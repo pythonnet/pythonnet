@@ -1,0 +1,408 @@
+// Copyright (c) 2001, 2002 Zope Corporation and Contributors.
+//
+// All Rights Reserved.
+//
+// This software is subject to the provisions of the Zope Public License,
+// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
+// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+// FOR A PARTICULAR PURPOSE.
+
+using System;
+using System.Collections;
+using System.Collections.Specialized;
+using System.Runtime.InteropServices;
+using System.Reflection;
+
+namespace Python.Runtime {
+
+    //=======================================================================
+    // This file defines objects to support binary interop with the Python
+    // runtime. Generally, the definitions here need to be kept up to date
+    // when moving to new Python versions.
+    //=======================================================================
+
+    [Serializable()]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
+    internal class CallConvCdeclAttribute : Attribute {
+	public CallConvCdeclAttribute() {}
+    }
+
+
+    [Serializable()]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
+    internal class PythonMethodAttribute : Attribute {
+	public PythonMethodAttribute() {}
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
+    internal class ObjectOffset {
+
+	static ObjectOffset() {
+	    int size = IntPtr.Size;
+	    ob_refcnt = 0;
+	    ob_type = 1 * size;
+	    ob_dict = 2 * size;
+	    ob_data = 3 * size;
+	}
+
+	public static int magic() {
+	    return ob_data;
+	}
+
+	public static int Size() {
+	    return 4 * IntPtr.Size;
+	}
+
+	public static int ob_refcnt;
+	public static int ob_type;
+	public static int ob_dict;
+	public static int ob_data;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
+    internal class TypeOffset {
+
+	static TypeOffset() {
+	    Type type = typeof(TypeOffset);
+	    FieldInfo[] fi = type.GetFields();
+	    int size = IntPtr.Size;
+	    for (int i = 0; i < fi.Length; i++) {
+		fi[i].SetValue(null, i * size);
+	    }
+	}
+
+	public static int magic() {
+	    return ob_size;
+	}
+	
+	public static int ob_refcnt = 0;
+	public static int ob_type = 0;
+	public static int ob_size = 0;
+	public static int tp_name = 0;
+	public static int tp_basicsize = 0;
+	public static int tp_itemsize = 0;
+	public static int tp_dealloc = 0;
+	public static int tp_print = 0;
+	public static int tp_getattr = 0;
+	public static int tp_setattr = 0;
+	public static int tp_compare = 0;
+	public static int tp_repr = 0;
+	public static int tp_as_number = 0;
+	public static int tp_as_sequence = 0;
+	public static int tp_as_mapping = 0;
+	public static int tp_hash = 0;
+	public static int tp_call = 0;
+	public static int tp_str = 0;
+	public static int tp_getattro = 0;
+	public static int tp_setattro = 0;
+	public static int tp_as_buffer = 0;
+	public static int tp_flags = 0;
+	public static int tp_doc = 0;
+	public static int tp_traverse = 0;
+	public static int tp_clear = 0;
+	public static int tp_richcompare = 0;
+	public static int tp_weaklistoffset = 0;
+	public static int tp_iter = 0;
+	public static int tp_iternext = 0;
+	public static int tp_methods = 0;
+	public static int tp_members = 0;
+	public static int tp_getset = 0;
+	public static int tp_base = 0;
+	public static int tp_dict = 0;
+	public static int tp_descr_get = 0;
+	public static int tp_descr_set = 0;
+	public static int tp_dictoffset = 0;
+	public static int tp_init = 0;
+	public static int tp_alloc = 0;
+	public static int tp_new = 0;
+	public static int tp_free = 0;
+	public static int tp_is_gc = 0;
+	public static int tp_bases = 0;
+	public static int tp_mro = 0;
+	public static int tp_cache = 0;
+	public static int tp_subclasses = 0;
+	public static int tp_weaklist = 0;
+	public static int tp_del = 0;
+
+	public static int nb_add = 0;
+	public static int nb_subtract = 0;
+	public static int nb_multiply = 0;
+	public static int nb_divide = 0;
+	public static int nb_remainder = 0;
+	public static int nb_divmod = 0;
+	public static int nb_power = 0;
+	public static int nb_negative = 0;
+	public static int nb_positive = 0;
+	public static int nb_absolute = 0;
+	public static int nb_nonzero = 0;
+        public static int nb_invert = 0;
+	public static int nb_lshift = 0;
+	public static int nb_rshift = 0;
+	public static int nb_and = 0;
+	public static int nb_xor = 0;
+	public static int nb_or = 0;
+        public static int nb_coerce = 0;
+	public static int nb_int = 0;
+	public static int nb_long = 0;
+	public static int nb_float = 0;
+	public static int nb_oct = 0;
+	public static int nb_hex = 0;
+	public static int nb_inplace_add = 0;
+	public static int nb_inplace_subtract = 0;
+	public static int nb_inplace_multiply = 0;
+	public static int nb_inplace_divide = 0;
+	public static int nb_inplace_remainder = 0;
+	public static int nb_inplace_power = 0;
+	public static int nb_inplace_lshift = 0;
+	public static int nb_inplace_rshift = 0;
+	public static int nb_inplace_and = 0;
+	public static int nb_inplace_xor = 0;
+	public static int nb_inplace_or = 0;
+	public static int nb_floor_divide = 0;
+	public static int nb_true_divide = 0;
+	public static int nb_inplace_floor_divide = 0;
+	public static int nb_inplace_true_divide = 0;
+
+	public static int mp_length = 0;
+	public static int mp_subscript = 0;
+	public static int mp_ass_subscript = 0;
+
+	public static int sq_length = 0;
+	public static int sq_concat = 0;
+	public static int sq_repeat = 0;
+	public static int sq_item = 0;
+	public static int sq_slice = 0;
+	public static int sq_ass_item = 0;
+	public static int sq_ass_slice = 0;
+	public static int sq_contains = 0;
+	public static int sq_inplace_concat = 0;
+	public static int sq_inplace_repeat = 0;
+
+	public static int bf_getreadbuffer = 0;
+	public static int bf_getwritebuffer = 0;
+	public static int bf_getsegcount = 0;
+	public static int bf_getcharbuffer = 0;
+
+	public static int name = 0;
+	public static int slots = 0;
+	public static int members = 0;
+
+    }
+
+
+    internal class TypeFlags {
+	public static int HaveGetCharBuffer = (1 << 0);
+	public static int HaveSequenceIn = (1 << 1);
+	public static int GC = 0;
+	public static int HaveInPlaceOps = (1 << 3);
+	public static int CheckTypes = (1 << 4);
+	public static int HaveRichCompare = (1 << 5);
+	public static int HaveWeakRefs = (1 << 6);
+	public static int HaveIter = (1 << 7);
+	public static int HaveClass = (1 << 8);
+	public static int HeapType = (1 << 9);
+	public static int BaseType = (1 << 10);
+	public static int Ready = (1 << 12);
+	public static int Readying = (1 << 13);
+	public static int HaveGC = (1 << 14);
+	public static int Managed = (1 << 29);
+	public static int Subclass = (1 << 30);
+	public static int Default = (1 << 0) |
+	                     (1 << 1) |
+	                     (1 << 3) |
+	                     (1 << 5) | 
+	                     (1 << 6) | 
+	                     (1 << 7) |
+	                     (1 << 8) | 0;
+    }
+
+
+    // This class defines the function prototypes (delegates) used for low
+    // level integration with the CPython runtime. It also provides name 
+    // based lookup of the correct prototype for a particular Python type 
+    // slot and utilities for generating method thunks for managed methods.
+
+    internal class Interop {
+
+	static ArrayList keepAlive;
+	static Hashtable pmap;
+ 	static IntPtr temp;
+
+	static Interop() {
+
+	    // Here we build a mapping of PyTypeObject slot names to the
+	    // appropriate prototype (delegate) type to use for the slot.
+
+	    Type[] items = typeof(Interop).GetNestedTypes();
+	    Hashtable p = new Hashtable();
+
+	    for (int i = 0; i < items.Length; i++) {
+		Type item = items[i];
+		p[item.Name] = item;
+	    }
+
+	    keepAlive = new ArrayList();
+	    temp = Marshal.AllocHGlobal(IntPtr.Size);
+	    pmap = new Hashtable();
+
+	    pmap["tp_dealloc"] = p["DestructorFunc"];
+	    pmap["tp_print"] = p["PrintFunc"];
+	    pmap["tp_getattr"] = p["BinaryFunc"];
+	    pmap["tp_setattr"] = p["ObjObjArgFunc"];
+	    pmap["tp_compare"] = p["ObjObjFunc"];
+	    pmap["tp_repr"] = p["UnaryFunc"];
+	    pmap["tp_hash"] = p["UnaryFunc"];
+	    pmap["tp_call"] = p["TernaryFunc"];
+	    pmap["tp_str"] = p["UnaryFunc"];
+	    pmap["tp_getattro"] = p["BinaryFunc"];
+	    pmap["tp_setattro"] = p["ObjObjArgFunc"];
+	    pmap["tp_traverse"] = p["ObjObjArgFunc"];
+	    pmap["tp_clear"] = p["InquiryFunc"];
+	    pmap["tp_richcompare"] = p["RichCmpFunc"];
+	    pmap["tp_iter"] = p["UnaryFunc"];
+	    pmap["tp_iternext"] = p["UnaryFunc"];
+	    pmap["tp_descr_get"] = p["TernaryFunc"];
+	    pmap["tp_descr_set"] = p["ObjObjArgFunc"];
+	    pmap["tp_init"] = p["ObjObjArgFunc"];
+	    pmap["tp_alloc"] = p["IntArgFunc"];
+	    pmap["tp_new"] = p["TernaryFunc"];
+	    pmap["tp_free"] = p["DestructorFunc"];
+	    pmap["tp_is_gc"] = p["InquiryFunc"];
+
+	    pmap["nb_add"] = p["BinaryFunc"];
+	    pmap["nb_subtract"] = p["BinaryFunc"];
+	    pmap["nb_multiply"] = p["BinaryFunc"];
+	    pmap["nb_divide"] = p["BinaryFunc"];
+	    pmap["nb_remainder"] = p["BinaryFunc"];
+	    pmap["nb_divmod"] = p["BinaryFunc"];
+	    pmap["nb_power"] = p["TernaryFunc"];
+	    pmap["nb_negative"] = p["UnaryFunc"];
+	    pmap["nb_positive"] = p["UnaryFunc"];
+	    pmap["nb_absolute"] = p["UnaryFunc"];
+	    pmap["nb_nonzero"] = p["InquiryFunc"];
+	    pmap["nb_invert"] = p["UnaryFunc"];
+	    pmap["nb_lshift"] = p["BinaryFunc"];
+	    pmap["nb_rshift"] = p["BinaryFunc"];
+	    pmap["nb_and"] = p["BinaryFunc"];
+	    pmap["nb_xor"] = p["BinaryFunc"];
+	    pmap["nb_or"] = p["BinaryFunc"];
+	    pmap["nb_coerce"] = p["ObjObjFunc"];
+	    pmap["nb_int"] = p["UnaryFunc"];
+	    pmap["nb_long"] = p["UnaryFunc"];
+	    pmap["nb_float"] = p["UnaryFunc"];
+	    pmap["nb_oct"] = p["UnaryFunc"];
+	    pmap["nb_hex"] = p["UnaryFunc"];
+	    pmap["nb_inplace_add"] = p["BinaryFunc"];
+	    pmap["nb_inplace_subtract"] = p["BinaryFunc"];
+	    pmap["nb_inplace_multiply"] = p["BinaryFunc"];
+	    pmap["nb_inplace_divide"] = p["BinaryFunc"];
+	    pmap["nb_inplace_remainder"] = p["BinaryFunc"];
+	    pmap["nb_inplace_power"] = p["TernaryFunc"];
+	    pmap["nb_inplace_lshift"] = p["BinaryFunc"];
+	    pmap["nb_inplace_rshift"] = p["BinaryFunc"];
+	    pmap["nb_inplace_and"] = p["BinaryFunc"];
+	    pmap["nb_inplace_xor"] = p["BinaryFunc"];
+	    pmap["nb_inplace_or"] = p["BinaryFunc"];
+	    pmap["nb_floor_divide"] = p["BinaryFunc"];
+	    pmap["nb_true_divide"] = p["BinaryFunc"];
+	    pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
+	    pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
+
+	    pmap["sq_length"] = p["InquiryFunc"];
+	    pmap["sq_concat"] = p["BinaryFunc"];
+	    pmap["sq_repeat"] = p["IntArgFunc"];
+	    pmap["sq_item"] = p["IntArgFunc"];
+	    pmap["sq_slice"] = p["IntIntArgFunc"];
+	    pmap["sq_ass_item"] = p["IntObjArgFunc"];
+	    pmap["sq_ass_slice"] = p["IntIntObjArgFunc"];
+	    pmap["sq_contains"] = p["ObjObjFunc"];
+	    pmap["sq_inplace_concat"] = p["BinaryFunc"];
+	    pmap["sq_inplace_repeat"] = p["IntArgFunc"];
+
+	    pmap["mp_length"] = p["InquiryFunc"];
+	    pmap["mp_subscript"] = p["BinaryFunc"];
+	    pmap["mp_ass_subscript"] = p["ObjObjArgFunc"];
+	    
+	    pmap["bf_getreadbuffer"] = p["IntObjArgFunc"];
+	    pmap["bf_getwritebuffer"] = p["IntObjArgFunc"];
+	    pmap["bf_getsegcount"] = p["ObjObjFunc"];
+	    pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
+
+	    pmap["__import__"] = p["TernaryFunc"];
+	}
+
+	internal static Type GetPrototype(string name) {
+	    return pmap[name] as Type;
+	}
+
+	internal static IntPtr GetThunk(MethodInfo method) {
+	    Type dt = Interop.GetPrototype(method.Name);
+	    if (dt != null) {
+		IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
+		Delegate d = Delegate.CreateDelegate(dt, method);
+		Thunk cb = new Thunk(d);
+		Marshal.StructureToPtr(cb, tmp, false);
+		IntPtr fp = Marshal.ReadIntPtr(tmp, 0);
+		Marshal.FreeHGlobal(tmp);
+		keepAlive.Add(d);
+		return fp;
+	    }
+	    return IntPtr.Zero;
+	}
+
+	[CallConvCdecl()]
+	public delegate IntPtr UnaryFunc(IntPtr ob);
+
+	[CallConvCdecl()]
+	public delegate IntPtr BinaryFunc(IntPtr ob, IntPtr arg);
+
+	[CallConvCdecl()]
+	public delegate IntPtr TernaryFunc(IntPtr ob, IntPtr a1, IntPtr a2);
+
+	[CallConvCdecl()]
+	public delegate int InquiryFunc(IntPtr ob);
+
+	[CallConvCdecl()]
+	public delegate IntPtr IntArgFunc(IntPtr ob, int arg);
+
+	[CallConvCdecl()]
+	public delegate IntPtr IntIntArgFunc(IntPtr ob, int a1, int a2);
+
+	[CallConvCdecl()]
+	public delegate int IntObjArgFunc(IntPtr ob, int a1, IntPtr a2);
+
+	[CallConvCdecl()]
+	public delegate int IntIntObjArgFunc(IntPtr o, int a, int b, IntPtr c);
+
+	[CallConvCdecl()]
+	public delegate int ObjObjArgFunc(IntPtr o, IntPtr a, IntPtr b);
+
+	[CallConvCdecl()]
+	public delegate int ObjObjFunc(IntPtr ob, IntPtr arg);
+
+	[CallConvCdecl()]
+	public delegate void DestructorFunc(IntPtr ob);
+
+	[CallConvCdecl()]
+	public delegate int PrintFunc(IntPtr ob, IntPtr a, int b);
+
+	[CallConvCdecl()]
+	public delegate IntPtr RichCmpFunc(IntPtr ob, IntPtr a, int b);
+
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
+    internal struct Thunk {
+	public Delegate fn;
+
+	public Thunk(Delegate d) {
+	    fn = d;
+	}
+    }
+
+}
