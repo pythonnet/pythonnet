@@ -44,7 +44,6 @@ namespace Python.Runtime {
 	// Implements __new__ for reflected interface types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
 	    InterfaceObject self = (InterfaceObject)GetManagedObject(tp);
 	    int nargs = Runtime.PyTuple_Size(args);

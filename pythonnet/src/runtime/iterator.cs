@@ -33,7 +33,6 @@ namespace Python.Runtime {
 	// Implements support for the Python iteration protocol.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_iternext(IntPtr ob) {
 	    Iterator self = GetManagedObject(ob) as Iterator;
 	    if (!self.iter.MoveNext()) {
@@ -44,8 +43,6 @@ namespace Python.Runtime {
 	    return Converter.ToPythonImplicit(item);
 	}
 
-
-	[CallConvCdecl()]
 	public static IntPtr tp_iter(IntPtr ob) {
 	    Runtime.Incref(ob);
 	    return ob;

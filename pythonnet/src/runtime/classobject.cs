@@ -11,7 +11,6 @@
 
 using System;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime {
 
@@ -56,7 +55,6 @@ namespace Python.Runtime {
 	// Implements __new__ for reflected classes and value types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
 
 	    ClassObject self = GetManagedObject(tp) as ClassObject;
@@ -132,7 +130,6 @@ namespace Python.Runtime {
 	// Implements __getitem__ for reflected classes and value types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr mp_subscript(IntPtr ob, IntPtr idx) {
 	    ManagedType self = GetManagedObject(ob);
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);
@@ -177,7 +174,6 @@ namespace Python.Runtime {
 	// Implements __setitem__ for reflected classes and value types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v) {
 	    ManagedType self = GetManagedObject(ob);
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);
@@ -240,7 +236,6 @@ namespace Python.Runtime {
 	// when working with multicast delegates.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw) {
 	    ManagedType self = GetManagedObject(ob);
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);

@@ -137,7 +137,6 @@ namespace Python.Runtime {
 	// a "bound" event that keeps a reference to the object instance.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
 	    EventObject self = GetManagedObject(ds) as EventObject;
 	    EventBinding binding;
@@ -176,7 +175,6 @@ namespace Python.Runtime {
 	// SomeEvent on ob to the result of the '+=' operation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
 	    EventBinding e = GetManagedObject(val) as EventBinding;
 
@@ -194,7 +192,6 @@ namespace Python.Runtime {
 	// Descriptor __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    EventObject self = (EventObject)GetManagedObject(ob);
 	    string s = String.Format("<event '{0}'>", self.name);
@@ -206,7 +203,6 @@ namespace Python.Runtime {
 	// Descriptor dealloc implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new void tp_dealloc(IntPtr ob) {
 	    EventObject self = (EventObject)GetManagedObject(ob);
 	    if (self.unbound != null) {

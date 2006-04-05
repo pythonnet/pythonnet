@@ -17,20 +17,11 @@ python.exe: Python.Runtime.dll
 	cd ..; cd ..;
 
 
-Python.Runtime.dll: callconvutil.exe
+Python.Runtime.dll:
 	cd src; cd runtime; \
 	$(CSC) /nologo /unsafe /target:library /out:../../Python.Runtime.dll \
         /recurse:*.cs
 	cd ..; cd ..;
-	$(ILDASM) /nobar Python.Runtime.dll /out=Python.Runtime.il;
-	$(RUNNER) ./callconvutil.exe;
-	$(ILASM) /nologo /quiet /dll \
-	/resource=Python.Runtime.res /output=Python.Runtime.dll \
-	Python.Runtime.il2;
-	rm -f Python.Runtime.il;
-	rm -f Python.Runtime.il2;
-	rm -f Python.Runtime.res;
-	rm -f ./callconvutil.exe;
 
 
 CLR.dll: Python.Runtime.dll
@@ -46,23 +37,14 @@ Python.Test.dll: Python.Runtime.dll
 	cd ..; cd ..;
 
 
-callconvutil.exe:
-	cd src; cd tools; \
-	$(CSC) /nologo /target:exe /out:../../callconvutil.exe \
-        /recurse:*.cs
-	cd ..; cd ..;
-
-
 clean:
 	rm -f python.exe Python*.dll Python*.il Python*.il2 Python*.res
-	rm -f callconvutil.exe
 	rm -f CLR.dll
 	rm -f ./*~
 	cd src; cd console; rm -f *~; cd ..; cd ..;
 	cd src; cd runtime; rm -f *~; cd ..; cd ..;
 	cd src; cd testing; rm -f *~; cd ..; cd ..;
 	cd src; cd tests; rm -f *~; rm -f *.pyc; cd ..; cd ..;
-	cd src; cd tools; rm -f *~; cd ..; cd ..;
 	cd doc; rm -f *~; cd ..;
 	cd demo; rm -f *~; cd ..;
 

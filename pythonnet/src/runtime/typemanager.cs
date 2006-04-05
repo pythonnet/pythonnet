@@ -12,6 +12,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Reflection.Emit;
+using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 using System.Threading;
@@ -26,13 +27,13 @@ namespace Python.Runtime {
     internal class TypeManager {
 
 	static BindingFlags tbFlags;
-	static Hashtable cache;
+	static Dictionary<Type, IntPtr> cache;
 	static int obSize;
 
 	static TypeManager() {
 	    tbFlags = BindingFlags.Public | BindingFlags.Static;
 	    obSize = 4 * IntPtr.Size;
-	    cache = new Hashtable();
+	    cache = new Dictionary<Type, IntPtr>(128);
 	}
 
 
@@ -44,17 +45,16 @@ namespace Python.Runtime {
 	//====================================================================
 
 	internal static IntPtr GetTypeHandle(Type type) {
-
 	    // Note that these types are cached with a refcount of 1, so they
-	    // effectively exist until the CPython runtime is finalized. We
-
-	    Object ob = cache[type];
-	    if (ob != null) {
-		return (IntPtr) ob;
+	    // effectively exist until the CPython runtime is finalized.
+	    IntPtr handle = IntPtr.Zero;
+	    cache.TryGetValue(type, out handle);
+	    if (handle != IntPtr.Zero) {
+		return handle;
 	    }
-	    IntPtr tp = CreateType(type);
-	    cache[type] = tp;
-	    return tp;
+	    handle = CreateType(type);
+	    cache[type] = handle;
+	    return handle;
 	}
 
 
@@ -64,14 +64,15 @@ namespace Python.Runtime {
 	// the appropriate semantics in Python for the reflected managed type.
 	//====================================================================
 
-	internal static IntPtr GetTypeHandle(ManagedType obj, Type clrType) {
-	    Object ob = cache[clrType];
-	    if (ob != null) {
-		return (IntPtr) ob;
+	internal static IntPtr GetTypeHandle(ManagedType obj, Type type) {
+	    IntPtr handle = IntPtr.Zero;
+	    cache.TryGetValue(type, out handle);
+	    if (handle != IntPtr.Zero) {
+		return handle;
 	    }
-	    IntPtr tp = CreateType(obj, clrType);
-	    cache[clrType] = tp;
-	    return tp;
+	    handle = CreateType(obj, type);
+	    cache[type] = handle;
+	    return handle;
 	}
 
 

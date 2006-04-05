@@ -11,6 +11,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 using System.Security;
@@ -29,13 +30,13 @@ namespace Python.Runtime {
 
     internal class ClassManager {
 
-	static Hashtable cache;
+	static Dictionary<Type, ClassBase> cache;
 	static Type dtype;
 
 	private ClassManager() {}
 
 	static ClassManager() {
-	    cache = new Hashtable();
+	    cache = new Dictionary<Type, ClassBase>(128);
 	    dtype = typeof(System.Delegate);
 	}
 
@@ -45,13 +46,14 @@ namespace Python.Runtime {
 	//====================================================================
 
 	internal static ClassBase GetClass(Type type) {
-	    Object ob = cache[type];
-	    if (ob == null) {
-		ClassBase c = CreateClass(type);
-		cache.Add(type, c);
-		return c;
+	    ClassBase cb = null;
+	    cache.TryGetValue(type, out cb);
+	    if (cb != null) {
+		return cb;
 	    }
-	    return (ClassBase) ob;
+	    cb = CreateClass(type);
+	    cache.Add(type, cb);
+	    return cb;
 	}
 
 
@@ -84,6 +86,14 @@ namespace Python.Runtime {
 		impl = new DelegateObject(type);
 	    }
 
+	    else if (type.ContainsGenericParameters) {
+		impl = new GenericType(type);
+	    }
+
+	    else if (type.IsGenericType) {
+		impl = new GenericType(type);
+	    }
+
 	    else if (type.IsArray) {
 		impl = new ArrayObject(type);
 	    }
@@ -94,7 +104,8 @@ namespace Python.Runtime {
 
 	    else {
 		impl = new ClassObject(type);
-		if (type == typeof(Exception) || type.IsSubclassOf(typeof(Exception))) {
+		if (type == typeof(Exception) || 
+                    type.IsSubclassOf(typeof(Exception))) {
 		    impl.is_exception = true;
 		}
 	    }

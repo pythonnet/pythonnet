@@ -33,7 +33,6 @@ namespace Python.Runtime {
 	// EventBinding += operator implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr nb_inplace_add(IntPtr ob, IntPtr arg) {
 	    EventBinding self = (EventBinding)GetManagedObject(ob);
 
@@ -57,7 +56,6 @@ namespace Python.Runtime {
 	// EventBinding -= operator implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr nb_inplace_subtract(IntPtr ob, IntPtr arg) {
 	    EventBinding self = (EventBinding)GetManagedObject(ob);
 
@@ -81,7 +79,6 @@ namespace Python.Runtime {
 	// EventBinding  __hash__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_hash(IntPtr ob) {
 	    EventBinding self = (EventBinding)GetManagedObject(ob);
 	    long x = 0;
@@ -113,7 +110,6 @@ namespace Python.Runtime {
 	// EventBinding __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    EventBinding self = (EventBinding)GetManagedObject(ob);
 	    string type = (self.target == IntPtr.Zero) ? "unbound" : "bound";
@@ -126,7 +122,6 @@ namespace Python.Runtime {
 	// EventBinding dealloc implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new void tp_dealloc(IntPtr ob) {
 	    EventBinding self = (EventBinding)GetManagedObject(ob);
 	    Runtime.Decref(self.target);

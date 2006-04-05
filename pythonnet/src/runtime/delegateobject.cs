@@ -11,6 +11,7 @@
 
 using System;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime {
 
@@ -58,7 +59,6 @@ namespace Python.Runtime {
 	// to the Python callable passed in.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
 	    DelegateObject self = (DelegateObject)GetManagedObject(tp);
 
@@ -83,7 +83,6 @@ namespace Python.Runtime {
 	// Implements __call__ for reflected delegate types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw) {
 	    // todo: add fast type check!
 	    IntPtr pytype = Runtime.PyObject_TYPE(ob);
@@ -108,7 +107,6 @@ namespace Python.Runtime {
 	// Implements __cmp__ for reflected delegate types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new int tp_compare(IntPtr ob, IntPtr other) {
 	    Delegate d1 = GetTrueDelegate(ob);
 	    Delegate d2 = GetTrueDelegate(other);

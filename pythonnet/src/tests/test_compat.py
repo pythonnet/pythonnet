@@ -12,8 +12,10 @@
 import sys, os, string, unittest, types
 
 
-class ModuleTests(unittest.TestCase):
-    """Test CLR modules and the CLR import hook."""
+class CompatibilityTests(unittest.TestCase):
+    """
+    Backward-compatibility tests for deprecated features.
+    """
 
     def isCLRModule(self, object):
         return type(object).__name__ == 'ModuleObject'
@@ -21,30 +23,13 @@ class ModuleTests(unittest.TestCase):
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype' # for now
 
-    def testAAAImportHookWorks(self):
-        """Test that the import hook works correctly both using the
-           included runtime and an external runtime. This must be
-           the first test run in the unit tests!"""
-
-        from CLR.System import String
-
-
-    def testModuleInterface(self):
-        """Test the interface exposed by CLR module objects."""
-        import System
-        self.assertEquals(type(System.__dict__), type({}))
-        self.assertEquals(System.__name__, 'System')
-        self.assertEquals(System.__file__, None)
-        self.assertEquals(System.__doc__, None)
-        self.failUnless(self.isCLRClass(System.String))
-        self.failUnless(self.isCLRClass(System.Int32))
-
+    # Tests for old-style CLR-prefixed module naming.
 
     def testSimpleImport(self):
         """Test simple import."""
-        import System
-        self.failUnless(self.isCLRModule(System))
-        self.failUnless(System.__name__ == 'System')
+        import CLR
+        self.failUnless(self.isCLRModule(CLR))
+        self.failUnless(CLR.__name__ == 'CLR')
 
         import sys
         self.failUnless(type(sys) == types.ModuleType)
@@ -57,9 +42,9 @@ class ModuleTests(unittest.TestCase):
 
     def testSimpleImportWithAlias(self):
         """Test simple import with aliasing."""
-        import System as mySystem
-        self.failUnless(self.isCLRModule(mySystem))
-        self.failUnless(mySystem.__name__ == 'System')
+        import CLR as myCLR
+        self.failUnless(self.isCLRModule(myCLR))
+        self.failUnless(myCLR.__name__ == 'CLR')
 
         import sys as mySys
         self.failUnless(type(mySys) == types.ModuleType)
@@ -72,30 +57,20 @@ class ModuleTests(unittest.TestCase):
 
     def testDottedNameImport(self):
         """Test dotted-name import."""
-        import System.Reflection
-        self.failUnless(self.isCLRModule(System.Reflection))
-        self.failUnless(System.Reflection.__name__ == 'System.Reflection')
+        import CLR.System
+        self.failUnless(self.isCLRModule(CLR.System))
+        self.failUnless(CLR.System.__name__ == 'System')
 
         import xml.dom
         self.failUnless(type(xml.dom) == types.ModuleType)
         self.failUnless(xml.dom.__name__ == 'xml.dom')
 
 
-    def testMultipleDottedNameImport(self):
-        """Test an import bug with multiple dotted imports."""
-        import System.Data
-        self.failUnless(self.isCLRModule(System.Data))
-        self.failUnless(System.Data.__name__ == 'System.Data')
-        import System.Data
-        self.failUnless(self.isCLRModule(System.Data))
-        self.failUnless(System.Data.__name__ == 'System.Data')
-
-        
     def testDottedNameImportWithAlias(self):
         """Test dotted-name import with aliasing."""
-        import System.Reflection as SysRef
-        self.failUnless(self.isCLRModule(SysRef))
-        self.failUnless(SysRef.__name__ == 'System.Reflection')
+        import CLR.System as mySystem
+        self.failUnless(self.isCLRModule(mySystem))
+        self.failUnless(mySystem.__name__ == 'System')
 
         import xml.dom as myDom
         self.failUnless(type(myDom) == types.ModuleType)
@@ -104,9 +79,9 @@ class ModuleTests(unittest.TestCase):
 
     def testSimpleImportFrom(self):
         """Test simple 'import from'."""
-        from System import Reflection
-        self.failUnless(self.isCLRModule(Reflection))
-        self.failUnless(Reflection.__name__ == 'System.Reflection')
+        from CLR import System
+        self.failUnless(self.isCLRModule(System))
+        self.failUnless(System.__name__ == 'System')
 
         from xml import dom
         self.failUnless(type(dom) == types.ModuleType)
@@ -115,9 +90,9 @@ class ModuleTests(unittest.TestCase):
 
     def testSimpleImportFromWithAlias(self):
         """Test simple 'import from' with aliasing."""
-        from System import Collections as Coll
-        self.failUnless(self.isCLRModule(Coll))
-        self.failUnless(Coll.__name__ == 'System.Collections')
+        from CLR import System as mySystem
+        self.failUnless(self.isCLRModule(mySystem))
+        self.failUnless(mySystem.__name__ == 'System')
 
         from xml import dom as myDom
         self.failUnless(type(myDom) == types.ModuleType)
@@ -126,15 +101,13 @@ class ModuleTests(unittest.TestCase):
 
     def testDottedNameImportFrom(self):
         """Test dotted-name 'import from'."""
-        from System.Collections import Specialized
-        self.failUnless(self.isCLRModule(Specialized))
-        self.failUnless(
-            Specialized.__name__ == 'System.Collections.Specialized'
-            )
+        from CLR.System import Xml
+        self.failUnless(self.isCLRModule(Xml))
+        self.failUnless(Xml.__name__ == 'System.Xml')
 
-        from System.Collections.Specialized import StringCollection
-        self.failUnless(self.isCLRClass(StringCollection))
-        self.failUnless(StringCollection.__name__ == 'StringCollection')
+        from CLR.System.Xml import XmlDocument
+        self.failUnless(self.isCLRClass(XmlDocument))
+        self.failUnless(XmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom
         self.failUnless(type(pulldom) == types.ModuleType)
@@ -147,13 +120,13 @@ class ModuleTests(unittest.TestCase):
 
     def testDottedNameImportFromWithAlias(self):
         """Test dotted-name 'import from' with aliasing."""
-        from System.Collections import Specialized as Spec
-        self.failUnless(self.isCLRModule(Spec))
-        self.failUnless(Spec.__name__ == 'System.Collections.Specialized')
+        from CLR.System import Xml as myXml
+        self.failUnless(self.isCLRModule(myXml))
+        self.failUnless(myXml.__name__ == 'System.Xml')
 
-        from System.Collections.Specialized import StringCollection as SC
-        self.failUnless(self.isCLRClass(SC))
-        self.failUnless(SC.__name__ == 'StringCollection')
+        from CLR.System.Xml import XmlDocument as myXmlDocument
+        self.failUnless(self.isCLRClass(myXmlDocument))
+        self.failUnless(myXmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom as myPulldom
         self.failUnless(type(myPulldom) == types.ModuleType)
@@ -167,39 +140,22 @@ class ModuleTests(unittest.TestCase):
     def testFromModuleImportStar(self):
         """Test from module import * behavior."""
         count = len(locals().keys())
-        m = __import__('System.Xml', globals(), locals(), ['*'])
-        self.failUnless(m.__name__ == 'System.Xml')
+        m = __import__('CLR.System.Management', globals(), locals(), ['*'])
+        self.failUnless(m.__name__ == 'System.Management')
         self.failUnless(self.isCLRModule(m))
         self.failUnless(len(locals().keys()) > count + 1)
 
 
-    def testImplicitAssemblyLoad(self):
-        """Test implicit assembly loading via import."""
-
-        def test():
-            # This should fail until CLR.System.Windows.Forms has been
-            # imported or that assembly has been explicitly loaded.
-            import System.Windows
-
-        self.failUnlessRaises(ImportError, test)
-
-        import System.Windows.Forms as Forms
-        self.failUnless(self.isCLRModule(Forms))
-        self.failUnless(Forms.__name__ == 'System.Windows.Forms')
-        from System.Windows.Forms import Form
-        self.failUnless(self.isCLRClass(Form))
-        self.failUnless(Form.__name__ == 'Form')
-
-
     def testExplicitAssemblyLoad(self):
         """Test explicit assembly loading using standard CLR tools."""
-        from System.Reflection import Assembly
-        import System, sys
+        from CLR.System.Reflection import Assembly
+        from CLR import System
+        import sys
 
         assembly = Assembly.LoadWithPartialName('System.Data')
         self.failUnless(assembly != None)
         
-        import System.Data
+        import CLR.System.Data
         self.failUnless(sys.modules.has_key('System.Data'))
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
@@ -214,21 +170,21 @@ class ModuleTests(unittest.TestCase):
         # types in the System namespace. The desired behavior is for the
         # Python runtime to "do the right thing", allowing types from both
         # assemblies to be found in the CLR.System module implicitly.
-        import System
-        self.failUnless(self.isCLRClass(System.UriBuilder))
+        import CLR.System
+        self.failUnless(self.isCLRClass(CLR.System.UriBuilder))
 
 
     def testImportNonExistantModule(self):
         """Test import failure for a non-existant module."""
         def test():
-            import System.SpamSpamSpam
+            import CLR.System.SpamSpamSpam
 
         self.failUnlessRaises(ImportError, test)
 
 
     def testLookupNoNamespaceType(self):
         """Test lookup of types without a qualified namespace."""
-        import Python.Test
+        import CLR.Python.Test
         import CLR
         self.failUnless(self.isCLRClass(CLR.NoNamespaceType))
 
@@ -236,20 +192,20 @@ class ModuleTests(unittest.TestCase):
     def testModuleLookupRecursion(self):
         """Test for recursive lookup handling."""
         def test1():
-            from System import System
+            from CLR import CLR
 
         self.failUnlessRaises(ImportError, test1)
 
         def test2():
-            import System
-            x = System.System
+            import CLR
+            x = CLR.CLR
 
         self.failUnlessRaises(AttributeError, test2)
 
 
     def testModuleGetAttr(self):
         """Test module getattr behavior."""
-        import System
+        import CLR.System as System
 
         int_type = System.Int32
         self.failUnless(self.isCLRClass(int_type))
@@ -268,45 +224,8 @@ class ModuleTests(unittest.TestCase):
         self.failUnlessRaises(TypeError, test)
 
 
-    def testModuleAttrAbuse(self):
-        """Test handling of attempts to set module attributes."""
-
-        # It would be safer to use a dict-proxy as the __dict__ for CLR
-        # modules, but as of Python 2.3 some parts of the CPython runtime
-        # like dir() will fail if a module dict is not a real dictionary.
-        
-        def test():
-            import System
-            System.__dict__['foo'] = 0
-            return 1
-
-        self.failUnless(test())
-
-
-    def testModuleTypeAbuse(self):
-        """Test handling of attempts to break the module type."""
-        import System
-        mtype = type(System)
-
-        def test():
-            mtype.__getattribute__(0, 'spam')
-
-        self.failUnlessRaises(TypeError, test)
-
-        def test():
-            mtype.__setattr__(0, 'spam', 1)
-
-        self.failUnlessRaises(TypeError, test)
-
-        def test():
-            mtype.__repr__(0)
-
-        self.failUnlessRaises(TypeError, test)
-
-
-
 def test_suite():
-    return unittest.makeSuite(ModuleTests)
+    return unittest.makeSuite(CompatibilityTests)
 
 def main():
     unittest.TextTestRunner().run(test_suite())

@@ -40,7 +40,6 @@ namespace Python.Runtime {
 	// is converted to an appropriately typed Python object.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
 	    PropertyObject self = (PropertyObject)GetManagedObject(ds);
 	    MethodInfo getter = self.getter;
@@ -95,7 +94,6 @@ namespace Python.Runtime {
 	// be convertible to the type of the property.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
 	    PropertyObject self = (PropertyObject)GetManagedObject(ds);
 	    MethodInfo setter = self.setter;
@@ -158,7 +156,6 @@ namespace Python.Runtime {
 	// Descriptor __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    PropertyObject self = (PropertyObject)GetManagedObject(ob);
 	    string s = String.Format("<property '{0}'>", self.info.Name);

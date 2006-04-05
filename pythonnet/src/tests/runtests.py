@@ -5,6 +5,8 @@ import time
 test_modules = (
         'test_exceptions',
         'test_module',
+        'test_compat',    
+        'test_generic',
         'test_conversion',
         'test_class',
         'test_interface',
@@ -16,7 +18,7 @@ test_modules = (
         'test_method',
         'test_delegate',
         'test_array',
-        'test_thread',
+        'test_thread'
 )
 
 

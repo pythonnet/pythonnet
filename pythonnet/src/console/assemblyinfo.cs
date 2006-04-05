@@ -15,7 +15,7 @@ using System.Security.Permissions;
 using System.Runtime.InteropServices;
 
 [assembly: System.Reflection.AssemblyProduct("Python for .NET")]
-[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersion("2.0.0.0")]
 [assembly: AssemblyTitleAttribute("Python Console")]
 [assembly: AssemblyDefaultAliasAttribute("python.exe")]
 [assembly: CLSCompliant(true)]

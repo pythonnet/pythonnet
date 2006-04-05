@@ -25,13 +25,6 @@ namespace Python.Runtime {
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class CallConvCdeclAttribute : Attribute {
-	public CallConvCdeclAttribute() {}
-    }
-
-
-    [Serializable()]
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class PythonMethodAttribute : Attribute {
 	public PythonMethodAttribute() {}
     }
@@ -354,43 +347,43 @@ namespace Python.Runtime {
 	    return IntPtr.Zero;
 	}
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate IntPtr UnaryFunc(IntPtr ob);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate IntPtr BinaryFunc(IntPtr ob, IntPtr arg);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate IntPtr TernaryFunc(IntPtr ob, IntPtr a1, IntPtr a2);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int InquiryFunc(IntPtr ob);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate IntPtr IntArgFunc(IntPtr ob, int arg);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate IntPtr IntIntArgFunc(IntPtr ob, int a1, int a2);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int IntObjArgFunc(IntPtr ob, int a1, IntPtr a2);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int IntIntObjArgFunc(IntPtr o, int a, int b, IntPtr c);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int ObjObjArgFunc(IntPtr o, IntPtr a, IntPtr b);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int ObjObjFunc(IntPtr ob, IntPtr arg);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void DestructorFunc(IntPtr ob);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int PrintFunc(IntPtr ob, IntPtr a, int b);
 
-	[CallConvCdecl()]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate IntPtr RichCmpFunc(IntPtr ob, IntPtr a, int b);
 
     }

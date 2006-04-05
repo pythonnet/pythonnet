@@ -12,6 +12,7 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime {
 
@@ -33,7 +34,6 @@ namespace Python.Runtime {
 	// is converted to an appropriately typed Python object.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
 	    FieldObject self = (FieldObject)GetManagedObject(ds);
 	    Object result;
@@ -79,7 +79,6 @@ namespace Python.Runtime {
 	// convertible to the type of the field.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
 	    FieldObject self = (FieldObject)GetManagedObject(ds);
 	    Object newval;
@@ -141,7 +140,6 @@ namespace Python.Runtime {
 	// Descriptor __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    FieldObject self = (FieldObject)GetManagedObject(ob);
 	    string s = String.Format("<field '{0}'>", self.info.Name);

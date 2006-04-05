@@ -42,7 +42,6 @@ namespace Python.Runtime {
 	// class / type when a reflected class is subclassed. 
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
 	    int len = Runtime.PyTuple_Size(args);
 	    if (len < 3) {
@@ -133,14 +132,12 @@ namespace Python.Runtime {
 	}
 
 
-	[CallConvCdecl()]
 	public static IntPtr tp_alloc(IntPtr mt, int n) {
 	    IntPtr type = Runtime.PyType_GenericAlloc(mt, n);
 	    return type;
 	}
 
 
-	[CallConvCdecl()]
 	public static void tp_free(IntPtr tp) {
 	    Runtime.PyObject_GC_Del(tp);
 	}
@@ -152,7 +149,6 @@ namespace Python.Runtime {
 	// from PyType_Type won't call __init__ for metatypes it doesnt know.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_call(IntPtr tp, IntPtr args, IntPtr kw) {
 	    IntPtr func = Marshal.ReadIntPtr(tp, TypeOffset.tp_new);
 	    if (func == IntPtr.Zero) {
@@ -200,7 +196,6 @@ namespace Python.Runtime {
 	// support the right setattr behavior for static fields and properties.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_setattro(IntPtr tp, IntPtr name, IntPtr value) {
 	    IntPtr descr = Runtime._PyType_Lookup(tp, name);
 
@@ -222,13 +217,24 @@ namespace Python.Runtime {
 	    return 0;
 	}
 
+	//====================================================================
+	// The metatype has to implement [] semantics for generic types, so
+	// here we just delegate to the generic type def implementation. Its
+	// own mp_subscript
+	//====================================================================
+	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
+	    GenericType gt = GetManagedObject(tp) as GenericType;
+	    if (gt != null) {
+		return GenericType.bind(tp, idx);
+	    }
+	    return Exceptions.RaiseTypeError("unsubscriptable object");
+	}
 
 	//====================================================================
 	// Dealloc implementation. This is called when a Python type generated
 	// by this metatype is no longer referenced from the Python runtime.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static void tp_dealloc(IntPtr tp) {
 	    // Fix this when we dont cheat on the handle for subclasses!
 

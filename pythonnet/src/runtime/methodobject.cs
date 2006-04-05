@@ -16,7 +16,8 @@ using System.Reflection;
 namespace Python.Runtime {
 
     //========================================================================
-    // Implements a Python type that provides access to CLR object methods.
+    // Implements a Python type that represents a CLR method. Method objects
+    // support a subscript syntax [] to allow explicit overload selection.
     //========================================================================
 
     internal class MethodObject : ExtensionType {
@@ -25,6 +26,7 @@ namespace Python.Runtime {
 	internal string name;
 	internal MethodBinding unbound;
 	internal MethodBinder binder;
+	internal bool is_static = false;
 	internal IntPtr doc;
 
 	public MethodObject(string name, MethodInfo[] info) : base() {
@@ -32,7 +34,11 @@ namespace Python.Runtime {
 	    this.info = info;
 	    binder = new MethodBinder();
 	    for (int i = 0; i < info.Length; i++) {
-		binder.AddMethod((MethodInfo)info[i]);
+		MethodInfo item = (MethodInfo)info[i];
+		binder.AddMethod(item);
+		if (item.IsStatic) {
+		    this.is_static = true;
+		}
 	    }
 	}
 
@@ -76,12 +82,7 @@ namespace Python.Runtime {
 	//====================================================================
 
 	internal bool IsStatic() {
-	    MethodBase[] methods = binder.GetMethods();
-	    for (int i = 0; i < methods.Length; i++) {
-		if (methods[i].IsStatic)
-		    return true;
-	    }
-	    return false;
+	    return this.is_static;
 	}
 
 
@@ -89,7 +90,6 @@ namespace Python.Runtime {
 	// Descriptor __getattribute__ implementation. 
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
 	    MethodObject self = (MethodObject)GetManagedObject(ob);
 
@@ -113,7 +113,6 @@ namespace Python.Runtime {
 	// a "bound" method similar to a Python bound method. 
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
 	    MethodObject self = (MethodObject)GetManagedObject(ds);
 	    MethodBinding binding;
@@ -140,10 +139,18 @@ namespace Python.Runtime {
 	}
 
 	//====================================================================
+	// Implement [] semantics to select overload based on type signature.
+	//====================================================================
+
+	public static IntPtr mp_subscript(IntPtr op, IntPtr idx) {
+	    MethodObject self = GetManagedObject(op) as MethodObject;
+	    return Exceptions.RaiseTypeError("not implemented");
+	}
+
+	//====================================================================
 	// Descriptor __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    MethodObject self = (MethodObject)GetManagedObject(ob);
 	    string s = String.Format("<method '{0}'>", self.name);
@@ -154,7 +161,6 @@ namespace Python.Runtime {
 	// Descriptor dealloc implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new void tp_dealloc(IntPtr ob) {
 	    MethodObject self = (MethodObject)GetManagedObject(ob);
 	    Runtime.Decref(self.doc);

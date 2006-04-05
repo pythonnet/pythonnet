@@ -12,7 +12,6 @@
 using System;
 using System.Collections;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime {
 
@@ -30,7 +29,6 @@ namespace Python.Runtime {
 	    return false;
 	}
 
-	[CallConvCdecl()]
 	public static IntPtr tp_new(IntPtr ob, IntPtr args, IntPtr kw) {
 	    string message = "cannot instantiate array wrapper";
 	    return Exceptions.RaiseTypeError(message);
@@ -41,7 +39,6 @@ namespace Python.Runtime {
 	// Implements __getitem__ for array types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr mp_subscript(IntPtr ob, IntPtr idx) {
 	    CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
 	    Array items = obj.inst as Array;
@@ -129,7 +126,6 @@ namespace Python.Runtime {
 	// Implements __setitem__ for array types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v) {
 	    CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
 	    Array items = obj.inst as Array;
@@ -215,7 +211,6 @@ namespace Python.Runtime {
 	// Implements __contains__ for array types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int sq_contains(IntPtr ob, IntPtr v) {
 	    CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
 	    Type itemType = obj.inst.GetType().GetElementType();
@@ -238,7 +233,6 @@ namespace Python.Runtime {
 	// Implements __len__ for array types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int mp_length(IntPtr ob) {
 	    CLRObject self = (CLRObject)ManagedType.GetManagedObject(ob);
 	    Array items = self.inst as Array;

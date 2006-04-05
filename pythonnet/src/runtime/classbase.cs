@@ -43,11 +43,11 @@ namespace Python.Runtime {
 	}
 
 
+
 	//====================================================================
 	// Implements __init__ for reflected classes and value types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_init(IntPtr ob, IntPtr args, IntPtr kw) {
 	    return 0;
 	}
@@ -56,7 +56,6 @@ namespace Python.Runtime {
 	// Standard comparison implementation for instances of reflected types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_compare(IntPtr ob, IntPtr other) {
 	    if (ob == other) {
 		return 0;
@@ -80,7 +79,6 @@ namespace Python.Runtime {
 	// or themselves support IEnumerator directly.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_iter(IntPtr ob) {
 	    CLRObject co = GetManagedObject(ob) as CLRObject;
 	    if (co == null) {
@@ -95,6 +93,7 @@ namespace Python.Runtime {
 	    }
 	    else {
 		o = co.inst as IEnumerator;
+		         
 		if (o == null) {
 		    string message = "iteration over non-sequence";
 		    return Exceptions.RaiseTypeError(message);
@@ -109,7 +108,6 @@ namespace Python.Runtime {
 	// Standard __hash__ implementation for instances of reflected types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_hash(IntPtr ob) {
 	    CLRObject co = GetManagedObject(ob) as CLRObject;
 	    if (co == null) {
@@ -123,7 +121,6 @@ namespace Python.Runtime {
 	// Standard __str__ implementation for instances of reflected types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_str(IntPtr ob) {
 	    CLRObject co = GetManagedObject(ob) as CLRObject;
 	    if (co == null) {
@@ -137,17 +134,14 @@ namespace Python.Runtime {
 	// Default implementations for required Python GC support.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args) {
 	    return 0;
 	}
 
-	[CallConvCdecl()]
 	public static int tp_clear(IntPtr ob) {
 	    return 0;
 	}
 
-	[CallConvCdecl()]
 	public static int tp_is_gc(IntPtr type) {
 	    return 1;
 	}
@@ -156,7 +150,6 @@ namespace Python.Runtime {
 	// Standard dealloc implementation for instances of reflected types.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static void tp_dealloc(IntPtr ob) {
 	    ManagedType self = GetManagedObject(ob);
 	    IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.ob_dict);

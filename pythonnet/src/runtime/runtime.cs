@@ -120,6 +120,15 @@ namespace Python.Runtime {
   	    PyCLRMetaType = MetaType.Initialize();
   	    Exceptions.Initialize();
   	    ImportHook.Initialize();
+
+	    // Need to add the runtime directory to sys.path so that we
+	    // can find built-in assemblies like System.Data, et. al.
+	    string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
+	    IntPtr path = Runtime.PySys_GetObject("path");
+	    IntPtr item = Runtime.PyString_FromString(rtdir);
+	    Runtime.PyList_Append(path, item);
+	    Runtime.Decref(item);
+	    AssemblyManager.UpdatePath();
 	}
 
 	internal static void Shutdown() {

@@ -30,6 +30,7 @@ namespace Python.Runtime {
 	static NumberFormatInfo nfi;
 	static Type objectType;
 	static Type stringType;
+	static Type doubleType;
 	static Type int32Type;
 	static Type int64Type;
 	static Type flagsType;
@@ -42,9 +43,35 @@ namespace Python.Runtime {
 	    stringType = typeof(String);
 	    int32Type = typeof(Int32);
 	    int64Type = typeof(Int64);
+	    doubleType = typeof(Double);
 	    flagsType = typeof(FlagsAttribute);
 	    boolType = typeof(Boolean);
 	    typeType = typeof(Type);
+	}
+
+
+	//====================================================================
+	// Given a builtin Python type, return the corresponding CLR type.
+	//====================================================================
+
+	internal static Type GetTypeByAlias(IntPtr op) {
+	    if ((op == Runtime.PyStringType) || 
+                (op == Runtime.PyUnicodeType)) {
+		return stringType;
+	    }
+	    else if (op == Runtime.PyIntType) {
+		return int32Type;
+	    }
+	    else if (op == Runtime.PyLongType) {
+		return int64Type;
+	    }
+	    else if (op == Runtime.PyFloatType) {
+		return doubleType;
+	    }
+	    else if (op == Runtime.PyBoolType) {
+		return boolType;
+	    }
+	    return null;
 	}
 
 

@@ -35,7 +35,6 @@ namespace Python.Runtime {
 	// MethodBinding __getattribute__ implementation. 
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
 	    MethodBinding self = (MethodBinding)GetManagedObject(ob);
 
@@ -59,7 +58,6 @@ namespace Python.Runtime {
 	// MethodBinding  __call__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw) {
 	    MethodBinding self = (MethodBinding)GetManagedObject(ob);
 
@@ -92,7 +90,6 @@ namespace Python.Runtime {
 	// MethodBinding  __hash__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_hash(IntPtr ob) {
 	    MethodBinding self = (MethodBinding)GetManagedObject(ob);
 	    long x = 0;
@@ -124,7 +121,6 @@ namespace Python.Runtime {
 	// MethodBinding  __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    MethodBinding self = (MethodBinding)GetManagedObject(ob);
 	    string type = (self.target == IntPtr.Zero) ? "unbound" : "bound";
@@ -136,7 +132,6 @@ namespace Python.Runtime {
 	// MethodBinding dealloc implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static new void tp_dealloc(IntPtr ob) {
 	    MethodBinding self = (MethodBinding)GetManagedObject(ob);
 	    Runtime.Decref(self.target);

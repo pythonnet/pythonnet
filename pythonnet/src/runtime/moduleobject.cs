@@ -10,15 +10,13 @@
 // FOR A PARTICULAR PURPOSE.
 
 using System;
-using System.Runtime.InteropServices;
 using System.Collections.Specialized;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 
 namespace Python.Runtime {
-
-    // TODO: decide whether to support __all__ and / or whether to impl
-    // a 'preload' method to force names to be pre-loaded.
 
     //========================================================================
     // Implements a Python type that provides access to CLR namespaces. The 
@@ -27,15 +25,16 @@ namespace Python.Runtime {
 
     internal class ModuleObject : ExtensionType {
 
-	string moduleName;
+	Dictionary<string, ManagedType> cache;
+	internal string moduleName;
 	string _namespace;
-	Hashtable cache;
 	static bool hacked;
 	IntPtr dict;
 
 	public ModuleObject(string name) : base() {
-	    moduleName = (name == String.Empty) ? "CLR" : "CLR." + name;
-	    cache = new Hashtable();
+	    //moduleName = (name == String.Empty) ? "CLR" : "CLR." + name;
+	    moduleName = (name == String.Empty) ? "CLR" : name;
+	    cache = new Dictionary<string, ManagedType>();
 	    _namespace = name;
 
 	    dict = Runtime.PyDict_New();
@@ -63,12 +62,6 @@ namespace Python.Runtime {
 
 	}
 
-	public string ModuleName {
-	    get { 
-		return moduleName; 
-	    }
-	}
-
 
 	//===================================================================
 	// Returns a ClassBase object representing a type that appears in
@@ -78,9 +71,10 @@ namespace Python.Runtime {
 	//===================================================================
 
 	public ManagedType GetAttribute(string name) {
-	    Object ob = this.cache[name];
-	    if (ob != null) {
-		return (ManagedType) ob;
+	    ManagedType cached = null;
+	    this.cache.TryGetValue(name, out cached);
+	    if (cached != null) {
+		return cached;
 	    }
 
 	    string qname = (_namespace == String.Empty) ? name : 
@@ -150,30 +144,34 @@ namespace Python.Runtime {
 	}
 
 
-	[PythonMethod]
-	public static IntPtr _preload(IntPtr ob, IntPtr args, IntPtr kw) {
-	    ModuleObject self = (ModuleObject)GetManagedObject(ob);
+	//===================================================================
+	// Preloads all currently-known names for the module namespace. This
+	// can be called multiple times, to add names from assemblies that
+	// may have been loaded since the last call to the method.
+ 	//===================================================================
 
-	    string module_ns = self._namespace;
-	    AppDomain domain = AppDomain.CurrentDomain;
-	    Assembly[] assemblies = domain.GetAssemblies();
-	    for (int i = 0; i < assemblies.Length; i++) {
-		Assembly assembly = assemblies[i];
-		Type[] types = assembly.GetTypes();
-		for (int n = 0; n < types.Length; n++) {
-		    Type type = types[n];
+	public void LoadNames() {
+	    ManagedType m = null;
+	    foreach (string name in AssemblyManager.GetNames(_namespace)) {
+		this.cache.TryGetValue(name, out m);
+		if (m == null) {
+		    ManagedType attr = this.GetAttribute(name);
+		    if (Runtime.wrap_exceptions) {
+			if (attr is ClassBase) {
+			    ClassBase c = attr as ClassBase;
+			    if (c.is_exception) {
+				IntPtr p = attr.pyHandle;
+				IntPtr r = Exceptions.GetExceptionClassWrapper(p);
+				Runtime.PyDict_SetItemString(dict, name, r);
+				Runtime.Incref(r);
 
-		    string ns = type.Namespace;
-		    if ((ns != null) && (ns == module_ns)) {
-			if (type.IsPublic) {
-			    ClassBase c = ClassManager.GetClass(type);
-			    self.StoreAttribute(type.Name, c);
+			    }
 			}
 		    }
+		    
+
 		}
 	    }
-	    Runtime.Incref(Runtime.PyNone);
-	    return Runtime.PyNone;
 	}
 
 
@@ -184,7 +182,6 @@ namespace Python.Runtime {
 	// and classes are created when accessed and cached for future use.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
 	    ModuleObject self = (ModuleObject)GetManagedObject(ob);
 
@@ -237,7 +234,6 @@ namespace Python.Runtime {
 	// ModuleObject __repr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static IntPtr tp_repr(IntPtr ob) {
 	    ModuleObject self = (ModuleObject)GetManagedObject(ob);
 	    string s = String.Format("<module '{0}'>", self.moduleName);

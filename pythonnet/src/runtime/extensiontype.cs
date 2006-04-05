@@ -72,7 +72,6 @@ namespace Python.Runtime {
 	// Type __setattr__ implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val) {
 	    string message = "type does not support setting attributes";
 	    if (val == IntPtr.Zero) {
@@ -88,7 +87,6 @@ namespace Python.Runtime {
 	// being silently replaced in a type __dict__ by default __setattr__.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
 	    string message = "attribute is read-only";
 	    Exceptions.SetError(Exceptions.AttributeError, message);
@@ -100,19 +98,16 @@ namespace Python.Runtime {
 	// Required Python GC support.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args) {
 	    return 0;
 	}
 
 
-	[CallConvCdecl()]
 	public static int tp_clear(IntPtr ob) {
 	    return 0;
 	}
 
 
-	[CallConvCdecl()]
 	public static int tp_is_gc(IntPtr type) {
 	    return 1;
 	}
@@ -122,7 +117,6 @@ namespace Python.Runtime {
 	// Default dealloc implementation.
 	//====================================================================
 
-	[CallConvCdecl()]
 	public static void tp_dealloc(IntPtr ob) {
 	    // Clean up a Python instance of this extension type. This 
 	    // frees the allocated Python object and decrefs the type.
