@@ -1,16 +1,14 @@
-# Copyright (c) 2005 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types, thread
-from CLR.Python.Test import ThreadTest
+from Python.Test import ThreadTest
 
 
 def dprint(msg):
@@ -42,7 +40,7 @@ class ThreadTests(unittest.TestCase):
         """Test calls by Python-spawned threads into managed code."""
         # This test is very likely to hang if something is wrong ;)
         import threading, thread, time
-        from CLR.System import String
+        from System import String
 
         done = []
         def run_thread():

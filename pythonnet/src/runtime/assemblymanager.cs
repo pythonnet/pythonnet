@@ -1,13 +1,11 @@
-// Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-//
-// All Rights Reserved.
-//
+// ==========================================================================
 // This software is subject to the provisions of the Zope Public License,
 // Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 // THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 // WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 // FOR A PARTICULAR PURPOSE.
+// ==========================================================================
 
 using System;
 using System.IO;
@@ -32,7 +30,6 @@ namespace Python.Runtime {
 	static Hashtable namespaces;
 	static ArrayList assemblies;	
 	static Hashtable probed;
-	static int last;
 
 	private AssemblyManager() {}
 
@@ -241,28 +238,33 @@ namespace Python.Runtime {
 
 	static void ScanAssembly(Assembly assembly) {
 
-	    // TODO: this is a workaround for a current Mono bug: calling
-	    // GetTypes on a generated assembly will cause it to fall over.
-	    // For now we'll skip generated assemblies, which usually are
-	    // uninteresting support code anyway.
-
-	    if (assembly is AssemblyBuilder) {
-		return;
-	    }
+	    // A couple of things we want to do here: first, we want to
+	    // gather a list of all of the namespaces contributed to by
+	    // the assembly. Since we have to rifle through all of the
+	    // types in the assembly anyway, we also build up a running
+	    // list of 'odd names' like generic names so that we can map
+	    // them appropriately later while still being lazy about 
+	    // type lookup and instantiation.
 
 	    Type[] types = assembly.GetTypes();
 	    for (int i = 0; i < types.Length; i++) {
-		string type_ns = types[i].Namespace;
-		if ((type_ns != null) && (!namespaces.ContainsKey(type_ns))) {
-		    string[] names = type_ns.Split('.');
+		Type t = types[i];
+		string ns = t.Namespace != null ? t.Namespace : "";
+		if ((ns != null) && (!namespaces.ContainsKey(ns))) {
+		    string[] names = ns.Split('.');
 		    string s = "";
 		    for (int n = 0; n < names.Length; n++) {
 			s = (n == 0) ? names[0] : s + "." + names[n];
 			if (!namespaces.ContainsKey(s)) {
-			    namespaces.Add(s, String.Empty);
+			    namespaces.Add(s, new Hashtable());
 			}
 		    }
 		}
+
+		Hashtable asm = namespaces[ns] as Hashtable;
+		if (ns != null && !asm.ContainsKey(assembly)) {
+		    asm.Add(assembly, String.Empty);
+		}	    
 	    }
 	}
 
@@ -276,6 +278,38 @@ namespace Python.Runtime {
 	    return namespaces.ContainsKey(name);
 	}
 
+
+	//===================================================================
+	// Returns the current list of valid names for the input namespace.
+	//===================================================================
+
+	public static StringCollection GetNames(string nsname) {
+	    StringCollection names = new StringCollection();
+	    if (namespaces.ContainsKey(nsname)) {
+		Hashtable asm = namespaces[nsname] as Hashtable;
+		foreach (Object o in asm.Keys) {
+		    Assembly a = o as Assembly;
+		    Type[] types = a.GetTypes();
+		    for (int i = 0; i < types.Length; i++) {
+			Type t = types[i];
+			if (t.Namespace == nsname) {
+			    names.Add(t.Name);
+			}
+		    }
+		}
+		int nslen = nsname.Length;
+		foreach (object n in namespaces.Keys) {
+		    string key = n as string;
+		    if (key.Length > nslen && key.StartsWith(nsname)) {
+			string tail = key.Substring(nslen);
+			if (key.IndexOf('.') == -1) {
+			    names.Add(key);
+			} 
+		    }
+		}
+	    }
+	    return names;
+	}
 
 	//===================================================================
 	// Returns the System.Type object for a given qualified name,

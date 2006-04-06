@@ -1,16 +1,14 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR import System
+import System
 
 # Note: all of these tests are known to fail because Python currently
 # doesn't allow new-style classes to be used as exceptions. I'm leaving
@@ -22,7 +20,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testUnifiedExceptionSemantics(self):
         """Test unified exception semantics."""
-        from CLR.System import Exception, Object
+        from System import Exception, Object
         import exceptions
         
         e = Exception('Something bad happened')
@@ -32,8 +30,8 @@ class ExceptionTests(unittest.TestCase):
 
     def testStandardExceptionAttributes(self):
         """Test accessing standard exception attributes."""
-        from CLR.System import OverflowException
-        from CLR.Python.Test import ExceptionTest
+        from System import OverflowException
+        from Python.Test import ExceptionTest
 
         e = ExceptionTest.GetExplicitException()
         self.failUnless(isinstance(e, OverflowException))
@@ -49,8 +47,8 @@ class ExceptionTests(unittest.TestCase):
 
     def testExtendedExceptionAttributes(self):
         """Test accessing extended exception attributes."""
-        from CLR.Python.Test import ExceptionTest, ExtendedException
-        from CLR.System import Exception, OverflowException
+        from Python.Test import ExceptionTest, ExtendedException
+        from System import Exception, OverflowException
         import exceptions
         
         e = ExceptionTest.GetExtendedException()
@@ -75,7 +73,7 @@ class ExceptionTests(unittest.TestCase):
                         
     def testRaiseClassException(self):
         """Test class exception propagation."""
-        from CLR.System import NullReferenceException
+        from System import NullReferenceException
 
         def test():
             raise NullReferenceException
@@ -92,7 +90,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testRaiseClassExceptionWithValue(self):
         """Test class exception propagation with associated value."""
-        from CLR.System import NullReferenceException
+        from System import NullReferenceException
 
         def test():
             raise NullReferenceException, 'Aiiieee!'
@@ -110,7 +108,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testRaiseInstanceException(self):
         """Test instance exception propagation."""
-        from CLR.System import NullReferenceException
+        from System import NullReferenceException
 
         def test():
             raise NullReferenceException()
@@ -128,7 +126,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testRaiseInstanceExceptionWithArgs(self):
         """Test instance exception propagation with args."""
-        from CLR.System import NullReferenceException
+        from System import NullReferenceException
 
         def test():
             raise NullReferenceException("Aiieeee!")
@@ -146,7 +144,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testManagedExceptionPropagation(self):
         """Test propagation of exceptions raised in managed code."""
-        from CLR.System import Decimal, OverflowException
+        from System import Decimal, OverflowException
 
         def test():
             l = Decimal.ToInt64(Decimal.MaxValue)
@@ -156,8 +154,8 @@ class ExceptionTests(unittest.TestCase):
 
     def testManagedExceptionConversion(self):
         """Test conversion of managed exceptions."""
-        from CLR.System import Exception, OverflowException
-        from CLR.Python.Test import ExceptionTest
+        from System import Exception, OverflowException
+        from Python.Test import ExceptionTest
 
         e = ExceptionTest.GetBaseException()
         self.failUnless(isinstance(e, Exception))
@@ -182,8 +180,8 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionFromManagedMethod(self):
         """Test catching an exception from a managed method."""
-        from CLR.Python.Test import ExceptionTest
-        from CLR.System import OverflowException
+        from Python.Test import ExceptionTest
+        from System import OverflowException
 
         try:
             ExceptionTest().ThrowException()
@@ -196,8 +194,8 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionFromManagedProperty(self):
         """Test catching an exception from a managed property."""
-        from CLR.Python.Test import ExceptionTest
-        from CLR.System import OverflowException
+        from Python.Test import ExceptionTest
+        from System import OverflowException
 
         try:
             v = ExceptionTest().ThrowProperty
@@ -216,7 +214,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionManagedClass(self):
         """Test catching the managed class of an exception."""
-        from CLR.System import OverflowException
+        from System import OverflowException
 
         try:
             raise OverflowException('overflow')
@@ -228,7 +226,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionPythonClass(self):
         """Test catching the python class of an exception."""
-        from CLR.System import OverflowException
+        from System import OverflowException
         from exceptions import Exception
 
         try:
@@ -241,7 +239,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionBaseClass(self):
         """Test catching the base of an exception."""
-        from CLR.System import OverflowException, ArithmeticException
+        from System import OverflowException, ArithmeticException
 
         try:
             raise OverflowException('overflow')
@@ -253,7 +251,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionNestedBaseClass(self):
         """Test catching the nested base of an exception."""
-        from CLR.System import OverflowException, SystemException
+        from System import OverflowException, SystemException
 
         try:
             raise OverflowException('overflow')
@@ -265,7 +263,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionWithAssignment(self):
         """Test catching an exception with assignment."""
-        from CLR.System import OverflowException
+        from System import OverflowException
 
         try:
             raise OverflowException('overflow')
@@ -275,7 +273,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testCatchExceptionUnqualified(self):
         """Test catching an unqualified exception."""
-        from CLR.System import OverflowException
+        from System import OverflowException
 
         try:
             raise OverflowException('overflow')
@@ -287,16 +285,16 @@ class ExceptionTests(unittest.TestCase):
 
     def testApparentModuleOfException(self):
         """Test the apparent module of an exception."""
-        from CLR.System import Exception, OverflowException
+        from System import Exception, OverflowException
 
-        self.failUnless(Exception.__module__ == 'CLR.System')
-        self.failUnless(OverflowException.__module__ == 'CLR.System')
+        self.failUnless(Exception.__module__ == 'System')
+        self.failUnless(OverflowException.__module__ == 'System')
 
 
     def testStrOfException(self):
         """Test the str() representation of an exception."""
-        from CLR.System import NullReferenceException
-        from CLR.System import Convert, FormatException
+        from System import NullReferenceException
+        from System import Convert, FormatException
         
         e = NullReferenceException('')
         self.failUnless(str(e) == '')
@@ -322,8 +320,8 @@ class ExceptionTests(unittest.TestCase):
         # without causing a crash in the CPython interpreter). This test is
         # here mainly to remind me to update the caveat in the documentation
         # one day when when exceptions can be new-style classes.
-        from CLR.System import OverflowException
-        from CLR.System import Object
+        from System import OverflowException
+        from System import Object
         
         o = OverflowException('error')
         self.failIf(isinstance(o, Object))

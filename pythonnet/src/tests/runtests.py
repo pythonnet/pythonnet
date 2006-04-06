@@ -1,3 +1,12 @@
+# ===========================================================================
+# This software is subject to the provisions of the Zope Public License,
+# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+# FOR A PARTICULAR PURPOSE.
+# ===========================================================================
+
 """Run all of the unit tests for this package."""
 
 import time
@@ -5,6 +14,7 @@ import time
 test_modules = (
         'test_exceptions',
         'test_module',
+        'test_compat',    
         'test_conversion',
         'test_class',
         'test_interface',
@@ -16,7 +26,7 @@ test_modules = (
         'test_method',
         'test_delegate',
         'test_array',
-        'test_thread',
+        'test_thread'
 )
 
 

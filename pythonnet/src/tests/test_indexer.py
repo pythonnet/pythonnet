@@ -1,16 +1,14 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-import CLR.Python.Test as Test
+import Python.Test as Test
 
 
 class IndexerTests(unittest.TestCase):
@@ -403,7 +401,7 @@ class IndexerTests(unittest.TestCase):
         """Test Decimal indexers."""
         object = Test.DecimalIndexerTest()
 
-        from CLR.System import Decimal
+        from System import Decimal
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
 
@@ -494,7 +492,7 @@ class IndexerTests(unittest.TestCase):
         """Test object indexers."""
         object = Test.ObjectIndexerTest()
 
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
         spam = Spam("spam")
 
         self.failUnless(object[spam] == None)
@@ -528,7 +526,7 @@ class IndexerTests(unittest.TestCase):
         """Test interface indexers."""
         object = Test.InterfaceIndexerTest()
 
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
         spam = Spam("spam")
 
         self.failUnless(object[spam] == None)
@@ -556,7 +554,7 @@ class IndexerTests(unittest.TestCase):
         """Test typed indexers."""
         object = Test.TypedIndexerTest()
 
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
         spam = Spam("spam")
 
         self.failUnless(object[spam] == None)

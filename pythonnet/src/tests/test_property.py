@@ -1,16 +1,14 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR.Python.Test import PropertyTest
+from Python.Test import PropertyTest
 
 
 class PropertyTests(unittest.TestCase):
@@ -181,7 +179,7 @@ class PropertyTests(unittest.TestCase):
            that an IsAbstract check was inappropriate and prevented
            use of properties when only the interface is known."""
 
-        from CLR.System.Collections import Hashtable, ICollection
+        from System.Collections import Hashtable, ICollection
         mapping = Hashtable()
         coll = ICollection(mapping)
         self.failUnless(coll.Count == 0)

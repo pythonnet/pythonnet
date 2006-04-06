@@ -1,13 +1,11 @@
-// Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-//
-// All Rights Reserved.
-//
+// ==========================================================================
 // This software is subject to the provisions of the Zope Public License,
 // Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 // THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 // WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 // FOR A PARTICULAR PURPOSE.
+// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -27,14 +25,14 @@ namespace Python.Runtime {
 
     internal class ModuleObject : ExtensionType {
 
-	string moduleName;
+	internal string moduleName;
 	string _namespace;
 	Hashtable cache;
 	static bool hacked;
 	IntPtr dict;
 
 	public ModuleObject(string name) : base() {
-	    moduleName = (name == String.Empty) ? "CLR" : "CLR." + name;
+	    moduleName = (name == String.Empty) ? "CLR" : name;
 	    cache = new Hashtable();
 	    _namespace = name;
 
@@ -150,30 +148,30 @@ namespace Python.Runtime {
 	}
 
 
-	[PythonMethod]
-	public static IntPtr _preload(IntPtr ob, IntPtr args, IntPtr kw) {
-	    ModuleObject self = (ModuleObject)GetManagedObject(ob);
+	//===================================================================
+	// Preloads all currently-known names for the module namespace. This
+	// can be called multiple times, to add names from assemblies that
+	// may have been loaded since the last call to the method.
+ 	//===================================================================
 
-	    string module_ns = self._namespace;
-	    AppDomain domain = AppDomain.CurrentDomain;
-	    Assembly[] assemblies = domain.GetAssemblies();
-	    for (int i = 0; i < assemblies.Length; i++) {
-		Assembly assembly = assemblies[i];
-		Type[] types = assembly.GetTypes();
-		for (int n = 0; n < types.Length; n++) {
-		    Type type = types[n];
+	public void LoadNames() {
+	    foreach (string name in AssemblyManager.GetNames(_namespace)) {
+		if (!this.cache.ContainsKey(name)) {
+		    ManagedType attr = this.GetAttribute(name);
+		    if (Runtime.wrap_exceptions) {
+			if (attr is ClassBase) {
+			    ClassBase c = attr as ClassBase;
+			    if (c.is_exception) {
+				IntPtr p = attr.pyHandle;
+				IntPtr r = Exceptions.GetExceptionClassWrapper(p);
+				Runtime.PyDict_SetItemString(dict, name, r);
+				Runtime.Incref(r);
 
-		    string ns = type.Namespace;
-		    if ((ns != null) && (ns == module_ns)) {
-			if (type.IsPublic) {
-			    ClassBase c = ClassManager.GetClass(type);
-			    self.StoreAttribute(type.Name, c);
+			    }
 			}
 		    }
 		}
 	    }
-	    Runtime.Incref(Runtime.PyNone);
-	    return Runtime.PyNone;
 	}
 
 

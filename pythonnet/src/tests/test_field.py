@@ -1,18 +1,16 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR.Python.Test import FieldTest
-from CLR.Python.Test import ShortEnum
-from CLR import System
+from Python.Test import FieldTest
+from Python.Test import ShortEnum
+import System
 
 
 class FieldTests(unittest.TestCase):
@@ -392,7 +390,7 @@ class FieldTests(unittest.TestCase):
 
     def testInterfaceField(self):
         """Test interface fields."""
-        from CLR.Python.Test import Spam, ISpam
+        from Python.Test import Spam, ISpam
 
         object = FieldTest()
         

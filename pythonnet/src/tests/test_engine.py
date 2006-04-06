@@ -1,16 +1,14 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
-import sys, os, string, unittest, types, CLR
-from CLR.Python.Runtime import PythonEngine
+import sys, os, string, unittest, types
+from Python.Runtime import PythonEngine
 
 
 class EngineTests(unittest.TestCase):
@@ -26,7 +24,7 @@ class EngineTests(unittest.TestCase):
         """Test module import."""
         m = PythonEngine.ImportModule("sys")
         n = m.GetAttr("__name__")
-        self.failUnless(n.AsManagedObject(CLR.System.String) == "sys")
+        self.failUnless(n.AsManagedObject(System.String) == "sys")
 
 
     def testRunString(self):

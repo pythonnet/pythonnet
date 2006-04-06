@@ -1,15 +1,13 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
-import CLR.System as System
+import System
 import gc
 
 class LeakTest:
@@ -69,19 +67,19 @@ class LeakTest:
             if i == 10:
                 self.start_test()
                 
-            __import__('CLR')
-            __import__('CLR.System')
-            __import__('CLR.System.IO')
-            __import__('CLR.System.Net')
-            __import__('CLR.System.Xml')            
+            __import__('clr')
+            __import__('System')
+            __import__('System.IO')
+            __import__('System.Net')
+            __import__('System.Xml')            
 
         self.end_test()
 
 
     def testClasses(self):
-        from CLR.System.Collections import Hashtable
-        from CLR.Python.Test import StringDelegate
-        from CLR.System import Int32
+        from System.Collections import Hashtable
+        from Python.Test import StringDelegate
+        from System import Int32
         
         self.notify("Running class leak check...")
 
@@ -105,7 +103,7 @@ class LeakTest:
 
 
     def testEnumerations(self):
-        from CLR.Python import Test
+        from Python import Test
         
         self.notify("Running enum leak check...")
 
@@ -141,7 +139,7 @@ class LeakTest:
 
 
     def testEvents(self):
-        from CLR.Python.Test import EventTest, TestEventArgs
+        from Python.Test import EventTest, TestEventArgs
 
         self.notify("Running event leak check...")
 
@@ -219,8 +217,8 @@ class LeakTest:
 
 
     def testDelegates(self):
-        from CLR.Python.Test import DelegateTest, StringDelegate
-        from CLR import System
+        from Python.Test import DelegateTest, StringDelegate
+        import System
 
         self.notify("Running delegate leak check...")
 

@@ -1,17 +1,15 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR.System import DayOfWeek
-from CLR.Python import Test
+from System import DayOfWeek
+from Python import Test
 
 
 class EnumTests(unittest.TestCase):
@@ -20,7 +18,7 @@ class EnumTests(unittest.TestCase):
     def testEnumStandardAttrs(self):
         """Test standard enum attributes."""
         self.failUnless(DayOfWeek.__name__ == 'DayOfWeek')
-        self.failUnless(DayOfWeek.__module__ == 'CLR.System')
+        self.failUnless(DayOfWeek.__module__ == 'System')
         self.failUnless(type(DayOfWeek.__dict__) == types.DictProxyType)
         self.failUnless(DayOfWeek.__doc__ == '')
 
@@ -124,7 +122,7 @@ class EnumTests(unittest.TestCase):
 
     def testEnumWithFlagsAttrConversion(self):
         """Test enumeration conversion with FlagsAttribute set."""
-        from CLR.System.Windows.Forms import Label
+        from System.Windows.Forms import Label
 
         # This works because the AnchorStyles enum has FlagsAttribute.
         label = Label()

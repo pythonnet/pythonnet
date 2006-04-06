@@ -1,38 +1,35 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
-from CLR.Python.Test import InterfaceTest
+from Python.Test import InterfaceTest
 import sys, os, string, unittest, types
-import CLR.System as System
-import CLR.Python.Test as Test
-
+import Python.Test as Test
+import System
 
 class InterfaceTests(unittest.TestCase):
     """Test CLR interface support."""
 
     def testInterfaceStandardAttrs(self):
         """Test standard class attributes."""
-        from CLR.Python.Test import IPublicInterface as ip
+        from Python.Test import IPublicInterface as ip
         self.failUnless(ip.__name__ == 'IPublicInterface')
-        self.failUnless(ip.__module__ == 'CLR.Python.Test')
+        self.failUnless(ip.__module__ == 'Python.Test')
         self.failUnless(type(ip.__dict__) == types.DictProxyType)
 
 
     def testGlobalInterfaceVisibility(self):
         """Test visibility of module-level interfaces."""
-        from CLR.Python.Test import IPublicInterface
+        from Python.Test import IPublicInterface
         self.failUnless(IPublicInterface.__name__ == 'IPublicInterface')
         
         def test():
-            from CLR.Python.Test import IInternalInterface
+            from Python.Test import IInternalInterface
 
         self.failUnlessRaises(ImportError, test)
 
