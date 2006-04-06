@@ -1,5 +1,43 @@
-PythonNet Changes
------------------
+Python for .NET Changes
+-----------------------
+
+  PythonNet 2.0 alpha 1
+  ---------------------------------------------------------------------------
+
+    - Moved the Python for .NET project to Sourceforge and moved version 
+      control to Subversion.
+
+    - Removed CallConvCdecl attributes and the IL hack that they supported.
+      .NET 2.x now supports UnmanagedFunctionPointer, which does the right
+      thing without the hackery required in 1.x. This removes a dependency
+      on ILASM to build the package and better supports Mono (in theory).
+
+    - Refactored import and assembly management machinery. The old 'CLR.' 
+      syntax for import is deprecated, but still supported until 3.x. The
+      recommended style now is to use 'from System import xxx', etc. We 
+      also now support 'from X import *' correctly.
+
+    - Implemented a (lowercase) 'clr' module to match IronPython for code 
+      compatibility. Methods of this module should be used to explicitly 
+      load assemblies. Implicit (name-based) assembly loading will still 
+      work until 3.x, but it is deprecated.
+
+    - Implemented support for generic types and generic methods using the
+      same patterns and syntax as IronPython. See the documentation for 
+      usage details.
+
+    - Many small and large performance improvements, switched to generic 
+      collections for some internals, better algorithms for assembly 
+      scanning, etc.
+
+
+  PythonNet 1.0 final
+  ---------------------------------------------------------------------------
+
+    - Backported the refactored import and assembly management from the 2.x 
+      line, mainly to improve the possibility of code-compatibility with 
+      IronPython.
+
 
   PythonNet 1.0 release candidate 2
   ---------------------------------------------------------------------------

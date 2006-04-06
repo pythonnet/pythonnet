@@ -1,17 +1,15 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR.Python.Test import ConversionTest
-from CLR import System
+from Python.Test import ConversionTest
+import System
 
 
 class ConversionTests(unittest.TestCase):
@@ -615,7 +613,7 @@ class ConversionTests(unittest.TestCase):
 
     def testDecimalConversion(self):
         """Test decimal conversion."""
-        from CLR.System import Decimal
+        from System import Decimal
 
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
@@ -692,7 +690,7 @@ class ConversionTests(unittest.TestCase):
 
     def testInterfaceConversion(self):
         """Test interface conversion."""
-        from CLR.Python.Test import Spam, ISpam
+        from Python.Test import Spam, ISpam
 
         object = ConversionTest()
 
@@ -723,7 +721,7 @@ class ConversionTests(unittest.TestCase):
 
     def testObjectConversion(self):
         """Test object conversion."""
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
 
         object = ConversionTest()
         self.failUnless(object.ObjectField == None)
@@ -752,7 +750,7 @@ class ConversionTests(unittest.TestCase):
 
     def testEnumConversion(self):
         """Test enum conversion."""
-        from CLR.Python.Test import ShortEnum
+        from Python.Test import ShortEnum
 
         object = ConversionTest()
         self.failUnless(object.EnumField == ShortEnum.Zero)

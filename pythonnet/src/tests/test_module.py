@@ -1,13 +1,11 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
 
@@ -26,7 +24,7 @@ class ModuleTests(unittest.TestCase):
            included runtime and an external runtime. This must be
            the first test run in the unit tests!"""
 
-        from CLR.System import String
+        from System import String
 
 
     def testModuleInterface(self):
@@ -177,7 +175,7 @@ class ModuleTests(unittest.TestCase):
         """Test implicit assembly loading via import."""
 
         def test():
-            # This should fail until CLR.System.Windows.Forms has been
+            # This should fail until System.Windows.Forms has been
             # imported or that assembly has been explicitly loaded.
             import System.Windows
 
@@ -213,7 +211,7 @@ class ModuleTests(unittest.TestCase):
         # assembly, which is _not_ loaded by default, which also contains
         # types in the System namespace. The desired behavior is for the
         # Python runtime to "do the right thing", allowing types from both
-        # assemblies to be found in the CLR.System module implicitly.
+        # assemblies to be found in the System module implicitly.
         import System
         self.failUnless(self.isCLRClass(System.UriBuilder))
 
@@ -229,8 +227,8 @@ class ModuleTests(unittest.TestCase):
     def testLookupNoNamespaceType(self):
         """Test lookup of types without a qualified namespace."""
         import Python.Test
-        import CLR
-        self.failUnless(self.isCLRClass(CLR.NoNamespaceType))
+        import clr
+        self.failUnless(self.isCLRClass(clr.NoNamespaceType))
 
 
     def testModuleLookupRecursion(self):

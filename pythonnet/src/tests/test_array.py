@@ -1,16 +1,14 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-import CLR.Python.Test as Test
+import Python.Test as Test
 
 
 class ArrayTests(unittest.TestCase):
@@ -693,7 +691,7 @@ class ArrayTests(unittest.TestCase):
         object = Test.DecimalArrayTest()
         items = object.items
 
-        from CLR.System import Decimal
+        from System import Decimal
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
 
@@ -764,7 +762,7 @@ class ArrayTests(unittest.TestCase):
 
     def testEnumArray(self):
         """Test enum arrays."""
-        from CLR.Python.Test import ShortEnum
+        from Python.Test import ShortEnum
         object = Test.EnumArrayTest()
         items = object.items
 
@@ -806,7 +804,7 @@ class ArrayTests(unittest.TestCase):
 
     def testObjectArray(self):
         """Test object arrays."""
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
         object = Test.ObjectArrayTest()
         items = object.items
 
@@ -880,7 +878,7 @@ class ArrayTests(unittest.TestCase):
 
     def testInterfaceArray(self):
         """Test interface arrays."""
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
         object = Test.InterfaceArrayTest()
         items = object.items
 
@@ -925,7 +923,7 @@ class ArrayTests(unittest.TestCase):
 
     def testTypedArray(self):
         """Test typed arrays."""
-        from CLR.Python.Test import Spam
+        from Python.Test import Spam
         object = Test.TypedArrayTest()
         items = object.items
 
@@ -1061,8 +1059,8 @@ class ArrayTests(unittest.TestCase):
 
     def testTupleArrayConversion(self):
         """Test conversion of tuples to array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
 
         items = []
         for i in range(10):
@@ -1076,8 +1074,8 @@ class ArrayTests(unittest.TestCase):
 
     def testTupleNestedArrayConversion(self):
         """Test conversion of tuples to array-of-array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
 
         items = []
         for i in range(10):
@@ -1096,8 +1094,8 @@ class ArrayTests(unittest.TestCase):
 
     def testListArrayConversion(self):
         """Test conversion of lists to array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
 
         items = []
         for i in range(10):
@@ -1110,8 +1108,8 @@ class ArrayTests(unittest.TestCase):
 
     def testListNestedArrayConversion(self):
         """Test conversion of lists to array-of-array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
 
         items = []
         for i in range(10):
@@ -1129,8 +1127,8 @@ class ArrayTests(unittest.TestCase):
 
     def testSequenceArrayConversion(self):
         """Test conversion of sequence-like objects to array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
         from UserList import UserList
 
         items = UserList()
@@ -1144,8 +1142,8 @@ class ArrayTests(unittest.TestCase):
 
     def testSequenceNestedArrayConversion(self):
         """Test conversion of sequences to array-of-array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
         from UserList import UserList
 
         items = UserList()
@@ -1164,8 +1162,8 @@ class ArrayTests(unittest.TestCase):
 
     def testTupleArrayConversionTypeChecking(self):
         """Test error handling for tuple conversion to array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
 
         # This should work, because null / None is a valid value in an
         # array of reference types.
@@ -1201,8 +1199,8 @@ class ArrayTests(unittest.TestCase):
 
     def testListArrayConversionTypeChecking(self):
         """Test error handling for list conversion to array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
 
         # This should work, because null / None is a valid value in an
         # array of reference types.
@@ -1233,8 +1231,8 @@ class ArrayTests(unittest.TestCase):
 
     def testSequenceArrayConversionTypeChecking(self):
         """Test error handling for sequence conversion to array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
         from UserList import UserList
 
         # This should work, because null / None is a valid value in an
@@ -1266,9 +1264,9 @@ class ArrayTests(unittest.TestCase):
 
     def testMDArrayConversion(self):
         """Test passing of multi-dimensional array arguments."""
-        from CLR.Python.Test import ArrayConversionTest
-        from CLR.Python.Test import Spam
-        from CLR.System import Array
+        from Python.Test import ArrayConversionTest
+        from Python.Test import Spam
+        from System import Array
 
         # Currently, the runtime does not support automagic conversion of
         # Python sequences to true multi-dimensional arrays (though it
@@ -1298,8 +1296,8 @@ class ArrayTests(unittest.TestCase):
         # to accidentally write code like the following which is not really
         # mutating value types in-place but changing boxed copies.
         
-        from CLR.System.Drawing import Point
-        from CLR.System import Array
+        from System.Drawing import Point
+        from System import Array
 
         items = Array.CreateInstance(Point, 5)
 

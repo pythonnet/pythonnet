@@ -1,17 +1,15 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR.Python.Test import EventTest, TestEventHandler
-from CLR.Python.Test import TestEventArgs
+from Python.Test import EventTest, TestEventHandler
+from Python.Test import TestEventArgs
 
 
 class EventTests(unittest.TestCase):
@@ -501,7 +499,7 @@ class EventTests(unittest.TestCase):
         object.PublicEvent += h
         object.PublicEvent -= h
 
-        from CLR.System.Windows.Forms import Form
+        from System.Windows.Forms import Form
         f = Form()
         f.Click += h
         f.Click -= h

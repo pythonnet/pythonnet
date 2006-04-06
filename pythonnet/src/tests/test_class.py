@@ -1,19 +1,17 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
-from CLR.System.Collections import Hashtable
-from CLR.Python.Test import ClassTest
+from System.Collections import Hashtable
+from Python.Test import ClassTest
 import sys, os, string, unittest, types
-import CLR.Python.Test as Test
-import CLR.System as System
+import Python.Test as Test
+import System
 
 
 class ClassTests(unittest.TestCase):
@@ -34,7 +32,7 @@ class ClassTests(unittest.TestCase):
     def testClassStandardAttrs(self):
         """Test standard class attributes."""
         self.failUnless(ClassTest.__name__ == 'ClassTest')
-        self.failUnless(ClassTest.__module__ == 'CLR.Python.Test')
+        self.failUnless(ClassTest.__module__ == 'Python.Test')
         self.failUnless(type(ClassTest.__dict__) == types.DictProxyType)
         self.failUnless(len(ClassTest.__doc__) > 0)
 
@@ -54,15 +52,15 @@ class ClassTests(unittest.TestCase):
     def testClassDefaultRepr(self):
         """Test the default __repr__ implementation for managed objects."""
         s = System.String("this is a test")
-        self.failUnless(repr(s).startswith("<CLR.System.String object"))
+        self.failUnless(repr(s).startswith("<System.String object"))
 
 
     def testNonPublicClass(self):
         """Test that non-public classes are inaccessible."""
-        from CLR.Python import Test
+        from Python import Test
 
         def test():
-            from CLR.Python.Test import InternalClass
+            from Python.Test import InternalClass
 
         self.failUnlessRaises(ImportError, test)
 
@@ -99,7 +97,7 @@ class ClassTests(unittest.TestCase):
 
     def testSubclassWithNoArgConstructor(self):
         """Test subclass of a managed class with a no-arg constructor."""
-        from CLR.Python.Test import ClassCtorTest1
+        from Python.Test import ClassCtorTest1
         
         class SubClass(ClassCtorTest1):
             def __init__(self, name):
@@ -110,7 +108,7 @@ class ClassTests(unittest.TestCase):
 
     def testSubclassWithVariousConstructors(self):
         """Test subclass of a managed class with various constructors."""
-        from CLR.Python.Test import ClassCtorTest2
+        from Python.Test import ClassCtorTest2
         
         class SubClass(ClassCtorTest2):
             def __init__(self, v):
@@ -131,7 +129,7 @@ class ClassTests(unittest.TestCase):
 
     def testStructConstruction(self):
         """Test construction of structs."""
-        from CLR.System.Drawing import Point
+        from System.Drawing import Point
 
         def test():
             p = Point()

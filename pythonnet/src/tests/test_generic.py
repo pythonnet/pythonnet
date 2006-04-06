@@ -1,18 +1,16 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
-from CLR.System.Collections.Generic import Dictionary
+from System.Collections.Generic import Dictionary
 import sys, os, string, unittest, types
-import CLR.Python.Test as Test
-import CLR.System as System
+import Python.Test as Test
+import System
 
 
 class GenericTests(unittest.TestCase):
@@ -20,7 +18,7 @@ class GenericTests(unittest.TestCase):
 
     def testGenericReferenceTypeDef(self):
         """Test usage of generic reference type definitions."""
-        from CLR.Python.Test import GenericTypeDefinition
+        from Python.Test import GenericTypeDefinition
         bound = GenericTypeDefinition[System.String, System.Int32]
         inst = bound("one", 2)
         self.failUnless(inst.value1 == "one")
@@ -42,7 +40,7 @@ class GenericTests(unittest.TestCase):
         """
         Test behavior of reflected open generic types.
         """
-        from CLR.Python.Test import DerivedFromOpenGeneric
+        from Python.Test import DerivedFromOpenGeneric
 
         OpenGenericType = DerivedFromOpenGeneric.__bases__[0]
         def test():
@@ -59,7 +57,7 @@ class GenericTests(unittest.TestCase):
         """
         Test a generic type derived from an open generic type.
         """
-        from CLR.Python.Test import DerivedFromOpenGeneric
+        from Python.Test import DerivedFromOpenGeneric
         
         type = DerivedFromOpenGeneric[System.String, System.String]
         inst = type(1, 'two', 'three')

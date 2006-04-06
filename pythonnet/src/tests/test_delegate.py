@@ -1,19 +1,17 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
-from CLR.Python.Test import DelegateTest, PublicDelegate
-from CLR.Python.Test import StringDelegate, ObjectDelegate
+from Python.Test import DelegateTest, PublicDelegate
+from Python.Test import StringDelegate, ObjectDelegate
 import sys, os, string, unittest, types
-import CLR.Python.Test as Test
-import CLR.System as System
+import Python.Test as Test
+import System
 
 
 class DelegateTests(unittest.TestCase):
@@ -22,20 +20,20 @@ class DelegateTests(unittest.TestCase):
     def testDelegateStandardAttrs(self):
         """Test standard delegate attributes."""
         self.failUnless(PublicDelegate.__name__ == 'PublicDelegate')
-        self.failUnless(PublicDelegate.__module__ == 'CLR.Python.Test')
+        self.failUnless(PublicDelegate.__module__ == 'Python.Test')
         self.failUnless(type(PublicDelegate.__dict__) == types.DictProxyType)
         self.failUnless(PublicDelegate.__doc__ == None)
 
 
     def testGlobalDelegateVisibility(self):
         """Test visibility of module-level delegates."""
-        from CLR.Python.Test import PublicDelegate
+        from Python.Test import PublicDelegate
 
         self.failUnless(PublicDelegate.__name__ == 'PublicDelegate')
         self.failUnless(Test.PublicDelegate.__name__ == 'PublicDelegate')
 
         def test():
-            from CLR.Python.Test import InternalDelegate
+            from Python.Test import InternalDelegate
 
         self.failUnlessRaises(ImportError, test)
 

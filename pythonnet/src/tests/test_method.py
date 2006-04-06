@@ -1,18 +1,16 @@
-# Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-#
-# All Rights Reserved.
-#
+# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 # WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
+# ===========================================================================
 
 import sys, os, string, unittest, types
-from CLR.Python.Test import MethodTest
-from CLR.Python.Test import MethodTestSub
-
+from Python.Test import MethodTest
+from Python.Test import MethodTestSub
+import System
 
 class MethodTests(unittest.TestCase):
     """Test CLR method support."""
@@ -196,7 +194,7 @@ class MethodTests(unittest.TestCase):
 
     def testMethodCallEnumConversion(self):
         """Test enum conversion in method call."""
-        from CLR.System import TypeCode
+        from System import TypeCode
 
         object = MethodTest()
         r = object.TestEnumConversion(TypeCode.Int32)
@@ -205,7 +203,7 @@ class MethodTests(unittest.TestCase):
 
     def testMethodCallFlagsConversion(self):
         """Test flags conversion in method call."""
-        from CLR.System.IO import FileAccess
+        from System.IO import FileAccess
 
         object = MethodTest()
         flags = FileAccess.Read | FileAccess.Write
@@ -215,7 +213,7 @@ class MethodTests(unittest.TestCase):
 
     def testMethodCallStructConversion(self):
         """Test struct conversion in method call."""
-        from CLR.System import Guid
+        from System import Guid
 
         object = MethodTest()
         guid = Guid.NewGuid()
@@ -226,7 +224,7 @@ class MethodTests(unittest.TestCase):
 
     def testSubclassInstanceConversion(self):
         """Test subclass instance conversion in method call."""
-        from CLR.System.Windows.Forms import Form, Control
+        from System.Windows.Forms import Form, Control
 
         class sub(Form):
             pass
@@ -239,7 +237,7 @@ class MethodTests(unittest.TestCase):
 
     def testNullArrayConversion(self):
         """Test null array conversion in method call."""
-        from CLR.System import Type
+        from System import Type
 
         object = MethodTest()
         r = object.TestNullArrayConversion(None)
@@ -308,44 +306,41 @@ class MethodTests(unittest.TestCase):
 
     def testObjectOutParams(self):
         """Test use of object out-parameters."""
-        import CLR
         result = MethodTest.TestObjectOutParams("hi", MethodTest())
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
-        self.failUnless(isinstance(result[1], CLR.System.Exception))
+        self.failUnless(isinstance(result[1], System.Exception))
 
         result = MethodTest.TestObjectOutParams("hi", None)
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
-        self.failUnless(isinstance(result[1], CLR.System.Exception))
+        self.failUnless(isinstance(result[1], System.Exception))
 
 
     def testObjectRefParams(self):
         """Test use of object byref parameters."""
-        import CLR
         result = MethodTest.TestObjectRefParams("hi", MethodTest())
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
-        self.failUnless(isinstance(result[1], CLR.System.Exception))
+        self.failUnless(isinstance(result[1], System.Exception))
 
         result = MethodTest.TestObjectRefParams("hi", None)
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
-        self.failUnless(isinstance(result[1], CLR.System.Exception))
+        self.failUnless(isinstance(result[1], System.Exception))
 
 
     def testStructOutParams(self):
         """Test use of struct out-parameters."""
-        import CLR
-        result = MethodTest.TestStructOutParams("hi",CLR.System.Guid.NewGuid())
+        result = MethodTest.TestStructOutParams("hi",System.Guid.NewGuid())
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
-        self.failUnless(isinstance(result[1], CLR.System.Guid))
+        self.failUnless(isinstance(result[1], System.Guid))
 
         def test():
             MethodTest.TestValueRefParams("hi", None)
@@ -356,12 +351,11 @@ class MethodTests(unittest.TestCase):
 
     def testStructRefParams(self):
         """Test use of struct byref parameters."""
-        import CLR
-        result = MethodTest.TestStructRefParams("hi",CLR.System.Guid.NewGuid())
+        result = MethodTest.TestStructRefParams("hi",System.Guid.NewGuid())
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
-        self.failUnless(isinstance(result[1], CLR.System.Guid))
+        self.failUnless(isinstance(result[1], System.Guid))
 
         def test():
             MethodTest.TestValueRefParams("hi", None)
@@ -372,7 +366,6 @@ class MethodTests(unittest.TestCase):
 
     def testVoidSingleOutParam(self):
         """Test void method with single out-parameter."""
-        import CLR
         result = MethodTest.TestVoidSingleOutParam(9)
         self.failUnless(result == 42)
 
@@ -385,7 +378,6 @@ class MethodTests(unittest.TestCase):
 
     def testVoidSingleRefParam(self):
         """Test void method with single ref-parameter."""
-        import CLR
         result = MethodTest.TestVoidSingleRefParam(9)
         self.failUnless(result == 42)
 

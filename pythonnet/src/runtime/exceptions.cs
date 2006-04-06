@@ -1,13 +1,11 @@
-// Copyright (c) 2001, 2002 Zope Corporation and Contributors.
-//
-// All Rights Reserved.
-//
+// ==========================================================================
 // This software is subject to the provisions of the Zope Public License,
 // Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 // THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 // WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 // FOR A PARTICULAR PURPOSE.
+// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -114,7 +112,7 @@ namespace Python.Runtime {
 	    IntPtr builtins = Runtime.PyEval_GetBuiltins();
 	    Runtime.PyDict_SetItemString(dict, "__builtins__", builtins);
 
-	    IntPtr namestr = Runtime.PyString_FromString("CLR.System");
+	    IntPtr namestr = Runtime.PyString_FromString("System");
 	    Runtime.PyDict_SetItemString(dict, "__name__", namestr);
 	    Runtime.Decref(namestr);
 

@@ -1,13 +1,11 @@
-// ===========================================================================
-//
+// ==========================================================================
 // This software is subject to the provisions of the Zope Public License,
-// Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
+// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 // THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
 // WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 // FOR A PARTICULAR PURPOSE.
-//
-// ===========================================================================
+// ==========================================================================
 
 using System;
 using System.IO;
@@ -268,7 +266,6 @@ namespace Python.Runtime {
 	// mapping of valid namespaces. Note that for a given namespace
 	// a.b.c.d, each of a, a.b, a.b.c and a.b.c.d are considered to 
 	// be valid namespaces (to better match Python import semantics).
-	// {'System' : ['Reflection', 'String']}
 	//===================================================================
 
 	static void ScanAssembly(Assembly assembly) {
