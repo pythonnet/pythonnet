@@ -8,10 +8,10 @@
 // ==========================================================================
 
 //============================================================================
-// This file is a hand-maintained stub - it implements CLR.dll, which can be
+// This file is a hand-maintained stub - it implements clr.dll, which can be
 // loaded by a standard CPython interpreter as an extension module. When it 
 // is loaded, it bootstraps the managed runtime integration layer and defers
-// to it do initialization and put the CLR module into sys.modules, etc.
+// to it do initialization and put the clr module into sys.modules, etc.
 //============================================================================
 
 .assembly extern mscorlib
@@ -23,7 +23,7 @@
 {
   .ver 1:0:0:0
 }
-.assembly CLR
+.assembly clr
 {
   // --- The following custom attribute is added automatically, do not uncomment -------
   //  .custom instance void [mscorlib]System.Diagnostics.DebuggableAttribute::.ctor(bool,
@@ -32,7 +32,7 @@
   .ver 0:0:0:0
 }
 
-.module CLR.dll
+.module clr.dll
 // MVID: {01BEB897-1638-4D9D-B01C-3638714A76B4}
 .imagebase 0x00400000
 .subsystem 0x00000003
@@ -43,22 +43,22 @@
 .data VT_01 = int32(0)
 
 
-.class public auto ansi beforefieldinit CLRModule
+.class public auto ansi beforefieldinit clrModule
        extends [mscorlib]System.Object
 {
-} // end of class CLRModule
+} // end of class clrModule
 
 
 
-.class public auto ansi beforefieldinit CLRModule
+.class public auto ansi beforefieldinit clrModule
        extends [mscorlib]System.Object
 {
   .method public hidebysig static void 
    modopt([mscorlib]System.Runtime.CompilerServices.CallConvCdecl) 
-   initCLR() cil managed
+   initclr() cil managed
   {
     .vtentry 1:1
-    .export [1] as initCLR
+    .export [1] as initclr
 
     // Code size       8 (0x8)
     .maxstack  0
@@ -66,7 +66,7 @@
     IL_0005:  br.s       IL_0007
 
     IL_0007:  ret
-  } // end of method CLRModule::initCLR
+  } // end of method clrModule::initclr
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -76,8 +76,8 @@
     IL_0000:  ldarg.0
     IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
     IL_0006:  ret
-  } // end of method CLRModule::.ctor
+  } // end of method clrModule::.ctor
 
-} // end of class CLRModule
+} // end of class clrModule
 
 

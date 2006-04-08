@@ -17,6 +17,14 @@ namespace Python.Test {
     // Supports CLR generics unit tests.
     //========================================================================
     
+    public class GenericWrapper<T> {
+	public T value;
+
+	public GenericWrapper(T value) {
+	    this.value = value;
+	}
+    }
+
     public class GenericTypeDefinition<T, U> {
 	public T value1;
 	public U value2;

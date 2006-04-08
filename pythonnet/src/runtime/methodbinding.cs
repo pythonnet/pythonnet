@@ -8,6 +8,7 @@
 // ==========================================================================
 
 using System;
+using System.Reflection;
 
 namespace Python.Runtime {
 
@@ -19,14 +20,35 @@ namespace Python.Runtime {
 
     internal class MethodBinding : ExtensionType {
 
+	MethodInfo info;
 	MethodObject m;
 	IntPtr target;
 
 	public MethodBinding(MethodObject m, IntPtr target) : base() {
 	    Runtime.Incref(target);
 	    this.target = target;
+	    this.info = null;
 	    this.m = m;
 	}
+
+
+ 	//====================================================================
+ 	// Implement explicit overload selection using subscript syntax ([]).
+ 	//====================================================================
+ 
+ 	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
+ 	    MethodBinding self = (MethodBinding)GetManagedObject(tp);
+ 	    MethodInfo sig = MethodBinder.MatchByTypeSig(self.m.info, idx);
+ 	    if (sig == null) {
+ 		return Exceptions.RaiseTypeError(
+ 				  "No match found for signature"
+ 				  );
+ 	    }
+ 	    MethodBinding mb = new MethodBinding(self.m, self.target);
+ 	    mb.info = sig;
+ 	    Runtime.Incref(mb.pyHandle);
+ 	    return mb.pyHandle;	    
+ 	}
 
 
 	//====================================================================

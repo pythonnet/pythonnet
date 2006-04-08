@@ -221,11 +221,11 @@ namespace Python.Runtime {
 	// own mp_subscript
 	//====================================================================
 	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
-	    GenericType gt = GetManagedObject(tp) as GenericType;
-	    if (gt != null) {
-		return GenericType.bind(tp, idx);
-	    }
-	    return Exceptions.RaiseTypeError("unsubscriptable object");
+ 	    ClassBase cb = GetManagedObject(tp) as ClassBase;
+ 	    if (cb != null) {
+ 		return cb.type_subscript(tp, idx);
+ 	    }
+ 	    return Exceptions.RaiseTypeError("unsubscriptable object");
 	}
 
 	//====================================================================
