@@ -9,6 +9,7 @@
 
 import sys, os, string, unittest, types
 import Python.Test as Test
+import System
 
 
 class ArrayTests(unittest.TestCase):
@@ -1323,6 +1324,139 @@ class ArrayTests(unittest.TestCase):
             items[i] = item
             self.failUnless(items[i].X == i + 1)
             self.failUnless(items[i].Y == i + 1)
+
+
+    def testSpecialArrayCreation(self):
+        """Test using the Array[<type>] syntax for creating arrays."""
+        from Python.Test import ISayHello1, InterfaceTest, ShortEnum        
+        from System import Array
+        inst = InterfaceTest()
+
+        value = Array[System.Boolean]([True, True])
+        self.failUnless(value[0] == True)
+        self.failUnless(value[1] == True)
+        self.failUnless(value.Length == 2)
+
+        value = Array[bool]([True, True])
+        self.failUnless(value[0] == True)
+        self.failUnless(value[1] == True)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Byte]([0, 255])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 255)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.SByte]([0, 127])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 127)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Char]([u'A', u'Z'])
+        self.failUnless(value[0] == u'A')
+        self.failUnless(value[1] == u'Z')
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Char]([0, 65535])
+        self.failUnless(value[0] == unichr(0))
+        self.failUnless(value[1] == unichr(65535))        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Int16]([0, 32767])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 32767)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Int32]([0, 2147483647])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 2147483647)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[int]([0, 2147483647])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 2147483647)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Int64]([0, 9223372036854775807L])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 9223372036854775807L)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[long]([0, 9223372036854775807L])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 9223372036854775807L)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.UInt16]([0, 65000])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 65000)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.UInt32]([0, 4294967295L])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 4294967295L)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.UInt64]([0, 18446744073709551615L])
+        self.failUnless(value[0] == 0)
+        self.failUnless(value[1] == 18446744073709551615L)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Single]([0.0, 3.402823e38])
+        self.failUnless(value[0] == 0.0)
+        self.failUnless(value[1] == 3.402823e38)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Double]([0.0, 1.7976931348623157e308])
+        self.failUnless(value[0] == 0.0)
+        self.failUnless(value[1] == 1.7976931348623157e308)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[float]([0.0, 1.7976931348623157e308])
+        self.failUnless(value[0] == 0.0)
+        self.failUnless(value[1] == 1.7976931348623157e308)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Decimal]([System.Decimal.Zero,System.Decimal.One])
+        self.failUnless(value[0] == System.Decimal.Zero)
+        self.failUnless(value[1] == System.Decimal.One)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.String](["one", "two"])
+        self.failUnless(value[0] == "one")
+        self.failUnless(value[1] == "two")
+        self.failUnless(value.Length == 2)
+        
+        value = Array[str](["one", "two"])
+        self.failUnless(value[0] == "one")
+        self.failUnless(value[1] == "two")
+        self.failUnless(value.Length == 2)
+        
+        value = Array[ShortEnum]([ShortEnum.Zero, ShortEnum.One])
+        self.failUnless(value[0] == ShortEnum.Zero)
+        self.failUnless(value[1] == ShortEnum.One)
+        self.failUnless(value.Length == 2)
+        
+        value = Array[System.Object]([inst, inst])
+        self.failUnless(value[0].__class__ == inst.__class__)
+        self.failUnless(value[1].__class__ == inst.__class__)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[InterfaceTest]([inst, inst])
+        self.failUnless(value[0].__class__ == inst.__class__)
+        self.failUnless(value[1].__class__ == inst.__class__)        
+        self.failUnless(value.Length == 2)
+        
+        value = Array[ISayHello1]([inst, inst])
+        self.failUnless(value[0].__class__ == inst.__class__)
+        self.failUnless(value[1].__class__ == inst.__class__)        
+        self.failUnless(value.Length == 2)
+
+        inst = System.Exception("badness")
+        value = Array[System.Exception]([inst, inst])
+        self.failUnless(value[0].__class__ == inst.__class__)
+        self.failUnless(value[1].__class__ == inst.__class__)        
+        self.failUnless(value.Length == 2)
 
 
     def testArrayAbuse(self):

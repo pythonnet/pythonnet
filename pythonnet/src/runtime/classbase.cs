@@ -50,6 +50,16 @@ namespace Python.Runtime {
 	    return 0;
 	}
 
+
+ 	//====================================================================
+ 	// Default implementation of [] semantics for reflected types.
+ 	//====================================================================
+ 
+ 	public virtual IntPtr type_subscript(IntPtr ob, IntPtr idx) {
+ 	    return Exceptions.RaiseTypeError("unsubscriptable object");
+ 	}
+ 
+
 	//====================================================================
 	// Standard comparison implementation for instances of reflected types.
 	//====================================================================

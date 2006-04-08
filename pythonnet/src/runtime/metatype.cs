@@ -220,6 +220,20 @@ namespace Python.Runtime {
 	    return 0;
 	}
 
+	//====================================================================
+	// The metatype has to implement [] semantics for generic types, so
+	// here we just delegate to the generic type def implementation. Its
+	// own mp_subscript
+	//====================================================================
+
+	[CallConvCdecl()]
+	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
+ 	    ClassBase cb = GetManagedObject(tp) as ClassBase;
+ 	    if (cb != null) {
+ 		return cb.type_subscript(tp, idx);
+ 	    }
+ 	    return Exceptions.RaiseTypeError("unsubscriptable object");
+	}
 
 	//====================================================================
 	// Dealloc implementation. This is called when a Python type generated

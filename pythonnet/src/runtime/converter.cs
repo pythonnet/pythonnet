@@ -28,6 +28,7 @@ namespace Python.Runtime {
 	static NumberFormatInfo nfi;
 	static Type objectType;
 	static Type stringType;
+	static Type doubleType;
 	static Type int32Type;
 	static Type int64Type;
 	static Type flagsType;
@@ -40,9 +41,35 @@ namespace Python.Runtime {
 	    stringType = typeof(String);
 	    int32Type = typeof(Int32);
 	    int64Type = typeof(Int64);
+	    doubleType = typeof(Double);
 	    flagsType = typeof(FlagsAttribute);
 	    boolType = typeof(Boolean);
 	    typeType = typeof(Type);
+	}
+
+
+	//====================================================================
+	// Given a builtin Python type, return the corresponding CLR type.
+	//====================================================================
+
+	internal static Type GetTypeByAlias(IntPtr op) {
+	    if ((op == Runtime.PyStringType) || 
+                (op == Runtime.PyUnicodeType)) {
+		return stringType;
+	    }
+	    else if (op == Runtime.PyIntType) {
+		return int32Type;
+	    }
+	    else if (op == Runtime.PyLongType) {
+		return int64Type;
+	    }
+	    else if (op == Runtime.PyFloatType) {
+		return doubleType;
+	    }
+	    else if (op == Runtime.PyBoolType) {
+		return boolType;
+	    }
+	    return null;
 	}
 
 
@@ -177,7 +204,6 @@ namespace Python.Runtime {
 
 	internal static bool ToManagedValue(IntPtr value, Type obType, 
 				      out Object result, bool setError) {
-
 	    // Common case: if the Python value is a wrapped managed object
 	    // instance, just return the wrapped object.
 	    ManagedType mt = ManagedType.GetManagedObject(value);
@@ -198,6 +224,12 @@ namespace Python.Runtime {
 			Runtime.Decref(p);
 			mt = ManagedType.GetManagedObject(value);
 		    }
+		}
+		IntPtr c = Exceptions.UnwrapExceptionClass(value);
+		if ((c != IntPtr.Zero) && (c != value)) {
+		    value = c;
+		    Runtime.Decref(c);
+		    mt = ManagedType.GetManagedObject(value);
 		}
 	    }
 	    }
@@ -601,6 +633,8 @@ namespace Python.Runtime {
 
 	    Array items = Array.CreateInstance(elementType, size);
 
+	    // XXX - is there a better way to unwrap this if it is a real
+	    // array?
 	    for (int i = 0; i < size; i++) {
 		Object obj = null;
 		IntPtr item = Runtime.PySequence_GetItem(value, i);

@@ -126,6 +126,32 @@ namespace Python.Runtime {
 	}
 
 
+ 	//====================================================================
+ 	// Implementation of [] semantics for reflected types. This mainly 
+ 	// exists to implement the Array[int] syntax for creating arrays.
+ 	//====================================================================
+ 
+ 	public override IntPtr type_subscript(IntPtr ob, IntPtr idx) {
+ 	    if ((this.type) != typeof(Array)) {
+ 		return Exceptions.RaiseTypeError("unsubscriptable object");
+ 	    }
+ 
+ 	    if (Runtime.PyTuple_Check(idx)) {
+ 		return Exceptions.RaiseTypeError("expected single type");
+ 	    }
+ 
+ 	    ClassBase c = GetManagedObject(idx) as ClassBase;
+ 	    Type t = (c != null) ? c.type : Converter.GetTypeByAlias(idx);
+ 	    if (t == null) {
+ 		return Exceptions.RaiseTypeError("type expected");
+ 	    }
+ 	    Array a = Array.CreateInstance(t, 0);
+ 	    c = ClassManager.GetClass(a.GetType());
+ 	    Runtime.Incref(c.pyHandle);
+ 	    return c.pyHandle;	    
+ 	}
+
+
 	//====================================================================
 	// Implements __getitem__ for reflected classes and value types.
 	//====================================================================

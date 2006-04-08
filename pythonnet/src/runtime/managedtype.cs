@@ -46,6 +46,18 @@ namespace Python.Runtime {
 		    GCHandle gc = (GCHandle)op;
 		    return (ManagedType)gc.Target;
 		}
+
+		// In certain situations, we need to recognize a wrapped
+		// exception class and be willing to unwrap the class :(
+
+		if (Runtime.wrap_exceptions) {
+		    IntPtr e = Exceptions.UnwrapExceptionClass(ob);
+		    if ((e != IntPtr.Zero) && (e != ob)) {
+			ManagedType m = GetManagedObject(e);
+			Runtime.Decref(e);
+			return m;
+		    }
+		}
 	    }
 	    return null;
 	}

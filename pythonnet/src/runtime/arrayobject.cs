@@ -29,7 +29,18 @@ namespace Python.Runtime {
 	}
 
 	[CallConvCdecl()]
-	public static IntPtr tp_new(IntPtr ob, IntPtr args, IntPtr kw) {
+	public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
+	    ArrayObject self = GetManagedObject(tp) as ArrayObject;
+	    if (Runtime.PyTuple_Size(args) != 1) {
+		return Exceptions.RaiseTypeError("array expects 1 argument");
+	    }
+	    IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+	    Object result;
+
+	    if (!Converter.ToManaged(op, self.type, out result, true)) {
+		return IntPtr.Zero;
+	    }
+	    return CLRObject.GetInstHandle(result, tp);
 	    string message = "cannot instantiate array wrapper";
 	    return Exceptions.RaiseTypeError(message);
 	}

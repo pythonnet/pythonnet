@@ -127,6 +127,174 @@ namespace Python.Test {
 	    i = 42;
 	}
 
+	// overload selection test support 
+
+	public static bool TestOverloadSelection(bool v) {
+	    return v;
+	}
+
+	public static byte TestOverloadSelection(byte v) {
+	    return v;
+	}
+
+	public static sbyte TestOverloadSelection(sbyte v) {
+	    return v;
+	}
+
+	public static char TestOverloadSelection(char v) {
+	    return v;
+	}
+
+	public static short TestOverloadSelection(short v) {
+	    return v;
+	}
+
+	public static int TestOverloadSelection(int v) {
+	    return v;
+	}
+
+	public static long TestOverloadSelection(long v) {
+	    return v;
+	}
+
+	public static ushort TestOverloadSelection(ushort v) {
+	    return v;
+	}
+
+	public static uint TestOverloadSelection(uint v) {
+	    return v;
+	}
+
+	public static ulong TestOverloadSelection(ulong v) {
+	    return v;
+	}
+
+	public static float TestOverloadSelection(float v) {
+	    return v;
+	}
+
+	public static double TestOverloadSelection(double v) {
+	    return v;
+	}
+
+	public static decimal TestOverloadSelection(decimal v) {
+	    return v;
+	}
+
+	public static string TestOverloadSelection(string v) {
+	    return v;
+	}
+
+	public static ShortEnum TestOverloadSelection(ShortEnum v) {
+	    return v;
+	}
+
+	public static object TestOverloadSelection(object v) {
+	    return v;
+	}
+
+	public static InterfaceTest TestOverloadSelection(InterfaceTest v) {
+	    return v;
+	}
+
+	public static ISayHello1 TestOverloadSelection(ISayHello1 v) {
+	    return v;
+	}
+
+	public static bool[] TestOverloadSelection(bool[] v) {
+	    return v;
+	}
+
+	public static byte[] TestOverloadSelection(byte[] v) {
+	    return v;
+	}
+
+	public static sbyte[] TestOverloadSelection(sbyte[] v) {
+	    return v;
+	}
+
+	public static char[] TestOverloadSelection(char[] v) {
+	    return v;
+	}
+
+	public static short[] TestOverloadSelection(short[] v) {
+	    return v;
+	}
+
+	public static int[] TestOverloadSelection(int[] v) {
+	    return v;
+	}
+
+	public static long[] TestOverloadSelection(long[] v) {
+	    return v;
+	}
+
+	public static ushort[] TestOverloadSelection(ushort[] v) {
+	    return v;
+	}
+
+	public static uint[] TestOverloadSelection(uint[] v) {
+	    return v;
+	}
+
+	public static ulong[] TestOverloadSelection(ulong[] v) {
+	    return v;
+	}
+
+	public static float[] TestOverloadSelection(float[] v) {
+	    return v;
+	}
+
+	public static double[] TestOverloadSelection(double[] v) {
+	    return v;
+	}
+
+	public static decimal[] TestOverloadSelection(decimal[] v) {
+	    return v;
+	}
+
+	public static string[] TestOverloadSelection(string[] v) {
+	    return v;
+	}
+
+	public static ShortEnum[] TestOverloadSelection(ShortEnum[] v) {
+	    return v;
+	}
+
+	public static object[] TestOverloadSelection(object[] v) {
+	    return v;
+	}
+
+	public static InterfaceTest[] TestOverloadSelection(InterfaceTest[] v){
+	    return v;
+	}
+
+	public static ISayHello1[] TestOverloadSelection(ISayHello1[] v) {
+	    return v;
+	}
+
+//  	public static GenericWrapper<T> TestOverloadSelection(
+//                                          GenericWrapper<T> v) {
+//  	    return v;
+//  	}
+
+//  	public static GenericWrapper<T>[] TestOverloadSelection(
+//                                            GenericWrapper<T>[] v) {
+//  	    return v;
+//  	}
+
+	public static int TestOverloadSelection(string s, int i, object[] o) {
+	    return o.Length;
+	}
+
+	public static int TestOverloadSelection(string s, int i) {
+	    return i;
+	}
+
+	public static int TestOverloadSelection(int i, string s) {
+	    return i;
+	}
+
     }
 
 
