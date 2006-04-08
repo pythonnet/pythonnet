@@ -391,6 +391,7 @@ class MethodTests(unittest.TestCase):
     def testExplicitOverloadSelection(self):
         """Check explicit overload selection using [] syntax."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
+        from System import Array
         inst = InterfaceTest()
 
         value = MethodTest.TestOverloadSelection[System.Boolean](True)
@@ -479,7 +480,7 @@ class MethodTests(unittest.TestCase):
 
         atype = Array[System.Object]
         value = MethodTest.TestOverloadSelection[str, int, atype](
-            "one", 1, atype(1, 2, 3)
+            "one", 1, atype([1, 2, 3])
             )
         self.failUnless(value == 3)
 
@@ -512,7 +513,7 @@ class MethodTests(unittest.TestCase):
         input = vtype([0, 255])
         value = MethodTest.TestOverloadSelection[vtype](input)
         self.failUnless(value[0] == 0)
-        self.failUnless(value[0] == 255)        
+        self.failUnless(value[1] == 255)        
         
         vtype = Array[System.SByte]
         input = vtype([0, 127])
@@ -887,7 +888,7 @@ class MethodTests(unittest.TestCase):
         self.failUnlessRaises(TypeError, test)
 
         def test():
-            value = MethodTest.TestOverloadSelection[int](1)
+            value = MethodTest.TestOverloadSelection[int, long](1)
 
         self.failUnlessRaises(TypeError, test)
 

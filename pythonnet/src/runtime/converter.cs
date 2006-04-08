@@ -204,7 +204,6 @@ namespace Python.Runtime {
 
 	internal static bool ToManagedValue(IntPtr value, Type obType, 
 				      out Object result, bool setError) {
-
 	    // Common case: if the Python value is a wrapped managed object
 	    // instance, just return the wrapped object.
 	    ManagedType mt = ManagedType.GetManagedObject(value);
@@ -628,6 +627,8 @@ namespace Python.Runtime {
 
 	    Array items = Array.CreateInstance(elementType, size);
 
+	    // XXX - is there a better way to unwrap this if it is a real
+	    // array?
 	    for (int i = 0; i < size; i++) {
 		Object obj = null;
 		IntPtr item = Runtime.PySequence_GetItem(value, i);

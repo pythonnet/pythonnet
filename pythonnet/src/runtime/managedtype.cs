@@ -46,6 +46,19 @@ namespace Python.Runtime {
 		    GCHandle gc = (GCHandle)op;
 		    return (ManagedType)gc.Target;
 		}
+
+
+//  		// Hmm - check to see if its a wrapped exception?
+//  		if (Runtime.wrap_exceptions) {
+//  		    IntPtr p = Runtime.PyObject_GetAttrString(ob, "_inner");
+//  		    if (p != IntPtr.Zero) {
+//  			ManagedType m = GetManagedObject(p);
+//  			Runtime.Decref(p);
+//  			if (m != null)
+//  			    return m;
+//  		    }
+//  		}
+
 	    }
 	    return null;
 	}

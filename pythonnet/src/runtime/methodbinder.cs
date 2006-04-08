@@ -136,6 +136,7 @@ namespace Python.Runtime {
  		if (pi.Length != plen) {
  		    continue;
  		}
+		bool matched = true;
  		for (int n = 0; n < pi.Length; n++) {
  		    IntPtr p = Runtime.PyTuple_GetItem(args, n);
  		    if (p == IntPtr.Zero) {
@@ -145,15 +146,19 @@ namespace Python.Runtime {
  		    ClassBase c = ManagedType.GetManagedObject(p) as ClassBase;
  		    Type t = (c != null) ? c.type : 
  			     Converter.GetTypeByAlias(p);
+
  		    if (t == null) {
  			break;
  		    }
  		    if (t != pi[n].ParameterType) {
+			matched = false;
  			break;
  		    }
  		}
- 		match = msig[i];
- 		break;
+		if (matched) {
+		    match = msig[i];
+		    break;
+		}
  	    }
  
  	    if (free) {
@@ -171,12 +176,26 @@ namespace Python.Runtime {
 	//====================================================================
 
 	internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw) {
+	    return this.Bind(inst, args, kw, null);
+	}
+
+	internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw,
+			      MethodBase info) {
 	    // loop to find match, return invoker w/ or /wo error
+	    MethodBase[] _methods = null;
 	    int nargs = Runtime.PyTuple_Size(args);
 	    object arg;
 
-	    MethodBase[] _methods = GetMethods();
-
+ 	    if (info != null) {
+		_methods = (MethodBase[])Array.CreateInstance(
+ 					       typeof(MethodBase), 1
+ 					       );
+ 		_methods.SetValue(info, 0);
+ 	    }
+	    else {
+		_methods = GetMethods();
+	    }
+ 
 	    for (int i = 0; i < _methods.Length; i++) {
 		MethodBase mi = _methods[i];
 		ParameterInfo[] pi = mi.GetParameters();
@@ -220,9 +239,14 @@ namespace Python.Runtime {
 	    return null;
 	}
 
-
 	internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
-	    Binding binding = this.Bind(inst, args, kw);
+	    return this.Invoke(inst, args, kw, null);
+	    
+	}
+
+	internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw,
+				       MethodBase info) {
+	    Binding binding = this.Bind(inst, args, kw, info);
 	    Object result;
 
 	    if (binding == null) {

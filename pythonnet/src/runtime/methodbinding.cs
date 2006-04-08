@@ -97,12 +97,13 @@ namespace Python.Runtime {
 		IntPtr uargs = Runtime.PyTuple_GetSlice(args, 1, len);
 		IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
 		Runtime.Incref(inst);
-		IntPtr r = self.m.Invoke(inst, uargs, kw);
+		IntPtr r = self.m.Invoke(inst, uargs, kw, self.info);
 		Runtime.Decref(inst);
+		Runtime.Decref(uargs);
 		return r;
 	    }
 
-	    return self.m.Invoke(self.target, args, kw);
+	    return self.m.Invoke(self.target, args, kw, self.info);
 	}
 
 

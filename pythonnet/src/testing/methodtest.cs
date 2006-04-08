@@ -185,6 +185,10 @@ namespace Python.Test {
 	    return v;
 	}
 
+	public static ShortEnum TestOverloadSelection(ShortEnum v) {
+	    return v;
+	}
+
 	public static object TestOverloadSelection(object v) {
 	    return v;
 	}
@@ -250,6 +254,10 @@ namespace Python.Test {
 	}
 
 	public static string[] TestOverloadSelection(string[] v) {
+	    return v;
+	}
+
+	public static ShortEnum[] TestOverloadSelection(ShortEnum[] v) {
 	    return v;
 	}
 

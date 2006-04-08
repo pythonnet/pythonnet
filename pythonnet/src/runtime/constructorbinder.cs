@@ -33,7 +33,12 @@ namespace Python.Runtime {
 	// Python type to use when wrapping the result (may be a subclass).
 	//====================================================================
 
-	internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw) {
+ 	internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw) {
+	    return this.InvokeRaw(inst, args, kw, null);
+	}
+
+	internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw,
+				  MethodBase info) {
 	    Binding binding = this.Bind(inst, args, kw);
 	    Object result;
 
