@@ -192,6 +192,23 @@ namespace Python.Runtime {
 	    return op;
 	}
 
+	internal static IntPtr UnwrapExceptionClass(IntPtr op) {
+	    // In some cases its necessary to recognize an exception *class*,
+	    // and obtain the inner (wrapped) exception class. This method
+	    // returns the inner class if found, or a null pointer.
+
+	    IntPtr d = Runtime.PyObject_GetAttrString(op, "__dict__");
+	    if (d == IntPtr.Zero) {
+		Exceptions.Clear();
+		return IntPtr.Zero;
+	    }
+	    IntPtr c = Runtime.PyDict_GetItemString(d, "_class");
+	    Runtime.Decref(d);
+	    if (c == IntPtr.Zero) {
+		Exceptions.Clear();
+	    }
+	    return c;
+	}
 
 
 	/// <summary>

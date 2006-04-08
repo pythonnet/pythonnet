@@ -47,18 +47,17 @@ namespace Python.Runtime {
 		    return (ManagedType)gc.Target;
 		}
 
+		// In certain situations, we need to recognize a wrapped
+		// exception class and be willing to unwrap the class :(
 
-//  		// Hmm - check to see if its a wrapped exception?
-//  		if (Runtime.wrap_exceptions) {
-//  		    IntPtr p = Runtime.PyObject_GetAttrString(ob, "_inner");
-//  		    if (p != IntPtr.Zero) {
-//  			ManagedType m = GetManagedObject(p);
-//  			Runtime.Decref(p);
-//  			if (m != null)
-//  			    return m;
-//  		    }
-//  		}
-
+		if (Runtime.wrap_exceptions) {
+		    IntPtr e = Exceptions.UnwrapExceptionClass(ob);
+		    if ((e != IntPtr.Zero) && (e != ob)) {
+			ManagedType m = GetManagedObject(e);
+			Runtime.Decref(e);
+			return m;
+		    }
+		}
 	    }
 	    return null;
 	}

@@ -225,6 +225,12 @@ namespace Python.Runtime {
 			mt = ManagedType.GetManagedObject(value);
 		    }
 		}
+		IntPtr c = Exceptions.UnwrapExceptionClass(value);
+		if ((c != IntPtr.Zero) && (c != value)) {
+		    value = c;
+		    Runtime.Decref(c);
+		    mt = ManagedType.GetManagedObject(value);
+		}
 	    }
 	    }
 
