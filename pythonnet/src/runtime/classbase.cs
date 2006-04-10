@@ -28,6 +28,7 @@ namespace Python.Runtime {
 
 	internal bool is_exception;
 	internal Indexer indexer;
+	internal Type[] generics;
 	internal Type type;
 
 	internal ClassBase(Type tp) : base() {
@@ -40,8 +41,6 @@ namespace Python.Runtime {
 	    return (!this.type.IsEnum);
 	}
 
-
-
 	//====================================================================
 	// Implements __init__ for reflected classes and value types.
 	//====================================================================
@@ -50,15 +49,13 @@ namespace Python.Runtime {
 	    return 0;
 	}
 
-
  	//====================================================================
  	// Default implementation of [] semantics for reflected types.
  	//====================================================================
  
- 	public virtual IntPtr type_subscript(IntPtr ob, IntPtr idx) {
- 	    return Exceptions.RaiseTypeError("unsubscriptable object");
- 	}
- 
+	public virtual IntPtr type_subscript(IntPtr idx) {
+	    return Exceptions.RaiseTypeError("unsubscriptable object");
+	} 
 
 	//====================================================================
 	// Standard comparison implementation for instances of reflected types.

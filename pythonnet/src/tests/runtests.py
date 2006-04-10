@@ -15,7 +15,7 @@ test_modules = (
         'test_exceptions',
         'test_module',
         'test_compat',    
-        #'test_generic',
+        'test_generic',
         'test_conversion',
         'test_class',
         'test_interface',

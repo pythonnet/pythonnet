@@ -80,16 +80,12 @@ namespace Python.Runtime {
 	    // lets us check once (vs. on every lookup) in case we need to 
 	    // wrap Exception-derived types in old-style classes
 
-	    if (type.IsSubclassOf(dtype)) {
+	    if (type.ContainsGenericParameters) {
+		impl = new GenericType(type);
+	    }
+
+	    else if (type.IsSubclassOf(dtype)) {
 		impl = new DelegateObject(type);
-	    }
-
-	    else if (type.ContainsGenericParameters) {
-		impl = new GenericType(type);
-	    }
-
-	    else if (type.IsGenericType) {
-		impl = new GenericType(type);
 	    }
 
 	    else if (type.IsArray) {

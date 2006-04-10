@@ -223,7 +223,7 @@ namespace Python.Runtime {
 	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
  	    ClassBase cb = GetManagedObject(tp) as ClassBase;
  	    if (cb != null) {
- 		return cb.type_subscript(tp, idx);
+ 		return cb.type_subscript(idx);
  	    }
  	    return Exceptions.RaiseTypeError("unsubscriptable object");
 	}

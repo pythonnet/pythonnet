@@ -46,58 +46,29 @@ namespace Python.Runtime {
 	}
 
 	//====================================================================
-	// Implements __getitem__ for reflected open generic types. A closed 
+	// Implements subscript syntax for reflected generic types. A closed 
         // type is created by binding the generic type via subscript syntax:
         // inst = List[str]()
 	//====================================================================
 
-	public static IntPtr bind(IntPtr ob, IntPtr idx) {
-	    ClassBase cls = (ClassBase)GetManagedObject(ob) as ClassBase;
-
-	    // Ensure that the reflected class is a generic type definition,
-	    // or that
-	    if (!cls.type.IsGenericTypeDefinition) {
+	public override IntPtr type_subscript(IntPtr idx) {
+	    Type[] types = Runtime.PythonArgsToTypeArray(idx);
+	    if (types == null) {
+		return Exceptions.RaiseTypeError("type(s) expected");
+	    }
+	    if (!this.type.IsGenericTypeDefinition) {
 		return Exceptions.RaiseTypeError(
-		       "type is not a generic type definition"
-		       );
+				  "type is not a generic type definition"
+				  );
+	    }
+	    if (this.type.ContainsGenericParameters) {
+		Type t = this.type.MakeGenericType(types);
+		ManagedType c = (ManagedType)ClassManager.GetClass(t);
+		Runtime.Incref(c.pyHandle);
+		return c.pyHandle;
 	    }
 
-	    // The index argument will often be a tuple, for generic types
-	    // that have more than one generic binding parameter.
-
-	    IntPtr args = idx;
-	    bool free = false;
-
-	    if (!Runtime.PyTuple_Check(idx)) {
-		args = Runtime.PyTuple_New(1);
-		Runtime.Incref(idx);
-		Runtime.PyTuple_SetItem(args, 0, idx);
-		free = true;
-	    }
-
-	    int n = Runtime.PyTuple_Size(args);
-	    Type[] types = new Type[n];
-	    Type t = null;
-
-	    for (int i = 0; i < n; i++) {
-		IntPtr op = Runtime.PyTuple_GetItem(args, i);
-		ClassBase cb = GetManagedObject(op) as ClassBase;
-		t = (cb != null) ? cb.type : Converter.GetTypeByAlias(op);
-		if (t == null) {
-		    if (free) Runtime.Decref(args); 
-		    return Exceptions.RaiseTypeError("type expected");
-		}
-		types[i] = t;
-	    }
-
-	    if (free) {
-		Runtime.Decref(args);
-	    }
-
-	    t =cls.type.MakeGenericType(types);
-	    ManagedType c = (ManagedType)ClassManager.GetClass(t);
-	    Runtime.Incref(c.pyHandle);
-	    return c.pyHandle;
+	    return Exceptions.RaiseTypeError("unsubscriptable object");
 	}
 
     }

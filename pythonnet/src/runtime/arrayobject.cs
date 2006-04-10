@@ -39,8 +39,6 @@ namespace Python.Runtime {
 		return IntPtr.Zero;
 	    }
 	    return CLRObject.GetInstHandle(result, tp);
-	    string message = "cannot instantiate array wrapper";
-	    return Exceptions.RaiseTypeError(message);
 	}
 
 

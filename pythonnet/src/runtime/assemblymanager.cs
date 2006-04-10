@@ -327,6 +327,8 @@ namespace Python.Runtime {
 
 	public static List<string> GetNames(string nsname) {
 	    List<string> names = new List<string>(32);
+	    Dictionary<string, int> seen = new Dictionary<string, int>();
+
 	    if (namespaces.ContainsKey(nsname)) {
 		foreach (Assembly a in namespaces[nsname].Keys) {
 		    Type[] types = a.GetTypes();
@@ -347,6 +349,7 @@ namespace Python.Runtime {
 		    }
 		}
 	    }
+	    names.Sort(); // ensure that non-generics come first!
 	    return names;
 	}
 

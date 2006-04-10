@@ -22,9 +22,10 @@ namespace Python.Runtime {
     internal class ClassObject : ClassBase {
 
 	ConstructorBinder binder;
+	ConstructorInfo[] ctors;
 
 	internal ClassObject(Type tp) : base(tp) {
-	    ConstructorInfo[] ctors = type.GetConstructors();
+	    ctors = type.GetConstructors();
 	    binder = new ConstructorBinder();
 
 	    for (int i = 0; i < ctors.Length; i++) {
@@ -125,28 +126,49 @@ namespace Python.Runtime {
 
 
  	//====================================================================
- 	// Implementation of [] semantics for reflected types. This mainly 
- 	// exists to implement the Array[int] syntax for creating arrays.
+ 	// Implementation of [] semantics for reflected types. This exists 
+ 	// both to implement the Array[int] syntax for creating arrays and 
+	// to support generic name overload resolution using [].
  	//====================================================================
  
- 	public override IntPtr type_subscript(IntPtr ob, IntPtr idx) {
- 	    if ((this.type) != typeof(Array)) {
- 		return Exceptions.RaiseTypeError("unsubscriptable object");
- 	    }
- 
- 	    if (Runtime.PyTuple_Check(idx)) {
- 		return Exceptions.RaiseTypeError("expected single type");
- 	    }
- 
- 	    ClassBase c = GetManagedObject(idx) as ClassBase;
- 	    Type t = (c != null) ? c.type : Converter.GetTypeByAlias(idx);
- 	    if (t == null) {
- 		return Exceptions.RaiseTypeError("type expected");
- 	    }
- 	    Array a = Array.CreateInstance(t, 0);
- 	    c = ClassManager.GetClass(a.GetType());
- 	    Runtime.Incref(c.pyHandle);
- 	    return c.pyHandle;	    
+ 	public override IntPtr type_subscript(IntPtr idx) {
+
+	    // If this type is the Array type, the [<type>] means we need to
+	    // construct and return an array type of the given element type.
+
+ 	    if ((this.type) == typeof(Array)) {
+		if (Runtime.PyTuple_Check(idx)) {
+		    return Exceptions.RaiseTypeError("type expected");
+		}
+		ClassBase c = GetManagedObject(idx) as ClassBase;
+		Type t = (c != null) ? c.type : Converter.GetTypeByAlias(idx);
+		if (t == null) {
+		    return Exceptions.RaiseTypeError("type expected");
+		}
+		Array a = Array.CreateInstance(t, 0);
+		ClassBase o = ClassManager.GetClass(a.GetType());
+		Runtime.Incref(o.pyHandle);
+		return o.pyHandle;	 
+	    }   
+
+	    // If there are generics in our namespace with the same base name
+	    // as the current type, then [<type>] means the caller wants to
+	    // bind the generic type matching the given type parameters.
+
+	    Type[] types = Runtime.PythonArgsToTypeArray(idx);
+	    if (types == null) {
+		return Exceptions.RaiseTypeError("type(s) expected");
+	    }
+
+	    string gname = this.type.FullName + "`" + types.Length.ToString();
+	    Type gtype = AssemblyManager.LookupType(gname);
+	    if (gtype != null) {
+		GenericType g = ClassManager.GetClass(gtype) as GenericType;
+		return g.type_subscript(idx);
+		Runtime.Incref(g.pyHandle);
+		return g.pyHandle;
+	    }
+	    return Exceptions.RaiseTypeError("unsubscriptable object");
  	}
  
 
@@ -205,7 +227,7 @@ namespace Python.Runtime {
 
 	    if (cls.indexer == null || !cls.indexer.CanSet) {
 		Exceptions.SetError(Exceptions.TypeError, 
-				    "object doesn't support item assignment x"
+				    "object doesn't support item assignment"
 				    );
 		return -1;
 	    }

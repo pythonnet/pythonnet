@@ -33,9 +33,6 @@ namespace Python.Test {
 	    this.value1 = arg1;
 	    this.value2 = arg2;
 	}
-
-
-
     }
 
     public class DerivedFromOpenGeneric<V, W> : 
@@ -50,9 +47,78 @@ namespace Python.Test {
     }
 
 
-    public class NameTest {}
-    public class NameTest<T,U> {}
-    public class NameTest<T> {}
+    public class GenericNameTest1 {
+	public static int value = 0;
+    }
+
+    public class GenericNameTest1<T> {
+	public static int value = 1;
+    }
+
+    public class GenericNameTest1<T,U> {
+	public static int value = 2;
+    }
+
+    public class GenericNameTest2<T> {
+	public static int value = 1;
+    }
+
+    public class GenericNameTest2<T,U> {
+	public static int value = 2;
+    }
+
+
+    public class GenericMethodTest<T> {
+
+	public GenericMethodTest() {}
+
+	public int OverloadedMethod() {
+	    return 1;
+	}
+
+	public int OverloadedMethod(int arg) {
+	    return arg;
+	}
+
+	public T OverloadedMethod(T arg) {
+	    return arg;
+	}
+
+	public Q OverloadedMethod<Q>(Q arg) {
+	    return arg;
+	}
+
+	public U OverloadedMethod<Q, U>(Q arg1, U arg2) {
+	    return arg2;
+	}
+
+    }
+
+    public class GenericStaticMethodTest<T> {
+
+	public GenericStaticMethodTest() {}
+
+	public static int OverloadedMethod() {
+	    return 1;
+	}
+
+	public static int OverloadedMethod(int arg) {
+	    return arg;
+	}
+
+	public static T OverloadedMethod(T arg) {
+	    return arg;
+	}
+
+	public static Q OverloadedMethod<Q>(Q arg) {
+	    return arg;
+	}
+
+	public static U OverloadedMethod<Q, U>(Q arg1, U arg2) {
+	    return arg2;
+	}
+
+    }
 
 
 }

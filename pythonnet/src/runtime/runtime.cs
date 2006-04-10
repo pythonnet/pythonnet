@@ -206,6 +206,39 @@ namespace Python.Runtime {
 	    return items;
 	}
 
+	internal static Type[] PythonArgsToTypeArray(IntPtr arg) {
+	    // Given a PyObject * that is either a single type object or a
+	    // tuple of (managed or unmanaged) type objects, return a Type[]
+	    // containing the CLR Type objects that map to those types.
+	    IntPtr args = arg;
+	    bool free = false;
+
+	    if (!Runtime.PyTuple_Check(arg)) {
+		args = Runtime.PyTuple_New(1);
+		Runtime.Incref(arg);
+		Runtime.PyTuple_SetItem(args, 0, arg);
+		free = true;
+	    }
+
+	    int n = Runtime.PyTuple_Size(args);
+	    Type[] types = new Type[n];
+	    Type t = null;
+
+	    for (int i = 0; i < n; i++) {
+		IntPtr op = Runtime.PyTuple_GetItem(args, i);
+		ClassBase cb = ManagedType.GetManagedObject(op) as ClassBase;
+		t = (cb != null) ? cb.type : Converter.GetTypeByAlias(op);
+		if (t == null) {
+		    types = null;
+		    break;
+		}
+		types[i] = t;
+	    }
+	    if (free) {
+		Runtime.Decref(args);
+	    }
+	    return types;
+	}
 
 	//===================================================================
 	// Managed exports of the Python C API. Where appropriate, we do 
