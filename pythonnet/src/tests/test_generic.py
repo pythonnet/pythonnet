@@ -81,9 +81,6 @@ class GenericTests(unittest.TestCase):
         self.failUnless(inst.HasValue)
         self.failUnless(inst.Value == 10)
 
-        inst = System.Nullable[System.Int32](None)
-        self.failUnless(not inst.HasValue)
-        self.failUnless(inst.Value == None)
 
     def testGenericInterface(self):
         pass
@@ -277,6 +274,29 @@ class GenericTests(unittest.TestCase):
             self.failUnless(result[0] == value)
             self.failUnless(result[1] == value)            
 
+    def testGenericMethodBinding(self):
+        from Python.Test import GenericMethodTest, GenericStaticMethodTest
+
+        # Can invoke a static member on a closed generic type.
+        value = GenericStaticMethodTest[str].OverloadedMethod()
+        self.failUnless(value == 1)
+
+        def test():
+            # Cannot invoke a static member on an open type.
+            GenericStaticMethodTest.OverloadedMethod()
+
+        self.failUnlessRaises(TypeError, test)
+
+        # Can invoke an instance member on a closed generic type.
+        value = GenericMethodTest[str]().OverloadedMethod()
+        self.failUnless(value == 1)
+
+        def test():
+            # Cannot invoke an instance member on an open type.
+            GenericMethodTest().OverloadedMethod()
+
+        self.failUnlessRaises(TypeError, test)
+
     def testGenericMethodTypeHandling(self):
         """
         Test argument conversion / binding for generic methods.
@@ -313,31 +333,24 @@ class GenericTests(unittest.TestCase):
         """
         Test explicit overload selection with generic methods.
         """
-        from Python.Test import GenericMethodTest
+        from Python.Test import GenericMethodTest, GenericStaticMethodTest
+        type = GenericStaticMethodTest[str]
         inst = GenericMethodTest[str]()
 
         # public static int OverloadedMethod()
-        value = GenericMethodTest.OverloadedMethod()
-        self.failUnless(value == 1)
-
-        # public static int OverloadedMethod() (explicit)
-        value = GenericMethodTest.OverloadedMethod[None]()
+        value = type.OverloadedMethod()
         self.failUnless(value == 1)
 
         # public int OverloadedMethod()
         value = inst.OverloadedMethod()
         self.failUnless(value == 1)
-        
-        # public int OverloadedMethod() (explicit)
-        value = inst.OverloadedMethod[None]()
-        self.failUnless(value == 1)
     
         # public static int OverloadedMethod(int)
-        value = GenericMethodTest.OverloadedMethod(2)
+        value = type.OverloadedMethod(2)
         self.failUnless(value == 2)
 
         # public static int OverloadedMethod(int) (explicit)
-        value = GenericMethodTest.OverloadedMethod[None](2)
+        value = type.OverloadedMethod[int](2)
         self.failUnless(value == 2)
 
         # public int OverloadedMethod(int)
@@ -345,11 +358,11 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == 2)
 
         # public int OverloadedMethod(int) (explicit)
-        value = inst.OverloadedMethod[None](2)
+        value = inst.OverloadedMethod[int](2)
         self.failUnless(value == 2)
 
         # public static T OverloadedMethod(T arg) (inferred)
-        value = GenericMethodTest.OverloadedMethod("test")
+        value = type.OverloadedMethod("test")
         self.failUnless(value == "test")
 
         # public T OverloadedMethod(T arg) (inferred)
@@ -357,7 +370,7 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == "test")
 
         # public static T OverloadedMethod(T arg) (explicit)
-        value = GenericMethodTest.OverloadedMethod[str]("test")
+        value = type.OverloadedMethod[str]("test")
         self.failUnless(value == "test")
 
         # public T OverloadedMethod(T arg) (explicit)
@@ -365,7 +378,7 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == "test")
 
         # public static Q OverloadedMethod<Q>(Q arg)
-        value = GenericMethodTest.OverloadedMethod[float](2.2)
+        value = type.OverloadedMethod[float](2.2)
         self.failUnless(value == 2.2)
 
         # public Q OverloadedMethod<Q>(Q arg)
@@ -373,7 +386,7 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == 2.2)
 
         # public static Q OverloadedMethod<Q>(Q arg)
-        value = GenericMethodTest.OverloadedMethod[bool](True)
+        value = type.OverloadedMethod[bool](True)
         self.failUnless(value == True)
 
         # public Q OverloadedMethod<Q>(Q arg)
@@ -381,7 +394,7 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == True)
 
         # public static U OverloadedMethod<Q, U>(Q arg1, U arg2)
-        value = GenericMethodTest.OverloadedMethod[bool, str](True, "true")
+        value = type.OverloadedMethod[bool, str](True, "true")
         self.failUnless(value == "true")
 
         # public U OverloadedMethod<Q, U>(Q arg1, U arg2)
@@ -389,7 +402,7 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == "true")
 
         # public static U OverloadedMethod<Q, U>(Q arg1, U arg2)
-        value = GenericMethodTest.OverloadedMethod[str, bool]("true", True)
+        value = type.OverloadedMethod[str, bool]("true", True)
         self.failUnless(value == True)
 
         # public U OverloadedMethod<Q, U>(Q arg1, U arg2)
@@ -397,9 +410,7 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == True)
 
         def test():
-            value = GenericMethodTest.OverloadedMethod[str, bool, int](
-                "true", True, 1
-                )
+            value = type.OverloadedMethod[str, bool, int]("true", True, 1)
         self.failUnlessRaises(TypeError, test)
 
         def test():

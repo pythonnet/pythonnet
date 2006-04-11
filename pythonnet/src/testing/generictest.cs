@@ -77,7 +77,7 @@ namespace Python.Test {
 	}
 
 	public int OverloadedMethod(int arg) {
-	    return arg;
+	    return arg * 2;
 	}
 
 	public T OverloadedMethod(T arg) {

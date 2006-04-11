@@ -145,8 +145,8 @@ namespace Python.Runtime {
 		if (t == null) {
 		    return Exceptions.RaiseTypeError("type expected");
 		}
-		Array a = Array.CreateInstance(t, 0);
-		ClassBase o = ClassManager.GetClass(a.GetType());
+		Type a = t.MakeArrayType();
+		ClassBase o = ClassManager.GetClass(a);
 		Runtime.Incref(o.pyHandle);
 		return o.pyHandle;	 
 	    }   

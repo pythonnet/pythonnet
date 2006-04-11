@@ -88,7 +88,6 @@ namespace Python.Runtime {
 	    return this.is_static;
 	}
 
-
 	//====================================================================
 	// Descriptor __getattribute__ implementation. 
 	//====================================================================
@@ -109,7 +108,6 @@ namespace Python.Runtime {
 
 	    return Runtime.PyObject_GenericGetAttr(ob, key);
 	}
-
 
 	//====================================================================
 	// Descriptor __get__ implementation. Accessing a CLR method returns
@@ -139,15 +137,6 @@ namespace Python.Runtime {
 
 	    binding = new MethodBinding(self, ob);
 	    return binding.pyHandle;
-	}
-
-	//====================================================================
-	// Implement [] semantics to select overload based on type signature.
-	//====================================================================
-
-	public static IntPtr mp_subscript(IntPtr op, IntPtr idx) {
-	    MethodObject self = GetManagedObject(op) as MethodObject;
-	    return Exceptions.RaiseTypeError("not implemented");
 	}
 
 	//====================================================================

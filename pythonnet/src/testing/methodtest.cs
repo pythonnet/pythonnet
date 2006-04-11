@@ -10,6 +10,7 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace Python.Test {
 
@@ -272,6 +273,189 @@ namespace Python.Test {
 	public static ISayHello1[] TestOverloadSelection(ISayHello1[] v) {
 	    return v;
 	}
+
+	public static GenericWrapper<bool> TestOverloadSelection(
+					   GenericWrapper<bool> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<byte> TestOverloadSelection(
+					   GenericWrapper<byte> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<sbyte> TestOverloadSelection(
+					    GenericWrapper<sbyte> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<char> TestOverloadSelection(
+					   GenericWrapper<char> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<short> TestOverloadSelection(
+					    GenericWrapper<short> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<int> TestOverloadSelection(
+					  GenericWrapper<int> v) {
+	    return v;
+	}
+	public static GenericWrapper<long> TestOverloadSelection(
+					   GenericWrapper<long> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ushort> TestOverloadSelection(
+					     GenericWrapper<ushort> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<uint> TestOverloadSelection(
+					   GenericWrapper<uint> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ulong> TestOverloadSelection(
+					    GenericWrapper<ulong> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<float> TestOverloadSelection(
+					    GenericWrapper<float> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<double> TestOverloadSelection(
+					     GenericWrapper<double> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<decimal> TestOverloadSelection(
+					      GenericWrapper<decimal> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<string> TestOverloadSelection(
+					     GenericWrapper<string> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ShortEnum> TestOverloadSelection(
+					        GenericWrapper<ShortEnum> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<object> TestOverloadSelection(
+					     GenericWrapper<object> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<InterfaceTest> TestOverloadSelection(
+					  GenericWrapper<InterfaceTest> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ISayHello1> TestOverloadSelection(
+					        GenericWrapper<ISayHello1> v) {
+	    return v;
+	}
+
+	public static GenericWrapper<bool>[] TestOverloadSelection(
+					   GenericWrapper<bool>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<byte>[] TestOverloadSelection(
+					   GenericWrapper<byte>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<sbyte>[] TestOverloadSelection(
+					    GenericWrapper<sbyte>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<char>[] TestOverloadSelection(
+					   GenericWrapper<char>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<short>[] TestOverloadSelection(
+					    GenericWrapper<short>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<int>[] TestOverloadSelection(
+					  GenericWrapper<int>[] v) {
+	    return v;
+	}
+	public static GenericWrapper<long>[] TestOverloadSelection(
+					   GenericWrapper<long>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ushort>[] TestOverloadSelection(
+					     GenericWrapper<ushort>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<uint>[] TestOverloadSelection(
+					   GenericWrapper<uint>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ulong>[] TestOverloadSelection(
+					    GenericWrapper<ulong>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<float>[] TestOverloadSelection(
+					    GenericWrapper<float>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<double>[] TestOverloadSelection(
+					     GenericWrapper<double>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<decimal>[] TestOverloadSelection(
+					      GenericWrapper<decimal>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<string>[] TestOverloadSelection(
+					     GenericWrapper<string>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ShortEnum>[] TestOverloadSelection(
+					      GenericWrapper<ShortEnum>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<object>[] TestOverloadSelection(
+					     GenericWrapper<object>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<InterfaceTest>[] TestOverloadSelection(
+					  GenericWrapper<InterfaceTest>[] v) {
+	    return v;
+	}
+
+	public static GenericWrapper<ISayHello1>[] TestOverloadSelection(
+					      GenericWrapper<ISayHello1>[] v) {
+
+	    return v;
+	}
+
+
+
+
 
 //  	public static GenericWrapper<T> TestOverloadSelection(
 //                                          GenericWrapper<T> v) {

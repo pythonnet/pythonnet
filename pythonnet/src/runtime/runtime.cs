@@ -226,8 +226,21 @@ namespace Python.Runtime {
 
 	    for (int i = 0; i < n; i++) {
 		IntPtr op = Runtime.PyTuple_GetItem(args, i);
-		ClassBase cb = ManagedType.GetManagedObject(op) as ClassBase;
-		t = (cb != null) ? cb.type : Converter.GetTypeByAlias(op);
+		ManagedType mt = ManagedType.GetManagedObject(op);
+
+		if (mt is ClassBase) {
+		    t = ((ClassBase)mt).type;
+		}
+		else if (mt is CLRObject) {
+		    object inst = ((CLRObject)mt).inst;
+		    if (inst is Type) {
+			t = inst as Type;
+		    }
+		}
+		else {
+		    t = Converter.GetTypeByAlias(op);
+		}
+
 		if (t == null) {
 		    types = null;
 		    break;
