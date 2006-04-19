@@ -9,7 +9,8 @@
     <echo message="Building ${project.name}-${project.version}"/>
   </target>
 
-  <target name="build-2.0">
+  <target name="build-2.0" depends="runtime, console, testdll, clrmodule,
+                                    oldmodule">
     <property name="project.version" value="2.0.0"/>
     <echo message="Building ${project.name}-${project.version}"/>
   </target>
@@ -20,7 +21,7 @@
 
 
   <target name="console" depends="runtime" >
-    <csc target="exe" output="python.exe" >
+    <csc target="exe" output="./python.exe" >
       <references>
         <include name="python.runtime.dll" />
       </references>
@@ -54,7 +55,7 @@
       <sources>
         <include name="src/runtime/oldmodule.il" />
       </sources>
-    </csc>
+    </ilasm>
   </target>
 
   <target name="clrmodule">
@@ -62,7 +63,7 @@
       <sources>
         <include name="src/runtime/clrmodule.il" />
       </sources>
-    </csc>
+    </ilasm>
   </target>
 
 

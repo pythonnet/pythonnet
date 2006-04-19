@@ -184,9 +184,9 @@ namespace Python.Runtime {
 	public static Assembly LoadAssembly(string name) {
 	    Assembly assembly = null;
 	    try {
-#pragma warning disable 618
+
 		assembly = Assembly.LoadWithPartialName(name);
-#pragma warning restore 618
+
 	    }
 	    catch {
 	    }
