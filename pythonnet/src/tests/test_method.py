@@ -8,8 +8,7 @@
 # ===========================================================================
 
 import sys, os, string, unittest, types
-from Python.Test import MethodTest
-from Python.Test import MethodTestSub
+from Python.Test import MethodTest, MethodTestSub
 import System
 
 class MethodTests(unittest.TestCase):
@@ -391,13 +390,17 @@ class MethodTests(unittest.TestCase):
     def testExplicitSelectionWithOutModifier(self):
         """Check explicit overload selection with out modifiers."""
         refstr = System.String("").GetType().MakeByRefType()
-        result = MethodTest.TestStringOutParams[str, refstr]("hi", "there")
+        result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
+            "hi", "there"
+            )
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
-        result = MethodTest.TestStringOutParams[str, refstr]("hi", None)
+        result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
+            "hi", None
+            )
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
@@ -407,120 +410,123 @@ class MethodTests(unittest.TestCase):
     def testExplicitSelectionWithRefModifier(self):
         """Check explicit overload selection with ref modifiers."""
         refstr = System.String("").GetType().MakeByRefType()        
-        result = MethodTest.TestStringRefParams[str, refstr]("hi", "there")
+        result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
+            "hi", "there"
+            )
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
-        result = MethodTest.TestStringRefParams[str, refstr]("hi", None)
+        result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
+            "hi", None
+            )
         self.failUnless(type(result) == type(()))
         self.failUnless(len(result) == 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
 
-    
     def testExplicitOverloadSelection(self):
         """Check explicit overload selection using [] syntax."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from System import Array
         inst = InterfaceTest()
 
-        value = MethodTest.TestOverloadSelection[System.Boolean](True)
+        value =MethodTest.Overloaded.__overloads__[System.Boolean](True)
         self.failUnless(value == True)
 
-        value = MethodTest.TestOverloadSelection[bool](True)
+        value = MethodTest.Overloaded.__overloads__[bool](True)
         self.failUnless(value == True)
 
-        value = MethodTest.TestOverloadSelection[System.Byte](255)
+        value = MethodTest.Overloaded.__overloads__[System.Byte](255)
         self.failUnless(value == 255)
 
-        value = MethodTest.TestOverloadSelection[System.SByte](127)
+        value = MethodTest.Overloaded.__overloads__[System.SByte](127)
         self.failUnless(value == 127)
 
-        value = MethodTest.TestOverloadSelection[System.Char](u'A')
+        value = MethodTest.Overloaded.__overloads__[System.Char](u'A')
         self.failUnless(value == u'A')
 
-        value = MethodTest.TestOverloadSelection[System.Char](65535)
+        value = MethodTest.Overloaded.__overloads__[System.Char](65535)
         self.failUnless(value == unichr(65535))
 
-        value = MethodTest.TestOverloadSelection[System.Int16](32767)
+        value = MethodTest.Overloaded.__overloads__[System.Int16](32767)
         self.failUnless(value == 32767)
 
-        value = MethodTest.TestOverloadSelection[System.Int32](2147483647)
+        value = MethodTest.Overloaded.__overloads__[System.Int32](2147483647)
         self.failUnless(value == 2147483647)
 
-        value = MethodTest.TestOverloadSelection[int](2147483647)
+        value = MethodTest.Overloaded.__overloads__[int](2147483647)
         self.failUnless(value == 2147483647)
 
-        value = MethodTest.TestOverloadSelection[System.Int64](
+        value = MethodTest.Overloaded.__overloads__[System.Int64](
             9223372036854775807L
             )
         self.failUnless(value == 9223372036854775807L)
 
-        value = MethodTest.TestOverloadSelection[long](
+        value = MethodTest.Overloaded.__overloads__[long](
             9223372036854775807L
             )
         self.failUnless(value == 9223372036854775807L)
 
-        value = MethodTest.TestOverloadSelection[System.UInt16](65000)
+        value = MethodTest.Overloaded.__overloads__[System.UInt16](65000)
         self.failUnless(value == 65000)
 
-        value = MethodTest.TestOverloadSelection[System.UInt32](4294967295L)
+        value = MethodTest.Overloaded.__overloads__[System.UInt32](4294967295L)
         self.failUnless(value == 4294967295L)
 
-        value = MethodTest.TestOverloadSelection[System.UInt64](
+        value = MethodTest.Overloaded.__overloads__[System.UInt64](
             18446744073709551615L
             )
         self.failUnless(value == 18446744073709551615L)
 
-        value = MethodTest.TestOverloadSelection[System.Single](3.402823e38)
+        value = MethodTest.Overloaded.__overloads__[System.Single](3.402823e38)
         self.failUnless(value == 3.402823e38)
 
-        value = MethodTest.TestOverloadSelection[System.Double](
+        value = MethodTest.Overloaded.__overloads__[System.Double](
             1.7976931348623157e308
             )
         self.failUnless(value == 1.7976931348623157e308)
 
-        value = MethodTest.TestOverloadSelection[float](
+        value = MethodTest.Overloaded.__overloads__[float](
             1.7976931348623157e308
             )
         self.failUnless(value == 1.7976931348623157e308)
 
-        value = MethodTest.TestOverloadSelection[System.Decimal](
+        value = MethodTest.Overloaded.__overloads__[System.Decimal](
             System.Decimal.One
             )
         self.failUnless(value == System.Decimal.One)
 
-        value = MethodTest.TestOverloadSelection[System.String]("spam")
+        value = MethodTest.Overloaded.__overloads__[System.String]("spam")
         self.failUnless(value == "spam")
 
-        value = MethodTest.TestOverloadSelection[str]("spam")
+        value = MethodTest.Overloaded.__overloads__[str]("spam")
         self.failUnless(value == "spam")
 
-        value = MethodTest.TestOverloadSelection[ShortEnum](ShortEnum.Zero)
+        value = MethodTest.Overloaded.__overloads__[ShortEnum](ShortEnum.Zero)
         self.failUnless(value == ShortEnum.Zero)
 
-        value = MethodTest.TestOverloadSelection[System.Object](inst)
+        value = MethodTest.Overloaded.__overloads__[System.Object](inst)
         self.failUnless(value.__class__ == inst.__class__)
 
-        value = MethodTest.TestOverloadSelection[InterfaceTest](inst)
+        value = MethodTest.Overloaded.__overloads__[InterfaceTest](inst)
         self.failUnless(value.__class__ == inst.__class__)
 
-        value = MethodTest.TestOverloadSelection[ISayHello1](inst)
+        value = MethodTest.Overloaded.__overloads__[ISayHello1](inst)
         self.failUnless(value.__class__ == inst.__class__)
 
-        atype = Array[System.Object]
-        value = MethodTest.TestOverloadSelection[str, int, atype](
+        atype = Array.__overloads__[System.Object]
+        value = MethodTest.Overloaded.__overloads__[str, int, atype](
             "one", 1, atype([1, 2, 3])
             )
         self.failUnless(value == 3)
 
-        value = MethodTest.TestOverloadSelection[str, int]("one", 1)
+        value = MethodTest.Overloaded.__overloads__[str, int]("one", 1)
         self.failUnless(value == 1)
 
-        value = MethodTest.TestOverloadSelection[int, str](1, "one")
+        value = MethodTest.Overloaded.__overloads__[int, str](1, "one")
         self.failUnless(value == 1)
 
 
@@ -532,486 +538,174 @@ class MethodTests(unittest.TestCase):
 
         vtype = Array[System.Boolean]
         input = vtype([True, True])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == True)
         self.failUnless(value[1] == True)        
 
         vtype = Array[bool]
         input = vtype([True, True])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == True)
         self.failUnless(value[1] == True)        
 
         vtype = Array[System.Byte]
         input = vtype([0, 255])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 255)        
         
         vtype = Array[System.SByte]
         input = vtype([0, 127])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 127)        
 
         vtype = Array[System.Char]
         input = vtype([u'A', u'Z'])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == u'A')
         self.failUnless(value[1] == u'Z')
 
         vtype = Array[System.Char]
         input = vtype([0, 65535])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == unichr(0))
         self.failUnless(value[1] == unichr(65535))        
 
         vtype = Array[System.Int16]
         input = vtype([0, 32767])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 32767)        
 
         vtype = Array[System.Int32]
         input = vtype([0, 2147483647])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 2147483647)        
 
         vtype = Array[int]
         input = vtype([0, 2147483647])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 2147483647)        
 
         vtype = Array[System.Int64]
         input = vtype([0, 9223372036854775807L])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 9223372036854775807L)        
 
         vtype = Array[long]
         input = vtype([0, 9223372036854775807L])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 9223372036854775807L)        
 
         vtype = Array[System.UInt16]
         input = vtype([0, 65000])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 65000)        
 
         vtype = Array[System.UInt32]
         input = vtype([0, 4294967295L])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 4294967295L)        
 
         vtype = Array[System.UInt64]
         input = vtype([0, 18446744073709551615L])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0)
         self.failUnless(value[1] == 18446744073709551615L)        
 
         vtype = Array[System.Single]
         input = vtype([0.0, 3.402823e38])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0.0)
         self.failUnless(value[1] == 3.402823e38)        
 
         vtype = Array[System.Double]
         input = vtype([0.0, 1.7976931348623157e308])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0.0)
         self.failUnless(value[1] == 1.7976931348623157e308)        
 
         vtype = Array[float]
         input = vtype([0.0, 1.7976931348623157e308])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == 0.0)
         self.failUnless(value[1] == 1.7976931348623157e308)        
 
         vtype = Array[System.Decimal]
         input = vtype([System.Decimal.Zero, System.Decimal.One])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == System.Decimal.Zero)
         self.failUnless(value[1] == System.Decimal.One)        
 
         vtype = Array[System.String]
         input = vtype(["one", "two"])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == "one")
         self.failUnless(value[1] == "two")
 
         vtype = Array[str]
         input = vtype(["one", "two"])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == "one")
         self.failUnless(value[1] == "two")
 
         vtype = Array[ShortEnum]
         input = vtype([ShortEnum.Zero, ShortEnum.One])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0] == ShortEnum.Zero)
         self.failUnless(value[1] == ShortEnum.One)
 
         vtype = Array[System.Object]
         input = vtype([inst, inst])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0].__class__ == inst.__class__)
         self.failUnless(value[1].__class__ == inst.__class__)        
 
         vtype = Array[InterfaceTest]
         input = vtype([inst, inst])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0].__class__ == inst.__class__)
         self.failUnless(value[1].__class__ == inst.__class__)        
 
         vtype = Array[ISayHello1]
         input = vtype([inst, inst])
-        value = MethodTest.TestOverloadSelection[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0].__class__ == inst.__class__)
         self.failUnless(value[1].__class__ == inst.__class__)        
-
-    def testOverloadSelectionWithGenericTypes(self):
-        """Check overload selection using generic types."""
-        from Python.Test import ISayHello1, InterfaceTest, ShortEnum
-        from Python.Test import GenericWrapper
-        inst = InterfaceTest()
-
-        vtype = GenericWrapper[System.Boolean]
-        input = vtype(True)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == True)
-
-        vtype = GenericWrapper[bool]
-        input = vtype(True)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == True)
-
-        vtype = GenericWrapper[System.Byte]
-        input = vtype(255)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 255)
-
-        vtype = GenericWrapper[System.SByte]
-        input = vtype(127)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 127)
-
-        vtype = GenericWrapper[System.Char]
-        input = vtype(u'A')
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == u'A')
-
-        vtype = GenericWrapper[System.Char]
-        input = vtype(65535)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == unichr(65535))
-
-        vtype = GenericWrapper[System.Int16]
-        input = vtype(32767)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 32767)
-
-        vtype = GenericWrapper[System.Int32]
-        input = vtype(2147483647)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 2147483647)
-
-        vtype = GenericWrapper[int]
-        input = vtype(2147483647)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 2147483647)
-
-        vtype = GenericWrapper[System.Int64]
-        input = vtype(9223372036854775807L)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 9223372036854775807L)
-
-        vtype = GenericWrapper[long]
-        input = vtype(9223372036854775807L)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 9223372036854775807L)
-
-        vtype = GenericWrapper[System.UInt16]
-        input = vtype(65000)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 65000)
-
-        vtype = GenericWrapper[System.UInt32]
-        input = vtype(4294967295L)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 4294967295L)
-
-        vtype = GenericWrapper[System.UInt64]
-        input = vtype(18446744073709551615L)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 18446744073709551615L)
-
-        vtype = GenericWrapper[System.Single]
-        input = vtype(3.402823e38)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 3.402823e38)
-
-        vtype = GenericWrapper[System.Double]
-        input = vtype(1.7976931348623157e308)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 1.7976931348623157e308)
-
-        vtype = GenericWrapper[float]
-        input = vtype(1.7976931348623157e308)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == 1.7976931348623157e308)
-
-        vtype = GenericWrapper[System.Decimal]
-        input = vtype(System.Decimal.One)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == System.Decimal.One)
-
-        vtype = GenericWrapper[System.String]
-        input = vtype("spam")
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == "spam")
-
-        vtype = GenericWrapper[str]
-        input = vtype("spam")
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == "spam")
-
-        vtype = GenericWrapper[ShortEnum]
-        input = vtype(ShortEnum.Zero)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value == ShortEnum.Zero)
-
-        vtype = GenericWrapper[System.Object]
-        input = vtype(inst)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value.__class__ == inst.__class__)
-
-        vtype = GenericWrapper[InterfaceTest]
-        input = vtype(inst)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value.__class__ == inst.__class__)
-
-        vtype = GenericWrapper[ISayHello1]
-        input = vtype(inst)
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value.value.__class__ == inst.__class__)
-
-        vtype = System.Array[GenericWrapper[int]]
-        input = vtype([GenericWrapper[int](0), GenericWrapper[int](1)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 0)
-        self.failUnless(value[1].value == 1)        
-
-
-    def testOverloadSelectionWithArraysOfGenericTypes(self):
-        """Check overload selection using arrays of generic types."""
-        from Python.Test import ISayHello1, InterfaceTest, ShortEnum
-        from Python.Test import GenericWrapper
-        inst = InterfaceTest()
-
-        gtype = GenericWrapper[System.Boolean]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(True),gtype(True)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == True)
-        self.failUnless(value.Length == 2)
-
-        gtype = GenericWrapper[bool]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(True), gtype(True)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == True)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Byte]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(255), gtype(255)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 255)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.SByte]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(127), gtype(127)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 127)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Char]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(u'A'), gtype(u'A')])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == u'A')
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Char]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(65535), gtype(65535)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == unichr(65535))
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Int16]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(32767),gtype(32767)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 32767)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Int32]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(2147483647), gtype(2147483647)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 2147483647)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[int]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(2147483647), gtype(2147483647)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 2147483647)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Int64]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(9223372036854775807L),
-                       gtype(9223372036854775807L)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 9223372036854775807L)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[long]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(9223372036854775807L),
-                       gtype(9223372036854775807L)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 9223372036854775807L)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.UInt16]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(65000), gtype(65000)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 65000)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.UInt32]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(4294967295L), gtype(4294967295L)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 4294967295L)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.UInt64]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(18446744073709551615L),
-                       gtype(18446744073709551615L)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 18446744073709551615L)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Single]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(3.402823e38), gtype(3.402823e38)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 3.402823e38)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Double]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(1.7976931348623157e308),
-                       gtype(1.7976931348623157e308)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 1.7976931348623157e308)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[float]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(1.7976931348623157e308),
-                       gtype(1.7976931348623157e308)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == 1.7976931348623157e308)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Decimal]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(System.Decimal.One),
-                       gtype(System.Decimal.One)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == System.Decimal.One)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.String]
-        vtype = System.Array[gtype]
-        input = vtype([gtype("spam"), gtype("spam")])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == "spam")
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[str]
-        vtype = System.Array[gtype]
-        input = vtype([gtype("spam"), gtype("spam")])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == "spam")
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[ShortEnum]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(ShortEnum.Zero), gtype(ShortEnum.Zero)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value == ShortEnum.Zero)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[System.Object]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(inst), gtype(inst)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value.__class__ == inst.__class__)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[InterfaceTest]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(inst), gtype(inst)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value.__class__ == inst.__class__)
-        self.failUnless(value.Length == 2)
-        
-        gtype = GenericWrapper[ISayHello1]
-        vtype = System.Array[gtype]
-        input = vtype([gtype(inst), gtype(inst)])
-        value = MethodTest.TestOverloadSelection[vtype](input)
-        self.failUnless(value[0].value.__class__ == inst.__class__)
-        self.failUnless(value.Length == 2)
 
 
     def testExplicitOverloadSelectionFailure(self):
         """Check that overload selection fails correctly."""
         
         def test():
-            value = MethodTest.TestOverloadSelection[System.Type](True)
+            value = MethodTest.Overloaded.__overloads__[System.Type](True)
 
         self.failUnlessRaises(TypeError, test)
 
         def test():
-            value = MethodTest.TestOverloadSelection[int, int](1, 1)
+            value = MethodTest.Overloaded.__overloads__[int, int](1, 1)
 
         self.failUnlessRaises(TypeError, test)
 
         def test():
-            value = MethodTest.TestOverloadSelection[str, int, int]("", 1, 1)
+            value = MethodTest.Overloaded.__overloads__[str, int, int](
+                "", 1, 1
+                )
 
         self.failUnlessRaises(TypeError, test)
 
         def test():
-            value = MethodTest.TestOverloadSelection[int, long](1)
+            value = MethodTest.Overloaded.__overloads__[int, long](1)
 
         self.failUnlessRaises(TypeError, test)
 
-        
 
 
 def test_suite():

@@ -81,7 +81,6 @@ class GenericTests(unittest.TestCase):
         self.failUnless(inst.HasValue)
         self.failUnless(inst.Value == 10)
 
-
     def testGenericInterface(self):
         pass
 
@@ -122,17 +121,11 @@ class GenericTests(unittest.TestCase):
         """
         Test the ability to disambiguate generic type names.
         """
-        from Python.Test import GenericNameTest1
+        from Python.Test import GenericNameTest1, GenericNameTest2
 
         # If both a non-generic and generic type exist for a name, the
         # unadorned name always resolves to the non-generic type.
-        inst = GenericNameTest1()
-        self.failUnless(_class().value == 0)
-        self.failUnless(_class.value == 0)
-
-        # We can also explicitly select the non-generic type using the []
-        # syntax by passing None for the type binding argument.
-        _class = GenericNameTest1[None]
+        _class = GenericNameTest1
         self.failUnless(_class().value == 0)
         self.failUnless(_class.value == 0)
 
@@ -140,7 +133,7 @@ class GenericTests(unittest.TestCase):
         # cannot be instantiated. It can only be used to bind a generic.
 
         def test():
-            inst = GenericcNameTest2()
+            inst = GenericNameTest2()
 
         self.failUnlessRaises(TypeError, test)
 
@@ -151,13 +144,6 @@ class GenericTests(unittest.TestCase):
         _class = GenericNameTest2[int, int]
         self.failUnless(_class().value == 2)
         self.failUnless(_class.value == 2)
-
-    def testGenericTypeIntrospectionMurkiness(self):
-        """
-        Test (and document) some murky areas with overloaded type names.
-        """
-        raise # dir(GenericNameTest1) ?
-        
 
     def _testGenericWrapperByType(self, ptype, value, test_type=0):
         from Python.Test import GenericWrapper
@@ -212,21 +198,25 @@ class GenericTests(unittest.TestCase):
         itype = GenericMethodTest[System.Type]
         stype = GenericStaticMethodTest[System.Type]
 
-        result = stype.OverloadedMethod[ptype](value)
+        # Explicit selection (static method)
+        result = stype.Overloaded[ptype](value)
         if test_type: self.failUnless(result.__class__ == value.__class__)
         else:         self.failUnless(result == value)
 
-        result = stype.OverloadedMethod(value)
+        # Type inference (static method)
+        result = stype.Overloaded(value)
         self.failUnless(result == value)
         if test_type: self.failUnless(result.__class__ == value.__class__)
         else:         self.failUnless(result == value)
 
-        result = itype().OverloadedMethod[ptype](value)
+        # Explicit selection (instance method)
+        result = itype().Overloaded[ptype](value)
         self.failUnless(result == value)        
         if test_type: self.failUnless(result.__class__ == value.__class__)
         else:         self.failUnless(result == value)
 
-        result = itype().OverloadedMethod(value)
+        # Type inference (instance method)
+        result = itype().Overloaded(value)
         self.failUnless(result == value)
         if test_type: self.failUnless(result.__class__ == value.__class__)
         else:         self.failUnless(result == value)
@@ -234,7 +224,8 @@ class GenericTests(unittest.TestCase):
         atype = System.Array[ptype]
         items = atype([value, value, value])
 
-        result = stype.OverloadedMethod[atype](items)
+        # Explicit selection (static method)
+        result = stype.Overloaded[atype](items)
         if test_type:
             self.failUnless(len(result) == 3)
             self.failUnless(result[0].__class__ == value.__class__)
@@ -244,7 +235,8 @@ class GenericTests(unittest.TestCase):
             self.failUnless(result[0] == value)
             self.failUnless(result[1] == value)            
 
-        result = stype.OverloadedMethod(items)
+        # Type inference (static method)
+        result = stype.Overloaded(items)
         if test_type:
             self.failUnless(len(result) == 3)
             self.failUnless(result[0].__class__ == value.__class__)
@@ -254,7 +246,8 @@ class GenericTests(unittest.TestCase):
             self.failUnless(result[0] == value)
             self.failUnless(result[1] == value)            
 
-        result = itype().OverloadedMethod[atype](items)
+        # Explicit selection (instance method)
+        result = itype().Overloaded[atype](items)
         if test_type:
             self.failUnless(len(result) == 3)
             self.failUnless(result[0].__class__ == value.__class__)
@@ -264,7 +257,8 @@ class GenericTests(unittest.TestCase):
             self.failUnless(result[0] == value)
             self.failUnless(result[1] == value)            
 
-        result = itype().OverloadedMethod(items)
+        # Type inference (instance method)
+        result = itype().Overloaded(items)
         if test_type:
             self.failUnless(len(result) == 3)
             self.failUnless(result[0].__class__ == value.__class__)
@@ -276,24 +270,26 @@ class GenericTests(unittest.TestCase):
 
     def testGenericMethodBinding(self):
         from Python.Test import GenericMethodTest, GenericStaticMethodTest
-
+        from System import InvalidOperationException
+        
         # Can invoke a static member on a closed generic type.
-        value = GenericStaticMethodTest[str].OverloadedMethod()
+        value = GenericStaticMethodTest[str].Overloaded()
         self.failUnless(value == 1)
 
         def test():
             # Cannot invoke a static member on an open type.
-            GenericStaticMethodTest.OverloadedMethod()
+            GenericStaticMethodTest.Overloaded()
 
-        self.failUnlessRaises(TypeError, test)
+        self.failUnlessRaises(InvalidOperationException, test)
 
         # Can invoke an instance member on a closed generic type.
-        value = GenericMethodTest[str]().OverloadedMethod()
+        value = GenericMethodTest[str]().Overloaded()
         self.failUnless(value == 1)
 
         def test():
-            # Cannot invoke an instance member on an open type.
-            GenericMethodTest().OverloadedMethod()
+            # Cannot invoke an instance member on an open type,
+            # because the open type cannot be instantiated.
+            GenericMethodTest().Overloaded()
 
         self.failUnlessRaises(TypeError, test)
 
@@ -337,87 +333,387 @@ class GenericTests(unittest.TestCase):
         type = GenericStaticMethodTest[str]
         inst = GenericMethodTest[str]()
 
-        # public static int OverloadedMethod()
-        value = type.OverloadedMethod()
+        # public static int Overloaded()
+        value = type.Overloaded()
         self.failUnless(value == 1)
 
-        # public int OverloadedMethod()
-        value = inst.OverloadedMethod()
+        # public int Overloaded()
+        value = inst.Overloaded()
         self.failUnless(value == 1)
+
+        # public static T Overloaded(T arg) (inferred)
+        value = type.Overloaded("test")
+        self.failUnless(value == "test")
+
+        # public T Overloaded(T arg) (inferred)
+        value = inst.Overloaded("test")
+        self.failUnless(value == "test")
+
+        # public static T Overloaded(T arg) (explicit)
+        value = type.Overloaded[str]("test")
+        self.failUnless(value == "test")
+
+        # public T Overloaded(T arg) (explicit)
+        value = inst.Overloaded[str]("test")
+        self.failUnless(value == "test")
+
+        # public static Q Overloaded<Q>(Q arg)
+        value = type.Overloaded[float](2.2)
+        self.failUnless(value == 2.2)
+
+        # public Q Overloaded<Q>(Q arg)
+        value = inst.Overloaded[float](2.2)
+        self.failUnless(value == 2.2)
+
+        # public static Q Overloaded<Q>(Q arg)
+        value = type.Overloaded[bool](True)
+        self.failUnless(value == True)
+
+        # public Q Overloaded<Q>(Q arg)
+        value = inst.Overloaded[bool](True)
+        self.failUnless(value == True)
+
+        # public static U Overloaded<Q, U>(Q arg1, U arg2)
+        value = type.Overloaded[bool, str](True, "true")
+        self.failUnless(value == "true")
+
+        # public U Overloaded<Q, U>(Q arg1, U arg2)
+        value = inst.Overloaded[bool, str](True, "true")
+        self.failUnless(value == "true")
+
+        # public static U Overloaded<Q, U>(Q arg1, U arg2)
+        value = type.Overloaded[str, bool]("true", True)
+        self.failUnless(value == True)
+
+        # public U Overloaded<Q, U>(Q arg1, U arg2)
+        value = inst.Overloaded[str, bool]("true", True)
+        self.failUnless(value == True)
+
+        def test():
+            value = type.Overloaded[str, bool, int]("true", True, 1)
+        self.failUnlessRaises(TypeError, test)
+
+        def test():
+            value = inst.Overloaded[str, bool, int]("true", True, 1)
+
+        self.failUnlessRaises(TypeError, test)
+
+    def testMethodOverloadSelectionWithGenericTypes(self):
+        """Check method overload selection using generic types."""
+        from Python.Test import ISayHello1, InterfaceTest, ShortEnum
+        from Python.Test import MethodTest, GenericWrapper
+        inst = InterfaceTest()
+
+        vtype = GenericWrapper[System.Boolean]
+        input = vtype(True)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == True)
+
+        vtype = GenericWrapper[bool]
+        input = vtype(True)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == True)
+
+        vtype = GenericWrapper[System.Byte]
+        input = vtype(255)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 255)
+
+        vtype = GenericWrapper[System.SByte]
+        input = vtype(127)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 127)
+
+        vtype = GenericWrapper[System.Char]
+        input = vtype(u'A')
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == u'A')
+
+        vtype = GenericWrapper[System.Char]
+        input = vtype(65535)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == unichr(65535))
+
+        vtype = GenericWrapper[System.Int16]
+        input = vtype(32767)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 32767)
+
+        vtype = GenericWrapper[System.Int32]
+        input = vtype(2147483647)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 2147483647)
+
+        vtype = GenericWrapper[int]
+        input = vtype(2147483647)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 2147483647)
+
+        vtype = GenericWrapper[System.Int64]
+        input = vtype(9223372036854775807L)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 9223372036854775807L)
+
+        vtype = GenericWrapper[long]
+        input = vtype(9223372036854775807L)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 9223372036854775807L)
+
+        vtype = GenericWrapper[System.UInt16]
+        input = vtype(65000)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 65000)
+
+        vtype = GenericWrapper[System.UInt32]
+        input = vtype(4294967295L)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 4294967295L)
+
+        vtype = GenericWrapper[System.UInt64]
+        input = vtype(18446744073709551615L)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 18446744073709551615L)
+
+        vtype = GenericWrapper[System.Single]
+        input = vtype(3.402823e38)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 3.402823e38)
+
+        vtype = GenericWrapper[System.Double]
+        input = vtype(1.7976931348623157e308)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 1.7976931348623157e308)
+
+        vtype = GenericWrapper[float]
+        input = vtype(1.7976931348623157e308)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == 1.7976931348623157e308)
+
+        vtype = GenericWrapper[System.Decimal]
+        input = vtype(System.Decimal.One)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == System.Decimal.One)
+
+        vtype = GenericWrapper[System.String]
+        input = vtype("spam")
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == "spam")
+
+        vtype = GenericWrapper[str]
+        input = vtype("spam")
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == "spam")
+
+        vtype = GenericWrapper[ShortEnum]
+        input = vtype(ShortEnum.Zero)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value == ShortEnum.Zero)
+
+        vtype = GenericWrapper[System.Object]
+        input = vtype(inst)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value.__class__ == inst.__class__)
+
+        vtype = GenericWrapper[InterfaceTest]
+        input = vtype(inst)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value.__class__ == inst.__class__)
+
+        vtype = GenericWrapper[ISayHello1]
+        input = vtype(inst)
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value.value.__class__ == inst.__class__)
+
+        vtype = System.Array[GenericWrapper[int]]
+        input = vtype([GenericWrapper[int](0), GenericWrapper[int](1)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 0)
+        self.failUnless(value[1].value == 1)        
+
+    def testOverloadSelectionWithArraysOfGenericTypes(self):
+        """Check overload selection using arrays of generic types."""
+        from Python.Test import ISayHello1, InterfaceTest, ShortEnum
+        from Python.Test import MethodTest, GenericWrapper
+        inst = InterfaceTest()
+
+        gtype = GenericWrapper[System.Boolean]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(True),gtype(True)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == True)
+        self.failUnless(value.Length == 2)
+
+        gtype = GenericWrapper[bool]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(True), gtype(True)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == True)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Byte]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(255), gtype(255)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 255)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.SByte]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(127), gtype(127)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 127)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Char]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(u'A'), gtype(u'A')])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == u'A')
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Char]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(65535), gtype(65535)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == unichr(65535))
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Int16]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(32767),gtype(32767)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 32767)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Int32]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(2147483647), gtype(2147483647)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 2147483647)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[int]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(2147483647), gtype(2147483647)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 2147483647)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Int64]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(9223372036854775807L),
+                       gtype(9223372036854775807L)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 9223372036854775807L)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[long]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(9223372036854775807L),
+                       gtype(9223372036854775807L)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 9223372036854775807L)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.UInt16]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(65000), gtype(65000)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 65000)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.UInt32]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(4294967295L), gtype(4294967295L)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 4294967295L)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.UInt64]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(18446744073709551615L),
+                       gtype(18446744073709551615L)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 18446744073709551615L)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Single]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(3.402823e38), gtype(3.402823e38)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 3.402823e38)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Double]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(1.7976931348623157e308),
+                       gtype(1.7976931348623157e308)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 1.7976931348623157e308)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[float]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(1.7976931348623157e308),
+                       gtype(1.7976931348623157e308)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == 1.7976931348623157e308)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Decimal]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(System.Decimal.One),
+                       gtype(System.Decimal.One)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == System.Decimal.One)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.String]
+        vtype = System.Array[gtype]
+        input = vtype([gtype("spam"), gtype("spam")])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == "spam")
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[str]
+        vtype = System.Array[gtype]
+        input = vtype([gtype("spam"), gtype("spam")])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == "spam")
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[ShortEnum]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(ShortEnum.Zero), gtype(ShortEnum.Zero)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value == ShortEnum.Zero)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[System.Object]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(inst), gtype(inst)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value.__class__ == inst.__class__)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[InterfaceTest]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(inst), gtype(inst)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value.__class__ == inst.__class__)
+        self.failUnless(value.Length == 2)
+        
+        gtype = GenericWrapper[ISayHello1]
+        vtype = System.Array[gtype]
+        input = vtype([gtype(inst), gtype(inst)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        self.failUnless(value[0].value.__class__ == inst.__class__)
+        self.failUnless(value.Length == 2)
+
+    def testNestedGenericClass(self):
+        """Check nested generic classes."""
+        pass
     
-        # public static int OverloadedMethod(int)
-        value = type.OverloadedMethod(2)
-        self.failUnless(value == 2)
-
-        # public static int OverloadedMethod(int) (explicit)
-        value = type.OverloadedMethod[int](2)
-        self.failUnless(value == 2)
-
-        # public int OverloadedMethod(int)
-        value = inst.OverloadedMethod(2)
-        self.failUnless(value == 2)
-
-        # public int OverloadedMethod(int) (explicit)
-        value = inst.OverloadedMethod[int](2)
-        self.failUnless(value == 2)
-
-        # public static T OverloadedMethod(T arg) (inferred)
-        value = type.OverloadedMethod("test")
-        self.failUnless(value == "test")
-
-        # public T OverloadedMethod(T arg) (inferred)
-        value = inst.OverloadedMethod("test")
-        self.failUnless(value == "test")
-
-        # public static T OverloadedMethod(T arg) (explicit)
-        value = type.OverloadedMethod[str]("test")
-        self.failUnless(value == "test")
-
-        # public T OverloadedMethod(T arg) (explicit)
-        value = inst.OverloadedMethod[str]("test")
-        self.failUnless(value == "test")
-
-        # public static Q OverloadedMethod<Q>(Q arg)
-        value = type.OverloadedMethod[float](2.2)
-        self.failUnless(value == 2.2)
-
-        # public Q OverloadedMethod<Q>(Q arg)
-        value = inst.OverloadedMethod[float](2.2)
-        self.failUnless(value == 2.2)
-
-        # public static Q OverloadedMethod<Q>(Q arg)
-        value = type.OverloadedMethod[bool](True)
-        self.failUnless(value == True)
-
-        # public Q OverloadedMethod<Q>(Q arg)
-        value = inst.OverloadedMethod[bool](True)
-        self.failUnless(value == True)
-
-        # public static U OverloadedMethod<Q, U>(Q arg1, U arg2)
-        value = type.OverloadedMethod[bool, str](True, "true")
-        self.failUnless(value == "true")
-
-        # public U OverloadedMethod<Q, U>(Q arg1, U arg2)
-        value = inst.OverloadedMethod[bool, str](True, "true")
-        self.failUnless(value == "true")
-
-        # public static U OverloadedMethod<Q, U>(Q arg1, U arg2)
-        value = type.OverloadedMethod[str, bool]("true", True)
-        self.failUnless(value == True)
-
-        # public U OverloadedMethod<Q, U>(Q arg1, U arg2)
-        value = inst.OverloadedMethod[str, bool]("true", True)
-        self.failUnless(value == True)
-
-        def test():
-            value = type.OverloadedMethod[str, bool, int]("true", True, 1)
-        self.failUnlessRaises(TypeError, test)
-
-        def test():
-            value = inst.OverloadedMethod[str, bool, int]("true", True, 1)
-
-        self.failUnlessRaises(TypeError, test)
-
 
 
 def test_suite():

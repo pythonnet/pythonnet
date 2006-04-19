@@ -24,10 +24,10 @@ namespace Python.Runtime {
 
     internal class AssemblyManager {
 
+	static Dictionary<string, Dictionary<Assembly, string>> namespaces;
+	static Dictionary<string, Dictionary<string, string>> generics;
 	static AssemblyLoadEventHandler lhandler;
 	static ResolveEventHandler rhandler;
-	static Dictionary<string, string> snames;
-	static Dictionary<string, Dictionary<Assembly, string>> namespaces;
 	static Dictionary<string, int> probed;
 	static List<Assembly> assemblies;	
 	static List<string> pypath;
@@ -42,11 +42,10 @@ namespace Python.Runtime {
 	//===================================================================
 
 	internal static void Initialize() {
-	    snames = new Dictionary<string, string>();
-
 	    namespaces = new 
                          Dictionary<string, Dictionary<Assembly, string>>(32);
 	    probed = new Dictionary<string, int>(32);
+	    generics = new Dictionary<string, Dictionary<string, string>>();
 	    assemblies = new List<Assembly>(16);
 	    pypath = new List<string>(16);
 
@@ -111,32 +110,6 @@ namespace Python.Runtime {
 		}
 	    }
 	    return LoadAssemblyPath(args.Name);
-	}
-
-
-	//===================================================================
-	// Certain kinds of names (such as the names of generic types) are
-	// mangled so we need to perform mapping from human-friendly names
-	// to inhumane names. Given a friendly name, this method will either
-	// return the associated inhumane name or the original name with no
-	// changes if there is no mapping for that name.
-	//===================================================================
-
-	static string ConvertSpecialName(string name) {
-	    if (snames.ContainsKey(name)) {
-		return snames[name];
-	    }
-	    return name;
-	}
-
-	static void AddSpecialName(string nice, string ugly) {
-	    if (!snames.ContainsKey(nice)) {
-		snames.Add(nice, ugly);
-	    }
-	    else {
-		//Console.WriteLine("dup: {0} : {1}", nice, ugly);
-	    }
-
 	}
 
 
@@ -211,7 +184,9 @@ namespace Python.Runtime {
 	public static Assembly LoadAssembly(string name) {
 	    Assembly assembly = null;
 	    try {
+#pragma warning disable 618
 		assembly = Assembly.LoadWithPartialName(name);
+#pragma warning restore 618
 	    }
 	    catch {
 	    }
@@ -272,11 +247,7 @@ namespace Python.Runtime {
 
 	    // A couple of things we want to do here: first, we want to
 	    // gather a list of all of the namespaces contributed to by
-	    // the assembly. Since we have to rifle through all of the
-	    // types in the assembly anyway, we also build up a running
-	    // list of 'odd names' like generic names so that we can map
-	    // them appropriately later while still being lazy about 
-	    // type lookup and instantiation.
+	    // the assembly.
 
 	    Type[] types = assembly.GetTypes();
 	    for (int i = 0; i < types.Length; i++) {
@@ -300,12 +271,35 @@ namespace Python.Runtime {
 		}
 
 		if (t.IsGenericTypeDefinition) {
-		    string qname = t.FullName;
-		    int tick = qname.IndexOf('`');
-		    if (tick != -1) {
-			AddSpecialName(qname.Substring(0, tick), qname);
-		    }
+		    GenericManager.Register(t);
+//  		    Dictionary<string, string> map = null;
+//  		    generics.TryGetValue(t.Namespace, out map);
+//  		    if (map == null) {
+//  			map = new Dictionary<string, string>();
+//  			generics[t.Namespace] = map;
+//  		    }
+//  		    string bname = t.Name;
+//  		    string mapped = null;
+//  		    int tick = bname.IndexOf("`");
+//  		    if (tick > -1) {
+//  			bname = bname.Substring(0, tick);
+//  		    }
+//  		    map.TryGetValue(bname, out mapped);
+//  		    if (mapped == null) {
+//  			map[bname] = t.Name;
+//  		    }
 		}
+
+//  		if (t.IsGenericTypeDefinition) {
+//  		    List<string> snames = null;
+//  		    special.TryGetValue(t.Namespace, out snames);
+//  		    if (snames == null) {
+//  			snames = new List<string>(8);
+//  			special[t.Namespace] = snames;
+//  		    }
+//  		    snames.Add(t.Name);
+//  		}
+
 	    
 	    }
 	}
@@ -326,8 +320,15 @@ namespace Python.Runtime {
 	//===================================================================
 
 	public static List<string> GetNames(string nsname) {
-	    List<string> names = new List<string>(32);
 	    Dictionary<string, int> seen = new Dictionary<string, int>();
+	    List<string> names = new List<string>(8);
+
+	    List<string> g = GenericManager.GetGenericBaseNames(nsname);
+	    if (g != null) {
+		foreach (string n in g) {
+		    names.Add(n);
+		}
+	    }
 
 	    if (namespaces.ContainsKey(nsname)) {
 		foreach (Assembly a in namespaces[nsname].Keys) {
@@ -335,7 +336,7 @@ namespace Python.Runtime {
 		    for (int i = 0; i < types.Length; i++) {
 			Type t = types[i];
 			if (t.Namespace == nsname) {
-			    names.Add(ConvertSpecialName(t.Name));
+			    names.Add(t.Name);
 			}
 		    }
 		}
@@ -349,7 +350,6 @@ namespace Python.Runtime {
 		    }
 		}
 	    }
-	    names.Sort(); // ensure that non-generics come first!
 	    return names;
 	}
 
@@ -359,13 +359,10 @@ namespace Python.Runtime {
 	// type. Returns null if the named type cannot be found.
 	//===================================================================
 
-	// funny names: generics, 
-
 	public static Type LookupType(string qname) {
-	    string name = ConvertSpecialName(qname);
 	    for (int i = 0; i < assemblies.Count; i++) {
 		Assembly assembly = (Assembly)assemblies[i];
-		Type type = assembly.GetType(name);
+		Type type = assembly.GetType(qname);
 		if (type != null) {
 		    return type;
 		}

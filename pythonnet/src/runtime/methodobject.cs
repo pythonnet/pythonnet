@@ -40,7 +40,6 @@ namespace Python.Runtime {
 	    }
 	}
 
-
 	public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
 	    return this.Invoke(inst, args, kw, null);
 	}
@@ -49,7 +48,6 @@ namespace Python.Runtime {
 				     MethodBase info) {
 	    return binder.Invoke(target, args, kw, info);
 	}
-
 
 	//====================================================================
 	// Helper to get docstrings from reflected method / param info.

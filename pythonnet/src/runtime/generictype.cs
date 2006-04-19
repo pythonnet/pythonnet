@@ -61,11 +61,35 @@ namespace Python.Runtime {
 				  "type is not a generic type definition"
 				  );
 	    }
+
+	    // This is a little tricky, because an instance of GenericType
+	    // may represent either a specific generic type, or act as an
+	    // alias for one or more generic types with the same base name.
+
 	    if (this.type.ContainsGenericParameters) {
-		Type t = this.type.MakeGenericType(types);
-		ManagedType c = (ManagedType)ClassManager.GetClass(t);
-		Runtime.Incref(c.pyHandle);
-		return c.pyHandle;
+		Type[] args = this.type.GetGenericArguments();
+		Type target = null;
+
+		if (args.Length == types.Length) {
+		    target = this.type;
+		}
+		else {
+		    foreach (Type t in 
+			     GenericManager.GenericsForType(this.type)) {
+			if (t.GetGenericArguments().Length == types.Length) {
+			    target = t;
+			    break;
+			}
+		    }
+		}
+
+		if (target != null) {
+		    Type t = target.MakeGenericType(types);
+		    ManagedType c = (ManagedType)ClassManager.GetClass(t);
+		    Runtime.Incref(c.pyHandle);
+		    return c.pyHandle;
+		}
+		return Exceptions.RaiseTypeError("no type matches params");
 	    }
 
 	    return Exceptions.RaiseTypeError("unsubscriptable object");

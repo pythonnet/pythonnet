@@ -43,7 +43,50 @@ namespace Python.Runtime {
 	    this.list.Add(m);
 	}
 
+	//====================================================================
+	// Given a sequence of MethodInfo and a sequence of types, return the 
+	// MethodInfo that matches the signature represented by those types.
+	//====================================================================
 
+ 	internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp) {
+ 	    int count = tp.Length;
+ 	    for (int i = 0; i < mi.Length; i++) {
+ 		ParameterInfo[] pi = mi[i].GetParameters();
+ 		if (pi.Length != count) {
+ 		    continue;
+ 		}
+ 		for (int n = 0; n < pi.Length; n++) {
+ 		    if (tp[n]!= pi[n].ParameterType) {
+ 			break;
+ 		    }
+		    if (n == (pi.Length - 1)) {
+			return mi[i];
+		    }
+ 		}
+ 	    }
+ 	    return null;
+ 	}
+ 
+	//====================================================================
+	// Given a sequence of MethodInfo and a sequence of type parameters, 
+	// return the MethodInfo that represents the matching closed generic.
+	//====================================================================
+
+ 	internal static MethodInfo MatchParameters(MethodInfo[] mi,Type[] tp) {
+ 	    int count = tp.Length;
+ 	    for (int i = 0; i < mi.Length; i++) {
+		if (!mi[i].IsGenericMethodDefinition) {
+		    continue;
+		}
+		Type[] args = mi[0].GetGenericArguments();
+		if (args.Length != count) {
+		    continue;
+		}
+		return mi[i].MakeGenericMethod(tp);
+	    }
+	    return null;
+ 	}
+ 
 	//====================================================================
 	// Return the array of MethodInfo for this method. The result array
 	// is arranged in order of precendence (done lazily to avoid doing it
@@ -59,7 +102,6 @@ namespace Python.Runtime {
 	    }
 	    return methods;
 	}
-
 
 	//====================================================================
 	// Precedence algorithm largely lifted from jython - the concerns are
@@ -77,7 +119,6 @@ namespace Python.Runtime {
 
 	    return val;
 	}
-
 
 	//====================================================================
 	// Return a precedence value for a particular Type object.

@@ -67,7 +67,7 @@ namespace Python.Runtime {
 	// not increment the Python refcount of the returned object.
 	//===================================================================
 
-	public ManagedType GetAttribute(string name) {
+	public ManagedType GetAttribute(string name, bool guess) {
 	    ManagedType cached = null;
 	    this.cache.TryGetValue(name, out cached);
 	    if (cached != null) {
@@ -127,6 +127,26 @@ namespace Python.Runtime {
 		}
 	    }
 
+	    // We didn't find the name, so we may need to see if there is a 
+	    // generic type with this base name. If so, we'll go ahead and
+	    // return it. Note that we store the mapping of the unmangled
+	    // name to generic type -  it is technically possible that some
+	    // future assembly load could contribute a non-generic type to
+	    // the current namespace with the given basename, but unlikely
+	    // enough to complicate the implementation for now.
+
+	    if (guess) {
+		string gname = GenericManager.GenericNameForBaseName(
+					      _namespace, name);
+		if (gname != null) {
+		    ManagedType o = GetAttribute(gname, false);
+		    if (o != null) {
+			StoreAttribute(name, o);
+			return o;
+		    }
+		}
+	    }
+
 	    return null;
 	}
 
@@ -152,21 +172,19 @@ namespace Python.Runtime {
 	    foreach (string name in AssemblyManager.GetNames(_namespace)) {
 		this.cache.TryGetValue(name, out m);
 		if (m == null) {
-		    ManagedType attr = this.GetAttribute(name);
+		    ManagedType attr = this.GetAttribute(name, true);
 		    if (Runtime.wrap_exceptions) {
 			if (attr is ClassBase) {
 			    ClassBase c = attr as ClassBase;
 			    if (c.is_exception) {
-				IntPtr p = attr.pyHandle;
-				IntPtr r = Exceptions.GetExceptionClassWrapper(p);
-				Runtime.PyDict_SetItemString(dict, name, r);
-				Runtime.Incref(r);
+			      IntPtr p = attr.pyHandle;
+			      IntPtr r =Exceptions.GetExceptionClassWrapper(p);
+			      Runtime.PyDict_SetItemString(dict, name, r);
+			      Runtime.Incref(r);
 
 			    }
 			}
 		    }
-		    
-
 		}
 	    }
 	}
@@ -199,7 +217,7 @@ namespace Python.Runtime {
 		return self.dict;
 	    }
 
-	    ManagedType attr = self.GetAttribute(name);
+	    ManagedType attr = self.GetAttribute(name, true);
 
 	    if (attr == null) {
 		Exceptions.SetError(Exceptions.AttributeError, name);

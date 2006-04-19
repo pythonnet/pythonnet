@@ -166,7 +166,7 @@ namespace Python.Runtime {
 
 	    for (int i = 0; i < names.Length; i++) {
 		string name = names[i];
-		ManagedType mt = tail.GetAttribute(name);
+		ManagedType mt = tail.GetAttribute(name, true);
 		if (!(mt is ModuleObject)) {
 		    string error = String.Format("No module named {0}", name);
 		    Exceptions.SetError(Exceptions.ImportError, error); 

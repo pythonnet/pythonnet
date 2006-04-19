@@ -72,23 +72,19 @@ namespace Python.Test {
 
 	public GenericMethodTest() {}
 
-	public int OverloadedMethod() {
+	public int Overloaded() {
 	    return 1;
 	}
 
-	public int OverloadedMethod(int arg) {
-	    return arg * 2;
-	}
-
-	public T OverloadedMethod(T arg) {
+	public T Overloaded(T arg) {
 	    return arg;
 	}
 
-	public Q OverloadedMethod<Q>(Q arg) {
+	public Q Overloaded<Q>(Q arg) {
 	    return arg;
 	}
 
-	public U OverloadedMethod<Q, U>(Q arg1, U arg2) {
+	public U Overloaded<Q, U>(Q arg1, U arg2) {
 	    return arg2;
 	}
 
@@ -98,23 +94,19 @@ namespace Python.Test {
 
 	public GenericStaticMethodTest() {}
 
-	public static int OverloadedMethod() {
+	public static int Overloaded() {
 	    return 1;
 	}
 
-	public static int OverloadedMethod(int arg) {
+	public static T Overloaded(T arg) {
 	    return arg;
 	}
 
-	public static T OverloadedMethod(T arg) {
+	public static Q Overloaded<Q>(Q arg) {
 	    return arg;
 	}
 
-	public static Q OverloadedMethod<Q>(Q arg) {
-	    return arg;
-	}
-
-	public static U OverloadedMethod<Q, U>(Q arg1, U arg2) {
+	public static U Overloaded<Q, U>(Q arg1, U arg2) {
 	    return arg2;
 	}
 

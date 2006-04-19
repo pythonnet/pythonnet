@@ -20,9 +20,9 @@ namespace Python.Runtime {
 
     internal class MethodBinding : ExtensionType {
 
-	MethodInfo info;
-	MethodObject m;
-	IntPtr target;
+	internal MethodInfo info;
+	internal MethodObject m;
+	internal IntPtr target;
 
 	public MethodBinding(MethodObject m, IntPtr target) : base() {
 	    Runtime.Incref(target);
@@ -31,73 +31,23 @@ namespace Python.Runtime {
 	    this.m = m;
 	}
 
-	//====================================================================
-	// Given a sequence of MethodInfo and a sequence of types, return the 
-	// MethodInfo that matches the signature represented by those types.
-	//====================================================================
-
- 	internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp) {
- 	    int count = tp.Length;
- 	    for (int i = 0; i < mi.Length; i++) {
- 		ParameterInfo[] pi = mi[i].GetParameters();
- 		if (pi.Length != count) {
- 		    continue;
- 		}
- 		for (int n = 0; n < pi.Length; n++) {
- 		    if (tp[n]!= pi[n].ParameterType) {
- 			break;
- 		    }
-		    if (n == (pi.Length - 1)) {
-			return mi[i];
-		    }
- 		}
- 	    }
- 	    return null;
- 	}
- 
-	//====================================================================
-	// Given a sequence of MethodInfo and a sequence of type parameters, 
-	// return the MethodInfo that represents the matching closed generic.
-	//====================================================================
-
- 	internal static MethodInfo MatchParameters(MethodInfo[] mi,Type[] tp) {
- 	    int count = tp.Length;
- 	    for (int i = 0; i < mi.Length; i++) {
-		if (!mi[i].IsGenericMethodDefinition) {
-		    continue;
-		}
-		Type[] args = mi[0].GetGenericArguments();
-		if (args.Length != count) {
-		    continue;
-		}
-		return mi[i].MakeGenericMethod(tp);
-	    }
-	    return null;
- 	}
- 
  	//====================================================================
- 	// Implement explicit overload selection using subscript syntax ([]).
+ 	// Implement binding of generic methods using the subscript syntax [].
  	//====================================================================
  
  	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
  	    MethodBinding self = (MethodBinding)GetManagedObject(tp);
-
-	    // Note: if the type provides a non-generic method with N args
-	    // and a generic method that takes N params, then we always
-	    // prefer the non-generic version in doing overload selection.
 
 	    Type[] types = Runtime.PythonArgsToTypeArray(idx);
 	    if (types == null) {
  		return Exceptions.RaiseTypeError("type(s) expected");
 	    }
 
- 	    MethodInfo mi = MatchSignature(self.m.info, types);
- 	    if (mi == null) {
-		mi = MatchParameters(self.m.info, types);
-		if (mi == null) {
-		    return Exceptions.RaiseTypeError("No match found");
-		}
- 	    }
+ 	    MethodInfo mi = MethodBinder.MatchParameters(self.m.info, types);
+	    if (mi == null) {
+		string e = "No match found for given type params";
+		return Exceptions.RaiseTypeError(e);
+	    }
 
  	    MethodBinding mb = new MethodBinding(self.m, self.target);
  	    mb.info = mi;
@@ -123,6 +73,12 @@ namespace Python.Runtime {
 		IntPtr doc = self.m.GetDocString();
 		Runtime.Incref(doc);
 		return doc;
+	    }
+
+	    if (name == "__overloads__") {
+		OverloadMapper om = new OverloadMapper(self.m, self.target);
+		Runtime.Incref(om.pyHandle);
+		return om.pyHandle;	    
 	    }
 
 	    return Runtime.PyObject_GenericGetAttr(ob, key);
