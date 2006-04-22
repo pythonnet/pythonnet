@@ -28,7 +28,6 @@ namespace Python.Runtime {
 
 	internal bool is_exception;
 	internal Indexer indexer;
-	internal Type[] generics;
 	internal Type type;
 
 	internal ClassBase(Type tp) : base() {

@@ -31,7 +31,6 @@ namespace Python.Runtime {
 	static Dictionary<string, int> probed;
 	static List<Assembly> assemblies;	
 	static List<string> pypath;
-	static int last;
 
 	private AssemblyManager() {}
 
@@ -271,7 +270,7 @@ namespace Python.Runtime {
 		}
 
 		if (t.IsGenericTypeDefinition) {
-		    GenericManager.Register(t);
+		    GenericUtil.Register(t);
 //  		    Dictionary<string, string> map = null;
 //  		    generics.TryGetValue(t.Namespace, out map);
 //  		    if (map == null) {
@@ -323,7 +322,7 @@ namespace Python.Runtime {
 	    Dictionary<string, int> seen = new Dictionary<string, int>();
 	    List<string> names = new List<string>(8);
 
-	    List<string> g = GenericManager.GetGenericBaseNames(nsname);
+	    List<string> g = GenericUtil.GetGenericBaseNames(nsname);
 	    if (g != null) {
 		foreach (string n in g) {
 		    names.Add(n);

@@ -75,7 +75,7 @@ namespace Python.Runtime {
 		}
 		else {
 		    foreach (Type t in 
-			     GenericManager.GenericsForType(this.type)) {
+			     GenericUtil.GenericsForType(this.type)) {
 			if (t.GetGenericArguments().Length == types.Length) {
 			    target = t;
 			    break;
