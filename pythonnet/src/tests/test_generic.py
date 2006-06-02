@@ -374,8 +374,8 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == True)
 
         # public static U Overloaded<Q, U>(Q arg1, U arg2)
-        value = type.Overloaded[bool, str](True, "true")
-        self.failUnless(value == "true")
+        #value = type.Overloaded[bool, str](True, "true")
+        #self.failUnless(value == "true")
 
         # public U Overloaded<Q, U>(Q arg1, U arg2)
         value = inst.Overloaded[bool, str](True, "true")
@@ -709,6 +709,10 @@ class GenericTests(unittest.TestCase):
         value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.failUnless(value[0].value.__class__ == inst.__class__)
         self.failUnless(value.Length == 2)
+
+    def testGenericOverloadSelectionMagicNameOnly(self):
+        """Test using only __overloads__ to select on type & sig"""
+        raise
 
     def testNestedGenericClass(self):
         """Check nested generic classes."""

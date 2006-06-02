@@ -28,6 +28,13 @@ namespace Python.Runtime {
     }
 
 
+    [Serializable()]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
+    internal class ModuleMethodAttribute : Attribute {
+	public ModuleMethodAttribute() {}
+    }
+
+
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     internal class ObjectOffset {
 
