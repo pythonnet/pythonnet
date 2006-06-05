@@ -22,6 +22,7 @@ namespace Python.Runtime {
 	static IntPtr py_import;
 	static ModuleObject root;
 	static MethodWrapper hook;
+	static ClrModule clr;
 	static int preload;
 
 	//===================================================================
@@ -45,7 +46,9 @@ namespace Python.Runtime {
 
 	    root = new ModuleObject("");
 	    Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
-	    Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
+
+	    clr = new ClrModule("clr");
+	    Runtime.PyDict_SetItemString(dict, "clr", clr.pyHandle);
 	    preload = -1;
 	}
 
@@ -99,9 +102,14 @@ namespace Python.Runtime {
 
 	    string mod_name = Runtime.GetManagedString(py_mod_name);
 
-	    if (mod_name == "CLR" || mod_name == "clr") {
+	    if (mod_name == "CLR") {
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
+	    }
+
+	    if (mod_name == "clr") {
+		Runtime.Incref(clr.pyHandle);
+		return clr.pyHandle;
 	    }
 
 	    string realname = mod_name;

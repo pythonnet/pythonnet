@@ -243,6 +243,51 @@ class MethodTests(unittest.TestCase):
         self.failUnless(r == None)
 
 
+    def testStringParamsArgs(self):
+        """Test use of string params."""
+        result = MethodTest.TestStringParamsArg('one', 'two', 'three')
+        self.failUnless(len(result) == 3)
+        self.failUnless(result[0] == 'one')
+        self.failUnless(result[1] == 'two')
+        self.failUnless(result[2] == 'three')        
+
+        result = MethodTest.TestStringParamsArg(['one', 'two', 'three'])
+        self.failUnless(len(result) == 3)
+        self.failUnless(result[0] == 'one')
+        self.failUnless(result[1] == 'two')
+        self.failUnless(result[2] == 'three')        
+
+
+    def testObjectParamsArgs(self):
+        """Test use of object params."""
+        result = MethodTest.TestObjectParamsArg('one', 'two', 'three')
+        self.failUnless(len(result) == 3)
+        self.failUnless(result[0] == 'one')
+        self.failUnless(result[1] == 'two')
+        self.failUnless(result[2] == 'three')        
+
+        result = MethodTest.TestObjectParamsArg(['one', 'two', 'three'])
+        self.failUnless(len(result) == 3)
+        self.failUnless(result[0] == 'one')
+        self.failUnless(result[1] == 'two')
+        self.failUnless(result[2] == 'three')        
+
+
+    def testValueParamsArgs(self):
+        """Test use of value type params."""
+        result = MethodTest.TestValueParamsArg(1, 2, 3)
+        self.failUnless(len(result) == 3)
+        self.failUnless(result[0] == 1)
+        self.failUnless(result[1] == 2)
+        self.failUnless(result[2] == 3)        
+
+        result = MethodTest.TestValueParamsArg([1, 2, 3])
+        self.failUnless(len(result) == 3)
+        self.failUnless(result[0] == 1)
+        self.failUnless(result[1] == 2)
+        self.failUnless(result[2] == 3)        
+
+
     def testStringOutParams(self):
         """Test use of string out-parameters."""
         result = MethodTest.TestStringOutParams("hi", "there")

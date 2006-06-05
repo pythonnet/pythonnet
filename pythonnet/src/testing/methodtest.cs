@@ -79,6 +79,34 @@ namespace Python.Test {
 	    return v;
 	}
 
+        public static string[] TestStringParamsArg(params string[] args) {
+	    return args;
+	}
+
+        public static object[] TestObjectParamsArg(params object[] args) {
+	    return args;
+	}
+
+        public static int[] TestValueParamsArg(params int[] args) {
+	    return args;
+	}
+
+        public static int[] TestOneArgWithParams(string s, params int[] args) {
+	    return args;
+	}
+
+        public static int[] TestTwoArgWithParams(string s, string x, 
+						 params int[] args) {
+	    return args;
+	}
+
+        public static int[] TestOverloadedParams(string v, params int[] args) {
+	    return args;
+	}
+
+        public static int[] TestOverloadedParams(int v, int[] args) {
+	    return args;
+	}
 
 	public static bool TestStringOutParams (string s, out string s1) {
 	    s1 = "output string";
@@ -127,6 +155,8 @@ namespace Python.Test {
 	public static void TestVoidSingleRefParam (ref int i) {
 	    i = 42;
 	}
+
+
 
 	// overload selection test support 
 

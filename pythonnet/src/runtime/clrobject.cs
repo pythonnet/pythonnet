@@ -38,9 +38,6 @@ namespace Python.Runtime {
 	    this.pyHandle = py;
 	    this.gcHandle = gc;
 	    inst = ob;
-
-	    //DebugUtil.DumpInst(py);
-
 	}
 
 

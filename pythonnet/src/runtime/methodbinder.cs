@@ -187,6 +187,12 @@ namespace Python.Runtime {
 		int count = pi.Length;
 		int outs = 0;
 
+		
+//  		if ((nargs > count) && (pi[count].ParameterType.IsArray)) {
+//  		    // See if we can map to a params signature
+
+//  		}
+
 		if ( nargs == count ) {
 		    Object[] margs = new Object[count];
 
@@ -219,7 +225,6 @@ namespace Python.Runtime {
 
 		    return new Binding(mi, target, margs, outs);
 		}
-
 	    }
 	    return null;
 	}

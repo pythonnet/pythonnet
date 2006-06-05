@@ -25,9 +25,10 @@ namespace Python.Runtime {
 
 	Dictionary<string, ManagedType> cache;
 	internal string moduleName;
+	internal IntPtr dict;
 	string _namespace;
 	static bool hacked;
-	IntPtr dict;
+
 
 	public ModuleObject(string name) : base() {
 	    moduleName = (name == String.Empty) ? "CLR" : name;
@@ -253,6 +254,8 @@ namespace Python.Runtime {
 	    string s = String.Format("<module '{0}'>", self.moduleName);
 	    return Runtime.PyString_FromString(s);
 	}
+
+
 
     }
 

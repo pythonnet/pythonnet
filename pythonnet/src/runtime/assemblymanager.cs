@@ -30,7 +30,7 @@ namespace Python.Runtime {
 	static ResolveEventHandler rhandler;
 	static Dictionary<string, int> probed;
 	static List<Assembly> assemblies;	
-	static List<string> pypath;
+	internal static List<string> pypath;
 
 	private AssemblyManager() {}
 
