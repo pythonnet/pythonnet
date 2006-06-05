@@ -20,6 +20,7 @@ namespace Python.Test {
 
     public delegate DelegateTest ObjectDelegate();
     public delegate string StringDelegate();
+    public delegate bool BoolDelegate();
 
 
     public class DelegateTest {
@@ -31,6 +32,7 @@ namespace Python.Test {
 
 	public StringDelegate stringDelegate;
 	public ObjectDelegate objectDelegate;
+	public BoolDelegate boolDelegate;
 
 	public DelegateTest() {
 
@@ -51,6 +53,11 @@ namespace Python.Test {
 	public DelegateTest CallObjectDelegate(ObjectDelegate d) {
 	    return d();
 	}
+
+	public bool CallBoolDelegate(BoolDelegate d) {
+	    return d();
+	}
+
 
     }
 

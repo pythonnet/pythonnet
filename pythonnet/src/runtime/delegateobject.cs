@@ -96,7 +96,6 @@ namespace Python.Runtime {
 	    if (d == null) {
 		return Exceptions.RaiseTypeError("invalid argument");
 	    }
-
 	    return self.binder.Invoke(ob, args, kw);
 	}
 

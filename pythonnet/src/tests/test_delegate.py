@@ -9,6 +9,7 @@
 
 from Python.Test import DelegateTest, PublicDelegate
 from Python.Test import StringDelegate, ObjectDelegate
+from Python.Test import BoolDelegate
 import sys, os, string, unittest, types
 import Python.Test as Test
 import System
@@ -298,6 +299,21 @@ class DelegateTests(unittest.TestCase):
         ob.stringDelegate = d
         self.failUnless(ob.stringDelegate == d)
 
+
+    def testBoolDelegate(self):
+        """Test boolean delegate."""
+
+        def always_so_negative():
+            return 0
+
+        d = BoolDelegate(always_so_negative)
+        ob = DelegateTest()
+        ob.CallBoolDelegate(d)
+        
+
+        self.failUnless(not d())
+
+        self.failUnless(not ob.CallBoolDelegate(d))
 
     # test async delegates
     

@@ -147,6 +147,9 @@ namespace Python.Runtime {
 	    if (method.ReturnType == voidtype) {
 		il.Emit(OpCodes.Pop);
 	    }
+	    else if (method.ReturnType.IsValueType) {
+		il.Emit(OpCodes.Unbox_Any, method.ReturnType);
+	    }
 
 	    il.Emit(OpCodes.Ret);
 
