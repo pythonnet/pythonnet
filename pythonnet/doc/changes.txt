@@ -30,6 +30,9 @@ Python for .NET Changes
       collections for some internals, better algorithms for assembly 
       scanning, etc.
 
+    - Fixed an unboxing issue in generated delegate implementation code 
+      that affected delegates that return value types.
+
 
   PythonNet 1.0 final
   ---------------------------------------------------------------------------
