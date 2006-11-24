@@ -8,6 +8,7 @@
 // ==========================================================================
 
 using System;
+using System.Collections;
 
 namespace Python.Runtime {
 
@@ -17,7 +18,7 @@ namespace Python.Runtime {
     /// http://www.python.org/doc/current/api/sequence.html for details.
     /// </summary>
 
-    public class PySequence : PyObject {
+    public class PySequence : PyObject, IEnumerable {
 
 	protected PySequence(IntPtr ptr) : base(ptr) {}
 
@@ -156,10 +157,16 @@ namespace Python.Runtime {
 		throw new PythonException();
 	    }
 	    return new PyObject(op);
-	}
-
-
-
     }
+
+    #region IEnumerable Members
+
+    public IEnumerator GetEnumerator()
+    {
+        return new PyIter(this);
+    }
+
+    #endregion
+}
 
 }
