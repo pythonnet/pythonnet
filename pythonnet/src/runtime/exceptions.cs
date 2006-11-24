@@ -298,7 +298,7 @@ namespace Python.Runtime {
 
 	    PythonException pe = e as PythonException;
 	    if (pe != null) {
-		Runtime.PyErr_SetObject(pe.Type, pe.Value);
+		Runtime.PyErr_SetObject(pe.PyType, pe.PyValue);
 		return;
 	    }
 

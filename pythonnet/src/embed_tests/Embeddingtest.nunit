@@ -1,7 +1,7 @@
 ﻿<NUnitProject>
   <Settings activeconfig="Debug" />
   <Config name="Debug" binpathtype="Auto">
-    <assembly path="bin\Release\EmbeddingTest.dll" />
+    <assembly path="bin\Release\Python.EmbeddingTest.dll" />
   </Config>
   <Config name="Release" binpathtype="Auto" />
 </NUnitProject>

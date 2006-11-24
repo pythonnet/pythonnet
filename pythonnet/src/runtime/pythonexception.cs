@@ -18,107 +18,130 @@ namespace Python.Runtime {
 
     public class PythonException : System.Exception {
 
-	private IntPtr excType = IntPtr.Zero;
-	private IntPtr excValue = IntPtr.Zero;
-	private IntPtr excTb = IntPtr.Zero;
-	private bool disposed = false;
+    private IntPtr _pyType = IntPtr.Zero;
+    private IntPtr _pyValue = IntPtr.Zero;
+    private IntPtr _pyTB = IntPtr.Zero;
+    private string _tb = "";
+    private string _message = "";
+    private bool disposed = false;
 
-	public PythonException() : base() {
-	    Runtime.PyErr_Fetch(ref excType, ref excValue, ref excTb);
-	    Runtime.Incref(excType);
-	    Runtime.Incref(excValue);
-	    Runtime.Incref(excTb);
+    public PythonException() : base()
+    {
+        Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
+        Runtime.Incref(_pyType);
+        Runtime.Incref(_pyValue);
+        Runtime.Incref(_pyTB);
+        IntPtr gs = PythonEngine.AcquireLock();
+        if ((_pyType != IntPtr.Zero) && (_pyValue != IntPtr.Zero))
+        {
+            string type = new PyObject(_pyType).ToString();
+            string message = Runtime.GetManagedString(_pyValue);
+            _message = type + " : " + message;
+        }
+        if (_pyTB != IntPtr.Zero)
+        {
+            PyObject tb_module = PythonEngine.ImportModule("traceback");
+            _tb = tb_module.InvokeMethod("format_tb", new PyObject(_pyTB)).ToString();
+        }
+        PythonEngine.ReleaseLock(gs);
+    }
 
-	}
+    // Ensure that encapsulated Python objects are decref'ed appropriately
+    // when the managed exception wrapper is garbage-collected.
 
-	// Ensure that encapsulated Python objects are decref'ed appropriately
-	// when the managed exception wrapper is garbage-collected.
-
-	~PythonException() {
-	    Dispose();
-	}
-
-
-	/// <summary>
-	/// Type Property
-	/// </summary>
-	///
-	/// <remarks>
-	/// Returns the exception type as a Python object.
-	/// </remarks>
-
-	public IntPtr Type {
-	    get {
-		return excType;
-	    }
-	}
-
-	/// <summary>
-	/// Value Property
-	/// </summary>
-	///
-	/// <remarks>
-	/// Returns the exception value as a Python object.
-	/// </remarks>
-
-	public IntPtr Value {
-	    get {
-		return excValue;
-	    }
-	}
-
-	/// <summary>
-	/// Traceback Property
-	/// </summary>
-	///
-	/// <remarks>
-	/// Returns the exception traceback as a Python object.
-	/// </remarks>
-
-	public IntPtr Traceback {
-	    get {
-		return excTb;
-	    }
-	}
+    ~PythonException() {
+        Dispose();
+    }
 
 
-	/// <summary>
-	/// Dispose Method
-	/// </summary>
-	///
-	/// <remarks>
-	/// The Dispose method provides a way to explicitly release the 
-	/// Python objects represented by a PythonException.
-	/// </remarks>
+    /// <summary>
+    /// PyType Property
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns the exception type as a Python object.
+    /// </remarks>
 
-	public void Dispose() {
-	    if (!disposed) {
-		if (Runtime.Py_IsInitialized() > 0) {
-		    IntPtr gs = PythonEngine.AcquireLock();
-		    Runtime.Decref(excType);
-		    Runtime.Decref(excValue);
-		    Runtime.Decref(excTb);
-		    PythonEngine.ReleaseLock(gs);
-		}
-		GC.SuppressFinalize(this);
-		disposed = true;
-	    }
-	}
+    public IntPtr PyType 
+    {
+        get { return _pyType; }
+    }
 
-	/// <summary>
-	/// Matches Method
-	/// </summary>
-	///
-	/// <remarks>
-	/// Returns true if the Python exception type represented by the 
-	/// PythonException instance matches the given exception type.
-	/// </remarks>
+    /// <summary>
+    /// PyValue Property
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns the exception value as a Python object.
+    /// </remarks>
 
-	public static bool Matches(IntPtr ob) {
-	    return Runtime.PyErr_ExceptionMatches(ob) != 0;
-	}
+    public IntPtr PyValue
+    {
+        get { return _pyValue; }
+    }
+
+    /// <summary>
+    /// Message Property
+    /// </summary>
+    ///
+    /// <remarks>
+    /// A string representing the python exception message.
+    /// </remarks>
+
+    public override string Message
+    {
+        get { return _message; }
+    }
+
+    /// <summary>
+    /// StackTrace Property
+    /// </summary>
+    ///
+    /// <remarks>
+    /// A string representing the python exception stack trace.
+    /// </remarks>
+
+    public override string StackTrace 
+    {
+        get { return _tb; }
+    }
+
+
+    /// <summary>
+    /// Dispose Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// The Dispose method provides a way to explicitly release the 
+    /// Python objects represented by a PythonException.
+    /// </remarks>
+
+    public void Dispose() {
+        if (!disposed) {
+        if (Runtime.Py_IsInitialized() > 0) {
+            IntPtr gs = PythonEngine.AcquireLock();
+            Runtime.Decref(_pyType);
+            Runtime.Decref(_pyValue);
+            Runtime.Decref(_pyTB);
+            PythonEngine.ReleaseLock(gs);
+        }
+        GC.SuppressFinalize(this);
+        disposed = true;
+        }
+    }
+
+    /// <summary>
+    /// Matches Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns true if the Python exception type represented by the 
+    /// PythonException instance matches the given exception type.
+    /// </remarks>
+
+    public static bool Matches(IntPtr ob) {
+        return Runtime.PyErr_ExceptionMatches(ob) != 0;
+    }
 
     } 
-
-
 }

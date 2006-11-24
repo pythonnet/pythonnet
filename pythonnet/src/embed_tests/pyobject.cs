@@ -2,7 +2,7 @@ using System;
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace EmbeddingTest
+namespace Python.EmbeddingTest
 {
     [TestFixture]
     public class PyObjectTest
