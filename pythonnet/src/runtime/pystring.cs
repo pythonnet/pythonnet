@@ -18,65 +18,65 @@ namespace Python.Runtime {
 
     public class PyString : PySequence {
 
-	/// <summary>
-	/// PyString Constructor
-	/// </summary>
-	///
-	/// <remarks>
-	/// Creates a new PyString from an existing object reference. Note 
-	/// that the instance assumes ownership of the object reference. 
-	/// The object reference is not checked for type-correctness. 
-	/// </remarks>
+    /// <summary>
+    /// PyString Constructor
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Creates a new PyString from an existing object reference. Note 
+    /// that the instance assumes ownership of the object reference. 
+    /// The object reference is not checked for type-correctness. 
+    /// </remarks>
 
-	public PyString(IntPtr ptr) : base(ptr) {}
-
-
-	/// <summary>
-	/// PyString Constructor
-	/// </summary>
-	///
-	/// <remarks>
-	/// Copy constructor - obtain a PyString from a generic PyObject. 
-	/// An ArgumentException will be thrown if the given object is not 
-	/// a Python string object.
-	/// </remarks>
-
-	public PyString(PyObject o) : base() {
-	    if (!IsStringType(o)) {
-		throw new ArgumentException("object is not a string");
-	    }
-	    Runtime.Incref(o.obj);
-	    obj = o.obj;
-	}
+    public PyString(IntPtr ptr) : base(ptr) {}
 
 
-	/// <summary>
-	/// PyString Constructor
-	/// </summary>
-	///
-	/// <remarks>
-	/// Creates a Python string from a managed string.
-	/// </remarks>
+    /// <summary>
+    /// PyString Constructor
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Copy constructor - obtain a PyString from a generic PyObject. 
+    /// An ArgumentException will be thrown if the given object is not 
+    /// a Python string object.
+    /// </remarks>
 
-	public PyString(string s) : base() {
-	    obj = Runtime.PyString_FromStringAndSize(s, s.Length);
-	    if (obj == IntPtr.Zero) {
-		throw new PythonException();
-	    }
-	}
+    public PyString(PyObject o) : base() {
+        if (!IsStringType(o)) {
+            throw new ArgumentException("object is not a string");
+        }
+        Runtime.Incref(o.obj);
+        obj = o.obj;
+    }
 
 
-	/// <summary>
-	/// IsStringType Method
-	/// </summary>
-	///
-	/// <remarks>
-	/// Returns true if the given object is a Python string.
-	/// </remarks>
+    /// <summary>
+    /// PyString Constructor
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Creates a Python string from a managed string.
+    /// </remarks>
 
-	public static bool IsStringType(PyObject value) {
-	    return Runtime.PyString_Check(value.obj);
-	}
+    public PyString(string s) : base() {
+        obj = Runtime.PyUnicode_FromUnicode(s, s.Length);
+        if (obj == IntPtr.Zero) {
+            throw new PythonException();
+        }
+    }
+
+
+    /// <summary>
+    /// IsStringType Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns true if the given object is a Python string.
+    /// </remarks>
+
+    public static bool IsStringType(PyObject value) {
+        return Runtime.PyString_Check(value.obj);
+    }
 
     }
 
