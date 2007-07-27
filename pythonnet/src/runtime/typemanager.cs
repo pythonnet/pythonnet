@@ -124,7 +124,16 @@ namespace Python.Runtime {
 	    }
 
 	    IntPtr base_ = IntPtr.Zero;
-	    if (clrType.BaseType != null) {
+            // XXX Hack, use a different base class for System.Exception
+            // Python 2.5+ allows new style class exceptions but they *must*
+            // subclass BaseException (or better Exception).
+#if (PYTHON25 || PYTHON26)
+            if (clrType == typeof(System.Exception)) {
+                base_ = Exceptions.Exception;
+                Runtime.Incref(base_);
+            } else
+#endif
+            if (clrType.BaseType != null) {
 		ClassBase bc = ClassManager.GetClass(clrType.BaseType);
 		base_ = bc.pyHandle;
 	    }

@@ -1,6 +1,54 @@
 Python for .NET Changes
 -----------------------
 
+  PythonNet 2.0 alpha 2
+  ---------------------------------------------------------------------------
+  
+    - First work on Python 2.5 compatibility. The destination version can be
+      set by defining PYTHON24 or PYTHON25. Python 2.6 compatibility is in
+      work. [tiran]
+    
+    - Added VS 2005 solution and project files including a UnitTest
+      configuration which runs the unit test suite. [tiran]
+      
+    - Enhanced unit test suite. All test cases are combined in a single
+      test suite now. [tiran]
+    
+    - Fixed bugs in generics support for all Python versions. [tiran]
+    
+    - Fixed exception bugs for Python 2.5+. When compiled for Python 2.5+ all
+      managed exceptions are based on Python's exceptions.Exception class.
+      [tiran]
+      
+    - Implemented a preload switch. Automatic preloading can be enabled by
+      setting clr.preload to true. Preloading is automatically enabled for
+      interactive Python shells and disabled in all other cases. [tiran]
+      
+    - Added deprecation warnings for importing from CLR.* and the CLR module.
+      [tiran]
+    
+    - Implemented support for methods with variable arguments 
+      spam(params object[] egg) [tiran]
+
+    - Fixed Mono support by adding a custom marshaler for UCS-4 unicode,
+      fixing a some ref counter bugs and creating a new makefile.mono.
+      [tiran] 
+
+    - Added a standard python extension to load the clr environment 
+      (src/monoclr). XXX DOES NOT WORK
+      [tiran]
+
+    - Added yet another python prompt. This time it's a C application that
+      embedds both Python and Mono. It may be useful as an example app for
+      others and I need it to debug a nasty bug. [tiran]
+
+    - Implemented ModuleFunctionAttribute and added ForbidPythonThreadsAttribute.
+      The latter is required for module functions which invoke Python methods.
+      [tiran]
+
+    - Added clr.AddReference("assembly name"), clr.FindAssembly("name") and
+      clr.ListAssemblies(verbose). [tiran]
+
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
 

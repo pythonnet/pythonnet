@@ -25,6 +25,7 @@ namespace Python.Runtime {
 	public ArrayList list;
 	public MethodBase[] methods;
 	public bool init = false;
+        public bool allow_threads = true;
 
 	internal MethodBinder () {
 	    this.list = new ArrayList();
@@ -78,7 +79,7 @@ namespace Python.Runtime {
 		if (!mi[i].IsGenericMethodDefinition) {
 		    continue;
 		}
-		Type[] args = mi[0].GetGenericArguments();
+		Type[] args = mi[i].GetGenericArguments();
 		if (args.Length != count) {
 		    continue;
 		}
@@ -168,7 +169,7 @@ namespace Python.Runtime {
 			      MethodBase info) {
 	    // loop to find match, return invoker w/ or /wo error
 	    MethodBase[] _methods = null;
-	    int nargs = Runtime.PyTuple_Size(args);
+	    int pynargs = Runtime.PyTuple_Size(args);
 	    object arg;
 
  	    if (info != null) {
@@ -184,20 +185,35 @@ namespace Python.Runtime {
 	    for (int i = 0; i < _methods.Length; i++) {
 		MethodBase mi = _methods[i];
 		ParameterInfo[] pi = mi.GetParameters();
-		int count = pi.Length;
+		int clrnargs = pi.Length;
+                bool match = false;
+                int arrayStart = -1;
 		int outs = 0;
 
-		
-//  		if ((nargs > count) && (pi[count].ParameterType.IsArray)) {
-//  		    // See if we can map to a params signature
+                if (pynargs == clrnargs) { 
+                    match = true; 
+                } else if ((pynargs > clrnargs) && (clrnargs > 0) &&
+                           (pi[clrnargs-1].ParameterType.IsArray)) {
+                    // The last argument of the mananged functions seems to
+                    // accept multiple arguments as a array. Hopefully it's a
+                    // spam(params object[] egg) style method
+                    match = true;
+                    arrayStart = clrnargs - 1;
+                }
 
-//  		}
+                if (match) {
+		    Object[] margs = new Object[clrnargs];
 
-		if ( nargs == count ) {
-		    Object[] margs = new Object[count];
-
-		    for (int n = 0; n < count; n++) {
-			IntPtr op = Runtime.PyTuple_GetItem(args, n);
+		    for (int n = 0; n < clrnargs; n++) {
+                        IntPtr op;
+                        if (arrayStart == n) {
+                            // map remaining Python arguments to a tuple since
+                            // the managed function accepts it - hopefully :]
+                            op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
+                        }
+                        else {
+                            op = Runtime.PyTuple_GetItem(args, n);
+                        }
 			Type type = pi[n].ParameterType;
 			if (pi[n].IsOut || type.IsByRef) {
 			    outs++;
@@ -208,6 +224,11 @@ namespace Python.Runtime {
 			    margs = null;
 			    break;
 			}
+                        if (arrayStart == n) {
+                            // GetSlice() creates a new reference but GetItem()
+                            // returns only a borrow reference.
+                            Runtime.Decref(op);
+                        }
 			margs[n] = arg;
 		    }
 		    
@@ -238,15 +259,19 @@ namespace Python.Runtime {
 				       MethodBase info) {
 	    Binding binding = this.Bind(inst, args, kw, info);
 	    Object result;
+            IntPtr ts = IntPtr.Zero;
 
 	    if (binding == null) {
 		Exceptions.SetError(Exceptions.TypeError, 
-				    "no method matches given arguments"
+				    "No method matches given arguments"
 				    );
 		return IntPtr.Zero;
 	    }
 
-	    IntPtr ts = PythonEngine.BeginAllowThreads();
+            if (allow_threads) {
+                ts = PythonEngine.BeginAllowThreads(); 
+            }
+
 	    try {
 		result = binding.info.Invoke(binding.inst, 
 					     BindingFlags.Default, 
@@ -258,12 +283,16 @@ namespace Python.Runtime {
 		if (e.InnerException != null) {
 		    e = e.InnerException;
 		}
-		PythonEngine.EndAllowThreads(ts);
+                if (allow_threads) {
+                    PythonEngine.EndAllowThreads(ts);
+                }
 		Exceptions.SetError(e);
 		return IntPtr.Zero;
 	    }
 
-	    PythonEngine.EndAllowThreads(ts);
+            if (allow_threads) {
+                PythonEngine.EndAllowThreads(ts);
+            }
 
 	    // If there are out parameters, we return a tuple containing
 	    // the result followed by the out parameters. If there is only

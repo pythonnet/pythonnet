@@ -18,12 +18,13 @@ namespace Python.Runtime {
 
     /// <summary>
     /// Debugging helper utilities.
+    /// The methods are only executed when the DEBUG flag is set. Otherwise
+    /// they are automagically hidden by the compiler and silently surpressed.
     /// </summary>
 
     internal class DebugUtil {
 
-
-
+        [Conditional("DEBUG")]
 	public static void Print(string msg, params IntPtr[] args) {
 	    string result = msg;
 	    result += " ";
@@ -41,7 +42,12 @@ namespace Python.Runtime {
 	    return;
 	}
 
+        [Conditional("DEBUG")]
+        public static void Print(string msg) {
+            Console.WriteLine(msg);
+        }
 
+        [Conditional("DEBUG")]
 	internal static void DumpType(IntPtr type) {
 	    IntPtr op = Marshal.ReadIntPtr(type, TypeOffset.tp_name);
 	    string name = Marshal.PtrToStringAnsi(op);
@@ -84,7 +90,7 @@ namespace Python.Runtime {
 
 	}
 
-
+        [Conditional("DEBUG")]
 	internal static void DumpInst(IntPtr ob) {
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);
 	    int sz = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_basicsize);
@@ -99,7 +105,7 @@ namespace Python.Runtime {
 	    Console.WriteLine("");
 	}
 
-
+        [Conditional("DEBUG")]
 	internal static void debug(string msg) {
 	    StackTrace st = new StackTrace(1, true);
 	    StackFrame sf = st.GetFrame(0);
@@ -118,4 +124,5 @@ namespace Python.Runtime {
 
 
 }
+
 

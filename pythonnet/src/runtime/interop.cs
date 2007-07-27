@@ -27,12 +27,19 @@ namespace Python.Runtime {
 	public PythonMethodAttribute() {}
     }
 
-
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class ModuleFunctionAttribute : Attribute {
 	public ModuleFunctionAttribute() {}
     }
+
+    [Serializable()]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
+    internal class ForbidPythonThreadsAttribute : Attribute
+    {
+        public ForbidPythonThreadsAttribute() { }
+    }
+
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Property)]
@@ -46,10 +53,16 @@ namespace Python.Runtime {
 
 	static ObjectOffset() {
 	    int size = IntPtr.Size;
-	    ob_refcnt = 0;
-	    ob_type = 1 * size;
-	    ob_dict = 2 * size;
-	    ob_data = 3 * size;
+            int n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD 
+#if (Py_DEBUG)
+            _ob_next = 0;
+            _ob_prev = 1 * size;
+            n = 2;
+#endif 
+	    ob_refcnt = (n+0) * size;
+	    ob_type = (n+1) * size;
+	    ob_dict = (n+2) * size;
+	    ob_data = (n+3) * size;
 	}
 
 	public static int magic() {
@@ -57,9 +70,17 @@ namespace Python.Runtime {
 	}
 
 	public static int Size() {
-	    return 4 * IntPtr.Size;
+#if (Py_DEBUG)
+	    return 6 * IntPtr.Size;
+#else
+            return 4 * IntPtr.Size;
+#endif
 	}
 
+#if (Py_DEBUG)
+        public static int _ob_next;
+        public static int _ob_prev;
+#endif
 	public static int ob_refcnt;
 	public static int ob_type;
 	public static int ob_dict;
@@ -82,7 +103,11 @@ namespace Python.Runtime {
 	public static int magic() {
 	    return ob_size;
 	}
-	
+
+#if (Py_DEBUG)
+        public static int _ob_next = 0;
+        public static int _ob_prev = 0;
+#endif
 	public static int ob_refcnt = 0;
 	public static int ob_type = 0;
 	public static int ob_size = 0;
@@ -131,6 +156,14 @@ namespace Python.Runtime {
 	public static int tp_subclasses = 0;
 	public static int tp_weaklist = 0;
 	public static int tp_del = 0;
+        // COUNT_ALLOCS adds some more stuff to PyTypeObject 
+#if (Py_COUNT_ALLOCS)
+        public static int tp_allocs = 0;
+        public static int tp_frees = 0;
+        public static int tp_maxalloc = 0;
+        public static int tp_prev = 0;
+        public static int tp_next = 0;
+#endif
 
 	public static int nb_add = 0;
 	public static int nb_subtract = 0;
@@ -170,6 +203,9 @@ namespace Python.Runtime {
 	public static int nb_true_divide = 0;
 	public static int nb_inplace_floor_divide = 0;
 	public static int nb_inplace_true_divide = 0;
+#if (PYTHON25 || PYTHON26)
+        public static int nb_index = 0;
+#endif
 
 	public static int mp_length = 0;
 	public static int mp_subscript = 0;
@@ -213,15 +249,37 @@ namespace Python.Runtime {
 	public static int Ready = (1 << 12);
 	public static int Readying = (1 << 13);
 	public static int HaveGC = (1 << 14);
-	public static int Managed = (1 << 29);
-	public static int Subclass = (1 << 30);
-	public static int Default = (1 << 0) |
-	                     (1 << 1) |
-	                     (1 << 3) |
-	                     (1 << 5) | 
-	                     (1 << 6) | 
-	                     (1 << 7) |
-	                     (1 << 8) | 0;
+        // 15 and 16 are reserved for stackless
+        public static int HaveStacklessExtension = 0;
+#if (PYTHON25 || PYTHON26)
+        public static int HaveIndex = (1 << 17);
+#endif
+        public static int Managed = (1 << 21); // PythonNet specific?
+        public static int Subclass = (1 << 22); // PythonNet specific?
+#if (PYTHON26)
+        // TODO: Implement FastSubclass functions
+        public static int IntSubclass = (1 << 23);
+        public static int LongSubclass = (1 << 24);
+        public static int ListSubclass = (1 << 25);
+        public static int TupleSubclass = (1 << 26);
+        public static int StringSubclass = (1 << 27);
+        public static int UnicodeSubclass = (1 << 28);
+        public static int DictSubclass = (1 << 29);
+        public static int BaseExceptionSubclass = (1 << 30);
+        public static int TypeSubclass = (1 << 31);
+#endif
+	public static int Default = (HaveGetCharBuffer |
+	                     HaveSequenceIn |
+	                     HaveInPlaceOps |
+	                     HaveRichCompare |
+	                     HaveWeakRefs |
+	                     HaveIter |
+	                     HaveClass |
+                             HaveStacklessExtension |
+#if (PYTHON25 || PYTHON26)
+	                     HaveIndex | 
+#endif
+                             0);
     }
 
 
@@ -234,7 +292,6 @@ namespace Python.Runtime {
 
 	static ArrayList keepAlive;
 	static Hashtable pmap;
- 	static IntPtr temp;
 
 	static Interop() {
 
@@ -250,7 +307,7 @@ namespace Python.Runtime {
 	    }
 
 	    keepAlive = new ArrayList();
-	    temp = Marshal.AllocHGlobal(IntPtr.Size);
+	    Marshal.AllocHGlobal(IntPtr.Size);
 	    pmap = new Hashtable();
 
 	    pmap["tp_dealloc"] = p["DestructorFunc"];
@@ -315,6 +372,9 @@ namespace Python.Runtime {
 	    pmap["nb_true_divide"] = p["BinaryFunc"];
 	    pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
 	    pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
+#if (PYTHON25 || Python26)
+            pmap["nb_index"] = p["UnaryFunc"];
+#endif
 
 	    pmap["sq_length"] = p["InquiryFunc"];
 	    pmap["sq_concat"] = p["BinaryFunc"];

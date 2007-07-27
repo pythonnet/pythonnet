@@ -46,7 +46,7 @@ namespace Python.Runtime {
 		return Exceptions.RaiseTypeError("invalid argument list");
 	    }
 
-	    IntPtr name = Runtime.PyTuple_GetItem(args, 0);
+	    //IntPtr name = Runtime.PyTuple_GetItem(args, 0);
 	    IntPtr bases = Runtime.PyTuple_GetItem(args, 1);
 	    IntPtr dict = Runtime.PyTuple_GetItem(args, 2);
 

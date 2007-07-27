@@ -17,7 +17,8 @@ class ConstructorTests(unittest.TestCase):
 
     def testEnumConstructor(self):
         """Test enum constructor args"""
-        from Test import EnumConstructorTest
+        from System import TypeCode
+        from Python.Test import EnumConstructorTest
 
         ob = EnumConstructorTest(TypeCode.Int32)
         self.failUnless(ob.value == TypeCode.Int32)
@@ -25,7 +26,7 @@ class ConstructorTests(unittest.TestCase):
 
     def testFlagsConstructor(self):
         """Test flags constructor args"""
-        from Test import FlagsConstructorTest
+        from Python.Test import FlagsConstructorTest
         from System.IO import FileAccess
         
         flags = FileAccess.Read | FileAccess.Write
@@ -35,7 +36,8 @@ class ConstructorTests(unittest.TestCase):
 
     def testStructConstructor(self):
         """Test struct constructor args"""
-        from Test import StructConstructorTest
+        from System import Guid
+        from Python.Test import StructConstructorTest
 
         guid = Guid.NewGuid()
         ob = StructConstructorTest(guid)
@@ -44,7 +46,7 @@ class ConstructorTests(unittest.TestCase):
 
     def testSubclassConstructor(self):
         """Test subclass constructor args"""
-        from Test import SubclassConstructorTest
+        from Python.Test import SubclassConstructorTest
         from System.Windows.Forms import Form, Control
 
         class sub(Form):
@@ -63,6 +65,5 @@ def main():
     unittest.TextTestRunner().run(test_suite())
 
 if __name__ == '__main__':
-    testcase.setup()
     main()
 

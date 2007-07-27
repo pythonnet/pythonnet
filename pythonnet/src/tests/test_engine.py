@@ -10,6 +10,7 @@
 import sys, os, string, unittest, types
 from Python.Runtime import PythonEngine
 
+# XXX This test module isn't used!
 
 class EngineTests(unittest.TestCase):
     """Test PythonEngine embedding APIs."""
@@ -49,6 +50,5 @@ def main():
     unittest.TextTestRunner().run(test_suite())
 
 if __name__ == '__main__':
-    testcase.setup()
     main()
 

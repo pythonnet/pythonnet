@@ -25,11 +25,11 @@ namespace Python.Runtime {
     internal class AssemblyManager {
 
 	static Dictionary<string, Dictionary<Assembly, string>> namespaces;
-	static Dictionary<string, Dictionary<string, string>> generics;
+	//static Dictionary<string, Dictionary<string, string>> generics;
 	static AssemblyLoadEventHandler lhandler;
 	static ResolveEventHandler rhandler;
 	static Dictionary<string, int> probed;
-	static List<Assembly> assemblies;	
+	static List<Assembly> assemblies;
 	internal static List<string> pypath;
 
 	private AssemblyManager() {}
@@ -44,7 +44,7 @@ namespace Python.Runtime {
 	    namespaces = new 
                          Dictionary<string, Dictionary<Assembly, string>>(32);
 	    probed = new Dictionary<string, int>(32);
-	    generics = new Dictionary<string, Dictionary<string, string>>();
+	    //generics = new Dictionary<string, Dictionary<string, string>>();
 	    assemblies = new List<Assembly>(16);
 	    pypath = new List<string>(16);
 
@@ -148,7 +148,7 @@ namespace Python.Runtime {
 	// using standard load semantics (app base directory then GAC, etc.)
 	//===================================================================
 
-	static string FindAssembly(string name) {
+	public static string FindAssembly(string name) {
 	    char sep = Path.DirectorySeparatorChar;
 	    string path;
 	    string temp;
@@ -183,12 +183,9 @@ namespace Python.Runtime {
 	public static Assembly LoadAssembly(string name) {
 	    Assembly assembly = null;
 	    try {
-
-		assembly = Assembly.LoadWithPartialName(name);
-
+                assembly = Assembly.Load(name);
 	    }
-	    catch {
-	    }
+	    catch { }
 	    return assembly;
 	}
 
@@ -303,6 +300,17 @@ namespace Python.Runtime {
 	    }
 	}
 
+        public static AssemblyName[] ListAssemblies()
+        {
+            AssemblyName[] names = new AssemblyName[assemblies.Count];
+            Assembly assembly;
+            for (int i=0; i < assemblies.Count; i++)
+            {
+                assembly = assemblies[i];
+                names.SetValue(assembly.GetName(), i);
+            }
+            return names;
+        }
 
 	//===================================================================
 	// Returns true if the given qualified name matches a namespace
@@ -319,7 +327,7 @@ namespace Python.Runtime {
 	//===================================================================
 
 	public static List<string> GetNames(string nsname) {
-	    Dictionary<string, int> seen = new Dictionary<string, int>();
+	    //Dictionary<string, int> seen = new Dictionary<string, int>();
 	    List<string> names = new List<string>(8);
 
 	    List<string> g = GenericUtil.GetGenericBaseNames(nsname);
@@ -342,7 +350,7 @@ namespace Python.Runtime {
 		int nslen = nsname.Length;
 		foreach (string key in namespaces.Keys) {
 		    if (key.Length > nslen && key.StartsWith(nsname)) {
-			string tail = key.Substring(nslen);
+			//string tail = key.Substring(nslen);
 			if (key.IndexOf('.') == -1) {
 			    names.Add(key);
 			} 

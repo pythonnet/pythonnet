@@ -11,10 +11,10 @@ using System;
 using System.Reflection;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
+using System.Resources;
 
 [assembly: System.Reflection.AssemblyProduct("Python for .NET")]
-[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyTitleAttribute("Python.Runtime")]
+[assembly: System.Reflection.AssemblyVersion("2.0.0.2")]
 [assembly: AssemblyDefaultAliasAttribute("Python.Runtime.dll")]
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
@@ -22,3 +22,19 @@ using System.Runtime.InteropServices;
 
 [assembly:PermissionSetAttribute(SecurityAction.RequestMinimum, 
 				 Name = "FullTrust")]
+[assembly: AssemblyCopyrightAttribute("Zope Public License, Version 2.0 (ZPL)")]
+[assembly: AssemblyFileVersionAttribute("2.0.0.2")]
+[assembly: NeutralResourcesLanguageAttribute("en")]
+
+#if (PYTHON24)
+[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.4")]
+[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.4")]
+#endif
+#if (PYTHON25)
+[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.5")]
+[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.5")]
+#endif
+#if (PYTHON26)
+[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.6")]
+[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.6")]
+#endif

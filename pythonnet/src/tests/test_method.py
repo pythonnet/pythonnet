@@ -246,7 +246,8 @@ class MethodTests(unittest.TestCase):
     def testStringParamsArgs(self):
         """Test use of string params."""
         result = MethodTest.TestStringParamsArg('one', 'two', 'three')
-        self.failUnless(len(result) == 3)
+        self.failUnlessEqual(result.Length, 3)
+        self.failUnlessEqual(len(result), 3, result)
         self.failUnless(result[0] == 'one')
         self.failUnless(result[1] == 'two')
         self.failUnless(result[2] == 'three')        
@@ -261,13 +262,13 @@ class MethodTests(unittest.TestCase):
     def testObjectParamsArgs(self):
         """Test use of object params."""
         result = MethodTest.TestObjectParamsArg('one', 'two', 'three')
-        self.failUnless(len(result) == 3)
+        self.failUnlessEqual(len(result), 3, result)
         self.failUnless(result[0] == 'one')
         self.failUnless(result[1] == 'two')
         self.failUnless(result[2] == 'three')        
 
         result = MethodTest.TestObjectParamsArg(['one', 'two', 'three'])
-        self.failUnless(len(result) == 3)
+        self.failUnlessEqual(len(result), 3, result)
         self.failUnless(result[0] == 'one')
         self.failUnless(result[1] == 'two')
         self.failUnless(result[2] == 'three')        
@@ -276,13 +277,13 @@ class MethodTests(unittest.TestCase):
     def testValueParamsArgs(self):
         """Test use of value type params."""
         result = MethodTest.TestValueParamsArg(1, 2, 3)
-        self.failUnless(len(result) == 3)
+        self.failUnlessEqual(len(result), 3)
         self.failUnless(result[0] == 1)
         self.failUnless(result[1] == 2)
         self.failUnless(result[2] == 3)        
 
         result = MethodTest.TestValueParamsArg([1, 2, 3])
-        self.failUnless(len(result) == 3)
+        self.failUnlessEqual(len(result), 3)
         self.failUnless(result[0] == 1)
         self.failUnless(result[1] == 2)
         self.failUnless(result[2] == 3)        
@@ -292,13 +293,13 @@ class MethodTests(unittest.TestCase):
         """Test use of string out-parameters."""
         result = MethodTest.TestStringOutParams("hi", "there")
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
         result = MethodTest.TestStringOutParams("hi", None)
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
@@ -307,13 +308,13 @@ class MethodTests(unittest.TestCase):
         """Test use of string byref parameters."""
         result = MethodTest.TestStringRefParams("hi", "there")
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
         result = MethodTest.TestStringRefParams("hi", None)
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == "output string")
 
@@ -322,7 +323,7 @@ class MethodTests(unittest.TestCase):
         """Test use of value type out-parameters."""
         result = MethodTest.TestValueOutParams("hi", 1)
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == 42)
 
@@ -337,7 +338,7 @@ class MethodTests(unittest.TestCase):
         """Test use of value type byref parameters."""
         result = MethodTest.TestValueRefParams("hi", 1)
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(result[1] == 42)
 
@@ -358,7 +359,7 @@ class MethodTests(unittest.TestCase):
 
         result = MethodTest.TestObjectOutParams("hi", None)
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(isinstance(result[1], System.Exception))
 
@@ -367,13 +368,13 @@ class MethodTests(unittest.TestCase):
         """Test use of object byref parameters."""
         result = MethodTest.TestObjectRefParams("hi", MethodTest())
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(isinstance(result[1], System.Exception))
 
         result = MethodTest.TestObjectRefParams("hi", None)
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(isinstance(result[1], System.Exception))
 
@@ -382,7 +383,7 @@ class MethodTests(unittest.TestCase):
         """Test use of struct out-parameters."""
         result = MethodTest.TestStructOutParams("hi",System.Guid.NewGuid())
         self.failUnless(type(result) == type(()))
-        self.failUnless(len(result) == 2)
+        self.failUnlessEqual(len(result), 2)
         self.failUnless(result[0] == True)
         self.failUnless(isinstance(result[1], System.Guid))
 
@@ -562,7 +563,7 @@ class MethodTests(unittest.TestCase):
         value = MethodTest.Overloaded.__overloads__[ISayHello1](inst)
         self.failUnless(value.__class__ == inst.__class__)
 
-        atype = Array.__overloads__[System.Object]
+        atype = Array[System.Object]
         value = MethodTest.Overloaded.__overloads__[str, int, atype](
             "one", 1, atype([1, 2, 3])
             )
@@ -760,6 +761,5 @@ def main():
     unittest.TextTestRunner().run(test_suite())
 
 if __name__ == '__main__':
-    testcase.setup()
     main()
 

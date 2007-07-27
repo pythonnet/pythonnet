@@ -20,10 +20,8 @@ namespace Python.Runtime {
     internal class ImportHook {
 
 	static IntPtr py_import;
-	static ModuleObject root;
+	static CLRModule root;
 	static MethodWrapper hook;
-	static ClrModule clr;
-	static int preload;
 
 	//===================================================================
 	// Initialization performed on startup of the Python runtime.
@@ -44,12 +42,10 @@ namespace Python.Runtime {
   	    Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
 	    Runtime.Decref(hook.ptr);
 
-	    root = new ModuleObject("");
+	    root = new CLRModule();
+            Runtime.Incref(root.pyHandle); // we are using the module two times
 	    Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
-
-	    clr = new ClrModule("clr");
-	    Runtime.PyDict_SetItemString(dict, "clr", clr.pyHandle);
-	    preload = -1;
+            Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
 	}
 
 
@@ -59,6 +55,7 @@ namespace Python.Runtime {
 
 	internal static void Shutdown() {
 	    Runtime.Decref(root.pyHandle);
+            Runtime.Decref(root.pyHandle);
 	    Runtime.Decref(py_import);
 	}
 
@@ -103,18 +100,25 @@ namespace Python.Runtime {
 	    string mod_name = Runtime.GetManagedString(py_mod_name);
 
 	    if (mod_name == "CLR") {
+                Exceptions.deprecation("The CLR module is deprecated. " +
+                    "Please use 'clr'.");
+                root.InitializePreload();
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
 	    }
 
 	    if (mod_name == "clr") {
-		Runtime.Incref(clr.pyHandle);
-		return clr.pyHandle;
+                root.InitializePreload();
+		Runtime.Incref(root.pyHandle);
+		return root.pyHandle;
 	    }
 
 	    string realname = mod_name;
 	    if (mod_name.StartsWith("CLR.")) {
-		realname = mod_name.Substring(4);
+                realname = mod_name.Substring(4);
+                string msg = String.Format("Importing from the CLR.* namespace "+
+                    "is deprecated. Please import '{0}' directly.", realname);
+                Exceptions.deprecation(msg);
 	    }
 
 	    string[] names = realname.Split('.');
@@ -158,19 +162,14 @@ namespace Python.Runtime {
 	    // each module, which is often useful for introspection. If we
 	    // are not interactive, we stick to just-in-time creation of
 	    // objects at lookup time, which is much more efficient.
-
-	    if (preload < 0) {
-		if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
-		    preload = 1;
-		}
-		else {
-		    Exceptions.Clear();
-		    preload = 0;
-		}
-	    }
+            // NEW: The clr got a new module variable preload. You can
+            // enable preloading in a non-interactive python processing by
+            // setting clr.preload = True
 
 	    ModuleObject head = (mod_name == realname) ? null : root;
 	    ModuleObject tail = root;
+            root.InitializePreload();
+            bool preload = root.preload;
 
 	    for (int i = 0; i < names.Length; i++) {
 		string name = names[i];
@@ -184,7 +183,7 @@ namespace Python.Runtime {
 		    head = (ModuleObject)mt;
 		}
 		tail = (ModuleObject) mt;
-		if (preload == 1) {
+		if (preload) {
 		    tail.LoadNames();
 		}
 		Runtime.PyDict_SetItemString(modules, tail.moduleName, 
@@ -196,7 +195,7 @@ namespace Python.Runtime {
 
 	    if (fromlist && Runtime.PySequence_Size(fromList) == 1) {
 		IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
-		if ((preload < 1) && Runtime.GetManagedString(fp) == "*") {
+		if ((!preload) && Runtime.GetManagedString(fp) == "*") {
 		    mod.LoadNames();
 		}
 		Runtime.Decref(fp);

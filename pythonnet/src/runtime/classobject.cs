@@ -165,8 +165,8 @@ namespace Python.Runtime {
 	    if (gtype != null) {
 		GenericType g = ClassManager.GetClass(gtype) as GenericType;
 		return g.type_subscript(idx);
-		Runtime.Incref(g.pyHandle);
-		return g.pyHandle;
+		/*Runtime.Incref(g.pyHandle);
+		return g.pyHandle;*/
 	    }
 	    return Exceptions.RaiseTypeError("unsubscriptable object");
  	}
@@ -177,7 +177,7 @@ namespace Python.Runtime {
 	//====================================================================
 
 	public static IntPtr mp_subscript(IntPtr ob, IntPtr idx) {
-	    ManagedType self = GetManagedObject(ob);
+	    //ManagedType self = GetManagedObject(ob);
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);
 	    ClassBase cls = (ClassBase)GetManagedObject(tp);
 
@@ -221,7 +221,7 @@ namespace Python.Runtime {
 	//====================================================================
 
 	public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v) {
-	    ManagedType self = GetManagedObject(ob);
+	    //ManagedType self = GetManagedObject(ob);
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);
 	    ClassBase cls = (ClassBase)GetManagedObject(tp);
 
@@ -283,7 +283,7 @@ namespace Python.Runtime {
 	//====================================================================
 
 	public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw) {
-	    ManagedType self = GetManagedObject(ob);
+	    //ManagedType self = GetManagedObject(ob);
 	    IntPtr tp = Runtime.PyObject_TYPE(ob);
 	    ClassBase cb = (ClassBase)GetManagedObject(tp);
 

@@ -41,7 +41,6 @@ namespace Python.Runtime {
 	public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
 	    PropertyObject self = (PropertyObject)GetManagedObject(ds);
 	    MethodInfo getter = self.getter;
-	    IntPtr ts = IntPtr.Zero;
 	    Object result;
 
 
@@ -95,7 +94,6 @@ namespace Python.Runtime {
 	public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
 	    PropertyObject self = (PropertyObject)GetManagedObject(ds);
 	    MethodInfo setter = self.setter;
-	    IntPtr ts = IntPtr.Zero;
 	    Object newval;
 
 	    if (val == IntPtr.Zero) {

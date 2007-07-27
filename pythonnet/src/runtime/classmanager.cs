@@ -96,12 +96,13 @@ namespace Python.Runtime {
 		impl = new InterfaceObject(type);
 	    }
 
-	    else {
-		impl = new ClassObject(type);
-		if (type == typeof(Exception) || 
+            else if (type == typeof(Exception) || 
                     type.IsSubclassOf(typeof(Exception))) {
-		    impl.is_exception = true;
-		}
+                impl = new ExceptionClassObject(type);
+            }
+
+            else {
+		impl = new ClassObject(type);
 	    }
 
 	    impl.indexer = info.indexer;

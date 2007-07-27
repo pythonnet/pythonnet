@@ -26,12 +26,10 @@ namespace Python.Runtime {
 
     internal class ClassBase : ManagedType {
 
-	internal bool is_exception;
 	internal Indexer indexer;
 	internal Type type;
 
 	internal ClassBase(Type tp) : base() {
-	    is_exception = false;
 	    indexer = null;
 	    type = tp;
 	}
@@ -157,7 +155,9 @@ namespace Python.Runtime {
 	public static void tp_dealloc(IntPtr ob) {
 	    ManagedType self = GetManagedObject(ob);
 	    IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.ob_dict);
-	    Runtime.Decref(dict);
+            if (dict != IntPtr.Zero) { 
+	        Runtime.Decref(dict);
+            }
 	    Runtime.PyObject_GC_UnTrack(self.pyHandle);
 	    Runtime.PyObject_GC_Del(self.pyHandle);
 	    Runtime.Decref(self.tpHandle);

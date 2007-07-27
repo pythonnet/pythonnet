@@ -1,0 +1,25 @@
+<Combine name="monopythonnet" fileversion="2.0" outputpath="./build/bin/" MakePkgConfig="False" MakeLibPC="True">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="CombineConfiguration">
+      <Entry build="True" name="Python.Runtime" configuration="Debug" />
+      <Entry build="True" name="Console" configuration="Debug" />
+      <Entry build="True" name="Python.Test" configuration="Debug" />
+    </Configuration>
+    <Configuration name="Release" ctype="CombineConfiguration">
+      <Entry build="True" name="Python.Runtime" configuration="Release" />
+      <Entry build="True" name="Console" configuration="Release" />
+      <Entry build="True" name="Python.Test" configuration="Release" />
+    </Configuration>
+  </Configurations>
+  <DeployTargets />
+  <StartMode startupentry="Console" single="True">
+    <Execute type="None" entry="Python.Runtime" />
+    <Execute type="None" entry="Console" />
+    <Execute type="None" entry="Python.Test" />
+  </StartMode>
+  <Entries>
+    <Entry filename="./src/runtime/Python.Runtime.mdp" />
+    <Entry filename="./src/console/Console.mdp" />
+    <Entry filename="./src/testing/Python.Test.mdp" />
+  </Entries>
+</Combine>

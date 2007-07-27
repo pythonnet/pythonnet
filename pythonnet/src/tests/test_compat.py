@@ -18,6 +18,9 @@ class CompatibilityTests(unittest.TestCase):
     def isCLRModule(self, object):
         return type(object).__name__ == 'ModuleObject'
 
+    def isCLRRootModule(self, object):
+        return type(object).__name__ == 'CLRModule'
+        
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype' # for now
 
@@ -26,8 +29,8 @@ class CompatibilityTests(unittest.TestCase):
     def testSimpleImport(self):
         """Test simple import."""
         import CLR
-        self.failUnless(self.isCLRModule(CLR))
-        self.failUnless(CLR.__name__ == 'CLR')
+        self.failUnless(self.isCLRRootModule(CLR))
+        self.failUnless(CLR.__name__ == 'clr')
 
         import sys
         self.failUnless(type(sys) == types.ModuleType)
@@ -41,8 +44,8 @@ class CompatibilityTests(unittest.TestCase):
     def testSimpleImportWithAlias(self):
         """Test simple import with aliasing."""
         import CLR as myCLR
-        self.failUnless(self.isCLRModule(myCLR))
-        self.failUnless(myCLR.__name__ == 'CLR')
+        self.failUnless(self.isCLRRootModule(myCLR))
+        self.failUnless(myCLR.__name__ == 'clr')
 
         import sys as mySys
         self.failUnless(type(mySys) == types.ModuleType)
@@ -58,6 +61,12 @@ class CompatibilityTests(unittest.TestCase):
         import CLR.System
         self.failUnless(self.isCLRModule(CLR.System))
         self.failUnless(CLR.System.__name__ == 'System')
+        
+        import System
+        self.failUnless(self.isCLRModule(System))
+        self.failUnless(System.__name__ == 'System')
+        
+        self.failUnless(System is CLR.System)
 
         import xml.dom
         self.failUnless(type(xml.dom) == types.ModuleType)
@@ -66,10 +75,16 @@ class CompatibilityTests(unittest.TestCase):
 
     def testDottedNameImportWithAlias(self):
         """Test dotted-name import with aliasing."""
-        import CLR.System as mySystem
+        import CLR.System as myCLRSystem
+        self.failUnless(self.isCLRModule(myCLRSystem))
+        self.failUnless(myCLRSystem.__name__ == 'System')
+
+        import System as mySystem
         self.failUnless(self.isCLRModule(mySystem))
         self.failUnless(mySystem.__name__ == 'System')
 
+        self.failUnless(mySystem is myCLRSystem)
+        
         import xml.dom as myDom
         self.failUnless(type(myDom) == types.ModuleType)
         self.failUnless(myDom.__name__ == 'xml.dom')
@@ -143,6 +158,12 @@ class CompatibilityTests(unittest.TestCase):
         self.failUnless(self.isCLRModule(m))
         self.failUnless(len(locals().keys()) > count + 1)
 
+        m2 = __import__('System.Management', globals(), locals(), ['*'])
+        self.failUnless(m2.__name__ == 'System.Management')
+        self.failUnless(self.isCLRModule(m2))
+        self.failUnless(len(locals().keys()) > count + 1)
+        
+        self.failUnless(m is m2)
 
     def testExplicitAssemblyLoad(self):
         """Test explicit assembly loading using standard CLR tools."""
@@ -175,10 +196,13 @@ class CompatibilityTests(unittest.TestCase):
     def testImportNonExistantModule(self):
         """Test import failure for a non-existant module."""
         def test():
+            import System.SpamSpamSpam
+
+        def testclr():
             import CLR.System.SpamSpamSpam
 
         self.failUnlessRaises(ImportError, test)
-
+        self.failUnlessRaises(ImportError, testclr)
 
     def testLookupNoNamespaceType(self):
         """Test lookup of types without a qualified namespace."""
@@ -220,6 +244,12 @@ class CompatibilityTests(unittest.TestCase):
             spam = getattr(System, 1)
 
         self.failUnlessRaises(TypeError, test)
+        
+    def test000MultipleImports(self):
+        # import CLR did raise a Seg Fault once
+        # test if the Exceptions.warn() method still causes it
+        for n in range(100):
+            import CLR
 
 
 def test_suite():
@@ -229,6 +259,5 @@ def main():
     unittest.TextTestRunner().run(test_suite())
 
 if __name__ == '__main__':
-    testcase.setup()
     main()
 

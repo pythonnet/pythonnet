@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<UserCombinePreferences filename="/home/heimes/dev/python/pythonnet25/monopythonnet.mds">
+  <Files />
+  <Views>
+    <ViewMemento Id="MonoDevelop.Ide.Gui.Pads.ProjectPad">
+      <TreeView>
+        <Node expanded="True">
+          <Node name="Console" expanded="True" selected="True" />
+          <Node name="Python.Runtime" expanded="True" />
+        </Node>
+      </TreeView>
+    </ViewMemento>
+    <ViewMemento Id="MonoDevelop.Ide.Gui.Pads.ClassPad">
+      <TreeView>
+        <Node expanded="True" />
+      </TreeView>
+    </ViewMemento>
+  </Views>
+  <Properties>
+    <Properties>
+      <Property key="ActiveConfiguration" value="Debug" />
+      <Property key="ActiveWindow" value="" />
+    </Properties>
+  </Properties>
+</UserCombinePreferences>

@@ -17,6 +17,7 @@ namespace Python.Runtime {
     // Implements a Python type that represents a CLR method. Method objects
     // support a subscript syntax [] to allow explicit overload selection.
     //========================================================================
+    // TODO: ForbidPythonThreadsAttribute per method info
 
     internal class MethodObject : ExtensionType {
 
@@ -28,17 +29,30 @@ namespace Python.Runtime {
 	internal IntPtr doc;
 
 	public MethodObject(string name, MethodInfo[] info) : base() {
-	    this.name = name;
-	    this.info = info;
-	    binder = new MethodBinder();
-	    for (int i = 0; i < info.Length; i++) {
-		MethodInfo item = (MethodInfo)info[i];
-		binder.AddMethod(item);
-		if (item.IsStatic) {
-		    this.is_static = true;
-		}
-	    }
+            _MethodObject(name, info);
 	}
+
+        public MethodObject(string name, MethodInfo[] info, bool allow_threads) : base()
+        {
+            _MethodObject(name, info);
+            binder.allow_threads = allow_threads;
+        }
+
+        private void _MethodObject(string name, MethodInfo[] info)
+        {
+            this.name = name;
+            this.info = info;
+            binder = new MethodBinder();
+            for (int i = 0; i < info.Length; i++)
+            {
+                MethodInfo item = (MethodInfo)info[i];
+                binder.AddMethod(item);
+                if (item.IsStatic)
+                {
+                    this.is_static = true;
+                }
+            }
+        }
 
 	public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
 	    return this.Invoke(inst, args, kw, null);

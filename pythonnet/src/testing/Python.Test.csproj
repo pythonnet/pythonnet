@@ -1,0 +1,75 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6F401A34-273B-450F-9A4C-13550BE0767B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>Python.Test</AssemblyName>
+    <RootNamespace>Python.Test</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>.\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>.\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'EmbeddingTest|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\EmbeddingTest\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTests|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\UnitTests\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="arraytest.cs" />
+    <Compile Include="classtest.cs" />
+    <Compile Include="constructortests.cs" />
+    <Compile Include="conversiontest.cs" />
+    <Compile Include="delegatetest.cs" />
+    <Compile Include="enumtest.cs" />
+    <Compile Include="eventtest.cs" />
+    <Compile Include="exceptiontest.cs" />
+    <Compile Include="fieldtest.cs" />
+    <Compile Include="generictest.cs" />
+    <Compile Include="globaltest.cs" />
+    <Compile Include="indexertest.cs" />
+    <Compile Include="interfacetest.cs" />
+    <Compile Include="methodtest.cs" />
+    <Compile Include="propertytest.cs" />
+    <Compile Include="threadtest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\runtime\Python.Runtime.csproj">
+      <Project>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</Project>
+      <Name>Python.Runtime</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetDir)*.pdb" ..\..\..\..\
+copy "$(TargetDir)Python.Test.dll" ..\..\..\..\</PostBuildEvent>
+  </PropertyGroup>
+</Project>

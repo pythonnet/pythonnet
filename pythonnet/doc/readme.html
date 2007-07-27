@@ -111,16 +111,17 @@ li {
   <li><a href="#getting_started">Getting Started</a></li>
   <li><a href="#importing">Importing Modules</a></li>
   <li><a href="#classes">Using Classes</a></li>
+  <li><a href="#generics">Using Generics</a></li>
   <li><a href="#fields">Fields and Properties</a></li>
   <li><a href="#indexers">Using Indexers</a></li>
   <li><a href="#methods">Using Methods</a></li>
+  <li><a href="#genericmethods">Overloaded and Generic Methods</a></li>
   <li><a href="#delegates">Delegates and Events</a></li>
   <li><a href="#exceptions">Exception Handling</a></li>
   <li><a href="#arrays">Using Arrays</a></li>
   <li><a href="#collections">Using Collections</a></li>
   <li><a href="#com">COM Components</a></li>
   <li><a href="#types">Type Conversion</a></li>
-  <li><a href="#assemblies">Using Assemblies</a></li>
   <li><a href="#embedding">Embedding Python</a></li>
   <li><a href="#license">License</a></li>
   </ul>
@@ -153,7 +154,7 @@ li {
 </p>
 
 <p>
- Python for .NET is currently compatible with Python releases 2.3 and greater. 
+ Python for .NET is currently compatible with Python releases 2.4 and 2.5. 
  Current releases are available at the 
  <a href="http://pythonnet.sourceforge.net/">
  Python for .NET website
@@ -168,6 +169,7 @@ li {
  mailing list information
  </a> page. 
 </p>
+
 
 <a name="#installation"></a>
 
@@ -192,32 +194,74 @@ li {
 </p>
 
 <p>
- <strong>Running on Linux/Mono:</strong> preliminary testing shows that 
- PythonNet will run under <a href="http://www.go-mono.com">Mono</a>, though 
- the Mono runtime is not yet complete so there still may be problems. The 
- Python for .NET integration layer is 100% managed code, so there should be 
- no long-term issues under Mono - it should work better and better as the 
- Mono platform matures.
+ <strong>Running on Linux/Mono:</strong> Preliminary testing shows that 
+ PythonNet runs under <a href="http://www.go-mono.com">Mono</a> without
+ major issues, though the Mono runtime is not yet complete so there 
+ still may be problems. The Python for .NET integration layer is 100% 
+ managed code, so there should be no long-term issues under Mono - it
+ should work better and better as the Mono platform matures.
 </p>
 
 <p>
- It is not currently possible to *build* PythonNet using only the Mono 
- tools, due to an issue involving the Mono assembler / disassembler. You 
- should, however, be able to try the pre-built assembly under Mono (or 
- compile it yourself with the MS tools and run it under Mono).
+ With Mono 1.2.3 and greater it is possible to build PythonNet under Mono.
+ You need to install the Mono suite including the gmcs compiler for .Net
+ 2.0 and mono-dev for the header files headers. The latter is only
+ required if you want to build the tools in src/monoclr.
 </p>
 
 <p>
- Note that if you are running under Mono on a *nix system, you will need 
+ <strong>Note:</strong> Although in theory a Python.Runtime.dll build
+ with Microsoft Visual C# should work under Linux/Mono it doesn't work
+ in pratice due a conflict between UCS-2 and UCS-4 unicode representation.
+ Windows build of Python store unicode as 2 byte objects while most Linux
+ distributions build Python with UCS-4. UCS-4 builds of PythonNet require
+ Mono specific libraries.
+</p>
+
+<p>
+  Note that if you are running under Mono on a *nix system, you will need 
  to have a compatible version of Python installed. You will also need 
  to create a symbolic link to the copy of libpython2.x.so (in your existing 
  Python installation) in the PythonNet directory. This is needed to ensure 
  that the mono interop dll loader will find it by name. For example:
+ to have a compatible version of Python installed. You'll also have to
+ add some aliases to either ~/.mono/config or /etc/mono/config so Mono can
+ find the python25.dll. The doc/ directory contains a sample
+</p>
+ 
+<p>
+ You can use the clr.so extension to add PythonNet to a standard Python 
+ interpreter on *nix. Either you have to copy Python.Runtime.dll next to
+ binary or you have to use the GAC. clr.so does <strong>NOT</strong> work
+ when the interpreter is not build with --enable-shared (Debian, Ubuntu)
+ or libpython2.?.so isn't available. You <strong>must</strong> use a
+ Python binary that is linked dynamically against libpython2.?.so.
+ <pre>ldd /usr/bin/python2.?</pre> has to list libpython2.?.so. When your
+ Python interpreter isn't linked against libpython2.?.so but the shared
+ lib
 </p>
 
-<pre>
-    ln -s /usr/lib/libpython2.4.so ./python24.so
-</pre>
+ <pre>
+    &lt;dllmap dll=&quote;python25&quote; target=&quote;libpython2.5.so&quote; os=&quote;!wi
+ndows&quote; /&gt;
+ </pre>
+ 
+<a name="monoclr_libpython"><a/>
+<p>
+ PythonNet uses compiler symbols in order to build PythonNet for different
+ versions and flavors of Python.
+ <table>
+  <th><td>symbol</td><td>explenetion</td></th>
+  <tr><td>PYTHON24</td><td>build for Python 2.4</td></tr>
+  <tr><td>PYTHON25</td><td>build for Python 2.5</td></tr>
+  <tr><td>PYTHON26</td><td>build for Python 2.6</td></tr>
+  <tr><td>UCS2</td><td>For Python compiled with --enable-unicode=ucs2 (default)</td></tr>
+  <tr><td>UCS4</td><td>For Python compiled with --enable-unicode=ucs4</td></tr>
+  <tr><td>Py_DEBUG</td><td>For Python debug builds (not yet implemented)</td></tr>
+  <tr><td>DEBUG</td><td>Additional debugging (doesn't require Py_DEBUG)</td></tr>
+  <tr><td>TRACE</td><td>Not used</td></tr>
+</table>
+</p>
 
 
 <a name="getting_started"></a>
@@ -228,7 +272,9 @@ li {
  A key goal for this project has been that Python for .NET should &quot;work 
  just the way you'd expect in Python&quot;, except for cases that are .NET 
  specific (in which case the goal is to work &quot;just the way you'd expect 
- in C#&quot;).
+ in C#&quot;). In addition, with the IronPython project gaining traction, it 
+ is my goal that code written for IronPython run without modification under 
+ Python for .NET.
 </p>
 
 <p>
@@ -246,6 +292,12 @@ li {
  distribution that can be helpful as examples.
 </p>
 
+<p>
+ Note that if you have installed CLR support into your existing Python 
+ installation (rather than using the included python.exe), you will need 
+ to use the line: &quot'import clr&quot; (lower-case!) to initially load 
+ the clr extension module before trying the following examples.
+</p>
 
 <a name="importing"></a>
 
@@ -253,65 +305,50 @@ li {
 
 <p>      
  Python for .NET allows CLR namespaces to be treated essentially as 
- Python packages. The top-level package is named <code>CLR</code>, and 
- acts as the root for accessing all CLR namespaces:
-</p>
+ Python packages. 
+<p>
 
 <pre>
-    from CLR.System import String
-    import CLR.System as System
+    from System import String
+    from System.Collections import *
 </pre>
+
+<p>
+<em>
+ Note that earlier releases of Python for .NET required you to import modules 
+ through a special top-level package named <code>CLR</code>. This is no longer 
+ required, though the syntax is still supported for backward compatibility.
+</em>
+</p>
 
 <p>      
- Types from any loaded assembly may be imported and used in this manner.
- The import hook uses "implicit loading" to support automatic loading 
- of assemblies whose names correspond to an imported namespace:
+ Types from any loaded assembly may be imported and used in this manner. To 
+ load an assembly, use the "AddReference" function in the "clr" module:
 </p>
 
 <pre>
-    # This will implicitly load the System.Windows.Forms assembly
 
-    from CLR.System.Windows.Forms import Form
+    import clr
+    clr.AddReference("System.Windows.Forms")
+    from System.Windows.Forms import Form
+
 </pre>
+
+<p>
+<em>
+ Note that earlier releases of Python for .NET relied on "implicit loading" 
+ to support automatic loading of assemblies whose names corresponded to an 
+ imported namespace. Implicit loading still works for backward compatibility, 
+ but will be removed in a future release so it is recommended to use the 
+ clr.AddReference method.
+</em>
+</p>
 
 <p>
  Python for .NET uses the PYTHONPATH (sys.path) to look for assemblies 
  to load, in addition to the usual application base and the GAC. To 
  ensure that you can implicitly import an assembly, put the directory 
  containing the assembly in <code>sys.path</code>.
-</p>
-
-<p>
- To load assemblies with names that do not correspond with a namespace,
- you can use the standard mechanisms provided by the CLR:
-</p>
-
-<pre>
-    from CLR.System.Reflection import Assembly
-
-    a = Assembly.LoadWithPartialName("SomeAssembly")
-
-    # now we can import namespaces defined in that assembly
-
-    from CLR.SomeNamespace import Something
-</pre>
-
-<p>
- Note that CLR modules are "lazy". Because a namespace can contain a 
- potentially very large number of classes, reflected CLR classes are 
- created on-demand when they are requested of a CLR module. This means
- that using the Python <code>dir()</code> function in the interactive 
- interpreter will not necessarily show all of the classes available from 
- a given CLR module (it will only show any classes that have been referenced 
- to that point in time).
-</p>
-
-<p>
- It also means that <code>from somemodule import *</code> will not work as 
- expected. It is possible that it could be made to work in the future,
- but for now it would impose a big performance hit and a lot of 
- complexity to support something that is used relatively rarely and 
- often considered bad form in Python anyway ;)
 </p>
 
 
@@ -327,13 +364,64 @@ li {
 </p>
 
 <pre>
-    from CLR.System.Drawing import Point
+    from System.Drawing import Point
 
     p = Point(5, 5)
 </pre>
 
 <p>
- You can also subclass managed classes in Python. See the 
+ In most cases, Python for .NET can determine the correct constructor 
+ to call automatically based on the arguments. In some cases, it may 
+ be necessary to call a particular overloaded constructor, which is 
+ supported by a special "__overloads__" attribute on a class:
+</p>
+
+<pre>
+    from System import String, Char, Int32
+
+    s = String.__overloads__[Char, Int32]('A', 10)
+</pre>
+
+
+<a name="generics"></a>
+
+<h2>Using Generics</h2>
+
+<p>
+ When running under versions of the .NET runtime greater than 2.0, you can 
+ use generic types. A generic type must be bound to create a concrete type 
+ before it can be instantiated. Generic types support the subscript syntax 
+ to create bound types:
+</p>
+
+<pre>
+    from System.Collections.Generic import Dictionary
+    from System import *
+
+    dict1 = Dictionary[String, String]()
+    dict2 = Dictionary[String, Int32]()
+    dict3 = Dictionary[String, Type]()
+</pre>
+
+<p>
+ When you pass a list of types using the subscript syntax, you can also 
+ pass a subset of Python types that directly correspond to .NET types:
+</p>
+
+<pre>
+    dict1 = Dictionary[str, str]()
+    dict2 = Dictionary[str, int]()
+    dict3 = Dictionary[str, Decimal]()
+</pre>
+
+<p>
+ This shorthand also works when explicitly selecting generic methods or 
+ specific versions of overloaded methods and constructors (explained later).
+</p>
+
+<p>
+ You can also subclass managed classes in Python, though members of the 
+ Python subclass are not visible to .NET code. See the 
  <code>helloform.py</code> file in the <code>/demo</code> directory of the 
  distribution for a simple Windows Forms example that demonstrates 
  subclassing a managed class.
@@ -350,7 +438,7 @@ li {
 </p>
 
 <pre>
-    from CLR.System import Environment
+    from System import Environment
 
     name = Environment.MachineName
     Environment.ExitCode = 1
@@ -367,7 +455,7 @@ li {
 </p>
 
 <pre>
-    from CLR.System.Collections import Hashtable
+    from System.Collections import Hashtable
 
     table = Hashtable()
     table["key 1"] = "value 1"
@@ -397,7 +485,7 @@ li {
 </p>
 
 <pre>
-    from CLR.System import Environment
+    from System import Environment
 
     drives = Environment.GetLogicalDrives()
 </pre>
@@ -424,11 +512,44 @@ li {
 </p>
 
 <pre>
-    from CLR.System import Environment
+    from System import Environment
 
     print Environment.GetFolderPath.__doc__
 
     help(Environment)
+</pre>
+
+<a name="genericmethods"></a>
+
+<h2>Overloaded and Generic Methods</h2>
+
+<p>
+ While Python for .NET will generally be able to figure out the right 
+ version of an overloaded method to call automatically, there are cases 
+ where it is desirable to select a particular method overload explicitly.
+</p>
+
+<p>
+ Methods of CLR objects have an "__overloads__" attribute that can be used 
+ for this purpose:
+</p>
+
+<pre>
+    from System import Console
+
+    Console.WriteLine.__overloads__[bool](true)
+    Console.WriteLine.__overloads__[str]("true")
+    Console.WriteLine.__overloads__[int](42)
+</pre>
+
+<p>
+ Similarly, generic methods may be bound at runtime using the subscript 
+ syntax directly on the method:
+</p>
+
+<pre>
+    someobject.SomeGenericMethod[int](10)
+    someobject.SomeGenericMethod[str]("10")
 </pre>
 
 
@@ -504,7 +625,7 @@ li {
  You can raise and catch managed exceptions just the same as you would 
  pure-Python exceptions:
 <pre>
-    from CLR.System import NullReferenceException
+    from System import NullReferenceException
 
     try:
         raise NullReferenceException("aiieee!")
@@ -518,6 +639,17 @@ li {
 <a name="arrays"></a>
 
 <h2>Using Arrays</h2>
+
+<p>
+ The type <code>System.Array</code> supports the subscript syntax in order 
+ to make it easy to create managed arrays from Python:
+</p>
+
+<pre>
+    from System import Array
+
+    myarray = Array[int](10)
+</pre>
 
 <p>
  Managed arrays support the standard Python sequence protocols:
@@ -629,7 +761,7 @@ idioms:
 </p>
 
 <pre>
-    items = CLR.System.Array.CreateInstance(Point, 3)
+    items = System.Array.CreateInstance(Point, 3)
     for i in range(3):
         items[i] = Point(0, 0)
 
@@ -669,7 +801,7 @@ idioms:
 </p>
 
 <pre>
-    items = CLR.System.Array.CreateInstance(Point, 3)
+    items = System.Array.CreateInstance(Point, 3)
     for i in range(3):
         items[i] = Point(0, 0)
 
@@ -693,70 +825,6 @@ idioms:
  This is the same thing, just the manifestation is a little different
  in Python. See the .NET documentation for more details on boxing and 
  the differences between value types and reference types.
-</p>
-
-
-<a name="assemblies"></a>
-
-<h2>Using Assemblies</h2>
-
-<p>
- The Python for .NET runtime uses Assembly.LoadWithPartialName to do 
- name-based imports, which will usually load the most recent version of 
- an assembly that it can find.
-</p>
-
-<p>
- The CLR's ability to load different versions of assemblies side-by-side 
- is one of the (relatively few) places where the matching of meta-models 
- between Python and the CLR breaks down (though it is unclear how often 
- this happens in practice).
-</p>
-
-<p>
- Because Python import is name-based and unaware of any concept of 
- versioned modules, the design goal has been for name-based implicit assembly 
- loading to do something consistent and reasonable (i.e. load most 
- recent available based on the name).
-</p>
-
-<p>
- It <em>is</em> possible to load a specific version of an assembly if you 
- need to using code similar to the following:
-</p>
-
-<pre>
-    from CLR.System.Reflection import Assembly, AssemblyName
-
-    name = AssemblyName(...) # set required version, etc.
-    assembly = Assembly.Load(name)
-
-    # now import namespaces from the loaded assembly
-</pre>
-
-<p>
- Things get a lot more complicated if you need to load more than one 
- version of a particular assembly (or more likely, you have a dependency 
- on some library the does so). In this case, the names you access via 
- the CLR modules will always come from the first version of the 
- assembly loaded (which will always win in the internals of the Python 
- for .NET runtime).
-</p>
-
-<p>
- You <em>can</em> still use particular versions of objects in this case - you 
- just have to do more work to get the right versions of objects:
-</p>
-
-<pre>
-    from CLR.System.Reflection import Assembly, AssemblyName
-    from System import Activator
-
-    name = AssemblyName(...) # get the right version
-    assembly = Assembly.Load(name)
-    type = assembly.GetType("QualifiedNameOf.TheTypeINeed")
-    obj = Activator.CreateInstance(type)
-</pre>
 </p>
 
 

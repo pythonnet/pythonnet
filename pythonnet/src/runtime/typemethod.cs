@@ -22,6 +22,9 @@ namespace Python.Runtime {
 	public TypeMethod(string name, MethodInfo[] info) : 
 	       base(name, info) {}
 
+        public TypeMethod(string name, MethodInfo[] info, bool allow_threads) :
+               base(name, info, allow_threads) { }
+
 	public override IntPtr Invoke(IntPtr ob, IntPtr args, IntPtr kw) {
 	    MethodInfo mi = this.info[0];
 	    Object[] arglist = new Object[3];

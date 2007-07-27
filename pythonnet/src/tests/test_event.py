@@ -716,6 +716,5 @@ def main():
     unittest.TextTestRunner().run(test_suite())
 
 if __name__ == '__main__':
-    testcase.setup()
     main()
 

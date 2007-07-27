@@ -9,7 +9,17 @@
 
 """Run all of the unit tests for this package."""
 
-import time
+import os
+import sys
+import unittest
+import warnfilter
+warnfilter.addClrWarnfilter()
+
+try:
+    import System
+except ImportError:
+    print "Load clr import hook"
+    import clr
 
 test_modules = (
         'test_exceptions',
@@ -30,20 +40,27 @@ test_modules = (
         'test_thread'
 )
 
+def removePyc():
+    path = os.path.dirname(os.path.abspath(__file__))
+    for name in test_modules:
+        pyc = os.path.join(path, "%s.pyc" % name)
+        if os.path.isfile(pyc):
+            os.unlink(pyc)
 
-def main():
+def main(verbosity=1):
 
-    start = time.clock()
+    removePyc()
+    
+    suite = unittest.TestSuite()
     
     for name in test_modules:
         module = __import__(name)
-        module.main()
-
-    stop = time.clock()
-    took = str(stop - start)
-    print 'Total Time: %s' % took
+        suite.addTests(module.test_suite())
+        
+    unittest.TextTestRunner(verbosity=verbosity).run(suite)
 
 if __name__ == '__main__':
-    main()
-
-
+    main(1)
+    if '--pause' in sys.argv:
+        print "Press enter to continue"
+        raw_input()
