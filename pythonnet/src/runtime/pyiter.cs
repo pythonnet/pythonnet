@@ -21,30 +21,30 @@ namespace Python.Runtime
         private PyObject _current = null;
 
         /// <summary>
-	    /// PyIter Constructor
-	    /// </summary>
-	    ///
-	    /// <remarks>
-	    /// Creates a new PyIter from an existing iterator reference. Note 
-	    /// that the instance assumes ownership of the object reference. 
-	    /// The object reference is not checked for type-correctness. 
-	    /// </remarks>
+            /// PyIter Constructor
+            /// </summary>
+            ///
+            /// <remarks>
+            /// Creates a new PyIter from an existing iterator reference. Note 
+            /// that the instance assumes ownership of the object reference. 
+            /// The object reference is not checked for type-correctness. 
+            /// </remarks>
 
-	    public PyIter(IntPtr ptr) : base(ptr) {}
+            public PyIter(IntPtr ptr) : base(ptr) {}
 
         /// <summary>
-	    /// PyIter Constructor
-	    /// </summary>
-	    ///
-	    /// <remarks>
-	    /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
-	    /// </remarks>
+            /// PyIter Constructor
+            /// </summary>
+            ///
+            /// <remarks>
+            /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
+            /// </remarks>
 
-	    public PyIter(PyObject iterable) : base() 
+            public PyIter(PyObject iterable) : base() 
         {
             obj = Runtime.PyObject_GetIter(iterable.obj);
-	        if (obj == IntPtr.Zero)
-		        throw new PythonException();
+                if (obj == IntPtr.Zero)
+                        throw new PythonException();
         }
 
         #region IEnumerator Members

@@ -25,38 +25,38 @@ namespace Python.Test {
 
     public class DelegateTest {
 
-	public delegate void PublicDelegate();
-	protected delegate void ProtectedDelegate();
-	internal delegate void InternalDelegate();
-	private delegate void PrivateDelegate();
+        public delegate void PublicDelegate();
+        protected delegate void ProtectedDelegate();
+        internal delegate void InternalDelegate();
+        private delegate void PrivateDelegate();
 
-	public StringDelegate stringDelegate;
-	public ObjectDelegate objectDelegate;
-	public BoolDelegate boolDelegate;
+        public StringDelegate stringDelegate;
+        public ObjectDelegate objectDelegate;
+        public BoolDelegate boolDelegate;
 
-	public DelegateTest() {
+        public DelegateTest() {
 
-	}
+        }
 
-	public string SayHello() {
-	    return "hello";
-	}
+        public string SayHello() {
+            return "hello";
+        }
 
-	public static string StaticSayHello() {
-	    return "hello";
-	}
+        public static string StaticSayHello() {
+            return "hello";
+        }
 
-	public string CallStringDelegate(StringDelegate d) {
-	    return d();
-	}
+        public string CallStringDelegate(StringDelegate d) {
+            return d();
+        }
 
-	public DelegateTest CallObjectDelegate(ObjectDelegate d) {
-	    return d();
-	}
+        public DelegateTest CallObjectDelegate(ObjectDelegate d) {
+            return d();
+        }
 
-	public bool CallBoolDelegate(BoolDelegate d) {
-	    return d();
-	}
+        public bool CallBoolDelegate(BoolDelegate d) {
+            return d();
+        }
 
 
     }

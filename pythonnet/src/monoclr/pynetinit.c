@@ -40,7 +40,7 @@ PyNet_Args* PyNet_Init(int ext) {
      * mono_runtime_exec_managed_code(pn_args->domain, main_thread_handler,
      *                                pn_args);
      */
-				   
+                                   
     main_thread_handler(pn_args);
 
     if (pn_args->error != NULL) {
@@ -59,9 +59,9 @@ void PyNet_Finalize(PyNet_Args *pn_args) {
         if (exception) {
             pn_args->error = "An exception was raised during shutdown";
             fprintf(stderr, pn_args->error);
-	    fprintf(stderr, "\n");
+            fprintf(stderr, "\n");
         }
-	pn_args->shutdown = NULL;
+        pn_args->shutdown = NULL;
     }
     
     if (pn_args->domain) {
@@ -98,30 +98,30 @@ void main_thread_handler (gpointer user_data) {
     pr_image = mono_assembly_get_image(pn_args->pr_assm);
     if (!pr_image) {
         pn_args->error = "Unable to get image";
-	return;
+        return;
     }
 
     pythonengine = mono_class_from_name(pr_image, "Python.Runtime", "PythonEngine");
     if (!pythonengine) {
         pn_args->error = "Unable to load class PythonEngine from Python.Runtime";
-	return;
+        return;
     }
 
     init = getMethodFromClass(pythonengine, pn_args->init_name);
     if (!init) {
         pn_args->error = "Unable to fetch Init method from PythonEngine";
-	return;
+        return;
     }
 
     pn_args->shutdown = getMethodFromClass(pythonengine, pn_args->shutdown_name);
     if (!pn_args->shutdown) {
         pn_args->error = "Unable to fetch shutdown method from PythonEngine";
-	return;
+        return;
     }
 
     mono_runtime_invoke(init, NULL, NULL, &exception);
     if (exception) {
         pn_args->error = "An exception was raised";
-	return;
+        return;
     }
 }

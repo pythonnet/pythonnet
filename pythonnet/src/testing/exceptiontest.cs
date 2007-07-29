@@ -18,69 +18,69 @@ namespace Python.Test {
 
     public class ExceptionTest {
 
-	public int ThrowProperty {
-	    get {
-		throw new OverflowException("error");
-	    }
-	    set { 
-		throw new OverflowException("error");
-	    }
-	}
+        public int ThrowProperty {
+            get {
+                throw new OverflowException("error");
+            }
+            set { 
+                throw new OverflowException("error");
+            }
+        }
 
-	public static Exception GetBaseException() {
-	    return new Exception("error");
-	}
+        public static Exception GetBaseException() {
+            return new Exception("error");
+        }
 
-	public static OverflowException GetExplicitException() {
-	    return new OverflowException("error");
-	}
+        public static OverflowException GetExplicitException() {
+            return new OverflowException("error");
+        }
 
-	public static Exception GetWidenedException() {
-	    return new OverflowException("error");
-	}
+        public static Exception GetWidenedException() {
+            return new OverflowException("error");
+        }
 
-	public static ExtendedException GetExtendedException() {
-	    return new ExtendedException("error");
-	}
+        public static ExtendedException GetExtendedException() {
+            return new ExtendedException("error");
+        }
 
 
-	public static bool SetBaseException(Exception e) {
-	    return typeof(Exception).IsInstanceOfType(e);
-	}
+        public static bool SetBaseException(Exception e) {
+            return typeof(Exception).IsInstanceOfType(e);
+        }
 
-	public static bool SetExplicitException(OverflowException e) {
-	    return typeof(OverflowException).IsInstanceOfType(e);
-	}
+        public static bool SetExplicitException(OverflowException e) {
+            return typeof(OverflowException).IsInstanceOfType(e);
+        }
 
-	public static bool SetWidenedException(Exception e) {
-	    return typeof(Exception).IsInstanceOfType(e);
-	}
+        public static bool SetWidenedException(Exception e) {
+            return typeof(Exception).IsInstanceOfType(e);
+        }
 
-	public static bool ThrowException() {
-	    throw new OverflowException("error");
-	}
+        public static bool ThrowException() {
+            throw new OverflowException("error");
+        }
     }
 
 
     public class ExtendedException : OverflowException {
 
-	public ExtendedException() : base() {}
-	public ExtendedException(string m) : base(m) {}
+        public ExtendedException() : base() {}
+        public ExtendedException(string m) : base(m) {}
 
-	public string extra = "extra";
+        public string extra = "extra";
 
-	public string ExtraProperty {
-	    get { 
-		return extra;
-	    }
-	    set { 
-		extra = value;
-	    }
-	}
+        public string ExtraProperty {
+            get { 
+                return extra;
+            }
+            set { 
+                extra = value;
+            }
+        }
 
-	public string GetExtraInfo() {
-	    return extra;
-	}
+        public string GetExtraInfo() {
+            return extra;
+        }
 
 
     }

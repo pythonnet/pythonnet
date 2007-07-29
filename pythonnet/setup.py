@@ -13,22 +13,29 @@ Author: Christian Heimes <christian(at)cheimes(dot)de>
 """
 
 from setuptools import setup
-from setuptools import find_packages
 from setuptools import Extension
+import subprocess
 
-import commands
 def pkgconfig(*packages, **kw):
     """From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/502261
     """
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
-    output = commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split()
-    for token in output:
+    cmd = "pkg-config --libs --cflags %s" % ' '.join(packages)
+    popen = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
+    popen.wait()
+    if popen.returncode != 0:
+        raise RuntimeError("An error has occured")
+    output = popen.stdout.read().strip()
+
+    for token in output.split():
         if flag_map.has_key(token[:2]):
             kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
         else: # throw others to extra_link_args
             kw.setdefault('extra_link_args', []).append(token)
+
     for k, v in kw.iteritems(): # remove duplicated
         kw[k] = list(set(v))
+
     return kw
 
 clr = Extension('clr',

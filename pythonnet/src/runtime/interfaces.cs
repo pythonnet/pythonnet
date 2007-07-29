@@ -18,12 +18,12 @@ namespace Python.Runtime {
     /// </summary>
 
     internal interface IReflectedType {
-	string PythonTypeName();
-	Type GetReflectedType();
+        string PythonTypeName();
+        Type GetReflectedType();
     }
 
     internal interface IReflectedClass : IReflectedType {
-	bool IsException();
+        bool IsException();
     }
 
     internal interface IReflectedInterface : IReflectedType {

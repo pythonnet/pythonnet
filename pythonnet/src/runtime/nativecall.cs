@@ -36,113 +36,113 @@ namespace Python.Runtime {
 
     internal class NativeCall {
 
-	static AssemblyBuilder aBuilder;
-	static ModuleBuilder mBuilder;
+        static AssemblyBuilder aBuilder;
+        static ModuleBuilder mBuilder;
 
-	public static INativeCall Impl;
+        public static INativeCall Impl;
 
-	static NativeCall() {
+        static NativeCall() {
 
-	    // The static constructor is responsible for generating the
-	    // assembly and the methods that implement the IJW thunks.
-	    //
-	    // To do this, we actually use reflection on the INativeCall
-	    // interface (defined below) and generate the required thunk 
-	    // code based on the method signatures.
+            // The static constructor is responsible for generating the
+            // assembly and the methods that implement the IJW thunks.
+            //
+            // To do this, we actually use reflection on the INativeCall
+            // interface (defined below) and generate the required thunk 
+            // code based on the method signatures.
 
-	    AssemblyName aname = new AssemblyName();
-	    aname.Name = "e__NativeCall_Assembly";
-	    AssemblyBuilderAccess aa = AssemblyBuilderAccess.Run;
+            AssemblyName aname = new AssemblyName();
+            aname.Name = "e__NativeCall_Assembly";
+            AssemblyBuilderAccess aa = AssemblyBuilderAccess.Run;
 
-	    aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
-	    mBuilder = aBuilder.DefineDynamicModule("e__NativeCall_Module");
+            aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
+            mBuilder = aBuilder.DefineDynamicModule("e__NativeCall_Module");
 
-	    TypeAttributes ta = TypeAttributes.Public;
-	    TypeBuilder tBuilder = mBuilder.DefineType("e__NativeCall", ta);
+            TypeAttributes ta = TypeAttributes.Public;
+            TypeBuilder tBuilder = mBuilder.DefineType("e__NativeCall", ta);
 
-	    Type iType = typeof(INativeCall);
-	    tBuilder.AddInterfaceImplementation(iType);
+            Type iType = typeof(INativeCall);
+            tBuilder.AddInterfaceImplementation(iType);
 
-	    // Use reflection to loop over the INativeCall interface methods, 
-	    // calling GenerateThunk to create a managed thunk for each one.
+            // Use reflection to loop over the INativeCall interface methods, 
+            // calling GenerateThunk to create a managed thunk for each one.
 
-	    foreach (MethodInfo method in iType.GetMethods()) {
-		GenerateThunk(tBuilder, method);
-	    }
-	    
-	    Type theType = tBuilder.CreateType();
+            foreach (MethodInfo method in iType.GetMethods()) {
+                GenerateThunk(tBuilder, method);
+            }
+            
+            Type theType = tBuilder.CreateType();
 
-	    Impl = (INativeCall)Activator.CreateInstance(theType);
+            Impl = (INativeCall)Activator.CreateInstance(theType);
 
-	}
+        }
 
-	private static void GenerateThunk(TypeBuilder tb, MethodInfo method) {
+        private static void GenerateThunk(TypeBuilder tb, MethodInfo method) {
 
-	    ParameterInfo[] pi = method.GetParameters();
-	    int count = pi.Length;
-	    int argc = count - 1;
+            ParameterInfo[] pi = method.GetParameters();
+            int count = pi.Length;
+            int argc = count - 1;
 
-	    Type[] args = new Type[count];
-	    for (int i = 0; i < count; i++) {
-		args[i] = pi[i].ParameterType;
-	    }
+            Type[] args = new Type[count];
+            for (int i = 0; i < count; i++) {
+                args[i] = pi[i].ParameterType;
+            }
 
-	    MethodBuilder mb = tb.DefineMethod(
-				  method.Name,
-				  MethodAttributes.Public | 
-				  MethodAttributes.Virtual,
-				  method.ReturnType,
-				  args
-				  );
+            MethodBuilder mb = tb.DefineMethod(
+                                  method.Name,
+                                  MethodAttributes.Public | 
+                                  MethodAttributes.Virtual,
+                                  method.ReturnType,
+                                  args
+                                  );
 
-	    // Build the method signature for the actual native function.
-	    // This is essentially the signature of the wrapper method
-	    // minus the first argument (the passed in function pointer).
+            // Build the method signature for the actual native function.
+            // This is essentially the signature of the wrapper method
+            // minus the first argument (the passed in function pointer).
 
-	    Type[] nargs = new Type[argc];
-	    for (int i = 1; i < count; i++) {
-		nargs[(i - 1)] = args[i];
-	    }
+            Type[] nargs = new Type[argc];
+            for (int i = 1; i < count; i++) {
+                nargs[(i - 1)] = args[i];
+            }
 
-	    // IL generation: the (implicit) first argument of the method 
-	    // is the 'this' pointer and the second is the function pointer.
-	    // This code pushes the real args onto the stack, followed by
-	    // the function pointer, then the calli opcode to make the call.
+            // IL generation: the (implicit) first argument of the method 
+            // is the 'this' pointer and the second is the function pointer.
+            // This code pushes the real args onto the stack, followed by
+            // the function pointer, then the calli opcode to make the call.
 
-	    ILGenerator il = mb.GetILGenerator();
+            ILGenerator il = mb.GetILGenerator();
 
-	    for (int i = 0; i < argc; i++) {
-		il.Emit(OpCodes.Ldarg_S, (i + 2));
-	    }
+            for (int i = 0; i < argc; i++) {
+                il.Emit(OpCodes.Ldarg_S, (i + 2));
+            }
 
-	    il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_1);
 
-	    il.EmitCalli(OpCodes.Calli, 
-			 CallingConvention.Cdecl, 
-			 method.ReturnType, 
-			 nargs
-			 );
+            il.EmitCalli(OpCodes.Calli, 
+                         CallingConvention.Cdecl, 
+                         method.ReturnType, 
+                         nargs
+                         );
 
-	    il.Emit(OpCodes.Ret);
+            il.Emit(OpCodes.Ret);
 
-	    tb.DefineMethodOverride(mb, method);
-	    return;
-	}
+            tb.DefineMethodOverride(mb, method);
+            return;
+        }
 
 
-	public static void Void_Call_1(IntPtr fp, IntPtr a1) {
-	    Impl.Void_Call_1(fp, a1);
-	}
+        public static void Void_Call_1(IntPtr fp, IntPtr a1) {
+            Impl.Void_Call_1(fp, a1);
+        }
 
-	public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2, 
-				    IntPtr a3) {
-	    return Impl.Call_3(fp, a1, a2, a3);
-	}
+        public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2, 
+                                    IntPtr a3) {
+            return Impl.Call_3(fp, a1, a2, a3);
+        }
 
-	public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, 
-				     IntPtr a3) {
-	    return Impl.Int_Call_3(fp, a1, a2, a3);
-	}
+        public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, 
+                                     IntPtr a3) {
+            return Impl.Int_Call_3(fp, a1, a2, a3);
+        }
 
     }
 
@@ -153,13 +153,13 @@ namespace Python.Runtime {
 
     public interface INativeCall {
 
-	void Void_Call_0(IntPtr funcPtr);
+        void Void_Call_0(IntPtr funcPtr);
 
-	void Void_Call_1(IntPtr funcPtr, IntPtr arg1);
+        void Void_Call_1(IntPtr funcPtr, IntPtr arg1);
 
-	int Int_Call_3(IntPtr funcPtr, IntPtr t, IntPtr n, IntPtr v);
+        int Int_Call_3(IntPtr funcPtr, IntPtr t, IntPtr n, IntPtr v);
 
-	IntPtr Call_3(IntPtr funcPtr, IntPtr a1, IntPtr a2, IntPtr a3);
+        IntPtr Call_3(IntPtr funcPtr, IntPtr a1, IntPtr a2, IntPtr a3);
 
     }
 

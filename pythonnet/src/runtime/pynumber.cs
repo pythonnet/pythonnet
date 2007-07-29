@@ -19,25 +19,25 @@ namespace Python.Runtime {
 
     public class PyNumber : PyObject {
 
-	protected PyNumber(IntPtr ptr) : base(ptr) {}
+        protected PyNumber(IntPtr ptr) : base(ptr) {}
 
-	protected PyNumber() : base() {}
-
-
-	/// <summary>
-	/// IsNumberType Method
-	/// </summary>
-	///
-	/// <remarks>
-	/// Returns true if the given object is a Python numeric type.
-	/// </remarks>
-
-	public static bool IsNumberType(PyObject value) {
-	    return Runtime.PyNumber_Check(value.obj);
-	}
+        protected PyNumber() : base() {}
 
 
-	// TODO: add all of the PyNumber_XXX methods.
+        /// <summary>
+        /// IsNumberType Method
+        /// </summary>
+        ///
+        /// <remarks>
+        /// Returns true if the given object is a Python numeric type.
+        /// </remarks>
+
+        public static bool IsNumberType(PyObject value) {
+            return Runtime.PyNumber_Check(value.obj);
+        }
+
+
+        // TODO: add all of the PyNumber_XXX methods.
 
 
 

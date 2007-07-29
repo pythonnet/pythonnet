@@ -26,36 +26,36 @@ namespace Python.Runtime {
 
     internal class CodeGenerator {
 
-	static AssemblyBuilder aBuilder;
-	static ModuleBuilder mBuilder;
+        static AssemblyBuilder aBuilder;
+        static ModuleBuilder mBuilder;
 
-	static CodeGenerator() {
-	    AssemblyName aname = new AssemblyName();
-	    aname.Name = "__CodeGenerator_Assembly";
-	    AssemblyBuilderAccess aa = AssemblyBuilderAccess.Run;
+        static CodeGenerator() {
+            AssemblyName aname = new AssemblyName();
+            aname.Name = "__CodeGenerator_Assembly";
+            AssemblyBuilderAccess aa = AssemblyBuilderAccess.Run;
 
-	    aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
-	    mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
+            aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
+            mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
 
-	}
+        }
 
-	//====================================================================
-	// DefineType is a shortcut utility to get a new TypeBuilder.
-	//====================================================================
+        //====================================================================
+        // DefineType is a shortcut utility to get a new TypeBuilder.
+        //====================================================================
 
-	internal static TypeBuilder DefineType(string name) {
-	    TypeAttributes attrs = TypeAttributes.Public;
-	    return mBuilder.DefineType(name, attrs);
-	}
+        internal static TypeBuilder DefineType(string name) {
+            TypeAttributes attrs = TypeAttributes.Public;
+            return mBuilder.DefineType(name, attrs);
+        }
 
-	//====================================================================
-	// DefineType is a shortcut utility to get a new TypeBuilder.
-	//====================================================================
+        //====================================================================
+        // DefineType is a shortcut utility to get a new TypeBuilder.
+        //====================================================================
 
-	internal static TypeBuilder DefineType(string name, Type basetype) {
-	    TypeAttributes attrs = TypeAttributes.Public;
-	    return mBuilder.DefineType(name, attrs, basetype);
-	}
+        internal static TypeBuilder DefineType(string name, Type basetype) {
+            TypeAttributes attrs = TypeAttributes.Public;
+            return mBuilder.DefineType(name, attrs, basetype);
+        }
 
     }
 

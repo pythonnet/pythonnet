@@ -19,10 +19,10 @@ namespace Python.Runtime {
     /// </summary>
     internal class ModulePropertyObject : ExtensionType {
 
-	public ModulePropertyObject(PropertyInfo md) : base() 
+        public ModulePropertyObject(PropertyInfo md) : base() 
         {
             throw new NotImplementedException("ModulePropertyObject");
-	}
+        }
 
     }
 

@@ -19,52 +19,52 @@ namespace Python.Runtime {
 
     internal class OverloadMapper : ExtensionType {
 
-	MethodObject m;
-	IntPtr target;
+        MethodObject m;
+        IntPtr target;
 
-	public OverloadMapper(MethodObject m, IntPtr target) : base() {
-	    Runtime.Incref(target);
-	    this.target = target;
-	    this.m = m;
-	}
+        public OverloadMapper(MethodObject m, IntPtr target) : base() {
+            Runtime.Incref(target);
+            this.target = target;
+            this.m = m;
+        }
  
- 	//====================================================================
- 	// Implement explicit overload selection using subscript syntax ([]).
- 	//====================================================================
+         //====================================================================
+         // Implement explicit overload selection using subscript syntax ([]).
+         //====================================================================
  
- 	public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
- 	    OverloadMapper self = (OverloadMapper)GetManagedObject(tp);
+         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
+             OverloadMapper self = (OverloadMapper)GetManagedObject(tp);
 
-	    // Note: if the type provides a non-generic method with N args
-	    // and a generic method that takes N params, then we always
-	    // prefer the non-generic version in doing overload selection.
+            // Note: if the type provides a non-generic method with N args
+            // and a generic method that takes N params, then we always
+            // prefer the non-generic version in doing overload selection.
 
-	    Type[] types = Runtime.PythonArgsToTypeArray(idx);
-	    if (types == null) {
- 		return Exceptions.RaiseTypeError("type(s) expected");
-	    }
+            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            if (types == null) {
+                 return Exceptions.RaiseTypeError("type(s) expected");
+            }
 
- 	    MethodInfo mi = MethodBinder.MatchSignature(self.m.info, types);
- 	    if (mi == null) {
-		string e = "No match found for signature";
-		return Exceptions.RaiseTypeError(e);
- 	    }
+             MethodInfo mi = MethodBinder.MatchSignature(self.m.info, types);
+             if (mi == null) {
+                string e = "No match found for signature";
+                return Exceptions.RaiseTypeError(e);
+             }
 
- 	    MethodBinding mb = new MethodBinding(self.m, self.target);
- 	    mb.info = mi;
- 	    Runtime.Incref(mb.pyHandle);
- 	    return mb.pyHandle;	    
- 	}
+             MethodBinding mb = new MethodBinding(self.m, self.target);
+             mb.info = mi;
+             Runtime.Incref(mb.pyHandle);
+             return mb.pyHandle;            
+         }
 
-	//====================================================================
-	// OverloadMapper dealloc implementation.
-	//====================================================================
+        //====================================================================
+        // OverloadMapper dealloc implementation.
+        //====================================================================
 
-	public static new void tp_dealloc(IntPtr ob) {
-	    OverloadMapper self = (OverloadMapper)GetManagedObject(ob);
-	    Runtime.Decref(self.target);
-	    ExtensionType.FinalizeObject(self);
-	}
+        public static new void tp_dealloc(IntPtr ob) {
+            OverloadMapper self = (OverloadMapper)GetManagedObject(ob);
+            Runtime.Decref(self.target);
+            ExtensionType.FinalizeObject(self);
+        }
 
     }
 

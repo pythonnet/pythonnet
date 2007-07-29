@@ -21,7 +21,7 @@ using System.Resources;
 
 
 [assembly:PermissionSetAttribute(SecurityAction.RequestMinimum, 
-				 Name = "FullTrust")]
+                                 Name = "FullTrust")]
 [assembly: AssemblyCopyrightAttribute("Zope Public License, Version 2.0 (ZPL)")]
 [assembly: AssemblyFileVersionAttribute("2.0.0.2")]
 [assembly: NeutralResourcesLanguageAttribute("en")]

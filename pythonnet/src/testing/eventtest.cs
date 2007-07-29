@@ -22,107 +22,107 @@ namespace Python.Test {
     public class EventTest {
 
 
-	public void WinFormTest() {
-	    EventTest e = new EventTest();
-	    EventHandler h = new EventHandler(e.ClickHandler);
+        public void WinFormTest() {
+            EventTest e = new EventTest();
+            EventHandler h = new EventHandler(e.ClickHandler);
 
-	    Form f = new Form();
-	    f.Click += h;
-	    //f.Click(null, new EventArgs());
-	    f.Click -= h;
-	}
+            Form f = new Form();
+            f.Click += h;
+            //f.Click(null, new EventArgs());
+            f.Click -= h;
+        }
 
-	public void ClickHandler(object sender, EventArgs e) {
-	    Console.WriteLine("click");
-	}
-
-
-	public static event TestEventHandler PublicStaticEvent;
-
-	protected static event TestEventHandler ProtectedStaticEvent;
-
-	internal static event TestEventHandler InternalStaticEvent;
-
-	private static event TestEventHandler PrivateStaticEvent;
-
-	public event TestEventHandler PublicEvent;
-
-	protected event TestEventHandler ProtectedEvent;
-
-	internal event TestEventHandler InternalEvent;
-
-	private event TestEventHandler PrivateEvent;
+        public void ClickHandler(object sender, EventArgs e) {
+            Console.WriteLine("click");
+        }
 
 
-	public static int s_value;
-	public int value;
+        public static event TestEventHandler PublicStaticEvent;
 
-	public EventTest () {
-	    this.value = 0;
-	}
+        protected static event TestEventHandler ProtectedStaticEvent;
 
-	static EventTest () {
-	    s_value = 0;
-	}
+        internal static event TestEventHandler InternalStaticEvent;
 
+        private static event TestEventHandler PrivateStaticEvent;
 
-	public void OnPublicEvent(TestEventArgs e) {
-	    if (PublicEvent != null) {
-		PublicEvent(this, e);
-	    }
-	}
+        public event TestEventHandler PublicEvent;
+
+        protected event TestEventHandler ProtectedEvent;
+
+        internal event TestEventHandler InternalEvent;
+
+        private event TestEventHandler PrivateEvent;
 
 
-	public void OnProtectedEvent(TestEventArgs e) {
-	    if (ProtectedEvent != null) {
-		ProtectedEvent(this, e);
-	    }
-	}
+        public static int s_value;
+        public int value;
+
+        public EventTest () {
+            this.value = 0;
+        }
+
+        static EventTest () {
+            s_value = 0;
+        }
 
 
-	public static void OnPublicStaticEvent(TestEventArgs e) {
-	    if (PublicStaticEvent != null) {
-		PublicStaticEvent(null, e);
-	    }
-	}
+        public void OnPublicEvent(TestEventArgs e) {
+            if (PublicEvent != null) {
+                PublicEvent(this, e);
+            }
+        }
 
 
-	protected static void OnProtectedStaticEvent(TestEventArgs e) {
-	    if (ProtectedStaticEvent != null) {
-		ProtectedStaticEvent(null, e);
-	    }
-	}
+        public void OnProtectedEvent(TestEventArgs e) {
+            if (ProtectedEvent != null) {
+                ProtectedEvent(this, e);
+            }
+        }
 
 
-	public void GenericHandler(object sender, TestEventArgs e) {
-	    this.value = e.value;
-	}
+        public static void OnPublicStaticEvent(TestEventArgs e) {
+            if (PublicStaticEvent != null) {
+                PublicStaticEvent(null, e);
+            }
+        }
 
-	public static void StaticHandler(object sender, TestEventArgs e) {
-	    s_value = e.value;
-	}
 
-	public static void ShutUpCompiler() {
-	    // Quiet compiler warnings.
-	    EventTest e = new EventTest();
-	    TestEventHandler f = new TestEventHandler(e.GenericHandler);
-	    ProtectedStaticEvent += f;
-	    InternalStaticEvent += f;
-	    PrivateStaticEvent += f;
-	    e.ProtectedEvent += f;
-	    e.InternalEvent += f;
-	    e.PrivateEvent += f;
-	}
+        protected static void OnProtectedStaticEvent(TestEventArgs e) {
+            if (ProtectedStaticEvent != null) {
+                ProtectedStaticEvent(null, e);
+            }
+        }
+
+
+        public void GenericHandler(object sender, TestEventArgs e) {
+            this.value = e.value;
+        }
+
+        public static void StaticHandler(object sender, TestEventArgs e) {
+            s_value = e.value;
+        }
+
+        public static void ShutUpCompiler() {
+            // Quiet compiler warnings.
+            EventTest e = new EventTest();
+            TestEventHandler f = new TestEventHandler(e.GenericHandler);
+            ProtectedStaticEvent += f;
+            InternalStaticEvent += f;
+            PrivateStaticEvent += f;
+            e.ProtectedEvent += f;
+            e.InternalEvent += f;
+            e.PrivateEvent += f;
+        }
 
     }
 
 
     public class TestEventArgs : EventArgs {
-	public int value;
+        public int value;
 
-	public TestEventArgs(int v) {
-	    this.value = v;
-	}
+        public TestEventArgs(int v) {
+            this.value = v;
+        }
 
     }
 

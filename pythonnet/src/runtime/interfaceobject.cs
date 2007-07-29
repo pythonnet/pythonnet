@@ -22,68 +22,68 @@ namespace Python.Runtime {
 
     internal class InterfaceObject : ClassBase {
 
-	internal ConstructorInfo ctor;
+        internal ConstructorInfo ctor;
 
-	internal InterfaceObject(Type tp) : base(tp) {
-	    CoClassAttribute coclass = (CoClassAttribute) 
-	      Attribute.GetCustomAttribute(tp, cc_attr);
-	    if (coclass != null) {
-		ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);
-	    }
-	}
+        internal InterfaceObject(Type tp) : base(tp) {
+            CoClassAttribute coclass = (CoClassAttribute) 
+              Attribute.GetCustomAttribute(tp, cc_attr);
+            if (coclass != null) {
+                ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);
+            }
+        }
 
-	static Type cc_attr;
+        static Type cc_attr;
 
-	static InterfaceObject() {
-	    cc_attr = typeof(CoClassAttribute);
-	}
+        static InterfaceObject() {
+            cc_attr = typeof(CoClassAttribute);
+        }
 
-	//====================================================================
-	// Implements __new__ for reflected interface types.
-	//====================================================================
+        //====================================================================
+        // Implements __new__ for reflected interface types.
+        //====================================================================
 
-	public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
-	    InterfaceObject self = (InterfaceObject)GetManagedObject(tp);
-	    int nargs = Runtime.PyTuple_Size(args);
-	    Type type = self.type;
-	    Object obj;
+        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
+            InterfaceObject self = (InterfaceObject)GetManagedObject(tp);
+            int nargs = Runtime.PyTuple_Size(args);
+            Type type = self.type;
+            Object obj;
 
-	    if (nargs == 1) {
-		IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
-		CLRObject co = GetManagedObject(inst) as CLRObject;
+            if (nargs == 1) {
+                IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
+                CLRObject co = GetManagedObject(inst) as CLRObject;
 
-		if ((co == null) || (!type.IsInstanceOfType(co.inst))) {
-		    string msg = "object does not implement " + type.Name;
-		    Exceptions.SetError(Exceptions.TypeError, msg);
-		    return IntPtr.Zero;
-		}
+                if ((co == null) || (!type.IsInstanceOfType(co.inst))) {
+                    string msg = "object does not implement " + type.Name;
+                    Exceptions.SetError(Exceptions.TypeError, msg);
+                    return IntPtr.Zero;
+                }
 
-		obj = co.inst;
-	    }
+                obj = co.inst;
+            }
 
-	    else if ((nargs == 0) && (self.ctor != null)) {
-		obj = self.ctor.Invoke(null);
+            else if ((nargs == 0) && (self.ctor != null)) {
+                obj = self.ctor.Invoke(null);
 
-		if (obj == null || !type.IsInstanceOfType(obj)) {
-		    Exceptions.SetError(Exceptions.TypeError,
-		               "CoClass default constructor failed" 
-			       );
-		    return IntPtr.Zero;
-		}
-	    }
+                if (obj == null || !type.IsInstanceOfType(obj)) {
+                    Exceptions.SetError(Exceptions.TypeError,
+                               "CoClass default constructor failed" 
+                               );
+                    return IntPtr.Zero;
+                }
+            }
 
-	    else {
-		Exceptions.SetError(Exceptions.TypeError,
-				    "interface takes exactly one argument"
-				    );
-		return IntPtr.Zero;
-	    }
+            else {
+                Exceptions.SetError(Exceptions.TypeError,
+                                    "interface takes exactly one argument"
+                                    );
+                return IntPtr.Zero;
+            }
 
-	    return CLRObject.GetInstHandle(obj, self.pyHandle);
-	}
+            return CLRObject.GetInstHandle(obj, self.pyHandle);
+        }
 
 
-    }	
+    }        
 
 
 }

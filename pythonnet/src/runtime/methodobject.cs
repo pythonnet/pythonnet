@@ -21,16 +21,16 @@ namespace Python.Runtime {
 
     internal class MethodObject : ExtensionType {
 
-	internal MethodInfo[] info;
-	internal string name;
-	internal MethodBinding unbound;
-	internal MethodBinder binder;
-	internal bool is_static = false;
-	internal IntPtr doc;
+        internal MethodInfo[] info;
+        internal string name;
+        internal MethodBinding unbound;
+        internal MethodBinder binder;
+        internal bool is_static = false;
+        internal IntPtr doc;
 
-	public MethodObject(string name, MethodInfo[] info) : base() {
+        public MethodObject(string name, MethodInfo[] info) : base() {
             _MethodObject(name, info);
-	}
+        }
 
         public MethodObject(string name, MethodInfo[] info, bool allow_threads) : base()
         {
@@ -54,125 +54,125 @@ namespace Python.Runtime {
             }
         }
 
-	public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
-	    return this.Invoke(inst, args, kw, null);
-	}
+        public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
+            return this.Invoke(inst, args, kw, null);
+        }
  
-	public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw,
-				     MethodBase info) {
-	    return binder.Invoke(target, args, kw, info);
-	}
+        public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw,
+                                     MethodBase info) {
+            return binder.Invoke(target, args, kw, info);
+        }
 
-	//====================================================================
-	// Helper to get docstrings from reflected method / param info.
-	//====================================================================
+        //====================================================================
+        // Helper to get docstrings from reflected method / param info.
+        //====================================================================
 
-	internal IntPtr GetDocString() {
-	    if (doc != IntPtr.Zero) {
-		return doc;
-	    }
-	    MethodBase[] methods = binder.GetMethods();
-	    string str = "";
-	    for (int i = 0; i < methods.Length; i++) {
-		if (str.Length > 0)
-		    str += Environment.NewLine;
-		str += methods[i].ToString();
-	    }
-	    doc = Runtime.PyString_FromString(str);
-	    return doc;
-	}
+        internal IntPtr GetDocString() {
+            if (doc != IntPtr.Zero) {
+                return doc;
+            }
+            MethodBase[] methods = binder.GetMethods();
+            string str = "";
+            for (int i = 0; i < methods.Length; i++) {
+                if (str.Length > 0)
+                    str += Environment.NewLine;
+                str += methods[i].ToString();
+            }
+            doc = Runtime.PyString_FromString(str);
+            return doc;
+        }
 
 
-	//====================================================================
-	// This is a little tricky: a class can actually have a static method
-	// and instance methods all with the same name. That makes it tough
-	// to support calling a method 'unbound' (passing the instance as the
-	// first argument), because in this case we can't know whether to call
-	// the instance method unbound or call the static method. 
-	//
-	// The rule we is that if there are both instance and static methods
-	// with the same name, then we always call the static method. So this
-	// method returns true if any of the methods that are represented by 
-	// the descriptor are static methods (called by MethodBinding).
-	//====================================================================
+        //====================================================================
+        // This is a little tricky: a class can actually have a static method
+        // and instance methods all with the same name. That makes it tough
+        // to support calling a method 'unbound' (passing the instance as the
+        // first argument), because in this case we can't know whether to call
+        // the instance method unbound or call the static method. 
+        //
+        // The rule we is that if there are both instance and static methods
+        // with the same name, then we always call the static method. So this
+        // method returns true if any of the methods that are represented by 
+        // the descriptor are static methods (called by MethodBinding).
+        //====================================================================
 
-	internal bool IsStatic() {
-	    return this.is_static;
-	}
+        internal bool IsStatic() {
+            return this.is_static;
+        }
 
-	//====================================================================
-	// Descriptor __getattribute__ implementation. 
-	//====================================================================
+        //====================================================================
+        // Descriptor __getattribute__ implementation. 
+        //====================================================================
 
-	public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
-	    MethodObject self = (MethodObject)GetManagedObject(ob);
+        public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
+            MethodObject self = (MethodObject)GetManagedObject(ob);
 
-	    if (!Runtime.PyString_Check(key)) {
-		return Exceptions.RaiseTypeError("string expected");
-	    }
+            if (!Runtime.PyString_Check(key)) {
+                return Exceptions.RaiseTypeError("string expected");
+            }
 
-	    string name = Runtime.GetManagedString(key);
-	    if (name == "__doc__") {
-		IntPtr doc = self.GetDocString();
-		Runtime.Incref(doc);
-		return doc;
-	    }
+            string name = Runtime.GetManagedString(key);
+            if (name == "__doc__") {
+                IntPtr doc = self.GetDocString();
+                Runtime.Incref(doc);
+                return doc;
+            }
 
-	    return Runtime.PyObject_GenericGetAttr(ob, key);
-	}
+            return Runtime.PyObject_GenericGetAttr(ob, key);
+        }
 
-	//====================================================================
-	// Descriptor __get__ implementation. Accessing a CLR method returns
-	// a "bound" method similar to a Python bound method. 
-	//====================================================================
+        //====================================================================
+        // Descriptor __get__ implementation. Accessing a CLR method returns
+        // a "bound" method similar to a Python bound method. 
+        //====================================================================
 
-	public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
-	    MethodObject self = (MethodObject)GetManagedObject(ds);
-	    MethodBinding binding;
+        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
+            MethodObject self = (MethodObject)GetManagedObject(ds);
+            MethodBinding binding;
 
-	    // If the method is accessed through its type (rather than via
-	    // an instance) we return an 'unbound' MethodBinding that will
-	    // cached for future accesses through the type.
+            // If the method is accessed through its type (rather than via
+            // an instance) we return an 'unbound' MethodBinding that will
+            // cached for future accesses through the type.
 
-	    if (ob == IntPtr.Zero) {
-		if (self.unbound == null) {
-		    self.unbound = new MethodBinding(self, IntPtr.Zero);
-		}
-		binding = self.unbound;
-		Runtime.Incref(binding.pyHandle);;
-		return binding.pyHandle;
-	    }
+            if (ob == IntPtr.Zero) {
+                if (self.unbound == null) {
+                    self.unbound = new MethodBinding(self, IntPtr.Zero);
+                }
+                binding = self.unbound;
+                Runtime.Incref(binding.pyHandle);;
+                return binding.pyHandle;
+            }
 
-	    if (Runtime.PyObject_IsInstance(ob, tp) < 1) {
-		return Exceptions.RaiseTypeError("invalid argument");
-	    }
+            if (Runtime.PyObject_IsInstance(ob, tp) < 1) {
+                return Exceptions.RaiseTypeError("invalid argument");
+            }
 
-	    binding = new MethodBinding(self, ob);
-	    return binding.pyHandle;
-	}
+            binding = new MethodBinding(self, ob);
+            return binding.pyHandle;
+        }
 
-	//====================================================================
-	// Descriptor __repr__ implementation.
-	//====================================================================
+        //====================================================================
+        // Descriptor __repr__ implementation.
+        //====================================================================
 
-	public static IntPtr tp_repr(IntPtr ob) {
-	    MethodObject self = (MethodObject)GetManagedObject(ob);
-	    string s = String.Format("<method '{0}'>", self.name);
-	    return Runtime.PyString_FromStringAndSize(s, s.Length);
-	}
+        public static IntPtr tp_repr(IntPtr ob) {
+            MethodObject self = (MethodObject)GetManagedObject(ob);
+            string s = String.Format("<method '{0}'>", self.name);
+            return Runtime.PyString_FromStringAndSize(s, s.Length);
+        }
 
-	//====================================================================
-	// Descriptor dealloc implementation.
-	//====================================================================
+        //====================================================================
+        // Descriptor dealloc implementation.
+        //====================================================================
 
-	public static new void tp_dealloc(IntPtr ob) {
-	    MethodObject self = (MethodObject)GetManagedObject(ob);
-	    Runtime.Decref(self.doc);
-	    if (self.unbound != null) {
-		Runtime.Decref(self.unbound.pyHandle);
-	    }
-	    ExtensionType.FinalizeObject(self);
-	}
+        public static new void tp_dealloc(IntPtr ob) {
+            MethodObject self = (MethodObject)GetManagedObject(ob);
+            Runtime.Decref(self.doc);
+            if (self.unbound != null) {
+                Runtime.Decref(self.unbound.pyHandle);
+            }
+            ExtensionType.FinalizeObject(self);
+        }
 
 
     }

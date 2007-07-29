@@ -20,44 +20,44 @@ namespace Python.Test {
 
     public class EnumConstructorTest {
 
-	public TypeCode value;
+        public TypeCode value;
 
-	public EnumConstructorTest(TypeCode v) {
-	    this.value = v;
-	}
+        public EnumConstructorTest(TypeCode v) {
+            this.value = v;
+        }
 
     }
 
 
     public class FlagsConstructorTest {
 
-	public FileAccess value;
+        public FileAccess value;
 
-	public FlagsConstructorTest(FileAccess v) {
-	    this.value = v;
-	}
+        public FlagsConstructorTest(FileAccess v) {
+            this.value = v;
+        }
 
     }
 
 
     public class StructConstructorTest {
 
-	public Guid value;
+        public Guid value;
 
-	public StructConstructorTest(Guid v) {
-	    this.value = v;
-	}
+        public StructConstructorTest(Guid v) {
+            this.value = v;
+        }
 
     }
 
 
     public class SubclassConstructorTest {
 
-	public Control value;
+        public Control value;
 
-	public SubclassConstructorTest(Control v) {
-	    this.value = v;
-	}
+        public SubclassConstructorTest(Control v) {
+            this.value = v;
+        }
 
     }
 

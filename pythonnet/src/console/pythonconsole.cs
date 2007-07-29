@@ -18,11 +18,11 @@ public sealed class PythonConsole {
 
     [STAThread]
     public static int Main(string[] args) {
-	string [] cmd = Environment.GetCommandLineArgs();
-	PythonEngine.Initialize();
+        string [] cmd = Environment.GetCommandLineArgs();
+        PythonEngine.Initialize();
 
-	int i = Runtime.Py_Main(cmd.Length, cmd);
-	PythonEngine.Shutdown();
+        int i = Runtime.Py_Main(cmd.Length, cmd);
+        PythonEngine.Shutdown();
 
         return i;
     }
