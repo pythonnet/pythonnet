@@ -48,12 +48,12 @@ all: Python.Runtime.dll python.exe Python.Test.dll $(ALL)
 cleanall: clean all
 
 python.exe: Python.Runtime.dll $(PYTHON_CS)
-	cd $(BASEDIR)/src/console; \
+	cd "$(BASEDIR)/src/console"; \
 	$(CSC) /target:exe /out:../../python.exe \
 	    /reference:../../Python.Runtime.dll /recurse:*.cs
 
 Python.Runtime.dll: $(RUNTIME_CS)
-	cd $(BASEDIR)/src/runtime; \
+	cd "$(BASEDIR)/src/runtime"; \
 	$(CSC) /unsafe /target:library \
 	    $(RUNTIME_REF) /out:../../Python.Runtime.dll /recurse:*.cs
 
@@ -69,7 +69,7 @@ clr.so: Python.Runtime.dll src/monoclr/clrmod.c src/monoclr/pynetclr.h \
 
 
 Python.Test.dll: Python.Runtime.dll
-	cd $(BASEDIR)/src/testing; \
+	cd "$(BASEDIR)/src/testing"; \
 	$(CSC) /target:library /out:../../Python.Test.dll \
 	    /reference:../../Python.Runtime.dll,System.Windows.Forms.dll \
 	    /recurse:*.cs

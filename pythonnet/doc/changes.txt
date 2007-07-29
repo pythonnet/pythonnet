@@ -48,6 +48,9 @@ Python for .NET Changes
 
     - Added clr.AddReference("assembly name"), clr.FindAssembly("name") and
       clr.ListAssemblies(verbose). [tiran]
+      
+    - New Makefile that works for Windows and Mono and autodetects the Python
+      version and UCS 2/4 setting.
 
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
