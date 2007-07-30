@@ -6,26 +6,32 @@
 #     make clean
 
 RELEASE = pythonnet-2.0-alpha3
+KEYFILE = pythonnet.key
 
 PYTHON ?= python
 PYTHONVER ?= $(shell $(PYTHON) -c "import sys; print 'PYTHON%i%i' % sys.version_info[:2]")
 UCS ?= $(shell $(PYTHON) -c "from distutils.sysconfig import get_config_var; \
-                          print 'UCS%i' % (get_config_var('Py_UNICODE_SIZE') or 2)")
+    print 'UCS%i' % (get_config_var('Py_UNICODE_SIZE') or 2)")
+SITEPACKAGES = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; \
+    print get_python_lib(plat_specific=1, standard_lib=0)")
+INSTALL=/usr/bin/install -m644
 
 ifeq ($(origin WINDIR), undefined)
     RUNNER = mono
     ILDASM = monodis
     ILASM = ilasm
     CSC = gmcs
-    RUNTIME_REF = /reference:Mono.Posix.dll
+    RUNTIME_REF = 
     ALL = clr.so monoclr
+    GACUTIL = gacutil /nologo
 else
     RUNNER = 
     ILDASM = ildasm.exe 
-    ILASM = ilasm.exe
-    CSC = csc.exe
+    ILASM = $(WINDIR)/Microsoft.NET/Framework/v2.0.50727/ilasm.exe
+    CSC = $(WINDIR)/Microsoft.NET/Framework/v2.0.50727/csc.exe
     RUNTIME_REF = 
-    ALL = clr.pyd
+    ALL = 
+    GACUTIL = $(ProgramFiles)/Microsoft.NET/SDK/v2.0/Bin/gacutil.exe /nologo
 endif 
 
 ifeq ($(origin DEFINE), undefined)
@@ -33,6 +39,10 @@ ifeq ($(origin DEFINE), undefined)
 else
     _DEFINE = $(DEFINE),$(PYTHONVER),$(UCS)
 endif
+
+ifeq ($(UCS), UCS4)
+    RUNTIME_REF = /reference:Mono.Posix.dll
+endif 
 
 CSC += /define:$(_DEFINE) /nologo $(CSCARGS)
 
@@ -43,9 +53,9 @@ RUNTIME_CS = $(wildcard $(BASEDIR)/src/runtime/*.cs)
 TESTING_CS = $(wildcard $(BASEDIR)/src/testing/*.cs)
 EMBED_CS = $(wildcard $(BASEDIR)/src/embed_tests/*.cs)
 
-all: Python.Runtime.dll python.exe Python.Test.dll $(ALL)
+all: Python.Runtime.dll python.exe Python.Test.dll clr.pyd $(ALL)
 
-cleanall: clean all
+cleanall: realclean all
 
 python.exe: Python.Runtime.dll $(PYTHON_CS)
 	cd "$(BASEDIR)/src/console"; \
@@ -74,8 +84,19 @@ Python.Test.dll: Python.Runtime.dll
 	    /reference:../../Python.Runtime.dll,System.Windows.Forms.dll \
 	    /recurse:*.cs
 
+Python.EmbeddingTest.dll: Python.Runtime.dll $(EMBED_CS)
+	cd $(BASEDIR)/src/embed_tests; \
+	$(CSC) /target:library /out:../../Python.EmbeddingTest.dll \
+	    /reference:../../Python.Runtime.dll,System.Windows.Forms.dll,nunit.framework \
+	    /recurse:*.cs
+
 .PHONY=clean
 clean:
+	rm -f *.exe *.dll *.so *.pyd
+	make -C src/monoclr clean
+
+.PHONY=realclean
+realclean: clean
 	find . \( -name \*.o -o -name \*.so -o -name \*.py[co] -o -name \
 	    \*.dll -o -name \*.exe -o -name \*.pdb -o -name \*.mdb \
 	    -o -name \*.pyd -o -name \*~ \) -exec rm -f {} \;
@@ -93,21 +114,36 @@ test: all
 	$(RUNNER) ./python.exe ./src/tests/runtests.py
 
 .PHONY=dist
-dist: clean all
+dist: realclean
+	if ! [ -f $(KEYFILE) ]; then \
+	    echo "Could not find $(KEYFILE) to sign assemblies"; \
+	    exit 1; \
+	fi 
 	rm -rf ./$(RELEASE)
+	mkdir -p ./release/
 	mkdir ./$(RELEASE)
-	mkdir -p ./release
-	cp ./makefile ./$(RELEASE)/
+	cp ./Makefile ./$(RELEASE)/
 	cp ./*.sln ./$(RELEASE)/
+	cp ./*.mds ./$(RELEASE)/
 	cp ./*.txt ./$(RELEASE)/
 	svn export ./demo ./$(RELEASE)/demo/
 	svn export ./doc ./$(RELEASE)/doc/
 	svn export ./src ./$(RELEASE)/src/
-	cp ./python.exe ./$(RELEASE)/
-	cp ./*.dll ./$(RELEASE)/
-	cp ./*.pyd ./$(RELEASE)/
-	tar czf $(RELEASE).tgz ./$(RELEASE)/
-	mv $(RELEASE).tgz ./release/
+	for PY in python2.4 python2.5; do \
+	    for PYUCS in UCS2 UCS4; do \
+	        make clean; \
+		make PYTHON=$$PY UCS=$$PYUCS CSCARGS=/keyfile:$(BASEDIR)/$(KEYFILE); \
+		mkdir ./$(RELEASE)/$$PY-$$PYUCS; \
+		cp *.dll *.exe *.pyd *.so ./$(RELEASE)/$$PY-$$PYUCS/; \
+	    done; \
+	done;
+	tar czf $(RELEASE).tar.gz ./$(RELEASE)/
+	zip -r -6 $(RELEASE).zip ./$(RELEASE)
+	md5sum $(RELEASE).tar.gz $(RELEASE).zip > $(RELEASE).md5
+	sha256sum $(RELEASE).tar.gz $(RELEASE).zip > $(RELEASE).sha
+	gpg -sb $(RELEASE).zip
+	gpg -sb $(RELEASE).tar.gz 
+	mv $(RELEASE).* ./release/
 	rm -rf ./$(RELEASE)/
 
 dis:
@@ -123,4 +159,7 @@ monoclr:
 
 run: python.exe
 	$(RUNNER) python.exe
+
+install: all
+	$(PYTHON) setup.py install
 

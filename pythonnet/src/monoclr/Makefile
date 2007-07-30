@@ -1,7 +1,7 @@
 # Author: Christian Heimes
 
 PYTHON = python2.5
-BASENAME = $(shell basename $(PYTHON))
+BASENAME = $(shell $(PYTHON) -c "import sys; print 'python%i.%i' % sys.version_info[:2]")
 GCC = gcc
 
 PY_LIBS = $(shell $(PYTHON) -c "from distutils.sysconfig import get_config_vars; \
@@ -15,9 +15,9 @@ MONO_CFLAGS = $(shell pkg-config --cflags mono)
 LIBS = $(MONO_LIBS) $(PY_LIBS)
 CFLAGS = $(MONO_CFLAGS) $(PY_CFLAGS)
 
-all: clrpython python
+all: clr$(BASENAME) $(BASENAME) 
 
-clrpython: clrpython.o pynetinit.o
+clr$(BASENAME): clrpython.o pynetinit.o
 	$(GCC) $(LIBS) clrpython.o pynetinit.o -o clr$(BASENAME) 
 
 clrpython.o: pynetclr.h clrpython.c
@@ -26,12 +26,13 @@ clrpython.o: pynetclr.h clrpython.c
 pynetinit.o: pynetclr.h pynetinit.c
 	$(GCC) $(CFLAGS) -c pynetinit.c -o pynetinit.o
 
-python: python.c 
+$(BASENAME): python.c 
 	$(GCC) $(PY_CFLAGS) $(PY_LIBS) python.c -o $(BASENAME)
 
 clean:
 	rm -f *.o
 	rm -f *.so
-	rm -f clr$(PYTHON)
-	rm -f $(PYTHON)
+	rm -f clrpython2.?
+	rm -f python2.? 
 	rm -rf build/
+

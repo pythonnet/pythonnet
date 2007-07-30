@@ -12,9 +12,13 @@
 Author: Christian Heimes <christian(at)cheimes(dot)de>
 """
 
-from setuptools import setup
-from setuptools import Extension
+import os
+import sys
+from distutils.core import setup
+from distutils.core import Extension
 import subprocess
+
+VERSION = "%i.%i" % sys.version_info[:2] 
 
 def pkgconfig(*packages, **kw):
     """From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/502261
@@ -44,6 +48,11 @@ clr = Extension('clr',
     **pkgconfig('mono')
     )
 
+extensions = []
+if os.name == "posix":
+    extensions.append(clr)
+
 setup(name="clr",
-    ext_modules = [clr],
+    ext_modules = extensions,
+    scripts = ["src/monoclr/clrpython%s" % VERSION],
     )
