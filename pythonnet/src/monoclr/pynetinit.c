@@ -11,6 +11,7 @@
 
 #include "pynetclr.h"
 
+// initialize Mono and PythonNet
 PyNet_Args* PyNet_Init(int ext) {
     PyNet_Args *pn_args;
     pn_args = (PyNet_Args *)malloc(sizeof(PyNet_Args));
@@ -44,22 +45,19 @@ PyNet_Args* PyNet_Init(int ext) {
     main_thread_handler(pn_args);
 
     if (pn_args->error != NULL) {
-        fprintf(stderr, "CRITICAL ERROR\n");
-        fprintf(stderr, pn_args->error);
-        fprintf(stderr, "\n\n");
+        PyErr_SetString(PyExc_ImportError, pn_args->error);
     }
     return pn_args;
 } 
 
+// Shuts down PythonNet and cleans up Mono
 void PyNet_Finalize(PyNet_Args *pn_args) {
     MonoObject *exception = NULL;
 
     if (pn_args->shutdown) {
         mono_runtime_invoke(pn_args->shutdown, NULL, NULL, &exception);
         if (exception) {
-            pn_args->error = "An exception was raised during shutdown";
-            fprintf(stderr, pn_args->error);
-            fprintf(stderr, "\n");
+            pn_args->error = PyNet_ExceptionToString(exception);
         }
         pn_args->shutdown = NULL;
     }
@@ -72,12 +70,12 @@ void PyNet_Finalize(PyNet_Args *pn_args) {
 }
 
 MonoMethod *getMethodFromClass(MonoClass *cls, char *name) {
-    MonoMethodDesc *method_desc;
+    MonoMethodDesc *mdesc;
     MonoMethod *method;
 
-    method_desc = mono_method_desc_new(name, 1);
-    method = mono_method_desc_search_in_class(method_desc, cls);
-    mono_method_desc_free(method_desc);
+    mdesc = mono_method_desc_new(name, 1);
+    method = mono_method_desc_search_in_class(mdesc, cls);
+    mono_method_desc_free(mdesc);
 
     return method;
 }
@@ -121,7 +119,20 @@ void main_thread_handler (gpointer user_data) {
 
     mono_runtime_invoke(init, NULL, NULL, &exception);
     if (exception) {
-        pn_args->error = "An exception was raised";
+        pn_args->error = PyNet_ExceptionToString(exception);
         return;
     }
 }
+
+// Get string from a Mono exception 
+char* PyNet_ExceptionToString(MonoObject *e) {
+    MonoMethodDesc* mdesc = mono_method_desc_new(":ToString()", FALSE);
+    MonoMethod* mmethod = mono_method_desc_search_in_class(mdesc, 
+        mono_get_object_class());
+    mono_method_desc_free(mdesc);
+    mmethod = mono_object_get_virtual_method(e, mmethod);
+    MonoString* monoString = (MonoString*) mono_runtime_invoke(mmethod, 
+        e, NULL, NULL);
+    return mono_string_to_utf8(monoString);
+}
+

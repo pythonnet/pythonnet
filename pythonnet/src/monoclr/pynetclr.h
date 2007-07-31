@@ -36,6 +36,7 @@ typedef struct {
 PyNet_Args* PyNet_Init(int);
 void PyNet_Finalize(PyNet_Args*);
 void main_thread_handler(gpointer user_data);
+char* PyNet_ExceptionToString(MonoObject *);
 
 #endif // PYNET_CLR_H
 

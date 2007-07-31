@@ -38,8 +38,6 @@ initclr(void)
 
         pn_args = PyNet_Init(0);
         if (pn_args->error) {
-            // ERROR
-            printf(pn_args->error);
             return;
         }
 }
