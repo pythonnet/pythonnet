@@ -26,17 +26,33 @@ namespace Python.Runtime {
     /// the responsibility of the caller to have acquired the GIL
     /// before calling any of these methods.
     /// </summary>
+#if (UCS4)
+        public const int UCS = 4;
+#endif
+#if (UCS2)
+        public const int UCS = 2;
+#endif
+#if ! (UCS2 || UCS4)
+#error You must define either UCS2 or UCS4!
+#endif
+
 #if (PYTHON24)
-        internal const string dll = "python24";
+        public const string dll = "python24";
+        public const string pyversion = "2.4";
+        public const int pyversionnumber = 24;
 #endif
 #if (PYTHON25)
-        internal const string dll = "python25";
+        public const string dll = "python25";
+        public const string pyversion = "2.5";
+        public const int pyversionnumber = 25;
 #endif
 #if (PYTHON26)
-        internal const string dll = "python26";
+        public const string dll = "python26";
+        public const string pyversion = "2.6";
+        public const int pyversionnumber = 26;
 #endif
 #if ! (PYTHON24 || PYTHON25 || PYTHON26)
-#error You must define either PYTHON24 or PYTHON25!
+#error You must define either PYTHON24, PYTHON25 or PYTHON26!
 #endif
     internal static bool wrap_exceptions;
     internal static bool is32bit;
@@ -117,7 +133,7 @@ namespace Python.Runtime {
         // of the Python runtime that do not allow new-style classes to
         // be used as exceptions (Python versions 2.4 and lower).
 
-#if (PYTHON25)
+#if (PYTHON25 || PYTHON26)
         wrap_exceptions = false;
 #else
         IntPtr m = PyImport_ImportModule("exceptions");
@@ -130,7 +146,6 @@ namespace Python.Runtime {
         Runtime.Decref(op);
         Runtime.Decref(m);
 #endif
-
 
         // Initialize modules that depend on the runtime class.
         AssemblyManager.Initialize();
@@ -227,6 +242,10 @@ namespace Python.Runtime {
     }
 
     internal static Type[] PythonArgsToTypeArray(IntPtr arg) {
+        return PythonArgsToTypeArray(arg, false);
+    }
+
+    internal static Type[] PythonArgsToTypeArray(IntPtr arg, bool mangleObjects) {
         // Given a PyObject * that is either a single type object or a
         // tuple of (managed or unmanaged) type objects, return a Type[]
         // containing the CLR Type objects that map to those types.
@@ -246,6 +265,9 @@ namespace Python.Runtime {
 
         for (int i = 0; i < n; i++) {
             IntPtr op = Runtime.PyTuple_GetItem(args, i);
+            if (mangleObjects && (!Runtime.PyType_Check(op))) {
+                op = Runtime.PyObject_TYPE(op);
+            }
             ManagedType mt = ManagedType.GetManagedObject(op);
 
             if (mt is ClassBase) {
@@ -575,15 +597,20 @@ namespace Python.Runtime {
 
     internal unsafe static IntPtr
     PyObject_TYPE(IntPtr op) {
-        void *p = (void *)op;
-        if ((void *)0 == p) {
-        return IntPtr.Zero;
+        void* p = (void*)op;
+        if ((void*)0 == p) {
+            return IntPtr.Zero;
         }
+#if (Py_DEBUG)
+        int n = 3;
+#else
+        int n = 1;
+#endif
         if (is32bit) {
-        return new IntPtr((void *)(*((uint *)p + 1)));
+            return new IntPtr((void*)(*((uint*)p + n)));
         }
         else {
-        return new IntPtr((void *)(*((ulong *)p + 1)));
+            return new IntPtr((void*)(*((ulong*)p + n)));
         }
     }
 
@@ -1384,6 +1411,10 @@ namespace Python.Runtime {
     //====================================================================
     // Python type object API
     //====================================================================
+
+    internal static bool PyType_Check(IntPtr ob) {
+        return PyObject_TypeCheck(ob, Runtime.PyTypeType);
+    }
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]

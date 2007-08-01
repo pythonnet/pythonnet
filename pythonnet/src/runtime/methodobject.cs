@@ -60,7 +60,7 @@ namespace Python.Runtime {
  
         public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw,
                                      MethodBase info) {
-            return binder.Invoke(target, args, kw, info);
+            return binder.Invoke(target, args, kw, info, this.info);
         }
 
         //====================================================================

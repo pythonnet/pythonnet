@@ -162,15 +162,21 @@ namespace Python.Runtime {
         //====================================================================
 
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw) {
-            return this.Bind(inst, args, kw, null);
+            return this.Bind(inst, args, kw, null, null);
         }
 
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw,
                               MethodBase info) {
+            return this.Bind(inst, args, kw, info, null);
+        }
+
+        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw,
+                              MethodBase info, MethodInfo[] methodinfo) {
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
             int pynargs = Runtime.PyTuple_Size(args);
             object arg;
+            bool isGeneric = false;
 
              if (info != null) {
                 _methods = (MethodBase[])Array.CreateInstance(
@@ -184,6 +190,7 @@ namespace Python.Runtime {
  
             for (int i = 0; i < _methods.Length; i++) {
                 MethodBase mi = _methods[i];
+                if (mi.IsGenericMethod) { isGeneric = true; }
                 ParameterInfo[] pi = mi.GetParameters();
                 int clrnargs = pi.Length;
                 bool match = false;
@@ -247,17 +254,32 @@ namespace Python.Runtime {
                     return new Binding(mi, target, margs, outs);
                 }
             }
+            // We weren't able to find a matching method but at least one
+            // is a generic method and info is null. That happens when a generic
+            // method was not called using the [] syntax. Let's introspect the
+            // type of the arguments and use it to construct the correct method.
+            if (isGeneric && (info == null) && (methodinfo != null))
+            {
+                Type[] types = Runtime.PythonArgsToTypeArray(args, true);
+                MethodInfo mi = MethodBinder.MatchParameters(methodinfo, types);
+                return Bind(inst, args, kw, mi, null);
+            }
             return null;
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
-            return this.Invoke(inst, args, kw, null);
+            return this.Invoke(inst, args, kw, null, null);
             
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw,
                                        MethodBase info) {
-            Binding binding = this.Bind(inst, args, kw, info);
+            return this.Invoke(inst, args, kw, info, null);
+        }
+
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw,
+                                       MethodBase info, MethodInfo[] methodinfo) {
+            Binding binding = this.Bind(inst, args, kw, info, methodinfo);
             Object result;
             IntPtr ts = IntPtr.Zero;
 

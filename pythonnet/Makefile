@@ -5,7 +5,7 @@
 #     make PYTHON=/path/to/python DEFINE=additional,defines CSCARGS=additional_args
 #     make clean
 
-RELEASE = pythonnet-2.0-alpha3
+RELEASE = pythonnet-2.0-alpha2
 KEYFILE = pythonnet.key
 
 PYTHON ?= python
@@ -23,15 +23,17 @@ ifeq ($(origin WINDIR), undefined)
     CSC = gmcs
     RUNTIME_REF = 
     ALL = clr.so monoclr
-    GACUTIL = gacutil /nologo
+    GACUTIL = gacutil
+    SN = sn
 else
     RUNNER = 
-    ILDASM = ildasm.exe 
-    ILASM = $(WINDIR)/Microsoft.NET/Framework/v2.0.50727/ilasm.exe
-    CSC = $(WINDIR)/Microsoft.NET/Framework/v2.0.50727/csc.exe
+    ILDASM = $${PROGRAMFILES}/Microsoft.NET/SDK/v2.0/Bin/ildasm.exe 
+    ILASM = $${WINDIR}/Microsoft.NET/Framework/v2.0.50727/ilasm.exe
+    CSC = $${WINDIR}/Microsoft.NET/Framework/v2.0.50727/csc.exe
     RUNTIME_REF = 
     ALL = 
-    GACUTIL = $(ProgramFiles)/Microsoft.NET/SDK/v2.0/Bin/gacutil.exe /nologo
+    GACUTIL = $${PROGRAMFILES}/Microsoft.NET/SDK/v2.0/Bin/gacutil.exe /nologo
+    SN = $${PROGRAMFILES}/Microsoft.NET/SDK/v2.0/Bin/sn.exe /q
 endif 
 
 ifeq ($(origin DEFINE), undefined)
@@ -132,19 +134,23 @@ dist: realclean
 	for PY in python2.4 python2.5; do \
 	    for PYUCS in UCS2 UCS4; do \
 	        make clean; \
-		make PYTHON=$$PY UCS=$$PYUCS CSCARGS=/keyfile:$(BASEDIR)/$(KEYFILE); \
+		make PYTHON=$$PY UCS=$$PYUCS CSCARGS="/keyfile:$(BASEDIR)/$(KEYFILE) /optimize"; \
 		mkdir ./$(RELEASE)/$$PY-$$PYUCS; \
 		cp *.dll *.exe *.pyd *.so ./$(RELEASE)/$$PY-$$PYUCS/; \
 	    done; \
 	done;
 	tar czf $(RELEASE).tar.gz ./$(RELEASE)/
 	zip -r -6 $(RELEASE).zip ./$(RELEASE)
-	md5sum $(RELEASE).tar.gz $(RELEASE).zip > $(RELEASE).md5
-	sha256sum $(RELEASE).tar.gz $(RELEASE).zip > $(RELEASE).sha
-	gpg -sb $(RELEASE).zip
-	gpg -sb $(RELEASE).tar.gz 
 	mv $(RELEASE).* ./release/
 	rm -rf ./$(RELEASE)/
+
+sign:
+	md5sum ./release/$(RELEASE).tar.gz ./release/$(RELEASE).zip > \
+	    ./release/$(RELEASE).md5
+	sha256sum ./release/$(RELEASE).tar.gz ./release/$(RELEASE).zip > \
+	    ./release/$(RELEASE).sha
+	gpg -sb ./release/$(RELEASE).zip
+	gpg -sb ./release/$(RELEASE).tar.gz 
 
 dis:
 	$(ILDASM) Python.Runtime.dll /out=Python.Runtime.il
@@ -163,3 +169,5 @@ run: python.exe
 install: all
 	$(PYTHON) setup.py install
 
+mkkey:
+	$(SN) /k $(KEYFILE)

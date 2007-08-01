@@ -10,10 +10,6 @@ For PythonNet 2.0
  
  * Deprecate implicit loading of assemblies
 
- * Add support for implicit calls to overloaded methods. 
-   OverloadedMethod[string, int]("egg", 42) works
-   OverloadedMethod("egg", 42) does not under some circumstances work
-
  * Debug failing unit tests under Mono and report them if they are caused
    by incompatibilities in Mono. 
 

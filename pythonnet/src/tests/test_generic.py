@@ -299,7 +299,7 @@ class GenericTests(unittest.TestCase):
         """
         from Python.Test import InterfaceTest, ISayHello1, ShortEnum
         import System
-        
+
         self._testGenericMethodByType(System.Boolean, True)
         self._testGenericMethodByType(bool, True)
         self._testGenericMethodByType(System.Byte, 255)
@@ -312,7 +312,7 @@ class GenericTests(unittest.TestCase):
         self._testGenericMethodByType(long, 9223372036854775807L)         
         self._testGenericMethodByType(System.UInt16, 65000)
         self._testGenericMethodByType(System.UInt32, 4294967295L)
-        self._testGenericMethodByType(System.UInt64, 18446744073709551615L)
+        self._testGenericMethodByType(System.UInt64, 1844674407370955161L)
         self._testGenericMethodByType(System.Single, 3.402823e38)
         self._testGenericMethodByType(System.Double, 1.7976931348623157e308)
         self._testGenericMethodByType(float, 1.7976931348623157e308)         
@@ -324,6 +324,10 @@ class GenericTests(unittest.TestCase):
         self._testGenericMethodByType(System.Object, InterfaceTest())
         self._testGenericMethodByType(InterfaceTest, InterfaceTest(), 1)
         self._testGenericMethodByType(ISayHello1, InterfaceTest(), 1)
+        # XXX BUG: The value doesn't fit into Int64 and PythonNet doesn't
+        # recognize it as UInt64 for unknown reasons.
+        self._testGenericMethodByType(System.UInt64, 18446744073709551615L)
+
 
     def testGenericMethodOverloadSelection(self):
         """
