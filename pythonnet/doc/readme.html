@@ -197,9 +197,11 @@ li {
  <strong>Running on Linux/Mono:</strong> Preliminary testing shows that 
  PythonNet runs under <a href="http://www.go-mono.com">Mono</a> without
  major issues, though the Mono runtime is not yet complete so there 
- still may be problems. The Python for .NET integration layer is 100% 
- managed code, so there should be no long-term issues under Mono - it
- should work better and better as the Mono platform matures.
+ still may be problems. The only known issues with Mono are related to
+ generic methods. Some edge cases aren't working properly and the bugs
+ are already been worked on. However the Python for .NET integration layer
+ is 100% managed code, so there should be no long-term issues under Mono
+ - it should work better and better as the Mono platform matures.
 </p>
 
 <p>
@@ -236,14 +238,15 @@ li {
  when the interpreter is not build with --enable-shared (Debian, Ubuntu)
  or libpython2.?.so isn't available. You <strong>must</strong> use a
  Python binary that is linked dynamically against libpython2.?.so.
- <pre>ldd /usr/bin/python2.?</pre> has to list libpython2.?.so. When your
- Python interpreter isn't linked against libpython2.?.so but the shared
- lib
+ <code>ldd /usr/bin/python2.?</code> has to list <code>libpython2.?.so</code>. When your
+ Python interpreter isn't linked against libpython2.?.so you can't load
+ the clr.so module. The src/monoclr/ directory contains a dynamically linked
+ Python binary and a clrpython2.x which automatically loads Mono and PythonNet
+ on startup.
 </p>
 
  <pre>
-    &lt;dllmap dll=&quote;python25&quote; target=&quote;libpython2.5.so&quote; os=&quote;!wi
-ndows&quote; /&gt;
+    &lt;dllmap dll="python25" target="libpython2.5.so" os="!windows" /&gt;
  </pre>
  
 <a name="monoclr_libpython"><a/>
@@ -251,7 +254,8 @@ ndows&quote; /&gt;
  PythonNet uses compiler symbols in order to build PythonNet for different
  versions and flavors of Python.
  <table>
-  <th><td>symbol</td><td>explenetion</td></th>
+  <tr><th>symbol</th><th>explenetion</th></tr>
+  <tr><td>PYTHON23</td><td>build for Python 2.3</td></tr>
   <tr><td>PYTHON24</td><td>build for Python 2.4</td></tr>
   <tr><td>PYTHON25</td><td>build for Python 2.5</td></tr>
   <tr><td>PYTHON26</td><td>build for Python 2.6</td></tr>
@@ -348,9 +352,19 @@ ndows&quote; /&gt;
  Python for .NET uses the PYTHONPATH (sys.path) to look for assemblies 
  to load, in addition to the usual application base and the GAC. To 
  ensure that you can implicitly import an assembly, put the directory 
- containing the assembly in <code>sys.path</code>.
+ containing the assembly in <code>sys.path</code>. However the 
+ <code>Python.Runtime.dll</code> is not loaded from  <code>sys.path</code>.
+ It must either live in the GAC or somewhere else were it can be loaded.
 </p>
 
+<p>
+ The clr module contains some additional methods like <code>setPreload(bool)</code>,
+ <code>getPreload()</code>, <code>ListAssemblies(verbosity)</code> and
+ <code>FindAssembly(name)</code>. set/getPreload tune the preload flag. For performance
+ reasons PythonNet only creates wrappers for classes that are imported. It nakes
+ important a bit faster but makes introspection impossible. Interactive Python shells
+ have a default of True.
+</p>
 
 <a name="classes"></a>
 

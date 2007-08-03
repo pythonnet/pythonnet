@@ -26,6 +26,10 @@ using System.Resources;
 [assembly: AssemblyFileVersionAttribute("2.0.0.2")]
 [assembly: NeutralResourcesLanguageAttribute("en")]
 
+#if (PYTHON23)
+[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.3")]
+[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.3")]
+#endif
 #if (PYTHON24)
 [assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.4")]
 [assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.4")]

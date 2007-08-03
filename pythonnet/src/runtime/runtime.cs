@@ -36,6 +36,11 @@ namespace Python.Runtime {
 #error You must define either UCS2 or UCS4!
 #endif
 
+#if (PYTHON23)
+        public const string dll = "python23";
+        public const string pyversion = "2.3";
+        public const int pyversionnumber = 23;
+#endif
 #if (PYTHON24)
         public const string dll = "python24";
         public const string pyversion = "2.4";
@@ -51,8 +56,8 @@ namespace Python.Runtime {
         public const string pyversion = "2.6";
         public const int pyversionnumber = 26;
 #endif
-#if ! (PYTHON24 || PYTHON25 || PYTHON26)
-#error You must define either PYTHON24, PYTHON25 or PYTHON26!
+#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26)
+#error You must define one of PYTHON23 to PYTHON26
 #endif
     internal static bool wrap_exceptions;
     internal static bool is32bit;

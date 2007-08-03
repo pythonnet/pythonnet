@@ -214,9 +214,10 @@ namespace Python.Runtime {
             "    _class = None\n" +
             "    _inner = None\n" +
             "    \n" +
-            "    @property\n" +
+            "    #@property\n" +
             "    def message(self):\n" +
             "        return self.Message\n" +
+            "    message = property(message)\n" +
             "    \n" +
             "    def __init__(self, *args, **kw):\n" +
             "        inst = self.__class__._class(*args, **kw)\n" +
@@ -264,7 +265,9 @@ namespace Python.Runtime {
             Runtime.PyDict_SetItemString(dict, "__doc__", Runtime.PyNone);
 
             IntPtr flag = Runtime.Py_file_input;
-            Runtime.PyRun_String(code, flag, dict, dict);
+            IntPtr result = Runtime.PyRun_String(code, flag, dict, dict);
+            Exceptions.ErrorCheck(result);
+            Runtime.Decref(result);
 
             os_exc = Runtime.PyDict_GetItemString(dict, "Exception");
             Runtime.PyObject_SetAttrString(os_exc, "_class", ns_exc);

@@ -169,7 +169,6 @@ namespace Python.Runtime {
             ModuleObject head = (mod_name == realname) ? null : root;
             ModuleObject tail = root;
             root.InitializePreload();
-            bool preload = root.preload;
 
             for (int i = 0; i < names.Length; i++) {
                 string name = names[i];
@@ -183,7 +182,7 @@ namespace Python.Runtime {
                     head = (ModuleObject)mt;
                 }
                 tail = (ModuleObject) mt;
-                if (preload) {
+                if (CLRModule.preload) {
                     tail.LoadNames();
                 }
                 Runtime.PyDict_SetItemString(modules, tail.moduleName, 
@@ -195,7 +194,7 @@ namespace Python.Runtime {
 
             if (fromlist && Runtime.PySequence_Size(fromList) == 1) {
                 IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
-                if ((!preload) && Runtime.GetManagedString(fp) == "*") {
+                if ((!CLRModule.preload) && Runtime.GetManagedString(fp) == "*") {
                     mod.LoadNames();
                 }
                 Runtime.Decref(fp);

@@ -55,7 +55,7 @@ def main(verbosity=1):
     
     for name in test_modules:
         module = __import__(name)
-        suite.addTests(module.test_suite())
+        suite.addTests((module.test_suite(),))
         
     unittest.TextTestRunner(verbosity=verbosity).run(suite)
 
