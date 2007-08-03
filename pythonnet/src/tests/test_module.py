@@ -35,20 +35,22 @@ class ModuleTests(unittest.TestCase):
 
     def testPreloadVar(self):
         import clr
-        self.failUnless(clr.preload is False, clr.preload)
+        self.failUnless(clr.getPreload() is False, clr.getPreload())
+	clr.setPreload(False)
+	self.failUnless(clr.getPreload() is False, clr.getPreload())
         try:
-            clr.preload = True
-            self.failUnless(clr.preload is True, clr.preload)
-            clr.preload = 0
-            self.failUnless(clr.preload is False, clr.preload)
-            clr.preload = 1
-            self.failUnless(clr.preload is True, clr.preload)
+            clr.setPreload(True)
+            self.failUnless(clr.getPreload() is True, clr.getPreload())
+            clr.setPreload(0)
+            self.failUnless(clr.getPreload() is False, clr.getPreload())
+            clr.setPreload(1)
+            self.failUnless(clr.getPreload() is True, clr.getPreload())
             
             import System.Configuration
             content = dir(System.Configuration)
             self.failUnless(len(content) > 10, content)
         finally:
-            clr.preload = False
+            clr.setPreload(False)
 
     def testModuleInterface(self):
         """Test the interface exposed by CLR module objects."""
