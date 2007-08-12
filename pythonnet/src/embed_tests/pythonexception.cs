@@ -33,7 +33,7 @@ namespace Python.EmbeddingTest
             }
             catch (PythonException e)
             {
-                Assert.AreEqual("exceptions.IndexError : list index out of range", e.Message);
+                Assert.AreEqual("IndexError : list index out of range", e.Message);
             }
         }
 

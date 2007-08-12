@@ -34,7 +34,7 @@ namespace Python.Runtime {
         IntPtr gs = PythonEngine.AcquireLock();
         if ((_pyType != IntPtr.Zero) && (_pyValue != IntPtr.Zero))
         {
-            string type = new PyObject(_pyType).ToString();
+            string type = new PyObject(_pyType).GetAttr("__name__").ToString();
             string message = Runtime.GetManagedString(_pyValue);
             _message = type + " : " + message;
         }
