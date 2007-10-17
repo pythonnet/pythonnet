@@ -145,12 +145,13 @@ dist: realclean
 	rm -rf ./$(RELEASE)/
 
 sign:
-	md5sum ./release/$(RELEASE).tar.gz ./release/$(RELEASE).zip > \
-	    ./release/$(RELEASE).md5
-	sha256sum ./release/$(RELEASE).tar.gz ./release/$(RELEASE).zip > \
-	    ./release/$(RELEASE).sha
-	gpg -sb ./release/$(RELEASE).zip
-	gpg -sb ./release/$(RELEASE).tar.gz 
+	rm -f release/$(RELEASE)*.sig
+	cd release; md5sum $(RELEASE).tar.gz $(RELEASE).zip > \
+	    $(RELEASE).md5
+	cd release; sha256sum $(RELEASE).tar.gz $(RELEASE).zip > \
+	    $(RELEASE).sha
+	cd release; gpg -sab $(RELEASE).zip
+	cd release; gpg -sab $(RELEASE).tar.gz 
 
 dis:
 	$(ILDASM) Python.Runtime.dll /out=Python.Runtime.il
@@ -170,4 +171,4 @@ install: all
 	$(PYTHON) setup.py install
 
 mkkey:
-	$(SN) /k $(KEYFILE)
+	$(SN) -k $(KEYFILE)

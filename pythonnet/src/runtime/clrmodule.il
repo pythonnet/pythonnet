@@ -21,7 +21,8 @@
 }
 .assembly extern Python.Runtime
 {
-  .ver 1:0:0:0
+  // .publickeytoken = (64 e1 4e 84 5a bf 2e 60)
+  .ver 2:0:0:2
 }
 .assembly clr
 {
@@ -29,7 +30,7 @@
   //  .custom instance void [mscorlib]System.Diagnostics.DebuggableAttribute::.ctor(bool,
   //                                                                                bool) = ( 01 00 00 01 00 00 ) 
   .hash algorithm 0x00008004
-  .ver 0:0:0:0
+  .ver 2:0:0:2
 }
 
 .module clr.dll

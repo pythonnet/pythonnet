@@ -56,6 +56,13 @@ Python for .NET Changes
     - Added code for Python 2.3. PythonNet can be build for Python 2.3 again
       but it is not fully supported. [tiran]
 
+    - Changed the PythonException.Message value so it displays the name of 
+      the exception class ("Exception") instead of its representation
+      ("<type 'exceptions.Exception'>").
+
+    - Added Python.Runtime.dll.config
+
+
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
 
