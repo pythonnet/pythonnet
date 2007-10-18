@@ -9,9 +9,10 @@ RELEASE = pythonnet-2.0-alpha2
 KEYFILE = pythonnet.key
 
 PYTHON ?= python
-PYTHONVER ?= $(shell $(PYTHON) -c "import sys; print 'PYTHON%i%i' % sys.version_info[:2]")
-UCS ?= $(shell $(PYTHON) -c "from distutils.sysconfig import get_config_var; \
-    print 'UCS%i' % (get_config_var('Py_UNICODE_SIZE') or 2)")
+PYTHONVER ?= $(shell $(PYTHON) -c "import sys; \
+    print 'PYTHON%i%i' % sys.version_info[:2]") 
+UCS ?= $(shell $(PYTHON) -c "import sys; \
+    print 'UCS%i' % ((sys.maxunicode > 65536) and 4 or 2)")
 SITEPACKAGES = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; \
     print get_python_lib(plat_specific=1, standard_lib=0)")
 INSTALL=/usr/bin/install -m644
@@ -37,16 +38,16 @@ else
 endif 
 
 ifeq ($(origin DEFINE), undefined)
-    _DEFINE = $(PYTHONVER),$(UCS)
+    _DEFINE = 
 else
-    _DEFINE = $(DEFINE),$(PYTHONVER),$(UCS)
+    _DEFINE = /define:$(DEFINE)
 endif
 
 ifeq ($(UCS), UCS4)
     RUNTIME_REF = /reference:Mono.Posix.dll
 endif 
 
-CSC += /define:$(_DEFINE) /nologo $(CSCARGS)
+CSC += /define:$(PYTHONVER) /define:$(UCS) $(_DEFINE) /nologo $(CSCARGS)
 
 BASEDIR = $(shell pwd)
 
@@ -172,3 +173,4 @@ install: all
 
 mkkey:
 	$(SN) -k $(KEYFILE)
+
