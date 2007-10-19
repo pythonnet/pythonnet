@@ -92,7 +92,7 @@ namespace Python.Runtime {
         /// </remarks>
 
         public PyLong(long value) : base() {
-            obj = Runtime.PyLong_FromLong(value);
+            obj = Runtime.PyLong_FromLongLong(value);
             if (obj == IntPtr.Zero) {
                 throw new PythonException();
             }
@@ -246,7 +246,46 @@ namespace Python.Runtime {
             return new PyLong(op);
         }
 
+        /// <summary>
+        /// ToInt16 Method
+        /// </summary>
+        ///
+        /// <remarks>
+        /// Return the value of the Python long object as an int16.
+        /// </remarks>
 
+        public short ToInt16()
+        {
+            return System.Convert.ToInt16(this.ToInt64());
+        }
+
+
+        /// <summary>
+        /// ToInt32 Method
+        /// </summary>
+        ///
+        /// <remarks>
+        /// Return the value of the Python long object as an int32.
+        /// </remarks>
+
+        public int ToInt32()
+        {
+            return System.Convert.ToInt32(this.ToInt64());
+        }
+
+
+        /// <summary>
+        /// ToInt64 Method
+        /// </summary>
+        ///
+        /// <remarks>
+        /// Return the value of the Python long object as an int64.
+        /// </remarks>
+
+        public long ToInt64()
+        {
+            return Runtime.PyLong_AsLongLong(obj);
+        }
     }
 
 }
