@@ -129,6 +129,7 @@ dist: realclean
 	cp ./*.sln ./$(RELEASE)/
 	cp ./*.mds ./$(RELEASE)/
 	cp ./*.txt ./$(RELEASE)/
+	cp ./*.py ./$(RELEASE)/
 	svn export ./demo ./$(RELEASE)/demo/
 	svn export ./doc ./$(RELEASE)/doc/
 	svn export ./src ./$(RELEASE)/src/
