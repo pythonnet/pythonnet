@@ -53,7 +53,7 @@ namespace Python.Runtime {
         //====================================================================
 
         internal static Type GetTypeByAlias(IntPtr op) {
-            if ((op == Runtime.PyStringType) || 
+            if ((op == Runtime.PyStringType) ||
                 (op == Runtime.PyUnicodeType)) {
                 return stringType;
             }
@@ -76,7 +76,7 @@ namespace Python.Runtime {
         //====================================================================
         // Return a Python object for the given native object, converting
         // basic types (string, int, etc.) into equivalent Python objects.
-        // This always returns a new reference. Note that the System.Decimal 
+        // This always returns a new reference. Note that the System.Decimal
         // type has no Python equivalent and converts to a managed instance.
         //====================================================================
 
@@ -134,7 +134,7 @@ namespace Python.Runtime {
 
             case TypeCode.Char:
                 return Runtime.PyUnicode_FromOrdinal((int)((char)value));
-              
+
             case TypeCode.Int16:
                 return Runtime.PyInt_FromInt32((int)((short)value));
 
@@ -184,7 +184,7 @@ namespace Python.Runtime {
                 return result;
             }
 
-            return ToPython(value, objectType); 
+            return ToPython(value, objectType);
         }
 
 
@@ -198,11 +198,11 @@ namespace Python.Runtime {
             if (type.IsByRef) {
                 type = type.GetElementType();
             }
-            return Converter.ToManagedValue(value, type, out result, setError);            
+            return Converter.ToManagedValue(value, type, out result, setError);
         }
 
 
-        internal static bool ToManagedValue(IntPtr value, Type obType, 
+        internal static bool ToManagedValue(IntPtr value, Type obType,
                                       out Object result, bool setError) {
             // Common case: if the Python value is a wrapped managed object
             // instance, just return the wrapped object.
@@ -268,12 +268,12 @@ namespace Python.Runtime {
             }
 
             // Conversion to 'Object' is done based on some reasonable
-            // default conversions (Python string -> managed string, 
+            // default conversions (Python string -> managed string,
             // Python int -> Int32 etc.).
 
             if (obType == objectType) {
                 if (Runtime.IsStringType(value)) {
-                    return ToPrimitive(value, stringType, out result, 
+                    return ToPrimitive(value, stringType, out result,
                                        setError);
                 }
 
@@ -289,8 +289,12 @@ namespace Python.Runtime {
                     return ToPrimitive(value, int64Type, out result, setError);
                 }
 
+                else if (Runtime.PyFloat_Check(value)) {
+                    return ToPrimitive(value, doubleType, out result, setError);
+                }
+
                 else if (Runtime.PySequence_Check(value)) {
-                    return ToArray(value, typeof(object[]), out result, 
+                    return ToArray(value, typeof(object[]), out result,
                                    setError);
                 }
 
@@ -311,7 +315,7 @@ namespace Python.Runtime {
         // Convert a Python value to an instance of a primitive managed type.
         //====================================================================
 
-        static bool ToPrimitive(IntPtr value, Type obType, out Object result, 
+        static bool ToPrimitive(IntPtr value, Type obType, out Object result,
                                 bool setError) {
 
             IntPtr overflow = Exceptions.OverflowError;
@@ -441,7 +445,7 @@ namespace Python.Runtime {
                     goto type_error;
                 }
 
-                else if (Runtime.PyObject_TypeCheck(value, 
+                else if (Runtime.PyObject_TypeCheck(value,
                                  Runtime.PyUnicodeType)) {
                     if (Runtime.PyUnicode_GetSize(value) == 1) {
                         op = Runtime.PyUnicode_AS_UNICODE(value);
@@ -622,7 +626,7 @@ namespace Python.Runtime {
         // items in the sequence must be convertible to the target array type.
         //====================================================================
 
-        static bool ToArray(IntPtr value, Type obType, out Object result, 
+        static bool ToArray(IntPtr value, Type obType, out Object result,
                            bool setError) {
 
             Type elementType = obType.GetElementType();
@@ -668,7 +672,7 @@ namespace Python.Runtime {
         // Convert a Python value to a correctly typed managed enum instance.
         //====================================================================
 
-        static bool ToEnum(IntPtr value, Type obType, out Object result, 
+        static bool ToEnum(IntPtr value, Type obType, out Object result,
                            bool setError) {
 
             Type etype = Enum.GetUnderlyingType(obType);
@@ -679,7 +683,7 @@ namespace Python.Runtime {
             }
 
             if (Enum.IsDefined(obType, result)) {
-                result = Enum.ToObject(obType, result);                
+                result = Enum.ToObject(obType, result);
                 return true;
             }
 
