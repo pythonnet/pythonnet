@@ -305,7 +305,7 @@ class ExceptionTests(unittest.TestCase):
             Convert.ToDateTime('this will fail')
         except FormatException, e:
             msg = unicode(e).encode("utf8") # fix for international installation
-            self.failUnless(msg.find('System.DateTime.Parse') > -1, msg)
+            self.failUnless(msg.find('System.Convert.ToDateTime') > -1, msg)
 
             
     def testPythonCompatOfManagedExceptions(self):
