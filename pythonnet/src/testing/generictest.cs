@@ -88,7 +88,7 @@ namespace Python.Test {
             return arg2;
         }
 
-        public string Overloaded<T>(int arg1, int arg2, string arg3) {
+        public string Overloaded<Q>(int arg1, int arg2, string arg3) {
             return arg3;
         }
 
@@ -114,7 +114,7 @@ namespace Python.Test {
             return arg2;
         }
 
-        public static string Overloaded<T>(int arg1, int arg2, string arg3) {
+        public static string Overloaded<Q>(int arg1, int arg2, string arg3) {
             return arg3;
         }
 
