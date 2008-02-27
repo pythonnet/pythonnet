@@ -59,7 +59,8 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)*.pdb" ..\..\..\..\
-copy "$(TargetDir)Python.EmbeddingTest.dll" ..\..\..\..\</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "$(SolutionDir)"
+copy "$(TargetDir)*.pdb" "$(SolutionDir)"
+</PostBuildEvent>
   </PropertyGroup>
 </Project>

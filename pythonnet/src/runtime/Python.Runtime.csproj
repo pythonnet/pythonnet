@@ -42,6 +42,45 @@
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON25,UCS2</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <NoWarn>1607</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;PYTHON25,UCS2</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <NoWarn>1607</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'EmbeddingTest|x64' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\EmbeddingTest\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON25,UCS2</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <NoWarn>1607</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTests|x64' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\UnitTests\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON25,UCS2</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <NoWarn>1607</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -103,15 +142,20 @@
     <Compile Include="typemethod.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="buildclrmodule.bat" />
     <None Include="clrmodule.il" />
-    <None Include="oldmodule.il" />
+    <None Include="x64\clrmodule-platform.il" />
+    <None Include="x86\clrmodule-platform.il" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>%25windir%25\Microsoft.NET\Framework\v2.0.50727\ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)clrmodule.il"
+    <PostBuildEvent>call "$(ProjectDir)buildclrmodule.bat" $(Platform) "$(ProjectDir)" "$(TargetDir)clr.pyd"
+copy "$(TargetPath)" "$(SolutionDir)"
+copy "$(TargetDir)*.pdb" "$(SolutionDir)"
+copy "$(TargetDir)clr.pyd" "$(SolutionDir)"
 </PostBuildEvent>
     <PreBuildEvent>del "$(TargetDir)clr.pyd"</PreBuildEvent>
   </PropertyGroup>
