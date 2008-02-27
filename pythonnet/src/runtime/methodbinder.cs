@@ -87,7 +87,55 @@ namespace Python.Runtime {
             }
             return null;
          }
- 
+
+
+		 //====================================================================
+		 // Given a sequence of MethodInfo and two sequences of type parameters, 
+		 // return the MethodInfo that matches the signature and the closed generic.
+		 //====================================================================
+
+		 internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
+		 {
+			 int genericCount = genericTp.Length;
+			 int signatureCount = sigTp.Length;
+			 for (int i = 0; i < mi.Length; i++)
+			 {
+				 if (!mi[i].IsGenericMethodDefinition)
+				 {
+					 continue;
+				 }
+				 Type[] genericArgs = mi[i].GetGenericArguments();
+				 if (genericArgs.Length != genericCount)
+				 {
+					 continue;
+				 }
+				 ParameterInfo[] pi = mi[i].GetParameters();
+				 if (pi.Length != signatureCount)
+				 {
+					 continue;
+				 }
+				 for (int n = 0; n < pi.Length; n++)
+				 {
+					 if (sigTp[n] != pi[n].ParameterType)
+					 {
+						 break;
+					 }
+					 if (n == (pi.Length - 1))
+					 {
+						 MethodInfo match = mi[i];
+						 if (match.IsGenericMethodDefinition)
+						 {
+							 Type[] typeArgs = match.GetGenericArguments();
+							 return match.MakeGenericMethod(genericTp);
+						 }
+						 return match;
+					 }
+				 }
+			 }
+			 return null;
+		 }
+
+
         //====================================================================
         // Return the array of MethodInfo for this method. The result array
         // is arranged in order of precendence (done lazily to avoid doing it
@@ -264,7 +312,7 @@ namespace Python.Runtime {
                 MethodInfo mi = MethodBinder.MatchParameters(methodinfo, types);
                 return Bind(inst, args, kw, mi, null);
             }
-            return null;
+			return null;
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {

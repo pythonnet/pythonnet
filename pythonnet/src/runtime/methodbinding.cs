@@ -90,31 +90,48 @@ namespace Python.Runtime {
         //====================================================================
 
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw) {
-            MethodBinding self = (MethodBinding)GetManagedObject(ob);
+			MethodBinding self = (MethodBinding)GetManagedObject(ob);
 
-            // This supports calling a method 'unbound', passing the instance
-            // as the first argument. Note that this is not supported if any
-            // of the overloads are static since we can't know if the intent
-            // was to call the static method or the unbound instance method.
+			// This works around a situation where the wrong generic method is picked,
+			// for example this method in the tests: string Overloaded<T>(int arg1, int arg2, string arg3)
+			if (self.info != null)
+			{
+				if (self.info.IsGenericMethod)
+				{
+					int len = Runtime.PyTuple_Size(args);
+					Type[] sigTp = Runtime.PythonArgsToTypeArray(args, true);
+					if (sigTp != null)
+					{
+						Type[] genericTp = self.info.GetGenericArguments();
+						MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
+						if (betterMatch != null) self.info = betterMatch;
+					}
+				}
+			}
 
-            if ((self.target == IntPtr.Zero) && (!self.m.IsStatic())) {
-                if (Runtime.PyTuple_Size(args) < 1) {
-                    Exceptions.SetError(Exceptions.TypeError, 
-                                        "not enough arguments"
-                                        );
-                    return IntPtr.Zero;
-                }
-                int len = Runtime.PyTuple_Size(args);
-                IntPtr uargs = Runtime.PyTuple_GetSlice(args, 1, len);
-                IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
-                Runtime.Incref(inst);
-                IntPtr r = self.m.Invoke(inst, uargs, kw, self.info);
-                Runtime.Decref(inst);
-                Runtime.Decref(uargs);
-                return r;
-            }
+			// This supports calling a method 'unbound', passing the instance
+			// as the first argument. Note that this is not supported if any
+			// of the overloads are static since we can't know if the intent
+			// was to call the static method or the unbound instance method.
 
-            return self.m.Invoke(self.target, args, kw, self.info);
+			if ((self.target == IntPtr.Zero) && (!self.m.IsStatic()))
+			{
+				int len = Runtime.PyTuple_Size(args);
+				if (len < 1)
+				{
+					Exceptions.SetError(Exceptions.TypeError, "not enough arguments");
+					return IntPtr.Zero;
+				}
+				IntPtr uargs = Runtime.PyTuple_GetSlice(args, 1, len);
+				IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
+				Runtime.Incref(inst);
+				IntPtr r = self.m.Invoke(inst, uargs, kw, self.info);
+				Runtime.Decref(inst);
+				Runtime.Decref(uargs);
+				return r;
+			}
+
+			return self.m.Invoke(self.target, args, kw, self.info);
         }
 
 

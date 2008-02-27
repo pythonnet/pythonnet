@@ -378,8 +378,8 @@ class GenericTests(unittest.TestCase):
         self.failUnless(value == True)
 
         # public static U Overloaded<Q, U>(Q arg1, U arg2)
-        #value = type.Overloaded[bool, str](True, "true")
-        #self.failUnless(value == "true")
+        value = type.Overloaded[bool, str](True, "true")
+        self.failUnless(value == "true")
 
         # public U Overloaded<Q, U>(Q arg1, U arg2)
         value = inst.Overloaded[bool, str](True, "true")
@@ -392,6 +392,14 @@ class GenericTests(unittest.TestCase):
         # public U Overloaded<Q, U>(Q arg1, U arg2)
         value = inst.Overloaded[str, bool]("true", True)
         self.failUnless(value == True)
+
+        # public static string Overloaded<T>(int arg1, int arg2, string arg3)
+        value = type.Overloaded[str](123, 456, "success")
+        self.failUnless(value == "success")
+
+        # public string Overloaded<T>(int arg1, int arg2, string arg3)
+        value = inst.Overloaded[str](123, 456, "success")
+        self.failUnless(value == "success")
 
         def test():
             value = type.Overloaded[str, bool, int]("true", True, 1)
@@ -734,4 +742,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 

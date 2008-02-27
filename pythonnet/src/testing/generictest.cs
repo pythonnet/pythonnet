@@ -88,6 +88,10 @@ namespace Python.Test {
             return arg2;
         }
 
+        public string Overloaded<T>(int arg1, int arg2, string arg3) {
+            return arg3;
+        }
+
     }
 
     public class GenericStaticMethodTest<T> {
@@ -108,6 +112,10 @@ namespace Python.Test {
 
         public static U Overloaded<Q, U>(Q arg1, U arg2) {
             return arg2;
+        }
+
+        public static string Overloaded<T>(int arg1, int arg2, string arg3) {
+            return arg3;
         }
 
     }
