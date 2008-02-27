@@ -24,20 +24,22 @@ namespace Python.Runtime {
 
     internal class DelegateManager {
 
-        static Hashtable cache;
-        static Type basetype;
-        static Type listtype;
-        static Type voidtype;
-        static Type typetype;
-        static Type ptrtype;
+        Hashtable cache;
+        Type basetype;
+        Type listtype;
+        Type voidtype;
+        Type typetype;
+        Type ptrtype;
+        CodeGenerator codeGenerator;
 
-        static DelegateManager() {
+        public DelegateManager() {
             basetype = typeof(Dispatcher);
             listtype = typeof(ArrayList);
             voidtype = typeof(void);
             typetype = typeof(Type);
             ptrtype = typeof(IntPtr);
             cache = new Hashtable();
+            codeGenerator = new CodeGenerator();
         }
 
         //====================================================================
@@ -46,7 +48,7 @@ namespace Python.Runtime {
         // delegate is not implemented in Python code.
         //====================================================================
 
-        public static IntPtr GetPythonHandle(Delegate d) {
+        public IntPtr GetPythonHandle(Delegate d) {
             if ((d != null) && (d.Target is Dispatcher)) {
                 Dispatcher disp = d.Target as Dispatcher;
                 return disp.target;
@@ -59,7 +61,7 @@ namespace Python.Runtime {
         // an appropriate managed callback method for a given delegate type.
         //====================================================================
         
-        private static Type GetDispatcher(Type dtype) {
+        private Type GetDispatcher(Type dtype) {
 
             // If a dispatcher type for the given delegate type has already 
             // been generated, get it from the cache. The cache maps delegate
@@ -76,7 +78,7 @@ namespace Python.Runtime {
             string name = "__" + dtype.FullName + "Dispatcher";
             name = name.Replace('.', '_');
             name = name.Replace('+', '_');
-            TypeBuilder tb = CodeGenerator.DefineType(name, basetype);
+            TypeBuilder tb = codeGenerator.DefineType(name, basetype);
 
             // Generate a constructor for the generated type that calls the
             // appropriate constructor of the Dispatcher base type.
@@ -164,7 +166,7 @@ namespace Python.Runtime {
         // returned will dispatch calls to the given Python object.
         //====================================================================
 
-        internal static Delegate GetDelegate(Type dtype, IntPtr callable) {
+        internal Delegate GetDelegate(Type dtype, IntPtr callable) {
             Type dispatcher = GetDispatcher(dtype);
             object[] args = {callable, dtype};
             object o = Activator.CreateInstance(dispatcher, args);

@@ -46,7 +46,7 @@ namespace Python.Runtime {
             // always succeeds, though calling the wrapper may fail.
 
             Type type = this.info.EventHandlerType;
-            Delegate d = DelegateManager.GetDelegate(type, handler);
+            Delegate d = PythonEngine.DelegateManager.GetDelegate(type, handler);
 
             // Now register the handler in a mapping from instance to pairs
             // of (handler hash, delegate) so we can lookup to remove later.

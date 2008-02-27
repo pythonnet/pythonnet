@@ -18,6 +18,7 @@ namespace Python.Runtime {
 
     public class PythonEngine {
 
+        private static DelegateManager delegateManager;
         private static bool initialized;
 
         #region Properties
@@ -25,6 +26,15 @@ namespace Python.Runtime {
         public static bool IsInitialized {
             get {
                 return initialized;
+            }
+        }
+
+        internal static DelegateManager DelegateManager {
+            get {
+                if (delegateManager == null) {
+                    throw new InvalidOperationException("DelegateManager has not yet been initialized using Python.Runtime.PythonEngine.Initialize().");
+                }
+                return delegateManager;
             }
         }
 
@@ -98,6 +108,12 @@ namespace Python.Runtime {
 
         public static void Initialize() {
             if (!initialized) {
+                // Creating the delegateManager MUST happen before Runtime.Initialize
+                // is called. If it happens afterwards, DelegateManager's CodeGenerator
+                // throws an exception in its ctor.  This exception is eaten somehow
+                // during an initial "import clr", and the world ends shortly thereafter.
+                // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
+                delegateManager = new DelegateManager();
                 Runtime.Initialize();
                 initialized = true;
                 Exceptions.Clear();

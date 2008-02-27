@@ -71,7 +71,7 @@ namespace Python.Runtime {
                 return Exceptions.RaiseTypeError("argument must be callable");
             }
 
-            Delegate d = DelegateManager.GetDelegate(self.type, method);
+            Delegate d = PythonEngine.DelegateManager.GetDelegate(self.type, method);
             return CLRObject.GetInstHandle(d, self.pyHandle);
         }
 

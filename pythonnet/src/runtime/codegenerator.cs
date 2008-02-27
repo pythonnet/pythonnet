@@ -26,24 +26,23 @@ namespace Python.Runtime {
 
     internal class CodeGenerator {
 
-        static AssemblyBuilder aBuilder;
-        static ModuleBuilder mBuilder;
+        AssemblyBuilder aBuilder;
+        ModuleBuilder mBuilder;
 
-        static CodeGenerator() {
+        internal CodeGenerator() {
             AssemblyName aname = new AssemblyName();
             aname.Name = "__CodeGenerator_Assembly";
             AssemblyBuilderAccess aa = AssemblyBuilderAccess.Run;
 
             aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
             mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
-
         }
 
         //====================================================================
         // DefineType is a shortcut utility to get a new TypeBuilder.
         //====================================================================
 
-        internal static TypeBuilder DefineType(string name) {
+        internal TypeBuilder DefineType(string name) {
             TypeAttributes attrs = TypeAttributes.Public;
             return mBuilder.DefineType(name, attrs);
         }
@@ -52,7 +51,7 @@ namespace Python.Runtime {
         // DefineType is a shortcut utility to get a new TypeBuilder.
         //====================================================================
 
-        internal static TypeBuilder DefineType(string name, Type basetype) {
+        internal TypeBuilder DefineType(string name, Type basetype) {
             TypeAttributes attrs = TypeAttributes.Public;
             return mBuilder.DefineType(name, attrs, basetype);
         }
