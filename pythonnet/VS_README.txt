@@ -38,7 +38,6 @@ inside the Python.Runtime project.
 
 MS VS doesn't take changes to define into account.
 
-
 Thanks to Virgil Duprasfor his original VS howto!
 
 Christian 'Tiran' Heimes
