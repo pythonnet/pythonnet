@@ -10,6 +10,7 @@
 // Author: Christian Heimes <christian(at)cheimes(dot)de>
 
 #include "pynetclr.h"
+#include "dirent.h"
 
 // initialize Mono and PythonNet
 PyNet_Args* PyNet_Init(int ext) {
@@ -18,6 +19,7 @@ PyNet_Args* PyNet_Init(int ext) {
     pn_args->pr_file = PR_ASSEMBLY;
     pn_args->error = NULL;
     pn_args->shutdown = NULL;
+
     if (ext == 0) {
         pn_args->init_name = "Python.Runtime:Initialize()";
     } else {
@@ -25,14 +27,14 @@ PyNet_Args* PyNet_Init(int ext) {
     }
     pn_args->shutdown_name = "Python.Runtime:Shutdown()";
 
+    pn_args->domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
+
     /*
      * Load the default Mono configuration file, this is needed
      * if you are planning on using the dllmaps defined on the
      * system configuration
      */
     mono_config_parse(NULL);
-
-    pn_args->domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
 
     /* I can't use this call to run the main_thread_handler. The function
      * runs it in another thread but *this* thread holds the Python
@@ -87,11 +89,55 @@ void main_thread_handler (gpointer user_data) {
     MonoClass *pythonengine;
     MonoObject *exception = NULL;
 
+    //get python path system variable
+    PyObject* syspath = PySys_GetObject("path");
+    char* runtime_full_path = (char*) malloc(1024);
+    const char* slash = "/";
+    int found = 0;
+
+    int ii = 0;
+    for (ii = 0; ii < PyList_Size(syspath); ++ii) {
+        const char* pydir = PyString_AsString(PyList_GetItem(syspath, ii));
+        char* curdir = (char*) malloc(1024);
+        if (strlen(pydir) == 0) pydir = ".";
+    	
+        strcpy(curdir, pydir);
+        strcat(curdir, slash);
+
+        //look in this directory for the pn_args->pr_file
+        DIR* dirp = opendir(curdir);
+        if (dirp != NULL) {
+
+            struct dirent *dp;
+            while ((dp = readdir(dirp)) != NULL) {
+                if (strcmp(dp->d_name, pn_args->pr_file) == 0) {
+                    strcpy(runtime_full_path, curdir);
+                    strcat(runtime_full_path, pn_args->pr_file);
+                    found = 1;
+                    break;
+                }
+            }
+            closedir(dirp);
+        }
+        free(curdir);
+
+        if (found) {
+            pn_args->pr_file = runtime_full_path;
+            break;
+        }
+    }
+
+    if (!found) {
+        fprintf(stderr, "Could not find assembly %s. \n", pn_args->pr_file);
+        return;
+    }
+
     pn_args->pr_assm = mono_domain_assembly_open(pn_args->domain, pn_args->pr_file);
     if (!pn_args->pr_assm) {
         pn_args->error = "Unable to load assembly";
         return;
     }
+    free(runtime_full_path);
 
     pr_image = mono_assembly_get_image(pn_args->pr_assm);
     if (!pr_image) {

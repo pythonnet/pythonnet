@@ -30,7 +30,7 @@ namespace Python.Runtime {
 
         static TypeManager() {
             tbFlags = BindingFlags.Public | BindingFlags.Static;
-            obSize = 4 * IntPtr.Size;
+            obSize = 5 * IntPtr.Size;
             cache = new Dictionary<Type, IntPtr>(128);
         }
 

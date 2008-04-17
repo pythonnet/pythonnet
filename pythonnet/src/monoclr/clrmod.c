@@ -23,6 +23,7 @@ PyDoc_STRVAR(clr_module_doc,
 );
 
 static PyNet_Args *pn_args;
+char** environ = NULL;
 
 PyMODINIT_FUNC
 initclr(void)

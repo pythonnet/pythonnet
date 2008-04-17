@@ -1,3 +1,5 @@
+This has been updated to work with MonoFramework 1.9.
+
 1. On MacOS X, create the following directory structure:
 
 	/PythonNET/src/monoclr
@@ -11,3 +13,5 @@
 	$ python setup.py build
 
 5. This creates the clr.so
+
+6. Copy the clr.so, the Python.Runtime.dll, and the Python.Runtime.dll.config to the site-packages folder.
