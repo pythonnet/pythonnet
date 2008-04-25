@@ -162,6 +162,7 @@ namespace Python.Runtime {
             int val = mi.IsStatic ? 3000 : 0;
             int num = pi.Length;
 
+            val += (mi.IsGenericMethod ? 1 : 0);
             for (int i = 0; i < num; i++) {
                 val += ArgPrecedence(pi[i].ParameterType);
             }
