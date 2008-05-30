@@ -156,6 +156,9 @@ namespace Python.Runtime {
         public static int tp_subclasses = 0;
         public static int tp_weaklist = 0;
         public static int tp_del = 0;
+#if (PYTHON26)
+	public static int tp_version_tag;
+#endif
         // COUNT_ALLOCS adds some more stuff to PyTypeObject 
 #if (Py_COUNT_ALLOCS)
         public static int tp_allocs = 0;
@@ -226,6 +229,10 @@ namespace Python.Runtime {
         public static int bf_getwritebuffer = 0;
         public static int bf_getsegcount = 0;
         public static int bf_getcharbuffer = 0;
+#if (PYTHON26)
+	public static int bf_getbuffer = 0;
+	public static int bf_releasebuffer = 0;
+#endif
 
         public static int name = 0;
         public static int slots = 0;
@@ -254,8 +261,15 @@ namespace Python.Runtime {
 #if (PYTHON25 || PYTHON26)
         public static int HaveIndex = (1 << 17);
 #endif
-        public static int Managed = (1 << 21); // PythonNet specific?
-        public static int Subclass = (1 << 22); // PythonNet specific?
+#if (PYTHON26)
+	public static int HaveVersionTag = (1<<18);
+	public static int ValidVersionTag =  (1<<19);
+	public static int IsAbstract = (1<<20);
+	public static int HaveNewBuffer = (1<<21);
+#endif
+	/* XXX Reusing reserved constants */
+        public static int Managed = (1 << 15); // PythonNet specific
+        public static int Subclass = (1 << 16); // PythonNet specific
 #if (PYTHON26)
         // TODO: Implement FastSubclass functions
         public static int IntSubclass = (1 << 23);
