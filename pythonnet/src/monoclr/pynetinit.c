@@ -10,7 +10,10 @@
 // Author: Christian Heimes <christian(at)cheimes(dot)de>
 
 #include "pynetclr.h"
+
+#ifndef _WIN32
 #include "dirent.h"
+#endif
 
 // initialize Mono and PythonNet
 PyNet_Args* PyNet_Init(int ext) {
@@ -34,7 +37,7 @@ PyNet_Args* PyNet_Init(int ext) {
      * if you are planning on using the dllmaps defined on the
      * system configuration
      */
-    mono_config_parse(NULL);
+    //mono_config_parse(NULL);
 
     /* I can't use this call to run the main_thread_handler. The function
      * runs it in another thread but *this* thread holds the Python
@@ -89,6 +92,8 @@ void main_thread_handler (gpointer user_data) {
     MonoClass *pythonengine;
     MonoObject *exception = NULL;
 
+#ifndef _WIN32
+
     //get python path system variable
     PyObject* syspath = PySys_GetObject("path");
     char* runtime_full_path = (char*) malloc(1024);
@@ -131,13 +136,17 @@ void main_thread_handler (gpointer user_data) {
         fprintf(stderr, "Could not find assembly %s. \n", pn_args->pr_file);
         return;
     }
+#endif
+
 
     pn_args->pr_assm = mono_domain_assembly_open(pn_args->domain, pn_args->pr_file);
     if (!pn_args->pr_assm) {
         pn_args->error = "Unable to load assembly";
         return;
     }
+#ifndef _WIN32
     free(runtime_full_path);
+#endif
 
     pr_image = mono_assembly_get_image(pn_args->pr_assm);
     if (!pr_image) {
@@ -173,12 +182,12 @@ void main_thread_handler (gpointer user_data) {
 // Get string from a Mono exception 
 char* PyNet_ExceptionToString(MonoObject *e) {
     MonoMethodDesc* mdesc = mono_method_desc_new(":ToString()", FALSE);
-    MonoMethod* mmethod = mono_method_desc_search_in_class(mdesc, 
-        mono_get_object_class());
+    MonoMethod* mmethod = mono_method_desc_search_in_class(mdesc, mono_get_object_class());
     mono_method_desc_free(mdesc);
+
     mmethod = mono_object_get_virtual_method(e, mmethod);
-    MonoString* monoString = (MonoString*) mono_runtime_invoke(mmethod, 
-        e, NULL, NULL);
+    MonoString* monoString = (MonoString*) mono_runtime_invoke(mmethod, e, NULL, NULL);
+    mono_runtime_invoke(mmethod, e, NULL, NULL);
     return mono_string_to_utf8(monoString);
 }
 
