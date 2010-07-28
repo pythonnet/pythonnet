@@ -386,7 +386,7 @@ namespace Python.Runtime {
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || Python26)
+#if (PYTHON25 || PYTHON26)
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 
