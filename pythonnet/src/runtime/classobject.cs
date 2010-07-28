@@ -106,19 +106,7 @@ namespace Python.Runtime {
 
             Object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
             if (obj == null) {
-                // It is possible for __new__ to be invoked on construction
-                // of a Python subclass of a managed class, so args may
-                // reflect more args than are required to instantiate the
-                // class. So if we cant find a ctor that matches, we'll see
-                // if there is a default constructor and, if so, assume that
-                // any extra args are intended for the subclass' __init__.
-
-                IntPtr eargs = Runtime.PyTuple_New(0);
-                obj = self.binder.InvokeRaw(IntPtr.Zero, eargs, kw);
-                Runtime.Decref(eargs);
-                if (obj == null) {
-                    return IntPtr.Zero;
-                }
+                return IntPtr.Zero;
             }
 
             return CLRObject.GetInstHandle(obj, tp);

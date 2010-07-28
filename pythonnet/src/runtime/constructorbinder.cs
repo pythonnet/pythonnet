@@ -43,10 +43,23 @@ namespace Python.Runtime {
             Object result;
 
             if (binding == null) {
-                Exceptions.SetError(Exceptions.TypeError, 
-                                    "no constructor matches given arguments"
-                                    );
-                return null;
+                // It is possible for __new__ to be invoked on construction
+                // of a Python subclass of a managed class, so args may
+                // reflect more args than are required to instantiate the
+                // class. So if we cant find a ctor that matches, we'll see
+                // if there is a default constructor and, if so, assume that
+                // any extra args are intended for the subclass' __init__.
+
+                IntPtr eargs = Runtime.PyTuple_New(0);
+                binding = this.Bind(inst, eargs, kw);
+                Runtime.Decref(eargs);
+
+                if (binding == null) {
+                    Exceptions.SetError(Exceptions.TypeError, 
+                                        "no constructor matches given arguments"
+                                        );
+                    return null;
+                }
             }
 
             // Object construction is presumed to be non-blocking and fast
