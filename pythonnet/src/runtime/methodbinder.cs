@@ -294,9 +294,18 @@ namespace Python.Runtime {
 
                     Object target = null;
                     if ((!mi.IsStatic) && (inst != IntPtr.Zero)) {
-                        CLRObject co = (CLRObject)ManagedType.GetManagedObject(
-                                                  inst
-                                                  );
+                        //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
+                        // InvalidCastException: Unable to cast object of type
+                        // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
+                        CLRObject co = ManagedType.GetManagedObject(inst) as CLRObject;
+
+                        // Sanity check: this ensures a graceful exit if someone does
+                        // something intentionally wrong like call a non-static method
+                        // on the class rather than on an instance of the class.
+                        // XXX maybe better to do this before all the other rigmarole.
+                        if (co == null) {
+                            return null;
+                        }
                         target = co.inst;
                     }
 
