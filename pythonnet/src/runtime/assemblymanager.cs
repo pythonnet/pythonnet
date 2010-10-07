@@ -210,9 +210,13 @@ namespace Python.Runtime {
         // an assembly named after each of A.B.C.D, A.B.C, A.B, A. This
         // will only actually probe for the assembly once for each unique
         // namespace. Returns true if any assemblies were loaded.
+        // TODO item 3 "* Deprecate implicit loading of assemblies"
         //===================================================================
 
-        public static bool LoadImplicit(string name) {
+        public static bool LoadImplicit(string name, out bool fromFile) {
+            // 2010-08-16: Deprecation support
+            // Added out param to detect fully qualified name load
+            fromFile = false;
             string[] names = name.Split('.');
             bool loaded = false;
             string s = "";
@@ -221,9 +225,17 @@ namespace Python.Runtime {
                 if (!probed.ContainsKey(s)) {
                     if (LoadAssemblyPath(s) != null){
                         loaded = true;
+                        // 2010-08-16: Deprecation support
+                        if (s == name) {
+                            fromFile = true;
+                        }
                     }
                     else if (LoadAssembly(s) != null) {
                         loaded = true;
+                        // 2010-08-16: Deprecation support
+                        if (s == name) {
+                            fromFile = true;
+                        }
                     }
                     probed[s] = 1;
                 }
@@ -268,35 +280,7 @@ namespace Python.Runtime {
 
                 if (t.IsGenericTypeDefinition) {
                     GenericUtil.Register(t);
-//                      Dictionary<string, string> map = null;
-//                      generics.TryGetValue(t.Namespace, out map);
-//                      if (map == null) {
-//                          map = new Dictionary<string, string>();
-//                          generics[t.Namespace] = map;
-//                      }
-//                      string bname = t.Name;
-//                      string mapped = null;
-//                      int tick = bname.IndexOf("`");
-//                      if (tick > -1) {
-//                          bname = bname.Substring(0, tick);
-//                      }
-//                      map.TryGetValue(bname, out mapped);
-//                      if (mapped == null) {
-//                          map[bname] = t.Name;
-//                      }
                 }
-
-//                  if (t.IsGenericTypeDefinition) {
-//                      List<string> snames = null;
-//                      special.TryGetValue(t.Namespace, out snames);
-//                      if (snames == null) {
-//                          snames = new List<string>(8);
-//                          special[t.Namespace] = snames;
-//                      }
-//                      snames.Add(t.Name);
-//                  }
-
-            
             }
         }
 
