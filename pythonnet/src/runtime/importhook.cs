@@ -98,6 +98,18 @@ namespace Python.Runtime {
             }
 
             string mod_name = Runtime.GetManagedString(py_mod_name);
+            // 2010-08-15: Always seemed smart to let python try first...
+            // This shaves off a few tenths of a second on test_module.py
+            // and works around a quirk where 'sys' is found by the 
+            // LoadImplicit() deprecation logic.
+            // Turns out that the AssemblyManager.ResolveHandler() checks to see if any
+            // Assembly's FullName.ToLower().StartsWith(name.ToLower()), which makes very
+            // little sense to me.
+            IntPtr res = Runtime.PyObject_Call(py_import, args, kw);
+            if (res != IntPtr.Zero) {
+                return res;
+            }
+            Exceptions.Clear();
 
             if (mod_name == "CLR") {
                 Exceptions.deprecation("The CLR module is deprecated. " +
@@ -134,9 +146,21 @@ namespace Python.Runtime {
             // we know we have the GIL, so we'll let it update if needed.
 
             AssemblyManager.UpdatePath();
-            AssemblyManager.LoadImplicit(realname);
             if (!AssemblyManager.IsValidNamespace(realname)) {
-                return Runtime.PyObject_Call(py_import, args, kw);
+                bool fromFile = false;
+                if (AssemblyManager.LoadImplicit(realname, out fromFile)) {
+                    if (true == fromFile) {
+                        string deprWarning = String.Format("\nThe module was found, but not in a referenced namespace.\n" +
+                                     "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").", realname);
+                        Exceptions.deprecation(deprWarning);
+                    }
+                }
+                else
+                {
+                    // May be called when a module being imported imports a module.
+                    // In particular, I've seen decimal import copy import org.python.core
+                    return Runtime.PyObject_Call(py_import, args, kw);
+                }
             }
 
             // See if sys.modules for this interpreter already has the
