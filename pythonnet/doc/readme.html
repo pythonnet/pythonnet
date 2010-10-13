@@ -176,8 +176,9 @@ li {
 <h2>Installation</h2>
 
 <p>
- Python for .NET is available as a source release and as a Windows installer 
- for various versions of Python and the common language runtime from the 
+ Python for .NET is available as a source release for all versions
+ and as a Windows installer for earlier versions of Python and for
+ versions the common language runtime prior to 2.0.0.0 alpha2 from the 
  <a href="http://pythonnet.sourceforge.net/">
  Python for .NET website
  </a>. On Windows platforms, you can choose to install .NET-awareness into 
@@ -343,8 +344,8 @@ li {
  Note that earlier releases of Python for .NET relied on "implicit loading" 
  to support automatic loading of assemblies whose names corresponded to an 
  imported namespace. Implicit loading still works for backward compatibility, 
- but will be removed in a future release so it is recommended to use the 
- clr.AddReference method.
+ but has been deprecated in the current source release so it is time to use 
+ the clr.AddReference method!
 </em>
 </p>
 
@@ -394,6 +395,14 @@ li {
     from System import String, Char, Int32
 
     s = String.__overloads__[Char, Int32]('A', 10)
+    
+    As of 2.0.0.2 alpha2, this has not worked as expected.
+    Although this is not something supported by IPy, good symmetry
+    with method overload selection dictates that the syntax become:
+    
+    s = String.Overloads[Char, Int32]('A', 10)
+    with __overloads__ remaining optional ONLY if someone demonstrates
+    that this used to work and wants backward compatibility.    
 </pre>
 
 
@@ -546,7 +555,7 @@ li {
 <p>
  Methods of CLR objects have an "__overloads__" attribute that can be used 
  for this purpose:
-</p>
+ </p>
 
 <pre>
     from System import Console
@@ -554,6 +563,12 @@ li {
     Console.WriteLine.__overloads__[bool](true)
     Console.WriteLine.__overloads__[str]("true")
     Console.WriteLine.__overloads__[int](42)
+    
+    Work is under way to bring this into line with IPy.
+    See: <a href="http://blogs.msdn.com/b/haibo_luo/archive/2007/10/11/5413239.aspx">IronPython: explicitly choose one method</a>
+    The new syntax is
+    s = SomeMethode.Overloads[PyOrClrType, ...](param1, ...)
+    with __overloads__ remaining optional for some period before being deprecated.
 </pre>
 
 <p>
