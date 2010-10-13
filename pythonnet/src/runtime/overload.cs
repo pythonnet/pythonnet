@@ -53,7 +53,18 @@ namespace Python.Runtime {
              MethodBinding mb = new MethodBinding(self.m, self.target);
              mb.info = mi;
              Runtime.Incref(mb.pyHandle);
-             return mb.pyHandle;            
+             return mb.pyHandle;
+         }
+
+        //====================================================================
+        // OverloadMapper  __repr__ implementation.
+        //====================================================================
+
+        public static IntPtr tp_repr(IntPtr op) {
+            OverloadMapper self = (OverloadMapper)GetManagedObject(op);
+            IntPtr doc = self.m.GetDocString();
+            Runtime.Incref(doc);
+            return doc;
          }
 
         //====================================================================

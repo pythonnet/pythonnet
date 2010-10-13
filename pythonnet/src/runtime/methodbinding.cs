@@ -75,7 +75,8 @@ namespace Python.Runtime {
                 return doc;
             }
 
-            if (name == "__overloads__") {
+            // XXX deprecate __overloads__ soon...
+            if (name == "__overloads__" || name == "Overloads") {
                 OverloadMapper om = new OverloadMapper(self.m, self.target);
                 Runtime.Incref(om.pyHandle);
                 return om.pyHandle;            
