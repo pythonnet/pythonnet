@@ -20,7 +20,7 @@ class EnumTests(unittest.TestCase):
         self.failUnless(DayOfWeek.__name__ == 'DayOfWeek')
         self.failUnless(DayOfWeek.__module__ == 'System')
         self.failUnless(type(DayOfWeek.__dict__) == types.DictProxyType)
-        self.failUnless(DayOfWeek.__doc__ == '')
+        self.failUnless(DayOfWeek.__doc__ == None)
 
 
     def testEnumGetMember(self):

@@ -21,8 +21,8 @@ namespace Python.Runtime {
 
     internal class ClassObject : ClassBase {
 
-        ConstructorBinder binder;
-        ConstructorInfo[] ctors;
+        internal ConstructorBinder binder;
+        internal ConstructorInfo[] ctors;
 
         internal ClassObject(Type tp) : base(tp) {
             ctors = type.GetConstructors();

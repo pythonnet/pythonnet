@@ -129,10 +129,14 @@ namespace Python.Runtime {
             // If class has constructors, generate an __doc__ attribute.
 
             ClassObject co = impl as ClassObject;
+            // If this is a ClassObject AND it has constructors, generate a __doc__ attribute.
+            // required that the ClassObject.ctors be changed to internal
             if (co != null) {
-                IntPtr doc = co.GetDocString();
-                Runtime.PyDict_SetItemString(dict, "__doc__", doc);
-                Runtime.Decref(doc);
+                if (co.ctors.Length > 0) {
+                    IntPtr doc = co.GetDocString();
+                    Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+                    Runtime.Decref(doc);
+                }
             }
 
             return impl;
