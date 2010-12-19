@@ -42,3 +42,7 @@ using System.Resources;
 [assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.6")]
 [assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.6")]
 #endif
+#if (PYTHON27)
+[assembly: AssemblyTitle("Python.Runtime for Python 2.7")]
+[assembly: AssemblyDescription("Python Runtime for Python 2.7")]
+#endif
