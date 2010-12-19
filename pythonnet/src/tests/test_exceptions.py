@@ -24,8 +24,8 @@ class ExceptionTests(unittest.TestCase):
         import exceptions
         
         e = Exception('Something bad happened')
-        self.failUnless(isinstance(e, exceptions.Exception))
-        self.failUnless(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, exceptions.Exception))
+        self.assertTrue(isinstance(e, Exception))
 
 
     def testStandardExceptionAttributes(self):
@@ -34,15 +34,15 @@ class ExceptionTests(unittest.TestCase):
         from Python.Test import ExceptionTest
 
         e = ExceptionTest.GetExplicitException()
-        self.failUnless(isinstance(e, OverflowException))
+        self.assertTrue(isinstance(e, OverflowException))
 
-        self.failUnless(e.Message == 'error')
+        self.assertTrue(e.Message == 'error')
 
         e.Source = 'Test Suite'
-        self.failUnless(e.Source == 'Test Suite')
+        self.assertTrue(e.Source == 'Test Suite')
 
         v = e.ToString()
-        self.failUnless(len(v) > 0)
+        self.assertTrue(len(v) > 0)
                        
 
     def testExtendedExceptionAttributes(self):
@@ -52,23 +52,23 @@ class ExceptionTests(unittest.TestCase):
         import exceptions
         
         e = ExceptionTest.GetExtendedException()
-        self.failUnless(isinstance(e, ExtendedException))
-        self.failUnless(isinstance(e, OverflowException))
-        self.failUnless(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, ExtendedException))
+        self.assertTrue(isinstance(e, OverflowException))
+        self.assertTrue(isinstance(e, Exception))
         
-        self.failUnless(e.Message == 'error')
+        self.assertTrue(e.Message == 'error')
 
         e.Source = 'Test Suite'
-        self.failUnless(e.Source == 'Test Suite')
+        self.assertTrue(e.Source == 'Test Suite')
 
         v = e.ToString()
-        self.failUnless(len(v) > 0)
+        self.assertTrue(len(v) > 0)
 
-        self.failUnless(e.ExtraProperty == 'extra')
+        self.assertTrue(e.ExtraProperty == 'extra')
         e.ExtraProperty = 'changed'
-        self.failUnless(e.ExtraProperty == 'changed')
+        self.assertTrue(e.ExtraProperty == 'changed')
                        
-        self.failUnless(e.GetExtraInfo() == 'changed')
+        self.assertTrue(e.GetExtraInfo() == 'changed')
         
                         
     def testRaiseClassException(self):
@@ -78,14 +78,14 @@ class ExceptionTests(unittest.TestCase):
         def test():
             raise NullReferenceException
 
-        self.failUnlessRaises(NullReferenceException, test)
+        self.assertRaises(NullReferenceException, test)
 
         try:
             raise NullReferenceException
         except:
             type, value, tb = sys.exc_info()
-            self.failUnless(type is NullReferenceException)
-            self.failUnless(isinstance(value, NullReferenceException))
+            self.assertTrue(type is NullReferenceException)
+            self.assertTrue(isinstance(value, NullReferenceException))
 
 
     def testRaiseClassExceptionWithValue(self):
@@ -95,15 +95,15 @@ class ExceptionTests(unittest.TestCase):
         def test():
             raise NullReferenceException, 'Aiiieee!'
 
-        self.failUnlessRaises(NullReferenceException, test)
+        self.assertRaises(NullReferenceException, test)
 
         try:
             raise NullReferenceException('Aiiieee!')
         except:
             type, value, tb = sys.exc_info()
-            self.failUnless(type is NullReferenceException)
-            self.failUnless(isinstance(value, NullReferenceException))
-            self.failUnless(value.Message == 'Aiiieee!')
+            self.assertTrue(type is NullReferenceException)
+            self.assertTrue(isinstance(value, NullReferenceException))
+            self.assertTrue(value.Message == 'Aiiieee!')
 
 
     def testRaiseInstanceException(self):
@@ -113,15 +113,15 @@ class ExceptionTests(unittest.TestCase):
         def test():
             raise NullReferenceException()
 
-        self.failUnlessRaises(NullReferenceException, test)
+        self.assertRaises(NullReferenceException, test)
 
         try:
             raise NullReferenceException()
         except:
             type, value, tb = sys.exc_info()
-            self.failUnless(type is NullReferenceException)
-            self.failUnless(isinstance(value, NullReferenceException))
-            self.failUnless(len(value.Message) > 0)
+            self.assertTrue(type is NullReferenceException)
+            self.assertTrue(isinstance(value, NullReferenceException))
+            self.assertTrue(len(value.Message) > 0)
 
 
     def testRaiseInstanceExceptionWithArgs(self):
@@ -131,15 +131,15 @@ class ExceptionTests(unittest.TestCase):
         def test():
             raise NullReferenceException("Aiieeee!")
 
-        self.failUnlessRaises(NullReferenceException, test)
+        self.assertRaises(NullReferenceException, test)
 
         try:
             raise NullReferenceException('Aiiieee!')
         except:
             type, value, tb = sys.exc_info()
-            self.failUnless(type is NullReferenceException)
-            self.failUnless(isinstance(value, NullReferenceException))
-            self.failUnless(value.Message == 'Aiiieee!')
+            self.assertTrue(type is NullReferenceException)
+            self.assertTrue(isinstance(value, NullReferenceException))
+            self.assertTrue(value.Message == 'Aiiieee!')
 
 
     def testManagedExceptionPropagation(self):
@@ -149,7 +149,7 @@ class ExceptionTests(unittest.TestCase):
         def test():
             l = Decimal.ToInt64(Decimal.MaxValue)
 
-        self.failUnlessRaises(OverflowException, test)
+        self.assertRaises(OverflowException, test)
 
 
     def testManagedExceptionConversion(self):
@@ -158,24 +158,24 @@ class ExceptionTests(unittest.TestCase):
         from Python.Test import ExceptionTest
 
         e = ExceptionTest.GetBaseException()
-        self.failUnless(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, Exception))
 
         e = ExceptionTest.GetExplicitException()
-        self.failUnless(isinstance(e, OverflowException))
-        self.failUnless(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, OverflowException))
+        self.assertTrue(isinstance(e, Exception))
 
         e = ExceptionTest.GetWidenedException()
-        self.failUnless(isinstance(e, OverflowException))
-        self.failUnless(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, OverflowException))
+        self.assertTrue(isinstance(e, Exception))
 
         v = ExceptionTest.SetBaseException(Exception('error'))
-        self.failUnless(v)
+        self.assertTrue(v)
 
         v = ExceptionTest.SetExplicitException(OverflowException('error'))
-        self.failUnless(v)
+        self.assertTrue(v)
 
         v = ExceptionTest.SetWidenedException(OverflowException('error'))
-        self.failUnless(v)     
+        self.assertTrue(v)     
 
 
     def testCatchExceptionFromManagedMethod(self):
@@ -186,7 +186,7 @@ class ExceptionTests(unittest.TestCase):
         try:
             ExceptionTest().ThrowException()
         except OverflowException, e:
-            self.failUnless(isinstance(e, OverflowException))
+            self.assertTrue(isinstance(e, OverflowException))
             return
 
         raise SystemError('failed to catch exception from managed method')
@@ -200,13 +200,13 @@ class ExceptionTests(unittest.TestCase):
         try:
             v = ExceptionTest().ThrowProperty
         except OverflowException, e:
-            self.failUnless(isinstance(e, OverflowException))
+            self.assertTrue(isinstance(e, OverflowException))
             return
 
         try:
             ExceptionTest().ThrowProperty = 1
         except OverflowException, e:
-            self.failUnless(isinstance(e, OverflowException))
+            self.assertTrue(isinstance(e, OverflowException))
             return
 
         raise SystemError('failed to catch exception from managed property')
@@ -268,7 +268,7 @@ class ExceptionTests(unittest.TestCase):
         try:
             raise OverflowException('overflow')
         except OverflowException, e:
-            self.failUnless(isinstance(e, OverflowException))
+            self.assertTrue(isinstance(e, OverflowException))
 
 
     def testCatchExceptionUnqualified(self):
@@ -287,8 +287,8 @@ class ExceptionTests(unittest.TestCase):
         """Test the apparent module of an exception."""
         from System import Exception, OverflowException
 
-        self.failUnless(Exception.__module__ == 'System')
-        self.failUnless(OverflowException.__module__ == 'System')
+        self.assertTrue(Exception.__module__ == 'System')
+        self.assertTrue(OverflowException.__module__ == 'System')
 
 
     def testStrOfException(self):
@@ -296,16 +296,16 @@ class ExceptionTests(unittest.TestCase):
         from System import NullReferenceException
         from System import Convert, FormatException
         e = NullReferenceException('')
-        self.failUnlessEqual(str(e), '')
+        self.assertEqual(str(e), '')
 
         e = NullReferenceException('Something bad happened')
-        self.failUnless(str(e).startswith('Something bad happened'))
+        self.assertTrue(str(e).startswith('Something bad happened'))
 
         try:
             Convert.ToDateTime('this will fail')
         except FormatException, e:
             msg = unicode(e).encode("utf8") # fix for international installation
-            self.failUnless(msg.find('System.Convert.ToDateTime') > -1, msg)
+            self.assertTrue(msg.find('System.Convert.ToDateTime') > -1, msg)
 
             
     def testPythonCompatOfManagedExceptions(self):
@@ -315,14 +315,14 @@ class ExceptionTests(unittest.TestCase):
         msg = "A simple message"
         
         e = OverflowException(msg)
-        self.failUnlessEqual(e.message, msg)
-        self.failUnless(isinstance(e.message, unicode)) # ???
-        self.failUnlessEqual(str(e), msg)
-        self.failUnlessEqual(unicode(e), msg)
+        self.assertEqual(e.message, msg)
+        self.assertTrue(isinstance(e.message, unicode)) # ???
+        self.assertEqual(str(e), msg)
+        self.assertEqual(unicode(e), msg)
         
-        self.failUnlessEqual(e.args, (msg,))
-        self.failUnless(isinstance(e.args, tuple))
-        self.failUnlessEqual(repr(e), "OverflowException('A simple message',)")
+        self.assertEqual(e.args, (msg,))
+        self.assertTrue(isinstance(e.args, tuple))
+        self.assertEqual(repr(e), "OverflowException('A simple message',)")
 
     def testExceptionIsInstanceOfSystemObject(self):
         """Test behavior of isinstance(<managed exception>, System.Object)."""
@@ -340,7 +340,7 @@ class ExceptionTests(unittest.TestCase):
         from System import Object
         
         o = OverflowException('error')
-        self.failIf(isinstance(o, Object))
+        self.assertFalse(isinstance(o, Object))
     
         
 

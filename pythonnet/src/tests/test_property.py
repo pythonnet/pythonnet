@@ -18,74 +18,74 @@ class PropertyTests(unittest.TestCase):
         """Test public instance properties."""
         object = PropertyTest();
 
-        self.failUnless(object.PublicProperty == 0)
+        self.assertTrue(object.PublicProperty == 0)
         object.PublicProperty = 1
-        self.failUnless(object.PublicProperty == 1)
+        self.assertTrue(object.PublicProperty == 1)
 
         def test():
             del PropertyTest().PublicProperty
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testPublicStaticProperty(self):
         """Test public static properties."""
         object = PropertyTest();
 
-        self.failUnless(PropertyTest.PublicStaticProperty == 0)
+        self.assertTrue(PropertyTest.PublicStaticProperty == 0)
         PropertyTest.PublicStaticProperty = 1
-        self.failUnless(PropertyTest.PublicStaticProperty == 1)
+        self.assertTrue(PropertyTest.PublicStaticProperty == 1)
 
-        self.failUnless(object.PublicStaticProperty == 1)
+        self.assertTrue(object.PublicStaticProperty == 1)
         object.PublicStaticProperty = 0
-        self.failUnless(object.PublicStaticProperty == 0)
+        self.assertTrue(object.PublicStaticProperty == 0)
 
         def test():
             del PropertyTest.PublicStaticProperty
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             del PropertyTest().PublicStaticProperty
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testProtectedInstanceProperty(self):
         """Test protected instance properties."""
         object = PropertyTest();
 
-        self.failUnless(object.ProtectedProperty == 0)
+        self.assertTrue(object.ProtectedProperty == 0)
         object.ProtectedProperty = 1
-        self.failUnless(object.ProtectedProperty == 1)
+        self.assertTrue(object.ProtectedProperty == 1)
 
         def test():
             del PropertyTest().ProtectedProperty
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testProtectedStaticProperty(self):
         """Test protected static properties."""
         object = PropertyTest();
 
-        self.failUnless(PropertyTest.ProtectedStaticProperty == 0)
+        self.assertTrue(PropertyTest.ProtectedStaticProperty == 0)
         PropertyTest.ProtectedStaticProperty = 1
-        self.failUnless(PropertyTest.ProtectedStaticProperty == 1)
+        self.assertTrue(PropertyTest.ProtectedStaticProperty == 1)
 
-        self.failUnless(object.ProtectedStaticProperty == 1)
+        self.assertTrue(object.ProtectedStaticProperty == 1)
         object.ProtectedStaticProperty = 0
-        self.failUnless(object.ProtectedStaticProperty == 0)
+        self.assertTrue(object.ProtectedStaticProperty == 0)
 
         def test():
             del PropertyTest.ProtectedStaticProperty
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             del PropertyTest().ProtectedStaticProperty
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInternalProperty(self):
@@ -94,17 +94,17 @@ class PropertyTests(unittest.TestCase):
         def test():
             f = PropertyTest().InternalProperty
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = PropertyTest().InternalStaticProperty
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = PropertyTest.InternalStaticProperty
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testPrivateProperty(self):
@@ -113,17 +113,17 @@ class PropertyTests(unittest.TestCase):
         def test():
             f = PropertyTest().PrivateProperty
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = PropertyTest().PrivateStaticProperty
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = PropertyTest.PrivateStaticProperty
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testPropertyDescriptorGetSet(self):
@@ -135,19 +135,19 @@ class PropertyTests(unittest.TestCase):
 
         object = PropertyTest()
 
-        self.failUnless(PropertyTest.PublicStaticProperty == 0)
-        self.failUnless(object.PublicStaticProperty == 0)
+        self.assertTrue(PropertyTest.PublicStaticProperty == 0)
+        self.assertTrue(object.PublicStaticProperty == 0)
 
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.failUnless(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != types.IntType)
 
         object.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.failUnless(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != types.IntType)
 
         PropertyTest.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.failUnless(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != types.IntType)
 
 
     def testPropertyDescriptorWrongType(self):
@@ -156,7 +156,7 @@ class PropertyTests(unittest.TestCase):
             object = PropertyTest()
             object.PublicProperty = "spam"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertTrue(TypeError, test)
 
 
     def testPropertyDescriptorAbuse(self):
@@ -166,12 +166,12 @@ class PropertyTests(unittest.TestCase):
         def test():
             desc.__get__(0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             desc.__set__(0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInterfaceProperty(self):
@@ -182,7 +182,7 @@ class PropertyTests(unittest.TestCase):
         from System.Collections import Hashtable, ICollection
         mapping = Hashtable()
         coll = ICollection(mapping)
-        self.failUnless(coll.Count == 0)
+        self.assertTrue(coll.Count == 0)
 
 
 

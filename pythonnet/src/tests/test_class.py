@@ -31,28 +31,28 @@ class ClassTests(unittest.TestCase):
 
     def testClassStandardAttrs(self):
         """Test standard class attributes."""
-        self.failUnless(ClassTest.__name__ == 'ClassTest')
-        self.failUnless(ClassTest.__module__ == 'Python.Test')
-        self.failUnless(type(ClassTest.__dict__) == types.DictProxyType)
-        self.failUnless(len(ClassTest.__doc__) > 0)
+        self.assertTrue(ClassTest.__name__ == 'ClassTest')
+        self.assertTrue(ClassTest.__module__ == 'Python.Test')
+        self.assertTrue(type(ClassTest.__dict__) == types.DictProxyType)
+        self.assertTrue(len(ClassTest.__doc__) > 0)
 
 
     def testClassDocstrings(self):
         """Test standard class docstring generation"""
         value = 'Void .ctor()'
-        self.failUnless(ClassTest.__doc__ == value)
+        self.assertTrue(ClassTest.__doc__ == value)
 
 
     def testClassDefaultStr(self):
         """Test the default __str__ implementation for managed objects."""
         s = System.String("this is a test")
-        self.failUnless(str(s) == "this is a test")
+        self.assertTrue(str(s) == "this is a test")
 
 
     def testClassDefaultRepr(self):
         """Test the default __repr__ implementation for managed objects."""
         s = System.String("this is a test")
-        self.failUnless(repr(s).startswith("<System.String object"))
+        self.assertTrue(repr(s).startswith("<System.String object"))
 
 
     def testNonPublicClass(self):
@@ -62,12 +62,12 @@ class ClassTests(unittest.TestCase):
         def test():
             from Python.Test import InternalClass
 
-        self.failUnlessRaises(ImportError, test)
+        self.assertRaises(ImportError, test)
 
         def test():
             x = Test.InternalClass
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testBasicSubclass(self):
@@ -79,18 +79,18 @@ class ClassTests(unittest.TestCase):
 
         table = MyTable()
 
-        self.failUnless(table.__class__.__name__.endswith('MyTable'))
-        self.failUnless(type(table).__name__.endswith('MyTable'))
-        self.failUnless(len(table.__class__.__bases__) == 1)
-        self.failUnless(table.__class__.__bases__[0] == Hashtable)
+        self.assertTrue(table.__class__.__name__.endswith('MyTable'))
+        self.assertTrue(type(table).__name__.endswith('MyTable'))
+        self.assertTrue(len(table.__class__.__bases__) == 1)
+        self.assertTrue(table.__class__.__bases__[0] == Hashtable)
 
-        self.failUnless(table.howMany() == 0)
-        self.failUnless(table.Count == 0)
+        self.assertTrue(table.howMany() == 0)
+        self.assertTrue(table.Count == 0)
 
         table.set_Item('one', 'one')
         
-        self.failUnless(table.howMany() == 1)
-        self.failUnless(table.Count == 1)
+        self.assertTrue(table.howMany() == 1)
+        self.assertTrue(table.Count == 1)
 
         MyTable = None
 
@@ -116,7 +116,7 @@ class ClassTests(unittest.TestCase):
                 self.value = v
 
         inst = SubClass('test')
-        self.failUnless(inst.value == 'test')
+        self.assertTrue(inst.value == 'test')
 
         class SubClass2(ClassCtorTest2):
             def __init__(self, v):
@@ -124,7 +124,7 @@ class ClassTests(unittest.TestCase):
                 self.value = v
 
         inst = SubClass2('test')
-        self.failUnless(inst.value == 'test')
+        self.assertTrue(inst.value == 'test')
 
 
     def testStructConstruction(self):
@@ -134,17 +134,17 @@ class ClassTests(unittest.TestCase):
         def test():
             p = Point()
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         p = Point(0, 0)
-        self.failUnless(p.X == 0)
-        self.failUnless(p.Y == 0)
+        self.assertTrue(p.X == 0)
+        self.assertTrue(p.Y == 0)
 
         p.X = 10
         p.Y = 10
 
-        self.failUnless(p.X == 10)
-        self.failUnless(p.Y == 10)
+        self.assertTrue(p.X == 10)
+        self.assertTrue(p.Y == 10)
 
 
 
@@ -160,13 +160,13 @@ class ClassTests(unittest.TestCase):
         list = Test.ClassTest.GetArrayList()
 
         for item in list:
-            self.failUnless((item > -1) and (item < 10))
+            self.assertTrue((item > -1) and (item < 10))
 
         dict = Test.ClassTest.GetHashtable()
 
         for item in dict:
             cname = item.__class__.__name__
-            self.failUnless(cname.endswith('DictionaryEntry'))
+            self.assertTrue(cname.endswith('DictionaryEntry'))
 
 
     def testIEnumeratorIteration(self):
@@ -174,7 +174,7 @@ class ClassTests(unittest.TestCase):
         chars = Test.ClassTest.GetEnumerator()
 
         for item in chars:
-            self.failUnless(item in 'test string')
+            self.assertTrue(item in 'test string')
 
 
 
@@ -193,11 +193,11 @@ class ClassTests(unittest.TestCase):
         table['two'] = 'two'
         table['three'] = 'three'
 
-        self.failUnless(table['one'] == 'my one')
-        self.failUnless(table['two'] == 'my two')
-        self.failUnless(table['three'] == 'my three')
+        self.assertTrue(table['one'] == 'my one')
+        self.assertTrue(table['two'] == 'my two')
+        self.assertTrue(table['three'] == 'my three')
 
-        self.failUnless(table.Count == 3)                    
+        self.assertTrue(table.Count == 3)                    
 
 
     def testOverrideSetItem(self):
@@ -214,11 +214,11 @@ class ClassTests(unittest.TestCase):
         table['two'] = 'two'
         table['three'] = 'three'
 
-        self.failUnless(table['one'] == 'my one')
-        self.failUnless(table['two'] == 'my two')
-        self.failUnless(table['three'] == 'my three')
+        self.assertTrue(table['one'] == 'my one')
+        self.assertTrue(table['two'] == 'my two')
+        self.assertTrue(table['three'] == 'my three')
 
-        self.failUnless(table.Count == 3)                    
+        self.assertTrue(table.Count == 3)                    
 
 
 

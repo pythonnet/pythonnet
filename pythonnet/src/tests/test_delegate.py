@@ -6,6 +6,8 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
+import clr
+clr.AddReference('Python.Test')
 
 from Python.Test import DelegateTest, PublicDelegate
 from Python.Test import StringDelegate, ObjectDelegate
@@ -20,47 +22,47 @@ class DelegateTests(unittest.TestCase):
 
     def testDelegateStandardAttrs(self):
         """Test standard delegate attributes."""
-        self.failUnless(PublicDelegate.__name__ == 'PublicDelegate')
-        self.failUnless(PublicDelegate.__module__ == 'Python.Test')
-        self.failUnless(type(PublicDelegate.__dict__) == types.DictProxyType)
-        self.failUnless(PublicDelegate.__doc__ == None)
+        self.assertTrue(PublicDelegate.__name__ == 'PublicDelegate')
+        self.assertTrue(PublicDelegate.__module__ == 'Python.Test')
+        self.assertTrue(type(PublicDelegate.__dict__) == types.DictProxyType)
+        self.assertTrue(PublicDelegate.__doc__ == None)
 
 
     def testGlobalDelegateVisibility(self):
         """Test visibility of module-level delegates."""
         from Python.Test import PublicDelegate
 
-        self.failUnless(PublicDelegate.__name__ == 'PublicDelegate')
-        self.failUnless(Test.PublicDelegate.__name__ == 'PublicDelegate')
+        self.assertTrue(PublicDelegate.__name__ == 'PublicDelegate')
+        self.assertTrue(Test.PublicDelegate.__name__ == 'PublicDelegate')
 
         def test():
             from Python.Test import InternalDelegate
 
-        self.failUnlessRaises(ImportError, test)
+        self.assertRaises(ImportError, test)
 
         def test():
             i = Test.InternalDelegate
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testNestedDelegateVisibility(self):
         """Test visibility of nested delegates."""
         ob = DelegateTest.PublicDelegate
-        self.failUnless(ob.__name__ == 'PublicDelegate')
+        self.assertTrue(ob.__name__ == 'PublicDelegate')
 
         ob = DelegateTest.ProtectedDelegate
-        self.failUnless(ob.__name__ == 'ProtectedDelegate')
+        self.assertTrue(ob.__name__ == 'ProtectedDelegate')
 
         def test():
             ob = DelegateTest.InternalDelegate
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             ob = DelegateTest.PrivateDelegate
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testDelegateFromFunction(self):
@@ -72,12 +74,12 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(sayhello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromMethod(self):
@@ -91,12 +93,12 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(inst.sayhello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromUnboundMethod(self):
@@ -110,7 +112,7 @@ class DelegateTests(unittest.TestCase):
             d = StringDelegate(Hello.sayhello)
             d()
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testDelegateFromStaticMethod(self):
@@ -124,23 +126,23 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(Hello.sayhello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
         inst = Hello()
         d = StringDelegate(inst.sayhello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromClassMethod(self):
@@ -154,23 +156,23 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(Hello.sayhello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
         inst = Hello()
         d = StringDelegate(inst.sayhello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromCallable(self):
@@ -184,12 +186,12 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(inst)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromManagedInstanceMethod(self):
@@ -197,12 +199,12 @@ class DelegateTests(unittest.TestCase):
         ob = DelegateTest()
         d = StringDelegate(ob.SayHello)
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromManagedStaticMethod(self):
@@ -210,12 +212,12 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(DelegateTest.StaticSayHello)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d) == "hello")
-        self.failUnless(d() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d) == "hello")
+        self.assertTrue(d() == "hello")
 
         ob.stringDelegate = d
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
 
     def testDelegateFromDelegate(self):
@@ -228,12 +230,12 @@ class DelegateTests(unittest.TestCase):
         d2 = StringDelegate(d1)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(d2) == "hello")
-        self.failUnless(d2() == "hello")
+        self.assertTrue(ob.CallStringDelegate(d2) == "hello")
+        self.assertTrue(d2() == "hello")
 
         ob.stringDelegate = d2
-        self.failUnless(ob.CallStringDelegate(ob.stringDelegate) == "hello")
-        self.failUnless(ob.stringDelegate() == "hello")
+        self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
+        self.assertTrue(ob.stringDelegate() == "hello")
 
     
     def testDelegateWithInvalidArgs(self):
@@ -241,17 +243,17 @@ class DelegateTests(unittest.TestCase):
         def test():
             d = StringDelegate(None)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             d = StringDelegate("spam")
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             d = StringDelegate(1)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testMulticastDelegate(self):
@@ -272,11 +274,11 @@ class DelegateTests(unittest.TestCase):
         md = System.Delegate.Combine(d1, d2)
         ob = DelegateTest()
 
-        self.failUnless(ob.CallStringDelegate(md) == "ok")
-        self.failUnless(inst.value == 2)
+        self.assertTrue(ob.CallStringDelegate(md) == "ok")
+        self.assertTrue(inst.value == 2)
         
-        self.failUnless(md() == "ok")
-        self.failUnless(inst.value == 4)
+        self.assertTrue(md() == "ok")
+        self.assertTrue(inst.value == 4)
 
 
     def testSubclassDelegateFails(self):
@@ -285,7 +287,7 @@ class DelegateTests(unittest.TestCase):
             class Boom(PublicDelegate):
                 pass
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testDelegateEquality(self):
@@ -297,7 +299,7 @@ class DelegateTests(unittest.TestCase):
         d = StringDelegate(sayhello)
         ob = DelegateTest()
         ob.stringDelegate = d
-        self.failUnless(ob.stringDelegate == d)
+        self.assertTrue(ob.stringDelegate == d)
 
 
     def testBoolDelegate(self):
@@ -311,9 +313,9 @@ class DelegateTests(unittest.TestCase):
         ob.CallBoolDelegate(d)
         
 
-        self.failUnless(not d())
+        self.assertTrue(not d())
 
-        self.failUnless(not ob.CallBoolDelegate(d))
+        self.assertTrue(not ob.CallBoolDelegate(d))
 
     # test async delegates
     

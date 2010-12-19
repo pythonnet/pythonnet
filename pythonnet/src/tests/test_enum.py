@@ -17,77 +17,77 @@ class EnumTests(unittest.TestCase):
 
     def testEnumStandardAttrs(self):
         """Test standard enum attributes."""
-        self.failUnless(DayOfWeek.__name__ == 'DayOfWeek')
-        self.failUnless(DayOfWeek.__module__ == 'System')
-        self.failUnless(type(DayOfWeek.__dict__) == types.DictProxyType)
-        self.failUnless(DayOfWeek.__doc__ == None)
+        self.assertTrue(DayOfWeek.__name__ == 'DayOfWeek')
+        self.assertTrue(DayOfWeek.__module__ == 'System')
+        self.assertTrue(type(DayOfWeek.__dict__) == types.DictProxyType)
+        self.assertTrue(DayOfWeek.__doc__ == None)
 
 
     def testEnumGetMember(self):
         """Test access to enum members."""
-        self.failUnless(DayOfWeek.Sunday == 0)
-        self.failUnless(DayOfWeek.Monday == 1)
-        self.failUnless(DayOfWeek.Tuesday == 2)
-        self.failUnless(DayOfWeek.Wednesday == 3)
-        self.failUnless(DayOfWeek.Thursday == 4)
-        self.failUnless(DayOfWeek.Friday == 5)
-        self.failUnless(DayOfWeek.Saturday == 6)
+        self.assertTrue(DayOfWeek.Sunday == 0)
+        self.assertTrue(DayOfWeek.Monday == 1)
+        self.assertTrue(DayOfWeek.Tuesday == 2)
+        self.assertTrue(DayOfWeek.Wednesday == 3)
+        self.assertTrue(DayOfWeek.Thursday == 4)
+        self.assertTrue(DayOfWeek.Friday == 5)
+        self.assertTrue(DayOfWeek.Saturday == 6)
 
 
     def testByteEnum(self):
         """Test byte enum."""
-        self.failUnless(Test.ByteEnum.Zero == 0)
-        self.failUnless(Test.ByteEnum.One == 1)
-        self.failUnless(Test.ByteEnum.Two == 2)
+        self.assertTrue(Test.ByteEnum.Zero == 0)
+        self.assertTrue(Test.ByteEnum.One == 1)
+        self.assertTrue(Test.ByteEnum.Two == 2)
 
 
     def testSByteEnum(self):
         """Test sbyte enum."""
-        self.failUnless(Test.SByteEnum.Zero == 0)
-        self.failUnless(Test.SByteEnum.One == 1)
-        self.failUnless(Test.SByteEnum.Two == 2)
+        self.assertTrue(Test.SByteEnum.Zero == 0)
+        self.assertTrue(Test.SByteEnum.One == 1)
+        self.assertTrue(Test.SByteEnum.Two == 2)
 
 
     def testShortEnum(self):
         """Test short enum."""
-        self.failUnless(Test.ShortEnum.Zero == 0)
-        self.failUnless(Test.ShortEnum.One == 1)
-        self.failUnless(Test.ShortEnum.Two == 2)
+        self.assertTrue(Test.ShortEnum.Zero == 0)
+        self.assertTrue(Test.ShortEnum.One == 1)
+        self.assertTrue(Test.ShortEnum.Two == 2)
 
 
     def testUShortEnum(self):
         """Test ushort enum."""
-        self.failUnless(Test.UShortEnum.Zero == 0)
-        self.failUnless(Test.UShortEnum.One == 1)
-        self.failUnless(Test.UShortEnum.Two == 2)
+        self.assertTrue(Test.UShortEnum.Zero == 0)
+        self.assertTrue(Test.UShortEnum.One == 1)
+        self.assertTrue(Test.UShortEnum.Two == 2)
 
 
     def testIntEnum(self):
         """Test int enum."""
-        self.failUnless(Test.IntEnum.Zero == 0)
-        self.failUnless(Test.IntEnum.One == 1)
-        self.failUnless(Test.IntEnum.Two == 2)
+        self.assertTrue(Test.IntEnum.Zero == 0)
+        self.assertTrue(Test.IntEnum.One == 1)
+        self.assertTrue(Test.IntEnum.Two == 2)
 
 
     def testUIntEnum(self):
         """Test uint enum."""
-        self.failUnless(Test.UIntEnum.Zero == 0L)
-        self.failUnless(Test.UIntEnum.One == 1L)
-        self.failUnless(Test.UIntEnum.Two == 2L)
+        self.assertTrue(Test.UIntEnum.Zero == 0L)
+        self.assertTrue(Test.UIntEnum.One == 1L)
+        self.assertTrue(Test.UIntEnum.Two == 2L)
 
 
     def testLongEnum(self):
         """Test long enum."""
-        self.failUnless(Test.LongEnum.Zero == 0L)
-        self.failUnless(Test.LongEnum.One == 1L)
-        self.failUnless(Test.LongEnum.Two == 2L)
+        self.assertTrue(Test.LongEnum.Zero == 0L)
+        self.assertTrue(Test.LongEnum.One == 1L)
+        self.assertTrue(Test.LongEnum.Two == 2L)
 
 
     def testULongEnum(self):
         """Test ulong enum."""
-        self.failUnless(Test.ULongEnum.Zero == 0L)
-        self.failUnless(Test.ULongEnum.One == 1L)
-        self.failUnless(Test.ULongEnum.Two == 2L)
+        self.assertTrue(Test.ULongEnum.Zero == 0L)
+        self.assertTrue(Test.ULongEnum.One == 1L)
+        self.assertTrue(Test.ULongEnum.Two == 2L)
 
 
     def testInstantiateEnumFails(self):
@@ -95,7 +95,7 @@ class EnumTests(unittest.TestCase):
         def test():
             ob = DayOfWeek()
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testSubclassEnumFails(self):
@@ -104,7 +104,7 @@ class EnumTests(unittest.TestCase):
             class Boom(DayOfWeek):
                 pass
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testEnumSetMemberFails(self):
@@ -112,12 +112,12 @@ class EnumTests(unittest.TestCase):
         def test():
             DayOfWeek.Sunday = 13
             
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             del DayOfWeek.Sunday
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testEnumWithFlagsAttrConversion(self):
@@ -132,31 +132,31 @@ class EnumTests(unittest.TestCase):
         def test():
             Test.FieldTest().EnumField = 99
             
-        self.failUnlessRaises(ValueError, test)
+        self.assertRaises(ValueError, test)
 
 
     def testEnumConversion(self):
         """Test enumeration conversion."""
         object = Test.FieldTest()
-        self.failUnless(object.EnumField == 0)
+        self.assertTrue(object.EnumField == 0)
 
         object.EnumField = Test.ShortEnum.One
-        self.failUnless(object.EnumField == 1)
+        self.assertTrue(object.EnumField == 1)
 
         def test():
             Test.FieldTest().EnumField = 20
             
-        self.failUnlessRaises(ValueError, test)
+        self.assertRaises(ValueError, test)
 
         def test():
             Test.FieldTest().EnumField = 100000
             
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             Test.FieldTest().EnumField = "str"
             
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
 

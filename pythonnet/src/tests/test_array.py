@@ -20,22 +20,22 @@ class ArrayTests(unittest.TestCase):
         object = Test.PublicArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         items[0] = 8
-        self.failUnless(items[0] == 8)
+        self.assertTrue(items[0] == 8)
 
         items[4] = 9
-        self.failUnless(items[4] == 9)
+        self.assertTrue(items[4] == 9)
 
         items[-4] = 0
-        self.failUnless(items[-4] == 0)
+        self.assertTrue(items[-4] == 0)
 
         items[-1] = 4
-        self.failUnless(items[-1] == 4)
+        self.assertTrue(items[-1] == 4)
 
 
     def testProtectedArray(self):
@@ -43,22 +43,22 @@ class ArrayTests(unittest.TestCase):
         object = Test.ProtectedArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         items[0] = 8
-        self.failUnless(items[0] == 8)
+        self.assertTrue(items[0] == 8)
 
         items[4] = 9
-        self.failUnless(items[4] == 9)
+        self.assertTrue(items[4] == 9)
 
         items[-4] = 0
-        self.failUnless(items[-4] == 0)
+        self.assertTrue(items[-4] == 0)
 
         items[-1] = 4
-        self.failUnless(items[-1] == 4)
+        self.assertTrue(items[-1] == 4)
 
 
     def testInternalArray(self):
@@ -68,7 +68,7 @@ class ArrayTests(unittest.TestCase):
             object = Test.InternalArrayTest()
             items = object.items
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testPrivateArray(self):
@@ -78,7 +78,7 @@ class ArrayTests(unittest.TestCase):
             object = Test.PrivateArrayTest()
             items = object.items
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testArrayBoundsChecking(self):
@@ -87,41 +87,41 @@ class ArrayTests(unittest.TestCase):
         object = Test.Int32ArrayTest()
         items = object.items
 
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[1] == 1)
-        self.failUnless(items[2] == 2)
-        self.failUnless(items[3] == 3)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[1] == 1)
+        self.assertTrue(items[2] == 2)
+        self.assertTrue(items[3] == 3)
+        self.assertTrue(items[4] == 4)
 
-        self.failUnless(items[-5] == 0)
-        self.failUnless(items[-4] == 1)
-        self.failUnless(items[-3] == 2)
-        self.failUnless(items[-2] == 3)
-        self.failUnless(items[-1] == 4)
+        self.assertTrue(items[-5] == 0)
+        self.assertTrue(items[-4] == 1)
+        self.assertTrue(items[-3] == 2)
+        self.assertTrue(items[-2] == 3)
+        self.assertTrue(items[-1] == 4)
 
         def test():
             object = Test.Int32ArrayTest()
             object.items[5]
 
-        self.failUnlessRaises(IndexError, test)
+        self.assertRaises(IndexError, test)
 
         def test():
             object = Test.Int32ArrayTest()
             object.items[5] = 0
 
-        self.failUnlessRaises(IndexError, test)
+        self.assertRaises(IndexError, test)
 
         def test():
             object = Test.Int32ArrayTest()
             items[-6]
 
-        self.failUnlessRaises(IndexError, test)
+        self.assertRaises(IndexError, test)
 
         def test():
             object = Test.Int32ArrayTest()
             items[-6] = 0
 
-        self.failUnlessRaises(IndexError, test)
+        self.assertRaises(IndexError, test)
 
 
     def testArrayContains(self):
@@ -130,15 +130,16 @@ class ArrayTests(unittest.TestCase):
         object = Test.Int32ArrayTest()
         items = object.items
 
-        self.failUnless(0 in items)
-        self.failUnless(1 in items)
-        self.failUnless(2 in items)
-        self.failUnless(3 in items)
-        self.failUnless(4 in items)
+        self.assertTrue(0 in items)
+        self.assertTrue(1 in items)
+        self.assertTrue(2 in items)
+        self.assertTrue(3 in items)
+        self.assertTrue(4 in items)
 
-        self.failIf(5 in items)
-        self.failIf(-1 in items)
-        self.failIf(None in items)
+        self.assertFalse(5 in items)    # "H:\Python27\Lib\unittest\case.py", line 592, in deprecated_func,
+        self.assertFalse(-1 in items)   #TypeError: int() argument must be a string or a number, not 'NoneType'
+        self.assertFalse(None in items) # which threw ^ here which is a little odd.
+        # But when run from runtests.py. Not when this module ran by itself.
 
 
     def testBooleanArray(self):
@@ -146,31 +147,31 @@ class ArrayTests(unittest.TestCase):
         object = Test.BooleanArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == True)
-        self.failUnless(items[1] == False)
-        self.failUnless(items[2] == True)
-        self.failUnless(items[3] == False)
-        self.failUnless(items[4] == True)
+        self.assertTrue(items[0] == True)
+        self.assertTrue(items[1] == False)
+        self.assertTrue(items[2] == True)
+        self.assertTrue(items[3] == False)
+        self.assertTrue(items[4] == True)
 
         items[0] = False
-        self.failUnless(items[0] == False)
+        self.assertTrue(items[0] == False)
 
         items[0] = True
-        self.failUnless(items[0] == True)
+        self.assertTrue(items[0] == True)
 
         def test():
             object = Test.ByteArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.ByteArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testByteArray(self):
@@ -178,49 +179,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.ByteArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 255
         min = 0
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.ByteArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.ByteArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.ByteArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.ByteArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testSByteArray(self):
@@ -228,49 +229,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.SByteArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 127
         min = -128
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.SByteArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.SByteArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.SByteArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.SByteArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testCharArray(self):
@@ -278,37 +279,37 @@ class ArrayTests(unittest.TestCase):
         object = Test.CharArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 'a')
-        self.failUnless(items[4] == 'e')
+        self.assertTrue(items[0] == 'a')
+        self.assertTrue(items[4] == 'e')
 
         max = unichr(65535)
         min = unichr(0)
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.CharArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.CharArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInt16Array(self):
@@ -316,49 +317,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.Int16ArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 32767
         min = -32768
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.Int16ArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.Int16ArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.Int16ArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int16ArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInt32Array(self):
@@ -366,49 +367,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.Int32ArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 2147483647
         min = -2147483648
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.Int32ArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.Int32ArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.Int32ArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int32ArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInt64Array(self):
@@ -416,49 +417,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.Int64ArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 9223372036854775807L
         min = -9223372036854775808L
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.Int64ArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.Int64ArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.Int64ArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int64ArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testUInt16Array(self):
@@ -466,49 +467,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.UInt16ArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 65535
         min = 0
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.UInt16ArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.UInt16ArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.UInt16ArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.UInt16ArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
         
 
     def testUInt32Array(self):
@@ -516,49 +517,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.UInt32ArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 4294967295L
         min = 0
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.UInt32ArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.UInt32ArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.UInt32ArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.UInt32ArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testUInt64Array(self):
@@ -566,49 +567,49 @@ class ArrayTests(unittest.TestCase):
         object = Test.UInt64ArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0)
-        self.failUnless(items[4] == 4)
+        self.assertTrue(items[0] == 0)
+        self.assertTrue(items[4] == 4)
 
         max = 18446744073709551615L
         min = 0
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.UInt64ArrayTest()
             object.items[0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.UInt64ArrayTest()
             object.items[0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.UInt64ArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.UInt64ArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testSingleArray(self):
@@ -616,37 +617,37 @@ class ArrayTests(unittest.TestCase):
         object = Test.SingleArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0.0)
-        self.failUnless(items[4] == 4.0)
+        self.assertTrue(items[0] == 0.0)
+        self.assertTrue(items[4] == 4.0)
 
         max = 3.402823e38
         min = -3.402823e38
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.SingleArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.SingleArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testDoubleArray(self):
@@ -654,37 +655,37 @@ class ArrayTests(unittest.TestCase):
         object = Test.DoubleArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == 0.0)
-        self.failUnless(items[4] == 4.0)
+        self.assertTrue(items[0] == 0.0)
+        self.assertTrue(items[4] == 4.0)
 
         max = 1.7976931348623157e308
         min = -1.7976931348623157e308
 
         items[0] = max
-        self.failUnless(items[0] == max)
+        self.assertTrue(items[0] == max)
 
         items[0] = min
-        self.failUnless(items[0] == min)
+        self.assertTrue(items[0] == min)
 
         items[-4] = max
-        self.failUnless(items[-4] == max)
+        self.assertTrue(items[-4] == max)
 
         items[-1] = min
-        self.failUnless(items[-1] == min)
+        self.assertTrue(items[-1] == min)
 
         def test():
             object = Test.DoubleArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.DoubleArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testDecimalArray(self):
@@ -696,34 +697,34 @@ class ArrayTests(unittest.TestCase):
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == Decimal(0))
-        self.failUnless(items[4] == Decimal(4))
+        self.assertTrue(items[0] == Decimal(0))
+        self.assertTrue(items[4] == Decimal(4))
 
         items[0] = max_d
-        self.failUnless(items[0] == max_d)
+        self.assertTrue(items[0] == max_d)
 
         items[0] = min_d
-        self.failUnless(items[0] == min_d)
+        self.assertTrue(items[0] == min_d)
 
         items[-4] = max_d
-        self.failUnless(items[-4] == max_d)
+        self.assertTrue(items[-4] == max_d)
 
         items[-1] = min_d
-        self.failUnless(items[-1] == min_d)
+        self.assertTrue(items[-1] == min_d)
 
         def test():
             object = Test.DecimalArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.DecimalArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testStringArray(self):
@@ -731,34 +732,34 @@ class ArrayTests(unittest.TestCase):
         object = Test.StringArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == '0')
-        self.failUnless(items[4] == '4')
+        self.assertTrue(items[0] == '0')
+        self.assertTrue(items[4] == '4')
 
         items[0] = "spam"
-        self.failUnless(items[0] == "spam")
+        self.assertTrue(items[0] == "spam")
 
         items[0] = "eggs"
-        self.failUnless(items[0] == "eggs")
+        self.assertTrue(items[0] == "eggs")
 
         items[-4] = "spam"
-        self.failUnless(items[-4] == "spam")
+        self.assertTrue(items[-4] == "spam")
 
         items[-1] = "eggs"
-        self.failUnless(items[-1] == "eggs")
+        self.assertTrue(items[-1] == "eggs")
 
         def test():
             object = Test.StringArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int64ArrayTest()
             object[0] = 0
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testEnumArray(self):
@@ -767,40 +768,40 @@ class ArrayTests(unittest.TestCase):
         object = Test.EnumArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == ShortEnum.Zero)
-        self.failUnless(items[4] == ShortEnum.Four)
+        self.assertTrue(items[0] == ShortEnum.Zero)
+        self.assertTrue(items[4] == ShortEnum.Four)
 
         items[0] = ShortEnum.Four
-        self.failUnless(items[0] == ShortEnum.Four)
+        self.assertTrue(items[0] == ShortEnum.Four)
 
         items[0] = ShortEnum.Zero
-        self.failUnless(items[0] == ShortEnum.Zero)
+        self.assertTrue(items[0] == ShortEnum.Zero)
 
         items[-4] = ShortEnum.Four
-        self.failUnless(items[-4] == ShortEnum.Four)
+        self.assertTrue(items[-4] == ShortEnum.Four)
 
         items[-1] = ShortEnum.Zero
-        self.failUnless(items[-1] == ShortEnum.Zero)
+        self.assertTrue(items[-1] == ShortEnum.Zero)
 
         def test():
             object = Test.EnumArrayTest()
             object.items[0] = 99
 
-        self.failUnlessRaises(ValueError, test)
+        self.assertRaises(ValueError, test)
 
         def test():
             object = Test.EnumArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.EnumArrayTest()
             object[0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testObjectArray(self):
@@ -809,40 +810,40 @@ class ArrayTests(unittest.TestCase):
         object = Test.ObjectArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0].GetValue() == "0")
-        self.failUnless(items[4].GetValue() == "4")
+        self.assertTrue(items[0].GetValue() == "0")
+        self.assertTrue(items[4].GetValue() == "4")
 
         items[0] = Spam("4")
-        self.failUnless(items[0].GetValue() == "4")
+        self.assertTrue(items[0].GetValue() == "4")
 
         items[0] = Spam("0")
-        self.failUnless(items[0].GetValue() == "0")
+        self.assertTrue(items[0].GetValue() == "0")
 
         items[-4] = Spam("4")
-        self.failUnless(items[-4].GetValue() == "4")
+        self.assertTrue(items[-4].GetValue() == "4")
 
         items[-1] = Spam("0")
-        self.failUnless(items[-1].GetValue() == "0")
+        self.assertTrue(items[-1].GetValue() == "0")
 
         items[0] = 99
-        self.failUnless(items[0] == 99)
+        self.assertTrue(items[0] == 99)
 
         items[0] = None
-        self.failUnless(items[0] == None)
+        self.assertTrue(items[0] == None)
 
         def test():
             object = Test.ObjectArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.ObjectArrayTest()
             object.items["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testNullArray(self):
@@ -850,31 +851,31 @@ class ArrayTests(unittest.TestCase):
         object = Test.NullArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0] == None)
-        self.failUnless(items[4] == None)
+        self.assertTrue(items[0] == None)
+        self.assertTrue(items[4] == None)
 
         items[0] = "spam"
-        self.failUnless(items[0] == "spam")
+        self.assertTrue(items[0] == "spam")
 
         items[0] = None
-        self.failUnless(items[0] == None)
+        self.assertTrue(items[0] == None)
 
         items[-4] = "spam"
-        self.failUnless(items[-4] == "spam")
+        self.assertTrue(items[-4] == "spam")
 
         items[-1] = None
-        self.failUnless(items[-1] == None)
+        self.assertTrue(items[-1] == None)
 
         empty = object.empty
-        self.failUnless(len(empty) == 0)
+        self.assertTrue(len(empty) == 0)
 
         def test():
             object = Test.NullArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInterfaceArray(self):
@@ -883,43 +884,43 @@ class ArrayTests(unittest.TestCase):
         object = Test.InterfaceArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0].GetValue() == "0")
-        self.failUnless(items[4].GetValue() == "4")
+        self.assertTrue(items[0].GetValue() == "0")
+        self.assertTrue(items[4].GetValue() == "4")
 
         items[0] = Spam("4")
-        self.failUnless(items[0].GetValue() == "4")
+        self.assertTrue(items[0].GetValue() == "4")
 
         items[0] = Spam("0")
-        self.failUnless(items[0].GetValue() == "0")
+        self.assertTrue(items[0].GetValue() == "0")
 
         items[-4] = Spam("4")
-        self.failUnless(items[-4].GetValue() == "4")
+        self.assertTrue(items[-4].GetValue() == "4")
 
         items[-1] = Spam("0")
-        self.failUnless(items[-1].GetValue() == "0")
+        self.assertTrue(items[-1].GetValue() == "0")
 
         items[0] = None
-        self.failUnless(items[0] == None)
+        self.assertTrue(items[0] == None)
 
         def test():
             object = Test.InterfaceArrayTest()
             object.items[0] = 99
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.InterfaceArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.InterfaceArrayTest()
             object.items["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testTypedArray(self):
@@ -928,43 +929,43 @@ class ArrayTests(unittest.TestCase):
         object = Test.TypedArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 5)
+        self.assertTrue(len(items) == 5)
         
-        self.failUnless(items[0].GetValue() == "0")
-        self.failUnless(items[4].GetValue() == "4")
+        self.assertTrue(items[0].GetValue() == "0")
+        self.assertTrue(items[4].GetValue() == "4")
 
         items[0] = Spam("4")
-        self.failUnless(items[0].GetValue() == "4")
+        self.assertTrue(items[0].GetValue() == "4")
 
         items[0] = Spam("0")
-        self.failUnless(items[0].GetValue() == "0")
+        self.assertTrue(items[0].GetValue() == "0")
 
         items[-4] = Spam("4")
-        self.failUnless(items[-4].GetValue() == "4")
+        self.assertTrue(items[-4].GetValue() == "4")
 
         items[-1] = Spam("0")
-        self.failUnless(items[-1].GetValue() == "0")
+        self.assertTrue(items[-1].GetValue() == "0")
 
         items[0] = None
-        self.failUnless(items[0] == None)
+        self.assertTrue(items[0] == None)
 
         def test():
             object = Test.TypedArrayTest()
             object.items[0] = 99
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.TypedArrayTest()
             v = object.items["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.TypedArrayTest()
             object.items["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testMultiDimensionalArray(self):
@@ -972,72 +973,72 @@ class ArrayTests(unittest.TestCase):
         object = Test.MultiDimensionalArrayTest()
         items = object.items
 
-        self.failUnless(len(items) == 25)
+        self.assertTrue(len(items) == 25)
         
-        self.failUnless(items[0, 0] == 0)
-        self.failUnless(items[0, 1] == 1)
-        self.failUnless(items[0, 2] == 2)
-        self.failUnless(items[0, 3] == 3)
-        self.failUnless(items[0, 4] == 4)
-        self.failUnless(items[1, 0] == 5)
-        self.failUnless(items[1, 1] == 6)
-        self.failUnless(items[1, 2] == 7)
-        self.failUnless(items[1, 3] == 8)
-        self.failUnless(items[1, 4] == 9)
-        self.failUnless(items[2, 0] == 10)
-        self.failUnless(items[2, 1] == 11)
-        self.failUnless(items[2, 2] == 12)
-        self.failUnless(items[2, 3] == 13)
-        self.failUnless(items[2, 4] == 14)
-        self.failUnless(items[3, 0] == 15)
-        self.failUnless(items[3, 1] == 16)
-        self.failUnless(items[3, 2] == 17)
-        self.failUnless(items[3, 3] == 18)
-        self.failUnless(items[3, 4] == 19)
-        self.failUnless(items[4, 0] == 20)
-        self.failUnless(items[4, 1] == 21)
-        self.failUnless(items[4, 2] == 22)
-        self.failUnless(items[4, 3] == 23)
-        self.failUnless(items[4, 4] == 24)
+        self.assertTrue(items[0, 0] == 0)
+        self.assertTrue(items[0, 1] == 1)
+        self.assertTrue(items[0, 2] == 2)
+        self.assertTrue(items[0, 3] == 3)
+        self.assertTrue(items[0, 4] == 4)
+        self.assertTrue(items[1, 0] == 5)
+        self.assertTrue(items[1, 1] == 6)
+        self.assertTrue(items[1, 2] == 7)
+        self.assertTrue(items[1, 3] == 8)
+        self.assertTrue(items[1, 4] == 9)
+        self.assertTrue(items[2, 0] == 10)
+        self.assertTrue(items[2, 1] == 11)
+        self.assertTrue(items[2, 2] == 12)
+        self.assertTrue(items[2, 3] == 13)
+        self.assertTrue(items[2, 4] == 14)
+        self.assertTrue(items[3, 0] == 15)
+        self.assertTrue(items[3, 1] == 16)
+        self.assertTrue(items[3, 2] == 17)
+        self.assertTrue(items[3, 3] == 18)
+        self.assertTrue(items[3, 4] == 19)
+        self.assertTrue(items[4, 0] == 20)
+        self.assertTrue(items[4, 1] == 21)
+        self.assertTrue(items[4, 2] == 22)
+        self.assertTrue(items[4, 3] == 23)
+        self.assertTrue(items[4, 4] == 24)
         
         max = 2147483647
         min = -2147483648
 
         items[0, 0] = max
-        self.failUnless(items[0, 0] == max)
+        self.assertTrue(items[0, 0] == max)
 
         items[0, 0] = min
-        self.failUnless(items[0, 0] == min)
+        self.assertTrue(items[0, 0] == min)
 
         items[-4, 0] = max
-        self.failUnless(items[-4, 0] == max)
+        self.assertTrue(items[-4, 0] == max)
 
         items[-1, -1] = min
-        self.failUnless(items[-1, -1] == min)
+        self.assertTrue(items[-1, -1] == min)
 
         def test():
             object = Test.MultiDimensionalArrayTest()
             object.items[0, 0] = max + 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.MultiDimensionalArrayTest()
             object.items[0, 0] = min - 1
 
-        self.failUnlessRaises(OverflowError, test)
+        self.assertRaises(OverflowError, test)
 
         def test():
             object = Test.MultiDimensionalArrayTest()
             v = object.items["wrong", 0]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.MultiDimensionalArrayTest()
             object[0, 0] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testArrayIteration(self):
@@ -1045,12 +1046,12 @@ class ArrayTests(unittest.TestCase):
         items = Test.Int32ArrayTest().items
 
         for i in items:
-            self.failUnless((i > -1) and (i < 5))
+            self.assertTrue((i > -1) and (i < 5))
 
         items = Test.NullArrayTest().items
 
         for i in items:
-            self.failUnless(i == None)
+            self.assertTrue(i == None)
 
         empty = Test.NullArrayTest().empty
 
@@ -1069,8 +1070,8 @@ class ArrayTests(unittest.TestCase):
         items = tuple(items)
 
         result = ArrayConversionTest.EchoRange(items)
-        self.failUnless(result[0].__class__ == Spam)
-        self.failUnless(len(result) == 10)
+        self.assertTrue(result[0].__class__ == Spam)
+        self.assertTrue(len(result) == 10)
 
 
     def testTupleNestedArrayConversion(self):
@@ -1088,9 +1089,9 @@ class ArrayTests(unittest.TestCase):
         
         result = ArrayConversionTest.EchoRangeAA(items)
         
-        self.failUnless(len(result) == 10)
-        self.failUnless(len(result[0]) == 10)
-        self.failUnless(result[0][0].__class__ == Spam)
+        self.assertTrue(len(result) == 10)
+        self.assertTrue(len(result[0]) == 10)
+        self.assertTrue(result[0][0].__class__ == Spam)
 
 
     def testListArrayConversion(self):
@@ -1103,8 +1104,8 @@ class ArrayTests(unittest.TestCase):
             items.append(Spam(str(i)))
 
         result = ArrayConversionTest.EchoRange(items)
-        self.failUnless(result[0].__class__ == Spam)
-        self.failUnless(len(result) == 10)
+        self.assertTrue(result[0].__class__ == Spam)
+        self.assertTrue(len(result) == 10)
 
 
     def testListNestedArrayConversion(self):
@@ -1121,9 +1122,9 @@ class ArrayTests(unittest.TestCase):
         
         result = ArrayConversionTest.EchoRangeAA(items)
         
-        self.failUnless(len(result) == 10)
-        self.failUnless(len(result[0]) == 10)
-        self.failUnless(result[0][0].__class__ == Spam)
+        self.assertTrue(len(result) == 10)
+        self.assertTrue(len(result[0]) == 10)
+        self.assertTrue(result[0][0].__class__ == Spam)
 
 
     def testSequenceArrayConversion(self):
@@ -1137,8 +1138,8 @@ class ArrayTests(unittest.TestCase):
             items.append(Spam(str(i)))
 
         result = ArrayConversionTest.EchoRange(items)
-        self.failUnless(result[0].__class__ == Spam)
-        self.failUnless(len(result) == 10)
+        self.assertTrue(result[0].__class__ == Spam)
+        self.assertTrue(len(result) == 10)
 
 
     def testSequenceNestedArrayConversion(self):
@@ -1156,9 +1157,9 @@ class ArrayTests(unittest.TestCase):
         
         result = ArrayConversionTest.EchoRangeAA(items)
         
-        self.failUnless(len(result) == 10)
-        self.failUnless(len(result[0]) == 10)
-        self.failUnless(result[0][0].__class__ == Spam)
+        self.assertTrue(len(result) == 10)
+        self.assertTrue(len(result[0]) == 10)
+        self.assertTrue(result[0][0].__class__ == Spam)
 
 
     def testTupleArrayConversionTypeChecking(self):
@@ -1177,9 +1178,9 @@ class ArrayTests(unittest.TestCase):
 
         result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnless(result[0].__class__ == Spam)
-        self.failUnless(result[1] == None)
-        self.failUnless(len(result) == 10)
+        self.assertTrue(result[0].__class__ == Spam)
+        self.assertTrue(result[1] == None)
+        self.assertTrue(len(result) == 10)
 
         def test(items = items):
             temp = list(items)
@@ -1187,7 +1188,7 @@ class ArrayTests(unittest.TestCase):
 
             result = ArrayConversionTest.EchoRange(tuple(temp))
 
-        self.failUnlessRaises(TypeError, test) 
+        self.assertRaises(TypeError, test) 
 
         def test(items = items):
             temp = list(items)
@@ -1195,7 +1196,7 @@ class ArrayTests(unittest.TestCase):
 
             result = ArrayConversionTest.EchoRange(tuple(temp))
 
-        self.failUnlessRaises(TypeError, test) 
+        self.assertRaises(TypeError, test) 
 
 
     def testListArrayConversionTypeChecking(self):
@@ -1213,21 +1214,21 @@ class ArrayTests(unittest.TestCase):
 
         result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnless(result[0].__class__ == Spam)
-        self.failUnless(result[1] == None)
-        self.failUnless(len(result) == 10)
+        self.assertTrue(result[0].__class__ == Spam)
+        self.assertTrue(result[1] == None)
+        self.assertTrue(len(result) == 10)
 
         def test(items = items):
             items[1] = 1
             result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnlessRaises(TypeError, test) 
+        self.assertRaises(TypeError, test) 
 
         def test(items = items):
             items[1] = "spam"
             result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnlessRaises(TypeError, test) 
+        self.assertRaises(TypeError, test) 
 
 
     def testSequenceArrayConversionTypeChecking(self):
@@ -1246,21 +1247,21 @@ class ArrayTests(unittest.TestCase):
 
         result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnless(result[0].__class__ == Spam)
-        self.failUnless(result[1] == None)
-        self.failUnless(len(result) == 10)
+        self.assertTrue(result[0].__class__ == Spam)
+        self.assertTrue(result[1] == None)
+        self.assertTrue(len(result) == 10)
 
         def test(items = items):
             items[1] = 1
             result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnlessRaises(TypeError, test) 
+        self.assertRaises(TypeError, test) 
 
         def test(items = items):
             items[1] = "spam"
             result = ArrayConversionTest.EchoRange(items)
 
-        self.failUnlessRaises(TypeError, test) 
+        self.assertRaises(TypeError, test) 
 
 
     def testMDArrayConversion(self):
@@ -1283,9 +1284,9 @@ class ArrayTests(unittest.TestCase):
         
         result = ArrayConversionTest.EchoRangeMD(items)
         
-        self.failUnless(len(result) == 25)
-        self.failUnless(result[0, 0].__class__ == Spam)
-        self.failUnless(result[0, 0].__class__ == Spam)
+        self.assertTrue(len(result) == 25)
+        self.assertTrue(result[0, 0].__class__ == Spam)
+        self.assertTrue(result[0, 0].__class__ == Spam)
 
 
     def testBoxedValueTypeMutationResult(self):
@@ -1307,23 +1308,23 @@ class ArrayTests(unittest.TestCase):
 
         for i in range(5):
             # Boxed items, so settr will not change the array member.
-            self.failUnless(items[i].X == i)
-            self.failUnless(items[i].Y == i)
+            self.assertTrue(items[i].X == i)
+            self.assertTrue(items[i].Y == i)
             items[i].X = i + 1
             items[i].Y = i + 1
-            self.failUnless(items[i].X == i)
-            self.failUnless(items[i].Y == i)
+            self.assertTrue(items[i].X == i)
+            self.assertTrue(items[i].Y == i)
 
         for i in range(5):
             # Demonstrates the workaround that will change the members.
-            self.failUnless(items[i].X == i)
-            self.failUnless(items[i].Y == i)
+            self.assertTrue(items[i].X == i)
+            self.assertTrue(items[i].Y == i)
             item = items[i]
             item.X = i + 1
             item.Y = i + 1
             items[i] = item
-            self.failUnless(items[i].X == i + 1)
-            self.failUnless(items[i].Y == i + 1)
+            self.assertTrue(items[i].X == i + 1)
+            self.assertTrue(items[i].Y == i + 1)
 
 
     def testSpecialArrayCreation(self):
@@ -1333,130 +1334,130 @@ class ArrayTests(unittest.TestCase):
         inst = InterfaceTest()
 
         value = Array[System.Boolean]([True, True])
-        self.failUnless(value[0] == True)
-        self.failUnless(value[1] == True)
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == True)
+        self.assertTrue(value[1] == True)
+        self.assertTrue(value.Length == 2)
 
         value = Array[bool]([True, True])
-        self.failUnless(value[0] == True)
-        self.failUnless(value[1] == True)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == True)
+        self.assertTrue(value[1] == True)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Byte]([0, 255])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 255)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 255)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.SByte]([0, 127])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 127)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 127)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Char]([u'A', u'Z'])
-        self.failUnless(value[0] == u'A')
-        self.failUnless(value[1] == u'Z')
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == u'A')
+        self.assertTrue(value[1] == u'Z')
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Char]([0, 65535])
-        self.failUnless(value[0] == unichr(0))
-        self.failUnless(value[1] == unichr(65535))        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == unichr(0))
+        self.assertTrue(value[1] == unichr(65535))        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Int16]([0, 32767])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 32767)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 32767)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Int32]([0, 2147483647])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 2147483647)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 2147483647)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[int]([0, 2147483647])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 2147483647)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 2147483647)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Int64]([0, 9223372036854775807L])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 9223372036854775807L)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 9223372036854775807L)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[long]([0, 9223372036854775807L])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 9223372036854775807L)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 9223372036854775807L)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.UInt16]([0, 65000])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 65000)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 65000)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.UInt32]([0, 4294967295L])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 4294967295L)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 4294967295L)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.UInt64]([0, 18446744073709551615L])
-        self.failUnless(value[0] == 0)
-        self.failUnless(value[1] == 18446744073709551615L)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0)
+        self.assertTrue(value[1] == 18446744073709551615L)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Single]([0.0, 3.402823e38])
-        self.failUnless(value[0] == 0.0)
-        self.failUnless(value[1] == 3.402823e38)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0.0)
+        self.assertTrue(value[1] == 3.402823e38)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Double]([0.0, 1.7976931348623157e308])
-        self.failUnless(value[0] == 0.0)
-        self.failUnless(value[1] == 1.7976931348623157e308)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0.0)
+        self.assertTrue(value[1] == 1.7976931348623157e308)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[float]([0.0, 1.7976931348623157e308])
-        self.failUnless(value[0] == 0.0)
-        self.failUnless(value[1] == 1.7976931348623157e308)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == 0.0)
+        self.assertTrue(value[1] == 1.7976931348623157e308)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Decimal]([System.Decimal.Zero,System.Decimal.One])
-        self.failUnless(value[0] == System.Decimal.Zero)
-        self.failUnless(value[1] == System.Decimal.One)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == System.Decimal.Zero)
+        self.assertTrue(value[1] == System.Decimal.One)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.String](["one", "two"])
-        self.failUnless(value[0] == "one")
-        self.failUnless(value[1] == "two")
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == "one")
+        self.assertTrue(value[1] == "two")
+        self.assertTrue(value.Length == 2)
         
         value = Array[str](["one", "two"])
-        self.failUnless(value[0] == "one")
-        self.failUnless(value[1] == "two")
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == "one")
+        self.assertTrue(value[1] == "two")
+        self.assertTrue(value.Length == 2)
         
         value = Array[ShortEnum]([ShortEnum.Zero, ShortEnum.One])
-        self.failUnless(value[0] == ShortEnum.Zero)
-        self.failUnless(value[1] == ShortEnum.One)
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0] == ShortEnum.Zero)
+        self.assertTrue(value[1] == ShortEnum.One)
+        self.assertTrue(value.Length == 2)
         
         value = Array[System.Object]([inst, inst])
-        self.failUnless(value[0].__class__ == inst.__class__)
-        self.failUnless(value[1].__class__ == inst.__class__)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0].__class__ == inst.__class__)
+        self.assertTrue(value[1].__class__ == inst.__class__)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[InterfaceTest]([inst, inst])
-        self.failUnless(value[0].__class__ == inst.__class__)
-        self.failUnless(value[1].__class__ == inst.__class__)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0].__class__ == inst.__class__)
+        self.assertTrue(value[1].__class__ == inst.__class__)        
+        self.assertTrue(value.Length == 2)
         
         value = Array[ISayHello1]([inst, inst])
-        self.failUnless(value[0].__class__ == inst.__class__)
-        self.failUnless(value[1].__class__ == inst.__class__)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0].__class__ == inst.__class__)
+        self.assertTrue(value[1].__class__ == inst.__class__)        
+        self.assertTrue(value.Length == 2)
 
         inst = System.Exception("badness")
         value = Array[System.Exception]([inst, inst])
-        self.failUnless(value[0].__class__ == inst.__class__)
-        self.failUnless(value[1].__class__ == inst.__class__)        
-        self.failUnless(value.Length == 2)
+        self.assertTrue(value[0].__class__ == inst.__class__)
+        self.assertTrue(value[1].__class__ == inst.__class__)        
+        self.assertTrue(value.Length == 2)
 
 
     def testArrayAbuse(self):
@@ -1467,44 +1468,44 @@ class ArrayTests(unittest.TestCase):
         def test():
             del _class.__getitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             del object.__getitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             del _class.__setitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             del object.__setitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             Test.PublicArrayTest.__getitem__(0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             Test.PublicArrayTest.__setitem__(0, 0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             desc = Test.PublicArrayTest.__dict__['__getitem__']
             desc(0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             desc = Test.PublicArrayTest.__dict__['__setitem__']
             desc(0, 0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
 

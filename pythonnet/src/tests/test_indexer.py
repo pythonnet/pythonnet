@@ -19,12 +19,12 @@ class IndexerTests(unittest.TestCase):
         object = Test.PublicIndexerTest()
 
         object[0] = "zero"
-        self.failUnless(object[0] == "zero")
+        self.assertTrue(object[0] == "zero")
         
         object[1] = "one"
-        self.failUnless(object[1] == "one")
+        self.assertTrue(object[1] == "one")
 
-        self.failUnless(object[10] == None)
+        self.assertTrue(object[10] == None)
 
 
     def testProtectedIndexer(self):
@@ -32,12 +32,12 @@ class IndexerTests(unittest.TestCase):
         object = Test.ProtectedIndexerTest()
 
         object[0] = "zero"
-        self.failUnless(object[0] == "zero")
+        self.assertTrue(object[0] == "zero")
         
         object[1] = "one"
-        self.failUnless(object[1] == "one")
+        self.assertTrue(object[1] == "one")
 
-        self.failUnless(object[10] == None)
+        self.assertTrue(object[10] == None)
 
 
     def testInternalIndexer(self):
@@ -47,17 +47,17 @@ class IndexerTests(unittest.TestCase):
         def test():
             object[0] = "zero"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             Test.InternalIndexerTest.__getitem__(object, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object.__getitem__(0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testPrivateIndexer(self):
@@ -67,37 +67,37 @@ class IndexerTests(unittest.TestCase):
         def test():
             object[0] = "zero"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             Test.PrivateIndexerTest.__getitem__(object, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object.__getitem__(0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testBooleanIndexer(self):
         """Test boolean indexers."""
         object = Test.BooleanIndexerTest()
 
-        self.failUnless(object[True] == None)
-        self.failUnless(object[1] == None)
+        self.assertTrue(object[True] == None)
+        self.assertTrue(object[1] == None)
 
         object[0] = "false"
-        self.failUnless(object[0] == "false")
+        self.assertTrue(object[0] == "false")
         
         object[1] = "true"
-        self.failUnless(object[1] == "true")
+        self.assertTrue(object[1] == "true")
 
         object[False] = "false"
-        self.failUnless(object[False] == "false")
+        self.assertTrue(object[False] == "false")
         
         object[True] = "true"
-        self.failUnless(object[True] == "true")
+        self.assertTrue(object[True] == "true")
 
 
     def testByteIndexer(self):
@@ -106,25 +106,25 @@ class IndexerTests(unittest.TestCase):
         max = 255
         min = 0
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.ByteIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.ByteIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testSByteIndexer(self):
@@ -133,25 +133,25 @@ class IndexerTests(unittest.TestCase):
         max = 127
         min = -128
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.SByteIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.SByteIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testCharIndexer(self):
@@ -160,25 +160,25 @@ class IndexerTests(unittest.TestCase):
         max = unichr(65535)
         min = unichr(0)
     
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = "max"
-        self.failUnless(object[max] == "max")
+        self.assertTrue(object[max] == "max")
         
         object[min] = "min"
-        self.failUnless(object[min] == "min")
+        self.assertTrue(object[min] == "min")
 
         def test():
             object = Test.CharIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.CharIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInt16Indexer(self):
@@ -187,25 +187,25 @@ class IndexerTests(unittest.TestCase):
         max = 32767
         min = -32768
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.Int16IndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int16IndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInt32Indexer(self):
@@ -214,25 +214,25 @@ class IndexerTests(unittest.TestCase):
         max = 2147483647
         min = -2147483648
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.Int32IndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int32IndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInt64Indexer(self):
@@ -241,25 +241,25 @@ class IndexerTests(unittest.TestCase):
         max = 9223372036854775807L
         min = -9223372036854775808L
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.Int64IndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.Int64IndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testUInt16Indexer(self):
@@ -268,25 +268,25 @@ class IndexerTests(unittest.TestCase):
         max = 65535
         min = 0
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.UInt16IndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.UInt16IndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testUInt32Indexer(self):
@@ -295,25 +295,25 @@ class IndexerTests(unittest.TestCase):
         max = 4294967295L
         min = 0
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.UInt32IndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.UInt32IndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testUInt64Indexer(self):
@@ -322,25 +322,25 @@ class IndexerTests(unittest.TestCase):
         max = 18446744073709551615L
         min = 0
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = str(max)
-        self.failUnless(object[max] == str(max))
+        self.assertTrue(object[max] == str(max))
         
         object[min] = str(min)
-        self.failUnless(object[min] == str(min))
+        self.assertTrue(object[min] == str(min))
 
         def test():
             object = Test.UInt64IndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.UInt64IndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testSingleIndexer(self):
@@ -349,25 +349,25 @@ class IndexerTests(unittest.TestCase):
         max = 3.402823e38
         min = -3.402823e38
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = "max"
-        self.failUnless(object[max] == "max")
+        self.assertTrue(object[max] == "max")
         
         object[min] = "min"
-        self.failUnless(object[min] == "min")
+        self.assertTrue(object[min] == "min")
 
         def test():
             object = Test.SingleIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.SingleIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testDoubleIndexer(self):
@@ -376,25 +376,25 @@ class IndexerTests(unittest.TestCase):
         max = 1.7976931348623157e308
         min = -1.7976931348623157e308
 
-        self.failUnless(object[max] == None)
+        self.assertTrue(object[max] == None)
 
         object[max] = "max"
-        self.failUnless(object[max] == "max")
+        self.assertTrue(object[max] == "max")
         
         object[min] = "min"
-        self.failUnless(object[min] == "min")
+        self.assertTrue(object[min] == "min")
 
         def test():
             object = Test.DoubleIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.DoubleIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testDecimalIndexer(self):
@@ -405,57 +405,57 @@ class IndexerTests(unittest.TestCase):
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
 
-        self.failUnless(object[max_d] == None)
+        self.assertTrue(object[max_d] == None)
 
         object[max_d] = "max"
-        self.failUnless(object[max_d] == "max")
+        self.assertTrue(object[max_d] == "max")
         
         object[min_d] = "min"
-        self.failUnless(object[min_d] == "min")
+        self.assertTrue(object[min_d] == "min")
 
         def test():
             object = Test.DecimalIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.DecimalIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testStringIndexer(self):
         """Test String indexers."""
         object = Test.StringIndexerTest()
 
-        self.failUnless(object["spam"] == None)
-        self.failUnless(object[u"spam"] == None)
+        self.assertTrue(object["spam"] == None)
+        self.assertTrue(object[u"spam"] == None)
 
         object["spam"] = "spam"
-        self.failUnless(object["spam"] == "spam")
-        self.failUnless(object["spam"] == u"spam")
-        self.failUnless(object[u"spam"] == "spam")
-        self.failUnless(object[u"spam"] == u"spam")
+        self.assertTrue(object["spam"] == "spam")
+        self.assertTrue(object["spam"] == u"spam")
+        self.assertTrue(object[u"spam"] == "spam")
+        self.assertTrue(object[u"spam"] == u"spam")
         
         object[u"eggs"] = u"eggs"
-        self.failUnless(object["eggs"] == "eggs")
-        self.failUnless(object["eggs"] == u"eggs")
-        self.failUnless(object[u"eggs"] == "eggs")
-        self.failUnless(object[u"eggs"] == u"eggs")
+        self.assertTrue(object["eggs"] == "eggs")
+        self.assertTrue(object["eggs"] == u"eggs")
+        self.assertTrue(object[u"eggs"] == "eggs")
+        self.assertTrue(object[u"eggs"] == u"eggs")
 
         def test():
             object = Test.StringIndexerTest()
             object[1]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.StringIndexerTest()
             object[1] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testEnumIndexer(self):
@@ -464,28 +464,28 @@ class IndexerTests(unittest.TestCase):
 
         key = Test.ShortEnum.One
 
-        self.failUnless(object[key] == None)
+        self.assertTrue(object[key] == None)
 
         object[key] = "spam"
-        self.failUnless(object[key] == "spam")
+        self.assertTrue(object[key] == "spam")
         
         object[key] = "eggs"
-        self.failUnless(object[key] == "eggs")
+        self.assertTrue(object[key] == "eggs")
 
         object[1] = "spam"
-        self.failUnless(object[1] == "spam")
+        self.assertTrue(object[1] == "spam")
 
         def test():
             object = Test.EnumIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.EnumIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testObjectIndexer(self):
@@ -495,22 +495,22 @@ class IndexerTests(unittest.TestCase):
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.failUnless(object[spam] == None)
-        self.failUnless(object["spam"] == None)
-        self.failUnless(object[1] == None)
-        self.failUnless(object[None] == None)
+        self.assertTrue(object[spam] == None)
+        self.assertTrue(object["spam"] == None)
+        self.assertTrue(object[1] == None)
+        self.assertTrue(object[None] == None)
 
         object[spam] = "spam"
-        self.failUnless(object[spam] == "spam")
+        self.assertTrue(object[spam] == "spam")
         
         object["spam"] = "eggs"
-        self.failUnless(object["spam"] == "eggs")
+        self.assertTrue(object["spam"] == "eggs")
 
         object[1] = "one"
-        self.failUnless(object[1] == "one")
+        self.assertTrue(object[1] == "one")
 
         object[1L] = "long"
-        self.failUnless(object[1L] == "long")
+        self.assertTrue(object[1L] == "long")
 
         def test():
             class eggs:
@@ -519,7 +519,7 @@ class IndexerTests(unittest.TestCase):
             object = Test.ObjectIndexerTest()
             object[key] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testInterfaceIndexer(self):
@@ -529,25 +529,25 @@ class IndexerTests(unittest.TestCase):
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.failUnless(object[spam] == None)
+        self.assertTrue(object[spam] == None)
 
         object[spam] = "spam"
-        self.failUnless(object[spam] == "spam")
+        self.assertTrue(object[spam] == "spam")
         
         object[spam] = "eggs"
-        self.failUnless(object[spam] == "eggs")
+        self.assertTrue(object[spam] == "eggs")
 
         def test():
             object = Test.InterfaceIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.InterfaceIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testTypedIndexer(self):
@@ -557,25 +557,25 @@ class IndexerTests(unittest.TestCase):
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.failUnless(object[spam] == None)
+        self.assertTrue(object[spam] == None)
 
         object[spam] = "spam"
-        self.failUnless(object[spam] == "spam")
+        self.assertTrue(object[spam] == "spam")
         
         object[spam] = "eggs"
-        self.failUnless(object[spam] == "eggs")
+        self.assertTrue(object[spam] == "eggs")
 
         def test():
             object = Test.TypedIndexerTest()
             object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.TypedIndexerTest()
             object["wrong"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testMultiArgIndexer(self):
@@ -583,24 +583,24 @@ class IndexerTests(unittest.TestCase):
         object = Test.MultiArgIndexerTest()
 
         object[0, 1] = "zero one"
-        self.failUnless(object[0, 1] == "zero one")
+        self.assertTrue(object[0, 1] == "zero one")
         
         object[1, 9] = "one nine"
-        self.failUnless(object[1, 9] == "one nine")
+        self.assertTrue(object[1, 9] == "one nine")
 
-        self.failUnless(object[10, 50] == None)
+        self.assertTrue(object[10, 50] == None)
 
         def test():
             object = Test.MultiArgIndexerTest()
             v = object[0, "one"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.MultiArgIndexerTest()
             object[0, "one"] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testMultiTypeIndexer(self):
@@ -609,22 +609,22 @@ class IndexerTests(unittest.TestCase):
         spam = Test.Spam("spam")
 
         object[0, "one", spam] = "zero one spam"
-        self.failUnless(object[0, "one", spam] == "zero one spam")
+        self.assertTrue(object[0, "one", spam] == "zero one spam")
         
         object[1, "nine", spam] = "one nine spam"
-        self.failUnless(object[1, "nine", spam] == "one nine spam")
+        self.assertTrue(object[1, "nine", spam] == "one nine spam")
 
         def test():
             object = Test.MultiTypeIndexerTest()
             v = object[0, 1, spam]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.MultiTypeIndexerTest()
             object[0, 1, spam] = "wrong"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testIndexerWrongKeyType(self):
@@ -634,13 +634,13 @@ class IndexerTests(unittest.TestCase):
             object = Test.PublicIndexerTest()
             v = object["wrong"]
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = Test.PublicIndexerTest()
             object["wrong"] = "spam"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testIndexerWrongValueType(self):
@@ -650,7 +650,7 @@ class IndexerTests(unittest.TestCase):
             object = Test.PublicIndexerTest()
             object[1] = 9993.9
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testUnboundIndexer(self):
@@ -658,12 +658,12 @@ class IndexerTests(unittest.TestCase):
         object = Test.PublicIndexerTest()
 
         Test.PublicIndexerTest.__setitem__(object, 0, "zero")
-        self.failUnless(object[0] == "zero")
+        self.assertTrue(object[0] == "zero")
         
         Test.PublicIndexerTest.__setitem__(object, 1, "one")
-        self.failUnless(object[1] == "one")
+        self.assertTrue(object[1] == "one")
 
-        self.failUnless(object[10] == None)
+        self.assertTrue(object[10] == None)
 
 
     def testIndexerAbuse(self):
@@ -674,22 +674,22 @@ class IndexerTests(unittest.TestCase):
         def test():
             del _class.__getitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             del object.__getitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             del _class.__setitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             del object.__setitem__
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
 

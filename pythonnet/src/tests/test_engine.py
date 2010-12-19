@@ -25,7 +25,7 @@ class EngineTests(unittest.TestCase):
         """Test module import."""
         m = PythonEngine.ImportModule("sys")
         n = m.GetAttr("__name__")
-        self.failUnless(n.AsManagedObject(System.String) == "sys")
+        self.assertTrue(n.AsManagedObject(System.String) == "sys")
 
 
     def testRunString(self):
@@ -34,11 +34,11 @@ class EngineTests(unittest.TestCase):
         
         code = "import sys; sys.singleline_worked = 1"
         PythonEngine.RunString(code)
-        self.failUnless(sys.singleline_worked == 1)
+        self.assertTrue(sys.singleline_worked == 1)
         
         code = "import sys\nsys.multiline_worked = 1"
         PythonEngine.RunString(code)
-        self.failUnless(sys.multiline_worked == 1)
+        self.assertTrue(sys.multiline_worked == 1)
 
         PythonEngine.ReleaseLock()
         

@@ -8,6 +8,8 @@
 # ===========================================================================
 
 import sys, os, string, unittest, types
+import clr
+clr.AddReference("Python.Test")
 import Python.Test as Test
 import System
 
@@ -21,7 +23,7 @@ class ConstructorTests(unittest.TestCase):
         from Python.Test import EnumConstructorTest
 
         ob = EnumConstructorTest(TypeCode.Int32)
-        self.failUnless(ob.value == TypeCode.Int32)
+        self.assertTrue(ob.value == TypeCode.Int32)
 
 
     def testFlagsConstructor(self):
@@ -31,7 +33,7 @@ class ConstructorTests(unittest.TestCase):
         
         flags = FileAccess.Read | FileAccess.Write
         ob = FlagsConstructorTest(flags)
-        self.failUnless(ob.value == flags)
+        self.assertTrue(ob.value == flags)
 
 
     def testStructConstructor(self):
@@ -41,7 +43,7 @@ class ConstructorTests(unittest.TestCase):
 
         guid = Guid.NewGuid()
         ob = StructConstructorTest(guid)
-        self.failUnless(ob.value == guid)
+        self.assertTrue(ob.value == guid)
 
 
     def testSubclassConstructor(self):
@@ -54,7 +56,7 @@ class ConstructorTests(unittest.TestCase):
 
         form = sub()
         ob = SubclassConstructorTest(form)
-        self.failUnless(isinstance(ob.value, Control))
+        self.assertTrue(isinstance(ob.value, Control))
 
 
 

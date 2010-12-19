@@ -29,141 +29,144 @@ class CompatibilityTests(unittest.TestCase):
     def testSimpleImport(self):
         """Test simple import."""
         import CLR
-        self.failUnless(self.isCLRRootModule(CLR))
-        self.failUnless(CLR.__name__ == 'clr')
+        self.assertTrue(self.isCLRRootModule(CLR))
+        self.assertTrue(CLR.__name__ == 'clr')
 
         import sys
-        self.failUnless(type(sys) == types.ModuleType)
-        self.failUnless(sys.__name__ == 'sys')
+        self.assertTrue(type(sys) == types.ModuleType)
+        self.assertTrue(sys.__name__ == 'sys')
 
         import httplib
-        self.failUnless(type(httplib) == types.ModuleType)
-        self.failUnless(httplib.__name__ == 'httplib')
+        self.assertTrue(type(httplib) == types.ModuleType)
+        self.assertTrue(httplib.__name__ == 'httplib')
 
 
     def testSimpleImportWithAlias(self):
         """Test simple import with aliasing."""
         import CLR as myCLR
-        self.failUnless(self.isCLRRootModule(myCLR))
-        self.failUnless(myCLR.__name__ == 'clr')
+        self.assertTrue(self.isCLRRootModule(myCLR))
+        self.assertTrue(myCLR.__name__ == 'clr')
 
         import sys as mySys
-        self.failUnless(type(mySys) == types.ModuleType)
-        self.failUnless(mySys.__name__ == 'sys')
+        self.assertTrue(type(mySys) == types.ModuleType)
+        self.assertTrue(mySys.__name__ == 'sys')
 
         import httplib as myHttplib
-        self.failUnless(type(myHttplib) == types.ModuleType)
-        self.failUnless(myHttplib.__name__ == 'httplib')
+        self.assertTrue(type(myHttplib) == types.ModuleType)
+        self.assertTrue(myHttplib.__name__ == 'httplib')
 
 
     def testDottedNameImport(self):
         """Test dotted-name import."""
         import CLR.System
-        self.failUnless(self.isCLRModule(CLR.System))
-        self.failUnless(CLR.System.__name__ == 'System')
+        self.assertTrue(self.isCLRModule(CLR.System))
+        self.assertTrue(CLR.System.__name__ == 'System')
         
         import System
-        self.failUnless(self.isCLRModule(System))
-        self.failUnless(System.__name__ == 'System')
+        self.assertTrue(self.isCLRModule(System))
+        self.assertTrue(System.__name__ == 'System')
         
-        self.failUnless(System is CLR.System)
+        self.assertTrue(System is CLR.System)
 
         import xml.dom
-        self.failUnless(type(xml.dom) == types.ModuleType)
-        self.failUnless(xml.dom.__name__ == 'xml.dom')
+        self.assertTrue(type(xml.dom) == types.ModuleType)
+        self.assertTrue(xml.dom.__name__ == 'xml.dom')
 
 
     def testDottedNameImportWithAlias(self):
         """Test dotted-name import with aliasing."""
         import CLR.System as myCLRSystem
-        self.failUnless(self.isCLRModule(myCLRSystem))
-        self.failUnless(myCLRSystem.__name__ == 'System')
+        self.assertTrue(self.isCLRModule(myCLRSystem))
+        self.assertTrue(myCLRSystem.__name__ == 'System')
 
         import System as mySystem
-        self.failUnless(self.isCLRModule(mySystem))
-        self.failUnless(mySystem.__name__ == 'System')
+        self.assertTrue(self.isCLRModule(mySystem))
+        self.assertTrue(mySystem.__name__ == 'System')
 
-        self.failUnless(mySystem is myCLRSystem)
+        self.assertTrue(mySystem is myCLRSystem)
         
         import xml.dom as myDom
-        self.failUnless(type(myDom) == types.ModuleType)
-        self.failUnless(myDom.__name__ == 'xml.dom')
+        self.assertTrue(type(myDom) == types.ModuleType)
+        self.assertTrue(myDom.__name__ == 'xml.dom')
 
 
     def testSimpleImportFrom(self):
         """Test simple 'import from'."""
         from CLR import System
-        self.failUnless(self.isCLRModule(System))
-        self.failUnless(System.__name__ == 'System')
+        self.assertTrue(self.isCLRModule(System))
+        self.assertTrue(System.__name__ == 'System')
 
         from xml import dom
-        self.failUnless(type(dom) == types.ModuleType)
-        self.failUnless(dom.__name__ == 'xml.dom')
+        self.assertTrue(type(dom) == types.ModuleType)
+        self.assertTrue(dom.__name__ == 'xml.dom')
 
 
     def testSimpleImportFromWithAlias(self):
         """Test simple 'import from' with aliasing."""
         from CLR import System as mySystem
-        self.failUnless(self.isCLRModule(mySystem))
-        self.failUnless(mySystem.__name__ == 'System')
+        self.assertTrue(self.isCLRModule(mySystem))
+        self.assertTrue(mySystem.__name__ == 'System')
 
         from xml import dom as myDom
-        self.failUnless(type(myDom) == types.ModuleType)
-        self.failUnless(myDom.__name__ == 'xml.dom')
+        self.assertTrue(type(myDom) == types.ModuleType)
+        self.assertTrue(myDom.__name__ == 'xml.dom')
 
 
     def testDottedNameImportFrom(self):
         """Test dotted-name 'import from'."""
         from CLR.System import Xml
-        self.failUnless(self.isCLRModule(Xml))
-        self.failUnless(Xml.__name__ == 'System.Xml')
+        self.assertTrue(self.isCLRModule(Xml))
+        self.assertTrue(Xml.__name__ == 'System.Xml')
 
         from CLR.System.Xml import XmlDocument
-        self.failUnless(self.isCLRClass(XmlDocument))
-        self.failUnless(XmlDocument.__name__ == 'XmlDocument')
+        self.assertTrue(self.isCLRClass(XmlDocument))
+        self.assertTrue(XmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom
-        self.failUnless(type(pulldom) == types.ModuleType)
-        self.failUnless(pulldom.__name__ == 'xml.dom.pulldom')
+        self.assertTrue(type(pulldom) == types.ModuleType)
+        self.assertTrue(pulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM
-        self.failUnless(type(PullDOM) == types.ClassType)
-        self.failUnless(PullDOM.__name__ == 'PullDOM')
+        self.assertTrue(type(PullDOM) == types.ClassType)
+        self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
 
     def testDottedNameImportFromWithAlias(self):
         """Test dotted-name 'import from' with aliasing."""
         from CLR.System import Xml as myXml
-        self.failUnless(self.isCLRModule(myXml))
-        self.failUnless(myXml.__name__ == 'System.Xml')
+        self.assertTrue(self.isCLRModule(myXml))
+        self.assertTrue(myXml.__name__ == 'System.Xml')
 
         from CLR.System.Xml import XmlDocument as myXmlDocument
-        self.failUnless(self.isCLRClass(myXmlDocument))
-        self.failUnless(myXmlDocument.__name__ == 'XmlDocument')
+        self.assertTrue(self.isCLRClass(myXmlDocument))
+        self.assertTrue(myXmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom as myPulldom
-        self.failUnless(type(myPulldom) == types.ModuleType)
-        self.failUnless(myPulldom.__name__ == 'xml.dom.pulldom')
+        self.assertTrue(type(myPulldom) == types.ModuleType)
+        self.assertTrue(myPulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM as myPullDOM
-        self.failUnless(type(myPullDOM) == types.ClassType)
-        self.failUnless(myPullDOM.__name__ == 'PullDOM')
+        self.assertTrue(type(myPullDOM) == types.ClassType)
+        self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
 
     def testFromModuleImportStar(self):
         """Test from module import * behavior."""
+        import clr
+        clr.AddReference("System.Management")
+
         count = len(locals().keys())
         m = __import__('CLR.System.Management', globals(), locals(), ['*'])
-        self.failUnless(m.__name__ == 'System.Management')
-        self.failUnless(self.isCLRModule(m))
-        self.failUnless(len(locals().keys()) > count + 1)
+        self.assertTrue(m.__name__ == 'System.Management')
+        self.assertTrue(self.isCLRModule(m))
+        self.assertTrue(len(locals().keys()) > count + 1)
 
         m2 = __import__('System.Management', globals(), locals(), ['*'])
-        self.failUnless(m2.__name__ == 'System.Management')
-        self.failUnless(self.isCLRModule(m2))
-        self.failUnless(len(locals().keys()) > count + 1)
+        self.assertTrue(m2.__name__ == 'System.Management')
+        self.assertTrue(self.isCLRModule(m2))
+        self.assertTrue(len(locals().keys()) > count + 1)
         
-        self.failUnless(m is m2)
+        self.assertTrue(m is m2)
 
     def testExplicitAssemblyLoad(self):
         """Test explicit assembly loading using standard CLR tools."""
@@ -172,13 +175,13 @@ class CompatibilityTests(unittest.TestCase):
         import sys
 
         assembly = Assembly.LoadWithPartialName('System.Data')
-        self.failUnless(assembly != None)
+        self.assertTrue(assembly != None)
         
         import CLR.System.Data
-        self.failUnless(sys.modules.has_key('System.Data'))
+        self.assertTrue(sys.modules.has_key('System.Data'))
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
-        self.failUnless(assembly == None)
+        self.assertTrue(assembly == None)
 
 
     def testImplicitLoadAlreadyValidNamespace(self):
@@ -190,7 +193,7 @@ class CompatibilityTests(unittest.TestCase):
         # Python runtime to "do the right thing", allowing types from both
         # assemblies to be found in the CLR.System module implicitly.
         import CLR.System
-        self.failUnless(self.isCLRClass(CLR.System.UriBuilder))
+        self.assertTrue(self.isCLRClass(CLR.System.UriBuilder))
 
 
     def testImportNonExistantModule(self):
@@ -201,14 +204,14 @@ class CompatibilityTests(unittest.TestCase):
         def testclr():
             import CLR.System.SpamSpamSpam
 
-        self.failUnlessRaises(ImportError, test)
-        self.failUnlessRaises(ImportError, testclr)
+        self.assertRaises(ImportError, test)
+        self.assertRaises(ImportError, testclr)
 
     def testLookupNoNamespaceType(self):
         """Test lookup of types without a qualified namespace."""
         import CLR.Python.Test
         import CLR
-        self.failUnless(self.isCLRClass(CLR.NoNamespaceType))
+        self.assertTrue(self.isCLRClass(CLR.NoNamespaceType))
 
 
     def testModuleLookupRecursion(self):
@@ -216,13 +219,13 @@ class CompatibilityTests(unittest.TestCase):
         def test1():
             from CLR import CLR
 
-        self.failUnlessRaises(ImportError, test1)
+        self.assertRaises(ImportError, test1)
 
         def test2():
             import CLR
             x = CLR.CLR
 
-        self.failUnlessRaises(AttributeError, test2)
+        self.assertRaises(AttributeError, test2)
 
 
     def testModuleGetAttr(self):
@@ -230,20 +233,20 @@ class CompatibilityTests(unittest.TestCase):
         import CLR.System as System
 
         int_type = System.Int32
-        self.failUnless(self.isCLRClass(int_type))
+        self.assertTrue(self.isCLRClass(int_type))
         
         module = System.Xml
-        self.failUnless(self.isCLRModule(module))
+        self.assertTrue(self.isCLRModule(module))
 
         def test():
             spam = System.Spam
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             spam = getattr(System, 1)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
         
     def test000MultipleImports(self):
         # import CLR did raise a Seg Fault once

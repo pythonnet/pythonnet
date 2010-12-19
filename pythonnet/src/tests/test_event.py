@@ -6,6 +6,8 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
+import clr
+clr.AddReference('Python.Test')
 
 import sys, os, string, unittest, types
 from Python.Test import EventTest, TestEventHandler
@@ -20,12 +22,12 @@ class EventTests(unittest.TestCase):
         object = EventTest()
 
         handler = GenericHandler()
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.PublicEvent += handler.handler
 
         object.OnPublicEvent(TestEventArgs(10))
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler.handler
 
@@ -33,12 +35,12 @@ class EventTests(unittest.TestCase):
     def testPublicStaticEvent(self):
         """Test public static events."""
         handler = GenericHandler()
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         EventTest.PublicStaticEvent += handler.handler
 
         EventTest.OnPublicStaticEvent(TestEventArgs(10))
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testProtectedInstanceEvent(self):
@@ -46,12 +48,12 @@ class EventTests(unittest.TestCase):
         object = EventTest()
 
         handler = GenericHandler()
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.ProtectedEvent += handler.handler
 
         object.OnProtectedEvent(TestEventArgs(10))
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.ProtectedEvent -= handler.handler
 
@@ -61,12 +63,12 @@ class EventTests(unittest.TestCase):
         object = EventTest
 
         handler = GenericHandler()
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         EventTest.ProtectedStaticEvent += handler.handler
 
         EventTest.OnProtectedStaticEvent(TestEventArgs(10))
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         EventTest.ProtectedStaticEvent -= handler.handler
 
@@ -77,17 +79,17 @@ class EventTests(unittest.TestCase):
         def test():
             f = EventTest().InternalEvent
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = EventTest().InternalStaticEvent
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = EventTest.InternalStaticEvent
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testPrivateEvents(self):
@@ -96,17 +98,17 @@ class EventTests(unittest.TestCase):
         def test():
             f = EventTest().PrivateEvent
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = EventTest().PrivateStaticEvent
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
         def test():
             f = EventTest.PrivateStaticEvent
 
-        self.failUnlessRaises(AttributeError, test)
+        self.assertRaises(AttributeError, test)
 
 
     def testMulticastEvent(self):
@@ -123,15 +125,15 @@ class EventTests(unittest.TestCase):
         
         object.OnPublicEvent(TestEventArgs(10))
         
-        self.failUnless(handler1.value == 10)
-        self.failUnless(handler2.value == 10)
-        self.failUnless(handler3.value == 10)
+        self.assertTrue(handler1.value == 10)
+        self.assertTrue(handler2.value == 10)
+        self.assertTrue(handler3.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))
         
-        self.failUnless(handler1.value == 20)
-        self.failUnless(handler2.value == 20)
-        self.failUnless(handler3.value == 20)
+        self.assertTrue(handler1.value == 20)
+        self.assertTrue(handler2.value == 20)
+        self.assertTrue(handler3.value == 20)
 
         object.PublicEvent -= handler1.handler
         object.PublicEvent -= handler2.handler
@@ -144,16 +146,16 @@ class EventTests(unittest.TestCase):
         handler = GenericHandler()
 
         object.PublicEvent += handler.handler
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler.handler
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testVarArgsInstanceMethodHandler(self):
@@ -162,16 +164,16 @@ class EventTests(unittest.TestCase):
         handler = VariableArgsHandler()
 
         object.PublicEvent += handler.handler
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler.handler
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testCallableObjectHandler(self):
@@ -180,16 +182,16 @@ class EventTests(unittest.TestCase):
         handler = CallableHandler()
 
         object.PublicEvent += handler
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testVarArgsCallableHandler(self):
@@ -198,16 +200,16 @@ class EventTests(unittest.TestCase):
         handler = VarCallableHandler()
 
         object.PublicEvent += handler
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testStaticMethodHandler(self):
@@ -217,16 +219,16 @@ class EventTests(unittest.TestCase):
         StaticMethodHandler.value = None
 
         object.PublicEvent += handler.handler
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler.handler
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testClassMethodHandler(self):
@@ -236,16 +238,16 @@ class EventTests(unittest.TestCase):
         ClassMethodHandler.value = None
 
         object.PublicEvent += handler.handler
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.PublicEvent -= handler.handler
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testManagedInstanceMethodHandler(self):
@@ -253,16 +255,16 @@ class EventTests(unittest.TestCase):
         object = EventTest()
 
         object.PublicEvent += object.GenericHandler
-        self.failUnless(object.value == 0)
+        self.assertTrue(object.value == 0)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(object.value == 10)
+        self.assertTrue(object.value == 10)
 
         object.PublicEvent -= object.GenericHandler
-        self.failUnless(object.value == 10)
+        self.assertTrue(object.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(object.value == 10)
+        self.assertTrue(object.value == 10)
 
 
     def testManagedStaticMethodHandler(self):
@@ -271,16 +273,16 @@ class EventTests(unittest.TestCase):
         EventTest.s_value = 0
 
         object.PublicEvent += object.StaticHandler
-        self.failUnless(EventTest.s_value == 0)
+        self.assertTrue(EventTest.s_value == 0)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(EventTest.s_value == 10)
+        self.assertTrue(EventTest.s_value == 10)
 
         object.PublicEvent -= object.StaticHandler
-        self.failUnless(EventTest.s_value == 10)
+        self.assertTrue(EventTest.s_value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(EventTest.s_value == 10)
+        self.assertTrue(EventTest.s_value == 10)
 
 
     def testUnboundMethodHandler(self):
@@ -305,16 +307,16 @@ class EventTests(unittest.TestCase):
             dict['value'] = args.value
 
         object.PublicEvent += handler
-        self.failUnless(dict['value'] == None)
+        self.assertTrue(dict['value'] == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(dict['value'] == 10)
+        self.assertTrue(dict['value'] == 10)
 
         object.PublicEvent -= handler
-        self.failUnless(dict['value'] == 10)
+        self.assertTrue(dict['value'] == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(dict['value'] == 10)
+        self.assertTrue(dict['value'] == 10)
 
 
     def testAddNonCallableHandler(self):
@@ -324,13 +326,13 @@ class EventTests(unittest.TestCase):
             object = EventTest()
             object.PublicEvent += 10
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = EventTest()
             object.PublicEvent += "spam"
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
 
@@ -340,7 +342,7 @@ class EventTests(unittest.TestCase):
             object = EventTest()
             object.PublicEvent += spam()
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testRemoveMultipleHandlers(self):
@@ -355,17 +357,17 @@ class EventTests(unittest.TestCase):
         object.PublicEvent += h2
 
         object.OnPublicEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 20)
+        self.assertTrue(handler.value == 20)
 
         object.PublicEvent -= h1
 
         object.OnPublicEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
         object.PublicEvent -= h2
 
         object.OnPublicEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
         # try again, removing in a different order.
 
@@ -379,17 +381,17 @@ class EventTests(unittest.TestCase):
         object.PublicEvent += h2
 
         object.OnPublicEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 20)
+        self.assertTrue(handler.value == 20)
 
         object.PublicEvent -= h2
 
         object.OnPublicEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
         object.PublicEvent -= h1
 
         object.OnPublicEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
 
     def testRemoveMultipleStaticHandlers(self):
@@ -404,17 +406,17 @@ class EventTests(unittest.TestCase):
         object.PublicStaticEvent += h2
 
         object.OnPublicStaticEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 20)
+        self.assertTrue(handler.value == 20)
 
         object.PublicStaticEvent -= h1
 
         object.OnPublicStaticEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
         object.PublicStaticEvent -= h2
 
         object.OnPublicStaticEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
         # try again, removing in a different order.
 
@@ -428,17 +430,17 @@ class EventTests(unittest.TestCase):
         object.PublicStaticEvent += h2
 
         object.OnPublicStaticEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 20)
+        self.assertTrue(handler.value == 20)
 
         object.PublicStaticEvent -= h2
 
         object.OnPublicStaticEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
         object.PublicStaticEvent -= h1
 
         object.OnPublicStaticEvent(TestEventArgs(10))     
-        self.failUnless(handler.value == 30)
+        self.assertTrue(handler.value == 30)
 
 
     def testRandomMultipleHandlers(self):
@@ -458,8 +460,8 @@ class EventTests(unittest.TestCase):
             handlers.append(method)
 
         object.OnPublicEvent(TestEventArgs(10))
-        self.failUnless(handler.value == 300)
-        self.failUnless(handler2.value == 20)
+        self.assertTrue(handler.value == 300)
+        self.assertTrue(handler2.value == 20)
         handler.value = 0
         handler2.value = 0
 
@@ -469,28 +471,29 @@ class EventTests(unittest.TestCase):
             object.PublicEvent -= item
             handler.value = 0
             object.OnPublicEvent(TestEventArgs(10))
-            self.failUnless(handler.value == (len(handlers) * 10))
-            self.failUnless(handler2.value == ((i + 1) * 20))
+            self.assertTrue(handler.value == (len(handlers) * 10))
+            self.assertTrue(handler2.value == ((i + 1) * 20))
 
         handler2.value = 0
         object.OnPublicEvent(TestEventArgs(10))
-        self.failUnless(handler2.value == 20)
+        self.assertTrue(handler2.value == 20)
         
         object.PublicEvent -= handler2.handler
 
         handler2.value = 0
         object.OnPublicEvent(TestEventArgs(10))
-        self.failUnless(handler2.value == 10)
+        self.assertTrue(handler2.value == 10)
 
         object.PublicEvent -= handler2.handler
 
         handler2.value = 0
         object.OnPublicEvent(TestEventArgs(10))
-        self.failUnless(handler2.value == 0)
+        self.assertTrue(handler2.value == 0)
 
 
     def testRemoveInternalCallHandler(self):
         """Test remove on an event sink implemented w/internalcall."""
+        clr.AddReference('System.Windows.Forms')
         object = EventTest()
 
         def h(sender, args):
@@ -514,7 +517,7 @@ class EventTests(unittest.TestCase):
 
             object.PublicEvent -= handler.handler
 
-        self.failUnlessRaises(ValueError, test)
+        self.assertRaises(ValueError, test)
 
 
     def testHandlerCallbackFailure(self):
@@ -531,7 +534,7 @@ class EventTests(unittest.TestCase):
             object.PublicEvent += handler.handler
             object.OnPublicEvent(TestEventArgs(10))
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         object.PublicEvent -= handler.handler
 
@@ -546,7 +549,7 @@ class EventTests(unittest.TestCase):
             object.PublicEvent += handler.handler
             object.OnPublicEvent(TestEventArgs(10))
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         object.PublicEvent -= handler.handler
 
@@ -561,12 +564,12 @@ class EventTests(unittest.TestCase):
         def test():
             object.OnPublicEvent()
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object.OnPublicEvent(32)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         object.PublicEvent -= handler.handler
 
@@ -578,16 +581,16 @@ class EventTests(unittest.TestCase):
 
         delegate = TestEventHandler(handler.handler)
         object.add_PublicEvent(delegate)
-        self.failUnless(handler.value == None)
+        self.assertTrue(handler.value == None)
 
         object.OnPublicEvent(TestEventArgs(10))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.remove_PublicEvent(delegate)
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
         object.OnPublicEvent(TestEventArgs(20))        
-        self.failUnless(handler.value == 10)
+        self.assertTrue(handler.value == 10)
 
 
     def testImplicitCLSEventRegistration(self):
@@ -598,7 +601,7 @@ class EventTests(unittest.TestCase):
             handler = GenericHandler()
             object.add_PublicEvent(handler.handler)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
     def testEventDescriptorAbuse(self):
@@ -607,35 +610,35 @@ class EventTests(unittest.TestCase):
         def test():
             del EventTest.PublicEvent
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             del EventTest.__dict__['PublicEvent']
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         desc = EventTest.__dict__['PublicEvent']
 
         def test():
             desc.__get__(0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             desc.__set__(0, 0)
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             object = EventTest()
             object.PublicEvent = 0
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
         def test():
             EventTest.PublicStaticEvent = 0
 
-        self.failUnlessRaises(TypeError, test)
+        self.assertRaises(TypeError, test)
 
 
 

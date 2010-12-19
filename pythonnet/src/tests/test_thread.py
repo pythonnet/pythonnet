@@ -23,7 +23,7 @@ class ThreadTests(unittest.TestCase):
         """Test a call to managed code that then calls back into Python."""
         dprint("thread %s SimpleCallBack" % thread.get_ident())
         result = ThreadTest.CallEchoString("spam")
-        self.failUnless(result == "spam")
+        self.assertTrue(result == "spam")
         dprint("thread %s SimpleCallBack ret" % thread.get_ident())
 
                 
@@ -32,7 +32,7 @@ class ThreadTests(unittest.TestCase):
            that then calls managed code that then calls Python again."""
         dprint("thread %s DoubleCallBack" % thread.get_ident())
         result = ThreadTest.CallEchoString2("spam")
-        self.failUnless(result == "spam")
+        self.assertTrue(result == "spam")
         dprint("thread %s DoubleCallBack ret" % thread.get_ident())
     
 
