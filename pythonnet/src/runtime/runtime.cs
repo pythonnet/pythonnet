@@ -56,13 +56,22 @@ namespace Python.Runtime {
         public const string pyversion = "2.6";
         public const int pyversionnumber = 26;
 #endif
-#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26)
-#error You must define one of PYTHON23 to PYTHON26
+#if (PYTHON27)
+        public const string dll = "python27";
+        public const string pyversion = "2.7";
+        public const int pyversionnumber = 27;
 #endif
-    internal static bool wrap_exceptions;
-    internal static bool is32bit;
+#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
+#error You must define one of PYTHON23 to PYTHON27
+#endif
 
-    internal static void Initialize() {
+        internal static bool wrap_exceptions;
+        internal static bool is32bit;
+
+        /// <summary>
+        /// Intitialize the runtime...
+        /// </summary>
+        internal static void Initialize() {
 
         is32bit = IntPtr.Size == 4;
 
@@ -138,7 +147,7 @@ namespace Python.Runtime {
         // of the Python runtime that do not allow new-style classes to
         // be used as exceptions (Python versions 2.4 and lower).
 
-#if (PYTHON25 || PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
         wrap_exceptions = false;
 #else
         IntPtr m = PyImport_ImportModule("exceptions");

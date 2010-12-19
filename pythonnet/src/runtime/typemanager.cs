@@ -127,7 +127,7 @@ namespace Python.Runtime {
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
             // subclass BaseException (or better Exception).
-#if (PYTHON25 || PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
             if (clrType == typeof(System.Exception)) {
                 base_ = Exceptions.Exception;
                 Runtime.Incref(base_);
