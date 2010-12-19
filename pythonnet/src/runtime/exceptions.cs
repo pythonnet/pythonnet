@@ -31,7 +31,7 @@ namespace Python.Runtime {
         internal ExceptionClassObject(Type tp) : base(tp) {
         }
 
-#if (PYTHON25 || PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
         internal static Exception ToException(IntPtr ob) {
             CLRObject co = GetManagedObject(ob) as CLRObject;
             if (co == null) {
@@ -114,23 +114,26 @@ namespace Python.Runtime {
 
             return Runtime.PyObject_GenericGetAttr(ob, key);
         }
-#endif
+#endif      // (PYTHON25 || PYTHON26 || PYTHON27)
     }
 
     /// <summary>
     /// Encapsulates the Python exception APIs.
     /// </summary>
+    /// <remarks>
+    /// Readability of the Exceptions class improvements as we look toward version 2.7 ...
+    /// </remarks>
 
     public class Exceptions {
+
+        internal static IntPtr warnings_module;
+        internal static IntPtr exceptions_module;
 
         private Exceptions() {}
 
         //===================================================================
         // Initialization performed on startup of the Python runtime.
         //===================================================================
-
-        internal static IntPtr warnings_module;
-        internal static IntPtr exceptions_module;
 
         internal static void Initialize() {
             exceptions_module = Runtime.PyImport_ImportModule("exceptions");
@@ -200,10 +203,20 @@ namespace Python.Runtime {
         // this-at-home hackery) delegates to the managed exception and
         // obeys the conventions of both Python and managed exceptions.
 
+        /// <remarks>
+        /// Conditionally initialized variables!
+        /// </remarks>
         static IntPtr ns_exc; // new-style class for System.Exception
         static IntPtr os_exc; // old-style class for System.Exception
         static Hashtable cache;
 
+        /// <remarks>
+        /// the lines
+        /// // XXX - hack to raise a compatible old-style exception ;(
+        /// if (Runtime.wrap_exceptions) {
+        ///     CallOneOfTheseMethods();
+        ///  
+        /// </remarks>
         internal static void SetupExceptionHack() {
             ns_exc = ClassManager.GetClass(typeof(Exception)).pyHandle;
             cache = new Hashtable();
@@ -546,63 +559,79 @@ namespace Python.Runtime {
             return IntPtr.Zero;
         }
 
-
-        public static IntPtr ArithmeticError;
-        public static IntPtr AssertionError;
-        public static IntPtr AttributeError;
-#if (PYTHON25 || PYTHON26)
+        // 2010-11-16: Arranged in python (2.6 & 2.7) source header file order
+        /* Predefined exceptions are
+           puplic static variables on the Exceptions class filled in from
+           the python class using reflection in Initialize() looked up by
+		   name, not posistion. */
+#if (PYTHON25 || PYTHON26 || PYTHON27)
         public static IntPtr BaseException;
 #endif
-        public static IntPtr DeprecationWarning;
-        public static IntPtr EOFError;
-        public static IntPtr EnvironmentError;
         public static IntPtr Exception;
-        public static IntPtr FloatingPointError;
-        public static IntPtr FutureWarning;
-#if (PYTHON25 || PYTHON26)
+        public static IntPtr StopIteration;
+#if (PYTHON25 || PYTHON26 || PYTHON27)
         public static IntPtr GeneratorExit;
 #endif
+        public static IntPtr StandardError;
+        public static IntPtr ArithmeticError;
+        public static IntPtr LookupError;
+        
+        public static IntPtr AssertionError;
+        public static IntPtr AttributeError;
+        public static IntPtr EOFError;
+        public static IntPtr FloatingPointError;
+        public static IntPtr EnvironmentError;
         public static IntPtr IOError;
+        public static IntPtr OSError;
         public static IntPtr ImportError;
-#if (PYTHON25 || PYTHON26)
-        public static IntPtr ImportWarning;
-#endif
-        public static IntPtr IndentationError;
         public static IntPtr IndexError;
         public static IntPtr KeyError;
         public static IntPtr KeyboardInterrupt;
-        public static IntPtr LookupError;
         public static IntPtr MemoryError;
         public static IntPtr NameError;
-        public static IntPtr NotImplementedError;
-        public static IntPtr OSError;
         public static IntPtr OverflowError;
-        public static IntPtr PendingDeprecationWarning;
-        public static IntPtr ReferenceError;
         public static IntPtr RuntimeError;
-        public static IntPtr RuntimeWarning;
-        public static IntPtr StandardError;
-        public static IntPtr StopIteration;
+        public static IntPtr NotImplementedError;
         public static IntPtr SyntaxError;
-        public static IntPtr SyntaxWarning;
+        public static IntPtr IndentationError;
+        public static IntPtr TabError;
+        public static IntPtr ReferenceError;
         public static IntPtr SystemError;
         public static IntPtr SystemExit;
-        public static IntPtr TabError;
         public static IntPtr TypeError;
         public static IntPtr UnboundLocalError;
-        public static IntPtr UnicodeDecodeError;
-        public static IntPtr UnicodeEncodeError;
         public static IntPtr UnicodeError;
+        public static IntPtr UnicodeEncodeError;
+        public static IntPtr UnicodeDecodeError;
         public static IntPtr UnicodeTranslateError;
-#if (PYTHON25 || PYTHON26)
-        public static IntPtr UnicodeWarning;
-#endif
-        public static IntPtr UserWarning;
         public static IntPtr ValueError;
-        public static IntPtr Warning;
-        //public static IntPtr WindowsError;
         public static IntPtr ZeroDivisionError;
+//#ifdef MS_WINDOWS
+        //public static IntPtr WindowsError;
+//#endif
+//#ifdef __VMS
+        //public static IntPtr VMSError;
+//#endif
 
+        //PyAPI_DATA(PyObject *) PyExc_BufferError;
+
+        //PyAPI_DATA(PyObject *) PyExc_MemoryErrorInst;
+        //PyAPI_DATA(PyObject *) PyExc_RecursionErrorInst;
+
+
+        /* Predefined warning categories */
+        public static IntPtr Warning;
+        public static IntPtr UserWarning;
+        public static IntPtr DeprecationWarning;
+        public static IntPtr PendingDeprecationWarning;
+        public static IntPtr SyntaxWarning;
+        public static IntPtr RuntimeWarning;
+        public static IntPtr FutureWarning;
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+        public static IntPtr ImportWarning;
+        public static IntPtr UnicodeWarning;
+        //PyAPI_DATA(PyObject *) PyExc_BytesWarning;
+#endif
     }
 
 
