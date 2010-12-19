@@ -35,8 +35,7 @@ namespace Python.Runtime {
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class ForbidPythonThreadsAttribute : Attribute
-    {
+    internal class ForbidPythonThreadsAttribute : Attribute {
         public ForbidPythonThreadsAttribute() { }
     }
 
@@ -103,40 +102,70 @@ namespace Python.Runtime {
         public static int magic() {
             return ob_size;
         }
-
-#if (Py_DEBUG)
+        
+/* The *real* layout of a type object when allocated on the heap */
+//typedef struct _heaptypeobject {
+#if (Py_DEBUG)  // #ifdef Py_TRACE_REFS
+/* _PyObject_HEAD_EXTRA defines pointers to support a doubly-linked list of all live heap objects. */
         public static int _ob_next = 0;
         public static int _ob_prev = 0;
 #endif
+// PyObject_VAR_HEAD {
+//     PyObject_HEAD {
         public static int ob_refcnt = 0;
         public static int ob_type = 0;
-        public static int ob_size = 0;
-        public static int tp_name = 0;
-        public static int tp_basicsize = 0;
+    // }
+        public static int ob_size = 0;      /* Number of items in _VAR_iable part */
+// }
+        public static int tp_name = 0;      /* For printing, in format "<module>.<name>" */
+        public static int tp_basicsize = 0; /* For allocation */
         public static int tp_itemsize = 0;
+
+        /* Methods to implement standard operations */
         public static int tp_dealloc = 0;
         public static int tp_print = 0;
         public static int tp_getattr = 0;
         public static int tp_setattr = 0;
         public static int tp_compare = 0;
         public static int tp_repr = 0;
+
+        /* Method suites for standard classes */
         public static int tp_as_number = 0;
         public static int tp_as_sequence = 0;
         public static int tp_as_mapping = 0;
+
+        /* More standard operations (here for binary compatibility) */
         public static int tp_hash = 0;
         public static int tp_call = 0;
         public static int tp_str = 0;
         public static int tp_getattro = 0;
         public static int tp_setattro = 0;
+
+        /* Functions to access object as input/output buffer */
         public static int tp_as_buffer = 0;
+
+        /* Flags to define presence of optional/expanded features */
         public static int tp_flags = 0;
-        public static int tp_doc = 0;
+
+        public static int tp_doc = 0; /* Documentation string */
+
+        /* Assigned meaning in release 2.0 */
+        /* call function for all accessible objects */
         public static int tp_traverse = 0;
+        /* delete references to contained objects */
         public static int tp_clear = 0;
+
+        /* Assigned meaning in release 2.1 */
+        /* rich comparisons */
         public static int tp_richcompare = 0;
+        /* weak reference enabler */
         public static int tp_weaklistoffset = 0;
+
+        /* Added in release 2.2 */
+        /* Iterators */
         public static int tp_iter = 0;
         public static int tp_iternext = 0;
+        /* Attribute descriptor and subclassing stuff */
         public static int tp_methods = 0;
         public static int tp_members = 0;
         public static int tp_getset = 0;
@@ -148,26 +177,29 @@ namespace Python.Runtime {
         public static int tp_init = 0;
         public static int tp_alloc = 0;
         public static int tp_new = 0;
-        public static int tp_free = 0;
-        public static int tp_is_gc = 0;
+        public static int tp_free = 0;      /* Low-level free-memory routine */
+        public static int tp_is_gc = 0;     /* For PyObject_IS_GC */
         public static int tp_bases = 0;
-        public static int tp_mro = 0;
+        public static int tp_mro = 0;       /* method resolution order */
         public static int tp_cache = 0;
         public static int tp_subclasses = 0;
         public static int tp_weaklist = 0;
         public static int tp_del = 0;
-#if (PYTHON26)
-	public static int tp_version_tag;
+#if (PYTHON26 || PYTHON27)
+        /* Type attribute cache version tag. Added in version 2.6 */
+	    public static int tp_version_tag;
 #endif
         // COUNT_ALLOCS adds some more stuff to PyTypeObject 
 #if (Py_COUNT_ALLOCS)
+	/* these must be last and never explicitly initialized */
         public static int tp_allocs = 0;
         public static int tp_frees = 0;
         public static int tp_maxalloc = 0;
         public static int tp_prev = 0;
         public static int tp_next = 0;
 #endif
-
+//} PyTypeObject;
+//typedef struct {
         public static int nb_add = 0;
         public static int nb_subtract = 0;
         public static int nb_multiply = 0;
@@ -191,6 +223,7 @@ namespace Python.Runtime {
         public static int nb_float = 0;
         public static int nb_oct = 0;
         public static int nb_hex = 0;
+        /* Added in release 2.0 */
         public static int nb_inplace_add = 0;
         public static int nb_inplace_subtract = 0;
         public static int nb_inplace_multiply = 0;
@@ -202,18 +235,23 @@ namespace Python.Runtime {
         public static int nb_inplace_and = 0;
         public static int nb_inplace_xor = 0;
         public static int nb_inplace_or = 0;
+        /* Added in release 2.2 */
+        /* The following require the Py_TPFLAGS_HAVE_CLASS flag */
         public static int nb_floor_divide = 0;
         public static int nb_true_divide = 0;
         public static int nb_inplace_floor_divide = 0;
         public static int nb_inplace_true_divide = 0;
-#if (PYTHON25 || PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+        /* Added in release 2.5 */
         public static int nb_index = 0;
 #endif
-
+        //} PyNumberMethods;
+//typedef struct {
         public static int mp_length = 0;
         public static int mp_subscript = 0;
         public static int mp_ass_subscript = 0;
-
+//} PyMappingMethods;
+//typedef struct {
         public static int sq_length = 0;
         public static int sq_concat = 0;
         public static int sq_repeat = 0;
@@ -222,25 +260,34 @@ namespace Python.Runtime {
         public static int sq_ass_item = 0;
         public static int sq_ass_slice = 0;
         public static int sq_contains = 0;
+        /* Added in release 2.0 */
         public static int sq_inplace_concat = 0;
         public static int sq_inplace_repeat = 0;
-
+//} PySequenceMethods;
+//typedef struct {
         public static int bf_getreadbuffer = 0;
         public static int bf_getwritebuffer = 0;
         public static int bf_getsegcount = 0;
         public static int bf_getcharbuffer = 0;
-#if (PYTHON26)
-	public static int bf_getbuffer = 0;
-	public static int bf_releasebuffer = 0;
+#if (PYTHON26 || PYTHON27)
+        // This addition is not actually noted in the 2.6.5 object.h
+	    public static int bf_getbuffer = 0;
+	    public static int bf_releasebuffer = 0;
+//} PyBufferProcs;
 #endif
-
+        //PyObject *ht_name, *ht_slots;
         public static int name = 0;
         public static int slots = 0;
+        /* here are optional user slots, followed by the members. */
         public static int members = 0;
-
     }
 
-
+    /// <summary>
+    /// TypeFlags(): The actual bit values for the Type Flags stored
+    /// in a class.
+    /// Note that the two values reserved for stackless have been put
+    /// to good use as PythonNet specific flags (Managed and Subclass)
+    /// </summary>
     internal class TypeFlags {
         public static int HaveGetCharBuffer = (1 << 0);
         public static int HaveSequenceIn = (1 << 1);
@@ -258,19 +305,18 @@ namespace Python.Runtime {
         public static int HaveGC = (1 << 14);
         // 15 and 16 are reserved for stackless
         public static int HaveStacklessExtension = 0;
-#if (PYTHON25 || PYTHON26)
-        public static int HaveIndex = (1 << 17);
-#endif
-#if (PYTHON26)
-	public static int HaveVersionTag = (1<<18);
-	public static int ValidVersionTag =  (1<<19);
-	public static int IsAbstract = (1<<20);
-	public static int HaveNewBuffer = (1<<21);
-#endif
-	/* XXX Reusing reserved constants */
+        /* XXX Reusing reserved constants */
         public static int Managed = (1 << 15); // PythonNet specific
         public static int Subclass = (1 << 16); // PythonNet specific
-#if (PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+        public static int HaveIndex = (1 << 17);
+#endif
+#if (PYTHON26 || PYTHON27)
+        /* Objects support nb_index in PyNumberMethods */
+        public static int HaveVersionTag = (1 << 18);
+        public static int ValidVersionTag = (1 << 19);
+        public static int IsAbstract = (1 << 20);
+        public static int HaveNewBuffer = (1 << 21);
         // TODO: Implement FastSubclass functions
         public static int IntSubclass = (1 << 23);
         public static int LongSubclass = (1 << 24);
@@ -290,7 +336,7 @@ namespace Python.Runtime {
                              HaveIter |
                              HaveClass |
                              HaveStacklessExtension |
-#if (PYTHON25 || PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
                              HaveIndex | 
 #endif
                              0);
@@ -386,7 +432,7 @@ namespace Python.Runtime {
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || PYTHON26)
+#if (PYTHON25 || PYTHON26 || PYTHON27)
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 
