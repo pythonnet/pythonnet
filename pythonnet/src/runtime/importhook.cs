@@ -98,6 +98,21 @@ namespace Python.Runtime {
             }
 
             string mod_name = Runtime.GetManagedString(py_mod_name);
+            // Check these BEFORE the built-in import runs; may as well
+            // do the Incref()ed return here, since we've already found
+            // the module.
+            if (mod_name == "clr") {
+                root.InitializePreload();
+                Runtime.Incref(root.pyHandle);
+                return root.pyHandle;
+            }
+            if (mod_name == "CLR") {
+                Exceptions.deprecation("The CLR module is deprecated. " +
+                    "Please use 'clr'.");
+                root.InitializePreload();
+                Runtime.Incref(root.pyHandle);
+                return root.pyHandle;
+            }
             // 2010-08-15: Always seemed smart to let python try first...
             // This shaves off a few tenths of a second on test_module.py
             // and works around a quirk where 'sys' is found by the 
@@ -107,23 +122,16 @@ namespace Python.Runtime {
             // little sense to me.
             IntPtr res = Runtime.PyObject_Call(py_import, args, kw);
             if (res != IntPtr.Zero) {
+                // There was no error.
                 return res;
             }
+            // There was an error
+            if (!Exceptions.ExceptionMatches(Exceptions.ImportError)) {
+                // and it was NOT an ImportError; bail out here.
+                return IntPtr.Zero;
+            }
+            // Otherwise,  just clear the it.
             Exceptions.Clear();
-
-            if (mod_name == "CLR") {
-                Exceptions.deprecation("The CLR module is deprecated. " +
-                    "Please use 'clr'.");
-                root.InitializePreload();
-                Runtime.Incref(root.pyHandle);
-                return root.pyHandle;
-            }
-
-            if (mod_name == "clr") {
-                root.InitializePreload();
-                Runtime.Incref(root.pyHandle);
-                return root.pyHandle;
-            }
 
             string realname = mod_name;
             if (mod_name.StartsWith("CLR.")) {
