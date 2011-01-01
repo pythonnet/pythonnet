@@ -210,7 +210,9 @@ namespace Python.Runtime {
         // an assembly named after each of A.B.C.D, A.B.C, A.B, A. This
         // will only actually probe for the assembly once for each unique
         // namespace. Returns true if any assemblies were loaded.
-        // TODO item 3 "* Deprecate implicit loading of assemblies"
+        // TODO item 3 "* Deprecate implicit loading of assemblies":
+        //  Set the fromFile flag if the name of the loaded assembly matches
+        //  the fully qualified name that was requested.
         //===================================================================
 
         public static bool LoadImplicit(string name, out bool fromFile) {
@@ -225,19 +227,15 @@ namespace Python.Runtime {
                 if (!probed.ContainsKey(s)) {
                     if (LoadAssemblyPath(s) != null){
                         loaded = true;
-                        // 2010-08-16: Deprecation support
-                        if (s == name) {
-                            fromFile = true;
-                        }
                     }
                     else if (LoadAssembly(s) != null) {
                         loaded = true;
-                        // 2010-08-16: Deprecation support
-                        if (s == name) {
-                            fromFile = true;
-                        }
                     }
                     probed[s] = 1;
+                    // 2010-12-24: Implicit Load Deprecation logic
+                    if (loaded && (s == name)) {
+                        fromFile = true;
+                    }
                 }
             }
             return loaded;
