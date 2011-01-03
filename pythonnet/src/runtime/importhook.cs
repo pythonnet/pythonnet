@@ -113,32 +113,33 @@ namespace Python.Runtime {
                 Runtime.Incref(root.pyHandle);
                 return root.pyHandle;
             }
-            // 2010-08-15: Always seemed smart to let python try first...
-            // This shaves off a few tenths of a second on test_module.py
-            // and works around a quirk where 'sys' is found by the 
-            // LoadImplicit() deprecation logic.
-            // Turns out that the AssemblyManager.ResolveHandler() checks to see if any
-            // Assembly's FullName.ToLower().StartsWith(name.ToLower()), which makes very
-            // little sense to me.
-            IntPtr res = Runtime.PyObject_Call(py_import, args, kw);
-            if (res != IntPtr.Zero) {
-                // There was no error.
-                return res;
-            }
-            // There was an error
-            if (!Exceptions.ExceptionMatches(Exceptions.ImportError)) {
-                // and it was NOT an ImportError; bail out here.
-                return IntPtr.Zero;
-            }
-            // Otherwise,  just clear the it.
-            Exceptions.Clear();
-
             string realname = mod_name;
             if (mod_name.StartsWith("CLR.")) {
                 realname = mod_name.Substring(4);
                 string msg = String.Format("Importing from the CLR.* namespace "+
                     "is deprecated. Please import '{0}' directly.", realname);
                 Exceptions.deprecation(msg);
+            }
+            else {
+                // 2010-08-15: Always seemed smart to let python try first...
+                // This shaves off a few tenths of a second on test_module.py
+                // and works around a quirk where 'sys' is found by the 
+                // LoadImplicit() deprecation logic.
+                // Turns out that the AssemblyManager.ResolveHandler() checks to see if any
+                // Assembly's FullName.ToLower().StartsWith(name.ToLower()), which makes very
+                // little sense to me.
+                IntPtr res = Runtime.PyObject_Call(py_import, args, kw);
+                if (res != IntPtr.Zero) {
+                    // There was no error.
+                    return res;
+                }
+                // There was an error
+                if (!Exceptions.ExceptionMatches(Exceptions.ImportError)) {
+                    // and it was NOT an ImportError; bail out here.
+                    return IntPtr.Zero;
+                }
+                // Otherwise,  just clear the it.
+                Exceptions.Clear();
             }
 
             string[] names = realname.Split('.');
