@@ -347,8 +347,9 @@ class ModuleTests(unittest.TestCase):
         from clr import AddReference
         from System.IO import FileNotFoundException
         for name in ("System", "Python.Runtime"):
-            mod = AddReference(name) 
-            self.assertEqual(mod.__name__, name)
+            assy = AddReference(name) 
+            assyName = assy.GetName().Name
+            self.assertEqual(assyName, name)
         
         self.assertRaises(FileNotFoundException, 
             AddReference, "somethingtotallysilly")
