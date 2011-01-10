@@ -212,7 +212,9 @@ namespace Python.Runtime {
         // namespace. Returns true if any assemblies were loaded.
         // TODO item 3 "* Deprecate implicit loading of assemblies":
         //  Set the fromFile flag if the name of the loaded assembly matches
-        //  the fully qualified name that was requested.
+        //  the fully qualified name that was requested if the framework
+        //  actually loads an assembly.
+        // Call ONLY for namespaces that HAVE NOT been cached yet.
         //===================================================================
 
         public static bool LoadImplicit(string name, out bool fromFile) {
@@ -225,17 +227,26 @@ namespace Python.Runtime {
             for (int i = 0; i < names.Length; i++) {
                 s = (i == 0) ? names[0] : s + "." + names[i];
                 if (!probed.ContainsKey(s)) {
-                    if (LoadAssemblyPath(s) != null){
+                    if (LoadAssemblyPath(s) != null) {
                         loaded = true;
+                        /* 2010-08-16: Deprecation support */
+                        if (s == name) {
+                            fromFile = true;
+                        }
                     }
                     else if (LoadAssembly(s) != null) {
                         loaded = true;
+                        /* 2010-08-16: Deprecation support */
+                        if (s == name) {
+                            fromFile = true;
+                        }
                     }
                     probed[s] = 1;
-                    // 2010-12-24: Implicit Load Deprecation logic
-                    if (loaded && (s == name)) {
+                    // 2010-12-24: Deprecation logic
+                    /* if (loaded && (s == name)) {
                         fromFile = true;
-                    }
+                        break;
+                    } */
                 }
             }
             return loaded;
