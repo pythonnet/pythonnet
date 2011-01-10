@@ -133,6 +133,13 @@ namespace Python.Runtime {
             // required that the ClassObject.ctors be changed to internal
             if (co != null) {
                 if (co.ctors.Length > 0) {
+                    // Implement Overloads on the class object
+                    ConstructorBinding ctors = new ConstructorBinding(type, tp, co.binder);
+                    // ExtensionType types are untracked, so don't Incref() them.
+                    // XXX deprecate __overloads__ soon...
+                    Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
+                    Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
+
                     IntPtr doc = co.GetDocString();
                     Runtime.PyDict_SetItemString(dict, "__doc__", doc);
                     Runtime.Decref(doc);
