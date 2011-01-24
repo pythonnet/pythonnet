@@ -80,8 +80,7 @@ namespace Python.Runtime {
                     return Exceptions.RaiseTypeError("How in the world could that happen!");
                 }
             }*/
-            /* Since ExtensionType calls Runtime.PyObject_GC_UnTrack(py), don't
-            Runtime.Incref(self.pyHandle);  // Decref'd by the interpreter??? */
+            Runtime.Incref(self.pyHandle);  // Decref'd by the interpreter.
             return self.pyHandle;
         }
 
@@ -112,7 +111,7 @@ namespace Python.Runtime {
             }
             BoundContructor boundCtor = new BoundContructor(self.type, self.pyTypeHndl, self.ctorBinder, ci);
 
-            /* Since ExtensionType calls Runtime.PyObject_GC_UnTrack(py), don't
+            /* Since nothing's chached, do we need the increment???
             Runtime.Incref(boundCtor.pyHandle);  // Decref'd by the interpreter??? */
             return boundCtor.pyHandle;
         }
@@ -128,7 +127,7 @@ namespace Python.Runtime {
                 return self.repr;
             }
             MethodBase[] methods = self.ctorBinder.GetMethods();
-            string name = self.type.Name;
+            string name = self.type.FullName;
             string doc = "";
             for (int i = 0; i < methods.Length; i++) {
                 if (doc.Length > 0)
