@@ -262,5 +262,11 @@ def main():
     unittest.TextTestRunner().run(test_suite())
 
 if __name__ == '__main__':
+    try:
+        import System
+    except ImportError:
+        print "Load clr import hook"
+        import clr
+
     main()
 

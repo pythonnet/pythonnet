@@ -22,19 +22,24 @@ except ImportError:
     import clr
 
 test_modules = (
+        'test_module',  # Passes on its own, but not here if
+        # other test modules that import System.Windows.Forms
+        # run first. They must not do module level import/AddReference()
+        # of the System.Windows.Forms namespace.
+        'test_event',
+        'test_constructors',
+        'test_enum',
+        'test_method',
+        
         'test_exceptions',
-        'test_module',
         'test_compat',    
         'test_generic',
         'test_conversion',
         'test_class',
         'test_interface',
-        'test_enum',
         'test_field',
         'test_property',
         'test_indexer',
-        'test_event',
-        'test_method',
         'test_delegate',
         'test_array',
         'test_thread'
