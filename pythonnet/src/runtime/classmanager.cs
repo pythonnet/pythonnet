@@ -35,7 +35,7 @@ namespace Python.Runtime {
 
         static ClassManager() {
             cache = new Dictionary<Type, ClassBase>(128);
-            dtype = typeof(System.Delegate);
+            dtype = typeof(System.MulticastDelegate);
         }
 
         //====================================================================
