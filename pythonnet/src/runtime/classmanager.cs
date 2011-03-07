@@ -35,6 +35,10 @@ namespace Python.Runtime {
 
         static ClassManager() {
             cache = new Dictionary<Type, ClassBase>(128);
+            // SEE: http://msdn.microsoft.com/en-us/library/96b1ayy4%28VS.90%29.aspx
+            // ""All delegates inherit from MulticastDelegate, which inherits from Delegate.""
+            // Was Delegate, which caused a null MethodInfo returned from GetMethode("Invoke")
+            // and crashed on Linux under Mono.
             dtype = typeof(System.MulticastDelegate);
         }
 
