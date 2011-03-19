@@ -16,6 +16,13 @@ UCS ?= $(shell $(PYTHON) -c "import sys; \
 SITEPACKAGES = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; \
     print get_python_lib(plat_specific=1, standard_lib=0)")
 INSTALL=/usr/bin/install -m644
+# Contributed by VIKAS DHIMAN -  - Thanks, Vikas!
+ARCH_FULL = $(shell uname -m)
+ifneq (, $(findstring 86, $(ARCH_FULL)))
+	ARCH = x86
+else
+	ARCH = x64
+endif 
 
 ifeq ($(origin WINDIR), undefined)
     RUNNER = mono
@@ -70,6 +77,15 @@ Python.Runtime.dll: $(RUNTIME_CS)
 	$(CSC) /unsafe /target:library \
 	    $(RUNTIME_REF) /out:../../Python.Runtime.dll /recurse:*.cs
 
+# Contributed by VIKAS DHIMAN -  - Thanks, Vikas!
+src/runtime/clrmodule.il: src/runtime/clrmodule.pp.il
+ifeq ($(origin WINDIR), undefined)
+	cd "$(BASEDIR)/src/runtime";\
+	$(CPP) -C -P -x c++ -I $(ARCH) clrmodule.pp.il -o clrmodule.il
+else
+	cd "$(BASEDIR)/src/runtime";\
+	cp oldmodule.il clrmodule.il
+endif
 
 clr.pyd: Python.Runtime.dll src/runtime/clrmodule.il
 	$(ILASM) /nologo /dll /quiet /output=clr.pyd \
@@ -106,7 +122,7 @@ realclean: clean
 	rm -f Python*.il Python*.il2 Python*.res
 	rm -rf build/
 	cd src/console; rm -rf bin; rm -rf obj; cd ../..;
-	cd src/runtime; rm -rf bin; rm -rf obj; cd ../..;
+	cd src/runtime; rm -rf bin; rm -rf obj; rm clrmodule.il; cd ../..;
 	cd src/testing; rm -rf bin; rm -rf obj; cd ../..;
 	cd src/embed_tests; rm -rf bin; rm -rf obj; rm -f TestResult.xml; cd ../..;
 	cd src/monoclr; make clean; cd ../..

@@ -12,12 +12,13 @@
 #ifndef PYNET_CLR_H
 #define PYNET_CLR_H
 
+#include <Python.h>
 #include <mono/jit/jit.h>
 #include <mono/metadata/environment.h>
 #include <mono/metadata/mono-config.h>
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/assembly.h>
-#include <Python.h>
+#include <glib.h>
 
 #define MONO_VERSION "v2.0.50727"
 #define MONO_DOMAIN "Python.Runtime"

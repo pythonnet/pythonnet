@@ -1,16 +1,23 @@
 # Author: Christian Heimes
 
-PYTHON = python2.5
+PYTHON = python
 BASENAME = $(shell $(PYTHON) -c "import sys; print 'python%i.%i' % sys.version_info[:2]")
 GCC = gcc
 
+ifeq ($(origin WINDIR), undefined)
+    DLL_OR_SO = "-shared"
+else
+    DLL_OR_SO = "-dynamiclib"
+endif
+
+
 PY_LIBS = $(shell $(PYTHON) -c "from distutils.sysconfig import get_config_vars; \
-    print get_config_vars('BLDLIBRARY')[0]") -lpython
+    print get_config_vars('BLDLIBRARY')[0]") #-lpython
 PY_CFLAGS = -I$(shell $(PYTHON) -c "from distutils.sysconfig import get_config_vars; \
     print get_config_vars('CFLAGS')[0] + ' -I' + get_config_vars('CONFINCLUDEPY')[0]")
 
-MONO_LIBS = $(shell pkg-config --libs mono)
-MONO_CFLAGS = $(shell pkg-config --cflags mono)
+MONO_LIBS = $(shell pkg-config --libs mono)		# Was --libs mono
+MONO_CFLAGS = $(shell pkg-config --cflags mono)	# Was --cflags mono
 
 LIBS = $(MONO_LIBS) $(PY_LIBS)
 CFLAGS = $(MONO_CFLAGS) $(PY_CFLAGS)
@@ -30,7 +37,7 @@ $(BASENAME): python.c
 	$(GCC) $(PY_CFLAGS) $(PY_LIBS) python.c -o $(BASENAME)
 
 clr.so: clrmod.o pynetinit.o
-	$(GCC) $(LIBS) -dynamiclib pynetinit.o clrmod.o -o clr.so
+	$(GCC) $(LIBS) $(DLL_OR_SO) pynetinit.o clrmod.o -o clr.so
 
 clr$(BASENAME): clrpython.o pynetinit.o
 	$(GCC) $(LIBS) clrpython.o pynetinit.o -o clr$(BASENAME) 

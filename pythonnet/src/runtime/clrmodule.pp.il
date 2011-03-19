@@ -50,6 +50,11 @@
 // is set depending on whether we're compiling 32 or 64 bit.
 // This MUST come before any other .data directives!
 // Why, oh why, can't ilasm support command line #defines? :(
+
+// Contributed by VIKAS DHIMAN - Handled by /home/barton/Projects/PyDotNet/pythonnet/makefile
+// gcc -C -P -x c++ -I $(ARCH) clrmodule.pp.il -o clrmodule.il
+// to copy the correct architecture to the clrModule.
+// Nice formating, as well - Thanks, Vikas!
 #include "clrmodule-platform.il"
 
 #ifdef USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
@@ -226,7 +231,7 @@
 		ldstr		"Could not load Python.Runtime, so sad."
 		call		void [mscorlib]System.Console::WriteLine(string)
 #endif
-		ret;
+		ret
 
 		// Once here, we've successfully loaded SOME version of Python.Runtime
 		// So now we get the PythonEngine and execute the InitExt method on it.
