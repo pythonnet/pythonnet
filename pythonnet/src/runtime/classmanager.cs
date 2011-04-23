@@ -131,6 +131,20 @@ namespace Python.Runtime {
             }
 
             // If class has constructors, generate an __doc__ attribute.
+					
+            IntPtr doc;
+			Type marker = typeof(DocStringAttribute);
+			Attribute[] attrs = (Attribute[])type.GetCustomAttributes(marker, false);
+            if (attrs.Length == 0) {
+            	doc = IntPtr.Zero;
+			}
+			else {
+				DocStringAttribute attr = (DocStringAttribute)attrs[0];
+				string docStr = attr.DocString;
+            	doc = Runtime.PyString_FromString(docStr);
+                Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+                Runtime.Decref(doc);
+			}
 
             ClassObject co = impl as ClassObject;
             // If this is a ClassObject AND it has constructors, generate a __doc__ attribute.
@@ -143,12 +157,14 @@ namespace Python.Runtime {
                     // XXX deprecate __overloads__ soon...
                     Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
                     Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
-
-                    IntPtr doc = co.GetDocString();
-                    Runtime.PyDict_SetItemString(dict, "__doc__", doc);
-                    Runtime.Decref(doc);
-                }
-            }
+					
+                    if (doc == IntPtr.Zero) {
+                    	doc = co.GetDocString();
+	                    Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+	                    Runtime.Decref(doc);
+	                }
+				}
+			}
 
             return impl;
         }

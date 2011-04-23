@@ -22,7 +22,7 @@ namespace Python.Runtime {
     //=======================================================================
 
     [Serializable()]
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.All)]
     public class DocStringAttribute : Attribute {
         public DocStringAttribute(string docStr) {
 			DocString = docStr;

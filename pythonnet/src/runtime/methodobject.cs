@@ -71,13 +71,21 @@ namespace Python.Runtime {
             if (doc != IntPtr.Zero) {
                 return doc;
             }
-            MethodBase[] methods = binder.GetMethods();
             string str = "";
-            for (int i = 0; i < methods.Length; i++) {
+			Type marker = typeof(DocStringAttribute);
+            MethodBase[] methods = binder.GetMethods();
+            foreach (MethodBase method in methods) {
                 if (str.Length > 0)
                     str += Environment.NewLine;
-                str += methods[i].ToString();
-            }
+				Attribute[] attrs = (Attribute[]) method.GetCustomAttributes(marker, false);
+	            if (attrs.Length == 0) {
+		                str += method.ToString();
+		            }
+				else {
+					DocStringAttribute attr = (DocStringAttribute)attrs[0];
+					str += attr.DocString;
+				}
+			}
             doc = Runtime.PyString_FromString(str);
             return doc;
         }
