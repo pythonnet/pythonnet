@@ -22,6 +22,19 @@ namespace Python.Runtime {
     //=======================================================================
 
     [Serializable()]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate | AttributeTargets.Property)]
+    public class DocStringAttribute : Attribute {
+        public DocStringAttribute(string docStr) {
+			DocString = docStr;
+		}
+		public string DocString {
+			get { return docStr; }
+			set { docStr = value; }
+		}
+		private string docStr;
+    }
+	
+    [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class PythonMethodAttribute : Attribute {
         public PythonMethodAttribute() {}
