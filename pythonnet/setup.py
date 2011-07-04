@@ -41,8 +41,8 @@ def pkgconfig(*packages, **kw):
         kw[k] = list(set(v))
 
     return kw
-argsDict = pkgconfig('mono-2')
-argsDict['include_dirs'] += ['/opt/mono-2.8/include','/include:usr/include','/usr/include/glib-2.0','/usr/lib/glib-2.0/include']
+argsDict = pkgconfig('glib-2.0', 'mono-2')
+#argsDict['include_dirs'] += ['/opt/mono-2.8/include','/include:usr/include','/usr/include/glib-2.0','/usr/lib/glib-2.0/include']
 
 clr = Extension('clr',
     ['src/monoclr/clrmod.c', 'src/monoclr/pynetinit.c'],
