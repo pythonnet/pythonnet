@@ -22,9 +22,10 @@ VERSION = "%i.%i" % sys.version_info[:2]
 
 def pkgconfig(*packages, **kw):
     """From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/502261
+    XXX cmd = "export PKG_CONFIG_PATH=/opt/mono-2.8/lib/pkgconfig:... early 2011
     """
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
-    cmd = "export PKG_CONFIG_PATH=/opt/mono-2.8/lib/pkgconfig:/lib/pkgconfig; pkg-config --libs --cflags %s" % ' '.join(packages)
+    cmd = "export PKG_CONFIG_PATH=/lib/pkgconfig; pkg-config --libs --cflags %s" % ' '.join(packages)
     popen = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
     popen.wait()
     if popen.returncode != 0:
@@ -41,8 +42,8 @@ def pkgconfig(*packages, **kw):
         kw[k] = list(set(v))
 
     return kw
-argsDict = pkgconfig('glib-2.0', 'mono-2')
 #argsDict['include_dirs'] += ['/opt/mono-2.8/include','/include:usr/include','/usr/include/glib-2.0','/usr/lib/glib-2.0/include']
+argsDict = pkgconfig('glib-2.0', 'mono-2')
 
 clr = Extension('clr',
     ['src/monoclr/clrmod.c', 'src/monoclr/pynetinit.c'],
