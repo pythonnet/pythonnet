@@ -24,7 +24,7 @@ namespace Python.EmbeddingTest
              * Append the tests directory to sys.path
              * using reflection to circumvent the private modifires placed on most Runtime methods.
              */
-            string s = @"..\..\..\tests";
+            string s = @"../../../tests";
 
             Type RTClass = typeof(Runtime.Runtime);
 
