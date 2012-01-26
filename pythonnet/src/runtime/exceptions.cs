@@ -473,6 +473,7 @@ namespace Python.Runtime {
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
             Runtime.PyErr_SetObject(etype, op);
             Runtime.Decref(etype);
+            Runtime.Decref(op);
         }
 
         /// <summary>

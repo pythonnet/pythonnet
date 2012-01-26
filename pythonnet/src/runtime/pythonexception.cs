@@ -27,11 +27,11 @@ namespace Python.Runtime {
 
     public PythonException() : base()
     {
+        IntPtr gs = PythonEngine.AcquireLock();
         Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
         Runtime.Incref(_pyType);
         Runtime.Incref(_pyValue);
         Runtime.Incref(_pyTB);
-        IntPtr gs = PythonEngine.AcquireLock();
         if ((_pyType != IntPtr.Zero) && (_pyValue != IntPtr.Zero))
         {
             string type = new PyObject(_pyType).GetAttr("__name__").ToString();
