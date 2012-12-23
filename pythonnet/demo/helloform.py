@@ -7,6 +7,9 @@
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
 
+import clr
+SWF = clr.AddReference("System.Windows.Forms")
+print SWF.Location
 import System.Windows.Forms as WinForms
 from System.Drawing import Size, Point
 
@@ -24,8 +27,8 @@ class HelloApp(WinForms.Form):
 
         # Create the button
         self.button = WinForms.Button()
-        self.button.Location = Point(256, 64)
-        self.button.Size = Size(120, 40)
+        self.button.Location = Point(160, 64)
+        self.button.Size = Size(820, 20)
         self.button.TabIndex = 2
         self.button.Text = "Click Me!"
         
@@ -36,8 +39,8 @@ class HelloApp(WinForms.Form):
         self.textbox = WinForms.TextBox()
         self.textbox.Text = "Hello World"
         self.textbox.TabIndex = 1
-        self.textbox.Size = Size(360, 20)
-        self.textbox.Location = Point(16, 24)
+        self.textbox.Size = Size(1260, 40)
+        self.textbox.Location = Point(160, 24)
         
         # Add the controls to the form
         self.AcceptButton = self.button
@@ -46,6 +49,7 @@ class HelloApp(WinForms.Form):
 
     def button_Click(self, sender, args):
         """Button click event handler"""
+        print  "Click"
         WinForms.MessageBox.Show("Please do not press this button again.")
 
     def run(self):
@@ -53,7 +57,11 @@ class HelloApp(WinForms.Form):
 
 
 def main():
-    HelloApp().run()
+    form = HelloApp()
+    print "form created"
+    app = WinForms.Application
+    print "app referenced"
+    app.Run(form)
 
 
 if __name__ == '__main__':
