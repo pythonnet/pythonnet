@@ -208,10 +208,11 @@ class ModuleTests(unittest.TestCase):
         def test():
             # This should fail until System.Windows.Forms has been
             # imported or that assembly has been explicitly loaded.
-            # True for Windows; Not so for Mono 2.8.1 (ubuntu 10.10)
+            # True for Windows; Not so for Mono 2.8.1
             import System.Windows
 
         # The test fails when the project is compiled with MS VS 2005. Dunno why :(
+		# Fails (as expected) on Late Binding model. Works as expected on an interactive sesson.
         self.assertRaises(ImportError, test)
 
         clr.AddReference("System.Windows.Forms")
