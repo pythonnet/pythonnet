@@ -32,13 +32,13 @@
 .assembly extern mscorlib
 {
 	.publickeytoken = (B7 7A 5C 56 19 34 E0 89 )
-	.ver 2:0:0:0
+	.ver 4:0:0:0
 }
 
 .assembly clr
 {
 	.hash algorithm 0x00008004
-	.ver 2:0:0:2
+	.ver 2:4:2:7
 }
 
 .module clr.dll
@@ -207,6 +207,10 @@
 
 #ifdef DEBUG_PRINT
 			ldstr		"Success!"
+			call		void [mscorlib]System.Console::WriteLine(string)
+			
+			ldloc		pythonRuntime
+			callvirt	instance string	[mscorlib]System.Reflection.Assembly::get_CodeBase()
 			call		void [mscorlib]System.Console::WriteLine(string)
 #endif
 			leave.s		LOADED_PYTHON_RUNTIME

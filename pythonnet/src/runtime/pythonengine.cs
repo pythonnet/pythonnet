@@ -152,8 +152,10 @@ namespace Python.Runtime {
             "import traceback\n" + 
             "for item in traceback.extract_stack():\n" + 
             "    line = item[3]\n" + 
-            "    if line is not None:\n" + 
+            "    if line is not None:\n" +
             "        if line.startswith('import CLR') or \\\n" +
+            "           line.startswith('import clr') or \\\n" +
+            "           line.startswith('from clr') or \\\n" + 
             "           line.startswith('from CLR'):\n" + 
             "            exec line\n" + 
             "            break\n";            

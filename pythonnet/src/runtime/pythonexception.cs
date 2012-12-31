@@ -122,7 +122,10 @@ namespace Python.Runtime {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.Decref(_pyType);
             Runtime.Decref(_pyValue);
-            Runtime.Decref(_pyTB);
+            // XXX Do we ever get TraceBack? //
+            if (_pyTB != IntPtr.Zero) {
+                Runtime.Decref(_pyTB);
+            }
             PythonEngine.ReleaseLock(gs);
         }
         GC.SuppressFinalize(this);

@@ -64,11 +64,22 @@ namespace Python.Runtime {
                 return cached;
             }
 
-            string qname = (_namespace == String.Empty) ? name : 
-                            _namespace + "." + name;
-
             ModuleObject m;
             ClassBase c;
+            Type type;
+
+            //if (AssemblyManager.IsValidNamespace(name))
+            //{
+            //    IntPtr py_mod_name = Runtime.PyString_FromString(name);
+            //    IntPtr modules = Runtime.PyImport_GetModuleDict();
+            //    IntPtr module = Runtime.PyDict_GetItem(modules, py_mod_name);
+            //    if (module != IntPtr.Zero)
+            //        return (ManagedType)this;
+            //    return null;
+            //}
+
+            string qname = (_namespace == String.Empty) ? name : 
+                            _namespace + "." + name;
 
             // If the fully-qualified name of the requested attribute is 
             // a namespace exported by a currently loaded assembly, return 
@@ -84,7 +95,7 @@ namespace Python.Runtime {
             // includes types, delegates, enums, interfaces and structs.
             // Only public namespace members are exposed to Python.
 
-            Type type = AssemblyManager.LookupType(qname);
+            type = AssemblyManager.LookupType(qname);
             if (type != null) {
                 if (!type.IsPublic) {
                     return null;
@@ -100,7 +111,8 @@ namespace Python.Runtime {
             // of the steps in the qualified name, then try it again.
             bool fromFile;
             if (AssemblyManager.LoadImplicit(qname, out fromFile)) {
-                if (true == fromFile) {
+                bool ignore = name.StartsWith("__");
+                if (true == fromFile && (!ignore)) {
                     string deprWarning = String.Format("\nThe module was found, but not in a referenced namespace.\n" +
                                  "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").", qname);
                     Exceptions.deprecation(deprWarning);
@@ -311,6 +323,9 @@ namespace Python.Runtime {
         protected static bool hacked = false;
         protected static bool interactive_preload = true;
         internal static bool preload;
+        // XXX Test performance of new features //
+        internal static bool _SuppressDocs = false;
+        internal static bool _SuppressOverloads = false;
 
         public CLRModule() : base("clr") {
             _namespace = String.Empty;
@@ -356,6 +371,18 @@ namespace Python.Runtime {
         public static void setPreload(bool preloadFlag)
         {
             preload = preloadFlag;
+        }
+
+        //[ModulePropertyAttribute]
+        public static bool SuppressDocs {
+            get { return _SuppressDocs; }
+            set { _SuppressDocs = value; }
+        }
+
+        //[ModulePropertyAttribute]
+        public static bool SuppressOverloads {
+            get { return _SuppressOverloads; }
+            set { _SuppressOverloads = value; }
         }
 
         [ModuleFunctionAttribute()]

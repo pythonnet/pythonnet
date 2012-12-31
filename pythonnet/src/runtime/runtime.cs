@@ -337,23 +337,23 @@ namespace Python.Runtime {
         Py_DecRef(op);
         return;
 #else
-        void *p = (void *)op;
-        if ((void *)0 != p) {
-        if (is32bit) { --(*(int *)p);  }
-        else         { --(*(long *)p); }
-        if ((*(int *)p) == 0) {
-            // PyObject_HEAD: struct _typeobject *ob_type
-            void *t = is32bit ? (void *)(*((uint *)p + 1)) :
-                            (void *)(*((ulong *)p + 1));
-            // PyTypeObject: destructor tp_dealloc
-            void* f = is32bit ? (void*)(*((uint*)t + 6)) :
-                (void*)(*((ulong*)t + 6));
-            if ((void *)0 == f) {
-            return;
+        void* p = (void*) op;
+        if ((void*) 0 != p) {
+            if (is32bit) { --(*(int*) p); }
+            else        { --(*(long*) p); }
+            if ((*(int*) p) == 0) {
+                // PyObject_HEAD: struct _typeobject *ob_type
+                void* t = is32bit ? (void*) (*((uint*) p + 1)) :
+                                    (void*) (*((ulong*) p + 1));
+                // PyTypeObject: destructor tp_dealloc
+                void* f = is32bit ? (void*) (*((uint*) t + 6)) :
+                    (void*) (*((ulong*) t + 6));
+                if ((void*) 0 == f) {
+                    return;
+                }
+                NativeCall.Impl.Void_Call_1(new IntPtr(f), op);
+                return;
             }
-            NativeCall.Impl.Void_Call_1(new IntPtr(f), op);
-            return;
-        }
         }
 #endif
     }
@@ -1021,7 +1021,7 @@ namespace Python.Runtime {
         return PyObject_TYPE(ob) == Runtime.PyUnicodeType;
     }
 
-#if (!UCS4)
+#if (UCS2)
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_FromObject",
         ExactSpelling=true, CharSet=CharSet.Unicode)]
