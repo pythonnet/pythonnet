@@ -9,19 +9,15 @@
 
 using System;
 using System.Reflection;
-using System.Security.Permissions;
 using System.Runtime.InteropServices;
 using System.Resources;
 
-[assembly: System.Reflection.AssemblyProduct("Python for .NET")]
-[assembly: System.Reflection.AssemblyVersion("2.0.0.2")]
+[assembly: AssemblyProduct("Python for .NET")]
+[assembly: AssemblyVersion("4.0.0.1")]
 [assembly: AssemblyDefaultAliasAttribute("Python.Runtime.dll")]
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
 
-
-[assembly:PermissionSetAttribute(SecurityAction.RequestMinimum, 
-                                 Name = "FullTrust")]
 [assembly: AssemblyCopyrightAttribute("Zope Public License, Version 2.0 (ZPL)")]
 [assembly: AssemblyFileVersionAttribute("2.0.0.2")]
 [assembly: NeutralResourcesLanguageAttribute("en")]

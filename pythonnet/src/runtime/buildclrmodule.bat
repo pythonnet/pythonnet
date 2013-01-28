@@ -32,5 +32,5 @@ exit /b 1
 if not exist %INPUT_PATH% goto ERROR_MISSING_INPUT
 %windir%\Microsoft.NET\Framework\v4.0.30319\ilasm /nologo /quiet /dll %ILASM_EXTRA_ARGS% /include=%INCLUDE_PATH% /output=%OUTPUT_PATH% %INPUT_PATH%
 
-::: 2.0
+::: 2.0 or 3.5
 :::%windir%\Microsoft.NET\Framework\v2.0.50727\ilasm /nologo /quiet /dll %ILASM_EXTRA_ARGS% /include=%INCLUDE_PATH% /output=%OUTPUT_PATH% %INPUT_PATH%

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>UnmanagedExports</id>
+    <version>1.2.3-Beta</version>
+    <title>Unmanaged Exports (DllExport for .Net)</title>
+    <authors>Robert Giesecke</authors>
+    <owners>Robert Giesecke</owners>
+    <licenseUrl>http://opensource.org/licenses/mit-license.php</licenseUrl>
+    <projectUrl>https://sites.google.com/site/robertgiesecke/Home/uploads/unmanagedexports</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A set of compile-time libraries (nothing to deploy) and a build task that enable you to export functions from managed code to native applications.
+      That means, you can create plugins in a managed language like C# or F# for native applications that only have a C-Api (like Notepad++).
+      The nuget package is all you need. Just mark your methods with [DllExport] and build.
+
+      Hints:
+      - You have to set your platform target to either x86, ia64 or x64. AnyCPU assemblies cannot export functions.
+      - The export name defaults to the method name and the calling convention to stdcall. If that's all what you want, you can just use [DllExport] without parameters.
+      - You cannot put your exports in generic types or export gegenric methods, but your parameters or the result can use generics.
+      e.g.:
+      [DllExport]
+      static void Test(YourStruct&lt;int&gt; data){}</description>
+    <summary>Adds the ability to declare unmanaged function exports.
+      IOW: the exact opposite of how DllImport works.</summary>
+    <releaseNotes>- Placing [DllExport] on non-static methods will now yield an error.
+      - Placing [DllExport] on methods in generic types (or types nested in generic types) will yield an error.
+      - Errors regarding lib.exe will no longer break the build.
+      - Added support for generic return types. Even the most esotheric corner cases (obfuscated types) should work.
+      - Made the code that checks method names and class names much more resilient and faster.
+      - Most messages are localizable now (and I translated them to German).</releaseNotes>
+    <language>en-US</language>
+    <tags>dllexport unmanaged exports export</tags>
+    <references>
+      <reference file="RGiesecke.DllExport.Metadata.dll" />
+    </references>
+  </metadata>
+</package>

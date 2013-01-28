@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  
+  <PropertyGroup>
+    <PostBuildEventDependsOn>
+      $(PostBuildEventDependsOn);
+      RGieseckeDllExport
+    </PostBuildEventDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      RGieseckeDllExport
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <UsingTask TaskName="RGiesecke.DllExport.MSBuild.DllExportAppDomainIsolatedTask"
+             AssemblyFile="RGiesecke.DllExport.MSBuild.dll" />
+
+  <Target Name="RGieseckeDllExport"
+          DependsOnTargets="GetFrameworkPaths">
+
+    <!--
+      These properties can still be applied to the task, but upon installation of a 
+      new version of the nuget package, the properties 
+      DllExportAttributeAssemblyName and DllExportAttributeAssemblyName will be removed from the project.
+      So, if you want to provide an alternative attribute name, the you have to name the property in your project file differently.
+      
+      e.g.:
+      DllExportAttributeAssemblyName="$(MyDllExportAttributeAssemblyName)"
+      DllExportAttributeFullName="$(MyDllExportAttributeFullName)"
+    -->
+
+
+    <DllExportAppDomainIsolatedTask Platform="$(Platform)"
+                                    PlatformTarget="$(PlatformTarget)"
+                                    CpuType="$(CpuType)"
+                                    EmitDebugSymbols="$(DebugSymbols)"
+                                    Timeout="$(DllExportTimeout)"
+                                    KeyContainer="$(KeyContainerName)$(AssemblyKeyContainerName)"
+                                    KeyFile="$(KeyOriginatorFile)"
+                                    ProjectDirectory="$(MSBuildProjectDirectory)"
+                                    InputFileName="$(TargetPath)"
+                                    FrameworkPath="$(TargetedFrameworkDir);$(TargetFrameworkDirectory)"
+                                    LibToolPath="$(DevEnvDir)\..\..\VC\bin"
+                                    LibToolDllPath="$(DevEnvDir)"
+                                    TargetFrameworkVersion="$(TargetFrameworkVersion)"
+                                    SdkPath="$(TargetFrameworkSDKToolsDirectory)"
+                                    SkipOnAnyCpu="$(NoDllExportsForAnyCpu)"/>
+  </Target>
+</Project>

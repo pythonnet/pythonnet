@@ -152,19 +152,22 @@ namespace Python.Runtime {
             if (co != null) {
                 if (co.ctors.Length > 0) {
                     // Implement Overloads on the class object
-                    ConstructorBinding ctors = new ConstructorBinding(type, tp, co.binder);
-                    // ExtensionType types are untracked, so don't Incref() them.
-                    // XXX deprecate __overloads__ soon...
-                    Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
-                    Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
-					
-                    if (doc == IntPtr.Zero) {
-                    	doc = co.GetDocString();
-	                    Runtime.PyDict_SetItemString(dict, "__doc__", doc);
-	                    Runtime.Decref(doc);
-	                }
-				}
-			}
+                    if (!CLRModule._SuppressOverloads)
+                    {
+                        ConstructorBinding ctors = new ConstructorBinding(type, tp, co.binder);
+                        // ExtensionType types are untracked, so don't Incref() them.
+                        // XXX deprecate __overloads__ soon...
+                        Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
+                        Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
+                    }
+                    if (!CLRModule._SuppressDocs)
+                    {
+                        doc = co.GetDocString();
+                        Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+                        Runtime.Decref(doc);
+                    }
+                }
+            }
 
             return impl;
         }

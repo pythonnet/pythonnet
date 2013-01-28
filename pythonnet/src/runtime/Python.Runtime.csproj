@@ -82,6 +82,12 @@
     <PlatformTarget>x64</PlatformTarget>
     <NoWarn>1607</NoWarn>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>pythonnet.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -147,11 +153,9 @@
   <ItemGroup>
     <None Include="buildclrmodule.bat" />
     <None Include="clrmodule.il" />
+    <None Include="pythonnet.snk" />
     <None Include="x64\clrmodule-platform.il" />
     <None Include="x86\clrmodule-platform.il" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="python-clear.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
@@ -165,4 +169,5 @@ copy "$(TargetDir)clr.pyd" "$(SolutionDir)"
 </PostBuildEvent>
     <PreBuildEvent>del "$(TargetDir)clr.pyd"</PreBuildEvent>
   </PropertyGroup>
+  <Import Project="../../packages/UnmanagedExports.1.2.3-Beta/tools/RGiesecke.DllExport.targets" />
 </Project>
