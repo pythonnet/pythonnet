@@ -9,8 +9,8 @@
 
 //============================================================================
 // This file is a hand-maintained stub - it implements clr.dll, which can be
-// loaded by a standard CPython interpreter as an extension module. When it
-// is loaded, it bootstraps the managed runtime integration layer and defers
+// loaded by a standard CPython interpreter (on Windows) as an extension module.
+// When it is loaded, it bootstraps the managed runtime integration layer and defers
 // to it to do initialization and put the clr module into sys.modules, etc.
 
 // The "USE_PYTHON_RUNTIME_*" defines control what extra evidence is used
@@ -21,8 +21,8 @@
 #define USE_PYTHON_RUNTIME_VERSION
 
 // If defined, the "PythonRuntimePublicKeyTokenData" data array must be
-// set to Python.Runtime's public key token.
-//#define USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
+// set to Python.Runtime's public key token. (sn -T Python.Runtin.dll)
+#define USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
 
 // If DEBUG_PRINT is defined, a few System.Console.WriteLine calls are made
 // to indicate what's going on during the load...
@@ -35,10 +35,16 @@
 	.ver 4:0:0:0
 }
 
+.assembly extern mscorlib
+{
+	.publickeytoken = (B7 7A 5C 56 19 34 E0 89 )
+	.ver 2:0:0:0
+}
+
 .assembly clr
 {
 	.hash algorithm 0x00008004
-	.ver 2:4:2:7
+	.ver 4:0:0:1
 }
 
 .module clr.dll
@@ -46,15 +52,36 @@
 .subsystem 0x00000003
 .file alignment 512
 
+#ifdef USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
+.data PythonRuntimePublicKeyTokenData = bytearray (50 00 fe a6 cb a7 02 dd)
+//.data PythonRuntimePublicKeyTokenData = bytearray (64 e1 4e 84 5a bf 2e 60)
+#endif
+
 // This includes the platform-specific IL.  The include search path
 // is set depending on whether we're compiling 32 or 64 bit.
 // This MUST come before any other .data directives!
 // Why, oh why, can't ilasm support command line #defines? :(
-#include "clrmodule-platform.il"
+//
 
-#ifdef USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
-.data PythonRuntimePublicKeyTokenData = bytearray (64 e1 4e 84 5a bf 2e 60)
-#endif
+//#include "clrmodule-platform.il"
+
+// From the manifest as seen by ildasm
+//%windir%\Microsoft.NET\Framework\v4.0.30319\ilasm /dll /pe64 /x64 clrmodule.il
+//.corflags 0x00000000
+// Image base: 0x01550000
+// .vtfixup [1] int64 fromunmanaged at D_00004008 // 0000000006000002
+
+//%windir%\Microsoft.NET\Framework\v4.0.30319\ilasm /dll clrmodule.il
+// .vtfixup [1] int32 fromunmanaged at D_00004008 // 06000002
+//.corflags 0x00000002    //  32BITREQUIRED
+// Image base: 0x015A0000
+
+// With or without  /pe64 /x64 switches.
+//{
+//  .vtentry 1 : 1
+//  .export [1] as initclr
+// ... }
+
 
 .class public auto ansi beforefieldinit clrModule extends [mscorlib]System.Object
 {
@@ -74,7 +101,7 @@
 	.method public hidebysig static void modopt([mscorlib]System.Runtime.CompilerServices.CallConvCdecl)
 		initclr() cil managed
 	{
-		.vtentry 1:1
+//		.vtentry 1:1
 		.export [1] as initclr
 
 		.maxstack  6
@@ -117,7 +144,7 @@
 
 #ifdef USE_PYTHON_RUNTIME_VERSION
 			// pythonRuntimeVersionString = "...";
-			ldstr		"2.0.0.2"
+			ldstr		"4.0.0.1"
 			stloc		pythonRuntimeVersionString
 
 			// pythonRuntimeName.Version = new Version(pythonRuntimeVersionString);
