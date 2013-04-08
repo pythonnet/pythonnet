@@ -27,9 +27,8 @@
 // set to Python.Runtime's public key token. (sn -T Python.Runtin.dll)
 #define USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
 
-// If DEBUG_PRINT is defined, a few System.Console.WriteLine calls are made
-// to indicate what's going on during the load...
-#define DEBUG_PRINT
+// If DEBUG_PRINT is defined in the Build Properties, a few System.Console.WriteLine
+// calls are made to indicate what's going on during the load...
 //============================================================================
 
 
