@@ -185,7 +185,11 @@ namespace Python.Runtime {
             try {
                 assembly = Assembly.Load(name);
             }
-            catch { }
+            catch (System.Exception e) {
+                //if (!(e is System.IO.FileNotFoundException)) {
+                //    throw;
+                //}
+            }
             return assembly;
         }
 
@@ -229,24 +233,16 @@ namespace Python.Runtime {
                 if (!probed.ContainsKey(s)) {
                     if (LoadAssemblyPath(s) != null) {
                         loaded = true;
-                        /* 2010-08-16: Deprecation support */
-                        if (s == name) {
-                            fromFile = true;
-                        }
                     }
                     else if (LoadAssembly(s) != null) {
                         loaded = true;
-                        /* 2010-08-16: Deprecation support */
-                        if (s == name) {
-                            fromFile = true;
-                        }
                     }
                     probed[s] = 1;
                     // 2010-12-24: Deprecation logic
-                    /* if (loaded && (s == name)) {
+                    if (loaded && (s == name)) {
                         fromFile = true;
-                        break;
-                    } */
+                        //break;
+                    }
                 }
             }
             return loaded;

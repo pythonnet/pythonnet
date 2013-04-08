@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProjectGuid>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
@@ -10,56 +10,8 @@
     <RootNamespace>Python.Runtime</RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>.\bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release\</OutputPath>
-    <DefineConstants>TRACE;PYTHON27, UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'EmbeddingTest|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\EmbeddingTest\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTests|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\UnitTests\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>pythonnet.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
+    <OutputPath>bin\x86\ReleaseMono\</OutputPath>
     <DefineConstants>PYTHON27, UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
@@ -68,59 +20,8 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'EmbeddingTest|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <OutputPath>bin\x86\EmbeddingTest\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTests|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\UnitTests\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugMono_x86|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\DebugMono_x86\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugMono_x86|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\DebugMono_x86\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
+  <PropertyGroup Condition="' $(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
+    <OutputPath>bin\x64\ReleaseMono\</OutputPath>
     <DefineConstants>PYTHON27, UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
@@ -129,42 +30,89 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'EmbeddingTest|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\EmbeddingTest\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
+    <OutputPath>bin\x86\ReleaseWin\</OutputPath>
+    <DefineConstants>PYTHON27, UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTests|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\UnitTests\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
+    <OutputPath>bin\x64\ReleaseWin\</OutputPath>
+    <DefineConstants>PYTHON27, UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\DebugMono\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugMono_x86|x64'">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\DebugMono_x86\</OutputPath>
+    <OutputPath>bin\x64\DebugMono\</OutputPath>
     <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-  </ItemGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\DebugWin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\DebugWin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+	<Choose>
+        <When Condition=" '$(Configuration)'=='DebugMono' ">
+            <ItemGroup>
+				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+				  <SpecificVersion>False</SpecificVersion>
+				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
+				</Reference>
+            </ItemGroup>
+        </When>
+        <When Condition=" '$(Configuration)'=='ReleaseMono' ">
+            <ItemGroup>
+				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+				  <SpecificVersion>False</SpecificVersion>
+				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
+				</Reference>
+            </ItemGroup>
+        </When>
+    </Choose>
+	<ItemGroup>
+		<Reference Include="System" />
+	</ItemGroup>
   <ItemGroup>
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblyinfo.cs" />

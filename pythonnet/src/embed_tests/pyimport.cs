@@ -24,7 +24,7 @@ namespace Python.EmbeddingTest
              * Append the tests directory to sys.path
              * using reflection to circumvent the private modifires placed on most Runtime methods.
              */
-            string s = @"../../../tests";
+            const string s = @"../../../tests";
 
             Type RTClass = typeof(Runtime.Runtime);
 
@@ -41,9 +41,7 @@ namespace Python.EmbeddingTest
 
             /* SysDotPath.append(*pyStrPtr) */
             MethodInfo PyList_Append = RTClass.GetMethod("PyList_Append", BindingFlags.NonPublic | BindingFlags.Static);
-            funcArgs = new object[2];
-            funcArgs[0] = SysDotPath;
-            funcArgs[1] = pyStrPtr;
+            funcArgs = new object[] {SysDotPath, pyStrPtr};
             int r = (int)PyList_Append.Invoke(null, funcArgs);
         }
 
@@ -69,8 +67,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestDottedName()
         {
-            PyObject module;
-            module = PythonEngine.ImportModule("PyImportTest.test.one");
+            PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
             Assert.IsNotNull(module, ">>>  import PyImportTest.test.one  # FAILED");
         }
     }
