@@ -18,13 +18,13 @@ namespace Python.EmbeddingTest
             gs = PythonEngine.AcquireLock();
 
             //string here = Environment.CurrentDirectory;
-            // trunk\pythonnet\src\embed_tests\bin\Debug
+            //trunk\pythonnet\src\embed_tests\bin\x86\DebugWin
 
             /* 
              * Append the tests directory to sys.path
              * using reflection to circumvent the private modifires placed on most Runtime methods.
              */
-            const string s = @"../../../tests";
+            const string s = @"../../../../tests";
 
             Type RTClass = typeof(Runtime.Runtime);
 
