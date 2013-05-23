@@ -15,6 +15,10 @@ using System.Text;
 using Mono.Unix;
 #endif
 
+#if (UCS2 && (PYTHON32 || PYTHON33 || PYTHON34))
+using System.Text;
+#endif
+
 namespace Python.Runtime {
 
     [SuppressUnmanagedCodeSecurityAttribute()]
@@ -61,8 +65,23 @@ namespace Python.Runtime {
         public const string pyversion = "2.7";
         public const int pyversionnumber = 27;
 #endif
-#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
-#error You must define one of PYTHON23 to PYTHON27
+#if (PYTHON32)
+        public const string dll = "python32";
+        public const string pyversion = "3.2";
+        public const int pyversionnumber = 32;
+#endif
+#if (PYTHON33)
+        public const string dll = "python33";
+        public const string pyversion = "3.3";
+        public const int pyversionnumber = 33;
+#endif
+#if (PYTHON34)
+        public const string dll = "python34";
+        public const string pyversion = "3.4";
+        public const int pyversionnumber = 34;
+#endif
+#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#error You must define one of PYTHON23 to PYTHON34
 #endif
 
         internal static bool wrap_exceptions;
@@ -75,12 +94,20 @@ namespace Python.Runtime {
 
         is32bit = IntPtr.Size == 4;
 
+        if (0 == Runtime.Py_IsInitialized())
+        {
         Runtime.Py_Initialize();
         Runtime.PyEval_InitThreads();
+        }
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        IntPtr op = Runtime.PyImport_ImportModule("builtins");
+        IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
+        PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
+#else
         IntPtr dict = Runtime.PyImport_GetModuleDict();
         IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");
-
+#endif
         PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
 
         PyModuleType = Runtime.PyObject_Type(op);
@@ -96,6 +123,11 @@ namespace Python.Runtime {
         PyMethodType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        Runtime.Decref(dict);
+        Runtime.Decref(op);
+#endif
+
         op = Runtime.PyString_FromString("string");
         PyStringType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
@@ -103,6 +135,12 @@ namespace Python.Runtime {
         op = Runtime.PyUnicode_FromString("unicode");
         PyUnicodeType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
+
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        op = Runtime.PyBytes_FromString("bytes");
+        PyBytesType = Runtime.PyObject_Type(op);
+        Runtime.Decref(op);
+#endif
 
         op = Runtime.PyTuple_New(0);
         PyTupleType = Runtime.PyObject_Type(op);
@@ -128,8 +166,13 @@ namespace Python.Runtime {
         PyFloatType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        PyClassType = IntPtr.Zero;
+        PyInstanceType = IntPtr.Zero;
+#else
         IntPtr s = Runtime.PyString_FromString("_temp");
         IntPtr d = Runtime.PyDict_New();
+
         IntPtr c = Runtime.PyClass_New(IntPtr.Zero, d, s);
         PyClassType = Runtime.PyObject_Type(c);
 
@@ -140,6 +183,7 @@ namespace Python.Runtime {
         Runtime.Decref(i);
         Runtime.Decref(c);
         Runtime.Decref(d);
+#endif
 
         Error = new IntPtr(-1);
 
@@ -147,7 +191,7 @@ namespace Python.Runtime {
         // of the Python runtime that do not allow new-style classes to
         // be used as exceptions (Python versions 2.4 and lower).
 
-#if (PYTHON25 || PYTHON26 || PYTHON27)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         wrap_exceptions = false;
 #else
         IntPtr m = PyImport_ImportModule("exceptions");
@@ -206,6 +250,13 @@ namespace Python.Runtime {
     internal static IntPtr PyBoolType;
     internal static IntPtr PyNoneType;
     internal static IntPtr PyTypeType;
+
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    internal static IntPtr PyBytesType;
+    internal static IntPtr PyNotImplemented;
+    internal static int Py_EQ = 2;
+    internal static int Py_NE = 3;
+#endif
 
     internal static IntPtr PyTrue;
     internal static IntPtr PyFalse;
@@ -750,10 +801,18 @@ namespace Python.Runtime {
     internal unsafe static extern IntPtr
     PyObject_Str(IntPtr pointer);
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint="PyObject_Str",
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyObject_Unicode(IntPtr pointer);
+#else
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Ansi)]
     internal unsafe static extern IntPtr
     PyObject_Unicode(IntPtr pointer);
+#endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
@@ -795,14 +854,8 @@ namespace Python.Runtime {
         return PyObject_TypeCheck(ob, Runtime.PyBoolType);
     }
 
-
-
-    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
-        ExactSpelling=true, CharSet=CharSet.Ansi)]
-    private unsafe static extern IntPtr
-    PyInt_FromLong(IntPtr value);
-
-    internal static IntPtr PyInt_FromInt32(int value) {
+    internal static IntPtr PyInt_FromInt32(int value)
+    {
         IntPtr v = new IntPtr(value);
         return PyInt_FromLong(v);
     }
@@ -812,6 +865,35 @@ namespace Python.Runtime {
         return PyInt_FromLong(v);
     }
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "PyLong_FromLong",
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    private unsafe static extern IntPtr
+    PyInt_FromLong(IntPtr value);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        EntryPoint = "PyLong_AsLong",
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern int
+    PyInt_AsLong(IntPtr value);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        EntryPoint = "PyLong_FromString",
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyInt_FromString(string value, IntPtr end, int radix);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        EntryPoint = "PyLong_GetMax",
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern int
+    PyInt_GetMax();
+#else // Python 2
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    private unsafe static extern IntPtr
+    PyInt_FromLong(IntPtr value);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
@@ -827,7 +909,7 @@ namespace Python.Runtime {
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern int
     PyInt_GetMax();
-
+#endif
 
     internal static bool PyLong_Check(IntPtr ob) {
         return PyObject_TYPE(ob) == Runtime.PyLongType;
@@ -1001,6 +1083,57 @@ namespace Python.Runtime {
         return PyString_FromStringAndSize(value, value.Length);
     }
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyBytes_FromString(string op);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern int
+    PyBytes_Size(IntPtr op);
+
+    internal static IntPtr PyBytes_AS_STRING(IntPtr ob) {
+        return ob + BytesOffset.ob_sval;
+    }
+
+    internal static IntPtr PyString_FromStringAndSize(string value, int length)
+    {
+        // copy the string into an unmanaged UTF-8 buffer
+        int len = Encoding.UTF8.GetByteCount(value);
+        byte[] buffer = new byte[len + 1];
+        Encoding.UTF8.GetBytes(value, 0, value.Length, buffer, 0);
+        IntPtr nativeUtf8 = Marshal.AllocHGlobal(buffer.Length);
+        try {
+            Marshal.Copy(buffer, 0, nativeUtf8, buffer.Length);
+            return PyUnicode_FromStringAndSize(nativeUtf8, length);
+        }
+        finally {
+            Marshal.FreeHGlobal(nativeUtf8);
+        }
+    }
+
+#if (PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromStringAndSize(IntPtr value, int size);
+#elif (UCS2)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "PyUnicodeUCS2_FromStringAndSize",
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromStringAndSize(IntPtr value, int size);
+#else
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "PyUnicodeUCS4_FromStringAndSize",
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromStringAndSize(IntPtr value, int size);
+#endif
+
+#else // Python2x
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern IntPtr
@@ -1016,12 +1149,57 @@ namespace Python.Runtime {
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern int
     PyString_Size(IntPtr pointer);
+#endif
 
     internal static bool PyUnicode_Check(IntPtr ob) {
         return PyObject_TYPE(ob) == Runtime.PyUnicodeType;
     }
 
 #if (UCS2)
+#if (PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromObject(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint="PyUnicode_FromKindAndData",
+        ExactSpelling=true,
+        CharSet=CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromKindAndString(int kind, string s, int size);
+
+    internal static IntPtr PyUnicode_FromUnicode(string s, int size) {
+        return PyUnicode_FromKindAndString(2, s, size);
+    }
+    
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern int
+    PyUnicode_GetSize(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern char *
+    PyUnicode_AsUnicode(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicode_AsUnicode",
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_AS_UNICODE(IntPtr op);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromOrdinal(int c);
+
+#else
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_FromObject",
         ExactSpelling=true, CharSet=CharSet.Unicode)]
@@ -1063,6 +1241,7 @@ namespace Python.Runtime {
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
+#endif
 
     internal static IntPtr PyUnicode_FromString(string s)
     {
@@ -1073,6 +1252,8 @@ namespace Python.Runtime {
     {
         IntPtr type = PyObject_TYPE(op);
 
+// Python 3 strings are all unicode
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         if (type == Runtime.PyStringType)
         {
             return Marshal.PtrToStringAnsi(
@@ -1080,6 +1261,7 @@ namespace Python.Runtime {
                        Runtime.PyString_Size(op)
                        );
         }
+#endif
 
         if (type == Runtime.PyUnicodeType)
         {
@@ -1093,6 +1275,52 @@ namespace Python.Runtime {
 
 #endif
 #if (UCS4)
+#if (PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromObject(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicode_FromKindAndData",
+        ExactSpelling = true)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromKindAndString(int kind,
+                                [MarshalAs (UnmanagedType.CustomMarshaler,
+                                 MarshalTypeRef=typeof(Utf32Marshaler))] string s,
+                                int size);
+
+    internal static IntPtr PyUnicode_FromUnicode(string s, int size) {
+        return PyUnicode_FromKindAndString(4, s, size);
+    }
+    
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern int
+    PyUnicode_GetSize(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true)]
+    internal unsafe static extern IntPtr
+    PyUnicode_AsUnicode(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicode_AsUnicode",
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_AS_UNICODE(IntPtr op);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromOrdinal(int c);
+
+#else
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
            EntryPoint = "PyUnicodeUCS4_FromObject",
         ExactSpelling = true, CharSet = CharSet.Unicode)]
@@ -1138,6 +1366,8 @@ namespace Python.Runtime {
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
 
+#endif
+
     internal static IntPtr PyUnicode_FromString(string s)
     {
         return PyUnicode_FromUnicode(s, (s.Length));
@@ -1147,6 +1377,8 @@ namespace Python.Runtime {
     {
         IntPtr type = PyObject_TYPE(op);
 
+// Python 3 strings are all unicode
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         if (type == Runtime.PyStringType)
         {
             return Marshal.PtrToStringAnsi(
@@ -1154,6 +1386,7 @@ namespace Python.Runtime {
                        Runtime.PyString_Size(op)
                        );
         }
+#endif
 
         if (type == Runtime.PyUnicodeType)
         {
@@ -1367,6 +1600,11 @@ namespace Python.Runtime {
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyModule_New(string name);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern string
     PyModule_GetName(IntPtr module);
 
@@ -1379,6 +1617,13 @@ namespace Python.Runtime {
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern string
     PyModule_GetFilename(IntPtr module);
+
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyModule_Create2(IntPtr module, int apiver);
+#endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]

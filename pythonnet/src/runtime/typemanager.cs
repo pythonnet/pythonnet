@@ -26,11 +26,9 @@ namespace Python.Runtime {
 
         static BindingFlags tbFlags;
         static Dictionary<Type, IntPtr> cache;
-        static int obSize;
 
         static TypeManager() {
             tbFlags = BindingFlags.Public | BindingFlags.Static;
-            obSize = 5 * IntPtr.Size;
             cache = new Dictionary<Type, IntPtr>(128);
         }
 
@@ -86,11 +84,12 @@ namespace Python.Runtime {
         internal static IntPtr CreateType(Type impl) {
 
             IntPtr type = AllocateTypeObject(impl.Name);
+            int ob_size = ObjectOffset.Size(type);
 
             // Set tp_basicsize to the size of our managed instance objects.
-            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)obSize);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
 
-            IntPtr offset = (IntPtr)ObjectOffset.ob_dict;
+            IntPtr offset = (IntPtr)ObjectOffset.DictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             InitializeSlots(type, impl);
@@ -124,11 +123,21 @@ namespace Python.Runtime {
             }
 
             IntPtr base_ = IntPtr.Zero;
+            int ob_size = ObjectOffset.Size(Runtime.PyTypeType);
+            int tp_dictoffset = ObjectOffset.DictOffset(Runtime.PyTypeType);
+
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
             // subclass BaseException (or better Exception).
-#if (PYTHON25 || PYTHON26 || PYTHON27)
-            if (clrType == typeof(System.Exception)) {
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+            if (typeof(System.Exception).IsAssignableFrom(clrType))
+            {
+                ob_size = ObjectOffset.Size(Exceptions.BaseException);
+                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.BaseException);
+            }
+
+            if (clrType == typeof(System.Exception))
+            {
                 base_ = Exceptions.Exception;
                 Runtime.Incref(base_);
             } else
@@ -143,11 +152,9 @@ namespace Python.Runtime {
             Marshal.WriteIntPtr(type,TypeOffset.ob_type,Runtime.PyCLRMetaType);
             Runtime.Incref(Runtime.PyCLRMetaType);
 
-            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)obSize);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
-
-            IntPtr offset = (IntPtr)ObjectOffset.ob_dict;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
             InitializeSlots(type, impl.GetType());
 
@@ -201,10 +208,11 @@ namespace Python.Runtime {
             Marshal.WriteIntPtr(type,TypeOffset.ob_type,Runtime.PyCLRMetaType);
             Runtime.Incref(Runtime.PyCLRMetaType);
 
-            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)obSize);
+            int size = ObjectOffset.Size(type);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)size);
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
 
-            IntPtr offset = (IntPtr)ObjectOffset.ob_dict;
+            IntPtr offset = (IntPtr)ObjectOffset.DictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             IntPtr dc = Runtime.PyDict_Copy(dict);
@@ -338,11 +346,23 @@ namespace Python.Runtime {
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            // For python3 we leak two objects. One for the ascii representation
+            // required for tp_name, and another for the unicode representation
+            // for ht_name.
+            IntPtr temp = Runtime.PyBytes_FromString(name);
+            IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
+            temp = Runtime.PyUnicode_FromString(name);
+#else
             IntPtr temp = Runtime.PyString_FromString(name);
             IntPtr raw = Runtime.PyString_AS_STRING(temp);
+#endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
+
+#if (PYTHON33 || PYTHON34)
+            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
+#endif
 
             long ptr = type.ToInt64(); // 64-bit safe
 
@@ -355,8 +375,13 @@ namespace Python.Runtime {
             temp = new IntPtr(ptr + TypeOffset.mp_length);
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
+#else
             temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
+#endif
 
             return type;
         }

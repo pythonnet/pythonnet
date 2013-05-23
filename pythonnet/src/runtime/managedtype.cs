@@ -42,7 +42,7 @@ namespace Python.Runtime {
                 if ((flags & TypeFlags.Managed) != 0) {
                     IntPtr op = (tp == ob) ?
                         Marshal.ReadIntPtr(tp, TypeOffset.magic()) :
-                        Marshal.ReadIntPtr(ob, ObjectOffset.magic());
+                        Marshal.ReadIntPtr(ob, ObjectOffset.magic(ob));
                     GCHandle gc = (GCHandle)op;
                     return (ManagedType)gc.Target;
                 }

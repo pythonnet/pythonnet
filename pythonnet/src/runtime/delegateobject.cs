@@ -103,7 +103,36 @@ namespace Python.Runtime {
         //====================================================================
         // Implements __cmp__ for reflected delegate types.
         //====================================================================
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
+            if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
+            {
+                Runtime.Incref(Runtime.PyNotImplemented);
+                return Runtime.PyNotImplemented;
+            }
 
+            IntPtr pytrue = Runtime.PyTrue;
+            IntPtr pyfalse = Runtime.PyFalse;
+
+            // swap true and false for NE
+            if (op != Runtime.Py_EQ)
+            {
+                pytrue = Runtime.PyFalse;
+                pyfalse = Runtime.PyTrue;
+            }
+
+            Delegate d1 = GetTrueDelegate(ob);
+            Delegate d2 = GetTrueDelegate(other);
+            if (d1 == d2)
+            {
+                Runtime.Incref(pytrue);
+                return pytrue;
+            }
+
+            Runtime.Incref(pyfalse);
+            return pyfalse;
+        }
+#else
         public static new int tp_compare(IntPtr ob, IntPtr other) {
             Delegate d1 = GetTrueDelegate(ob);
             Delegate d2 = GetTrueDelegate(other);
@@ -112,7 +141,7 @@ namespace Python.Runtime {
             }
             return -1;
         }
-
+#endif
 
     }        
 

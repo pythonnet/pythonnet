@@ -126,8 +126,11 @@ namespace Python.Runtime {
         // CPython interpreter process - this bootstraps the managed runtime
         // when it is imported by the CLR extension module.
         //====================================================================
-
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static IntPtr InitExt() {
+#else
         public static void InitExt() {
+#endif
             Initialize();
 
             // Trickery - when the import hook is installed into an already
@@ -157,15 +160,18 @@ namespace Python.Runtime {
             "           line.startswith('import clr') or \\\n" +
             "           line.startswith('from clr') or \\\n" + 
             "           line.startswith('from CLR'):\n" + 
-            "            exec line\n" + 
+            "            exec(line)\n" + 
             "            break\n";            
 
             PyObject r = PythonEngine.RunString(code);
             if (r != null) {
                 r.Dispose();
             }
-        }
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            return Python.Runtime.ImportHook.GetCLRModule();
+#endif
+        }
 
         /// <summary>
         /// Shutdown Method

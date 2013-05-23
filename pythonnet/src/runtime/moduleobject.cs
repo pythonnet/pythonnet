@@ -44,7 +44,7 @@ namespace Python.Runtime {
             Runtime.PyDict_SetItemString(dict, "__doc__", Runtime.PyNone);
             Runtime.Decref(pyname);
 
-            Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.ob_dict, dict);
+            Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.DictOffset(this.pyHandle), dict);
 
             InitializeModuleMembers();
         }

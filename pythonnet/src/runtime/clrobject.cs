@@ -25,15 +25,15 @@ namespace Python.Runtime {
 
               int flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
               if ((flags & TypeFlags.Subclass) != 0) {
-                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.ob_dict);
+                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.DictOffset(tp));
                 if (dict == IntPtr.Zero) {
                     dict = Runtime.PyDict_New();
-                    Marshal.WriteIntPtr(py, ObjectOffset.ob_dict, dict);
+                    Marshal.WriteIntPtr(py, ObjectOffset.DictOffset(tp), dict);
                 }
             }
 
             GCHandle gc = GCHandle.Alloc(this);
-            Marshal.WriteIntPtr(py, ObjectOffset.magic(), (IntPtr)gc);
+            Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
             this.tpHandle = tp;
             this.pyHandle = py;
             this.gcHandle = gc;
