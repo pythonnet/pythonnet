@@ -824,10 +824,18 @@ namespace Python.Runtime {
     // Python number API
     //====================================================================
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        EntryPoint = "PyNumber_Long",
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Int(IntPtr ob);
+#else // Python 2
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern IntPtr
     PyNumber_Int(IntPtr ob);
+#endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
