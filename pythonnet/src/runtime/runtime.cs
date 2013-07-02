@@ -776,10 +776,15 @@ namespace Python.Runtime {
     internal unsafe static extern int
     PyCallable_Check(IntPtr pointer);
 
-    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
-        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
     internal unsafe static extern int
     PyObject_IsTrue(IntPtr pointer);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern int
+    PyObject_Not(IntPtr pointer);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
@@ -993,6 +998,130 @@ namespace Python.Runtime {
     internal unsafe static extern double
     PyFloat_AsDouble(IntPtr ob);
 
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Add(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Subtract(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Multiply(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Divide(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_And(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Xor(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Or(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Lshift(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Rshift(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Power(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Remainder(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceAdd(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceSubtract(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceMultiply(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceDivide(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceAnd(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceXor(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceOr(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceLshift(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceRshift(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlacePower(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_InPlaceRemainder(IntPtr o1, IntPtr o2);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Negative(IntPtr o1);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Positive(IntPtr o1);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyNumber_Invert(IntPtr o1);
 
     //====================================================================
     // Python sequence API
