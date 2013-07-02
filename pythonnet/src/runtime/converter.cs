@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Security;
+using System.Collections;
 
 namespace Python.Runtime {
 
@@ -89,6 +90,16 @@ namespace Python.Runtime {
                 result = Runtime.PyNone;
                 Runtime.Incref(result);
                 return result;
+            }
+
+            if (value is IEnumerable)
+            {
+                var resultlist = new PyList();
+                foreach (object o in (IEnumerable)value)
+                {
+                    resultlist.Append(new PyObject(ToPython(o, o.GetType())));
+                }
+                return resultlist.Handle;
             }
 
             // hmm - from Python, we almost never care what the declared
@@ -738,10 +749,13 @@ namespace Python.Runtime {
             return false;
 
         }
-
-
-
     }
 
-
+    public static class ConverterExtension
+    {
+        public static PyObject ToPython(this object o)
+        {
+            return new PyObject(Converter.ToPython(o, o.GetType()));
+        }
+    }
 }
