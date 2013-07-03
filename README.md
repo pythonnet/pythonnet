@@ -18,7 +18,8 @@ static void Main(string[] args)
     dynamic sin = np.sin;
     Console.WriteLine(np.cos(np.pi*2));
     Console.WriteLine(sin(5));
-    Console.WriteLine(np.cos(5) + sin(5));
+    double c = np.cos(5) + sin(5);
+    Console.WriteLine(c);
     dynamic a = np.array(new List<float> { 1, 2, 3 };
     dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
     Console.WriteLine(a.dtype);
