@@ -195,58 +195,52 @@ namespace Python.Runtime {
             return type;
         }
 
-        internal static IntPtr CreateSubType(IntPtr args) {
-
-            IntPtr py_name = Runtime.PyTuple_GetItem(args, 0);
-            IntPtr bases = Runtime.PyTuple_GetItem(args, 1);
-            IntPtr dict = Runtime.PyTuple_GetItem(args, 2);
-            IntPtr base_ = Runtime.PyTuple_GetItem(bases, 0);
-
+        internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
+        {
+            // Utility to create a subtype of a managed type with the ability for the
+            // a python subtype able to override the managed implementation
             string name = Runtime.GetManagedString(py_name);
-            IntPtr type = AllocateTypeObject(name);
 
-            Marshal.WriteIntPtr(type,TypeOffset.ob_type,Runtime.PyCLRMetaType);
-            Runtime.Incref(Runtime.PyCLRMetaType);
+            // the derived class can have class attributes __assembly__ and __module__ which
+            // control the name of the assembly and module the new type is created in.
+            object assembly = null;
+            object namespaceStr = null;
 
-            int size = ObjectOffset.Size(type);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)size);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
+            PyObject assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(String)));
+            if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
+            {
+                PyObject pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
+                if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(String), out assembly, false))
+                    throw new InvalidCastException("Couldn't convert __assembly__ value to string");
+            }
 
-            IntPtr offset = (IntPtr)ObjectOffset.DictOffset(type);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
+            PyObject namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
+            if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
+            {
+                PyObject pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
+                if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(String), out namespaceStr, false))
+                    throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+            }
 
-            IntPtr dc = Runtime.PyDict_Copy(dict);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_dict, dc);
+            // create the new managed type subclassing the base managed type
+            ClassObject baseClass = ManagedType.GetManagedObject(py_base_type) as ClassObject;
 
-            Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
-            Runtime.Incref(base_);
+            Type subType = ClassDerivedObject.CreateDerivedType(name,
+                                                                baseClass.type,
+                                                                (string)namespaceStr,
+                                                                (string)assembly);
 
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.BaseType;
-            flags |= TypeFlags.Subclass;
-            flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            // create the new ManagedType and python type
+            ClassBase subClass = ClassManager.GetClass(subType);
+            IntPtr py_type = GetTypeHandle(subClass, subType);
 
-            CopySlot(base_, type, TypeOffset.tp_traverse);
-            CopySlot(base_, type, TypeOffset.tp_clear);
-            CopySlot(base_, type, TypeOffset.tp_is_gc);
+            // by default the class dict will have all the C# methods in it, but as this is a
+            // derived class we want the python overrides in there instead if they exist.
+            IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
+            Runtime.PyDict_Update(cls_dict, py_dict);
 
-            Runtime.PyType_Ready(type);
-
-
-            IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(tp_dict, "__module__", mod);
-
-            // for now, move up hidden handle...
-            IntPtr gc = Marshal.ReadIntPtr(base_, TypeOffset.magic());
-            Marshal.WriteIntPtr(type, TypeOffset.magic(), gc);
-
-            return type;
+            return py_type;
         }
-
 
         internal static IntPtr CreateMetaType(Type impl) {
 

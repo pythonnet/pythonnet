@@ -46,7 +46,7 @@ namespace Python.Runtime {
                 return Exceptions.RaiseTypeError("invalid argument list");
             }
 
-            //IntPtr name = Runtime.PyTuple_GetItem(args, 0);
+            IntPtr name = Runtime.PyTuple_GetItem(args, 0);
             IntPtr bases = Runtime.PyTuple_GetItem(args, 1);
             IntPtr dict = Runtime.PyTuple_GetItem(args, 2);
 
@@ -88,45 +88,7 @@ namespace Python.Runtime {
                 );
             }
 
-            // hack for now... fix for 1.0
-            //return TypeManager.CreateSubType(args);
-
-
-            // right way
-
-            IntPtr func = Marshal.ReadIntPtr(Runtime.PyTypeType,
-                                             TypeOffset.tp_new);
-            IntPtr type = NativeCall.Call_3(func, tp, args, kw);
-            if (type == IntPtr.Zero) {
-                return IntPtr.Zero;
-            }
-
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.BaseType;
-            flags |= TypeFlags.Subclass;
-            flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
-
-            TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
-
-            // Hmm - the standard subtype_traverse, clear look at ob_size to
-            // do things, so to allow gc to work correctly we need to move
-            // our hidden handle out of ob_size. Then, in theory we can 
-            // comment this out and still not crash.
-            TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
-            TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
-
-
-            // for now, move up hidden handle...
-            IntPtr gc = Marshal.ReadIntPtr(base_type, TypeOffset.magic());
-            Marshal.WriteIntPtr(type, TypeOffset.magic(), gc);
-
-            //DebugUtil.DumpType(base_type);
-            //DebugUtil.DumpType(type);
-
-            return type;
+            return TypeManager.CreateSubType(name, base_type, dict);
         }
 
 

@@ -115,7 +115,7 @@
     <OutputPath>bin\x64\Debug\</OutputPath>
     <DefineConstants Condition=" '$(DefineConstants)'==''">TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
@@ -171,6 +171,7 @@
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblyinfo.cs" />
     <Compile Include="assemblymanager.cs" />
+    <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />
     <Compile Include="classobject.cs" />

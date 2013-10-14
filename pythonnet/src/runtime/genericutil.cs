@@ -37,6 +37,9 @@ namespace Python.Runtime {
         //====================================================================
 
         internal static void Register(Type t) {
+            if (null == t.Namespace || null == t.Name)
+                return;
+
             Dictionary<string, List<string>> nsmap = null;
             mapping.TryGetValue(t.Namespace, out nsmap);
             if (nsmap == null) {

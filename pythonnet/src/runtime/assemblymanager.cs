@@ -260,7 +260,7 @@ namespace Python.Runtime {
         // be valid namespaces (to better match Python import semantics).
         //===================================================================
 
-        static void ScanAssembly(Assembly assembly) {
+        internal static void ScanAssembly(Assembly assembly) {
 
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by

@@ -82,6 +82,11 @@ namespace Python.Runtime {
 
             CLRObject co1 = GetManagedObject(ob) as CLRObject;
             CLRObject co2 = GetManagedObject(other) as CLRObject;
+			if (null == co2) {
+				Runtime.Incref(pyfalse);
+				return pyfalse;
+			}
+
             Object o1 = co1.inst;
             Object o2 = co2.inst;
 
