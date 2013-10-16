@@ -206,20 +206,33 @@ namespace Python.Runtime {
             object assembly = null;
             object namespaceStr = null;
 
-            PyObject assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(String)));
-            if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
+            List<PyObject> disposeList = new List<PyObject>();
+            try
             {
-                PyObject pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
-                if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(String), out assembly, false))
-                    throw new InvalidCastException("Couldn't convert __assembly__ value to string");
-            }
+                PyObject assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(String)));
+                disposeList.Add(assemblyKey);
+                if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
+                {
+                    PyObject pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
+                    disposeList.Add(pyAssembly);
+                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(String), out assembly, false))
+                        throw new InvalidCastException("Couldn't convert __assembly__ value to string");
+                }
 
-            PyObject namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
-            if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
+                PyObject namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
+                disposeList.Add(namespaceKey);
+                if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
+                {
+                    PyObject pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
+                    disposeList.Add(pyNamespace);
+                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(String), out namespaceStr, false))
+                        throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+                }
+            }
+            finally
             {
-                PyObject pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
-                if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(String), out namespaceStr, false))
-                    throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+                foreach (PyObject o in disposeList)
+                    o.Dispose();
             }
 
             // create the new managed type subclassing the base managed type

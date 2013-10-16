@@ -519,7 +519,12 @@ namespace Python.Runtime
 
             // delete the python object in an asnyc task as we may not be able to acquire
             // the GIL immediately and we don't want to block the GC thread.
-            var t = Task.Factory.StartNew(() => {
+            var t = Task.Factory.StartNew(() =>
+            {
+                // If python's been terminated then there's nothing to do
+                if (0 == Runtime.Py_IsInitialized())
+                    return;
+
                 IntPtr gs = Runtime.PyGILState_Ensure();
                 try
                 {

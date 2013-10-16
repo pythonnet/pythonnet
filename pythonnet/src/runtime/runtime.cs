@@ -96,8 +96,12 @@ namespace Python.Runtime {
 
         if (0 == Runtime.Py_IsInitialized())
         {
-        Runtime.Py_Initialize();
-        Runtime.PyEval_InitThreads();
+            Runtime.Py_Initialize();
+        }
+
+        if (0 == Runtime.PyEval_ThreadsInitialized())
+        {
+            Runtime.PyEval_InitThreads();
         }
 
 #if (PYTHON32 || PYTHON33 || PYTHON34)
@@ -515,6 +519,11 @@ namespace Python.Runtime {
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern void
     PyEval_InitThreads();
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern int
+    PyEval_ThreadsInitialized();
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
