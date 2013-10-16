@@ -409,6 +409,17 @@ namespace Python.Runtime {
 #endif
     }
 
+    internal unsafe static long Refcount(IntPtr op)
+    {
+        void* p = (void*)op;
+        if ((void*)0 != p)
+        {
+            if (is32bit) { return (*(int*)p); }
+            else { return (*(long*)p); }
+        }
+        return 0;
+    }
+
 #if (Py_DEBUG)
     // Py_IncRef and Py_DecRef are taking care of the extra payload
     // in Py_DEBUG builds of Python like _Py_RefTotal 

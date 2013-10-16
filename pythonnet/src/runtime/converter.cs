@@ -102,6 +102,14 @@ namespace Python.Runtime {
                 return resultlist.Handle;
             }
 
+            // it the type is a python subclass of a managed type then return the
+            // underying python object rather than construct a new wrapper object.
+            IPythonDerivedType pyderived = value as IPythonDerivedType;
+            if (null != pyderived)
+            {
+                return ClassDerivedObject.ToPython(pyderived);
+            }
+
             // hmm - from Python, we almost never care what the declared
             // type is. we'd rather have the object bound to the actual
             // implementing class.
