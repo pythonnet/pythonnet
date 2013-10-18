@@ -110,6 +110,16 @@ namespace Python.Runtime {
                 return ClassDerivedObject.ToPython(pyderived);
             }
 
+	    if (value is IEnumerable)
+            {
+                var resultlist = new PyList();
+                foreach (object o in (IEnumerable)value)
+                {
+                    resultlist.Append(new PyObject(ToPython(o, o.GetType())));
+                }
+                return resultlist.Handle;
+            }
+
             // hmm - from Python, we almost never care what the declared
             // type is. we'd rather have the object bound to the actual
             // implementing class.
