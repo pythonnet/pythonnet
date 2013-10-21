@@ -19,11 +19,11 @@ namespace Python.Runtime {
 
     internal class TypeMethod : MethodObject {
 
-        public TypeMethod(string name, MethodInfo[] info) : 
-               base(name, info) {}
+        public TypeMethod(Type type, string name, MethodInfo[] info) : 
+               base(type, name, info) {}
 
-        public TypeMethod(string name, MethodInfo[] info, bool allow_threads) :
-               base(name, info, allow_threads) { }
+        public TypeMethod(Type type, string name, MethodInfo[] info, bool allow_threads) :
+               base(type, name, info, allow_threads) { }
 
         public override IntPtr Invoke(IntPtr ob, IntPtr args, IntPtr kw) {
             MethodInfo mi = this.info[0];

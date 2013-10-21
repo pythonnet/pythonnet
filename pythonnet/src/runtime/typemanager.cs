@@ -458,7 +458,7 @@ namespace Python.Runtime {
                         string method_name = method.Name;
                         MethodInfo[] mi = new MethodInfo[1];
                         mi[0] = method;
-                        MethodObject m = new TypeMethod(method_name, mi);
+                        MethodObject m = new TypeMethod(type, method_name, mi);
                         Runtime.PyDict_SetItemString(dict, method_name,
                                                      m.pyHandle);
                     }

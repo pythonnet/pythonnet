@@ -348,7 +348,7 @@ namespace Python.Runtime {
                                                    typeof(MethodInfo)
                                                    );
 
-                ob = new MethodObject(name, mlist);
+                ob = new MethodObject(type, name, mlist);
                 ci.members[name] = ob;
             }
 

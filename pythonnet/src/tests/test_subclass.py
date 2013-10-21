@@ -19,6 +19,12 @@ class DerivedClass(SubClassTest):
     def foo(self):
         return "bar"
 
+    def base_foo(self):
+        return SubClassTest.foo(self)
+
+    def super_foo(self):
+        return super(DerivedClass, self).foo()
+
     def bar(self, x, i):
         return "_".join([x] * i)
 
@@ -47,6 +53,8 @@ class SubClassTests(unittest.TestCase):
         """Test python class derived from managed type"""
         object = DerivedClass()
         self.assertEqual(object.foo(), "bar")
+        self.assertEqual(object.base_foo(), "foo")
+        self.assertEqual(object.super_foo(), "foo")
         self.assertEqual(SubClassTest.test_foo(object), "bar")
         self.assertEqual(object.bar("bar", 2), "bar_bar")
         self.assertEqual(SubClassTest.test_bar(object, "bar", 2), "bar_bar")

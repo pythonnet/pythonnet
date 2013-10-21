@@ -222,7 +222,7 @@ namespace Python.Runtime {
                         string name = method.Name;
                         MethodInfo[] mi = new MethodInfo[1];
                         mi[0] = method;
-                        ModuleFunctionObject m = new ModuleFunctionObject(name, mi, allow_threads);
+                        ModuleFunctionObject m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
                     }
                 }
