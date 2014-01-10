@@ -154,7 +154,7 @@ namespace Python.Runtime
             FieldBuilder fb = typeBuilder.DefineField("__pyobj__", typeof(CLRObject), FieldAttributes.Public);
 
             // override any constructors
-            ConstructorInfo[] constructors = baseType.GetConstructors();
+            ConstructorInfo[] constructors = baseClass.GetConstructors();
             foreach (ConstructorInfo ctor in constructors)
             {
                 ParameterInfo[] parameters = ctor.GetParameters();
@@ -349,6 +349,7 @@ namespace Python.Runtime
         {
             FieldInfo fi = obj.GetType().GetField("__pyobj__");
             CLRObject self = (CLRObject)fi.GetValue(obj);
+
             if (null != self)
             {
                 List<PyObject> disposeList = new List<PyObject>();
