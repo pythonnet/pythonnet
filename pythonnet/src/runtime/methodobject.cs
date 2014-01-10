@@ -157,7 +157,7 @@ namespace Python.Runtime {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            // The the object this descriptor is being called with is a subclass of the type
+            // If the object this descriptor is being called with is a subclass of the type
             // this descriptor was defined on then it will be because the base class method
             // is being called via super(Derived, self).method(...).
             // In which case create a MethodBinding bound to the base class.

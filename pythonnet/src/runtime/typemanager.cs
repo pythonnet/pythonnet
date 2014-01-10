@@ -236,23 +236,34 @@ namespace Python.Runtime {
             }
 
             // create the new managed type subclassing the base managed type
-            ClassObject baseClass = ManagedType.GetManagedObject(py_base_type) as ClassObject;
+            ClassBase baseClass = ManagedType.GetManagedObject(py_base_type) as ClassBase;
+            if (null == baseClass)
+            {
+                return Exceptions.RaiseTypeError("invalid base class, expected CLR class type");
+            }
 
-            Type subType = ClassDerivedObject.CreateDerivedType(name,
-                                                                baseClass.type,
-                                                                (string)namespaceStr,
-                                                                (string)assembly);
+            try
+            {
+                Type subType = ClassDerivedObject.CreateDerivedType(name,
+                                                                    baseClass.type,
+                                                                    (string)namespaceStr,
+                                                                    (string)assembly);
 
-            // create the new ManagedType and python type
-            ClassBase subClass = ClassManager.GetClass(subType);
-            IntPtr py_type = GetTypeHandle(subClass, subType);
+                // create the new ManagedType and python type
+                ClassBase subClass = ClassManager.GetClass(subType);
+                IntPtr py_type = GetTypeHandle(subClass, subType);
 
-            // by default the class dict will have all the C# methods in it, but as this is a
-            // derived class we want the python overrides in there instead if they exist.
-            IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
-            Runtime.PyDict_Update(cls_dict, py_dict);
+                // by default the class dict will have all the C# methods in it, but as this is a
+                // derived class we want the python overrides in there instead if they exist.
+                IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
+                Runtime.PyDict_Update(cls_dict, py_dict);
 
-            return py_type;
+                return py_type;
+            }
+            catch (Exception e)
+            {
+                return Exceptions.RaiseTypeError(e.Message);
+            }
         }
 
         internal static IntPtr CreateMetaType(Type impl) {
@@ -448,19 +459,22 @@ namespace Python.Runtime {
             Type marker = typeof(PythonMethodAttribute);
 
             BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+            HashSet<string> addedMethods = new HashSet<string>();
 
             while (type != null) {
                 MethodInfo[] methods = type.GetMethods(flags);
                 for (int i = 0; i < methods.Length; i++) {
                     MethodInfo method = methods[i];
-                    object[] attrs = method.GetCustomAttributes(marker, false);
-                    if (attrs.Length > 0) {
-                        string method_name = method.Name;
-                        MethodInfo[] mi = new MethodInfo[1];
-                        mi[0] = method;
-                        MethodObject m = new TypeMethod(type, method_name, mi);
-                        Runtime.PyDict_SetItemString(dict, method_name,
-                                                     m.pyHandle);
+                    if (!addedMethods.Contains(method.Name)) {
+                        object[] attrs = method.GetCustomAttributes(marker, false);
+                        if (attrs.Length > 0) {
+                            string method_name = method.Name;
+                            MethodInfo[] mi = new MethodInfo[1];
+                            mi[0] = method;
+                            MethodObject m = new TypeMethod(type, method_name, mi);
+                            Runtime.PyDict_SetItemString(dict, method_name, m.pyHandle);
+                            addedMethods.Add(method_name);
+                        }
                     }
                 }
                 type = type.BaseType;

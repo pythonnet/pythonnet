@@ -129,10 +129,23 @@ namespace Python.Runtime
                 assemblyName = Assembly.GetExecutingAssembly().FullName;
 
             ModuleBuilder moduleBuilder = GetModuleBuilder(assemblyName, moduleName);
-            TypeBuilder typeBuilder = moduleBuilder.DefineType(name,
-                                                                TypeAttributes.Public | TypeAttributes.Class,
-                                                                baseType,
-                                                                new Type[] { typeof(IPythonDerivedType) });
+            TypeBuilder typeBuilder;
+
+            Type baseClass = baseType;
+            List<Type> interfaces = new List<Type> { typeof(IPythonDerivedType) };
+
+            // if the base type is an interface then use System.Object as the base class
+            // and add the base type to the list of interfaces this new class will implement.
+            if (baseType.IsInterface)
+            {
+                interfaces.Add(baseType);
+                baseClass = typeof(System.Object);
+            }
+
+            typeBuilder = moduleBuilder.DefineType(name,
+                                                    TypeAttributes.Public | TypeAttributes.Class,
+                                                    baseClass,
+                                                    interfaces.ToArray());
 
             ILGenerator il;
             MethodBuilder mb;
@@ -268,7 +281,7 @@ namespace Python.Runtime
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("Finalize"));
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, baseType.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
+            il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
             il.Emit(OpCodes.Ret);
 
             Type type = typeBuilder.CreateType();
