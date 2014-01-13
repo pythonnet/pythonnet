@@ -11,13 +11,22 @@ clr.AddReference('Python.Test')
 clr.AddReference('System')
 
 import sys, os, string, unittest, types
-from Python.Test import SubClassTest
+from Python.Test import TestFunctions, SubClassTest, IInterfaceTest
 from System.Collections.Generic import List
 
+# class that implements the test interface
+class InterfaceTestClass(IInterfaceTest):
+    def foo(self):
+        return "InterfaceTestClass"
+
+    def bar(self, x, i):
+        return "/".join([x] * i)
+
+# class that derives from a class deriving from IInterfaceTest
 class DerivedClass(SubClassTest):
 
     def foo(self):
-        return "bar"
+        return "DerivedClass"
 
     def base_foo(self):
         return SubClassTest.foo(self)
@@ -42,40 +51,60 @@ class SubClassTests(unittest.TestCase):
         """Test base class managed type"""
         object = SubClassTest()
         self.assertEqual(object.foo(), "foo")
-        self.assertEqual(SubClassTest.test_foo(object), "foo")
+        self.assertEqual(TestFunctions.test_foo(object), "foo")
         self.assertEqual(object.bar("bar", 2), "bar")
-        self.assertEqual(SubClassTest.test_bar(object, "bar", 2), "bar")
+        self.assertEqual(TestFunctions.test_bar(object, "bar", 2), "bar")
         self.assertEqual(object.not_overriden(), "not_overriden")
         self.assertEqual(list(object.return_list()), ["a", "b", "c"])
         self.assertEqual(list(SubClassTest.test_list(object)), ["a", "b", "c"])
 
+    def testInterface(self):
+        """Test python classes can derive from C# interfaces"""
+        object = InterfaceTestClass()
+        self.assertEqual(object.foo(), "InterfaceTestClass")
+        self.assertEqual(TestFunctions.test_foo(object), "InterfaceTestClass")
+        self.assertEqual(object.bar("bar", 2), "bar/bar")
+        self.assertEqual(TestFunctions.test_bar(object, "bar", 2), "bar/bar")
+
+        x = TestFunctions.pass_through(object)
+        self.assertEqual(id(x), id(object))
+
     def testDerivedClass(self):
         """Test python class derived from managed type"""
         object = DerivedClass()
-        self.assertEqual(object.foo(), "bar")
+        self.assertEqual(object.foo(), "DerivedClass")
         self.assertEqual(object.base_foo(), "foo")
         self.assertEqual(object.super_foo(), "foo")
-        self.assertEqual(SubClassTest.test_foo(object), "bar")
+        self.assertEqual(TestFunctions.test_foo(object), "DerivedClass")
         self.assertEqual(object.bar("bar", 2), "bar_bar")
-        self.assertEqual(SubClassTest.test_bar(object, "bar", 2), "bar_bar")
+        self.assertEqual(TestFunctions.test_bar(object, "bar", 2), "bar_bar")
         self.assertEqual(object.not_overriden(), "not_overriden")
         self.assertEqual(list(object.return_list()), ["A", "B", "C"])
         self.assertEqual(list(SubClassTest.test_list(object)), ["A", "B", "C"])
 
-        x = SubClassTest.pass_through(object)
+        x = TestFunctions.pass_through(object)
         self.assertEqual(id(x), id(object))
 
     def testCreateInstance(self):
         """Test derived instances can be created from managed code"""
-        object = SubClassTest.create_instance(DerivedClass)
-        self.assertEqual(object.foo(), "bar")
-        self.assertEqual(SubClassTest.test_foo(object), "bar")
+        object = TestFunctions.create_instance(DerivedClass)
+        self.assertEqual(object.foo(), "DerivedClass")
+        self.assertEqual(TestFunctions.test_foo(object), "DerivedClass")
         self.assertEqual(object.bar("bar", 2), "bar_bar")
-        self.assertEqual(SubClassTest.test_bar(object, "bar", 2), "bar_bar")
+        self.assertEqual(TestFunctions.test_bar(object, "bar", 2), "bar_bar")
         self.assertEqual(object.not_overriden(), "not_overriden")
 
-        x = SubClassTest.pass_through(object)
+        x = TestFunctions.pass_through(object)
         self.assertEqual(id(x), id(object))
+
+        object2 = TestFunctions.create_instance(InterfaceTestClass)
+        self.assertEqual(object2.foo(), "InterfaceTestClass")
+        self.assertEqual(TestFunctions.test_foo(object2), "InterfaceTestClass")
+        self.assertEqual(object2.bar("bar", 2), "bar/bar")
+        self.assertEqual(TestFunctions.test_bar(object2, "bar", 2), "bar/bar")
+
+        y = TestFunctions.pass_through(object2)
+        self.assertEqual(id(y), id(object2))
 
 def test_suite():
     return unittest.makeSuite(SubClassTests)
