@@ -283,7 +283,7 @@ namespace Python.Runtime {
                     namespaces[ns].Add(assembly, String.Empty);
                 }
 
-                if (t.IsGenericTypeDefinition) {
+                if (ns!=null && t.IsGenericTypeDefinition) {
                     GenericUtil.Register(t);
                 }
             }
