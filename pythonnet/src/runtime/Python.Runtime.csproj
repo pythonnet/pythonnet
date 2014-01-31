@@ -191,5 +191,4 @@ copy "$(TargetDir)clr.pyd" "$(SolutionDir)"
 </PostBuildEvent>
     <PreBuildEvent>del "$(TargetDir)clr.pyd"</PreBuildEvent>
   </PropertyGroup>
-  <Import Project="../../packages/UnmanagedExports.1.2.3-Beta/tools/RGiesecke.DllExport.targets" />
 </Project>
