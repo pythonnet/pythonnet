@@ -1,0 +1,8 @@
+*.suo
+*.pdb
+[Oo]bj/
+[Bb]in/
+*.dll
+*.pyd
+*.exe
+pythonnet/packages/*
