@@ -37,7 +37,7 @@ PyNet_Args* PyNet_Init(int ext) {
      * if you are planning on using the dllmaps defined on the
      * system configuration
      */
-    //mono_config_parse(NULL);
+    mono_config_parse(NULL);
 
     /* I can't use this call to run the main_thread_handler. The function
      * runs it in another thread but *this* thread holds the Python

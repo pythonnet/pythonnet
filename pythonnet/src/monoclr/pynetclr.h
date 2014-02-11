@@ -20,7 +20,7 @@
 #include <mono/metadata/assembly.h>
 #include <glib.h>
 
-#define MONO_VERSION "v2.0.50727"
+#define MONO_VERSION "v4.0.30319.1"
 #define MONO_DOMAIN "Python.Runtime"
 #define PR_ASSEMBLY "Python.Runtime.dll"
 
