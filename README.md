@@ -1,6 +1,14 @@
 pythonnet
 =========
 
+**NOTE** The *official* repo is now https://github.com/pythonnet/pythonnet. Changes from this fork of the original sourceforge project will be integrated back into that main repo in due course.
+
+**Features not yet integrated into the main repo**:
+- Python 3 support
+- Subclassing managed types in Python
+
+--------------------------------------------------------------------------------------------------------
+
 This fork of http://sourceforge.net/projects/pythonnet/ allows easy calling of python functions from C#.
 
 + All calls to python should be inside a "using (Py.GIL()) {/* Your code here */}" block.
