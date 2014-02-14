@@ -314,6 +314,16 @@ namespace Python.Runtime {
             return namespaces.ContainsKey(name);
         }
 
+        //===================================================================
+        // Returns list of assemblies that declare types in a given namespace
+        //===================================================================
+
+        public static IEnumerable<Assembly> GetAssemblies(string nsname) {
+            if (!namespaces.ContainsKey(nsname))
+                return new List<Assembly>();
+
+            return namespaces[nsname].Keys;
+        }
 
         //===================================================================
         // Returns the current list of valid names for the input namespace.
