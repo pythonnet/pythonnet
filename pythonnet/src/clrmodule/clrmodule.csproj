@@ -13,12 +13,13 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\DebugMono\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
@@ -29,7 +30,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugMono|x64'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\DebugMono\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
@@ -39,8 +40,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
     <OutputPath>bin\x86\ReleaseMono\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -51,8 +51,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
     <OutputPath>bin\x64\ReleaseMono\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -64,7 +63,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\DebugWin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DEBUG_PRINT</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;DEBUG_PRINT</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
@@ -75,7 +74,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugWin|x64'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\DebugWin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
@@ -85,8 +84,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
     <OutputPath>bin\x86\ReleaseWin\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -97,8 +95,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
     <OutputPath>bin\x64\ReleaseWin\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -122,20 +119,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>del "$(SolutionDir)clr.pyd"</PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>move "$(TargetPath)" "$(TargetDir)clr.pyd"
-copy "$(TargetDir)clr.pyd" "$(SolutionDir)"</PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Import Project="../../packages/UnmanagedExports.1.2.3-Beta/tools/RGiesecke.DllExport.targets" Condition="Exists('../../packages/UnmanagedExports.1.2.3-Beta/tools/RGiesecke.DllExport.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="'$(NoNuGet)' != 'true' And Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Import Project="..\..\packages\UnmanagedExports.1.2.3-Beta\tools\RGiesecke.DllExport.targets" Condition="Exists('..\..\packages\UnmanagedExports.1.2.3-Beta\tools\RGiesecke.DllExport.targets')"/>
+  <Target Name="AfterBuild" DependsOnTargets="RGieseckeDllExport">
+	<Copy SourceFiles="$(TargetPath)" DestinationFiles="$(PythonBuildDir)\clr.pyd" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

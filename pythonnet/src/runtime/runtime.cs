@@ -75,8 +75,10 @@ namespace Python.Runtime {
 
         is32bit = IntPtr.Size == 4;
 
-        Runtime.Py_Initialize();
-        Runtime.PyEval_InitThreads();
+        if (0 == Runtime.Py_IsInitialized()) {
+            Runtime.Py_Initialize();
+            Runtime.PyEval_InitThreads();
+        }
 
         IntPtr dict = Runtime.PyImport_GetModuleDict();
         IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");

@@ -37,7 +37,7 @@ initclr(void)
         PyModule_AddObject(m, "facade", Py_True);
         Py_INCREF(Py_True);
 
-        pn_args = PyNet_Init(0);
+        pn_args = PyNet_Init(1);
         if (pn_args->error) {
             return;
         }

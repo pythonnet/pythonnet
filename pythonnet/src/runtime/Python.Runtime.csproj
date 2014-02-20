@@ -8,11 +8,12 @@
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Python.Runtime</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+  	<PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
     <OutputPath>bin\x86\ReleaseMono\</OutputPath>
-    <DefineConstants>PYTHON27, UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -20,9 +21,9 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
-  <PropertyGroup Condition="' $(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
     <OutputPath>bin\x64\ReleaseMono\</OutputPath>
-    <DefineConstants>PYTHON27, UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -32,7 +33,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
     <OutputPath>bin\x86\ReleaseWin\</OutputPath>
-    <DefineConstants>PYTHON27, UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -42,7 +43,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
     <OutputPath>bin\x64\ReleaseWin\</OutputPath>
-    <DefineConstants>PYTHON27, UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -53,7 +54,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\DebugMono\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
@@ -65,7 +66,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x64'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\DebugMono\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
@@ -74,7 +75,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\DebugWin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
@@ -86,7 +87,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x64'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\DebugWin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
@@ -183,12 +184,7 @@
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
-  <PropertyGroup>
-    <PostBuildEvent>call "$(ProjectDir)buildclrmodule.bat" $(Platform) "$(ProjectDir)" "$(TargetDir)clr.pyd"
-copy "$(TargetPath)" "$(SolutionDir)"
-copy "$(TargetDir)*.pdb" "$(SolutionDir)"
-copy "$(TargetDir)clr.pyd" "$(SolutionDir)"
-</PostBuildEvent>
-    <PreBuildEvent>del "$(TargetDir)clr.pyd"</PreBuildEvent>
-  </PropertyGroup>
+  <Target Name="AfterBuild">
+	<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+  </Target>
 </Project>

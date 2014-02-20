@@ -1,0 +1,14 @@
+language: python
+python:
+  - 2.7
+before_install:
+  - sudo apt-get install software-properties-common
+  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
+  - sudo apt-get -qq update
+  - sudo apt-get -qq install mono-devel mono-gmcs mono-xbuild nunit-console
+install:
+  - cd pythonnet
+  - python setupmono.py build_ext --inplace
+script:
+  - export PYTHONPATH=`pwd`
+  - ./npython src/tests/runtests.py
