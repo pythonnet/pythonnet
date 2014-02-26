@@ -77,8 +77,10 @@ namespace Python.Runtime {
 
         if (0 == Runtime.Py_IsInitialized()) {
             Runtime.Py_Initialize();
-            Runtime.PyEval_InitThreads();
         }
+
+        // make sure threads are initialized even if python was initialized already
+        Runtime.PyEval_InitThreads();
 
         IntPtr dict = Runtime.PyImport_GetModuleDict();
         IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");

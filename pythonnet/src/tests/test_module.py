@@ -204,6 +204,9 @@ class ModuleTests(unittest.TestCase):
 
     def testImplicitAssemblyLoad(self):
         """Test implicit assembly loading via import."""
+        # this test only applies to windows
+        if sys.platform != "win32":
+            return
 
         def test():
             # This should fail until System.Windows.Forms has been

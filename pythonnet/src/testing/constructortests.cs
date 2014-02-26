@@ -9,7 +9,6 @@
 
 using System;
 using System.Collections;
-using System.Windows.Forms;
 using System.IO;
 
 namespace Python.Test {
@@ -53,9 +52,9 @@ namespace Python.Test {
 
     public class SubclassConstructorTest {
 
-        public Control value;
+        public Exception value;
 
-        public SubclassConstructorTest(Control v) {
+        public SubclassConstructorTest(Exception v) {
             this.value = v;
         }
 

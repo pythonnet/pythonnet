@@ -235,16 +235,13 @@ class MethodTests(unittest.TestCase):
 
     def testSubclassInstanceConversion(self):
         """Test subclass instance conversion in method call."""
-        clr.AddReference("System.Windows.Forms")
-        from System.Windows.Forms import Form, Control
-
-        class sub(Form):
+        class sub(System.Exception):
             pass
 
         object = MethodTest()
-        form = sub()
-        result = object.TestSubclassConversion(form)
-        self.assertTrue(isinstance(result, Control))
+        instance = sub()
+        result = object.TestSubclassConversion(instance)
+        self.assertTrue(isinstance(result, System.Exception))
 
 
     def testNullArrayConversion(self):

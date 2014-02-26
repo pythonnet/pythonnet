@@ -49,14 +49,14 @@ class ConstructorTests(unittest.TestCase):
     def testSubclassConstructor(self):
         """Test subclass constructor args"""
         from Python.Test import SubclassConstructorTest
-        from System.Windows.Forms import Form, Control
 
-        class sub(Form):
+        class sub(System.Exception):
             pass
 
-        form = sub()
-        ob = SubclassConstructorTest(form)
-        self.assertTrue(isinstance(ob.value, Control))
+        instance = sub()
+        ob = SubclassConstructorTest(instance)
+        print ob
+        self.assertTrue(isinstance(ob.value, System.Exception))
 
 
 
