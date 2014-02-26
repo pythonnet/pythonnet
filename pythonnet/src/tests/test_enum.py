@@ -122,16 +122,13 @@ class EnumTests(unittest.TestCase):
 
     def testEnumWithFlagsAttrConversion(self):
         """Test enumeration conversion with FlagsAttribute set."""
-        from System.Windows.Forms import Label
-
-        # This works because the AnchorStyles enum has FlagsAttribute.
-        label = Label()
-        label.Anchor = 99
+        # This works because the FlagsField enum has FlagsAttribute.
+        Test.FieldTest().FlagsField = 99
 
         # This should fail because our test enum doesn't have it.
         def test():
             Test.FieldTest().EnumField = 99
-            
+ 
         self.assertRaises(ValueError, test)
 
 

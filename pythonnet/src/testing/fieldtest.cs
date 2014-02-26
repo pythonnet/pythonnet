@@ -57,6 +57,7 @@ namespace Python.Test {
         public decimal DecimalField = 0;
         public string StringField;
         public ShortEnum EnumField;
+        public FlagsEnum FlagsField;
         public object ObjectField;
         public ISpam SpamField;
 

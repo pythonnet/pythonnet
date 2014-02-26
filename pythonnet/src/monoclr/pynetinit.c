@@ -104,10 +104,8 @@ void main_thread_handler (gpointer user_data) {
     for (ii = 0; ii < PyList_Size(syspath); ++ii) {
         const char* pydir = PyString_AsString(PyList_GetItem(syspath, ii));
         char* curdir = (char*) malloc(1024);
-        if (strlen(pydir) == 0) pydir = ".";
-    	
-        strcpy(curdir, pydir);
-        strcat(curdir, slash);
+        strncpy(curdir, strlen(pydir) > 0 ? pydir : ".", 1024);
+        strncat(curdir, slash, 1024);
 
         //look in this directory for the pn_args->pr_file
         DIR* dirp = opendir(curdir);

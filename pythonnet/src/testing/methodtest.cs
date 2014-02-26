@@ -9,7 +9,6 @@
 
 using System;
 using System.IO;
-using System.Windows.Forms;
 using System.Collections.Generic;
 
 namespace Python.Test {
@@ -71,7 +70,7 @@ namespace Python.Test {
             return v;
         }
 
-        public Control TestSubclassConversion(Control v) {
+        public Exception TestSubclassConversion(Exception v) {
             return v;
         }
 

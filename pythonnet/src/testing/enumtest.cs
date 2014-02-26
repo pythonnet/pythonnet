@@ -88,4 +88,14 @@ namespace Python.Test {
         Five
     }
 
+    [FlagsAttribute]
+    public enum FlagsEnum {
+        Zero,
+        One,
+        Two,
+        Three,
+        Four,
+        Five
+    }
+
 }

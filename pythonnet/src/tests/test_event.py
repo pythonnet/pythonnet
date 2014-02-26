@@ -493,7 +493,6 @@ class EventTests(unittest.TestCase):
 
     def testRemoveInternalCallHandler(self):
         """Test remove on an event sink implemented w/internalcall."""
-        clr.AddReference('System.Windows.Forms')
         object = EventTest()
 
         def h(sender, args):
@@ -501,12 +500,6 @@ class EventTests(unittest.TestCase):
 
         object.PublicEvent += h
         object.PublicEvent -= h
-
-        from System.Windows.Forms import Form
-        f = Form()
-        f.Click += h
-        f.Click -= h
-        f.Dispose()
 
 
     def testRemoveUnknownHandler(self):
