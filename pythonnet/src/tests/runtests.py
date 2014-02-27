@@ -62,10 +62,12 @@ def main(verbosity=1):
         module = __import__(name)
         suite.addTests((module.test_suite(),))
         
-    unittest.TextTestRunner(verbosity=verbosity).run(suite)
+    return unittest.TextTestRunner(verbosity=verbosity).run(suite)
 
 if __name__ == '__main__':
-    main(1)
+    result = main(1)
     if '--pause' in sys.argv:
         print "Press enter to continue"
         raw_input()
+    sys.exit(result)
+
