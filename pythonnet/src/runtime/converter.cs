@@ -540,6 +540,14 @@ namespace Python.Runtime {
                 if (Exceptions.ErrorOccurred()) {
                     goto overflow;
                 }
+
+                IntPtr check = Runtime.PyLong_FromUnsignedLong(ui);
+                int err = Runtime.PyObject_Compare(check, op);
+                Runtime.Decref(check);
+                if (0 != err || Exceptions.ErrorOccurred()) {
+                    goto overflow;
+                }
+
                 result = ui;
                 return true;
 
