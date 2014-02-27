@@ -9,7 +9,7 @@ before_install:
   - sudo apt-get -qq install mono-devel mono-gmcs mono-xbuild nunit-console
 install:
   - cd pythonnet
-  - python setupmono.py build_ext --inplace
+  - python setup.py build_ext --inplace
 script:
   - export PYTHONPATH=`pwd`
   - ./npython src/tests/runtests.py
