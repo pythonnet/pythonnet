@@ -6,7 +6,7 @@ from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_config_vars
 from platform import architecture
-from subprocess import check_output, check_call
+from subprocess import Popen, CalledProcessError, PIPE, check_call
 import shutil
 import sys
 import os
@@ -77,10 +77,10 @@ class PythonNET_BuildExt(build_ext):
 
 
     def _build_monoclr(self, ext):
-        mono_libs = check_output("pkg-config --libs mono-2", shell=True)
-        mono_cflags = check_output("pkg-config --cflags mono-2", shell=True)
-        glib_libs = check_output("pkg-config --libs glib-2.0", shell=True)
-        glib_cflags = check_output("pkg-config --cflags glib-2.0", shell=True)
+        mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
+        mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
+        glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
+        glib_cflags = _check_output("pkg-config --cflags glib-2.0", shell=True)
         cflags = mono_cflags.strip() + " " + glib_cflags.strip()
         libs = mono_libs.strip() + " " + glib_libs.strip()
 
@@ -127,6 +127,22 @@ class PythonNET_BuildExt(build_ext):
                                       runtime_library_dirs=ext.runtime_library_dirs,
                                       extra_postargs=libs.split(" "),
                                       debug=self.debug)
+
+
+def _check_output(*popenargs, **kwargs):
+    """subprocess.check_output from python 2.7.
+    Added here to support building for earlier versions
+    of Python.
+    """
+    process = Popen(stdout=PIPE, *popenargs, **kwargs)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        raise CalledProcessError(retcode, cmd, output=output)
+    return output
 
 
 if __name__ == "__main__":
