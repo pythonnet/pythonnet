@@ -132,7 +132,7 @@ namespace Python.Runtime {
 
             // If class has constructors, generate an __doc__ attribute.
 					
-            IntPtr doc;
+            IntPtr doc = IntPtr.Zero;
 			Type marker = typeof(DocStringAttribute);
 			Attribute[] attrs = (Attribute[])type.GetCustomAttributes(marker, false);
             if (attrs.Length == 0) {
@@ -160,7 +160,9 @@ namespace Python.Runtime {
                         Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
                         Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
                     }
-                    if (!CLRModule._SuppressDocs)
+
+                    // don't generate the docstring if one was already set from a DocStringAttribute.
+                    if (!CLRModule._SuppressDocs && doc == IntPtr.Zero)
                     {
                         doc = co.GetDocString();
                         Runtime.PyDict_SetItemString(dict, "__doc__", doc);
