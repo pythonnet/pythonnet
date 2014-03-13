@@ -6,3 +6,5 @@
 *.pyd
 *.exe
 pythonnet/packages/*
+pythonnet/dist
+pythonnet/pythonnet.egg-info
