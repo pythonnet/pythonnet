@@ -184,7 +184,11 @@ def _check_output(*popenargs, **kwargs):
 
 
 if __name__ == "__main__":
-    setup(name="pythonnet",
+    setup(
+        name="pythonnet",
+        version="2.0.0.dev1",
+        description=".Net and Mono integration for Python",
+        url='http://pythonnet.github.io/',
         ext_modules=[
             Extension("clr", sources=[])
         ],
