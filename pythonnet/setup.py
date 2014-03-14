@@ -24,7 +24,7 @@ if DEVTOOLS == "MsDev":
 
     cc = msvc9compiler.MSVCCompiler()
     cc.initialize()
-    _xbuild = cc.find_exe("msbuild.exe")
+    _xbuild = "\"%s\"" % cc.find_exe("msbuild.exe")
     _defines_sep = ";"
     _config = "%sWin" % CONFIG
     _npython_exe = "nPython.exe"
