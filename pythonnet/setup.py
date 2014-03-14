@@ -189,6 +189,10 @@ if __name__ == "__main__":
         version="2.0.0.dev1",
         description=".Net and Mono integration for Python",
         url='http://pythonnet.github.io/',
+        author="Python for .Net developers",
+        classifiers=[
+            'Development Status :: 3 - Alpha',
+            'Intended Audience :: Developers'],
         ext_modules=[
             Extension("clr", sources=[])
         ],
