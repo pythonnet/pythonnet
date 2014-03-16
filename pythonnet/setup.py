@@ -18,13 +18,39 @@ CONFIG = "Release" # Release or Debug
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 VERBOSITY = "minimal" # quiet, minimal, normal, detailed, diagnostic
 
-if DEVTOOLS == "MsDev":
-    from distutils import msvc9compiler
-    msvc9compiler.VERSION = 11
+def FindMsBuildPath():
+    import _winreg
 
-    cc = msvc9compiler.MSVCCompiler()
-    cc.initialize()
-    _xbuild = "\"%s\"" % cc.find_exe("msbuild.exe")
+    aReg = _winreg.ConnectRegistry(None,_winreg.HKEY_LOCAL_MACHINE)
+    try:
+        keysToCheck = [r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0", r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0", r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5", r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\2.0"]
+        aKey = None
+        for key in keysToCheck:
+            try:
+                aKey = _winreg.OpenKey(aReg, key)
+                break
+            except WindowsError:
+                pass
+
+        if aKey==None:
+            raise RuntimeError("MSBUILD.exe could not be found")
+
+        try:
+            val, type = _winreg.QueryValueEx(aKey, "MSBuildToolsPath")
+
+            if type!=_winreg.REG_SZ:
+                raise RuntimeError("MSBUILD.exe could not be found")
+        finally:
+            aKey.Close()
+    finally:
+        aReg.Close()
+
+    msbuildpath = os.path.join(val, "msbuild.exe")
+    return msbuildpath
+
+
+if DEVTOOLS == "MsDev":
+    _xbuild = "\"%s\"" % FindMsBuildPath()
     _defines_sep = ";"
     _config = "%sWin" % CONFIG
     _npython_exe = "nPython.exe"
