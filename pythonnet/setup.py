@@ -95,7 +95,6 @@ class PythonNET_BuildExt(build_ext):
             "/p:Platform=%s" % _platform,
             "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
             "/p:PythonBuildDir=%s" % os.path.abspath(dest_dir),
-            "/p:NoNuGet=true",
             "/verbosity:%s" % VERBOSITY,
         ]
 
