@@ -106,7 +106,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="RGiesecke.DllExport.Metadata">
-      <HintPath>..\..\packages\UnmanagedExports.1.2.3-Beta\lib\net\RGiesecke.DllExport.Metadata.dll</HintPath>
+      <HintPath>..\..\packages\UnmanagedExports.1.2.6\lib\net\RGiesecke.DllExport.Metadata.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -119,8 +119,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\..\packages\UnmanagedExports.1.2.3-Beta\tools\RGiesecke.DllExport.targets" Condition="Exists('..\..\packages\UnmanagedExports.1.2.3-Beta\tools\RGiesecke.DllExport.targets')"/>
   <Target Name="AfterBuild" DependsOnTargets="RGieseckeDllExport">
 	<Copy SourceFiles="$(TargetPath)" DestinationFiles="$(PythonBuildDir)\clr.pyd" />
   </Target>
+  <Import Project="../../packages/UnmanagedExports.1.2.6/tools/RGiesecke.DllExport.targets" Condition="Exists('../../packages/UnmanagedExports.1.2.6/tools/RGiesecke.DllExport.targets')" />
 </Project>
