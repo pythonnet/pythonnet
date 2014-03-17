@@ -183,7 +183,7 @@ class PythonNET_BuildScripts(build_scripts):
         # fixup scripts to look in the build_ext output folder
         if self.scripts:
             build_ext = self.get_finalized_command("build_ext")
-            output_dir = os.path.dirname(build_ext.get_ext_fullpath(_npython_exe))
+            output_dir = os.path.dirname(build_ext.get_ext_fullpath("clr"))
             scripts = []
             for script in self.scripts:
                 if os.path.exists(os.path.join(output_dir, script)):
