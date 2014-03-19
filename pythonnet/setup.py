@@ -81,6 +81,9 @@ class PythonNET_BuildExt(build_ext):
         if ext.name != "clr":
             return build_ext.build_extension(self, ext)
 
+        # install packages using nuget
+        self._install_packages()
+
         dest_file = self.get_ext_fullpath(ext.name)
         dest_dir = os.path.dirname(dest_file)
         if not os.path.exists(dest_dir):
@@ -162,6 +165,29 @@ class PythonNET_BuildExt(build_ext):
                                       runtime_library_dirs=ext.runtime_library_dirs,
                                       extra_postargs=libs.split(" "),
                                       debug=self.debug)
+
+
+    def _install_packages(self):
+        """install packages using nuget"""
+        nuget = os.path.join("tools", "nuget", "nuget.exe")
+        use_shell = False
+        if DEVTOOLS == "Mono":
+            nuget = "mono %s" % nuget
+            use_shell = True
+
+        for dir in os.listdir("src"):
+            if DEVTOOLS == "Mono" and dir == "clrmodule":
+                continue
+            if DEVTOOLS != "Mono" and dir == "monoclr":
+                continue
+
+            packages_cfg = os.path.join("src", dir, "packages.config")
+            if not os.path.exists(packages_cfg):
+                continue
+
+            cmd = "%s install %s -o packages" % (nuget, packages_cfg)
+            self.announce("Installng packages for %s: %s" % (dir, cmd))
+            check_call(cmd, shell=use_shell)
 
 
 class PythonNET_InstallLib(install_lib):
