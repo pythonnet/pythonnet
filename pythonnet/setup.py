@@ -175,19 +175,9 @@ class PythonNET_BuildExt(build_ext):
             nuget = "mono %s" % nuget
             use_shell = True
 
-        for dir in os.listdir("src"):
-            if DEVTOOLS == "Mono" and dir == "clrmodule":
-                continue
-            if DEVTOOLS != "Mono" and dir == "monoclr":
-                continue
-
-            packages_cfg = os.path.join("src", dir, "packages.config")
-            if not os.path.exists(packages_cfg):
-                continue
-
-            cmd = "%s install %s -o packages" % (nuget, packages_cfg)
-            self.announce("Installng packages for %s: %s" % (dir, cmd))
-            check_call(cmd, shell=use_shell)
+        cmd = "%s restore pythonnet.sln -o packages" % nuget
+        self.announce("Installing packages: %s" % cmd)
+        check_call(cmd, shell=use_shell)
 
 
 class PythonNET_InstallLib(install_lib):
