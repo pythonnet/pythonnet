@@ -27,4 +27,5 @@ test_script:
   - ps: C:\python\scripts\pip.exe install ("dist\" + (gci dist)[0].Name)
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
-#  - c:\python\python.exe src\tests\runtests.py
+  - c:\python\python.exe src\tests\runtests.py
+  - c:\python\scripts\npython.exe src\tests\runtests.py
