@@ -99,8 +99,8 @@ class PythonNET_BuildExt(build_ext):
         ]
 
         self.announce("Building: %s" % " ".join(cmd))
-        check_call(" ".join(cmd) + " /t:Clean", shell=True)
-        check_call(" ".join(cmd) + " /t:Build", shell=True)
+        check_call(" ".join(cmd + ["/t:Clean"]), shell=(True if DEVTOOLS=="Mono" else False))
+        check_call(" ".join(cmd + ["/t:Build"]), shell=(True if DEVTOOLS=="Mono" else False))
 
         if DEVTOOLS == "Mono":
             self._build_monoclr(ext)
