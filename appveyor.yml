@@ -21,7 +21,6 @@ install:
 
 build_script:
   - cd pythonnet
-  - tools\nuget\NuGet.exe restore pythonnet.sln
   - C:\python\python.exe setup.py bdist_wheel
 
 test_script:
