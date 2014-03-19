@@ -17,40 +17,47 @@ import os
 CONFIG = "Release" # Release or Debug
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 VERBOSITY = "minimal" # quiet, minimal, normal, detailed, diagnostic
+PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
 
-def FindMsBuildPath():
+
+def _find_msbuild_path():
+    """Return full path to msbuild.exe"""
     import _winreg
 
-    aReg = _winreg.ConnectRegistry(None,_winreg.HKEY_LOCAL_MACHINE)
+    hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     try:
-        keysToCheck = [r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0", r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0", r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5", r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\2.0"]
-        aKey = None
-        for key in keysToCheck:
+        keys_to_check = [
+            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0",
+            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0",
+            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5",
+            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\2.0"
+        ]
+        hkey = None
+        for key in keys_to_check:
             try:
-                aKey = _winreg.OpenKey(aReg, key)
+                hkey = _winreg.OpenKey(hreg, key)
                 break
             except WindowsError:
                 pass
 
-        if aKey==None:
-            raise RuntimeError("MSBUILD.exe could not be found")
+        if hkey is None:
+            raise RuntimeError("msbuild.exe could not be found")
 
         try:
-            val, type = _winreg.QueryValueEx(aKey, "MSBuildToolsPath")
-
-            if type!=_winreg.REG_SZ:
-                raise RuntimeError("MSBUILD.exe could not be found")
+            val, type_ = _winreg.QueryValueEx(hkey, "MSBuildToolsPath")
+            if type_ != _winreg.REG_SZ:
+                raise RuntimeError("msbuild.exe could not be found")
         finally:
-            aKey.Close()
+            hkey.Close()
     finally:
-        aReg.Close()
+        hreg.Close()
 
     msbuildpath = os.path.join(val, "msbuild.exe")
     return msbuildpath
 
 
 if DEVTOOLS == "MsDev":
-    _xbuild = "\"%s\"" % FindMsBuildPath()
+    _xbuild = "\"%s\"" % _find_msbuild_path()
     _defines_sep = ";"
     _config = "%sWin" % CONFIG
     _npython_exe = "nPython.exe"
@@ -64,7 +71,6 @@ elif DEVTOOLS == "Mono":
 else:
     raise NotImplementedError("DevTools %s not supported (use MsDev or Mono)" % DEVTOOLS)
 
-_platform = "x64" if architecture()[0] == "64bit" else "x86"
 
 class PythonNET_BuildExt(build_ext):
 
@@ -74,6 +80,9 @@ class PythonNET_BuildExt(build_ext):
         """
         if ext.name != "clr":
             return build_ext.build_extension(self, ext)
+
+        # install packages using nuget
+        self._install_packages()
 
         dest_file = self.get_ext_fullpath(ext.name)
         dest_dir = os.path.dirname(dest_file)
@@ -92,15 +101,16 @@ class PythonNET_BuildExt(build_ext):
             _xbuild,
             "pythonnet.sln",
             "/p:Configuration=%s" % _config,
-            "/p:Platform=%s" % _platform,
+            "/p:Platform=%s" % PLATFORM,
             "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
             "/p:PythonBuildDir=%s" % os.path.abspath(dest_dir),
             "/verbosity:%s" % VERBOSITY,
         ]
 
         self.announce("Building: %s" % " ".join(cmd))
-        check_call(" ".join(cmd + ["/t:Clean"]), shell=(True if DEVTOOLS=="Mono" else False))
-        check_call(" ".join(cmd + ["/t:Build"]), shell=(True if DEVTOOLS=="Mono" else False))
+        use_shell = True if DEVTOOLS == "Mono" else False
+        check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
+        check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
 
         if DEVTOOLS == "Mono":
             self._build_monoclr(ext)
@@ -155,6 +165,29 @@ class PythonNET_BuildExt(build_ext):
                                       runtime_library_dirs=ext.runtime_library_dirs,
                                       extra_postargs=libs.split(" "),
                                       debug=self.debug)
+
+
+    def _install_packages(self):
+        """install packages using nuget"""
+        nuget = os.path.join("tools", "nuget", "nuget.exe")
+        use_shell = False
+        if DEVTOOLS == "Mono":
+            nuget = "mono %s" % nuget
+            use_shell = True
+
+        for dir in os.listdir("src"):
+            if DEVTOOLS == "Mono" and dir == "clrmodule":
+                continue
+            if DEVTOOLS != "Mono" and dir == "monoclr":
+                continue
+
+            packages_cfg = os.path.join("src", dir, "packages.config")
+            if not os.path.exists(packages_cfg):
+                continue
+
+            cmd = "%s install %s -o packages" % (nuget, packages_cfg)
+            self.announce("Installng packages for %s: %s" % (dir, cmd))
+            check_call(cmd, shell=use_shell)
 
 
 class PythonNET_InstallLib(install_lib):
