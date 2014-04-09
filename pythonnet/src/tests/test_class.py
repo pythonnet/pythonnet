@@ -6,7 +6,6 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
-
 from System.Collections import Hashtable
 from Python.Test import ClassTest
 import sys, os, string, unittest, types

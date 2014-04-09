@@ -109,14 +109,8 @@ namespace Python.Runtime {
             // thing happens with implicit assembly loading at a reasonable
             // cost. Ask the AssemblyManager to do implicit loading for each 
             // of the steps in the qualified name, then try it again.
-            bool fromFile;
-            if (AssemblyManager.LoadImplicit(qname, out fromFile)) {
-                bool ignore = name.StartsWith("__");
-                if (true == fromFile && (!ignore)) {
-                    string deprWarning = String.Format("\nThe module was found, but not in a referenced namespace.\n" +
-                                 "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").", qname);
-                    Exceptions.deprecation(deprWarning);
-                }
+            bool ignore = name.StartsWith("__");
+            if (AssemblyManager.LoadImplicit(qname, !ignore)) {
                 if (AssemblyManager.IsValidNamespace(qname)) {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
