@@ -221,30 +221,40 @@ namespace Python.Runtime {
         // Call ONLY for namespaces that HAVE NOT been cached yet.
         //===================================================================
 
-        public static bool LoadImplicit(string name, out bool fromFile) {
-            // 2010-08-16: Deprecation support
-            // Added out param to detect fully qualified name load
-            fromFile = false;
+        public static bool LoadImplicit(string name, bool warn=true) {
             string[] names = name.Split('.');
             bool loaded = false;
             string s = "";
+            Assembly lastAssembly = null;
+            HashSet<Assembly> assemblies = null;
             for (int i = 0; i < names.Length; i++) {
                 s = (i == 0) ? names[0] : s + "." + names[i];
                 if (!probed.ContainsKey(s)) {
-                    if (LoadAssemblyPath(s) != null) {
-                        loaded = true;
+                    if (assemblies == null) {
+                        assemblies = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
                     }
-                    else if (LoadAssembly(s) != null) {
+                    Assembly a = LoadAssemblyPath(s);
+                    if (a == null) {
+                        a = LoadAssembly(s);
+                    }
+                    if (a != null && !assemblies.Contains(a)) {
                         loaded = true;
+                        lastAssembly = a;
                     }
                     probed[s] = 1;
-                    // 2010-12-24: Deprecation logic
-                    if (loaded && (s == name)) {
-                        fromFile = true;
-                        //break;
-                    }
                 }
             }
+
+            // Deprecation warning
+            if (warn && loaded)
+            {
+                string deprWarning = String.Format(
+                                "\nThe module was found, but not in a referenced namespace.\n" +
+                                "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").",
+                                    Path.GetFileNameWithoutExtension(lastAssembly.Location));
+                Exceptions.deprecation(deprWarning);
+            }
+
             return loaded;
         }
 

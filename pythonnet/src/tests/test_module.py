@@ -6,14 +6,13 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
-
 import clr
 clr.AddReference('Python.Test')
 clr.AddReference('System.Data')
 
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
 ##clr.AddReference('System.Windows.Forms')
-import sys, os, string, unittest, types
+import sys, os, string, unittest, types, warnings
 
 
 class ModuleTests(unittest.TestCase):
@@ -42,8 +41,8 @@ class ModuleTests(unittest.TestCase):
     def testPreloadVar(self):
         import clr
         self.assertTrue(clr.getPreload() is False, clr.getPreload())
-    	clr.setPreload(False)
-    	self.assertTrue(clr.getPreload() is False, clr.getPreload())
+        clr.setPreload(False)
+        self.assertTrue(clr.getPreload() is False, clr.getPreload())
         try:
             clr.setPreload(True)
             self.assertTrue(clr.getPreload() is True, clr.getPreload())
@@ -204,27 +203,25 @@ class ModuleTests(unittest.TestCase):
 
     def testImplicitAssemblyLoad(self):
         """Test implicit assembly loading via import."""
-        # this test only applies to windows
-        if sys.platform != "win32":
-            return
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
 
-        def test():
-            # This should fail until System.Windows.Forms has been
-            # imported or that assembly has been explicitly loaded.
-            # True for Windows; Not so for Mono 2.8.1
-            import System.Windows
+            # should trigger a DeprecationWarning as Microsoft.Build hasn't
+            # been added as a reference yet (and should exist for mono)
+            import Microsoft.Build
 
-        # The test fails when the project is compiled with MS VS 2005. Dunno why :(
-		# Fails (as expected) on Late Binding model. Works as expected on an interactive sesson.
-        self.assertRaises(ImportError, test)
+            self.assertEqual(len(w), 1)
+            self.assertTrue(isinstance(w[0].message, DeprecationWarning))
 
-        clr.AddReference("System.Windows.Forms")
-        import System.Windows.Forms as Forms
-        self.assertTrue(self.isCLRModule(Forms))
-        self.assertTrue(Forms.__name__ == 'System.Windows.Forms')
-        from System.Windows.Forms import Form
-        self.assertTrue(self.isCLRClass(Form))
-        self.assertTrue(Form.__name__ == 'Form')
+        with warnings.catch_warnings(record=True) as w:
+            clr.AddReference("System.Windows.Forms")
+            import System.Windows.Forms as Forms
+            self.assertTrue(self.isCLRModule(Forms))
+            self.assertTrue(Forms.__name__ == 'System.Windows.Forms')
+            from System.Windows.Forms import Form
+            self.assertTrue(self.isCLRClass(Form))
+            self.assertTrue(Form.__name__ == 'Form')
+            self.assertEqual(len(w), 0)
 
 
     def testExplicitAssemblyLoad(self):

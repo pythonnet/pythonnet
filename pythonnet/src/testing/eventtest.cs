@@ -8,7 +8,6 @@
 // ==========================================================================
 
 using System;
-using System.Windows.Forms;
 
 namespace Python.Test {
 
@@ -20,22 +19,6 @@ namespace Python.Test {
 
 
     public class EventTest {
-
-
-        public void WinFormTest() {
-            EventTest e = new EventTest();
-            EventHandler h = new EventHandler(e.ClickHandler);
-
-            Form f = new Form();
-            f.Click += h;
-            //f.Click(null, new EventArgs());
-            f.Click -= h;
-        }
-
-        public void ClickHandler(object sender, EventArgs e) {
-            Console.WriteLine("click");
-        }
-
 
         public static event TestEventHandler PublicStaticEvent;
 

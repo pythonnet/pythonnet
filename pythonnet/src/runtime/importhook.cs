@@ -156,15 +156,7 @@ namespace Python.Runtime {
 
             AssemblyManager.UpdatePath();
             if (!AssemblyManager.IsValidNamespace(realname)) {
-                bool fromFile = false;
-                if (AssemblyManager.LoadImplicit(realname, out fromFile)) {
-                    if (true == fromFile) {
-                        string deprWarning = String.Format("\nThe module was found, but not in a referenced namespace.\n" +
-                                     "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").", realname);
-                        Exceptions.deprecation(deprWarning);
-                    }
-                }
-                else
+                if (!AssemblyManager.LoadImplicit(realname))
                 {
                     // May be called when a module being imported imports a module.
                     // In particular, I've seen decimal import copy import org.python.core
@@ -174,7 +166,6 @@ namespace Python.Runtime {
 
             // See if sys.modules for this interpreter already has the
             // requested module. If so, just return the exising module.
-
             IntPtr modules = Runtime.PyImport_GetModuleDict();
             IntPtr module = Runtime.PyDict_GetItem(modules, py_mod_name);
 
