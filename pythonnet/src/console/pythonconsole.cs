@@ -8,6 +8,7 @@
 // ==========================================================================
 
 using System;
+using System.Reflection;
 using Python.Runtime;
 
 namespace Python.Runtime {
@@ -27,6 +28,30 @@ public sealed class PythonConsole {
         return i;
     }
 
-}
+    // Register a callback function to load embedded assmeblies.
+    // (Python.Runtime.dll is included as a resource)
+    private sealed class AssemblyLoader {
+        public AssemblyLoader() {
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
+                String resourceName = new AssemblyName(args.Name).Name + ".dll";
+
+                // looks for the assembly from the resources and load it
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName)) {
+                    if (stream != null) {
+                        Byte[] assemblyData = new Byte[stream.Length];
+                        stream.Read(assemblyData, 0, assemblyData.Length);
+                        return Assembly.Load(assemblyData);
+                    }
+                }
+
+                return null;
+            };
+        }
+    };
+
+    private static AssemblyLoader assemblyLoader = new AssemblyLoader();
+
+};
+
 
 }

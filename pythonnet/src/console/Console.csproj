@@ -192,6 +192,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="python-clear.ico" />
+    <EmbeddedResource Include="$(PythonBuildDir)\Python.Runtime.dll">
+        <LogicalName>Python.Runtime.dll</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
