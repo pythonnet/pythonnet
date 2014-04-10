@@ -9,6 +9,7 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 using Python.Runtime;
 
 namespace Python.Runtime {
@@ -19,6 +20,9 @@ public sealed class PythonConsole {
 
     [STAThread]
     public static int Main(string[] args) {
+	// reference the static assemblyLoader to stop it being optimized away
+        AssemblyLoader a = assemblyLoader;
+
         string [] cmd = Environment.GetCommandLineArgs();
         PythonEngine.Initialize();
 
@@ -31,16 +35,26 @@ public sealed class PythonConsole {
     // Register a callback function to load embedded assmeblies.
     // (Python.Runtime.dll is included as a resource)
     private sealed class AssemblyLoader {
+        Dictionary<string, Assembly> loadedAssemblies;
+
         public AssemblyLoader() {
+            loadedAssemblies = new Dictionary<string, Assembly>();
+
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
                 String resourceName = new AssemblyName(args.Name).Name + ".dll";
+
+                if (loadedAssemblies.ContainsKey(resourceName)) {
+                    return loadedAssemblies[resourceName];
+                }
 
                 // looks for the assembly from the resources and load it
                 using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName)) {
                     if (stream != null) {
                         Byte[] assemblyData = new Byte[stream.Length];
                         stream.Read(assemblyData, 0, assemblyData.Length);
-                        return Assembly.Load(assemblyData);
+                        Assembly assembly = Assembly.Load(assemblyData);
+                        loadedAssemblies[resourceName] = assembly;
+                        return assembly;
                     }
                 }
 
