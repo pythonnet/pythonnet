@@ -39,35 +39,43 @@ namespace Python.Test {
 
         public static string CallEchoString(string arg) {
             IntPtr gs = PythonEngine.AcquireLock();
-            if (module == null) {
-                module = PythonEngine.ModuleFromString("tt", testmod);
+            try {
+                if (module == null) {
+                    module = PythonEngine.ModuleFromString("tt", testmod);
+                }
+                PyObject func = module.GetAttr("echostring");
+                PyString parg = new PyString(arg);
+                PyObject temp = func.Invoke(parg);
+                string result = (string)temp.AsManagedObject(typeof(String));
+                func.Dispose();
+                parg.Dispose();
+                temp.Dispose();
+                return result;
             }
-            PyObject func = module.GetAttr("echostring");
-            PyString parg = new PyString(arg);
-            PyObject temp = func.Invoke(parg);
-            string result = (string)temp.AsManagedObject(typeof(String));
-            func.Dispose();
-            parg.Dispose();
-            temp.Dispose();
-            PythonEngine.ReleaseLock(gs);
-            return result;
+            finally {
+                PythonEngine.ReleaseLock(gs);
+            }
         }
 
         public static string CallEchoString2(string arg) {
             IntPtr gs = PythonEngine.AcquireLock();
-            if (module == null) {
-                module = PythonEngine.ModuleFromString("tt", testmod);
-            }
+            try {
+                if (module == null) {
+                    module = PythonEngine.ModuleFromString("tt", testmod);
+                }
 
-            PyObject func = module.GetAttr("echostring2");
-            PyString parg = new PyString(arg);
-            PyObject temp = func.Invoke(parg);
-            string result = (string)temp.AsManagedObject(typeof(String));
-            func.Dispose();
-            parg.Dispose();
-            temp.Dispose();
-            PythonEngine.ReleaseLock(gs);
-            return result;
+                PyObject func = module.GetAttr("echostring2");
+                PyString parg = new PyString(arg);
+                PyObject temp = func.Invoke(parg);
+                string result = (string)temp.AsManagedObject(typeof(String));
+                func.Dispose();
+                parg.Dispose();
+                temp.Dispose();
+                return result;
+            }
+            finally {
+                PythonEngine.ReleaseLock(gs);
+            }
         }
 
         
