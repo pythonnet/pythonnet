@@ -12,7 +12,6 @@ before_install:
   - yes | sudo certmgr -ssl -m https://nugetgallery.blob.core.windows.net
   - yes | sudo certmgr -ssl -m https://nuget.org
 install:
-  - cd pythonnet
   - python setup.py build_ext --inplace
 script:
   - export PYTHONPATH=`pwd`

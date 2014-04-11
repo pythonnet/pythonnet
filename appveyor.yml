@@ -21,7 +21,6 @@ install:
   - C:\Python\Scripts\pip.exe install wheel
 
 build_script:
-  - cd pythonnet
   - C:\python\python.exe setup.py bdist_wheel
 
 test_script:
