@@ -41,7 +41,8 @@ public sealed class PythonConsole {
             loadedAssemblies = new Dictionary<string, Assembly>();
 
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
-                String resourceName = new AssemblyName(args.Name).Name + ".dll";
+                string shortName = args.Name.Split(',')[0];
+                String resourceName = shortName + ".dll";
 
                 if (loadedAssemblies.ContainsKey(resourceName)) {
                     return loadedAssemblies[resourceName];
