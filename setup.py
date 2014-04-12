@@ -20,18 +20,30 @@ VERBOSITY = "minimal" # quiet, minimal, normal, detailed, diagnostic
 PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
 
 
-def _find_msbuild_path():
-    """Return full path to msbuild.exe"""
+def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
+    """Return full path to one of the microsoft build tools"""
     import _winreg
 
-    hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-    try:
+    if use_windows_sdk:
+        value_name = "InstallationFolder"
+        sdk_name = "Windows SDK"
+        keys_to_check = [
+            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1\WinSDKWin32Tools",
+            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0\WinSDKWin32Tools",
+            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0A\WinSDKWin32Tools",
+        ]
+    else:
+        value_name = "MSBuildToolsPath"
+        sdk_name = "MSBuild"
         keys_to_check = [
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\2.0"
         ]
+
+    hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+    try:
         hkey = None
         for key in keys_to_check:
             try:
@@ -41,23 +53,26 @@ def _find_msbuild_path():
                 pass
 
         if hkey is None:
-            raise RuntimeError("msbuild.exe could not be found")
+            raise RuntimeError("%s could not be found" % sdk_name)
 
         try:
-            val, type_ = _winreg.QueryValueEx(hkey, "MSBuildToolsPath")
+            val, type_ = _winreg.QueryValueEx(hkey, value_name)
             if type_ != _winreg.REG_SZ:
-                raise RuntimeError("msbuild.exe could not be found")
+                raise RuntimeError("%s could not be found" % sdk_name)
+ 
+            path = os.path.join(val, tool)
+            if os.path.exists(path):
+                return path
         finally:
             hkey.Close()
     finally:
         hreg.Close()
 
-    msbuildpath = os.path.join(val, "msbuild.exe")
-    return msbuildpath
-
+    raise RuntimeError("%s could not be found" % tool)
+    
 
 if DEVTOOLS == "MsDev":
-    _xbuild = "\"%s\"" % _find_msbuild_path()
+    _xbuild = "\"%s\"" % _find_msbuild_tool("msbuild.exe")
     _defines_sep = ";"
     _config = "%sWin" % CONFIG
     _npython_exe = "nPython.exe"
@@ -107,6 +122,10 @@ class PythonNET_BuildExt(build_ext):
             "/verbosity:%s" % VERBOSITY,
         ]
 
+        manifest = self._get_manifest(dest_dir)
+        if manifest:
+            cmd.append("/p:PythonManifest=\"%s\"" % manifest)
+
         self.announce("Building: %s" % " ".join(cmd))
         use_shell = True if DEVTOOLS == "Mono" else False
         check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
@@ -114,6 +133,16 @@ class PythonNET_BuildExt(build_ext):
 
         if DEVTOOLS == "Mono":
             self._build_monoclr(ext)
+
+
+    def _get_manifest(self, build_dir):
+        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2,5):
+            mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
+            manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
+            cmd = [mt, '-inputresource:"%s"' % sys.executable, '-out:"%s"' % manifest]
+            self.announce("Extracting manifest from %s" % sys.executable)
+            check_call(" ".join(cmd), shell=False)
+            return manifest
 
 
     def _build_monoclr(self, ext):

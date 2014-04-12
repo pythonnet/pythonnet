@@ -180,6 +180,9 @@
     <WarningLevel>4</WarningLevel>
     <Optimize>False</Optimize>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(PythonManifest)' != ''">
+    <ApplicationManifest>$(PythonManifest)</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core">
