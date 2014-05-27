@@ -442,6 +442,12 @@ namespace Python.Runtime {
             return names;
         }
 
+        [ModuleFunctionAttribute()]
+        public static int _AtExit()
+        {
+            return Runtime.AtExit();
+        }
+
     }
 
 }

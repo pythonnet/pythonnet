@@ -117,6 +117,16 @@ namespace Python.Runtime {
                 Runtime.Initialize();
                 initialized = true;
                 Exceptions.Clear();
+
+                // register the atexit callback (this doesn't use Py_AtExit as the C atexit
+                // callbacks are called after python is fully finalized but the python ones
+                // are called while the python engine is still running).
+                string code =
+                "import atexit, clr\n" +
+                "atexit.register(clr._AtExit)\n";
+                PyObject r = PythonEngine.RunString(code);
+                if (r != null)
+                    r.Dispose();
             }
         }
 

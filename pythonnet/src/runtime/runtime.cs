@@ -84,6 +84,10 @@ namespace Python.Runtime {
 #error You must define one of PYTHON23 to PYTHON34
 #endif
 
+        // set to true when python is finalizing
+        internal static Object IsFinalizingLock = new Object();
+        internal static bool IsFinalizing = false;
+
         internal static bool wrap_exceptions;
         internal static bool is32bit;
 
@@ -230,6 +234,14 @@ namespace Python.Runtime {
         Exceptions.Shutdown();
         ImportHook.Shutdown();
         Py_Finalize();
+    }
+
+    // called *without* the GIL aquired by clr._AtExit
+    internal static int AtExit() {
+        lock (IsFinalizingLock) {
+            IsFinalizing = true;
+        }
+        return 0;
     }
 
     internal static IntPtr Py_single_input = (IntPtr)256;
