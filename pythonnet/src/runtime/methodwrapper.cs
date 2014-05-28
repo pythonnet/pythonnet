@@ -50,7 +50,7 @@ namespace Python.Runtime {
             Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), fp);
             Marshal.WriteIntPtr(mdef, (2 * IntPtr.Size), (IntPtr)0x0003); // METH_VARARGS | METH_KEYWORDS
             Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), IntPtr.Zero);
-            ptr = Runtime.PyCFunction_New(mdef, IntPtr.Zero);
+            ptr = Runtime.PyCFunction_NewEx(mdef, IntPtr.Zero, IntPtr.Zero);
         }
 
         public IntPtr Call(IntPtr args, IntPtr kw) {

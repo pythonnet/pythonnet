@@ -262,6 +262,9 @@ namespace Python.Runtime {
         /* Type attribute cache version tag. Added in version 2.6 */
 	    public static int tp_version_tag;
 #endif
+#if (PYTHON34)
+        public static int tp_finalize = 0;
+#endif
         // COUNT_ALLOCS adds some more stuff to PyTypeObject 
 #if (Py_COUNT_ALLOCS)
 	/* these must be last and never explicitly initialized */
@@ -470,6 +473,8 @@ namespace Python.Runtime {
     /// to good use as PythonNet specific flags (Managed and Subclass)
     /// </summary>
     internal class TypeFlags {
+#if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
+        // these flags were removed in Python 3
         public static int HaveGetCharBuffer = (1 << 0);
         public static int HaveSequenceIn = (1 << 1);
         public static int GC = 0;
@@ -479,6 +484,7 @@ namespace Python.Runtime {
         public static int HaveWeakRefs = (1 << 6);
         public static int HaveIter = (1 << 7);
         public static int HaveClass = (1 << 8);
+#endif
         public static int HeapType = (1 << 9);
         public static int BaseType = (1 << 10);
         public static int Ready = (1 << 12);
@@ -509,7 +515,11 @@ namespace Python.Runtime {
         public static int BaseExceptionSubclass = (1 << 30);
         public static int TypeSubclass = (1 << 31);
 #endif
-        public static int Default = (HaveGetCharBuffer |
+
+// Default flags for Python 2
+#if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
+        public static int Default = (
+                             HaveGetCharBuffer |
                              HaveSequenceIn |
                              HaveInPlaceOps |
                              HaveRichCompare |
@@ -517,10 +527,19 @@ namespace Python.Runtime {
                              HaveIter |
                              HaveClass |
                              HaveStacklessExtension |
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+    #if (PYTHON25 || PYTHON26 || PYTHON27)
                              HaveIndex | 
-#endif
+    #endif
                              0);
+#endif
+
+// Default flags for Python 3
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static int Default = (
+                            HaveStacklessExtension |
+                            HaveVersionTag);
+#endif
+
     }
 
 

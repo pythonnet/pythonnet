@@ -651,11 +651,6 @@ namespace Python.Runtime {
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern IntPtr
-    PyCFunction_New(IntPtr ml, IntPtr self);
-
-    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
-        ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern IntPtr
     PyCFunction_NewEx(IntPtr ml, IntPtr self, IntPtr mod);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
