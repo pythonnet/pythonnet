@@ -102,15 +102,15 @@ namespace Python.Runtime {
         //===================================================================
 
         static Assembly ResolveHandler(Object ob, ResolveEventArgs args){
-            string name = args.Name.ToLower();
+            AssemblyName name = new AssemblyName(args.Name);
             for (int i = 0; i < assemblies.Count; i++) {
                 Assembly a = (Assembly)assemblies[i];
                 string full = a.FullName.ToLower();
-                if (full.StartsWith(name)) {
+                if (full.StartsWith(name.Name)) {
                     return a;
                 }
             }
-            return LoadAssemblyPath(args.Name);
+            return LoadAssemblyPath(name.Name);
         }
 
 
@@ -212,12 +212,21 @@ namespace Python.Runtime {
                 // using other versions already loaded. This is a problem if there
                 // is a Python.Runtime.dll in the same folder as the assembly being
                 // loaded, as that will result in two instances being loaded.
-                try   {
+                try {
                     byte[] bytes = System.IO.File.ReadAllBytes(path);
                     assembly = Assembly.Load(bytes);
                     loadedAssemblies[path] = assembly;
                 }
-                catch {}
+                catch {
+                    try {
+                        // last ditch effort - might be only way
+                        assembly = Assembly.LoadFrom(path);
+                    }
+                    catch {
+                        // Do we really want to swallow everything here?
+                        // System.Console.WriteLine("Warning: could not load %s", path);
+                    }
+                }
             }
             return assembly;
         }
