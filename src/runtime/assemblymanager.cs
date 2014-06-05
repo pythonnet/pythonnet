@@ -208,6 +208,19 @@ namespace Python.Runtime {
             return assembly;
         }
 
+        //===================================================================
+        // Returns an assembly that's already been loaded
+        //===================================================================
+
+        public static Assembly FindLoadedAssembly(string name) {
+            for (int i = 0; i < assemblies.Count; i++) {
+                Assembly a = (Assembly)assemblies[i];
+                if (a.GetName().Name == name) {
+                    return a;
+                }
+            }
+            return null;
+        }
 
         //===================================================================
         // Given a qualified name of the form A.B.C.D, attempt to load 
@@ -233,7 +246,10 @@ namespace Python.Runtime {
                     if (assemblies == null) {
                         assemblies = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
                     }
-                    Assembly a = LoadAssemblyPath(s);
+                    Assembly a = FindLoadedAssembly(s);
+                    if (a == null) {
+                        a = LoadAssemblyPath(s);
+                    }
                     if (a == null) {
                         a = LoadAssembly(s);
                     }
