@@ -6,7 +6,7 @@ from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.command.build_scripts import build_scripts
 from distutils.command.install_lib import install_lib
-from distutils.sysconfig import get_config_vars
+from distutils.sysconfig import get_config_var
 from platform import architecture
 from subprocess import Popen, CalledProcessError, PIPE, check_call
 from glob import glob
@@ -183,15 +183,22 @@ class PythonNET_BuildExt(build_ext):
                                         depends=ext.depends)
 
         output_dir = os.path.dirname(self.get_ext_fullpath(ext.name))
-        py_libs = get_config_vars("BLDLIBRARY")[0]
+        py_libs = get_config_var("BLDLIBRARY")
         libs += " " + py_libs
+
+        # Include the directories python's shared libs were installed to. This
+        # is case python was built with --enable-shared as then npython will need
+        # to be able to find libpythonX.X.so.
+        runtime_library_dirs = (get_config_var("DESTDIRS") or "").split(" ")
+        if ext.runtime_library_dirs:
+            runtime_library_dirs.extend(ext.runtime_library_dirs)
 
         self.compiler.link_executable(objects,
                                       _npython_exe,
                                       output_dir=output_dir,
                                       libraries=self.get_libraries(ext),
                                       library_dirs=ext.library_dirs,
-                                      runtime_library_dirs=ext.runtime_library_dirs,
+                                      runtime_library_dirs=runtime_library_dirs,
                                       extra_postargs=libs.split(" "),
                                       debug=self.debug)
 
