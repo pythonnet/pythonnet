@@ -385,7 +385,11 @@ namespace Python.Runtime {
         {
             AssemblyManager.UpdatePath();
             Assembly assembly = null;
-            assembly = AssemblyManager.LoadAssemblyPath(name);
+            assembly = AssemblyManager.FindLoadedAssembly(name);
+            if (assembly == null)
+            {
+                assembly = AssemblyManager.LoadAssemblyPath(name);
+            }
             if (assembly == null)
             {
                 assembly = AssemblyManager.LoadAssembly(name);

@@ -30,7 +30,6 @@ namespace Python.Runtime {
         static ResolveEventHandler rhandler;
         static Dictionary<string, int> probed;
         static List<Assembly> assemblies;
-        static Dictionary<string, Assembly> loadedAssemblies;
         internal static List<string> pypath;
 
         private AssemblyManager() {}
@@ -47,7 +46,6 @@ namespace Python.Runtime {
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
             assemblies = new List<Assembly>(16);
-            loadedAssemblies = new Dictionary<string, Assembly>();
             pypath = new List<string>(16);
 
             AppDomain domain = AppDomain.CurrentDomain;
@@ -204,24 +202,25 @@ namespace Python.Runtime {
             string path = FindAssembly(name);
             Assembly assembly = null;
             if (path != null) {
-                if (loadedAssemblies.ContainsKey(path)) {
-                    return loadedAssemblies[path];
-                }
-                // Avoid using Assembly.LoadFrom as referenced assemblies that exist
-                // in the same path will be loaded directly from there, rather than
-                // using other versions already loaded. This is a problem if there
-                // is a Python.Runtime.dll in the same folder as the assembly being
-                // loaded, as that will result in two instances being loaded.
-                try   {
-                    byte[] bytes = System.IO.File.ReadAllBytes(path);
-                    assembly = Assembly.Load(bytes);
-                    loadedAssemblies[path] = assembly;
-                }
+                try   { assembly = Assembly.LoadFrom(path); }
                 catch {}
             }
             return assembly;
         }
 
+        //===================================================================
+        // Returns an assembly that's already been loaded
+        //===================================================================
+
+        public static Assembly FindLoadedAssembly(string name) {
+            for (int i = 0; i < assemblies.Count; i++) {
+                Assembly a = (Assembly)assemblies[i];
+                if (a.GetName().Name == name) {
+                    return a;
+                }
+            }
+            return null;
+        }
 
         //===================================================================
         // Given a qualified name of the form A.B.C.D, attempt to load 
@@ -247,7 +246,10 @@ namespace Python.Runtime {
                     if (assemblies == null) {
                         assemblies = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
                     }
-                    Assembly a = LoadAssemblyPath(s);
+                    Assembly a = FindLoadedAssembly(s);
+                    if (a == null) {
+                        a = LoadAssemblyPath(s);
+                    }
                     if (a == null) {
                         a = LoadAssembly(s);
                     }
