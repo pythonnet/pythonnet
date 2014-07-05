@@ -222,12 +222,21 @@ namespace Python.Runtime {
         ///  
         /// </remarks>
         internal static void SetupExceptionHack() {
+            DebugUtil.Print("SetupExceptionHack");
             ns_exc = ClassManager.GetClass(typeof(Exception)).pyHandle;
             cache = new Hashtable();
 
+            string module_exception =
+#if(PYTHON34)
+                "builtins"
+#else
+                "exceptions"
+#endif
+                ;
+
             string code = 
-            "import exceptions\n" +
-            "class Exception(exceptions.Exception):\n" +
+            "import {0}\n" +
+            "class Exception({0}.Exception):\n" +
             "    _class = None\n" +
             "    _inner = None\n" +
             "    \n" +
@@ -239,7 +248,7 @@ namespace Python.Runtime {
             "    def __init__(self, *args, **kw):\n" +
             "        inst = self.__class__._class(*args, **kw)\n" +
             "        self.__dict__['_inner'] = inst\n" +
-            "        exceptions.Exception.__init__(self, *args, **kw)\n" +
+            "        {0}.Exception.__init__(self, *args, **kw)\n" +
             "\n" +
             "    def __getattr__(self, name, _marker=[]):\n" +
             "        inner = self.__dict__['_inner']\n" +
@@ -268,6 +277,8 @@ namespace Python.Runtime {
             "        name = self.__class__.__name__\n" +
             "        return '%s(\\'%s\\',)' % (name, msg) \n" +
             "\n";
+            code = string.Format(code, module_exception);
+            DebugUtil.Print(code);
 
             IntPtr dict = Runtime.PyDict_New();
 

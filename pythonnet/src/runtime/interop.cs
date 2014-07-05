@@ -79,7 +79,7 @@ namespace Python.Runtime {
         }
 
         public static int magic(IntPtr ob) {
-#if (PYTHON32 || PYTHON33 || PYTHON33)
+#if (PYTHON32 || PYTHON33 || PYTHON34)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -91,7 +91,7 @@ namespace Python.Runtime {
 
         public static int DictOffset(IntPtr ob)
         {
-#if (PYTHON32 || PYTHON33 || PYTHON33)
+#if (PYTHON32 || PYTHON33 || PYTHON34)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -102,7 +102,7 @@ namespace Python.Runtime {
         }
 
         public static int Size(IntPtr ob) {
-#if (PYTHON32 || PYTHON33 || PYTHON33)
+#if (PYTHON32 || PYTHON33 || PYTHON34)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
