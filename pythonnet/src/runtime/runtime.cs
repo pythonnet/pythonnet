@@ -199,18 +199,10 @@ namespace Python.Runtime {
         // of the Python runtime that do not allow new-style classes to
         // be used as exceptions (Python versions 2.4 and lower).
 
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 )
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         wrap_exceptions = false;
 #else
-
-        IntPtr m = PyImport_ImportModule(
-#if(PYTHON34)
-            "builtins"
-#else
-            "exceptions"
-#endif
-            );
-
+        IntPtr m = PyImport_ImportModule("exceptions");
         Exceptions.ErrorCheck(m);
         op = Runtime.PyObject_GetAttrString(m, "Exception");
         Exceptions.ErrorCheck(op);
