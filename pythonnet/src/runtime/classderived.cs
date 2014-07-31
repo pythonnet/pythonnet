@@ -375,7 +375,7 @@ namespace Python.Runtime
                             PyObject[] pyargs = new PyObject[args.Length];
                             for (int i = 0; i < args.Length; ++i)
                             {
-                                pyargs[i] = new PyObject(Converter.ToPython(args[i], args[i].GetType()));
+                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]));
                                 disposeList.Add(pyargs[i]);
                             }
 
@@ -431,7 +431,7 @@ namespace Python.Runtime
                             PyObject[] pyargs = new PyObject[args.Length];
                             for (int i = 0; i < args.Length; ++i)
                             {
-                                pyargs[i] = new PyObject(Converter.ToPython(args[i], args[i].GetType()));
+                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]));
                                 disposeList.Add(pyargs[i]);
                             }
 
