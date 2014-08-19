@@ -170,7 +170,17 @@ namespace Python.Runtime {
             if (co == null) {
                 return Exceptions.RaiseTypeError("invalid object");
             }
-            return Runtime.PyString_FromString(co.inst.ToString());
+            try {
+                return Runtime.PyString_FromString(co.inst.ToString());
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null) {
+                    e = e.InnerException;
+                }
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
         }
 
 
