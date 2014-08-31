@@ -64,6 +64,22 @@ namespace Python.Runtime {
             }
         }
 
+        public static string PythonPath {
+            get
+            {
+                string result = Runtime.Py_GetPath();
+                if (result == null)
+                {
+                    return "";
+                }
+                return result;
+            }
+            set
+            {
+                Runtime.Py_SetPath(value);
+            }
+        }
+
         public static string Version {
             get { 
                 return Runtime.Py_GetVersion(); 

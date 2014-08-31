@@ -583,25 +583,70 @@ namespace Python.Runtime {
     PyEval_GetLocals();
 
 
+#if PYTHON32 || PYTHON33 || PYTHON34
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
          ExactSpelling=true, CharSet=CharSet.Ansi)]
+    [return: MarshalAs(UnmanagedType.LPWStr)]
         internal unsafe static extern string
         Py_GetProgramName();
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
         internal unsafe static extern void
-        Py_SetProgramName(string name);
+        Py_SetProgramName([MarshalAsAttribute(UnmanagedType.LPWStr)]string name);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
+    [return: MarshalAs(UnmanagedType.LPWStr)]
         internal unsafe static extern string
         Py_GetPythonHome();
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
         internal unsafe static extern void
-        Py_SetPythonHome(string home);
+        Py_SetPythonHome([MarshalAsAttribute(UnmanagedType.LPWStr)]string home);
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    [return: MarshalAs(UnmanagedType.LPWStr)]
+        internal unsafe static extern string
+        Py_GetPath();
+
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+        internal unsafe static extern void
+        Py_SetPath([MarshalAsAttribute(UnmanagedType.LPWStr)]string home);
+#else
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+          ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern string
+    Py_GetProgramName();
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern void
+    Py_SetProgramName(string name);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern string
+    Py_GetPythonHome();
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern void
+    Py_SetPythonHome(string home);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern string
+    Py_GetPath();
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern void
+    Py_SetPath(string home);
+#endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
