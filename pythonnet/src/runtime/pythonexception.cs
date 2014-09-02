@@ -53,6 +53,18 @@ namespace Python.Runtime {
         Dispose();
     }
 
+    /// <summary>
+    /// Restores python error.
+    /// </summary>
+    public void Restore()
+    {
+        IntPtr gs = PythonEngine.AcquireLock();
+        Runtime.PyErr_Restore(_pyType, _pyValue, _pyTB);
+        _pyType = IntPtr.Zero;
+        _pyValue = IntPtr.Zero;
+        _pyTB = IntPtr.Zero;
+        PythonEngine.ReleaseLock(gs);
+    }
 
     /// <summary>
     /// PyType Property

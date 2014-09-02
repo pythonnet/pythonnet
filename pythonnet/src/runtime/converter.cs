@@ -34,7 +34,7 @@ namespace Python.Runtime {
         static Type int64Type;
         static Type flagsType;
         static Type boolType;
-        //static Type typeType;
+        static Type typeType;
 
         static Converter () {
             nfi = NumberFormatInfo.InvariantInfo;
@@ -45,7 +45,7 @@ namespace Python.Runtime {
             doubleType = typeof(Double);
             flagsType = typeof(FlagsAttribute);
             boolType = typeof(Boolean);
-            //typeType = typeof(Type);
+            typeType = typeof(Type);
         }
 
 
@@ -329,6 +329,57 @@ namespace Python.Runtime {
                 if (setError) {
                     Exceptions.SetError(Exceptions.TypeError,
                                         "value cannot be converted to Object"
+                                        );
+                }
+
+                return false;
+            }
+
+            // Conversion to 'Type' is done using the same mappings as above
+            // for objects.
+
+            if (obType == typeType)
+            {
+                if (value == Runtime.PyStringType)
+                {
+                    result = stringType;
+                    return true;
+                }
+
+                else if (value == Runtime.PyBoolType)
+                {
+                    result = boolType;
+                    return true;
+                }
+
+                else if (value == Runtime.PyIntType)
+                {
+                    result = int32Type;
+                    return true;
+                }
+
+                else if (value == Runtime.PyLongType)
+                {
+                    result = int64Type;
+                    return true;
+                }
+
+                else if (value == Runtime.PyFloatType)
+                {
+                    result = doubleType;
+                    return true;
+                }
+
+                else if (value == Runtime.PyListType || value == Runtime.PyTupleType)
+                {
+                    result = typeof(object[]);
+                    return true;
+                }
+
+                if (setError)
+                {
+                    Exceptions.SetError(Exceptions.TypeError,
+                                        "value cannot be converted to Type"
                                         );
                 }
 

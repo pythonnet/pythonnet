@@ -10,6 +10,7 @@
 using System;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Collections;
 
 namespace Python.Runtime {
 
@@ -561,6 +562,21 @@ namespace Python.Runtime {
         return new PyObject(r);
     }
 
+    /// <summary>
+    /// GetEnumerator Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Return a new PyIter object for the object. This allows any iterable
+    /// python object to be iterated over in C#. A PythonException will be
+    /// raised if the object is not iterable.
+    /// </remarks>
+
+    public IEnumerator GetEnumerator()
+    {
+        return new PyIter(this);
+    }
+
 
     /// <summary>
     /// Invoke Method
@@ -758,6 +774,22 @@ namespace Python.Runtime {
     public bool IsCallable() {
         return (Runtime.PyCallable_Check(obj) != 0);
     }
+
+
+    /// <summary>
+    /// IsIterable Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns true if the object is iterable object. This method 
+    /// always succeeds.
+    /// </remarks>
+
+    public bool IsIterable()
+    {
+        return Runtime.PyIter_Check(obj);
+    }
+
 
 
     /// <summary>

@@ -246,6 +246,7 @@ namespace Python.Runtime {
             {
                 Type subType = ClassDerivedObject.CreateDerivedType(name,
                                                                     baseClass.type,
+                                                                    py_dict,
                                                                     (string)namespaceStr,
                                                                     (string)assembly);
 

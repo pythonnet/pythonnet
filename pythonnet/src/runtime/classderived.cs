@@ -8,6 +8,7 @@
 // ==========================================================================
 
 using System;
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections.Generic;
@@ -47,9 +48,9 @@ namespace Python.Runtime
         {
         }
 
-        //====================================================================
-        // Implements __new__ for derived classes of reflected classes.
-        //====================================================================
+        /// <summary>
+        /// Implements __new__ for derived classes of reflected classes.
+        /// <summary>
         new public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             ClassDerivedObject cls = GetManagedObject(tp) as ClassDerivedObject;
@@ -111,13 +112,14 @@ namespace Python.Runtime
             return self.pyHandle;
         }
 
-        //====================================================================
-        // Creates a new managed type derived from a base type with any virtual
-        // methods overriden to call out to python if the associated python
-        // object has overriden the method.
-        //====================================================================
+        /// <summary>
+        /// Creates a new managed type derived from a base type with any virtual
+        /// methods overriden to call out to python if the associated python
+        /// object has overriden the method.
+        /// </summary>
         internal static Type CreateDerivedType(string name,
                                                Type baseType,
+                                               IntPtr py_dict,
                                                string namespaceStr,
                                                string assemblyName,
                                                string moduleName="Python.Runtime.Dynamic.dll")
@@ -147,9 +149,6 @@ namespace Python.Runtime
                                                     baseClass,
                                                     interfaces.ToArray());
 
-            ILGenerator il;
-            MethodBuilder mb;
-
             // add a field for storing the python object pointer
             FieldBuilder fb = typeBuilder.DefineField("__pyobj__", typeof(CLRObject), FieldAttributes.Public);
 
@@ -157,127 +156,82 @@ namespace Python.Runtime
             ConstructorInfo[] constructors = baseClass.GetConstructors();
             foreach (ConstructorInfo ctor in constructors)
             {
-                ParameterInfo[] parameters = ctor.GetParameters();
-                Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
-
-                // create a method for calling the original constructor
-                string baseCtorName = "_" + baseType.Name + "__cinit__";
-                mb = typeBuilder.DefineMethod(baseCtorName,
-                                                MethodAttributes.Public |
-                                                    MethodAttributes.Final |
-                                                    MethodAttributes.HideBySig,
-                                                typeof(void),
-                                                parameterTypes);
-
-                // emit the assembly for calling the original method using call instead of callvirt
-                il = mb.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                for (int i = 0; i < parameters.Length; ++i)
-                    il.Emit(OpCodes.Ldarg, i + 1);
-                il.Emit(OpCodes.Call, ctor);
-                il.Emit(OpCodes.Ret);
-
-                // override the original method with a new one that dispatches to python
-                ConstructorBuilder cb = typeBuilder.DefineConstructor(MethodAttributes.Public | 
-                                                                        MethodAttributes.ReuseSlot |
-                                                                        MethodAttributes.HideBySig,
-                                                                      ctor.CallingConvention,
-                                                                      parameterTypes);
-                il = cb.GetILGenerator();
-                il.DeclareLocal(typeof(Object[]));
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldstr, baseCtorName);
-                il.Emit(OpCodes.Ldc_I4, parameters.Length);
-                il.Emit(OpCodes.Newarr, typeof(System.Object));
-                il.Emit(OpCodes.Stloc_0);
-                for (int i = 0; i < parameters.Length; ++i)
-                {
-                    il.Emit(OpCodes.Ldloc_0);
-                    il.Emit(OpCodes.Ldc_I4, i);
-                    il.Emit(OpCodes.Ldarg, i + 1);
-                    if (parameterTypes[i].IsValueType)
-                        il.Emit(OpCodes.Box, parameterTypes[i]);
-                    il.Emit(OpCodes.Stelem, typeof(Object));
-                }
-                il.Emit(OpCodes.Ldloc_0);
-                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeCtor"));
-                il.Emit(OpCodes.Ret);
+                AddConstructor(ctor, baseType, typeBuilder);
             }
 
-            // override any virtual methods
+            // Override any properties explicitly overriden in python
+            HashSet<string> pyProperties = new HashSet<string>();
+            if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
+            {
+                Runtime.Incref(py_dict);
+                PyDict dict = new PyDict(py_dict);
+
+                foreach (PyObject pyKey in dict.Keys())
+                {
+                    PyObject value = dict[pyKey];
+                    if (value.HasAttr("_clr_property_type_"))
+                    {
+                        string propertyName = pyKey.ToString();
+                        pyProperties.Add(propertyName);
+
+                        // Add the property to the type
+                        AddPythonProperty(propertyName, value, typeBuilder);
+                    }
+                }
+            }
+
+            // override any virtual methods not already overriden by the properties above
             MethodInfo[] methods = baseType.GetMethods();
+            HashSet<string> virtualMethods = new HashSet<string>();
             foreach (MethodInfo method in methods)
             {
                 if (!method.Attributes.HasFlag(MethodAttributes.Virtual) | method.Attributes.HasFlag(MethodAttributes.Final))
                     continue;
 
-                ParameterInfo[] parameters = method.GetParameters();
-                Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
+                // skip if this property has already been overriden
+                if ((method.Name.StartsWith("get_") || method.Name.StartsWith("set_"))
+                        && pyProperties.Contains(method.Name.Substring(4)))
+                    continue;
 
-                // create a method for calling the original method
-                string baseMethodName = "_" + baseType.Name + "__" + method.Name;
-                mb = typeBuilder.DefineMethod(baseMethodName,
-                                                MethodAttributes.Public |
-                                                    MethodAttributes.Final |
-                                                    MethodAttributes.HideBySig,
-                                                method.ReturnType,
-                                                parameterTypes);
+                // keep track of the virtual methods redirected to the python instance
+                virtualMethods.Add(method.Name);
 
-                // emit the assembly for calling the original method using call instead of callvirt
-                il = mb.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                for (int i = 0; i < parameters.Length; ++i)
-                    il.Emit(OpCodes.Ldarg, i + 1);
-                il.Emit(OpCodes.Call, method);
-                il.Emit(OpCodes.Ret);
+                // override the virtual method to call out to the python method, if there is one.
+                AddVirtualMethod(method, baseType, typeBuilder);
+            }
 
-                // override the original method with a new one that dispatches to python
-                mb = typeBuilder.DefineMethod(method.Name,
-                                                MethodAttributes.Public |
-                                                    MethodAttributes.ReuseSlot |
-                                                    MethodAttributes.Virtual |
-                                                    MethodAttributes.HideBySig,
-                                                method.CallingConvention,
-                                                method.ReturnType,
-                                                parameterTypes);
-                il = mb.GetILGenerator();
-                il.DeclareLocal(typeof(Object[]));
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldstr, method.Name);
-                il.Emit(OpCodes.Ldstr, baseMethodName);
-                il.Emit(OpCodes.Ldc_I4, parameters.Length);
-                il.Emit(OpCodes.Newarr, typeof(System.Object));
-                il.Emit(OpCodes.Stloc_0);
-                for (int i = 0; i < parameters.Length; ++i)
+            // Add any additional methods and properties explicitly exposed from Python.
+            if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
+            {
+                Runtime.Incref(py_dict);
+                PyDict dict = new PyDict(py_dict);
+
+                foreach (PyObject pyKey in dict.Keys())
                 {
-                    il.Emit(OpCodes.Ldloc_0);
-                    il.Emit(OpCodes.Ldc_I4, i);
-                    il.Emit(OpCodes.Ldarg, i + 1);
-                    if (parameterTypes[i].IsValueType)
-                        il.Emit(OpCodes.Box, parameterTypes[i]);
-                    il.Emit(OpCodes.Stelem, typeof(Object));
+                    PyObject value = dict[pyKey];
+                    if (value.HasAttr("_clr_return_type_") && value.HasAttr("_clr_arg_types_"))
+                    {
+                        string methodName = pyKey.ToString();
+
+                        // if this method has already been redirected to the python method skip it
+                        if (virtualMethods.Contains(methodName))
+                            continue;
+
+                        // Add the method to the type
+                        AddPythonMethod(methodName, value, typeBuilder);
+                    }
                 }
-                il.Emit(OpCodes.Ldloc_0);
-                if (method.ReturnType == typeof(void))
-                {
-                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
-                }
-                else
-                {
-                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(method.ReturnType));
-                }
-                il.Emit(OpCodes.Ret);
             }
 
             // add the destructor so the python object created in the constructor gets destroyed
-            mb = typeBuilder.DefineMethod("Finalize",
-                                            MethodAttributes.Family |
-                                                MethodAttributes.Virtual |
-                                                MethodAttributes.HideBySig,
-                                            CallingConventions.Standard,
-                                            typeof(void),
-                                            Type.EmptyTypes);
-            il = mb.GetILGenerator();
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod("Finalize",
+                                                                    MethodAttributes.Family |
+                                                                        MethodAttributes.Virtual |
+                                                                        MethodAttributes.HideBySig,
+                                                                        CallingConventions.Standard,
+                                                                    typeof(void),
+                                                                    Type.EmptyTypes);
+            ILGenerator il = methodBuilder.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("Finalize"));
             il.Emit(OpCodes.Ldarg_0);
@@ -290,9 +244,265 @@ namespace Python.Runtime
             Assembly assembly = Assembly.GetAssembly(type);
             AssemblyManager.ScanAssembly(assembly);
 
+            AssemblyBuilder assemblyBuilder = assemblyBuilders[assemblyName];
+
             return type;
         }
 
+        /// <summary>
+        /// Add a constructor override that calls the python ctor after calling the base type constructor.
+        /// </summary>
+        /// <param name="ctor">constructor to be called before calling the python ctor</param>
+        /// <param name="baseType">Python callable object</param>
+        /// <param name="typeBuilder">TypeBuilder for the new type the ctor is to be added to</param>
+        private static void AddConstructor(ConstructorInfo ctor, Type baseType, TypeBuilder typeBuilder)
+        {
+            ParameterInfo[] parameters = ctor.GetParameters();
+            Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
+
+            // create a method for calling the original constructor
+            string baseCtorName = "_" + baseType.Name + "__cinit__";
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(baseCtorName,
+                                                                    MethodAttributes.Public |
+                                                                        MethodAttributes.Final |
+                                                                        MethodAttributes.HideBySig,
+                                                                    typeof(void),
+                                                                    parameterTypes);
+
+            // emit the assembly for calling the original method using call instead of callvirt
+            ILGenerator il = methodBuilder.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            for (int i = 0; i < parameters.Length; ++i)
+                il.Emit(OpCodes.Ldarg, i + 1);
+            il.Emit(OpCodes.Call, ctor);
+            il.Emit(OpCodes.Ret);
+
+            // override the original method with a new one that dispatches to python
+            ConstructorBuilder cb = typeBuilder.DefineConstructor(MethodAttributes.Public |
+                                                                    MethodAttributes.ReuseSlot |
+                                                                    MethodAttributes.HideBySig,
+                                                                  ctor.CallingConvention,
+                                                                  parameterTypes);
+            il = cb.GetILGenerator();
+            il.DeclareLocal(typeof(Object[]));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldstr, baseCtorName);
+            il.Emit(OpCodes.Ldc_I4, parameters.Length);
+            il.Emit(OpCodes.Newarr, typeof(System.Object));
+            il.Emit(OpCodes.Stloc_0);
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Ldarg, i + 1);
+                if (parameterTypes[i].IsValueType)
+                    il.Emit(OpCodes.Box, parameterTypes[i]);
+                il.Emit(OpCodes.Stelem, typeof(Object));
+            }
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeCtor"));
+            il.Emit(OpCodes.Ret);
+        }
+
+        /// <summary>
+        /// Add a virtual method override that checks for an override on the python instance
+        /// and calls it, otherwise fall back to the base class method.
+        /// </summary>
+        /// <param name="method">virtual method to be overriden</param>
+        /// <param name="baseType">Python callable object</param>
+        /// <param name="typeBuilder">TypeBuilder for the new type the method is to be added to</param>
+        private static void AddVirtualMethod(MethodInfo method, Type baseType, TypeBuilder typeBuilder)
+        {
+
+            ParameterInfo[] parameters = method.GetParameters();
+            Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
+
+            // create a method for calling the original method
+            string baseMethodName = "_" + baseType.Name + "__" + method.Name;
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(baseMethodName,
+                                                                    MethodAttributes.Public |
+                                                                        MethodAttributes.Final |
+                                                                        MethodAttributes.HideBySig,
+                                                                    method.ReturnType,
+                                                                    parameterTypes);
+
+            // emit the assembly for calling the original method using call instead of callvirt
+            ILGenerator il = methodBuilder.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            for (int i = 0; i < parameters.Length; ++i)
+                il.Emit(OpCodes.Ldarg, i + 1);
+            il.Emit(OpCodes.Call, method);
+            il.Emit(OpCodes.Ret);
+
+            // override the original method with a new one that dispatches to python
+            methodBuilder = typeBuilder.DefineMethod(method.Name,
+                                                        MethodAttributes.Public |
+                                                            MethodAttributes.ReuseSlot |
+                                                            MethodAttributes.Virtual |
+                                                            MethodAttributes.HideBySig,
+                                                        method.CallingConvention,
+                                                        method.ReturnType,
+                                                        parameterTypes);
+            il = methodBuilder.GetILGenerator();
+            il.DeclareLocal(typeof(Object[]));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldstr, method.Name);
+            il.Emit(OpCodes.Ldstr, baseMethodName);
+            il.Emit(OpCodes.Ldc_I4, parameters.Length);
+            il.Emit(OpCodes.Newarr, typeof(System.Object));
+            il.Emit(OpCodes.Stloc_0);
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Ldarg, i + 1);
+                if (parameterTypes[i].IsValueType)
+                    il.Emit(OpCodes.Box, parameterTypes[i]);
+                il.Emit(OpCodes.Stelem, typeof(Object));
+            }
+            il.Emit(OpCodes.Ldloc_0);
+            if (method.ReturnType == typeof(void))
+            {
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
+            }
+            else
+            {
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(method.ReturnType));
+            }
+            il.Emit(OpCodes.Ret);
+        }
+
+        /// <summary>
+        /// Python method may have the following function attributes set to control how they're exposed:
+        ///   - _clr_return_type_    - method return type (required)
+        ///   - _clr_arg_types_      - list of method argument types (required)
+        ///   - _clr_method_name_    - method name, if different from the python method name (optional)
+        /// </summary>
+        /// <param name="methodName">Method name to add to the type</param>
+        /// <param name="func">Python callable object</param>
+        /// <param name="typeBuilder">TypeBuilder for the new type the method/property is to be added to</param>
+        private static void AddPythonMethod(string methodName, PyObject func, TypeBuilder typeBuilder)
+        {
+            if (func.HasAttr("_clr_method_name_"))
+                methodName = func.GetAttr("_clr_method_name_").ToString();
+
+            PyObject pyReturnType = func.GetAttr("_clr_return_type_");
+            Type returnType = pyReturnType.AsManagedObject(typeof(Type)) as Type;
+            if (returnType == null)
+                returnType = typeof(void);
+
+            PyObject pyArgTypes = func.GetAttr("_clr_arg_types_");
+            if (!pyArgTypes.IsIterable())
+                throw new ArgumentException("_clr_arg_types_ must be a list or tuple of CLR types");
+
+            List<Type> argTypes = new List<Type>();
+            foreach (PyObject pyArgType in pyArgTypes)
+            {
+                Type argType = pyArgType.AsManagedObject(typeof(Type)) as Type;
+                if (argType == null)
+                    throw new ArgumentException("_clr_arg_types_ must be a list or tuple of CLR types");
+                argTypes.Add(argType);
+            }
+
+            // add the method to call back into python
+            MethodAttributes methodAttribs = MethodAttributes.Public |
+                                                MethodAttributes.Virtual |
+                                                MethodAttributes.ReuseSlot |
+                                                MethodAttributes.HideBySig;
+
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(methodName,
+                                                                    methodAttribs,
+                                                                    returnType,
+                                                                    argTypes.ToArray());
+
+            ILGenerator il = methodBuilder.GetILGenerator();
+            il.DeclareLocal(typeof(Object[]));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldstr, methodName);
+            il.Emit(OpCodes.Ldnull); // don't fall back to the base type's method
+            il.Emit(OpCodes.Ldc_I4, argTypes.Count);
+            il.Emit(OpCodes.Newarr, typeof(System.Object));
+            il.Emit(OpCodes.Stloc_0);
+            for (int i = 0; i < argTypes.Count; ++i)
+            {
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Ldarg, i + 1);
+                if (argTypes[i].IsValueType)
+                    il.Emit(OpCodes.Box, argTypes[i]);
+                il.Emit(OpCodes.Stelem, typeof(Object));
+            }
+            il.Emit(OpCodes.Ldloc_0);
+            if (returnType == typeof(void))
+            {
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
+            }
+            else
+            {
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(returnType));
+            }
+            il.Emit(OpCodes.Ret);
+        }
+
+        /// <summary>
+        /// Python properties may have the following function attributes set to control how they're exposed:
+        ///   - _clr_property_type_     - property type (required)
+        /// </summary>
+        /// <param name="propertyName">Property name to add to the type</param>
+        /// <param name="func">Python property object</param>
+        /// <param name="typeBuilder">TypeBuilder for the new type the method/property is to be added to</param>
+        private static void AddPythonProperty(string propertyName, PyObject func, TypeBuilder typeBuilder)
+        {
+            // add the method to call back into python
+            MethodAttributes methodAttribs = MethodAttributes.Public |
+                                                MethodAttributes.Virtual |
+                                                MethodAttributes.ReuseSlot |
+                                                MethodAttributes.HideBySig |
+                                                MethodAttributes.SpecialName;
+
+            PyObject pyPropertyType = func.GetAttr("_clr_property_type_");
+            Type propertyType = pyPropertyType.AsManagedObject(typeof(Type)) as Type;
+            if (propertyType == null)
+                throw new ArgumentException("_clr_property_type must be a CLR type");
+
+            PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(propertyName,
+                                                                         PropertyAttributes.None,
+                                                                         propertyType,
+                                                                         null);
+
+            if (func.HasAttr("fget") && func.GetAttr("fget").IsTrue())
+            {
+                MethodBuilder methodBuilder = typeBuilder.DefineMethod("get_" + propertyName,
+                                                                        methodAttribs,
+                                                                        propertyType,
+                                                                        null);
+
+                ILGenerator il = methodBuilder.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldstr, propertyName);
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeGetProperty").MakeGenericMethod(propertyType));
+                il.Emit(OpCodes.Ret);
+
+                propertyBuilder.SetGetMethod(methodBuilder);
+            }
+
+            if (func.HasAttr("fset") && func.GetAttr("fset").IsTrue())
+            {
+                MethodBuilder methodBuilder = typeBuilder.DefineMethod("set_" + propertyName,
+                                                                        methodAttribs,
+                                                                        null,
+                                                                        new Type[]{propertyType});
+
+                ILGenerator il = methodBuilder.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldstr, propertyName);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeSetProperty").MakeGenericMethod(propertyType));
+                il.Emit(OpCodes.Ret);
+
+                propertyBuilder.SetSetMethod(methodBuilder);
+            }
+        }
 
         private static ModuleBuilder GetModuleBuilder(string assemblyName, string moduleName)
         {
@@ -324,7 +534,6 @@ namespace Python.Runtime
 
             return moduleBuilder;
         }
-
     }
 
     //
@@ -395,6 +604,9 @@ namespace Python.Runtime
                 }
             }
 
+            if (origMethodName == null)
+                throw new NullReferenceException("Python object does not have a '" + methodName + "' method");
+
             return (T)obj.GetType().InvokeMember(origMethodName,
                                                  BindingFlags.InvokeMethod,
                                                  null,
@@ -451,11 +663,77 @@ namespace Python.Runtime
                 }
             }
 
+            if (origMethodName == null)
+                throw new NullReferenceException("Python object does not have a '" + methodName + "' method");
+
             obj.GetType().InvokeMember(origMethodName,
                                        BindingFlags.InvokeMethod,
                                        null,
                                        obj,
                                        args);
+        }
+
+        public static T InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)
+        {
+            FieldInfo fi = obj.GetType().GetField("__pyobj__");
+            CLRObject self = (CLRObject)fi.GetValue(obj);
+
+            if (null == self)
+                throw new NullReferenceException("Instance must be specified when getting a property");
+
+            List<PyObject> disposeList = new List<PyObject>();
+            IntPtr gs = Runtime.PyGILState_Ensure();
+            try
+            {
+                Runtime.Incref(self.pyHandle);
+                PyObject pyself = new PyObject(self.pyHandle);
+                disposeList.Add(pyself);
+
+                PyObject pyvalue = pyself.GetAttr(propertyName);
+                disposeList.Add(pyvalue);
+                return (T)pyvalue.AsManagedObject(typeof(T));
+            }
+            finally
+            {
+                foreach (PyObject x in disposeList)
+                {
+                    if (x != null)
+                        x.Dispose();
+                }
+                Runtime.PyGILState_Release(gs);
+            }
+        }
+
+        public static void InvokeSetProperty<T>(IPythonDerivedType obj, string propertyName, T value)
+        {
+            FieldInfo fi = obj.GetType().GetField("__pyobj__");
+            CLRObject self = (CLRObject)fi.GetValue(obj);
+
+            if (null == self)
+                throw new NullReferenceException("Instance must be specified when setting a property");
+
+            List<PyObject> disposeList = new List<PyObject>();
+            IntPtr gs = Runtime.PyGILState_Ensure();
+            try
+            {
+                Runtime.Incref(self.pyHandle);
+                PyObject pyself = new PyObject(self.pyHandle);
+                disposeList.Add(pyself);
+
+                PyObject pyvalue = new PyObject(Converter.ToPythonImplicit(value));
+                disposeList.Add(pyvalue);
+
+                pyself.SetAttr(propertyName, pyvalue);
+            }
+            finally
+            {
+                foreach (PyObject x in disposeList)
+                {
+                    if (x != null)
+                        x.Dispose();
+                }
+                Runtime.PyGILState_Release(gs);
+            }
         }
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, Object[] args)

@@ -234,6 +234,9 @@
     <None Include="x64\clrmodule-platform.il" />
     <None Include="x86\clrmodule-platform.il" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="resources\clr.py" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />

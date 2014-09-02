@@ -23,6 +23,19 @@ namespace Python.Runtime {
 
     [SuppressUnmanagedCodeSecurityAttribute()]
 
+    static class NativeMethods
+    {
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr LoadLibrary(string dllToLoad);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+
+
+        [DllImport("kernel32.dll")]
+        public static extern bool FreeLibrary(IntPtr hModule);
+    }
+
     public class Runtime {
 
     /// <summary>
@@ -195,6 +208,13 @@ namespace Python.Runtime {
 
         Error = new IntPtr(-1);
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        IntPtr dll = NativeMethods.LoadLibrary(Runtime.dll);
+        _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dll, "_PyObject_NextNotImplemented");
+        NativeMethods.FreeLibrary(dll);
+#endif
+
+
         // Determine whether we need to wrap exceptions for versions of
         // of the Python runtime that do not allow new-style classes to
         // be used as exceptions (Python versions 2.4 and lower).
@@ -272,6 +292,7 @@ namespace Python.Runtime {
     internal static IntPtr PyNotImplemented;
     internal static int Py_EQ = 2;
     internal static int Py_NE = 3;
+    internal static IntPtr _PyObject_NextNotImplemented;
 #endif
 
     internal static IntPtr PyTrue;
@@ -1650,6 +1671,11 @@ namespace Python.Runtime {
     internal unsafe static extern int
     PyDict_DelItem(IntPtr pointer, IntPtr key);
 
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+        ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern int
+    PyDict_DelItemString(IntPtr pointer, string key);
+
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern int
@@ -1793,10 +1819,20 @@ namespace Python.Runtime {
     // Python iterator API
     //====================================================================
 
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Ansi)]
     internal unsafe static extern bool
     PyIter_Check(IntPtr pointer);
+#else
+    internal static bool
+    PyIter_Check(IntPtr pointer)
+    {
+        IntPtr ob_type = (IntPtr)Marshal.PtrToStructure(pointer + ObjectOffset.ob_type, typeof(IntPtr));
+        IntPtr tp_iternext = ob_type + TypeOffset.tp_iternext;
+        return tp_iternext != null && tp_iternext != _PyObject_NextNotImplemented;
+    }
+#endif
 
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Ansi)]

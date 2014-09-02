@@ -8,7 +8,9 @@
 // ==========================================================================
 
 using System;
+using System.IO;
 using System.Threading;
+using System.Reflection;
 
 namespace Python.Runtime {
 
@@ -143,9 +145,46 @@ namespace Python.Runtime {
                 PyObject r = PythonEngine.RunString(code);
                 if (r != null)
                     r.Dispose();
+
+                // Load the clr.py resource into the clr module
+                IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
+                IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
+
+                IntPtr globals = Runtime.PyEval_GetGlobals();
+                PyDict locals = new PyDict();
+                try
+                {
+                    IntPtr builtins = Runtime.PyEval_GetBuiltins();
+                    Runtime.PyDict_SetItemString(locals.Handle, "__builtins__", builtins);
+
+                    var assembly = Assembly.GetExecutingAssembly();
+                    using (Stream stream = assembly.GetManifestResourceStream("Python.Runtime.resources.clr.py"))
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        // add the contents of clr.py to the module
+                        string clr_py = reader.ReadToEnd();
+                        PyObject result = RunString(clr_py, globals, locals.Handle);
+                        if (null == result)
+                            throw new PythonException();
+                        result.Dispose();
+                    }
+
+                    foreach (PyObject key in locals.Keys())
+                    {
+                        if (!key.ToString().StartsWith("_")){
+                            PyObject value = locals[key];
+                            Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
+                            value.Dispose();
+                        }
+                        key.Dispose();
+                    }
+                }
+                finally
+                {
+                    locals.Dispose();
+                }
             }
         }
-
 
         //====================================================================
         // A helper to perform initialization from the context of an active
@@ -157,41 +196,51 @@ namespace Python.Runtime {
 #else
         public static void InitExt() {
 #endif
-            Initialize();
+            try
+            {
+                Initialize();
 
-            // Trickery - when the import hook is installed into an already
-            // running Python, the standard import machinery is still in 
-            // control for the duration of the import that caused bootstrap.
-            // 
-            // That is problematic because the std machinery tries to get
-            // sub-names directly from the module __dict__ rather than going
-            // through our module object's getattr hook. This workaround is
-            // evil ;) We essentially climb up the stack looking for the
-            // import that caused the bootstrap to happen, then re-execute
-            // the import explicitly after our hook has been installed. By
-            // doing this, the original outer import should work correctly.
-            //
-            // Note that this is only needed during the execution of the
-            // first import that installs the CLR import hook. This hack
-            // still doesn't work if you use the interactive interpreter,
-            // since there is no line info to get the import line ;(
+                // Trickery - when the import hook is installed into an already
+                // running Python, the standard import machinery is still in 
+                // control for the duration of the import that caused bootstrap.
+                // 
+                // That is problematic because the std machinery tries to get
+                // sub-names directly from the module __dict__ rather than going
+                // through our module object's getattr hook. This workaround is
+                // evil ;) We essentially climb up the stack looking for the
+                // import that caused the bootstrap to happen, then re-execute
+                // the import explicitly after our hook has been installed. By
+                // doing this, the original outer import should work correctly.
+                //
+                // Note that this is only needed during the execution of the
+                // first import that installs the CLR import hook. This hack
+                // still doesn't work if you use the interactive interpreter,
+                // since there is no line info to get the import line ;(
 
-            string code = 
+                string code =
 
-            "import traceback\n" + 
-            "for item in traceback.extract_stack():\n" + 
-            "    line = item[3]\n" + 
-            "    if line is not None:\n" +
-            "        if line.startswith('import CLR') or \\\n" +
-            "           line.startswith('import clr') or \\\n" +
-            "           line.startswith('from clr') or \\\n" + 
-            "           line.startswith('from CLR'):\n" + 
-            "            exec(line)\n" + 
-            "            break\n";            
+                "import traceback\n" +
+                "for item in traceback.extract_stack():\n" +
+                "    line = item[3]\n" +
+                "    if line is not None:\n" +
+                "        if line.startswith('import CLR') or \\\n" +
+                "           line.startswith('import clr') or \\\n" +
+                "           line.startswith('from clr') or \\\n" +
+                "           line.startswith('from CLR'):\n" +
+                "            exec(line)\n" +
+                "            break\n";
 
-            PyObject r = PythonEngine.RunString(code);
-            if (r != null) {
-                r.Dispose();
+                PyObject r = PythonEngine.RunString(code);
+                if (r != null) {
+                    r.Dispose();
+                }
+            }
+            catch (PythonException e)
+            {
+                e.Restore();
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+                return IntPtr.Zero;
+#endif
             }
 
 #if (PYTHON32 || PYTHON33 || PYTHON34)
@@ -374,6 +423,18 @@ namespace Python.Runtime {
             IntPtr result = Runtime.PyRun_String(code, flag, globals, locals);
             Runtime.Decref(locals);
             if (result == IntPtr.Zero) {
+                return null;
+            }
+            return new PyObject(result);
+        }
+
+        public static PyObject RunString(string code, IntPtr globals, IntPtr locals)
+        {
+            IntPtr flag = (IntPtr)257; /* Py_file_input */
+            IntPtr result = Runtime.PyRun_String(code, flag, globals, locals);
+            Runtime.Decref(locals);
+            if (result == IntPtr.Zero)
+            {
                 return null;
             }
             return new PyObject(result);
