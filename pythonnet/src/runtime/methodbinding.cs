@@ -161,13 +161,17 @@ namespace Python.Runtime {
                         {
                             string baseMethodName = "_" + baseType.type.Name + "__" + self.m.name;
                             IntPtr baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
-                            if (baseMethod != null)
+                            if (baseMethod != IntPtr.Zero)
                             {
                                 MethodBinding baseSelf = GetManagedObject(baseMethod) as MethodBinding;
                                 if (baseSelf != null)
                                     self = baseSelf;
+                                Runtime.Decref(baseMethod);
                             }
-                            Runtime.Decref(baseMethod);
+                            else
+                            {
+                                Runtime.PyErr_Clear();
+                            }
                         }
                     }
                 }
