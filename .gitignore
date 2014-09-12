@@ -9,3 +9,4 @@
 packages/*
 dist
 pythonnet.egg-info
+*.userprefs
