@@ -119,6 +119,7 @@
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <WarningLevel>4</WarningLevel>
     <Optimize>False</Optimize>
+    <Externalconsole>true</Externalconsole>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>True</DebugSymbols>
@@ -195,9 +196,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="python-clear.ico" />
-    <EmbeddedResource Include="$(PythonBuildDir)\Python.Runtime.dll">
-        <LogicalName>Python.Runtime.dll</LogicalName>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

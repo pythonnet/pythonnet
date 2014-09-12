@@ -93,27 +93,50 @@
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-	<Choose>
-        <When Condition=" '$(Configuration)'=='DebugMono' ">
-            <ItemGroup>
-				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-				  <SpecificVersion>False</SpecificVersion>
-				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
-				</Reference>
-            </ItemGroup>
-        </When>
-        <When Condition=" '$(Configuration)'=='ReleaseMono' ">
-            <ItemGroup>
-				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-				  <SpecificVersion>False</SpecificVersion>
-				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
-				</Reference>
-            </ItemGroup>
-        </When>
-    </Choose>
-	<ItemGroup>
-		<Reference Include="System" />
-	</ItemGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMac|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\x86\DebugMono\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMac|x86' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\x86\ReleaseMono\</OutputPath>
+    <DefineConstants>PYTHON27, UCS2</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <Choose>
+    <When Condition=" '$(Configuration)'=='DebugMono' ">
+      <ItemGroup>
+        <Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+          <SpecificVersion>False</SpecificVersion>
+          <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+    <When Condition=" '$(Configuration)'=='ReleaseMono' ">
+      <ItemGroup>
+        <Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+          <SpecificVersion>False</SpecificVersion>
+          <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblyinfo.cs" />
@@ -179,6 +202,9 @@
     <None Include="pythonnet.snk" />
     <None Include="x64\clrmodule-platform.il" />
     <None Include="x86\clrmodule-platform.il" />
+    <None Include="Python.Runtime.dll.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
