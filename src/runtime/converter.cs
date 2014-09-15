@@ -92,16 +92,6 @@ namespace Python.Runtime {
                 return result;
             }
 
-            if (value is IEnumerable)
-            {
-                var resultlist = new PyList();
-                foreach (object o in (IEnumerable)value)
-                {
-                    resultlist.Append(new PyObject(ToPython(o, o.GetType())));
-                }
-                return resultlist.Handle;
-            }
-
             // it the type is a python subclass of a managed type then return the
             // underying python object rather than construct a new wrapper object.
             IPythonDerivedType pyderived = value as IPythonDerivedType;
@@ -184,19 +174,17 @@ namespace Python.Runtime {
                 return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
 
             default:
-	        if (value is IEnumerable)
-                {
+	            if (value is IEnumerable) {
                     var resultlist = new PyList();
-                    foreach (object o in (IEnumerable)value)
-                    {
+                    foreach (object o in (IEnumerable)value) {
                         resultlist.Append(new PyObject(ToPython(o, o.GetType())));
                     }
                     return resultlist.Handle;
                 }
+
                 result = CLRObject.GetInstHandle(value, type);
                 return result;
             }
-
         }
 
 
