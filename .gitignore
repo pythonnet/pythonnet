@@ -1,0 +1,12 @@
+*.suo
+*.pdb
+[Oo]bj/
+[Bb]in/
+*.dll
+*.pyd
+*.exe
+*.pyc
+packages/*
+dist
+pythonnet.egg-info
+*.userprefs

@@ -1,15 +1,18 @@
 pythonnet
 =========
 
-**NOTE** The *official* repo is now https://github.com/pythonnet/pythonnet. Changes from this fork of the original sourceforge project will be integrated back into that main repo in due course.
+Python for .NET is a package that gives Python programmers nearly seamless integration with the .NET Common Language Runtime (CLR) and provides a powerful application scripting tool for .NET developers.
 
-**Features not yet integrated into the main repo**:
+[![Build Status](https://travis-ci.org/pythonnet/pythonnet.png?branch=develop)](https://travis-ci.org/pythonnet/pythonnet)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/65riiu1hvgaxsbwb)](https://ci.appveyor.com/project/davidanthoff/pythonnet)
+
+
+**Features not yet integrated into the main branch**:
 - Python 3 support
 - Subclassing managed types in Python
 
 --------------------------------------------------------------------------------------------------------
-
-This fork of http://sourceforge.net/projects/pythonnet/ allows easy calling of python functions from C#.
 
 + All calls to python should be inside a "using (Py.GIL()) {/* Your code here */}" block.
 + Import python modules using dynamic mod = Py.Import("mod"), then you can call functions as normal, eg mod.func(args).
