@@ -22,7 +22,10 @@ PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
 
 def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     """Return full path to one of the microsoft build tools"""
-    import _winreg
+    try:
+        import _winreg
+    except ImportError:
+        import winreg as _winreg
 
     if use_windows_sdk:
         value_name = "InstallationFolder"
