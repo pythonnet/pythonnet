@@ -62,8 +62,8 @@ class ModuleTests(unittest.TestCase):
         import System
         self.assertEquals(type(System.__dict__), type({}))
         self.assertEquals(System.__name__, 'System')
-        self.assertEquals(System.__file__, None)
-        self.assertEquals(System.__doc__, None)
+        self.assertTrue(System.__file__.endswith("System.dll"))
+        self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
         self.assertTrue(self.isCLRClass(System.String))
         self.assertTrue(self.isCLRClass(System.Int32))
 
