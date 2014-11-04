@@ -88,7 +88,48 @@ namespace Python.Runtime {
                 );
             }
 
-            return TypeManager.CreateSubType(name, base_type, dict);
+            // If __assembly__ or __namespace__ are in the class dictionary then create
+            // a managed sub type.
+            // This creates a new managed type that can be used from .net to call back
+            // into python.
+            if (IntPtr.Zero != dict) {
+                Runtime.Incref(dict);
+                PyDict clsDict = new PyDict(dict);
+                if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
+                    return TypeManager.CreateSubType(name, base_type, dict);
+            }
+
+            // otherwise just create a basic type without reflecting back into the managed side.
+            IntPtr func = Marshal.ReadIntPtr(Runtime.PyTypeType,
+                                             TypeOffset.tp_new);
+            IntPtr type = NativeCall.Call_3(func, tp, args, kw);
+            if (type == IntPtr.Zero) {
+                return IntPtr.Zero;
+            }
+
+            int flags = TypeFlags.Default;
+            flags |= TypeFlags.Managed;
+            flags |= TypeFlags.HeapType;
+            flags |= TypeFlags.BaseType;
+            flags |= TypeFlags.Subclass;
+            flags |= TypeFlags.HaveGC;
+            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+
+            TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
+
+            // Hmm - the standard subtype_traverse, clear look at ob_size to
+            // do things, so to allow gc to work correctly we need to move
+            // our hidden handle out of ob_size. Then, in theory we can 
+            // comment this out and still not crash.
+            TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
+            TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
+
+
+            // for now, move up hidden handle...
+            IntPtr gc = Marshal.ReadIntPtr(base_type, TypeOffset.magic());
+            Marshal.WriteIntPtr(type, TypeOffset.magic(), gc);
+
+            return type;
         }
 
 
