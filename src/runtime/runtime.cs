@@ -290,8 +290,11 @@ namespace Python.Runtime {
 #if (PYTHON32 || PYTHON33 || PYTHON34)
     internal static IntPtr PyBytesType;
     internal static IntPtr PyNotImplemented;
-    internal static int Py_EQ = 2;
-    internal static int Py_NE = 3;
+    internal const int Py_LT = 0;
+    internal const int Py_LE = 1;
+    internal const int Py_EQ = 2;
+    internal const int Py_NE = 3;
+    internal const int Py_GT = 4;
     internal static IntPtr _PyObject_NextNotImplemented;
 #endif
 
@@ -849,10 +852,42 @@ namespace Python.Runtime {
     internal unsafe static extern IntPtr
     PyObject_CallObject(IntPtr pointer, IntPtr args);
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    internal unsafe static extern int
+    PyObject_RichCompareBool(IntPtr value1, IntPtr value2, int opid);
+
+    internal static int PyObject_Compare(IntPtr value1, IntPtr value2) {
+        int res;
+        res = PyObject_RichCompareBool(value1, value2, Py_LT);
+        if (-1 == res)
+            return -1;
+        else if (1 == res)
+            return -1;
+
+        res = PyObject_RichCompareBool(value1, value2, Py_EQ);
+        if (-1 == res)
+            return -1;
+        else if (1 == res)
+            return 0;
+
+        res = PyObject_RichCompareBool(value1, value2, Py_GT);
+        if (-1 == res)
+            return -1;
+        else if (1 == res)
+            return 1;
+
+        Exceptions.SetError(Exceptions.SystemError, "Error comparing objects");
+        return -1;
+    }
+#else
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern int
     PyObject_Compare(IntPtr value1, IntPtr value2);
+#endif
+
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
