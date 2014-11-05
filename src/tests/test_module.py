@@ -13,6 +13,7 @@ clr.AddReference('System.Data')
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
 ##clr.AddReference('System.Windows.Forms')
 import sys, os, string, unittest, types, warnings
+from fnmatch import fnmatch
 
 
 class ModuleTests(unittest.TestCase):
@@ -62,9 +63,8 @@ class ModuleTests(unittest.TestCase):
         import System
         self.assertEquals(type(System.__dict__), type({}))
         self.assertEquals(System.__name__, 'System')
-        print (System.__file__)
-        self.assertTrue(System.__file__.endswith("System.dll"))
-        print (System.__doc__)
+        # the filename can be any module from the System namespace (eg System.Data.dll or System.dll)
+        self.assertTrue(fnmatch(System.__file__, "*System*.dll"))
         self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
         self.assertTrue(self.isCLRClass(System.String))
         self.assertTrue(self.isCLRClass(System.Int32))
