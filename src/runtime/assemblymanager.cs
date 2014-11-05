@@ -291,8 +291,8 @@ namespace Python.Runtime {
             Type[] types = assembly.GetTypes();
             for (int i = 0; i < types.Length; i++) {
                 Type t = types[i];
-                string ns = t.Namespace;
-                if ((ns != null) && (!namespaces.ContainsKey(ns))) {
+                string ns = t.Namespace ?? "";
+                if (!namespaces.ContainsKey(ns)) {
                     string[] names = ns.Split('.');
                     string s = "";
                     for (int n = 0; n < names.Length; n++) {
@@ -367,7 +367,7 @@ namespace Python.Runtime {
                     Type[] types = a.GetTypes();
                     for (int i = 0; i < types.Length; i++) {
                         Type t = types[i];
-                        if (t.Namespace == nsname) {
+                        if ((t.Namespace ?? "") == nsname) {
                             names.Add(t.Name);
                         }
                     }

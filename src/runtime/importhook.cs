@@ -92,9 +92,44 @@ namespace Python.Runtime {
         //===================================================================
         // Return the clr python module (new reference)
         //===================================================================
-        public static IntPtr GetCLRModule() {
+        public static IntPtr GetCLRModule(IntPtr? fromList=null) {
             root.InitializePreload();
 #if (PYTHON32 || PYTHON33 || PYTHON34)
+            // update the module dictionary with the contents of the root dictionary
+            root.LoadNames();
+            IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);
+            IntPtr clr_dict = Runtime._PyObject_GetDictPtr(root.pyHandle); // PyObject**
+            clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
+            Runtime.PyDict_Update(py_mod_dict, clr_dict);
+
+            // find any items from the fromlist and get them from the root if they're not
+            // aleady in the module dictionary
+            if (fromList != null && fromList != IntPtr.Zero) {
+                if (Runtime.PyTuple_Check(fromList.GetValueOrDefault()))
+                {
+                    Runtime.Incref(py_mod_dict);
+                    PyDict mod_dict = new PyDict(py_mod_dict);
+
+                    Runtime.Incref(fromList.GetValueOrDefault());
+                    PyTuple from = new PyTuple(fromList.GetValueOrDefault());
+                    foreach (PyObject item in from) {
+                        if (mod_dict.HasKey(item))
+                            continue;
+
+                        string s = item.AsManagedObject(typeof(string)) as string;
+                        if (null == s)
+                            continue;
+
+                        ManagedType attr = root.GetAttribute(s, true);
+                        if (null == attr)
+                            continue;
+
+                        Runtime.Incref(attr.pyHandle);
+                        mod_dict.SetItem(s, new PyObject(attr.pyHandle));
+                    }
+                }
+            }
+
             Runtime.Incref(py_clr_module);
             return py_clr_module;
 #else
@@ -145,12 +180,12 @@ namespace Python.Runtime {
             // do the Incref()ed return here, since we've already found
             // the module.
             if (mod_name == "clr") {
-                return GetCLRModule();
+                return GetCLRModule(fromList);
             }
             if (mod_name == "CLR") {
                 Exceptions.deprecation("The CLR module is deprecated. " +
                     "Please use 'clr'.");
-                return GetCLRModule();
+                return GetCLRModule(fromList);
             }
             string realname = mod_name;
             if (mod_name.StartsWith("CLR.")) {
