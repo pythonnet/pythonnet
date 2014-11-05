@@ -150,12 +150,13 @@ namespace Python.Runtime {
                 IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
                 IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
 
-                IntPtr globals = Runtime.PyEval_GetGlobals();
                 PyDict locals = new PyDict();
                 try
                 {
+                    IntPtr module = Runtime.PyImport_AddModule("clr._extras");
+                    IntPtr module_globals = Runtime.PyModule_GetDict(module);
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
-                    Runtime.PyDict_SetItemString(locals.Handle, "__builtins__", builtins);
+                    Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
                     var assembly = Assembly.GetExecutingAssembly();
                     using (Stream stream = assembly.GetManifestResourceStream("Python.Runtime.resources.clr.py"))
@@ -163,12 +164,15 @@ namespace Python.Runtime {
                     {
                         // add the contents of clr.py to the module
                         string clr_py = reader.ReadToEnd();
-                        PyObject result = RunString(clr_py, globals, locals.Handle);
+                        PyObject result = RunString(clr_py, module_globals, locals.Handle);
                         if (null == result)
                             throw new PythonException();
                         result.Dispose();
                     }
 
+                    // add the imported module to the clr module, and copy the API functions
+                    // and decorators into the main clr module.
+                    Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
                     foreach (PyObject key in locals.Keys())
                     {
                         if (!key.ToString().StartsWith("_")){
