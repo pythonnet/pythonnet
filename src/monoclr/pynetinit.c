@@ -15,6 +15,10 @@
 #include "dirent.h"
 #endif
 
+#if PY_MAJOR_VERSION > 2
+#include <stdlib.h>
+#endif
+
 // initialize Mono and PythonNet
 PyNet_Args* PyNet_Init(int ext) {
     PyNet_Args *pn_args;
@@ -102,10 +106,24 @@ void main_thread_handler (gpointer user_data) {
 
     int ii = 0;
     for (ii = 0; ii < PyList_Size(syspath); ++ii) {
+#if PY_MAJOR_VERSION > 2
+        Py_ssize_t wlen;
+        wchar_t *wstr = PyUnicode_AsWideCharString(PyList_GetItem(syspath, ii), &wlen);
+        char* pydir = (char*)malloc(wlen + 1);
+        size_t mblen = wcstombs(pydir, wstr, wlen + 1);
+        if (mblen > wlen)
+            pydir[wlen] = '\0';
+        PyMem_Free(wstr);
+#else
         const char* pydir = PyString_AsString(PyList_GetItem(syspath, ii));
+#endif
         char* curdir = (char*) malloc(1024);
         strncpy(curdir, strlen(pydir) > 0 ? pydir : ".", 1024);
         strncat(curdir, slash, 1024);
+
+#if PY_MAJOR_VERSION > 2
+        free(pydir);
+#endif
 
         //look in this directory for the pn_args->pr_file
         DIR* dirp = opendir(curdir);
