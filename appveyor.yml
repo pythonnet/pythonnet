@@ -23,6 +23,7 @@ install:
   - set PATH=C:\Python;%PATH%
   - C:\Python\python.exe c:\get-pip.py
   - C:\Python\Scripts\pip.exe install wheel
+  - C:\Python\Scripts\pip.exe install six
 
 build_script:
   - C:\python\python.exe setup.py bdist_wheel
