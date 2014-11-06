@@ -9,6 +9,12 @@
 
 import sys, os, string, unittest, types
 from Python.Test import PropertyTest
+import six
+
+if six.PY3:
+    IntType = int
+else:
+    IntType = types.IntType
 
 
 class PropertyTests(unittest.TestCase):
@@ -139,15 +145,15 @@ class PropertyTests(unittest.TestCase):
         self.assertTrue(object.PublicStaticProperty == 0)
 
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != IntType)
 
         object.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != IntType)
 
         PropertyTest.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != IntType)
 
 
     def testPropertyDescriptorWrongType(self):

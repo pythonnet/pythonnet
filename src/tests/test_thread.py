@@ -7,13 +7,19 @@
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
 
-import sys, os, string, unittest, types, thread
+import sys, os, string, unittest, types
 from Python.Test import ThreadTest
+import six
+
+if six.PY3:
+    import _thread as thread
+else:
+    import thread
 
 
 def dprint(msg):
     # Debugging helper to trace thread-related tests.
-    if 0: print msg
+    if 0: print(msg)
 
 
 class ThreadTests(unittest.TestCase):
@@ -39,7 +45,7 @@ class ThreadTests(unittest.TestCase):
     def testPythonThreadCallsToCLR(self):
         """Test calls by Python-spawned threads into managed code."""
         # This test is very likely to hang if something is wrong ;)
-        import threading, thread, time
+        import threading, time
         from System import String
 
         done = []

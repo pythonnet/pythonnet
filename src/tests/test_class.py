@@ -11,6 +11,12 @@ from Python.Test import ClassTest
 import sys, os, string, unittest, types
 import Python.Test as Test
 import System
+import six
+
+if six.PY3:
+    DictProxyType = type(object.__dict__)
+else:
+    DictProxyType = types.DictProxyType
 
 
 class ClassTests(unittest.TestCase):
@@ -32,7 +38,7 @@ class ClassTests(unittest.TestCase):
         """Test standard class attributes."""
         self.assertTrue(ClassTest.__name__ == 'ClassTest')
         self.assertTrue(ClassTest.__module__ == 'Python.Test')
-        self.assertTrue(type(ClassTest.__dict__) == types.DictProxyType)
+        self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
         self.assertTrue(len(ClassTest.__doc__) > 0)
 
 
