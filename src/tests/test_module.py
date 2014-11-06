@@ -32,7 +32,7 @@ class ModuleTests(unittest.TestCase):
         if six.PY3:
             # in Python 3 the clr module is a normal python module
             return object.__name__ == "clr"
-        return type(object).__name__ == 'CLRModuleObject'
+        return type(object).__name__ == 'CLRModule'
 
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype' # for now
