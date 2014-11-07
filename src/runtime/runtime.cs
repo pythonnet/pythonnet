@@ -546,10 +546,17 @@ namespace Python.Runtime {
     internal unsafe static extern IntPtr
     PyGILState_GetThisThreadState();
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+        ExactSpelling=true, CharSet=CharSet.Ansi)]
+    public unsafe static extern int
+    Py_Main(int argc, [MarshalAsAttribute(UnmanagedType.LPArray, ArraySubType=UnmanagedType.LPWStr)] string[] argv);
+#else
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     public unsafe static extern int
     Py_Main(int argc, string[] argv);
+#endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
