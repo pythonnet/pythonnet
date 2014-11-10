@@ -115,6 +115,17 @@ class PythonNET_BuildExt(build_ext):
         if CONFIG == "Debug":
             defines.extend(["DEBUG", "TRACE"])
 
+        if sys.platform != "win32" and DEVTOOLS == "Mono":
+            defines.append("MONO_LINUX")
+
+        if hasattr(sys, "abiflags"):
+            if "d" in sys.abiflags:
+                defines.append("PYTHON_WITH_PYDEBUG")
+            if "m" in sys.abiflags:
+                defines.append("PYTHON_WITH_PYMALLOC")
+            if "u" in sys.abiflags:
+                defines.append("PYTHON_WITH_WIDE_UNICODE")
+
         cmd = [
             _xbuild,
             "pythonnet.sln",

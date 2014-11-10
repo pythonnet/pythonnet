@@ -25,15 +25,50 @@ namespace Python.Runtime {
 
     static class NativeMethods
     {
+#if MONO_LINUX
+        static public IntPtr LoadLibrary(string fileName) {
+            return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
+        }
+
+        static public void FreeLibrary(IntPtr handle) {
+            dlclose(handle);
+        }
+
+        static public IntPtr GetProcAddress(IntPtr dllHandle, string name) {
+            // clear previous errors if any
+            dlerror();
+            var res = dlsym(dllHandle, name);
+            var errPtr = dlerror();
+            if (errPtr != IntPtr.Zero) {
+                throw new Exception("dlsym: " + Marshal.PtrToStringAnsi(errPtr));
+            }
+            return res;
+        }
+
+        const int RTLD_NOW = 2;
+        const int RTLD_SHARED = 20;
+
+        [DllImport("libdl.so")]
+        private static extern IntPtr dlopen(String fileName, int flags);
+        
+        [DllImport("libdl.so")]
+        private static extern IntPtr dlsym(IntPtr handle, String symbol);
+
+        [DllImport("libdl.so")]
+        private static extern int dlclose(IntPtr handle);
+
+        [DllImport("libdl.so")]
+        private static extern IntPtr dlerror();
+#else
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string dllToLoad);
 
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
 
-
         [DllImport("kernel32.dll")]
         public static extern bool FreeLibrary(IntPtr hModule);
+#endif
     }
 
     public class Runtime {
@@ -54,48 +89,95 @@ namespace Python.Runtime {
 #endif
 
 #if (PYTHON23)
-        public const string dll = "python23";
         public const string pyversion = "2.3";
         public const int pyversionnumber = 23;
 #endif
 #if (PYTHON24)
-        public const string dll = "python24";
         public const string pyversion = "2.4";
         public const int pyversionnumber = 24;
 #endif
 #if (PYTHON25)
-        public const string dll = "python25";
         public const string pyversion = "2.5";
         public const int pyversionnumber = 25;
 #endif
 #if (PYTHON26)
-        public const string dll = "python26";
         public const string pyversion = "2.6";
         public const int pyversionnumber = 26;
 #endif
 #if (PYTHON27)
-        public const string dll = "python27";
         public const string pyversion = "2.7";
         public const int pyversionnumber = 27;
 #endif
 #if (PYTHON32)
-        public const string dll = "python32";
         public const string pyversion = "3.2";
         public const int pyversionnumber = 32;
 #endif
 #if (PYTHON33)
-        public const string dll = "python33";
         public const string pyversion = "3.3";
         public const int pyversionnumber = 33;
 #endif
 #if (PYTHON34)
-        public const string dll = "python34";
         public const string pyversion = "3.4";
         public const int pyversionnumber = 34;
 #endif
 #if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
 #error You must define one of PYTHON23 to PYTHON34
 #endif
+
+#if (PYTHON23)
+        internal const string dllBase = "python23";
+#endif
+#if (PYTHON24)
+        internal const string dllBase = "python24";
+#endif
+#if (PYTHON25)
+        internal const string dllBase = "python25";
+#endif
+#if (PYTHON26)
+        internal const string dllBase = "python26";
+#endif
+#if (PYTHON27)
+        internal const string dllBase = "python27";
+#endif
+#if (MONO_LINUX)
+#if (PYTHON32)
+        internal const string dllBase = "python3.2";
+#endif
+#if (PYTHON33)
+        internal const string dllBase = "python3.3";
+#endif
+#if (PYTHON34)
+        internal const string dllBase = "python3.4";
+#endif
+#else
+#if (PYTHON32)
+        internal const string dllBase = "python32";
+#endif
+#if (PYTHON33)
+        internal const string dllBase = "python33";
+#endif
+#if (PYTHON34)
+        internal const string dllBase = "python34";
+#endif
+#endif
+
+#if (PYTHON_WITH_PYDEBUG)
+        internal const string dllWithPyDebug = "d";
+#else
+        internal const string dllWithPyDebug = "";
+#endif
+#if (PYTHON_WITH_PYMALLOC)
+        internal const string dllWithPyMalloc = "m";
+#else
+        internal const string dllWithPyMalloc = "";
+#endif
+#if (PYTHON_WITH_WIDE_UNICODE)
+        internal const string dllWithWideUnicode = "u";
+#else
+        internal const string dllWithWideUnicode = "";
+#endif
+
+        public const string dll = dllBase + dllWithPyDebug + dllWithPyMalloc + dllWithWideUnicode;
 
         // set to true when python is finalizing
         internal static Object IsFinalizingLock = new Object();
@@ -108,7 +190,7 @@ namespace Python.Runtime {
         /// Intitialize the runtime...
         /// </summary>
         internal static void Initialize() {
-
+ 
         is32bit = IntPtr.Size == 4;
 
         if (0 == Runtime.Py_IsInitialized())
@@ -211,7 +293,9 @@ namespace Python.Runtime {
 #if (PYTHON32 || PYTHON33 || PYTHON34)
         IntPtr dll = NativeMethods.LoadLibrary(Runtime.dll);
         _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dll, "_PyObject_NextNotImplemented");
+#if !MONO_LINUX
         NativeMethods.FreeLibrary(dll);
+#endif
 #endif
 
 

@@ -16,7 +16,29 @@
 
 #include <Python.h>
 
+#if (PY_MAJOR_VERSION > 2)
+#include <wchar.h>
+#endif
+
 int main(int argc, char **argv) {
+#if (PY_MAJOR_VERSION > 2)
+    int i, result;
+    size_t len;
+    wchar_t **wargv = (wchar_t**)malloc(sizeof(wchar_t*)*argc);
+    for (i=0; i<argc; ++ i) {
+        len = strlen(argv[i]);
+        wargv[i] = (wchar_t*)malloc(sizeof(wchar_t)*(len+1));
+	if (len == mbsrtowcs(wargv[i], (const char**)&argv[i], len, NULL))
+            wargv[i][len] = 0;
+    }
+    result = Py_Main(argc, wargv);
+    for (i=0; i<argc; ++i) {
+        free((void*)wargv[i]);
+    }
+    free((void*)wargv);
+    return result;
+#else
     return Py_Main(argc, argv);
+#endif
 }
 
