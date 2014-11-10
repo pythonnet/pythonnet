@@ -49,7 +49,7 @@ static PyObject *_initclr() {
     m = Py_InitModule3("clr", clr_methods, clr_module_doc);
 #endif
     if (m == NULL)
-        return;
+        return NULL;
     PyModule_AddObject(m, "facade", Py_True);
     Py_INCREF(Py_True);
 
@@ -67,7 +67,7 @@ PyInit_clr(void) {
 }
 #else
 PyMODINIT_FUNC
-initclr(void)
+initclr(void) {
     _initclr();
 }
 #endif
