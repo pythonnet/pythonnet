@@ -278,7 +278,7 @@ def _check_output(*popenargs, **kwargs):
         if cmd is None:
             cmd = popenargs[0]
         raise CalledProcessError(retcode, cmd, output=output)
-    if sys.version_info[2] > 2:
+    if sys.version_info[0] > 2:
         return output.decode("ascii")
     return output
 
