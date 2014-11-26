@@ -179,6 +179,7 @@ namespace Python.Runtime {
                     foreach (object o in (IEnumerable)value) {
                         resultlist.Append(new PyObject(ToPython(o, o.GetType())));
                     }
+                    Runtime.Incref(resultlist.Handle);
                     return resultlist.Handle;
                 }
 
