@@ -175,17 +175,19 @@ namespace Python.Runtime {
 
             default:
 	            if (value is IEnumerable) {
-                    var resultlist = new PyList();
-                    foreach (object o in (IEnumerable)value) {
-                        resultlist.Append(new PyObject(ToPython(o, o.GetType())));
+                    using (var resultlist = new PyList()) {
+                        foreach (object o in (IEnumerable)value) {
+                            using (var p = new PyObject(ToPython(o, o.GetType())))
+                                resultlist.Append(p);
+                        }
+                        Runtime.Incref(resultlist.Handle);
+                        return resultlist.Handle;
                     }
-                    Runtime.Incref(resultlist.Handle);
-                    return resultlist.Handle;
                 }
-
                 result = CLRObject.GetInstHandle(value, type);
                 return result;
             }
+
         }
 
 
