@@ -117,6 +117,16 @@ namespace Python.Runtime {
                 Runtime.Initialize();
                 initialized = true;
                 Exceptions.Clear();
+
+                // register the atexit callback (this doesn't use Py_AtExit as the C atexit
+                // callbacks are called after python is fully finalized but the python ones
+                // are called while the python engine is still running).
+                string code =
+                "import atexit, clr\n" +
+                "atexit.register(clr._AtExit)\n";
+                PyObject r = PythonEngine.RunString(code);
+                if (r != null)
+                    r.Dispose();
             }
         }
 
@@ -126,8 +136,11 @@ namespace Python.Runtime {
         // CPython interpreter process - this bootstraps the managed runtime
         // when it is imported by the CLR extension module.
         //====================================================================
-
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static IntPtr InitExt() {
+#else
         public static void InitExt() {
+#endif
             Initialize();
 
             // Trickery - when the import hook is installed into an already
@@ -157,15 +170,18 @@ namespace Python.Runtime {
             "           line.startswith('import clr') or \\\n" +
             "           line.startswith('from clr') or \\\n" + 
             "           line.startswith('from CLR'):\n" + 
-            "            exec line\n" + 
+            "            exec(line)\n" + 
             "            break\n";            
 
             PyObject r = PythonEngine.RunString(code);
             if (r != null) {
                 r.Dispose();
             }
-        }
 
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            return Python.Runtime.ImportHook.GetCLRModule();
+#endif
+        }
 
         /// <summary>
         /// Shutdown Method
@@ -346,10 +362,61 @@ namespace Python.Runtime {
             }
             return new PyObject(result);
         }
-
-
-
     }
 
+    public static class Py
+    {
+        public static GILState GIL()
+        {
+            if (!PythonEngine.IsInitialized)
+                PythonEngine.Initialize();
 
+            return new GILState();
+        }
+
+        public class GILState : IDisposable
+        {
+            private IntPtr state;
+            internal GILState()
+            {
+                state = PythonEngine.AcquireLock();
+            }
+            public void Dispose()
+            {
+                PythonEngine.ReleaseLock(state);
+                GC.SuppressFinalize(this);
+            }
+            ~GILState()
+            {
+                Dispose();
+            }
+        }
+
+        public class KeywordArguments : PyDict { }
+
+        public static KeywordArguments kw(params object[] kv)
+        {
+            var dict = new KeywordArguments();
+            if (kv.Length % 2 != 0)
+                throw new ArgumentException("Must have an equal number of keys and values");
+            for (int i = 0; i < kv.Length; i += 2)
+            {
+                IntPtr value;
+                if (kv[i + 1] is PyObject)
+                    value = ((PyObject)kv[i + 1]).Handle;
+                else
+                    value = Converter.ToPython(kv[i + 1], kv[i + 1].GetType());
+                if (Runtime.PyDict_SetItemString(dict.Handle, (string)kv[i], value) != 0)
+                    throw new ArgumentException(string.Format("Cannot add key '{0}' to dictionary.", (string)kv[i]));
+                if (!(kv[i + 1] is PyObject))
+                    Runtime.Decref(value);
+            }
+            return dict;
+        }
+
+        public static PyObject Import(string name)
+        {
+            return PythonEngine.ImportModule(name);
+        }
+    }
 }
