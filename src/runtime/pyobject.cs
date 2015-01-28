@@ -364,7 +364,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual PyObject GetItem(string key) {
-        return GetItem(new PyString(key));
+        using (PyString pyKey = new PyString(key))
+            return GetItem(pyKey);
     }
 
 
@@ -413,7 +414,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void SetItem(string key, PyObject value) {
-        SetItem(new PyString(key), value);
+        using (PyString pyKey = new PyString(key))
+            SetItem(pyKey, value);
     }
 
 
@@ -461,7 +463,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void DelItem(string key) {
-        DelItem(new PyString(key));
+        using (PyString pyKey = new PyString(key))
+            DelItem(pyKey);
     }
 
 

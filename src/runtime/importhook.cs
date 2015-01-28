@@ -108,24 +108,27 @@ namespace Python.Runtime {
                 if (Runtime.PyTuple_Check(fromList.GetValueOrDefault()))
                 {
                     Runtime.Incref(py_mod_dict);
-                    PyDict mod_dict = new PyDict(py_mod_dict);
+                    using(PyDict mod_dict = new PyDict(py_mod_dict)) {
+                        Runtime.Incref(fromList.GetValueOrDefault());
+                        using (PyTuple from = new PyTuple(fromList.GetValueOrDefault())) {
+                            foreach (PyObject item in from) {
+                                if (mod_dict.HasKey(item))
+                                    continue;
 
-                    Runtime.Incref(fromList.GetValueOrDefault());
-                    PyTuple from = new PyTuple(fromList.GetValueOrDefault());
-                    foreach (PyObject item in from) {
-                        if (mod_dict.HasKey(item))
-                            continue;
+                                string s = item.AsManagedObject(typeof(string)) as string;
+                                if (null == s)
+                                    continue;
 
-                        string s = item.AsManagedObject(typeof(string)) as string;
-                        if (null == s)
-                            continue;
+                                ManagedType attr = root.GetAttribute(s, true);
+                                if (null == attr)
+                                    continue;
 
-                        ManagedType attr = root.GetAttribute(s, true);
-                        if (null == attr)
-                            continue;
-
-                        Runtime.Incref(attr.pyHandle);
-                        mod_dict.SetItem(s, new PyObject(attr.pyHandle));
+                                Runtime.Incref(attr.pyHandle);
+                                using (PyObject obj = new PyObject(attr.pyHandle)) {
+                                    mod_dict.SetItem(s, obj);
+                                }
+                            }
+                        }
                     }
                 }
             }
