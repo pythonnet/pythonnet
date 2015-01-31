@@ -130,10 +130,9 @@ class ClassTests(unittest.TestCase):
         """Test construction of structs."""
         from System.Drawing import Point
 
-        def test():
-            p = Point()
-
-        self.assertRaises(TypeError, test)
+        p = Point()
+        self.assertTrue(p.X == 0)
+        self.assertTrue(p.Y == 0)
 
         p = Point(0, 0)
         self.assertTrue(p.X == 0)
