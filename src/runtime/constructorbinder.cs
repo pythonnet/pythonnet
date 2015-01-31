@@ -21,8 +21,11 @@ namespace Python.Runtime {
     //========================================================================
 
     internal class ConstructorBinder : MethodBinder {
+        private Type _containingType = null;
 
-        internal ConstructorBinder () : base() {}
+        internal ConstructorBinder(Type containingType) : base() {
+            _containingType = containingType;
+        }
 
         //====================================================================
         // Constructors get invoked when an instance of a wrapped managed
@@ -53,8 +56,30 @@ namespace Python.Runtime {
         /// </remarks>
         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw,
                                   MethodBase info) {
-            Binding binding = this.Bind(inst, args, kw, info);
             Object result;
+
+            if (_containingType.IsValueType && !_containingType.IsPrimitive && 
+                !_containingType.IsEnum && _containingType != typeof (decimal) && 
+                Runtime.PyTuple_Size(args) == 0) {
+                // If you are trying to construct an instance of a struct by
+                // calling its default constructor, that ConstructorInfo
+                // instance will not appear in reflection and the object must 
+                // instead be constructed via a call to 
+                // Activator.CreateInstance().
+                try {
+                    result = Activator.CreateInstance(_containingType);
+                }
+                catch (Exception e) {
+                    if (e.InnerException != null) {
+                        e = e.InnerException;
+                    }
+                    Exceptions.SetError(e);
+                    return null;
+                }
+                return result;
+            }
+
+            Binding binding = this.Bind(inst, args, kw, info);
 
             if (binding == null) {
                 // It is possible for __new__ to be invoked on construction
