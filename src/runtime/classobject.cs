@@ -26,7 +26,7 @@ namespace Python.Runtime {
 
         internal ClassObject(Type tp) : base(tp) {
             ctors = type.GetConstructors();
-            binder = new ConstructorBinder();
+            binder = new ConstructorBinder(type);
 
             for (int i = 0; i < ctors.Length; i++) {
                 binder.AddMethod(ctors[i]);
