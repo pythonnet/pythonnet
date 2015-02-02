@@ -28,7 +28,9 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
         value_name = "InstallationFolder"
         sdk_name = "Windows SDK"
         keys_to_check = [
+            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A\WinSDK-Win32Tools",
             r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1\WinSDKWin32Tools",
+            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A\WinSDK-Win32Tools",
             r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0\WinSDKWin32Tools",
             r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0A\WinSDKWin32Tools",
         ]
