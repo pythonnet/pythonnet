@@ -118,17 +118,21 @@ namespace Python.Runtime {
     /// collection occurs.
     /// </remarks>
 
-    public void Dispose() {
+    protected virtual void Dispose(bool disposing) {
         if (!disposed) {
             if (Runtime.Py_IsInitialized() > 0) {
                 IntPtr gs = PythonEngine.AcquireLock();
                 Runtime.Decref(obj);
-                obj = IntPtr.Zero;    
+                obj = IntPtr.Zero;
                 PythonEngine.ReleaseLock(gs);
             }
-            GC.SuppressFinalize(this);
             disposed = true;
         }
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
 
