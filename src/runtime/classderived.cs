@@ -388,7 +388,10 @@ namespace Python.Runtime
         private static void AddPythonMethod(string methodName, PyObject func, TypeBuilder typeBuilder)
         {
             if (func.HasAttr("_clr_method_name_"))
-                methodName = func.GetAttr("_clr_method_name_").ToString();
+            {
+                using (PyObject pyMethodName = func.GetAttr("_clr_method_name_"))
+                    methodName = pyMethodName.ToString();
+            }
 
             using (PyObject pyReturnType = func.GetAttr("_clr_return_type_"))
             using (PyObject pyArgTypes = func.GetAttr("_clr_arg_types_"))
@@ -477,37 +480,45 @@ namespace Python.Runtime
                                                                              propertyType,
                                                                              null);
 
-                if (func.HasAttr("fget") && func.GetAttr("fget").IsTrue())
+                if (func.HasAttr("fget"))
                 {
-                    MethodBuilder methodBuilder = typeBuilder.DefineMethod("get_" + propertyName,
-                                                                            methodAttribs,
-                                                                            propertyType,
-                                                                            null);
+                    using (PyObject pyfget = func.GetAttr("fget"))
+                    if (pyfget.IsTrue())
+                    {
+                        MethodBuilder methodBuilder = typeBuilder.DefineMethod("get_" + propertyName,
+                                                                                methodAttribs,
+                                                                                propertyType,
+                                                                                null);
 
-                    ILGenerator il = methodBuilder.GetILGenerator();
-                    il.Emit(OpCodes.Ldarg_0);
-                    il.Emit(OpCodes.Ldstr, propertyName);
-                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeGetProperty").MakeGenericMethod(propertyType));
-                    il.Emit(OpCodes.Ret);
+                        ILGenerator il = methodBuilder.GetILGenerator();
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldstr, propertyName);
+                        il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeGetProperty").MakeGenericMethod(propertyType));
+                        il.Emit(OpCodes.Ret);
 
-                    propertyBuilder.SetGetMethod(methodBuilder);
+                        propertyBuilder.SetGetMethod(methodBuilder);
+                    }
                 }
 
-                if (func.HasAttr("fset") && func.GetAttr("fset").IsTrue())
+                if (func.HasAttr("fset"))
                 {
-                    MethodBuilder methodBuilder = typeBuilder.DefineMethod("set_" + propertyName,
-                                                                            methodAttribs,
-                                                                            null,
-                                                                            new Type[]{propertyType});
+                    using (PyObject pyset = func.GetAttr("fset"))
+                    if (pyset.IsTrue())
+                    {
+                        MethodBuilder methodBuilder = typeBuilder.DefineMethod("set_" + propertyName,
+                                                                                methodAttribs,
+                                                                                null,
+                                                                                new Type[]{propertyType});
 
-                    ILGenerator il = methodBuilder.GetILGenerator();
-                    il.Emit(OpCodes.Ldarg_0);
-                    il.Emit(OpCodes.Ldstr, propertyName);
-                    il.Emit(OpCodes.Ldarg_1);
-                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeSetProperty").MakeGenericMethod(propertyType));
-                    il.Emit(OpCodes.Ret);
+                        ILGenerator il = methodBuilder.GetILGenerator();
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldstr, propertyName);
+                        il.Emit(OpCodes.Ldarg_1);
+                        il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeSetProperty").MakeGenericMethod(propertyType));
+                        il.Emit(OpCodes.Ret);
 
-                    propertyBuilder.SetSetMethod(methodBuilder);
+                        propertyBuilder.SetSetMethod(methodBuilder);
+                    }
                 }
             }
         }

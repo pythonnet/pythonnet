@@ -434,7 +434,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void SetItem(int index, PyObject value) {
-        SetItem(new PyInt(index), value);
+        using (PyInt pyindex = new PyInt(index)) {
+            SetItem(pyindex, value);
+        }
     }
 
 
@@ -483,7 +485,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void DelItem(int index) {
-        DelItem(new PyInt(index));
+        using (PyInt pyindex = new PyInt(index))
+            DelItem(pyindex);
     }
 
 
@@ -962,10 +965,20 @@ namespace Python.Runtime {
     {
         if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
         {
-            PyTuple pyargs;
-            PyDict kwargs;
-            GetArgs(args, out pyargs, out kwargs);
-            result = InvokeMethod(binder.Name, pyargs, kwargs);
+            PyTuple pyargs = null;
+            PyDict kwargs = null;
+            try
+            {
+                GetArgs(args, out pyargs, out kwargs);
+                result = InvokeMethod(binder.Name, pyargs, kwargs);
+            }
+            finally
+            {
+                if (null != pyargs)
+                    pyargs.Dispose();
+                if (null != kwargs)
+                    kwargs.Dispose();
+            }
             return true;
         }
         else
@@ -976,10 +989,20 @@ namespace Python.Runtime {
     {
         if (this.IsCallable())
         {
-            PyTuple pyargs;
-            PyDict kwargs;
-            GetArgs(args, out pyargs, out kwargs);
-            result = Invoke(pyargs, kwargs);
+            PyTuple pyargs = null;
+            PyDict kwargs = null;
+            try
+            {
+                GetArgs(args, out pyargs, out kwargs);
+                result = Invoke(pyargs, kwargs);
+            }
+            finally
+            {
+                if (null != pyargs)
+                    pyargs.Dispose();
+                if (null != kwargs)
+                    kwargs.Dispose();
+            }
             return true;
         }
         else

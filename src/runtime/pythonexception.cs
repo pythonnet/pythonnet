@@ -35,8 +35,10 @@ namespace Python.Runtime {
         if ((_pyType != IntPtr.Zero) && (_pyValue != IntPtr.Zero))
         {
             string type;
-            using (PyObject pyType = new PyObject(_pyType)) {
-                type = pyType.GetAttr("__name__").ToString();
+            using (PyObject pyType = new PyObject(_pyType))
+            using (PyObject pyTypeName = pyType.GetAttr("__name__"))
+            {
+                    type = pyTypeName.ToString();
             }
             string message = Runtime.GetManagedString(_pyValue);
             _message = type + " : " + message;
