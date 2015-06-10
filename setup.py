@@ -109,9 +109,17 @@ class PythonNET_BuildExt(build_ext):
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
 
+        # Up to Python 3.2 sys.maxunicode is used to determine the size of Py_UNICODE
+        # but from 3.3 onwards Py_UNICODE is a typedef of wchar_t.
+        if sys.version_info[:2] <= (3, 2):
+            unicode_width = 2 if sys.maxunicode < 0x10FFFF else 4
+        else:
+            import ctypes
+            unicode_width = ctypes.sizeof(ctypes.c_wchar)
+
         defines = [
             "PYTHON%d%s" % (sys.version_info[:2]),
-            "UCS2" if sys.maxunicode < 0x10FFFF else "UCS4",
+            "UCS%d" % unicode_width,
         ]
 
         if CONFIG == "Debug":
