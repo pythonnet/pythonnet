@@ -7,10 +7,13 @@ from distutils.command.build_ext import build_ext
 from distutils.command.build_scripts import build_scripts
 from distutils.command.install_lib import install_lib
 from distutils.sysconfig import get_config_var
+from distutils.util import convert_path
+from distutils.dep_util import newer
+from distutils import log
 from platform import architecture
 from subprocess import Popen, CalledProcessError, PIPE, check_call
 from glob import glob
-import shutil
+import stat
 import sys
 import os
 
@@ -274,6 +277,60 @@ class PythonNET_BuildScripts(build_scripts):
                 scripts.append(script)
             self.scripts = scripts
 
+    def copy_scripts(self):
+        # Look for the npython script as it can't be copied by the base class'
+        # copy_scripts as it attempts to determine the file encoding as if it
+        # were a text file.
+        npython = None
+        for script in self.scripts:
+            if os.path.basename(script) == _npython_exe:
+                npython = script
+
+        if npython is None:
+            return build_scripts.copy_scripts(self)
+
+        # Call the base class copy_scripts with anything other than npython
+        scripts = self.scripts
+        self.scripts = [x for x in scripts if x != npython]
+        try:
+            base_result = build_scripts.copy_scripts(self)
+        finally:
+            self.scripts = scripts
+
+        # Copy npython
+        outfiles = []
+        updated_files = []
+
+        script = convert_path(npython)
+        outfile = os.path.join(self.build_dir, os.path.basename(script))
+        outfiles.append(outfile)
+
+        if not self.force and not newer(script, outfile):
+            log.debug("not copying %s (up-to-date)", script)
+        else:
+            updated_files.append(outfile)
+            self.copy_file(script, outfile)
+
+            if os.name == 'posix':
+                for file in outfiles:
+                    if self.dry_run:
+                        log.info("changing mode of %s", file)
+                    else:
+                        oldmode = os.stat(file)[stat.ST_MODE] & 0o7777
+                        newmode = (oldmode | 0o555) & 0o7777
+                        if newmode != oldmode:
+                            log.info("changing mode of %s from %o to %o",
+                                     file, oldmode, newmode)
+                            os.chmod(file, newmode)
+
+        # Some versions of build_command.copy_scripts return (outfiles, updated_files),
+        # older versions return None.
+        if base_result is not None:
+            base_outfiles, base_updated_files = base_result
+            outfiles.extend(base_outfiles)
+            updated_files.extend(base_updated_files)
+            return outfiles, updated_files
+
 
 def _check_output(*popenargs, **kwargs):
     """subprocess.check_output from python 2.7.
@@ -309,9 +366,9 @@ if __name__ == "__main__":
         scripts=[_npython_exe],
         zip_safe=False,
         cmdclass={
-            "build_ext" : PythonNET_BuildExt,
-            "build_scripts" : PythonNET_BuildScripts,
-            "install_lib" : PythonNET_InstallLib
+            "build_ext": PythonNET_BuildExt,
+            "build_scripts": PythonNET_BuildScripts,
+            "install_lib": PythonNET_InstallLib,
         }
     )
 
