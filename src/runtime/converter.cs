@@ -405,6 +405,7 @@ namespace Python.Runtime {
                 return true;
 
             case TypeCode.Int32:
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
                 // Trickery to support 64-bit platforms.
                 if (IntPtr.Size == 4) {
                     op = Runtime.PyNumber_Int(value);
@@ -427,6 +428,10 @@ namespace Python.Runtime {
                     return true;
                 }
                 else {
+#else
+                // When using Python3 always use the PyLong API
+                {
+#endif
                     op = Runtime.PyNumber_Long(value);
                     if (op == IntPtr.Zero) {
                         if (Exceptions.ExceptionMatches(overflow)) {
