@@ -79,14 +79,20 @@ namespace Python.Runtime {
 
         internal static void Shutdown() {
 #if (PYTHON32 || PYTHON33 || PYTHON34)
-            Runtime.Decref(py_clr_module);
-            Runtime.Decref(root.pyHandle);
+            if (0 != Runtime.Py_IsInitialized()) {
+                Runtime.Decref(py_clr_module);
+                Runtime.Decref(root.pyHandle);
+            }
             ModuleDefOffset.FreeModuleDef(module_def);
 #else
-            Runtime.Decref(root.pyHandle);
-            Runtime.Decref(root.pyHandle);
+            if (0 != Runtime.Py_IsInitialized()) {
+                Runtime.Decref(root.pyHandle);
+                Runtime.Decref(root.pyHandle);
+            }
 #endif
-            Runtime.Decref(py_import);
+            if (0 != Runtime.Py_IsInitialized()) {
+                Runtime.Decref(py_import);
+            }
         }
 
         //===================================================================

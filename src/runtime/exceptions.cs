@@ -168,16 +168,19 @@ namespace Python.Runtime {
         //===================================================================
 
         internal static void Shutdown() {
-            Type type = typeof(Exceptions);
-            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | 
-                                                    BindingFlags.Static)) {
-                IntPtr op = (IntPtr)fi.GetValue(type);
-                if (op != IntPtr.Zero) {
-                      Runtime.Decref(op);
+            if (0 != Runtime.Py_IsInitialized()) {
+                Type type = typeof(Exceptions);
+                foreach (FieldInfo fi in type.GetFields(BindingFlags.Public |
+                                                        BindingFlags.Static)) {
+                    IntPtr op = (IntPtr)fi.GetValue(type);
+                    if (op != IntPtr.Zero) {
+                        Runtime.Decref(op);
+                    }
                 }
+                Runtime.Decref(exceptions_module);
+                Runtime.PyObject_HasAttrString(warnings_module, "xx");
+                Runtime.Decref(warnings_module);
             }
-            Runtime.Decref(exceptions_module);
-            Runtime.Decref(warnings_module);
         }
 
         /// <summary>
