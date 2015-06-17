@@ -1,4 +1,4 @@
-// ==========================================================================
+work// ==========================================================================
 // This software is subject to the provisions of the Zope Public License,
 // Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 // THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
@@ -436,9 +436,7 @@ namespace Python.Runtime {
         {
             IntPtr flag = (IntPtr)257; /* Py_file_input */
             IntPtr result = Runtime.PyRun_String(code, flag, globals, locals);
-            Runtime.Decref(locals);
-            if (result == IntPtr.Zero)
-            {
+            if (result == IntPtr.Zero) {
                 return null;
             }
             return new PyObject(result);
