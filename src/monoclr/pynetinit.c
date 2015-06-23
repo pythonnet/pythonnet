@@ -10,14 +10,15 @@
 // Author: Christian Heimes <christian(at)cheimes(dot)de>
 
 #include "pynetclr.h"
+#include "stdlib.h"
 
 #ifndef _WIN32
 #include "dirent.h"
+#include "dlfcn.h"
+#include "libgen.h"
+#include "alloca.h"
 #endif
 
-#if PY_MAJOR_VERSION > 2
-#include <stdlib.h>
-#endif
 
 // initialize Mono and PythonNet
 PyNet_Args* PyNet_Init(int ext) {
@@ -97,6 +98,26 @@ void main_thread_handler (gpointer user_data) {
     MonoObject *exception = NULL;
 
 #ifndef _WIN32
+    // Get the filename of the python shared object and set
+    // LD_LIBRARY_PATH so Mono can find it.
+    Dl_info dlinfo = {0};
+    if (0 != dladdr(&Py_Initialize, &dlinfo)) {
+        char* fname = alloca(strlen(dlinfo.dli_fname) + 1);
+        strcpy(fname, dlinfo.dli_fname);
+        char* py_libdir = dirname(fname);
+        char* ld_library_path = getenv("LD_LIBRARY_PATH");
+        if (NULL == ld_library_path) {
+            setenv("LD_LIBRARY_PATH", py_libdir, 1);
+        } else {
+            char* new_ld_library_path = alloca(strlen(py_libdir)
+                                                + strlen(ld_library_path)
+                                                + 2);
+            strcpy(new_ld_library_path, py_libdir);
+            strcat(new_ld_library_path, ":");
+            strcat(new_ld_library_path, ld_library_path);
+            setenv("LD_LIBRARY_PATH", py_libdir, 1);
+        }
+    }
 
     //get python path system variable
     PyObject* syspath = PySys_GetObject("path");
