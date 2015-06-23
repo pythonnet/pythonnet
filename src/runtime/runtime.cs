@@ -177,7 +177,11 @@ namespace Python.Runtime {
         internal const string dllWithWideUnicode = "";
 #endif
 
+#if (PYTHON_WITHOUT_ENABLE_SHARED)
+        public const string dll = "__Internal";
+#else
         public const string dll = dllBase + dllWithPyDebug + dllWithPyMalloc + dllWithWideUnicode;
+#endif
 
         // set to true when python is finalizing
         internal static Object IsFinalizingLock = new Object();

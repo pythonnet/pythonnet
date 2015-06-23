@@ -17,6 +17,6 @@ install:
   - pip install six
   - python setup.py build_ext --inplace
 script:
-  - export PYTHONPATH=`pwd`
+  - export PYTHONPATH=`pwd`:$PYTHONPATH
   - export PYTHONHOME=`python -c "import sys; print(sys.exec_prefix)"`
-  - ./npython src/tests/runtests.py
+  - python src/tests/runtests.py

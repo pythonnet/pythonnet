@@ -83,13 +83,11 @@ if DEVTOOLS == "MsDev":
     _xbuild = "\"%s\"" % _find_msbuild_tool("msbuild.exe")
     _defines_sep = ";"
     _config = "%sWin" % CONFIG
-    _npython_exe = "nPython.exe"
 
 elif DEVTOOLS == "Mono":
     _xbuild = "xbuild"
     _defines_sep = ","
     _config = "%sMono" % CONFIG
-    _npython_exe = "npython"
 
 else:
     raise NotImplementedError("DevTools %s not supported (use MsDev or Mono)" % DEVTOOLS)
@@ -130,6 +128,11 @@ class PythonNET_BuildExt(build_ext):
 
         if sys.platform != "win32" and DEVTOOLS == "Mono":
             defines.append("MONO_LINUX")
+
+            # Check if --enable-shared was set when Python was built
+            enable_shared = get_config_var("Py_ENABLE_SHARED")
+            if enable_shared == 0:
+                defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
 
         if hasattr(sys, "abiflags"):
             if "d" in sys.abiflags:
@@ -191,44 +194,6 @@ class PythonNET_BuildExt(build_ext):
 
         build_ext.build_extension(self, clr_ext)
 
-        # build the clr python executable
-        sources = [
-            "src/monoclr/pynetinit.c",
-            "src/monoclr/python.c",
-        ]
-
-        macros = ext.define_macros[:]
-        for undef in ext.undef_macros:
-            macros.append((undef,))
-
-        objects = self.compiler.compile(sources,
-                                        output_dir=self.build_temp,
-                                        macros=macros,
-                                        include_dirs=ext.include_dirs,
-                                        debug=self.debug,
-                                        extra_postargs=cflags.split(" "),
-                                        depends=ext.depends)
-
-        output_dir = os.path.dirname(self.get_ext_fullpath(ext.name))
-        py_libs = get_config_var("BLDLIBRARY")
-        libs += " " + py_libs
-
-        # Include the directories python's shared libs were installed to. This
-        # is case python was built with --enable-shared as then npython will need
-        # to be able to find libpythonX.X.so.
-        runtime_library_dirs = (get_config_var("DESTDIRS") or "").split(" ")
-        if ext.runtime_library_dirs:
-            runtime_library_dirs.extend(ext.runtime_library_dirs)
-
-        self.compiler.link_executable(objects,
-                                      _npython_exe,
-                                      output_dir=output_dir,
-                                      libraries=self.get_libraries(ext),
-                                      library_dirs=ext.library_dirs,
-                                      runtime_library_dirs=runtime_library_dirs,
-                                      extra_postargs=libs.split(" "),
-                                      debug=self.debug)
-
 
     def _install_packages(self):
         """install packages using nuget"""
@@ -261,77 +226,6 @@ class PythonNET_InstallLib(install_lib):
                 self.copy_file(srcfile, destfile)
     
 
-class PythonNET_BuildScripts(build_scripts):
-
-    def finalize_options(self):
-        build_scripts.finalize_options(self)
-
-        # fixup scripts to look in the build_ext output folder
-        if self.scripts:
-            build_ext = self.get_finalized_command("build_ext")
-            output_dir = os.path.dirname(build_ext.get_ext_fullpath("clr"))
-            scripts = []
-            for script in self.scripts:
-                if os.path.exists(os.path.join(output_dir, script)):
-                    script = os.path.join(output_dir, script)
-                scripts.append(script)
-            self.scripts = scripts
-
-    def copy_scripts(self):
-        # Look for the npython script as it can't be copied by the base class'
-        # copy_scripts as it attempts to determine the file encoding as if it
-        # were a text file.
-        npython = None
-        for script in self.scripts:
-            if os.path.basename(script) == _npython_exe:
-                npython = script
-
-        if npython is None:
-            return build_scripts.copy_scripts(self)
-
-        # Call the base class copy_scripts with anything other than npython
-        scripts = self.scripts
-        self.scripts = [x for x in scripts if x != npython]
-        try:
-            base_result = build_scripts.copy_scripts(self)
-        finally:
-            self.scripts = scripts
-
-        # Copy npython
-        outfiles = []
-        updated_files = []
-
-        script = convert_path(npython)
-        outfile = os.path.join(self.build_dir, os.path.basename(script))
-        outfiles.append(outfile)
-
-        if not self.force and not newer(script, outfile):
-            log.debug("not copying %s (up-to-date)", script)
-        else:
-            updated_files.append(outfile)
-            self.copy_file(script, outfile)
-
-            if os.name == 'posix':
-                for file in outfiles:
-                    if self.dry_run:
-                        log.info("changing mode of %s", file)
-                    else:
-                        oldmode = os.stat(file)[stat.ST_MODE] & 0o7777
-                        newmode = (oldmode | 0o555) & 0o7777
-                        if newmode != oldmode:
-                            log.info("changing mode of %s from %o to %o",
-                                     file, oldmode, newmode)
-                            os.chmod(file, newmode)
-
-        # Some versions of build_command.copy_scripts return (outfiles, updated_files),
-        # older versions return None.
-        if base_result is not None:
-            base_outfiles, base_updated_files = base_result
-            outfiles.extend(base_outfiles)
-            updated_files.extend(base_updated_files)
-            return outfiles, updated_files
-
-
 def _check_output(*popenargs, **kwargs):
     """subprocess.check_output from python 2.7.
     Added here to support building for earlier versions
@@ -363,11 +257,9 @@ if __name__ == "__main__":
         ext_modules=[
             Extension("clr", sources=[])
         ],
-        scripts=[_npython_exe],
         zip_safe=False,
         cmdclass={
             "build_ext": PythonNET_BuildExt,
-            "build_scripts": PythonNET_BuildScripts,
             "install_lib": PythonNET_InstallLib,
         }
     )
