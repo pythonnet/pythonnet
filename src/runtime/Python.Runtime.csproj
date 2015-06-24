@@ -183,7 +183,9 @@
     <None Include="x86\clrmodule-platform.il" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\clr.py" />
+    <EmbeddedResource Include="resources\clr.py">
+        <LogicalName>clr.py</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
