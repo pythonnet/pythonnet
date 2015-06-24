@@ -6,10 +6,12 @@ from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.command.build_scripts import build_scripts
 from distutils.command.install_lib import install_lib
+from distutils.command.install_data import install_data
 from distutils.sysconfig import get_config_var
 from platform import architecture
 from subprocess import Popen, CalledProcessError, PIPE, check_call
 from glob import glob
+import fnmatch
 import shutil
 import sys
 import os
@@ -229,16 +231,35 @@ class PythonNET_InstallLib(install_lib):
         if not os.path.exists(self.install_dir):
             self.mkpath(self.install_dir)
 
-        # only copy clr.pyd and its dependencies
-        for pattern in ("clr.*", "Python.Runtime.*"):
-            for srcfile in glob(os.path.join(self.build_dir, pattern)):
-                destfile = os.path.join(self.install_dir, os.path.basename(srcfile))
-                self.copy_file(srcfile, destfile)
-    
+        # only copy clr.pyd/.so
+        for srcfile in glob(os.path.join(self.build_dir, "clr.*")):
+            destfile = os.path.join(self.install_dir, os.path.basename(srcfile))
+            self.copy_file(srcfile, destfile)
+
+
+class PythonNET_InstallData(install_data):
+
+    def run(self):
+        build_cmd = self.get_finalized_command("build_ext")
+        install_cmd = self.get_finalized_command("install")
+        build_lib = os.path.abspath(build_cmd.build_lib)
+        install_platlib = os.path.relpath(install_cmd.install_platlib, self.install_dir)
+
+        for i, data_files in enumerate(self.data_files):
+            if isinstance(data_files, str):
+                self.data_files[i] = data_files[i].format(build_lib=build_lib)
+            else:
+                for j, filename in enumerate(data_files[1]):
+                    data_files[1][j] = filename.format(build_lib=build_lib)
+                dest = data_files[0].format(install_platlib=install_platlib)
+                self.data_files[i] = dest, data_files[1]
+
+        return install_data.run(self)
+ 
 
 class PythonNET_BuildScripts(build_scripts):
 
-    def finalize_options(self):
+    def run(self):
         build_scripts.finalize_options(self)
 
         # fixup scripts to look in the build_ext output folder
@@ -251,6 +272,8 @@ class PythonNET_BuildScripts(build_scripts):
                     script = os.path.join(output_dir, script)
                 scripts.append(script)
             self.scripts = scripts
+
+        return build_scripts.run(self)
 
 
 def _check_output(*popenargs, **kwargs):
@@ -270,6 +293,24 @@ def _check_output(*popenargs, **kwargs):
 
 
 if __name__ == "__main__":
+    setupdir = os.path.dirname(__file__)
+    if setupdir:
+        os.chdir(setupdir)
+
+    sources = []
+    for ext in (".sln", ".snk"):
+        sources.extend(glob("*" + ext))
+
+    for root, dirnames, filenames in os.walk("src"):
+        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il", ".py", ".c", ".h", ".ico"):
+            for filename in fnmatch.filter(filenames, "*" + ext):
+                sources.append(os.path.join(root, filename))
+
+    for root, dirnames, filenames in os.walk("tools"):
+        for ext in (".exe"):
+            for filename in fnmatch.filter(filenames, "*" + ext):
+                sources.append(os.path.join(root, filename))
+
     setup(
         name="pythonnet",
         version="2.0.0.dev1",
@@ -280,14 +321,18 @@ if __name__ == "__main__":
             'Development Status :: 3 - Alpha',
             'Intended Audience :: Developers'],
         ext_modules=[
-            Extension("clr", sources=[])
+            Extension("clr", sources=sources)
+        ],
+        data_files=[
+            ("{install_platlib}", ["{build_lib}/Python.Runtime.dll"]),
         ],
         scripts=[_npython_exe],
         zip_safe=False,
         cmdclass={
             "build_ext" : PythonNET_BuildExt,
             "build_scripts" : PythonNET_BuildScripts,
-            "install_lib" : PythonNET_InstallLib
+            "install_lib" : PythonNET_InstallLib,
+            "install_data": PythonNET_InstallData,
         }
     )
 
