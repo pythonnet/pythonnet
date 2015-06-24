@@ -25,7 +25,7 @@ namespace Python.Runtime {
 
     static class NativeMethods
     {
-#if MONO_LINUX
+#if (MONO_LINUX || MONO_OSX)
         static public IntPtr LoadLibrary(string fileName) {
             return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
         }
@@ -35,6 +35,10 @@ namespace Python.Runtime {
         }
 
         static public IntPtr GetProcAddress(IntPtr dllHandle, string name) {
+            // look in the exe if dllHandle is NULL
+            if (IntPtr.Zero == dllHandle)
+                dllHandle = RTLD_DEFAULT;
+
             // clear previous errors if any
             dlerror();
             var res = dlsym(dllHandle, name);
@@ -45,8 +49,26 @@ namespace Python.Runtime {
             return res;
         }
 
-        const int RTLD_NOW = 2;
-        const int RTLD_SHARED = 20;
+#if (MONO_OSX)
+        static int RTLD_NOW = 0x2;
+        static int RTLD_SHARED = 0x20;
+        static IntPtr RTLD_DEFAULT = new IntPtr(-2);
+
+        [DllImport("__Internal")]
+        private static extern IntPtr dlopen(String fileName, int flags);
+
+        [DllImport("__Internal")]
+        private static extern IntPtr dlsym(IntPtr handle, String symbol);
+
+        [DllImport("__Internal")]
+        private static extern int dlclose(IntPtr handle);
+
+        [DllImport("__Internal")]
+        private static extern IntPtr dlerror();
+#else
+        static int RTLD_NOW = 0x2;
+        static int RTLD_SHARED = 0x20;
+        static IntPtr RTLD_DEFAULT = IntPtr.Zero;
 
         [DllImport("libdl.so")]
         private static extern IntPtr dlopen(String fileName, int flags);
@@ -59,6 +81,8 @@ namespace Python.Runtime {
 
         [DllImport("libdl.so")]
         private static extern IntPtr dlerror();
+#endif
+
 #else
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string dllToLoad);
@@ -139,7 +163,7 @@ namespace Python.Runtime {
 #if (PYTHON27)
         internal const string dllBase = "python27";
 #endif
-#if (MONO_LINUX)
+#if (MONO_LINUX || MONO_OSX)
 #if (PYTHON32)
         internal const string dllBase = "python3.2";
 #endif
@@ -295,10 +319,15 @@ namespace Python.Runtime {
         Error = new IntPtr(-1);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34)
-        IntPtr dll = NativeMethods.LoadLibrary(Runtime.dll);
+        IntPtr dll = IntPtr.Zero;
+        if ("__Internal" != Runtime.dll) {
+            NativeMethods.LoadLibrary(Runtime.dll);
+        }
         _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dll, "_PyObject_NextNotImplemented");
-#if !MONO_LINUX
-        NativeMethods.FreeLibrary(dll);
+#if !(MONO_LINUX || MONO_OSX)
+        if (IntPtr.Zero != dll) {
+            NativeMethods.FreeLibrary(dll);
+        }
 #endif
 #endif
 
@@ -1751,7 +1780,11 @@ namespace Python.Runtime {
         if (type == Runtime.PyUnicodeType)
         {
             IntPtr p = Runtime.PyUnicode_AsUnicode(op);
-            return UnixMarshal.PtrToString(p, Encoding.UTF32);
+            int length = Runtime.PyUnicode_GetSize(op);
+            int size = length * 4;
+            byte[] buffer = new byte[size];
+            Marshal.Copy(p, buffer, 0, size);
+            return Encoding.UTF32.GetString(buffer, 0, size);
         }
 
         return null;
