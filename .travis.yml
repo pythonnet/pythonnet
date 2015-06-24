@@ -18,5 +18,4 @@ install:
   - python setup.py build_ext --inplace
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
-  - export PYTHONHOME=`python -c "import sys; print(sys.exec_prefix)"`
   - python src/tests/runtests.py

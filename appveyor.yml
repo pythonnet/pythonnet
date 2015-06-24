@@ -33,4 +33,3 @@ test_script:
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
   - c:\python\python.exe src\tests\runtests.py
-  - c:\python\scripts\npython.exe src\tests\runtests.py
