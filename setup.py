@@ -127,7 +127,10 @@ class PythonNET_BuildExt(build_ext):
             defines.extend(["DEBUG", "TRACE"])
 
         if sys.platform != "win32" and DEVTOOLS == "Mono":
-            defines.append("MONO_LINUX")
+            if sys.platform == "darwin":
+                defines.append("MONO_OSX")
+            else:
+                defines.append("MONO_LINUX")
 
             # Check if --enable-shared was set when Python was built
             enable_shared = get_config_var("Py_ENABLE_SHARED")

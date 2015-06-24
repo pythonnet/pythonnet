@@ -57,6 +57,10 @@ static PyObject *_initclr() {
     if (pn_args->error) {
         return NULL;
     }
+
+    if (NULL != pn_args->module)
+        return pn_args->module;
+
     return m;
 }
 

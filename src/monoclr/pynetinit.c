@@ -27,6 +27,7 @@ PyNet_Args* PyNet_Init(int ext) {
     pn_args->pr_file = PR_ASSEMBLY;
     pn_args->error = NULL;
     pn_args->shutdown = NULL;
+    pn_args->module = NULL;
 
     if (ext == 0) {
         pn_args->init_name = "Python.Runtime:Initialize()";
@@ -96,6 +97,7 @@ void main_thread_handler (gpointer user_data) {
     MonoImage *pr_image;
     MonoClass *pythonengine;
     MonoObject *exception = NULL;
+    MonoObject *init_result;
 
 #ifndef _WIN32
     // Get the filename of the python shared object and set
@@ -209,11 +211,17 @@ void main_thread_handler (gpointer user_data) {
         return;
     }
 
-    mono_runtime_invoke(init, NULL, NULL, &exception);
+    init_result = mono_runtime_invoke(init, NULL, NULL, &exception);
     if (exception) {
         pn_args->error = PyNet_ExceptionToString(exception);
         return;
     }
+
+#if PY_MAJOR_VERSION >= 3
+    if (NULL != init_result)
+        pn_args->module = *(PyObject**)mono_object_unbox(init_result);
+#endif
+
 }
 
 // Get string from a Mono exception 

@@ -32,6 +32,7 @@ typedef struct {
     char *error;
     char *init_name;
     char *shutdown_name;
+    PyObject* module;
 } PyNet_Args;
 
 PyNet_Args* PyNet_Init(int);
