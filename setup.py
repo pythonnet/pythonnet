@@ -298,7 +298,7 @@ if __name__ == "__main__":
         os.chdir(setupdir)
 
     sources = []
-    for ext in (".sln", ".snk"):
+    for ext in (".sln", ".snk", ".config"):
         sources.extend(glob("*" + ext))
 
     for root, dirnames, filenames in os.walk("src"):
@@ -324,7 +324,9 @@ if __name__ == "__main__":
             Extension("clr", sources=sources)
         ],
         data_files=[
-            ("{install_platlib}", ["{build_lib}/Python.Runtime.dll"]),
+            ("{install_platlib}", [
+                "{build_lib}/Python.Runtime.dll",
+                "Python.Runtime.dll.config"]),
         ],
         scripts=[_npython_exe],
         zip_safe=False,
