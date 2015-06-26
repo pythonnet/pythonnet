@@ -11,6 +11,12 @@ import sys, os, string, unittest, types
 from Python.Test import FieldTest
 from Python.Test import ShortEnum
 import System
+import six
+
+if six.PY3:
+    IntType = int
+else:
+    IntType = types.IntType
 
 
 class FieldTests(unittest.TestCase):
@@ -212,15 +218,15 @@ class FieldTests(unittest.TestCase):
         self.assertTrue(object.PublicStaticField == 0)
 
         descriptor = FieldTest.__dict__['PublicStaticField']
-        self.assertTrue(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != IntType)
 
         object.PublicStaticField = 0
         descriptor = FieldTest.__dict__['PublicStaticField']
-        self.assertTrue(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != IntType)
 
         FieldTest.PublicStaticField = 0
         descriptor = FieldTest.__dict__['PublicStaticField']
-        self.assertTrue(type(descriptor) != types.IntType)
+        self.assertTrue(type(descriptor) != IntType)
 
 
     def testFieldDescriptorWrongType(self):
@@ -286,15 +292,15 @@ class FieldTests(unittest.TestCase):
     def testCharField(self):
         """Test char fields."""
         object = FieldTest()
-        self.assertTrue(object.CharField == u'A')
+        self.assertTrue(object.CharField == six.u('A'))
         self.assertTrue(object.CharField == 'A')
 
         object.CharField = 'B'
-        self.assertTrue(object.CharField == u'B')
+        self.assertTrue(object.CharField == six.u('B'))
         self.assertTrue(object.CharField ==  'B')
 
-        object.CharField = u'C'
-        self.assertTrue(object.CharField == u'C')
+        object.CharField = six.u('C')
+        self.assertTrue(object.CharField == six.u('C'))
         self.assertTrue(object.CharField == 'C')
 
 

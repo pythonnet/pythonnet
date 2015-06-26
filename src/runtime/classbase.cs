@@ -57,7 +57,48 @@ namespace Python.Runtime {
         //====================================================================
         // Standard comparison implementation for instances of reflected types.
         //====================================================================
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
+            if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
+            {
+                Runtime.Incref(Runtime.PyNotImplemented);
+                return Runtime.PyNotImplemented;
+            }
 
+            IntPtr pytrue = Runtime.PyTrue;
+            IntPtr pyfalse = Runtime.PyFalse;
+
+            // swap true and false for NE
+            if (op != Runtime.Py_EQ)
+            {
+                pytrue = Runtime.PyFalse;
+                pyfalse = Runtime.PyTrue;
+            }
+
+            if (ob == other) {
+                Runtime.Incref(pytrue);
+                return pytrue;
+            }
+
+            CLRObject co1 = GetManagedObject(ob) as CLRObject;
+            CLRObject co2 = GetManagedObject(other) as CLRObject;
+			if (null == co2) {
+				Runtime.Incref(pyfalse);
+				return pyfalse;
+			}
+
+            Object o1 = co1.inst;
+            Object o2 = co2.inst;
+
+            if (Object.Equals(o1, o2)) {
+                Runtime.Incref(pytrue);
+                return pytrue;
+            }
+
+            Runtime.Incref(pyfalse);
+            return pyfalse;
+        }
+#else
         public static int tp_compare(IntPtr ob, IntPtr other) {
             if (ob == other) {
                 return 0;
@@ -73,6 +114,7 @@ namespace Python.Runtime {
             }
             return -1;
         }
+#endif
 
 
         //====================================================================
@@ -128,7 +170,17 @@ namespace Python.Runtime {
             if (co == null) {
                 return Exceptions.RaiseTypeError("invalid object");
             }
-            return Runtime.PyString_FromString(co.inst.ToString());
+            try {
+                return Runtime.PyString_FromString(co.inst.ToString());
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null) {
+                    e = e.InnerException;
+                }
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
         }
 
 
@@ -154,7 +206,7 @@ namespace Python.Runtime {
 
         public static void tp_dealloc(IntPtr ob) {
             ManagedType self = GetManagedObject(ob);
-            IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.ob_dict);
+            IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
             if (dict != IntPtr.Zero) { 
                 Runtime.Decref(dict);
             }

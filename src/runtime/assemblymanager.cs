@@ -282,7 +282,7 @@ namespace Python.Runtime {
         // be valid namespaces (to better match Python import semantics).
         //===================================================================
 
-        static void ScanAssembly(Assembly assembly) {
+        internal static void ScanAssembly(Assembly assembly) {
 
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
@@ -291,8 +291,8 @@ namespace Python.Runtime {
             Type[] types = assembly.GetTypes();
             for (int i = 0; i < types.Length; i++) {
                 Type t = types[i];
-                string ns = t.Namespace;
-                if ((ns != null) && (!namespaces.ContainsKey(ns))) {
+                string ns = t.Namespace ?? "";
+                if (!namespaces.ContainsKey(ns)) {
                     string[] names = ns.Split('.');
                     string s = "";
                     for (int n = 0; n < names.Length; n++) {
@@ -336,6 +336,16 @@ namespace Python.Runtime {
             return namespaces.ContainsKey(name);
         }
 
+        //===================================================================
+        // Returns list of assemblies that declare types in a given namespace
+        //===================================================================
+
+        public static IEnumerable<Assembly> GetAssemblies(string nsname) {
+            if (!namespaces.ContainsKey(nsname))
+                return new List<Assembly>();
+
+            return namespaces[nsname].Keys;
+        }
 
         //===================================================================
         // Returns the current list of valid names for the input namespace.
@@ -357,7 +367,7 @@ namespace Python.Runtime {
                     Type[] types = a.GetTypes();
                     for (int i = 0; i < types.Length; i++) {
                         Type t = types[i];
-                        if (t.Namespace == nsname) {
+                        if ((t.Namespace ?? "") == nsname) {
                             names.Add(t.Name);
                         }
                     }

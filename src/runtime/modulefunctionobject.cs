@@ -19,8 +19,8 @@ namespace Python.Runtime
     internal class ModuleFunctionObject : MethodObject
     {
 
-        public ModuleFunctionObject(string name, MethodInfo[] info, bool allow_threads)
-            : base(name, info, allow_threads)
+        public ModuleFunctionObject(Type type, string name, MethodInfo[] info, bool allow_threads)
+            : base(type, name, info, allow_threads)
         {
             for (int i = 0; i < info.Length; i++)
             {

@@ -34,9 +34,13 @@ namespace Python.Runtime {
             // XXX - here we create a Python string object, then take the
             // char * of the internal string to pass to our methoddef
             // structure. Its a hack, and the name is leaked!
-
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            IntPtr ps = Runtime.PyBytes_FromString(name);
+            IntPtr sp = Runtime.PyBytes_AS_STRING(ps);
+#else
             IntPtr ps = Runtime.PyString_FromString(name);
             IntPtr sp = Runtime.PyString_AS_STRING(ps);
+#endif
 
             // Allocate and initialize a PyMethodDef structure to represent 
             // the managed method, then create a PyCFunction. 
@@ -44,9 +48,9 @@ namespace Python.Runtime {
             mdef = Runtime.PyMem_Malloc(4 * IntPtr.Size);
             Marshal.WriteIntPtr(mdef, sp);
             Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), fp);
-            Marshal.WriteIntPtr(mdef, (2 * IntPtr.Size), (IntPtr)0x0002);
+            Marshal.WriteIntPtr(mdef, (2 * IntPtr.Size), (IntPtr)0x0003); // METH_VARARGS | METH_KEYWORDS
             Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), IntPtr.Zero);
-            ptr = Runtime.PyCFunction_New(mdef, IntPtr.Zero);
+            ptr = Runtime.PyCFunction_NewEx(mdef, IntPtr.Zero, IntPtr.Zero);
         }
 
         public IntPtr Call(IntPtr args, IntPtr kw) {

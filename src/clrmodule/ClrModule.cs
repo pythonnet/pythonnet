@@ -30,7 +30,7 @@
 // If DEBUG_PRINT is defined in the Build Properties, a few System.Console.WriteLine
 // calls are made to indicate what's going on during the load...
 //============================================================================
-
+using System;
 
 // ReSharper disable CheckNamespace
 // ReSharper disable InconsistentNaming
@@ -38,10 +38,14 @@ public class clrModule
 // ReSharper restore InconsistentNaming
 // ReSharper restore CheckNamespace
 {
-
-    [RGiesecke.DllExport.DllExport("initclr", System.Runtime.InteropServices.CallingConvention.StdCall)]
 // ReSharper disable InconsistentNaming
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [RGiesecke.DllExport.DllExport("PyInit_clr", System.Runtime.InteropServices.CallingConvention.StdCall)]
+    public static IntPtr PyInit_clr()
+#else
+    [RGiesecke.DllExport.DllExport("initclr", System.Runtime.InteropServices.CallingConvention.StdCall)]
     public static void initclr()
+#endif
 // ReSharper restore InconsistentNaming    
     {
 #if DEBUG_PRINT
@@ -76,7 +80,7 @@ public class clrModule
             System.Console.WriteLine("Success!");
 #endif
         }
-        catch (System.IO.FileNotFoundException)
+        catch (System.IO.IOException)
         {
             try
             {
@@ -103,13 +107,22 @@ public class clrModule
 #if DEBUG_PRINT
                 System.Console.WriteLine("Could not load Python.Runtime, so sad.");
 #endif
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+                return IntPtr.Zero;
+#else
                 return;
+#endif
             }
         }
 
         // Once here, we've successfully loaded SOME version of Python.Runtime
 		// So now we get the PythonEngine and execute the InitExt method on it.
         var pythonEngineType = pythonRuntime.GetType("Python.Runtime.PythonEngine");
+
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        return (IntPtr)pythonEngineType.InvokeMember("InitExt", System.Reflection.BindingFlags.InvokeMethod, null, null, null);
+#else
         pythonEngineType.InvokeMember("InitExt", System.Reflection.BindingFlags.InvokeMethod, null, null, null);
+#endif
     }
 }

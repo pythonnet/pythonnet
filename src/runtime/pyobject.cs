@@ -8,6 +8,9 @@
 // ==========================================================================
 
 using System;
+using System.Dynamic;
+using System.Linq.Expressions;
+using System.Collections;
 
 namespace Python.Runtime {
 
@@ -17,7 +20,7 @@ namespace Python.Runtime {
     /// http://www.python.org/doc/current/api/object.html for details.
     /// </summary>
 
-    public class PyObject : IDisposable {
+    public class PyObject : DynamicObject, IDisposable {
 
     protected internal IntPtr obj = IntPtr.Zero;
     private bool disposed = false;
@@ -95,7 +98,7 @@ namespace Python.Runtime {
 
     public object AsManagedObject(Type t) {
         Object result;
-        if (!Converter.ToManaged(this.Handle, t, out result, false)) {
+        if (!Converter.ToManaged(this.obj, t, out result, false)) {
             throw new InvalidCastException("cannot convert object to target type");
         }
         return result;
@@ -115,17 +118,21 @@ namespace Python.Runtime {
     /// collection occurs.
     /// </remarks>
 
-    public void Dispose() {
+    protected virtual void Dispose(bool disposing) {
         if (!disposed) {
             if (Runtime.Py_IsInitialized() > 0) {
                 IntPtr gs = PythonEngine.AcquireLock();
                 Runtime.Decref(obj);
-                obj = IntPtr.Zero;    
+                obj = IntPtr.Zero;
                 PythonEngine.ReleaseLock(gs);
             }
-            GC.SuppressFinalize(this);
             disposed = true;
         }
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
 
@@ -361,7 +368,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual PyObject GetItem(string key) {
-        return GetItem(new PyString(key));
+        using (PyString pyKey = new PyString(key))
+            return GetItem(pyKey);
     }
 
 
@@ -410,7 +418,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void SetItem(string key, PyObject value) {
-        SetItem(new PyString(key), value);
+        using (PyString pyKey = new PyString(key))
+            SetItem(pyKey, value);
     }
 
 
@@ -425,7 +434,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void SetItem(int index, PyObject value) {
-        SetItem(new PyInt(index), value);
+        using (PyInt pyindex = new PyInt(index)) {
+            SetItem(pyindex, value);
+        }
     }
 
 
@@ -458,7 +469,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void DelItem(string key) {
-        DelItem(new PyString(key));
+        using (PyString pyKey = new PyString(key))
+            DelItem(pyKey);
     }
 
 
@@ -473,7 +485,8 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void DelItem(int index) {
-        DelItem(new PyInt(index));
+        using (PyInt pyindex = new PyInt(index))
+            DelItem(pyindex);
     }
 
 
@@ -559,6 +572,21 @@ namespace Python.Runtime {
         return new PyObject(r);
     }
 
+    /// <summary>
+    /// GetEnumerator Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Return a new PyIter object for the object. This allows any iterable
+    /// python object to be iterated over in C#. A PythonException will be
+    /// raised if the object is not iterable.
+    /// </remarks>
+
+    public IEnumerator GetEnumerator()
+    {
+        return new PyIter(this);
+    }
+
 
     /// <summary>
     /// Invoke Method
@@ -609,7 +637,7 @@ namespace Python.Runtime {
 
     public PyObject Invoke(PyObject[] args, PyDict kw) {
         PyTuple t = new PyTuple(args);
-        IntPtr r = Runtime.PyObject_Call(obj, t.obj, kw.obj);
+        IntPtr r = Runtime.PyObject_Call(obj, t.obj, kw != null ? kw.obj : IntPtr.Zero);
         t.Dispose();
         if (r == IntPtr.Zero) {
             throw new PythonException();
@@ -628,7 +656,7 @@ namespace Python.Runtime {
     /// </remarks>
 
     public PyObject Invoke(PyTuple args, PyDict kw) {
-        IntPtr r = Runtime.PyObject_Call(obj, args.obj, kw.obj);
+        IntPtr r = Runtime.PyObject_Call(obj, args.obj, kw != null ? kw.obj : IntPtr.Zero);
         if (r == IntPtr.Zero) {
             throw new PythonException();
         }
@@ -759,6 +787,22 @@ namespace Python.Runtime {
 
 
     /// <summary>
+    /// IsIterable Method
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns true if the object is iterable object. This method 
+    /// always succeeds.
+    /// </remarks>
+
+    public bool IsIterable()
+    {
+        return Runtime.PyIter_Check(obj);
+    }
+
+
+
+    /// <summary>
     /// IsTrue Method
     /// </summary>
     ///
@@ -862,8 +906,242 @@ namespace Python.Runtime {
         return Runtime.PyObject_Hash(obj).ToInt32();
     }
 
-
+    public override bool TryGetMember(GetMemberBinder binder, out object result)
+    {
+        if (this.HasAttr(binder.Name))
+        {
+            result = this.GetAttr(binder.Name);
+            return true;
+        }
+        else
+            return base.TryGetMember(binder, out result);
     }
 
+    public override bool TrySetMember(SetMemberBinder binder, object value)
+    {
+        if (this.HasAttr(binder.Name))
+        {
+            this.SetAttr(binder.Name, (PyObject)value);
+            return true;
+        }
+        else
+            return base.TrySetMember(binder, value);
+    }
 
+    private void GetArgs(object[] inargs, out PyTuple args, out PyDict kwargs)
+    {
+        int arg_count;
+        for (arg_count = 0; arg_count < inargs.Length && !(inargs[arg_count] is Py.KeywordArguments); ++arg_count);
+        IntPtr argtuple = Runtime.PyTuple_New(arg_count);
+        for (int i = 0; i < arg_count; i++)
+        {
+            IntPtr ptr;
+            if (inargs[i] is PyObject)
+            {
+                ptr = ((PyObject)inargs[i]).Handle;
+                Runtime.Incref(ptr);
+            }
+            else
+            {
+                ptr = Converter.ToPython(inargs[i], inargs[i].GetType());
+            }
+            if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
+                throw new PythonException();
+        }
+        args = new PyTuple(argtuple);
+        kwargs = null;
+        for (int i = arg_count; i < inargs.Length; i++)
+        {
+            if (!(inargs[i] is Py.KeywordArguments))
+                throw new ArgumentException("Keyword arguments must come after normal arguments.");
+            if (kwargs == null)
+                kwargs = (Py.KeywordArguments)inargs[i];
+            else
+                kwargs.Update((Py.KeywordArguments)inargs[i]);
+        }
+    }
+
+    public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+    {
+        if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
+        {
+            PyTuple pyargs = null;
+            PyDict kwargs = null;
+            try
+            {
+                GetArgs(args, out pyargs, out kwargs);
+                result = InvokeMethod(binder.Name, pyargs, kwargs);
+            }
+            finally
+            {
+                if (null != pyargs)
+                    pyargs.Dispose();
+                if (null != kwargs)
+                    kwargs.Dispose();
+            }
+            return true;
+        }
+        else
+            return base.TryInvokeMember(binder, args, out result);
+    }
+
+    public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+    {
+        if (this.IsCallable())
+        {
+            PyTuple pyargs = null;
+            PyDict kwargs = null;
+            try
+            {
+                GetArgs(args, out pyargs, out kwargs);
+                result = Invoke(pyargs, kwargs);
+            }
+            finally
+            {
+                if (null != pyargs)
+                    pyargs.Dispose();
+                if (null != kwargs)
+                    kwargs.Dispose();
+            }
+            return true;
+        }
+        else
+            return base.TryInvoke(binder, args, out result);
+    }
+
+    public override bool TryConvert(ConvertBinder binder, out object result)
+    {
+        return Converter.ToManaged(this.obj, binder.Type, out result, false);
+    }
+
+    public override bool TryBinaryOperation(BinaryOperationBinder binder, Object arg, out Object result) {
+        IntPtr res;
+        if (!(arg is PyObject))
+            arg = arg.ToPython();
+
+        switch (binder.Operation)
+        {
+            case ExpressionType.Add:
+                res = Runtime.PyNumber_Add(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.AddAssign:
+                res = Runtime.PyNumber_InPlaceAdd(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.Subtract:
+                res = Runtime.PyNumber_Subtract(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.SubtractAssign:
+                res = Runtime.PyNumber_InPlaceSubtract(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.Multiply:
+                res = Runtime.PyNumber_Multiply(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.MultiplyAssign:
+                res = Runtime.PyNumber_InPlaceMultiply(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.Divide:
+                res = Runtime.PyNumber_Divide(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.DivideAssign:
+                res = Runtime.PyNumber_InPlaceDivide(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.And:
+                res = Runtime.PyNumber_And(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.AndAssign:
+                res = Runtime.PyNumber_InPlaceAnd(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.ExclusiveOr:
+                res = Runtime.PyNumber_Xor(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.ExclusiveOrAssign:
+                res = Runtime.PyNumber_InPlaceXor(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.GreaterThan:
+                result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) > 0;
+                return true;
+            case ExpressionType.GreaterThanOrEqual:
+                result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) >= 0;
+                return true;
+            case ExpressionType.LeftShift:
+                res = Runtime.PyNumber_Lshift(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.LeftShiftAssign:
+                res = Runtime.PyNumber_InPlaceLshift(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.LessThan:
+                result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) < 0;
+                return true;
+            case ExpressionType.LessThanOrEqual:
+                result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) <= 0;
+                return true;
+            case ExpressionType.Modulo:
+                res = Runtime.PyNumber_Remainder(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.ModuloAssign:
+                res = Runtime.PyNumber_InPlaceRemainder(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.NotEqual:
+                result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) != 0;
+                return true;
+            case ExpressionType.Or:
+                res = Runtime.PyNumber_Or(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.OrAssign:
+                res = Runtime.PyNumber_InPlaceOr(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.Power:
+                res = Runtime.PyNumber_Power(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.RightShift:
+                res = Runtime.PyNumber_Rshift(this.obj, ((PyObject)arg).obj);
+                break;
+            case ExpressionType.RightShiftAssign:
+                res = Runtime.PyNumber_InPlaceRshift(this.obj, ((PyObject)arg).obj);
+                break;
+            default:
+                result = null;
+                return false;
+        }
+        result = new PyObject(res);
+        return true;
+    }
+
+    public override bool TryUnaryOperation(UnaryOperationBinder binder, out Object result)
+    {
+        int r;
+        IntPtr res;
+        switch (binder.Operation)
+        {
+            case ExpressionType.Negate:
+                res = Runtime.PyNumber_Negative(this.obj);
+                break;
+            case ExpressionType.UnaryPlus:
+                res = Runtime.PyNumber_Positive(this.obj);
+                break;
+            case ExpressionType.OnesComplement:
+                res = Runtime.PyNumber_Invert(this.obj);
+                break;
+            case ExpressionType.Not:
+                r = Runtime.PyObject_Not(this.obj);
+                result = r == 1;
+                return r != -1;
+            case ExpressionType.IsFalse:
+                r = Runtime.PyObject_IsTrue(this.obj);
+                result = r == 0;
+                return r != -1;
+            case ExpressionType.IsTrue:
+                r = Runtime.PyObject_IsTrue(this.obj);
+                result = r == 1;
+                return r != -1;
+            case ExpressionType.Decrement:
+            case ExpressionType.Increment:
+            default:
+                result = null;
+                return false;
+        }
+        result = new PyObject(res);
+        return true;
+    }
+    }
 }

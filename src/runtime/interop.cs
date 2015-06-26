@@ -12,6 +12,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Reflection;
+using System.Text;
 
 namespace Python.Runtime {
 
@@ -77,11 +78,37 @@ namespace Python.Runtime {
             ob_data = (n+3) * size;
         }
 
-        public static int magic() {
+        public static int magic(IntPtr ob) {
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
+                (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            {
+                return ExceptionOffset.ob_data;
+            }
+#endif
             return ob_data;
         }
 
-        public static int Size() {
+        public static int DictOffset(IntPtr ob)
+        {
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
+                (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            {
+                return ExceptionOffset.ob_dict;
+            }
+#endif
+            return ob_dict;
+        }
+
+        public static int Size(IntPtr ob) {
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
+                (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            {
+                return ExceptionOffset.Size();
+            }
+#endif
 #if (Py_DEBUG)
             return 6 * IntPtr.Size;
 #else
@@ -95,10 +122,43 @@ namespace Python.Runtime {
 #endif
         public static int ob_refcnt;
         public static int ob_type;
+        private static int ob_dict;
+        private static int ob_data;
+    }
+
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class ExceptionOffset
+    {
+        static ExceptionOffset()
+        {
+            Type type = typeof(ExceptionOffset);
+            FieldInfo[] fi = type.GetFields();
+            int size = IntPtr.Size;
+            for (int i = 0; i < fi.Length; i++)
+            {
+                fi[i].SetValue(null, (i * size) + ObjectOffset.ob_type + size);
+            }
+        }
+
+        public static int Size()
+        {
+            return ob_data + IntPtr.Size;
+        }
+
+        // PyException_HEAD
+        // (start after PyObject_HEAD)
+        public static int dict = 0;
+        public static int args = 0;
+        public static int traceback = 0;
+        public static int context = 0;
+        public static int cause = 0;
+
+        // extra c# data
         public static int ob_dict;
         public static int ob_data;
     }
-
+#endif
 
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     internal class TypeOffset {
@@ -139,7 +199,7 @@ namespace Python.Runtime {
         public static int tp_print = 0;
         public static int tp_getattr = 0;
         public static int tp_setattr = 0;
-        public static int tp_compare = 0;
+        public static int tp_compare = 0; /* tp_reserved in Python 3 */
         public static int tp_repr = 0;
 
         /* Method suites for standard classes */
@@ -198,9 +258,12 @@ namespace Python.Runtime {
         public static int tp_subclasses = 0;
         public static int tp_weaklist = 0;
         public static int tp_del = 0;
-#if (PYTHON26 || PYTHON27)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         /* Type attribute cache version tag. Added in version 2.6 */
 	    public static int tp_version_tag;
+#endif
+#if (PYTHON34)
+        public static int tp_finalize = 0;
 #endif
         // COUNT_ALLOCS adds some more stuff to PyTypeObject 
 #if (Py_COUNT_ALLOCS)
@@ -212,11 +275,14 @@ namespace Python.Runtime {
         public static int tp_next = 0;
 #endif
 //} PyTypeObject;
+
 //typedef struct {
         public static int nb_add = 0;
         public static int nb_subtract = 0;
         public static int nb_multiply = 0;
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         public static int nb_divide = 0;
+#endif
         public static int nb_remainder = 0;
         public static int nb_divmod = 0;
         public static int nb_power = 0;
@@ -230,17 +296,23 @@ namespace Python.Runtime {
         public static int nb_and = 0;
         public static int nb_xor = 0;
         public static int nb_or = 0;
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         public static int nb_coerce = 0;
+#endif
         public static int nb_int = 0;
         public static int nb_long = 0;
         public static int nb_float = 0;
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         public static int nb_oct = 0;
         public static int nb_hex = 0;
+#endif
         /* Added in release 2.0 */
         public static int nb_inplace_add = 0;
         public static int nb_inplace_subtract = 0;
         public static int nb_inplace_multiply = 0;
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         public static int nb_inplace_divide = 0;
+#endif
         public static int nb_inplace_remainder = 0;
         public static int nb_inplace_power = 0;
         public static int nb_inplace_lshift = 0;
@@ -254,7 +326,7 @@ namespace Python.Runtime {
         public static int nb_true_divide = 0;
         public static int nb_inplace_floor_divide = 0;
         public static int nb_inplace_true_divide = 0;
-#if (PYTHON25 || PYTHON26 || PYTHON27)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         /* Added in release 2.5 */
         public static int nb_index = 0;
 #endif
@@ -278,11 +350,13 @@ namespace Python.Runtime {
         public static int sq_inplace_repeat = 0;
 //} PySequenceMethods;
 //typedef struct {
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
         public static int bf_getreadbuffer = 0;
         public static int bf_getwritebuffer = 0;
         public static int bf_getsegcount = 0;
         public static int bf_getcharbuffer = 0;
-#if (PYTHON26 || PYTHON27)
+#endif
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         // This addition is not actually noted in the 2.6.5 object.h
 	    public static int bf_getbuffer = 0;
 	    public static int bf_releasebuffer = 0;
@@ -291,9 +365,106 @@ namespace Python.Runtime {
         //PyObject *ht_name, *ht_slots;
         public static int name = 0;
         public static int slots = 0;
+
+#if (PYTHON33 || PYTHON34)
+        public static int qualname = 0;
+        public static int cached_keys;
+#endif
+
         /* here are optional user slots, followed by the members. */
         public static int members = 0;
     }
+
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class BytesOffset
+    {
+        static BytesOffset()
+        {
+            Type type = typeof(BytesOffset);
+            FieldInfo[] fi = type.GetFields();
+            int size = IntPtr.Size;
+            for (int i = 0; i < fi.Length; i++)
+            {
+                fi[i].SetValue(null, i * size);
+            }
+        }
+
+        /* The *real* layout of a type object when allocated on the heap */
+        //typedef struct _heaptypeobject {
+#if (Py_DEBUG)  // #ifdef Py_TRACE_REFS
+/* _PyObject_HEAD_EXTRA defines pointers to support a doubly-linked list of all live heap objects. */
+        public static int _ob_next = 0;
+        public static int _ob_prev = 0;
+#endif
+        // PyObject_VAR_HEAD {
+        //     PyObject_HEAD {
+        public static int ob_refcnt = 0;
+        public static int ob_type = 0;
+        // }
+        public static int ob_size = 0;      /* Number of items in _VAR_iable part */
+        // }
+        public static int ob_shash = 0;
+        public static int ob_sval = 0; /* start of data */
+
+        /* Invariants:
+         *     ob_sval contains space for 'ob_size+1' elements.
+         *     ob_sval[ob_size] == 0.
+         *     ob_shash is the hash of the string or -1 if not computed yet.
+         */
+        //} PyBytesObject;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class ModuleDefOffset
+    {
+        static ModuleDefOffset()
+        {
+            Type type = typeof(ModuleDefOffset);
+            FieldInfo[] fi = type.GetFields();
+            int size = IntPtr.Size;
+            for (int i = 0; i < fi.Length; i++)
+            {
+                fi[i].SetValue(null, (i * size) + TypeOffset.ob_size);
+            }
+        }
+
+        public static IntPtr AllocModuleDef(string modulename) {
+            byte[] ascii = Encoding.ASCII.GetBytes(modulename);
+            int size = name + ascii.Length + 1;
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+            for (int i = 0; i <= m_free; i += IntPtr.Size)
+                Marshal.WriteIntPtr(ptr, i, IntPtr.Zero);
+            Marshal.Copy(ascii, 0, (IntPtr)(ptr + name), ascii.Length);
+            Marshal.WriteIntPtr(ptr, m_name, (IntPtr)(ptr + name));
+            Marshal.WriteByte(ptr, name + ascii.Length, 0);
+            return ptr;
+        }
+
+        public static void FreeModuleDef(IntPtr ptr) {
+            Marshal.FreeHGlobal(ptr);
+        }
+
+        // typedef struct PyModuleDef{
+        //  typedef struct PyModuleDef_Base {
+        // starts after PyObject_HEAD (TypeOffset.ob_type + 1)
+        public static int m_init = 0;
+        public static int m_index = 0;
+        public static int m_copy = 0;
+        //  } PyModuleDef_Base
+        public static int m_name = 0;
+        public static int m_doc = 0;
+        public static int m_size = 0;
+        public static int m_methods = 0;
+        public static int m_reload = 0;
+        public static int m_traverse = 0;
+        public static int m_clear = 0;
+        public static int m_free = 0;
+        // } PyModuleDef
+
+        public static int name = 0;
+    }
+#endif // PYTHON3
 
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
@@ -302,6 +473,8 @@ namespace Python.Runtime {
     /// to good use as PythonNet specific flags (Managed and Subclass)
     /// </summary>
     internal class TypeFlags {
+#if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
+        // these flags were removed in Python 3
         public static int HaveGetCharBuffer = (1 << 0);
         public static int HaveSequenceIn = (1 << 1);
         public static int GC = 0;
@@ -311,6 +484,7 @@ namespace Python.Runtime {
         public static int HaveWeakRefs = (1 << 6);
         public static int HaveIter = (1 << 7);
         public static int HaveClass = (1 << 8);
+#endif
         public static int HeapType = (1 << 9);
         public static int BaseType = (1 << 10);
         public static int Ready = (1 << 12);
@@ -321,10 +495,10 @@ namespace Python.Runtime {
         /* XXX Reusing reserved constants */
         public static int Managed = (1 << 15); // PythonNet specific
         public static int Subclass = (1 << 16); // PythonNet specific
-#if (PYTHON25 || PYTHON26 || PYTHON27)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         public static int HaveIndex = (1 << 17);
 #endif
-#if (PYTHON26 || PYTHON27)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
         /* Objects support nb_index in PyNumberMethods */
         public static int HaveVersionTag = (1 << 18);
         public static int ValidVersionTag = (1 << 19);
@@ -341,7 +515,11 @@ namespace Python.Runtime {
         public static int BaseExceptionSubclass = (1 << 30);
         public static int TypeSubclass = (1 << 31);
 #endif
-        public static int Default = (HaveGetCharBuffer |
+
+// Default flags for Python 2
+#if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
+        public static int Default = (
+                             HaveGetCharBuffer |
                              HaveSequenceIn |
                              HaveInPlaceOps |
                              HaveRichCompare |
@@ -349,10 +527,19 @@ namespace Python.Runtime {
                              HaveIter |
                              HaveClass |
                              HaveStacklessExtension |
-#if (PYTHON25 || PYTHON26 || PYTHON27)
+    #if (PYTHON25 || PYTHON26 || PYTHON27)
                              HaveIndex | 
-#endif
+    #endif
                              0);
+#endif
+
+// Default flags for Python 3
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static int Default = (
+                            HaveStacklessExtension |
+                            HaveVersionTag);
+#endif
+
     }
 
 
@@ -410,7 +597,9 @@ namespace Python.Runtime {
             pmap["nb_add"] = p["BinaryFunc"];
             pmap["nb_subtract"] = p["BinaryFunc"];
             pmap["nb_multiply"] = p["BinaryFunc"];
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
             pmap["nb_divide"] = p["BinaryFunc"];
+#endif
             pmap["nb_remainder"] = p["BinaryFunc"];
             pmap["nb_divmod"] = p["BinaryFunc"];
             pmap["nb_power"] = p["TernaryFunc"];
@@ -433,7 +622,9 @@ namespace Python.Runtime {
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
             pmap["nb_inplace_divide"] = p["BinaryFunc"];
+#endif
             pmap["nb_inplace_remainder"] = p["BinaryFunc"];
             pmap["nb_inplace_power"] = p["TernaryFunc"];
             pmap["nb_inplace_lshift"] = p["BinaryFunc"];
@@ -445,7 +636,7 @@ namespace Python.Runtime {
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || PYTHON26 || PYTHON27)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 
@@ -541,5 +732,4 @@ namespace Python.Runtime {
             fn = d;
         }
     }
-
 }

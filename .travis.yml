@@ -2,6 +2,8 @@ language: python
 python:
   - 2.6
   - 2.7
+  - 3.2
+  - 3.4
 before_install:
   - sudo apt-get install software-properties-common
   - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
@@ -12,7 +14,8 @@ before_install:
   - yes | sudo certmgr -ssl -m https://nugetgallery.blob.core.windows.net
   - yes | sudo certmgr -ssl -m https://nuget.org
 install:
+  - pip install six
   - python setup.py build_ext --inplace
 script:
-  - export PYTHONPATH=`pwd`
-  - ./npython src/tests/runtests.py
+  - export PYTHONPATH=`pwd`:$PYTHONPATH
+  - python src/tests/runtests.py

@@ -105,7 +105,12 @@ namespace Python.Runtime {
                 impl = new ExceptionClassObject(type);
             }
 
-            else {
+            else if (null != type.GetField("__pyobj__")) {
+                impl = new ClassDerivedObject(type);
+            }
+
+            else
+            {
                 impl = new ClassObject(type);
             }
 
@@ -345,7 +350,7 @@ namespace Python.Runtime {
                                                    typeof(MethodInfo)
                                                    );
 
-                ob = new MethodObject(name, mlist);
+                ob = new MethodObject(type, name, mlist);
                 ci.members[name] = ob;
             }
 

@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Security;
+using System.Collections;
 
 namespace Python.Runtime {
 
@@ -33,7 +34,7 @@ namespace Python.Runtime {
         static Type int64Type;
         static Type flagsType;
         static Type boolType;
-        //static Type typeType;
+        static Type typeType;
 
         static Converter () {
             nfi = NumberFormatInfo.InvariantInfo;
@@ -44,7 +45,7 @@ namespace Python.Runtime {
             doubleType = typeof(Double);
             flagsType = typeof(FlagsAttribute);
             boolType = typeof(Boolean);
-            //typeType = typeof(Type);
+            typeType = typeof(Type);
         }
 
 
@@ -89,6 +90,14 @@ namespace Python.Runtime {
                 result = Runtime.PyNone;
                 Runtime.Incref(result);
                 return result;
+            }
+
+            // it the type is a python subclass of a managed type then return the
+            // underying python object rather than construct a new wrapper object.
+            IPythonDerivedType pyderived = value as IPythonDerivedType;
+            if (null != pyderived)
+            {
+                return ClassDerivedObject.ToPython(pyderived);
             }
 
             // hmm - from Python, we almost never care what the declared
@@ -165,6 +174,16 @@ namespace Python.Runtime {
                 return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
 
             default:
+	            if (value is IEnumerable) {
+                    using (var resultlist = new PyList()) {
+                        foreach (object o in (IEnumerable)value) {
+                            using (var p = new PyObject(ToPython(o, o.GetType())))
+                                resultlist.Append(p);
+                        }
+                        Runtime.Incref(resultlist.Handle);
+                        return resultlist.Handle;
+                    }
+                }
                 result = CLRObject.GetInstHandle(value, type);
                 return result;
             }
@@ -307,6 +326,57 @@ namespace Python.Runtime {
                 return false;
             }
 
+            // Conversion to 'Type' is done using the same mappings as above
+            // for objects.
+
+            if (obType == typeType)
+            {
+                if (value == Runtime.PyStringType)
+                {
+                    result = stringType;
+                    return true;
+                }
+
+                else if (value == Runtime.PyBoolType)
+                {
+                    result = boolType;
+                    return true;
+                }
+
+                else if (value == Runtime.PyIntType)
+                {
+                    result = int32Type;
+                    return true;
+                }
+
+                else if (value == Runtime.PyLongType)
+                {
+                    result = int64Type;
+                    return true;
+                }
+
+                else if (value == Runtime.PyFloatType)
+                {
+                    result = doubleType;
+                    return true;
+                }
+
+                else if (value == Runtime.PyListType || value == Runtime.PyTupleType)
+                {
+                    result = typeof(object[]);
+                    return true;
+                }
+
+                if (setError)
+                {
+                    Exceptions.SetError(Exceptions.TypeError,
+                                        "value cannot be converted to Type"
+                                        );
+                }
+
+                return false;
+            }
+
             return ToPrimitive(value, obType, out result, setError);
 
         }
@@ -335,6 +405,7 @@ namespace Python.Runtime {
                 return true;
 
             case TypeCode.Int32:
+#if !(PYTHON32 || PYTHON33 || PYTHON34)
                 // Trickery to support 64-bit platforms.
                 if (IntPtr.Size == 4) {
                     op = Runtime.PyNumber_Int(value);
@@ -357,6 +428,10 @@ namespace Python.Runtime {
                     return true;
                 }
                 else {
+#else
+                // When using Python3 always use the PyLong API
+                {
+#endif
                     op = Runtime.PyNumber_Long(value);
                     if (op == IntPtr.Zero) {
                         if (Exceptions.ExceptionMatches(overflow)) {
@@ -381,6 +456,18 @@ namespace Python.Runtime {
                 return true;
 
             case TypeCode.Byte:
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+                if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
+                {
+                    if (Runtime.PyBytes_Size(value) == 1)
+                    {
+                        op = Runtime.PyBytes_AS_STRING(value);
+                        result = (byte)Marshal.ReadByte(op);
+                        return true;
+                    }
+                    goto type_error;
+                }
+#else
                 if (Runtime.PyObject_TypeCheck(value, Runtime.PyStringType)) {
                     if (Runtime.PyString_Size(value) == 1) {
                         op = Runtime.PyString_AS_STRING(value);
@@ -389,6 +476,7 @@ namespace Python.Runtime {
                     }
                     goto type_error;
                 }
+#endif
 
                 op = Runtime.PyNumber_Int(value);
                 if (op == IntPtr.Zero) {
@@ -408,6 +496,16 @@ namespace Python.Runtime {
                 return true;
 
             case TypeCode.SByte:
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+                if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType)) {
+                    if (Runtime.PyBytes_Size(value) == 1) {
+                        op = Runtime.PyBytes_AS_STRING(value);
+                        result = (byte)Marshal.ReadByte(op);
+                        return true;
+                    }
+                    goto type_error;
+                }
+#else
                 if (Runtime.PyObject_TypeCheck(value, Runtime.PyStringType)) {
                     if (Runtime.PyString_Size(value) == 1) {
                         op = Runtime.PyString_AS_STRING(value);
@@ -416,6 +514,7 @@ namespace Python.Runtime {
                     }
                     goto type_error;
                 }
+#endif
 
                 op = Runtime.PyNumber_Int(value);
                 if (op == IntPtr.Zero) {
@@ -435,7 +534,16 @@ namespace Python.Runtime {
                 return true;
 
             case TypeCode.Char:
-
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+                if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType)) {
+                    if (Runtime.PyBytes_Size(value) == 1) {
+                        op = Runtime.PyBytes_AS_STRING(value);
+                        result = (byte)Marshal.ReadByte(op);
+                        return true;
+                    }
+                    goto type_error;
+                }
+#else
                 if (Runtime.PyObject_TypeCheck(value, Runtime.PyStringType)) {
                     if (Runtime.PyString_Size(value) == 1) {
                         op = Runtime.PyString_AS_STRING(value);
@@ -444,7 +552,7 @@ namespace Python.Runtime {
                     }
                     goto type_error;
                 }
-
+#endif
                 else if (Runtime.PyObject_TypeCheck(value,
                                  Runtime.PyUnicodeType)) {
                     if (Runtime.PyUnicode_GetSize(value) == 1) {
@@ -713,10 +821,13 @@ namespace Python.Runtime {
             return false;
 
         }
-
-
-
     }
 
-
+    public static class ConverterExtension
+    {
+        public static PyObject ToPython(this object o)
+        {
+            return new PyObject(Converter.ToPython(o, o.GetType()));
+        }
+    }
 }

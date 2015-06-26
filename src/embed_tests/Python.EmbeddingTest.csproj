@@ -172,7 +172,12 @@
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
+  <PropertyGroup>
+    <TargetAssembly>$(TargetPath)</TargetAssembly>
+    <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
+  </PropertyGroup>
   <Target Name="AfterBuild">
-	<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+	<Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+	<Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>

@@ -8,6 +8,12 @@
 # ===========================================================================
 
 import sys, os, string, unittest, types
+import six
+
+if six.PY3:
+    ClassType = type
+else:
+    ClassType = types.ClassType
 
 
 class CompatibilityTests(unittest.TestCase):
@@ -19,8 +25,11 @@ class CompatibilityTests(unittest.TestCase):
         return type(object).__name__ == 'ModuleObject'
 
     def isCLRRootModule(self, object):
+        if six.PY3:
+            # in Python 3 the clr module is a normal python module
+            return object.__name__ == "clr"
         return type(object).__name__ == 'CLRModule'
-        
+
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype' # for now
 
@@ -36,9 +45,15 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(sys) == types.ModuleType)
         self.assertTrue(sys.__name__ == 'sys')
 
-        import httplib
-        self.assertTrue(type(httplib) == types.ModuleType)
-        self.assertTrue(httplib.__name__ == 'httplib')
+        if six.PY3:
+            import http.client
+            self.assertTrue(type(http.client) == types.ModuleType)
+            self.assertTrue(http.client.__name__ == 'http.client')
+
+        else:
+            import httplib
+            self.assertTrue(type(httplib) == types.ModuleType)
+            self.assertTrue(httplib.__name__ == 'httplib')
 
 
     def testSimpleImportWithAlias(self):
@@ -51,9 +66,15 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(mySys) == types.ModuleType)
         self.assertTrue(mySys.__name__ == 'sys')
 
-        import httplib as myHttplib
-        self.assertTrue(type(myHttplib) == types.ModuleType)
-        self.assertTrue(myHttplib.__name__ == 'httplib')
+        if six.PY3:
+            import http.client as myHttplib
+            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(myHttplib.__name__ == 'http.client')
+
+        else:
+            import httplib as myHttplib
+            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(myHttplib.__name__ == 'httplib')
 
 
     def testDottedNameImport(self):
@@ -127,7 +148,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(pulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM
-        self.assertTrue(type(PullDOM) == types.ClassType)
+        self.assertTrue(type(PullDOM) == ClassType)
         self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
 
@@ -146,7 +167,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(myPulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM as myPullDOM
-        self.assertTrue(type(myPullDOM) == types.ClassType)
+        self.assertTrue(type(myPullDOM) == ClassType)
         self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
 
@@ -178,7 +199,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(assembly != None)
         
         import CLR.System.Data
-        self.assertTrue(sys.modules.has_key('System.Data'))
+        self.assertTrue('System.Data' in sys.modules)
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
         self.assertTrue(assembly == None)
@@ -265,7 +286,7 @@ if __name__ == '__main__':
     try:
         import System
     except ImportError:
-        print "Load clr import hook"
+        print("Load clr import hook")
         import clr
 
     main()

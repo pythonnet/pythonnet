@@ -10,6 +10,13 @@
 import sys, os, string, unittest, types
 from System import DayOfWeek
 from Python import Test
+import six
+
+if six.PY3:
+    DictProxyType = type(object.__dict__)
+    long = int
+else:
+    DictProxyType = types.DictProxyType
 
 
 class EnumTests(unittest.TestCase):
@@ -19,7 +26,7 @@ class EnumTests(unittest.TestCase):
         """Test standard enum attributes."""
         self.assertTrue(DayOfWeek.__name__ == 'DayOfWeek')
         self.assertTrue(DayOfWeek.__module__ == 'System')
-        self.assertTrue(type(DayOfWeek.__dict__) == types.DictProxyType)
+        self.assertTrue(type(DayOfWeek.__dict__) == DictProxyType)
         self.assertTrue(DayOfWeek.__doc__ == None)
 
 
@@ -71,23 +78,23 @@ class EnumTests(unittest.TestCase):
 
     def testUIntEnum(self):
         """Test uint enum."""
-        self.assertTrue(Test.UIntEnum.Zero == 0L)
-        self.assertTrue(Test.UIntEnum.One == 1L)
-        self.assertTrue(Test.UIntEnum.Two == 2L)
+        self.assertTrue(Test.UIntEnum.Zero == long(0))
+        self.assertTrue(Test.UIntEnum.One == long(1))
+        self.assertTrue(Test.UIntEnum.Two == long(2))
 
 
     def testLongEnum(self):
         """Test long enum."""
-        self.assertTrue(Test.LongEnum.Zero == 0L)
-        self.assertTrue(Test.LongEnum.One == 1L)
-        self.assertTrue(Test.LongEnum.Two == 2L)
+        self.assertTrue(Test.LongEnum.Zero == long(0))
+        self.assertTrue(Test.LongEnum.One == long(1))
+        self.assertTrue(Test.LongEnum.Two == long(2))
 
 
     def testULongEnum(self):
         """Test ulong enum."""
-        self.assertTrue(Test.ULongEnum.Zero == 0L)
-        self.assertTrue(Test.ULongEnum.One == 1L)
-        self.assertTrue(Test.ULongEnum.Two == 2L)
+        self.assertTrue(Test.ULongEnum.Zero == long(0))
+        self.assertTrue(Test.ULongEnum.One == long(1))
+        self.assertTrue(Test.ULongEnum.Two == long(2))
 
 
     def testInstantiateEnumFails(self):

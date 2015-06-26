@@ -20,6 +20,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <DefineConstants>PYTHON27,UCS2</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
     <OutputPath>bin\x64\ReleaseMono\</OutputPath>
@@ -118,6 +119,7 @@
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblyinfo.cs" />
     <Compile Include="assemblymanager.cs" />
+    <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />
     <Compile Include="classobject.cs" />
@@ -180,11 +182,21 @@
     <None Include="x64\clrmodule-platform.il" />
     <None Include="x86\clrmodule-platform.il" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="resources\clr.py">
+        <LogicalName>clr.py</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
+  <PropertyGroup>
+    <TargetAssembly>$(TargetPath)</TargetAssembly>
+    <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
+  </PropertyGroup>
   <Target Name="AfterBuild">
-	<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+	<Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+	<Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>

@@ -10,10 +10,15 @@
 // Author: Christian Heimes <christian(at)cheimes(dot)de>
 
 #include "pynetclr.h"
+#include "stdlib.h"
 
 #ifndef _WIN32
 #include "dirent.h"
+#include "dlfcn.h"
+#include "libgen.h"
+#include "alloca.h"
 #endif
+
 
 // initialize Mono and PythonNet
 PyNet_Args* PyNet_Init(int ext) {
@@ -22,6 +27,7 @@ PyNet_Args* PyNet_Init(int ext) {
     pn_args->pr_file = PR_ASSEMBLY;
     pn_args->error = NULL;
     pn_args->shutdown = NULL;
+    pn_args->module = NULL;
 
     if (ext == 0) {
         pn_args->init_name = "Python.Runtime:Initialize()";
@@ -91,8 +97,29 @@ void main_thread_handler (gpointer user_data) {
     MonoImage *pr_image;
     MonoClass *pythonengine;
     MonoObject *exception = NULL;
+    MonoObject *init_result;
 
 #ifndef _WIN32
+    // Get the filename of the python shared object and set
+    // LD_LIBRARY_PATH so Mono can find it.
+    Dl_info dlinfo = {0};
+    if (0 != dladdr(&Py_Initialize, &dlinfo)) {
+        char* fname = alloca(strlen(dlinfo.dli_fname) + 1);
+        strcpy(fname, dlinfo.dli_fname);
+        char* py_libdir = dirname(fname);
+        char* ld_library_path = getenv("LD_LIBRARY_PATH");
+        if (NULL == ld_library_path) {
+            setenv("LD_LIBRARY_PATH", py_libdir, 1);
+        } else {
+            char* new_ld_library_path = alloca(strlen(py_libdir)
+                                                + strlen(ld_library_path)
+                                                + 2);
+            strcpy(new_ld_library_path, py_libdir);
+            strcat(new_ld_library_path, ":");
+            strcat(new_ld_library_path, ld_library_path);
+            setenv("LD_LIBRARY_PATH", py_libdir, 1);
+        }
+    }
 
     //get python path system variable
     PyObject* syspath = PySys_GetObject("path");
@@ -102,10 +129,24 @@ void main_thread_handler (gpointer user_data) {
 
     int ii = 0;
     for (ii = 0; ii < PyList_Size(syspath); ++ii) {
+#if PY_MAJOR_VERSION > 2
+        Py_ssize_t wlen;
+        wchar_t *wstr = PyUnicode_AsWideCharString(PyList_GetItem(syspath, ii), &wlen);
+        char* pydir = (char*)malloc(wlen + 1);
+        size_t mblen = wcstombs(pydir, wstr, wlen + 1);
+        if (mblen > wlen)
+            pydir[wlen] = '\0';
+        PyMem_Free(wstr);
+#else
         const char* pydir = PyString_AsString(PyList_GetItem(syspath, ii));
+#endif
         char* curdir = (char*) malloc(1024);
         strncpy(curdir, strlen(pydir) > 0 ? pydir : ".", 1024);
         strncat(curdir, slash, 1024);
+
+#if PY_MAJOR_VERSION > 2
+        free(pydir);
+#endif
 
         //look in this directory for the pn_args->pr_file
         DIR* dirp = opendir(curdir);
@@ -170,11 +211,17 @@ void main_thread_handler (gpointer user_data) {
         return;
     }
 
-    mono_runtime_invoke(init, NULL, NULL, &exception);
+    init_result = mono_runtime_invoke(init, NULL, NULL, &exception);
     if (exception) {
         pn_args->error = PyNet_ExceptionToString(exception);
         return;
     }
+
+#if PY_MAJOR_VERSION >= 3
+    if (NULL != init_result)
+        pn_args->module = *(PyObject**)mono_object_unbox(init_result);
+#endif
+
 }
 
 // Get string from a Mono exception 

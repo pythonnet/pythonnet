@@ -9,6 +9,7 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace Python.Runtime {
 
@@ -23,12 +24,23 @@ namespace Python.Runtime {
         internal MethodInfo info;
         internal MethodObject m;
         internal IntPtr target;
+        internal IntPtr targetType;
 
-        public MethodBinding(MethodObject m, IntPtr target) : base() {
+        public MethodBinding(MethodObject m, IntPtr target, IntPtr targetType) : base() {
             Runtime.Incref(target);
             this.target = target;
+
+            Runtime.Incref(targetType);
+            if (targetType == IntPtr.Zero)
+                targetType = Runtime.PyObject_Type(target);
+            this.targetType = targetType;
+
             this.info = null;
             this.m = m;
+        }
+
+        public MethodBinding(MethodObject m, IntPtr target) : this(m, target, IntPtr.Zero)
+        {
         }
 
          //====================================================================
@@ -114,25 +126,63 @@ namespace Python.Runtime {
 			// as the first argument. Note that this is not supported if any
 			// of the overloads are static since we can't know if the intent
 			// was to call the static method or the unbound instance method.
+            List<IntPtr> disposeList = new List<IntPtr>();
+            try
+            {
+                IntPtr target = self.target;
 
-			if ((self.target == IntPtr.Zero) && (!self.m.IsStatic()))
-			{
-				int len = Runtime.PyTuple_Size(args);
-				if (len < 1)
-				{
-					Exceptions.SetError(Exceptions.TypeError, "not enough arguments");
-					return IntPtr.Zero;
-				}
-				IntPtr uargs = Runtime.PyTuple_GetSlice(args, 1, len);
-				IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
-				Runtime.Incref(inst);
-				IntPtr r = self.m.Invoke(inst, uargs, kw, self.info);
-				Runtime.Decref(inst);
-				Runtime.Decref(uargs);
-				return r;
-			}
+                if ((target == IntPtr.Zero) && (!self.m.IsStatic()))
+                {
+                    int len = Runtime.PyTuple_Size(args);
+                    if (len < 1)
+                    {
+                        Exceptions.SetError(Exceptions.TypeError, "not enough arguments");
+                        return IntPtr.Zero;
+                    }
+                    target = Runtime.PyTuple_GetItem(args, 0);
+                    Runtime.Incref(target);
+                    disposeList.Add(target);
 
-			return self.m.Invoke(self.target, args, kw, self.info);
+                    args = Runtime.PyTuple_GetSlice(args, 1, len);
+                    disposeList.Add(args);
+                }
+
+                // if the class is a IPythonDerivedClass and target is not the same as self.targetType
+                // (eg if calling the base class method) then call the original base class method instead
+                // of the target method.
+                IntPtr superType = IntPtr.Zero;
+                if (Runtime.PyObject_TYPE(target) != self.targetType)
+                {
+                    CLRObject inst = CLRObject.GetManagedObject(target) as CLRObject;
+                    if (inst != null && (inst.inst as IPythonDerivedType) != null)
+                    {
+                        ClassBase baseType = GetManagedObject(self.targetType) as ClassBase;
+                        if (baseType != null)
+                        {
+                            string baseMethodName = "_" + baseType.type.Name + "__" + self.m.name;
+                            IntPtr baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
+                            if (baseMethod != IntPtr.Zero)
+                            {
+                                MethodBinding baseSelf = GetManagedObject(baseMethod) as MethodBinding;
+                                if (baseSelf != null)
+                                    self = baseSelf;
+                                Runtime.Decref(baseMethod);
+                            }
+                            else
+                            {
+                                Runtime.PyErr_Clear();
+                            }
+                        }
+                    }
+                }
+
+                return self.m.Invoke(target, args, kw, self.info);
+            }
+            finally
+            {
+                foreach (IntPtr ptr in disposeList)
+                    Runtime.Decref(ptr);
+            }
         }
 
 
@@ -184,6 +234,7 @@ namespace Python.Runtime {
         public static new void tp_dealloc(IntPtr ob) {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
             Runtime.Decref(self.target);
+            Runtime.Decref(self.targetType);
             ExtensionType.FinalizeObject(self);
         }
 

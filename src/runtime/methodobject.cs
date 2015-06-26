@@ -27,19 +27,21 @@ namespace Python.Runtime {
         internal MethodBinder binder;
         internal bool is_static = false;
         internal IntPtr doc;
+        internal Type type;
 
-        public MethodObject(string name, MethodInfo[] info) : base() {
-            _MethodObject(name, info);
+        public MethodObject(Type type, string name, MethodInfo[] info) : base() {
+            _MethodObject(type, name, info);
         }
 
-        public MethodObject(string name, MethodInfo[] info, bool allow_threads) : base()
+        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads) : base()
         {
-            _MethodObject(name, info);
+            _MethodObject(type, name, info);
             binder.allow_threads = allow_threads;
         }
 
-        private void _MethodObject(string name, MethodInfo[] info)
+        private void _MethodObject(Type type, string name, MethodInfo[] info)
         {
+            this.type = type;
             this.name = name;
             this.info = info;
             binder = new MethodBinder();
@@ -144,7 +146,7 @@ namespace Python.Runtime {
 
             if (ob == IntPtr.Zero) {
                 if (self.unbound == null) {
-                    self.unbound = new MethodBinding(self, IntPtr.Zero);
+                    self.unbound = new MethodBinding(self, IntPtr.Zero, tp);
                 }
                 binding = self.unbound;
                 Runtime.Incref(binding.pyHandle);;
@@ -155,7 +157,22 @@ namespace Python.Runtime {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            binding = new MethodBinding(self, ob);
+            // If the object this descriptor is being called with is a subclass of the type
+            // this descriptor was defined on then it will be because the base class method
+            // is being called via super(Derived, self).method(...).
+            // In which case create a MethodBinding bound to the base class.
+            CLRObject obj = GetManagedObject(ob) as CLRObject;
+            if (obj != null
+                && obj.inst.GetType() != self.type
+                && obj.inst is IPythonDerivedType
+                && self.type.IsAssignableFrom(obj.inst.GetType()))
+            {
+                ClassBase basecls = ClassManager.GetClass(self.type);
+                binding = new MethodBinding(self, ob, basecls.pyHandle);
+                return binding.pyHandle;
+            }
+
+            binding = new MethodBinding(self, ob, tp);
             return binding.pyHandle;
         }
 
