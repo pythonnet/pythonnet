@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<project name="Python for .NET" default="build-2.0" basedir=".">
+
+  <property name="project.name" value="pythonnet"/>
+
+
+  <target name="build-1.0">
+    <property name="project.version" value="1.0.0"/>
+    <echo message="Building ${project.name}-${project.version}"/>
+  </target>
+
+  <target name="build-2.0" depends="runtime, console, testdll, clrmodule,
+                                    oldmodule">
+    <property name="project.version" value="2.0.0"/>
+    <echo message="Building ${project.name}-${project.version}"/>
+  </target>
+
+  <target name="test">
+
+  </target>
+
+
+  <target name="console" depends="runtime" >
+    <csc target="exe" output="./python.exe" >
+      <references>
+        <include name="python.runtime.dll" />
+      </references>
+      <sources>
+        <include name="src/console/*.cs" />
+      </sources>
+    </csc>
+  </target>
+
+  <target name="runtime">
+    <csc target="library" output="python.runtime.dll" unsafe="true">
+      <sources>
+        <include name="src/runtime/*.cs" />
+      </sources>
+    </csc>
+  </target>
+
+  <target name="testdll">
+    <csc target="library" output="python.test.dll">
+      <references>
+        <include name="python.runtime.dll" />
+      </references>
+      <sources>
+        <include name="src/testing/*.cs" />
+      </sources>
+    </csc>
+  </target>
+
+  <target name="oldmodule">
+    <ilasm target="dll" output="CLR.dll">
+      <sources>
+        <include name="src/runtime/oldmodule.il" />
+      </sources>
+    </ilasm>
+  </target>
+
+  <target name="clrmodule">
+    <ilasm target="dll" output="clr.dll">
+      <sources>
+        <include name="src/runtime/clrmodule.il" />
+      </sources>
+    </ilasm>
+  </target>
+
+
+  <target name="dist">
+
+  </target>
+
+</project>

@@ -1,0 +1,17 @@
+<!-- Mono Config for PythonNet
+
+Copy this file to ~/.mono/config or add the dllmaps to the global
+configuration file /etc/mono/config 
+-->
+
+<configuration>
+	<dllmap dll="python23" target="libpython2.3.so" os="!windows" />
+	<dllmap dll="python24" target="libpython2.4.so" os="!windows" />
+	<dllmap dll="python25" target="libpython2.5.so" os="!windows" />
+	<dllmap dll="python26" target="libpython2.6.so" os="!windows" />
+	<dllmap dll="python23.dll" target="libpython2.3.so" os="!windows" />
+	<dllmap dll="python24.dll" target="libpython2.4.so" os="!windows" />
+	<dllmap dll="python25.dll" target="libpython2.5.so" os="!windows" />
+	<dllmap dll="python26.dll" target="libpython2.6.so" os="!windows" />
+</configuration>
+

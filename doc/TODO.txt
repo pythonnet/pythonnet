@@ -1,0 +1,34 @@
+TODO list
+=========
+
+For PythonNet 2.0 
+-----------------
+
+ * Implement support for ModulePropertyAttribute.
+
+ * Replace CLRModule.preload code with ModulePropertyAttribute specific code.
+ 
+ * Deprecate implicit loading of assemblies
+
+ * Debug failing unit tests under Mono and report them if they are caused
+   by incompatibilities in Mono. 
+
+Future and nice-to-have features
+--------------------------------
+
+ * Add support for Python's debug builds. Debug builds have additional fields
+   in the struct, extensive self testing and C assert() are enabled. Py_DEBUG
+   implies Py_TRACE_REFS and Py_REF_DEBUG which enlarge the PyObject and 
+   PyVarObject based structs. The Py_INCREF and Py_DECREF macros have a larger
+   payload as well. They keep track of the absolute number of references and
+   do tests when an object is GCed. 
+   I've taken care of most of the incompatibilities but the Py_DEBUG build 
+   is still broken. Somehow tp_mro of wrapper_descriptor isn't a tuple.
+
+ * Support Python 2.6. The most important feature I was able to isolate is the
+   PyType_FastSubclass macro and related TypeFlags in interops.cs.
+
+ * Let's talk to the Debian and Ubuntu maintainers for Python in order to convince
+   them to build Python with --enable-shared. Ubuntu's Python is semi static and not
+   linked against libpython2.x.so. This causes trouble with clr.so. 
+

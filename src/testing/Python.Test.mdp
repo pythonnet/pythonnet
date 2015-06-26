@@ -1,0 +1,40 @@
+<Project name="Python.Test" fileversion="2.0" language="C#" clr-version="Net_2_0" ctype="DotNetProject">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="DotNetProjectConfiguration">
+      <Output directory="./bin/Debug" assembly="Python.Test" />
+      <Build debugmode="True" target="Library" />
+      <Execution runwithwarnings="True" consolepause="False" runtime="MsNet" clr-version="Net_2_0" />
+      <CodeGeneration compiler="Csc" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
+    </Configuration>
+    <Configuration name="Release" ctype="DotNetProjectConfiguration">
+      <Output directory="./bin/Release" assembly="Python.Test" />
+      <Build debugmode="False" target="Library" />
+      <Execution runwithwarnings="True" consolepause="False" runtime="MsNet" clr-version="Net_2_0" />
+      <CodeGeneration compiler="Csc" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
+    </Configuration>
+  </Configurations>
+  <DeployTargets />
+  <Contents>
+    <File name="./arraytest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./classtest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./constructortests.cs" subtype="Code" buildaction="Compile" />
+    <File name="./conversiontest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./delegatetest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./enumtest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./eventtest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./exceptiontest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./fieldtest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./generictest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./globaltest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./indexertest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./interfacetest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./methodtest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./propertytest.cs" subtype="Code" buildaction="Compile" />
+    <File name="./threadtest.cs" subtype="Code" buildaction="Compile" />
+  </Contents>
+  <References>
+    <ProjectReference type="Project" localcopy="True" refto="Python.Runtime" />
+    <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference type="Gac" localcopy="True" refto="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  </References>
+</Project>
