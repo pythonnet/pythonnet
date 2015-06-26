@@ -1,17 +1,30 @@
 pythonnet
 =========
 
-Python for .NET is a package that gives Python programmers nearly seamless integration with the .NET Common Language Runtime (CLR) and provides a powerful application scripting tool for .NET developers.
+Python for .NET is a package that gives Python programmers nearly seamless integration with the .NET Common Language Runtime (CLR) and provides a powerful application scripting tool for .NET developers. It allows Python code to interact with the CLR, and may also be used to embed Python into a .NET application.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/u3p6pkiqpgu0qoku/branch/python3)](https://ci.appveyor.com/project/TonyRoberts/pythonnet/branch/python3)
+[![Build Status](https://travis-ci.org/pythonnet/pythonnet.png?branch=master)](https://travis-ci.org/pythonnet/pythonnet)
 
-[![Build Status](https://travis-ci.org/renshawbay/pythonnet.png?branch=python3)](https://travis-ci.org/renshawbay/pythonnet)
+[![Build status](https://ci.appveyor.com/api/projects/status/c8k0miljb3n1c7be/branch/master)](https://ci.appveyor.com/project/TonyRoberts/pythonnet-480xs)
 
-**Features not yet integrated into the main branch**:
-- Python 3 support
-- Subclassing managed types in Python
+**Calling .NET code from Python**
 
---------------------------------------------------------------------------------------------------------
+Python for .NET allows CLR namespaces to be treated essentially as Python packages.
+
+```python
+    import clr
+    from System import String
+    from System.Collections import *
+```
+To load an assembly, use the "AddReference" function in the "clr" module:
+
+```python
+    import clr
+    clr.AddReference("System.Windows.Forms")
+    from System.Windows.Forms import Form
+```
+
+**Embedding Python in .NET**
 
 + All calls to python should be inside a "using (Py.GIL()) {/* Your code here */}" block.
 + Import python modules using dynamic mod = Py.Import("mod"), then you can call functions as normal, eg mod.func(args).
