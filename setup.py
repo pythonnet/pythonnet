@@ -313,13 +313,21 @@ if __name__ == "__main__":
 
     setup(
         name="pythonnet",
-        version="2.0.0.dev1",
+        version="2.0.0",
         description=".Net and Mono integration for Python",
         url='http://pythonnet.github.io/',
         author="Python for .Net developers",
         classifiers=[
-            'Development Status :: 3 - Alpha',
-            'Intended Audience :: Developers'],
+            'Programming Language :: Python :: 2.6',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: C#',
+            'License :: OSI Approved :: Zope Public License',
+            'Development Status :: 5 - Production/Stable',
+            'Intended Audience :: Developers',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: POSIX :: Linux',
+            'Operating System :: MacOS :: MacOS X',
+        ],
         ext_modules=[
             Extension("clr", sources=sources)
         ],
