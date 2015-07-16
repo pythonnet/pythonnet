@@ -9,7 +9,9 @@
     <AssemblyName>Python.Runtime</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-  	<PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
+    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
     <OutputPath>bin\x86\ReleaseMono\</OutputPath>
@@ -71,6 +73,7 @@
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -93,31 +96,38 @@
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-	<Choose>
-        <When Condition=" '$(Configuration)'=='DebugMono' ">
-            <ItemGroup>
-				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-				  <SpecificVersion>False</SpecificVersion>
-				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
-				</Reference>
-            </ItemGroup>
-        </When>
-        <When Condition=" '$(Configuration)'=='ReleaseMono' ">
-            <ItemGroup>
-				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-				  <SpecificVersion>False</SpecificVersion>
-				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
-				</Reference>
-            </ItemGroup>
-        </When>
-    </Choose>
-	<ItemGroup>
-		<Reference Include="System" />
-	</ItemGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>pythonnet.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <Choose>
+    <When Condition=" '$(Configuration)'=='DebugMono' ">
+      <ItemGroup>
+        <Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+          <SpecificVersion>False</SpecificVersion>
+          <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+    <When Condition=" '$(Configuration)'=='ReleaseMono' ">
+      <ItemGroup>
+        <Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+          <SpecificVersion>False</SpecificVersion>
+          <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblyinfo.cs" />
     <Compile Include="assemblymanager.cs" />
+    <Compile Include="SimpleHashSet.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />
     <Compile Include="classobject.cs" />
@@ -185,6 +195,6 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <Target Name="AfterBuild">
-	<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>
