@@ -226,7 +226,7 @@ namespace Python.Runtime {
             int pynargs = Runtime.PyTuple_Size(args);
             object arg;
             bool isGeneric = false;
-
+            ArrayList defaultArgList = null;
              if (info != null) {
                 _methods = (MethodBase[])Array.CreateInstance(
                                                 typeof(MethodBase), 1
@@ -247,7 +247,17 @@ namespace Python.Runtime {
                 int outs = 0;
 
                 if (pynargs == clrnargs) { 
-                    match = true; 
+                    match = true;
+                } else if(pynargs < clrnargs){
+                    match = true;
+                    defaultArgList = new ArrayList();
+                    for (int v = pynargs; v < clrnargs; v++)
+                    {
+                        if (pi[v].DefaultValue == DBNull.Value)
+                            match = false;
+                        else
+                            defaultArgList.Add((object)pi[v].DefaultValue);    
+                    }
                 } else if ((pynargs > clrnargs) && (clrnargs > 0) &&
                            (pi[clrnargs-1].ParameterType.IsArray)) {
                     // The last argument of the mananged functions seems to
@@ -262,30 +272,43 @@ namespace Python.Runtime {
 
                     for (int n = 0; n < clrnargs; n++) {
                         IntPtr op;
-                        if (arrayStart == n) {
-                            // map remaining Python arguments to a tuple since
-                            // the managed function accepts it - hopefully :]
-                            op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
-                        }
-                        else {
-                            op = Runtime.PyTuple_GetItem(args, n);
-                        }
-                        Type type = pi[n].ParameterType;
-                        if (pi[n].IsOut || type.IsByRef) {
-                            outs++;
-                        }
+                        if (n < pynargs)
+                        {
+                            if (arrayStart == n)
+                            {
+                                // map remaining Python arguments to a tuple since
+                                // the managed function accepts it - hopefully :]
+                                op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
+                            }
+                            else
+                            {
+                                op = Runtime.PyTuple_GetItem(args, n);
+                            }
+                            Type type = pi[n].ParameterType;
+                            if (pi[n].IsOut || type.IsByRef)
+                            {
+                                outs++;
+                            }
 
-                        if (!Converter.ToManaged(op, type, out arg, false)) {
-                            Exceptions.Clear();
-                            margs = null;
-                            break;
+                            if (!Converter.ToManaged(op, type, out arg, false))
+                            {
+                                Exceptions.Clear();
+                                margs = null;
+                                break;
+                            }
+                            if (arrayStart == n)
+                            {
+                                // GetSlice() creates a new reference but GetItem()
+                                // returns only a borrow reference.
+                                Runtime.Decref(op);
+                            }
+                            margs[n] = arg;
                         }
-                        if (arrayStart == n) {
-                            // GetSlice() creates a new reference but GetItem()
-                            // returns only a borrow reference.
-                            Runtime.Decref(op);
+                        else
+                        {
+                            if (defaultArgList != null)
+                                margs[n] = defaultArgList[n - pynargs];
                         }
-                        margs[n] = arg;
                     }
                     
                     if (margs == null) {
