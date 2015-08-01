@@ -233,7 +233,7 @@ namespace Python.Runtime {
                 free = true;
             }
 
-            // Add args given from caller
+            // Add args given from caller + 1 for the value
             int i = Runtime.PyTuple_Size(args);
             IntPtr real = Runtime.PyTuple_New(i + 1);
             for (int n = 0; n < i; n++) {
@@ -243,10 +243,12 @@ namespace Python.Runtime {
             }
 
             // Do we need default arguments added to the list
-            if (cls.indexer.NeedsDefaultArgs(ob, real)) {
-                IntPtr defaultArgs = cls.indexer.GetDefaultArgs(ob, real);
-                int sizeOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
-                int temp = i + sizeOfDefaultArgs;
+            if (cls.indexer.NeedsDefaultArgs(real)) {
+                // Need to add default args to the end of real tuple
+                // before adding the value v
+                IntPtr defaultArgs = cls.indexer.GetDefaultArgs(real);
+                int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+                int temp = i + numOfDefaultArgs;
                 real = Runtime.PyTuple_New(temp + 1);
                 for (int n = 0; n < i; n++) {
                     IntPtr item = Runtime.PyTuple_GetItem(args, n);
@@ -254,13 +256,11 @@ namespace Python.Runtime {
                     Runtime.PyTuple_SetItem(real, n, item);
                 }
 
-                for (int n = 0; n < sizeOfDefaultArgs; n++) {
-
+                for (int n = 0; n < numOfDefaultArgs; n++) {
                     IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
                     Runtime.Incref(item);
                     Runtime.PyTuple_SetItem(real, n + i, item);
                 }
-
                 i = temp;
             }
 

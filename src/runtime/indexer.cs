@@ -62,7 +62,7 @@ namespace Python.Runtime {
             SetterBinder.Invoke(inst, args, IntPtr.Zero);
         }
 
-        internal bool NeedsDefaultArgs(IntPtr inst, IntPtr args){
+        internal bool NeedsDefaultArgs(IntPtr args){
             int pynargs = Runtime.PyTuple_Size(args) - 1;
             var methods = SetterBinder.GetMethods();
             if(methods.Length == 0)
@@ -82,7 +82,7 @@ namespace Python.Runtime {
             return true;
         }
 
-        internal IntPtr GetDefaultArgs(IntPtr inst, IntPtr args){
+        internal IntPtr GetDefaultArgs(IntPtr args){
             //IntPtr real = Runtime.PyTuple_New(i + 1);
             int pynargs = Runtime.PyTuple_Size(args) - 1;
             var methods = SetterBinder.GetMethods();
