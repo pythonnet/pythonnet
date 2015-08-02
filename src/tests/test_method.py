@@ -13,6 +13,12 @@ clr.AddReference("Python.Test")
 
 from Python.Test import MethodTest, MethodTestSub
 import System
+import six
+
+if six.PY3:
+    long = int
+    unichr = chr
+
 
 class MethodTests(unittest.TestCase):
     """Test CLR method support."""
@@ -235,11 +241,11 @@ class MethodTests(unittest.TestCase):
 
     def testSubclassInstanceConversion(self):
         """Test subclass instance conversion in method call."""
-        class sub(System.Exception):
+        class TestSubException(System.Exception):
             pass
 
         object = MethodTest()
-        instance = sub()
+        instance = TestSubException()
         result = object.TestSubclassConversion(instance)
         self.assertTrue(isinstance(result, System.Exception))
 
@@ -522,8 +528,8 @@ class MethodTests(unittest.TestCase):
         value = MethodTest.Overloaded.__overloads__[System.SByte](127)
         self.assertTrue(value == 127)
 
-        value = MethodTest.Overloaded.__overloads__[System.Char](u'A')
-        self.assertTrue(value == u'A')
+        value = MethodTest.Overloaded.__overloads__[System.Char](six.u('A'))
+        self.assertTrue(value == six.u('A'))
 
         value = MethodTest.Overloaded.__overloads__[System.Char](65535)
         self.assertTrue(value == unichr(65535))
@@ -538,25 +544,27 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value == 2147483647)
 
         value = MethodTest.Overloaded.__overloads__[System.Int64](
-            9223372036854775807L
+            long(9223372036854775807)
             )
-        self.assertTrue(value == 9223372036854775807L)
+        self.assertTrue(value == long(9223372036854775807))
 
-        value = MethodTest.Overloaded.__overloads__[long](
-            9223372036854775807L
-            )
-        self.assertTrue(value == 9223372036854775807L)
+        # Python 3 has no explicit long type, use System.Int64 instead
+        if not six.PY3:
+            value = MethodTest.Overloaded.__overloads__[long](
+                long(9223372036854775807)
+                )
+            self.assertTrue(value == long(9223372036854775807))
 
         value = MethodTest.Overloaded.__overloads__[System.UInt16](65000)
         self.assertTrue(value == 65000)
 
-        value = MethodTest.Overloaded.__overloads__[System.UInt32](4294967295L)
-        self.assertTrue(value == 4294967295L)
+        value = MethodTest.Overloaded.__overloads__[System.UInt32](long(4294967295))
+        self.assertTrue(value == long(4294967295))
 
         value = MethodTest.Overloaded.__overloads__[System.UInt64](
-            18446744073709551615L
+            long(18446744073709551615)
             )
-        self.assertTrue(value == 18446744073709551615L)
+        self.assertTrue(value == long(18446744073709551615))
 
         value = MethodTest.Overloaded.__overloads__[System.Single](3.402823e38)
         self.assertTrue(value == 3.402823e38)
@@ -638,10 +646,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value[1] == 127)        
 
         vtype = Array[System.Char]
-        input = vtype([u'A', u'Z'])
+        input = vtype([six.u('A'), six.u('Z')])
         value = MethodTest.Overloaded.__overloads__[vtype](input)
-        self.assertTrue(value[0] == u'A')
-        self.assertTrue(value[1] == u'Z')
+        self.assertTrue(value[0] == six.u('A'))
+        self.assertTrue(value[1] == six.u('Z'))
 
         vtype = Array[System.Char]
         input = vtype([0, 65535])
@@ -668,16 +676,18 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value[1] == 2147483647)        
 
         vtype = Array[System.Int64]
-        input = vtype([0, 9223372036854775807L])
+        input = vtype([0, long(9223372036854775807)])
         value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 9223372036854775807L)        
+        self.assertTrue(value[1] == long(9223372036854775807))
 
-        vtype = Array[long]
-        input = vtype([0, 9223372036854775807L])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 9223372036854775807L)        
+        # Python 3 has no explicit long type, use System.Int64 instead
+        if not six.PY3:
+            vtype = Array[long]
+            input = vtype([0, long(9223372036854775807)])
+            value = MethodTest.Overloaded.__overloads__[vtype](input)
+            self.assertTrue(value[0] == 0)
+            self.assertTrue(value[1] == long(9223372036854775807))
 
         vtype = Array[System.UInt16]
         input = vtype([0, 65000])
@@ -686,16 +696,16 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value[1] == 65000)        
 
         vtype = Array[System.UInt32]
-        input = vtype([0, 4294967295L])
+        input = vtype([0, long(4294967295)])
         value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 4294967295L)        
+        self.assertTrue(value[1] == long(4294967295))
 
         vtype = Array[System.UInt64]
-        input = vtype([0, 18446744073709551615L])
+        input = vtype([0, long(18446744073709551615)])
         value = MethodTest.Overloaded.__overloads__[vtype](input)
         self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 18446744073709551615L)        
+        self.assertTrue(value[1] == long(18446744073709551615))
 
         vtype = Array[System.Single]
         input = vtype([0.0, 3.402823e38])
