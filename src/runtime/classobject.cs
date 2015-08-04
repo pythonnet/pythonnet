@@ -233,36 +233,27 @@ namespace Python.Runtime {
                 free = true;
             }
 
-            // Add args given from caller + 1 for the value
+            // Get the args passed in.
             int i = Runtime.PyTuple_Size(args);
-            IntPtr real = Runtime.PyTuple_New(i + 1);
+            IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
+            int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+            int temp = i + numOfDefaultArgs;
+            IntPtr real = Runtime.PyTuple_New(temp + 1);
             for (int n = 0; n < i; n++) {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
                 Runtime.Incref(item);
                 Runtime.PyTuple_SetItem(real, n, item);
             }
 
-            // Do we need default arguments added to the list
-            if (cls.indexer.NeedsDefaultArgs(real)) {
-                // Need to add default args to the end of real tuple
-                // before adding the value v
-                IntPtr defaultArgs = cls.indexer.GetDefaultArgs(real);
-                int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
-                int temp = i + numOfDefaultArgs;
-                real = Runtime.PyTuple_New(temp + 1);
-                for (int n = 0; n < i; n++) {
-                    IntPtr item = Runtime.PyTuple_GetItem(args, n);
-                    Runtime.Incref(item);
-                    Runtime.PyTuple_SetItem(real, n, item);
-                }
-
-                for (int n = 0; n < numOfDefaultArgs; n++) {
-                    IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
-                    Runtime.Incref(item);
-                    Runtime.PyTuple_SetItem(real, n + i, item);
-                }
-                i = temp;
+            // Add Default Args if needed
+            for (int n = 0; n < numOfDefaultArgs; n++) {
+                IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
+                Runtime.Incref(item);
+                Runtime.PyTuple_SetItem(real, n + i, item);
             }
+            // no longer need defaultArgs 
+            Runtime.Decref(defaultArgs);
+            i = temp;
 
             // Add value to argument list
             Runtime.Incref(v);

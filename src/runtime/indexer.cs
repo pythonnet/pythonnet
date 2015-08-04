@@ -63,7 +63,7 @@ namespace Python.Runtime {
         }
 
         internal bool NeedsDefaultArgs(IntPtr args){
-            int pynargs = Runtime.PyTuple_Size(args) - 1;
+            int pynargs = Runtime.PyTuple_Size(args);
             var methods = SetterBinder.GetMethods();
             if(methods.Length == 0)
                 return false;
@@ -72,7 +72,7 @@ namespace Python.Runtime {
             ParameterInfo[] pi = mi.GetParameters();
             // need to subtract one for the value
             int clrnargs = pi.Length - 1;
-            if(pynargs == clrnargs)
+            if (pynargs == clrnargs || pynargs > clrnargs)
                 return false;
 
             for (int v = pynargs; v < clrnargs; v++){
@@ -82,34 +82,30 @@ namespace Python.Runtime {
             return true;
         }
 
+        /// <summary>
+        /// This will return default arguments a new instance of a tuple. The size 
+        ///  of the tuple will indicate the number of default arguments. 
+        /// </summary>
+        /// <param name="args">This is pointing to the tuple args passed in</param>
+        /// <returns>a new instance of the tuple containing the default args</returns>
         internal IntPtr GetDefaultArgs(IntPtr args){
-            //IntPtr real = Runtime.PyTuple_New(i + 1);
-            int pynargs = Runtime.PyTuple_Size(args) - 1;
+
+            // if we don't need default args return empty tuple
+            if(!NeedsDefaultArgs(args))
+                return Runtime.PyTuple_New(0);
+            int pynargs = Runtime.PyTuple_Size(args);
+           
+            // Get the default arg tuple
             var methods = SetterBinder.GetMethods();
-            IntPtr defaultArgs;
-            if(methods.Length == 0){
-                 defaultArgs = Runtime.PyTuple_New(0);
-                return defaultArgs;
-            }
             MethodBase mi = methods[0];
             ParameterInfo[] pi = mi.GetParameters();
             int clrnargs = pi.Length - 1;
-            if(pynargs == clrnargs|| pynargs > clrnargs){
-                 defaultArgs = Runtime.PyTuple_New(0);
-                return defaultArgs;
-            }
-
-            defaultArgs = Runtime.PyTuple_New(clrnargs - pynargs);
+            IntPtr defaultArgs = Runtime.PyTuple_New(clrnargs - pynargs);
             for (int i = 0; i < (clrnargs - pynargs); i++) {
-                // Here we own the reference to the Python value, and we
-                // give the ownership to the arg tuple.
                 if (pi[i + pynargs].DefaultValue == DBNull.Value)
                     continue;
                 else{
                     IntPtr arg = Converter.ToPython(pi[i + pynargs].DefaultValue, pi[i + pynargs].ParameterType);
-                    Type type = typeof(String);
-                    Object arg2;
-                    Converter.ToManaged(arg, type, out arg2, false);
                     Runtime.PyTuple_SetItem(defaultArgs, i, arg);
                 }
             }
