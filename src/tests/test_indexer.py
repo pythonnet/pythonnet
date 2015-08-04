@@ -8,6 +8,8 @@
 # ===========================================================================
 
 import sys, os, string, unittest, types
+import clr
+clr.AddReference("Python.Test")
 import Python.Test as Test
 import six
 
@@ -630,6 +632,17 @@ class IndexerTests(unittest.TestCase):
             object[0, 1, spam] = "wrong"
 
         self.assertRaises(TypeError, test)
+        
+        
+    def testMultiDefaultKeyIndexer(self):
+        """Test indexers that take multiple indices with a default key arguments."""
+        #default argument is 2 in the MultiDefaultKeyIndexerTest object
+        object = Test.MultiDefaultKeyIndexerTest()
+        object[0, 2] = "zero one spam"
+        self.assertTrue(object[0] == "zero one spam")
+        
+        object[1] = "one nine spam"
+        self.assertTrue(object[1, 2] == "one nine spam")
 
 
     def testIndexerWrongKeyType(self):

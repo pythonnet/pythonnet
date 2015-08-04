@@ -447,6 +447,27 @@ class MethodTests(unittest.TestCase):
 
         # None cannot be converted to a value type
         self.assertRaises(TypeError, test)
+        
+    def testSingleDefaultParam(self):
+        """Test void method with single ref-parameter."""
+        result = MethodTest.TestSingleDefaultParam()
+        self.assertTrue(result == 5)
+        
+    def testOneArgAndTwoDefaultParam(self):
+        """Test void method with single ref-parameter."""
+        result = MethodTest.TestOneArgAndTwoDefaultParam(11)
+        self.assertTrue(result == 22)
+        
+        result = MethodTest.TestOneArgAndTwoDefaultParam(15)
+        self.assertTrue(result == 26)
+        
+        result = MethodTest.TestOneArgAndTwoDefaultParam(20)
+        self.assertTrue(result == 31)
+        
+    def testTwoDefaultParam(self):
+        """Test void method with single ref-parameter."""
+        result = MethodTest.TestTwoDefaultParam()
+        self.assertTrue(result == 11)        
 
 
     def testExplicitSelectionWithOutModifier(self):
