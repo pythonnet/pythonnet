@@ -36,23 +36,24 @@ namespace Python.Runtime {
         {
             string type;
             string message;
+            Runtime.Incref(_pyType);
             using (PyObject pyType = new PyObject(_pyType))
             using (PyObject pyTypeName = pyType.GetAttr("__name__"))
             {
                     type = pyTypeName.ToString();
             }
-            
+
+            Runtime.Incref(_pyValue);
             using (PyObject pyValue = new PyObject(_pyValue)) 
             {
                 message = pyValue.ToString(); 
             }
-            ;
-
             _message = type + " : " + message;
         }
         if (_pyTB != IntPtr.Zero)
         {
             PyObject tb_module = PythonEngine.ImportModule("traceback");
+            Runtime.Incref(_pyTB);
             using (PyObject pyTB = new PyObject(_pyTB)) {
                 _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
             }
