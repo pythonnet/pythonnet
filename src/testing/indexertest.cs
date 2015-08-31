@@ -347,6 +347,23 @@ namespace Python.Test {
 
     }
 
+    public class MultiDefaultKeyIndexerTest : IndexerBase {
+
+        public MultiDefaultKeyIndexerTest() : base() { }
+
+        public string this[int i1, int i2 = 2] {
+            get {
+                string key = i1.ToString() + i2.ToString();
+                return (string)t[key];
+            }
+            set {
+                string key = i1.ToString() + i2.ToString();
+                t[key] = value;
+            }
+        }
+
+    }
+
 
 
 

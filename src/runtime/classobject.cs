@@ -223,7 +223,6 @@ namespace Python.Runtime {
             // Arg may be a tuple in the case of an indexer with multiple
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
-
             IntPtr args = idx;
             bool free = false;
 
@@ -234,13 +233,29 @@ namespace Python.Runtime {
                 free = true;
             }
 
+            // Get the args passed in.
             int i = Runtime.PyTuple_Size(args);
-            IntPtr real = Runtime.PyTuple_New(i + 1);
+            IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
+            int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+            int temp = i + numOfDefaultArgs;
+            IntPtr real = Runtime.PyTuple_New(temp + 1);
             for (int n = 0; n < i; n++) {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
                 Runtime.Incref(item);
                 Runtime.PyTuple_SetItem(real, n, item);
             }
+
+            // Add Default Args if needed
+            for (int n = 0; n < numOfDefaultArgs; n++) {
+                IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
+                Runtime.Incref(item);
+                Runtime.PyTuple_SetItem(real, n + i, item);
+            }
+            // no longer need defaultArgs 
+            Runtime.Decref(defaultArgs);
+            i = temp;
+
+            // Add value to argument list
             Runtime.Incref(v);
             Runtime.PyTuple_SetItem(real, i, v);
 

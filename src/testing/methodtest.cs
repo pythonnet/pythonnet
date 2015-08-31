@@ -155,6 +155,16 @@ namespace Python.Test {
             i = 42;
         }
 
+        public static int TestSingleDefaultParam(int i = 5) {
+            return i;
+        }
+        public static int TestTwoDefaultParam(int i = 5, int j = 6) {
+            return i + j;
+        }
+        public static int TestOneArgAndTwoDefaultParam(int z, int i = 5, int j = 6) {
+            return i + j + z;
+        }
+
 
 
         // overload selection test support 
