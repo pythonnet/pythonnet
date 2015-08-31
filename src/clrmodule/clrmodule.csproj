@@ -40,7 +40,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
     <OutputPath>bin\x86\ReleaseMono\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">
+    </DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -51,7 +52,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
     <OutputPath>bin\x64\ReleaseMono\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">
+    </DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -84,7 +86,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
     <OutputPath>bin\x86\ReleaseWin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">
+    </DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -95,7 +98,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
     <OutputPath>bin\x64\ReleaseWin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">
+    </DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -120,7 +124,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild" DependsOnTargets="RGieseckeDllExport">
-	<Copy SourceFiles="$(TargetPath)" DestinationFiles="$(PythonBuildDir)\clr.pyd" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(PythonBuildDir)\clr.pyd" />
   </Target>
   <Import Project="../../packages/UnmanagedExports.1.2.6/tools/RGiesecke.DllExport.targets" Condition="Exists('../../packages/UnmanagedExports.1.2.6/tools/RGiesecke.DllExport.targets')" />
+  <PropertyGroup>
+    <PostBuildEvent>for /f "delims=" %25%25i in ('python -c "import site; print(site.getsitepackages()[1])"') do set output=%25%25i
+copy /Y "$(SolutionDir)\clr.pyd" %25output%25</PostBuildEvent>
+  </PropertyGroup>
 </Project>

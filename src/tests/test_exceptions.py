@@ -1,4 +1,4 @@
-# ===========================================================================
+﻿# ===========================================================================
 # This software is subject to the provisions of the Zope Public License,
 # Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
 # THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
@@ -6,9 +6,12 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
-
-import sys, os, string, unittest, types
+import clr
 import System
+import sys, os, string, unittest, types
+
+#TODO: Py 2/3 compatibility
+#TODO: build to Python directory
 
 # Note: all of these tests are known to fail because Python currently
 # doesn't allow new-style classes to be used as exceptions. I'm leaving
@@ -93,7 +96,7 @@ class ExceptionTests(unittest.TestCase):
         from System import NullReferenceException
 
         def test():
-            raise NullReferenceException, 'Aiiieee!'
+            raise NullReferenceException('Aiiieee!')
 
         self.assertRaises(NullReferenceException, test)
 
@@ -185,7 +188,7 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             ExceptionTest().ThrowException()
-        except OverflowException, e:
+        except OverflowException as e:
             self.assertTrue(isinstance(e, OverflowException))
             return
 
@@ -199,13 +202,13 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             v = ExceptionTest().ThrowProperty
-        except OverflowException, e:
+        except OverflowException as e:
             self.assertTrue(isinstance(e, OverflowException))
             return
 
         try:
             ExceptionTest().ThrowProperty = 1
-        except OverflowException, e:
+        except OverflowException as e:
             self.assertTrue(isinstance(e, OverflowException))
             return
 
@@ -267,7 +270,7 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             raise OverflowException('overflow')
-        except OverflowException, e:
+        except OverflowException as e:
             self.assertTrue(isinstance(e, OverflowException))
 
 
@@ -303,7 +306,7 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             Convert.ToDateTime('this will fail')
-        except FormatException, e:
+        except FormatException as e:
             msg = unicode(e).encode("utf8") # fix for international installation
             self.assertTrue(msg.find('System.Convert.ToDateTime') > -1, msg)
 
