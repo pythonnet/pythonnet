@@ -199,11 +199,41 @@ namespace Python.Runtime {
         //===================================================================
 
         public static Assembly LoadAssemblyPath(string name) {
+            
             string path = FindAssembly(name);
             Assembly assembly = null;
             if (path != null) {
                 try   { assembly = Assembly.LoadFrom(path); }
                 catch {}
+            }
+            return assembly;
+        }
+
+        /// <summary>
+        /// Loads an assembly using full path.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static Assembly LoadAssemblyFullPath(string name)
+        {
+            Assembly assembly = null;
+            if (name.Contains(Convert.ToString(Path.DirectorySeparatorChar)))
+            {
+                string temp = "";
+                temp = name + ".dll";
+                if (!File.Exists(temp))
+                {
+                    temp = name + ".exe";
+                    if (!File.Exists(temp))
+                    {
+                        temp = "";
+                    }
+                }
+                if (temp != "")
+                {
+                    try { assembly = Assembly.LoadFrom(temp); }
+                    catch { }
+                }
             }
             return assembly;
         }
