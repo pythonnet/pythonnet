@@ -93,6 +93,7 @@
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;PYTHON34,UCS2</DefineConstants>
   </PropertyGroup>
 	<Choose>
         <When Condition=" '$(Configuration)'=='DebugMono' ">
@@ -199,4 +200,8 @@
 	<Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
 	<Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>for /f "delims=" %25%25i in ('python -c "import site; print(site.getsitepackages()[1])"') do set output=%25%25i
+copy /Y "$(TargetPath)" %25output%25</PostBuildEvent>
+  </PropertyGroup>
 </Project>
