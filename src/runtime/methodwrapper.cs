@@ -34,7 +34,7 @@ namespace Python.Runtime {
             // XXX - here we create a Python string object, then take the
             // char * of the internal string to pass to our methoddef
             // structure. Its a hack, and the name is leaked!
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             IntPtr ps = Runtime.PyBytes_FromString(name);
             IntPtr sp = Runtime.PyBytes_AS_STRING(ps);
 #else

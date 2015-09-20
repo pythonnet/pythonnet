@@ -79,7 +79,7 @@ namespace Python.Runtime {
         }
 
         public static int magic(IntPtr ob) {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -91,7 +91,7 @@ namespace Python.Runtime {
 
         public static int DictOffset(IntPtr ob)
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -102,7 +102,7 @@ namespace Python.Runtime {
         }
 
         public static int Size(IntPtr ob) {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -126,7 +126,7 @@ namespace Python.Runtime {
         private static int ob_data;
     }
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class ExceptionOffset
     {
@@ -258,11 +258,11 @@ namespace Python.Runtime {
         public static int tp_subclasses = 0;
         public static int tp_weaklist = 0;
         public static int tp_del = 0;
-#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         /* Type attribute cache version tag. Added in version 2.6 */
-	    public static int tp_version_tag;
+        public static int tp_version_tag;
 #endif
-#if (PYTHON34)
+#if (PYTHON34 || PYTHON35)
         public static int tp_finalize = 0;
 #endif
         // COUNT_ALLOCS adds some more stuff to PyTypeObject 
@@ -274,13 +274,13 @@ namespace Python.Runtime {
         public static int tp_prev = 0;
         public static int tp_next = 0;
 #endif
-//} PyTypeObject;
+        //} PyTypeObject;
 
-//typedef struct {
+        //typedef struct {
         public static int nb_add = 0;
         public static int nb_subtract = 0;
         public static int nb_multiply = 0;
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int nb_divide = 0;
 #endif
         public static int nb_remainder = 0;
@@ -296,13 +296,13 @@ namespace Python.Runtime {
         public static int nb_and = 0;
         public static int nb_xor = 0;
         public static int nb_or = 0;
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int nb_coerce = 0;
 #endif
         public static int nb_int = 0;
         public static int nb_long = 0;
         public static int nb_float = 0;
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int nb_oct = 0;
         public static int nb_hex = 0;
 #endif
@@ -310,7 +310,7 @@ namespace Python.Runtime {
         public static int nb_inplace_add = 0;
         public static int nb_inplace_subtract = 0;
         public static int nb_inplace_multiply = 0;
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int nb_inplace_divide = 0;
 #endif
         public static int nb_inplace_remainder = 0;
@@ -326,7 +326,7 @@ namespace Python.Runtime {
         public static int nb_true_divide = 0;
         public static int nb_inplace_floor_divide = 0;
         public static int nb_inplace_true_divide = 0;
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         /* Added in release 2.5 */
         public static int nb_index = 0;
 #endif
@@ -348,17 +348,17 @@ namespace Python.Runtime {
         /* Added in release 2.0 */
         public static int sq_inplace_concat = 0;
         public static int sq_inplace_repeat = 0;
-//} PySequenceMethods;
-//typedef struct {
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+        //} PySequenceMethods;
+        //typedef struct {
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int bf_getreadbuffer = 0;
         public static int bf_getwritebuffer = 0;
         public static int bf_getsegcount = 0;
         public static int bf_getcharbuffer = 0;
 #endif
-#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         // This addition is not actually noted in the 2.6.5 object.h
-	    public static int bf_getbuffer = 0;
+        public static int bf_getbuffer = 0;
 	    public static int bf_releasebuffer = 0;
 //} PyBufferProcs;
 #endif
@@ -366,7 +366,7 @@ namespace Python.Runtime {
         public static int name = 0;
         public static int slots = 0;
 
-#if (PYTHON33 || PYTHON34)
+#if (PYTHON33 || PYTHON34 || PYTHON35)
         public static int qualname = 0;
         public static int cached_keys;
 #endif
@@ -375,7 +375,7 @@ namespace Python.Runtime {
         public static int members = 0;
     }
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class BytesOffset
     {
@@ -495,10 +495,10 @@ namespace Python.Runtime {
         /* XXX Reusing reserved constants */
         public static int Managed = (1 << 15); // PythonNet specific
         public static int Subclass = (1 << 16); // PythonNet specific
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int HaveIndex = (1 << 17);
 #endif
-#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         /* Objects support nb_index in PyNumberMethods */
         public static int HaveVersionTag = (1 << 18);
         public static int ValidVersionTag = (1 << 19);
@@ -533,8 +533,8 @@ namespace Python.Runtime {
                              0);
 #endif
 
-// Default flags for Python 3
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+        // Default flags for Python 3
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int Default = (
                             HaveStacklessExtension |
                             HaveVersionTag);
@@ -597,7 +597,7 @@ namespace Python.Runtime {
             pmap["nb_add"] = p["BinaryFunc"];
             pmap["nb_subtract"] = p["BinaryFunc"];
             pmap["nb_multiply"] = p["BinaryFunc"];
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             pmap["nb_divide"] = p["BinaryFunc"];
 #endif
             pmap["nb_remainder"] = p["BinaryFunc"];
@@ -622,7 +622,7 @@ namespace Python.Runtime {
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             pmap["nb_inplace_divide"] = p["BinaryFunc"];
 #endif
             pmap["nb_inplace_remainder"] = p["BinaryFunc"];
@@ -636,7 +636,7 @@ namespace Python.Runtime {
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 
