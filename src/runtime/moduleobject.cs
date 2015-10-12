@@ -409,11 +409,15 @@ namespace Python.Runtime {
             {
                 assembly = AssemblyManager.LoadAssembly(name);
             }
+            if (assembly == null) {
+                assembly = AssemblyManager.LoadAssemblyFullPath(name);
+            }
             if (assembly == null)
             {
                 string msg = String.Format("Unable to find assembly '{0}'.", name);
                 throw new System.IO.FileNotFoundException(msg);
             }
+            
             return assembly ;
         }
 
