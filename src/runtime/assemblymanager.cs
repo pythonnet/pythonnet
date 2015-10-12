@@ -208,6 +208,24 @@ namespace Python.Runtime {
             return assembly;
         }
 
+        /// <summary>  
+        /// Loads an assembly using full path.  
+        /// </summary>  
+        /// <param name="name"></param>  
+        /// <returns></returns>  
+        public static Assembly LoadAssemblyFullPath(string name) {
+            Assembly assembly = null;
+            if (Path.IsPathRooted(name)) {
+                if (!Path.HasExtension(name))
+                    name = name + ".dll";
+                if (File.Exists(name)) {
+                    try { assembly = Assembly.LoadFrom(name); }
+                    catch { }
+                }
+            }
+            return assembly;
+        }
+
         //===================================================================
         // Returns an assembly that's already been loaded
         //===================================================================
