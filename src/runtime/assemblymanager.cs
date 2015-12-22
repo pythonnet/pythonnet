@@ -12,6 +12,7 @@ using System.IO;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -57,10 +58,17 @@ namespace Python.Runtime {
             domain.AssemblyResolve += rhandler;
 
             Assembly[] items = domain.GetAssemblies();
-            for (int i = 0; i < items.Length; i++) {
-                Assembly a = items[i];
-                assemblies.Add(a);
-                ScanAssembly(a);
+            foreach (var a in items)
+            {
+                try
+                {
+                    ScanAssembly(a);
+                    assemblies.Add(a);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error scaning assembly {a}. {ex}");
+                }
             }
         }
 
@@ -316,9 +324,7 @@ namespace Python.Runtime {
                     for (int n = 0; n < names.Length; n++) {
                         s = (n == 0) ? names[0] : s + "." + names[n];
                         if (!namespaces.ContainsKey(s)) {
-                            namespaces.Add(s,
-                                           new Dictionary<Assembly, string>()
-                                           );
+                            namespaces.Add(s, new Dictionary<Assembly, string>());
                         }
                     }
                 }
