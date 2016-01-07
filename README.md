@@ -6,6 +6,7 @@ Python for .NET is a package that gives Python programmers nearly seamless integ
 [![Build Status](https://travis-ci.org/pythonnet/pythonnet.png?branch=master)](https://travis-ci.org/pythonnet/pythonnet)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/c8k0miljb3n1c7be/branch/master)](https://ci.appveyor.com/project/TonyRoberts/pythonnet-480xs)
+<<<<<<< HEAD
 
 **Calling .NET code from Python**
 
@@ -61,3 +62,5 @@ float64
 int32
 [  6.  10.  12.]
 ```
+=======
+>>>>>>> refs/remotes/origin/3dsmaxfix
