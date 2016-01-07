@@ -67,7 +67,7 @@ namespace Python.Runtime {
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Error scaning assembly {a}. {ex}");
+                    Debug.WriteLine(string.Format("Error scanning assembly {0}. {1}", a, ex));
                 }
             }
         }
