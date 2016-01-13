@@ -15,13 +15,14 @@ environment:
   - pythonurl: http://www.python.org/ftp/python/3.4.2/python-3.4.2.amd64.msi 
 
 install:
-  - ps: (new-object net.webclient).DownloadFile($env:pythonurl, 'C:\python.msi')
-  - ps: start-process -wait -FilePath msiexec.exe -ArgumentList "/qn /i C:\python.msi TARGETDIR=C:\Python"
-  - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:\get-pip.py')
+  - ps: if(!(Test-Path 'C:\pythonnet')) {mkdir 'C:\pythonnet'}
+  - ps: if(!(Test-Path 'C:\pythonnet\python.msi')) {(new-object net.webclient).DownloadFile($env:pythonurl, 'C:\pythonnet\python.msi')}
+  - ps: start-process -wait -FilePath msiexec.exe -ArgumentList "/qn /i C:\pythonnet\python.msi TARGETDIR=C:\Python"
+  - ps: if(!(Test-Path 'C:\pythonnet\get-pip.py')) {(new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:\pythonnet\get-pip.py')}
   # appveyor has python 2.7.6 x86 preinstalled, but in the wrong directory, this works around this
   - ps: if ($env:pythonurl -eq "http://www.python.org/ftp/python/2.7.6/python-2.7.6.msi") {mi c:\python27 c:\python}
   - set PATH=C:\Python;%PATH%
-  - C:\Python\python.exe c:\get-pip.py
+  - C:\Python\python.exe c:\pythonnet\get-pip.py
   - C:\Python\Scripts\pip.exe install wheel
   - C:\Python\Scripts\pip.exe install six
 
@@ -33,3 +34,7 @@ test_script:
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
   - c:\python\python.exe src\tests\runtests.py
+
+cache:
+  - c:\pythonnet -> appveyor.yml
+
