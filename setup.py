@@ -41,6 +41,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
         value_name = "MSBuildToolsPath"
         sdk_name = "MSBuild"
         keys_to_check = [
+            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5",
@@ -291,6 +292,7 @@ if __name__ == "__main__":
             'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
             'Programming Language :: C#',
             'License :: OSI Approved :: Zope Public License',
             'Development Status :: 5 - Production/Stable',
