@@ -39,7 +39,7 @@ public class clrModule
 // ReSharper restore CheckNamespace
 {
 // ReSharper disable InconsistentNaming
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [RGiesecke.DllExport.DllExport("PyInit_clr", System.Runtime.InteropServices.CallingConvention.StdCall)]
     public static IntPtr PyInit_clr()
 #else
@@ -107,7 +107,7 @@ public class clrModule
 #if DEBUG_PRINT
                 System.Console.WriteLine("Could not load Python.Runtime, so sad.");
 #endif
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
                 return IntPtr.Zero;
 #else
                 return;
@@ -119,7 +119,7 @@ public class clrModule
 		// So now we get the PythonEngine and execute the InitExt method on it.
         var pythonEngineType = pythonRuntime.GetType("Python.Runtime.PythonEngine");
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         return (IntPtr)pythonEngineType.InvokeMember("InitExt", System.Reflection.BindingFlags.InvokeMethod, null, null, null);
 #else
         pythonEngineType.InvokeMember("InitExt", System.Reflection.BindingFlags.InvokeMethod, null, null, null);
