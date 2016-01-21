@@ -307,18 +307,17 @@ namespace Python.Runtime {
         // a.b.c.d, each of a, a.b, a.b.c and a.b.c.d are considered to 
         // be valid namespaces (to better match Python import semantics).
         //===================================================================
-
-        internal static void ScanAssembly(Assembly assembly) {
-
+        internal static void ScanAssembly(Assembly assembly)
+        {
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
 
             Type[] types = assembly.GetTypes();
-            for (int i = 0; i < types.Length; i++) {
-                Type t = types[i];
-                string ns = t.Namespace ?? "";
-                if (!namespaces.ContainsKey(ns)) {
+            foreach (var t in types)
+            {
+                string ns = t.Namespace;
+                if ((ns != null) && (!namespaces.ContainsKey(ns))) {
                     string[] names = ns.Split('.');
                     string s = "";
                     for (int n = 0; n < names.Length; n++) {
