@@ -2,7 +2,6 @@
 Setup script for building clr.pyd and dependencies using mono and into
 an egg or wheel.
 """
-
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.command.install_lib import install_lib
