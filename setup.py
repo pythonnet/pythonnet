@@ -2,11 +2,6 @@
 Setup script for building clr.pyd and dependencies using mono and into
 an egg or wheel.
 """
-#import ptvsd
-#ptvsd.enable_attach('pythonnet')
-#while not ptvsd.is_attached():
-#    from time import sleep
-#    sleep(1)
 
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
