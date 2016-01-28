@@ -2,6 +2,7 @@
 Setup script for building clr.pyd and dependencies using mono and into
 an egg or wheel.
 """
+
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.command.install_lib import install_lib
@@ -28,6 +29,18 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
         import winreg as _winreg
 
     if use_windows_sdk:
+        if sys.version_info[:2] == (2,7):
+            locappdir = os.environ["LOCALAPPDATA"]
+            vcpy27 = (r"Programs\Common\Microsoft"
+                r"\Visual C++ for Python\9.0\WinSDK\Bin")
+            if PLATFORM == "x86":
+                mtpath = os.path.join(
+                locappdir, vcpy27, r"mt.exe")
+            elif PLATFORM == "x64":
+                mtpath = os.path.join(
+                locappdir, vcpy27, r"x64\mt.exe")
+            if os.path.exists(mtpath):
+                return mtpath      
         value_name = "InstallationFolder"
         sdk_name = "Windows SDK"
         keys_to_check = [
@@ -41,6 +54,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
         value_name = "MSBuildToolsPath"
         sdk_name = "MSBuild"
         keys_to_check = [
+            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0",
             r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5",
@@ -148,7 +162,7 @@ class PythonNET_BuildExt(build_ext):
             "/p:Configuration=%s" % _config,
             "/p:Platform=%s" % PLATFORM,
             "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
-            "/p:PythonBuildDir=%s" % os.path.abspath(dest_dir),
+            "/p:PythonBuildDir=\"%s\"" % os.path.abspath(dest_dir),
             "/verbosity:%s" % VERBOSITY,
         ]
 
@@ -314,4 +328,3 @@ if __name__ == "__main__":
             "install_data": PythonNET_InstallData,
         }
     )
-
