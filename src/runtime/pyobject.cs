@@ -368,8 +368,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual PyObject GetItem(string key) {
-        using (PyString pyKey = new PyString(key))
+        using (PyString pyKey = new PyString(key)) {
             return GetItem(pyKey);
+        }
     }
 
 
@@ -384,8 +385,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual PyObject GetItem(int index) {
-        PyInt key = new PyInt(index);
-        return GetItem((PyObject)key);
+        using (PyInt key = new PyInt(index)) {
+            return GetItem((PyObject)key);
+        }
     }
 
 
@@ -418,8 +420,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void SetItem(string key, PyObject value) {
-        using (PyString pyKey = new PyString(key))
+        using (PyString pyKey = new PyString(key)) {
             SetItem(pyKey, value);
+        }
     }
 
 
@@ -469,8 +472,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void DelItem(string key) {
-        using (PyString pyKey = new PyString(key))
+        using (PyString pyKey = new PyString(key)) {
             DelItem(pyKey);
+        }
     }
 
 
@@ -485,8 +489,9 @@ namespace Python.Runtime {
     /// </remarks>
 
     public virtual void DelItem(int index) {
-        using (PyInt pyindex = new PyInt(index))
+        using (PyInt pyindex = new PyInt(index)) {
             DelItem(pyindex);
+        }
     }
 
 
