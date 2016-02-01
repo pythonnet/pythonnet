@@ -73,8 +73,11 @@ namespace Python.Runtime {
         // return the MethodInfo that represents the matching closed generic.
         //====================================================================
 
-         internal static MethodInfo MatchParameters(MethodInfo[] mi,Type[] tp) {
-             int count = tp.Length;
+         internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp) {
+            if (tp == null) {
+                return null;
+            }
+            int count = tp.Length;
              for (int i = 0; i < mi.Length; i++) {
                 if (!mi[i].IsGenericMethodDefinition) {
                     continue;
