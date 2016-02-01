@@ -50,7 +50,10 @@ namespace Python.Runtime {
         //====================================================================
 
          internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp) {
-             int count = tp.Length;
+            if (tp == null) {
+                return null;
+            }
+            int count = tp.Length;
              for (int i = 0; i < mi.Length; i++) {
                  ParameterInfo[] pi = mi[i].GetParameters();
                  if (pi.Length != count) {
@@ -99,7 +102,10 @@ namespace Python.Runtime {
 
 		 internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
 		 {
-			 int genericCount = genericTp.Length;
+             if ((genericTp == null) || (sigTp == null)) { 
+                 return null;
+             }
+             int genericCount = genericTp.Length;
 			 int signatureCount = sigTp.Length;
 			 for (int i = 0; i < mi.Length; i++)
 			 {
