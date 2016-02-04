@@ -199,7 +199,12 @@ namespace Python.Runtime {
         public static int tp_print = 0;
         public static int tp_getattr = 0;
         public static int tp_setattr = 0;
-        public static int tp_compare = 0; /* tp_reserved in Python 3 */
+
+#if (PYTHON35)
+        public static int tp_as_async = 0; /* tp_reserved, tp_compare in Python 3 */
+#else
+        public static int tp_reserved = 0; /* tp_reserved, tp_compare in Python 3 */
+#endif
         public static int tp_repr = 0;
 
         /* Method suites for standard classes */
@@ -330,6 +335,10 @@ namespace Python.Runtime {
         /* Added in release 2.5 */
         public static int nb_index = 0;
 #endif
+#if (PYTHON35)
+        public static int nb_matrix_multiply;
+        public static int nb_inplace_matrix_multiply;
+#endif
         //} PyNumberMethods;
 //typedef struct {
         public static int mp_length = 0;
@@ -356,6 +365,14 @@ namespace Python.Runtime {
         public static int bf_getsegcount = 0;
         public static int bf_getcharbuffer = 0;
 #endif
+#if (PYTHON35)
+        //typedef struct {
+        public static int am_await = 0;
+        public static int am_aiter = 0;
+        public static int am_anext = 0;
+        // } PyAsyncMethods
+#endif
+
 #if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         // This addition is not actually noted in the 2.6.5 object.h
 	    public static int bf_getbuffer = 0;
@@ -456,7 +473,11 @@ namespace Python.Runtime {
         public static int m_doc = 0;
         public static int m_size = 0;
         public static int m_methods = 0;
+#if (PYTHON35)
+        public static int m_slots = 0;
+#else
         public static int m_reload = 0;
+#endif
         public static int m_traverse = 0;
         public static int m_clear = 0;
         public static int m_free = 0;
@@ -574,7 +595,11 @@ namespace Python.Runtime {
             pmap["tp_print"] = p["PrintFunc"];
             pmap["tp_getattr"] = p["BinaryFunc"];
             pmap["tp_setattr"] = p["ObjObjArgFunc"];
+#if (PYTHON35)
+            //pmap["tp_as_async"] = p["IntObjArgFunc"];
+#else
             pmap["tp_compare"] = p["ObjObjFunc"];
+#endif
             pmap["tp_repr"] = p["UnaryFunc"];
             pmap["tp_hash"] = p["UnaryFunc"];
             pmap["tp_call"] = p["TernaryFunc"];
@@ -640,6 +665,10 @@ namespace Python.Runtime {
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 
+#if (PYTHON35)
+            pmap["nb_matrix_multiply"] = p["BinaryFunc"];
+            pmap["nb_inplace_matrix_multiply"] = p["BinaryFunc"];
+#endif
             pmap["sq_length"] = p["InquiryFunc"];
             pmap["sq_concat"] = p["BinaryFunc"];
             pmap["sq_repeat"] = p["IntArgFunc"];
@@ -659,6 +688,13 @@ namespace Python.Runtime {
             pmap["bf_getwritebuffer"] = p["IntObjArgFunc"];
             pmap["bf_getsegcount"] = p["ObjObjFunc"];
             pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
+
+#if (PYTHON35)
+            pmap["am_await"] = p["UnaryFunc"];
+            pmap["am_aiter"] = p["UnaryFunc"];
+            pmap["am_anext"] = p["UnaryFunc"];
+            pmap["tp_finalize"] = p["DestructorFunc"];
+#endif
 
             pmap["__import__"] = p["TernaryFunc"];
         }

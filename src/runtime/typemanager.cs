@@ -402,6 +402,11 @@ namespace Python.Runtime {
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
 #endif
 
+#if(PYTHON35)
+            temp = new IntPtr(ptr + TypeOffset.am_await);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_async, temp);
+#endif
+
             return type;
         }
 
