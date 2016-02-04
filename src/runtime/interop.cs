@@ -199,7 +199,12 @@ namespace Python.Runtime {
         public static int tp_print = 0;
         public static int tp_getattr = 0;
         public static int tp_setattr = 0;
-        public static int tp_compare = 0; /* tp_reserved in Python 3 */
+
+#if (PYTHON35)
+        public static int tp_as_async = 0; /* tp_reserved, tp_compare in Python 3 */
+#else
+        public static int tp_reserved = 0; /* tp_reserved, tp_compare in Python 3 */
+#endif
         public static int tp_repr = 0;
 
         /* Method suites for standard classes */
@@ -289,7 +294,11 @@ namespace Python.Runtime {
         public static int nb_negative = 0;
         public static int nb_positive = 0;
         public static int nb_absolute = 0;
+#if (PYTHON35)
+        public static int nb_bool = 0;
+#else
         public static int nb_nonzero = 0;
+#endif
         public static int nb_invert = 0;
         public static int nb_lshift = 0;
         public static int nb_rshift = 0;
@@ -300,7 +309,11 @@ namespace Python.Runtime {
         public static int nb_coerce = 0;
 #endif
         public static int nb_int = 0;
+#if (PYTHON35)
+        public static int nb_reserved;
+#else
         public static int nb_long = 0;
+#endif
         public static int nb_float = 0;
 #if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int nb_oct = 0;
@@ -330,32 +343,52 @@ namespace Python.Runtime {
         /* Added in release 2.5 */
         public static int nb_index = 0;
 #endif
+#if (PYTHON35)
+        public static int nb_matrix_multiply;
+        public static int nb_inplace_matrix_multiply;
+#endif
         //} PyNumberMethods;
-//typedef struct {
-        public static int mp_length = 0;
-        public static int mp_subscript = 0;
-        public static int mp_ass_subscript = 0;
-//} PyMappingMethods;
 //typedef struct {
         public static int sq_length = 0;
         public static int sq_concat = 0;
         public static int sq_repeat = 0;
         public static int sq_item = 0;
+#if (PYTHON35)
+        public static int was_sq_slice = 0;
+#else
         public static int sq_slice = 0;
+#endif
         public static int sq_ass_item = 0;
+#if (PYTHON35)
+        public static int was_sq_ass_slice = 0;
+#else
         public static int sq_ass_slice = 0;
+#endif
         public static int sq_contains = 0;
         /* Added in release 2.0 */
         public static int sq_inplace_concat = 0;
         public static int sq_inplace_repeat = 0;
+        //} PySequenceMethods;
+        //typedef struct {
+        public static int mp_length = 0;
+        public static int mp_subscript = 0;
+        public static int mp_ass_subscript = 0;
+        //} PyMappingMethods;
+        //typedef struct {
 #if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-//} PySequenceMethods;
-//typedef struct {
         public static int bf_getreadbuffer = 0;
         public static int bf_getwritebuffer = 0;
         public static int bf_getsegcount = 0;
         public static int bf_getcharbuffer = 0;
 #endif
+#if (PYTHON35)
+        //typedef struct {
+        public static int am_await = 0;
+        public static int am_aiter = 0;
+        public static int am_anext = 0;
+        // } PyAsyncMethods
+#endif
+
 #if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         // This addition is not actually noted in the 2.6.5 object.h
 	    public static int bf_getbuffer = 0;
@@ -456,12 +489,17 @@ namespace Python.Runtime {
         public static int m_doc = 0;
         public static int m_size = 0;
         public static int m_methods = 0;
+#if (PYTHON35)
+        public static int m_slots = 0;
+#else
         public static int m_reload = 0;
+#endif
         public static int m_traverse = 0;
         public static int m_clear = 0;
         public static int m_free = 0;
         // } PyModuleDef
 
+        // the module name will be stored at this location
         public static int name = 0;
     }
 #endif // PYTHON3
@@ -574,7 +612,11 @@ namespace Python.Runtime {
             pmap["tp_print"] = p["PrintFunc"];
             pmap["tp_getattr"] = p["BinaryFunc"];
             pmap["tp_setattr"] = p["ObjObjArgFunc"];
+#if (PYTHON35)
+            //pmap["tp_as_async"] = p["IntObjArgFunc"];
+#else
             pmap["tp_compare"] = p["ObjObjFunc"];
+#endif
             pmap["tp_repr"] = p["UnaryFunc"];
             pmap["tp_hash"] = p["UnaryFunc"];
             pmap["tp_call"] = p["TernaryFunc"];
@@ -606,19 +648,29 @@ namespace Python.Runtime {
             pmap["nb_negative"] = p["UnaryFunc"];
             pmap["nb_positive"] = p["UnaryFunc"];
             pmap["nb_absolute"] = p["UnaryFunc"];
+#if (PYTHON35)
+            pmap["nb_bool"] = p["InquiryFunc"];
+#else
             pmap["nb_nonzero"] = p["InquiryFunc"];
+#endif
             pmap["nb_invert"] = p["UnaryFunc"];
             pmap["nb_lshift"] = p["BinaryFunc"];
             pmap["nb_rshift"] = p["BinaryFunc"];
             pmap["nb_and"] = p["BinaryFunc"];
             pmap["nb_xor"] = p["BinaryFunc"];
             pmap["nb_or"] = p["BinaryFunc"];
+#if !(PYTHON35)
             pmap["nb_coerce"] = p["ObjObjFunc"];
+#endif
             pmap["nb_int"] = p["UnaryFunc"];
+#if !(PYTHON35)
             pmap["nb_long"] = p["UnaryFunc"];
+#endif
             pmap["nb_float"] = p["UnaryFunc"];
+#if !(PYTHON35)
             pmap["nb_oct"] = p["UnaryFunc"];
             pmap["nb_hex"] = p["UnaryFunc"];
+#endif
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
@@ -640,13 +692,25 @@ namespace Python.Runtime {
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 
+#if (PYTHON35)
+            pmap["nb_matrix_multiply"] = p["BinaryFunc"];
+            pmap["nb_inplace_matrix_multiply"] = p["BinaryFunc"];
+#endif
             pmap["sq_length"] = p["InquiryFunc"];
             pmap["sq_concat"] = p["BinaryFunc"];
             pmap["sq_repeat"] = p["IntArgFunc"];
             pmap["sq_item"] = p["IntArgFunc"];
+#if !(PYTHON35)
             pmap["sq_slice"] = p["IntIntArgFunc"];
+#else			
+            pmap["was_sq_slice"] = p["IntIntArgFunc"];
+#endif
             pmap["sq_ass_item"] = p["IntObjArgFunc"];
+#if !(PYTHON35)
             pmap["sq_ass_slice"] = p["IntIntObjArgFunc"];
+#else			
+            pmap["was_sq_ass_slice"] = p["IntIntArgFunc"];
+#endif
             pmap["sq_contains"] = p["ObjObjFunc"];
             pmap["sq_inplace_concat"] = p["BinaryFunc"];
             pmap["sq_inplace_repeat"] = p["IntArgFunc"];
@@ -659,6 +723,13 @@ namespace Python.Runtime {
             pmap["bf_getwritebuffer"] = p["IntObjArgFunc"];
             pmap["bf_getsegcount"] = p["ObjObjFunc"];
             pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
+
+#if (PYTHON35)
+            pmap["am_await"] = p["UnaryFunc"];
+            pmap["am_aiter"] = p["UnaryFunc"];
+            pmap["am_anext"] = p["UnaryFunc"];
+            pmap["tp_finalize"] = p["DestructorFunc"];
+#endif
 
             pmap["__import__"] = p["TernaryFunc"];
         }

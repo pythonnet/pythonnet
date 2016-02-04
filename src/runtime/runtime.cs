@@ -144,6 +144,10 @@ namespace Python.Runtime {
         public const string pyversion = "3.4";
         public const int pyversionnumber = 34;
 #endif
+#if (PYTHON35)
+        public const string pyversion = "3.5";
+        public const int pyversionnumber = 35;
+#endif
 #if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
 #error You must define one of PYTHON23 to PYTHON35
 #endif
@@ -173,6 +177,9 @@ namespace Python.Runtime {
 #if (PYTHON34)
         internal const string dllBase = "python3.4";
 #endif
+#if (PYTHON35)
+        internal const string dllBase = "python3.5";
+#endif
 #else
 #if (PYTHON32)
         internal const string dllBase = "python32";
@@ -182,6 +189,9 @@ namespace Python.Runtime {
 #endif
 #if (PYTHON34)
         internal const string dllBase = "python34";
+#endif
+#if (PYTHON35)
+        internal const string dllBase = "python35";
 #endif
 #endif
 
@@ -256,7 +266,10 @@ namespace Python.Runtime {
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         Runtime.Decref(dict);
+        // negative count
+#if !(PYTHON35)
         Runtime.Decref(op);
+#endif
 #endif
 
         op = Runtime.PyString_FromString("string");
@@ -2027,10 +2040,18 @@ namespace Python.Runtime {
     PyModule_GetFilename(IntPtr module);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+
+#if (Py_TRACE_REFS && PYTHON35)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+    ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern IntPtr
+    PyModule_FromDefAndSpec2(IntPtr module, IntPtr spec, int apiver);
+#else
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     internal unsafe static extern IntPtr
     PyModule_Create2(IntPtr module, int apiver);
+#endif
 #endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,

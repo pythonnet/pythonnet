@@ -238,6 +238,11 @@ namespace Python.Runtime {
                 if (r != null) {
                     r.Dispose();
                 }
+                if (Exceptions.ErrorOccurred())
+                {
+                    throw new InvalidOperationException("An error has occured when it should not, Python will fail later.");
+                }
+
             }
             catch (PythonException e)
             {

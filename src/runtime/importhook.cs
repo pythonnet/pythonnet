@@ -54,7 +54,12 @@ namespace Python.Runtime {
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             // create a python module with the same methods as the clr module-like object
             module_def = ModuleDefOffset.AllocModuleDef("clr");
+
+#if (Py_TRACE_REFS && PYTHON35)
+            py_clr_module = Runtime.PyModule_FromDefAndSpec2(module_def, (IntPtr)null, 3);
+#else
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
+#endif
 
             // both dicts are borrowed references
             IntPtr mod_dict = Runtime.PyModule_GetDict(py_clr_module);
