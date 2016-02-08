@@ -7,6 +7,8 @@
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
 
+import clr
+
 import System.Windows.Forms as WinForms
 from System.Drawing import Color, Size, Point
 import System
