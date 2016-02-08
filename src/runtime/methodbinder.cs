@@ -50,7 +50,10 @@ namespace Python.Runtime {
         //====================================================================
 
          internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp) {
-             int count = tp.Length;
+            if (tp == null) {
+                return null;
+            }
+            int count = tp.Length;
              for (int i = 0; i < mi.Length; i++) {
                  ParameterInfo[] pi = mi[i].GetParameters();
                  if (pi.Length != count) {
@@ -99,7 +102,10 @@ namespace Python.Runtime {
 
 		 internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
 		 {
-			 int genericCount = genericTp.Length;
+             if ((genericTp == null) || (sigTp == null)) { 
+                 return null;
+             }
+             int genericCount = genericTp.Length;
 			 int signatureCount = sigTp.Length;
 			 for (int i = 0; i < mi.Length; i++)
 			 {
@@ -239,9 +245,10 @@ namespace Python.Runtime {
             else {
                 _methods = GetMethods();
             }
- 
+            Type type;
             for (int i = 0; i < _methods.Length; i++) {
                 MethodBase mi = _methods[i];
+
                 if (mi.IsGenericMethod) { isGeneric = true; }
                 ParameterInfo[] pi = mi.GetParameters();
                 int clrnargs = pi.Length;
@@ -287,7 +294,20 @@ namespace Python.Runtime {
                             {
                                 op = Runtime.PyTuple_GetItem(args, n);
                             }
-                            Type type = pi[n].ParameterType;
+
+                            type = Converter.GetTypeByAlias(Runtime.PyObject_Type(op));
+
+                            if (type != null) {
+                                if (pi[n].ParameterType != type) {
+                                    Exceptions.Clear();
+                                    margs = null;
+                                    break;
+                                }
+                            }
+                            else {
+                                type = pi[n].ParameterType;
+                            }
+                            
                             if (pi[n].IsOut || type.IsByRef)
                             {
                                 outs++;
