@@ -9,7 +9,7 @@
 
 import clr
 SWF = clr.AddReference("System.Windows.Forms")
-print SWF.Location
+print (SWF.Location)
 import System.Windows.Forms as WinForms
 from System.Drawing import Size, Point
 
@@ -49,7 +49,7 @@ class HelloApp(WinForms.Form):
 
     def button_Click(self, sender, args):
         """Button click event handler"""
-        print  "Click"
+        print ("Click")
         WinForms.MessageBox.Show("Please do not press this button again.")
 
     def run(self):
@@ -58,9 +58,9 @@ class HelloApp(WinForms.Form):
 
 def main():
     form = HelloApp()
-    print "form created"
+    print ("form created")
     app = WinForms.Application
-    print "app referenced"
+    print ("app referenced")
     app.Run(form)
 
 
