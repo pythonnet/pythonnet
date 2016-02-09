@@ -291,15 +291,15 @@ namespace Python.Runtime {
                             else {
                                 op = Runtime.PyTuple_GetItem(args, n);
                             }
+
+                            // this logic below handles cases when multiple overloading methods
+                            // are ambiguous, hence comparison between Python and CLR types
+                            // is necessary
                             type = null;
-                            if  (_methods.Length>1) { 
-                                IntPtr pyoptype = IntPtr.Zero;
-                                //try {
-                                    pyoptype = Runtime.PyObject_Type(op);
-                                /*}
-                                catch (System.Exception) {
                             
-                                }*/
+                            if (_methods.Length>1) { 
+                                IntPtr pyoptype = IntPtr.Zero;
+                                pyoptype = Runtime.PyObject_Type(op);
                                 Exceptions.Clear();
                                 if (pyoptype != IntPtr.Zero) { }
                                     type = Converter.GetTypeByAlias(pyoptype);
@@ -309,7 +309,6 @@ namespace Python.Runtime {
 
                             if (type != null) {
                                 if (pi[n].ParameterType != type) {
-                                    //Exceptions.Clear();
                                     margs = null;
                                     break;
                                 }
