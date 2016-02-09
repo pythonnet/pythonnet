@@ -282,24 +282,32 @@ namespace Python.Runtime {
 
                     for (int n = 0; n < clrnargs; n++) {
                         IntPtr op;
-                        if (n < pynargs)
-                        {
-                            if (arrayStart == n)
-                            {
+                        if (n < pynargs) {
+                            if (arrayStart == n) {
                                 // map remaining Python arguments to a tuple since
                                 // the managed function accepts it - hopefully :]
                                 op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
                             }
-                            else
-                            {
+                            else {
                                 op = Runtime.PyTuple_GetItem(args, n);
                             }
-
-                            type = Converter.GetTypeByAlias(Runtime.PyObject_Type(op));
+                            type = null;
+                            if  (_methods.Length>1) { 
+                                IntPtr pyoptype = IntPtr.Zero;
+                                try {
+                                    pyoptype = Runtime.PyObject_Type(op);
+                                }
+                                catch (System.Exception e) {
+                            
+                                }
+                                if (pyoptype != IntPtr.Zero) { }
+                                    type = Converter.GetTypeByAlias(pyoptype);
+                                }
+                            //Runtime.Decref(pyoptype);
 
                             if (type != null) {
                                 if (pi[n].ParameterType != type) {
-                                    Exceptions.Clear();
+                                    //Exceptions.Clear();
                                     margs = null;
                                     break;
                                 }
