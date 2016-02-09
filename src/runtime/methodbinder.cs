@@ -302,8 +302,9 @@ namespace Python.Runtime {
                                 }
                                 if (pyoptype != IntPtr.Zero) { }
                                     type = Converter.GetTypeByAlias(pyoptype);
+                                    Runtime.Decref(pyoptype);
                                 }
-                            //Runtime.Decref(pyoptype);
+                            
 
                             if (type != null) {
                                 if (pi[n].ParameterType != type) {
