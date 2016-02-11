@@ -578,10 +578,10 @@ namespace Python.Runtime {
                     goto type_error;
                 }
                 ival = Runtime.PyInt_AsLong(op);
+                Runtime.Decref(op);
                 if (ival > Char.MaxValue || ival < Char.MinValue) {
                     goto overflow;
                 }
-                Runtime.Decref(op);
                 result = (char)ival;
                 return true;
 
