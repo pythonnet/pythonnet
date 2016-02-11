@@ -578,10 +578,10 @@ namespace Python.Runtime {
                     goto type_error;
                 }
                 ival = Runtime.PyInt_AsLong(op);
+                Runtime.Decref(op);
                 if (ival > Char.MaxValue || ival < Char.MinValue) {
                     goto overflow;
                 }
-                Runtime.Decref(op);
                 result = (char)ival;
                 return true;
 
@@ -644,14 +644,16 @@ namespace Python.Runtime {
                     goto type_error;
                 }
                 uint ui = (uint)Runtime.PyLong_AsUnsignedLong(op);
-                Runtime.Decref(op);
+                
                 if (Exceptions.ErrorOccurred()) {
+                    Runtime.Decref(op);
                     goto overflow;
                 }
 
                 IntPtr check = Runtime.PyLong_FromUnsignedLong(ui);
                 int err = Runtime.PyObject_Compare(check, op);
                 Runtime.Decref(check);
+                Runtime.Decref(op);
                 if (0 != err || Exceptions.ErrorOccurred()) {
                     goto overflow;
                 }
@@ -684,7 +686,8 @@ namespace Python.Runtime {
                     }
                     goto type_error;
                 }
-                double dd = Runtime.PyFloat_AsDouble(value);
+                double dd = Runtime.PyFloat_AsDouble(op);
+                Runtime.Decref(op);
                 if (dd > Single.MaxValue || dd < Single.MinValue) {
                     goto overflow;
                 }
