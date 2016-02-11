@@ -684,7 +684,8 @@ namespace Python.Runtime {
                     }
                     goto type_error;
                 }
-                double dd = Runtime.PyFloat_AsDouble(value);
+                double dd = Runtime.PyFloat_AsDouble(op);
+                Runtime.Decref(op);
                 if (dd > Single.MaxValue || dd < Single.MinValue) {
                     goto overflow;
                 }
