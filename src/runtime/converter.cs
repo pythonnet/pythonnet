@@ -644,14 +644,16 @@ namespace Python.Runtime {
                     goto type_error;
                 }
                 uint ui = (uint)Runtime.PyLong_AsUnsignedLong(op);
-                Runtime.Decref(op);
+                
                 if (Exceptions.ErrorOccurred()) {
+                    Runtime.Decref(op);
                     goto overflow;
                 }
 
                 IntPtr check = Runtime.PyLong_FromUnsignedLong(ui);
                 int err = Runtime.PyObject_Compare(check, op);
                 Runtime.Decref(check);
+                Runtime.Decref(op);
                 if (0 != err || Exceptions.ErrorOccurred()) {
                     goto overflow;
                 }
