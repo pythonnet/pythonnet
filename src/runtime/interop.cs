@@ -201,9 +201,13 @@ namespace Python.Runtime {
         public static int tp_setattr = 0;
 
 #if (PYTHON35)
-        public static int tp_as_async = 0; /* tp_reserved, tp_compare in Python 3 */
-#else
-        public static int tp_reserved = 0; /* tp_reserved, tp_compare in Python 3 */
+        public static int tp_as_async = 0;
+#endif
+#if (PYTHON32 || PYTHON33 || PYTHON34)
+        public static int tp_reserved = 0;
+#endif
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+        public static int tp_compare = 0;
 #endif
         public static int tp_repr = 0;
 
