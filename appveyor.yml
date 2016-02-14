@@ -13,6 +13,8 @@ environment:
   - pythonurl: http://www.python.org/ftp/python/3.3.5/python-3.3.5.amd64.msi 
   - pythonurl: http://www.python.org/ftp/python/3.4.2/python-3.4.2.msi
   - pythonurl: http://www.python.org/ftp/python/3.4.2/python-3.4.2.amd64.msi 
+  - pythonurl: http://www.python.org/ftp/python/3.5.1/python-3.5.1.exe
+  - pythonurl: http://www.python.org/ftp/python/3.5.1/python-3.5.1-amd64.exe
 
 install:
   - ps: (new-object net.webclient).DownloadFile($env:pythonurl, 'C:\python.msi')
