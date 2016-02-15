@@ -30,7 +30,7 @@ written, documented and tested pull requests are encouraged.
 ## Submitting Changes
 
 * Push your changes to a topic branch in your fork of the repository.
-* Submit a pull request to the repository in the puppetlabs organization.
+* Submit a pull request to the repository in the pythonnet organization.
 * After feedback has been given we expect responses within two weeks. After two
   weeks we may close the pull request if it isn't showing any activity.
 
