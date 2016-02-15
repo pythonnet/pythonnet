@@ -193,7 +193,7 @@ namespace Python.Runtime {
             try {
                 assembly = Assembly.Load(name);
             }
-            catch (System.Exception e) {
+            catch (System.Exception /*e*/) {
                 //if (!(e is System.IO.FileNotFoundException)) {
                 //    throw;
                 //}
