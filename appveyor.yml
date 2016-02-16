@@ -19,13 +19,12 @@ environment:
     - PYTHON: "C:\\Python34-x64"
       DISTUTILS_USE_SDK: "1"
     - PYTHON: "C:\\Python35-x64"
-
   install:
     # We need wheel installed to build wheels
-    - %PYTHON%\python.exe -m pip install wheel
+    - ps: ($env:PYTHON)\python.exe -m pip install wheel
     # - "%PYTHON%\\python.exe -m pip install six"
   build_script:
-    - %PYTHON%\python.exe setup.py bdist_wheel
+    - ps: ($env:PYTHON)\python.exe setup.py bdist_wheel
   #test_script:
   #  - ps: "%PYTHON%\\Scripts\\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\\' + (gci dist)[0].Name)"
   #  - mkdir c:\testdir
