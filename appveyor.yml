@@ -29,7 +29,7 @@ environment:
     - "%PYTHON%\\python.exe setup.py bdist_wheel"
 
   test_script:
-    - ps: "%PYTHON%\Scripts\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\' + (gci dist)[0].Name)"
+    - ps: "%PYTHON%\\Scripts\\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\\' + (gci dist)[0].Name)"
     - mkdir c:\testdir
     - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
     - %PYTHON%\python.exe src\tests\runtests.py
