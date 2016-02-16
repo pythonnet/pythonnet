@@ -205,8 +205,9 @@ namespace Python.Runtime {
 #endif
 #if (PYTHON32 || PYTHON33 || PYTHON34)
         public static int tp_reserved = 0;
-#else
-	public static int tp_compare = 0;
+#endif
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+        public static int tp_compare = 0;
 #endif
         public static int tp_repr = 0;
 
