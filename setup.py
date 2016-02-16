@@ -40,6 +40,18 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
                 locappdir, vcpy27, r"x64\mt.exe")
             if os.path.exists(mtpath):
                 return mtpath      
+        if sys.version_info[:2] == (3,5):
+            vcpy35 = (r"C:\Program Files (x86)\Windows Kits\8.1\bin")
+            if PLATFORM == "x86":
+                mtpath = os.path.join(
+                vcpy35, r"x86\mt.exe")
+            elif PLATFORM == "x64":
+                mtpath = os.path.join(
+                vcpy35, r"x64\mt.exe")
+            if os.path.exists(mtpath):
+                return mtpath
+            else:
+                print (mtpath)
         value_name = "InstallationFolder"
         sdk_name = "Windows SDK"
         keys_to_check = [
