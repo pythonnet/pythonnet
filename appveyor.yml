@@ -26,7 +26,7 @@ environment:
     # - "%PYTHON%\\python.exe -m pip install six"
 
   build_script:
-    - "%PYTHON%\\python.exe setup.py bdist_wheel"
+    - ps: "%PYTHON%\\python.exe setup.py bdist_wheel"
 
   test_script:
     - ps: "%PYTHON%\\Scripts\\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\\' + (gci dist)[0].Name)"
