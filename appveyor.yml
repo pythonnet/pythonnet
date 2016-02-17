@@ -32,8 +32,7 @@ build_script:
 
 test_script:
   - cd "%PYTHON%"
-  - ps: Scripts\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('C:\\projects\\pythonnet\\dist\\' + 
-  (gci C:\projects\pythonnet\dist)[0].Name)
+  - ps: Scripts\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('C:\\projects\\pythonnet\\dist\\' + (gci C:\projects\pythonnet\dist)[0].Name)
   - cd C:\projects\pythonnet
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
