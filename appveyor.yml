@@ -4,31 +4,37 @@ environment:
   global:
     PYTHONPATH: c:\testdir
     PYTHONWARNINGS: 'ignore:::pip.pep425tags:'
-    PIPURL: https://bootstrap.pypa.io/get-pip.py
-
   matrix:
-  - pythonurl: http://www.python.org/ftp/python/2.7.6/python-2.7.6.amd64.msi
-  - pythonurl: http://www.python.org/ftp/python/2.7.6/python-2.7.6.msi
-  - pythonurl: http://www.python.org/ftp/python/3.3.5/python-3.3.5.msi
-  - pythonurl: http://www.python.org/ftp/python/3.3.5/python-3.3.5.amd64.msi 
-  - pythonurl: http://www.python.org/ftp/python/3.4.2/python-3.4.2.msi
-  - pythonurl: http://www.python.org/ftp/python/3.4.2/python-3.4.2.amd64.msi 
+
+    # For Python versions available on Appveyor, see
+    # http://www.appveyor.com/docs/installed-software#python
+    # The list here is complete (excluding Python 2.6, which
+    # isn't covered by this document) at the time of writing.
+
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python33"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python27-x64"
+    - PYTHON: "C:\\Python33-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python35-x64"
 
 install:
-  - ps: (new-object net.webclient).DownloadFile($env:pythonurl, 'C:\python.msi')
-  - ps: start-process -wait -FilePath msiexec.exe -ArgumentList '/qn /x C:\python.msi TARGETDIR=C:\Python'
-  - ps: start-process -wait -FilePath msiexec.exe -ArgumentList '/qn /i C:\python.msi TARGETDIR=C:\Python'
-  - ps: (new-object net.webclient).DownloadFile($env:PIPURL, 'C:\get-pip.py')
-  - C:\Python\python.exe --version
-  - C:\Python\python.exe c:\get-pip.py
-  - C:\Python\Scripts\pip.exe install wheel
-  - C:\Python\Scripts\pip.exe install six
+# We need wheel installed to build wheels
+- "%PYTHON%\\python -m pip install --upgrade pip"
+- "%PYTHON%\\python.exe -m pip install wheel"
+- "%PYTHON%\\python.exe -m pip install six"
 
 build_script:
-  - C:\python\python.exe setup.py bdist_wheel
+- "%PYTHON%\\python.exe setup.py bdist_wheel"
 
 test_script:
-  - ps: C:\Python\Scripts\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\' + (gci dist)[0].Name)
+  - cd "%PYTHON%"
+  - ps: Scripts\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('C:\\projects\\pythonnet\\dist\\' + (gci C:\projects\pythonnet\dist)[0].Name)
+  - cd C:\projects\pythonnet
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
-  - c:\python\python.exe src\tests\runtests.py
+  - "%PYTHON%\\python.exe src\\tests\\runtests.py"
