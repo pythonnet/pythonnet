@@ -1,7 +1,9 @@
 os: Windows Server 2012
 
 environment:
-
+  global:
+    PYTHONPATH: c:\testdir
+    PYTHONWARNINGS: 'ignore:::pip.pep425tags:'
   matrix:
 
     # For Python versions available on Appveyor, see
@@ -28,8 +30,8 @@ install:
 build_script:
 - "%PYTHON%\\python.exe setup.py bdist_wheel"
 
-#test_script:
-#  - ps: "%PYTHON%\\Scripts\\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\\' + (gci dist)[0].Name)"
-#  - mkdir c:\testdir
-#  - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
-#  - "%PYTHON%\\python.exe src\\tests\\runtests.py"
+test_script:
+  - ps: "%PYTHON%\\Scripts\\pip.exe install --no-cache-dir --force-reinstall --ignore-installed ('dist\\' + (gci dist)[0].Name)"
+  - mkdir c:\testdir
+  - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
+  - "%PYTHON%\\python.exe src\\tests\\runtests.py"
