@@ -24,6 +24,7 @@ environment:
 
 install:
 # We need wheel installed to build wheels
+- "%PYTHON%\\python -m pip install --upgrade pip"
 - "%PYTHON%\\python.exe -m pip install wheel"
 - "%PYTHON%\\python.exe -m pip install six"
 
