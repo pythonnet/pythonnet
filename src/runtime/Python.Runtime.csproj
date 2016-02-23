@@ -175,6 +175,9 @@
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
+    <Compile Include="$(PythonInteropFile)" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="buildclrmodule.bat" />
     <None Include="clrmodule.il" />

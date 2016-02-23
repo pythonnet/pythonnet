@@ -155,6 +155,12 @@ class PythonNET_BuildExt(build_ext):
             if "u" in sys.abiflags:
                 defines.append("PYTHON_WITH_WIDE_UNICODE")
 
+        # check the interop file exists, and create it if it doesn't
+        interop_file = _get_interop_filename()
+        if not os.path.exists(interop_file):
+            geninterop = os.path.join("tools", "geninterop", "geninterop.py")
+            _check_output([sys.executable, geninterop, interop_file])
+
         cmd = [
             _xbuild,
             "pythonnet.sln",
@@ -162,6 +168,7 @@ class PythonNET_BuildExt(build_ext):
             "/p:Platform=%s" % PLATFORM,
             "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
             "/p:PythonBuildDir=\"%s\"" % os.path.abspath(dest_dir),
+            "/p:PythonInteropFile=\"%s\"" % os.path.basename(interop_file),
             "/verbosity:%s" % VERBOSITY,
         ]
 
@@ -272,6 +279,15 @@ def _check_output(*popenargs, **kwargs):
         return output.decode("ascii")
     return output
 
+def _get_interop_filename():
+    """interopXX.cs is auto-generated as part of the build.
+    For common windows platforms pre-generated files are included
+    as most windows users won't have Clang installed, which is
+    required to generate the file.
+    """
+    interop_file = "interop%d%s%s.cs" % (sys.version_info[0], sys.version_info[1], getattr(sys, "abiflags", ""))
+    return os.path.join("src", "runtime", interop_file)
+
 
 if __name__ == "__main__":
     setupdir = os.path.dirname(__file__)
@@ -291,6 +307,11 @@ if __name__ == "__main__":
         for ext in (".exe"):
             for filename in fnmatch.filter(filenames, "*" + ext):
                 sources.append(os.path.join(root, filename))
+
+    setup_requires = []
+    interop_file = _get_interop_filename()
+    if not os.path.exists(interop_file):
+        setup_requires.append("pycparser")
 
     setup(
         name="pythonnet",
@@ -325,5 +346,6 @@ if __name__ == "__main__":
             "build_ext" : PythonNET_BuildExt,
             "install_lib" : PythonNET_InstallLib,
             "install_data": PythonNET_InstallData,
-        }
+        },
+        setup_requires=setup_requires
     )
