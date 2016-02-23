@@ -434,6 +434,7 @@ namespace Python.Runtime {
 #endif
                     op = Runtime.PyNumber_Long(value);
                     if (op == IntPtr.Zero) {
+                        Exceptions.Clear();
                         if (Exceptions.ExceptionMatches(overflow)) {
                             goto overflow;
                         }
