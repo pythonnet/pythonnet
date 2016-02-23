@@ -79,7 +79,7 @@ namespace Python.Runtime {
         }
 
         public static int magic(IntPtr ob) {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -91,7 +91,7 @@ namespace Python.Runtime {
 
         public static int DictOffset(IntPtr ob)
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -102,7 +102,7 @@ namespace Python.Runtime {
         }
 
         public static int Size(IntPtr ob) {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
@@ -126,7 +126,7 @@ namespace Python.Runtime {
         private static int ob_data;
     }
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class ExceptionOffset
     {
@@ -161,7 +161,7 @@ namespace Python.Runtime {
 #endif
 
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class BytesOffset
     {
@@ -281,10 +281,10 @@ namespace Python.Runtime {
         /* XXX Reusing reserved constants */
         public static int Managed = (1 << 15); // PythonNet specific
         public static int Subclass = (1 << 16); // PythonNet specific
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int HaveIndex = (1 << 17);
 #endif
-#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         /* Objects support nb_index in PyNumberMethods */
         public static int HaveVersionTag = (1 << 18);
         public static int ValidVersionTag = (1 << 19);
@@ -320,7 +320,7 @@ namespace Python.Runtime {
 #endif
 
 // Default flags for Python 3
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int Default = (
                             HaveStacklessExtension |
                             HaveVersionTag);
@@ -383,7 +383,7 @@ namespace Python.Runtime {
             pmap["nb_add"] = p["BinaryFunc"];
             pmap["nb_subtract"] = p["BinaryFunc"];
             pmap["nb_multiply"] = p["BinaryFunc"];
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             pmap["nb_divide"] = p["BinaryFunc"];
 #endif
             pmap["nb_remainder"] = p["BinaryFunc"];
@@ -408,7 +408,7 @@ namespace Python.Runtime {
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
-#if !(PYTHON32 || PYTHON33 || PYTHON34)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             pmap["nb_inplace_divide"] = p["BinaryFunc"];
 #endif
             pmap["nb_inplace_remainder"] = p["BinaryFunc"];
@@ -422,7 +422,7 @@ namespace Python.Runtime {
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 

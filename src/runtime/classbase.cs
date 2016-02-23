@@ -57,7 +57,7 @@ namespace Python.Runtime {
         //====================================================================
         // Standard comparison implementation for instances of reflected types.
         //====================================================================
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
