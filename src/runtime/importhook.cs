@@ -23,7 +23,7 @@ namespace Python.Runtime {
         static CLRModule root;
         static MethodWrapper hook;
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         static IntPtr py_clr_module;
         static IntPtr module_def;
 #endif
@@ -38,7 +38,7 @@ namespace Python.Runtime {
             // but it provides the most "Pythonic" way of dealing with CLR
             // modules (Python doesn't provide a way to emulate packages).
             IntPtr dict = Runtime.PyImport_GetModuleDict();
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             IntPtr mod = Runtime.PyImport_ImportModule("builtins");
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
 #else
@@ -51,7 +51,7 @@ namespace Python.Runtime {
 
             root = new CLRModule();
 
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             // create a python module with the same methods as the clr module-like object
             module_def = ModuleDefOffset.AllocModuleDef("clr");
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
@@ -78,7 +78,7 @@ namespace Python.Runtime {
         //===================================================================
 
         internal static void Shutdown() {
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if (0 != Runtime.Py_IsInitialized()) {
                 Runtime.Decref(py_clr_module);
                 Runtime.Decref(root.pyHandle);
@@ -100,7 +100,7 @@ namespace Python.Runtime {
         //===================================================================
         public static IntPtr GetCLRModule(IntPtr? fromList=null) {
             root.InitializePreload();
-#if (PYTHON32 || PYTHON33 || PYTHON34)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);
