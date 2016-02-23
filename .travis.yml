@@ -15,6 +15,7 @@ before_install:
   - yes | sudo certmgr -ssl -m https://nuget.org
 install:
   - pip install six
+  - pip install pycparser
   - python setup.py build_ext --inplace
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
