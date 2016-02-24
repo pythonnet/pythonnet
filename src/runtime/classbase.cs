@@ -51,7 +51,21 @@ namespace Python.Runtime {
          //====================================================================
  
         public virtual IntPtr type_subscript(IntPtr idx) {
-            return Exceptions.RaiseTypeError("unsubscriptable object");
+            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            if (types == null) {
+                return Exceptions.RaiseTypeError("type(s) expected");
+            }
+
+            Type target = GenericUtil.GenericForType(this.type, types.Length);
+
+            if (target != null) {
+                Type t = target.MakeGenericType(types);
+                ManagedType c = (ManagedType)ClassManager.GetClass(t);
+                Runtime.Incref(c.pyHandle);
+                return c.pyHandle;
+            }
+
+            return Exceptions.RaiseTypeError("no type matches params");
         } 
 
         //====================================================================
