@@ -29,3 +29,7 @@ test_script:
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
   - "%PYTHON%\\python.exe src\\tests\\runtests.py"
+
+artifacts:
+  # bdist_wheel puts your built wheel in the dist directory
+  - path: dist\*
