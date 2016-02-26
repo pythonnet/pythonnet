@@ -260,10 +260,30 @@ namespace Python.Runtime {
             return;
         }
 
+        public static IntPtr __instancecheck__(IntPtr tp, IntPtr args)
+        {
+            ClassBase cb = GetManagedObject(tp) as ClassBase;
 
+            if (cb == null)
+                return Runtime.PyFalse;
 
+            using (PyList argsObj = new PyList(args))
+            {
+                if (argsObj.Length() != 1)
+                    return Exceptions.RaiseTypeError("Invalid parameter count");
 
+                PyObject arg = argsObj[0];
+                PyObject otherType = arg.GetPythonType();
+
+                if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType)
+                    return Runtime.PyFalse;
+
+                ClassBase otherCb = GetManagedObject(otherType.Handle) as ClassBase;
+                if (otherCb == null)
+                    return Runtime.PyFalse;
+
+                return Converter.ToPython(cb.type.IsAssignableFrom(otherCb.type));
+            }
+        }
     }
-
-
 }

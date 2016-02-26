@@ -302,6 +302,16 @@ namespace Python.Runtime {
             flags |= TypeFlags.HaveGC;
             Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
 
+            IntPtr fp = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"));
+            IntPtr mdef = Runtime.PyMem_Malloc(5 * IntPtr.Size);
+            Marshal.WriteIntPtr(mdef, Marshal.StringToHGlobalAnsi("__instancecheck__"));
+            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), fp);
+            Marshal.WriteIntPtr(mdef, (2 * IntPtr.Size), (IntPtr)0x0001); // METH_VARARGS
+            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), IntPtr.Zero);
+            Marshal.WriteIntPtr(mdef, (4 * IntPtr.Size), IntPtr.Zero);
+
+            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdef);
+
             Runtime.PyType_Ready(type);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);

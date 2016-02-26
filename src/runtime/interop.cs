@@ -447,6 +447,7 @@ namespace Python.Runtime {
             pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
 
             pmap["__import__"] = p["TernaryFunc"];
+            pmap["__instancecheck__"] = p["BinaryFunc"];
         }
 
         internal static Type GetPrototype(string name) {

@@ -80,6 +80,10 @@ namespace Python.Runtime {
         // This always returns a new reference. Note that the System.Decimal
         // type has no Python equivalent and converts to a managed instance.
         //====================================================================
+        internal static IntPtr ToPython<T>(T value)
+        {
+            return ToPython(value, typeof(T));
+        }
 
         internal static IntPtr ToPython(Object value, Type type) {
             IntPtr result = IntPtr.Zero;
