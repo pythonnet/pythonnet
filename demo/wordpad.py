@@ -205,7 +205,7 @@ class Wordpad(WinForms.Form):
         self.richTextBox.TabIndex = 0
         self.richTextBox.AutoSize = 1
         self.richTextBox.ScrollBars = WinForms.RichTextBoxScrollBars.ForcedBoth
-        self.richTextBox.Font = System.Drawing.Font("Tahoma", 10)
+        self.richTextBox.Font = System.Drawing.Font("Tahoma", 10.0)
         self.richTextBox.AcceptsTab = 1
         self.richTextBox.Location = System.Drawing.Point(0, 0)
 
