@@ -245,7 +245,7 @@ namespace Python.Runtime {
             else {
                 _methods = GetMethods();
             }
-            Type type;
+            Type clrtype;
             for (int i = 0; i < _methods.Length; i++) {
                 MethodBase mi = _methods[i];
 
@@ -295,34 +295,53 @@ namespace Python.Runtime {
                             // this logic below handles cases when multiple overloading methods
                             // are ambiguous, hence comparison between Python and CLR types
                             // is necessary
-                            type = null;
-                            
-                            if (_methods.Length>1) { 
-                                IntPtr pyoptype = IntPtr.Zero;
+                            clrtype = null;
+                            IntPtr pyoptype;
+                            if (_methods.Length > 1) {
+                                pyoptype = IntPtr.Zero;
                                 pyoptype = Runtime.PyObject_Type(op);
                                 Exceptions.Clear();
-                                if (pyoptype != IntPtr.Zero) { }
-                                    type = Converter.GetTypeByAlias(pyoptype);
-                                    Runtime.Decref(pyoptype);
+                                if (pyoptype != IntPtr.Zero) {
+                                    clrtype = Converter.GetTypeByAlias(pyoptype);
                                 }
+                                Runtime.Decref(pyoptype);
+                            }
 
 
-                            if (type != null) {
-                                if (pi[n].ParameterType != type) {
-                                    margs = null;
-                                    break;
+                            if (clrtype != null) {
+                                if (pi[n].ParameterType != clrtype) {
+                                    IntPtr pytype = Converter.GetPythonTypeByAlias(pi[n].ParameterType);
+                                    // does pytype require Decref?
+                                    pyoptype = Runtime.PyObject_Type(op);
+                                    Exceptions.Clear();
+                                    if (pyoptype != IntPtr.Zero) {
+                                        if (pytype != pyoptype) {
+                                            Runtime.Decref(pyoptype);
+                                            margs = null;
+                                            break;
+                                        }
+                                        else {
+                                            clrtype = pi[n].ParameterType;
+                                        }
+                                    }
+                                    else {
+                                        Runtime.Decref(pyoptype);
+                                        margs = null;
+                                        break;
+                                    }
+                                    Runtime.Decref(pyoptype);
                                 }
                             }
                             else {
-                                type = pi[n].ParameterType;
+                                clrtype = pi[n].ParameterType;
                             }
                             
-                            if (pi[n].IsOut || type.IsByRef)
+                            if (pi[n].IsOut || clrtype.IsByRef)
                             {
                                 outs++;
                             }
 
-                            if (!Converter.ToManaged(op, type, out arg, false))
+                            if (!Converter.ToManaged(op, clrtype, out arg, false))
                             {
                                 Exceptions.Clear();
                                 margs = null;
