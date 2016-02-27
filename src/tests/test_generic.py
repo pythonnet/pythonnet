@@ -341,6 +341,39 @@ class GenericTests(unittest.TestCase):
         self._testGenericMethodByType(InterfaceTest, InterfaceTest(), 1)
         self._testGenericMethodByType(ISayHello1, InterfaceTest(), 1)
 
+    def testCorrectOverloadSelection(self):
+        """
+        Test correct overloading selection for common types.
+        """
+        from System.Drawing import Font
+
+        from System import (String, Double, Single,
+                            Int16, Int32, Int64)
+        from System import Math
+
+        substr = String("substring")
+        self.assertTrue(substr.Substring(2) == substr.Substring.__overloads__[Int32](
+            Int32(2)))
+        self.assertTrue(substr.Substring(2, 3) == substr.Substring.__overloads__[Int32,Int32](
+            Int32(2), Int32(3)))
+
+        for atype, value1, value2 in zip([Double, Single, Int16, Int32, Int64],
+                                 [1.0, 1.0, 1, 1, 1],
+                                 [2.0, 0.5, 2, 0, -1]):
+            self.assertTrue(Math.Abs(atype(value1)) == Math.Abs.__overloads__[atype](atype(value1)))
+            self.assertTrue(Math.Abs(value1) == Math.Abs.__overloads__[atype](atype(value1)))
+            self.assertTrue(
+                Math.Max(atype(value1), 
+                         atype(value2)) == Math.Max.__overloads__[atype, atype](
+                         atype(value1),
+                         atype(value2)))
+            if (atype is Int64) and six.PY2:
+                value2 = long(value2)
+            self.assertTrue(
+                Math.Max(atype(value1), 
+                         value2) == Math.Max.__overloads__[atype, atype](
+                         atype(value1),
+                         atype(value2)))
 
     def testGenericMethodOverloadSelection(self):
         """
