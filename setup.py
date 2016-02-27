@@ -168,7 +168,7 @@ class PythonNET_BuildExt(build_ext):
             "/p:Platform=%s" % PLATFORM,
             "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
             "/p:PythonBuildDir=\"%s\"" % os.path.abspath(dest_dir),
-            "/p:PythonInteropFile=\"%s\"" % os.path.basename(interop_file),
+            #"/p:PythonInteropFile=\"%s\"" % os.path.basename(interop_file),
             "/verbosity:%s" % VERBOSITY,
         ]
 
