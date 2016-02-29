@@ -9,7 +9,7 @@
 // WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 // FOR A PARTICULAR PURPOSE.
 // ==========================================================================
-
+#if (PYTHON34)
 using System;
 using System.Collections;
 using System.Collections.Specialized;
@@ -144,3 +144,4 @@ namespace Python.Runtime {
         public static int members = 0;
     }
 }
+#endif
