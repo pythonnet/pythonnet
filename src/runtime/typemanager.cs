@@ -306,9 +306,14 @@ namespace Python.Runtime {
             IntPtr mdef = Runtime.PyMem_Malloc(5 * IntPtr.Size);
             Marshal.WriteIntPtr(mdef, Marshal.StringToHGlobalAnsi("__instancecheck__"));
             Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), fp);
-            Marshal.WriteIntPtr(mdef, (2 * IntPtr.Size), (IntPtr)0x0001); // METH_VARARGS
+            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), 0x0001);
             Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), IntPtr.Zero);
+
+            // Write empty sentinel struct
             Marshal.WriteIntPtr(mdef, (4 * IntPtr.Size), IntPtr.Zero);
+            Marshal.WriteIntPtr(mdef, (5 * IntPtr.Size), IntPtr.Zero);
+            Marshal.WriteIntPtr(mdef, (6 * IntPtr.Size), IntPtr.Zero);
+            Marshal.WriteIntPtr(mdef, (7 * IntPtr.Size), IntPtr.Zero);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdef);
 
