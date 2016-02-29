@@ -20,14 +20,13 @@ VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
 PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
 
 
-def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
+def _find_build_tool(tool="msbuild.exe", use_windows_sdk=False):
     """Return full path to one of the microsoft build tools"""
     try:
         import _winreg
     except ImportError:
         import winreg as _winreg
-
-    if use_windows_sdk:
+    if tool == "mt.exe":
         if sys.version_info[:2] == (2,7):
             locappdir = os.environ["LOCALAPPDATA"]
             vcpy27 = (r"Programs\Common\Microsoft"
@@ -39,7 +38,39 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
                 mtpath = os.path.join(
                 locappdir, vcpy27, r"x64\mt.exe")
             if os.path.exists(mtpath):
-                return mtpath      
+                return mtpath
+        if sys.version_info[:2] == (3,5):
+            reg_key = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
+            value_name = "KitsRoot81"
+            hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+            try:
+                hkey = None
+                try:
+                    hkey = _winreg.OpenKey(hreg, reg_key)
+                except WindowsError:
+                    pass
+                if hkey:
+                    try:
+                        val, type_ = _winreg.QueryValueEx(hkey, value_name)
+                        if type_ == _winreg.REG_SZ:
+                            vcpy35 = val + r"\bin"
+                            # vcpy35 is normally "C:\Program Files (x86)\Windows Kits\8.1\bin"
+                            if PLATFORM == "x86":
+                                mtpath = os.path.join(
+                                vcpy35, r"x86\mt.exe")
+                            elif PLATFORM == "x64":
+                                mtpath = os.path.join(
+                                vcpy35, r"x64\mt.exe")
+                            if os.path.exists(mtpath):
+                                return mtpath
+                            else:
+                                print ("path for mt.exe is in registry, but doesn't exist:")
+                                print (mtpath)
+                    finally:
+                        hkey.Close()
+            finally:
+                hreg.Close()
+        
         value_name = "InstallationFolder"
         sdk_name = "Windows SDK"
         keys_to_check = [
@@ -90,7 +121,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     
 
 if DEVTOOLS == "MsDev":
-    _xbuild = "\"%s\"" % _find_msbuild_tool("msbuild.exe")
+    _xbuild = "\"%s\"" % _find_build_tool("msbuild.exe")
     _defines_sep = ";"
     _config = "%sWin" % CONFIG
 
@@ -186,7 +217,7 @@ class PythonNET_BuildExt(build_ext):
 
     def _get_manifest(self, build_dir):
         if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2,5):
-            mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
+            mt = _find_build_tool("mt.exe", use_windows_sdk=True)
             manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
             cmd = [mt, '-inputresource:"%s"' % sys.executable, '-out:"%s"' % manifest]
             self.announce("Extracting manifest from %s" % sys.executable)
