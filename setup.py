@@ -7,6 +7,7 @@ from distutils.command.build_ext import build_ext
 from distutils.command.install_lib import install_lib
 from distutils.command.install_data import install_data
 from distutils.sysconfig import get_config_var
+from distutils import log
 from platform import architecture
 from subprocess import Popen, CalledProcessError, PIPE, check_call
 from glob import glob
@@ -27,67 +28,72 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     except ImportError:
         import winreg as _winreg
 
+    keys_to_check = []
     if use_windows_sdk:
-        if sys.version_info[:2] == (2,7):
-            locappdir = os.environ["LOCALAPPDATA"]
-            vcpy27 = (r"Programs\Common\Microsoft"
-                r"\Visual C++ for Python\9.0\WinSDK\Bin")
-            if PLATFORM == "x86":
-                mtpath = os.path.join(
-                locappdir, vcpy27, r"mt.exe")
-            elif PLATFORM == "x64":
-                mtpath = os.path.join(
-                locappdir, vcpy27, r"x64\mt.exe")
-            if os.path.exists(mtpath):
-                return mtpath      
-        value_name = "InstallationFolder"
-        sdk_name = "Windows SDK"
-        keys_to_check = [
-            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A\WinSDK-Win32Tools",
-            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1\WinSDKWin32Tools",
-            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A\WinSDK-Win32Tools",
-            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0\WinSDKWin32Tools",
-            r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0A\WinSDKWin32Tools",
-        ]
+        sdks_root = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows"
+        kits_root = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
+        kits_suffix = "bin"
+        if PLATFORM == "x64":
+            kits_suffix += r"\x64"
+        keys_to_check.extend([
+            ("Windows Kit 10.0", kits_root, "KitsRoot10", kits_suffix),
+            ("Windows Kit 8.1", kits_root, "KitsRoot81", kits_suffix),
+            ("Windows Kit 8.0", kits_root, "KitsRoot", kits_suffix),
+            ("Windows SDK 7.1A", sdks_root + r"\v7.1A\WinSDK-Win32Tools", "InstallationFolder"),
+            ("Windows SDK 7.1", sdks_root + r"\v7.1\WinSDKWin32Tools", "InstallationFolder"),
+            ("Windows SDK 7.0A", sdks_root + r"\v7.0A\WinSDK-Win32Tools", "InstallationFolder"),
+            ("Windows SDK 7.0", sdks_root + r"\v7.0\WinSDKWin32Tools", "InstallationFolder"),
+            ("Windows SDK 6.0A", sdks_root + r"\v6.0A\WinSDKWin32Tools", "InstallationFolder")
+        ])
     else:
-        value_name = "MSBuildToolsPath"
-        sdk_name = "MSBuild"
-        keys_to_check = [
-            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0",
-            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0",
-            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0",
-            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5",
-            r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\2.0"
-        ]
+        vs_root = r"SOFTWARE\Microsoft\MSBuild\ToolsVersions"
+        keys_to_check.extend([
+            ("MSBuild 14", vs_root + r"\14.0", "MSBuildToolsPath"),
+            ("MSBuild 12", vs_root + r"\12.0", "MSBuildToolsPath"),
+            ("MSBuild 4", vs_root + r"\4.0", "MSBuildToolsPath"),
+            ("MSBuild 3.5", vs_root + r"\3.5", "MSBuildToolsPath"),
+            ("MSBuild 2.0", vs_root + r"\2.0", "MSBuildToolsPath")
+        ])
 
+    # read the possible tools paths from the various registry locations
+    paths_to_check = []
     hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     try:
         hkey = None
-        for key in keys_to_check:
+        for key_to_check in keys_to_check:
+            sdk_name, key, value_name = key_to_check[:3]
+            suffix = key_to_check[3] if len(key_to_check) > 3 else None
             try:
                 hkey = _winreg.OpenKey(hreg, key)
-                break
+                val, type_ = _winreg.QueryValueEx(hkey, value_name)
+                if type_ != _winreg.REG_SZ:
+                    continue
+                if suffix:
+                    val = os.path.join(val, suffix)
+                paths_to_check.append((sdk_name, val))
             except WindowsError:
                 pass
-
-        if hkey is None:
-            raise RuntimeError("%s could not be found" % sdk_name)
-
-        try:
-            val, type_ = _winreg.QueryValueEx(hkey, value_name)
-            if type_ != _winreg.REG_SZ:
-                raise RuntimeError("%s could not be found" % sdk_name)
- 
-            path = os.path.join(val, tool)
-            if os.path.exists(path):
-                return path
-        finally:
-            hkey.Close()
+            finally:
+                hkey.Close()
     finally:
         hreg.Close()
 
+    # Add Visual C++ for Python as a fallback in case one of the other Windows SDKs isn't installed
+    if use_windows_sdk:
+        localappdata = os.environ["LOCALAPPDATA"]
+        pywinsdk = localappdata + r"\Programs\Common\Microsoft\Visual C++ for Python\9.0\WinSDK\Bin"
+        if PLATFORM == "x64":
+            pywinsdk += r"\x64"
+        paths_to_check.append(("Visual C++ for Python", pywinsdk))
+
+    for sdk_name, path in paths_to_check:
+        path = os.path.join(path, tool)
+        if os.path.exists(path):
+            log.info("Using %s from %s" % (tool, sdk_name))
+            return path
+
     raise RuntimeError("%s could not be found" % tool)
-    
+
 
 if DEVTOOLS == "MsDev":
     _xbuild = "\"%s\"" % _find_msbuild_tool("msbuild.exe")
