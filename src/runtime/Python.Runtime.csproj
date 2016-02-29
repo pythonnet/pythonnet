@@ -178,6 +178,13 @@
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(PythonInteropFile)' == '' ">
+    <Compile Include="interop26.cs" />
+    <Compile Include="interop27.cs" />
+    <Compile Include="interop32.cs" />
+    <Compile Include="interop34.cs" />
+    <Compile Include="interop35.cs" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="buildclrmodule.bat" />
     <None Include="clrmodule.il" />
