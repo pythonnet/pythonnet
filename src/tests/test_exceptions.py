@@ -348,12 +348,20 @@ class ExceptionTests(unittest.TestCase):
         # without causing a crash in the CPython interpreter). This test is
         # here mainly to remind me to update the caveat in the documentation
         # one day when when exceptions can be new-style classes.
+
+        # This behaviour is now over-shadowed by the implementation of
+        # __instancecheck__ (i.e., overloading isinstance), so for all Python
+        # version >= 2.6 we expect isinstance(<managed exception>, Object) to
+        # be true, even though it does not really subclass Object.
         from System import OverflowException
         from System import Object
         
         o = OverflowException('error')
-        self.assertFalse(isinstance(o, Object))
-    
+
+        if sys.version_info >= (2, 6):
+            self.assertTrue(isinstance(o, Object))
+        else:
+            self.assertFalse(isinstance(o, Object))
         
 
 def test_suite():
