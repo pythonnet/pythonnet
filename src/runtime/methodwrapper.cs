@@ -25,20 +25,17 @@ namespace Python.Runtime {
         public IntPtr mdef;
         public IntPtr ptr;
 
-        public MethodWrapper(Type type, string name) {
+        public MethodWrapper(Type type, string name, string funcType = null) {
 
             // Turn the managed method into a function pointer
 
-            IntPtr fp = Interop.GetThunk(type.GetMethod(name));
+            IntPtr fp = Interop.GetThunk(type.GetMethod(name), funcType);
 
             // Allocate and initialize a PyMethodDef structure to represent 
             // the managed method, then create a PyCFunction. 
 
             mdef = Runtime.PyMem_Malloc(4 * IntPtr.Size);
-            Marshal.WriteIntPtr(mdef, Marshal.StringToHGlobalAnsi(name));
-            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), fp);
-            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), 0x0003); // METH_VARARGS | METH_KEYWORDS
-            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), IntPtr.Zero);
+            TypeManager.WriteMethodDef(mdef, name, fp, 0x0003);
             ptr = Runtime.PyCFunction_NewEx(mdef, IntPtr.Zero, IntPtr.Zero);
         }
 

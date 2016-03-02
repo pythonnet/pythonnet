@@ -260,7 +260,7 @@ namespace Python.Runtime {
             return;
         }
 
-        public static IntPtr __instancecheck__(IntPtr tp, IntPtr args)
+        static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
         {
             ClassBase cb = GetManagedObject(tp) as ClassBase;
 
@@ -273,7 +273,11 @@ namespace Python.Runtime {
                     return Exceptions.RaiseTypeError("Invalid parameter count");
 
                 PyObject arg = argsObj[0];
-                PyObject otherType = arg.GetPythonType();
+                PyObject otherType;
+                if (checkType)
+                    otherType = arg;
+                else
+                    otherType = arg.GetPythonType();
 
                 if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType)
                     return Runtime.PyFalse;
@@ -284,6 +288,16 @@ namespace Python.Runtime {
 
                 return Converter.ToPython(cb.type.IsAssignableFrom(otherCb.type));
             }
+        }
+
+        public static IntPtr __instancecheck__(IntPtr tp, IntPtr args)
+        {
+            return DoInstanceCheck(tp, args, false);
+        }
+
+        public static IntPtr __subclasscheck__(IntPtr tp, IntPtr args)
+        {
+            return DoInstanceCheck(tp, args, true);
         }
     }
 }

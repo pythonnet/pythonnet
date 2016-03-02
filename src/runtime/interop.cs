@@ -445,17 +445,19 @@ namespace Python.Runtime {
             pmap["bf_getwritebuffer"] = p["IntObjArgFunc"];
             pmap["bf_getsegcount"] = p["ObjObjFunc"];
             pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
-
-            pmap["__import__"] = p["TernaryFunc"];
-            pmap["__instancecheck__"] = p["BinaryFunc"];
         }
 
         internal static Type GetPrototype(string name) {
             return pmap[name] as Type;
         }
 
-        internal static IntPtr GetThunk(MethodInfo method) {
-            Type dt = Interop.GetPrototype(method.Name);
+        internal static IntPtr GetThunk(MethodInfo method, string funcType = null) {
+            Type dt;
+            if (funcType != null)
+                dt = typeof(Interop).GetNestedType(funcType) as Type;
+            else
+                dt = GetPrototype(method.Name);
+
             if (dt != null) {
                 IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
                 Delegate d = Delegate.CreateDelegate(dt, method);

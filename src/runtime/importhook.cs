@@ -45,8 +45,8 @@ namespace Python.Runtime {
             IntPtr mod = Runtime.PyDict_GetItemString(dict, "__builtin__");
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
 #endif
-              hook = new MethodWrapper(typeof(ImportHook), "__import__");
-              Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
+            hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
+            Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
             Runtime.Decref(hook.ptr);
 
             root = new CLRModule();

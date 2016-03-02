@@ -267,6 +267,28 @@ namespace Python.Runtime {
             }
         }
 
+        internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, int flags, IntPtr doc)
+        {
+            Marshal.WriteIntPtr(mdef, name);
+            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), func);
+            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), flags);
+            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), doc);
+            return mdef + 4 * IntPtr.Size;
+        }
+
+        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001, string doc = null)
+        {
+            IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
+            IntPtr docPtr = doc != null ? Marshal.StringToHGlobalAnsi(doc) : IntPtr.Zero;
+
+            return WriteMethodDef(mdef, namePtr, func, flags, docPtr);
+        }
+
+        internal static IntPtr WriteMethodDefSentinel(IntPtr mdef)
+        {
+            return WriteMethodDef(mdef, IntPtr.Zero, IntPtr.Zero, 0, IntPtr.Zero);
+        }
+
         internal static IntPtr CreateMetaType(Type impl) {
 
             // The managed metatype is functionally little different than the
@@ -302,20 +324,25 @@ namespace Python.Runtime {
             flags |= TypeFlags.HaveGC;
             Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
 
-            IntPtr fp = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"));
-            IntPtr mdef = Runtime.PyMem_Malloc(5 * IntPtr.Size);
-            Marshal.WriteIntPtr(mdef, Marshal.StringToHGlobalAnsi("__instancecheck__"));
-            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), fp);
-            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), 0x0001);
-            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), IntPtr.Zero);
+            // We need space for 3 PyMethodDef structs, each of them
+            // 4 int-ptrs in size.
+            IntPtr mdef = Runtime.PyMem_Malloc(3 * (4 * IntPtr.Size));
+            IntPtr mdefStart = mdef;
+            mdef = WriteMethodDef(
+                mdef,
+                "__instancecheck__",
+                Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc")
+                );
 
-            // Write empty sentinel struct
-            Marshal.WriteIntPtr(mdef, (4 * IntPtr.Size), IntPtr.Zero);
-            Marshal.WriteIntPtr(mdef, (5 * IntPtr.Size), IntPtr.Zero);
-            Marshal.WriteIntPtr(mdef, (6 * IntPtr.Size), IntPtr.Zero);
-            Marshal.WriteIntPtr(mdef, (7 * IntPtr.Size), IntPtr.Zero);
+            mdef = WriteMethodDef(
+                mdef,
+                "__subclasscheck__",
+                Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
+                );
 
-            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdef);
+            mdef = WriteMethodDefSentinel(mdef);
+
+            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
 
             Runtime.PyType_Ready(type);
 
