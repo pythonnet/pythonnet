@@ -29,7 +29,10 @@ namespace Python.Runtime {
         static NumberFormatInfo nfi;
         static Type objectType;
         static Type stringType;
+        static Type singleType;
         static Type doubleType;
+        static Type decimalType;
+        static Type int16Type;
         static Type int32Type;
         static Type int64Type;
         static Type flagsType;
@@ -40,9 +43,12 @@ namespace Python.Runtime {
             nfi = NumberFormatInfo.InvariantInfo;
             objectType = typeof(Object);
             stringType = typeof(String);
+            int16Type = typeof(Int16);
             int32Type = typeof(Int32);
             int64Type = typeof(Int64);
+            singleType = typeof(Single);
             doubleType = typeof(Double);
+            decimalType = typeof(Decimal);
             flagsType = typeof(FlagsAttribute);
             boolType = typeof(Boolean);
             typeType = typeof(Type);
@@ -71,6 +77,28 @@ namespace Python.Runtime {
                 return boolType;
             }
             return null;
+        }
+
+        internal static IntPtr GetPythonTypeByAlias(Type op)
+        {
+            if (op == stringType) {
+                return Runtime.PyUnicodeType;
+            }
+            else if ((op == int16Type) ||
+                    (op == int32Type)) {
+                return Runtime.PyIntType;
+            }
+            else if (op == int64Type) {
+                return Runtime.PyLongType;
+            }
+            else if ((op == doubleType) ||
+                 (op == singleType)) {
+                return Runtime.PyFloatType;
+            }
+            else if (op == boolType) {
+                return Runtime.PyBoolType;
+            }
+            return IntPtr.Zero;
         }
 
 
