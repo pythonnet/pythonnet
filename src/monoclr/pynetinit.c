@@ -37,6 +37,7 @@ PyNet_Args* PyNet_Init(int ext) {
     pn_args->shutdown_name = "Python.Runtime:Shutdown()";
 
     pn_args->domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
+    mono_domain_set_config(pn_args->domain, ".", "Python.Runtime.dll.config");
 
     /*
      * Load the default Mono configuration file, this is needed
