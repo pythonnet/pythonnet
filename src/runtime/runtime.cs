@@ -762,7 +762,7 @@ namespace Python.Runtime {
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
         internal unsafe static extern void
-        Py_SetPythonHome([MarshalAsAttribute(UnmanagedType.LPWStr)]string home);
+        Py_SetPythonHome(IntPtr home);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
@@ -793,7 +793,7 @@ namespace Python.Runtime {
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Ansi)]
     internal unsafe static extern void
-    Py_SetPythonHome(string home);
+    Py_SetPythonHome(IntPtr home);
 
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Ansi)]

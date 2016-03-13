@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime {
 
@@ -62,7 +63,8 @@ namespace Python.Runtime {
                 return result;
             }
             set {
-                Runtime.Py_SetPythonHome(value);
+                IntPtr pythonHome = Marshal.StringToHGlobalAnsi(value);
+                Runtime.Py_SetPythonHome(pythonHome);
             }
         }
 
