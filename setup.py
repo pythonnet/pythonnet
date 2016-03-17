@@ -64,10 +64,10 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     paths_to_check = []
     hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     try:
-        hkey = None
         for key_to_check in keys_to_check:
             sdk_name, key, value_name = key_to_check[:3]
             suffix = key_to_check[3] if len(key_to_check) > 3 else None
+            hkey = None
             try:
                 hkey = _winreg.OpenKey(hreg, key)
                 val, type_ = _winreg.QueryValueEx(hkey, value_name)
@@ -79,7 +79,8 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
             except WindowsError:
                 pass
             finally:
-                hkey.Close()
+                if hkey:
+                    hkey.Close()
     finally:
         hreg.Close()
 
