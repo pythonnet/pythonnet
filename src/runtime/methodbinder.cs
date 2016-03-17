@@ -309,26 +309,38 @@ namespace Python.Runtime {
 
 
                             if (clrtype != null) {
+                                bool typematch = false;
                                 if (pi[n].ParameterType != clrtype) {
                                     IntPtr pytype = Converter.GetPythonTypeByAlias(pi[n].ParameterType);
                                     pyoptype = Runtime.PyObject_Type(op);
                                     Exceptions.Clear();
                                     if (pyoptype != IntPtr.Zero) {
                                         if (pytype != pyoptype) {
-                                            Runtime.Decref(pyoptype);
-                                            margs = null;
-                                            break;
+                                            typematch = false;
                                         }
                                         else {
+                                            typematch = true;
                                             clrtype = pi[n].ParameterType;
                                         }
                                     }
-                                    else {
-                                        Runtime.Decref(pyoptype);
+                                    if (!typematch) {
+                                        // this takes care of enum values
+                                        TypeCode argtypecode = Type.GetTypeCode(pi[n].ParameterType);
+                                        TypeCode paramtypecode = Type.GetTypeCode(clrtype);
+                                        if (argtypecode == paramtypecode) {
+                                            typematch = true;
+                                            clrtype = pi[n].ParameterType;
+                                        }
+                                    }
+                                    Runtime.Decref(pyoptype);
+                                    if (!typematch) {
                                         margs = null;
                                         break;
                                     }
-                                    Runtime.Decref(pyoptype);
+                                }
+                                else {
+                                    typematch = true;
+                                    clrtype = pi[n].ParameterType;
                                 }
                             }
                             else {

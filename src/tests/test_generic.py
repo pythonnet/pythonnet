@@ -375,6 +375,12 @@ class GenericTests(unittest.TestCase):
                          atype(value1),
                          atype(value2)))
 
+        clr.AddReference("System.Runtime.InteropServices")
+        from System.Runtime.InteropServices import GCHandle, GCHandleType
+        from System import Array, Byte
+        CSArray = Array.CreateInstance(Byte, 1000) 
+        handler = GCHandle.Alloc(CSArray, GCHandleType.Pinned)
+
     def testGenericMethodOverloadSelection(self):
         """
         Test explicit overload selection with generic methods.
