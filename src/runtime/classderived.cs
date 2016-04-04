@@ -321,37 +321,47 @@ namespace Python.Runtime
             ParameterInfo[] parameters = method.GetParameters();
             Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
 
-            // create a method for calling the original method
-            string baseMethodName = "_" + baseType.Name + "__" + method.Name;
-            MethodBuilder methodBuilder = typeBuilder.DefineMethod(baseMethodName,
-                                                                    MethodAttributes.Public |
-                                                                        MethodAttributes.Final |
-                                                                        MethodAttributes.HideBySig,
-                                                                    method.ReturnType,
-                                                                    parameterTypes);
+            // If the method isn't abstract create a method for calling the original method
+            string baseMethodName = null;
+            if (!method.IsAbstract)
+            {
+                baseMethodName = "_" + baseType.Name + "__" + method.Name;
+                MethodBuilder baseMethodBuilder = typeBuilder.DefineMethod(baseMethodName,
+                                                                           MethodAttributes.Public |
+                                                                               MethodAttributes.Final |
+                                                                               MethodAttributes.HideBySig,
+                                                                           method.ReturnType,
+                                                                           parameterTypes);
 
-            // emit the assembly for calling the original method using call instead of callvirt
-            ILGenerator il = methodBuilder.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);
-            for (int i = 0; i < parameters.Length; ++i)
-                il.Emit(OpCodes.Ldarg, i + 1);
-            il.Emit(OpCodes.Call, method);
-            il.Emit(OpCodes.Ret);
+                // emit the assembly for calling the original method using call instead of callvirt
+                ILGenerator baseIl = baseMethodBuilder.GetILGenerator();
+                baseIl.Emit(OpCodes.Ldarg_0);
+                for (int i = 0; i < parameters.Length; ++i)
+                    baseIl.Emit(OpCodes.Ldarg, i + 1);
+                baseIl.Emit(OpCodes.Call, method);
+                baseIl.Emit(OpCodes.Ret);
+            }
 
             // override the original method with a new one that dispatches to python
-            methodBuilder = typeBuilder.DefineMethod(method.Name,
-                                                        MethodAttributes.Public |
-                                                            MethodAttributes.ReuseSlot |
-                                                            MethodAttributes.Virtual |
-                                                            MethodAttributes.HideBySig,
-                                                        method.CallingConvention,
-                                                        method.ReturnType,
-                                                        parameterTypes);
-            il = methodBuilder.GetILGenerator();
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(method.Name,
+                                                                   MethodAttributes.Public |
+                                                                       MethodAttributes.ReuseSlot |
+                                                                       MethodAttributes.Virtual |
+                                                                       MethodAttributes.HideBySig,
+                                                                   method.CallingConvention,
+                                                                   method.ReturnType,
+                                                                   parameterTypes);
+            ILGenerator il = methodBuilder.GetILGenerator();
             il.DeclareLocal(typeof(Object[]));
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldstr, method.Name);
-            il.Emit(OpCodes.Ldstr, baseMethodName);
+
+            // don't fall back to the base type's method if it's abstract
+            if (null != baseMethodName)
+                il.Emit(OpCodes.Ldstr, baseMethodName);
+            else
+                il.Emit(OpCodes.Ldnull);
+
             il.Emit(OpCodes.Ldc_I4, parameters.Length);
             il.Emit(OpCodes.Newarr, typeof(System.Object));
             il.Emit(OpCodes.Stloc_0);
@@ -624,7 +634,7 @@ namespace Python.Runtime
             }
 
             if (origMethodName == null)
-                throw new NullReferenceException("Python object does not have a '" + methodName + "' method");
+                throw new NotImplementedException("Python object does not have a '" + methodName + "' method");
 
             return (T)obj.GetType().InvokeMember(origMethodName,
                                                  BindingFlags.InvokeMethod,
@@ -683,7 +693,7 @@ namespace Python.Runtime
             }
 
             if (origMethodName == null)
-                throw new NullReferenceException("Python object does not have a '" + methodName + "' method");
+                throw new NotImplementedException("Python object does not have a '" + methodName + "' method");
 
             obj.GetType().InvokeMember(origMethodName,
                                        BindingFlags.InvokeMethod,

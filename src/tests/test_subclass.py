@@ -13,6 +13,7 @@ clr.AddReference('System')
 import sys, os, string, unittest, types
 from Python.Test import TestFunctions, SubClassTest, IInterfaceTest
 from System.Collections.Generic import List
+from System import NotImplementedException
 
 # class that implements the test interface
 class InterfaceTestClass(IInterfaceTest):
@@ -108,6 +109,23 @@ class SubClassTests(unittest.TestCase):
 
         y = TestFunctions.pass_through(object2)
         self.assertEqual(id(y), id(object2))
+
+    def testEvents(self):
+
+        class EventHandler:
+            def handler(self, x, args):
+                self.value = args.value
+
+        event_handler = EventHandler()
+
+        x = SubClassTest()
+        x.TestEvent += event_handler.handler
+        TestFunctions.test_event(x, 1)
+        self.assertEqual(event_handler.value, 1)
+
+        i = InterfaceTestClass()
+        self.assertRaises(NotImplementedException, TestFunctions.test_event, i, 2)
+
 
 def test_suite():
     return unittest.makeSuite(SubClassTests)
