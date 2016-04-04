@@ -9,6 +9,7 @@
 
 import clr
 import System.Windows.Forms as WinForms
+from System.Threading import Thread, ThreadStart, ApartmentState
 from System.Drawing import Color, Size, Point
 from System.Text import Encoding
 from System.IO import File
@@ -420,11 +421,18 @@ class AboutForm(WinForms.Form):
         self.Close()
 
 
-
-def main():
+def app_thread():
     app = Wordpad()
     WinForms.Application.Run(app)
     app.Dispose()
+
+
+def main():
+    thread = Thread(ThreadStart(app_thread))
+    thread.SetApartmentState(ApartmentState.STA)
+    thread.Start()
+    thread.Join()
+
 
 if __name__ == '__main__':
     main()
