@@ -12,10 +12,17 @@ namespace Python.Test
 
         // test passing objects and boxing primitives
         string bar(string s, int i);
+
+        // test events on interfaces
+        event TestEventHandler TestEvent;
+
+        void OnTestEvent(int value);
     }
 
     public class SubClassTest : IInterfaceTest
     {
+        public event TestEventHandler TestEvent;
+
         public SubClassTest()
         {
         }
@@ -48,6 +55,13 @@ namespace Python.Test
             // calls into python if return_list is overriden
             return x.return_list();
         }
+
+        // raise the test event
+        public virtual void OnTestEvent(int value)
+        {
+            if (null != TestEvent)
+                TestEvent(this, new TestEventArgs(value));
+        }
     }
 
     public class TestFunctions
@@ -74,6 +88,19 @@ namespace Python.Test
         public static IInterfaceTest pass_through(IInterfaceTest s)
         {
             return s;
+        }
+
+        public static int test_event(IInterfaceTest x, int value)
+        {
+            // reuse the event handler from eventtest.cs
+            EventTest et = new EventTest();
+            x.TestEvent += et.GenericHandler;
+
+            // raise the event (should trigger both python and managed handlers)
+            x.OnTestEvent(value);
+
+            x.TestEvent -= et.GenericHandler;
+            return et.value;
         }
     }
 }
