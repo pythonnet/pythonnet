@@ -285,6 +285,7 @@ def _check_output(*popenargs, **kwargs):
         return output.decode("ascii")
     return output
 
+
 def _get_interop_filename():
     """interopXX.cs is auto-generated as part of the build.
     For common windows platforms pre-generated files are included
@@ -326,11 +327,11 @@ if __name__ == "__main__":
         url='http://pythonnet.github.io/',
         author="Python for .Net developers",
         classifiers=[
-            'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
             'Programming Language :: C#',
             'License :: OSI Approved :: Zope Public License',
             'Development Status :: 5 - Production/Stable',
@@ -355,3 +356,4 @@ if __name__ == "__main__":
         },
         setup_requires=setup_requires
     )
+
