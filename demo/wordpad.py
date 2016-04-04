@@ -414,7 +414,7 @@ class AboutForm(WinForms.Form):
         self.ShowInTaskbar = False
         self.StartPosition = WinForms.FormStartPosition.CenterScreen
         self.Text = "About"
-        self.ResumeLayout(0)
+        self.ResumeLayout(False)
 
     def OnClickClose(self, sender, args):
         self.Close()
