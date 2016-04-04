@@ -90,9 +90,17 @@ namespace Python.Test
             return s;
         }
 
-        public static void test_event(IInterfaceTest x, int value)
+        public static int test_event(IInterfaceTest x, int value)
         {
+            // reuse the event handler from eventtest.cs
+            EventTest et = new EventTest();
+            x.TestEvent += et.GenericHandler;
+
+            // raise the event (should trigger both python and managed handlers)
             x.OnTestEvent(value);
+
+            x.TestEvent -= et.GenericHandler;
+            return et.value;
         }
     }
 }
