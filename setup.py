@@ -321,7 +321,7 @@ if __name__ == "__main__":
 
     setup(
         name="pythonnet",
-        version="2.1.0.dev1",
+        version="2.1.0",
         description=".Net and Mono integration for Python",
         url='http://pythonnet.github.io/',
         author="Python for .Net developers",
