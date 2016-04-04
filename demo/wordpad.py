@@ -316,11 +316,10 @@ class Wordpad(WinForms.Form):
 
         buff = System.Array.CreateInstance(System.Byte, 1024)
         data = []
-        read = -1
 
-        while (read != 0):
+        while stream.Position < stream.Length:
             buff.Initialize()
-            read = stream.Read(buff, 0, 1024)
+            stream.Read(buff, 0, 1024)
             temp = Encoding.ASCII.GetString(buff, 0, 1024)
             data.append(temp)
 
