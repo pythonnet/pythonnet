@@ -269,10 +269,8 @@ namespace Python.Runtime {
                             defaultArgList.Add((object)pi[v].DefaultValue);    
                     }
                 } else if ((pynargs > clrnargs) && (clrnargs > 0) &&
-                           (pi[clrnargs-1].ParameterType.IsArray)) {
-                    // The last argument of the mananged functions seems to
-                    // accept multiple arguments as a array. Hopefully it's a
-                    // spam(params object[] egg) style method
+                           Attribute.IsDefined(pi[clrnargs-1], typeof(ParamArrayAttribute))) {
+                    // This is a spam(params object[] egg) style method
                     match = true;
                     arrayStart = clrnargs - 1;
                 }

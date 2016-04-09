@@ -117,6 +117,14 @@ namespace Python.Test {
             return true;
         }
 
+        public static bool TestNonParamsArrayInLastPlace(int i1, int[] i2) {
+            return false;
+        }
+
+        public static bool TestNonParamsArrayInLastPlace(int i1, int i2, int i3) {
+            return true;
+        }
+
         public static bool TestValueOutParams (string s, out int i1) {
             i1 = 42;
             return true;
