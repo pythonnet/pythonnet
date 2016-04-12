@@ -37,6 +37,9 @@ namespace Python.Runtime {
         //====================================================================
 
         internal static void Register(Type t) {
+            if (null == t.Namespace || null == t.Name)
+                return;
+
             Dictionary<string, List<string>> nsmap = null;
             mapping.TryGetValue(t.Namespace, out nsmap);
             if (nsmap == null) {
@@ -78,14 +81,33 @@ namespace Python.Runtime {
         // xxx
         //====================================================================
 
-        public static List<Type> GenericsForType(Type t) {
+        public static Type GenericForType(Type t, int paramCount)
+        {
+            return GenericByName(t.Namespace, t.Name, paramCount);
+        }
+
+        public static Type GenericByName(string ns, string name, int paramCount)
+        {
+            foreach (Type t in GenericsByName(ns, name))
+            {
+                if (t.GetGenericArguments().Length == paramCount)
+                    return t;
+            }
+            return null;
+        }
+
+        public static List<Type> GenericsForType(Type t)
+        {
+            return GenericsByName(t.Namespace, t.Name);
+        }
+
+        public static List<Type> GenericsByName(string ns, string basename) {
             Dictionary<string, List<string>> nsmap = null;
-            mapping.TryGetValue(t.Namespace, out nsmap);
+            mapping.TryGetValue(ns, out nsmap);
             if (nsmap == null) {
                 return null;
             }
 
-            string basename = t.Name;
             int tick = basename.IndexOf("`");
             if (tick > -1) {
                 basename = basename.Substring(0, tick);
@@ -99,7 +121,7 @@ namespace Python.Runtime {
 
             List<Type> result = new List<Type>();
             foreach (string name in names) {
-                string qname = t.Namespace + "." + name;
+                string qname = ns + "." + name;
                 Type o = AssemblyManager.LookupType(qname);
                 if (o != null) {
                     result.Add(o);

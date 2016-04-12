@@ -34,14 +34,29 @@ namespace Python.Runtime {
         Runtime.Incref(_pyTB);
         if ((_pyType != IntPtr.Zero) && (_pyValue != IntPtr.Zero))
         {
-            string type = new PyObject(_pyType).GetAttr("__name__").ToString();
-            string message = Runtime.GetManagedString(_pyValue);
+            string type;
+            string message;
+            Runtime.Incref(_pyType);
+            using (PyObject pyType = new PyObject(_pyType))
+            using (PyObject pyTypeName = pyType.GetAttr("__name__"))
+            {
+                    type = pyTypeName.ToString();
+            }
+
+            Runtime.Incref(_pyValue);
+            using (PyObject pyValue = new PyObject(_pyValue)) 
+            {
+                message = pyValue.ToString(); 
+            }
             _message = type + " : " + message;
         }
         if (_pyTB != IntPtr.Zero)
         {
             PyObject tb_module = PythonEngine.ImportModule("traceback");
-            _tb = tb_module.InvokeMethod("format_tb", new PyObject(_pyTB)).ToString();
+            Runtime.Incref(_pyTB);
+            using (PyObject pyTB = new PyObject(_pyTB)) {
+                _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
+            }
         }
         PythonEngine.ReleaseLock(gs);
     }
@@ -53,6 +68,18 @@ namespace Python.Runtime {
         Dispose();
     }
 
+    /// <summary>
+    /// Restores python error.
+    /// </summary>
+    public void Restore()
+    {
+        IntPtr gs = PythonEngine.AcquireLock();
+        Runtime.PyErr_Restore(_pyType, _pyValue, _pyTB);
+        _pyType = IntPtr.Zero;
+        _pyValue = IntPtr.Zero;
+        _pyTB = IntPtr.Zero;
+        PythonEngine.ReleaseLock(gs);
+    }
 
     /// <summary>
     /// PyType Property
@@ -78,6 +105,18 @@ namespace Python.Runtime {
     public IntPtr PyValue
     {
         get { return _pyValue; }
+    }
+
+    /// <summary>
+    /// PyTB Property
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Returns the TraceBack as a Python object.
+    /// </remarks>
+
+    public IntPtr PyTB {
+        get { return _pyTB; }
     }
 
     /// <summary>

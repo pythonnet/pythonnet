@@ -158,15 +158,6 @@ namespace Python.Runtime {
             }
             return new PyObject(op);
     }
-
-    #region IEnumerable Members
-
-    public IEnumerator GetEnumerator()
-    {
-        return new PyIter(this);
-    }
-
-    #endregion
 }
 
 }

@@ -7,7 +7,9 @@
 # FOR A PARTICULAR PURPOSE.
 # ===========================================================================
 
+import clr
 import System.Windows.Forms as WinForms
+from System.Threading import Thread, ThreadStart, ApartmentState
 from System.Drawing import Color, Size, Point
 from System.Text import Encoding
 from System.IO import File
@@ -204,7 +206,7 @@ class Wordpad(WinForms.Form):
         self.richTextBox.TabIndex = 0
         self.richTextBox.AutoSize = 1
         self.richTextBox.ScrollBars = WinForms.RichTextBoxScrollBars.ForcedBoth
-        self.richTextBox.Font = System.Drawing.Font("Tahoma", 10)
+        self.richTextBox.Font = System.Drawing.Font("Tahoma", 10.0)
         self.richTextBox.AcceptsTab = 1
         self.richTextBox.Location = System.Drawing.Point(0, 0)
 
@@ -314,11 +316,10 @@ class Wordpad(WinForms.Form):
 
         buff = System.Array.CreateInstance(System.Byte, 1024)
         data = []
-        read = -1
 
-        while (read != 0):
+        while stream.Position < stream.Length:
             buff.Initialize()
-            read = stream.Read(buff, 0, 1024)
+            stream.Read(buff, 0, 1024)
             temp = Encoding.ASCII.GetString(buff, 0, 1024)
             data.append(temp)
 
@@ -413,17 +414,24 @@ class AboutForm(WinForms.Form):
         self.ShowInTaskbar = False
         self.StartPosition = WinForms.FormStartPosition.CenterScreen
         self.Text = "About"
-        self.ResumeLayout(0)
+        self.ResumeLayout(False)
 
     def OnClickClose(self, sender, args):
         self.Close()
 
 
-
-def main():
+def app_thread():
     app = Wordpad()
     WinForms.Application.Run(app)
     app.Dispose()
+
+
+def main():
+    thread = Thread(ThreadStart(app_thread))
+    thread.SetApartmentState(ApartmentState.STA)
+    thread.Start()
+    thread.Join()
+
 
 if __name__ == '__main__':
     main()

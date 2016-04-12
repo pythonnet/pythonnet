@@ -18,7 +18,7 @@ warnfilter.addClrWarnfilter()
 try:
     import System
 except ImportError:
-    print "Load clr import hook"
+    print("Load clr import hook")
     import clr
 
 test_modules = (
@@ -69,6 +69,6 @@ def main(verbosity=1):
 if __name__ == '__main__':
     main(1)
     if '--pause' in sys.argv:
-        print "Press enter to continue"
+        print("Press enter to continue")
         raw_input()
 

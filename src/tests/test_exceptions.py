@@ -9,6 +9,10 @@
 
 import sys, os, string, unittest, types
 import System
+import six
+
+if six.PY3:
+    unicode = str
 
 # Note: all of these tests are known to fail because Python currently
 # doesn't allow new-style classes to be used as exceptions. I'm leaving
@@ -21,10 +25,11 @@ class ExceptionTests(unittest.TestCase):
     def testUnifiedExceptionSemantics(self):
         """Test unified exception semantics."""
         from System import Exception, Object
-        import exceptions
         
         e = Exception('Something bad happened')
-        self.assertTrue(isinstance(e, exceptions.Exception))
+        if not six.PY3:
+            import exceptions
+            self.assertTrue(isinstance(e, exceptions.Exception))
         self.assertTrue(isinstance(e, Exception))
 
 
@@ -49,7 +54,6 @@ class ExceptionTests(unittest.TestCase):
         """Test accessing extended exception attributes."""
         from Python.Test import ExceptionTest, ExtendedException
         from System import Exception, OverflowException
-        import exceptions
         
         e = ExceptionTest.GetExtendedException()
         self.assertTrue(isinstance(e, ExtendedException))
@@ -93,7 +97,7 @@ class ExceptionTests(unittest.TestCase):
         from System import NullReferenceException
 
         def test():
-            raise NullReferenceException, 'Aiiieee!'
+            raise NullReferenceException('Aiiieee!')
 
         self.assertRaises(NullReferenceException, test)
 
@@ -185,7 +189,8 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             ExceptionTest().ThrowException()
-        except OverflowException, e:
+        except OverflowException:
+            e = sys.exc_info()[1]
             self.assertTrue(isinstance(e, OverflowException))
             return
 
@@ -199,13 +204,15 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             v = ExceptionTest().ThrowProperty
-        except OverflowException, e:
+        except OverflowException:
+            e = sys.exc_info()[1]
             self.assertTrue(isinstance(e, OverflowException))
             return
 
         try:
             ExceptionTest().ThrowProperty = 1
-        except OverflowException, e:
+        except OverflowException:
+            e = sys.exc_info()[1]
             self.assertTrue(isinstance(e, OverflowException))
             return
 
@@ -227,7 +234,10 @@ class ExceptionTests(unittest.TestCase):
     def testCatchExceptionPythonClass(self):
         """Test catching the python class of an exception."""
         from System import OverflowException
-        from exceptions import Exception
+        if six.PY3:
+            from builtins import Exception
+        else:
+            from exceptions import Exception
 
         try:
             raise OverflowException('overflow')
@@ -267,7 +277,8 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             raise OverflowException('overflow')
-        except OverflowException, e:
+        except OverflowException:
+            e = sys.exc_info()[1]
             self.assertTrue(isinstance(e, OverflowException))
 
 
@@ -303,9 +314,10 @@ class ExceptionTests(unittest.TestCase):
 
         try:
             Convert.ToDateTime('this will fail')
-        except FormatException, e:
+        except FormatException:
+            e = sys.exc_info()[1]
             msg = unicode(e).encode("utf8") # fix for international installation
-            self.assertTrue(msg.find('System.Convert.ToDateTime') > -1, msg)
+            self.assertTrue(msg.find(unicode('System.Convert.ToDateTime').encode("utf8")) > -1, msg)
 
             
     def testPythonCompatOfManagedExceptions(self):
@@ -336,12 +348,20 @@ class ExceptionTests(unittest.TestCase):
         # without causing a crash in the CPython interpreter). This test is
         # here mainly to remind me to update the caveat in the documentation
         # one day when when exceptions can be new-style classes.
+
+        # This behaviour is now over-shadowed by the implementation of
+        # __instancecheck__ (i.e., overloading isinstance), so for all Python
+        # version >= 2.6 we expect isinstance(<managed exception>, Object) to
+        # be true, even though it does not really subclass Object.
         from System import OverflowException
         from System import Object
         
         o = OverflowException('error')
-        self.assertFalse(isinstance(o, Object))
-    
+
+        if sys.version_info >= (2, 6):
+            self.assertTrue(isinstance(o, Object))
+        else:
+            self.assertFalse(isinstance(o, Object))
         
 
 def test_suite():

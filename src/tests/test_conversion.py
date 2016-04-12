@@ -10,6 +10,11 @@
 import sys, os, string, unittest, types
 from Python.Test import ConversionTest
 import System
+import six
+
+if six.PY3:
+    long = int
+    unichr = chr
 
 
 class ConversionTests(unittest.TestCase):
@@ -176,16 +181,16 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(System.Char.MinValue == unichr(0))
 
         object = ConversionTest()
-        self.assertTrue(object.CharField == u'A')
+        self.assertTrue(object.CharField == six.u('A'))
 
         object.CharField = 'B'
-        self.assertTrue(object.CharField == u'B')
+        self.assertTrue(object.CharField == six.u('B'))
 
-        object.CharField = u'B'
-        self.assertTrue(object.CharField == u'B')
+        object.CharField = six.u('B')
+        self.assertTrue(object.CharField == six.u('B'))
 
         object.CharField = 67
-        self.assertTrue(object.CharField == u'C')
+        self.assertTrue(object.CharField == six.u('C'))
 
         def test():
             ConversionTest().CharField = 65536
@@ -307,23 +312,23 @@ class ConversionTests(unittest.TestCase):
 
     def testInt64Conversion(self):
         """Test int64 conversion."""
-        self.assertTrue(System.Int64.MaxValue == 9223372036854775807L)
-        self.assertTrue(System.Int64.MinValue == -9223372036854775808L)
+        self.assertTrue(System.Int64.MaxValue == long(9223372036854775807))
+        self.assertTrue(System.Int64.MinValue == long(-9223372036854775808))
 
         object = ConversionTest()
         self.assertTrue(object.Int64Field == 0)
 
-        object.Int64Field = 9223372036854775807L
-        self.assertTrue(object.Int64Field == 9223372036854775807L)
+        object.Int64Field = long(9223372036854775807)
+        self.assertTrue(object.Int64Field == long(9223372036854775807))
 
-        object.Int64Field = -9223372036854775808L
-        self.assertTrue(object.Int64Field == -9223372036854775808L)
+        object.Int64Field = long(-9223372036854775808)
+        self.assertTrue(object.Int64Field == long(-9223372036854775808))
 
-        object.Int64Field = System.Int64(9223372036854775807L)
-        self.assertTrue(object.Int64Field == 9223372036854775807L)
+        object.Int64Field = System.Int64(long(9223372036854775807))
+        self.assertTrue(object.Int64Field == long(9223372036854775807))
 
-        object.Int64Field = System.Int64(-9223372036854775808L)
-        self.assertTrue(object.Int64Field == -9223372036854775808L)
+        object.Int64Field = System.Int64(long(-9223372036854775808))
+        self.assertTrue(object.Int64Field == long(-9223372036854775808))
 
         def test():
             ConversionTest().Int64Field = "spam"
@@ -336,22 +341,22 @@ class ConversionTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
         def test():
-            ConversionTest().Int64Field = 9223372036854775808L
+            ConversionTest().Int64Field = long(9223372036854775808)
             
         self.assertRaises(OverflowError, test)
 
         def test():
-            ConversionTest().Int64Field = -9223372036854775809L
+            ConversionTest().Int64Field = long(-9223372036854775809)
             
         self.assertRaises(OverflowError, test)
 
         def test():
-            value = System.Int64(9223372036854775808L)
+            value = System.Int64(long(9223372036854775808))
             
         self.assertRaises(OverflowError, test)
 
         def test():
-            value = System.Int64(-9223372036854775809L)
+            value = System.Int64(long(-9223372036854775809))
             
         self.assertRaises(OverflowError, test)
 
@@ -409,20 +414,20 @@ class ConversionTests(unittest.TestCase):
 
     def testUInt32Conversion(self):
         """Test uint32 conversion."""
-        self.assertTrue(System.UInt32.MaxValue == 4294967295L)
+        self.assertTrue(System.UInt32.MaxValue == long(4294967295))
         self.assertTrue(System.UInt32.MinValue == 0)
 
         object = ConversionTest()
         self.assertTrue(object.UInt32Field == 0)
 
-        object.UInt32Field = 4294967295L
-        self.assertTrue(object.UInt32Field == 4294967295L)
+        object.UInt32Field = long(4294967295)
+        self.assertTrue(object.UInt32Field == long(4294967295))
 
         object.UInt32Field = -0
         self.assertTrue(object.UInt32Field == 0)
 
-        object.UInt32Field = System.UInt32(4294967295L)
-        self.assertTrue(object.UInt32Field == 4294967295L)
+        object.UInt32Field = System.UInt32(long(4294967295))
+        self.assertTrue(object.UInt32Field == long(4294967295))
 
         object.UInt32Field = System.UInt32(0)
         self.assertTrue(object.UInt32Field == 0)
@@ -438,7 +443,7 @@ class ConversionTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
         def test():
-            ConversionTest().UInt32Field = 4294967296L
+            ConversionTest().UInt32Field = long(4294967296)
             
         self.assertRaises(OverflowError, test)
 
@@ -448,7 +453,7 @@ class ConversionTests(unittest.TestCase):
         self.assertRaises(OverflowError, test)
 
         def test():
-            value = System.UInt32(4294967296L)
+            value = System.UInt32(long(4294967296))
             
         self.assertRaises(OverflowError, test)
 
@@ -460,20 +465,20 @@ class ConversionTests(unittest.TestCase):
 
     def testUInt64Conversion(self):
         """Test uint64 conversion."""
-        self.assertTrue(System.UInt64.MaxValue == 18446744073709551615L)
+        self.assertTrue(System.UInt64.MaxValue == long(18446744073709551615))
         self.assertTrue(System.UInt64.MinValue == 0)
 
         object = ConversionTest()
         self.assertTrue(object.UInt64Field == 0)
 
-        object.UInt64Field = 18446744073709551615L
-        self.assertTrue(object.UInt64Field == 18446744073709551615L)
+        object.UInt64Field = long(18446744073709551615)
+        self.assertTrue(object.UInt64Field == long(18446744073709551615))
 
         object.UInt64Field = -0
         self.assertTrue(object.UInt64Field == 0)
 
-        object.UInt64Field = System.UInt64(18446744073709551615L)
-        self.assertTrue(object.UInt64Field == 18446744073709551615L)
+        object.UInt64Field = System.UInt64(long(18446744073709551615))
+        self.assertTrue(object.UInt64Field == long(18446744073709551615))
 
         object.UInt64Field = System.UInt64(0)
         self.assertTrue(object.UInt64Field == 0)
@@ -489,7 +494,7 @@ class ConversionTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
         def test():
-            ConversionTest().UInt64Field = 18446744073709551616L
+            ConversionTest().UInt64Field = long(18446744073709551616)
             
         self.assertRaises(OverflowError, test)
 
@@ -499,7 +504,7 @@ class ConversionTests(unittest.TestCase):
         self.assertRaises(OverflowError, test)
 
         def test():
-            value = System.UInt64(18446744073709551616L)
+            value = System.UInt64(long(18446744073709551616))
             
         self.assertRaises(OverflowError, test)
 
@@ -618,7 +623,7 @@ class ConversionTests(unittest.TestCase):
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
         
-        self.assertTrue(Decimal.ToInt64(Decimal(10)) == 10L)
+        self.assertTrue(Decimal.ToInt64(Decimal(10)) == long(10))
 
         object = ConversionTest()
         self.assertTrue(object.DecimalField == Decimal(0))
@@ -659,25 +664,25 @@ class ConversionTests(unittest.TestCase):
         object = ConversionTest()
 
         self.assertTrue(object.StringField == "spam")
-        self.assertTrue(object.StringField == u"spam")
+        self.assertTrue(object.StringField == six.u("spam"))
 
         object.StringField = "eggs"
         self.assertTrue(object.StringField == "eggs")
-        self.assertTrue(object.StringField == u"eggs")
+        self.assertTrue(object.StringField == six.u("eggs"))
 
-        object.StringField = u"spam"
+        object.StringField = six.u("spam")
         self.assertTrue(object.StringField == "spam")
-        self.assertTrue(object.StringField == u"spam")
+        self.assertTrue(object.StringField == six.u("spam"))
 
-        object.StringField = u'\uffff\uffff'
-        self.assertTrue(object.StringField == u'\uffff\uffff')
+        object.StringField = six.u('\uffff\uffff')
+        self.assertTrue(object.StringField == six.u('\uffff\uffff'))
 
         object.StringField = System.String("spam")
         self.assertTrue(object.StringField == "spam")
-        self.assertTrue(object.StringField == u"spam")
+        self.assertTrue(object.StringField == six.u("spam"))
 
-        object.StringField = System.String(u'\uffff\uffff')
-        self.assertTrue(object.StringField == u'\uffff\uffff')
+        object.StringField = System.String(six.u('\uffff\uffff'))
+        self.assertTrue(object.StringField == six.u('\uffff\uffff'))
 
         object.StringField = None
         self.assertTrue(object.StringField == None)
@@ -829,11 +834,11 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(array[0] == 0)
         self.assertTrue(array[4] == 4)
 
-        value = "testing"
+        value = six.b("testing")
         object.ByteArrayField = value
         array = object.ByteArrayField
         for i in range(len(value)):
-            self.assertTrue(array[i] == ord(value[i]))
+            self.assertTrue(array[i] == six.indexbytes(value, i))
 
 
     def testSByteArrayConversion(self):
@@ -848,11 +853,11 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(array[0] == 0)
         self.assertTrue(array[4] == 4)
 
-        value = "testing"
+        value = six.b("testing")
         object.SByteArrayField = value
         array = object.SByteArrayField
         for i in range(len(value)):
-            self.assertTrue(array[i] == ord(value[i]))
+            self.assertTrue(array[i] == six.indexbytes(value, i))
 
 
 

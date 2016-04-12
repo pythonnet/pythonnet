@@ -8,7 +8,14 @@
 # ===========================================================================
 
 import sys, os, string, unittest, types
+import clr
+clr.AddReference("Python.Test")
 import Python.Test as Test
+import six
+
+if six.PY3:
+    long = int
+    unichr = chr
 
 
 class IndexerTests(unittest.TestCase):
@@ -238,8 +245,8 @@ class IndexerTests(unittest.TestCase):
     def testInt64Indexer(self):
         """Test Int64 indexers."""
         object = Test.Int64IndexerTest()
-        max = 9223372036854775807L
-        min = -9223372036854775808L
+        max = long(9223372036854775807)
+        min = long(-9223372036854775808)
 
         self.assertTrue(object[max] == None)
 
@@ -292,7 +299,7 @@ class IndexerTests(unittest.TestCase):
     def testUInt32Indexer(self):
         """Test UInt32 indexers."""
         object = Test.UInt32IndexerTest()
-        max = 4294967295L
+        max = long(4294967295)
         min = 0
 
         self.assertTrue(object[max] == None)
@@ -319,7 +326,7 @@ class IndexerTests(unittest.TestCase):
     def testUInt64Indexer(self):
         """Test UInt64 indexers."""
         object = Test.UInt64IndexerTest()
-        max = 18446744073709551615L
+        max = long(18446744073709551615)
         min = 0
 
         self.assertTrue(object[max] == None)
@@ -431,19 +438,19 @@ class IndexerTests(unittest.TestCase):
         object = Test.StringIndexerTest()
 
         self.assertTrue(object["spam"] == None)
-        self.assertTrue(object[u"spam"] == None)
+        self.assertTrue(object[six.u("spam")] == None)
 
         object["spam"] = "spam"
         self.assertTrue(object["spam"] == "spam")
-        self.assertTrue(object["spam"] == u"spam")
-        self.assertTrue(object[u"spam"] == "spam")
-        self.assertTrue(object[u"spam"] == u"spam")
+        self.assertTrue(object["spam"] == six.u("spam"))
+        self.assertTrue(object[six.u("spam")] == "spam")
+        self.assertTrue(object[six.u("spam")] == six.u("spam"))
         
-        object[u"eggs"] = u"eggs"
+        object[six.u("eggs")] = six.u("eggs")
         self.assertTrue(object["eggs"] == "eggs")
-        self.assertTrue(object["eggs"] == u"eggs")
-        self.assertTrue(object[u"eggs"] == "eggs")
-        self.assertTrue(object[u"eggs"] == u"eggs")
+        self.assertTrue(object["eggs"] == six.u("eggs"))
+        self.assertTrue(object[six.u("eggs")] == "eggs")
+        self.assertTrue(object[six.u("eggs")] == six.u("eggs"))
 
         def test():
             object = Test.StringIndexerTest()
@@ -509,8 +516,8 @@ class IndexerTests(unittest.TestCase):
         object[1] = "one"
         self.assertTrue(object[1] == "one")
 
-        object[1L] = "long"
-        self.assertTrue(object[1L] == "long")
+        object[long(1)] = "long"
+        self.assertTrue(object[long(1)] == "long")
 
         def test():
             class eggs:
@@ -625,6 +632,17 @@ class IndexerTests(unittest.TestCase):
             object[0, 1, spam] = "wrong"
 
         self.assertRaises(TypeError, test)
+        
+        
+    def testMultiDefaultKeyIndexer(self):
+        """Test indexers that take multiple indices with a default key arguments."""
+        #default argument is 2 in the MultiDefaultKeyIndexerTest object
+        object = Test.MultiDefaultKeyIndexerTest()
+        object[0, 2] = "zero one spam"
+        self.assertTrue(object[0] == "zero one spam")
+        
+        object[1] = "one nine spam"
+        self.assertTrue(object[1, 2] == "one nine spam")
 
 
     def testIndexerWrongKeyType(self):

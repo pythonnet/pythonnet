@@ -102,7 +102,8 @@ namespace Python.Runtime {
         /// </remarks>
 
         public bool HasKey(string key) {
-            return HasKey(new PyString(key));
+            using (PyString str = new PyString(key))
+                return HasKey(str);
         }
 
 

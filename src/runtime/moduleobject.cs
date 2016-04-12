@@ -37,14 +37,29 @@ namespace Python.Runtime {
             cache = new Dictionary<string, ManagedType>();
             _namespace = name;
 
+            // Use the filename from any of the assemblies just so there's something for
+            // anything that expects __file__ to be set.
+            string filename = "unknown";
+            string docstring = "Namespace containing types from the following assemblies:\n\n";
+            foreach (Assembly a in AssemblyManager.GetAssemblies(name)) {
+                filename = a.Location;
+                docstring += "- " + a.FullName + "\n";
+            }
+
             dict = Runtime.PyDict_New();
             IntPtr pyname = Runtime.PyString_FromString(moduleName);
+            IntPtr pyfilename = Runtime.PyString_FromString(filename);
+            IntPtr pydocstring = Runtime.PyString_FromString(docstring);
+            IntPtr pycls = TypeManager.GetTypeHandle(this.GetType());
             Runtime.PyDict_SetItemString(dict, "__name__", pyname);
-            Runtime.PyDict_SetItemString(dict, "__file__", Runtime.PyNone);
-            Runtime.PyDict_SetItemString(dict, "__doc__", Runtime.PyNone);
+            Runtime.PyDict_SetItemString(dict, "__file__", pyfilename);
+            Runtime.PyDict_SetItemString(dict, "__doc__", pydocstring);
+            Runtime.PyDict_SetItemString(dict, "__class__", pycls);
             Runtime.Decref(pyname);
+            Runtime.Decref(pyfilename);
+            Runtime.Decref(pydocstring);
 
-            Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.ob_dict, dict);
+            Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.DictOffset(this.pyHandle), dict);
 
             InitializeModuleMembers();
         }
@@ -216,7 +231,7 @@ namespace Python.Runtime {
                         string name = method.Name;
                         MethodInfo[] mi = new MethodInfo[1];
                         mi[0] = method;
-                        ModuleFunctionObject m = new ModuleFunctionObject(name, mi, allow_threads);
+                        ModuleFunctionObject m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
                     }
                 }
@@ -394,11 +409,15 @@ namespace Python.Runtime {
             {
                 assembly = AssemblyManager.LoadAssembly(name);
             }
+            if (assembly == null) {
+                assembly = AssemblyManager.LoadAssemblyFullPath(name);
+            }
             if (assembly == null)
             {
                 string msg = String.Format("Unable to find assembly '{0}'.", name);
                 throw new System.IO.FileNotFoundException(msg);
             }
+            
             return assembly ;
         }
 
@@ -423,6 +442,12 @@ namespace Python.Runtime {
                     names[i] = assnames[i].Name;
             }
             return names;
+        }
+
+        [ModuleFunctionAttribute()]
+        public static int _AtExit()
+        {
+            return Runtime.AtExit();
         }
 
     }

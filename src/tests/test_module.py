@@ -13,6 +13,13 @@ clr.AddReference('System.Data')
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
 ##clr.AddReference('System.Windows.Forms')
 import sys, os, string, unittest, types, warnings
+from fnmatch import fnmatch
+import six
+
+if six.PY3:
+    ClassType = type
+else:
+    ClassType = types.ClassType
 
 
 class ModuleTests(unittest.TestCase):
@@ -22,6 +29,9 @@ class ModuleTests(unittest.TestCase):
         return type(object).__name__ == 'ModuleObject'
 
     def isCLRRootModule(self, object):
+        if six.PY3:
+            # in Python 3 the clr module is a normal python module
+            return object.__name__ == "clr"
         return type(object).__name__ == 'CLRModule'
 
     def isCLRClass(self, object):
@@ -62,8 +72,9 @@ class ModuleTests(unittest.TestCase):
         import System
         self.assertEquals(type(System.__dict__), type({}))
         self.assertEquals(System.__name__, 'System')
-        self.assertEquals(System.__file__, None)
-        self.assertEquals(System.__doc__, None)
+        # the filename can be any module from the System namespace (eg System.Data.dll or System.dll)
+        self.assertTrue(fnmatch(System.__file__, "*System*.dll"))
+        self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
         self.assertTrue(self.isCLRClass(System.String))
         self.assertTrue(self.isCLRClass(System.Int32))
 
@@ -78,9 +89,14 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(type(sys) == types.ModuleType)
         self.assertTrue(sys.__name__ == 'sys')
 
-        import httplib
-        self.assertTrue(type(httplib) == types.ModuleType)
-        self.assertTrue(httplib.__name__ == 'httplib')
+        if six.PY3:
+            import http.client as httplib
+            self.assertTrue(type(httplib) == types.ModuleType)
+            self.assertTrue(httplib.__name__ == 'http.client')
+        else:
+            import httplib
+            self.assertTrue(type(httplib) == types.ModuleType)
+            self.assertTrue(httplib.__name__ == 'httplib')
 
 
     def testSimpleImportWithAlias(self):
@@ -93,9 +109,14 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(type(mySys) == types.ModuleType)
         self.assertTrue(mySys.__name__ == 'sys')
 
-        import httplib as myHttplib
-        self.assertTrue(type(myHttplib) == types.ModuleType)
-        self.assertTrue(myHttplib.__name__ == 'httplib')
+        if six.PY3:
+            import http.client as myHttplib
+            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(myHttplib.__name__ == 'http.client')
+        else:
+            import httplib as myHttplib
+            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(myHttplib.__name__ == 'httplib')
 
 
     def testDottedNameImport(self):
@@ -169,7 +190,7 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(pulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM
-        self.assertTrue(type(PullDOM) == types.ClassType)
+        self.assertTrue(type(PullDOM) == ClassType)
         self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
 
@@ -188,7 +209,7 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(myPulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM as myPullDOM
-        self.assertTrue(type(myPullDOM) == types.ClassType)
+        self.assertTrue(type(myPullDOM) == ClassType)
         self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
 
@@ -233,7 +254,7 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(assembly != None)
         
         import System.Data
-        self.assertTrue(sys.modules.has_key('System.Data'))
+        self.assertTrue('System.Data' in sys.modules)
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
         self.assertTrue(assembly == None)
@@ -340,10 +361,10 @@ class ModuleTests(unittest.TestCase):
         from clr import ListAssemblies 
         verbose = list(ListAssemblies(True))
         short = list(ListAssemblies(False))
-        self.assertTrue(u'mscorlib' in short)
-        self.assertTrue(u'System' in short)
-        self.assertTrue('Culture=' in verbose[0])
-        self.assertTrue('Version=' in verbose[0])
+        self.assertTrue(six.u('mscorlib') in short)
+        self.assertTrue(six.u('System') in short)
+        self.assertTrue(six.u('Culture=') in verbose[0])
+        self.assertTrue(six.u('Version=') in verbose[0])
 
     def test_ClrAddReference(self):
         from clr import AddReference

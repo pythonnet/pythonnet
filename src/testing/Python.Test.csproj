@@ -120,6 +120,7 @@
     <Compile Include="propertytest.cs" />
     <Compile Include="threadtest.cs" />
     <Compile Include="doctest.cs" />
+    <Compile Include="subclasstest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -140,8 +141,11 @@
   </ProjectExtensions>
   <PropertyGroup>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
+    <TargetAssembly>$(TargetPath)</TargetAssembly>
+    <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
   </PropertyGroup>
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+	<Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+	<Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>

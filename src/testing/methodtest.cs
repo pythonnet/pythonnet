@@ -117,6 +117,14 @@ namespace Python.Test {
             return true;
         }
 
+        public static bool TestNonParamsArrayInLastPlace(int i1, int[] i2) {
+            return false;
+        }
+
+        public static bool TestNonParamsArrayInLastPlace(int i1, int i2, int i3) {
+            return true;
+        }
+
         public static bool TestValueOutParams (string s, out int i1) {
             i1 = 42;
             return true;
@@ -153,6 +161,16 @@ namespace Python.Test {
 
         public static void TestVoidSingleRefParam (ref int i) {
             i = 42;
+        }
+
+        public static int TestSingleDefaultParam(int i = 5) {
+            return i;
+        }
+        public static int TestTwoDefaultParam(int i = 5, int j = 6) {
+            return i + j;
+        }
+        public static int TestOneArgAndTwoDefaultParam(int z, int i = 5, int j = 6) {
+            return i + j + z;
         }
 
 

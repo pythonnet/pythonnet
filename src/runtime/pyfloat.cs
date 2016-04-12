@@ -76,10 +76,11 @@ namespace Python.Runtime {
         /// </remarks>
 
         public PyFloat(string value) : base() {
-            PyString s = new PyString(value);
-            obj = Runtime.PyFloat_FromString(s.obj, IntPtr.Zero);
-            if (obj == IntPtr.Zero) {
-                throw new PythonException();
+            using (PyString s = new PyString(value)) {
+                obj = Runtime.PyFloat_FromString(s.obj, IntPtr.Zero);
+                if (obj == IntPtr.Zero) {
+                    throw new PythonException();
+                }
             }
         }
 

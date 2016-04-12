@@ -46,7 +46,7 @@ namespace Python.Runtime {
                 return Exceptions.RaiseTypeError("invalid argument list");
             }
 
-            //IntPtr name = Runtime.PyTuple_GetItem(args, 0);
+            IntPtr name = Runtime.PyTuple_GetItem(args, 0);
             IntPtr bases = Runtime.PyTuple_GetItem(args, 1);
             IntPtr dict = Runtime.PyTuple_GetItem(args, 2);
 
@@ -88,12 +88,19 @@ namespace Python.Runtime {
                 );
             }
 
-            // hack for now... fix for 1.0
-            //return TypeManager.CreateSubType(args);
+            // If __assembly__ or __namespace__ are in the class dictionary then create
+            // a managed sub type.
+            // This creates a new managed type that can be used from .net to call back
+            // into python.
+            if (IntPtr.Zero != dict) {
+                Runtime.Incref(dict);
+                using (PyDict clsDict = new PyDict(dict)) {
+                    if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
+                        return TypeManager.CreateSubType(name, base_type, dict);
+                }
+            }
 
-
-            // right way
-
+            // otherwise just create a basic type without reflecting back into the managed side.
             IntPtr func = Marshal.ReadIntPtr(Runtime.PyTypeType,
                                              TypeOffset.tp_new);
             IntPtr type = NativeCall.Call_3(func, tp, args, kw);
@@ -122,9 +129,6 @@ namespace Python.Runtime {
             // for now, move up hidden handle...
             IntPtr gc = Marshal.ReadIntPtr(base_type, TypeOffset.magic());
             Marshal.WriteIntPtr(type, TypeOffset.magic(), gc);
-
-            //DebugUtil.DumpType(base_type);
-            //DebugUtil.DumpType(type);
 
             return type;
         }
@@ -256,10 +260,44 @@ namespace Python.Runtime {
             return;
         }
 
+        static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
+        {
+            ClassBase cb = GetManagedObject(tp) as ClassBase;
 
+            if (cb == null)
+                return Runtime.PyFalse;
 
+            using (PyList argsObj = new PyList(args))
+            {
+                if (argsObj.Length() != 1)
+                    return Exceptions.RaiseTypeError("Invalid parameter count");
 
+                PyObject arg = argsObj[0];
+                PyObject otherType;
+                if (checkType)
+                    otherType = arg;
+                else
+                    otherType = arg.GetPythonType();
+
+                if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType)
+                    return Runtime.PyFalse;
+
+                ClassBase otherCb = GetManagedObject(otherType.Handle) as ClassBase;
+                if (otherCb == null)
+                    return Runtime.PyFalse;
+
+                return Converter.ToPython(cb.type.IsAssignableFrom(otherCb.type));
+            }
+        }
+
+        public static IntPtr __instancecheck__(IntPtr tp, IntPtr args)
+        {
+            return DoInstanceCheck(tp, args, false);
+        }
+
+        public static IntPtr __subclasscheck__(IntPtr tp, IntPtr args)
+        {
+            return DoInstanceCheck(tp, args, true);
+        }
     }
-
-
 }

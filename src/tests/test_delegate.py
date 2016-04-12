@@ -15,6 +15,12 @@ from Python.Test import BoolDelegate
 import sys, os, string, unittest, types
 import Python.Test as Test
 import System
+import six
+
+if six.PY3:
+    DictProxyType = type(object.__dict__)
+else:
+    DictProxyType = types.DictProxyType
 
 
 class DelegateTests(unittest.TestCase):
@@ -24,7 +30,7 @@ class DelegateTests(unittest.TestCase):
         """Test standard delegate attributes."""
         self.assertTrue(PublicDelegate.__name__ == 'PublicDelegate')
         self.assertTrue(PublicDelegate.__module__ == 'Python.Test')
-        self.assertTrue(type(PublicDelegate.__dict__) == types.DictProxyType)
+        self.assertTrue(type(PublicDelegate.__dict__) == DictProxyType)
         self.assertTrue(PublicDelegate.__doc__ == None)
 
 

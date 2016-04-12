@@ -50,7 +50,10 @@ namespace Python.Runtime {
         //====================================================================
 
          internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp) {
-             int count = tp.Length;
+            if (tp == null) {
+                return null;
+            }
+            int count = tp.Length;
              for (int i = 0; i < mi.Length; i++) {
                  ParameterInfo[] pi = mi[i].GetParameters();
                  if (pi.Length != count) {
@@ -73,8 +76,11 @@ namespace Python.Runtime {
         // return the MethodInfo that represents the matching closed generic.
         //====================================================================
 
-         internal static MethodInfo MatchParameters(MethodInfo[] mi,Type[] tp) {
-             int count = tp.Length;
+         internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp) {
+            if (tp == null) {
+                return null;
+            }
+            int count = tp.Length;
              for (int i = 0; i < mi.Length; i++) {
                 if (!mi[i].IsGenericMethodDefinition) {
                     continue;
@@ -89,51 +95,54 @@ namespace Python.Runtime {
          }
 
 
-		 //====================================================================
-		 // Given a sequence of MethodInfo and two sequences of type parameters, 
-		 // return the MethodInfo that matches the signature and the closed generic.
-		 //====================================================================
+         //====================================================================
+         // Given a sequence of MethodInfo and two sequences of type parameters, 
+         // return the MethodInfo that matches the signature and the closed generic.
+         //====================================================================
 
-		 internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
-		 {
-			 int genericCount = genericTp.Length;
-			 int signatureCount = sigTp.Length;
-			 for (int i = 0; i < mi.Length; i++)
-			 {
-				 if (!mi[i].IsGenericMethodDefinition)
-				 {
-					 continue;
-				 }
-				 Type[] genericArgs = mi[i].GetGenericArguments();
-				 if (genericArgs.Length != genericCount)
-				 {
-					 continue;
-				 }
-				 ParameterInfo[] pi = mi[i].GetParameters();
-				 if (pi.Length != signatureCount)
-				 {
-					 continue;
-				 }
-				 for (int n = 0; n < pi.Length; n++)
-				 {
-					 if (sigTp[n] != pi[n].ParameterType)
-					 {
-						 break;
-					 }
-					 if (n == (pi.Length - 1))
-					 {
-						 MethodInfo match = mi[i];
-						 if (match.IsGenericMethodDefinition)
-						 {
-							 Type[] typeArgs = match.GetGenericArguments();
-							 return match.MakeGenericMethod(genericTp);
-						 }
-						 return match;
-					 }
-				 }
-			 }
-			 return null;
-		 }
+         internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
+         {
+             if ((genericTp == null) || (sigTp == null)) { 
+                 return null;
+             }
+             int genericCount = genericTp.Length;
+             int signatureCount = sigTp.Length;
+             for (int i = 0; i < mi.Length; i++)
+             {
+                 if (!mi[i].IsGenericMethodDefinition)
+                 {
+                     continue;
+                 }
+                 Type[] genericArgs = mi[i].GetGenericArguments();
+                 if (genericArgs.Length != genericCount)
+                 {
+                     continue;
+                 }
+                 ParameterInfo[] pi = mi[i].GetParameters();
+                 if (pi.Length != signatureCount)
+                 {
+                     continue;
+                 }
+                 for (int n = 0; n < pi.Length; n++)
+                 {
+                     if (sigTp[n] != pi[n].ParameterType)
+                     {
+                         break;
+                     }
+                     if (n == (pi.Length - 1))
+                     {
+                         MethodInfo match = mi[i];
+                         if (match.IsGenericMethodDefinition)
+                         {
+                             Type[] typeArgs = match.GetGenericArguments();
+                             return match.MakeGenericMethod(genericTp);
+                         }
+                         return match;
+                     }
+                 }
+             }
+             return null;
+         }
 
 
         //====================================================================
@@ -226,7 +235,7 @@ namespace Python.Runtime {
             int pynargs = Runtime.PyTuple_Size(args);
             object arg;
             bool isGeneric = false;
-
+            ArrayList defaultArgList = null;
              if (info != null) {
                 _methods = (MethodBase[])Array.CreateInstance(
                                                 typeof(MethodBase), 1
@@ -236,9 +245,10 @@ namespace Python.Runtime {
             else {
                 _methods = GetMethods();
             }
- 
+            Type clrtype;
             for (int i = 0; i < _methods.Length; i++) {
                 MethodBase mi = _methods[i];
+
                 if (mi.IsGenericMethod) { isGeneric = true; }
                 ParameterInfo[] pi = mi.GetParameters();
                 int clrnargs = pi.Length;
@@ -247,12 +257,20 @@ namespace Python.Runtime {
                 int outs = 0;
 
                 if (pynargs == clrnargs) { 
-                    match = true; 
+                    match = true;
+                } else if(pynargs < clrnargs){
+                    match = true;
+                    defaultArgList = new ArrayList();
+                    for (int v = pynargs; v < clrnargs; v++)
+                    {
+                        if (pi[v].DefaultValue == DBNull.Value)
+                            match = false;
+                        else
+                            defaultArgList.Add((object)pi[v].DefaultValue);    
+                    }
                 } else if ((pynargs > clrnargs) && (clrnargs > 0) &&
-                           (pi[clrnargs-1].ParameterType.IsArray)) {
-                    // The last argument of the mananged functions seems to
-                    // accept multiple arguments as a array. Hopefully it's a
-                    // spam(params object[] egg) style method
+                           Attribute.IsDefined(pi[clrnargs-1], typeof(ParamArrayAttribute))) {
+                    // This is a spam(params object[] egg) style method
                     match = true;
                     arrayStart = clrnargs - 1;
                 }
@@ -262,30 +280,95 @@ namespace Python.Runtime {
 
                     for (int n = 0; n < clrnargs; n++) {
                         IntPtr op;
-                        if (arrayStart == n) {
-                            // map remaining Python arguments to a tuple since
-                            // the managed function accepts it - hopefully :]
-                            op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
-                        }
-                        else {
-                            op = Runtime.PyTuple_GetItem(args, n);
-                        }
-                        Type type = pi[n].ParameterType;
-                        if (pi[n].IsOut || type.IsByRef) {
-                            outs++;
-                        }
+                        if (n < pynargs) {
+                            if (arrayStart == n) {
+                                // map remaining Python arguments to a tuple since
+                                // the managed function accepts it - hopefully :]
+                                op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
+                            }
+                            else {
+                                op = Runtime.PyTuple_GetItem(args, n);
+                            }
 
-                        if (!Converter.ToManaged(op, type, out arg, false)) {
-                            Exceptions.Clear();
-                            margs = null;
-                            break;
+                            // this logic below handles cases when multiple overloading methods
+                            // are ambiguous, hence comparison between Python and CLR types
+                            // is necessary
+                            clrtype = null;
+                            IntPtr pyoptype;
+                            if (_methods.Length > 1) {
+                                pyoptype = IntPtr.Zero;
+                                pyoptype = Runtime.PyObject_Type(op);
+                                Exceptions.Clear();
+                                if (pyoptype != IntPtr.Zero) {
+                                    clrtype = Converter.GetTypeByAlias(pyoptype);
+                                }
+                                Runtime.Decref(pyoptype);
+                            }
+
+
+                            if (clrtype != null) {
+                                bool typematch = false;
+                                if (pi[n].ParameterType != clrtype) {
+                                    IntPtr pytype = Converter.GetPythonTypeByAlias(pi[n].ParameterType);
+                                    pyoptype = Runtime.PyObject_Type(op);
+                                    Exceptions.Clear();
+                                    if (pyoptype != IntPtr.Zero) {
+                                        if (pytype != pyoptype) {
+                                            typematch = false;
+                                        }
+                                        else {
+                                            typematch = true;
+                                            clrtype = pi[n].ParameterType;
+                                        }
+                                    }
+                                    if (!typematch) {
+                                        // this takes care of enum values
+                                        TypeCode argtypecode = Type.GetTypeCode(pi[n].ParameterType);
+                                        TypeCode paramtypecode = Type.GetTypeCode(clrtype);
+                                        if (argtypecode == paramtypecode) {
+                                            typematch = true;
+                                            clrtype = pi[n].ParameterType;
+                                        }
+                                    }
+                                    Runtime.Decref(pyoptype);
+                                    if (!typematch) {
+                                        margs = null;
+                                        break;
+                                    }
+                                }
+                                else {
+                                    typematch = true;
+                                    clrtype = pi[n].ParameterType;
+                                }
+                            }
+                            else {
+                                clrtype = pi[n].ParameterType;
+                            }
+                            
+                            if (pi[n].IsOut || clrtype.IsByRef)
+                            {
+                                outs++;
+                            }
+
+                            if (!Converter.ToManaged(op, clrtype, out arg, false))
+                            {
+                                Exceptions.Clear();
+                                margs = null;
+                                break;
+                            }
+                            if (arrayStart == n)
+                            {
+                                // GetSlice() creates a new reference but GetItem()
+                                // returns only a borrow reference.
+                                Runtime.Decref(op);
+                            }
+                            margs[n] = arg;
                         }
-                        if (arrayStart == n) {
-                            // GetSlice() creates a new reference but GetItem()
-                            // returns only a borrow reference.
-                            Runtime.Decref(op);
+                        else
+                        {
+                            if (defaultArgList != null)
+                                margs[n] = defaultArgList[n - pynargs];
                         }
-                        margs[n] = arg;
                     }
                     
                     if (margs == null) {
@@ -322,7 +405,7 @@ namespace Python.Runtime {
                 MethodInfo mi = MethodBinder.MatchParameters(methodinfo, types);
                 return Bind(inst, args, kw, mi, null);
             }
-			return null;
+            return null;
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
