@@ -304,6 +304,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[1] == 2)
         self.assertTrue(result[2] == 3)        
 
+    def testNonParamsArrayInLastPlace(self):
+        """Test overload resolution with of non-"params" array as last parameter."""
+        result = MethodTest.TestNonParamsArrayInLastPlace(1, 2, 3)
+        self.assertTrue(result)
 
     def testStringOutParams(self):
         """Test use of string out-parameters."""
