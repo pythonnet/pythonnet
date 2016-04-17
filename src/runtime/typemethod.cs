@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -19,7 +11,7 @@ namespace Python.Runtime {
 
     internal class TypeMethod : MethodObject {
 
-        public TypeMethod(Type type, string name, MethodInfo[] info) : 
+        public TypeMethod(Type type, string name, MethodInfo[] info) :
                base(type, name, info) {}
 
         public TypeMethod(Type type, string name, MethodInfo[] info, bool allow_threads) :
@@ -32,12 +24,12 @@ namespace Python.Runtime {
             arglist[1] = args;
             arglist[2] = kw;
 
-            try {        
+            try {
                 Object inst = null;
                 if (ob != IntPtr.Zero) {
                     inst = GetManagedObject(ob);
                 }
-                return (IntPtr)mi.Invoke(inst, BindingFlags.Default, null, arglist, 
+                return (IntPtr)mi.Invoke(inst, BindingFlags.Default, null, arglist,
                                  null);
             }
             catch (Exception e) {

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -13,8 +5,8 @@ using System.Collections;
 namespace Python.Runtime {
 
     /// <summary>
-    /// Represents a generic Python sequence. The methods of this class are 
-    /// equivalent to the Python "abstract sequence API". See  
+    /// Represents a generic Python sequence. The methods of this class are
+    /// equivalent to the Python "abstract sequence API". See
     /// http://www.python.org/doc/current/api/sequence.html for details.
     /// </summary>
 
@@ -92,7 +84,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Return the index of the given item in the sequence, or -1 if 
+        /// Return the index of the given item in the sequence, or -1 if
         /// the item does not appear in the sequence.
         /// </remarks>
 
@@ -129,7 +121,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Return the concatenation of the sequence object with the passed in 
+        /// Return the concatenation of the sequence object with the passed in
         /// sequence object.
         /// </remarks>
 
@@ -147,7 +139,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Return the sequence object repeated N times. This is equivalent 
+        /// Return the sequence object repeated N times. This is equivalent
         /// to the Python expression "object * count".
         /// </remarks>
 

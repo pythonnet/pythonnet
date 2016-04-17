@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -59,7 +51,7 @@ namespace Python.Runtime {
         public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
             return this.Invoke(inst, args, kw, null);
         }
- 
+
         public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw,
                                      MethodBase info) {
             return binder.Invoke(target, args, kw, info, this.info);
@@ -98,11 +90,11 @@ namespace Python.Runtime {
         // and instance methods all with the same name. That makes it tough
         // to support calling a method 'unbound' (passing the instance as the
         // first argument), because in this case we can't know whether to call
-        // the instance method unbound or call the static method. 
+        // the instance method unbound or call the static method.
         //
         // The rule we is that if there are both instance and static methods
         // with the same name, then we always call the static method. So this
-        // method returns true if any of the methods that are represented by 
+        // method returns true if any of the methods that are represented by
         // the descriptor are static methods (called by MethodBinding).
         //====================================================================
 
@@ -111,7 +103,7 @@ namespace Python.Runtime {
         }
 
         //====================================================================
-        // Descriptor __getattribute__ implementation. 
+        // Descriptor __getattribute__ implementation.
         //====================================================================
 
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
@@ -133,7 +125,7 @@ namespace Python.Runtime {
 
         //====================================================================
         // Descriptor __get__ implementation. Accessing a CLR method returns
-        // a "bound" method similar to a Python bound method. 
+        // a "bound" method similar to a Python bound method.
         //====================================================================
 
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.IO;
@@ -19,7 +11,7 @@ using System.Reflection.Emit;
 namespace Python.Runtime {
 
     /// <summary>
-    /// The AssemblyManager maintains information about loaded assemblies  
+    /// The AssemblyManager maintains information about loaded assemblies
     /// namespaces and provides an interface for name-based type lookup.
     /// </summary>
 
@@ -42,7 +34,7 @@ namespace Python.Runtime {
         //===================================================================
 
         internal static void Initialize() {
-            namespaces = new 
+            namespaces = new
                          Dictionary<string, Dictionary<Assembly, string>>(32);
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
@@ -54,7 +46,7 @@ namespace Python.Runtime {
             lhandler = new AssemblyLoadEventHandler(AssemblyLoadHandler);
             domain.AssemblyLoad += lhandler;
 
-            rhandler = new ResolveEventHandler(ResolveHandler);        
+            rhandler = new ResolveEventHandler(ResolveHandler);
             domain.AssemblyResolve += rhandler;
 
             Assembly[] items = domain.GetAssemblies();
@@ -85,10 +77,10 @@ namespace Python.Runtime {
 
 
         //===================================================================
-        // Event handler for assembly load events. At the time the Python 
+        // Event handler for assembly load events. At the time the Python
         // runtime loads, we scan the app domain to map the assemblies that
         // are loaded at the time. We also have to register this event handler
-        // so that we can know about assemblies that get loaded after the 
+        // so that we can know about assemblies that get loaded after the
         // Python runtime is initialized.
         //===================================================================
 
@@ -122,11 +114,11 @@ namespace Python.Runtime {
 
         //===================================================================
         // We __really__ want to avoid using Python objects or APIs when
-        // probing for assemblies to load, since our ResolveHandler may be 
+        // probing for assemblies to load, since our ResolveHandler may be
         // called in contexts where we don't have the Python GIL and can't
         // even safely try to get it without risking a deadlock ;(
         //
-        // To work around that, we update a managed copy of sys.path (which 
+        // To work around that, we update a managed copy of sys.path (which
         // is the main thing we care about) when UpdatePath is called. The
         // import hook calls this whenever it knows its about to use the
         // assembly manager, which lets us keep up with changes to sys.path
@@ -216,11 +208,11 @@ namespace Python.Runtime {
             return assembly;
         }
 
-        /// <summary>  
-        /// Loads an assembly using full path.  
-        /// </summary>  
-        /// <param name="name"></param>  
-        /// <returns></returns>  
+        /// <summary>
+        /// Loads an assembly using full path.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static Assembly LoadAssemblyFullPath(string name) {
             Assembly assembly = null;
             if (Path.IsPathRooted(name)) {
@@ -249,7 +241,7 @@ namespace Python.Runtime {
         }
 
         //===================================================================
-        // Given a qualified name of the form A.B.C.D, attempt to load 
+        // Given a qualified name of the form A.B.C.D, attempt to load
         // an assembly named after each of A.B.C.D, A.B.C, A.B, A. This
         // will only actually probe for the assembly once for each unique
         // namespace. Returns true if any assemblies were loaded.
@@ -304,7 +296,7 @@ namespace Python.Runtime {
         //===================================================================
         // Scans an assembly for exported namespaces, adding them to the
         // mapping of valid namespaces. Note that for a given namespace
-        // a.b.c.d, each of a, a.b, a.b.c and a.b.c.d are considered to 
+        // a.b.c.d, each of a, a.b, a.b.c and a.b.c.d are considered to
         // be valid namespaces (to better match Python import semantics).
         //===================================================================
 
@@ -402,7 +394,7 @@ namespace Python.Runtime {
                         //string tail = key.Substring(nslen);
                         if (key.IndexOf('.') == -1) {
                             names.Add(key);
-                        } 
+                        }
                     }
                 }
             }

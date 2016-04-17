@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -25,7 +17,7 @@ namespace Python.Runtime {
         internal ConstructorInfo ctor;
 
         internal InterfaceObject(Type tp) : base(tp) {
-            CoClassAttribute coclass = (CoClassAttribute) 
+            CoClassAttribute coclass = (CoClassAttribute)
               Attribute.GetCustomAttribute(tp, cc_attr);
             if (coclass != null) {
                 ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);
@@ -66,7 +58,7 @@ namespace Python.Runtime {
 
                 if (obj == null || !type.IsInstanceOfType(obj)) {
                     Exceptions.SetError(Exceptions.TypeError,
-                               "CoClass default constructor failed" 
+                               "CoClass default constructor failed"
                                );
                     return IntPtr.Zero;
                 }
@@ -83,7 +75,7 @@ namespace Python.Runtime {
         }
 
 
-    }        
+    }
 
 
 }

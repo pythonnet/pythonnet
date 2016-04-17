@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -21,9 +13,9 @@ namespace Python.Runtime {
     /// </summary>
     /// <remarks>
     /// The Python wrapper for managed exceptions LIES about its inheritance
-    /// tree. Although the real System.Exception is a subclass of 
+    /// tree. Although the real System.Exception is a subclass of
     /// System.Object the Python type for System.Exception does NOT claim that
-    /// it subclasses System.Object. Instead TypeManager.CreateType() uses 
+    /// it subclasses System.Object. Instead TypeManager.CreateType() uses
     /// Python's exception.Exception class as base class for System.Exception.
     /// </remarks>
     internal class ExceptionClassObject : ClassObject {
@@ -47,7 +39,7 @@ namespace Python.Runtime {
         //====================================================================
         // Exception __str__ implementation
         //====================================================================
-        
+
         public new static IntPtr tp_str(IntPtr ob) {
             Exception e = ToException(ob);
             if (e == null) {
@@ -83,7 +75,7 @@ namespace Python.Runtime {
             return Runtime.PyUnicode_FromString(message);
         }
         //====================================================================
-        // Exceptions __getattribute__ implementation. 
+        // Exceptions __getattribute__ implementation.
         // handles Python's args and message attributes
         //====================================================================
 
@@ -145,7 +137,7 @@ namespace Python.Runtime {
             warnings_module = Runtime.PyImport_ImportModule("warnings");
             Exceptions.ErrorCheck(warnings_module);
             Type type = typeof(Exceptions);
-            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | 
+            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public |
                                                     BindingFlags.Static)) {
                 IntPtr op = Runtime.PyObject_GetAttrString(exceptions_module, fi.Name);
                 if (op != IntPtr.Zero) {
@@ -222,13 +214,13 @@ namespace Python.Runtime {
         /// // XXX - hack to raise a compatible old-style exception ;(
         /// if (Runtime.wrap_exceptions) {
         ///     CallOneOfTheseMethods();
-        ///  
+        ///
         /// </remarks>
         internal static void SetupExceptionHack() {
             ns_exc = ClassManager.GetClass(typeof(Exception)).pyHandle;
             cache = new Hashtable();
 
-            string code = 
+            string code =
             "import exceptions\n" +
             "class Exception(exceptions.Exception):\n" +
             "    _class = None\n" +
@@ -264,7 +256,7 @@ namespace Python.Runtime {
             "        st = getattr(inner, 'StackTrace', '')\n" +
             "        st = st and '\\n' + st or ''\n" +
             "        return msg + st\n" +
-            "    \n" + 
+            "    \n" +
             "    def __repr__(self):\n" +
             "        inner = self.__dict__.get('_inner')\n" +
             "        msg = getattr(inner, 'Message', '')\n" +
@@ -342,8 +334,8 @@ namespace Python.Runtime {
         }
 
         internal static IntPtr GetExceptionInstanceWrapper(IntPtr real) {
-            // Given the pointer to a new-style class instance representing a 
-            // managed exception, return an appropriate old-style class 
+            // Given the pointer to a new-style class instance representing a
+            // managed exception, return an appropriate old-style class
             // wrapper instance that delegates to the wrapped instance.
             IntPtr tp = Runtime.PyObject_TYPE(real);
             if (Runtime.PyObject_TYPE(tp) == Runtime.PyInstanceType) {
@@ -585,7 +577,7 @@ namespace Python.Runtime {
 #endif
         public static IntPtr ArithmeticError;
         public static IntPtr LookupError;
-        
+
         public static IntPtr AssertionError;
         public static IntPtr AttributeError;
         public static IntPtr EOFError;

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -14,8 +6,8 @@ namespace Python.Runtime {
 
     /// <summary>
     /// Managed class that provides the implementation for reflected types.
-    /// Managed classes and value types are represented in Python by actual 
-    /// Python type objects. Each of those type objects is associated with 
+    /// Managed classes and value types are represented in Python by actual
+    /// Python type objects. Each of those type objects is associated with
     /// an instance of ClassObject, which provides its implementation.
     /// </summary>
 
@@ -65,16 +57,16 @@ namespace Python.Runtime {
             if (self == null) {
                 return Exceptions.RaiseTypeError("invalid object");
             }
-            
+
             Type type = self.type;
 
             // Primitive types do not have constructors, but they look like
-            // they do from Python. If the ClassObject represents one of the 
+            // they do from Python. If the ClassObject represents one of the
             // convertible primitive types, just convert the arg directly.
 
             if (type.IsPrimitive || type == typeof(String)) {
                 if (Runtime.PyTuple_Size(args) != 1) {
-                    Exceptions.SetError(Exceptions.TypeError, 
+                    Exceptions.SetError(Exceptions.TypeError,
                                "no constructors match given arguments"
                                );
                     return IntPtr.Zero;
@@ -91,14 +83,14 @@ namespace Python.Runtime {
             }
 
             if (type.IsAbstract) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                            "cannot instantiate abstract class"
                            );
                 return IntPtr.Zero;
             }
 
             if (type.IsEnum) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                            "cannot instantiate enumeration"
                            );
                 return IntPtr.Zero;
@@ -114,11 +106,11 @@ namespace Python.Runtime {
 
 
          //====================================================================
-         // Implementation of [] semantics for reflected types. This exists 
-         // both to implement the Array[int] syntax for creating arrays and 
+         // Implementation of [] semantics for reflected types. This exists
+         // both to implement the Array[int] syntax for creating arrays and
         // to support generic name overload resolution using [].
          //====================================================================
- 
+
          public override IntPtr type_subscript(IntPtr idx) {
 
             // If this type is the Array type, the [<type>] means we need to
@@ -136,8 +128,8 @@ namespace Python.Runtime {
                 Type a = t.MakeArrayType();
                 ClassBase o = ClassManager.GetClass(a);
                 Runtime.Incref(o.pyHandle);
-                return o.pyHandle;         
-            }   
+                return o.pyHandle;
+            }
 
             // If there are generics in our namespace with the same base name
             // as the current type, then [<type>] means the caller wants to
@@ -158,7 +150,7 @@ namespace Python.Runtime {
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
          }
- 
+
 
         //====================================================================
         // Implements __getitem__ for reflected classes and value types.
@@ -170,7 +162,7 @@ namespace Python.Runtime {
             ClassBase cls = (ClassBase)GetManagedObject(tp);
 
             if (cls.indexer == null || !cls.indexer.CanGet) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "unindexable object"
                                     );
                 return IntPtr.Zero;
@@ -214,7 +206,7 @@ namespace Python.Runtime {
             ClassBase cls = (ClassBase)GetManagedObject(tp);
 
             if (cls.indexer == null || !cls.indexer.CanSet) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "object doesn't support item assignment"
                                     );
                 return -1;
@@ -251,7 +243,7 @@ namespace Python.Runtime {
                 Runtime.Incref(item);
                 Runtime.PyTuple_SetItem(real, n + i, item);
             }
-            // no longer need defaultArgs 
+            // no longer need defaultArgs
             Runtime.Decref(defaultArgs);
             i = temp;
 
@@ -291,14 +283,14 @@ namespace Python.Runtime {
             ClassBase cb = (ClassBase)GetManagedObject(tp);
 
             if (cb.type != typeof(System.Delegate)) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "object is not callable");
                 return IntPtr.Zero;
             }
 
             CLRObject co = (CLRObject)ManagedType.GetManagedObject(ob);
             Delegate d = co.inst as Delegate;
-            BindingFlags flags = BindingFlags.Public | 
+            BindingFlags flags = BindingFlags.Public |
                                  BindingFlags.NonPublic |
                                  BindingFlags.Instance |
                                  BindingFlags.Static;
@@ -309,6 +301,6 @@ namespace Python.Runtime {
         }
 
 
-    }        
+    }
 
 }

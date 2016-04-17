@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -34,7 +26,7 @@ namespace Python.Runtime {
 		}
 		private string docStr;
     }
-	
+
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class PythonMethodAttribute : Attribute {
@@ -66,12 +58,12 @@ namespace Python.Runtime {
 
         static ObjectOffset() {
             int size = IntPtr.Size;
-            int n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD 
+            int n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
 #if (Py_DEBUG)
             _ob_next = 0;
             _ob_prev = 1 * size;
             n = 2;
-#endif 
+#endif
             ob_refcnt = (n+0) * size;
             ob_type = (n+1) * size;
             ob_dict = (n+2) * size;
@@ -314,7 +306,7 @@ namespace Python.Runtime {
                              HaveClass |
                              HaveStacklessExtension |
     #if (PYTHON25 || PYTHON26 || PYTHON27)
-                             HaveIndex | 
+                             HaveIndex |
     #endif
                              0);
 #endif
@@ -330,8 +322,8 @@ namespace Python.Runtime {
 
 
     // This class defines the function prototypes (delegates) used for low
-    // level integration with the CPython runtime. It also provides name 
-    // based lookup of the correct prototype for a particular Python type 
+    // level integration with the CPython runtime. It also provides name
+    // based lookup of the correct prototype for a particular Python type
     // slot and utilities for generating method thunks for managed methods.
 
     internal class Interop {
@@ -440,7 +432,7 @@ namespace Python.Runtime {
             pmap["mp_length"] = p["InquiryFunc"];
             pmap["mp_subscript"] = p["BinaryFunc"];
             pmap["mp_ass_subscript"] = p["ObjObjArgFunc"];
-            
+
             pmap["bf_getreadbuffer"] = p["IntObjArgFunc"];
             pmap["bf_getwritebuffer"] = p["IntObjArgFunc"];
             pmap["bf_getsegcount"] = p["ObjObjFunc"];

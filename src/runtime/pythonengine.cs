@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.IO;
@@ -83,26 +75,26 @@ namespace Python.Runtime {
         }
 
         public static string Version {
-            get { 
-                return Runtime.Py_GetVersion(); 
+            get {
+                return Runtime.Py_GetVersion();
             }
         }
 
         public static string BuildInfo {
-            get { 
-                return Runtime.Py_GetBuildInfo(); 
+            get {
+                return Runtime.Py_GetBuildInfo();
             }
         }
 
         public static string Platform {
-            get { 
-                return Runtime.Py_GetPlatform(); 
+            get {
+                return Runtime.Py_GetPlatform();
             }
         }
 
         public static string Copyright {
-            get { 
-                return Runtime.Py_GetCopyright(); 
+            get {
+                return Runtime.Py_GetCopyright();
             }
         }
 
@@ -118,8 +110,8 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Initialize the Python runtime. It is safe to call this method 
-        /// more than once, though initialization will only happen on the 
+        /// Initialize the Python runtime. It is safe to call this method
+        /// more than once, though initialization will only happen on the
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
         /// </remarks>
@@ -205,9 +197,9 @@ namespace Python.Runtime {
                 Initialize();
 
                 // Trickery - when the import hook is installed into an already
-                // running Python, the standard import machinery is still in 
+                // running Python, the standard import machinery is still in
                 // control for the duration of the import that caused bootstrap.
-                // 
+                //
                 // That is problematic because the std machinery tries to get
                 // sub-names directly from the module __dict__ rather than going
                 // through our module object's getattr hook. This workaround is
@@ -277,13 +269,13 @@ namespace Python.Runtime {
         /// <remarks>
         /// Acquire the Python global interpreter lock (GIL). Managed code
         /// *must* call this method before using any objects or calling any
-        /// methods on objects in the Python.Runtime namespace. The only 
+        /// methods on objects in the Python.Runtime namespace. The only
         /// exception is PythonEngine.Initialize, which may be called without
         /// first calling AcquireLock.
         ///
         /// Each call to AcquireLock must be matched by a corresponding call
         /// to ReleaseLock, passing the token obtained from AcquireLock.
-        /// 
+        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
@@ -300,11 +292,11 @@ namespace Python.Runtime {
         /// <remarks>
         /// Release the Python global interpreter lock using a token obtained
         /// from a previous call to AcquireLock.
-        /// 
+        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        
+
         public static void ReleaseLock(IntPtr gs) {
             Runtime.PyGILState_Release(gs);
         }
@@ -318,11 +310,11 @@ namespace Python.Runtime {
         /// Release the Python global interpreter lock to allow other threads
         /// to run. This is equivalent to the Py_BEGIN_ALLOW_THREADS macro
         /// provided by the C Python API.
-        /// 
+        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        
+
         public static IntPtr BeginAllowThreads() {
             return Runtime.PyEval_SaveThread();
         }
@@ -336,11 +328,11 @@ namespace Python.Runtime {
         /// Re-aquire the Python global interpreter lock for the current
         /// thread. This is equivalent to the Py_END_ALLOW_THREADS macro
         /// provided by the C Python API.
-        /// 
+        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        
+
         public static void EndAllowThreads(IntPtr ts) {
             Runtime.PyEval_RestoreThread(ts);
         }
@@ -353,7 +345,7 @@ namespace Python.Runtime {
         ///
         /// <remarks>
         /// Given a fully-qualified module or package name, import the
-        /// module and return the resulting module object as a PyObject 
+        /// module and return the resulting module object as a PyObject
         /// or null if an exception is raised.
         /// </remarks>
 

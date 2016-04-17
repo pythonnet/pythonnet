@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -49,7 +41,7 @@ namespace Python.Runtime {
          //====================================================================
          // Default implementation of [] semantics for reflected types.
          //====================================================================
- 
+
         public virtual IntPtr type_subscript(IntPtr idx) {
             Type[] types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null) {
@@ -66,7 +58,7 @@ namespace Python.Runtime {
             }
 
             return Exceptions.RaiseTypeError("no type matches params");
-        } 
+        }
 
         //====================================================================
         // Standard comparison implementation for instances of reflected types.
@@ -151,7 +143,7 @@ namespace Python.Runtime {
             }
             else {
                 o = co.inst as IEnumerator;
-                         
+
                 if (o == null) {
                     string message = "iteration over non-sequence";
                     return Exceptions.RaiseTypeError(message);
@@ -221,7 +213,7 @@ namespace Python.Runtime {
         public static void tp_dealloc(IntPtr ob) {
             ManagedType self = GetManagedObject(ob);
             IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
-            if (dict != IntPtr.Zero) { 
+            if (dict != IntPtr.Zero) {
                 Runtime.Decref(dict);
             }
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
@@ -231,6 +223,6 @@ namespace Python.Runtime {
         }
 
 
-    }        
+    }
 
 }

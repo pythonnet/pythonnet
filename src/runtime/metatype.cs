@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -19,7 +11,7 @@ namespace Python.Runtime {
     // types. It also provides support for single-inheritance from reflected
     // managed types.
     //========================================================================
-    
+
     internal class MetaType : ManagedType {
 
         static IntPtr PyCLRMetaType;
@@ -36,8 +28,8 @@ namespace Python.Runtime {
 
 
         //====================================================================
-        // Metatype __new__ implementation. This is called to create a new 
-        // class / type when a reflected class is subclassed. 
+        // Metatype __new__ implementation. This is called to create a new
+        // class / type when a reflected class is subclassed.
         //====================================================================
 
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
@@ -120,7 +112,7 @@ namespace Python.Runtime {
 
             // Hmm - the standard subtype_traverse, clear look at ob_size to
             // do things, so to allow gc to work correctly we need to move
-            // our hidden handle out of ob_size. Then, in theory we can 
+            // our hidden handle out of ob_size. Then, in theory we can
             // comment this out and still not crash.
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
@@ -156,7 +148,7 @@ namespace Python.Runtime {
             if (func == IntPtr.Zero) {
                 return Exceptions.RaiseTypeError("invalid object");
             }
-            
+
             IntPtr obj = NativeCall.Call_3(func, tp, args, kw);
             if (obj == IntPtr.Zero) {
                 return IntPtr.Zero;
@@ -194,7 +186,7 @@ namespace Python.Runtime {
         // Type __setattr__ implementation for reflected types. Note that this
         // is slightly different than the standard setattr implementation for
         // the normal Python metatype (PyTypeType). We need to look first in
-        // the type object of a reflected type for a descriptor in order to 
+        // the type object of a reflected type for a descriptor in order to
         // support the right setattr behavior for static fields and properties.
         //====================================================================
 
@@ -211,7 +203,7 @@ namespace Python.Runtime {
                                     "attribute is read-only");
                 return -1;
             }
-            
+
             if (Runtime.PyObject_GenericSetAttr(tp, name, value) < 0) {
                 return -1;
             }

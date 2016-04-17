@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -15,7 +7,7 @@ namespace Python.Runtime {
 
     /// <summary>
     /// Implements a Python type for managed arrays. This type is essentially
-    /// the same as a ClassObject, except that it provides sequence semantics 
+    /// the same as a ClassObject, except that it provides sequence semantics
     /// to support natural array usage (indexing) from Python.
     /// </summary>
 
@@ -57,7 +49,7 @@ namespace Python.Runtime {
             // Note that CLR 1.0 only supports int indexes - methods to
             // support long indices were introduced in 1.1. We could
             // support long indices automatically, but given that long
-            // indices are not backward compatible and a relative edge 
+            // indices are not backward compatible and a relative edge
             // case, we won't bother for now.
 
             // Single-dimensional arrays are the most common case and are
@@ -81,7 +73,7 @@ namespace Python.Runtime {
                     Exceptions.SetError(Exceptions.IndexError,
                                         "array index out of range"
                                         );
-                    return IntPtr.Zero; 
+                    return IntPtr.Zero;
                 }
 
                 return Converter.ToPython(items.GetValue(index), itemType);
@@ -122,7 +114,7 @@ namespace Python.Runtime {
                 Exceptions.SetError(Exceptions.IndexError,
                                     "array index out of range"
                                     );
-                return IntPtr.Zero; 
+                return IntPtr.Zero;
             }
 
             return Converter.ToPython(value, itemType);
@@ -169,7 +161,7 @@ namespace Python.Runtime {
                     Exceptions.SetError(Exceptions.IndexError,
                                         "array index out of range"
                                         );
-                    return -1; 
+                    return -1;
                 }
 
                 return 0;
@@ -247,6 +239,6 @@ namespace Python.Runtime {
         }
 
 
-    }        
+    }
 
 }

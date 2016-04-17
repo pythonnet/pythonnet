@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -72,7 +64,7 @@ namespace Python.Runtime {
 
         [DllImport("libdl.so")]
         private static extern IntPtr dlopen(String fileName, int flags);
-        
+
         [DllImport("libdl.so")]
         private static extern IntPtr dlsym(IntPtr handle, String symbol);
 
@@ -228,7 +220,7 @@ namespace Python.Runtime {
         /// Intitialize the runtime...
         /// </summary>
         internal static void Initialize() {
- 
+
         is32bit = IntPtr.Size == 4;
 
         if (0 == Runtime.Py_IsInitialized())
@@ -589,11 +581,11 @@ namespace Python.Runtime {
 
 #if (Py_DEBUG)
     // Py_IncRef and Py_DecRef are taking care of the extra payload
-    // in Py_DEBUG builds of Python like _Py_RefTotal 
+    // in Py_DEBUG builds of Python like _Py_RefTotal
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
     private unsafe static extern void
-    Py_IncRef(IntPtr ob); 
+    Py_IncRef(IntPtr ob);
 
    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Ansi)]
@@ -1576,7 +1568,7 @@ namespace Python.Runtime {
     internal static IntPtr PyUnicode_FromUnicode(string s, int size) {
         return PyUnicode_FromKindAndString(2, s, size);
     }
-    
+
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern int
@@ -1697,7 +1689,7 @@ namespace Python.Runtime {
     internal static IntPtr PyUnicode_FromUnicode(string s, int size) {
         return PyUnicode_FromKindAndString(4, s, size);
     }
-    
+
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Ansi)]
     internal unsafe static extern int

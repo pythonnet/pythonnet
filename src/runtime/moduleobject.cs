@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections.Specialized;
@@ -17,7 +9,7 @@ using System.Reflection;
 namespace Python.Runtime {
 
     //========================================================================
-    // Implements a Python type that provides access to CLR namespaces. The 
+    // Implements a Python type that provides access to CLR namespaces. The
     // type behaves like a Python module, and can contain other sub-modules.
     //========================================================================
 
@@ -67,7 +59,7 @@ namespace Python.Runtime {
 
         //===================================================================
         // Returns a ClassBase object representing a type that appears in
-        // this module's namespace or a ModuleObject representing a child 
+        // this module's namespace or a ModuleObject representing a child
         // namespace (or null if the name is not found). This method does
         // not increment the Python refcount of the returned object.
         //===================================================================
@@ -93,11 +85,11 @@ namespace Python.Runtime {
             //    return null;
             //}
 
-            string qname = (_namespace == String.Empty) ? name : 
+            string qname = (_namespace == String.Empty) ? name :
                             _namespace + "." + name;
 
-            // If the fully-qualified name of the requested attribute is 
-            // a namespace exported by a currently loaded assembly, return 
+            // If the fully-qualified name of the requested attribute is
+            // a namespace exported by a currently loaded assembly, return
             // a new ModuleObject representing that namespace.
 
             if (AssemblyManager.IsValidNamespace(qname)) {
@@ -106,7 +98,7 @@ namespace Python.Runtime {
                 return (ManagedType) m;
             }
 
-            // Look for a type in the current namespace. Note that this 
+            // Look for a type in the current namespace. Note that this
             // includes types, delegates, enums, interfaces and structs.
             // Only public namespace members are exposed to Python.
 
@@ -122,7 +114,7 @@ namespace Python.Runtime {
 
             // This is a little repetitive, but it ensures that the right
             // thing happens with implicit assembly loading at a reasonable
-            // cost. Ask the AssemblyManager to do implicit loading for each 
+            // cost. Ask the AssemblyManager to do implicit loading for each
             // of the steps in the qualified name, then try it again.
             bool ignore = name.StartsWith("__");
             if (AssemblyManager.LoadImplicit(qname, !ignore)) {
@@ -143,7 +135,7 @@ namespace Python.Runtime {
                 }
             }
 
-            // We didn't find the name, so we may need to see if there is a 
+            // We didn't find the name, so we may need to see if there is a
             // generic type with this base name. If so, we'll go ahead and
             // return it. Note that we store the mapping of the unmangled
             // name to generic type -  it is technically possible that some
@@ -255,7 +247,7 @@ namespace Python.Runtime {
 
         //====================================================================
         // ModuleObject __getattribute__ implementation. Module attributes
-        // are always either classes or sub-modules representing subordinate 
+        // are always either classes or sub-modules representing subordinate
         // namespaces. CLR modules implement a lazy pattern - the sub-modules
         // and classes are created when accessed and cached for future use.
         //====================================================================
@@ -273,7 +265,7 @@ namespace Python.Runtime {
                 Runtime.Incref(op);
                 return op;
             }
- 
+
             string name = Runtime.GetManagedString(key);
             if (name == "__dict__") {
                 Runtime.Incref(self.dict);
@@ -284,7 +276,7 @@ namespace Python.Runtime {
 
             if (attr == null) {
                 Exceptions.SetError(Exceptions.AttributeError, name);
-                return IntPtr.Zero;                
+                return IntPtr.Zero;
             }
 
             // XXX - hack required to recognize exception types. These types
@@ -338,9 +330,9 @@ namespace Python.Runtime {
 
         public CLRModule() : base("clr") {
             _namespace = String.Empty;
-            
+
             // This hackery is required in order to allow a plain Python to
-            // import the managed runtime via the CLR bootstrapper module. 
+            // import the managed runtime via the CLR bootstrapper module.
             // The standard Python machinery in control at the time of the
             // import requires the module to pass PyModule_Check. :(
             if (!hacked)
@@ -356,7 +348,7 @@ namespace Python.Runtime {
 
         /// <summary>
         /// The initializing of the preload hook has to happen as late as
-        /// possible since sys.ps1 is created after the CLR module is 
+        /// possible since sys.ps1 is created after the CLR module is
         /// created.
         /// </summary>
         internal void InitializePreload() {
@@ -417,7 +409,7 @@ namespace Python.Runtime {
                 string msg = String.Format("Unable to find assembly '{0}'.", name);
                 throw new System.IO.FileNotFoundException(msg);
             }
-            
+
             return assembly ;
         }
 

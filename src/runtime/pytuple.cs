@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 
@@ -23,9 +15,9 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Creates a new PyTuple from an existing object reference. Note 
-        /// that the instance assumes ownership of the object reference. 
-        /// The object reference is not checked for type-correctness. 
+        /// Creates a new PyTuple from an existing object reference. Note
+        /// that the instance assumes ownership of the object reference.
+        /// The object reference is not checked for type-correctness.
         /// </remarks>
 
         public PyTuple(IntPtr ptr) : base(ptr) {}
@@ -36,7 +28,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Copy constructor - obtain a PyTuple from a generic PyObject. An 
+        /// Copy constructor - obtain a PyTuple from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
         /// Python tuple object.
         /// </remarks>
@@ -64,7 +56,7 @@ namespace Python.Runtime {
                 throw new PythonException();
             }
         }
-        
+
 
         /// <summary>
         /// PyTuple Constructor
@@ -106,7 +98,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Convert a Python object to a Python tuple if possible, raising  
+        /// Convert a Python object to a Python tuple if possible, raising
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "tuple(object)".
         /// </remarks>

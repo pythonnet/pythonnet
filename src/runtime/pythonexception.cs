@@ -1,18 +1,10 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 
 namespace Python.Runtime {
 
     /// <summary>
-    /// Provides a managed interface to exceptions thrown by the Python 
+    /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
 
@@ -44,9 +36,9 @@ namespace Python.Runtime {
             }
 
             Runtime.Incref(_pyValue);
-            using (PyObject pyValue = new PyObject(_pyValue)) 
+            using (PyObject pyValue = new PyObject(_pyValue))
             {
-                message = pyValue.ToString(); 
+                message = pyValue.ToString();
             }
             _message = type + " : " + message;
         }
@@ -89,7 +81,7 @@ namespace Python.Runtime {
     /// Returns the exception type as a Python object.
     /// </remarks>
 
-    public IntPtr PyType 
+    public IntPtr PyType
     {
         get { return _pyType; }
     }
@@ -140,7 +132,7 @@ namespace Python.Runtime {
     /// A string representing the python exception stack trace.
     /// </remarks>
 
-    public override string StackTrace 
+    public override string StackTrace
     {
         get { return _tb; }
     }
@@ -151,7 +143,7 @@ namespace Python.Runtime {
     /// </summary>
     ///
     /// <remarks>
-    /// The Dispose method provides a way to explicitly release the 
+    /// The Dispose method provides a way to explicitly release the
     /// Python objects represented by a PythonException.
     /// </remarks>
 
@@ -177,7 +169,7 @@ namespace Python.Runtime {
     /// </summary>
     ///
     /// <remarks>
-    /// Returns true if the Python exception type represented by the 
+    /// Returns true if the Python exception type represented by the
     /// PythonException instance matches the given exception type.
     /// </remarks>
 
@@ -185,5 +177,5 @@ namespace Python.Runtime {
         return Runtime.PyErr_ExceptionMatches(ob) != 0;
     }
 
-    } 
+    }
 }

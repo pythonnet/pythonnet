@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -30,14 +22,14 @@ namespace Python.Runtime {
 
 
         public bool CanGet {
-            get { 
-                return GetterBinder.Count > 0; 
+            get {
+                return GetterBinder.Count > 0;
             }
         }
 
         public bool CanSet {
-            get { 
-                return SetterBinder.Count > 0; 
+            get {
+                return SetterBinder.Count > 0;
             }
         }
 
@@ -83,8 +75,8 @@ namespace Python.Runtime {
         }
 
         /// <summary>
-        /// This will return default arguments a new instance of a tuple. The size 
-        ///  of the tuple will indicate the number of default arguments. 
+        /// This will return default arguments a new instance of a tuple. The size
+        ///  of the tuple will indicate the number of default arguments.
         /// </summary>
         /// <param name="args">This is pointing to the tuple args passed in</param>
         /// <returns>a new instance of the tuple containing the default args</returns>
@@ -94,7 +86,7 @@ namespace Python.Runtime {
             if(!NeedsDefaultArgs(args))
                 return Runtime.PyTuple_New(0);
             int pynargs = Runtime.PyTuple_Size(args);
-           
+
             // Get the default arg tuple
             var methods = SetterBinder.GetMethods();
             MethodBase mi = methods[0];

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -22,8 +14,8 @@ namespace Python.Runtime {
     ///
     /// Each managed type reflected to Python is represented by an instance
     /// of a concrete subclass of ClassBase. Each instance is associated with
-    /// a generated Python type object, whose slots point to static methods 
-    /// of the managed instance's class. 
+    /// a generated Python type object, whose slots point to static methods
+    /// of the managed instance's class.
     /// </summary>
 
     internal class ClassManager {
@@ -43,7 +35,7 @@ namespace Python.Runtime {
         }
 
         //====================================================================
-        // Return the ClassBase-derived instance that implements a particular 
+        // Return the ClassBase-derived instance that implements a particular
         // reflected managed type, creating it if it doesn't yet exist.
         //====================================================================
 
@@ -68,7 +60,7 @@ namespace Python.Runtime {
         private static ClassBase CreateClass(Type type) {
 
             // First, we introspect the managed type and build some class
-            // information, including generating the member descriptors 
+            // information, including generating the member descriptors
             // that we'll be putting in the Python class __dict__.
 
             ClassInfo info = GetClassInfo(type);
@@ -81,7 +73,7 @@ namespace Python.Runtime {
             ClassBase impl;
 
             // Check to see if the given type extends System.Exception. This
-            // lets us check once (vs. on every lookup) in case we need to 
+            // lets us check once (vs. on every lookup) in case we need to
             // wrap Exception-derived types in old-style classes
 
             if (type.ContainsGenericParameters) {
@@ -100,7 +92,7 @@ namespace Python.Runtime {
                 impl = new InterfaceObject(type);
             }
 
-            else if (type == typeof(Exception) || 
+            else if (type == typeof(Exception) ||
                     type.IsSubclassOf(typeof(Exception))) {
                 impl = new ExceptionClassObject(type);
             }
@@ -136,7 +128,7 @@ namespace Python.Runtime {
             }
 
             // If class has constructors, generate an __doc__ attribute.
-					
+
             IntPtr doc = IntPtr.Zero;
 			Type marker = typeof(DocStringAttribute);
 			Attribute[] attrs = (Attribute[])type.GetCustomAttributes(marker, false);
@@ -193,16 +185,16 @@ namespace Python.Runtime {
             Type tp;
             int i, n;
 
-            // This is complicated because inheritance in Python is name 
+            // This is complicated because inheritance in Python is name
             // based. We can't just find DeclaredOnly members, because we
             // could have a base class A that defines two overloads of a
             // method and a class B that defines two more. The name-based
             // descriptor Python will find needs to know about inherited
             // overloads as well as those declared on the sub class.
 
-            BindingFlags flags = BindingFlags.Static | 
-                                 BindingFlags.Instance | 
-                                 BindingFlags.Public | 
+            BindingFlags flags = BindingFlags.Static |
+                                 BindingFlags.Instance |
+                                 BindingFlags.Public |
                                  BindingFlags.NonPublic;
 
             MemberInfo[] info = type.GetMembers(flags);
@@ -227,15 +219,15 @@ namespace Python.Runtime {
             }
 
             if (type.IsInterface) {
-                // Interface inheritance seems to be a different animal: 
+                // Interface inheritance seems to be a different animal:
                 // more contractual, less structural.  Thus, a Type that
-                // represents an interface that inherits from another 
-                // interface does not return the inherited interface's 
-                // methods in GetMembers. For example ICollection inherits 
-                // from IEnumerable, but ICollection's GetMemebers does not 
+                // represents an interface that inherits from another
+                // interface does not return the inherited interface's
+                // methods in GetMembers. For example ICollection inherits
+                // from IEnumerable, but ICollection's GetMemebers does not
                 // return GetEnumerator.
                 //
-                // Not sure if this is the correct way to fix this, but it 
+                // Not sure if this is the correct way to fix this, but it
                 // seems to work. Thanks to Bruce Dodson for the fix.
 
                 Type[] inheritedInterfaces = type.GetInterfaces();
@@ -260,7 +252,7 @@ namespace Python.Runtime {
 
                 case MemberTypes.Method:
                     meth = (MethodInfo) mi;
-                    if (!(meth.IsPublic || meth.IsFamily || 
+                    if (!(meth.IsPublic || meth.IsFamily ||
                           meth.IsFamilyOrAssembly))
                         continue;
                     name = meth.Name;
@@ -330,7 +322,7 @@ namespace Python.Runtime {
 
                 case MemberTypes.NestedType:
                     tp = (Type) mi;
-                    if (!(tp.IsNestedPublic || tp.IsNestedFamily || 
+                    if (!(tp.IsNestedPublic || tp.IsNestedFamily ||
                           tp.IsNestedFamORAssem))
                         continue;
                     ob = ClassManager.GetClass(tp);
@@ -359,7 +351,7 @@ namespace Python.Runtime {
         }
 
 
-    }        
+    }
 
 
     internal class ClassInfo {

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Threading;
@@ -18,7 +10,7 @@ using System.Reflection.Emit;
 namespace Python.Runtime {
 
     /// <summary>
-    /// The DelegateManager class manages the creation of true managed 
+    /// The DelegateManager class manages the creation of true managed
     /// delegate instances that dispatch calls to Python methods.
     /// </summary>
 
@@ -60,10 +52,10 @@ namespace Python.Runtime {
         // GetDispatcher is responsible for creating a class that provides
         // an appropriate managed callback method for a given delegate type.
         //====================================================================
-        
+
         private Type GetDispatcher(Type dtype) {
 
-            // If a dispatcher type for the given delegate type has already 
+            // If a dispatcher type for the given delegate type has already
             // been generated, get it from the cache. The cache maps delegate
             // types to generated dispatcher types. A possible optimization
             // for the future would be to generate dispatcher types based on
@@ -85,7 +77,7 @@ namespace Python.Runtime {
 
             MethodAttributes ma = MethodAttributes.Public |
                                   MethodAttributes.HideBySig |
-                                  MethodAttributes.SpecialName | 
+                                  MethodAttributes.SpecialName |
                                   MethodAttributes.RTSpecialName;
             CallingConventions cc = CallingConventions.Standard;
             Type[] args = {ptrtype, typetype};
@@ -115,7 +107,7 @@ namespace Python.Runtime {
 
             MethodBuilder mb = tb.DefineMethod(
                                   "Invoke",
-                                  MethodAttributes.Public, 
+                                  MethodAttributes.Public,
                                   method.ReturnType,
                                   signature
                                   );
@@ -182,13 +174,13 @@ namespace Python.Runtime {
        the delegate manager generates a custom subclass of Dispatcher and
        instantiates it, passing the IntPtr of the Python callable.
 
-       The "real" delegate is created using CreateDelegate, passing the 
+       The "real" delegate is created using CreateDelegate, passing the
        instance of the generated type and the name of the (generated)
        implementing method (Invoke).
 
        The true delegate instance holds the only reference to the dispatcher
        instance, which ensures that when the delegate dies, the finalizer
-       of the referenced instance will be able to decref the Python 
+       of the referenced instance will be able to decref the Python
        callable.
 
        A possible alternate strategy would be to create custom subclasses
@@ -212,7 +204,7 @@ namespace Python.Runtime {
 
         ~Dispatcher() {
             // Note: the managed GC thread can run and try to free one of
-            // these *after* the Python runtime has been finalized! 
+            // these *after* the Python runtime has been finalized!
             if (Runtime.Py_IsInitialized() > 0) {
                 IntPtr gs = PythonEngine.AcquireLock();
                 Runtime.Decref(target);
@@ -273,7 +265,7 @@ namespace Python.Runtime {
             return result;
         }
 
-        
+
     }
 
 

@@ -1,12 +1,4 @@
-﻿// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
+﻿
 using System;
 using System.Reflection;
 
@@ -18,7 +10,7 @@ namespace Python.Runtime {
     /// </summary>
     /// <remarks>
     /// ClassManager stores a ConstructorBinding instance in the class's __dict__['Overloads']
-    /// 
+    ///
     /// SomeType.Overloads[Type, ...] works like this:
     /// 1) Python retreives the Overloads attribute from this ClassObject's dictionary normally
     /// and finds a non-null tp_descr_get slot which is called by the interpreter
@@ -56,12 +48,12 @@ namespace Python.Runtime {
         /// <param name="owner"> always the owner class </param>
         /// <returns> a CtorMapper (that borrows a reference to this python type and the
         /// ClassObject's ConstructorBinder) wrapper. </returns>
-        /// 
+        ///
         /// <remarks>
         /// Python 2.6.5 docs:
         /// object.__get__(self, instance, owner)
         /// Called to get the attribute of the owner class (class attribute access)
-        /// or of an instance of that class (instance attribute access). 
+        /// or of an instance of that class (instance attribute access).
         /// owner is always the owner class, while instance is the instance that
         /// the attribute was accessed through, or None when the attribute is accessed through the owner.
         /// This method should return the (computed) attribute value or raise an AttributeError exception.

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -17,7 +9,7 @@ using System.Security;
 namespace Python.Runtime {
 
     /// <summary>
-    /// This class is responsible for efficiently maintaining the bits 
+    /// This class is responsible for efficiently maintaining the bits
     /// of information we need to support aliases with 'nice names'.
     /// </summary>
 
@@ -28,7 +20,7 @@ namespace Python.Runtime {
         private GenericUtil() {}
 
         static GenericUtil() {
-            mapping = new 
+            mapping = new
                 Dictionary<string, Dictionary<string, List<string>>>();
         }
 

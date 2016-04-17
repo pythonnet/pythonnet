@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -34,7 +26,7 @@ namespace Python.Test {
             }
             return null;
         }
-            
+
     }
 
 
@@ -307,7 +299,7 @@ namespace Python.Test {
         public MultiArgIndexerTest() : base() {}
 
         public string this [int index1, int index2] {
-            get { 
+            get {
                 string key = index1.ToString() + index2.ToString();
                 object value = t[key];
                 if (value != null) {
@@ -315,9 +307,9 @@ namespace Python.Test {
                 }
                 return null;
             }
-            set { 
+            set {
                 string key = index1.ToString() + index2.ToString();
-                t[key] = value; 
+                t[key] = value;
             }
         }
 
@@ -329,8 +321,8 @@ namespace Python.Test {
         public MultiTypeIndexerTest() : base() {}
 
         public string this [int i1, string i2, ISpam i3] {
-            get { 
-                string key = i1.ToString() + i2.ToString() + 
+            get {
+                string key = i1.ToString() + i2.ToString() +
                              i3.GetHashCode().ToString();
                 object value = t[key];
                 if (value != null) {
@@ -338,10 +330,10 @@ namespace Python.Test {
                 }
                 return null;
             }
-            set { 
-                string key = i1.ToString() + i2.ToString() + 
+            set {
+                string key = i1.ToString() + i2.ToString() +
                              i3.GetHashCode().ToString();
-                t[key] = value; 
+                t[key] = value;
             }
         }
 

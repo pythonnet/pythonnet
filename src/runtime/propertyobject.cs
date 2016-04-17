@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -33,7 +25,7 @@ namespace Python.Runtime {
 
 
         //====================================================================
-        // Descriptor __get__ implementation. This method returns the 
+        // Descriptor __get__ implementation. This method returns the
         // value of the property on the given object. The returned value
         // is converted to an appropriately typed Python object.
         //====================================================================
@@ -50,8 +42,8 @@ namespace Python.Runtime {
 
             if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone)) {
                 if (!(getter.IsStatic)) {
-                    Exceptions.SetError(Exceptions.TypeError, 
-                               "instance property must be accessed through " + 
+                    Exceptions.SetError(Exceptions.TypeError,
+                               "instance property must be accessed through " +
                                "a class instance"
                                );
                     return IntPtr.Zero;
@@ -87,7 +79,7 @@ namespace Python.Runtime {
 
         //====================================================================
         // Descriptor __set__ implementation. This method sets the value of
-        // a property based on the given Python value. The Python value must 
+        // a property based on the given Python value. The Python value must
         // be convertible to the type of the property.
         //====================================================================
 
@@ -107,7 +99,7 @@ namespace Python.Runtime {
             }
 
 
-            if (!Converter.ToManaged(val, self.info.PropertyType, out newval, 
+            if (!Converter.ToManaged(val, self.info.PropertyType, out newval,
                                       true)) {
                 return -1;
             }
@@ -133,7 +125,7 @@ namespace Python.Runtime {
                     self.info.SetValue(co.inst, newval, null);
                 }
                 else {
-                    self.info.SetValue(null, newval, null);                    
+                    self.info.SetValue(null, newval, null);
                 }
                 return 0;
             }

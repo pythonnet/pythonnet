@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 
@@ -35,7 +27,7 @@ namespace Python.Runtime {
             EventBinding self = (EventBinding)GetManagedObject(ob);
 
             if (Runtime.PyCallable_Check(arg) < 1) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "event handlers must be callable"
                                     );
                 return IntPtr.Zero;
@@ -58,7 +50,7 @@ namespace Python.Runtime {
             EventBinding self = (EventBinding)GetManagedObject(ob);
 
             if (Runtime.PyCallable_Check(arg) < 1) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "invalid event handler"
                                     );
                 return IntPtr.Zero;
@@ -88,7 +80,7 @@ namespace Python.Runtime {
                     return new IntPtr(-1);
                 }
             }
- 
+
             y = Runtime.PyObject_Hash(self.e.pyHandle).ToInt64();
             if (y == -1) {
                 return new IntPtr(-1);

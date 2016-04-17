@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -50,7 +42,7 @@ namespace Python.Runtime {
 
             // Now register the handler in a mapping from instance to pairs
             // of (handler hash, delegate) so we can lookup to remove later.
-            // All this is done lazily to avoid overhead until an event is 
+            // All this is done lazily to avoid overhead until an event is
             // actually subscribed to by a Python event handler.
 
             if (reg == null) {
@@ -64,7 +56,7 @@ namespace Python.Runtime {
             }
             list.Add(new Handler(Runtime.PyObject_Hash(handler), d));
 
-            // Note that AddEventHandler helper only works for public events, 
+            // Note that AddEventHandler helper only works for public events,
             // so we have to get the underlying add method explicitly.
 
             object[] args = { d };
@@ -88,9 +80,9 @@ namespace Python.Runtime {
 
             IntPtr hash = Runtime.PyObject_Hash(handler);
             if (Exceptions.ErrorOccurred() || (reg == null)) {
-                Exceptions.SetError(Exceptions.ValueError, 
+                Exceptions.SetError(Exceptions.ValueError,
                                     "unknown event handler"
-                                    ); 
+                                    );
                 return false;
             }
 
@@ -98,9 +90,9 @@ namespace Python.Runtime {
             ArrayList list = reg[key] as ArrayList;
 
             if (list == null) {
-                Exceptions.SetError(Exceptions.ValueError, 
+                Exceptions.SetError(Exceptions.ValueError,
                                     "unknown event handler"
-                                    ); 
+                                    );
                 return false;
             }
 
@@ -123,9 +115,9 @@ namespace Python.Runtime {
                 return true;
             }
 
-            Exceptions.SetError(Exceptions.ValueError, 
+            Exceptions.SetError(Exceptions.ValueError,
                                 "unknown event handler"
-                                ); 
+                                );
             return false;
         }
 

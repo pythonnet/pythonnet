@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -15,8 +7,8 @@ namespace Python.Runtime {
 
     /// <summary>
     /// Managed class that provides the implementation for reflected delegate
-    /// types. Delegates are represented in Python by generated type objects. 
-    /// Each of those type objects is associated an instance of this class, 
+    /// types. Delegates are represented in Python by generated type objects.
+    /// Each of those type objects is associated an instance of this class,
     /// which provides its implementation.
     /// </summary>
 
@@ -90,7 +82,7 @@ namespace Python.Runtime {
             if (o == null) {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
-            
+
             Delegate d = o.inst as Delegate;
 
             if (d == null) {
@@ -143,7 +135,7 @@ namespace Python.Runtime {
         }
 #endif
 
-    }        
+    }
 
 
 }

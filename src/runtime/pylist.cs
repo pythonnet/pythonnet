@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 
@@ -23,9 +15,9 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Creates a new PyList from an existing object reference. Note 
-        /// that the instance assumes ownership of the object reference. 
-        /// The object reference is not checked for type-correctness. 
+        /// Creates a new PyList from an existing object reference. Note
+        /// that the instance assumes ownership of the object reference.
+        /// The object reference is not checked for type-correctness.
         /// </remarks>
 
         public PyList(IntPtr ptr) : base(ptr) {}
@@ -36,7 +28,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Copy constructor - obtain a PyList from a generic PyObject. An 
+        /// Copy constructor - obtain a PyList from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
         /// Python list object.
         /// </remarks>
@@ -106,7 +98,7 @@ namespace Python.Runtime {
         /// </summary>
         ///
         /// <remarks>
-        /// Converts a Python object to a Python list if possible, raising  
+        /// Converts a Python object to a Python list if possible, raising
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "list(object)".
         /// </remarks>

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -31,7 +23,7 @@ namespace Python.Runtime {
         // Constructors get invoked when an instance of a wrapped managed
         // class or a subclass of a managed class is created. This differs
         // from the MethodBinder implementation in that we return the raw
-        // result of the constructor rather than wrapping it as a Python 
+        // result of the constructor rather than wrapping it as a Python
         // object - the reason is that only the caller knows the correct
         // Python type to use when wrapping the result (may be a subclass).
         //====================================================================
@@ -58,13 +50,13 @@ namespace Python.Runtime {
                                   MethodBase info) {
             Object result;
 
-            if (_containingType.IsValueType && !_containingType.IsPrimitive && 
-                !_containingType.IsEnum && _containingType != typeof (decimal) && 
+            if (_containingType.IsValueType && !_containingType.IsPrimitive &&
+                !_containingType.IsEnum && _containingType != typeof (decimal) &&
                 Runtime.PyTuple_Size(args) == 0) {
                 // If you are trying to construct an instance of a struct by
                 // calling its default constructor, that ConstructorInfo
-                // instance will not appear in reflection and the object must 
-                // instead be constructed via a call to 
+                // instance will not appear in reflection and the object must
+                // instead be constructed via a call to
                 // Activator.CreateInstance().
                 try {
                     result = Activator.CreateInstance(_containingType);

@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Threading;
@@ -17,7 +9,7 @@ using System.Reflection.Emit;
 namespace Python.Runtime {
 
     /// <summary>
-    /// Provides support for calling native code indirectly through 
+    /// Provides support for calling native code indirectly through
     /// function pointers. Most of the important parts of the Python
     /// C API can just be wrapped with p/invoke, but there are some
     /// situations (specifically, calling functions through Python
@@ -25,12 +17,12 @@ namespace Python.Runtime {
     ///
     /// This class uses Reflection.Emit to generate IJW thunks that
     /// support indirect calls to native code using various common
-    /// call signatures. This is mainly a workaround for the fact 
+    /// call signatures. This is mainly a workaround for the fact
     /// that you can't spell an indirect call in C# (but can in IL).
     ///
-    /// Another approach that would work is for this to be turned 
+    /// Another approach that would work is for this to be turned
     /// into a separate utility program that could be run during the
-    /// build process to generate the thunks as a separate assembly 
+    /// build process to generate the thunks as a separate assembly
     /// that could then be referenced by the main Python runtime.
     /// </summary>
 
@@ -47,7 +39,7 @@ namespace Python.Runtime {
             // assembly and the methods that implement the IJW thunks.
             //
             // To do this, we actually use reflection on the INativeCall
-            // interface (defined below) and generate the required thunk 
+            // interface (defined below) and generate the required thunk
             // code based on the method signatures.
 
             AssemblyName aname = new AssemblyName();
@@ -63,13 +55,13 @@ namespace Python.Runtime {
             Type iType = typeof(INativeCall);
             tBuilder.AddInterfaceImplementation(iType);
 
-            // Use reflection to loop over the INativeCall interface methods, 
+            // Use reflection to loop over the INativeCall interface methods,
             // calling GenerateThunk to create a managed thunk for each one.
 
             foreach (MethodInfo method in iType.GetMethods()) {
                 GenerateThunk(tBuilder, method);
             }
-            
+
             Type theType = tBuilder.CreateType();
 
             Impl = (INativeCall)Activator.CreateInstance(theType);
@@ -89,7 +81,7 @@ namespace Python.Runtime {
 
             MethodBuilder mb = tb.DefineMethod(
                                   method.Name,
-                                  MethodAttributes.Public | 
+                                  MethodAttributes.Public |
                                   MethodAttributes.Virtual,
                                   method.ReturnType,
                                   args
@@ -104,7 +96,7 @@ namespace Python.Runtime {
                 nargs[(i - 1)] = args[i];
             }
 
-            // IL generation: the (implicit) first argument of the method 
+            // IL generation: the (implicit) first argument of the method
             // is the 'this' pointer and the second is the function pointer.
             // This code pushes the real args onto the stack, followed by
             // the function pointer, then the calli opcode to make the call.
@@ -117,9 +109,9 @@ namespace Python.Runtime {
 
             il.Emit(OpCodes.Ldarg_1);
 
-            il.EmitCalli(OpCodes.Calli, 
-                         CallingConvention.Cdecl, 
-                         method.ReturnType, 
+            il.EmitCalli(OpCodes.Calli,
+                         CallingConvention.Cdecl,
+                         method.ReturnType,
                          nargs
                          );
 
@@ -134,12 +126,12 @@ namespace Python.Runtime {
             Impl.Void_Call_1(fp, a1);
         }
 
-        public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2, 
+        public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2,
                                     IntPtr a3) {
             return Impl.Call_3(fp, a1, a2, a3);
         }
 
-        public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, 
+        public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2,
                                      IntPtr a3) {
             return Impl.Int_Call_3(fp, a1, a2, a3);
         }

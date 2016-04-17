@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -14,7 +6,7 @@ using System.Reflection;
 namespace Python.Runtime {
 
     //========================================================================
-    // A MethodBinder encapsulates information about a (possibly overloaded) 
+    // A MethodBinder encapsulates information about a (possibly overloaded)
     // managed method, and is responsible for selecting the right method given
     // a set of Python arguments. This is also used as a base class for the
     // ConstructorBinder, a minor variation used to invoke constructors.
@@ -30,7 +22,7 @@ namespace Python.Runtime {
         internal MethodBinder () {
             this.list = new ArrayList();
         }
-        
+
         internal MethodBinder(MethodInfo mi) : base () {
             this.list = new ArrayList();
             this.list.Add(mi);
@@ -45,7 +37,7 @@ namespace Python.Runtime {
         }
 
         //====================================================================
-        // Given a sequence of MethodInfo and a sequence of types, return the 
+        // Given a sequence of MethodInfo and a sequence of types, return the
         // MethodInfo that matches the signature represented by those types.
         //====================================================================
 
@@ -70,9 +62,9 @@ namespace Python.Runtime {
              }
              return null;
          }
- 
+
         //====================================================================
-        // Given a sequence of MethodInfo and a sequence of type parameters, 
+        // Given a sequence of MethodInfo and a sequence of type parameters,
         // return the MethodInfo that represents the matching closed generic.
         //====================================================================
 
@@ -96,13 +88,13 @@ namespace Python.Runtime {
 
 
          //====================================================================
-         // Given a sequence of MethodInfo and two sequences of type parameters, 
+         // Given a sequence of MethodInfo and two sequences of type parameters,
          // return the MethodInfo that matches the signature and the closed generic.
          //====================================================================
 
          internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
          {
-             if ((genericTp == null) || (sigTp == null)) { 
+             if ((genericTp == null) || (sigTp == null)) {
                  return null;
              }
              int genericCount = genericTp.Length;
@@ -256,7 +248,7 @@ namespace Python.Runtime {
                 int arrayStart = -1;
                 int outs = 0;
 
-                if (pynargs == clrnargs) { 
+                if (pynargs == clrnargs) {
                     match = true;
                 } else if(pynargs < clrnargs){
                     match = true;
@@ -266,7 +258,7 @@ namespace Python.Runtime {
                         if (pi[v].DefaultValue == DBNull.Value)
                             match = false;
                         else
-                            defaultArgList.Add((object)pi[v].DefaultValue);    
+                            defaultArgList.Add((object)pi[v].DefaultValue);
                     }
                 } else if ((pynargs > clrnargs) && (clrnargs > 0) &&
                            Attribute.IsDefined(pi[clrnargs-1], typeof(ParamArrayAttribute))) {
@@ -344,7 +336,7 @@ namespace Python.Runtime {
                             else {
                                 clrtype = pi[n].ParameterType;
                             }
-                            
+
                             if (pi[n].IsOut || clrtype.IsByRef)
                             {
                                 outs++;
@@ -370,7 +362,7 @@ namespace Python.Runtime {
                                 margs[n] = defaultArgList[n - pynargs];
                         }
                     }
-                    
+
                     if (margs == null) {
                         continue;
                     }
@@ -410,7 +402,7 @@ namespace Python.Runtime {
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw) {
             return this.Invoke(inst, args, kw, null, null);
-            
+
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw,
@@ -425,21 +417,21 @@ namespace Python.Runtime {
             IntPtr ts = IntPtr.Zero;
 
             if (binding == null) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "No method matches given arguments"
                                     );
                 return IntPtr.Zero;
             }
 
             if (allow_threads) {
-                ts = PythonEngine.BeginAllowThreads(); 
+                ts = PythonEngine.BeginAllowThreads();
             }
 
             try {
-                result = binding.info.Invoke(binding.inst, 
-                                             BindingFlags.Default, 
-                                             null, 
-                                             binding.args, 
+                result = binding.info.Invoke(binding.inst,
+                                             BindingFlags.Default,
+                                             null,
+                                             binding.args,
                                              null);
             }
             catch (Exception e) {
@@ -535,7 +527,7 @@ namespace Python.Runtime {
         public Object inst;
         public int outs;
 
-        internal Binding(MethodBase info, Object inst, Object[] args, 
+        internal Binding(MethodBase info, Object inst, Object[] args,
                          int outs) {
             this.info = info;
             this.inst = inst;

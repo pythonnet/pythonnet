@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -34,7 +26,7 @@ namespace Python.Runtime {
 
         internal static void Initialize() {
             // Initialize the Python <--> CLR module hook. We replace the
-            // built-in Python __import__ with our own. This isn't ideal, 
+            // built-in Python __import__ with our own. This isn't ideal,
             // but it provides the most "Pythonic" way of dealing with CLR
             // modules (Python doesn't provide a way to emulate packages).
             IntPtr dict = Runtime.PyImport_GetModuleDict();
@@ -154,7 +146,7 @@ namespace Python.Runtime {
         public static IntPtr __import__(IntPtr self, IntPtr args, IntPtr kw) {
 
             // Replacement for the builtin __import__. The original import
-            // hook is saved as this.py_import. This version handles CLR 
+            // hook is saved as this.py_import. This version handles CLR
             // import and defers to the normal builtin for everything else.
 
             int num_args = Runtime.PyTuple_Size(args);
@@ -178,7 +170,7 @@ namespace Python.Runtime {
             bool fromlist = false;
             if (num_args >= 4) {
                 fromList = Runtime.PyTuple_GetItem(args, 3);
-                if ((fromList != IntPtr.Zero) && 
+                if ((fromList != IntPtr.Zero) &&
                     (Runtime.PyObject_IsTrue(fromList) == 1)) {
                     fromlist = true;
                 }
@@ -222,7 +214,7 @@ namespace Python.Runtime {
             else {
                 // 2010-08-15: Always seemed smart to let python try first...
                 // This shaves off a few tenths of a second on test_module.py
-                // and works around a quirk where 'sys' is found by the 
+                // and works around a quirk where 'sys' is found by the
                 // LoadImplicit() deprecation logic.
                 // Turns out that the AssemblyManager.ResolveHandler() checks to see if any
                 // Assembly's FullName.ToLower().StartsWith(name.ToLower()), which makes very
@@ -246,10 +238,10 @@ namespace Python.Runtime {
             // Now we need to decide if the name refers to a CLR module,
             // and may have to do an implicit load (for b/w compatibility)
             // using the AssemblyManager. The assembly manager tries
-            // really hard not to use Python objects or APIs, because 
+            // really hard not to use Python objects or APIs, because
             // parts of it can run recursively and on strange threads.
-            // 
-            // It does need an opportunity from time to time to check to 
+            //
+            // It does need an opportunity from time to time to check to
             // see if sys.path has changed, in a context that is safe. Here
             // we know we have the GIL, so we'll let it update if needed.
 
@@ -284,7 +276,7 @@ namespace Python.Runtime {
 
             // Traverse the qualified module name to get the named module
             // and place references in sys.modules as we go. Note that if
-            // we are running in interactive mode we pre-load the names in 
+            // we are running in interactive mode we pre-load the names in
             // each module, which is often useful for introspection. If we
             // are not interactive, we stick to just-in-time creation of
             // objects at lookup time, which is much more efficient.
@@ -301,7 +293,7 @@ namespace Python.Runtime {
                 ManagedType mt = tail.GetAttribute(name, true);
                 if (!(mt is ModuleObject)) {
                     string error = String.Format("No module named {0}", name);
-                    Exceptions.SetError(Exceptions.ImportError, error); 
+                    Exceptions.SetError(Exceptions.ImportError, error);
                     return IntPtr.Zero;
                 }
                 if (head == null) {

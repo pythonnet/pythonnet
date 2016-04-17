@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -15,7 +7,7 @@ using System.Reflection;
 namespace Python.Runtime {
 
     //========================================================================
-    // Common base class for all objects that are implemented in managed 
+    // Common base class for all objects that are implemented in managed
     // code. It defines the common fields that associate CLR and Python
     // objects and common utilities to convert between those identities.
     //========================================================================
@@ -37,7 +29,7 @@ namespace Python.Runtime {
                 if (tp == Runtime.PyTypeType || tp == Runtime.PyCLRMetaType) {
                     tp = ob;
                 }
-                
+
                 int flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0) {
                     IntPtr op = (tp == ob) ?
@@ -66,7 +58,7 @@ namespace Python.Runtime {
         internal static ManagedType GetManagedObjectErr(IntPtr ob) {
             ManagedType result = GetManagedObject(ob);
             if (result == null) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                            "invalid argument, expected CLR type"
                            );
             }
@@ -80,7 +72,7 @@ namespace Python.Runtime {
                 if (tp == Runtime.PyTypeType || tp == Runtime.PyCLRMetaType) {
                     tp = ob;
                 }
-                
+
                 int flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0) {
                     return true;

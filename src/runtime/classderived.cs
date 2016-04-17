@@ -1,12 +1,4 @@
-﻿// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
+﻿
 using System;
 using System.IO;
 using System.Reflection;
@@ -22,8 +14,8 @@ namespace Python.Runtime
 
     /// <summary>
     /// Managed class that provides the implementation for reflected types.
-    /// Managed classes and value types are represented in Python by actual 
-    /// Python type objects. Each of those type objects is associated with 
+    /// Managed classes and value types are represented in Python by actual
+    /// Python type objects. Each of those type objects is associated with
     /// an instance of ClassObject, which provides its implementation.
     /// </summary>
 

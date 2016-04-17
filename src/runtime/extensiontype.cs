@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -16,7 +8,7 @@ namespace Python.Runtime {
 
     /// <summary>
     /// Base class for extensions whose instances *share* a single Python
-    /// type object, such as the types that represent CLR methods, fields, 
+    /// type object, such as the types that represent CLR methods, fields,
     /// etc. Instances implemented by this class do not support subtyping.
     /// </summary>
 
@@ -26,7 +18,7 @@ namespace Python.Runtime {
 
             // Create a new PyObject whose type is a generated type that is
             // implemented by the particuar concrete ExtensionType subclass.
-            // The Python instance object is related to an instance of a 
+            // The Python instance object is related to an instance of a
             // particular concrete subclass with a hidden CLR gchandle.
 
             IntPtr tp = TypeManager.GetTypeHandle(this.GetType());
@@ -116,7 +108,7 @@ namespace Python.Runtime {
         //====================================================================
 
         public static void tp_dealloc(IntPtr ob) {
-            // Clean up a Python instance of this extension type. This 
+            // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             ManagedType self = GetManagedObject(ob);
             FinalizeObject(self);

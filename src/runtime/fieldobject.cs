@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Collections;
@@ -27,7 +19,7 @@ namespace Python.Runtime {
         }
 
         //====================================================================
-        // Descriptor __get__ implementation. This method returns the 
+        // Descriptor __get__ implementation. This method returns the
         // value of the field on the given object. The returned value
         // is converted to an appropriately typed Python object.
         //====================================================================
@@ -44,8 +36,8 @@ namespace Python.Runtime {
 
             if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone)) {
                 if (!info.IsStatic) {
-                    Exceptions.SetError(Exceptions.TypeError, 
-                               "instance attribute must be accessed " + 
+                    Exceptions.SetError(Exceptions.TypeError,
+                               "instance attribute must be accessed " +
                                "through a class instance"
                                );
                     return IntPtr.Zero;
@@ -86,7 +78,7 @@ namespace Python.Runtime {
             }
 
             if (val == IntPtr.Zero) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "cannot delete field"
                                     );
                 return -1;
@@ -95,7 +87,7 @@ namespace Python.Runtime {
             FieldInfo info = self.info;
 
             if (info.IsLiteral || info.IsInitOnly) {
-                Exceptions.SetError(Exceptions.TypeError, 
+                Exceptions.SetError(Exceptions.TypeError,
                                     "field is read-only"
                                     );
                 return -1;
@@ -105,15 +97,15 @@ namespace Python.Runtime {
 
             if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone)) {
                 if (!is_static) {
-                    Exceptions.SetError(Exceptions.TypeError, 
-                               "instance attribute must be set " + 
+                    Exceptions.SetError(Exceptions.TypeError,
+                               "instance attribute must be set " +
                                "through a class instance"
                                );
                     return -1;
                 }
             }
 
-            if (!Converter.ToManaged(val, info.FieldType, out newval, 
+            if (!Converter.ToManaged(val, info.FieldType, out newval,
                                       true)) {
                 return -1;
             }

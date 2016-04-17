@@ -1,12 +1,4 @@
-﻿// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
+﻿
 //============================================================================
 // This file replaces the  hand-maintained stub that used to implement clr.dll.
 // This is a line-by-line port from IL back to C#.
@@ -21,7 +13,7 @@
 // If defined, the "pythonRuntimeVersionString" variable must be set to
 // Python.Runtime's current version.
 
-#define USE_PYTHON_RUNTIME_VERSION 
+#define USE_PYTHON_RUNTIME_VERSION
 
 // If defined, the "PythonRuntimePublicKeyTokenData" data array must be
 // set to Python.Runtime's public key token. (sn -T Python.Runtin.dll)
@@ -32,13 +24,13 @@
 //============================================================================
 using System;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 public class clrModule
-// ReSharper restore InconsistentNaming
-// ReSharper restore CheckNamespace
+
+
 {
-// ReSharper disable InconsistentNaming
+
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [RGiesecke.DllExport.DllExport("PyInit_clr", System.Runtime.InteropServices.CallingConvention.StdCall)]
     public static IntPtr PyInit_clr()
@@ -46,7 +38,7 @@ public class clrModule
     [RGiesecke.DllExport.DllExport("initclr", System.Runtime.InteropServices.CallingConvention.StdCall)]
     public static void initclr()
 #endif
-// ReSharper restore InconsistentNaming    
+
     {
 #if DEBUG_PRINT
         System.Console.WriteLine("Attempting to load Python.Runtime using standard binding rules... ");
@@ -64,7 +56,7 @@ public class clrModule
         var pythonRuntimeName = new System.Reflection.AssemblyName("Python.Runtime")
             {
 #if USE_PYTHON_RUNTIME_VERSION
-                Version = new System.Version("4.0.0.1"), 
+                Version = new System.Version("4.0.0.1"),
 #endif
                 CultureInfo = System.Globalization.CultureInfo.InvariantCulture,
             };

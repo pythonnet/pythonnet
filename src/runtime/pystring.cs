@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 
@@ -24,9 +16,9 @@ namespace Python.Runtime {
     /// </summary>
     ///
     /// <remarks>
-    /// Creates a new PyString from an existing object reference. Note 
-    /// that the instance assumes ownership of the object reference. 
-    /// The object reference is not checked for type-correctness. 
+    /// Creates a new PyString from an existing object reference. Note
+    /// that the instance assumes ownership of the object reference.
+    /// The object reference is not checked for type-correctness.
     /// </remarks>
 
     public PyString(IntPtr ptr) : base(ptr) {}
@@ -37,8 +29,8 @@ namespace Python.Runtime {
     /// </summary>
     ///
     /// <remarks>
-    /// Copy constructor - obtain a PyString from a generic PyObject. 
-    /// An ArgumentException will be thrown if the given object is not 
+    /// Copy constructor - obtain a PyString from a generic PyObject.
+    /// An ArgumentException will be thrown if the given object is not
     /// a Python string object.
     /// </remarks>
 

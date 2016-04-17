@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Runtime.InteropServices;
@@ -293,7 +285,7 @@ namespace Python.Runtime {
 
             // The managed metatype is functionally little different than the
             // standard Python metatype (PyType_Type). It overrides certain of
-            // the standard type slots, and has to subclass PyType_Type for 
+            // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
             IntPtr type = AllocateTypeObject("CLR Metatype");
@@ -475,7 +467,7 @@ namespace Python.Runtime {
                     if (seen[name] != null) {
                         continue;
                     }
-                    
+
                     FieldInfo fi = offsetType.GetField(name);
                     int offset = (int)fi.GetValue(offsetType);
 

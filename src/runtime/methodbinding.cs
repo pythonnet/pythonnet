@@ -1,11 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
 
 using System;
 using System.Reflection;
@@ -46,7 +38,7 @@ namespace Python.Runtime {
          //====================================================================
          // Implement binding of generic methods using the subscript syntax [].
          //====================================================================
- 
+
          public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
              MethodBinding self = (MethodBinding)GetManagedObject(tp);
 
@@ -64,12 +56,12 @@ namespace Python.Runtime {
              MethodBinding mb = new MethodBinding(self.m, self.target);
              mb.info = mi;
              Runtime.Incref(mb.pyHandle);
-             return mb.pyHandle;            
+             return mb.pyHandle;
          }
 
 
         //====================================================================
-        // MethodBinding __getattribute__ implementation. 
+        // MethodBinding __getattribute__ implementation.
         //====================================================================
 
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
@@ -91,7 +83,7 @@ namespace Python.Runtime {
             if (name == "__overloads__" || name == "Overloads") {
                 OverloadMapper om = new OverloadMapper(self.m, self.target);
                 Runtime.Incref(om.pyHandle);
-                return om.pyHandle;            
+                return om.pyHandle;
             }
 
             return Runtime.PyObject_GenericGetAttr(ob, key);
@@ -201,7 +193,7 @@ namespace Python.Runtime {
                     return new IntPtr(-1);
                 }
             }
- 
+
             y = Runtime.PyObject_Hash(self.m.pyHandle).ToInt64();
             if (y == -1) {
                 return new IntPtr(-1);
