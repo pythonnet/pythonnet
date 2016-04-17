@@ -1,14 +1,6 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import System
 import gc
+
 
 class LeakTest:
     """A leak-check test for the objects implemented in the managed
@@ -50,7 +42,6 @@ class LeakTest:
         self.testEvents()
         self.testDelegates()
 
-
     def report(self):
         import sys, gc
         gc.collect()
@@ -59,28 +50,26 @@ class LeakTest:
             if type(item) != dicttype:
                 print item, sys.getrefcount(item)
 
-
     def testModules(self):
         self.notify("Running module leak check...")
 
         for i in xrange(self.count):
             if i == 10:
                 self.start_test()
-                
+
             __import__('clr')
             __import__('System')
             __import__('System.IO')
             __import__('System.Net')
-            __import__('System.Xml')            
+            __import__('System.Xml')
 
         self.end_test()
-
 
     def testClasses(self):
         from System.Collections import Hashtable
         from Python.Test import StringDelegate
         from System import Int32
-        
+
         self.notify("Running class leak check...")
 
         for i in xrange(self.count):
@@ -101,10 +90,9 @@ class LeakTest:
 
         self.end_test()
 
-
     def testEnumerations(self):
         from Python import Test
-        
+
         self.notify("Running enum leak check...")
 
         for i in xrange(self.count):
@@ -136,7 +124,6 @@ class LeakTest:
             del x
 
         self.end_test()
-
 
     def testEvents(self):
         from Python.Test import EventTest, TestEventArgs
@@ -204,7 +191,8 @@ class LeakTest:
             testob.PublicEvent -= EventTest.StaticHandler
 
             # Function event handler
-            dict = {'value':None}
+            dict = {'value': None}
+
             def handler(sender, args, dict=dict):
                 dict['value'] = args.value
 
@@ -214,7 +202,6 @@ class LeakTest:
             del handler
 
         self.end_test()
-
 
     def testDelegates(self):
         from Python.Test import DelegateTest, StringDelegate
@@ -325,12 +312,13 @@ class LeakTest:
             del d1
             del d2
             del md
-        
+
         self.end_test()
 
 
 class GenericHandler:
     """A generic handler to test event callbacks."""
+
     def __init__(self):
         self.value = None
 
@@ -340,6 +328,7 @@ class GenericHandler:
 
 class VariableArgsHandler:
     """A variable args handler to test event callbacks."""
+
     def __init__(self):
         self.value = None
 
@@ -350,6 +339,7 @@ class VariableArgsHandler:
 
 class CallableHandler:
     """A callable handler to test event callbacks."""
+
     def __init__(self):
         self.value = None
 
@@ -359,6 +349,7 @@ class CallableHandler:
 
 class VarCallableHandler:
     """A variable args callable handler to test event callbacks."""
+
     def __init__(self):
         self.value = None
 
@@ -405,18 +396,13 @@ class Hello:
         return "hello"
 
     c_hello = classmethod(c_hello)
-    
+
 
 def hello():
     return "hello"
-
-
 
 
 if __name__ == '__main__':
     test = LeakTest()
     test.run()
     test.report()
-
-
-

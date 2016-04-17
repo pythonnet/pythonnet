@@ -1,13 +1,5 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import clr
+
 SWF = clr.AddReference("System.Windows.Forms")
 print (SWF.Location)
 import System.Windows.Forms as WinForms
@@ -31,7 +23,7 @@ class HelloApp(WinForms.Form):
         self.button.Size = Size(820, 20)
         self.button.TabIndex = 2
         self.button.Text = "Click Me!"
-        
+
         # Register the event handler
         self.button.Click += self.button_Click
 
@@ -41,7 +33,7 @@ class HelloApp(WinForms.Form):
         self.textbox.TabIndex = 1
         self.textbox.Size = Size(1260, 40)
         self.textbox.Location = Point(160, 24)
-        
+
         # Add the controls to the form
         self.AcceptButton = self.button
         self.Controls.Add(self.button);
@@ -66,4 +58,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

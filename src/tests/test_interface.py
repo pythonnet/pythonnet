@@ -1,12 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 from Python.Test import InterfaceTest
 import sys, os, string, unittest, types
 import Python.Test as Test
@@ -29,12 +20,11 @@ class InterfaceTests(unittest.TestCase):
         self.assertTrue(ip.__module__ == 'Python.Test')
         self.assertTrue(type(ip.__dict__) == DictProxyType)
 
-
     def testGlobalInterfaceVisibility(self):
         """Test visibility of module-level interfaces."""
         from Python.Test import IPublicInterface
         self.assertTrue(IPublicInterface.__name__ == 'IPublicInterface')
-        
+
         def test():
             from Python.Test import IInternalInterface
 
@@ -44,7 +34,6 @@ class InterfaceTests(unittest.TestCase):
             i = Test.IInternalInterface
 
         self.assertRaises(AttributeError, test)
-
 
     def testNestedInterfaceVisibility(self):
         """Test visibility of nested interfaces."""
@@ -63,7 +52,6 @@ class InterfaceTests(unittest.TestCase):
             ob = InterfaceTest.IPrivate
 
         self.assertRaises(AttributeError, test)
-
 
     def testExplicitCastToInterface(self):
         """Test explicit cast to an interface."""
@@ -84,13 +72,13 @@ class InterfaceTests(unittest.TestCase):
         self.assertFalse(hasattr(i2, 'HelloProperty'))
 
 
-
 def test_suite():
     return unittest.makeSuite(InterfaceTests)
+
 
 def main():
     unittest.TextTestRunner().run(test_suite())
 
+
 if __name__ == '__main__':
     main()
-

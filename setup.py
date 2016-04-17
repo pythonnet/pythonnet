@@ -110,7 +110,6 @@ else:
 
 
 class PythonNET_BuildExt(build_ext):
-
     def build_extension(self, ext):
         """
         Builds the .pyd file using msbuild or xbuild.
@@ -191,7 +190,7 @@ class PythonNET_BuildExt(build_ext):
             self._build_monoclr(ext)
 
     def _get_manifest(self, build_dir):
-        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2,5):
+        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2, 5):
             mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
             manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
             cmd = [mt, '-inputresource:"%s"' % sys.executable, '-out:"%s"' % manifest]
@@ -209,12 +208,12 @@ class PythonNET_BuildExt(build_ext):
 
         # build the clr python module
         clr_ext = Extension("clr",
-                    sources=[
-                        "src/monoclr/pynetinit.c",
-                        "src/monoclr/clrmod.c"
-                    ],
-                    extra_compile_args=cflags.split(" "),
-                    extra_link_args=libs.split(" "))
+                            sources=[
+                                "src/monoclr/pynetinit.c",
+                                "src/monoclr/clrmod.c"
+                            ],
+                            extra_compile_args=cflags.split(" "),
+                            extra_link_args=libs.split(" "))
 
         build_ext.build_extension(self, clr_ext)
 
@@ -232,11 +231,10 @@ class PythonNET_BuildExt(build_ext):
 
 
 class PythonNET_InstallLib(install_lib):
-
     def install(self):
         if not os.path.isdir(self.build_dir):
             self.warn("'%s' does not exist -- no Python modules to install" %
-                        self.build_dir)
+                      self.build_dir)
             return
 
         if not os.path.exists(self.install_dir):
@@ -249,7 +247,6 @@ class PythonNET_InstallLib(install_lib):
 
 
 class PythonNET_InstallData(install_data):
-
     def run(self):
         build_cmd = self.get_finalized_command("build_ext")
         install_cmd = self.get_finalized_command("install")
@@ -350,10 +347,9 @@ if __name__ == "__main__":
         ],
         zip_safe=False,
         cmdclass={
-            "build_ext" : PythonNET_BuildExt,
-            "install_lib" : PythonNET_InstallLib,
+            "build_ext": PythonNET_BuildExt,
+            "install_lib": PythonNET_InstallLib,
             "install_data": PythonNET_InstallData,
         },
         setup_requires=setup_requires
     )
-

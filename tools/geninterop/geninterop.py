@@ -128,7 +128,6 @@ class AstParser(object):
             # otherwise add it as a single member
             struct_members.append((member_name, type_name))
 
-
     def __get_leaf_node(self, node):
         if isinstance(node, c_ast.Typedef):
             return self.__get_leaf_node(node.type)
@@ -281,4 +280,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
