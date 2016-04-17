@@ -1,3 +1,4 @@
+from __future__ import print_function
 import System
 import gc
 
@@ -15,7 +16,7 @@ class LeakTest:
 
     def notify(self, msg):
         if not self.quiet:
-            print msg
+            print(msg)
 
     def start_test(self):
         System.GC.Collect(System.GC.MaxGeneration)
@@ -32,8 +33,8 @@ class LeakTest:
             diff = '+%d' % diff
         else:
             diff = '%d' % diff
-        print "  start: %d  end: %d diff: %s" % (start, end, diff)
-        print ""
+        print("  start: %d  end: %d diff: %s" % (start, end, diff))
+        print("")
 
     def run(self):
         self.testModules()
@@ -48,7 +49,7 @@ class LeakTest:
         dicttype = type({})
         for item in gc.get_objects():
             if type(item) != dicttype:
-                print item, sys.getrefcount(item)
+                print(item, sys.getrefcount(item))
 
     def testModules(self):
         self.notify("Running module leak check...")

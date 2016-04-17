@@ -4,6 +4,7 @@ multithreaded way to stress the system. This makes it possible to look
 for memory leaks and threading issues and provides a good target for a
 profiler to accumulate better data.
 """
+from __future__ import print_function
 
 import sys, os, gc, time, threading, thread
 
@@ -19,7 +20,7 @@ class StressTest:
 
     def dprint(self, msg):
         # Debugging helper to trace thread-related tests.
-        if 1: print msg
+        if 1: print(msg)
 
     def markStart(self):
         self._start = time.clock()
@@ -32,7 +33,7 @@ class StressTest:
 
     def printGCReport(self):
         for item in gc.get_objects():
-            print item, sys.getrefcount(item)
+            print(item, sys.getrefcount(item))
 
     def runThread(self, iterations):
         thread_id = thread.get_ident()

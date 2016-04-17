@@ -6,7 +6,7 @@ def main():
     start = time.clock()
 
     for i in range(2000):
-        print i
+        print(i)
         for name in (
                 'test_module',
                 'test_conversion',
@@ -32,7 +32,7 @@ def main():
 
     import gc
     for i in gc.get_objects():
-        print i
+        print(i)
 
 
 if __name__ == '__main__':
