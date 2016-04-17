@@ -27,7 +27,7 @@ namespace Python.EmbeddingTest
         public void TestUnicode()
         {
             PyObject s = new PyString("foo\u00e9");
-            Assert.AreEqual("foo\u00e9",s.ToString());
+            Assert.AreEqual("foo\u00e9", s.ToString());
         }
     }
 }

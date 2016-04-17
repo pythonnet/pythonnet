@@ -1,15 +1,13 @@
-
 using System;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// Represents a Python tuple object. See the documentation at
     /// http://www.python.org/doc/current/api/tupleObjects.html for details.
     /// </summary>
-
-    public class PyTuple : PySequence {
-
+    public class PyTuple : PySequence
+    {
         /// <summary>
         /// PyTuple Constructor
         /// </summary>
@@ -19,8 +17,9 @@ namespace Python.Runtime {
         /// that the instance assumes ownership of the object reference.
         /// The object reference is not checked for type-correctness.
         /// </remarks>
-
-        public PyTuple(IntPtr ptr) : base(ptr) {}
+        public PyTuple(IntPtr ptr) : base(ptr)
+        {
+        }
 
 
         /// <summary>
@@ -32,9 +31,10 @@ namespace Python.Runtime {
         /// ArgumentException will be thrown if the given object is not a
         /// Python tuple object.
         /// </remarks>
-
-        public PyTuple(PyObject o) : base() {
-            if (!IsTupleType(o)) {
+        public PyTuple(PyObject o) : base()
+        {
+            if (!IsTupleType(o))
+            {
                 throw new ArgumentException("object is not a tuple");
             }
             Runtime.Incref(o.obj);
@@ -49,10 +49,11 @@ namespace Python.Runtime {
         /// <remarks>
         /// Creates a new empty PyTuple.
         /// </remarks>
-
-        public PyTuple() : base() {
+        public PyTuple() : base()
+        {
             obj = Runtime.PyTuple_New(0);
-            if (obj == IntPtr.Zero) {
+            if (obj == IntPtr.Zero)
+            {
                 throw new PythonException();
             }
         }
@@ -65,15 +66,17 @@ namespace Python.Runtime {
         /// <remarks>
         /// Creates a new PyTuple from an array of PyObject instances.
         /// </remarks>
-
-        public PyTuple(PyObject[] items) : base() {
+        public PyTuple(PyObject[] items) : base()
+        {
             int count = items.Length;
             obj = Runtime.PyTuple_New(count);
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++)
+            {
                 IntPtr ptr = items[i].obj;
                 Runtime.Incref(ptr);
                 int r = Runtime.PyTuple_SetItem(obj, i, ptr);
-                if (r < 0) {
+                if (r < 0)
+                {
                     throw new PythonException();
                 }
             }
@@ -87,8 +90,8 @@ namespace Python.Runtime {
         /// <remarks>
         /// Returns true if the given object is a Python tuple.
         /// </remarks>
-
-        public static bool IsTupleType(PyObject value) {
+        public static bool IsTupleType(PyObject value)
+        {
             return Runtime.PyTuple_Check(value.obj);
         }
 
@@ -102,17 +105,14 @@ namespace Python.Runtime {
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "tuple(object)".
         /// </remarks>
-
-        public static PyTuple AsTuple(PyObject value) {
+        public static PyTuple AsTuple(PyObject value)
+        {
             IntPtr op = Runtime.PySequence_Tuple(value.obj);
-            if (op == IntPtr.Zero) {
+            if (op == IntPtr.Zero)
+            {
                 throw new PythonException();
             }
             return new PyTuple(op);
         }
-
-
     }
-
-
 }

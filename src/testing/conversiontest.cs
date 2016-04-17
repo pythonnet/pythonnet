@@ -1,16 +1,16 @@
-
 using System;
 
 
-namespace Python.Test {
-
+namespace Python.Test
+{
     //========================================================================
     // Supports units tests for field access.
     //========================================================================
 
-    public class ConversionTest {
-
-        public ConversionTest() {
+    public class ConversionTest
+    {
+        public ConversionTest()
+        {
             EnumField = ShortEnum.Zero;
             SpamField = new Spam("spam");
             StringField = "spam";
@@ -36,25 +36,26 @@ namespace Python.Test {
 
         public byte[] ByteArrayField;
         public sbyte[] SByteArrayField;
-
     }
 
 
-    public interface ISpam {
+    public interface ISpam
+    {
         string GetValue();
     }
 
-    public class Spam : ISpam {
+    public class Spam : ISpam
+    {
         string value;
 
-        public Spam(string value) {
+        public Spam(string value)
+        {
             this.value = value;
         }
 
-        public string GetValue() {
+        public string GetValue()
+        {
             return value;
-
         }
     }
-
 }

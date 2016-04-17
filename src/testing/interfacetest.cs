@@ -1,51 +1,65 @@
-
 using System;
 
-namespace Python.Test {
-
+namespace Python.Test
+{
     //========================================================================
     // Supports CLR class unit tests.
     //========================================================================
 
-    public interface IPublicInterface {}
+    public interface IPublicInterface
+    {
+    }
 
-    internal interface IInternalInterface {}
+    internal interface IInternalInterface
+    {
+    }
 
 
-
-    public interface ISayHello1 {
+    public interface ISayHello1
+    {
         string SayHello();
     }
 
-    public interface ISayHello2 {
+    public interface ISayHello2
+    {
         string SayHello();
     }
 
-    public class InterfaceTest : ISayHello1, ISayHello2{
+    public class InterfaceTest : ISayHello1, ISayHello2
+    {
+        public InterfaceTest()
+        {
+        }
 
-        public InterfaceTest() {}
-
-        public string HelloProperty {
+        public string HelloProperty
+        {
             get { return "hello"; }
         }
 
-        string ISayHello1.SayHello() {
+        string ISayHello1.SayHello()
+        {
             return "hello 1";
         }
 
-        string ISayHello2.SayHello() {
+        string ISayHello2.SayHello()
+        {
             return "hello 2";
         }
 
-        public interface IPublic {}
+        public interface IPublic
+        {
+        }
 
-        protected interface IProtected {}
+        protected interface IProtected
+        {
+        }
 
-        internal interface IInternal {}
+        internal interface IInternal
+        {
+        }
 
-        private interface IPrivate {}
-
+        private interface IPrivate
+        {
+        }
     }
-
-
 }

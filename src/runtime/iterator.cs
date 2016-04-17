@@ -1,20 +1,20 @@
-
 using System;
 using System.Collections;
 using System.Reflection;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     //========================================================================
     // Implements a generic Python iterator for IEnumerable objects and
     // managed array objects. This supports 'for i in object:' in Python.
     //========================================================================
 
-    internal class Iterator : ExtensionType {
-
+    internal class Iterator : ExtensionType
+    {
         IEnumerator iter;
 
-        public Iterator(IEnumerator e) : base() {
+        public Iterator(IEnumerator e) : base()
+        {
             this.iter = e;
         }
 
@@ -23,9 +23,11 @@ namespace Python.Runtime {
         // Implements support for the Python iteration protocol.
         //====================================================================
 
-        public static IntPtr tp_iternext(IntPtr ob) {
+        public static IntPtr tp_iternext(IntPtr ob)
+        {
             Iterator self = GetManagedObject(ob) as Iterator;
-            if (!self.iter.MoveNext()) {
+            if (!self.iter.MoveNext())
+            {
                 Exceptions.SetError(Exceptions.StopIteration, Runtime.PyNone);
                 return IntPtr.Zero;
             }
@@ -33,12 +35,10 @@ namespace Python.Runtime {
             return Converter.ToPythonImplicit(item);
         }
 
-        public static IntPtr tp_iter(IntPtr ob) {
+        public static IntPtr tp_iter(IntPtr ob)
+        {
             Runtime.Incref(ob);
             return ob;
         }
-
     }
-
-
 }

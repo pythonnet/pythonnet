@@ -1,22 +1,23 @@
-
 using System;
 
 
-namespace Python.Test {
-
+namespace Python.Test
+{
     //========================================================================
     // Supports units tests for field access.
     //========================================================================
 
-    public class FieldTest {
-
-        public FieldTest() {
+    public class FieldTest
+    {
+        public FieldTest()
+        {
             EnumField = ShortEnum.Zero;
             SpamField = new Spam("spam");
             StringField = "spam";
         }
 
-        public void Shutup() {
+        public void Shutup()
+        {
             int i = PrivateStaticField;
             int j = PrivateField;
         }
@@ -52,8 +53,5 @@ namespace Python.Test {
         public FlagsEnum FlagsField;
         public object ObjectField;
         public ISpam SpamField;
-
     }
-
-
 }

@@ -1,4 +1,3 @@
-
 using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
@@ -6,8 +5,8 @@ using System.Collections;
 using System.Reflection;
 using System.Security;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// The ClassManager is responsible for creating and managing instances
     /// that implement the Python type objects that reflect managed classes.
@@ -17,15 +16,17 @@ namespace Python.Runtime {
     /// a generated Python type object, whose slots point to static methods
     /// of the managed instance's class.
     /// </summary>
-
-    internal class ClassManager {
-
+    internal class ClassManager
+    {
         static Dictionary<Type, ClassBase> cache;
         static Type dtype;
 
-        private ClassManager() {}
+        private ClassManager()
+        {
+        }
 
-        static ClassManager() {
+        static ClassManager()
+        {
             cache = new Dictionary<Type, ClassBase>(128);
             // SEE: http://msdn.microsoft.com/en-us/library/96b1ayy4%28VS.90%29.aspx
             // ""All delegates inherit from MulticastDelegate, which inherits from Delegate.""
@@ -39,10 +40,12 @@ namespace Python.Runtime {
         // reflected managed type, creating it if it doesn't yet exist.
         //====================================================================
 
-        internal static ClassBase GetClass(Type type) {
+        internal static ClassBase GetClass(Type type)
+        {
             ClassBase cb = null;
             cache.TryGetValue(type, out cb);
-            if (cb != null) {
+            if (cb != null)
+            {
                 return cb;
             }
             cb = CreateClass(type);
@@ -57,8 +60,8 @@ namespace Python.Runtime {
         // Python type object.
         //====================================================================
 
-        private static ClassBase CreateClass(Type type) {
-
+        private static ClassBase CreateClass(Type type)
+        {
             // First, we introspect the managed type and build some class
             // information, including generating the member descriptors
             // that we'll be putting in the Python class __dict__.
@@ -76,28 +79,34 @@ namespace Python.Runtime {
             // lets us check once (vs. on every lookup) in case we need to
             // wrap Exception-derived types in old-style classes
 
-            if (type.ContainsGenericParameters) {
+            if (type.ContainsGenericParameters)
+            {
                 impl = new GenericType(type);
             }
 
-            else if (type.IsSubclassOf(dtype)) {
+            else if (type.IsSubclassOf(dtype))
+            {
                 impl = new DelegateObject(type);
             }
 
-            else if (type.IsArray) {
+            else if (type.IsArray)
+            {
                 impl = new ArrayObject(type);
             }
 
-            else if (type.IsInterface) {
+            else if (type.IsInterface)
+            {
                 impl = new InterfaceObject(type);
             }
 
             else if (type == typeof(Exception) ||
-                    type.IsSubclassOf(typeof(Exception))) {
+                     type.IsSubclassOf(typeof(Exception)))
+            {
                 impl = new ExceptionClassObject(type);
             }
 
-            else if (null != type.GetField("__pyobj__")) {
+            else if (null != type.GetField("__pyobj__"))
+            {
                 impl = new ClassDerivedObject(type);
             }
 
@@ -121,7 +130,8 @@ namespace Python.Runtime {
 
 
             IDictionaryEnumerator iter = info.members.GetEnumerator();
-            while(iter.MoveNext()) {
+            while (iter.MoveNext())
+            {
                 ManagedType item = (ManagedType)iter.Value;
                 string name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
@@ -130,24 +140,28 @@ namespace Python.Runtime {
             // If class has constructors, generate an __doc__ attribute.
 
             IntPtr doc = IntPtr.Zero;
-			Type marker = typeof(DocStringAttribute);
-			Attribute[] attrs = (Attribute[])type.GetCustomAttributes(marker, false);
-            if (attrs.Length == 0) {
-            	doc = IntPtr.Zero;
-			}
-			else {
-				DocStringAttribute attr = (DocStringAttribute)attrs[0];
-				string docStr = attr.DocString;
-            	doc = Runtime.PyString_FromString(docStr);
+            Type marker = typeof(DocStringAttribute);
+            Attribute[] attrs = (Attribute[])type.GetCustomAttributes(marker, false);
+            if (attrs.Length == 0)
+            {
+                doc = IntPtr.Zero;
+            }
+            else
+            {
+                DocStringAttribute attr = (DocStringAttribute)attrs[0];
+                string docStr = attr.DocString;
+                doc = Runtime.PyString_FromString(docStr);
                 Runtime.PyDict_SetItemString(dict, "__doc__", doc);
                 Runtime.Decref(doc);
-			}
+            }
 
             ClassObject co = impl as ClassObject;
             // If this is a ClassObject AND it has constructors, generate a __doc__ attribute.
             // required that the ClassObject.ctors be changed to internal
-            if (co != null) {
-                if (co.ctors.Length > 0) {
+            if (co != null)
+            {
+                if (co.ctors.Length > 0)
+                {
                     // Implement Overloads on the class object
                     if (!CLRModule._SuppressOverloads)
                     {
@@ -172,9 +186,8 @@ namespace Python.Runtime {
         }
 
 
-
-
-        private static ClassInfo GetClassInfo(Type type) {
+        private static ClassInfo GetClassInfo(Type type)
+        {
             ClassInfo ci = new ClassInfo(type);
             Hashtable methods = new Hashtable();
             ArrayList list;
@@ -203,22 +216,27 @@ namespace Python.Runtime {
             MemberInfo m;
 
             // Loop through once to find out which names are declared
-            for (i = 0; i < info.Length; i++) {
+            for (i = 0; i < info.Length; i++)
+            {
                 m = info[i];
-                if (m.DeclaringType == type) {
+                if (m.DeclaringType == type)
+                {
                     local[m.Name] = 1;
                 }
             }
 
             // Now again to filter w/o losing overloaded member info
-            for (i = 0; i < info.Length; i++) {
+            for (i = 0; i < info.Length; i++)
+            {
                 m = info[i];
-                if (local[m.Name] != null) {
+                if (local[m.Name] != null)
+                {
                     items.Add(m);
                 }
             }
 
-            if (type.IsInterface) {
+            if (type.IsInterface)
+            {
                 // Interface inheritance seems to be a different animal:
                 // more contractual, less structural.  Thus, a Type that
                 // represents an interface that inherits from another
@@ -232,131 +250,139 @@ namespace Python.Runtime {
 
                 Type[] inheritedInterfaces = type.GetInterfaces();
 
-                for (i = 0; i < inheritedInterfaces.Length; ++i) {
+                for (i = 0; i < inheritedInterfaces.Length; ++i)
+                {
                     Type inheritedType = inheritedInterfaces[i];
                     MemberInfo[] imembers = inheritedType.GetMembers(flags);
-                    for (n = 0; n < imembers.Length; n++) {
+                    for (n = 0; n < imembers.Length; n++)
+                    {
                         m = imembers[n];
-                        if (local[m.Name] == null) {
+                        if (local[m.Name] == null)
+                        {
                             items.Add(m);
                         }
                     }
                 }
             }
 
-            for (i = 0; i < items.Count; i++) {
-
+            for (i = 0; i < items.Count; i++)
+            {
                 MemberInfo mi = (MemberInfo)items[i];
 
-                switch(mi.MemberType) {
-
-                case MemberTypes.Method:
-                    meth = (MethodInfo) mi;
-                    if (!(meth.IsPublic || meth.IsFamily ||
-                          meth.IsFamilyOrAssembly))
-                        continue;
-                    name = meth.Name;
-                    item = methods[name];
-                    if (item == null) {
-                        item = methods[name] = new ArrayList();
-                    }
-                    list = (ArrayList) item;
-                    list.Add(meth);
-                    continue;
-
-                case MemberTypes.Property:
-                    PropertyInfo pi = (PropertyInfo) mi;
-
-                    MethodInfo mm = null;
-                    try {
-                        mm = pi.GetGetMethod(true);
-                        if (mm == null) {
-                            mm = pi.GetSetMethod(true);
+                switch (mi.MemberType)
+                {
+                    case MemberTypes.Method:
+                        meth = (MethodInfo)mi;
+                        if (!(meth.IsPublic || meth.IsFamily ||
+                              meth.IsFamilyOrAssembly))
+                            continue;
+                        name = meth.Name;
+                        item = methods[name];
+                        if (item == null)
+                        {
+                            item = methods[name] = new ArrayList();
                         }
-                    }
-                    catch (SecurityException) {
-                        // GetGetMethod may try to get a method protected by
-                        // StrongNameIdentityPermission - effectively private.
-                        continue;
-                    }
-
-                    if (mm == null) {
-                        continue;
-                    }
-
-                    if (!(mm.IsPublic || mm.IsFamily || mm.IsFamilyOrAssembly))
+                        list = (ArrayList)item;
+                        list.Add(meth);
                         continue;
 
-                    // Check for indexer
-                    ParameterInfo[] args = pi.GetIndexParameters();
-                    if (args.GetLength(0) > 0) {
-                        Indexer idx = ci.indexer;
-                        if (idx == null) {
-                            ci.indexer = new Indexer();
-                            idx = ci.indexer;
+                    case MemberTypes.Property:
+                        PropertyInfo pi = (PropertyInfo)mi;
+
+                        MethodInfo mm = null;
+                        try
+                        {
+                            mm = pi.GetGetMethod(true);
+                            if (mm == null)
+                            {
+                                mm = pi.GetSetMethod(true);
+                            }
                         }
-                        idx.AddProperty(pi);
+                        catch (SecurityException)
+                        {
+                            // GetGetMethod may try to get a method protected by
+                            // StrongNameIdentityPermission - effectively private.
+                            continue;
+                        }
+
+                        if (mm == null)
+                        {
+                            continue;
+                        }
+
+                        if (!(mm.IsPublic || mm.IsFamily || mm.IsFamilyOrAssembly))
+                            continue;
+
+                        // Check for indexer
+                        ParameterInfo[] args = pi.GetIndexParameters();
+                        if (args.GetLength(0) > 0)
+                        {
+                            Indexer idx = ci.indexer;
+                            if (idx == null)
+                            {
+                                ci.indexer = new Indexer();
+                                idx = ci.indexer;
+                            }
+                            idx.AddProperty(pi);
+                            continue;
+                        }
+
+                        ob = new PropertyObject(pi);
+                        ci.members[pi.Name] = ob;
                         continue;
-                    }
 
-                    ob = new PropertyObject(pi);
-                    ci.members[pi.Name] = ob;
-                    continue;
-
-                case MemberTypes.Field:
-                    FieldInfo fi = (FieldInfo) mi;
-                    if (!(fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly))
+                    case MemberTypes.Field:
+                        FieldInfo fi = (FieldInfo)mi;
+                        if (!(fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly))
+                            continue;
+                        ob = new FieldObject(fi);
+                        ci.members[mi.Name] = ob;
                         continue;
-                    ob = new FieldObject(fi);
-                    ci.members[mi.Name] = ob;
-                    continue;
 
-                case MemberTypes.Event:
-                    EventInfo ei = (EventInfo)mi;
-                    MethodInfo me = ei.GetAddMethod(true);
-                    if (!(me.IsPublic || me.IsFamily || me.IsFamilyOrAssembly))
+                    case MemberTypes.Event:
+                        EventInfo ei = (EventInfo)mi;
+                        MethodInfo me = ei.GetAddMethod(true);
+                        if (!(me.IsPublic || me.IsFamily || me.IsFamilyOrAssembly))
+                            continue;
+                        ob = new EventObject(ei);
+                        ci.members[ei.Name] = ob;
                         continue;
-                    ob = new EventObject(ei);
-                    ci.members[ei.Name] = ob;
-                    continue;
 
-                case MemberTypes.NestedType:
-                    tp = (Type) mi;
-                    if (!(tp.IsNestedPublic || tp.IsNestedFamily ||
-                          tp.IsNestedFamORAssem))
+                    case MemberTypes.NestedType:
+                        tp = (Type)mi;
+                        if (!(tp.IsNestedPublic || tp.IsNestedFamily ||
+                              tp.IsNestedFamORAssem))
+                            continue;
+                        ob = ClassManager.GetClass(tp);
+                        ci.members[mi.Name] = ob;
                         continue;
-                    ob = ClassManager.GetClass(tp);
-                    ci.members[mi.Name] = ob;
-                    continue;
-
                 }
             }
 
             IDictionaryEnumerator iter = methods.GetEnumerator();
 
-            while(iter.MoveNext()) {
-                name = (string) iter.Key;
-                list = (ArrayList) iter.Value;
+            while (iter.MoveNext())
+            {
+                name = (string)iter.Key;
+                list = (ArrayList)iter.Value;
 
                 MethodInfo[] mlist = (MethodInfo[])list.ToArray(
-                                                   typeof(MethodInfo)
-                                                   );
+                    typeof(MethodInfo)
+                    );
 
                 ob = new MethodObject(type, name, mlist);
                 ci.members[name] = ob;
             }
 
             return ci;
-
         }
-
-
     }
 
 
-    internal class ClassInfo {
-
-        internal ClassInfo(Type t) {
+    internal class ClassInfo
+    {
+        internal ClassInfo(Type t)
+        {
             members = new Hashtable();
             indexer = null;
         }
@@ -364,7 +390,4 @@ namespace Python.Runtime {
         public Hashtable members;
         public Indexer indexer;
     }
-
-
-
 }

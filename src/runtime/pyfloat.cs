@@ -1,16 +1,14 @@
-
 using System;
 using System.Runtime.InteropServices;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// Represents a Python float object. See the documentation at
     /// http://www.python.org/doc/current/api/floatObjects.html
     /// </summary>
-
-    public class PyFloat : PyNumber {
-
+    public class PyFloat : PyNumber
+    {
         /// <summary>
         /// PyFloat Constructor
         /// </summary>
@@ -20,8 +18,9 @@ namespace Python.Runtime {
         /// that the instance assumes ownership of the object reference.
         /// The object reference is not checked for type-correctness.
         /// </remarks>
-
-        public PyFloat(IntPtr ptr) : base(ptr) {}
+        public PyFloat(IntPtr ptr) : base(ptr)
+        {
+        }
 
 
         /// <summary>
@@ -33,9 +32,10 @@ namespace Python.Runtime {
         /// ArgumentException will be thrown if the given object is not a
         /// Python float object.
         /// </remarks>
-
-        public PyFloat(PyObject o) : base() {
-            if (!IsFloatType(o)) {
+        public PyFloat(PyObject o) : base()
+        {
+            if (!IsFloatType(o))
+            {
                 throw new ArgumentException("object is not a float");
             }
             Runtime.Incref(o.obj);
@@ -50,10 +50,11 @@ namespace Python.Runtime {
         /// <remarks>
         /// Creates a new Python float from a double value.
         /// </remarks>
-
-        public PyFloat(double value) : base() {
+        public PyFloat(double value) : base()
+        {
             obj = Runtime.PyFloat_FromDouble(value);
-            if (obj == IntPtr.Zero) {
+            if (obj == IntPtr.Zero)
+            {
                 throw new PythonException();
             }
         }
@@ -66,11 +67,13 @@ namespace Python.Runtime {
         /// <remarks>
         /// Creates a new Python float from a string value.
         /// </remarks>
-
-        public PyFloat(string value) : base() {
-            using (PyString s = new PyString(value)) {
+        public PyFloat(string value) : base()
+        {
+            using (PyString s = new PyString(value))
+            {
                 obj = Runtime.PyFloat_FromString(s.obj, IntPtr.Zero);
-                if (obj == IntPtr.Zero) {
+                if (obj == IntPtr.Zero)
+                {
                     throw new PythonException();
                 }
             }
@@ -84,8 +87,8 @@ namespace Python.Runtime {
         /// <remarks>
         /// Returns true if the given object is a Python float.
         /// </remarks>
-
-        public static bool IsFloatType(PyObject value) {
+        public static bool IsFloatType(PyObject value)
+        {
             return Runtime.PyFloat_Check(value.obj);
         }
 
@@ -100,16 +103,14 @@ namespace Python.Runtime {
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "float(object)".
         /// </remarks>
-
-        public static PyFloat AsFloat(PyObject value) {
+        public static PyFloat AsFloat(PyObject value)
+        {
             IntPtr op = Runtime.PyNumber_Float(value.obj);
-            if (op == IntPtr.Zero) {
+            if (op == IntPtr.Zero)
+            {
                 throw new PythonException();
             }
             return new PyFloat(op);
         }
-
-
     }
-
 }

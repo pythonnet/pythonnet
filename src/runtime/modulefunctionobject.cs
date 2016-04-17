@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using System.Reflection;
@@ -10,7 +9,6 @@ namespace Python.Runtime
     /// </summary>
     internal class ModuleFunctionObject : MethodObject
     {
-
         public ModuleFunctionObject(Type type, string name, MethodInfo[] info, bool allow_threads)
             : base(type, name, info, allow_threads)
         {
@@ -44,7 +42,5 @@ namespace Python.Runtime
             string s = String.Format("<CLRModuleFunction '{0}'>", self.name);
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
-
     }
 }
-

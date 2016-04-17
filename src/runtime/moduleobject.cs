@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
@@ -6,21 +5,22 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     //========================================================================
     // Implements a Python type that provides access to CLR namespaces. The
     // type behaves like a Python module, and can contain other sub-modules.
     //========================================================================
 
-    internal class ModuleObject : ExtensionType {
-
+    internal class ModuleObject : ExtensionType
+    {
         Dictionary<string, ManagedType> cache;
         internal string moduleName;
         internal IntPtr dict;
         protected string _namespace;
 
-        public ModuleObject(string name) : base() {
+        public ModuleObject(string name) : base()
+        {
             if (name == String.Empty)
             {
                 throw new ArgumentException("Name must not be empty!");
@@ -33,7 +33,8 @@ namespace Python.Runtime {
             // anything that expects __file__ to be set.
             string filename = "unknown";
             string docstring = "Namespace containing types from the following assemblies:\n\n";
-            foreach (Assembly a in AssemblyManager.GetAssemblies(name)) {
+            foreach (Assembly a in AssemblyManager.GetAssemblies(name))
+            {
                 filename = a.Location;
                 docstring += "- " + a.FullName + "\n";
             }
@@ -64,10 +65,12 @@ namespace Python.Runtime {
         // not increment the Python refcount of the returned object.
         //===================================================================
 
-        public ManagedType GetAttribute(string name, bool guess) {
+        public ManagedType GetAttribute(string name, bool guess)
+        {
             ManagedType cached = null;
             this.cache.TryGetValue(name, out cached);
-            if (cached != null) {
+            if (cached != null)
+            {
                 return cached;
             }
 
@@ -85,17 +88,19 @@ namespace Python.Runtime {
             //    return null;
             //}
 
-            string qname = (_namespace == String.Empty) ? name :
-                            _namespace + "." + name;
+            string qname = (_namespace == String.Empty)
+                ? name
+                : _namespace + "." + name;
 
             // If the fully-qualified name of the requested attribute is
             // a namespace exported by a currently loaded assembly, return
             // a new ModuleObject representing that namespace.
 
-            if (AssemblyManager.IsValidNamespace(qname)) {
+            if (AssemblyManager.IsValidNamespace(qname))
+            {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
-                return (ManagedType) m;
+                return (ManagedType)m;
             }
 
             // Look for a type in the current namespace. Note that this
@@ -103,13 +108,15 @@ namespace Python.Runtime {
             // Only public namespace members are exposed to Python.
 
             type = AssemblyManager.LookupType(qname);
-            if (type != null) {
-                if (!type.IsPublic) {
+            if (type != null)
+            {
+                if (!type.IsPublic)
+                {
                     return null;
                 }
                 c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
-                return (ManagedType) c;
+                return (ManagedType)c;
             }
 
             // This is a little repetitive, but it ensures that the right
@@ -117,21 +124,25 @@ namespace Python.Runtime {
             // cost. Ask the AssemblyManager to do implicit loading for each
             // of the steps in the qualified name, then try it again.
             bool ignore = name.StartsWith("__");
-            if (AssemblyManager.LoadImplicit(qname, !ignore)) {
-                if (AssemblyManager.IsValidNamespace(qname)) {
+            if (AssemblyManager.LoadImplicit(qname, !ignore))
+            {
+                if (AssemblyManager.IsValidNamespace(qname))
+                {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
-                    return (ManagedType) m;
+                    return (ManagedType)m;
                 }
 
                 type = AssemblyManager.LookupType(qname);
-                if (type != null) {
-                    if (!type.IsPublic) {
+                if (type != null)
+                {
+                    if (!type.IsPublic)
+                    {
                         return null;
                     }
                     c = ClassManager.GetClass(type);
                     StoreAttribute(name, c);
-                    return (ManagedType) c;
+                    return (ManagedType)c;
                 }
             }
 
@@ -143,12 +154,15 @@ namespace Python.Runtime {
             // the current namespace with the given basename, but unlikely
             // enough to complicate the implementation for now.
 
-            if (guess) {
+            if (guess)
+            {
                 string gname = GenericUtil.GenericNameForBaseName(
-                                              _namespace, name);
-                if (gname != null) {
+                    _namespace, name);
+                if (gname != null)
+                {
                     ManagedType o = GetAttribute(gname, false);
-                    if (o != null) {
+                    if (o != null)
+                    {
                         StoreAttribute(name, o);
                         return o;
                     }
@@ -161,9 +175,10 @@ namespace Python.Runtime {
 
         //===================================================================
         // Stores an attribute in the instance dict for future lookups.
-         //===================================================================
+        //===================================================================
 
-        private void StoreAttribute(string name, ManagedType ob) {
+        private void StoreAttribute(string name, ManagedType ob)
+        {
             Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
             cache[name] = ob;
         }
@@ -173,23 +188,28 @@ namespace Python.Runtime {
         // Preloads all currently-known names for the module namespace. This
         // can be called multiple times, to add names from assemblies that
         // may have been loaded since the last call to the method.
-         //===================================================================
+        //===================================================================
 
-        public void LoadNames() {
+        public void LoadNames()
+        {
             ManagedType m = null;
-            foreach (string name in AssemblyManager.GetNames(_namespace)) {
+            foreach (string name in AssemblyManager.GetNames(_namespace))
+            {
                 this.cache.TryGetValue(name, out m);
-                if (m == null) {
+                if (m == null)
+                {
                     ManagedType attr = this.GetAttribute(name, true);
-                    if (Runtime.wrap_exceptions) {
-                        if (attr is ExceptionClassObject) {
+                    if (Runtime.wrap_exceptions)
+                    {
+                        if (attr is ExceptionClassObject)
+                        {
                             ExceptionClassObject c = attr as ExceptionClassObject;
-                            if (c != null) {
-                              IntPtr p = attr.pyHandle;
-                              IntPtr r =Exceptions.GetExceptionClassWrapper(p);
-                              Runtime.PyDict_SetItemString(dict, name, r);
-                              Runtime.Incref(r);
-
+                            if (c != null)
+                            {
+                                IntPtr p = attr.pyHandle;
+                                IntPtr r = Exceptions.GetExceptionClassWrapper(p);
+                                Runtime.PyDict_SetItemString(dict, name, r);
+                                Runtime.Incref(r);
                             }
                         }
                     }
@@ -252,29 +272,34 @@ namespace Python.Runtime {
         // and classes are created when accessed and cached for future use.
         //====================================================================
 
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
+        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        {
             ModuleObject self = (ModuleObject)GetManagedObject(ob);
 
-            if (!Runtime.PyString_Check(key)) {
+            if (!Runtime.PyString_Check(key))
+            {
                 Exceptions.SetError(Exceptions.TypeError, "string expected");
                 return IntPtr.Zero;
             }
 
             IntPtr op = Runtime.PyDict_GetItem(self.dict, key);
-            if (op != IntPtr.Zero) {
+            if (op != IntPtr.Zero)
+            {
                 Runtime.Incref(op);
                 return op;
             }
 
             string name = Runtime.GetManagedString(key);
-            if (name == "__dict__") {
+            if (name == "__dict__")
+            {
                 Runtime.Incref(self.dict);
                 return self.dict;
             }
 
             ManagedType attr = self.GetAttribute(name, true);
 
-            if (attr == null) {
+            if (attr == null)
+            {
                 Exceptions.SetError(Exceptions.AttributeError, name);
                 return IntPtr.Zero;
             }
@@ -283,10 +308,13 @@ namespace Python.Runtime {
             // may need to be wrapped in old-style class wrappers in versions
             // of Python where new-style classes cannot be used as exceptions.
 
-            if (Runtime.wrap_exceptions) {
-                if (attr is ExceptionClassObject) {
+            if (Runtime.wrap_exceptions)
+            {
+                if (attr is ExceptionClassObject)
+                {
                     ExceptionClassObject c = attr as ExceptionClassObject;
-                    if (c != null) {
+                    if (c != null)
+                    {
                         IntPtr p = attr.pyHandle;
                         IntPtr r = Exceptions.GetExceptionClassWrapper(p);
                         Runtime.PyDict_SetItemString(self.dict, name, r);
@@ -304,14 +332,12 @@ namespace Python.Runtime {
         // ModuleObject __repr__ implementation.
         //====================================================================
 
-        public static IntPtr tp_repr(IntPtr ob) {
+        public static IntPtr tp_repr(IntPtr ob)
+        {
             ModuleObject self = (ModuleObject)GetManagedObject(ob);
             string s = String.Format("<module '{0}'>", self.moduleName);
             return Runtime.PyString_FromString(s);
         }
-
-
-
     }
 
     /// <summary>
@@ -328,7 +354,8 @@ namespace Python.Runtime {
         internal static bool _SuppressDocs = false;
         internal static bool _SuppressOverloads = false;
 
-        public CLRModule() : base("clr") {
+        public CLRModule() : base("clr")
+        {
             _namespace = String.Empty;
 
             // This hackery is required in order to allow a plain Python to
@@ -351,12 +378,17 @@ namespace Python.Runtime {
         /// possible since sys.ps1 is created after the CLR module is
         /// created.
         /// </summary>
-        internal void InitializePreload() {
-            if (interactive_preload) {
+        internal void InitializePreload()
+        {
+            if (interactive_preload)
+            {
                 interactive_preload = false;
-                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
+                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero)
+                {
                     preload = true;
-                } else {
+                }
+                else
+                {
                     Exceptions.Clear();
                     preload = false;
                 }
@@ -364,7 +396,8 @@ namespace Python.Runtime {
         }
 
         [ModuleFunctionAttribute()]
-        public static bool getPreload() {
+        public static bool getPreload()
+        {
             return preload;
         }
 
@@ -375,13 +408,15 @@ namespace Python.Runtime {
         }
 
         //[ModulePropertyAttribute]
-        public static bool SuppressDocs {
+        public static bool SuppressDocs
+        {
             get { return _SuppressDocs; }
             set { _SuppressDocs = value; }
         }
 
         //[ModulePropertyAttribute]
-        public static bool SuppressOverloads {
+        public static bool SuppressOverloads
+        {
             get { return _SuppressOverloads; }
             set { _SuppressOverloads = value; }
         }
@@ -401,7 +436,8 @@ namespace Python.Runtime {
             {
                 assembly = AssemblyManager.LoadAssembly(name);
             }
-            if (assembly == null) {
+            if (assembly == null)
+            {
                 assembly = AssemblyManager.LoadAssemblyFullPath(name);
             }
             if (assembly == null)
@@ -410,7 +446,7 @@ namespace Python.Runtime {
                 throw new System.IO.FileNotFoundException(msg);
             }
 
-            return assembly ;
+            return assembly;
         }
 
         [ModuleFunctionAttribute()]
@@ -441,7 +477,5 @@ namespace Python.Runtime {
         {
             return Runtime.AtExit();
         }
-
     }
-
 }

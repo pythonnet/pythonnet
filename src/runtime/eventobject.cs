@@ -1,22 +1,22 @@
-
 using System;
 using System.Collections;
 using System.Reflection;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     //========================================================================
     // Implements a Python descriptor type that provides access to CLR events.
     //========================================================================
 
-    internal class EventObject : ExtensionType {
-
+    internal class EventObject : ExtensionType
+    {
         internal string name;
         internal EventBinding unbound;
         internal EventInfo info;
         internal Hashtable reg;
 
-        public EventObject(EventInfo info) : base() {
+        public EventObject(EventInfo info) : base()
+        {
             this.name = info.Name;
             this.info = info;
         }
@@ -26,9 +26,11 @@ namespace Python.Runtime {
         // Register a new Python object event handler with the event.
         //====================================================================
 
-        internal bool AddEventHandler(IntPtr target, IntPtr handler) {
+        internal bool AddEventHandler(IntPtr target, IntPtr handler)
+        {
             Object obj = null;
-            if (target != IntPtr.Zero) {
+            if (target != IntPtr.Zero)
+            {
                 CLRObject co = (CLRObject)ManagedType.GetManagedObject(target);
                 obj = co.inst;
             }
@@ -45,12 +47,14 @@ namespace Python.Runtime {
             // All this is done lazily to avoid overhead until an event is
             // actually subscribed to by a Python event handler.
 
-            if (reg == null) {
+            if (reg == null)
+            {
                 reg = new Hashtable();
             }
             object key = (obj != null) ? obj : this.info.ReflectedType;
             ArrayList list = reg[key] as ArrayList;
-            if (list == null) {
+            if (list == null)
+            {
                 list = new ArrayList();
                 reg[key] = list;
             }
@@ -71,44 +75,52 @@ namespace Python.Runtime {
         // Remove the given Python object event handler.
         //====================================================================
 
-        internal bool RemoveEventHandler(IntPtr target, IntPtr handler) {
+        internal bool RemoveEventHandler(IntPtr target, IntPtr handler)
+        {
             Object obj = null;
-            if (target != IntPtr.Zero) {
+            if (target != IntPtr.Zero)
+            {
                 CLRObject co = (CLRObject)ManagedType.GetManagedObject(target);
                 obj = co.inst;
             }
 
             IntPtr hash = Runtime.PyObject_Hash(handler);
-            if (Exceptions.ErrorOccurred() || (reg == null)) {
+            if (Exceptions.ErrorOccurred() || (reg == null))
+            {
                 Exceptions.SetError(Exceptions.ValueError,
-                                    "unknown event handler"
-                                    );
+                    "unknown event handler"
+                    );
                 return false;
             }
 
             object key = (obj != null) ? obj : this.info.ReflectedType;
             ArrayList list = reg[key] as ArrayList;
 
-            if (list == null) {
+            if (list == null)
+            {
                 Exceptions.SetError(Exceptions.ValueError,
-                                    "unknown event handler"
-                                    );
+                    "unknown event handler"
+                    );
                 return false;
             }
 
             object[] args = { null };
             MethodInfo mi = this.info.GetRemoveMethod(true);
 
-            for (int i = 0; i < list.Count; i++) {
+            for (int i = 0; i < list.Count; i++)
+            {
                 Handler item = (Handler)list[i];
-                if (item.hash != hash) {
+                if (item.hash != hash)
+                {
                     continue;
                 }
                 args[0] = item.del;
-                try {
+                try
+                {
                     mi.Invoke(obj, BindingFlags.Default, null, args, null);
                 }
-                catch {
+                catch
+                {
                     continue;
                 }
                 list.RemoveAt(i);
@@ -116,8 +128,8 @@ namespace Python.Runtime {
             }
 
             Exceptions.SetError(Exceptions.ValueError,
-                                "unknown event handler"
-                                );
+                "unknown event handler"
+                );
             return false;
         }
 
@@ -127,11 +139,13 @@ namespace Python.Runtime {
         // a "bound" event that keeps a reference to the object instance.
         //====================================================================
 
-        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
+        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
+        {
             EventObject self = GetManagedObject(ds) as EventObject;
             EventBinding binding;
 
-            if (self == null) {
+            if (self == null)
+            {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
@@ -139,8 +153,10 @@ namespace Python.Runtime {
             // an instance) we return an 'unbound' EventBinding that will
             // be cached for future accesses through the type.
 
-            if (ob == IntPtr.Zero) {
-                if (self.unbound == null) {
+            if (ob == IntPtr.Zero)
+            {
+                if (self.unbound == null)
+                {
                     self.unbound = new EventBinding(self, IntPtr.Zero);
                 }
                 binding = self.unbound;
@@ -148,7 +164,8 @@ namespace Python.Runtime {
                 return binding.pyHandle;
             }
 
-            if (Runtime.PyObject_IsInstance(ob, tp) < 1) {
+            if (Runtime.PyObject_IsInstance(ob, tp) < 1)
+            {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
@@ -165,10 +182,12 @@ namespace Python.Runtime {
         // SomeEvent on ob to the result of the '+=' operation.
         //====================================================================
 
-        public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
+        public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        {
             EventBinding e = GetManagedObject(val) as EventBinding;
 
-            if (e != null) {
+            if (e != null)
+            {
                 return 0;
             }
 
@@ -182,7 +201,8 @@ namespace Python.Runtime {
         // Descriptor __repr__ implementation.
         //====================================================================
 
-        public static IntPtr tp_repr(IntPtr ob) {
+        public static IntPtr tp_repr(IntPtr ob)
+        {
             EventObject self = (EventObject)GetManagedObject(ob);
             string s = String.Format("<event '{0}'>", self.name);
             return Runtime.PyString_FromString(s);
@@ -193,30 +213,27 @@ namespace Python.Runtime {
         // Descriptor dealloc implementation.
         //====================================================================
 
-        public static new void tp_dealloc(IntPtr ob) {
+        public static new void tp_dealloc(IntPtr ob)
+        {
             EventObject self = (EventObject)GetManagedObject(ob);
-            if (self.unbound != null) {
+            if (self.unbound != null)
+            {
                 Runtime.Decref(self.unbound.pyHandle);
             }
             ExtensionType.FinalizeObject(self);
         }
-
-
     }
 
 
-
-    internal class Handler {
-
+    internal class Handler
+    {
         public IntPtr hash;
         public Delegate del;
 
-        public Handler(IntPtr hash, Delegate d) {
+        public Handler(IntPtr hash, Delegate d)
+        {
             this.hash = hash;
             this.del = d;
         }
-
     }
-
-
 }

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using System.Collections.Specialized;
@@ -6,8 +5,8 @@ using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     //=======================================================================
     // This file defines objects to support binary interop with the Python
     // runtime. Generally, the definitions here need to be kept up to date
@@ -16,47 +15,65 @@ namespace Python.Runtime {
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.All)]
-    public class DocStringAttribute : Attribute {
-        public DocStringAttribute(string docStr) {
-			DocString = docStr;
-		}
-		public string DocString {
-			get { return docStr; }
-			set { docStr = value; }
-		}
-		private string docStr;
+    public class DocStringAttribute : Attribute
+    {
+        public DocStringAttribute(string docStr)
+        {
+            DocString = docStr;
+        }
+
+        public string DocString
+        {
+            get { return docStr; }
+            set { docStr = value; }
+        }
+
+        private string docStr;
     }
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class PythonMethodAttribute : Attribute {
-        public PythonMethodAttribute() {}
+    internal class PythonMethodAttribute : Attribute
+    {
+        public PythonMethodAttribute()
+        {
+        }
     }
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class ModuleFunctionAttribute : Attribute {
-        public ModuleFunctionAttribute() {}
+    internal class ModuleFunctionAttribute : Attribute
+    {
+        public ModuleFunctionAttribute()
+        {
+        }
     }
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class ForbidPythonThreadsAttribute : Attribute {
-        public ForbidPythonThreadsAttribute() { }
+    internal class ForbidPythonThreadsAttribute : Attribute
+    {
+        public ForbidPythonThreadsAttribute()
+        {
+        }
     }
 
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Property)]
-    internal class ModulePropertyAttribute : Attribute {
-        public ModulePropertyAttribute() {}
+    internal class ModulePropertyAttribute : Attribute
+    {
+        public ModulePropertyAttribute()
+        {
+        }
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
-    internal class ObjectOffset {
-
-        static ObjectOffset() {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class ObjectOffset
+    {
+        static ObjectOffset()
+        {
             int size = IntPtr.Size;
             int n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
 #if (Py_DEBUG)
@@ -64,13 +81,14 @@ namespace Python.Runtime {
             _ob_prev = 1 * size;
             n = 2;
 #endif
-            ob_refcnt = (n+0) * size;
-            ob_type = (n+1) * size;
-            ob_dict = (n+2) * size;
-            ob_data = (n+3) * size;
+            ob_refcnt = (n + 0)*size;
+            ob_type = (n + 1)*size;
+            ob_dict = (n + 2)*size;
+            ob_data = (n + 3)*size;
         }
 
-        public static int magic(IntPtr ob) {
+        public static int magic(IntPtr ob)
+        {
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
@@ -93,7 +111,8 @@ namespace Python.Runtime {
             return ob_dict;
         }
 
-        public static int Size(IntPtr ob) {
+        public static int Size(IntPtr ob)
+        {
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
@@ -104,7 +123,7 @@ namespace Python.Runtime {
 #if (Py_DEBUG)
             return 6 * IntPtr.Size;
 #else
-            return 4 * IntPtr.Size;
+            return 4*IntPtr.Size;
 #endif
         }
 
@@ -250,7 +269,8 @@ namespace Python.Runtime {
     /// Note that the two values reserved for stackless have been put
     /// to good use as PythonNet specific flags (Managed and Subclass)
     /// </summary>
-    internal class TypeFlags {
+    internal class TypeFlags
+    {
 #if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
         // these flags were removed in Python 3
         public static int HaveGetCharBuffer = (1 << 0);
@@ -297,18 +317,18 @@ namespace Python.Runtime {
 // Default flags for Python 2
 #if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
         public static int Default = (
-                             HaveGetCharBuffer |
-                             HaveSequenceIn |
-                             HaveInPlaceOps |
-                             HaveRichCompare |
-                             HaveWeakRefs |
-                             HaveIter |
-                             HaveClass |
-                             HaveStacklessExtension |
-    #if (PYTHON25 || PYTHON26 || PYTHON27)
-                             HaveIndex |
-    #endif
-                             0);
+            HaveGetCharBuffer |
+            HaveSequenceIn |
+            HaveInPlaceOps |
+            HaveRichCompare |
+            HaveWeakRefs |
+            HaveIter |
+            HaveClass |
+            HaveStacklessExtension |
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+                HaveIndex |
+#endif
+                0);
 #endif
 
 // Default flags for Python 3
@@ -317,7 +337,6 @@ namespace Python.Runtime {
                             HaveStacklessExtension |
                             HaveVersionTag);
 #endif
-
     }
 
 
@@ -326,20 +345,21 @@ namespace Python.Runtime {
     // based lookup of the correct prototype for a particular Python type
     // slot and utilities for generating method thunks for managed methods.
 
-    internal class Interop {
-
+    internal class Interop
+    {
         static ArrayList keepAlive;
         static Hashtable pmap;
 
-        static Interop() {
-
+        static Interop()
+        {
             // Here we build a mapping of PyTypeObject slot names to the
             // appropriate prototype (delegate) type to use for the slot.
 
             Type[] items = typeof(Interop).GetNestedTypes();
             Hashtable p = new Hashtable();
 
-            for (int i = 0; i < items.Length; i++) {
+            for (int i = 0; i < items.Length; i++)
+            {
                 Type item = items[i];
                 p[item.Name] = item;
             }
@@ -439,18 +459,21 @@ namespace Python.Runtime {
             pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
         }
 
-        internal static Type GetPrototype(string name) {
+        internal static Type GetPrototype(string name)
+        {
             return pmap[name] as Type;
         }
 
-        internal static IntPtr GetThunk(MethodInfo method, string funcType = null) {
+        internal static IntPtr GetThunk(MethodInfo method, string funcType = null)
+        {
             Type dt;
             if (funcType != null)
                 dt = typeof(Interop).GetNestedType(funcType) as Type;
             else
                 dt = GetPrototype(method.Name);
 
-            if (dt != null) {
+            if (dt != null)
+            {
                 IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
                 Delegate d = Delegate.CreateDelegate(dt, method);
                 Thunk cb = new Thunk(d);
@@ -501,15 +524,16 @@ namespace Python.Runtime {
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr RichCmpFunc(IntPtr ob, IntPtr a, int b);
-
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
-    internal struct Thunk {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct Thunk
+    {
         public Delegate fn;
 
-        public Thunk(Delegate d) {
+        public Thunk(Delegate d)
+        {
             fn = d;
         }
     }

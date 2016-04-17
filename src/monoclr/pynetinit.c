@@ -1,12 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-//
 // Author: Christian Heimes <christian(at)cheimes(dot)de>
 
 #include "pynetclr.h"
@@ -53,14 +44,14 @@ PyNet_Args* PyNet_Init(int ext) {
      * mono_runtime_exec_managed_code(pn_args->domain, main_thread_handler,
      *                                pn_args);
      */
-                                   
+
     main_thread_handler(pn_args);
 
     if (pn_args->error != NULL) {
         PyErr_SetString(PyExc_ImportError, pn_args->error);
     }
     return pn_args;
-} 
+}
 
 // Shuts down PythonNet and cleans up Mono
 void PyNet_Finalize(PyNet_Args *pn_args) {
@@ -73,7 +64,7 @@ void PyNet_Finalize(PyNet_Args *pn_args) {
         }
         pn_args->shutdown = NULL;
     }
-    
+
     if (pn_args->domain) {
         mono_jit_cleanup(pn_args->domain);
         pn_args->domain = NULL;
@@ -225,7 +216,7 @@ void main_thread_handler (gpointer user_data) {
 
 }
 
-// Get string from a Mono exception 
+// Get string from a Mono exception
 char* PyNet_ExceptionToString(MonoObject *e) {
     MonoMethodDesc* mdesc = mono_method_desc_new(":ToString()", FALSE);
     MonoMethod* mmethod = mono_method_desc_search_in_class(mdesc, mono_get_object_class());
@@ -236,4 +227,3 @@ char* PyNet_ExceptionToString(MonoObject *e) {
     mono_runtime_invoke(mmethod, e, NULL, NULL);
     return mono_string_to_utf8(monoString);
 }
-

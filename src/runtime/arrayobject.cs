@@ -1,33 +1,37 @@
-
 using System;
 using System.Collections;
 using System.Reflection;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// Implements a Python type for managed arrays. This type is essentially
     /// the same as a ClassObject, except that it provides sequence semantics
     /// to support natural array usage (indexing) from Python.
     /// </summary>
+    internal class ArrayObject : ClassBase
+    {
+        internal ArrayObject(Type tp) : base(tp)
+        {
+        }
 
-    internal class ArrayObject : ClassBase {
-
-        internal ArrayObject(Type tp) : base(tp) {}
-
-        internal override bool CanSubclass() {
+        internal override bool CanSubclass()
+        {
             return false;
         }
 
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
+        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        {
             ArrayObject self = GetManagedObject(tp) as ArrayObject;
-            if (Runtime.PyTuple_Size(args) != 1) {
+            if (Runtime.PyTuple_Size(args) != 1)
+            {
                 return Exceptions.RaiseTypeError("array expects 1 argument");
             }
             IntPtr op = Runtime.PyTuple_GetItem(args, 0);
             Object result;
 
-            if (!Converter.ToManaged(op, self.type, out result, true)) {
+            if (!Converter.ToManaged(op, self.type, out result, true))
+            {
                 return IntPtr.Zero;
             }
             return CLRObject.GetInstHandle(result, tp);
@@ -38,7 +42,8 @@ namespace Python.Runtime {
         // Implements __getitem__ for array types.
         //====================================================================
 
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx) {
+        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        {
             CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
             Array items = obj.inst as Array;
             Type itemType = obj.inst.GetType().GetElementType();
@@ -55,24 +60,29 @@ namespace Python.Runtime {
             // Single-dimensional arrays are the most common case and are
             // cheaper to deal with than multi-dimensional, so check first.
 
-            if (rank == 1) {
+            if (rank == 1)
+            {
                 index = (int)Runtime.PyInt_AsLong(idx);
 
-                if (Exceptions.ErrorOccurred()) {
+                if (Exceptions.ErrorOccurred())
+                {
                     return Exceptions.RaiseTypeError("invalid index value");
                 }
 
-                if (index < 0) {
+                if (index < 0)
+                {
                     index = items.Length + index;
                 }
 
-                try {
+                try
+                {
                     value = items.GetValue(index);
                 }
-                catch (IndexOutOfRangeException) {
+                catch (IndexOutOfRangeException)
+                {
                     Exceptions.SetError(Exceptions.IndexError,
-                                        "array index out of range"
-                                        );
+                        "array index out of range"
+                        );
                     return IntPtr.Zero;
                 }
 
@@ -81,10 +91,11 @@ namespace Python.Runtime {
 
             // Multi-dimensional arrays can be indexed a la: list[1, 2, 3].
 
-            if (!Runtime.PyTuple_Check(idx)) {
+            if (!Runtime.PyTuple_Check(idx))
+            {
                 Exceptions.SetError(Exceptions.TypeError,
-                                    "invalid index value"
-                                    );
+                    "invalid index value"
+                    );
                 return IntPtr.Zero;
             }
 
@@ -92,28 +103,33 @@ namespace Python.Runtime {
 
             Array args = Array.CreateInstance(typeof(Int32), count);
 
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++)
+            {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
                 index = (int)Runtime.PyInt_AsLong(op);
 
-                if (Exceptions.ErrorOccurred()) {
+                if (Exceptions.ErrorOccurred())
+                {
                     return Exceptions.RaiseTypeError("invalid index value");
                 }
 
-                if (index < 0) {
+                if (index < 0)
+                {
                     index = items.GetLength(i) + index;
                 }
 
                 args.SetValue(index, i);
             }
 
-            try {
-                value = items.GetValue((int[]) args);
+            try
+            {
+                value = items.GetValue((int[])args);
             }
-            catch (IndexOutOfRangeException) {
+            catch (IndexOutOfRangeException)
+            {
                 Exceptions.SetError(Exceptions.IndexError,
-                                    "array index out of range"
-                                    );
+                    "array index out of range"
+                    );
                 return IntPtr.Zero;
             }
 
@@ -125,7 +141,8 @@ namespace Python.Runtime {
         // Implements __setitem__ for array types.
         //====================================================================
 
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v) {
+        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        {
             CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
             Array items = obj.inst as Array;
             Type itemType = obj.inst.GetType().GetElementType();
@@ -133,41 +150,49 @@ namespace Python.Runtime {
             int index = 0;
             object value;
 
-            if (items.IsReadOnly) {
+            if (items.IsReadOnly)
+            {
                 Exceptions.RaiseTypeError("array is read-only");
                 return -1;
             }
 
-            if (!Converter.ToManaged(v, itemType, out value, true)) {
+            if (!Converter.ToManaged(v, itemType, out value, true))
+            {
                 return -1;
             }
 
-            if (rank == 1) {
+            if (rank == 1)
+            {
                 index = (int)Runtime.PyInt_AsLong(idx);
 
-                if (Exceptions.ErrorOccurred()) {
+                if (Exceptions.ErrorOccurred())
+                {
                     Exceptions.RaiseTypeError("invalid index value");
                     return -1;
                 }
 
-                if (index < 0) {
+                if (index < 0)
+                {
                     index = items.Length + index;
                 }
 
-                try {
+                try
+                {
                     items.SetValue(value, index);
                 }
-                catch (IndexOutOfRangeException) {
+                catch (IndexOutOfRangeException)
+                {
                     Exceptions.SetError(Exceptions.IndexError,
-                                        "array index out of range"
-                                        );
+                        "array index out of range"
+                        );
                     return -1;
                 }
 
                 return 0;
             }
 
-            if (!Runtime.PyTuple_Check(idx)) {
+            if (!Runtime.PyTuple_Check(idx))
+            {
                 Exceptions.RaiseTypeError("invalid index value");
                 return -1;
             }
@@ -176,29 +201,34 @@ namespace Python.Runtime {
 
             Array args = Array.CreateInstance(typeof(Int32), count);
 
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++)
+            {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
                 index = (int)Runtime.PyInt_AsLong(op);
 
-                if (Exceptions.ErrorOccurred()) {
+                if (Exceptions.ErrorOccurred())
+                {
                     Exceptions.RaiseTypeError("invalid index value");
                     return -1;
                 }
 
-                if (index < 0) {
+                if (index < 0)
+                {
                     index = items.GetLength(i) + index;
                 }
 
                 args.SetValue(index, i);
             }
 
-            try {
+            try
+            {
                 items.SetValue(value, (int[])args);
             }
-            catch (IndexOutOfRangeException) {
+            catch (IndexOutOfRangeException)
+            {
                 Exceptions.SetError(Exceptions.IndexError,
-                                    "array index out of range"
-                                    );
+                    "array index out of range"
+                    );
                 return -1;
             }
 
@@ -210,17 +240,20 @@ namespace Python.Runtime {
         // Implements __contains__ for array types.
         //====================================================================
 
-        public static int sq_contains(IntPtr ob, IntPtr v) {
+        public static int sq_contains(IntPtr ob, IntPtr v)
+        {
             CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
             Type itemType = obj.inst.GetType().GetElementType();
             IList items = obj.inst as IList;
             object value;
 
-            if (!Converter.ToManaged(v, itemType, out value, false)) {
+            if (!Converter.ToManaged(v, itemType, out value, false))
+            {
                 return 0;
             }
 
-            if (items.Contains(value)) {
+            if (items.Contains(value))
+            {
                 return 1;
             }
 
@@ -232,13 +265,11 @@ namespace Python.Runtime {
         // Implements __len__ for array types.
         //====================================================================
 
-        public static int mp_length(IntPtr ob) {
+        public static int mp_length(IntPtr ob)
+        {
             CLRObject self = (CLRObject)ManagedType.GetManagedObject(ob);
             Array items = self.inst as Array;
             return items.Length;
         }
-
-
     }
-
 }

@@ -1,13 +1,13 @@
-
 using System;
 
-namespace Python.Test {
-
+namespace Python.Test
+{
     //========================================================================
     // Supports CLR enum unit tests.
     //========================================================================
 
-    public enum ByteEnum : byte {
+    public enum ByteEnum : byte
+    {
         Zero,
         One,
         Two,
@@ -16,8 +16,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum SByteEnum : sbyte {
-
+    public enum SByteEnum : sbyte
+    {
         Zero,
         One,
         Two,
@@ -26,7 +26,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum ShortEnum : short {
+    public enum ShortEnum : short
+    {
         Zero,
         One,
         Two,
@@ -35,7 +36,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum UShortEnum : ushort {
+    public enum UShortEnum : ushort
+    {
         Zero,
         One,
         Two,
@@ -44,7 +46,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum IntEnum : int{
+    public enum IntEnum : int
+    {
         Zero,
         One,
         Two,
@@ -53,7 +56,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum UIntEnum : uint {
+    public enum UIntEnum : uint
+    {
         Zero,
         One,
         Two,
@@ -62,7 +66,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum LongEnum : long {
+    public enum LongEnum : long
+    {
         Zero,
         One,
         Two,
@@ -71,7 +76,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum ULongEnum : ulong {
+    public enum ULongEnum : ulong
+    {
         Zero,
         One,
         Two,
@@ -81,7 +87,8 @@ namespace Python.Test {
     }
 
     [FlagsAttribute]
-    public enum FlagsEnum {
+    public enum FlagsEnum
+    {
         Zero,
         One,
         Two,
@@ -89,5 +96,4 @@ namespace Python.Test {
         Four,
         Five
     }
-
 }

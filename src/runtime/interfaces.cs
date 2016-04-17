@@ -1,32 +1,32 @@
-
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// xxx
     /// </summary>
-
-    internal interface IReflectedType {
+    internal interface IReflectedType
+    {
         string PythonTypeName();
         Type GetReflectedType();
     }
 
-    internal interface IReflectedClass : IReflectedType {
+    internal interface IReflectedClass : IReflectedType
+    {
         bool IsException();
     }
 
-    internal interface IReflectedInterface : IReflectedType {
-
+    internal interface IReflectedInterface : IReflectedType
+    {
     }
 
-    internal interface IReflectedArray : IReflectedType {
+    internal interface IReflectedArray : IReflectedType
+    {
     }
 
-    internal interface IReflectedGenericClass : IReflectedClass {
+    internal interface IReflectedGenericClass : IReflectedClass
+    {
     }
-
-
 }

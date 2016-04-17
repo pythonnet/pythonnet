@@ -1,5 +1,4 @@
-﻿
-//============================================================================
+﻿//============================================================================
 // This file replaces the  hand-maintained stub that used to implement clr.dll.
 // This is a line-by-line port from IL back to C#.
 // We now use RGiesecke.DllExport on the required static init method so it can be
@@ -25,12 +24,8 @@
 using System;
 
 
-
 public class clrModule
-
-
 {
-
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [RGiesecke.DllExport.DllExport("PyInit_clr", System.Runtime.InteropServices.CallingConvention.StdCall)]
     public static IntPtr PyInit_clr()
@@ -38,7 +33,6 @@ public class clrModule
     [RGiesecke.DllExport.DllExport("initclr", System.Runtime.InteropServices.CallingConvention.StdCall)]
     public static void initclr()
 #endif
-
     {
 #if DEBUG_PRINT
         System.Console.WriteLine("Attempting to load Python.Runtime using standard binding rules... ");
@@ -54,12 +48,12 @@ public class clrModule
         // - A PrivateBinPath under ApplicationBase
         // With an unsigned assembly, the GAC is skipped.
         var pythonRuntimeName = new System.Reflection.AssemblyName("Python.Runtime")
-            {
+        {
 #if USE_PYTHON_RUNTIME_VERSION
-                Version = new System.Version("4.0.0.1"),
+            Version = new System.Version("4.0.0.1"),
 #endif
-                CultureInfo = System.Globalization.CultureInfo.InvariantCulture,
-            };
+            CultureInfo = System.Globalization.CultureInfo.InvariantCulture,
+        };
 #if USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
         pythonRuntimeName.SetPublicKeyToken(pythonRuntimePublicKeyTokenData);
 #endif
@@ -77,13 +71,13 @@ public class clrModule
             try
             {
                 // If the above fails for any reason, we fallback to attempting to load "Python.Runtime.dll"
-			    // from the directory this assembly is running in. "This assembly" is probably "clr.pyd",
-			    // sitting somewhere in PYTHONPATH.  This is using Assembly.LoadFrom, and inherits all the
-			    // caveats of that call.  See MSDN docs for details.
-			    // Suzanne Cook's blog is also an excellent source of info on this:
-			    // http://blogs.msdn.com/suzcook/
-			    // http://blogs.msdn.com/suzcook/archive/2003/05/29/57143.aspx
-			    // http://blogs.msdn.com/suzcook/archive/2003/06/13/57180.aspx
+                // from the directory this assembly is running in. "This assembly" is probably "clr.pyd",
+                // sitting somewhere in PYTHONPATH.  This is using Assembly.LoadFrom, and inherits all the
+                // caveats of that call.  See MSDN docs for details.
+                // Suzanne Cook's blog is also an excellent source of info on this:
+                // http://blogs.msdn.com/suzcook/
+                // http://blogs.msdn.com/suzcook/archive/2003/05/29/57143.aspx
+                // http://blogs.msdn.com/suzcook/archive/2003/06/13/57180.aspx
 
                 var executingAssembly = System.Reflection.Assembly.GetExecutingAssembly();
                 var assemblyDirectory = System.IO.Path.GetDirectoryName(executingAssembly.Location);
@@ -95,7 +89,8 @@ public class clrModule
 #endif
                 pythonRuntime = System.Reflection.Assembly.LoadFrom(pythonRuntimeDllPath);
             }
-            catch (System.InvalidOperationException) {
+            catch (System.InvalidOperationException)
+            {
 #if DEBUG_PRINT
                 System.Console.WriteLine("Could not load Python.Runtime, so sad.");
 #endif
@@ -108,7 +103,7 @@ public class clrModule
         }
 
         // Once here, we've successfully loaded SOME version of Python.Runtime
-		// So now we get the PythonEngine and execute the InitExt method on it.
+        // So now we get the PythonEngine and execute the InitExt method on it.
         var pythonEngineType = pythonRuntime.GetType("Python.Runtime.PythonEngine");
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)

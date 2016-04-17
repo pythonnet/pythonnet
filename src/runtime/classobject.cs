@@ -1,26 +1,26 @@
-
 using System;
 using System.Reflection;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// Managed class that provides the implementation for reflected types.
     /// Managed classes and value types are represented in Python by actual
     /// Python type objects. Each of those type objects is associated with
     /// an instance of ClassObject, which provides its implementation.
     /// </summary>
-
-    internal class ClassObject : ClassBase {
-
+    internal class ClassObject : ClassBase
+    {
         internal ConstructorBinder binder;
         internal ConstructorInfo[] ctors;
 
-        internal ClassObject(Type tp) : base(tp) {
+        internal ClassObject(Type tp) : base(tp)
+        {
             ctors = type.GetConstructors();
             binder = new ConstructorBinder(type);
 
-            for (int i = 0; i < ctors.Length; i++) {
+            for (int i = 0; i < ctors.Length; i++)
+            {
                 binder.AddMethod(ctors[i]);
             }
         }
@@ -30,10 +30,12 @@ namespace Python.Runtime {
         // Helper to get docstring from reflected constructor info.
         //====================================================================
 
-        internal IntPtr GetDocString() {
+        internal IntPtr GetDocString()
+        {
             MethodBase[] methods = binder.GetMethods();
             string str = "";
-            for (int i = 0; i < methods.Length; i++) {
+            for (int i = 0; i < methods.Length; i++)
+            {
                 if (str.Length > 0)
                     str += Environment.NewLine;
                 str += methods[i].ToString();
@@ -46,15 +48,16 @@ namespace Python.Runtime {
         // Implements __new__ for reflected classes and value types.
         //====================================================================
 
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw) {
-
+        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        {
             ClassObject self = GetManagedObject(tp) as ClassObject;
 
             // Sanity check: this ensures a graceful error if someone does
             // something intentially wrong like use the managed metatype for
             // a class that is not really derived from a managed class.
 
-            if (self == null) {
+            if (self == null)
+            {
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
@@ -64,40 +67,46 @@ namespace Python.Runtime {
             // they do from Python. If the ClassObject represents one of the
             // convertible primitive types, just convert the arg directly.
 
-            if (type.IsPrimitive || type == typeof(String)) {
-                if (Runtime.PyTuple_Size(args) != 1) {
+            if (type.IsPrimitive || type == typeof(String))
+            {
+                if (Runtime.PyTuple_Size(args) != 1)
+                {
                     Exceptions.SetError(Exceptions.TypeError,
-                               "no constructors match given arguments"
-                               );
+                        "no constructors match given arguments"
+                        );
                     return IntPtr.Zero;
                 }
 
                 IntPtr op = Runtime.PyTuple_GetItem(args, 0);
                 Object result;
 
-                if (!Converter.ToManaged(op, type, out result, true)) {
+                if (!Converter.ToManaged(op, type, out result, true))
+                {
                     return IntPtr.Zero;
                 }
 
                 return CLRObject.GetInstHandle(result, tp);
             }
 
-            if (type.IsAbstract) {
+            if (type.IsAbstract)
+            {
                 Exceptions.SetError(Exceptions.TypeError,
-                           "cannot instantiate abstract class"
-                           );
+                    "cannot instantiate abstract class"
+                    );
                 return IntPtr.Zero;
             }
 
-            if (type.IsEnum) {
+            if (type.IsEnum)
+            {
                 Exceptions.SetError(Exceptions.TypeError,
-                           "cannot instantiate enumeration"
-                           );
+                    "cannot instantiate enumeration"
+                    );
                 return IntPtr.Zero;
             }
 
             Object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
-            if (obj == null) {
+            if (obj == null)
+            {
                 return IntPtr.Zero;
             }
 
@@ -105,24 +114,27 @@ namespace Python.Runtime {
         }
 
 
-         //====================================================================
-         // Implementation of [] semantics for reflected types. This exists
-         // both to implement the Array[int] syntax for creating arrays and
+        //====================================================================
+        // Implementation of [] semantics for reflected types. This exists
+        // both to implement the Array[int] syntax for creating arrays and
         // to support generic name overload resolution using [].
-         //====================================================================
+        //====================================================================
 
-         public override IntPtr type_subscript(IntPtr idx) {
-
+        public override IntPtr type_subscript(IntPtr idx)
+        {
             // If this type is the Array type, the [<type>] means we need to
             // construct and return an array type of the given element type.
 
-             if ((this.type) == typeof(Array)) {
-                if (Runtime.PyTuple_Check(idx)) {
+            if ((this.type) == typeof(Array))
+            {
+                if (Runtime.PyTuple_Check(idx))
+                {
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 ClassBase c = GetManagedObject(idx) as ClassBase;
                 Type t = (c != null) ? c.type : Converter.GetTypeByAlias(idx);
-                if (t == null) {
+                if (t == null)
+                {
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 Type a = t.MakeArrayType();
@@ -136,35 +148,39 @@ namespace Python.Runtime {
             // bind the generic type matching the given type parameters.
 
             Type[] types = Runtime.PythonArgsToTypeArray(idx);
-            if (types == null) {
+            if (types == null)
+            {
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
             string gname = this.type.FullName + "`" + types.Length.ToString();
             Type gtype = AssemblyManager.LookupType(gname);
-            if (gtype != null) {
+            if (gtype != null)
+            {
                 GenericType g = ClassManager.GetClass(gtype) as GenericType;
                 return g.type_subscript(idx);
                 /*Runtime.Incref(g.pyHandle);
                 return g.pyHandle;*/
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
-         }
+        }
 
 
         //====================================================================
         // Implements __getitem__ for reflected classes and value types.
         //====================================================================
 
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx) {
+        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        {
             //ManagedType self = GetManagedObject(ob);
             IntPtr tp = Runtime.PyObject_TYPE(ob);
             ClassBase cls = (ClassBase)GetManagedObject(tp);
 
-            if (cls.indexer == null || !cls.indexer.CanGet) {
+            if (cls.indexer == null || !cls.indexer.CanGet)
+            {
                 Exceptions.SetError(Exceptions.TypeError,
-                                    "unindexable object"
-                                    );
+                    "unindexable object"
+                    );
                 return IntPtr.Zero;
             }
 
@@ -175,7 +191,8 @@ namespace Python.Runtime {
             IntPtr args = idx;
             bool free = false;
 
-            if (!Runtime.PyTuple_Check(idx)) {
+            if (!Runtime.PyTuple_Check(idx))
+            {
                 args = Runtime.PyTuple_New(1);
                 Runtime.Incref(idx);
                 Runtime.PyTuple_SetItem(args, 0, idx);
@@ -184,11 +201,14 @@ namespace Python.Runtime {
 
             IntPtr value = IntPtr.Zero;
 
-            try {
+            try
+            {
                 value = cls.indexer.GetItem(ob, args);
             }
-            finally {
-                if (free) {
+            finally
+            {
+                if (free)
+                {
                     Runtime.Decref(args);
                 }
             }
@@ -200,15 +220,17 @@ namespace Python.Runtime {
         // Implements __setitem__ for reflected classes and value types.
         //====================================================================
 
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v) {
+        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        {
             //ManagedType self = GetManagedObject(ob);
             IntPtr tp = Runtime.PyObject_TYPE(ob);
             ClassBase cls = (ClassBase)GetManagedObject(tp);
 
-            if (cls.indexer == null || !cls.indexer.CanSet) {
+            if (cls.indexer == null || !cls.indexer.CanSet)
+            {
                 Exceptions.SetError(Exceptions.TypeError,
-                                    "object doesn't support item assignment"
-                                    );
+                    "object doesn't support item assignment"
+                    );
                 return -1;
             }
 
@@ -218,7 +240,8 @@ namespace Python.Runtime {
             IntPtr args = idx;
             bool free = false;
 
-            if (!Runtime.PyTuple_Check(idx)) {
+            if (!Runtime.PyTuple_Check(idx))
+            {
                 args = Runtime.PyTuple_New(1);
                 Runtime.Incref(idx);
                 Runtime.PyTuple_SetItem(args, 0, idx);
@@ -231,14 +254,16 @@ namespace Python.Runtime {
             int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
             int temp = i + numOfDefaultArgs;
             IntPtr real = Runtime.PyTuple_New(temp + 1);
-            for (int n = 0; n < i; n++) {
+            for (int n = 0; n < i; n++)
+            {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
                 Runtime.Incref(item);
                 Runtime.PyTuple_SetItem(real, n, item);
             }
 
             // Add Default Args if needed
-            for (int n = 0; n < numOfDefaultArgs; n++) {
+            for (int n = 0; n < numOfDefaultArgs; n++)
+            {
                 IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
                 Runtime.Incref(item);
                 Runtime.PyTuple_SetItem(real, n + i, item);
@@ -251,18 +276,22 @@ namespace Python.Runtime {
             Runtime.Incref(v);
             Runtime.PyTuple_SetItem(real, i, v);
 
-            try {
+            try
+            {
                 cls.indexer.SetItem(ob, real);
             }
-            finally {
+            finally
+            {
                 Runtime.Decref(real);
 
-                if (free) {
+                if (free)
+                {
                     Runtime.Decref(args);
                 }
             }
 
-            if (Exceptions.ErrorOccurred()) {
+            if (Exceptions.ErrorOccurred())
+            {
                 return -1;
             }
 
@@ -277,14 +306,16 @@ namespace Python.Runtime {
         // when working with multicast delegates.
         //====================================================================
 
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw) {
+        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        {
             //ManagedType self = GetManagedObject(ob);
             IntPtr tp = Runtime.PyObject_TYPE(ob);
             ClassBase cb = (ClassBase)GetManagedObject(tp);
 
-            if (cb.type != typeof(System.Delegate)) {
+            if (cb.type != typeof(System.Delegate))
+            {
                 Exceptions.SetError(Exceptions.TypeError,
-                                    "object is not callable");
+                    "object is not callable");
                 return IntPtr.Zero;
             }
 
@@ -296,11 +327,8 @@ namespace Python.Runtime {
                                  BindingFlags.Static;
 
             MethodInfo method = d.GetType().GetMethod("Invoke", flags);
-              MethodBinder binder = new MethodBinder(method);
-             return binder.Invoke(ob, args, kw);
+            MethodBinder binder = new MethodBinder(method);
+            return binder.Invoke(ob, args, kw);
         }
-
-
     }
-
 }

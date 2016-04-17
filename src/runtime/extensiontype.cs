@@ -1,21 +1,19 @@
-
 using System;
 using System.Runtime.InteropServices;
 using System.Collections;
 using System.Reflection;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
     /// Base class for extensions whose instances *share* a single Python
     /// type object, such as the types that represent CLR methods, fields,
     /// etc. Instances implemented by this class do not support subtyping.
     /// </summary>
-
-    internal abstract class ExtensionType : ManagedType {
-
-        public ExtensionType() : base() {
-
+    internal abstract class ExtensionType : ManagedType
+    {
+        public ExtensionType() : base()
+        {
             // Create a new PyObject whose type is a generated type that is
             // implemented by the particuar concrete ExtensionType subclass.
             // The Python instance object is related to an instance of a
@@ -51,7 +49,8 @@ namespace Python.Runtime {
         // Common finalization code to support custom tp_deallocs.
         //====================================================================
 
-        public static void FinalizeObject(ManagedType self) {
+        public static void FinalizeObject(ManagedType self)
+        {
             Runtime.PyObject_GC_Del(self.pyHandle);
             Runtime.Decref(self.tpHandle);
             self.gcHandle.Free();
@@ -62,9 +61,11 @@ namespace Python.Runtime {
         // Type __setattr__ implementation.
         //====================================================================
 
-        public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val) {
+        public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        {
             string message = "type does not support setting attributes";
-            if (val == IntPtr.Zero) {
+            if (val == IntPtr.Zero)
+            {
                 message = "readonly attribute";
             }
             Exceptions.SetError(Exceptions.TypeError, message);
@@ -77,7 +78,8 @@ namespace Python.Runtime {
         // being silently replaced in a type __dict__ by default __setattr__.
         //====================================================================
 
-        public static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val) {
+        public static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        {
             string message = "attribute is read-only";
             Exceptions.SetError(Exceptions.AttributeError, message);
             return -1;
@@ -88,17 +90,20 @@ namespace Python.Runtime {
         // Required Python GC support.
         //====================================================================
 
-        public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args) {
+        public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args)
+        {
             return 0;
         }
 
 
-        public static int tp_clear(IntPtr ob) {
+        public static int tp_clear(IntPtr ob)
+        {
             return 0;
         }
 
 
-        public static int tp_is_gc(IntPtr type) {
+        public static int tp_is_gc(IntPtr type)
+        {
             return 1;
         }
 
@@ -107,15 +112,12 @@ namespace Python.Runtime {
         // Default dealloc implementation.
         //====================================================================
 
-        public static void tp_dealloc(IntPtr ob) {
+        public static void tp_dealloc(IntPtr ob)
+        {
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             ManagedType self = GetManagedObject(ob);
             FinalizeObject(self);
         }
-
-
     }
-
-
 }
