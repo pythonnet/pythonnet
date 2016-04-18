@@ -769,3 +769,25 @@ def test_wrong_overload():
     res = System.Math.Max(System.Double(50.5), 50.1)
     assert res == 50.5
     assert type(res) == float
+
+
+def test_no_object_in_param():
+    """Test that fix for #203 doesn't break behavior w/ no object overload"""
+
+    res = MethodTest.TestOverloadedNoObject(5)
+    assert res == "Got int"
+
+    with pytest.raises(TypeError):
+        MethodTest.TestOverloadedNoObject("test")
+
+
+@pytest.mark.xfail(reason="Needs fixing. #203")
+def test_object_in_param():
+    """Test regression introduced by #151 in which Object method overloads
+    aren't being used. See #203 for issue."""
+
+    res = MethodTest.TestOverloadedObject(5)
+    assert res == "Got int"
+
+    res = MethodTest.TestOverloadedObject("test")
+    assert res == "Got object"

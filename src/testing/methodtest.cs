@@ -116,6 +116,21 @@ namespace Python.Test
             return args;
         }
 
+        public static string TestOverloadedNoObject(int i)
+        {
+            return "Got int";
+        }
+
+        public static string TestOverloadedObject(int i)
+        {
+            return "Got int";
+        }
+
+        public static string TestOverloadedObject(object o)
+        {
+            return "Got object";
+        }
+
         public static bool TestStringOutParams(string s, out string s1)
         {
             s1 = "output string";
