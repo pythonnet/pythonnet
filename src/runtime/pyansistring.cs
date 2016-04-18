@@ -1,15 +1,7 @@
-// ==========================================================================
-// This is a user contribution to the pythondotnet project.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     public class PyAnsiString : PySequence
     {
         /// <summary>
@@ -21,8 +13,9 @@ namespace Python.Runtime {
         /// that the instance assumes ownership of the object reference.
         /// The object reference is not checked for type-correctness.
         /// </remarks>
-
-        public PyAnsiString(IntPtr ptr) : base(ptr) { }
+        public PyAnsiString(IntPtr ptr) : base(ptr)
+        {
+        }
 
 
         /// <summary>
@@ -34,7 +27,6 @@ namespace Python.Runtime {
         /// An ArgumentException will be thrown if the given object is not
         /// a Python string object.
         /// </remarks>
-
         public PyAnsiString(PyObject o)
             : base()
         {
@@ -54,7 +46,6 @@ namespace Python.Runtime {
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-
         public PyAnsiString(string s)
             : base()
         {
@@ -73,7 +64,6 @@ namespace Python.Runtime {
         /// <remarks>
         /// Returns true if the given object is a Python string.
         /// </remarks>
-
         public static bool IsStringType(PyObject value)
         {
             return Runtime.PyString_Check(value.obj);

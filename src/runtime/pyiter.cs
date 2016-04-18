@@ -1,12 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
 using System.Collections.Generic;
 
@@ -29,8 +20,9 @@ namespace Python.Runtime
         /// that the instance assumes ownership of the object reference.
         /// The object reference is not checked for type-correctness.
         /// </remarks>
-
-        public PyIter(IntPtr ptr) : base(ptr) {}
+        public PyIter(IntPtr ptr) : base(ptr)
+        {
+        }
 
         /// <summary>
         /// PyIter Constructor
@@ -39,12 +31,11 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
         /// </remarks>
-
         public PyIter(PyObject iterable) : base()
         {
             obj = Runtime.PyObject_GetIter(iterable.obj);
-                if (obj == IntPtr.Zero)
-                        throw new PythonException();
+            if (obj == IntPtr.Zero)
+                throw new PythonException();
         }
 
         protected override void Dispose(bool disposing)

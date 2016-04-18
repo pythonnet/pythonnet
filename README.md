@@ -54,7 +54,7 @@ static void Main(string[] args)
 ```
 outputs:
 ```
-1.0  
+1.0
 -0.958924274663
 -0.6752620892
 float64

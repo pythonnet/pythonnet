@@ -1,12 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import sys, os, string, unittest, types
 from Python.Test import ThreadTest
 import six
@@ -32,7 +23,6 @@ class ThreadTests(unittest.TestCase):
         self.assertTrue(result == "spam")
         dprint("thread %s SimpleCallBack ret" % thread.get_ident())
 
-                
     def testDoubleCallbackToPython(self):
         """Test a call to managed code that then calls back into Python
            that then calls managed code that then calls Python again."""
@@ -40,7 +30,6 @@ class ThreadTests(unittest.TestCase):
         result = ThreadTest.CallEchoString2("spam")
         self.assertTrue(result == "spam")
         dprint("thread %s DoubleCallBack ret" % thread.get_ident())
-    
 
     def testPythonThreadCallsToCLR(self):
         """Test calls by Python-spawned threads into managed code."""
@@ -49,13 +38,14 @@ class ThreadTests(unittest.TestCase):
         from System import String
 
         done = []
+
         def run_thread():
             for i in range(10):
                 time.sleep(0.1)
                 dprint("thread %s %d" % (thread.get_ident(), i))
                 mstr = String("thread %s %d" % (thread.get_ident(), i))
                 pstr = mstr.ToString()
-                done.append(None)                
+                done.append(None)
                 dprint("thread %s %d done" % (thread.get_ident(), i))
 
         def start_threads(count):
@@ -72,15 +62,14 @@ class ThreadTests(unittest.TestCase):
         return
 
 
-    
-
 def test_suite():
     return unittest.makeSuite(ThreadTests)
+
 
 def main():
     for i in range(50):
         unittest.TextTestRunner().run(test_suite())
 
+
 if __name__ == '__main__':
     main()
-

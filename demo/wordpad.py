@@ -1,12 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import clr
 import System.Windows.Forms as WinForms
 from System.Threading import Thread, ThreadStart, ApartmentState
@@ -60,18 +51,16 @@ class Wordpad(WinForms.Form):
         self.aboutMenu = WinForms.MenuItem()
         self.menuHelpAbout = WinForms.MenuItem()
 
-
         self.richTextBox = WinForms.RichTextBox()
         self.statusBarPanel1 = WinForms.StatusBarPanel()
         self.statusBar = WinForms.StatusBar()
         self.fontDialog = WinForms.FontDialog()
         self.statusBarPanel1.BeginInit()
 
-
         # ===================================================================
         # File Menu
         # ===================================================================
-        
+
         self.menuFileNew.Text = "&New"
         self.menuFileNew.Shortcut = WinForms.Shortcut.CtrlN
         self.menuFileNew.ShowShortcut = False
@@ -83,7 +72,7 @@ class Wordpad(WinForms.Form):
         self.menuFileOpen.ShowShortcut = False
         self.menuFileOpen.Index = 1
         self.menuFileOpen.Click += self.OnClickFileOpen
-                    
+
         self.menuFileSave.Text = "&Save"
         self.menuFileSave.Shortcut = WinForms.Shortcut.CtrlS
         self.menuFileSave.ShowShortcut = False
@@ -112,7 +101,6 @@ class Wordpad(WinForms.Form):
 
         self.fileMenu.MenuItems.AddRange(items)
 
-
         # ===================================================================
         # Edit menu
         # ===================================================================
@@ -134,7 +122,7 @@ class Wordpad(WinForms.Form):
         self.menuEditCut.Shortcut = WinForms.Shortcut.CtrlX
         self.menuEditCut.Index = 3
         self.menuEditCut.Click += self.OnClickEditCut
-        
+
         self.menuEditCopy.Text = "Copy"
         self.menuEditCopy.Shortcut = WinForms.Shortcut.CtrlC
         self.menuEditCopy.Index = 4
@@ -163,7 +151,6 @@ class Wordpad(WinForms.Form):
 
         self.editMenu.MenuItems.AddRange(items)
 
-
         # ===================================================================
         # Format Menu
         # ===================================================================
@@ -184,11 +171,10 @@ class Wordpad(WinForms.Form):
 
         self.formatMenu.MenuItems.AddRange(items)
 
-
         # ===================================================================
         # About menu
         # ===================================================================
-        
+
         self.menuHelpAbout.Text = "&About"
         self.menuHelpAbout.Index = 0
         self.menuHelpAbout.Click += self.OnClickHelpAbout
@@ -210,7 +196,6 @@ class Wordpad(WinForms.Form):
         self.richTextBox.AcceptsTab = 1
         self.richTextBox.Location = System.Drawing.Point(0, 0)
 
-
         self.statusBar.BackColor = System.Drawing.SystemColors.Control
         self.statusBar.Location = System.Drawing.Point(0, 518)
         self.statusBar.Size = System.Drawing.Size(775, 19)
@@ -218,11 +203,9 @@ class Wordpad(WinForms.Form):
         self.statusBar.ShowPanels = True
         self.statusBar.Panels.Add(self.statusBarPanel1)
 
-
         items = (self.fileMenu, self.editMenu, self.formatMenu, self.aboutMenu)
         self.mainMenu.MenuItems.AddRange(items)
 
-            
         self.openFileDialog.Filter = "Text documents|*.txt|RTF document|*.rtf"
         self.openFileDialog.Title = "Open document"
 
@@ -230,7 +213,6 @@ class Wordpad(WinForms.Form):
                                      "Rich Text Format|*.rtf"
         self.saveFileDialog.Title = "Save document"
         self.saveFileDialog.FileName = "Untitled"
-
 
         self.AutoScaleBaseSize = System.Drawing.Size(5, 13)
         self.ClientSize = System.Drawing.Size(775, 537)
@@ -244,7 +226,6 @@ class Wordpad(WinForms.Form):
     def Dispose(self):
         self.components.Dispose()
         WinForms.Form.Dispose(self)
-        
 
     def OnClickFileNew(self, sender, args):
         self.SaveChangesDialog()
@@ -265,7 +246,6 @@ class Wordpad(WinForms.Form):
         self.SaveChangesDialog()
         self.Close()
 
-
     def OnClickEditUndo(self, sender, args):
         self.richTextBox.Undo()
 
@@ -284,7 +264,6 @@ class Wordpad(WinForms.Form):
     def OnClickEditSelectAll(self, sender, args):
         self.richTextBox.SelectAll()
 
-
     def OnClickFormatWordWrap(self, sender, args):
         value = not self.word_wrap
         self.richTextBox.WordWrap = value
@@ -297,7 +276,6 @@ class Wordpad(WinForms.Form):
 
     def OnClickHelpAbout(self, sender, args):
         AboutForm().ShowDialog(self)
-
 
     def NewDocument(self):
         self.doctype = 1
@@ -327,7 +305,7 @@ class Wordpad(WinForms.Form):
         stream.Close()
 
         filename = self.filename = filename.lower()
-        
+
         if filename.endswith('.rtf'):
             self.richTextBox.Rtf = data
             self.doctype = 2
@@ -345,10 +323,10 @@ class Wordpad(WinForms.Form):
             if self.saveFileDialog.ShowDialog() != WinForms.DialogResult.OK:
                 return
             filename = self.saveFileDialog.FileName
-        
+
         filename = self.filename = filename.lower()
         self.Text = 'Python Wordpad - %s' % filename
-        
+
         self.richTextBox.Select(0, 0)
 
         stream = File.OpenWrite(filename)
@@ -366,17 +344,16 @@ class Wordpad(WinForms.Form):
     def SaveChangesDialog(self):
         if self.richTextBox.Modified:
             if WinForms.MessageBox.Show(
-                "Save changes?", "Word Pad",
-                WinForms.MessageBoxButtons.OK |
-                WinForms.MessageBoxButtons.YesNo
-                ) == WinForms.DialogResult.Yes: 
+                    "Save changes?", "Word Pad",
+                            WinForms.MessageBoxButtons.OK |
+                            WinForms.MessageBoxButtons.YesNo
+            ) == WinForms.DialogResult.Yes:
                 self.SaveDocument()
                 return 1
         return 0
 
 
 class AboutForm(WinForms.Form):
-
     def __init__(self):
         self.InitializeComponent()
 
@@ -406,7 +383,7 @@ class AboutForm(WinForms.Form):
         self.ClientSize = System.Drawing.Size(300, 150)
 
         self.Controls.AddRange((self.label1, self.btnClose))
-        
+
         self.FormBorderStyle = WinForms.FormBorderStyle.FixedDialog
         self.MaximizeBox = 0
         self.MinimizeBox = 0
@@ -435,4 +412,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

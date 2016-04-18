@@ -81,7 +81,7 @@ namespace Python.Test
         // test instances can be constructed in managed code
         public static IInterfaceTest create_instance(Type t)
         {
-            return (IInterfaceTest)t.GetConstructor(new Type[] {}).Invoke(new Object[] {});
+            return (IInterfaceTest)t.GetConstructor(new Type[] { }).Invoke(new Object[] { });
         }
 
         // test instances pass through managed code unchanged

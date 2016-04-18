@@ -1,23 +1,15 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 """
 Run all of the unit tests for this package multiple times in a highly
 multithreaded way to stress the system. This makes it possible to look
 for memory leaks and threading issues and provides a good target for a
 profiler to accumulate better data.
 """
+from __future__ import print_function
 
 import sys, os, gc, time, threading, thread
 
-class StressTest:
 
+class StressTest:
     def __init__(self):
         self.dirname = os.path.split(__file__)[0]
         sys.path.append(self.dirname)
@@ -28,8 +20,8 @@ class StressTest:
 
     def dprint(self, msg):
         # Debugging helper to trace thread-related tests.
-        if 1: print msg
-    
+        if 1: print(msg)
+
     def markStart(self):
         self._start = time.clock()
 
@@ -41,7 +33,7 @@ class StressTest:
 
     def printGCReport(self):
         for item in gc.get_objects():
-            print item, sys.getrefcount(item)
+            print(item, sys.getrefcount(item))
 
     def runThread(self, iterations):
         thread_id = thread.get_ident()
@@ -51,9 +43,9 @@ class StressTest:
             self.dprint("thread %s iter %d start" % (thread_id, i))
             self.module.main()
             self.dprint("thread %s iter %d end" % (thread_id, i))
-        self.done.append(None)                
+        self.done.append(None)
         self.dprint("thread %s done" % thread_id)
-        
+
     def stressTest(self, iterations=1, threads=1):
         args = (iterations,)
         self.markStart()
@@ -66,7 +58,7 @@ class StressTest:
         self.markFinish()
         took = self.elapsed()
         self.printGCReport()
-        
+
 
 def main():
     test = StressTest()
@@ -76,5 +68,3 @@ def main():
 if __name__ == '__main__':
     main()
     sys.exit(0)
-    
-
