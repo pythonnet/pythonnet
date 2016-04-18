@@ -115,6 +115,16 @@ namespace Python.Test
             return args;
         }
 
+        public static int TestOverloadedObject(int i)
+        {
+            return i;
+        }
+
+        public static object TestOverloadedObject(object o)
+        {
+            return o;
+        }
+
         public static int[] TestOverloadedParams(int v, int[] args)
         {
             return args;
