@@ -781,7 +781,6 @@ def test_no_object_in_param():
         MethodTest.TestOverloadedNoObject("test")
 
 
-@pytest.mark.xfail(reason="Needs fixing. #203")
 def test_object_in_param():
     """Test regression introduced by #151 in which Object method overloads
     aren't being used. See #203 for issue."""
