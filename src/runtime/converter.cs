@@ -228,7 +228,7 @@ namespace Python.Runtime
                         {
                             foreach (object o in (IEnumerable)value)
                             {
-                                using (var p = new PyObject(ToPython(o, o.GetType())))
+                                using (var p = new PyObject(ToPython(o, o?.GetType())))
                                     resultlist.Append(p);
                             }
                             Runtime.Incref(resultlist.Handle);
@@ -962,7 +962,7 @@ namespace Python.Runtime
     {
         public static PyObject ToPython(this object o)
         {
-            return new PyObject(Converter.ToPython(o, o.GetType()));
+            return new PyObject(Converter.ToPython(o, o?.GetType()));
         }
     }
 }

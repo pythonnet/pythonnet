@@ -972,7 +972,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    ptr = Converter.ToPython(inargs[i], inargs[i].GetType());
+                    ptr = Converter.ToPython(inargs[i], inargs[i]?.GetType());
                 }
                 if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
                     throw new PythonException();
