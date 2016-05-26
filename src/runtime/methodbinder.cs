@@ -344,7 +344,7 @@ namespace Python.Runtime
                             if (clrtype != null)
                             {
                                 bool typematch = false;
-                                if (pi[n].ParameterType != clrtype)
+                                if ((pi[n].ParameterType != clrtype) && !(pi[n].ParameterType.IsAssignableFrom(clrtype)))
                                 {
                                     IntPtr pytype = Converter.GetPythonTypeByAlias(pi[n].ParameterType);
                                     pyoptype = Runtime.PyObject_Type(op);
