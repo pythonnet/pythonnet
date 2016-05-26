@@ -246,6 +246,15 @@ namespace Python.Runtime
                     // and it was NOT an ImportError; bail out here.
                     return IntPtr.Zero;
                 }
+
+                if (mod_name == string.Empty)
+                {
+                    // Most likely a missing relative import.
+                    // For example site-packages\bs4\builder\__init__.py uses it to check if a package exists:
+                    //     from . import _html5lib
+                    // We don't support them anyway
+                    return IntPtr.Zero;
+                }
                 // Otherwise,  just clear the it.
                 Exceptions.Clear();
             }
