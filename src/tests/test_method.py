@@ -759,6 +759,28 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
+    def testWeCanBindToEncodingGetString(self):
+        """Check that we can bind to the Encoding.GetString method with variables."""
+        
+        from System.Text import Encoding
+        from System.IO import MemoryStream
+        myBytes = Encoding.UTF8.GetBytes('Some testing string')
+        stream = MemoryStream()
+        stream.Write(myBytes, 0, myBytes.Length)
+        stream.Position = 0
+        
+        buff = System.Array.CreateInstance(System.Byte, 3)
+        buff.Initialize()
+        data = []
+        read = 1
+
+        while read > 0:
+            read, _ = stream.Read(buff, 0, buff.Length)
+            temp = Encoding.UTF8.GetString(buff, 0, read)
+            data.append(temp)
+
+        data = ''.join(data)
+        self.assertEqual(data, 'Some testing string')
 
 def test_suite():
     return unittest.makeSuite(MethodTests)
