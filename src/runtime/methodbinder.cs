@@ -344,9 +344,13 @@ namespace Python.Runtime
                             if (clrtype != null)
                             {
                                 bool typematch = false;
-                                if (pi[n].ParameterType != clrtype)
+                                Type paramtype = pi[n].ParameterType;
+                                if (pi[n].ParameterType.IsByRef) {
+                                    paramtype = pi[n].ParameterType.GetElementType();
+                                }
+                                if (paramtype != clrtype)
                                 {
-                                    IntPtr pytype = Converter.GetPythonTypeByAlias(pi[n].ParameterType);
+                                    IntPtr pytype = Converter.GetPythonTypeByAlias(paramtype);
                                     pyoptype = Runtime.PyObject_Type(op);
                                     Exceptions.Clear();
                                     if (pyoptype != IntPtr.Zero)
@@ -364,7 +368,7 @@ namespace Python.Runtime
                                     if (!typematch)
                                     {
                                         // this takes care of enum values
-                                        TypeCode argtypecode = Type.GetTypeCode(pi[n].ParameterType);
+                                        TypeCode argtypecode = Type.GetTypeCode(paramtype);
                                         TypeCode paramtypecode = Type.GetTypeCode(clrtype);
                                         if (argtypecode == paramtypecode)
                                         {
