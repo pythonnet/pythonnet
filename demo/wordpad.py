@@ -293,12 +293,13 @@ class Wordpad(WinForms.Form):
         stream = File.OpenRead(filename)
 
         buff = System.Array.CreateInstance(System.Byte, 1024)
+        buff.Initialize()
         data = []
+        read = 1
 
-        while stream.Position < stream.Length:
-            buff.Initialize()
-            stream.Read(buff, 0, 1024)
-            temp = Encoding.ASCII.GetString(buff, 0, 1024)
+        while read > 0:
+            read, _ = stream.Read(buff, 0, 1024)
+            temp = Encoding.ASCII.GetString(buff, 0, read)
             data.append(temp)
 
         data = ''.join(data)
