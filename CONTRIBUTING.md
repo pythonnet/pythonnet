@@ -19,7 +19,7 @@ written, documented and tested pull requests are encouraged.
     branch.
   * To quickly create a topic branch based on master; `git checkout -b
     fix/develop/my_contribution master`. Please avoid working directly on the
-    `master` branch.
+    `master` branch for anything other than trivial changes.
 * Make commits of logical units.
 * Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure your commit messages are in the proper format.
@@ -29,7 +29,7 @@ written, documented and tested pull requests are encouraged.
 
 ## Submitting Changes
 
-* Push your changes to a topic branch in your fork of the repository.
+* Merge your topic branch into master and push to your fork of the repository.
 * Submit a pull request to the repository in the pythonnet organization.
 * After feedback has been given we expect responses within two weeks. After two
   weeks we may close the pull request if it isn't showing any activity.
