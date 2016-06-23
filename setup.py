@@ -32,9 +32,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     if use_windows_sdk:
         sdks_root = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows"
         kits_root = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
-        kits_suffix = "bin"
-        if PLATFORM == "x64":
-            kits_suffix += r"\x64"
+        kits_suffix = os.path.join("bin",PLATFORM)
         keys_to_check.extend([
             ("Windows Kit 10.0", kits_root, "KitsRoot10", kits_suffix),
             ("Windows Kit 8.1", kits_root, "KitsRoot81", kits_suffix),
