@@ -399,6 +399,7 @@ namespace Python.Runtime
         //===================================================================
 
         public static bool IsValidNamespace(string name)
+        {
             return !String.IsNullOrEmpty(name) && namespaces.ContainsKey(name);
         }
 
