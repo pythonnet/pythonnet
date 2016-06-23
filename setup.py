@@ -7,6 +7,7 @@ from distutils.command.build_ext import build_ext
 from distutils.command.install_lib import install_lib
 from distutils.command.install_data import install_data
 from distutils.sysconfig import get_config_var
+from distutils.spawn import find_executable
 from distutils import log
 from platform import architecture
 from subprocess import Popen, CalledProcessError, PIPE, check_call
@@ -23,6 +24,10 @@ PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
 
 def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     """Return full path to one of the microsoft build tools"""
+    path = find_executable(tool)
+    if path:
+        return path
+
     try:
         import _winreg
     except ImportError:
