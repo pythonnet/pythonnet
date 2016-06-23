@@ -110,7 +110,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="RGiesecke.DllExport.Metadata">
-      <HintPath>..\..\packages\UnmanagedExports.1.2.6\lib\net\RGiesecke.DllExport.Metadata.dll</HintPath>
+      <HintPath>..\..\packages\UnmanagedExports.1.2.7\lib\net\RGiesecke.DllExport.Metadata.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -131,5 +131,5 @@
     <Copy SourceFiles="$(TargetAssembly)" DestinationFiles="$(PythonBuildDir)\clr.pyd" />
     <Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFiles="$(PythonBuildDir)\clr.pdb" />
   </Target>
-  <Import Project="../../packages/UnmanagedExports.1.2.6/tools/RGiesecke.DllExport.targets" Condition="Exists('../../packages/UnmanagedExports.1.2.6/tools/RGiesecke.DllExport.targets')" />
+  <Import Project="../../packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.targets" Condition="Exists('../../packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.targets')" />
 </Project>
