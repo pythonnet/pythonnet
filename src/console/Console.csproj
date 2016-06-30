@@ -144,6 +144,7 @@
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
     <WarningLevel>4</WarningLevel>
+    <DefineConstants>TRACE;PYTHON34, UCS2</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'EmbeddingTest|x64'">
     <DebugSymbols>True</DebugSymbols>
@@ -196,7 +197,7 @@
   <ItemGroup>
     <Content Include="python-clear.ico" />
     <EmbeddedResource Include="$(PythonBuildDir)\Python.Runtime.dll">
-        <LogicalName>Python.Runtime.dll</LogicalName>
+      <LogicalName>Python.Runtime.dll</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

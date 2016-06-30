@@ -7,7 +7,28 @@ namespace Python.Test
     //========================================================================
     // These classes support the CLR constructor unit tests.
     //========================================================================
-
+    public class AConstrucorTest
+    {
+        public string name;
+        public AConstrucorTest(string n) { name = n; }
+    }
+    public class LinkConstructorTest
+    {
+        public LinkConstructorTest()
+        {
+            DefaultCtCalled = true;
+        }
+        public LinkConstructorTest(AConstrucorTest a,double matchMe,AConstrucorTest b)
+        {
+            MatchMe = matchMe;
+            a1 = a;
+            a2 = b;
+        }
+        public bool DefaultCtCalled;
+        public double MatchMe;
+        public AConstrucorTest a1;
+        public AConstrucorTest a2;
+    }
     public class EnumConstructorTest
     {
         public TypeCode value;

@@ -47,6 +47,19 @@ class ConstructorTests(unittest.TestCase):
         print(ob)
         self.assertTrue(isinstance(ob.value, System.Exception))
 
+    def testConstructorArgumentMatching(self):
+        """ Test that simple type promitions works for int->double """
+        from Python.Test import AConstrucorTest, LinkConstructorTest
+        a1=AConstrucorTest('a1')
+        a2=AConstrucorTest('a2')
+        self.assertEqual(a1.name,'a1')
+        self.assertEqual(a2.name, 'a2')
+        l1=LinkConstructorTest(a1,3000,a2)
+        #l2=LinkConstructorTest(a1,3000.0,a2)
+        self.assertEqual(l1.a1.name, a1.name)
+        self.assertEqual(l1.a2.name, a2.name)
+        self.assertAlmostEqual(3000.0,l1.MatchMe)
+
 
 def test_suite():
     return unittest.makeSuite(ConstructorTests)
