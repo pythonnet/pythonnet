@@ -5,6 +5,8 @@ clr.AddReference("Python.Test")
 import Python.Test as Test
 import System
 
+constructor_throw_on_arg_match_is_fixed = False # currently, failed match on super() is silently ignored, and tests will fail if set to true
+constructor_to_sub_class_accepts_specific_parameters= False # currently, we can't pass arguments to super() class ct.
 
 class ConstructorTests(unittest.TestCase):
     """Test CLR class constructor support."""
@@ -46,6 +48,27 @@ class ConstructorTests(unittest.TestCase):
         ob = SubclassConstructorTest(instance)
         self.assertTrue(isinstance(ob.value, System.Exception))
 
+    def testSubClassWithInternalArgsPassedToSuper(self):
+       """ 
+       Verify we can sub-class a .NET class, in python, 
+       and pass a working set of arguments to our super class.
+       """
+       from Python.Test import ToDoubleConstructorTest  # does the job for this test
+
+       class PySubClass(ToDoubleConstructorTest):
+           def __init__(self,d):
+               super().__init__('a',2.0,'c')
+               self.d = d 
+
+       o = PySubClass('d')
+       self.assertEqual( o.d,'d')
+       if constructor_to_sub_class_accepts_specific_parameters:
+           self.assertEqual( o.a,'a')
+           self.assertAlmostEqual(o.b,2.0)
+           self.assertEqual( o.c,'c')
+       else:
+           print("\n\n*** Warning passing parameters to super class is currently not verified\n")
+
 
     def testConstructorArgumentMatching(self):
         """ Test that simple type promitions works for int->double """
@@ -81,8 +104,21 @@ class ConstructorTests(unittest.TestCase):
         o = ToFloatConstructorTest()
 
     def testConstructorRaiseExceptionIfNoMatch(self):
+        """ 
+        Notice: Due to the feature of .NET object as super-class, there is a 
+                'hack' that after calling a constructor with the supplied arguments
+                 (and they fail to match the .NET class constructor for any reason)
+                 then it removes all the arguments, and retry the call.
+                 Now, if this succeeds, it will return an object, with default values.
+                 This *could* make sense, given that the .NET class *IS* subclassed,
+                 however, if the process is *not* a part of a sub-class construction,
+                 then this is at best very unexpected.
+
+
+        """
+
         from Python.Test import ToDoubleConstructorTest
-        constructor_throw_on_arg_match_is_fixed=False
+
 
         if constructor_throw_on_arg_match_is_fixed:
             with self.assertRaises(TypeError):
