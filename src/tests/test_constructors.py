@@ -44,8 +44,17 @@ class ConstructorTests(unittest.TestCase):
 
         instance = sub()
         ob = SubclassConstructorTest(instance)
-        print(ob)
         self.assertTrue(isinstance(ob.value, System.Exception))
+
+    def testIntToDoubleConstructorArguments(self):
+        from Python.Test import ToDoubleConstructorTest
+
+        o = ToDoubleConstructorTest('a',2,'c')
+        self.assertEqual(o.a,'a')
+        self.assertAlmostEqual(o.b,2)
+        self.assertEqual(o.c,'c')
+
+        o = ToDoubleConstructorTest()
 
 
 def test_suite():
