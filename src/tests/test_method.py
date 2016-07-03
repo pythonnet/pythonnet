@@ -227,6 +227,11 @@ class MethodTests(unittest.TestCase):
             self.assertTrue(False,"the promotion of string to double should fail")
         except:
             pass
+        try:
+            should_fail = object.TestSimpleIntToDoubleTypePromotion(2,True)
+            self.assertTrue(False,"the promotion of boolean to double should fail")
+        except:
+            pass
 
     def testSimpleTypePromotionIntToFloat(self):
         object = MethodTest()
@@ -242,8 +247,13 @@ class MethodTests(unittest.TestCase):
         except:
             self.assertTrue(False,"Type promotion from int to float failed")
         try:
-            should_fail = object.TestSimpleIntToDoubleTypePromotion(2,'2.0')
+            should_fail = object.TestSimpleIntToFloatTypePromotion(2,'2.0')
             self.assertTrue(False,"the promotion of string to float should fail")
+        except:
+            pass
+        try:
+            should_fail = object.TestSimpleIntToFloatTypePromotion(2,True)
+            self.assertTrue(False,"the promotion of boolean to float should fail")
         except:
             pass
 
