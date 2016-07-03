@@ -68,7 +68,7 @@ class ConstructorTests(unittest.TestCase):
         self.assertAlmostEqual(o.b,2)
         self.assertEqual(o.c,'c')
 
-        o = ToDoubleConstructorTest()
+        o = ToDoubleConstructorTest() # just to verify the default constructor is there
 
     def testIntToFloatConstructorArguments(self):
         from Python.Test import ToFloatConstructorTest
@@ -79,6 +79,18 @@ class ConstructorTests(unittest.TestCase):
         self.assertEqual(o.c,'c')
 
         o = ToFloatConstructorTest()
+
+    def testConstructorRaiseExceptionIfNoMatch(self):
+        from Python.Test import ToDoubleConstructorTest
+        constructor_throw_on_arg_match_is_fixed=False
+
+        if constructor_throw_on_arg_match_is_fixed:
+            with self.assertRaises(TypeError):
+                o = ToDoubleConstructorTest('a','not a number','c') # this should raise exception, because there are no match!
+        else:
+            print("\n\n*** Warning: failing arg match on constructors are currently silently accepted if there is a null constructor\n")
+
+
 
 def test_suite():
     return unittest.makeSuite(ConstructorTests)
