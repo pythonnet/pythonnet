@@ -44,8 +44,8 @@ class ConstructorTests(unittest.TestCase):
 
         instance = sub()
         ob = SubclassConstructorTest(instance)
-        print(ob)
         self.assertTrue(isinstance(ob.value, System.Exception))
+
 
     def testConstructorArgumentMatching(self):
         """ Test that simple type promitions works for int->double """
@@ -60,6 +60,25 @@ class ConstructorTests(unittest.TestCase):
         self.assertEqual(l1.a2.name, a2.name)
         self.assertAlmostEqual(3000.0,l1.MatchMe)
 
+    def testIntToDoubleConstructorArguments(self):
+        from Python.Test import ToDoubleConstructorTest
+
+        o = ToDoubleConstructorTest('a',2,'c')
+        self.assertEqual(o.a,'a')
+        self.assertAlmostEqual(o.b,2)
+        self.assertEqual(o.c,'c')
+
+        o = ToDoubleConstructorTest()
+
+    def testIntToFloatConstructorArguments(self):
+        from Python.Test import ToFloatConstructorTest
+
+        o = ToFloatConstructorTest('a',2,'c')
+        self.assertEqual(o.a,'a')
+        self.assertAlmostEqual(o.b,2)
+        self.assertEqual(o.c,'c')
+
+        o = ToFloatConstructorTest()
 
 def test_suite():
     return unittest.makeSuite(ConstructorTests)

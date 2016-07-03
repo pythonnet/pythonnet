@@ -73,6 +73,24 @@ namespace Python.Test
         {
             return v;
         }
+        /// <summary>
+        /// Method to support testing
+        ///  simple promotion of numeric types:
+        ///    
+        ///  integer types -> double
+        ///    
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public double TestSimpleIntToDoubleTypePromotion(double a, double b)
+        {
+            return a + b;
+        }
+        public float TestSimpleIntToFloatTypePromotion(float a, float b)
+        {
+            return a + b;
+        }
 
         public Exception TestSubclassConversion(Exception v)
         {
