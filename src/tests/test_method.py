@@ -208,6 +208,45 @@ class MethodTests(unittest.TestCase):
         r = object.TestFlagsConversion(flags)
         self.assertTrue(r == flags)
 
+    def testSimpleTypePromotionIntToDouble(self):
+        object = MethodTest()
+        try:
+            sum_of_a_plus_b = object.TestSimpleIntToDoubleTypePromotion(2,2)
+            self.assertAlmostEqual(sum_of_a_plus_b,2+2)
+            sum_of_a_plus_b = object.TestSimpleIntToDoubleTypePromotion(2.0,2)
+            self.assertAlmostEqual(sum_of_a_plus_b,2+2)
+            sum_of_a_plus_b = object.TestSimpleIntToDoubleTypePromotion(2,2.0)
+            self.assertAlmostEqual(sum_of_a_plus_b,2+2)
+            sum_of_a_plus_b = object.TestSimpleIntToDoubleTypePromotion(2.0,2.0)
+            self.assertAlmostEqual(sum_of_a_plus_b,2.0+2.0)
+        except:
+            self.assertTrue(False,"Type promotion from int to double failed")
+
+        try:
+            should_fail = object.TestSimpleIntToDoubleTypePromotion(2,'2.0')
+            self.assertTrue(False,"the promotion of string to double should fail")
+        except:
+            pass
+
+    def testSimpleTypePromotionIntToFloat(self):
+        object = MethodTest()
+        try:
+            sum_of_a_plus_b = object.TestSimpleIntToFloatTypePromotion(2,2)
+            self.assertAlmostEqual(sum_of_a_plus_b,2+2)
+            sum_of_a_plus_b = object.TestSimpleIntToFloatTypePromotion(2.0,2)
+            self.assertAlmostEqual(sum_of_a_plus_b,2+2)
+            sum_of_a_plus_b = object.TestSimpleIntToFloatTypePromotion(2,2.0)
+            self.assertAlmostEqual(sum_of_a_plus_b,2+2)
+            sum_of_a_plus_b = object.TestSimpleIntToFloatTypePromotion(2.0,2.0)
+            self.assertAlmostEqual(sum_of_a_plus_b,2.0+2.0)
+        except:
+            self.assertTrue(False,"Type promotion from int to float failed")
+        try:
+            should_fail = object.TestSimpleIntToDoubleTypePromotion(2,'2.0')
+            self.assertTrue(False,"the promotion of string to float should fail")
+        except:
+            pass
+
     def testMethodCallStructConversion(self):
         """Test struct conversion in method call."""
         from System import Guid
