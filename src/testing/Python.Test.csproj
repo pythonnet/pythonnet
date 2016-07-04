@@ -105,7 +105,6 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-    <DefineConstants>PYTHON34, UCS2</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="arraytest.cs" />
