@@ -121,8 +121,11 @@ class ConstructorTests(unittest.TestCase):
 
 
         if constructor_throw_on_arg_match_is_fixed:
-            with self.assertRaises(TypeError):
+            try:
                 o = ToDoubleConstructorTest('a','not a number','c') # this should raise exception, because there are no match!
+            except TypeError:
+                return
+            self.fail("exception should be raised for non-matching constructor atempt")
         else:
             print("\n\n*** Warning: failing arg match on constructors are currently silently accepted if there is a null constructor\n")
 
