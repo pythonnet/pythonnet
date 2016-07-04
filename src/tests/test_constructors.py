@@ -57,7 +57,7 @@ class ConstructorTests(unittest.TestCase):
 
        class PySubClass(ToDoubleConstructorTest):
            def __init__(self,d):
-               super().__init__('a',2.0,'c')
+               super(PySubClass, self).__init__('a',2.0,'c')
                self.d = d 
 
        o = PySubClass('d')
@@ -72,9 +72,9 @@ class ConstructorTests(unittest.TestCase):
 
     def testConstructorArgumentMatching(self):
         """ Test that simple type promitions works for int->double """
-        from Python.Test import AConstrucorTest, LinkConstructorTest
-        a1=AConstrucorTest('a1')
-        a2=AConstrucorTest('a2')
+        from Python.Test import AConstructorTest, LinkConstructorTest
+        a1=AConstructorTest('a1')
+        a2=AConstructorTest('a2')
         self.assertEqual(a1.name,'a1')
         self.assertEqual(a2.name, 'a2')
         l1=LinkConstructorTest(a1,3000,a2)
