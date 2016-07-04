@@ -107,7 +107,6 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-    <DefineConstants>PYTHON35,UCS2</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="RGiesecke.DllExport.Metadata">
