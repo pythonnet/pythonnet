@@ -469,15 +469,16 @@ namespace Python.Runtime
         }
         /// <summary>
         /// Returns true if src type (int -type) is promotable to a higher resolution type (float|double)
+        /// <note>no sanity check for overflow is done, this is done elsewhere when performing
+        ///  the actual conversion.
+        ///  </note>
         /// </summary>
         /// <param name="src"></param>
         /// <param name="dst"></param>
         /// <returns></returns>
         private bool SimplePromotableType(Type src, Type dst)
         {
-            return (((src == typeof(int) || src == typeof(short)) && (dst == typeof(double) || dst == typeof(float))))
-                || ((src == typeof(long)) && (dst == typeof(double)))
-                || ((src ==typeof(int) || src == typeof(short)) && (dst == typeof(long)));
+            return (((src == typeof(int) || src == typeof(short) || src == typeof(long) ) && (dst == typeof(double) || dst == typeof(float))));
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
