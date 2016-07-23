@@ -1134,7 +1134,6 @@ namespace Python.Runtime
                     return false;
             }
             result = CheckNone(new PyObject(res));
-
             return true;
         }
 
