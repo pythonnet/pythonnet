@@ -939,7 +939,7 @@ namespace Python.Runtime
         {
             if (this.HasAttr(binder.Name))
             {
-                result = this.GetAttr(binder.Name);
+                result = CheckNone(this.GetAttr(binder.Name));
                 return true;
             }
             else
@@ -972,7 +972,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    ptr = Converter.ToPython(inargs[i], inargs[i].GetType());
+                    ptr = Converter.ToPython(inargs[i], inargs[i]?.GetType());
                 }
                 if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
                     throw new PythonException();
@@ -999,7 +999,7 @@ namespace Python.Runtime
                 try
                 {
                     GetArgs(args, out pyargs, out kwargs);
-                    result = InvokeMethod(binder.Name, pyargs, kwargs);
+                    result = CheckNone(InvokeMethod(binder.Name, pyargs, kwargs));
                 }
                 finally
                 {
@@ -1023,7 +1023,7 @@ namespace Python.Runtime
                 try
                 {
                     GetArgs(args, out pyargs, out kwargs);
-                    result = Invoke(pyargs, kwargs);
+                    result = CheckNone(Invoke(pyargs, kwargs));
                 }
                 finally
                 {
@@ -1133,8 +1133,23 @@ namespace Python.Runtime
                     result = null;
                     return false;
             }
-            result = new PyObject(res);
+            result = CheckNone(new PyObject(res));
             return true;
+        }
+
+        // Workaround for https://bugzilla.xamarin.com/show_bug.cgi?id=41509
+        // See https://github.com/pythonnet/pythonnet/pull/219
+        private static object CheckNone(PyObject pyObj)
+        {
+            if (pyObj != null)
+            {
+                if (pyObj.obj == Runtime.PyNone)
+                {
+                    return null;
+                }
+            }
+
+            return pyObj;
         }
 
         public override bool TryUnaryOperation(UnaryOperationBinder binder, out Object result)
@@ -1170,7 +1185,7 @@ namespace Python.Runtime
                     result = null;
                     return false;
             }
-            result = new PyObject(res);
+            result = CheckNone(new PyObject(res));
             return true;
         }
     }

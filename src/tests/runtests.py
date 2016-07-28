@@ -18,6 +18,7 @@ test_modules = (
     # other test modules that import System.Windows.Forms
     # run first. They must not do module level import/AddReference()
     # of the System.Windows.Forms namespace.
+    'test_suite',
     'test_event',
     'test_constructors',
     'test_enum',

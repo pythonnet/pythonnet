@@ -108,6 +108,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="arraytest.cs" />
+    <Compile Include="callbacktest.cs" />
     <Compile Include="classtest.cs" />
     <Compile Include="constructortests.cs" />
     <Compile Include="conversiontest.cs" />
@@ -127,6 +128,7 @@
     <Compile Include="subclasstest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>

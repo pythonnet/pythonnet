@@ -487,7 +487,7 @@ namespace Python.Runtime
                 if (kv[i + 1] is PyObject)
                     value = ((PyObject)kv[i + 1]).Handle;
                 else
-                    value = Converter.ToPython(kv[i + 1], kv[i + 1].GetType());
+                    value = Converter.ToPython(kv[i + 1], kv[i + 1]?.GetType());
                 if (Runtime.PyDict_SetItemString(dict.Handle, (string)kv[i], value) != 0)
                     throw new ArgumentException(string.Format("Cannot add key '{0}' to dictionary.", (string)kv[i]));
                 if (!(kv[i + 1] is PyObject))
