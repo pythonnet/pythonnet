@@ -786,7 +786,7 @@ namespace Python.Runtime
                         PyObject[] pyargs = new PyObject[args.Length];
                         for (int i = 0; i < args.Length; ++i)
                         {
-                            pyargs[i] = new PyObject(Converter.ToPython(args[i], args[i].GetType()));
+                            pyargs[i] = new PyObject(Converter.ToPython(args[i], args[i]?.GetType()));
                             disposeList.Add(pyargs[i]);
                         }
 

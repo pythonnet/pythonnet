@@ -35,7 +35,10 @@ namespace Python.Runtime
             string docstring = "Namespace containing types from the following assemblies:\n\n";
             foreach (Assembly a in AssemblyManager.GetAssemblies(name))
             {
-                filename = a.Location;
+                if (!a.IsDynamic && a.Location != null)
+                {
+                    filename = a.Location;
+                }
                 docstring += "- " + a.FullName + "\n";
             }
 
