@@ -64,6 +64,17 @@ namespace Python.Test
         }
     }
 
+    public abstract class RecursiveInheritance
+    {
+        public class SubClass : RecursiveInheritance
+        {
+            public void SomeMethod()
+            {
+
+            }
+        }
+    }
+
     public class TestFunctions
     {
         public static string test_foo(IInterfaceTest x)
