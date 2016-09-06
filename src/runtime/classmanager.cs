@@ -50,6 +50,8 @@ namespace Python.Runtime
             }
             cb = CreateClass(type);
             cache.Add(type, cb);
+            // Initialize the object later, as this might call this GetClass method recursivly (for example when a nested class inherits its declaring class...)
+            InitClassBase(type, cb);
             return cb;
         }
 
@@ -62,12 +64,6 @@ namespace Python.Runtime
 
         private static ClassBase CreateClass(Type type)
         {
-            // First, we introspect the managed type and build some class
-            // information, including generating the member descriptors
-            // that we'll be putting in the Python class __dict__.
-
-            ClassInfo info = GetClassInfo(type);
-
             // Next, select the appropriate managed implementation class.
             // Different kinds of types, such as array types or interface
             // types, want to vary certain implementation details to make
@@ -114,6 +110,18 @@ namespace Python.Runtime
             {
                 impl = new ClassObject(type);
             }
+
+
+            return impl;
+        }
+
+        private static void InitClassBase(Type type, ClassBase impl)
+        {
+            // First, we introspect the managed type and build some class
+            // information, including generating the member descriptors
+            // that we'll be putting in the Python class __dict__.
+
+            ClassInfo info = GetClassInfo(type);
 
             impl.indexer = info.indexer;
 
@@ -182,9 +190,7 @@ namespace Python.Runtime
                 }
             }
 
-            return impl;
         }
-
 
         private static ClassInfo GetClassInfo(Type type)
         {
@@ -353,6 +359,7 @@ namespace Python.Runtime
                         if (!(tp.IsNestedPublic || tp.IsNestedFamily ||
                               tp.IsNestedFamORAssem))
                             continue;
+                        // Note the given instance might be uninitialized
                         ob = ClassManager.GetClass(tp);
                         ci.members[mi.Name] = ob;
                         continue;
