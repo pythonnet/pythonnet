@@ -1,18 +1,13 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
 import clr
+
 clr.AddReference('Python.Test')
 clr.AddReference('System')
 
 import sys, os, string, unittest, types
-from Python.Test import TestFunctions, SubClassTest, IInterfaceTest
+from Python.Test import TestFunctions, SubClassTest, IInterfaceTest, TestEventArgs
 from System.Collections.Generic import List
+from System import NotImplementedException
+
 
 # class that implements the test interface
 class InterfaceTestClass(IInterfaceTest):
@@ -23,6 +18,7 @@ class InterfaceTestClass(IInterfaceTest):
 
     def bar(self, x, i):
         return "/".join([x] * i)
+
 
 # class that derives from a class deriving from IInterfaceTest
 class DerivedClass(SubClassTest):
@@ -46,6 +42,27 @@ class DerivedClass(SubClassTest):
         l.Add("B")
         l.Add("C")
         return l
+
+
+# class that implements IInterfaceTest.TestEvent
+class DerivedEventTest(IInterfaceTest):
+    __namespace__ = "Python.Test"
+
+    def __init__(self):
+        self.event_handlers = []
+
+    # event handling
+    def add_TestEvent(self, handler):
+        self.event_handlers.append(handler)
+
+    def remove_TestEvent(self, handler):
+        self.event_handlers.remove(handler)
+
+    def OnTestEvent(self, value):
+        args = TestEventArgs(value)
+        for handler in self.event_handlers:
+            handler(self, args)
+
 
 class SubClassTests(unittest.TestCase):
     """Test subclassing managed types"""
@@ -109,11 +126,35 @@ class SubClassTests(unittest.TestCase):
         y = TestFunctions.pass_through(object2)
         self.assertEqual(id(y), id(object2))
 
+    def testEvents(self):
+        class EventHandler:
+            def handler(self, x, args):
+                self.value = args.value
+
+        event_handler = EventHandler()
+
+        x = SubClassTest()
+        x.TestEvent += event_handler.handler
+        self.assertEqual(TestFunctions.test_event(x, 1), 1)
+        self.assertEqual(event_handler.value, 1)
+
+        i = InterfaceTestClass()
+        self.assertRaises(NotImplementedException, TestFunctions.test_event, i, 2)
+
+        d = DerivedEventTest()
+        d.add_TestEvent(event_handler.handler)
+        self.assertEqual(TestFunctions.test_event(d, 3), 3)
+        self.assertEqual(event_handler.value, 3)
+        self.assertEqual(len(d.event_handlers), 1)
+
+
 def test_suite():
     return unittest.makeSuite(SubClassTests)
 
+
 def main():
     unittest.TextTestRunner().run(test_suite())
+
 
 if __name__ == '__main__':
     main()

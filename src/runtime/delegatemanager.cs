@@ -1,12 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
 using System.Threading;
 using System.Runtime.InteropServices;
@@ -15,15 +6,14 @@ using System.Collections;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Python.Runtime {
-
+namespace Python.Runtime
+{
     /// <summary>
-    /// The DelegateManager class manages the creation of true managed 
+    /// The DelegateManager class manages the creation of true managed
     /// delegate instances that dispatch calls to Python methods.
     /// </summary>
-
-    internal class DelegateManager {
-
+    internal class DelegateManager
+    {
         Hashtable cache;
         Type basetype;
         Type listtype;
@@ -32,7 +22,8 @@ namespace Python.Runtime {
         Type ptrtype;
         CodeGenerator codeGenerator;
 
-        public DelegateManager() {
+        public DelegateManager()
+        {
             basetype = typeof(Dispatcher);
             listtype = typeof(ArrayList);
             voidtype = typeof(void);
@@ -48,8 +39,10 @@ namespace Python.Runtime {
         // delegate is not implemented in Python code.
         //====================================================================
 
-        public IntPtr GetPythonHandle(Delegate d) {
-            if ((d != null) && (d.Target is Dispatcher)) {
+        public IntPtr GetPythonHandle(Delegate d)
+        {
+            if ((d != null) && (d.Target is Dispatcher))
+            {
                 Dispatcher disp = d.Target as Dispatcher;
                 return disp.target;
             }
@@ -60,10 +53,10 @@ namespace Python.Runtime {
         // GetDispatcher is responsible for creating a class that provides
         // an appropriate managed callback method for a given delegate type.
         //====================================================================
-        
-        private Type GetDispatcher(Type dtype) {
 
-            // If a dispatcher type for the given delegate type has already 
+        private Type GetDispatcher(Type dtype)
+        {
+            // If a dispatcher type for the given delegate type has already
             // been generated, get it from the cache. The cache maps delegate
             // types to generated dispatcher types. A possible optimization
             // for the future would be to generate dispatcher types based on
@@ -71,7 +64,8 @@ namespace Python.Runtime {
             // delegate types with the same sig could use the same dispatcher.
 
             Object item = cache[dtype];
-            if (item != null) {
+            if (item != null)
+            {
                 return (Type)item;
             }
 
@@ -85,10 +79,10 @@ namespace Python.Runtime {
 
             MethodAttributes ma = MethodAttributes.Public |
                                   MethodAttributes.HideBySig |
-                                  MethodAttributes.SpecialName | 
+                                  MethodAttributes.SpecialName |
                                   MethodAttributes.RTSpecialName;
             CallingConventions cc = CallingConventions.Standard;
-            Type[] args = {ptrtype, typetype};
+            Type[] args = { ptrtype, typetype };
             ConstructorBuilder cb = tb.DefineConstructor(ma, cc, args);
             ConstructorInfo ci = basetype.GetConstructor(args);
             ILGenerator il = cb.GetILGenerator();
@@ -109,16 +103,17 @@ namespace Python.Runtime {
             ParameterInfo[] pi = method.GetParameters();
 
             Type[] signature = new Type[pi.Length];
-            for (int i = 0; i < pi.Length; i++) {
+            for (int i = 0; i < pi.Length; i++)
+            {
                 signature[i] = pi[i].ParameterType;
             }
 
             MethodBuilder mb = tb.DefineMethod(
-                                  "Invoke",
-                                  MethodAttributes.Public, 
-                                  method.ReturnType,
-                                  signature
-                                  );
+                "Invoke",
+                MethodAttributes.Public,
+                method.ReturnType,
+                signature
+                );
 
             ConstructorInfo ctor = listtype.GetConstructor(Type.EmptyTypes);
             MethodInfo dispatch = basetype.GetMethod("Dispatch");
@@ -129,12 +124,14 @@ namespace Python.Runtime {
             il.Emit(OpCodes.Newobj, ctor);
             il.Emit(OpCodes.Stloc_0);
 
-            for (int c = 0; c < signature.Length; c++) {
+            for (int c = 0; c < signature.Length; c++)
+            {
                 Type t = signature[c];
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldarg_S, (byte)(c + 1));
 
-                if (t.IsValueType) {
+                if (t.IsValueType)
+                {
                     il.Emit(OpCodes.Box, t);
                 }
 
@@ -146,10 +143,12 @@ namespace Python.Runtime {
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Call, dispatch);
 
-            if (method.ReturnType == voidtype) {
+            if (method.ReturnType == voidtype)
+            {
                 il.Emit(OpCodes.Pop);
             }
-            else if (method.ReturnType.IsValueType) {
+            else if (method.ReturnType.IsValueType)
+            {
                 il.Emit(OpCodes.Unbox_Any, method.ReturnType);
             }
 
@@ -166,15 +165,13 @@ namespace Python.Runtime {
         // returned will dispatch calls to the given Python object.
         //====================================================================
 
-        internal Delegate GetDelegate(Type dtype, IntPtr callable) {
+        internal Delegate GetDelegate(Type dtype, IntPtr callable)
+        {
             Type dispatcher = GetDispatcher(dtype);
-            object[] args = {callable, dtype};
+            object[] args = { callable, dtype };
             object o = Activator.CreateInstance(dispatcher, args);
             return Delegate.CreateDelegate(dtype, o, "Invoke");
         }
-
-
-
     }
 
 
@@ -182,13 +179,13 @@ namespace Python.Runtime {
        the delegate manager generates a custom subclass of Dispatcher and
        instantiates it, passing the IntPtr of the Python callable.
 
-       The "real" delegate is created using CreateDelegate, passing the 
+       The "real" delegate is created using CreateDelegate, passing the
        instance of the generated type and the name of the (generated)
        implementing method (Invoke).
 
        The true delegate instance holds the only reference to the dispatcher
        instance, which ensures that when the delegate dies, the finalizer
-       of the referenced instance will be able to decref the Python 
+       of the referenced instance will be able to decref the Python
        callable.
 
        A possible alternate strategy would be to create custom subclasses
@@ -199,35 +196,41 @@ namespace Python.Runtime {
 
     */
 
-    public class Dispatcher {
-
+    public class Dispatcher
+    {
         public IntPtr target;
         public Type dtype;
 
-        public Dispatcher(IntPtr target, Type dtype) {
+        public Dispatcher(IntPtr target, Type dtype)
+        {
             Runtime.Incref(target);
             this.target = target;
             this.dtype = dtype;
         }
 
-        ~Dispatcher() {
+        ~Dispatcher()
+        {
             // Note: the managed GC thread can run and try to free one of
-            // these *after* the Python runtime has been finalized! 
-            if (Runtime.Py_IsInitialized() > 0) {
+            // these *after* the Python runtime has been finalized!
+            if (Runtime.Py_IsInitialized() > 0)
+            {
                 IntPtr gs = PythonEngine.AcquireLock();
                 Runtime.Decref(target);
                 PythonEngine.ReleaseLock(gs);
             }
         }
 
-        public object Dispatch(ArrayList args) {
+        public object Dispatch(ArrayList args)
+        {
             IntPtr gs = PythonEngine.AcquireLock();
             object ob = null;
 
-            try {
+            try
+            {
                 ob = TrueDispatch(args);
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 PythonEngine.ReleaseLock(gs);
                 throw e;
             }
@@ -236,13 +239,15 @@ namespace Python.Runtime {
             return ob;
         }
 
-        public object TrueDispatch(ArrayList args) {
+        public object TrueDispatch(ArrayList args)
+        {
             MethodInfo method = dtype.GetMethod("Invoke");
             ParameterInfo[] pi = method.GetParameters();
             IntPtr pyargs = Runtime.PyTuple_New(pi.Length);
             Type rtype = method.ReturnType;
 
-            for (int i = 0; i < pi.Length; i++) {
+            for (int i = 0; i < pi.Length; i++)
+            {
                 // Here we own the reference to the Python value, and we
                 // give the ownership to the arg tuple.
                 IntPtr arg = Converter.ToPython(args[i], pi[i].ParameterType);
@@ -252,17 +257,20 @@ namespace Python.Runtime {
             IntPtr op = Runtime.PyObject_Call(target, pyargs, IntPtr.Zero);
             Runtime.Decref(pyargs);
 
-            if (op == IntPtr.Zero) {
+            if (op == IntPtr.Zero)
+            {
                 PythonException e = new PythonException();
                 throw e;
             }
 
-            if (rtype == typeof(void)) {
+            if (rtype == typeof(void))
+            {
                 return null;
             }
 
             Object result = null;
-            if (!Converter.ToManaged(op, rtype, out result, false)) {
+            if (!Converter.ToManaged(op, rtype, out result, false))
+            {
                 string s = "could not convert Python result to " +
                            rtype.ToString();
                 Runtime.Decref(op);
@@ -272,18 +280,17 @@ namespace Python.Runtime {
             Runtime.Decref(op);
             return result;
         }
-
-        
     }
 
 
-    public class ConversionException : System.Exception {
+    public class ConversionException : System.Exception
+    {
+        public ConversionException() : base()
+        {
+        }
 
-        public ConversionException() : base() {}
-
-        public ConversionException(string msg) : base(msg) {}
-
+        public ConversionException(string msg) : base(msg)
+        {
+        }
     }
-
-
 }

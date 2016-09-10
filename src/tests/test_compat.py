@@ -1,12 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import sys, os, string, unittest, types
 import six
 
@@ -31,7 +22,7 @@ class CompatibilityTests(unittest.TestCase):
         return type(object).__name__ == 'CLRModule'
 
     def isCLRClass(self, object):
-        return type(object).__name__ == 'CLR Metatype' # for now
+        return type(object).__name__ == 'CLR Metatype'  # for now
 
     # Tests for old-style CLR-prefixed module naming.
 
@@ -55,7 +46,6 @@ class CompatibilityTests(unittest.TestCase):
             self.assertTrue(type(httplib) == types.ModuleType)
             self.assertTrue(httplib.__name__ == 'httplib')
 
-
     def testSimpleImportWithAlias(self):
         """Test simple import with aliasing."""
         import CLR as myCLR
@@ -76,23 +66,21 @@ class CompatibilityTests(unittest.TestCase):
             self.assertTrue(type(myHttplib) == types.ModuleType)
             self.assertTrue(myHttplib.__name__ == 'httplib')
 
-
     def testDottedNameImport(self):
         """Test dotted-name import."""
         import CLR.System
         self.assertTrue(self.isCLRModule(CLR.System))
         self.assertTrue(CLR.System.__name__ == 'System')
-        
+
         import System
         self.assertTrue(self.isCLRModule(System))
         self.assertTrue(System.__name__ == 'System')
-        
+
         self.assertTrue(System is CLR.System)
 
         import xml.dom
         self.assertTrue(type(xml.dom) == types.ModuleType)
         self.assertTrue(xml.dom.__name__ == 'xml.dom')
-
 
     def testDottedNameImportWithAlias(self):
         """Test dotted-name import with aliasing."""
@@ -105,11 +93,10 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(mySystem.__name__ == 'System')
 
         self.assertTrue(mySystem is myCLRSystem)
-        
+
         import xml.dom as myDom
         self.assertTrue(type(myDom) == types.ModuleType)
         self.assertTrue(myDom.__name__ == 'xml.dom')
-
 
     def testSimpleImportFrom(self):
         """Test simple 'import from'."""
@@ -121,7 +108,6 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(dom) == types.ModuleType)
         self.assertTrue(dom.__name__ == 'xml.dom')
 
-
     def testSimpleImportFromWithAlias(self):
         """Test simple 'import from' with aliasing."""
         from CLR import System as mySystem
@@ -131,7 +117,6 @@ class CompatibilityTests(unittest.TestCase):
         from xml import dom as myDom
         self.assertTrue(type(myDom) == types.ModuleType)
         self.assertTrue(myDom.__name__ == 'xml.dom')
-
 
     def testDottedNameImportFrom(self):
         """Test dotted-name 'import from'."""
@@ -151,7 +136,6 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(PullDOM) == ClassType)
         self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
-
     def testDottedNameImportFromWithAlias(self):
         """Test dotted-name 'import from' with aliasing."""
         from CLR.System import Xml as myXml
@@ -170,7 +154,6 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(myPullDOM) == ClassType)
         self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
-
     def testFromModuleImportStar(self):
         """Test from module import * behavior."""
         import clr
@@ -186,7 +169,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(m2.__name__ == 'System.Management')
         self.assertTrue(self.isCLRModule(m2))
         self.assertTrue(len(locals().keys()) > count + 1)
-        
+
         self.assertTrue(m is m2)
 
     def testExplicitAssemblyLoad(self):
@@ -197,13 +180,12 @@ class CompatibilityTests(unittest.TestCase):
 
         assembly = Assembly.LoadWithPartialName('System.Data')
         self.assertTrue(assembly != None)
-        
+
         import CLR.System.Data
         self.assertTrue('System.Data' in sys.modules)
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
         self.assertTrue(assembly == None)
-
 
     def testImplicitLoadAlreadyValidNamespace(self):
         """Test implicit assembly load over an already valid namespace."""
@@ -216,9 +198,9 @@ class CompatibilityTests(unittest.TestCase):
         import CLR.System
         self.assertTrue(self.isCLRClass(CLR.System.UriBuilder))
 
-
     def testImportNonExistantModule(self):
         """Test import failure for a non-existant module."""
+
         def test():
             import System.SpamSpamSpam
 
@@ -234,9 +216,9 @@ class CompatibilityTests(unittest.TestCase):
         import CLR
         self.assertTrue(self.isCLRClass(CLR.NoNamespaceType))
 
-
     def testModuleLookupRecursion(self):
         """Test for recursive lookup handling."""
+
         def test1():
             from CLR import CLR
 
@@ -248,14 +230,13 @@ class CompatibilityTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test2)
 
-
     def testModuleGetAttr(self):
         """Test module getattr behavior."""
         import CLR.System as System
 
         int_type = System.Int32
         self.assertTrue(self.isCLRClass(int_type))
-        
+
         module = System.Xml
         self.assertTrue(self.isCLRModule(module))
 
@@ -268,7 +249,7 @@ class CompatibilityTests(unittest.TestCase):
             spam = getattr(System, 1)
 
         self.assertRaises(TypeError, test)
-        
+
     def test000MultipleImports(self):
         # import CLR did raise a Seg Fault once
         # test if the Exceptions.warn() method still causes it
@@ -279,8 +260,10 @@ class CompatibilityTests(unittest.TestCase):
 def test_suite():
     return unittest.makeSuite(CompatibilityTests)
 
+
 def main():
     unittest.TextTestRunner().run(test_suite())
+
 
 if __name__ == '__main__':
     try:
@@ -290,4 +273,3 @@ if __name__ == '__main__':
         import clr
 
     main()
-

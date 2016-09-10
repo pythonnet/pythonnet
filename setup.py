@@ -7,6 +7,7 @@ from distutils.command.build_ext import build_ext
 from distutils.command.install_lib import install_lib
 from distutils.command.install_data import install_data
 from distutils.sysconfig import get_config_var
+from distutils.spawn import find_executable
 from distutils import log
 from platform import architecture
 from subprocess import Popen, CalledProcessError, PIPE, check_call
@@ -23,6 +24,10 @@ PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
 
 def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     """Return full path to one of the microsoft build tools"""
+    path = find_executable(tool)
+    if path:
+        return path
+
     try:
         import _winreg
     except ImportError:
@@ -32,9 +37,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     if use_windows_sdk:
         sdks_root = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows"
         kits_root = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
-        kits_suffix = "bin"
-        if PLATFORM == "x64":
-            kits_suffix += r"\x64"
+        kits_suffix = os.path.join("bin", PLATFORM)
         keys_to_check.extend([
             ("Windows Kit 10.0", kits_root, "KitsRoot10", kits_suffix),
             ("Windows Kit 8.1", kits_root, "KitsRoot81", kits_suffix),
@@ -59,10 +62,10 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     paths_to_check = []
     hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     try:
-        hkey = None
         for key_to_check in keys_to_check:
             sdk_name, key, value_name = key_to_check[:3]
             suffix = key_to_check[3] if len(key_to_check) > 3 else None
+            hkey = None
             try:
                 hkey = _winreg.OpenKey(hreg, key)
                 val, type_ = _winreg.QueryValueEx(hkey, value_name)
@@ -74,7 +77,8 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
             except WindowsError:
                 pass
             finally:
-                hkey.Close()
+                if hkey:
+                    hkey.Close()
     finally:
         hreg.Close()
 
@@ -110,7 +114,6 @@ else:
 
 
 class PythonNET_BuildExt(build_ext):
-
     def build_extension(self, ext):
         """
         Builds the .pyd file using msbuild or xbuild.
@@ -191,7 +194,7 @@ class PythonNET_BuildExt(build_ext):
             self._build_monoclr(ext)
 
     def _get_manifest(self, build_dir):
-        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2,5):
+        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2, 5):
             mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
             manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
             cmd = [mt, '-inputresource:"%s"' % sys.executable, '-out:"%s"' % manifest]
@@ -209,12 +212,12 @@ class PythonNET_BuildExt(build_ext):
 
         # build the clr python module
         clr_ext = Extension("clr",
-                    sources=[
-                        "src/monoclr/pynetinit.c",
-                        "src/monoclr/clrmod.c"
-                    ],
-                    extra_compile_args=cflags.split(" "),
-                    extra_link_args=libs.split(" "))
+                            sources=[
+                                "src/monoclr/pynetinit.c",
+                                "src/monoclr/clrmod.c"
+                            ],
+                            extra_compile_args=cflags.split(" "),
+                            extra_link_args=libs.split(" "))
 
         build_ext.build_extension(self, clr_ext)
 
@@ -232,11 +235,10 @@ class PythonNET_BuildExt(build_ext):
 
 
 class PythonNET_InstallLib(install_lib):
-
     def install(self):
         if not os.path.isdir(self.build_dir):
             self.warn("'%s' does not exist -- no Python modules to install" %
-                        self.build_dir)
+                      self.build_dir)
             return
 
         if not os.path.exists(self.install_dir):
@@ -249,7 +251,6 @@ class PythonNET_InstallLib(install_lib):
 
 
 class PythonNET_InstallData(install_data):
-
     def run(self):
         build_cmd = self.get_finalized_command("build_ext")
         install_cmd = self.get_finalized_command("install")
@@ -284,6 +285,7 @@ def _check_output(*popenargs, **kwargs):
     if sys.version_info[0] > 2:
         return output.decode("ascii")
     return output
+
 
 def _get_interop_filename():
     """interopXX.cs is auto-generated as part of the build.
@@ -321,16 +323,16 @@ if __name__ == "__main__":
 
     setup(
         name="pythonnet",
-        version="2.1.0.dev1",
+        version="2.1.0",
         description=".Net and Mono integration for Python",
         url='http://pythonnet.github.io/',
         author="Python for .Net developers",
         classifiers=[
-            'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
             'Programming Language :: C#',
             'License :: OSI Approved :: Zope Public License',
             'Development Status :: 5 - Production/Stable',
@@ -349,8 +351,8 @@ if __name__ == "__main__":
         ],
         zip_safe=False,
         cmdclass={
-            "build_ext" : PythonNET_BuildExt,
-            "install_lib" : PythonNET_InstallLib,
+            "build_ext": PythonNET_BuildExt,
+            "install_lib": PythonNET_InstallLib,
             "install_data": PythonNET_InstallData,
         },
         setup_requires=setup_requires

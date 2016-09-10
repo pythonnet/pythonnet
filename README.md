@@ -43,18 +43,20 @@ static void Main(string[] args)
     Console.WriteLine(sin(5));
     double c = np.cos(5) + sin(5);
     Console.WriteLine(c);
+    /* this block is temporarily disabled due to regression
     dynamic a = np.array(new List<float> { 1, 2, 3 });
     dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
     Console.WriteLine(a.dtype);
     Console.WriteLine(b.dtype);
     Console.WriteLine(a * b);
+    */
     Console.ReadKey();
   }
 }
 ```
 outputs:
 ```
-1.0  
+1.0
 -0.958924274663
 -0.6752620892
 float64

@@ -1,12 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import sys, os, string, unittest, types
 from Python.Test import PropertyTest
 import six
@@ -33,7 +24,6 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-
     def testPublicStaticProperty(self):
         """Test public static properties."""
         object = PropertyTest();
@@ -56,7 +46,6 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-
     def testProtectedInstanceProperty(self):
         """Test protected instance properties."""
         object = PropertyTest();
@@ -69,7 +58,6 @@ class PropertyTests(unittest.TestCase):
             del PropertyTest().ProtectedProperty
 
         self.assertRaises(TypeError, test)
-
 
     def testProtectedStaticProperty(self):
         """Test protected static properties."""
@@ -93,7 +81,6 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-
     def testInternalProperty(self):
         """Test internal properties."""
 
@@ -112,7 +99,6 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-
     def testPrivateProperty(self):
         """Test private properties."""
 
@@ -130,7 +116,6 @@ class PropertyTests(unittest.TestCase):
             f = PropertyTest.PrivateStaticProperty
 
         self.assertRaises(AttributeError, test)
-
 
     def testPropertyDescriptorGetSet(self):
         """Test property descriptor get / set."""
@@ -155,15 +140,14 @@ class PropertyTests(unittest.TestCase):
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
         self.assertTrue(type(descriptor) != IntType)
 
-
     def testPropertyDescriptorWrongType(self):
         """Test setting a property using a value of the wrong type."""
+
         def test():
             object = PropertyTest()
             object.PublicProperty = "spam"
 
         self.assertTrue(TypeError, test)
-
 
     def testPropertyDescriptorAbuse(self):
         """Test property descriptor abuse."""
@@ -179,7 +163,6 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-
     def testInterfaceProperty(self):
         """Test properties of interfaces. Added after a bug report
            that an IsAbstract check was inappropriate and prevented
@@ -191,13 +174,13 @@ class PropertyTests(unittest.TestCase):
         self.assertTrue(coll.Count == 0)
 
 
-
 def test_suite():
     return unittest.makeSuite(PropertyTests)
+
 
 def main():
     unittest.TextTestRunner().run(test_suite())
 
+
 if __name__ == '__main__':
     main()
-

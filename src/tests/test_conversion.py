@@ -1,12 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-
 import sys, os, string, unittest, types
 from Python.Test import ConversionTest
 import System
@@ -26,12 +17,12 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(object.BooleanField == False)
         self.assertTrue(object.BooleanField is False)
         self.assertTrue(object.BooleanField == 0)
-        
+
         object.BooleanField = True
         self.assertTrue(object.BooleanField == True)
         self.assertTrue(object.BooleanField is True)
         self.assertTrue(object.BooleanField == 1)
-        
+
         object.BooleanField = False
         self.assertTrue(object.BooleanField == False)
         self.assertTrue(object.BooleanField is False)
@@ -72,7 +63,6 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(object.BooleanField is True)
         self.assertTrue(object.BooleanField == 1)
 
-
     def testSByteConversion(self):
         """Test sbyte conversion."""
         self.assertTrue(System.SByte.MaxValue == 127)
@@ -95,34 +85,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().SByteField = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().SByteField = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().SByteField = 128
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().SByteField = -129
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.SByte(128)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.SByte(-129)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testByteConversion(self):
         """Test byte conversion."""
@@ -146,34 +135,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().ByteField = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().ByteField = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().ByteField = 256
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().ByteField = -1
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Byte(256)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Byte(-1)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testCharConversion(self):
         """Test char conversion."""
@@ -194,19 +182,18 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().CharField = 65536
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().CharField = -1
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().CharField = None
 
         self.assertRaises(TypeError, test)
-
 
     def testInt16Conversion(self):
         """Test int16 conversion."""
@@ -230,34 +217,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().Int16Field = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().Int16Field = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().Int16Field = 32768
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().Int16Field = -32769
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Int16(32768)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Int16(-32769)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testInt32Conversion(self):
         """Test int32 conversion."""
@@ -281,34 +267,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().Int32Field = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().Int32Field = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().Int32Field = 2147483648
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().Int32Field = -2147483649
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Int32(2147483648)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Int32(-2147483649)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testInt64Conversion(self):
         """Test int64 conversion."""
@@ -332,34 +317,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().Int64Field = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().Int64Field = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().Int64Field = long(9223372036854775808)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().Int64Field = long(-9223372036854775809)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Int64(long(9223372036854775808))
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Int64(long(-9223372036854775809))
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testUInt16Conversion(self):
         """Test uint16 conversion."""
@@ -383,34 +367,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().UInt16Field = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().UInt16Field = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().UInt16Field = 65536
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().UInt16Field = -1
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.UInt16(65536)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.UInt16(-1)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testUInt32Conversion(self):
         """Test uint32 conversion."""
@@ -434,34 +417,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().UInt32Field = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().UInt32Field = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().UInt32Field = long(4294967296)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().UInt32Field = -1
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.UInt32(long(4294967296))
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.UInt32(-1)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testUInt64Conversion(self):
         """Test uint64 conversion."""
@@ -485,34 +467,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().UInt64Field = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().UInt64Field = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().UInt64Field = long(18446744073709551616)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().UInt64Field = -1
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.UInt64(long(18446744073709551616))
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.UInt64(-1)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testSingleConversion(self):
         """Test single conversion."""
@@ -536,34 +517,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().SingleField = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().SingleField = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().SingleField = 3.402824e38
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().SingleField = -3.402824e38
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Single(3.402824e38)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Single(-3.402824e38)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testDoubleConversion(self):
         """Test double conversion."""
@@ -587,34 +567,33 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().DoubleField = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().DoubleField = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().DoubleField = 1.7976931348623159e308
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             ConversionTest().DoubleField = -1.7976931348623159e308
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Double(1.7976931348623159e308)
-            
+
         self.assertRaises(OverflowError, test)
 
         def test():
             value = System.Double(-1.7976931348623159e308)
-            
-        self.assertRaises(OverflowError, test)
 
+        self.assertRaises(OverflowError, test)
 
     def testDecimalConversion(self):
         """Test decimal conversion."""
@@ -622,7 +601,7 @@ class ConversionTests(unittest.TestCase):
 
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
-        
+
         self.assertTrue(Decimal.ToInt64(Decimal(10)) == long(10))
 
         object = ConversionTest()
@@ -645,19 +624,18 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().DecimalField = None
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().DecimalField = "spam"
-            
+
         self.assertRaises(TypeError, test)
 
         def test():
             ConversionTest().DecimalField = 1
-            
-        self.assertRaises(TypeError, test)
 
+        self.assertRaises(TypeError, test)
 
     def testStringConversion(self):
         """Test string / unicode conversion."""
@@ -689,9 +667,8 @@ class ConversionTests(unittest.TestCase):
 
         def test():
             ConversionTest().StringField = 1
-            
-        self.assertRaises(TypeError, test)
 
+        self.assertRaises(TypeError, test)
 
     def testInterfaceConversion(self):
         """Test interface conversion."""
@@ -701,7 +678,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertTrue(ISpam(object.SpamField).GetValue() == "spam")
         self.assertTrue(object.SpamField.GetValue() == "spam")
-        
+
         object.SpamField = Spam("eggs")
         self.assertTrue(ISpam(object.SpamField).GetValue() == "eggs")
         self.assertTrue(object.SpamField.GetValue() == "eggs")
@@ -722,7 +699,6 @@ class ConversionTests(unittest.TestCase):
             object.SpamField = System.Int32(1)
 
         self.assertRaises(TypeError, test)
-
 
     def testObjectConversion(self):
         """Test object conversion."""
@@ -751,7 +727,6 @@ class ConversionTests(unittest.TestCase):
             object.ObjectField = self
 
         self.assertRaises(TypeError, test)
-
 
     def testEnumConversion(self):
         """Test enum conversion."""
@@ -795,7 +770,6 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-
     def testNullConversion(self):
         """Test null conversion."""
         object = ConversionTest()
@@ -821,14 +795,13 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-
     def testByteArrayConversion(self):
         """Test byte array conversion."""
         object = ConversionTest()
 
         self.assertTrue(object.ByteArrayField == None)
 
-        object.ByteArrayField = [0, 1, 2 , 3, 4]
+        object.ByteArrayField = [0, 1, 2, 3, 4]
         array = object.ByteArrayField
         self.assertTrue(len(array) == 5)
         self.assertTrue(array[0] == 0)
@@ -840,14 +813,13 @@ class ConversionTests(unittest.TestCase):
         for i in range(len(value)):
             self.assertTrue(array[i] == six.indexbytes(value, i))
 
-
     def testSByteArrayConversion(self):
         """Test sbyte array conversion."""
         object = ConversionTest()
 
         self.assertTrue(object.SByteArrayField == None)
 
-        object.SByteArrayField = [0, 1, 2 , 3, 4]
+        object.SByteArrayField = [0, 1, 2, 3, 4]
         array = object.SByteArrayField
         self.assertTrue(len(array) == 5)
         self.assertTrue(array[0] == 0)
@@ -860,19 +832,13 @@ class ConversionTests(unittest.TestCase):
             self.assertTrue(array[i] == six.indexbytes(value, i))
 
 
-
-
-
-
-
-
-
 def test_suite():
     return unittest.makeSuite(ConversionTests)
+
 
 def main():
     unittest.TextTestRunner().run(test_suite())
 
+
 if __name__ == '__main__':
     main()
-

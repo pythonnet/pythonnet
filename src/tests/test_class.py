@@ -1,11 +1,3 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
 from System.Collections import Hashtable
 from Python.Test import ClassTest
 import sys, os, string, unittest, types
@@ -27,12 +19,10 @@ class ClassTests(unittest.TestCase):
         String = System.String
         self.assertEquals(String.Empty, "")
 
-
     def testBasicValueType(self):
         """Test usage of CLR defined value types."""
         Int32 = System.Int32
         self.assertEquals(Int32.MaxValue, 2147483647)
-
 
     def testClassStandardAttrs(self):
         """Test standard class attributes."""
@@ -41,24 +31,20 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
         self.assertTrue(len(ClassTest.__doc__) > 0)
 
-
     def testClassDocstrings(self):
         """Test standard class docstring generation"""
         value = 'Void .ctor()'
         self.assertTrue(ClassTest.__doc__ == value)
-
 
     def testClassDefaultStr(self):
         """Test the default __str__ implementation for managed objects."""
         s = System.String("this is a test")
         self.assertTrue(str(s) == "this is a test")
 
-
     def testClassDefaultRepr(self):
         """Test the default __repr__ implementation for managed objects."""
         s = System.String("this is a test")
         self.assertTrue(repr(s).startswith("<System.String object"))
-
 
     def testNonPublicClass(self):
         """Test that non-public classes are inaccessible."""
@@ -73,7 +59,6 @@ class ClassTests(unittest.TestCase):
             x = Test.InternalClass
 
         self.assertRaises(AttributeError, test)
-
 
     def testBasicSubclass(self):
         """Test basic subclass of a managed class."""
@@ -93,17 +78,16 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(table.Count == 0)
 
         table.set_Item('one', 'one')
-        
+
         self.assertTrue(table.howMany() == 1)
         self.assertTrue(table.Count == 1)
 
         MyTable = None
 
-
     def testSubclassWithNoArgConstructor(self):
         """Test subclass of a managed class with a no-arg constructor."""
         from Python.Test import ClassCtorTest1
-        
+
         class SubClass(ClassCtorTest1):
             def __init__(self, name):
                 self.name = name
@@ -114,7 +98,7 @@ class ClassTests(unittest.TestCase):
     def testSubclassWithVariousConstructors(self):
         """Test subclass of a managed class with various constructors."""
         from Python.Test import ClassCtorTest2
-        
+
         class SubClass(ClassCtorTest2):
             def __init__(self, v):
                 ClassCtorTest2.__init__(self)
@@ -130,7 +114,6 @@ class ClassTests(unittest.TestCase):
 
         inst = SubClass2('test')
         self.assertTrue(inst.value == 'test')
-
 
     def testStructConstruction(self):
         """Test construction of structs."""
@@ -150,13 +133,11 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(p.X == 10)
         self.assertTrue(p.Y == 10)
 
-
-
     # test strange __new__ interactions
-    
+
     # test weird metatype
     # test recursion
-    # test 
+    # test
 
 
     def testIEnumerableIteration(self):
@@ -172,7 +153,6 @@ class ClassTests(unittest.TestCase):
             cname = item.__class__.__name__
             self.assertTrue(cname.endswith('DictionaryEntry'))
 
-
     def testIEnumeratorIteration(self):
         """Test iteration over objects supporting IEnumerator."""
         chars = Test.ClassTest.GetEnumerator()
@@ -180,14 +160,10 @@ class ClassTests(unittest.TestCase):
         for item in chars:
             self.assertTrue(item in 'test string')
 
-
-
-
     def testOverrideGetItem(self):
         """Test managed subclass overriding __getitem__."""
 
         class MyTable(Hashtable):
-                
             def __getitem__(self, key):
                 value = Hashtable.__getitem__(self, key)
                 return 'my ' + str(value)
@@ -201,14 +177,12 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(table['two'] == 'my two')
         self.assertTrue(table['three'] == 'my three')
 
-        self.assertTrue(table.Count == 3)                    
-
+        self.assertTrue(table.Count == 3)
 
     def testOverrideSetItem(self):
         """Test managed subclass overriding __setitem__."""
 
         class MyTable(Hashtable):
-                
             def __setitem__(self, key, value):
                 value = 'my ' + str(value)
                 Hashtable.__setitem__(self, key, value)
@@ -222,26 +196,26 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(table['two'] == 'my two')
         self.assertTrue(table['three'] == 'my three')
 
-        self.assertTrue(table.Count == 3)                    
-
+        self.assertTrue(table.Count == 3)
 
 
 class ClassicClass:
     def kind(self):
         return 'classic'
 
+
 class NewStyleClass(object):
     def kind(self):
         return 'new-style'
 
 
-
 def test_suite():
     return unittest.makeSuite(ClassTests)
+
 
 def main():
     unittest.TextTestRunner().run(test_suite())
 
+
 if __name__ == '__main__':
     main()
-
