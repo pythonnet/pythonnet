@@ -229,6 +229,10 @@ class PythonNET_BuildExt(build_ext):
             nuget = "mono %s" % nuget
             use_shell = True
 
+        cmd = "%s update -self" % nuget
+        self.announce("Updating NuGet: %s" % cmd)
+        check_call(cmd, shell=use_shell)
+
         cmd = "%s restore pythonnet.sln -o packages" % nuget
         self.announce("Installing packages: %s" % cmd)
         check_call(cmd, shell=use_shell)
