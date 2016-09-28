@@ -58,8 +58,8 @@ install:
   - pip install tox-travis
   - pip install six
   - pip install pycparser
-  - python setup.py build_ext --inplace
-script:
   - tox
+  - python setup.py build_ext --inplace
+script: 
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python src/tests/runtests.py
