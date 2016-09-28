@@ -229,6 +229,10 @@ class PythonNET_BuildExt(build_ext):
             nuget = "mono %s" % nuget
             use_shell = True
 
+        cmd = "%s update -self" % nuget
+        self.announce("Updating NuGet: %s" % cmd)
+        check_call(cmd, shell=use_shell)
+
         cmd = "%s restore pythonnet.sln -o packages" % nuget
         self.announce("Installing packages: %s" % cmd)
         check_call(cmd, shell=use_shell)
@@ -323,7 +327,7 @@ if __name__ == "__main__":
 
     setup(
         name="pythonnet",
-        version="2.1.0",
+        version="2.2.0-dev1",
         description=".Net and Mono integration for Python",
         url='http://pythonnet.github.io/',
         author="Python for .Net developers",
