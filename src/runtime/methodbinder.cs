@@ -364,9 +364,11 @@ namespace Python.Runtime
                                     if (!typematch)
                                     {
                                         // this takes care of enum values
+                                        // special case: string is assignable to object
                                         TypeCode argtypecode = Type.GetTypeCode(pi[n].ParameterType);
                                         TypeCode paramtypecode = Type.GetTypeCode(clrtype);
-                                        if (argtypecode == paramtypecode)
+                                        if (argtypecode == paramtypecode
+                                            || (argtypecode == TypeCode.Object && paramtypecode == TypeCode.String)) 
                                         {
                                             typematch = true;
                                             clrtype = pi[n].ParameterType;
