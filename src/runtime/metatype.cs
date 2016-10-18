@@ -281,8 +281,10 @@ namespace Python.Runtime
         {
             ClassBase cb = GetManagedObject(tp) as ClassBase;
 
-            if (cb == null)
+            if (cb == null) {
+                Runtime.Incref(Runtime.PyFalse);
                 return Runtime.PyFalse;
+            }
 
             using (PyList argsObj = new PyList(args))
             {
@@ -296,12 +298,16 @@ namespace Python.Runtime
                 else
                     otherType = arg.GetPythonType();
 
-                if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType)
+                if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType) {
+                    Runtime.Incref(Runtime.PyFalse);
                     return Runtime.PyFalse;
+                }
 
                 ClassBase otherCb = GetManagedObject(otherType.Handle) as ClassBase;
-                if (otherCb == null)
+                if (otherCb == null) {
+                    Runtime.Incref(Runtime.PyFalse);
                     return Runtime.PyFalse;
+                }
 
                 return Converter.ToPython(cb.type.IsAssignableFrom(otherCb.type));
             }
