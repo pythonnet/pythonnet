@@ -236,7 +236,8 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             BoundContructor self = (BoundContructor)GetManagedObject(ob);
-            Runtime.Decref(self.repr);
+            if (self.repr != IntPtr.Zero)
+                Runtime.Decref(self.repr);
             Runtime.Decref(self.pyTypeHndl);
             ExtensionType.FinalizeObject(self);
         }
