@@ -147,7 +147,8 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             ConstructorBinding self = (ConstructorBinding)GetManagedObject(ob);
-            Runtime.Decref(self.repr);
+            if (self.repr != IntPtr.Zero)
+                Runtime.Decref(self.repr);
             Runtime.Decref(self.pyTypeHndl);
             ExtensionType.FinalizeObject(self);
         }
