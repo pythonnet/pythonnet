@@ -1,11 +1,13 @@
 using System;
 using System.IO;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -15,7 +17,7 @@ namespace Python.Runtime
     /// </summary>
     internal class AssemblyManager
     {
-        static Dictionary<string, Dictionary<Assembly, string>> namespaces;
+        static Dictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
         //static Dictionary<string, Dictionary<string, string>> generics;
         static AssemblyLoadEventHandler lhandler;
         static ResolveEventHandler rhandler;
@@ -35,8 +37,9 @@ namespace Python.Runtime
 
         internal static void Initialize()
         {
+            Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: Initialize");
             namespaces = new
-                Dictionary<string, Dictionary<Assembly, string>>(32);
+                Dictionary<string, ConcurrentDictionary<Assembly, string>>(32);
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
             assemblies = new List<Assembly>(16);
@@ -364,14 +367,17 @@ namespace Python.Runtime
                         s = (n == 0) ? names[0] : s + "." + names[n];
                         if (!namespaces.ContainsKey(s))
                         {
-                            namespaces.Add(s, new Dictionary<Assembly, string>());
+                            Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: ScanAssembly, Add {s}");
+                            namespaces.Add(s, new ConcurrentDictionary<Assembly, string>());
                         }
                     }
                 }
 
                 if (ns != null && !namespaces[ns].ContainsKey(assembly))
                 {
-                    namespaces[ns].Add(assembly, String.Empty);
+                    Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: ScanAssembly, Add {ns}, {assembly.FullName}");
+                    if (!namespaces[ns].TryAdd(assembly, String.Empty))
+                        throw new ArgumentException("Adding duplicate " + assembly);
                 }
 
                 if (ns != null && t.IsGenericTypeDefinition)

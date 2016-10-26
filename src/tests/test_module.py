@@ -353,6 +353,23 @@ class ModuleTests(unittest.TestCase):
         self.assertRaises(FileNotFoundException,
                           AddReference, "somethingtotallysilly")
 
+    def test_ThreadSafety(self):
+        import threading
+
+        def test_fn(i):
+            import time
+            time.sleep(i * 0.001)
+            import clr
+            from System.IO import FileNotFoundException
+
+        threads = [threading.Thread(target=test_fn, args=[i]) for i in range(1, 20)]
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
 
 def test_suite():
     return unittest.makeSuite(ModuleTests)
