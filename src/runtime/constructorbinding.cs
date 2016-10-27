@@ -30,7 +30,7 @@ namespace Python.Runtime
         public ConstructorBinding(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder) : base()
         {
             this.type = type;
-            Runtime.Incref(pyTypeHndl);
+            Runtime.XIncref(pyTypeHndl);
             this.pyTypeHndl = pyTypeHndl;
             this.ctorBinder = ctorBinder;
             repr = IntPtr.Zero;
@@ -73,7 +73,7 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("How in the world could that happen!");
                 }
             }*/
-            Runtime.Incref(self.pyHandle); // Decref'd by the interpreter.
+            Runtime.XIncref(self.pyHandle); // Decref'd by the interpreter.
             return self.pyHandle;
         }
 
@@ -121,7 +121,7 @@ namespace Python.Runtime
             ConstructorBinding self = (ConstructorBinding)GetManagedObject(ob);
             if (self.repr != IntPtr.Zero)
             {
-                Runtime.Incref(self.repr);
+                Runtime.XIncref(self.repr);
                 return self.repr;
             }
             MethodBase[] methods = self.ctorBinder.GetMethods();
@@ -136,7 +136,7 @@ namespace Python.Runtime
                 doc += String.Format("{0}{1}", name, str.Substring(idx));
             }
             self.repr = Runtime.PyString_FromString(doc);
-            Runtime.Incref(self.repr);
+            Runtime.XIncref(self.repr);
             return self.repr;
         }
 
@@ -147,9 +147,8 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             ConstructorBinding self = (ConstructorBinding)GetManagedObject(ob);
-            if (self.repr != IntPtr.Zero)
-                Runtime.Decref(self.repr);
-            Runtime.Decref(self.pyTypeHndl);
+            Runtime.XDecref(self.repr);
+            Runtime.XDecref(self.pyTypeHndl);
             ExtensionType.FinalizeObject(self);
         }
     }
@@ -174,7 +173,7 @@ namespace Python.Runtime
             : base()
         {
             this.type = type;
-            Runtime.Incref(pyTypeHndl);
+            Runtime.XIncref(pyTypeHndl);
             this.pyTypeHndl = pyTypeHndl;
             this.ctorBinder = ctorBinder;
             ctorInfo = ci;
@@ -218,7 +217,7 @@ namespace Python.Runtime
             BoundContructor self = (BoundContructor)GetManagedObject(ob);
             if (self.repr != IntPtr.Zero)
             {
-                Runtime.Incref(self.repr);
+                Runtime.XIncref(self.repr);
                 return self.repr;
             }
             string name = self.type.FullName;
@@ -226,7 +225,7 @@ namespace Python.Runtime
             int idx = str.IndexOf("(");
             str = String.Format("returns a new {0}{1}", name, str.Substring(idx));
             self.repr = Runtime.PyString_FromString(str);
-            Runtime.Incref(self.repr);
+            Runtime.XIncref(self.repr);
             return self.repr;
         }
 
