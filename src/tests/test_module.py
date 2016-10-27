@@ -353,22 +353,15 @@ class ModuleTests(unittest.TestCase):
         self.assertRaises(FileNotFoundException,
                           AddReference, "somethingtotallysilly")
 
-    def test_ThreadSafety(self):
-        import threading
-
-        def test_fn(i):
-            import time
-            time.sleep(i * 0.001)
+    def test_AssemblyLoadThreadSafety(self):
+        import time
+        from Python.Test import ModuleTest
+        # spin up .NET thread which loads assemblies and triggers AppDomain.AssemblyLoad event
+        ModuleTest.RunThreads()
+        time.sleep(1e-5)
+        # call import clr, which in AssemblyManager.GetNames iterates through the loaded types
+        for i in range(1, 100):
             import clr
-            from System.IO import FileNotFoundException
-
-        threads = [threading.Thread(target=test_fn, args=[i]) for i in range(1, 20)]
-
-        for thread in threads:
-            thread.start()
-
-        for thread in threads:
-            thread.join()
 
 
 def test_suite():

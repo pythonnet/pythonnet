@@ -1,13 +1,9 @@
 using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Threading;
 
 namespace Python.Runtime
 {
@@ -17,11 +13,16 @@ namespace Python.Runtime
     /// </summary>
     internal class AssemblyManager
     {
-        static Dictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
+        // modified from event handlers below, potentially triggered from different .NET threads
+        // therefore this should be a ConcurrentDictionary
+        static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
         //static Dictionary<string, Dictionary<string, string>> generics;
         static AssemblyLoadEventHandler lhandler;
         static ResolveEventHandler rhandler;
+        // updated only under GIL?
         static Dictionary<string, int> probed;
+        // modified from event handlers below, potentially triggered from different .NET threads
+        // we guard access to assemblies via lock(assemblies) { ... } blocks
         static List<Assembly> assemblies;
         internal static List<string> pypath;
 
@@ -37,9 +38,8 @@ namespace Python.Runtime
 
         internal static void Initialize()
         {
-            Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: Initialize");
             namespaces = new
-                Dictionary<string, ConcurrentDictionary<Assembly, string>>(32);
+                ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
             assemblies = new List<Assembly>(16);
@@ -92,7 +92,10 @@ namespace Python.Runtime
         static void AssemblyLoadHandler(Object ob, AssemblyLoadEventArgs args)
         {
             Assembly assembly = args.LoadedAssembly;
-            assemblies.Add(assembly);
+            lock (assemblies)
+            {
+                assemblies.Add(assembly);
+            }
             ScanAssembly(assembly);
         }
 
@@ -108,13 +111,16 @@ namespace Python.Runtime
         static Assembly ResolveHandler(Object ob, ResolveEventArgs args)
         {
             string name = args.Name.ToLower();
-            for (int i = 0; i < assemblies.Count; i++)
+            lock (assemblies)
             {
-                Assembly a = (Assembly)assemblies[i];
-                string full = a.FullName.ToLower();
-                if (full.StartsWith(name))
+                for (int i = 0; i < assemblies.Count; i++)
                 {
-                    return a;
+                    Assembly a = (Assembly) assemblies[i];
+                    string full = a.FullName.ToLower();
+                    if (full.StartsWith(name))
+                    {
+                        return a;
+                    }
                 }
             }
             return LoadAssemblyPath(args.Name);
@@ -269,12 +275,15 @@ namespace Python.Runtime
 
         public static Assembly FindLoadedAssembly(string name)
         {
-            for (int i = 0; i < assemblies.Count; i++)
+            lock (assemblies)
             {
-                Assembly a = (Assembly)assemblies[i];
-                if (a.GetName().Name == name)
+                for (int i = 0; i < assemblies.Count; i++)
                 {
-                    return a;
+                    Assembly a = (Assembly) assemblies[i];
+                    if (a.GetName().Name == name)
+                    {
+                        return a;
+                    }
                 }
             }
             return null;
@@ -365,19 +374,14 @@ namespace Python.Runtime
                     for (int n = 0; n < names.Length; n++)
                     {
                         s = (n == 0) ? names[0] : s + "." + names[n];
-                        if (!namespaces.ContainsKey(s))
-                        {
-                            Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: ScanAssembly, Add {s}");
-                            namespaces.Add(s, new ConcurrentDictionary<Assembly, string>());
-                        }
+                        namespaces.TryAdd(s, new ConcurrentDictionary<Assembly, string>());
                     }
                 }
 
                 if (ns != null && !namespaces[ns].ContainsKey(assembly))
                 {
-                    Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: ScanAssembly, Add {ns}, {assembly.FullName}");
                     if (!namespaces[ns].TryAdd(assembly, String.Empty))
-                        throw new ArgumentException("Adding duplicate " + assembly);
+                        throw new ArgumentException("Adding duplicate assembly " + assembly);
                 }
 
                 if (ns != null && t.IsGenericTypeDefinition)
@@ -389,14 +393,17 @@ namespace Python.Runtime
 
         public static AssemblyName[] ListAssemblies()
         {
-            AssemblyName[] names = new AssemblyName[assemblies.Count];
-            Assembly assembly;
-            for (int i = 0; i < assemblies.Count; i++)
+            lock (assemblies)
             {
-                assembly = assemblies[i];
-                names.SetValue(assembly.GetName(), i);
+                AssemblyName[] names = new AssemblyName[assemblies.Count];
+                Assembly assembly;
+                for (int i = 0; i < assemblies.Count; i++)
+                {
+                    assembly = assemblies[i];
+                    names.SetValue(assembly.GetName(), i);
+                }
+                return names;
             }
-            return names;
         }
 
         //===================================================================
@@ -477,13 +484,16 @@ namespace Python.Runtime
 
         public static Type LookupType(string qname)
         {
-            for (int i = 0; i < assemblies.Count; i++)
+            lock (assemblies)
             {
-                Assembly assembly = (Assembly)assemblies[i];
-                Type type = assembly.GetType(qname);
-                if (type != null)
+                for (int i = 0; i < assemblies.Count; i++)
                 {
-                    return type;
+                    Assembly assembly = (Assembly) assemblies[i];
+                    Type type = assembly.GetType(qname);
+                    if (type != null)
+                    {
+                        return type;
+                    }
                 }
             }
             return null;
