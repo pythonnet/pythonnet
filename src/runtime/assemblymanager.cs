@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -22,8 +24,7 @@ namespace Python.Runtime
         // updated only under GIL?
         static Dictionary<string, int> probed;
         // modified from event handlers below, potentially triggered from different .NET threads
-        // we guard access to assemblies via lock(assemblies) { ... } blocks
-        static List<Assembly> assemblies;
+        static AssemblyList assemblies;
         internal static List<string> pypath;
 
         private AssemblyManager()
@@ -42,7 +43,7 @@ namespace Python.Runtime
                 ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
-            assemblies = new List<Assembly>(16);
+            assemblies = new AssemblyList(16);
             pypath = new List<string>(16);
 
             AppDomain domain = AppDomain.CurrentDomain;
@@ -92,10 +93,7 @@ namespace Python.Runtime
         static void AssemblyLoadHandler(Object ob, AssemblyLoadEventArgs args)
         {
             Assembly assembly = args.LoadedAssembly;
-            lock (assemblies)
-            {
-                assemblies.Add(assembly);
-            }
+            assemblies.Add(assembly);
             ScanAssembly(assembly);
         }
 
@@ -111,16 +109,12 @@ namespace Python.Runtime
         static Assembly ResolveHandler(Object ob, ResolveEventArgs args)
         {
             string name = args.Name.ToLower();
-            lock (assemblies)
+            foreach (Assembly a in assemblies)
             {
-                for (int i = 0; i < assemblies.Count; i++)
+                string full = a.FullName.ToLower();
+                if (full.StartsWith(name))
                 {
-                    Assembly a = (Assembly) assemblies[i];
-                    string full = a.FullName.ToLower();
-                    if (full.StartsWith(name))
-                    {
-                        return a;
-                    }
+                    return a;
                 }
             }
             return LoadAssemblyPath(args.Name);
@@ -275,15 +269,11 @@ namespace Python.Runtime
 
         public static Assembly FindLoadedAssembly(string name)
         {
-            lock (assemblies)
+            foreach (Assembly a in assemblies)
             {
-                for (int i = 0; i < assemblies.Count; i++)
+                if (a.GetName().Name == name)
                 {
-                    Assembly a = (Assembly) assemblies[i];
-                    if (a.GetName().Name == name)
-                    {
-                        return a;
-                    }
+                    return a;
                 }
             }
             return null;
@@ -307,15 +297,15 @@ namespace Python.Runtime
             bool loaded = false;
             string s = "";
             Assembly lastAssembly = null;
-            HashSet<Assembly> assemblies = null;
+            HashSet<Assembly> assembliesSet = null;
             for (int i = 0; i < names.Length; i++)
             {
                 s = (i == 0) ? names[0] : s + "." + names[i];
                 if (!probed.ContainsKey(s))
                 {
-                    if (assemblies == null)
+                    if (assembliesSet == null)
                     {
-                        assemblies = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
+                        assembliesSet = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
                     }
                     Assembly a = FindLoadedAssembly(s);
                     if (a == null)
@@ -326,7 +316,7 @@ namespace Python.Runtime
                     {
                         a = LoadAssembly(s);
                     }
-                    if (a != null && !assemblies.Contains(a))
+                    if (a != null && !assembliesSet.Contains(a))
                     {
                         loaded = true;
                         lastAssembly = a;
@@ -392,17 +382,12 @@ namespace Python.Runtime
 
         public static AssemblyName[] ListAssemblies()
         {
-            lock (assemblies)
+            List<AssemblyName> names = new List<AssemblyName>(assemblies.Count);
+            foreach (Assembly assembly in assemblies)
             {
-                AssemblyName[] names = new AssemblyName[assemblies.Count];
-                Assembly assembly;
-                for (int i = 0; i < assemblies.Count; i++)
-                {
-                    assembly = assemblies[i];
-                    names.SetValue(assembly.GetName(), i);
-                }
-                return names;
+                names.Add(assembly.GetName());
             }
+            return names.ToArray();
         }
 
         //===================================================================
@@ -483,19 +468,89 @@ namespace Python.Runtime
 
         public static Type LookupType(string qname)
         {
-            lock (assemblies)
+            foreach (Assembly assembly in assemblies)
             {
-                for (int i = 0; i < assemblies.Count; i++)
+                Type type = assembly.GetType(qname);
+                if (type != null)
                 {
-                    Assembly assembly = (Assembly) assemblies[i];
-                    Type type = assembly.GetType(qname);
-                    if (type != null)
-                    {
-                        return type;
-                    }
+                    return type;
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Wrapper around List<Assembly> for thread safe access
+        /// </summary>
+        private class AssemblyList : IEnumerable<Assembly>{
+            private readonly List<Assembly> _list;
+            private readonly ReaderWriterLockSlim _lock;
+
+            public AssemblyList(int capacity) {
+                _list = new List<Assembly>(capacity);
+                _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+            }
+
+            public int Count { get { return _list.Count; } }
+
+            public void Add(Assembly assembly) {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _list.Add(assembly);
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            }
+
+            public IEnumerator GetEnumerator()
+            {
+                return ((IEnumerable<Assembly>) this).GetEnumerator();
+            }
+
+            /// <summary>
+            /// Enumerator wrapping around <see cref="AssemblyList._list"/>'s enumerator.
+            /// Acquires and releases a read lock on <see cref="AssemblyList._lock"/> during enumeration
+            /// </summary>
+            private class Enumerator : IEnumerator<Assembly>
+            {
+                private readonly AssemblyList _assemblyList;
+
+                private readonly IEnumerator<Assembly> _listEnumerator;
+
+                public Enumerator(AssemblyList assemblyList)
+                {
+                    _assemblyList = assemblyList;
+                    _listEnumerator = _assemblyList._list.GetEnumerator();
+                    _assemblyList._lock.EnterReadLock();
+                }
+
+                public void Dispose()
+                {
+                    _assemblyList._lock.ExitReadLock();
+                }
+
+                public bool MoveNext()
+                {
+                    return _listEnumerator.MoveNext();
+                }
+
+                public void Reset()
+                {
+                    _listEnumerator.Reset();
+                }
+
+                public Assembly Current { get { return _listEnumerator.Current; } }
+
+                object IEnumerator.Current { get { return Current; } }
+            }
+
+            IEnumerator<Assembly> IEnumerable<Assembly>.GetEnumerator()
+            {
+                return new Enumerator(this);
+            }
         }
     }
 }

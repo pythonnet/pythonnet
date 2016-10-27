@@ -363,6 +363,7 @@ class ModuleTests(unittest.TestCase):
         # call import clr, which in AssemblyManager.GetNames iterates through the loaded types
         for i in range(1, 100):
             import clr
+        ModuleTest.JoinThreads()
 
 
 def test_suite():
