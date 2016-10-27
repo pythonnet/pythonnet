@@ -13,7 +13,7 @@ namespace Python.Runtime
 
         public EventBinding(EventObject e, IntPtr target) : base()
         {
-            Runtime.Incref(target);
+            Runtime.XIncref(target);
             this.target = target;
             this.e = e;
         }
@@ -40,7 +40,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            Runtime.Incref(self.pyHandle);
+            Runtime.XIncref(self.pyHandle);
             return self.pyHandle;
         }
 
@@ -66,7 +66,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            Runtime.Incref(self.pyHandle);
+            Runtime.XIncref(self.pyHandle);
             return self.pyHandle;
         }
 
@@ -127,7 +127,7 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             EventBinding self = (EventBinding)GetManagedObject(ob);
-            Runtime.Decref(self.target);
+            Runtime.XDecref(self.target);
             ExtensionType.FinalizeObject(self);
         }
     }

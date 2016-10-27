@@ -253,50 +253,50 @@ namespace Python.Runtime
 
             op = Runtime.PyObject_GetAttrString(dict, "keys");
             PyMethodType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        Runtime.Decref(dict);
-        Runtime.Decref(op);
+        Runtime.XDecref(dict);
+        Runtime.XDecref(op);
 #endif
 
             op = Runtime.PyString_FromString("string");
             PyStringType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
             op = Runtime.PyUnicode_FromString("unicode");
             PyUnicodeType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         op = Runtime.PyBytes_FromString("bytes");
         PyBytesType = Runtime.PyObject_Type(op);
-        Runtime.Decref(op);
+        Runtime.XDecref(op);
 #endif
 
             op = Runtime.PyTuple_New(0);
             PyTupleType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
             op = Runtime.PyList_New(0);
             PyListType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
             op = Runtime.PyDict_New();
             PyDictType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
             op = Runtime.PyInt_FromInt32(0);
             PyIntType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
             op = Runtime.PyLong_FromLong(0);
             PyLongType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
             op = Runtime.PyFloat_FromDouble(0);
             PyFloatType = Runtime.PyObject_Type(op);
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         PyClassType = IntPtr.Zero;
@@ -363,7 +363,7 @@ namespace Python.Runtime
             IntPtr path = Runtime.PySys_GetObject("path");
             IntPtr item = Runtime.PyString_FromString(rtdir);
             Runtime.PyList_Append(path, item);
-            Runtime.Decref(item);
+            Runtime.XDecref(item);
             AssemblyManager.UpdatePath();
         }
 
@@ -435,12 +435,12 @@ namespace Python.Runtime
             int size = Runtime.PyTuple_Size(args);
             IntPtr items = Runtime.PyTuple_New(size + 1);
             Runtime.PyTuple_SetItem(items, 0, obj);
-            Runtime.Incref(obj);
+            Runtime.XIncref(obj);
 
             for (int i = 0; i < size; i++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(args, i);
-                Runtime.Incref(item);
+                Runtime.XIncref(item);
                 Runtime.PyTuple_SetItem(items, i + 1, item);
             }
 
@@ -458,14 +458,14 @@ namespace Python.Runtime
             for (int i = 0; i < size; i++)
             {
                 item = Runtime.PyTuple_GetItem(t, i);
-                Runtime.Incref(item);
+                Runtime.XIncref(item);
                 Runtime.PyTuple_SetItem(items, i, item);
             }
 
             for (int n = 0; n < add; n++)
             {
                 item = args[n];
-                Runtime.Incref(item);
+                Runtime.XIncref(item);
                 Runtime.PyTuple_SetItem(items, size + n, item);
             }
 
@@ -488,7 +488,7 @@ namespace Python.Runtime
             if (!Runtime.PyTuple_Check(arg))
             {
                 args = Runtime.PyTuple_New(1);
-                Runtime.Incref(arg);
+                Runtime.XIncref(arg);
                 Runtime.PyTuple_SetItem(args, 0, arg);
                 free = true;
             }
@@ -532,7 +532,7 @@ namespace Python.Runtime
             }
             if (free)
             {
-                Runtime.Decref(args);
+                Runtime.XDecref(args);
             }
             return types;
         }
@@ -543,9 +543,10 @@ namespace Python.Runtime
         // (mostly for heavily used methods).
         //===================================================================
 
-        internal unsafe static void Incref(IntPtr op)
+        internal unsafe static void XIncref(IntPtr op)
         {
 #if (Py_DEBUG)
+        // according to Python doc, Py_IncRef() is Py_XINCREF() 
         Py_IncRef(op);
         return;
 #else
@@ -564,14 +565,11 @@ namespace Python.Runtime
 #endif
         }
 
-        internal unsafe static void Decref(IntPtr op)
+        internal static unsafe void XDecref(IntPtr op)
         {
-            if (op == IntPtr.Zero)
-            {
-                DebugUtil.Print("Decref(NULL)");
-            }
 #if (Py_DEBUG)
-    // Py_DecRef calls Python's Py_DECREF
+        // Py_DecRef calls Python's Py_DECREF
+        // according to Python doc, Py_DecRef() is Py_XDECREF()
         Py_DecRef(op);
         return;
 #else
@@ -958,7 +956,7 @@ namespace Python.Runtime
             PyObject_Type(IntPtr op)
         {
             IntPtr tp = PyObject_TYPE(op);
-            Runtime.Incref(tp);
+            Runtime.XIncref(tp);
             return tp;
         }
 

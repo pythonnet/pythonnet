@@ -28,7 +28,7 @@ namespace Python.Runtime
                 }
                 IntPtr ob = Runtime.PyObject_Repr(args[i]);
                 result += Runtime.GetManagedString(ob);
-                Runtime.Decref(ob);
+                Runtime.XDecref(ob);
                 result += " ";
             }
             Console.WriteLine(result);
