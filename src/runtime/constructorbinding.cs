@@ -108,7 +108,7 @@ namespace Python.Runtime
             BoundContructor boundCtor = new BoundContructor(self.type, self.pyTypeHndl, self.ctorBinder, ci);
 
             /* Since nothing's chached, do we need the increment???
-            Runtime.Incref(boundCtor.pyHandle);  // Decref'd by the interpreter??? */
+            Runtime.XIncref(boundCtor.pyHandle);  // Decref'd by the interpreter??? */
             return boundCtor.pyHandle;
         }
 
