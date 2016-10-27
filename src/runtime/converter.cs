@@ -489,7 +489,7 @@ namespace Python.Runtime
                         // As of Python 2.3, large ints magically convert :(
                         if (Runtime.PyLong_Check(op))
                         {
-                            Runtime.Decref(op);
+                            Runtime.XDecref(op);
                             goto overflow;
                         }
 
@@ -502,7 +502,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
                         ival = (int)Runtime.PyInt_AsLong(op);
-                        Runtime.Decref(op);
+                        Runtime.XDecref(op);
                         result = ival;
                         return true;
                     }

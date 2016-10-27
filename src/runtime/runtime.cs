@@ -311,10 +311,10 @@ namespace Python.Runtime
             IntPtr i = Runtime.PyInstance_New(c, IntPtr.Zero, IntPtr.Zero);
             PyInstanceType = Runtime.PyObject_Type(i);
 
-            Runtime.Decref(s);
-            Runtime.Decref(i);
-            Runtime.Decref(c);
-            Runtime.Decref(d);
+            Runtime.XDecref(s);
+            Runtime.XDecref(i);
+            Runtime.XDecref(c);
+            Runtime.XDecref(d);
 #endif
 
             Error = new IntPtr(-1);
@@ -347,8 +347,8 @@ namespace Python.Runtime
         if (Runtime.PyObject_TYPE(op) == PyClassType) {
             wrap_exceptions = true;
         }
-        Runtime.Decref(op);
-        Runtime.Decref(m);
+        Runtime.XDecref(op);
+        Runtime.XDecref(m);
 #endif
 
             // Initialize modules that depend on the runtime class.

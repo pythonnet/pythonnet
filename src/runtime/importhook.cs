@@ -57,7 +57,7 @@ namespace Python.Runtime
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
 #else
-            Runtime.Incref(root.pyHandle); // we are using the module two times
+            Runtime.XIncref(root.pyHandle); // we are using the module two times
             Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
             Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
 #endif
@@ -79,8 +79,8 @@ namespace Python.Runtime
 #else
             if (0 != Runtime.Py_IsInitialized())
             {
-                Runtime.Decref(root.pyHandle);
-                Runtime.Decref(root.pyHandle);
+                Runtime.XDecref(root.pyHandle);
+                Runtime.XDecref(root.pyHandle);
             }
 #endif
             if (0 != Runtime.Py_IsInitialized())
@@ -137,7 +137,7 @@ namespace Python.Runtime
             Runtime.XIncref(py_clr_module);
             return py_clr_module;
 #else
-            Runtime.Incref(root.pyHandle);
+            Runtime.XIncref(root.pyHandle);
             return root.pyHandle;
 #endif
         }
