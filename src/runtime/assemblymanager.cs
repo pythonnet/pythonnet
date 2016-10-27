@@ -378,10 +378,9 @@ namespace Python.Runtime
                     }
                 }
 
-                if (ns != null && !namespaces[ns].ContainsKey(assembly))
+                if (ns != null)
                 {
-                    if (!namespaces[ns].TryAdd(assembly, String.Empty))
-                        throw new ArgumentException("Adding duplicate assembly " + assembly);
+                    namespaces[ns].TryAdd(assembly, String.Empty);
                 }
 
                 if (ns != null && t.IsGenericTypeDefinition)
