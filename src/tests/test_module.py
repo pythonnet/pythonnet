@@ -65,9 +65,11 @@ class ModuleTests(unittest.TestCase):
         import System
         self.assertEquals(type(System.__dict__), type({}))
         self.assertEquals(System.__name__, 'System')
-        # the filename can be any module from the System namespace (eg System.Data.dll or System.dll)
-        self.assertTrue(fnmatch(System.__file__, "*System*.dll"),
-                        "unexpected System.__file__" + System.__file__)
+        # the filename can be any module from the System namespace
+        # (eg System.Data.dll or System.dll, but also mscorlib.dll)
+        system_file = System.__file__
+        self.assertTrue(fnmatch(system_file, "*System*.dll") or fnmatch(system_file, "mscorlib.dll"),
+                        "unexpected System.__file__" + system_file)
         self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
         self.assertTrue(self.isCLRClass(System.String))
         self.assertTrue(self.isCLRClass(System.Int32))
