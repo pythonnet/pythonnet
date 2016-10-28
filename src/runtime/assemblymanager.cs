@@ -488,10 +488,22 @@ namespace Python.Runtime
 
             public AssemblyList(int capacity) {
                 _list = new List<Assembly>(capacity);
-                _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+                _lock = new ReaderWriterLockSlim();
             }
 
-            public int Count { get { return _list.Count; } }
+            public int Count
+            {
+                get
+                {
+                    _lock.EnterReadLock();
+                    try {
+                        return _list.Count;
+                    }
+                    finally {
+                        _lock.ExitReadLock();
+                    }
+                }
+            }
 
             public void Add(Assembly assembly) {
                 _lock.EnterWriteLock();
