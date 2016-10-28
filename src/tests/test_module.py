@@ -68,8 +68,8 @@ class ModuleTests(unittest.TestCase):
         # the filename can be any module from the System namespace
         # (eg System.Data.dll or System.dll, but also mscorlib.dll)
         system_file = System.__file__
-        self.assertTrue(fnmatch(system_file, "*System*.dll") or fnmatch(system_file, "mscorlib.dll"),
-                        "unexpected System.__file__" + system_file)
+        self.assertTrue(fnmatch(system_file, "*System*.dll") or fnmatch(system_file, "*mscorlib.dll"),
+                        "unexpected System.__file__: " + system_file)
         self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
         self.assertTrue(self.isCLRClass(System.String))
         self.assertTrue(self.isCLRClass(System.Int32))
