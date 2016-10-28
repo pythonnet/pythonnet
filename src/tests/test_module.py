@@ -360,9 +360,14 @@ class ModuleTests(unittest.TestCase):
         # spin up .NET thread which loads assemblies and triggers AppDomain.AssemblyLoad event
         ModuleTest.RunThreads()
         time.sleep(1e-5)
-        # call import clr, which in AssemblyManager.GetNames iterates through the loaded types
         for i in range(1, 100):
+            # call import clr, which in AssemblyManager.GetNames iterates through the loaded types
             import clr
+            # import some .NET types
+            from System import DateTime
+            from System import Guid
+            from System.Collections.Generic import Dictionary
+            dict = Dictionary[Guid,DateTime]()
         ModuleTest.JoinThreads()
 
 
