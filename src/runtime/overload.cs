@@ -15,7 +15,7 @@ namespace Python.Runtime
 
         public OverloadMapper(MethodObject m, IntPtr target) : base()
         {
-            Runtime.Incref(target);
+            Runtime.XIncref(target);
             this.target = target;
             this.m = m;
         }
@@ -47,7 +47,7 @@ namespace Python.Runtime
 
             MethodBinding mb = new MethodBinding(self.m, self.target);
             mb.info = mi;
-            Runtime.Incref(mb.pyHandle);
+            Runtime.XIncref(mb.pyHandle);
             return mb.pyHandle;
         }
 
@@ -59,7 +59,7 @@ namespace Python.Runtime
         {
             OverloadMapper self = (OverloadMapper)GetManagedObject(op);
             IntPtr doc = self.m.GetDocString();
-            Runtime.Incref(doc);
+            Runtime.XIncref(doc);
             return doc;
         }
 
@@ -70,7 +70,7 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             OverloadMapper self = (OverloadMapper)GetManagedObject(ob);
-            Runtime.Decref(self.target);
+            Runtime.XDecref(self.target);
             ExtensionType.FinalizeObject(self);
         }
     }

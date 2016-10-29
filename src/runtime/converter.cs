@@ -133,7 +133,7 @@ namespace Python.Runtime
             if (value == null)
             {
                 result = Runtime.PyNone;
-                Runtime.Incref(result);
+                Runtime.XIncref(result);
                 return result;
             }
 
@@ -180,10 +180,10 @@ namespace Python.Runtime
                 case TypeCode.Boolean:
                     if ((bool)value)
                     {
-                        Runtime.Incref(Runtime.PyTrue);
+                        Runtime.XIncref(Runtime.PyTrue);
                         return Runtime.PyTrue;
                     }
-                    Runtime.Incref(Runtime.PyFalse);
+                    Runtime.XIncref(Runtime.PyFalse);
                     return Runtime.PyFalse;
 
                 case TypeCode.Byte:
@@ -203,7 +203,7 @@ namespace Python.Runtime
                     string ss = ((float)value).ToString(nfi);
                     IntPtr ps = Runtime.PyString_FromString(ss);
                     IntPtr op = Runtime.PyFloat_FromString(ps, IntPtr.Zero);
-                    Runtime.Decref(ps);
+                    Runtime.XDecref(ps);
                     return op;
 
                 case TypeCode.Double:
@@ -231,7 +231,7 @@ namespace Python.Runtime
                                 using (var p = new PyObject(ToPython(o, o?.GetType())))
                                     resultlist.Append(p);
                             }
-                            Runtime.Incref(resultlist.Handle);
+                            Runtime.XIncref(resultlist.Handle);
                             return resultlist.Handle;
                         }
                     }
@@ -251,7 +251,7 @@ namespace Python.Runtime
             if (value == null)
             {
                 IntPtr result = Runtime.PyNone;
-                Runtime.Incref(result);
+                Runtime.XIncref(result);
                 return result;
             }
 
@@ -299,7 +299,7 @@ namespace Python.Runtime
                             // This is safe because we know that the __dict__ of
                             // value holds a reference to _inner.
                             value = p;
-                            Runtime.Decref(p);
+                            Runtime.XDecref(p);
                             mt = ManagedType.GetManagedObject(value);
                         }
                     }
@@ -307,7 +307,7 @@ namespace Python.Runtime
                     if ((c != IntPtr.Zero) && (c != value))
                     {
                         value = c;
-                        Runtime.Decref(c);
+                        Runtime.XDecref(c);
                         mt = ManagedType.GetManagedObject(value);
                     }
                 }
@@ -489,7 +489,7 @@ namespace Python.Runtime
                         // As of Python 2.3, large ints magically convert :(
                         if (Runtime.PyLong_Check(op))
                         {
-                            Runtime.Decref(op);
+                            Runtime.XDecref(op);
                             goto overflow;
                         }
 
@@ -502,7 +502,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
                         ival = (int)Runtime.PyInt_AsLong(op);
-                        Runtime.Decref(op);
+                        Runtime.XDecref(op);
                         result = ival;
                         return true;
                     }
@@ -523,7 +523,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
                         long ll = (long)Runtime.PyLong_AsLongLong(op);
-                        Runtime.Decref(op);
+                        Runtime.XDecref(op);
                         if ((ll == -1) && Exceptions.ErrorOccurred())
                         {
                             goto overflow;
@@ -575,7 +575,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
 
                     if (ival > Byte.MaxValue || ival < Byte.MinValue)
                     {
@@ -618,7 +618,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
 
                     if (ival > SByte.MaxValue || ival < SByte.MinValue)
                     {
@@ -678,7 +678,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     ival = Runtime.PyInt_AsLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if (ival > Char.MaxValue || ival < Char.MinValue)
                     {
                         goto overflow;
@@ -697,7 +697,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if (ival > Int16.MaxValue || ival < Int16.MinValue)
                     {
                         goto overflow;
@@ -717,7 +717,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     long l = (long)Runtime.PyLong_AsLongLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if ((l == -1) && Exceptions.ErrorOccurred())
                     {
                         goto overflow;
@@ -736,7 +736,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if (ival > UInt16.MaxValue || ival < UInt16.MinValue)
                     {
                         goto overflow;
@@ -759,14 +759,14 @@ namespace Python.Runtime
 
                     if (Exceptions.ErrorOccurred())
                     {
-                        Runtime.Decref(op);
+                        Runtime.XDecref(op);
                         goto overflow;
                     }
 
                     IntPtr check = Runtime.PyLong_FromUnsignedLong(ui);
                     int err = Runtime.PyObject_Compare(check, op);
-                    Runtime.Decref(check);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(check);
+                    Runtime.XDecref(op);
                     if (0 != err || Exceptions.ErrorOccurred())
                     {
                         goto overflow;
@@ -786,7 +786,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     ulong ul = (ulong)Runtime.PyLong_AsUnsignedLongLong(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if (Exceptions.ErrorOccurred())
                     {
                         goto overflow;
@@ -806,7 +806,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     double dd = Runtime.PyFloat_AsDouble(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if (dd > Single.MaxValue || dd < Single.MinValue)
                     {
                         goto overflow;
@@ -821,7 +821,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     double d = Runtime.PyFloat_AsDouble(op);
-                    Runtime.Decref(op);
+                    Runtime.XDecref(op);
                     if (d > Double.MaxValue || d < Double.MinValue)
                     {
                         goto overflow;
@@ -859,7 +859,7 @@ namespace Python.Runtime
         {
             IntPtr ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
-            Runtime.Decref(ob);
+            Runtime.XDecref(ob);
             string error = String.Format(
                 "Cannot convert {0} to {1}", src, target
                 );
@@ -908,12 +908,12 @@ namespace Python.Runtime
 
                 if (!Converter.ToManaged(item, elementType, out obj, true))
                 {
-                    Runtime.Decref(item);
+                    Runtime.XDecref(item);
                     return false;
                 }
 
                 items.SetValue(obj, i);
-                Runtime.Decref(item);
+                Runtime.XDecref(item);
             }
 
             result = items;

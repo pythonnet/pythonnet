@@ -81,7 +81,7 @@ namespace Python.Runtime
             FieldInfo fi = obj.GetType().GetField("__pyobj__");
             CLRObject self = (CLRObject)fi.GetValue(obj);
 
-            Runtime.Incref(self.pyHandle);
+            Runtime.XIncref(self.pyHandle);
 
             // when the C# constructor creates the python object it starts as a weak
             // reference with a reference count of 0. Now we're passing this object
@@ -153,7 +153,7 @@ namespace Python.Runtime
             HashSet<string> pyProperties = new HashSet<string>();
             if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
             {
-                Runtime.Incref(py_dict);
+                Runtime.XIncref(py_dict);
                 using (PyDict dict = new PyDict(py_dict))
                 using (PyObject keys = dict.Keys())
                 {
@@ -196,7 +196,7 @@ namespace Python.Runtime
             // Add any additional methods and properties explicitly exposed from Python.
             if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
             {
-                Runtime.Incref(py_dict);
+                Runtime.XIncref(py_dict);
                 using (PyDict dict = new PyDict(py_dict))
                 using (PyObject keys = dict.Keys())
                 {
@@ -588,11 +588,11 @@ namespace Python.Runtime
                 IntPtr gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    Runtime.Incref(self.pyHandle);
+                    Runtime.XIncref(self.pyHandle);
                     PyObject pyself = new PyObject(self.pyHandle);
                     disposeList.Add(pyself);
 
-                    Runtime.Incref(Runtime.PyNone);
+                    Runtime.XIncref(Runtime.PyNone);
                     PyObject pynone = new PyObject(Runtime.PyNone);
                     disposeList.Add(pynone);
 
@@ -649,11 +649,11 @@ namespace Python.Runtime
                 IntPtr gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    Runtime.Incref(self.pyHandle);
+                    Runtime.XIncref(self.pyHandle);
                     PyObject pyself = new PyObject(self.pyHandle);
                     disposeList.Add(pyself);
 
-                    Runtime.Incref(Runtime.PyNone);
+                    Runtime.XIncref(Runtime.PyNone);
                     PyObject pynone = new PyObject(Runtime.PyNone);
                     disposeList.Add(pynone);
 
@@ -710,7 +710,7 @@ namespace Python.Runtime
             IntPtr gs = Runtime.PyGILState_Ensure();
             try
             {
-                Runtime.Incref(self.pyHandle);
+                Runtime.XIncref(self.pyHandle);
                 using (PyObject pyself = new PyObject(self.pyHandle))
                 using (PyObject pyvalue = pyself.GetAttr(propertyName))
                     return (T)pyvalue.AsManagedObject(typeof(T));
@@ -732,7 +732,7 @@ namespace Python.Runtime
             IntPtr gs = Runtime.PyGILState_Ensure();
             try
             {
-                Runtime.Incref(self.pyHandle);
+                Runtime.XIncref(self.pyHandle);
                 using (PyObject pyself = new PyObject(self.pyHandle))
                 using (PyObject pyvalue = new PyObject(Converter.ToPythonImplicit(value)))
                     pyself.SetAttr(propertyName, pyvalue);
@@ -766,11 +766,11 @@ namespace Python.Runtime
                 FieldInfo fi = obj.GetType().GetField("__pyobj__");
                 fi.SetValue(obj, self);
 
-                Runtime.Incref(self.pyHandle);
+                Runtime.XIncref(self.pyHandle);
                 PyObject pyself = new PyObject(self.pyHandle);
                 disposeList.Add(pyself);
 
-                Runtime.Incref(Runtime.PyNone);
+                Runtime.XIncref(Runtime.PyNone);
                 PyObject pynone = new PyObject(Runtime.PyNone);
                 disposeList.Add(pynone);
 
@@ -806,7 +806,7 @@ namespace Python.Runtime
                 // This doesn't actually destroy the object, it just sets the reference to this object
                 // to be a weak reference and it will be destroyed when the C# object is destroyed.
                 if (null != self)
-                    Runtime.Decref(self.pyHandle);
+                    Runtime.XDecref(self.pyHandle);
 
                 Runtime.PyGILState_Release(gs);
             }
@@ -848,7 +848,7 @@ namespace Python.Runtime
                         // python object.
                         IntPtr dict = Marshal.ReadIntPtr(self.pyHandle, ObjectOffset.DictOffset(self.pyHandle));
                         if (dict != IntPtr.Zero)
-                            Runtime.Decref(dict);
+                            Runtime.XDecref(dict);
                         Runtime.PyObject_GC_Del(self.pyHandle);
                         self.gcHandle.Free();
                     }
