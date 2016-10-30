@@ -421,7 +421,7 @@ namespace Python.Runtime
 
             IntPtr flag = (IntPtr)257; /* Py_file_input */
             IntPtr result = Runtime.PyRun_String(code, flag, globals, locals);
-            Runtime.Decref(locals);
+            Runtime.XDecref(locals);
             if (result == IntPtr.Zero)
             {
                 return null;
@@ -491,7 +491,7 @@ namespace Python.Runtime
                 if (Runtime.PyDict_SetItemString(dict.Handle, (string)kv[i], value) != 0)
                     throw new ArgumentException(string.Format("Cannot add key '{0}' to dictionary.", (string)kv[i]));
                 if (!(kv[i + 1] is PyObject))
-                    Runtime.Decref(value);
+                    Runtime.XDecref(value);
             }
             return dict;
         }

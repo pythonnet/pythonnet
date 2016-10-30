@@ -139,7 +139,7 @@ namespace Python.Runtime
                 }
                 Type a = t.MakeArrayType();
                 ClassBase o = ClassManager.GetClass(a);
-                Runtime.Incref(o.pyHandle);
+                Runtime.XIncref(o.pyHandle);
                 return o.pyHandle;
             }
 
@@ -159,7 +159,7 @@ namespace Python.Runtime
             {
                 GenericType g = ClassManager.GetClass(gtype) as GenericType;
                 return g.type_subscript(idx);
-                /*Runtime.Incref(g.pyHandle);
+                /*Runtime.XIncref(g.pyHandle);
                 return g.pyHandle;*/
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
@@ -194,7 +194,7 @@ namespace Python.Runtime
             if (!Runtime.PyTuple_Check(idx))
             {
                 args = Runtime.PyTuple_New(1);
-                Runtime.Incref(idx);
+                Runtime.XIncref(idx);
                 Runtime.PyTuple_SetItem(args, 0, idx);
                 free = true;
             }
@@ -209,7 +209,7 @@ namespace Python.Runtime
             {
                 if (free)
                 {
-                    Runtime.Decref(args);
+                    Runtime.XDecref(args);
                 }
             }
             return value;
@@ -243,7 +243,7 @@ namespace Python.Runtime
             if (!Runtime.PyTuple_Check(idx))
             {
                 args = Runtime.PyTuple_New(1);
-                Runtime.Incref(idx);
+                Runtime.XIncref(idx);
                 Runtime.PyTuple_SetItem(args, 0, idx);
                 free = true;
             }
@@ -257,7 +257,7 @@ namespace Python.Runtime
             for (int n = 0; n < i; n++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
-                Runtime.Incref(item);
+                Runtime.XIncref(item);
                 Runtime.PyTuple_SetItem(real, n, item);
             }
 
@@ -265,15 +265,15 @@ namespace Python.Runtime
             for (int n = 0; n < numOfDefaultArgs; n++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
-                Runtime.Incref(item);
+                Runtime.XIncref(item);
                 Runtime.PyTuple_SetItem(real, n + i, item);
             }
             // no longer need defaultArgs
-            Runtime.Decref(defaultArgs);
+            Runtime.XDecref(defaultArgs);
             i = temp;
 
             // Add value to argument list
-            Runtime.Incref(v);
+            Runtime.XIncref(v);
             Runtime.PyTuple_SetItem(real, i, v);
 
             try
@@ -282,11 +282,11 @@ namespace Python.Runtime
             }
             finally
             {
-                Runtime.Decref(real);
+                Runtime.XDecref(real);
 
                 if (free)
                 {
-                    Runtime.Decref(args);
+                    Runtime.XDecref(args);
                 }
             }
 

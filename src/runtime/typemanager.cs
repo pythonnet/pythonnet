@@ -138,7 +138,7 @@ namespace Python.Runtime
             if (clrType == typeof(System.Exception))
             {
                 base_ = Exceptions.Exception;
-                Runtime.Incref(base_);
+                Runtime.XIncref(base_);
             }
             else
 #endif
@@ -151,7 +151,7 @@ namespace Python.Runtime
             IntPtr type = AllocateTypeObject(name);
 
             Marshal.WriteIntPtr(type, TypeOffset.ob_type, Runtime.PyCLRMetaType);
-            Runtime.Incref(Runtime.PyCLRMetaType);
+            Runtime.XIncref(Runtime.PyCLRMetaType);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
@@ -162,7 +162,7 @@ namespace Python.Runtime
             if (base_ != IntPtr.Zero)
             {
                 Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
-                Runtime.Incref(base_);
+                Runtime.XIncref(base_);
             }
 
             int flags = TypeFlags.Default;
@@ -303,7 +303,7 @@ namespace Python.Runtime
             IntPtr py_type = Runtime.PyTypeType;
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
-            Runtime.Incref(py_type);
+            Runtime.XIncref(py_type);
 
             // Copy gc and other type slots from the base Python metatype.
 
@@ -376,7 +376,7 @@ namespace Python.Runtime
             //Marshal.WriteIntPtr(type, TypeOffset.tp_dict, dc);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
-            Runtime.Incref(base_);
+            Runtime.XIncref(base_);
 
             int flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;

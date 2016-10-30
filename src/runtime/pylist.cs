@@ -37,7 +37,7 @@ namespace Python.Runtime
             {
                 throw new ArgumentException("object is not a list");
             }
-            Runtime.Incref(o.obj);
+            Runtime.XIncref(o.obj);
             obj = o.obj;
         }
 
@@ -73,7 +73,7 @@ namespace Python.Runtime
             for (int i = 0; i < count; i++)
             {
                 IntPtr ptr = items[i].obj;
-                Runtime.Incref(ptr);
+                Runtime.XIncref(ptr);
                 int r = Runtime.PyList_SetItem(obj, i, ptr);
                 if (r < 0)
                 {

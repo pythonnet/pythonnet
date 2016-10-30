@@ -337,7 +337,7 @@ namespace Python.Runtime
                                 {
                                     clrtype = Converter.GetTypeByAlias(pyoptype);
                                 }
-                                Runtime.Decref(pyoptype);
+                                Runtime.XDecref(pyoptype);
                             }
 
 
@@ -372,7 +372,7 @@ namespace Python.Runtime
                                             clrtype = pi[n].ParameterType;
                                         }
                                     }
-                                    Runtime.Decref(pyoptype);
+                                    Runtime.XDecref(pyoptype);
                                     if (!typematch)
                                     {
                                         margs = null;
@@ -405,7 +405,7 @@ namespace Python.Runtime
                             {
                                 // GetSlice() creates a new reference but GetItem()
                                 // returns only a borrow reference.
-                                Runtime.Decref(op);
+                                Runtime.XDecref(op);
                             }
                             margs[n] = arg;
                         }
@@ -551,8 +551,8 @@ namespace Python.Runtime
                 if ((binding.outs == 1) && (mi.ReturnType == typeof(void)))
                 {
                     v = Runtime.PyTuple_GetItem(t, 1);
-                    Runtime.Incref(v);
-                    Runtime.Decref(t);
+                    Runtime.XIncref(v);
+                    Runtime.XDecref(t);
                     return v;
                 }
 

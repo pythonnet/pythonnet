@@ -92,7 +92,7 @@ namespace Python.Runtime
 
                 IntPtr eargs = Runtime.PyTuple_New(0);
                 binding = this.Bind(inst, eargs, kw);
-                Runtime.Decref(eargs);
+                Runtime.XDecref(eargs);
 
                 if (binding == null)
                 {

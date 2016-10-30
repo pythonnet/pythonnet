@@ -106,7 +106,7 @@ namespace Python.Runtime
         public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
-                Runtime.Incref(Runtime.PyNotImplemented);
+                Runtime.XIncref(Runtime.PyNotImplemented);
                 return Runtime.PyNotImplemented;
             }
 
@@ -124,11 +124,11 @@ namespace Python.Runtime
             Delegate d2 = GetTrueDelegate(other);
             if (d1 == d2)
             {
-                Runtime.Incref(pytrue);
+                Runtime.XIncref(pytrue);
                 return pytrue;
             }
 
-            Runtime.Incref(pyfalse);
+            Runtime.XIncref(pyfalse);
             return pyfalse;
         }
 #else
