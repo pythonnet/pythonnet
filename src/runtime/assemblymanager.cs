@@ -535,12 +535,13 @@ namespace Python.Runtime
                 public Enumerator(AssemblyList assemblyList)
                 {
                     _assemblyList = assemblyList;
-                    _listEnumerator = _assemblyList._list.GetEnumerator();
                     _assemblyList._lock.EnterReadLock();
+                    _listEnumerator = _assemblyList._list.GetEnumerator();
                 }
 
                 public void Dispose()
                 {
+                    _listEnumerator.Dispose();
                     _assemblyList._lock.ExitReadLock();
                 }
 
