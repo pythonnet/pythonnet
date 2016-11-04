@@ -160,7 +160,7 @@ namespace Python.Runtime
                 string docStr = attr.DocString;
                 doc = Runtime.PyString_FromString(docStr);
                 Runtime.PyDict_SetItemString(dict, "__doc__", doc);
-                Runtime.Decref(doc);
+                Runtime.XDecref(doc);
             }
 
             ClassObject co = impl as ClassObject;
@@ -185,7 +185,7 @@ namespace Python.Runtime
                     {
                         doc = co.GetDocString();
                         Runtime.PyDict_SetItemString(dict, "__doc__", doc);
-                        Runtime.Decref(doc);
+                        Runtime.XDecref(doc);
                     }
                 }
             }

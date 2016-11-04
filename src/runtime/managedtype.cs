@@ -51,7 +51,7 @@ namespace Python.Runtime
                     if ((e != IntPtr.Zero) && (e != ob))
                     {
                         ManagedType m = GetManagedObject(e);
-                        Runtime.Decref(e);
+                        Runtime.XDecref(e);
                         return m;
                     }
                 }

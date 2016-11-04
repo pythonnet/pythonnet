@@ -160,7 +160,7 @@ namespace Python.Runtime
                     self.unbound = new EventBinding(self, IntPtr.Zero);
                 }
                 binding = self.unbound;
-                Runtime.Incref(binding.pyHandle);
+                Runtime.XIncref(binding.pyHandle);
                 return binding.pyHandle;
             }
 
@@ -218,7 +218,7 @@ namespace Python.Runtime
             EventObject self = (EventObject)GetManagedObject(ob);
             if (self.unbound != null)
             {
-                Runtime.Decref(self.unbound.pyHandle);
+                Runtime.XDecref(self.unbound.pyHandle);
             }
             ExtensionType.FinalizeObject(self);
         }

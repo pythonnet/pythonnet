@@ -57,7 +57,7 @@ namespace Python.Runtime
             {
                 Type t = target.MakeGenericType(types);
                 ManagedType c = (ManagedType)ClassManager.GetClass(t);
-                Runtime.Incref(c.pyHandle);
+                Runtime.XIncref(c.pyHandle);
                 return c.pyHandle;
             }
 
@@ -71,7 +71,7 @@ namespace Python.Runtime
         public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
-                Runtime.Incref(Runtime.PyNotImplemented);
+                Runtime.XIncref(Runtime.PyNotImplemented);
                 return Runtime.PyNotImplemented;
             }
 
@@ -86,14 +86,14 @@ namespace Python.Runtime
             }
 
             if (ob == other) {
-                Runtime.Incref(pytrue);
+                Runtime.XIncref(pytrue);
                 return pytrue;
             }
 
             CLRObject co1 = GetManagedObject(ob) as CLRObject;
             CLRObject co2 = GetManagedObject(other) as CLRObject;
 			if (null == co2) {
-				Runtime.Incref(pyfalse);
+				Runtime.XIncref(pyfalse);
 				return pyfalse;
 			}
 
@@ -101,11 +101,11 @@ namespace Python.Runtime
             Object o2 = co2.inst;
 
             if (Object.Equals(o1, o2)) {
-                Runtime.Incref(pytrue);
+                Runtime.XIncref(pytrue);
                 return pytrue;
             }
 
-            Runtime.Incref(pyfalse);
+            Runtime.XIncref(pyfalse);
             return pyfalse;
         }
 #else
@@ -237,11 +237,11 @@ namespace Python.Runtime
             IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
             if (dict != IntPtr.Zero)
             {
-                Runtime.Decref(dict);
+                Runtime.XDecref(dict);
             }
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
             Runtime.PyObject_GC_Del(self.pyHandle);
-            Runtime.Decref(self.tpHandle);
+            Runtime.XDecref(self.tpHandle);
             self.gcHandle.Free();
         }
     }

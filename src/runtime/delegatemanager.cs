@@ -203,7 +203,7 @@ namespace Python.Runtime
 
         public Dispatcher(IntPtr target, Type dtype)
         {
-            Runtime.Incref(target);
+            Runtime.XIncref(target);
             this.target = target;
             this.dtype = dtype;
         }
@@ -215,7 +215,7 @@ namespace Python.Runtime
             if (Runtime.Py_IsInitialized() > 0)
             {
                 IntPtr gs = PythonEngine.AcquireLock();
-                Runtime.Decref(target);
+                Runtime.XDecref(target);
                 PythonEngine.ReleaseLock(gs);
             }
         }
@@ -255,7 +255,7 @@ namespace Python.Runtime
             }
 
             IntPtr op = Runtime.PyObject_Call(target, pyargs, IntPtr.Zero);
-            Runtime.Decref(pyargs);
+            Runtime.XDecref(pyargs);
 
             if (op == IntPtr.Zero)
             {
@@ -273,11 +273,11 @@ namespace Python.Runtime
             {
                 string s = "could not convert Python result to " +
                            rtype.ToString();
-                Runtime.Decref(op);
+                Runtime.XDecref(op);
                 throw new ConversionException(s);
             }
 
-            Runtime.Decref(op);
+            Runtime.XDecref(op);
             return result;
         }
     }

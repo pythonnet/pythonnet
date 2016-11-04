@@ -127,7 +127,7 @@ namespace Python.Runtime
             if (name == "__doc__")
             {
                 IntPtr doc = self.GetDocString();
-                Runtime.Incref(doc);
+                Runtime.XIncref(doc);
                 return doc;
             }
 
@@ -155,7 +155,7 @@ namespace Python.Runtime
                     self.unbound = new MethodBinding(self, IntPtr.Zero, tp);
                 }
                 binding = self.unbound;
-                Runtime.Incref(binding.pyHandle);
+                Runtime.XIncref(binding.pyHandle);
                 ;
                 return binding.pyHandle;
             }
@@ -202,10 +202,10 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             MethodObject self = (MethodObject)GetManagedObject(ob);
-            Runtime.Decref(self.doc);
+            Runtime.XDecref(self.doc);
             if (self.unbound != null)
             {
-                Runtime.Decref(self.unbound.pyHandle);
+                Runtime.XDecref(self.unbound.pyHandle);
             }
             ExtensionType.FinalizeObject(self);
         }

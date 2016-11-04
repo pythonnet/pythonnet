@@ -37,7 +37,7 @@ namespace Python.Runtime
 
         public static IntPtr tp_iter(IntPtr ob)
         {
-            Runtime.Incref(ob);
+            Runtime.XIncref(ob);
             return ob;
         }
     }

@@ -39,7 +39,7 @@ namespace Python.Runtime
 #endif
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
             Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
-            Runtime.Decref(hook.ptr);
+            Runtime.XDecref(hook.ptr);
 
             root = new CLRModule();
 
@@ -57,7 +57,7 @@ namespace Python.Runtime
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
 #else
-            Runtime.Incref(root.pyHandle); // we are using the module two times
+            Runtime.XIncref(root.pyHandle); // we are using the module two times
             Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
             Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
 #endif
@@ -72,20 +72,20 @@ namespace Python.Runtime
         {
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if (0 != Runtime.Py_IsInitialized()) {
-                Runtime.Decref(py_clr_module);
-                Runtime.Decref(root.pyHandle);
+                Runtime.XDecref(py_clr_module);
+                Runtime.XDecref(root.pyHandle);
             }
             ModuleDefOffset.FreeModuleDef(module_def);
 #else
             if (0 != Runtime.Py_IsInitialized())
             {
-                Runtime.Decref(root.pyHandle);
-                Runtime.Decref(root.pyHandle);
+                Runtime.XDecref(root.pyHandle);
+                Runtime.XDecref(root.pyHandle);
             }
 #endif
             if (0 != Runtime.Py_IsInitialized())
             {
-                Runtime.Decref(py_import);
+                Runtime.XDecref(py_import);
             }
         }
 
@@ -108,9 +108,9 @@ namespace Python.Runtime
             if (fromList != null && fromList != IntPtr.Zero) {
                 if (Runtime.PyTuple_Check(fromList.GetValueOrDefault()))
                 {
-                    Runtime.Incref(py_mod_dict);
+                    Runtime.XIncref(py_mod_dict);
                     using(PyDict mod_dict = new PyDict(py_mod_dict)) {
-                        Runtime.Incref(fromList.GetValueOrDefault());
+                        Runtime.XIncref(fromList.GetValueOrDefault());
                         using (PyTuple from = new PyTuple(fromList.GetValueOrDefault())) {
                             foreach (PyObject item in from) {
                                 if (mod_dict.HasKey(item))
@@ -124,7 +124,7 @@ namespace Python.Runtime
                                 if (null == attr)
                                     continue;
 
-                                Runtime.Incref(attr.pyHandle);
+                                Runtime.XIncref(attr.pyHandle);
                                 using (PyObject obj = new PyObject(attr.pyHandle)) {
                                     mod_dict.SetItem(s, obj);
                                 }
@@ -134,10 +134,10 @@ namespace Python.Runtime
                 }
             }
 
-            Runtime.Incref(py_clr_module);
+            Runtime.XIncref(py_clr_module);
             return py_clr_module;
 #else
-            Runtime.Incref(root.pyHandle);
+            Runtime.XIncref(root.pyHandle);
             return root.pyHandle;
 #endif
         }
@@ -291,7 +291,7 @@ namespace Python.Runtime
             {
                 if (fromlist)
                 {
-                    Runtime.Incref(module);
+                    Runtime.XIncref(module);
                     return module;
                 }
                 if (clr_prefix != null)
@@ -299,7 +299,7 @@ namespace Python.Runtime
                     return GetCLRModule(fromList);
                 }
                 module = Runtime.PyDict_GetItemString(modules, names[0]);
-                Runtime.Incref(module);
+                Runtime.XIncref(module);
                 return module;
             }
             Exceptions.Clear();
@@ -361,10 +361,10 @@ namespace Python.Runtime
                 {
                     mod.LoadNames();
                 }
-                Runtime.Decref(fp);
+                Runtime.XDecref(fp);
             }
 
-            Runtime.Incref(mod.pyHandle);
+            Runtime.XIncref(mod.pyHandle);
             return mod.pyHandle;
         }
     }
