@@ -5,7 +5,7 @@ Python for .NET is a package that gives Python programmers nearly seamless integ
 
 [![Build Status](https://travis-ci.org/pythonnet/pythonnet.png?branch=master)](https://travis-ci.org/pythonnet/pythonnet)
 
-[![Build status](https://ci.appveyor.com/api/projects/status/c8k0miljb3n1c7be/branch/master)](https://ci.appveyor.com/project/TonyRoberts/pythonnet-480xs)
+[![Build status](https://ci.appveyor.com/api/projects/status/g4flfwq46g2adv6a/branch/master?svg=true)](https://ci.appveyor.com/project/pythonnet/pythonnet-0kq5d/branch/master)
 
 **Calling .NET code from Python**
 
