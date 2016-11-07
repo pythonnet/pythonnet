@@ -38,7 +38,7 @@ namespace Python.Runtime
             {
                 throw new ArgumentException("object is not a string");
             }
-            Runtime.Incref(o.obj);
+            Runtime.XIncref(o.obj);
             obj = o.obj;
         }
 

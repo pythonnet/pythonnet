@@ -19,10 +19,10 @@ namespace Python.Runtime
 
         public MethodBinding(MethodObject m, IntPtr target, IntPtr targetType) : base()
         {
-            Runtime.Incref(target);
+            Runtime.XIncref(target);
             this.target = target;
 
-            Runtime.Incref(targetType);
+            Runtime.XIncref(targetType);
             if (targetType == IntPtr.Zero)
                 targetType = Runtime.PyObject_Type(target);
             this.targetType = targetType;
@@ -58,7 +58,7 @@ namespace Python.Runtime
 
             MethodBinding mb = new MethodBinding(self.m, self.target);
             mb.info = mi;
-            Runtime.Incref(mb.pyHandle);
+            Runtime.XIncref(mb.pyHandle);
             return mb.pyHandle;
         }
 
@@ -81,7 +81,7 @@ namespace Python.Runtime
             if (name == "__doc__")
             {
                 IntPtr doc = self.m.GetDocString();
-                Runtime.Incref(doc);
+                Runtime.XIncref(doc);
                 return doc;
             }
 
@@ -89,7 +89,7 @@ namespace Python.Runtime
             if (name == "__overloads__" || name == "Overloads")
             {
                 OverloadMapper om = new OverloadMapper(self.m, self.target);
-                Runtime.Incref(om.pyHandle);
+                Runtime.XIncref(om.pyHandle);
                 return om.pyHandle;
             }
 
@@ -140,7 +140,7 @@ namespace Python.Runtime
                         return IntPtr.Zero;
                     }
                     target = Runtime.PyTuple_GetItem(args, 0);
-                    Runtime.Incref(target);
+                    Runtime.XIncref(target);
                     disposeList.Add(target);
 
                     args = Runtime.PyTuple_GetSlice(args, 1, len);
@@ -166,7 +166,7 @@ namespace Python.Runtime
                                 MethodBinding baseSelf = GetManagedObject(baseMethod) as MethodBinding;
                                 if (baseSelf != null)
                                     self = baseSelf;
-                                Runtime.Decref(baseMethod);
+                                Runtime.XDecref(baseMethod);
                             }
                             else
                             {
@@ -181,7 +181,7 @@ namespace Python.Runtime
             finally
             {
                 foreach (IntPtr ptr in disposeList)
-                    Runtime.Decref(ptr);
+                    Runtime.XDecref(ptr);
             }
         }
 
@@ -240,8 +240,8 @@ namespace Python.Runtime
         public static new void tp_dealloc(IntPtr ob)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
-            Runtime.Decref(self.target);
-            Runtime.Decref(self.targetType);
+            Runtime.XDecref(self.target);
+            Runtime.XDecref(self.targetType);
             ExtensionType.FinalizeObject(self);
         }
     }

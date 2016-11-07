@@ -195,12 +195,12 @@ namespace Python.Runtime
                     IntPtr op = (IntPtr)fi.GetValue(type);
                     if (op != IntPtr.Zero)
                     {
-                        Runtime.Decref(op);
+                        Runtime.XDecref(op);
                     }
                 }
-                Runtime.Decref(exceptions_module);
+                Runtime.XDecref(exceptions_module);
                 Runtime.PyObject_HasAttrString(warnings_module, "xx");
-                Runtime.Decref(warnings_module);
+                Runtime.XDecref(warnings_module);
             }
         }
 
@@ -306,7 +306,7 @@ namespace Python.Runtime
 
             IntPtr namestr = Runtime.PyString_FromString("System");
             Runtime.PyDict_SetItemString(dict, "__name__", namestr);
-            Runtime.Decref(namestr);
+            Runtime.XDecref(namestr);
 
             Runtime.PyDict_SetItemString(dict, "__file__", Runtime.PyNone);
             Runtime.PyDict_SetItemString(dict, "__doc__", Runtime.PyNone);
@@ -314,7 +314,7 @@ namespace Python.Runtime
             IntPtr flag = Runtime.Py_file_input;
             IntPtr result = Runtime.PyRun_String(code, flag, dict, dict);
             Exceptions.ErrorCheck(result);
-            Runtime.Decref(result);
+            Runtime.XDecref(result);
 
             os_exc = Runtime.PyDict_GetItemString(dict, "Exception");
             Runtime.PyObject_SetAttrString(os_exc, "_class", ns_exc);
@@ -335,23 +335,23 @@ namespace Python.Runtime
                 throw new SystemException("Invalid __bases__");
             }
             IntPtr nsbase = Runtime.PyTuple_GetItem(nbases, 0);
-            Runtime.Decref(nbases);
+            Runtime.XDecref(nbases);
 
             IntPtr osbase = GetExceptionClassWrapper(nsbase);
             IntPtr baselist = Runtime.PyTuple_New(1);
-            Runtime.Incref(osbase);
+            Runtime.XIncref(osbase);
             Runtime.PyTuple_SetItem(baselist, 0, osbase);
             IntPtr name = Runtime.PyObject_GetAttrString(real, "__name__");
 
             IntPtr dict = Runtime.PyDict_New();
             IntPtr mod = Runtime.PyObject_GetAttrString(real, "__module__");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
-            Runtime.Decref(mod);
+            Runtime.XDecref(mod);
 
             IntPtr subc = Runtime.PyClass_New(baselist, dict, name);
-            Runtime.Decref(baselist);
-            Runtime.Decref(dict);
-            Runtime.Decref(name);
+            Runtime.XDecref(baselist);
+            Runtime.XDecref(dict);
+            Runtime.XDecref(name);
 
             Runtime.PyObject_SetAttrString(subc, "_class", real);
             return subc;
@@ -392,7 +392,7 @@ namespace Python.Runtime
             IntPtr d = Runtime.PyObject_GetAttrString(op, "__dict__");
             Exceptions.ErrorCheck(d);
             Runtime.PyDict_SetItemString(d, "_inner", real);
-            Runtime.Decref(d);
+            Runtime.XDecref(d);
             return op;
         }
 
@@ -409,7 +409,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
             IntPtr c = Runtime.PyDict_GetItemString(d, "_class");
-            Runtime.Decref(d);
+            Runtime.XDecref(d);
             if (c == IntPtr.Zero)
             {
                 Exceptions.Clear();
@@ -517,8 +517,8 @@ namespace Python.Runtime
             }
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
             Runtime.PyErr_SetObject(etype, op);
-            Runtime.Decref(etype);
-            Runtime.Decref(op);
+            Runtime.XDecref(etype);
+            Runtime.XDecref(op);
         }
 
         /// <summary>
@@ -561,14 +561,14 @@ namespace Python.Runtime
                 Exceptions.RaiseTypeError("Invalid exception");
             }
 
-            Runtime.Incref(warnings_module);
+            Runtime.XIncref(warnings_module);
             IntPtr warn = Runtime.PyObject_GetAttrString(warnings_module, "warn");
-            Runtime.Decref(warnings_module);
+            Runtime.XDecref(warnings_module);
             Exceptions.ErrorCheck(warn);
 
             IntPtr args = Runtime.PyTuple_New(3);
             IntPtr msg = Runtime.PyString_FromString(message);
-            Runtime.Incref(exception); // PyTuple_SetItem steals a reference
+            Runtime.XIncref(exception); // PyTuple_SetItem steals a reference
             IntPtr level = Runtime.PyInt_FromInt32(stacklevel);
             Runtime.PyTuple_SetItem(args, 0, msg);
             Runtime.PyTuple_SetItem(args, 1, exception);
@@ -577,9 +577,9 @@ namespace Python.Runtime
             IntPtr result = Runtime.PyObject_CallObject(warn, args);
             Exceptions.ErrorCheck(result);
 
-            Runtime.Decref(warn);
-            Runtime.Decref(result);
-            Runtime.Decref(args);
+            Runtime.XDecref(warn);
+            Runtime.XDecref(result);
+            Runtime.XDecref(args);
         }
 
         public static void warn(string message, IntPtr exception)

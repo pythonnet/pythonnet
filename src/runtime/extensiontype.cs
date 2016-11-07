@@ -52,7 +52,7 @@ namespace Python.Runtime
         public static void FinalizeObject(ManagedType self)
         {
             Runtime.PyObject_GC_Del(self.pyHandle);
-            Runtime.Decref(self.tpHandle);
+            Runtime.XDecref(self.tpHandle);
             self.gcHandle.Free();
         }
 

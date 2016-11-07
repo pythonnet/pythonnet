@@ -73,7 +73,7 @@ namespace Python.Runtime
             // Special case: if ob is null, we return None.
             if (ob == null)
             {
-                Runtime.Incref(Runtime.PyNone);
+                Runtime.XIncref(Runtime.PyNone);
                 return new PyObject(Runtime.PyNone);
             }
             IntPtr op = CLRObject.GetInstHandle(ob);
@@ -119,7 +119,7 @@ namespace Python.Runtime
                 if (Runtime.Py_IsInitialized() > 0)
                 {
                     IntPtr gs = PythonEngine.AcquireLock();
-                    Runtime.Decref(obj);
+                    Runtime.XDecref(obj);
                     obj = IntPtr.Zero;
                     PythonEngine.ReleaseLock(gs);
                 }
@@ -872,7 +872,7 @@ namespace Python.Runtime
         {
             IntPtr strval = Runtime.PyObject_Repr(obj);
             string result = Runtime.GetManagedString(strval);
-            Runtime.Decref(strval);
+            Runtime.XDecref(strval);
             return result;
         }
 
@@ -889,7 +889,7 @@ namespace Python.Runtime
         {
             IntPtr strval = Runtime.PyObject_Unicode(obj);
             string result = Runtime.GetManagedString(strval);
-            Runtime.Decref(strval);
+            Runtime.XDecref(strval);
             return result;
         }
 
@@ -968,7 +968,7 @@ namespace Python.Runtime
                 if (inargs[i] is PyObject)
                 {
                     ptr = ((PyObject)inargs[i]).Handle;
-                    Runtime.Incref(ptr);
+                    Runtime.XIncref(ptr);
                 }
                 else
                 {

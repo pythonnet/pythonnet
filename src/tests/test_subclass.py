@@ -147,6 +147,21 @@ class SubClassTests(unittest.TestCase):
         self.assertEqual(event_handler.value, 3)
         self.assertEqual(len(d.event_handlers), 1)
 
+    def test_isinstance(self):
+        from System import Object
+        from System import String
+
+        a = [str(x) for x in range(0, 1000)]
+        b = [String(x) for x in a]
+
+        for x in a:
+            self.assertFalse(isinstance(x, Object))
+            self.assertFalse(isinstance(x, String))
+
+        for x in b:
+            self.assertTrue(isinstance(x, Object))
+            self.assertTrue(isinstance(x, String))
+
 
 def test_suite():
     return unittest.makeSuite(SubClassTests)
