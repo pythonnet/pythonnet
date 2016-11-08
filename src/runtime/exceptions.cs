@@ -55,50 +55,11 @@ namespace Python.Runtime
             {
                 message = e.Message;
             }
-            if ((e.StackTrace != null) && (e.StackTrace != String.Empty))
+            if (!string.IsNullOrEmpty(e.StackTrace))
             {
                 message = message + "\n" + e.StackTrace;
             }
             return Runtime.PyUnicode_FromString(message);
-        }
-
-        //====================================================================
-        // Exceptions __getattribute__ implementation.
-        // handles Python's args and message attributes
-        //====================================================================
-
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
-        {
-            if (!Runtime.PyString_Check(key))
-            {
-                Exceptions.SetError(Exceptions.TypeError, "string expected");
-                return IntPtr.Zero;
-            }
-
-            string name = Runtime.GetManagedString(key);
-            if (name == "args")
-            {
-                Exception e = ToException(ob);
-                IntPtr args;
-                if (e.Message != String.Empty)
-                {
-                    args = Runtime.PyTuple_New(1);
-                    IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
-                    Runtime.PyTuple_SetItem(args, 0, msg);
-                }
-                else
-                {
-                    args = Runtime.PyTuple_New(0);
-                }
-                return args;
-            }
-
-            if (name == "message")
-            {
-                return ExceptionClassObject.tp_str(ob);
-            }
-
-            return Runtime.PyObject_GenericGetAttr(ob, key);
         }
     }
 
@@ -190,10 +151,10 @@ namespace Python.Runtime
                 return;
 
             IntPtr args;
-            if (e.Message != String.Empty)
+            if (!string.IsNullOrEmpty(e.Message))
             {
                 args = Runtime.PyTuple_New(1);
-                IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
+                var msg = Runtime.PyUnicode_FromString(e.Message);
                 Runtime.PyTuple_SetItem(args, 0, msg);
             }
             else
