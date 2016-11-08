@@ -334,7 +334,7 @@ class ExceptionTests(unittest.TestCase):
 
     def testPicklingExceptions(self):
         from System import Exception
-        try
+        try:
             import cPickle as pickle
         except ImportError:
             import pickle
