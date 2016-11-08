@@ -63,30 +63,6 @@ namespace Python.Runtime
         }
 
         //====================================================================
-        // Exception __repr__ implementation.
-        //====================================================================
-
-        public static IntPtr tp_repr(IntPtr ob)
-        {
-            Exception e = ToException(ob);
-            if (e == null)
-            {
-                return Exceptions.RaiseTypeError("invalid object");
-            }
-            string name = e.GetType().Name;
-            string message;
-            if (e.Message != String.Empty)
-            {
-                message = String.Format("{0}('{1}',)", name, e.Message);
-            }
-            else
-            {
-                message = String.Format("{0}()", name);
-            }
-            return Runtime.PyUnicode_FromString(message);
-        }
-
-        //====================================================================
         // Exceptions __getattribute__ implementation.
         // handles Python's args and message attributes
         //====================================================================
@@ -196,6 +172,36 @@ namespace Python.Runtime
                 Runtime.PyObject_HasAttrString(warnings_module, "xx");
                 Runtime.XDecref(warnings_module);
             }
+        }
+
+        /// <summary>
+        /// Set the 'args' slot on a python exception object that wraps
+        /// a CLR exception. This is needed for pickling CLR exceptions as
+        /// BaseException_reduce will only check the slots, bypassing the
+        /// __getattr__ implementation, and thus dereferencing a NULL
+        /// pointer.
+        /// </summary>
+        /// <param name="e">A CLR exception</param>
+        /// <param name="ob">The python object wrapping </param>
+        internal static void SetArgs(IntPtr ob)
+        {
+            var e = ExceptionClassObject.ToException(ob);
+            if (e == null)
+                return;
+
+            IntPtr args;
+            if (e.Message != String.Empty)
+            {
+                args = Runtime.PyTuple_New(1);
+                IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
+                Runtime.PyTuple_SetItem(args, 0, msg);
+            }
+            else
+            {
+                args = Runtime.PyTuple_New(0);
+            }
+
+            Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
         }
 
         /// <summary>

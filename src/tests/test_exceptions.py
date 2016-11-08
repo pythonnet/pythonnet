@@ -6,11 +6,6 @@ if six.PY3:
     unicode = str
 
 
-# Note: all of these tests are known to fail because Python currently
-# doesn't allow new-style classes to be used as exceptions. I'm leaving
-# the tests in place in to document 'how it ought to work' in the hopes
-# that they'll all pass one day...
-
 class ExceptionTests(unittest.TestCase):
     """Test exception support."""
 
@@ -335,6 +330,16 @@ class ExceptionTests(unittest.TestCase):
             self.assertTrue(isinstance(o, Object))
         else:
             self.assertFalse(isinstance(o, Object))
+
+    def testPicklingExceptions(self):
+        from System import Exception
+        import pickle
+
+        exc = Exception("test")
+        dumped = pickle.dumps(exc)
+        loaded = pickle.loads(dumped)
+
+        self.assertEqual(repr(exc), repr(loaded))
 
 
 def test_suite():
