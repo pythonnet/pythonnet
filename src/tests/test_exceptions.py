@@ -295,14 +295,15 @@ class ExceptionTests(unittest.TestCase):
         msg = "A simple message"
 
         e = OverflowException(msg)
-        self.assertEqual(e.message, msg)
-        self.assertTrue(isinstance(e.message, unicode))  # ???
         self.assertEqual(str(e), msg)
         self.assertEqual(unicode(e), msg)
 
         self.assertEqual(e.args, (msg,))
         self.assertTrue(isinstance(e.args, tuple))
-        self.assertEqual(repr(e), "OverflowException('A simple message',)")
+        if six.PY2:
+            self.assertEqual(repr(e), "OverflowException(u'A simple message',)")
+        else:
+            self.assertEqual(repr(e), "OverflowException('A simple message',)")
 
     def testExceptionIsInstanceOfSystemObject(self):
         """Test behavior of isinstance(<managed exception>, System.Object)."""
@@ -339,7 +340,7 @@ class ExceptionTests(unittest.TestCase):
         dumped = pickle.dumps(exc)
         loaded = pickle.loads(dumped)
 
-        self.assertEqual(repr(exc), repr(loaded))
+        self.assertEqual(exc.args, loaded.args)
 
 
 def test_suite():
