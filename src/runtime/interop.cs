@@ -89,41 +89,35 @@ namespace Python.Runtime
 
         public static int magic(IntPtr ob)
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
                 return ExceptionOffset.ob_data;
             }
-#endif
             return ob_data;
         }
 
         public static int DictOffset(IntPtr ob)
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
                 return ExceptionOffset.ob_dict;
             }
-#endif
             return ob_dict;
         }
 
         public static int Size(IntPtr ob)
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
                 return ExceptionOffset.Size();
             }
-#endif
 #if (Py_DEBUG)
             return 6 * IntPtr.Size;
 #else
-            return 4*IntPtr.Size;
+            return 4 * IntPtr.Size;
 #endif
         }
 
@@ -137,7 +131,6 @@ namespace Python.Runtime
         private static int ob_data;
     }
 
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class ExceptionOffset
     {
@@ -161,15 +154,21 @@ namespace Python.Runtime
         // (start after PyObject_HEAD)
         public static int dict = 0;
         public static int args = 0;
+#if (PYTHON25 || PYTHON26 || PYTHON27)
+        public static int message = 0;
+#elif (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         public static int traceback = 0;
         public static int context = 0;
         public static int cause = 0;
+#if !PYTHON32
+        public static int suppress_context = 0;
+#endif
+#endif
 
         // extra c# data
         public static int ob_dict;
         public static int ob_data;
     }
-#endif
 
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
