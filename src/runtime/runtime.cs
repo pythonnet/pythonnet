@@ -212,7 +212,6 @@ namespace Python.Runtime
         internal static Object IsFinalizingLock = new Object();
         internal static bool IsFinalizing = false;
 
-        internal static bool wrap_exceptions;
         internal static bool is32bit;
 
         /// <summary>
@@ -330,25 +329,6 @@ namespace Python.Runtime
             NativeMethods.FreeLibrary(dll);
         }
 #endif
-#endif
-
-
-            // Determine whether we need to wrap exceptions for versions of
-            // of the Python runtime that do not allow new-style classes to
-            // be used as exceptions (Python versions 2.4 and lower).
-
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-            wrap_exceptions = false;
-#else
-        IntPtr m = PyImport_ImportModule("exceptions");
-        Exceptions.ErrorCheck(m);
-        op = Runtime.PyObject_GetAttrString(m, "Exception");
-        Exceptions.ErrorCheck(op);
-        if (Runtime.PyObject_TYPE(op) == PyClassType) {
-            wrap_exceptions = true;
-        }
-        Runtime.XDecref(op);
-        Runtime.XDecref(m);
 #endif
 
             // Initialize modules that depend on the runtime class.

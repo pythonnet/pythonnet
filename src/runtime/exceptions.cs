@@ -23,7 +23,6 @@ namespace Python.Runtime
         {
         }
 
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
         internal static Exception ToException(IntPtr ob)
         {
             CLRObject co = GetManagedObject(ob) as CLRObject;
@@ -56,76 +55,12 @@ namespace Python.Runtime
             {
                 message = e.Message;
             }
-            if ((e.StackTrace != null) && (e.StackTrace != String.Empty))
+            if (!string.IsNullOrEmpty(e.StackTrace))
             {
                 message = message + "\n" + e.StackTrace;
             }
             return Runtime.PyUnicode_FromString(message);
         }
-
-        //====================================================================
-        // Exception __repr__ implementation.
-        //====================================================================
-
-        public static IntPtr tp_repr(IntPtr ob)
-        {
-            Exception e = ToException(ob);
-            if (e == null)
-            {
-                return Exceptions.RaiseTypeError("invalid object");
-            }
-            string name = e.GetType().Name;
-            string message;
-            if (e.Message != String.Empty)
-            {
-                message = String.Format("{0}('{1}',)", name, e.Message);
-            }
-            else
-            {
-                message = String.Format("{0}()", name);
-            }
-            return Runtime.PyUnicode_FromString(message);
-        }
-
-        //====================================================================
-        // Exceptions __getattribute__ implementation.
-        // handles Python's args and message attributes
-        //====================================================================
-
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
-        {
-            if (!Runtime.PyString_Check(key))
-            {
-                Exceptions.SetError(Exceptions.TypeError, "string expected");
-                return IntPtr.Zero;
-            }
-
-            string name = Runtime.GetManagedString(key);
-            if (name == "args")
-            {
-                Exception e = ToException(ob);
-                IntPtr args;
-                if (e.Message != String.Empty)
-                {
-                    args = Runtime.PyTuple_New(1);
-                    IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
-                    Runtime.PyTuple_SetItem(args, 0, msg);
-                }
-                else
-                {
-                    args = Runtime.PyTuple_New(0);
-                }
-                return args;
-            }
-
-            if (name == "message")
-            {
-                return ExceptionClassObject.tp_str(ob);
-            }
-
-            return Runtime.PyObject_GenericGetAttr(ob, key);
-        }
-#endif // (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
     }
 
     /// <summary>
@@ -173,10 +108,6 @@ namespace Python.Runtime
                 }
             }
             Runtime.PyErr_Clear();
-            if (Runtime.wrap_exceptions)
-            {
-                SetupExceptionHack();
-            }
         }
 
 
@@ -205,6 +136,36 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// Set the 'args' slot on a python exception object that wraps
+        /// a CLR exception. This is needed for pickling CLR exceptions as
+        /// BaseException_reduce will only check the slots, bypassing the
+        /// __getattr__ implementation, and thus dereferencing a NULL
+        /// pointer.
+        /// </summary>
+        /// <param name="e">A CLR exception</param>
+        /// <param name="ob">The python object wrapping </param>
+        internal static void SetArgs(IntPtr ob)
+        {
+            var e = ExceptionClassObject.ToException(ob);
+            if (e == null)
+                return;
+
+            IntPtr args;
+            if (!string.IsNullOrEmpty(e.Message))
+            {
+                args = Runtime.PyTuple_New(1);
+                var msg = Runtime.PyUnicode_FromString(e.Message);
+                Runtime.PyTuple_SetItem(args, 0, msg);
+            }
+            else
+            {
+                args = Runtime.PyTuple_New(0);
+            }
+
+            Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
+        }
+
+        /// <summary>
         ///  Shortcut for (pointer == NULL) -> throw PythonException
         /// </summary>
         /// <param name="pointer">Pointer to a Python object</param>
@@ -226,210 +187,6 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
-        }
-
-        // Versions of CPython up to 2.4 do not allow exceptions to be
-        // new-style classes. To get around that restriction and provide
-        // a consistent user experience for programmers, we wrap managed
-        // exceptions in an old-style class that (through some dont-try-
-        // this-at-home hackery) delegates to the managed exception and
-        // obeys the conventions of both Python and managed exceptions.
-
-        /// <remarks>
-        /// Conditionally initialized variables!
-        /// </remarks>
-        static IntPtr ns_exc; // new-style class for System.Exception
-
-        static IntPtr os_exc; // old-style class for System.Exception
-        static Hashtable cache;
-
-        /// <remarks>
-        /// the lines
-        /// // XXX - hack to raise a compatible old-style exception ;(
-        /// if (Runtime.wrap_exceptions) {
-        ///     CallOneOfTheseMethods();
-        ///
-        /// </remarks>
-        internal static void SetupExceptionHack()
-        {
-            ns_exc = ClassManager.GetClass(typeof(Exception)).pyHandle;
-            cache = new Hashtable();
-
-            string code =
-                "import exceptions\n" +
-                "class Exception(exceptions.Exception):\n" +
-                "    _class = None\n" +
-                "    _inner = None\n" +
-                "    \n" +
-                "    #@property\n" +
-                "    def message(self):\n" +
-                "        return self.Message\n" +
-                "    message = property(message)\n" +
-                "    \n" +
-                "    def __init__(self, *args, **kw):\n" +
-                "        inst = self.__class__._class(*args, **kw)\n" +
-                "        self.__dict__['_inner'] = inst\n" +
-                "        exceptions.Exception.__init__(self, *args, **kw)\n" +
-                "\n" +
-                "    def __getattr__(self, name, _marker=[]):\n" +
-                "        inner = self.__dict__['_inner']\n" +
-                "        v = getattr(inner, name, _marker)\n" +
-                "        if v is not _marker:\n" +
-                "            return v\n" +
-                "        v = self.__dict__.get(name, _marker)\n" +
-                "        if v is not _marker:\n" +
-                "            return v\n" +
-                "        raise AttributeError(name)\n" +
-                "\n" +
-                "    def __setattr__(self, name, value):\n" +
-                "        inner = self.__dict__['_inner']\n" +
-                "        setattr(inner, name, value)\n" +
-                "\n" +
-                "    def __str__(self):\n" +
-                "        inner = self.__dict__.get('_inner')\n" +
-                "        msg = getattr(inner, 'Message', '')\n" +
-                "        st = getattr(inner, 'StackTrace', '')\n" +
-                "        st = st and '\\n' + st or ''\n" +
-                "        return msg + st\n" +
-                "    \n" +
-                "    def __repr__(self):\n" +
-                "        inner = self.__dict__.get('_inner')\n" +
-                "        msg = getattr(inner, 'Message', '')\n" +
-                "        name = self.__class__.__name__\n" +
-                "        return '%s(\\'%s\\',)' % (name, msg) \n" +
-                "\n";
-
-            IntPtr dict = Runtime.PyDict_New();
-
-            IntPtr builtins = Runtime.PyEval_GetBuiltins();
-            Runtime.PyDict_SetItemString(dict, "__builtins__", builtins);
-
-            IntPtr namestr = Runtime.PyString_FromString("System");
-            Runtime.PyDict_SetItemString(dict, "__name__", namestr);
-            Runtime.XDecref(namestr);
-
-            Runtime.PyDict_SetItemString(dict, "__file__", Runtime.PyNone);
-            Runtime.PyDict_SetItemString(dict, "__doc__", Runtime.PyNone);
-
-            IntPtr flag = Runtime.Py_file_input;
-            IntPtr result = Runtime.PyRun_String(code, flag, dict, dict);
-            Exceptions.ErrorCheck(result);
-            Runtime.XDecref(result);
-
-            os_exc = Runtime.PyDict_GetItemString(dict, "Exception");
-            Runtime.PyObject_SetAttrString(os_exc, "_class", ns_exc);
-            Runtime.PyErr_Clear();
-        }
-
-
-        internal static IntPtr GenerateExceptionClass(IntPtr real)
-        {
-            if (real == ns_exc)
-            {
-                return os_exc;
-            }
-
-            IntPtr nbases = Runtime.PyObject_GetAttrString(real, "__bases__");
-            if (Runtime.PyTuple_Size(nbases) != 1)
-            {
-                throw new SystemException("Invalid __bases__");
-            }
-            IntPtr nsbase = Runtime.PyTuple_GetItem(nbases, 0);
-            Runtime.XDecref(nbases);
-
-            IntPtr osbase = GetExceptionClassWrapper(nsbase);
-            IntPtr baselist = Runtime.PyTuple_New(1);
-            Runtime.XIncref(osbase);
-            Runtime.PyTuple_SetItem(baselist, 0, osbase);
-            IntPtr name = Runtime.PyObject_GetAttrString(real, "__name__");
-
-            IntPtr dict = Runtime.PyDict_New();
-            IntPtr mod = Runtime.PyObject_GetAttrString(real, "__module__");
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
-            Runtime.XDecref(mod);
-
-            IntPtr subc = Runtime.PyClass_New(baselist, dict, name);
-            Runtime.XDecref(baselist);
-            Runtime.XDecref(dict);
-            Runtime.XDecref(name);
-
-            Runtime.PyObject_SetAttrString(subc, "_class", real);
-            return subc;
-        }
-
-        internal static IntPtr GetExceptionClassWrapper(IntPtr real)
-        {
-            // Given the pointer to a new-style class representing a managed
-            // exception, return an appropriate old-style class wrapper that
-            // maintains all of the expectations and delegates to the wrapped
-            // class.
-            object ob = cache[real];
-            if (ob == null)
-            {
-                IntPtr op = GenerateExceptionClass(real);
-                cache[real] = op;
-                return op;
-            }
-            return (IntPtr)ob;
-        }
-
-        internal static IntPtr GetExceptionInstanceWrapper(IntPtr real)
-        {
-            // Given the pointer to a new-style class instance representing a
-            // managed exception, return an appropriate old-style class
-            // wrapper instance that delegates to the wrapped instance.
-            IntPtr tp = Runtime.PyObject_TYPE(real);
-            if (Runtime.PyObject_TYPE(tp) == Runtime.PyInstanceType)
-            {
-                return real;
-            }
-            // Get / generate a class wrapper, instantiate it and set its
-            // _inner attribute to the real new-style exception instance.
-            IntPtr ct = GetExceptionClassWrapper(tp);
-            Exceptions.ErrorCheck(ct);
-            IntPtr op = Runtime.PyInstance_NewRaw(ct, IntPtr.Zero);
-            Exceptions.ErrorCheck(op);
-            IntPtr d = Runtime.PyObject_GetAttrString(op, "__dict__");
-            Exceptions.ErrorCheck(d);
-            Runtime.PyDict_SetItemString(d, "_inner", real);
-            Runtime.XDecref(d);
-            return op;
-        }
-
-        internal static IntPtr UnwrapExceptionClass(IntPtr op)
-        {
-            // In some cases its necessary to recognize an exception *class*,
-            // and obtain the inner (wrapped) exception class. This method
-            // returns the inner class if found, or a null pointer.
-
-            IntPtr d = Runtime.PyObject_GetAttrString(op, "__dict__");
-            if (d == IntPtr.Zero)
-            {
-                Exceptions.Clear();
-                return IntPtr.Zero;
-            }
-            IntPtr c = Runtime.PyDict_GetItemString(d, "_class");
-            Runtime.XDecref(d);
-            if (c == IntPtr.Zero)
-            {
-                Exceptions.Clear();
-            }
-            return c;
-        }
-
-        /// <summary>
-        /// GetException Method
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Retrieve Python exception information as a PythonException
-        /// instance. The properties of the PythonException may be used
-        /// to access the exception type, value and traceback info.
-        /// </remarks>
-        public static PythonException GetException()
-        {
-            // TODO: implement this.
-            return null;
         }
 
         /// <summary>
@@ -509,12 +266,6 @@ namespace Python.Runtime
             }
 
             IntPtr op = CLRObject.GetInstHandle(e);
-
-            // XXX - hack to raise a compatible old-style exception ;(
-            if (Runtime.wrap_exceptions)
-            {
-                op = GetExceptionInstanceWrapper(op);
-            }
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
             Runtime.PyErr_SetObject(etype, op);
             Runtime.XDecref(etype);

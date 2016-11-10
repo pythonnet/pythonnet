@@ -156,20 +156,7 @@ namespace Python.Runtime
             switch (tc)
             {
                 case TypeCode.Object:
-                    result = CLRObject.GetInstHandle(value, type);
-
-                    // XXX - hack to make sure we convert new-style class based
-                    // managed exception instances to wrappers ;(
-                    if (Runtime.wrap_exceptions)
-                    {
-                        Exception e = value as Exception;
-                        if (e != null)
-                        {
-                            return Exceptions.GetExceptionInstanceWrapper(result);
-                        }
-                    }
-
-                    return result;
+                    return CLRObject.GetInstHandle(value, type);
 
                 case TypeCode.String:
                     return Runtime.PyUnicode_FromString((string)value);
@@ -282,36 +269,6 @@ namespace Python.Runtime
             // instance, just return the wrapped object.
             ManagedType mt = ManagedType.GetManagedObject(value);
             result = null;
-
-            // XXX - hack to support objects wrapped in old-style classes
-            // (such as exception objects).
-            if (Runtime.wrap_exceptions)
-            {
-                if (mt == null)
-                {
-                    if (Runtime.PyObject_IsInstance(
-                        value, Exceptions.Exception
-                        ) > 0)
-                    {
-                        IntPtr p = Runtime.PyObject_GetAttrString(value, "_inner");
-                        if (p != IntPtr.Zero)
-                        {
-                            // This is safe because we know that the __dict__ of
-                            // value holds a reference to _inner.
-                            value = p;
-                            Runtime.XDecref(p);
-                            mt = ManagedType.GetManagedObject(value);
-                        }
-                    }
-                    IntPtr c = Exceptions.UnwrapExceptionClass(value);
-                    if ((c != IntPtr.Zero) && (c != value))
-                    {
-                        value = c;
-                        Runtime.XDecref(c);
-                        mt = ManagedType.GetManagedObject(value);
-                    }
-                }
-            }
 
             if (mt != null)
             {

@@ -202,20 +202,6 @@ namespace Python.Runtime
                 if (m == null)
                 {
                     ManagedType attr = this.GetAttribute(name, true);
-                    if (Runtime.wrap_exceptions)
-                    {
-                        if (attr is ExceptionClassObject)
-                        {
-                            ExceptionClassObject c = attr as ExceptionClassObject;
-                            if (c != null)
-                            {
-                                IntPtr p = attr.pyHandle;
-                                IntPtr r = Exceptions.GetExceptionClassWrapper(p);
-                                Runtime.PyDict_SetItemString(dict, name, r);
-                                Runtime.XIncref(r);
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -305,26 +291,6 @@ namespace Python.Runtime
             {
                 Exceptions.SetError(Exceptions.AttributeError, name);
                 return IntPtr.Zero;
-            }
-
-            // XXX - hack required to recognize exception types. These types
-            // may need to be wrapped in old-style class wrappers in versions
-            // of Python where new-style classes cannot be used as exceptions.
-
-            if (Runtime.wrap_exceptions)
-            {
-                if (attr is ExceptionClassObject)
-                {
-                    ExceptionClassObject c = attr as ExceptionClassObject;
-                    if (c != null)
-                    {
-                        IntPtr p = attr.pyHandle;
-                        IntPtr r = Exceptions.GetExceptionClassWrapper(p);
-                        Runtime.PyDict_SetItemString(self.dict, name, r);
-                        Runtime.XIncref(r);
-                        return r;
-                    }
-                }
             }
 
             Runtime.XIncref(attr.pyHandle);

@@ -6,11 +6,6 @@ if six.PY3:
     unicode = str
 
 
-# Note: all of these tests are known to fail because Python currently
-# doesn't allow new-style classes to be used as exceptions. I'm leaving
-# the tests in place in to document 'how it ought to work' in the hopes
-# that they'll all pass one day...
-
 class ExceptionTests(unittest.TestCase):
     """Test exception support."""
 
@@ -300,14 +295,15 @@ class ExceptionTests(unittest.TestCase):
         msg = "A simple message"
 
         e = OverflowException(msg)
-        self.assertEqual(e.message, msg)
-        self.assertTrue(isinstance(e.message, unicode))  # ???
         self.assertEqual(str(e), msg)
         self.assertEqual(unicode(e), msg)
 
         self.assertEqual(e.args, (msg,))
         self.assertTrue(isinstance(e.args, tuple))
-        self.assertEqual(repr(e), "OverflowException('A simple message',)")
+        if six.PY2:
+            self.assertEqual(repr(e), "OverflowException(u'A simple message',)")
+        else:
+            self.assertEqual(repr(e), "OverflowException('A simple message',)")
 
     def testExceptionIsInstanceOfSystemObject(self):
         """Test behavior of isinstance(<managed exception>, System.Object)."""
@@ -335,6 +331,19 @@ class ExceptionTests(unittest.TestCase):
             self.assertTrue(isinstance(o, Object))
         else:
             self.assertFalse(isinstance(o, Object))
+
+    def testPicklingExceptions(self):
+        from System import Exception
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import pickle
+
+        exc = Exception("test")
+        dumped = pickle.dumps(exc)
+        loaded = pickle.loads(dumped)
+
+        self.assertEqual(exc.args, loaded.args)
 
 
 def test_suite():
