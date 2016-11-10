@@ -345,6 +345,27 @@ class ExceptionTests(unittest.TestCase):
 
         self.assertEqual(exc.args, loaded.args)
 
+    def testChainedExceptions(self):
+        if six.PY3:
+            from Python.Test import ExceptionTest
+
+            try:
+                ExceptionTest.ThrowChainedExceptions()
+            except Exception as exc:
+                msgs = [
+                    "Outer exception",
+                    "Inner exception",
+                    "Innermost exception"
+                ]
+
+                for msg in msgs:
+                    self.assertEqual(exc.Message, msg)
+                    self.assertEqual(exc.__cause__, exc.InnerException)
+                    exc = exc.__cause__
+
+            else:
+                self.fail("Test should raise an exception")
+
 
 def test_suite():
     return unittest.makeSuite(ExceptionTests)

@@ -144,7 +144,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="e">A CLR exception</param>
         /// <param name="ob">The python object wrapping </param>
-        internal static void SetArgs(IntPtr ob)
+        internal static void SetArgsAndCause(IntPtr ob)
         {
             var e = ExceptionClassObject.ToException(ob);
             if (e == null)
@@ -163,6 +163,14 @@ namespace Python.Runtime
             }
 
             Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
+
+#if !(PYTHON25 || PYTHON26 || PYTHON27)
+            if (e.InnerException != null)
+            {
+                IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
+                Marshal.WriteIntPtr(ob, ExceptionOffset.cause, cause);
+            }
+#endif
         }
 
         /// <summary>

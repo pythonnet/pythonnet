@@ -1,6 +1,5 @@
 using System;
 
-
 namespace Python.Test
 {
     //========================================================================
@@ -54,6 +53,25 @@ namespace Python.Test
         public static bool ThrowException()
         {
             throw new OverflowException("error");
+        }
+
+        public static void ThrowChainedExceptions()
+        {
+            try
+            {
+                try
+                {
+                    throw new Exception("Innermost exception");
+                }
+                catch (Exception exc)
+                {
+                    throw new Exception("Inner exception", exc);
+                }
+            }
+            catch (Exception exc2)
+            {
+                throw new Exception("Outer exception", exc2);
+            }
         }
     }
 
