@@ -128,25 +128,21 @@ namespace Python.Runtime
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
             // subclass BaseException (or better Exception).
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
             if (typeof(System.Exception).IsAssignableFrom(clrType))
             {
-                ob_size = ObjectOffset.Size(Exceptions.BaseException);
-                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.BaseException);
+                ob_size = ObjectOffset.Size(Exceptions.Exception);
+                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.Exception);
             }
 
             if (clrType == typeof(System.Exception))
             {
                 base_ = Exceptions.Exception;
-                Runtime.XIncref(base_);
             }
-            else
-#endif
-                if (clrType.BaseType != null)
-                {
-                    ClassBase bc = ClassManager.GetClass(clrType.BaseType);
-                    base_ = bc.pyHandle;
-                }
+            else if (clrType.BaseType != null)
+            {
+                ClassBase bc = ClassManager.GetClass(clrType.BaseType);
+                base_ = bc.pyHandle;
+            }
 
             IntPtr type = AllocateTypeObject(name);
 
