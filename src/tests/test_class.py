@@ -210,34 +210,39 @@ class ClassTests(unittest.TestCase):
         self.assertEqual(d1 == d2, False)
         self.assertEqual(d1 != d2, True)
 
-        self.assertEqual(d1 < d2, True)
-        self.assertEqual(d1 <= d2, True)
-        self.assertEqual(d1 >= d2, False)
-        self.assertEqual(d1 > d2, False)
+        if six.PY3:
+            self.assertEqual(d1 < d2, True)
+            self.assertEqual(d1 <= d2, True)
+            self.assertEqual(d1 >= d2, False)
+            self.assertEqual(d1 > d2, False)
 
         self.assertEqual(d1 == d1, True)
         self.assertEqual(d1 != d1, False)
 
-        self.assertEqual(d1 < d1, False)
-        self.assertEqual(d1 <= d1, True)
-        self.assertEqual(d1 >= d1, True)
-        self.assertEqual(d1 > d1, False)
+        if six.PY3:
+            self.assertEqual(d1 < d1, False)
+            self.assertEqual(d1 <= d1, True)
+            self.assertEqual(d1 >= d1, True)
+            self.assertEqual(d1 > d1, False)
 
         self.assertEqual(d2 == d1, False)
         self.assertEqual(d2 != d1, True)
 
-        self.assertEqual(d2 < d1, False)
-        self.assertEqual(d2 <= d1, False)
-        self.assertEqual(d2 >= d1, True)
-        self.assertEqual(d2 > d1, True)
+        if six.PY3:
+            self.assertEqual(d2 < d1, False)
+            self.assertEqual(d2 <= d1, False)
+            self.assertEqual(d2 >= d1, True)
+            self.assertEqual(d2 > d1, True)
 
-        self.assertRaises(TypeError, lambda: d1 < None)
-        self.assertRaises(TypeError, lambda: d1 < System.Guid())
+        if six.PY3:
+            self.assertRaises(TypeError, lambda: d1 < None)
+            self.assertRaises(TypeError, lambda: d1 < System.Guid())
 
-        # ClassTest does not implement IComparable
-        c1 = ClassTest()
-        c2 = ClassTest()
-        self.assertRaises(TypeError, lambda: c1 < c2)
+        if six.PY3:
+            # ClassTest does not implement IComparable
+            c1 = ClassTest()
+            c2 = ClassTest()
+            self.assertRaises(TypeError, lambda: c1 < c2)
 
 
 class ClassicClass:
