@@ -396,6 +396,7 @@ namespace Python.Runtime
     internal const int Py_EQ = 2;
     internal const int Py_NE = 3;
     internal const int Py_GT = 4;
+    internal const int Py_GE = 5;
     internal static IntPtr _PyObject_NextNotImplemented;
 #endif
 
