@@ -1,11 +1,11 @@
 using System;
-using System.IO;
 using System.Collections;
-using System.Collections.Specialized;
+using System.IO;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Reflection.Emit;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -15,12 +15,16 @@ namespace Python.Runtime
     /// </summary>
     internal class AssemblyManager
     {
-        static Dictionary<string, Dictionary<Assembly, string>> namespaces;
+        // modified from event handlers below, potentially triggered from different .NET threads
+        // therefore this should be a ConcurrentDictionary
+        static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
         //static Dictionary<string, Dictionary<string, string>> generics;
         static AssemblyLoadEventHandler lhandler;
         static ResolveEventHandler rhandler;
+        // updated only under GIL?
         static Dictionary<string, int> probed;
-        static List<Assembly> assemblies;
+        // modified from event handlers below, potentially triggered from different .NET threads
+        static AssemblyList assemblies;
         internal static List<string> pypath;
 
         private AssemblyManager()
@@ -36,10 +40,10 @@ namespace Python.Runtime
         internal static void Initialize()
         {
             namespaces = new
-                Dictionary<string, Dictionary<Assembly, string>>(32);
+                ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
-            assemblies = new List<Assembly>(16);
+            assemblies = new AssemblyList(16);
             pypath = new List<string>(16);
 
             AppDomain domain = AppDomain.CurrentDomain;
@@ -105,9 +109,8 @@ namespace Python.Runtime
         static Assembly ResolveHandler(Object ob, ResolveEventArgs args)
         {
             string name = args.Name.ToLower();
-            for (int i = 0; i < assemblies.Count; i++)
+            foreach (Assembly a in assemblies)
             {
-                Assembly a = (Assembly)assemblies[i];
                 string full = a.FullName.ToLower();
                 if (full.StartsWith(name))
                 {
@@ -266,9 +269,8 @@ namespace Python.Runtime
 
         public static Assembly FindLoadedAssembly(string name)
         {
-            for (int i = 0; i < assemblies.Count; i++)
+            foreach (Assembly a in assemblies)
             {
-                Assembly a = (Assembly)assemblies[i];
                 if (a.GetName().Name == name)
                 {
                     return a;
@@ -295,15 +297,15 @@ namespace Python.Runtime
             bool loaded = false;
             string s = "";
             Assembly lastAssembly = null;
-            HashSet<Assembly> assemblies = null;
+            HashSet<Assembly> assembliesSet = null;
             for (int i = 0; i < names.Length; i++)
             {
                 s = (i == 0) ? names[0] : s + "." + names[i];
                 if (!probed.ContainsKey(s))
                 {
-                    if (assemblies == null)
+                    if (assembliesSet == null)
                     {
-                        assemblies = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
+                        assembliesSet = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
                     }
                     Assembly a = FindLoadedAssembly(s);
                     if (a == null)
@@ -314,7 +316,7 @@ namespace Python.Runtime
                     {
                         a = LoadAssembly(s);
                     }
-                    if (a != null && !assemblies.Contains(a))
+                    if (a != null && !assembliesSet.Contains(a))
                     {
                         loaded = true;
                         lastAssembly = a;
@@ -362,16 +364,13 @@ namespace Python.Runtime
                     for (int n = 0; n < names.Length; n++)
                     {
                         s = (n == 0) ? names[0] : s + "." + names[n];
-                        if (!namespaces.ContainsKey(s))
-                        {
-                            namespaces.Add(s, new Dictionary<Assembly, string>());
-                        }
+                        namespaces.TryAdd(s, new ConcurrentDictionary<Assembly, string>());
                     }
                 }
 
-                if (ns != null && !namespaces[ns].ContainsKey(assembly))
+                if (ns != null)
                 {
-                    namespaces[ns].Add(assembly, String.Empty);
+                    namespaces[ns].TryAdd(assembly, String.Empty);
                 }
 
                 if (ns != null && t.IsGenericTypeDefinition)
@@ -383,14 +382,12 @@ namespace Python.Runtime
 
         public static AssemblyName[] ListAssemblies()
         {
-            AssemblyName[] names = new AssemblyName[assemblies.Count];
-            Assembly assembly;
-            for (int i = 0; i < assemblies.Count; i++)
+            List<AssemblyName> names = new List<AssemblyName>(assemblies.Count);
+            foreach (Assembly assembly in assemblies)
             {
-                assembly = assemblies[i];
-                names.SetValue(assembly.GetName(), i);
+                names.Add(assembly.GetName());
             }
-            return names;
+            return names.ToArray();
         }
 
         //===================================================================
@@ -471,9 +468,8 @@ namespace Python.Runtime
 
         public static Type LookupType(string qname)
         {
-            for (int i = 0; i < assemblies.Count; i++)
+            foreach (Assembly assembly in assemblies)
             {
-                Assembly assembly = (Assembly)assemblies[i];
                 Type type = assembly.GetType(qname);
                 if (type != null)
                 {
@@ -481,6 +477,93 @@ namespace Python.Runtime
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Wrapper around List<Assembly> for thread safe access
+        /// </summary>
+        private class AssemblyList : IEnumerable<Assembly>{
+            private readonly List<Assembly> _list;
+            private readonly ReaderWriterLockSlim _lock;
+
+            public AssemblyList(int capacity) {
+                _list = new List<Assembly>(capacity);
+                _lock = new ReaderWriterLockSlim();
+            }
+
+            public int Count
+            {
+                get
+                {
+                    _lock.EnterReadLock();
+                    try {
+                        return _list.Count;
+                    }
+                    finally {
+                        _lock.ExitReadLock();
+                    }
+                }
+            }
+
+            public void Add(Assembly assembly) {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _list.Add(assembly);
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            }
+
+            public IEnumerator GetEnumerator()
+            {
+                return ((IEnumerable<Assembly>) this).GetEnumerator();
+            }
+
+            /// <summary>
+            /// Enumerator wrapping around <see cref="AssemblyList._list"/>'s enumerator.
+            /// Acquires and releases a read lock on <see cref="AssemblyList._lock"/> during enumeration
+            /// </summary>
+            private class Enumerator : IEnumerator<Assembly>
+            {
+                private readonly AssemblyList _assemblyList;
+
+                private readonly IEnumerator<Assembly> _listEnumerator;
+
+                public Enumerator(AssemblyList assemblyList)
+                {
+                    _assemblyList = assemblyList;
+                    _assemblyList._lock.EnterReadLock();
+                    _listEnumerator = _assemblyList._list.GetEnumerator();
+                }
+
+                public void Dispose()
+                {
+                    _listEnumerator.Dispose();
+                    _assemblyList._lock.ExitReadLock();
+                }
+
+                public bool MoveNext()
+                {
+                    return _listEnumerator.MoveNext();
+                }
+
+                public void Reset()
+                {
+                    _listEnumerator.Reset();
+                }
+
+                public Assembly Current { get { return _listEnumerator.Current; } }
+
+                object IEnumerator.Current { get { return Current; } }
+            }
+
+            IEnumerator<Assembly> IEnumerable<Assembly>.GetEnumerator()
+            {
+                return new Enumerator(this);
+            }
         }
     }
 }
