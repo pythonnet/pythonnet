@@ -122,6 +122,7 @@
     <Compile Include="indexertest.cs" />
     <Compile Include="interfacetest.cs" />
     <Compile Include="methodtest.cs" />
+    <Compile Include="moduletest.cs" />
     <Compile Include="propertytest.cs" />
     <Compile Include="threadtest.cs" />
     <Compile Include="doctest.cs" />

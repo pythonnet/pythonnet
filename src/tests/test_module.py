@@ -65,8 +65,11 @@ class ModuleTests(unittest.TestCase):
         import System
         self.assertEquals(type(System.__dict__), type({}))
         self.assertEquals(System.__name__, 'System')
-        # the filename can be any module from the System namespace (eg System.Data.dll or System.dll)
-        self.assertTrue(fnmatch(System.__file__, "*System*.dll"))
+        # the filename can be any module from the System namespace
+        # (eg System.Data.dll or System.dll, but also mscorlib.dll)
+        system_file = System.__file__
+        self.assertTrue(fnmatch(system_file, "*System*.dll") or fnmatch(system_file, "*mscorlib.dll"),
+                        "unexpected System.__file__: " + system_file)
         self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
         self.assertTrue(self.isCLRClass(System.String))
         self.assertTrue(self.isCLRClass(System.Int32))
@@ -352,6 +355,22 @@ class ModuleTests(unittest.TestCase):
 
         self.assertRaises(FileNotFoundException,
                           AddReference, "somethingtotallysilly")
+
+    def test_AssemblyLoadThreadSafety(self):
+        import time
+        from Python.Test import ModuleTest
+        # spin up .NET thread which loads assemblies and triggers AppDomain.AssemblyLoad event
+        ModuleTest.RunThreads()
+        time.sleep(1e-5)
+        for i in range(1, 100):
+            # call import clr, which in AssemblyManager.GetNames iterates through the loaded types
+            import clr
+            # import some .NET types
+            from System import DateTime
+            from System import Guid
+            from System.Collections.Generic import Dictionary
+            dict = Dictionary[Guid,DateTime]()
+        ModuleTest.JoinThreads()
 
 
 def test_suite():
