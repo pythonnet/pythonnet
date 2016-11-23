@@ -67,7 +67,7 @@ namespace Python.Runtime
         //====================================================================
         // Standard comparison implementation for instances of reflected types.
         //====================================================================
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+
         public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
             CLRObject co1;
             CLRObject co2;
@@ -169,27 +169,6 @@ namespace Python.Runtime
                     return Runtime.PyNotImplemented;
             }
         }
-#else
-        public static int tp_compare(IntPtr ob, IntPtr other)
-        {
-            if (ob == other)
-            {
-                return 0;
-            }
-
-            CLRObject co1 = GetManagedObject(ob) as CLRObject;
-            CLRObject co2 = GetManagedObject(other) as CLRObject;
-            Object o1 = co1.inst;
-            Object o2 = co2.inst;
-
-            if (Object.Equals(o1, o2))
-            {
-                return 0;
-            }
-            return -1;
-        }
-#endif
-
 
         //====================================================================
         // Standard iteration support for instances of reflected types. This

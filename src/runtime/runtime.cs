@@ -232,13 +232,13 @@ namespace Python.Runtime
             }
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        IntPtr op = Runtime.PyImport_ImportModule("builtins");
-        IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
-        PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
+            IntPtr op = Runtime.PyImport_ImportModule("builtins");
+            IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
 #else
             IntPtr dict = Runtime.PyImport_GetModuleDict();
             IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");
 #endif
+            PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
 
             PyModuleType = Runtime.PyObject_Type(op);
@@ -263,7 +263,7 @@ namespace Python.Runtime
             Runtime.XDecref(op);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        Runtime.XDecref(dict);
+            Runtime.XDecref(dict);
 #endif
 
             op = Runtime.PyString_FromString("string");
@@ -275,9 +275,9 @@ namespace Python.Runtime
             Runtime.XDecref(op);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        op = Runtime.PyBytes_FromString("bytes");
-        PyBytesType = Runtime.PyObject_Type(op);
-        Runtime.XDecref(op);
+            op = Runtime.PyBytes_FromString("bytes");
+            PyBytesType = Runtime.PyObject_Type(op);
+            Runtime.XDecref(op);
 #endif
 
             op = Runtime.PyTuple_New(0);
@@ -397,16 +397,17 @@ namespace Python.Runtime
         internal static IntPtr PyTypeType;
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-    internal static IntPtr PyBytesType;
-    internal static IntPtr PyNotImplemented;
-    internal const int Py_LT = 0;
-    internal const int Py_LE = 1;
-    internal const int Py_EQ = 2;
-    internal const int Py_NE = 3;
-    internal const int Py_GT = 4;
-    internal const int Py_GE = 5;
-    internal static IntPtr _PyObject_NextNotImplemented;
+        internal static IntPtr PyBytesType;
+        internal static IntPtr _PyObject_NextNotImplemented;
 #endif
+
+        internal static IntPtr PyNotImplemented;
+        internal const int Py_LT = 0;
+        internal const int Py_LE = 1;
+        internal const int Py_EQ = 2;
+        internal const int Py_NE = 3;
+        internal const int Py_GT = 4;
+        internal const int Py_GE = 5;
 
         internal static IntPtr PyTrue;
         internal static IntPtr PyFalse;
