@@ -1,9 +1,12 @@
-from System.Collections import Hashtable
-from Python.Test import ClassTest
-import sys, os, string, unittest, types
+import clr
+import types
+import unittest
+
 import Python.Test as Test
 import System
 import six
+from Python.Test import ClassTest
+from System.Collections import Hashtable
 
 if six.PY3:
     DictProxyType = type(object.__dict__)
@@ -197,6 +200,49 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(table['three'] == 'my three')
 
         self.assertTrue(table.Count == 3)
+
+    def testComparisons(self):
+        from System import DateTimeOffset
+
+        d1 = DateTimeOffset.Parse("2016-11-14")
+        d2 = DateTimeOffset.Parse("2016-11-15")
+
+        self.assertEqual(d1 == d2, False)
+        self.assertEqual(d1 != d2, True)
+
+        if six.PY3:
+            self.assertEqual(d1 < d2, True)
+            self.assertEqual(d1 <= d2, True)
+            self.assertEqual(d1 >= d2, False)
+            self.assertEqual(d1 > d2, False)
+
+        self.assertEqual(d1 == d1, True)
+        self.assertEqual(d1 != d1, False)
+
+        if six.PY3:
+            self.assertEqual(d1 < d1, False)
+            self.assertEqual(d1 <= d1, True)
+            self.assertEqual(d1 >= d1, True)
+            self.assertEqual(d1 > d1, False)
+
+        self.assertEqual(d2 == d1, False)
+        self.assertEqual(d2 != d1, True)
+
+        if six.PY3:
+            self.assertEqual(d2 < d1, False)
+            self.assertEqual(d2 <= d1, False)
+            self.assertEqual(d2 >= d1, True)
+            self.assertEqual(d2 > d1, True)
+
+        if six.PY3:
+            self.assertRaises(TypeError, lambda: d1 < None)
+            self.assertRaises(TypeError, lambda: d1 < System.Guid())
+
+        if six.PY3:
+            # ClassTest does not implement IComparable
+            c1 = ClassTest()
+            c2 = ClassTest()
+            self.assertRaises(TypeError, lambda: c1 < c2)
 
 
 class ClassicClass:
