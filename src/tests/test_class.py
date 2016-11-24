@@ -198,6 +198,17 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(table.Count == 3)
 
+    def testAddAndRemoveClassAttribute(self):
+        
+        from System import TimeSpan
+
+        for i in range(100):
+            TimeSpan.new_method = lambda self: self.TotalMinutes
+            ts = TimeSpan.FromHours(1)
+            self.assertTrue(ts.new_method() == 60)
+            del TimeSpan.new_method
+            self.assertFalse(hasattr(ts, "new_method"))
+
 
 class ClassicClass:
     def kind(self):
