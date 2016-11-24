@@ -1,31 +1,85 @@
 os: Windows Server 2012
 
+matrix:
+    fast_finish: true
+
 environment:
   global:
     PYTHONPATH: c:\testdir
     PYTHONWARNINGS: 'ignore:::pip.pep425tags:'
+    CONDA_BLD_VERSION: "3.5"
+
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci\\run_with_env.cmd"
+
 
   matrix:
     # http://www.appveyor.com/docs/installed-software#python
     - PYTHON: "C:\\Python27"
+      CONDA_PY: "27"
+      CONDA_BLD: "C:\\miniconda-32"
+      CONDA_BLD_ARCH: "32"
+
     - PYTHON: "C:\\Python27-x64"
+      CONDA_PY: "27"
+      CONDA_BLD: "C:\\miniconda-64"
+      CONDA_BLD_ARCH: "64"
+
     - PYTHON: "C:\\Python33"
+      CONDA_PY: "33"
+      CONDA_BLD: "C:\\miniconda-32"
+      CONDA_BLD_ARCH: "32"
+
     - PYTHON: "C:\\Python33-x64"
+      CONDA_PY: "33"
+      CONDA_BLD: "C:\\miniconda-64"
+      CONDA_BLD_ARCH: "64"
+
     - PYTHON: "C:\\Python34"
+      CONDA_PY: "34"
+      CONDA_BLD: "C:\\miniconda-32"
+      CONDA_BLD_ARCH: "32"
+
     - PYTHON: "C:\\Python34-x64"
+      CONDA_PY: "34"
+      CONDA_BLD_ARCH: "64"
+      CONDA_BLD: "C:\\miniconda-64"
+
     - PYTHON: "C:\\Python35"
+      CONDA_PY: "35"
+      CONDA_BLD: "C:\\miniconda-32"
+      CONDA_BLD_ARCH: "32"
+
     - PYTHON: "C:\\Python35-x64"
+      CONDA_PY: "35"
+      CONDA_BLD: "C:\\miniconda-64"
+      CONDA_BLD_ARCH: "64"
 
 install:
+# install conda and deps
+- powershell .\ci\install.ps1
+- "%CONDA_BLD%\\Scripts\\conda config --set show_channel_urls true --set always_yes true --set changeps1 false"
+- "%CONDA_BLD%\\Scripts\\conda update -q conda"
+- "%CONDA_BLD%\\Scripts\\conda info -a"
+
+# install for wheels
 - "%PYTHON%\\python.exe -m pip install --upgrade pip"
 - "%PYTHON%\\python.exe -m pip install wheel"
 - "%PYTHON%\\python.exe -m pip install six"
 
 build_script:
+# build wheel
 - "%PYTHON%\\python.exe setup.py bdist_wheel"
 
+# build and dist conda package
+- cmd: "%CMD_IN_ENV% %CONDA_BLD%\\Scripts\\conda build conda.recipe"
+- ps: $CONDA_PKG=(& "$env:CONDA_BLD\\Scripts\\conda" build conda.recipe --output -q)
+- ps: copy-item $CONDA_PKG "$env:APPVEYOR_BUILD_FOLDER\\dist\\"
+
 test_script:
-  - ps: '& "$env:PYTHON\\Scripts\\pip.exe" install --no-cache-dir --force-reinstall --ignore-installed ("dist\\" + (gci dist)[0].Name)'
+  - ps: '& "$env:PYTHON\\Scripts\\pip.exe" install --no-cache-dir --force-reinstall --ignore-installed ("dist\\" + (gci dist\*.whl)[0].Name)'
   - mkdir c:\testdir
   - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
   - "%PYTHON%\\python.exe src\\tests\\runtests.py"
