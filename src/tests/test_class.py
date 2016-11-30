@@ -4,6 +4,7 @@ import sys, os, string, unittest, types
 import Python.Test as Test
 import System
 import six
+import Python.Runtime
 
 if six.PY3:
     DictProxyType = type(object.__dict__)
@@ -198,6 +199,21 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(table.Count == 3)
 
+    def testSelfCallback(self):
+        """ Test calling back and forth between this and a c# baseclass."""
+        class CallbackUser(Test.SelfCallbackTest):
+            def DoCallback(self):
+                self.PyCallbackWasCalled = False
+                self.SameReference = False
+                return self.Callback(self)
+            def PyCallback(self, self2):
+                self.PyCallbackWasCalled = True
+                self.SameReference = self == self2
+                
+        testobj = CallbackUser()
+        testobj.DoCallback()
+        self.assertTrue(testobj.PyCallbackWasCalled)
+        self.assertTrue(testobj.SameReference)
 
 class ClassicClass:
     def kind(self):
