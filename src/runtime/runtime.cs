@@ -232,13 +232,13 @@ namespace Python.Runtime
             }
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        IntPtr op = Runtime.PyImport_ImportModule("builtins");
-        IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
-        PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
+            IntPtr op = Runtime.PyImport_ImportModule("builtins");
+            IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
 #else
             IntPtr dict = Runtime.PyImport_GetModuleDict();
             IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");
 #endif
+            PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
 
             PyModuleType = Runtime.PyObject_Type(op);
@@ -254,9 +254,16 @@ namespace Python.Runtime
             PyMethodType = Runtime.PyObject_Type(op);
             Runtime.XDecref(op);
 
+            // For some arcane reason, builtins.__dict__.__setitem__ is *not*
+            // a wrapper_descriptor, even though dict.__setitem__ is.
+            //
+            // object.__init__ seems safe, though.
+            op = Runtime.PyObject_GetAttrString(PyBaseObjectType, "__init__");
+            PyWrapperDescriptorType = Runtime.PyObject_Type(op);
+            Runtime.XDecref(op);
+
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        Runtime.XDecref(dict);
-        Runtime.XDecref(op);
+            Runtime.XDecref(dict);
 #endif
 
             op = Runtime.PyString_FromString("string");
@@ -268,9 +275,9 @@ namespace Python.Runtime
             Runtime.XDecref(op);
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-        op = Runtime.PyBytes_FromString("bytes");
-        PyBytesType = Runtime.PyObject_Type(op);
-        Runtime.XDecref(op);
+            op = Runtime.PyBytes_FromString("bytes");
+            PyBytesType = Runtime.PyObject_Type(op);
+            Runtime.XDecref(op);
 #endif
 
             op = Runtime.PyTuple_New(0);
@@ -375,6 +382,7 @@ namespace Python.Runtime
         internal static IntPtr PyInstanceType;
         internal static IntPtr PyCLRMetaType;
         internal static IntPtr PyMethodType;
+        internal static IntPtr PyWrapperDescriptorType;
 
         internal static IntPtr PyUnicodeType;
         internal static IntPtr PyStringType;
@@ -389,21 +397,22 @@ namespace Python.Runtime
         internal static IntPtr PyTypeType;
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-    internal static IntPtr PyBytesType;
-    internal static IntPtr PyNotImplemented;
-    internal const int Py_LT = 0;
-    internal const int Py_LE = 1;
-    internal const int Py_EQ = 2;
-    internal const int Py_NE = 3;
-    internal const int Py_GT = 4;
-    internal static IntPtr _PyObject_NextNotImplemented;
+        internal static IntPtr PyBytesType;
+        internal static IntPtr _PyObject_NextNotImplemented;
 #endif
+
+        internal static IntPtr PyNotImplemented;
+        internal const int Py_LT = 0;
+        internal const int Py_LE = 1;
+        internal const int Py_EQ = 2;
+        internal const int Py_NE = 3;
+        internal const int Py_GT = 4;
+        internal const int Py_GE = 5;
 
         internal static IntPtr PyTrue;
         internal static IntPtr PyFalse;
         internal static IntPtr PyNone;
         internal static IntPtr Error;
-
 
         internal static IntPtr GetBoundArgTuple(IntPtr obj, IntPtr args)
         {
@@ -2128,6 +2137,11 @@ namespace Python.Runtime
         {
             return PyObject_TypeCheck(ob, Runtime.PyTypeType);
         }
+
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+            ExactSpelling = true, CharSet = CharSet.Ansi)]
+        internal unsafe static extern void
+            PyType_Modified(IntPtr type);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]

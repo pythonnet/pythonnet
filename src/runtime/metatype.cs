@@ -214,22 +214,30 @@ namespace Python.Runtime
             if (descr != IntPtr.Zero)
             {
                 IntPtr dt = Runtime.PyObject_TYPE(descr);
-                IntPtr fp = Marshal.ReadIntPtr(dt, TypeOffset.tp_descr_set);
-                if (fp != IntPtr.Zero)
+
+                if (dt == Runtime.PyWrapperDescriptorType
+                    || dt == Runtime.PyMethodType
+                    || typeof(ExtensionType).IsInstanceOfType(GetManagedObject(descr))
+                    )
                 {
-                    return NativeCall.Impl.Int_Call_3(fp, descr, name, value);
+                    IntPtr fp = Marshal.ReadIntPtr(dt, TypeOffset.tp_descr_set);
+                    if (fp != IntPtr.Zero)
+                    {
+                        return NativeCall.Impl.Int_Call_3(fp, descr, name, value);
+                    }
+                    else
+                    {
+                        Exceptions.SetError(Exceptions.AttributeError,
+                            "attribute is read-only");
+                        return -1;
+                    }
                 }
-                Exceptions.SetError(Exceptions.AttributeError,
-                    "attribute is read-only");
-                return -1;
             }
 
-            if (Runtime.PyObject_GenericSetAttr(tp, name, value) < 0)
-            {
-                return -1;
-            }
+            var res = Runtime.PyObject_GenericSetAttr(tp, name, value);
+            Runtime.PyType_Modified(tp);
 
-            return 0;
+            return res;
         }
 
         //====================================================================
@@ -281,7 +289,8 @@ namespace Python.Runtime
         {
             ClassBase cb = GetManagedObject(tp) as ClassBase;
 
-            if (cb == null) {
+            if (cb == null)
+            {
                 Runtime.XIncref(Runtime.PyFalse);
                 return Runtime.PyFalse;
             }
@@ -298,13 +307,15 @@ namespace Python.Runtime
                 else
                     otherType = arg.GetPythonType();
 
-                if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType) {
+                if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType)
+                {
                     Runtime.XIncref(Runtime.PyFalse);
                     return Runtime.PyFalse;
                 }
 
                 ClassBase otherCb = GetManagedObject(otherType.Handle) as ClassBase;
-                if (otherCb == null) {
+                if (otherCb == null)
+                {
                     Runtime.XIncref(Runtime.PyFalse);
                     return Runtime.PyFalse;
                 }
