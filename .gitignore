@@ -10,3 +10,5 @@ packages/*
 dist
 pythonnet.egg-info
 *.userprefs
+build/
+tools/nuget/*.exe

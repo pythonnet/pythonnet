@@ -67,68 +67,108 @@ namespace Python.Runtime
         //====================================================================
         // Standard comparison implementation for instances of reflected types.
         //====================================================================
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+
         public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
-            if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
+            CLRObject co1;
+            CLRObject co2;
+            switch (op)
             {
-                Runtime.XIncref(Runtime.PyNotImplemented);
-                return Runtime.PyNotImplemented;
+                case Runtime.Py_EQ:
+                case Runtime.Py_NE:
+                    IntPtr pytrue = Runtime.PyTrue;
+                    IntPtr pyfalse = Runtime.PyFalse;
+
+                    // swap true and false for NE
+                    if (op != Runtime.Py_EQ)
+                    {
+                        pytrue = Runtime.PyFalse;
+                        pyfalse = Runtime.PyTrue;
+                    }
+
+                    if (ob == other)
+                    {
+                        Runtime.XIncref(pytrue);
+                        return pytrue;
+                    }
+
+                    co1 = GetManagedObject(ob) as CLRObject;
+                    co2 = GetManagedObject(other) as CLRObject;
+                    if (null == co2)
+                    {
+                        Runtime.XIncref(pyfalse);
+                        return pyfalse;
+                    }
+
+                    Object o1 = co1.inst;
+                    Object o2 = co2.inst;
+
+                    if (Object.Equals(o1, o2))
+                    {
+                        Runtime.XIncref(pytrue);
+                        return pytrue;
+                    }
+
+                    Runtime.XIncref(pyfalse);
+                    return pyfalse;
+                case Runtime.Py_LT:
+                case Runtime.Py_LE:
+                case Runtime.Py_GT:
+                case Runtime.Py_GE:
+                    co1 = GetManagedObject(ob) as CLRObject;
+                    co2 = GetManagedObject(other) as CLRObject;
+                    if(co1 == null || co2 == null)
+                        return Exceptions.RaiseTypeError("Cannot get managed object");
+                    var co1Comp = co1.inst as IComparable;
+                    if (co1Comp == null)
+                        return Exceptions.RaiseTypeError("Cannot convert object of type " + co1.GetType() + " to IComparable");
+                    try
+                    {
+                        var cmp = co1Comp.CompareTo(co2.inst);
+
+                        IntPtr pyCmp;
+                        if (cmp < 0)
+                        {
+                            if (op == Runtime.Py_LT || op == Runtime.Py_LE)
+                            {
+                                pyCmp = Runtime.PyTrue;
+                            }
+                            else
+                            {
+                                pyCmp = Runtime.PyFalse;
+                            }
+                        }
+                        else if (cmp == 0)
+                        {
+                            if (op == Runtime.Py_LE || op == Runtime.Py_GE)
+                            {
+                                pyCmp = Runtime.PyTrue;
+                            }
+                            else
+                            {
+                                pyCmp = Runtime.PyFalse;
+                            }
+                        }
+                        else
+                        {
+                            if (op == Runtime.Py_GE || op == Runtime.Py_GT) {
+                                pyCmp = Runtime.PyTrue;
+                            }
+                            else {
+                                pyCmp = Runtime.PyFalse;
+                            }
+                        }
+                        Runtime.XIncref(pyCmp);
+                        return pyCmp;
+                    }
+                    catch (ArgumentException e)
+                    {
+                        return Exceptions.RaiseTypeError(e.Message);
+                    }
+                default:
+                    Runtime.XIncref(Runtime.PyNotImplemented);
+                    return Runtime.PyNotImplemented;
             }
-
-            IntPtr pytrue = Runtime.PyTrue;
-            IntPtr pyfalse = Runtime.PyFalse;
-
-            // swap true and false for NE
-            if (op != Runtime.Py_EQ)
-            {
-                pytrue = Runtime.PyFalse;
-                pyfalse = Runtime.PyTrue;
-            }
-
-            if (ob == other) {
-                Runtime.XIncref(pytrue);
-                return pytrue;
-            }
-
-            CLRObject co1 = GetManagedObject(ob) as CLRObject;
-            CLRObject co2 = GetManagedObject(other) as CLRObject;
-			if (null == co2) {
-				Runtime.XIncref(pyfalse);
-				return pyfalse;
-			}
-
-            Object o1 = co1.inst;
-            Object o2 = co2.inst;
-
-            if (Object.Equals(o1, o2)) {
-                Runtime.XIncref(pytrue);
-                return pytrue;
-            }
-
-            Runtime.XIncref(pyfalse);
-            return pyfalse;
         }
-#else
-        public static int tp_compare(IntPtr ob, IntPtr other)
-        {
-            if (ob == other)
-            {
-                return 0;
-            }
-
-            CLRObject co1 = GetManagedObject(ob) as CLRObject;
-            CLRObject co2 = GetManagedObject(other) as CLRObject;
-            Object o1 = co1.inst;
-            Object o2 = co2.inst;
-
-            if (Object.Equals(o1, o2))
-            {
-                return 0;
-            }
-            return -1;
-        }
-#endif
-
 
         //====================================================================
         // Standard iteration support for instances of reflected types. This
