@@ -338,6 +338,38 @@ namespace Python.Runtime
             return loaded;
         }
 
+        //===================================================================
+        // Return the Assembly for a given name
+        //===================================================================
+        internal static Assembly GetAssembly(string name)
+        {
+            string[] names = name.Split('.');
+            string s = "";
+            HashSet<Assembly> assembliesSet = null;
+            for (int i = 0; i < names.Length; i++)
+            {
+                s = (i == 0) ? names[0] : s + "." + names[i];
+                if (assembliesSet == null)
+                {
+                    assembliesSet = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
+                }
+                Assembly a = FindLoadedAssembly(s);
+                if (a == null)
+                {
+                    a = LoadAssemblyPath(s);
+                }
+                if (a == null)
+                {
+                    a = LoadAssembly(s);
+                }
+                if (a != null && assembliesSet.Contains(a))
+                {
+                    return a;
+                }
+            }
+            return null;
+        }
+
 
         //===================================================================
         // Scans an assembly for exported namespaces, adding them to the

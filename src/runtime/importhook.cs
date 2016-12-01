@@ -278,7 +278,35 @@ namespace Python.Runtime
                 {
                     // May be called when a module being imported imports a module.
                     // In particular, I've seen decimal import copy import org.python.core
-                    return Runtime.PyObject_Call(py_import, args, kw);
+                    var res = Runtime.PyObject_Call(py_import, args, kw);
+
+                    // Check if there is an ImportError Exception if so
+                    // determine which dependencies are missing
+                    if(Exceptions.ExceptionMatches(Exceptions.ImportError))
+                    {
+                        var target_assembly = AssemblyManager.GetAssembly(realname);
+                        if (target_assembly != null)
+                        {
+                            System.Collections.Generic.List<string> missing_dependencies = 
+                                new System.Collections.Generic.List<string>();
+                            foreach (var assembly in target_assembly.GetReferencedAssemblies())
+                            {
+                                var depedentAssembly = AssemblyManager.LoadAssembly(assembly.Name);
+                                if (depedentAssembly == null)
+                                    missing_dependencies.Add(assembly.Name);
+                            }
+
+                            if (missing_dependencies.Count > 0)
+                            {
+                                // We found missing dependencies
+                                string error = String.Format("No module named {0} missing dependencies {1}", 
+                                    realname, String.Join(", ", missing_dependencies));
+                                Exceptions.SetError(Exceptions.ImportError, error);
+                            }
+                        }                        
+                    }
+                    return res;
+
                 }
             }
 
