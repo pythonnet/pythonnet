@@ -9,6 +9,12 @@ class ImportTests(unittest.TestCase):
             from . import _missing_import
         except ImportError:
             pass
+            
+    def testMissingImportDepencency(self):
+        missing_dependency_name = "MissingDependencyAssembly"
+        with self.assertRaisesRegexp(ImportError, missing_dependency_name):
+             from . import _missing_import_dependency
+            
 
 
 def test_suite():
