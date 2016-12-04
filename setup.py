@@ -150,11 +150,12 @@ class PythonNET_BuildExt(build_ext):
                 defines.append("MONO_OSX")
             else:
                 defines.append("MONO_LINUX")
-
+            
+            # Disable this check due to issues on Ubuntu
             # Check if --enable-shared was set when Python was built
-            enable_shared = get_config_var("Py_ENABLE_SHARED")
-            if enable_shared == 0:
-                defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
+            # enable_shared = get_config_var("Py_ENABLE_SHARED")
+            # if enable_shared == 0:
+            defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
 
         if hasattr(sys, "abiflags"):
             if "d" in sys.abiflags:
