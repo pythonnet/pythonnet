@@ -31,7 +31,7 @@ namespace Python.Test
 
     //==========================================================================
     // Tests calling from Python into C# and back into Python using a PyObject.
-    // SelfCallbackTest should be inherited from a Python class. 
+    // SelfCallbackTest should be inherited by a Python class. 
     // Used in test_class.py / testCallback
     //==========================================================================
     public class SelfCallbackTest
