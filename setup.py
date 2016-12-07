@@ -151,11 +151,15 @@ class PythonNET_BuildExt(build_ext):
             else:
                 defines.append("MONO_LINUX")
             
-            # Disable this check due to issues on Ubuntu
             # Check if --enable-shared was set when Python was built
-            # enable_shared = get_config_var("Py_ENABLE_SHARED")
-            # if enable_shared == 0:
-            defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
+            enable_shared = get_config_var("Py_ENABLE_SHARED")
+            if enable_shared == 1:
+                # Double-check if libpython is linked dynamically with python
+                lddout = check_output(["ldd", sys.executable])
+                if 'libpython' not in lddout:
+                    enable_shared = 0
+            if enable_shared == 0:
+                defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
 
         if hasattr(sys, "abiflags"):
             if "d" in sys.abiflags:
