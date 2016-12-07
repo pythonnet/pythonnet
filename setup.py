@@ -10,7 +10,7 @@ from distutils.sysconfig import get_config_var
 from distutils.spawn import find_executable
 from distutils import log
 from platform import architecture
-from subprocess import Popen, CalledProcessError, PIPE, check_call
+from subprocess import Popen, CalledProcessError, PIPE, check_call, check_output
 from glob import glob
 import fnmatch
 import sys
