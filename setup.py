@@ -10,7 +10,7 @@ from distutils.sysconfig import get_config_var
 from distutils.spawn import find_executable
 from distutils import log
 from platform import architecture
-from subprocess import Popen, CalledProcessError, PIPE, check_call
+from subprocess import Popen, CalledProcessError, PIPE, check_call, check_output
 from glob import glob
 import fnmatch
 import sys
@@ -153,7 +153,13 @@ class PythonNET_BuildExt(build_ext):
 
             # Check if --enable-shared was set when Python was built
             enable_shared = get_config_var("Py_ENABLE_SHARED")
-            if enable_shared == 0:
+            if enable_shared:
+                # Double-check if libpython is linked dynamically with python
+                lddout = check_output(["ldd", sys.executable])
+                if b'libpython' not in lddout:
+                    enable_shared = False
+
+            if not enable_shared:
                 defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
 
         if hasattr(sys, "abiflags"):
