@@ -156,7 +156,7 @@ class PythonNET_BuildExt(build_ext):
             if enable_shared == 1:
                 # Double-check if libpython is linked dynamically with python
                 lddout = check_output(["ldd", sys.executable])
-                if 'libpython' not in lddout:
+                if b'libpython' not in lddout:
                     enable_shared = 0
             if enable_shared == 0:
                 defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
