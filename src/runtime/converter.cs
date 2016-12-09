@@ -197,9 +197,6 @@ namespace Python.Runtime
                 case TypeCode.Double:
                     return Runtime.PyFloat_FromDouble((double)value);
 
-                case TypeCode.Decimal:
-                    return Runtime.PyFloat_FromDouble(Convert.ToDouble((decimal)value));
-
                 case TypeCode.SByte:
                     return Runtime.PyInt_FromInt32((int)((sbyte)value));
 
@@ -211,6 +208,17 @@ namespace Python.Runtime
 
                 case TypeCode.UInt64:
                     return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
+
+                case TypeCode.Decimal:
+                    IntPtr mod = Runtime.PyImport_ImportModule("decimal");
+                    IntPtr ctor = Runtime.PyObject_GetAttrString(mod, "Decimal");
+
+                    string d2s = ((decimal)value).ToString(nfi);
+                    IntPtr d2p = Runtime.PyString_FromString(d2s);
+                    IntPtr args = Runtime.PyTuple_New(1);
+                    Runtime.PyTuple_SetItem(args, 0, d2p);
+                    
+                    return Runtime.PyObject_CallObject(ctor, args);
 
                 default:
                     if (value is IEnumerable)
