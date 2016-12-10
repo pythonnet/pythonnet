@@ -797,10 +797,22 @@ namespace Python.Runtime
                     }
                     result = d;
                     return true;
+
+                case TypeCode.Decimal:
+                    op = Runtime.PyObject_Str(value);
+                    decimal m;
+                    string sm = Runtime.GetManagedString(op);
+                    if (!Decimal.TryParse(sm, NumberStyles.Number, nfi, out m))
+                    {
+                        goto type_error;
+                    }
+                    Runtime.XDecref(op);
+                    result = m;
+                    return true;
             }
 
 
-        type_error:
+            type_error:
 
             if (setError)
             {
@@ -812,7 +824,7 @@ namespace Python.Runtime
 
             return false;
 
-        overflow:
+            overflow:
 
             if (setError)
             {
