@@ -250,6 +250,21 @@ class ClassTests(unittest.TestCase):
         c2 = ClassTest()
         self.assertRaises(TypeError, lambda: c1 < c2)
 
+    def testSelfCallback(self):
+        """ Test calling back and forth between this and a c# baseclass."""
+        class CallbackUser(Test.SelfCallbackTest):
+            def DoCallback(self):
+                self.PyCallbackWasCalled = False
+                self.SameReference = False
+                return self.Callback(self)
+            def PyCallback(self, self2):
+                self.PyCallbackWasCalled = True
+                self.SameReference = self == self2
+                
+        testobj = CallbackUser()
+        testobj.DoCallback()
+        self.assertTrue(testobj.PyCallbackWasCalled)
+        self.assertTrue(testobj.SameReference)
 
 class ClassicClass:
     def kind(self):

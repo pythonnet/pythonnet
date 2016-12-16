@@ -28,4 +28,18 @@ namespace Python.Test
             }
         }
     }
+
+    //==========================================================================
+    // Tests calling from Python into C# and back into Python using a PyObject.
+    // SelfCallbackTest should be inherited by a Python class. 
+    // Used in test_class.py / testCallback
+    //==========================================================================
+    public class SelfCallbackTest
+    {
+        public void Callback(Runtime.PyObject self)
+        {
+            using (Runtime.Py.GIL())
+                ((dynamic)self).PyCallback(self);
+        }
+    }
 }

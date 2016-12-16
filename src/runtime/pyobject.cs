@@ -127,6 +127,16 @@ namespace Python.Runtime
             }
         }
 
+        public long RefCount
+        {
+            get
+            {
+                if(!disposed)
+                    return Runtime.Refcount(obj);
+                return -1;
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);

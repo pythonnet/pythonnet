@@ -126,6 +126,12 @@ namespace Python.Runtime
 
         internal static IntPtr ToPython(Object value, Type type)
         {
+            if(value is PyObject)
+            {
+                IntPtr handle = ((PyObject)value).Handle;
+                Runtime.XIncref(handle);
+                return handle;
+            }
             IntPtr result = IntPtr.Zero;
 
             // Null always converts to None in Python.
@@ -265,6 +271,13 @@ namespace Python.Runtime
         internal static bool ToManagedValue(IntPtr value, Type obType,
             out Object result, bool setError)
         {
+            if (obType == typeof(PyObject))
+            {
+                Runtime.XIncref(value); // PyObject() assumes ownership
+                result = new PyObject(value);
+                return true;
+            }
+
             // Common case: if the Python value is a wrapped managed object
             // instance, just return the wrapped object.
             ManagedType mt = ManagedType.GetManagedObject(value);
