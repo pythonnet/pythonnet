@@ -17,6 +17,19 @@ environment:
 
   matrix:
     # http://www.appveyor.com/docs/installed-software#python
+
+  
+    - PYTHON: "C:\\Python36"
+      CONDA_PY: "36"
+      CONDA_BLD: "C:\\miniconda-32"
+      CONDA_BLD_ARCH: "32"
+
+
+    - PYTHON: "C:\\Python36-x64"
+      CONDA_PY: "36"
+      CONDA_BLD: "C:\\miniconda-64"
+      CONDA_BLD_ARCH: "64"
+
     - PYTHON: "C:\\Python27"
       CONDA_PY: "27"
       CONDA_BLD: "C:\\miniconda-32"
@@ -57,18 +70,6 @@ environment:
       CONDA_BLD: "C:\\miniconda-64"
       CONDA_BLD_ARCH: "64"
 
-  
-    - PYTHON: "C:\\Python36"
-      CONDA_PY: "36"
-      CONDA_BLD: "C:\\miniconda-32"
-      CONDA_BLD_ARCH: "32"
-
-
-    - PYTHON: "C:\\Python36-x64"
-      CONDA_PY: "36"
-      CONDA_BLD: "C:\\miniconda-64"
-      CONDA_BLD_ARCH: "64"
-
 install:
 # install conda and deps
 - powershell .\ci\install.ps1
@@ -77,7 +78,7 @@ install:
 - "%CONDA_BLD%\\Scripts\\conda info -a"
 
 # install for wheels
-- "%PYTHON%\\python.exe -m pip install --upgrade pip"
+# - "%PYTHON%\\python.exe -m pip install --upgrade pip"
 - "%PYTHON%\\python.exe -m pip install wheel"
 - "%PYTHON%\\python.exe -m pip install six"
 
