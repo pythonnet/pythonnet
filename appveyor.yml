@@ -78,7 +78,7 @@ install:
 - "%CONDA_BLD%\\Scripts\\conda info -a"
 
 # install for wheels
-# - "%PYTHON%\\python.exe -m pip install --upgrade pip"
+- "%PYTHON%\\python.exe -m pip install --upgrade pip"
 - "%PYTHON%\\python.exe -m pip install wheel"
 - "%PYTHON%\\python.exe -m pip install six"
 
