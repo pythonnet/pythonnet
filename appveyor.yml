@@ -17,6 +17,7 @@ environment:
 
   matrix:
     # http://www.appveyor.com/docs/installed-software#python
+    
 
     - PYTHON: "C:\\Python36-x64"
       CONDA_PY: "36"
