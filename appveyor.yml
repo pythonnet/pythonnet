@@ -80,6 +80,7 @@ install:
 - "%PYTHON%\\python.exe -m pip install --upgrade pip"
 - "%PYTHON%\\python.exe -m pip install wheel"
 - "%PYTHON%\\python.exe -m pip install six"
+- "%PYTHON%\\python.exe -m pip install pycparser"
 
 build_script:
 # build wheel
