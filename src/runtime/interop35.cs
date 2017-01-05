@@ -3,7 +3,7 @@
 
 
 
-#if (PYTHON35)
+#if (PYTHON35 || PYTHON36)
 using System;
 using System.Collections;
 using System.Collections.Specialized;
