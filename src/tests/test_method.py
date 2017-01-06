@@ -341,10 +341,6 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type like int, long, etc.
         self.assertRaises(TypeError, test)
 
-    def testObjectInParam(self):
-        MethodTest.TestOverloadedObject(5)
-        MethodTest.TestOverloadedObject("test")
-
     def testObjectOutParams(self):
         """Test use of object out-parameters."""
         result = MethodTest.TestObjectOutParams("hi", MethodTest())
