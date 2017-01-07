@@ -43,7 +43,7 @@ class ModuleTests(unittest.TestCase):
 
     def testVersionClr(self):
         import clr
-        self.assertTrue(clr.Version() >= "2.2.0")
+        self.assertTrue(clr.__version__ >= "2.2.0")
 
     def testPreloadVar(self):
         import clr

@@ -165,7 +165,7 @@ namespace Python.Runtime
                     Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
                     foreach (PyObject key in locals.Keys())
                     {
-                        if (!key.ToString().StartsWith("_"))
+                        if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
                         {
                             PyObject value = locals[key];
                             Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);

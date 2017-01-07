@@ -446,11 +446,5 @@ namespace Python.Runtime
         {
             return Runtime.AtExit();
         }
-
-        [ModuleFunctionAttribute()]
-        public static string Version()
-        {
-            return "2.2.0";
-        }
     }
 }
