@@ -156,7 +156,7 @@ namespace Python.Runtime
         public static int args = 0;
 #if (PYTHON25 || PYTHON26 || PYTHON27)
         public static int message = 0;
-#elif (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#elif (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         public static int traceback = 0;
         public static int context = 0;
         public static int cause = 0;
@@ -171,7 +171,7 @@ namespace Python.Runtime
     }
 
 
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class BytesOffset
     {
@@ -292,10 +292,10 @@ namespace Python.Runtime
         /* XXX Reusing reserved constants */
         public static int Managed = (1 << 15); // PythonNet specific
         public static int Subclass = (1 << 16); // PythonNet specific
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         public static int HaveIndex = (1 << 17);
 #endif
-#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         /* Objects support nb_index in PyNumberMethods */
         public static int HaveVersionTag = (1 << 18);
         public static int ValidVersionTag = (1 << 19);
@@ -331,7 +331,7 @@ namespace Python.Runtime
 #endif
 
 // Default flags for Python 3
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         public static int Default = (
                             HaveStacklessExtension |
                             HaveVersionTag);
@@ -394,7 +394,7 @@ namespace Python.Runtime
             pmap["nb_add"] = p["BinaryFunc"];
             pmap["nb_subtract"] = p["BinaryFunc"];
             pmap["nb_multiply"] = p["BinaryFunc"];
-#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
             pmap["nb_divide"] = p["BinaryFunc"];
 #endif
             pmap["nb_remainder"] = p["BinaryFunc"];
@@ -419,7 +419,7 @@ namespace Python.Runtime
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
-#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
             pmap["nb_inplace_divide"] = p["BinaryFunc"];
 #endif
             pmap["nb_inplace_remainder"] = p["BinaryFunc"];
@@ -433,7 +433,7 @@ namespace Python.Runtime
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
             pmap["nb_index"] = p["UnaryFunc"];
 #endif
 

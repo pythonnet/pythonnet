@@ -102,7 +102,7 @@ namespace Python.Runtime
         //====================================================================
         // Implements __cmp__ for reflected delegate types.
         //====================================================================
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
