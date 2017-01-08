@@ -3,6 +3,9 @@
 PythonNet is developed and maintained by unpaid community members so well
 written, documented and tested pull requests are encouraged.
 
+By submitting a pull request for this project, you agree to license your
+contribution under the MIT license to this project.
+
 ## Getting Started
 
 * Make sure you have a [GitHub account](https://github.com/signup/free)
