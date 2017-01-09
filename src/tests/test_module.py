@@ -41,6 +41,10 @@ class ModuleTests(unittest.TestCase):
         import clr
         self.assertTrue(self.isCLRRootModule(clr))
 
+    def testVersionClr(self):
+        import clr
+        self.assertTrue(clr.__version__ >= "2.2.0")
+
     def testPreloadVar(self):
         import clr
         self.assertTrue(clr.getPreload() is False, clr.getPreload())
