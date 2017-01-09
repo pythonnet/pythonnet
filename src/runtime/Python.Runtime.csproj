@@ -188,7 +188,7 @@
   <ItemGroup>
     <None Include="buildclrmodule.bat" />
     <None Include="clrmodule.il" />
-    <None Include="pythonnet.snk" />
+    <None Include="..\pythonnet.snk" />
     <None Include="x64\clrmodule-platform.il" />
     <None Include="x86\clrmodule-platform.il" />
   </ItemGroup>
