@@ -182,11 +182,12 @@
     <Compile Include="interop26.cs" />
     <Compile Include="interop27.cs" />
     <Compile Include="interop32.cs" />
+    <Compile Include="interop33.cs" />
     <Compile Include="interop34.cs" />
     <Compile Include="interop35.cs" />
+    <Compile Include="interop36.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="buildclrmodule.bat" />
     <None Include="clrmodule.il" />
     <None Include="..\pythonnet.snk" />
     <None Include="x64\clrmodule-platform.il" />
