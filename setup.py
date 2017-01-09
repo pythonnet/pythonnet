@@ -10,7 +10,7 @@ from distutils.sysconfig import get_config_var
 from distutils.spawn import find_executable
 from distutils import log
 from platform import architecture
-from subprocess import Popen, CalledProcessError, PIPE, check_call, check_output
+from subprocess import Popen, CalledProcessError, PIPE, check_call
 from glob import glob
 import fnmatch
 import sys
@@ -155,8 +155,8 @@ class PythonNET_BuildExt(build_ext):
             enable_shared = get_config_var("Py_ENABLE_SHARED")
             if enable_shared:
                 # Double-check if libpython is linked dynamically with python
-                lddout = check_output(["ldd", sys.executable])
-                if b'libpython' not in lddout:
+                lddout = _check_output(["ldd", sys.executable])
+                if 'libpython' not in lddout:
                     enable_shared = False
 
             if not enable_shared:
@@ -339,11 +339,10 @@ if __name__ == "__main__":
         author="Python for .Net developers",
         classifiers=[
             'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',            
+            'Programming Language :: Python :: 3.6',
             'Programming Language :: C#',
             'License :: OSI Approved :: Zope Public License',
             'Development Status :: 5 - Production/Stable',
