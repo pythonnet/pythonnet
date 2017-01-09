@@ -8,7 +8,7 @@ using System.Resources;
 [assembly: AssemblyDefaultAliasAttribute("Python.Runtime.dll")]
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
-[assembly: AssemblyCopyrightAttribute("Zope Public License, Version 2.0 (ZPL)")]
+[assembly: AssemblyCopyrightAttribute("MIT License")]
 [assembly: AssemblyFileVersionAttribute("2.0.0.2")]
 [assembly: NeutralResourcesLanguageAttribute("en")]
 
