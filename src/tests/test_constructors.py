@@ -44,7 +44,6 @@ class ConstructorTests(unittest.TestCase):
 
         instance = sub()
         ob = SubclassConstructorTest(instance)
-        print(ob)
         self.assertTrue(isinstance(ob.value, System.Exception))
 
 
