@@ -1,0 +1,41 @@
+# Credits
+
+## Development Lead
+
+-   Barton Cline ([@BartonCline](https://github.com/BartonCline))
+-   Benedikt Reinartz ([@filmor](https://github.com/filmor))
+-   Brian Lloyd ([@brianlloyd](https://github.com/brianlloyd))
+-   David Anthoff ([@davidanthoff](https://github.com/davidanthoff))
+-   Denis Akhiyarov ([@denfromufa](https://github.com/denfromufa))
+-   Tony Roberts ([@tonyroberts](https://github.com/tonyroberts))
+-   Victor Uriarte ([@vmuriart](https://github.com/vmuriart))
+
+## Contributors
+
+-   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
+-   Christian Heimes ([@tiran](https://github.com/tiran))
+-   Christoph Gohlke ([@cgohlke](https://github.com/cgohlke))
+-   Daniel Santana ([@dgsantana](https://github.com/dgsantana))
+-   David Lechner ([@dlech](https://github.com/dlech))
+-   He-chien Tsai ([@t3476](https://github.com/t3476))
+-   Jeff Reback ([@jreback](https://github.com/jreback))
+-   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
+-   John Burnett ([@johnburnett](https://github.com/johnburnett))
+-   Luke Stratman ([@lstratman](https://github.com/lstratman))
+-   Matthias Dittrich ([@matthid](https://github.com/matthid))
+-   Patrick Stewart ([@patstew](https://github.com/patstew))
+-   Raphael Nestler ([@rnestler](https://github.com/rnestler))
+-   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
+-   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
+-   Serge Weinstock ([@sweinst](https://github.com/sweinst))
+-   Virgil Dupras ([@hsoft](https://github.com/hsoft))
+-   Xavier Dupré ([@sdpython](https://github.com/sdpython))
+-   Zane Purvis ([@zanedp](https://github.com/zanedp))
+-   ([@ArvidJB](https://github.com/ArvidJB))
+-   ([@bltribble](https://github.com/bltribble))
+-   ([@dmitriyse](https://github.com/dmitriyse))
+-   ([@fdanny](https://github.com/fdanny))
+-   ([@omnicognate](https://github.com/omnicognate))
+-   ([@rico-chet](https://github.com/rico-chet))
+-   ([@rmadsen-ks](https://github.com/rmadsen-ks))
+-   ([@stonebig](https://github.com/stonebig))
