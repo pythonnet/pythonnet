@@ -1,5 +1,5 @@
 //============================================================================
-// This file replaces the  hand-maintained stub that used to implement clr.dll.
+// This file replaces the hand-maintained stub that used to implement clr.dll.
 // This is a line-by-line port from IL back to C#.
 // We now use RGiesecke.DllExport on the required static init method so it can be
 // loaded by a standard CPython interpreter as an extension module. When it
@@ -11,31 +11,34 @@
 
 // If defined, the "pythonRuntimeVersionString" variable must be set to
 // Python.Runtime's current version.
-
 #define USE_PYTHON_RUNTIME_VERSION
 
 // If defined, the "PythonRuntimePublicKeyTokenData" data array must be
 // set to Python.Runtime's public key token. (sn -T Python.Runtin.dll)
 #define USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
 
-// If DEBUG_PRINT is defined in the Build Properties, a few System.Console.WriteLine
+// If DEBUG_PRINT is defined in the Build Properties, a few Console.WriteLine
 // calls are made to indicate what's going on during the load...
 //============================================================================
 using System;
-
+using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using RGiesecke.DllExport;
 
 public class clrModule
 {
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
-    [RGiesecke.DllExport.DllExport("PyInit_clr", System.Runtime.InteropServices.CallingConvention.StdCall)]
+    [DllExport("PyInit_clr", CallingConvention.StdCall)]
     public static IntPtr PyInit_clr()
 #else
-    [RGiesecke.DllExport.DllExport("initclr", System.Runtime.InteropServices.CallingConvention.StdCall)]
+    [DllExport("initclr", CallingConvention.StdCall)]
     public static void initclr()
 #endif
     {
 #if DEBUG_PRINT
-        System.Console.WriteLine("Attempting to load Python.Runtime using standard binding rules... ");
+        Console.WriteLine("Attempting to load Python.Runtime using standard binding rules... ");
 #endif
 #if USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
         var pythonRuntimePublicKeyTokenData = new byte[] { 0x50, 0x00, 0xfe, 0xa6, 0xcb, 0xa7, 0x02, 0xdd };
@@ -47,26 +50,26 @@ public class clrModule
         // - ApplicationBase
         // - A PrivateBinPath under ApplicationBase
         // With an unsigned assembly, the GAC is skipped.
-        var pythonRuntimeName = new System.Reflection.AssemblyName("Python.Runtime")
+        var pythonRuntimeName = new AssemblyName("Python.Runtime")
         {
 #if USE_PYTHON_RUNTIME_VERSION
-            Version = new System.Version("4.0.0.1"),
+            Version = new Version("4.0.0.1"),
 #endif
-            CultureInfo = System.Globalization.CultureInfo.InvariantCulture,
+            CultureInfo = CultureInfo.InvariantCulture
         };
 #if USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
         pythonRuntimeName.SetPublicKeyToken(pythonRuntimePublicKeyTokenData);
 #endif
         // We've got the AssemblyName with optional features; try to load it.
-        System.Reflection.Assembly pythonRuntime;
+        Assembly pythonRuntime;
         try
         {
-            pythonRuntime = System.Reflection.Assembly.Load(pythonRuntimeName);
+            pythonRuntime = Assembly.Load(pythonRuntimeName);
 #if DEBUG_PRINT
-            System.Console.WriteLine("Success!");
+            Console.WriteLine("Success!");
 #endif
         }
-        catch (System.IO.IOException)
+        catch (IOException)
         {
             try
             {
@@ -79,20 +82,22 @@ public class clrModule
                 // http://blogs.msdn.com/suzcook/archive/2003/05/29/57143.aspx
                 // http://blogs.msdn.com/suzcook/archive/2003/06/13/57180.aspx
 
-                var executingAssembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var assemblyDirectory = System.IO.Path.GetDirectoryName(executingAssembly.Location);
+                Assembly executingAssembly = Assembly.GetExecutingAssembly();
+                string assemblyDirectory = Path.GetDirectoryName(executingAssembly.Location);
                 if (assemblyDirectory == null)
-                    throw new System.InvalidOperationException(executingAssembly.Location);
-                var pythonRuntimeDllPath = System.IO.Path.Combine(assemblyDirectory, "Python.Runtime.dll");
+                {
+                    throw new InvalidOperationException(executingAssembly.Location);
+                }
+                string pythonRuntimeDllPath = Path.Combine(assemblyDirectory, "Python.Runtime.dll");
 #if DEBUG_PRINT
-                System.Console.WriteLine("Attempting to load Python.Runtime from: '{0}'...", pythonRuntimeDllPath);
+                Console.WriteLine("Attempting to load Python.Runtime from: '{0}'...", pythonRuntimeDllPath);
 #endif
-                pythonRuntime = System.Reflection.Assembly.LoadFrom(pythonRuntimeDllPath);
+                pythonRuntime = Assembly.LoadFrom(pythonRuntimeDllPath);
             }
-            catch (System.InvalidOperationException)
+            catch (InvalidOperationException)
             {
 #if DEBUG_PRINT
-                System.Console.WriteLine("Could not load Python.Runtime, so sad.");
+                Console.WriteLine("Could not load Python.Runtime");
 #endif
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
                 return IntPtr.Zero;
@@ -104,12 +109,12 @@ public class clrModule
 
         // Once here, we've successfully loaded SOME version of Python.Runtime
         // So now we get the PythonEngine and execute the InitExt method on it.
-        var pythonEngineType = pythonRuntime.GetType("Python.Runtime.PythonEngine");
+        Type pythonEngineType = pythonRuntime.GetType("Python.Runtime.PythonEngine");
 
 #if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
-        return (IntPtr)pythonEngineType.InvokeMember("InitExt", System.Reflection.BindingFlags.InvokeMethod, null, null, null);
+        return (IntPtr)pythonEngineType.InvokeMember("InitExt", BindingFlags.InvokeMethod, null, null, null);
 #else
-        pythonEngineType.InvokeMember("InitExt", System.Reflection.BindingFlags.InvokeMethod, null, null, null);
+        pythonEngineType.InvokeMember("InitExt", BindingFlags.InvokeMethod, null, null, null);
 #endif
     }
 }

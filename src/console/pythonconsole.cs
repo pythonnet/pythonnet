@@ -1,12 +1,14 @@
 using System;
-using System.Reflection;
 using System.Collections.Generic;
+using System.Reflection;
 using Python.Runtime;
 
 namespace Python.Runtime
 {
     public sealed class PythonConsole
     {
+        private static AssemblyLoader assemblyLoader = new AssemblyLoader();
+
         private PythonConsole()
         {
         }
@@ -26,7 +28,7 @@ namespace Python.Runtime
             return i;
         }
 
-        // Register a callback function to load embedded assmeblies.
+        // Register a callback function to load embedded assemblies.
         // (Python.Runtime.dll is included as a resource)
         private sealed class AssemblyLoader
         {
@@ -39,7 +41,7 @@ namespace Python.Runtime
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
                 {
                     string shortName = args.Name.Split(',')[0];
-                    String resourceName = shortName + ".dll";
+                    string resourceName = string.Format("{0}.dll", shortName);
 
                     if (loadedAssemblies.ContainsKey(resourceName))
                     {
@@ -51,7 +53,7 @@ namespace Python.Runtime
                     {
                         if (stream != null)
                         {
-                            Byte[] assemblyData = new Byte[stream.Length];
+                            var assemblyData = new byte[stream.Length];
                             stream.Read(assemblyData, 0, assemblyData.Length);
                             Assembly assembly = Assembly.Load(assemblyData);
                             loadedAssemblies[resourceName] = assembly;
@@ -62,8 +64,6 @@ namespace Python.Runtime
                     return null;
                 };
             }
-        };
-
-        private static AssemblyLoader assemblyLoader = new AssemblyLoader();
-    };
+        }
+    }
 }

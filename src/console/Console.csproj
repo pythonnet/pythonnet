@@ -196,7 +196,7 @@
   <ItemGroup>
     <Content Include="python-clear.ico" />
     <EmbeddedResource Include="$(PythonBuildDir)\Python.Runtime.dll">
-        <LogicalName>Python.Runtime.dll</LogicalName>
+      <LogicalName>Python.Runtime.dll</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
