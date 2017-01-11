@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30110.0
@@ -89,10 +89,14 @@ Global
 		{E29DCF0A-5114-4A98-B1DD-71264B6EA349}.ReleaseWin|x64.Build.0 = Release|x64
 		{E29DCF0A-5114-4A98-B1DD-71264B6EA349}.ReleaseWin|x86.ActiveCfg = Release|x86
 		{E29DCF0A-5114-4A98-B1DD-71264B6EA349}.ReleaseWin|x86.Build.0 = Release|x86
+		{86E834DE-1139-4511-96CC-69636A56E7AC}.DebugMono|x64.ActiveCfg = DebugWin|x64
+		{86E834DE-1139-4511-96CC-69636A56E7AC}.DebugMono|x86.ActiveCfg = DebugWin|x86
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.DebugWin|x64.ActiveCfg = DebugWin|x64
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.DebugWin|x64.Build.0 = DebugWin|x64
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.DebugWin|x86.ActiveCfg = DebugWin|x86
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.DebugWin|x86.Build.0 = DebugWin|x86
+		{86E834DE-1139-4511-96CC-69636A56E7AC}.ReleaseMono|x64.ActiveCfg = ReleaseWin|x64
+		{86E834DE-1139-4511-96CC-69636A56E7AC}.ReleaseMono|x86.ActiveCfg = ReleaseWin|x86
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.ReleaseWin|x64.ActiveCfg = ReleaseWin|x64
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.ReleaseWin|x64.Build.0 = ReleaseWin|x64
 		{86E834DE-1139-4511-96CC-69636A56E7AC}.ReleaseWin|x86.ActiveCfg = ReleaseWin|x86

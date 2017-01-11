@@ -1,4 +1,4 @@
-﻿//============================================================================
+//============================================================================
 // This file replaces the  hand-maintained stub that used to implement clr.dll.
 // This is a line-by-line port from IL back to C#.
 // We now use RGiesecke.DllExport on the required static init method so it can be

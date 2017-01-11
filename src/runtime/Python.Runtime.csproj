@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -182,13 +182,13 @@
     <Compile Include="interop26.cs" />
     <Compile Include="interop27.cs" />
     <Compile Include="interop32.cs" />
+    <Compile Include="interop33.cs" />
     <Compile Include="interop34.cs" />
     <Compile Include="interop35.cs" />
+    <Compile Include="interop36.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="buildclrmodule.bat" />
-    <None Include="clrmodule.il" />
-    <None Include="pythonnet.snk" />
+    <None Include="..\pythonnet.snk" />
     <None Include="x64\clrmodule-platform.il" />
     <None Include="x86\clrmodule-platform.il" />
   </ItemGroup>
