@@ -13,6 +13,6 @@ using System.Resources;
 [assembly: PermissionSetAttribute(SecurityAction.RequestMinimum,
     Name = "FullTrust")]
 [assembly: AssemblyDescriptionAttribute("")]
-[assembly: AssemblyCopyrightAttribute("Zope Public License, Version 2.0 (ZPL)")]
+[assembly: AssemblyCopyrightAttribute("MIT License")]
 [assembly: AssemblyFileVersionAttribute("2.0.0.4")]
 [assembly: NeutralResourcesLanguageAttribute("en")]

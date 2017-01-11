@@ -345,7 +345,7 @@ if __name__ == "__main__":
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',            
             'Programming Language :: C#',
-            'License :: OSI Approved :: Zope Public License',
+            'License :: OSI Approved :: MIT License',
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Developers',
             'Operating System :: Microsoft :: Windows',
