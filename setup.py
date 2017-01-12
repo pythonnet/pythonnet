@@ -138,7 +138,8 @@ class PythonNET_BuildExt(build_ext):
             unicode_width = ctypes.sizeof(ctypes.c_wchar)
 
         defines = [
-            "PYTHON%d%s" % (sys.version_info[:2]),
+            "PYTHON%d%d" % (sys.version_info[:2]),
+            "PYTHON%d" % (sys.version_info[:1]),  # Python Major Version
             "UCS%d" % unicode_width,
         ]
 
