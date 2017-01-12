@@ -17,6 +17,18 @@ environment:
 
   matrix:
     # http://www.appveyor.com/docs/installed-software#python
+    
+
+    - PYTHON: "C:\\Python36-x64"
+      CONDA_PY: "36"
+      CONDA_BLD: "C:\\miniconda-64"
+      CONDA_BLD_ARCH: "64"
+  
+    - PYTHON: "C:\\Python36"
+      CONDA_PY: "36"
+      CONDA_BLD: "C:\\miniconda-32"
+      CONDA_BLD_ARCH: "32"
+
     - PYTHON: "C:\\Python27"
       CONDA_PY: "27"
       CONDA_BLD: "C:\\miniconda-32"
@@ -78,6 +90,7 @@ install:
 - "%PYTHON%\\python.exe -m pip install --upgrade pip"
 - "%PYTHON%\\python.exe -m pip install wheel"
 - "%PYTHON%\\python.exe -m pip install six"
+- "%PYTHON%\\python.exe -m pip install pycparser"
 
 build_script:
 # build wheel
