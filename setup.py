@@ -14,7 +14,7 @@ from distutils.sysconfig import get_config_var
 from distutils.spawn import find_executable
 from distutils import log
 from platform import architecture
-from subprocess import Popen, CalledProcessError, PIPE, check_call
+from subprocess import check_output, check_call
 from glob import glob
 import fnmatch
 import sys
@@ -179,7 +179,7 @@ class PythonNET_BuildExt(build_ext):
         interop_file = _get_interop_filename()
         if not os.path.exists(interop_file):
             geninterop = os.path.join("tools", "geninterop", "geninterop.py")
-            _check_output([sys.executable, geninterop, interop_file])
+            check_call([sys.executable, geninterop, interop_file])
 
         cmd = [
             _xbuild,
@@ -285,18 +285,9 @@ class PythonNET_InstallData(install_data):
         return install_data.run(self)
 
 
-def _check_output(*popenargs, **kwargs):
-    """subprocess.check_output from python 2.7.
-    Added here to support building for earlier versions of Python.
-    """
-    process = Popen(stdout=PIPE, *popenargs, **kwargs)
-    output, unused_err = process.communicate()
-    retcode = process.poll()
-    if retcode:
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        raise CalledProcessError(retcode, cmd, output=output)
+def _check_output(*args, **kwargs):
+    """Check output wrapper for py2/py3 compatibility"""
+    output = check_output(*args, **kwargs)
     if sys.version_info[0] > 2:
         return output.decode("ascii")
     return output
