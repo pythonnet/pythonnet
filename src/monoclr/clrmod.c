@@ -1,20 +1,18 @@
-// Author: Christian Heimes <christian(at)cheimes(dot)de>
-
 #include "pynetclr.h"
 
 /* List of functions defined in the module */
 static PyMethodDef clr_methods[] = {
-    {NULL, NULL, 0, NULL}        /* Sentinel */
+    {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
 PyDoc_STRVAR(clr_module_doc,
-"clr facade module to initialize the CLR. It's later "
-"replaced by the real clr module. This module has a facade "
-"attribute to make it distinguishable from the real clr module."
+             "clr facade module to initialize the CLR. It's later "
+             "replaced by the real clr module. This module has a facade "
+             "attribute to make it distinguishable from the real clr module."
 );
 
 static PyNet_Args *pn_args;
-char** environ = NULL;
+char **environ = NULL;
 
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef clrdef = {
@@ -30,7 +28,8 @@ static struct PyModuleDef clrdef = {
 };
 #endif
 
-static PyObject *_initclr() {
+static PyObject *_initclr()
+{
     PyObject *m;
 
     /* Create the module and add the functions */
@@ -45,7 +44,8 @@ static PyObject *_initclr() {
     Py_INCREF(Py_True);
 
     pn_args = PyNet_Init(1);
-    if (pn_args->error) {
+    if (pn_args->error)
+    {
         return NULL;
     }
 
@@ -57,12 +57,14 @@ static PyObject *_initclr() {
 
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC
-PyInit_clr(void) {
+PyInit_clr(void)
+{
     return _initclr();
 }
 #else
 PyMODINIT_FUNC
-initclr(void) {
+initclr(void)
+{
     _initclr();
 }
 #endif
