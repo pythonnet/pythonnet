@@ -25,4 +25,4 @@ test:
 
 about:
    home: https://github.com/pythonnet/pythonnet
-   license: ZPL
+   license: MIT
