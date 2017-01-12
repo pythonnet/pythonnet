@@ -292,10 +292,7 @@ namespace Python.Runtime
         /* XXX Reusing reserved constants */
         public static int Managed = (1 << 15); // PythonNet specific
         public static int Subclass = (1 << 16); // PythonNet specific
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         public static int HaveIndex = (1 << 17);
-#endif
-#if (PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
         /* Objects support nb_index in PyNumberMethods */
         public static int HaveVersionTag = (1 << 18);
         public static int ValidVersionTag = (1 << 19);
@@ -311,7 +308,6 @@ namespace Python.Runtime
         public static int DictSubclass = (1 << 29);
         public static int BaseExceptionSubclass = (1 << 30);
         public static int TypeSubclass = (1 << 31);
-#endif
 
 // Default flags for Python 2
 #if (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27)
@@ -433,9 +429,7 @@ namespace Python.Runtime
             pmap["nb_true_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
             pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
             pmap["nb_index"] = p["UnaryFunc"];
-#endif
 
             pmap["sq_length"] = p["InquiryFunc"];
             pmap["sq_concat"] = p["BinaryFunc"];
