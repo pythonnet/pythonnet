@@ -29,10 +29,10 @@ using RGiesecke.DllExport;
 
 public class clrModule
 {
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
     [DllExport("PyInit_clr", CallingConvention.StdCall)]
     public static IntPtr PyInit_clr()
-#else
+#elif PYTHON2
     [DllExport("initclr", CallingConvention.StdCall)]
     public static void initclr()
 #endif
@@ -99,9 +99,9 @@ public class clrModule
 #if DEBUG_PRINT
                 Console.WriteLine("Could not load Python.Runtime");
 #endif
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
                 return IntPtr.Zero;
-#else
+#elif PYTHON2
                 return;
 #endif
             }
@@ -111,9 +111,9 @@ public class clrModule
         // So now we get the PythonEngine and execute the InitExt method on it.
         Type pythonEngineType = pythonRuntime.GetType("Python.Runtime.PythonEngine");
 
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
         return (IntPtr)pythonEngineType.InvokeMember("InitExt", BindingFlags.InvokeMethod, null, null, null);
-#else
+#elif PYTHON2
         pythonEngineType.InvokeMember("InitExt", BindingFlags.InvokeMethod, null, null, null);
 #endif
     }
