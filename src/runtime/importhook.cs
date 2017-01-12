@@ -14,7 +14,7 @@ namespace Python.Runtime
         static CLRModule root;
         static MethodWrapper hook;
 
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
         static IntPtr py_clr_module;
         static IntPtr module_def;
 #endif
@@ -30,10 +30,10 @@ namespace Python.Runtime
             // but it provides the most "Pythonic" way of dealing with CLR
             // modules (Python doesn't provide a way to emulate packages).
             IntPtr dict = Runtime.PyImport_GetModuleDict();
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
             IntPtr mod = Runtime.PyImport_ImportModule("builtins");
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
-#else
+#elif PYTHON2
             IntPtr mod = Runtime.PyDict_GetItemString(dict, "__builtin__");
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
 #endif
@@ -43,7 +43,7 @@ namespace Python.Runtime
 
             root = new CLRModule();
 
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
     // create a python module with the same methods as the clr module-like object
             module_def = ModuleDefOffset.AllocModuleDef("clr");
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
@@ -56,7 +56,7 @@ namespace Python.Runtime
             Runtime.PyDict_Update(mod_dict, clr_dict);
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
-#else
+#elif PYTHON2
             Runtime.XIncref(root.pyHandle); // we are using the module two times
             Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
             Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
@@ -70,13 +70,13 @@ namespace Python.Runtime
 
         internal static void Shutdown()
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
             if (0 != Runtime.Py_IsInitialized()) {
                 Runtime.XDecref(py_clr_module);
                 Runtime.XDecref(root.pyHandle);
             }
             ModuleDefOffset.FreeModuleDef(module_def);
-#else
+#elif PYTHON2
             if (0 != Runtime.Py_IsInitialized())
             {
                 Runtime.XDecref(root.pyHandle);
@@ -95,7 +95,7 @@ namespace Python.Runtime
         public static IntPtr GetCLRModule(IntPtr? fromList = null)
         {
             root.InitializePreload();
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
     // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);
@@ -136,7 +136,7 @@ namespace Python.Runtime
 
             Runtime.XIncref(py_clr_module);
             return py_clr_module;
-#else
+#elif PYTHON2
             Runtime.XIncref(root.pyHandle);
             return root.pyHandle;
 #endif

@@ -84,9 +84,9 @@ namespace Python.Runtime
 
         internal static void Initialize()
         {
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON3
             exceptions_module = Runtime.PyImport_ImportModule("builtins");
-#else
+#elif PYTHON2
             exceptions_module = Runtime.PyImport_ImportModule("exceptions");
 #endif
             Exceptions.ErrorCheck(exceptions_module);
@@ -164,7 +164,7 @@ namespace Python.Runtime
 
             Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
 
-#if !(PYTHON25 || PYTHON26 || PYTHON27)
+#if PYTHON3
             if (e.InnerException != null)
             {
                 IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
@@ -375,7 +375,7 @@ namespace Python.Runtime
         public static IntPtr Exception;
         public static IntPtr StopIteration;
         public static IntPtr GeneratorExit;
-#if !(PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if PYTHON2
         public static IntPtr StandardError;
 #endif
         public static IntPtr ArithmeticError;
