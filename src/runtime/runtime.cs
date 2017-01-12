@@ -1563,27 +1563,11 @@ namespace Python.Runtime
         }
     }
 
-#if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromStringAndSize(IntPtr value, int size);
-#elif (UCS2)
-    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "PyUnicodeUCS2_FromStringAndSize",
-        ExactSpelling = true, CharSet = CharSet.Unicode)]
-    internal unsafe static extern IntPtr
-    PyUnicode_FromStringAndSize(IntPtr value, int size);
-#else
-    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "PyUnicodeUCS4_FromStringAndSize",
-        ExactSpelling = true, CharSet = CharSet.Ansi)]
-    internal unsafe static extern IntPtr
-    PyUnicode_FromStringAndSize(IntPtr value, int size);
-#endif
-
-#else // Python2x
-
+#elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern IntPtr
