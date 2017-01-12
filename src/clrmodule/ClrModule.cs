@@ -17,7 +17,7 @@
 // set to Python.Runtime's public key token. (sn -T Python.Runtin.dll)
 #define USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
 
-// If DEBUG_PRINT is defined in the Build Properties, a few Console.WriteLine
+// If DEBUG is defined in the Build Properties, a few Console.WriteLine
 // calls are made to indicate what's going on during the load...
 //============================================================================
 using System;
@@ -37,7 +37,7 @@ public class clrModule
     public static void initclr()
 #endif
     {
-#if DEBUG_PRINT
+#if DEBUG
         Console.WriteLine("Attempting to load Python.Runtime using standard binding rules... ");
 #endif
 #if USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
@@ -65,7 +65,7 @@ public class clrModule
         try
         {
             pythonRuntime = Assembly.Load(pythonRuntimeName);
-#if DEBUG_PRINT
+#if DEBUG
             Console.WriteLine("Success!");
 #endif
         }
@@ -89,14 +89,14 @@ public class clrModule
                     throw new InvalidOperationException(executingAssembly.Location);
                 }
                 string pythonRuntimeDllPath = Path.Combine(assemblyDirectory, "Python.Runtime.dll");
-#if DEBUG_PRINT
+#if DEBUG
                 Console.WriteLine("Attempting to load Python.Runtime from: '{0}'...", pythonRuntimeDllPath);
 #endif
                 pythonRuntime = Assembly.LoadFrom(pythonRuntimeDllPath);
             }
             catch (InvalidOperationException)
             {
-#if DEBUG_PRINT
+#if DEBUG
                 Console.WriteLine("Could not load Python.Runtime");
 #endif
 #if PYTHON3
