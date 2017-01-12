@@ -1677,37 +1677,6 @@ namespace Python.Runtime
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
 #endif
-
-    internal static IntPtr PyUnicode_FromString(string s)
-    {
-        return PyUnicode_FromUnicode(s, (s.Length));
-    }
-
-    internal unsafe static string GetManagedString(IntPtr op)
-    {
-        IntPtr type = PyObject_TYPE(op);
-
-// Python 3 strings are all unicode
-#if PYTHON2
-        if (type == Runtime.PyStringType)
-        {
-            return Marshal.PtrToStringAnsi(
-                       PyString_AS_STRING(op),
-                       Runtime.PyString_Size(op)
-                       );
-        }
-#endif
-
-        if (type == Runtime.PyUnicodeType)
-        {
-            char* p = Runtime.PyUnicode_AsUnicode(op);
-            int size = Runtime.PyUnicode_GetSize(op);
-            return new String(p, 0, size);
-        }
-
-        return null;
-    }
-
 #endif
 #if (UCS4)
 #if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
@@ -1801,6 +1770,7 @@ namespace Python.Runtime
             PyUnicode_FromOrdinal(int c);
 
 #endif
+#endif
 
         internal static IntPtr PyUnicode_FromString(string s)
         {
@@ -1811,8 +1781,7 @@ namespace Python.Runtime
         {
             IntPtr type = PyObject_TYPE(op);
 
-// Python 3 strings are all unicode
-#if PYTHON2
+#if PYTHON2 // Python 3 strings are all Unicode
             if (type == Runtime.PyStringType)
             {
                 return Marshal.PtrToStringAnsi(
@@ -1824,17 +1793,22 @@ namespace Python.Runtime
 
             if (type == Runtime.PyUnicodeType)
             {
+#if UCS4
                 IntPtr p = Runtime.PyUnicode_AsUnicode(op);
                 int length = Runtime.PyUnicode_GetSize(op);
                 int size = length*4;
                 byte[] buffer = new byte[size];
                 Marshal.Copy(p, buffer, 0, size);
                 return Encoding.UTF32.GetString(buffer, 0, size);
+#elif UCS2
+                char* p = Runtime.PyUnicode_AsUnicode(op);
+                int size = Runtime.PyUnicode_GetSize(op);
+                return new String(p, 0, size);
+#endif
             }
 
             return null;
         }
-#endif
 
         //====================================================================
         // Python dictionary API
