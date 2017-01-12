@@ -1,35 +1,34 @@
 using System;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Resources;
+using System.Runtime.InteropServices;
 
 [assembly: AssemblyProduct("Python for .NET")]
 [assembly: AssemblyVersion("4.0.0.1")]
-[assembly: AssemblyDefaultAliasAttribute("Python.Runtime.dll")]
+[assembly: AssemblyDefaultAlias("Python.Runtime.dll")]
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
-[assembly: AssemblyCopyrightAttribute("MIT License")]
-[assembly: AssemblyFileVersionAttribute("2.0.0.2")]
-[assembly: NeutralResourcesLanguageAttribute("en")]
+[assembly: AssemblyCopyright("MIT License")]
+[assembly: AssemblyFileVersion("2.0.0.2")]
+[assembly: NeutralResourcesLanguage("en")]
 
-#if (PYTHON23)
-[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.3")]
-[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.3")]
-#endif
-#if (PYTHON24)
-[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.4")]
-[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.4")]
-#endif
-#if (PYTHON25)
-[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.5")]
-[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.5")]
-#endif
-#if (PYTHON26)
-[assembly: AssemblyTitleAttribute("Python.Runtime for Python 2.6")]
-[assembly: AssemblyDescriptionAttribute("Python Runtime for Python 2.6")]
-#endif
-#if (PYTHON27)
-
+#if PYTHON27
 [assembly: AssemblyTitle("Python.Runtime for Python 2.7")]
 [assembly: AssemblyDescription("Python Runtime for Python 2.7")]
+#endif
+#if PYTHON33
+[assembly: AssemblyTitle("Python.Runtime for Python 3.3")]
+[assembly: AssemblyDescription("Python Runtime for Python 3.3")]
+#endif
+#if PYTHON34
+[assembly: AssemblyTitle("Python.Runtime for Python 3.4")]
+[assembly: AssemblyDescription("Python Runtime for Python 3.4")]
+#endif
+#if PYTHON35
+[assembly: AssemblyTitle("Python.Runtime for Python 3.5")]
+[assembly: AssemblyDescription("Python Runtime for Python 3.5")]
+#endif
+#if PYTHON36
+[assembly: AssemblyTitle("Python.Runtime for Python 3.6")]
+[assembly: AssemblyDescription("Python Runtime for Python 3.6")]
 #endif
