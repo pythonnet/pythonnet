@@ -2,8 +2,7 @@
 // DO NOT MODIFIY BY HAND.
 
 
-
-#if (PYTHON35)
+#if PYTHON35
 using System;
 using System.Collections;
 using System.Collections.Specialized;
@@ -11,21 +10,24 @@ using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
 
-namespace Python.Runtime {
-
-    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
-    internal class TypeOffset {
-
-        static TypeOffset() {
+namespace Python.Runtime
+{
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class TypeOffset
+    {
+        static TypeOffset()
+        {
             Type type = typeof(TypeOffset);
             FieldInfo[] fi = type.GetFields();
             int size = IntPtr.Size;
-            for (int i = 0; i < fi.Length; i++) {
+            for (int i = 0; i < fi.Length; i++)
+            {
                 fi[i].SetValue(null, i * size);
             }
         }
 
-        public static int magic() {
+        public static int magic()
+        {
             return ob_size;
         }
 
@@ -143,4 +145,5 @@ namespace Python.Runtime {
         public static int members = 0;
     }
 }
+
 #endif

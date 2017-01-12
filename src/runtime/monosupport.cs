@@ -1,4 +1,4 @@
-#if (UCS4)
+#if UCS4
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
