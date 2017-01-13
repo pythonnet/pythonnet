@@ -74,6 +74,7 @@ function InstallCondaPackages ($python_home, $spec) {
     Start-Process -FilePath "$conda_path" -ArgumentList $args -Wait -Passthru
 }
 
+
 function UpdateConda ($python_home) {
     $conda_path = $python_home + "\Scripts\conda.exe"
     Write-Host "Updating conda..."

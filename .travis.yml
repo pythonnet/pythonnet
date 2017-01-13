@@ -1,11 +1,13 @@
 sudo: required
 language: python
+
 python:
   - 2.7
   - 3.3
   - 3.4
   - 3.5
   - 3.6
+
 before_install:
   - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
   - sudo apt-get install software-properties-common
@@ -19,6 +21,11 @@ install:
   - pip install six
   - pip install pycparser
   - python setup.py build_ext --inplace
+
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python src/tests/runtests.py
+  # - nunit-console src/embed_tests/bin/x64/ReleaseMono/Python.EmbeddingTest.dll
+
+notifications:
+  email: false

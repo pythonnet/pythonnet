@@ -35,6 +35,9 @@
 :: outside of the IF clauses, they do not run properly in the SET_SDK_64==Y
 :: case, I don't know why.
 :: originally from https://github.com/pelson/Obvious-CI/blob/master/scripts/obvci_appveyor_python_build_env.cmd
+:: https://github.com/alimanfoo/zarr/blob/master/build.cmd
+:: https://github.com/cython/cython/blob/master/appveyor/run_with_env.cmd
+:: https://github.com/cjrh/easycython/blob/master/appveyor/setup_build_env.cmd
 @ECHO OFF
 
 SET COMMAND_TO_RUN=%*
@@ -49,9 +52,9 @@ IF "%CONDA_PY:~2,1%" == "" (
     SET MINOR_PYTHON_VERSION=%CONDA_PY:~1,1%
 ) ELSE (
     IF "%CONDA_PY:~3,1%" == "." (
-     SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,1%
+        SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,1%
     ) ELSE (
-     SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,2%
+        SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,2%
     )
 )
 
