@@ -14,7 +14,7 @@ $RUNTIME_DIR = ".\src\runtime\bin\"
 # why `2>&1 | %{ "$_" }`? see: http://stackoverflow.com/a/20950421/5208670
 Write-Host ("Starting Python tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:py.coverage `
-            -target:"$PY" -targetargs:src\tests\runtests.py `
+            -target:"$PY" -targetargs:"-m pytest" `
             -returntargetcode `
             2>&1 | %{ "$_" }
 $PYTHON_STATUS = $LastExitCode
