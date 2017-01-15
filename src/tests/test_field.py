@@ -1,369 +1,392 @@
 # -*- coding: utf-8 -*-
 
-import unittest
+"""Test CLR field support."""
 
 import System
+import pytest
 from Python.Test import FieldTest
 
 
-class FieldTests(unittest.TestCase):
-    """Test CLR field support."""
+def test_public_instance_field():
+    """Test public instance fields."""
+    ob = FieldTest()
+    assert ob.PublicField == 0
 
-    def test_public_instance_field(self):
-        """Test public instance fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.PublicField == 0)
+    ob.PublicField = 1
+    assert ob.PublicField == 1
 
-        ob.PublicField = 1
-        self.assertTrue(ob.PublicField == 1)
+    with pytest.raises(TypeError):
+        del FieldTest().PublicField
 
-        with self.assertRaises(TypeError):
-            del FieldTest().PublicField
 
-    def test_public_static_field(self):
-        """Test public static fields."""
-        ob = FieldTest()
-        self.assertTrue(FieldTest.PublicStaticField == 0)
+def test_public_static_field():
+    """Test public static fields."""
+    ob = FieldTest()
+    assert FieldTest.PublicStaticField == 0
 
-        FieldTest.PublicStaticField = 1
-        self.assertTrue(FieldTest.PublicStaticField == 1)
+    FieldTest.PublicStaticField = 1
+    assert FieldTest.PublicStaticField == 1
 
-        self.assertTrue(ob.PublicStaticField == 1)
-        ob.PublicStaticField = 0
-        self.assertTrue(ob.PublicStaticField == 0)
+    assert ob.PublicStaticField == 1
+    ob.PublicStaticField = 0
+    assert ob.PublicStaticField == 0
 
-        with self.assertRaises(TypeError):
-            del FieldTest.PublicStaticField
+    with pytest.raises(TypeError):
+        del FieldTest.PublicStaticField
 
-        with self.assertRaises(TypeError):
-            del FieldTest().PublicStaticField
+    with pytest.raises(TypeError):
+        del FieldTest().PublicStaticField
 
-    def test_protected_instance_field(self):
-        """Test protected instance fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.ProtectedField == 0)
 
-        ob.ProtectedField = 1
-        self.assertTrue(ob.ProtectedField == 1)
+def test_protected_instance_field():
+    """Test protected instance fields."""
+    ob = FieldTest()
+    assert ob.ProtectedField == 0
 
-        with self.assertRaises(TypeError):
-            del FieldTest().ProtectedField
+    ob.ProtectedField = 1
+    assert ob.ProtectedField == 1
 
-    def test_protected_static_field(self):
-        """Test protected static fields."""
-        ob = FieldTest()
-        self.assertTrue(FieldTest.ProtectedStaticField == 0)
+    with pytest.raises(TypeError):
+        del FieldTest().ProtectedField
 
-        FieldTest.ProtectedStaticField = 1
-        self.assertTrue(FieldTest.ProtectedStaticField == 1)
 
-        self.assertTrue(ob.ProtectedStaticField == 1)
-        ob.ProtectedStaticField = 0
-        self.assertTrue(ob.ProtectedStaticField == 0)
+def test_protected_static_field():
+    """Test protected static fields."""
+    ob = FieldTest()
+    assert FieldTest.ProtectedStaticField == 0
 
-        with self.assertRaises(TypeError):
-            del FieldTest.ProtectedStaticField
+    FieldTest.ProtectedStaticField = 1
+    assert FieldTest.ProtectedStaticField == 1
 
-        with self.assertRaises(TypeError):
-            del FieldTest().ProtectedStaticField
+    assert ob.ProtectedStaticField == 1
+    ob.ProtectedStaticField = 0
+    assert ob.ProtectedStaticField == 0
 
-    def test_read_only_instance_field(self):
-        """Test readonly instance fields."""
-        self.assertTrue(FieldTest().ReadOnlyField == 0)
+    with pytest.raises(TypeError):
+        del FieldTest.ProtectedStaticField
 
-        with self.assertRaises(TypeError):
-            FieldTest().ReadOnlyField = 1
+    with pytest.raises(TypeError):
+        del FieldTest().ProtectedStaticField
 
-        with self.assertRaises(TypeError):
-            del FieldTest().ReadOnlyField
 
-    def test_read_only_static_field(self):
-        """Test readonly static fields."""
-        ob = FieldTest()
+def test_read_only_instance_field():
+    """Test readonly instance fields."""
+    assert FieldTest().ReadOnlyField == 0
 
-        self.assertTrue(FieldTest.ReadOnlyStaticField == 0)
-        self.assertTrue(ob.ReadOnlyStaticField == 0)
+    with pytest.raises(TypeError):
+        FieldTest().ReadOnlyField = 1
 
-        with self.assertRaises(TypeError):
-            FieldTest.ReadOnlyStaticField = 1
+    with pytest.raises(TypeError):
+        del FieldTest().ReadOnlyField
 
-        with self.assertRaises(TypeError):
-            FieldTest().ReadOnlyStaticField = 1
 
-        with self.assertRaises(TypeError):
-            del FieldTest.ReadOnlyStaticField
+def test_read_only_static_field():
+    """Test readonly static fields."""
+    ob = FieldTest()
 
-        with self.assertRaises(TypeError):
-            del FieldTest().ReadOnlyStaticField
+    assert FieldTest.ReadOnlyStaticField == 0
+    assert ob.ReadOnlyStaticField == 0
 
-    def test_constant_field(self):
-        """Test const fields."""
-        ob = FieldTest()
+    with pytest.raises(TypeError):
+        FieldTest.ReadOnlyStaticField = 1
 
-        self.assertTrue(FieldTest.ConstField == 0)
-        self.assertTrue(ob.ConstField == 0)
+    with pytest.raises(TypeError):
+        FieldTest().ReadOnlyStaticField = 1
 
-        with self.assertRaises(TypeError):
-            FieldTest().ConstField = 1
+    with pytest.raises(TypeError):
+        del FieldTest.ReadOnlyStaticField
 
-        with self.assertRaises(TypeError):
-            FieldTest.ConstField = 1
+    with pytest.raises(TypeError):
+        del FieldTest().ReadOnlyStaticField
 
-        with self.assertRaises(TypeError):
-            del FieldTest().ConstField
 
-        with self.assertRaises(TypeError):
-            del FieldTest.ConstField
+def test_constant_field():
+    """Test const fields."""
+    ob = FieldTest()
 
-    def test_internal_field(self):
-        """Test internal fields."""
+    assert FieldTest.ConstField == 0
+    assert ob.ConstField == 0
 
-        with self.assertRaises(AttributeError):
-            _ = FieldTest().InternalField
+    with pytest.raises(TypeError):
+        FieldTest().ConstField = 1
 
-        with self.assertRaises(AttributeError):
-            _ = FieldTest().InternalStaticField
+    with pytest.raises(TypeError):
+        FieldTest.ConstField = 1
 
-        with self.assertRaises(AttributeError):
-            _ = FieldTest.InternalStaticField
+    with pytest.raises(TypeError):
+        del FieldTest().ConstField
 
-    def test_private_field(self):
-        """Test private fields."""
+    with pytest.raises(TypeError):
+        del FieldTest.ConstField
 
-        with self.assertRaises(AttributeError):
-            _ = FieldTest().PrivateField
 
-        with self.assertRaises(AttributeError):
-            _ = FieldTest().PrivateStaticField
+def test_internal_field():
+    """Test internal fields."""
 
-        with self.assertRaises(AttributeError):
-            _ = FieldTest.PrivateStaticField
+    with pytest.raises(AttributeError):
+        _ = FieldTest().InternalField
 
-    def test_field_descriptor_get_set(self):
-        """Test field descriptor get / set."""
+    with pytest.raises(AttributeError):
+        _ = FieldTest().InternalStaticField
 
-        # This test ensures that setting an attribute implemented with
-        # a descriptor actually goes through the descriptor (rather than
-        # silently replacing the descriptor in the instance or type dict.
+    with pytest.raises(AttributeError):
+        _ = FieldTest.InternalStaticField
 
-        ob = FieldTest()
 
-        self.assertTrue(FieldTest.PublicStaticField == 0)
-        self.assertTrue(ob.PublicStaticField == 0)
+def test_private_field():
+    """Test private fields."""
 
-        descriptor = FieldTest.__dict__['PublicStaticField']
-        self.assertTrue(type(descriptor) != int)
+    with pytest.raises(AttributeError):
+        _ = FieldTest().PrivateField
 
-        ob.PublicStaticField = 0
-        descriptor = FieldTest.__dict__['PublicStaticField']
-        self.assertTrue(type(descriptor) != int)
+    with pytest.raises(AttributeError):
+        _ = FieldTest().PrivateStaticField
 
-        FieldTest.PublicStaticField = 0
-        descriptor = FieldTest.__dict__['PublicStaticField']
-        self.assertTrue(type(descriptor) != int)
+    with pytest.raises(AttributeError):
+        _ = FieldTest.PrivateStaticField
 
-    def test_field_descriptor_wrong_type(self):
-        """Test setting a field using a value of the wrong type."""
 
-        with self.assertRaises(TypeError):
-            FieldTest().PublicField = "spam"
+def test_field_descriptor_get_set():
+    """Test field descriptor get / set."""
 
-    def test_field_descriptor_abuse(self):
-        """Test field descriptor abuse."""
-        desc = FieldTest.__dict__['PublicField']
+    # This test ensures that setting an attribute implemented with
+    # a descriptor actually goes through the descriptor (rather than
+    # silently replacing the descriptor in the instance or type dict.
 
-        with self.assertRaises(TypeError):
-            desc.__get__(0, 0)
+    ob = FieldTest()
 
-        with self.assertRaises(TypeError):
-            desc.__set__(0, 0)
+    assert FieldTest.PublicStaticField == 0
+    assert ob.PublicStaticField == 0
 
-    def test_boolean_field(self):
-        """Test boolean fields."""
-        # change this to true / false later for Python 2.3?
-        ob = FieldTest()
-        self.assertTrue(ob.BooleanField is False)
+    descriptor = FieldTest.__dict__['PublicStaticField']
+    assert type(descriptor) != int
 
-        ob.BooleanField = True
-        self.assertTrue(ob.BooleanField is True)
+    ob.PublicStaticField = 0
+    descriptor = FieldTest.__dict__['PublicStaticField']
+    assert type(descriptor) != int
 
-        ob.BooleanField = False
-        self.assertTrue(ob.BooleanField is False)
+    FieldTest.PublicStaticField = 0
+    descriptor = FieldTest.__dict__['PublicStaticField']
+    assert type(descriptor) != int
 
-        ob.BooleanField = 1
-        self.assertTrue(ob.BooleanField is True)
 
-        ob.BooleanField = 0
-        self.assertTrue(ob.BooleanField is False)
+def test_field_descriptor_wrong_type():
+    """Test setting a field using a value of the wrong type."""
 
-    def test_sbyte_field(self):
-        """Test sbyte fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.SByteField == 0)
+    with pytest.raises(TypeError):
+        FieldTest().PublicField = "spam"
 
-        ob.SByteField = 1
-        self.assertTrue(ob.SByteField == 1)
 
-    def test_byte_field(self):
-        """Test byte fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.ByteField == 0)
+def test_field_descriptor_abuse():
+    """Test field descriptor abuse."""
+    desc = FieldTest.__dict__['PublicField']
 
-        ob.ByteField = 1
-        self.assertTrue(ob.ByteField == 1)
+    with pytest.raises(TypeError):
+        desc.__get__(0, 0)
 
-    def test_char_field(self):
-        """Test char fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.CharField == u'A')
-        self.assertTrue(ob.CharField == 'A')
+    with pytest.raises(TypeError):
+        desc.__set__(0, 0)
 
-        ob.CharField = 'B'
-        self.assertTrue(ob.CharField == u'B')
-        self.assertTrue(ob.CharField == 'B')
 
-        ob.CharField = u'C'
-        self.assertTrue(ob.CharField == u'C')
-        self.assertTrue(ob.CharField == 'C')
+def test_boolean_field():
+    """Test boolean fields."""
+    # change this to true / false later for Python 2.3?
+    ob = FieldTest()
+    assert ob.BooleanField is False
 
-    def test_int16_field(self):
-        """Test int16 fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.Int16Field == 0)
+    ob.BooleanField = True
+    assert ob.BooleanField is True
 
-        ob.Int16Field = 1
-        self.assertTrue(ob.Int16Field == 1)
+    ob.BooleanField = False
+    assert ob.BooleanField is False
 
-    def test_int32_field(self):
-        """Test int32 fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.Int32Field == 0)
+    ob.BooleanField = 1
+    assert ob.BooleanField is True
 
-        ob.Int32Field = 1
-        self.assertTrue(ob.Int32Field == 1)
+    ob.BooleanField = 0
+    assert ob.BooleanField is False
 
-    def test_int64_field(self):
-        """Test int64 fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.Int64Field == 0)
 
-        ob.Int64Field = 1
-        self.assertTrue(ob.Int64Field == 1)
+def test_sbyte_field():
+    """Test sbyte fields."""
+    ob = FieldTest()
+    assert ob.SByteField == 0
 
-    def test_uint16_field(self):
-        """Test uint16 fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.UInt16Field == 0)
+    ob.SByteField = 1
+    assert ob.SByteField == 1
 
-        ob.UInt16Field = 1
-        self.assertTrue(ob.UInt16Field == 1)
 
-    def test_uint32_field(self):
-        """Test uint32 fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.UInt32Field == 0)
+def test_byte_field():
+    """Test byte fields."""
+    ob = FieldTest()
+    assert ob.ByteField == 0
 
-        ob.UInt32Field = 1
-        self.assertTrue(ob.UInt32Field == 1)
+    ob.ByteField = 1
+    assert ob.ByteField == 1
 
-    def test_uint64_field(self):
-        """Test uint64 fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.UInt64Field == 0)
 
-        ob.UInt64Field = 1
-        self.assertTrue(ob.UInt64Field == 1)
+def test_char_field():
+    """Test char fields."""
+    ob = FieldTest()
+    assert ob.CharField == u'A'
+    assert ob.CharField == 'A'
 
-    def test_single_field(self):
-        """Test single fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.SingleField == 0.0)
+    ob.CharField = 'B'
+    assert ob.CharField == u'B'
+    assert ob.CharField == 'B'
 
-        ob.SingleField = 1.1
-        self.assertTrue(ob.SingleField == 1.1)
+    ob.CharField = u'C'
+    assert ob.CharField == u'C'
+    assert ob.CharField == 'C'
 
-    def test_double_field(self):
-        """Test double fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.DoubleField == 0.0)
 
-        ob.DoubleField = 1.1
-        self.assertTrue(ob.DoubleField == 1.1)
+def test_int16_field():
+    """Test int16 fields."""
+    ob = FieldTest()
+    assert ob.Int16Field == 0
 
-    def test_decimal_field(self):
-        """Test decimal fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.DecimalField == System.Decimal(0))
+    ob.Int16Field = 1
+    assert ob.Int16Field == 1
 
-        ob.DecimalField = System.Decimal(1)
-        self.assertTrue(ob.DecimalField == System.Decimal(1))
 
-    def test_string_field(self):
-        """Test string fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.StringField == "spam")
+def test_int32_field():
+    """Test int32 fields."""
+    ob = FieldTest()
+    assert ob.Int32Field == 0
 
-        ob.StringField = "eggs"
-        self.assertTrue(ob.StringField == "eggs")
+    ob.Int32Field = 1
+    assert ob.Int32Field == 1
 
-    def test_interface_field(self):
-        """Test interface fields."""
-        from Python.Test import Spam, ISpam
 
-        ob = FieldTest()
+def test_int64_field():
+    """Test int64 fields."""
+    ob = FieldTest()
+    assert ob.Int64Field == 0
 
-        self.assertTrue(ISpam(ob.SpamField).GetValue() == "spam")
-        self.assertTrue(ob.SpamField.GetValue() == "spam")
+    ob.Int64Field = 1
+    assert ob.Int64Field == 1
 
-        ob.SpamField = Spam("eggs")
-        self.assertTrue(ISpam(ob.SpamField).GetValue() == "eggs")
-        self.assertTrue(ob.SpamField.GetValue() == "eggs")
 
-    def test_object_field(self):
-        """Test ob fields."""
-        ob = FieldTest()
-        self.assertTrue(ob.ObjectField is None)
+def test_uint16_field():
+    """Test uint16 fields."""
+    ob = FieldTest()
+    assert ob.UInt16Field == 0
 
-        ob.ObjectField = System.String("spam")
-        self.assertTrue(ob.ObjectField == "spam")
+    ob.UInt16Field = 1
+    assert ob.UInt16Field == 1
 
-        ob.ObjectField = System.Int32(1)
-        self.assertTrue(ob.ObjectField == 1)
 
-        ob.ObjectField = None
-        self.assertTrue(ob.ObjectField is None)
+def test_uint32_field():
+    """Test uint32 fields."""
+    ob = FieldTest()
+    assert ob.UInt32Field == 0
 
-    def test_enum_field(self):
-        """Test enum fields."""
-        from Python.Test import ShortEnum
+    ob.UInt32Field = 1
+    assert ob.UInt32Field == 1
 
-        ob = FieldTest()
-        self.assertTrue(ob.EnumField == ShortEnum.Zero)
 
-        ob.EnumField = ShortEnum.One
-        self.assertTrue(ob.EnumField == ShortEnum.One)
+def test_uint64_field():
+    """Test uint64 fields."""
+    ob = FieldTest()
+    assert ob.UInt64Field == 0
 
-    def test_nullable_field(self):
-        """Test nullable fields."""
-        ob = FieldTest()
+    ob.UInt64Field = 1
+    assert ob.UInt64Field == 1
 
-        ob.StringField = None
-        self.assertTrue(ob.StringField is None)
 
-        ob.ObjectField = None
-        self.assertTrue(ob.ObjectField is None)
+def test_single_field():
+    """Test single fields."""
+    ob = FieldTest()
+    assert ob.SingleField == 0.0
 
-        ob.SpamField = None
-        self.assertTrue(ob.SpamField is None)
+    ob.SingleField = 1.1
+    assert ob.SingleField == 1.1
 
-        # Primitive types and enums should not be set to null.
 
-        with self.assertRaises(TypeError):
-            FieldTest().Int32Field = None
+def test_double_field():
+    """Test double fields."""
+    ob = FieldTest()
+    assert ob.DoubleField == 0.0
 
-        with self.assertRaises(TypeError):
-            FieldTest().EnumField = None
+    ob.DoubleField = 1.1
+    assert ob.DoubleField == 1.1
 
 
-def test_suite():
-    return unittest.makeSuite(FieldTests)
+def test_decimal_field():
+    """Test decimal fields."""
+    ob = FieldTest()
+    assert ob.DecimalField == System.Decimal(0)
+
+    ob.DecimalField = System.Decimal(1)
+    assert ob.DecimalField == System.Decimal(1)
+
+
+def test_string_field():
+    """Test string fields."""
+    ob = FieldTest()
+    assert ob.StringField == "spam"
+
+    ob.StringField = "eggs"
+    assert ob.StringField == "eggs"
+
+
+def test_interface_field():
+    """Test interface fields."""
+    from Python.Test import Spam, ISpam
+
+    ob = FieldTest()
+
+    assert ISpam(ob.SpamField).GetValue() == "spam"
+    assert ob.SpamField.GetValue() == "spam"
+
+    ob.SpamField = Spam("eggs")
+    assert ISpam(ob.SpamField).GetValue() == "eggs"
+    assert ob.SpamField.GetValue() == "eggs"
+
+
+def test_object_field():
+    """Test ob fields."""
+    ob = FieldTest()
+    assert ob.ObjectField is None
+
+    ob.ObjectField = System.String("spam")
+    assert ob.ObjectField == "spam"
+
+    ob.ObjectField = System.Int32(1)
+    assert ob.ObjectField == 1
+
+    ob.ObjectField = None
+    assert ob.ObjectField is None
+
+
+def test_enum_field():
+    """Test enum fields."""
+    from Python.Test import ShortEnum
+
+    ob = FieldTest()
+    assert ob.EnumField == ShortEnum.Zero
+
+    ob.EnumField = ShortEnum.One
+    assert ob.EnumField == ShortEnum.One
+
+
+def test_nullable_field():
+    """Test nullable fields."""
+    ob = FieldTest()
+
+    ob.StringField = None
+    assert ob.StringField is None
+
+    ob.ObjectField = None
+    assert ob.ObjectField is None
+
+    ob.SpamField = None
+    assert ob.SpamField is None
+
+    # Primitive types and enums should not be set to null.
+
+    with pytest.raises(TypeError):
+        FieldTest().Int32Field = None
+
+    with pytest.raises(TypeError):
+        FieldTest().EnumField = None

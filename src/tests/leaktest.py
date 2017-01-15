@@ -10,10 +10,10 @@ import sys
 
 import System
 
-from _compat import range
-from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
-                   HelloClass, StaticMethodHandler, VarCallableHandler,
-                   VariableArgsHandler, hello_func)
+from ._compat import range
+from .utils import (CallableHandler, ClassMethodHandler, GenericHandler,
+                    HelloClass, StaticMethodHandler, VarCallableHandler,
+                    VariableArgsHandler, hello_func)
 
 
 class LeakTest(object):
