@@ -372,11 +372,3 @@ class ExceptionTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(ExceptionTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

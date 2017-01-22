@@ -179,11 +179,3 @@ class PropertyTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(PropertyTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

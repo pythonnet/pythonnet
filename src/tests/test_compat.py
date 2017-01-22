@@ -159,9 +159,6 @@ class CompatibilityTests(unittest.TestCase):
 
     def testFromModuleImportStar(self):
         """Test from module import * behavior."""
-        import clr
-        clr.AddReference("System.Management")
-
         count = len(locals().keys())
         m = __import__('CLR.System.Management', globals(), locals(), ['*'])
         self.assertTrue(m.__name__ == 'System.Management')
@@ -262,17 +259,3 @@ class CompatibilityTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(CompatibilityTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    try:
-        import System
-    except ImportError:
-        print("Load clr import hook")
-        import clr
-
-    main()

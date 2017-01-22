@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import clr
 import types
 import unittest
 
@@ -280,11 +279,3 @@ class NewStyleClass(object):
 
 def test_suite():
     return unittest.makeSuite(ClassTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

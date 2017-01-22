@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import clr
-
-clr.AddReference('Python.Test')
 
 from Python.Test import DocWithCtorTest, DocWithoutCtorTest, DocWithCtorNoDocTest
 
@@ -29,11 +26,3 @@ class DocStringTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(DocStringTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

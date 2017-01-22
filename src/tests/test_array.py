@@ -1480,11 +1480,3 @@ class ArrayTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(ArrayTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()
