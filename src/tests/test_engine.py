@@ -11,19 +11,19 @@ from Python.Runtime import PythonEngine
 class EngineTests(unittest.TestCase):
     """Test PythonEngine embedding APIs."""
 
-    def testMultipleCallsToInitialize(self):
+    def test_multiple_calls_to_initialize(self):
         """Test that multiple initialize calls are harmless."""
         PythonEngine.Initialize()
         PythonEngine.Initialize()
         PythonEngine.Initialize()
 
-    def testImportModule(self):
+    def test_import_module(self):
         """Test module import."""
         m = PythonEngine.ImportModule("sys")
         n = m.GetAttr("__name__")
         self.assertTrue(n.AsManagedObject(System.String) == "sys")
 
-    def testRunString(self):
+    def test_run_string(self):
         """Test the RunString method."""
         PythonEngine.AcquireLock()
 

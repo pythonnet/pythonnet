@@ -21,17 +21,17 @@ class NewStyleClass(object):
 class ClassTests(unittest.TestCase):
     """Test CLR class support."""
 
-    def testBasicReferenceType(self):
+    def test_basic_reference_type(self):
         """Test usage of CLR defined reference types."""
         String = System.String
         self.assertEquals(String.Empty, "")
 
-    def testBasicValueType(self):
+    def test_basic_value_type(self):
         """Test usage of CLR defined value types."""
         Int32 = System.Int32
         self.assertEquals(Int32.MaxValue, 2147483647)
 
-    def testClassStandardAttrs(self):
+    def test_class_standard_attrs(self):
         """Test standard class attributes."""
         from Python.Test import ClassTest
 
@@ -40,24 +40,24 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
         self.assertTrue(len(ClassTest.__doc__) > 0)
 
-    def testClassDocstrings(self):
+    def test_class_docstrings(self):
         """Test standard class docstring generation"""
         from Python.Test import ClassTest
 
         value = 'Void .ctor()'
         self.assertTrue(ClassTest.__doc__ == value)
 
-    def testClassDefaultStr(self):
+    def test_class_default_str(self):
         """Test the default __str__ implementation for managed objects."""
         s = System.String("this is a test")
         self.assertTrue(str(s) == "this is a test")
 
-    def testClassDefaultRepr(self):
+    def test_class_default_repr(self):
         """Test the default __repr__ implementation for managed objects."""
         s = System.String("this is a test")
         self.assertTrue(repr(s).startswith("<System.String object"))
 
-    def testNonPublicClass(self):
+    def test_non_public_class(self):
         """Test that non-public classes are inaccessible."""
 
         def test():
@@ -70,7 +70,7 @@ class ClassTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testBasicSubclass(self):
+    def test_basic_subclass(self):
         """Test basic subclass of a managed class."""
         from System.Collections import Hashtable
 
@@ -95,7 +95,7 @@ class ClassTests(unittest.TestCase):
 
         MyTable = None
 
-    def testSubclassWithNoArgConstructor(self):
+    def test_subclass_with_no_arg_constructor(self):
         """Test subclass of a managed class with a no-arg constructor."""
         from Python.Test import ClassCtorTest1
 
@@ -106,7 +106,7 @@ class ClassTests(unittest.TestCase):
         # This failed in earlier versions
         inst = SubClass('test')
 
-    def testSubclassWithVariousConstructors(self):
+    def test_subclass_with_various_constructors(self):
         """Test subclass of a managed class with various constructors."""
         from Python.Test import ClassCtorTest2
 
@@ -126,7 +126,7 @@ class ClassTests(unittest.TestCase):
         inst = SubClass2('test')
         self.assertTrue(inst.value == 'test')
 
-    def testStructConstruction(self):
+    def test_struct_construction(self):
         """Test construction of structs."""
         from System.Drawing import Point
 
@@ -151,7 +151,7 @@ class ClassTests(unittest.TestCase):
     # test
 
 
-    def testIEnumerableIteration(self):
+    def test_ienumerable_iteration(self):
         """Test iteration over objects supporting IEnumerable."""
         from Python.Test import ClassTest
 
@@ -166,7 +166,7 @@ class ClassTests(unittest.TestCase):
             cname = item.__class__.__name__
             self.assertTrue(cname.endswith('DictionaryEntry'))
 
-    def testIEnumeratorIteration(self):
+    def test_ienumerator_iteration(self):
         """Test iteration over objects supporting IEnumerator."""
         from Python.Test import ClassTest
 
@@ -175,7 +175,7 @@ class ClassTests(unittest.TestCase):
         for item in chars:
             self.assertTrue(item in 'test string')
 
-    def testOverrideGetItem(self):
+    def test_override_get_item(self):
         """Test managed subclass overriding __getitem__."""
         from System.Collections import Hashtable
 
@@ -195,7 +195,7 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(table.Count == 3)
 
-    def testOverrideSetItem(self):
+    def test_override_set_item(self):
         """Test managed subclass overriding __setitem__."""
         from System.Collections import Hashtable
 
@@ -215,7 +215,7 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(table.Count == 3)
 
-    def testAddAndRemoveClassAttribute(self):
+    def test_add_and_remove_class_attribute(self):
         from System import TimeSpan
 
         for _ in range(100):
@@ -225,7 +225,7 @@ class ClassTests(unittest.TestCase):
             del TimeSpan.new_method
             self.assertFalse(hasattr(ts, "new_method"))
 
-    def testComparisons(self):
+    def test_comparisons(self):
         from System import DateTimeOffset
         from Python.Test import ClassTest
 
@@ -264,7 +264,7 @@ class ClassTests(unittest.TestCase):
         c2 = ClassTest()
         self.assertRaises(TypeError, lambda: c1 < c2)
 
-    def testSelfCallback(self):
+    def test_self_callback(self):
         """Test calling back and forth between this and a c# baseclass."""
 
         class CallbackUser(Test.SelfCallbackTest):

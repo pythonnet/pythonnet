@@ -10,7 +10,7 @@ def simpleDefaultArg(arg='test'):
 class CallbackTests(unittest.TestCase):
     """Test that callbacks from C# into python work."""
 
-    def testDefaultForNull(self):
+    def test_default_for_null(self):
         """Test that C# can use null for an optional python argument"""
         from Python.Test import CallbackTest
 
@@ -19,7 +19,7 @@ class CallbackTests(unittest.TestCase):
         pythonRetVal = simpleDefaultArg(None)
         self.assertEquals(retVal, pythonRetVal)
 
-    def testDefaultForNone(self):
+    def test_default_for_none(self):
         """Test that C# can use no argument for an optional python argument"""
         from Python.Test import CallbackTest
 

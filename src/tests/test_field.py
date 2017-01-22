@@ -9,7 +9,7 @@ from Python.Test import FieldTest
 class FieldTests(unittest.TestCase):
     """Test CLR field support."""
 
-    def testPublicInstanceField(self):
+    def test_public_instance_field(self):
         """Test public instance fields."""
         ob = FieldTest()
         self.assertTrue(ob.PublicField == 0)
@@ -22,7 +22,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testPublicStaticField(self):
+    def test_public_static_field(self):
         """Test public static fields."""
         ob = FieldTest()
         self.assertTrue(FieldTest.PublicStaticField == 0)
@@ -44,7 +44,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testProtectedInstanceField(self):
+    def test_protected_instance_field(self):
         """Test protected instance fields."""
         ob = FieldTest()
         self.assertTrue(ob.ProtectedField == 0)
@@ -57,7 +57,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testProtectedStaticField(self):
+    def test_protected_static_field(self):
         """Test protected static fields."""
         ob = FieldTest()
         self.assertTrue(FieldTest.ProtectedStaticField == 0)
@@ -79,7 +79,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testReadOnlyInstanceField(self):
+    def test_read_only_instance_field(self):
         """Test readonly instance fields."""
         self.assertTrue(FieldTest().ReadOnlyField == 0)
 
@@ -93,7 +93,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testReadOnlyStaticField(self):
+    def test_read_only_static_field(self):
         """Test readonly static fields."""
         ob = FieldTest()
 
@@ -120,7 +120,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testConstantField(self):
+    def test_constant_field(self):
         """Test const fields."""
         ob = FieldTest()
 
@@ -147,7 +147,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInternalField(self):
+    def test_internal_field(self):
         """Test internal fields."""
 
         def test():
@@ -165,7 +165,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPrivateField(self):
+    def test_private_field(self):
         """Test private fields."""
 
         def test():
@@ -183,7 +183,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testFieldDescriptorGetSet(self):
+    def test_field_descriptor_get_set(self):
         """Test field descriptor get / set."""
 
         # This test ensures that setting an attribute implemented with
@@ -206,7 +206,7 @@ class FieldTests(unittest.TestCase):
         descriptor = FieldTest.__dict__['PublicStaticField']
         self.assertTrue(type(descriptor) != int)
 
-    def testFieldDescriptorWrongType(self):
+    def test_field_descriptor_wrong_type(self):
         """Test setting a field using a value of the wrong type."""
 
         def test():
@@ -214,7 +214,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testFieldDescriptorAbuse(self):
+    def test_field_descriptor_abuse(self):
         """Test field descriptor abuse."""
         desc = FieldTest.__dict__['PublicField']
 
@@ -228,7 +228,7 @@ class FieldTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testBooleanField(self):
+    def test_boolean_field(self):
         """Test boolean fields."""
         # change this to true / false later for Python 2.3?
         ob = FieldTest()
@@ -246,7 +246,7 @@ class FieldTests(unittest.TestCase):
         ob.BooleanField = 0
         self.assertTrue(ob.BooleanField == False)
 
-    def testSByteField(self):
+    def test_sbyte_field(self):
         """Test sbyte fields."""
         ob = FieldTest()
         self.assertTrue(ob.SByteField == 0)
@@ -254,7 +254,7 @@ class FieldTests(unittest.TestCase):
         ob.SByteField = 1
         self.assertTrue(ob.SByteField == 1)
 
-    def testByteField(self):
+    def test_byte_field(self):
         """Test byte fields."""
         ob = FieldTest()
         self.assertTrue(ob.ByteField == 0)
@@ -262,7 +262,7 @@ class FieldTests(unittest.TestCase):
         ob.ByteField = 1
         self.assertTrue(ob.ByteField == 1)
 
-    def testCharField(self):
+    def test_char_field(self):
         """Test char fields."""
         ob = FieldTest()
         self.assertTrue(ob.CharField == u'A')
@@ -276,7 +276,7 @@ class FieldTests(unittest.TestCase):
         self.assertTrue(ob.CharField == u'C')
         self.assertTrue(ob.CharField == 'C')
 
-    def testInt16Field(self):
+    def test_int16_field(self):
         """Test int16 fields."""
         ob = FieldTest()
         self.assertTrue(ob.Int16Field == 0)
@@ -284,7 +284,7 @@ class FieldTests(unittest.TestCase):
         ob.Int16Field = 1
         self.assertTrue(ob.Int16Field == 1)
 
-    def testInt32Field(self):
+    def test_int32_field(self):
         """Test int32 fields."""
         ob = FieldTest()
         self.assertTrue(ob.Int32Field == 0)
@@ -292,7 +292,7 @@ class FieldTests(unittest.TestCase):
         ob.Int32Field = 1
         self.assertTrue(ob.Int32Field == 1)
 
-    def testInt64Field(self):
+    def test_int64_field(self):
         """Test int64 fields."""
         ob = FieldTest()
         self.assertTrue(ob.Int64Field == 0)
@@ -300,7 +300,7 @@ class FieldTests(unittest.TestCase):
         ob.Int64Field = 1
         self.assertTrue(ob.Int64Field == 1)
 
-    def testUInt16Field(self):
+    def test_uint16_field(self):
         """Test uint16 fields."""
         ob = FieldTest()
         self.assertTrue(ob.UInt16Field == 0)
@@ -308,7 +308,7 @@ class FieldTests(unittest.TestCase):
         ob.UInt16Field = 1
         self.assertTrue(ob.UInt16Field == 1)
 
-    def testUInt32Field(self):
+    def test_uint32_field(self):
         """Test uint32 fields."""
         ob = FieldTest()
         self.assertTrue(ob.UInt32Field == 0)
@@ -316,7 +316,7 @@ class FieldTests(unittest.TestCase):
         ob.UInt32Field = 1
         self.assertTrue(ob.UInt32Field == 1)
 
-    def testUInt64Field(self):
+    def test_uint64_field(self):
         """Test uint64 fields."""
         ob = FieldTest()
         self.assertTrue(ob.UInt64Field == 0)
@@ -324,7 +324,7 @@ class FieldTests(unittest.TestCase):
         ob.UInt64Field = 1
         self.assertTrue(ob.UInt64Field == 1)
 
-    def testSingleField(self):
+    def test_single_field(self):
         """Test single fields."""
         ob = FieldTest()
         self.assertTrue(ob.SingleField == 0.0)
@@ -332,7 +332,7 @@ class FieldTests(unittest.TestCase):
         ob.SingleField = 1.1
         self.assertTrue(ob.SingleField == 1.1)
 
-    def testDoubleField(self):
+    def test_double_field(self):
         """Test double fields."""
         ob = FieldTest()
         self.assertTrue(ob.DoubleField == 0.0)
@@ -340,7 +340,7 @@ class FieldTests(unittest.TestCase):
         ob.DoubleField = 1.1
         self.assertTrue(ob.DoubleField == 1.1)
 
-    def testDecimalField(self):
+    def test_decimal_field(self):
         """Test decimal fields."""
         ob = FieldTest()
         self.assertTrue(ob.DecimalField == System.Decimal(0))
@@ -348,7 +348,7 @@ class FieldTests(unittest.TestCase):
         ob.DecimalField = System.Decimal(1)
         self.assertTrue(ob.DecimalField == System.Decimal(1))
 
-    def testStringField(self):
+    def test_string_field(self):
         """Test string fields."""
         ob = FieldTest()
         self.assertTrue(ob.StringField == "spam")
@@ -356,7 +356,7 @@ class FieldTests(unittest.TestCase):
         ob.StringField = "eggs"
         self.assertTrue(ob.StringField == "eggs")
 
-    def testInterfaceField(self):
+    def test_interface_field(self):
         """Test interface fields."""
         from Python.Test import Spam, ISpam
 
@@ -369,7 +369,7 @@ class FieldTests(unittest.TestCase):
         self.assertTrue(ISpam(ob.SpamField).GetValue() == "eggs")
         self.assertTrue(ob.SpamField.GetValue() == "eggs")
 
-    def testObjectField(self):
+    def test_object_field(self):
         """Test ob fields."""
         ob = FieldTest()
         self.assertTrue(ob.ObjectField == None)
@@ -383,7 +383,7 @@ class FieldTests(unittest.TestCase):
         ob.ObjectField = None
         self.assertTrue(ob.ObjectField == None)
 
-    def testEnumField(self):
+    def test_enum_field(self):
         """Test enum fields."""
         from Python.Test import ShortEnum
 
@@ -393,7 +393,7 @@ class FieldTests(unittest.TestCase):
         ob.EnumField = ShortEnum.One
         self.assertTrue(ob.EnumField == ShortEnum.One)
 
-    def testNullableField(self):
+    def test_nullable_field(self):
         """Test nullable fields."""
         ob = FieldTest()
 

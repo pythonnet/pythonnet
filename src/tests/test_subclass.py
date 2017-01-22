@@ -69,7 +69,7 @@ class DerivedEventTest(IInterfaceTest):
 class SubClassTests(unittest.TestCase):
     """Test subclassing managed types"""
 
-    def testBaseClass(self):
+    def test_base_class(self):
         """Test base class managed type"""
         ob = SubClassTest()
         self.assertEqual(ob.foo(), "foo")
@@ -80,7 +80,7 @@ class SubClassTests(unittest.TestCase):
         self.assertEqual(list(ob.return_list()), ["a", "b", "c"])
         self.assertEqual(list(SubClassTest.test_list(ob)), ["a", "b", "c"])
 
-    def testInterface(self):
+    def test_interface(self):
         """Test python classes can derive from C# interfaces"""
         ob = InterfaceTestClass()
         self.assertEqual(ob.foo(), "InterfaceTestClass")
@@ -91,7 +91,7 @@ class SubClassTests(unittest.TestCase):
         x = TestFunctions.pass_through(ob)
         self.assertEqual(id(x), id(ob))
 
-    def testDerivedClass(self):
+    def test_derived_class(self):
         """Test python class derived from managed type"""
         ob = DerivedClass()
         self.assertEqual(ob.foo(), "DerivedClass")
@@ -107,7 +107,7 @@ class SubClassTests(unittest.TestCase):
         x = TestFunctions.pass_through(ob)
         self.assertEqual(id(x), id(ob))
 
-    def testCreateInstance(self):
+    def test_create_instance(self):
         """Test derived instances can be created from managed code"""
         ob = TestFunctions.create_instance(DerivedClass)
         self.assertEqual(ob.foo(), "DerivedClass")
@@ -128,7 +128,7 @@ class SubClassTests(unittest.TestCase):
         y = TestFunctions.pass_through(ob2)
         self.assertEqual(id(y), id(ob2))
 
-    def testEvents(self):
+    def test_events(self):
         class EventHandler(object):
             def handler(self, x, args):
                 self.value = args.value

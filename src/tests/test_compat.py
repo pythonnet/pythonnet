@@ -12,7 +12,7 @@ class CompatibilityTests(unittest.TestCase):
 
     # Tests for old-style CLR-prefixed module naming.
 
-    def testSimpleImport(self):
+    def test_simple_import(self):
         """Test simple import."""
         import CLR
         self.assertTrue(isCLRRootModule(CLR))
@@ -32,7 +32,7 @@ class CompatibilityTests(unittest.TestCase):
             self.assertTrue(type(httplib) == types.ModuleType)
             self.assertTrue(httplib.__name__ == 'httplib')
 
-    def testSimpleImportWithAlias(self):
+    def test_simple_import_with_alias(self):
         """Test simple import with aliasing."""
         import CLR as myCLR
         self.assertTrue(isCLRRootModule(myCLR))
@@ -52,7 +52,7 @@ class CompatibilityTests(unittest.TestCase):
             self.assertTrue(type(myHttplib) == types.ModuleType)
             self.assertTrue(myHttplib.__name__ == 'httplib')
 
-    def testDottedNameImport(self):
+    def test_dotted_name_import(self):
         """Test dotted-name import."""
         import CLR.System
         self.assertTrue(isCLRModule(CLR.System))
@@ -68,7 +68,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(xml.dom) == types.ModuleType)
         self.assertTrue(xml.dom.__name__ == 'xml.dom')
 
-    def testDottedNameImportWithAlias(self):
+    def test_dotted_name_import_with_alias(self):
         """Test dotted-name import with aliasing."""
         import CLR.System as myCLRSystem
         self.assertTrue(isCLRModule(myCLRSystem))
@@ -84,7 +84,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(myDom) == types.ModuleType)
         self.assertTrue(myDom.__name__ == 'xml.dom')
 
-    def testSimpleImportFrom(self):
+    def test_simple_import_from(self):
         """Test simple 'import from'."""
         from CLR import System
         self.assertTrue(isCLRModule(System))
@@ -94,7 +94,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(dom) == types.ModuleType)
         self.assertTrue(dom.__name__ == 'xml.dom')
 
-    def testSimpleImportFromWithAlias(self):
+    def test_simple_import_from_with_alias(self):
         """Test simple 'import from' with aliasing."""
         from CLR import System as mySystem
         self.assertTrue(isCLRModule(mySystem))
@@ -104,7 +104,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(myDom) == types.ModuleType)
         self.assertTrue(myDom.__name__ == 'xml.dom')
 
-    def testDottedNameImportFrom(self):
+    def test_dotted_name_import_from(self):
         """Test dotted-name 'import from'."""
         from CLR.System import Xml
         self.assertTrue(isCLRModule(Xml))
@@ -122,7 +122,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(PullDOM) == ClassType)
         self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
-    def testDottedNameImportFromWithAlias(self):
+    def test_dotted_name_import_from_with_alias(self):
         """Test dotted-name 'import from' with aliasing."""
         from CLR.System import Xml as myXml
         self.assertTrue(isCLRModule(myXml))
@@ -140,7 +140,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(myPullDOM) == ClassType)
         self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
-    def testFromModuleImportStar(self):
+    def test_from_module_import_star(self):
         """Test from module import * behavior."""
         count = len(locals().keys())
         m = __import__('CLR.System.Management', globals(), locals(), ['*'])
@@ -155,7 +155,7 @@ class CompatibilityTests(unittest.TestCase):
 
         self.assertTrue(m is m2)
 
-    def testExplicitAssemblyLoad(self):
+    def test_explicit_assembly_load(self):
         """Test explicit assembly loading using standard CLR tools."""
         from CLR.System.Reflection import Assembly
         from CLR import System
@@ -170,7 +170,7 @@ class CompatibilityTests(unittest.TestCase):
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
         self.assertTrue(assembly == None)
 
-    def testImplicitLoadAlreadyValidNamespace(self):
+    def test_implicit_load_already_valid_namespace(self):
         """Test implicit assembly load over an already valid namespace."""
         # In this case, the mscorlib assembly (loaded by default) defines
         # a number of types in the System namespace. There is also a System
@@ -181,7 +181,7 @@ class CompatibilityTests(unittest.TestCase):
         import CLR.System
         self.assertTrue(isCLRClass(CLR.System.UriBuilder))
 
-    def testImportNonExistantModule(self):
+    def test_import_non_existant_module(self):
         """Test import failure for a non-existant module."""
 
         def test():
@@ -193,13 +193,13 @@ class CompatibilityTests(unittest.TestCase):
         self.assertRaises(ImportError, test)
         self.assertRaises(ImportError, testclr)
 
-    def testLookupNoNamespaceType(self):
+    def test_lookup_no_namespace_type(self):
         """Test lookup of types without a qualified namespace."""
         import CLR.Python.Test
         import CLR
         self.assertTrue(isCLRClass(CLR.NoNamespaceType))
 
-    def testModuleLookupRecursion(self):
+    def test_module_lookup_recursion(self):
         """Test for recursive lookup handling."""
 
         def test1():
@@ -213,7 +213,7 @@ class CompatibilityTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test2)
 
-    def testModuleGetAttr(self):
+    def test_module_get_attr(self):
         """Test module getattr behavior."""
         import CLR.System as System
 
@@ -233,7 +233,7 @@ class CompatibilityTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def test000MultipleImports(self):
+    def test000_multiple_imports(self):
         # import CLR did raise a Seg Fault once
         # test if the Exceptions.warn() method still causes it
         for n in range(100):

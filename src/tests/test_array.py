@@ -11,7 +11,7 @@ from _compat import PY2, UserList, long, range, unichr
 class ArrayTests(unittest.TestCase):
     """Test support for managed arrays."""
 
-    def testPublicArray(self):
+    def test_public_array(self):
         """Test public arrays."""
         ob = Test.PublicArrayTest()
         items = ob.items
@@ -33,7 +33,7 @@ class ArrayTests(unittest.TestCase):
         items[-1] = 4
         self.assertTrue(items[-1] == 4)
 
-    def testProtectedArray(self):
+    def test_protected_array(self):
         """Test protected arrays."""
         ob = Test.ProtectedArrayTest()
         items = ob.items
@@ -55,7 +55,7 @@ class ArrayTests(unittest.TestCase):
         items[-1] = 4
         self.assertTrue(items[-1] == 4)
 
-    def testInternalArray(self):
+    def test_internal_array(self):
         """Test internal arrays."""
 
         def test():
@@ -64,7 +64,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPrivateArray(self):
+    def test_private_array(self):
         """Test private arrays."""
 
         def test():
@@ -73,7 +73,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testArrayBoundsChecking(self):
+    def test_array_bounds_checking(self):
         """Test array bounds checking."""
 
         ob = Test.Int32ArrayTest()
@@ -115,7 +115,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(IndexError, test)
 
-    def testArrayContains(self):
+    def test_array_contains(self):
         """Test array support for __contains__."""
 
         ob = Test.Int32ArrayTest()
@@ -132,7 +132,7 @@ class ArrayTests(unittest.TestCase):
         self.assertFalse(None in items)  # which threw ^ here which is a little odd.
         # But when run from runtests.py. Not when this module ran by itself.
 
-    def testBooleanArray(self):
+    def test_boolean_array(self):
         """Test boolean arrays."""
         ob = Test.BooleanArrayTest()
         items = ob.items
@@ -163,7 +163,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testByteArray(self):
+    def test_byte_array(self):
         """Test byte arrays."""
         ob = Test.ByteArrayTest()
         items = ob.items
@@ -212,7 +212,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testSByteArray(self):
+    def test_sbyte_array(self):
         """Test sbyte arrays."""
         ob = Test.SByteArrayTest()
         items = ob.items
@@ -261,7 +261,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testCharArray(self):
+    def test_char_array(self):
         """Test char arrays."""
         ob = Test.CharArrayTest()
         items = ob.items
@@ -298,7 +298,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInt16Array(self):
+    def test_int16_array(self):
         """Test Int16 arrays."""
         ob = Test.Int16ArrayTest()
         items = ob.items
@@ -347,7 +347,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInt32Array(self):
+    def test_int32_array(self):
         """Test Int32 arrays."""
         ob = Test.Int32ArrayTest()
         items = ob.items
@@ -396,7 +396,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInt64Array(self):
+    def test_int64_array(self):
         """Test Int64 arrays."""
         ob = Test.Int64ArrayTest()
         items = ob.items
@@ -445,7 +445,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testUInt16Array(self):
+    def test_uint16_array(self):
         """Test UInt16 arrays."""
         ob = Test.UInt16ArrayTest()
         items = ob.items
@@ -494,7 +494,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testUInt32Array(self):
+    def test_uint32_array(self):
         """Test UInt32 arrays."""
         ob = Test.UInt32ArrayTest()
         items = ob.items
@@ -543,7 +543,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testUInt64Array(self):
+    def test_uint64_array(self):
         """Test UInt64 arrays."""
         ob = Test.UInt64ArrayTest()
         items = ob.items
@@ -592,7 +592,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testSingleArray(self):
+    def test_single_array(self):
         """Test Single arrays."""
         ob = Test.SingleArrayTest()
         items = ob.items
@@ -629,7 +629,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testDoubleArray(self):
+    def test_double_array(self):
         """Test Double arrays."""
         ob = Test.DoubleArrayTest()
         items = ob.items
@@ -666,7 +666,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testDecimalArray(self):
+    def test_decimal_array(self):
         """Test Decimal arrays."""
         ob = Test.DecimalArrayTest()
         items = ob.items
@@ -704,7 +704,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testStringArray(self):
+    def test_string_array(self):
         """Test String arrays."""
         ob = Test.StringArrayTest()
         items = ob.items
@@ -738,7 +738,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testEnumArray(self):
+    def test_enum_array(self):
         """Test enum arrays."""
         from Python.Test import ShortEnum
         ob = Test.EnumArrayTest()
@@ -779,7 +779,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testObjectArray(self):
+    def test_object_array(self):
         """Test ob arrays."""
         from Python.Test import Spam
         ob = Test.ObjectArrayTest()
@@ -820,7 +820,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testNullArray(self):
+    def test_null_array(self):
         """Test null arrays."""
         ob = Test.NullArrayTest()
         items = ob.items
@@ -851,7 +851,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInterfaceArray(self):
+    def test_interface_array(self):
         """Test interface arrays."""
         from Python.Test import Spam
         ob = Test.InterfaceArrayTest()
@@ -895,7 +895,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testTypedArray(self):
+    def test_typed_array(self):
         """Test typed arrays."""
         from Python.Test import Spam
         ob = Test.TypedArrayTest()
@@ -939,7 +939,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testMultiDimensionalArray(self):
+    def test_multi_dimensional_array(self):
         """Test multi-dimensional arrays."""
         ob = Test.MultiDimensionalArrayTest()
         items = ob.items
@@ -1011,7 +1011,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testArrayIteration(self):
+    def test_array_iteration(self):
         """Test array iteration."""
         items = Test.Int32ArrayTest().items
 
@@ -1028,7 +1028,7 @@ class ArrayTests(unittest.TestCase):
         for i in empty:
             raise TypeError('iteration over empty array')
 
-    def testTupleArrayConversion(self):
+    def test_tuple_array_conversion(self):
         """Test conversion of tuples to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1042,7 +1042,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[0].__class__ == Spam)
         self.assertTrue(len(result) == 10)
 
-    def testTupleNestedArrayConversion(self):
+    def test_tuple_nested_array_conversion(self):
         """Test conversion of tuples to array-of-array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1061,7 +1061,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(len(result[0]) == 10)
         self.assertTrue(result[0][0].__class__ == Spam)
 
-    def testListArrayConversion(self):
+    def test_list_array_conversion(self):
         """Test conversion of lists to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1074,7 +1074,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[0].__class__ == Spam)
         self.assertTrue(len(result) == 10)
 
-    def testListNestedArrayConversion(self):
+    def test_list_nested_array_conversion(self):
         """Test conversion of lists to array-of-array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1092,7 +1092,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(len(result[0]) == 10)
         self.assertTrue(result[0][0].__class__ == Spam)
 
-    def testSequenceArrayConversion(self):
+    def test_sequence_array_conversion(self):
         """Test conversion of sequence-like obs to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1105,7 +1105,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[0].__class__ == Spam)
         self.assertTrue(len(result) == 10)
 
-    def testSequenceNestedArrayConversion(self):
+    def test_sequence_nested_array_conversion(self):
         """Test conversion of sequences to array-of-array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1123,7 +1123,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(len(result[0]) == 10)
         self.assertTrue(result[0][0].__class__ == Spam)
 
-    def testTupleArrayConversionTypeChecking(self):
+    def test_tuple_array_conversion_type_checking(self):
         """Test error handling for tuple conversion to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1159,7 +1159,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testListArrayConversionTypeChecking(self):
+    def test_list_array_conversion_type_checking(self):
         """Test error handling for list conversion to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1190,7 +1190,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testSequenceArrayConversionTypeChecking(self):
+    def test_sequence_array_conversion_type_checking(self):
         """Test error handling for sequence conversion to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1221,7 +1221,7 @@ class ArrayTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testMDArrayConversion(self):
+    def test_md_array_conversion(self):
         """Test passing of multi-dimensional array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
@@ -1245,7 +1245,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[0, 0].__class__ == Spam)
         self.assertTrue(result[0, 0].__class__ == Spam)
 
-    def testBoxedValueTypeMutationResult(self):
+    def test_boxed_value_type_mutation_result(self):
         """Test behavior of boxed value types."""
 
         # This test actually exists mostly as documentation of an important
@@ -1282,7 +1282,7 @@ class ArrayTests(unittest.TestCase):
             self.assertTrue(items[i].X == i + 1)
             self.assertTrue(items[i].Y == i + 1)
 
-    def testSpecialArrayCreation(self):
+    def test_special_array_creation(self):
         """Test using the Array[<type>] syntax for creating arrays."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from System import Array
@@ -1416,7 +1416,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(value[1].__class__ == inst.__class__)
         self.assertTrue(value.Length == 2)
 
-    def testArrayAbuse(self):
+    def test_array_abuse(self):
         """Test array abuse."""
         _class = Test.PublicArrayTest
         ob = Test.PublicArrayTest()

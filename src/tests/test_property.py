@@ -8,7 +8,7 @@ from Python.Test import PropertyTest
 class PropertyTests(unittest.TestCase):
     """Test CLR property support."""
 
-    def testPublicInstanceProperty(self):
+    def test_public_instance_property(self):
         """Test public instance properties."""
         ob = PropertyTest()
 
@@ -21,7 +21,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testPublicStaticProperty(self):
+    def test_public_static_property(self):
         """Test public static properties."""
         ob = PropertyTest()
 
@@ -43,7 +43,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testProtectedInstanceProperty(self):
+    def test_protected_instance_property(self):
         """Test protected instance properties."""
         ob = PropertyTest()
 
@@ -56,7 +56,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testProtectedStaticProperty(self):
+    def test_protected_static_property(self):
         """Test protected static properties."""
         ob = PropertyTest()
 
@@ -78,7 +78,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInternalProperty(self):
+    def test_internal_property(self):
         """Test internal properties."""
 
         def test():
@@ -96,7 +96,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPrivateProperty(self):
+    def test_private_property(self):
         """Test private properties."""
 
         def test():
@@ -114,7 +114,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPropertyDescriptorGetSet(self):
+    def test_property_descriptor_get_set(self):
         """Test property descriptor get / set."""
 
         # This test ensures that setting an attribute implemented with
@@ -137,7 +137,7 @@ class PropertyTests(unittest.TestCase):
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
         self.assertTrue(type(descriptor) != int)
 
-    def testPropertyDescriptorWrongType(self):
+    def test_property_descriptor_wrong_type(self):
         """Test setting a property using a value of the wrong type."""
 
         def test():
@@ -146,7 +146,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertTrue(TypeError, test)
 
-    def testPropertyDescriptorAbuse(self):
+    def test_property_descriptor_abuse(self):
         """Test property descriptor abuse."""
         desc = PropertyTest.__dict__['PublicProperty']
 
@@ -160,7 +160,7 @@ class PropertyTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInterfaceProperty(self):
+    def test_interface_property(self):
         """Test properties of interfaces. Added after a bug report
            that an IsAbstract check was inappropriate and prevented
            use of properties when only the interface is known."""
