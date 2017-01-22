@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import clr
 
 clr.AddReference('Python.Test')
@@ -5,7 +7,8 @@ clr.AddReference('Python.Test')
 from Python.Test import DelegateTest, PublicDelegate
 from Python.Test import StringDelegate, ObjectDelegate
 from Python.Test import BoolDelegate
-import sys, os, string, unittest, types
+import unittest
+import types
 import Python.Test as Test
 import System
 import six

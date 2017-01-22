@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from Python.Test import InterfaceTest
-import sys, os, string, unittest, types
+import unittest
+import types
 import Python.Test as Test
 import System
 import six

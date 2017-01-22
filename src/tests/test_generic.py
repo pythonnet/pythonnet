@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import clr
 
 clr.AddReference('Python.Test')
 
 from System.Collections.Generic import Dictionary, List
-import sys, os, string, unittest, types
+import unittest
 import Python.Test as Test
 import System
 import six

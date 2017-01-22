@@ -1,4 +1,7 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import unittest
+import types
 import six
 
 if six.PY3:

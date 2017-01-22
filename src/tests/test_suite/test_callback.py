@@ -1,14 +1,20 @@
-import unittest, sys
+# -*- coding: utf-8 -*-
+
+import unittest
+import sys
 import clr
 
 this_module = sys.modules[__name__]
 clr.AddReference("Python.Test")
 import Python.Test as Test
 from Python.Test import CallbackTest
+
 test_instance = CallbackTest()
 
-def simpleDefaultArg(arg = 'test'):
+
+def simpleDefaultArg(arg='test'):
     return arg
+
 
 class CallbackTests(unittest.TestCase):
     """Test that callbacks from C# into python work."""
@@ -25,6 +31,6 @@ class CallbackTests(unittest.TestCase):
         pythonRetVal = simpleDefaultArg()
         self.assertEquals(retVal, pythonRetVal)
 
+
 def test_suite():
     return unittest.makeSuite(CallbackTests)
-

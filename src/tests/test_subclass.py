@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import clr
 
 clr.AddReference('Python.Test')
 clr.AddReference('System')
 
-import sys, os, string, unittest, types
+import unittest
 from Python.Test import TestFunctions, SubClassTest, IInterfaceTest, TestEventArgs
 from System.Collections.Generic import List
 from System import NotImplementedException

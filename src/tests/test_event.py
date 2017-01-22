@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import clr
 
 clr.AddReference('Python.Test')
 
-import sys, os, string, unittest, types
+import unittest
 from Python.Test import EventTest, TestEventHandler
 from Python.Test import TestEventArgs
 

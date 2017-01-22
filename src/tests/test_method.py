@@ -1,4 +1,6 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import unittest
 import clr
 
 clr.AddReference("Python.Test")
@@ -63,23 +65,23 @@ class MethodTests(unittest.TestCase):
 
     def testPublicInstanceMethod(self):
         """Test public instance method visibility."""
-        object = MethodTest();
+        object = MethodTest()
         self.assertTrue(object.PublicMethod() == "public")
 
     def testPublicStaticMethod(self):
         """Test public static method visibility."""
-        object = MethodTest();
+        object = MethodTest()
         self.assertTrue(MethodTest.PublicStaticMethod() == "public static")
         self.assertTrue(object.PublicStaticMethod() == "public static")
 
     def testProtectedInstanceMethod(self):
         """Test protected instance method visibility."""
-        object = MethodTest();
+        object = MethodTest()
         self.assertTrue(object.ProtectedMethod() == "protected")
 
     def testProtectedStaticMethod(self):
         """Test protected static method visibility."""
-        object = MethodTest();
+        object = MethodTest()
         result = "protected static"
         self.assertTrue(MethodTest.ProtectedStaticMethod() == result)
         self.assertTrue(object.ProtectedStaticMethod() == result)
@@ -141,7 +143,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-        object = MethodTestSub();
+        object = MethodTestSub()
         self.assertTrue(MethodTestSub.PublicMethod(object) == "public")
         self.assertTrue(MethodTestSub.PublicMethod(object, "echo") == "echo")
 
@@ -162,7 +164,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-        object = MethodTestSub();
+        object = MethodTestSub()
         self.assertTrue(object.PublicMethod() == "public")
 
         self.assertTrue(object.PublicMethod("echo") == "echo")
@@ -761,14 +763,14 @@ class MethodTests(unittest.TestCase):
 
     def testWeCanBindToEncodingGetString(self):
         """Check that we can bind to the Encoding.GetString method with variables."""
-        
+
         from System.Text import Encoding
         from System.IO import MemoryStream
         myBytes = Encoding.UTF8.GetBytes('Some testing string')
         stream = MemoryStream()
         stream.Write(myBytes, 0, myBytes.Length)
         stream.Position = 0
-        
+
         buff = System.Array.CreateInstance(System.Byte, 3)
         buff.Initialize()
         data = []
