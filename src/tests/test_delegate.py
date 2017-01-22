@@ -8,6 +8,7 @@ import System
 from Python.Test import DelegateTest, StringDelegate
 
 from _compat import DictProxyType
+from utils import HelloClass, hello_func, MultipleHandler
 
 
 class DelegateTests(unittest.TestCase):
@@ -60,10 +61,7 @@ class DelegateTests(unittest.TestCase):
     def testDelegateFromFunction(self):
         """Test delegate implemented with a Python function."""
 
-        def sayhello():
-            return "hello"
-
-        d = StringDelegate(sayhello)
+        d = StringDelegate(hello_func)
         ob = DelegateTest()
 
         self.assertTrue(ob.CallStringDelegate(d) == "hello")
@@ -76,12 +74,8 @@ class DelegateTests(unittest.TestCase):
     def testDelegateFromMethod(self):
         """Test delegate implemented with a Python instance method."""
 
-        class Hello:
-            def sayhello(self):
-                return "hello"
-
-        inst = Hello()
-        d = StringDelegate(inst.sayhello)
+        inst = HelloClass()
+        d = StringDelegate(inst.hello)
         ob = DelegateTest()
 
         self.assertTrue(ob.CallStringDelegate(d) == "hello")
@@ -94,12 +88,8 @@ class DelegateTests(unittest.TestCase):
     def testDelegateFromUnboundMethod(self):
         """Test failure mode for unbound methods."""
 
-        class Hello:
-            def sayhello(self):
-                return "hello"
-
         def test():
-            d = StringDelegate(Hello.sayhello)
+            d = StringDelegate(HelloClass.hello)
             d()
 
         self.assertRaises(TypeError, test)
@@ -107,13 +97,7 @@ class DelegateTests(unittest.TestCase):
     def testDelegateFromStaticMethod(self):
         """Test delegate implemented with a Python static method."""
 
-        class Hello:
-            def sayhello():
-                return "hello"
-
-            sayhello = staticmethod(sayhello)
-
-        d = StringDelegate(Hello.sayhello)
+        d = StringDelegate(HelloClass.s_hello)
         ob = DelegateTest()
 
         self.assertTrue(ob.CallStringDelegate(d) == "hello")
@@ -123,8 +107,8 @@ class DelegateTests(unittest.TestCase):
         self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
         self.assertTrue(ob.stringDelegate() == "hello")
 
-        inst = Hello()
-        d = StringDelegate(inst.sayhello)
+        inst = HelloClass()
+        d = StringDelegate(inst.s_hello)
         ob = DelegateTest()
 
         self.assertTrue(ob.CallStringDelegate(d) == "hello")
@@ -137,13 +121,7 @@ class DelegateTests(unittest.TestCase):
     def testDelegateFromClassMethod(self):
         """Test delegate implemented with a Python class method."""
 
-        class Hello:
-            def sayhello(self):
-                return "hello"
-
-            sayhello = classmethod(sayhello)
-
-        d = StringDelegate(Hello.sayhello)
+        d = StringDelegate(HelloClass.c_hello)
         ob = DelegateTest()
 
         self.assertTrue(ob.CallStringDelegate(d) == "hello")
@@ -153,8 +131,8 @@ class DelegateTests(unittest.TestCase):
         self.assertTrue(ob.CallStringDelegate(ob.stringDelegate) == "hello")
         self.assertTrue(ob.stringDelegate() == "hello")
 
-        inst = Hello()
-        d = StringDelegate(inst.sayhello)
+        inst = HelloClass()
+        d = StringDelegate(inst.c_hello)
         ob = DelegateTest()
 
         self.assertTrue(ob.CallStringDelegate(d) == "hello")
@@ -167,11 +145,7 @@ class DelegateTests(unittest.TestCase):
     def testDelegateFromCallable(self):
         """Test delegate implemented with a Python callable object."""
 
-        class Hello:
-            def __call__(self):
-                return "hello"
-
-        inst = Hello()
+        inst = HelloClass()
         d = StringDelegate(inst)
         ob = DelegateTest()
 
@@ -208,11 +182,7 @@ class DelegateTests(unittest.TestCase):
 
     def testDelegateFromDelegate(self):
         """Test delegate implemented with another delegate."""
-
-        def sayhello():
-            return "hello"
-
-        d1 = StringDelegate(sayhello)
+        d1 = StringDelegate(hello_func)
         d2 = StringDelegate(d1)
         ob = DelegateTest()
 
@@ -244,15 +214,7 @@ class DelegateTests(unittest.TestCase):
     def testMulticastDelegate(self):
         """Test multicast delegates."""
 
-        class Multi:
-            def __init__(self):
-                self.value = 0
-
-            def count(self):
-                self.value += 1
-                return 'ok'
-
-        inst = Multi()
+        inst = MultipleHandler()
         d1 = StringDelegate(inst.count)
         d2 = StringDelegate(inst.count)
 

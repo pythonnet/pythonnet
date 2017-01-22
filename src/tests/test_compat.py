@@ -4,32 +4,18 @@ import types
 import unittest
 
 from _compat import ClassType, PY2, PY3, range
+from utils import isCLRClass, isCLRModule, isCLRRootModule
 
 
 class CompatibilityTests(unittest.TestCase):
-    """
-    Backward-compatibility tests for deprecated features.
-    """
-
-    def isCLRModule(self, object):
-        return type(object).__name__ == 'ModuleObject'
-
-    def isCLRRootModule(self, object):
-        if PY3:
-            # in Python 3 the clr module is a normal python module
-            return object.__name__ == "clr"
-        elif PY2:
-            return type(object).__name__ == 'CLRModule'
-
-    def isCLRClass(self, object):
-        return type(object).__name__ == 'CLR Metatype'  # for now
+    """Backward-compatibility tests for deprecated features."""
 
     # Tests for old-style CLR-prefixed module naming.
 
     def testSimpleImport(self):
         """Test simple import."""
         import CLR
-        self.assertTrue(self.isCLRRootModule(CLR))
+        self.assertTrue(isCLRRootModule(CLR))
         self.assertTrue(CLR.__name__ == 'clr')
 
         import sys
@@ -49,7 +35,7 @@ class CompatibilityTests(unittest.TestCase):
     def testSimpleImportWithAlias(self):
         """Test simple import with aliasing."""
         import CLR as myCLR
-        self.assertTrue(self.isCLRRootModule(myCLR))
+        self.assertTrue(isCLRRootModule(myCLR))
         self.assertTrue(myCLR.__name__ == 'clr')
 
         import sys as mySys
@@ -69,11 +55,11 @@ class CompatibilityTests(unittest.TestCase):
     def testDottedNameImport(self):
         """Test dotted-name import."""
         import CLR.System
-        self.assertTrue(self.isCLRModule(CLR.System))
+        self.assertTrue(isCLRModule(CLR.System))
         self.assertTrue(CLR.System.__name__ == 'System')
 
         import System
-        self.assertTrue(self.isCLRModule(System))
+        self.assertTrue(isCLRModule(System))
         self.assertTrue(System.__name__ == 'System')
 
         self.assertTrue(System is CLR.System)
@@ -85,11 +71,11 @@ class CompatibilityTests(unittest.TestCase):
     def testDottedNameImportWithAlias(self):
         """Test dotted-name import with aliasing."""
         import CLR.System as myCLRSystem
-        self.assertTrue(self.isCLRModule(myCLRSystem))
+        self.assertTrue(isCLRModule(myCLRSystem))
         self.assertTrue(myCLRSystem.__name__ == 'System')
 
         import System as mySystem
-        self.assertTrue(self.isCLRModule(mySystem))
+        self.assertTrue(isCLRModule(mySystem))
         self.assertTrue(mySystem.__name__ == 'System')
 
         self.assertTrue(mySystem is myCLRSystem)
@@ -101,7 +87,7 @@ class CompatibilityTests(unittest.TestCase):
     def testSimpleImportFrom(self):
         """Test simple 'import from'."""
         from CLR import System
-        self.assertTrue(self.isCLRModule(System))
+        self.assertTrue(isCLRModule(System))
         self.assertTrue(System.__name__ == 'System')
 
         from xml import dom
@@ -111,7 +97,7 @@ class CompatibilityTests(unittest.TestCase):
     def testSimpleImportFromWithAlias(self):
         """Test simple 'import from' with aliasing."""
         from CLR import System as mySystem
-        self.assertTrue(self.isCLRModule(mySystem))
+        self.assertTrue(isCLRModule(mySystem))
         self.assertTrue(mySystem.__name__ == 'System')
 
         from xml import dom as myDom
@@ -121,11 +107,11 @@ class CompatibilityTests(unittest.TestCase):
     def testDottedNameImportFrom(self):
         """Test dotted-name 'import from'."""
         from CLR.System import Xml
-        self.assertTrue(self.isCLRModule(Xml))
+        self.assertTrue(isCLRModule(Xml))
         self.assertTrue(Xml.__name__ == 'System.Xml')
 
         from CLR.System.Xml import XmlDocument
-        self.assertTrue(self.isCLRClass(XmlDocument))
+        self.assertTrue(isCLRClass(XmlDocument))
         self.assertTrue(XmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom
@@ -139,11 +125,11 @@ class CompatibilityTests(unittest.TestCase):
     def testDottedNameImportFromWithAlias(self):
         """Test dotted-name 'import from' with aliasing."""
         from CLR.System import Xml as myXml
-        self.assertTrue(self.isCLRModule(myXml))
+        self.assertTrue(isCLRModule(myXml))
         self.assertTrue(myXml.__name__ == 'System.Xml')
 
         from CLR.System.Xml import XmlDocument as myXmlDocument
-        self.assertTrue(self.isCLRClass(myXmlDocument))
+        self.assertTrue(isCLRClass(myXmlDocument))
         self.assertTrue(myXmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom as myPulldom
@@ -159,12 +145,12 @@ class CompatibilityTests(unittest.TestCase):
         count = len(locals().keys())
         m = __import__('CLR.System.Management', globals(), locals(), ['*'])
         self.assertTrue(m.__name__ == 'System.Management')
-        self.assertTrue(self.isCLRModule(m))
+        self.assertTrue(isCLRModule(m))
         self.assertTrue(len(locals().keys()) > count + 1)
 
         m2 = __import__('System.Management', globals(), locals(), ['*'])
         self.assertTrue(m2.__name__ == 'System.Management')
-        self.assertTrue(self.isCLRModule(m2))
+        self.assertTrue(isCLRModule(m2))
         self.assertTrue(len(locals().keys()) > count + 1)
 
         self.assertTrue(m is m2)
@@ -193,7 +179,7 @@ class CompatibilityTests(unittest.TestCase):
         # Python runtime to "do the right thing", allowing types from both
         # assemblies to be found in the CLR.System module implicitly.
         import CLR.System
-        self.assertTrue(self.isCLRClass(CLR.System.UriBuilder))
+        self.assertTrue(isCLRClass(CLR.System.UriBuilder))
 
     def testImportNonExistantModule(self):
         """Test import failure for a non-existant module."""
@@ -211,7 +197,7 @@ class CompatibilityTests(unittest.TestCase):
         """Test lookup of types without a qualified namespace."""
         import CLR.Python.Test
         import CLR
-        self.assertTrue(self.isCLRClass(CLR.NoNamespaceType))
+        self.assertTrue(isCLRClass(CLR.NoNamespaceType))
 
     def testModuleLookupRecursion(self):
         """Test for recursive lookup handling."""
@@ -232,10 +218,10 @@ class CompatibilityTests(unittest.TestCase):
         import CLR.System as System
 
         int_type = System.Int32
-        self.assertTrue(self.isCLRClass(int_type))
+        self.assertTrue(isCLRClass(int_type))
 
         module = System.Xml
-        self.assertTrue(self.isCLRModule(module))
+        self.assertTrue(isCLRModule(module))
 
         def test():
             spam = System.Spam

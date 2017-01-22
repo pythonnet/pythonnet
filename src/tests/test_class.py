@@ -8,6 +8,16 @@ import System
 from _compat import DictProxyType, range
 
 
+class ClassicClass:
+    def kind(self):
+        return 'classic'
+
+
+class NewStyleClass(object):
+    def kind(self):
+        return 'new-style'
+
+
 class ClassTests(unittest.TestCase):
     """Test CLR class support."""
 
@@ -271,16 +281,6 @@ class ClassTests(unittest.TestCase):
         testobj.DoCallback()
         self.assertTrue(testobj.PyCallbackWasCalled)
         self.assertTrue(testobj.SameReference)
-
-
-class ClassicClass:
-    def kind(self):
-        return 'classic'
-
-
-class NewStyleClass(object):
-    def kind(self):
-        return 'new-style'
 
 
 def test_suite():

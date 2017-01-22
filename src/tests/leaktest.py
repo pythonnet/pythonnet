@@ -6,10 +6,14 @@ from __future__ import print_function
 
 import clr
 import gc
+import sys
 
 import System
 
 from _compat import range
+from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
+                   HelloClass, StaticMethodHandler, VarCallableHandler,
+                   VariableArgsHandler, hello_func)
 
 
 class LeakTest(object):
@@ -53,7 +57,6 @@ class LeakTest(object):
         self.testDelegates()
 
     def report(self):
-        import sys, gc
         gc.collect()
         dicttype = type({})
         for item in gc.get_objects():
@@ -78,7 +81,6 @@ class LeakTest(object):
     def testClasses(self):
         from System.Collections import Hashtable
         from Python.Test import StringDelegate
-        from System import Int32
 
         self.notify("Running class leak check...")
 
@@ -91,7 +93,7 @@ class LeakTest(object):
             del x
 
             # Value type
-            x = Int32(99)
+            x = System.Int32(99)
             del x
 
             # Delegate type
@@ -101,7 +103,7 @@ class LeakTest(object):
         self.end_test()
 
     def testEnumerations(self):
-        from Python import Test
+        import Python.Test as Test
 
         self.notify("Running enum leak check...")
 
@@ -215,7 +217,6 @@ class LeakTest(object):
 
     def testDelegates(self):
         from Python.Test import DelegateTest, StringDelegate
-        import System
 
         self.notify("Running delegate leak check...")
 
@@ -324,92 +325,6 @@ class LeakTest(object):
             del md
 
         self.end_test()
-
-
-class GenericHandler(object):
-    """A generic handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def handler(self, sender, args):
-        self.value = args.value
-
-
-class VariableArgsHandler(object):
-    """A variable args handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def handler(self, *args):
-        ob, eventargs = args
-        self.value = eventargs.value
-
-
-class CallableHandler(object):
-    """A callable handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def __call__(self, sender, args):
-        self.value = args.value
-
-
-class VarCallableHandler(object):
-    """A variable args callable handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def __call__(self, *args):
-        ob, eventargs = args
-        self.value = eventargs.value
-
-
-class StaticMethodHandler(object):
-    """A static method handler to test event callbacks."""
-
-    value = None
-
-    def handler(sender, args):
-        StaticMethodHandler.value = args.value
-
-    handler = staticmethod(handler)
-
-
-class ClassMethodHandler(object):
-    """A class method handler to test event callbacks."""
-
-    value = None
-
-    def handler(cls, sender, args):
-        cls.value = args.value
-
-    handler = classmethod(handler)
-
-
-class HelloClass(object):
-    def hello(self):
-        return "hello"
-
-    def __call__(self):
-        return "hello"
-
-    def s_hello():
-        return "hello"
-
-    s_hello = staticmethod(s_hello)
-
-    def c_hello(cls):
-        return "hello"
-
-    c_hello = classmethod(c_hello)
-
-
-def hello_func():
-    return "hello"
 
 
 if __name__ == '__main__':
