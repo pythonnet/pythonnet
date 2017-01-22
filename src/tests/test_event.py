@@ -68,38 +68,26 @@ class EventTests(unittest.TestCase):
     def test_internal_events(self):
         """Test internal events."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             f = EventTest().InternalEvent
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = EventTest().InternalStaticEvent
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = EventTest.InternalStaticEvent
-
-        self.assertRaises(AttributeError, test)
 
     def test_private_events(self):
         """Test private events."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             f = EventTest().PrivateEvent
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = EventTest().PrivateStaticEvent
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = EventTest.PrivateStaticEvent
-
-        self.assertRaises(AttributeError, test)
 
     def test_multicast_event(self):
         """Test multicast events."""
@@ -301,26 +289,20 @@ class EventTests(unittest.TestCase):
     def test_add_non_callable_handler(self):
         """Test handling of attempts to add non-callable handlers."""
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = EventTest()
             ob.PublicEvent += 10
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = EventTest()
             ob.PublicEvent += "spam"
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             class spam(object):
                 pass
 
             ob = EventTest()
             ob.PublicEvent += spam()
-
-        self.assertRaises(TypeError, test)
 
     def test_remove_multiple_handlers(self):
         """Test removing multiple instances of the same handler."""
@@ -478,13 +460,11 @@ class EventTests(unittest.TestCase):
     def test_remove_unknown_handler(self):
         """Test removing an event handler that was never added."""
 
-        def test():
+        with self.assertRaises(ValueError):
             ob = EventTest()
             handler = GenericHandler()
 
             ob.PublicEvent -= handler.handler
-
-        self.assertRaises(ValueError, test)
 
     def test_handler_callback_failure(self):
         """Test failure mode for inappropriate handlers."""
@@ -496,11 +476,9 @@ class EventTests(unittest.TestCase):
         ob = EventTest()
         handler = BadHandler()
 
-        def test():
+        with self.assertRaises(TypeError):
             ob.PublicEvent += handler.handler
             ob.OnPublicEvent(TestEventArgs(10))
-
-        self.assertRaises(TypeError, test)
 
         ob.PublicEvent -= handler.handler
 
@@ -511,11 +489,9 @@ class EventTests(unittest.TestCase):
         ob = EventTest()
         handler = BadHandler()
 
-        def test():
+        with self.assertRaises(TypeError):
             ob.PublicEvent += handler.handler
             ob.OnPublicEvent(TestEventArgs(10))
-
-        self.assertRaises(TypeError, test)
 
         ob.PublicEvent -= handler.handler
 
@@ -526,15 +502,11 @@ class EventTests(unittest.TestCase):
         handler = GenericHandler()
         ob.PublicEvent += handler.handler
 
-        def test():
+        with self.assertRaises(TypeError):
             ob.OnPublicEvent()
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob.OnPublicEvent(32)
-
-        self.assertRaises(TypeError, test)
 
         ob.PublicEvent -= handler.handler
 
@@ -561,48 +533,34 @@ class EventTests(unittest.TestCase):
     def test_implicit_cls_event_registration(self):
         """Test implicit CLS event registration."""
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = EventTest()
             handler = GenericHandler()
             ob.add_PublicEvent(handler.handler)
 
-        self.assertRaises(TypeError, test)
-
     def test_event_descriptor_abuse(self):
         """Test event descriptor abuse."""
 
-        def test():
+        with self.assertRaises(TypeError):
             del EventTest.PublicEvent
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del EventTest.__dict__['PublicEvent']
-
-        self.assertRaises(TypeError, test)
 
         desc = EventTest.__dict__['PublicEvent']
 
-        def test():
+        with self.assertRaises(TypeError):
             desc.__get__(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             desc.__set__(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = EventTest()
             ob.PublicEvent = 0
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             EventTest.PublicStaticEvent = 0
-
-        self.assertRaises(TypeError, test)
 
 
 def test_suite():

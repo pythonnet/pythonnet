@@ -83,34 +83,26 @@ class EnumTests(unittest.TestCase):
         """Test that instantiation of an enum class fails."""
         from System import DayOfWeek
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = DayOfWeek()
-
-        self.assertRaises(TypeError, test)
 
     def test_subclass_enum_fails(self):
         """Test that subclassing of an enumeration fails."""
         from System import DayOfWeek
 
-        def test():
+        with self.assertRaises(TypeError):
             class Boom(DayOfWeek):
                 pass
-
-        self.assertRaises(TypeError, test)
 
     def test_enum_set_member_fails(self):
         """Test that setattr operations on enumerations fail."""
         from System import DayOfWeek
 
-        def test():
+        with self.assertRaises(TypeError):
             DayOfWeek.Sunday = 13
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del DayOfWeek.Sunday
-
-        self.assertRaises(TypeError, test)
 
     def test_enum_with_flags_attr_conversion(self):
         """Test enumeration conversion with FlagsAttribute set."""
@@ -118,10 +110,8 @@ class EnumTests(unittest.TestCase):
         Test.FieldTest().FlagsField = 99
 
         # This should fail because our test enum doesn't have it.
-        def test():
+        with self.assertRaises(ValueError):
             Test.FieldTest().EnumField = 99
-
-        self.assertRaises(ValueError, test)
 
     def test_enum_conversion(self):
         """Test enumeration conversion."""
@@ -131,20 +121,14 @@ class EnumTests(unittest.TestCase):
         ob.EnumField = Test.ShortEnum.One
         self.assertTrue(ob.EnumField == 1)
 
-        def test():
+        with self.assertRaises(ValueError):
             Test.FieldTest().EnumField = 20
 
-        self.assertRaises(ValueError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             Test.FieldTest().EnumField = 100000
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             Test.FieldTest().EnumField = "str"
-
-        self.assertRaises(TypeError, test)
 
 
 def test_suite():

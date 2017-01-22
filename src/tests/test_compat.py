@@ -182,16 +182,12 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(isCLRClass(CLR.System.UriBuilder))
 
     def test_import_non_existant_module(self):
-        """Test import failure for a non-existant module."""
-
-        def test():
+        """Test import failure for a non-existent module."""
+        with self.assertRaises(ImportError):
             import System.SpamSpamSpam
 
-        def testclr():
+        with self.assertRaises(ImportError):
             import CLR.System.SpamSpamSpam
-
-        self.assertRaises(ImportError, test)
-        self.assertRaises(ImportError, testclr)
 
     def test_lookup_no_namespace_type(self):
         """Test lookup of types without a qualified namespace."""
@@ -201,17 +197,12 @@ class CompatibilityTests(unittest.TestCase):
 
     def test_module_lookup_recursion(self):
         """Test for recursive lookup handling."""
-
-        def test1():
+        with self.assertRaises(ImportError):
             from CLR import CLR
 
-        self.assertRaises(ImportError, test1)
-
-        def test2():
+        with self.assertRaises(AttributeError):
             import CLR
             x = CLR.CLR
-
-        self.assertRaises(AttributeError, test2)
 
     def test_module_get_attr(self):
         """Test module getattr behavior."""
@@ -223,20 +214,16 @@ class CompatibilityTests(unittest.TestCase):
         module = System.Xml
         self.assertTrue(isCLRModule(module))
 
-        def test():
+        with self.assertRaises(AttributeError):
             spam = System.Spam
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             spam = getattr(System, 1)
 
-        self.assertRaises(TypeError, test)
-
-    def test000_multiple_imports(self):
+    def test_multiple_imports(self):
         # import CLR did raise a Seg Fault once
         # test if the Exceptions.warn() method still causes it
-        for n in range(100):
+        for _ in range(100):
             import CLR
 
 

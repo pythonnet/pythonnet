@@ -17,10 +17,8 @@ class FieldTests(unittest.TestCase):
         ob.PublicField = 1
         self.assertTrue(ob.PublicField == 1)
 
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().PublicField
-
-        self.assertRaises(TypeError, test)
 
     def test_public_static_field(self):
         """Test public static fields."""
@@ -34,15 +32,11 @@ class FieldTests(unittest.TestCase):
         ob.PublicStaticField = 0
         self.assertTrue(ob.PublicStaticField == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest.PublicStaticField
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().PublicStaticField
-
-        self.assertRaises(TypeError, test)
 
     def test_protected_instance_field(self):
         """Test protected instance fields."""
@@ -52,10 +46,8 @@ class FieldTests(unittest.TestCase):
         ob.ProtectedField = 1
         self.assertTrue(ob.ProtectedField == 1)
 
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().ProtectedField
-
-        self.assertRaises(TypeError, test)
 
     def test_protected_static_field(self):
         """Test protected static fields."""
@@ -69,29 +61,21 @@ class FieldTests(unittest.TestCase):
         ob.ProtectedStaticField = 0
         self.assertTrue(ob.ProtectedStaticField == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest.ProtectedStaticField
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().ProtectedStaticField
-
-        self.assertRaises(TypeError, test)
 
     def test_read_only_instance_field(self):
         """Test readonly instance fields."""
         self.assertTrue(FieldTest().ReadOnlyField == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest().ReadOnlyField = 1
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().ReadOnlyField
-
-        self.assertRaises(TypeError, test)
 
     def test_read_only_static_field(self):
         """Test readonly static fields."""
@@ -100,25 +84,17 @@ class FieldTests(unittest.TestCase):
         self.assertTrue(FieldTest.ReadOnlyStaticField == 0)
         self.assertTrue(ob.ReadOnlyStaticField == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest.ReadOnlyStaticField = 1
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest().ReadOnlyStaticField = 1
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest.ReadOnlyStaticField
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().ReadOnlyStaticField
-
-        self.assertRaises(TypeError, test)
 
     def test_constant_field(self):
         """Test const fields."""
@@ -127,61 +103,41 @@ class FieldTests(unittest.TestCase):
         self.assertTrue(FieldTest.ConstField == 0)
         self.assertTrue(ob.ConstField == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest().ConstField = 1
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest.ConstField = 1
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest().ConstField
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del FieldTest.ConstField
-
-        self.assertRaises(TypeError, test)
 
     def test_internal_field(self):
         """Test internal fields."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             f = FieldTest().InternalField
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = FieldTest().InternalStaticField
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = FieldTest.InternalStaticField
-
-        self.assertRaises(AttributeError, test)
 
     def test_private_field(self):
         """Test private fields."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             f = FieldTest().PrivateField
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = FieldTest().PrivateStaticField
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = FieldTest.PrivateStaticField
-
-        self.assertRaises(AttributeError, test)
 
     def test_field_descriptor_get_set(self):
         """Test field descriptor get / set."""
@@ -209,24 +165,18 @@ class FieldTests(unittest.TestCase):
     def test_field_descriptor_wrong_type(self):
         """Test setting a field using a value of the wrong type."""
 
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest().PublicField = "spam"
-
-        self.assertRaises(TypeError, test)
 
     def test_field_descriptor_abuse(self):
         """Test field descriptor abuse."""
         desc = FieldTest.__dict__['PublicField']
 
-        def test():
+        with self.assertRaises(TypeError):
             desc.__get__(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             desc.__set__(0, 0)
-
-        self.assertRaises(TypeError, test)
 
     def test_boolean_field(self):
         """Test boolean fields."""
@@ -408,15 +358,11 @@ class FieldTests(unittest.TestCase):
 
         # Primitive types and enums should not be set to null.
 
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest().Int32Field = None
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             FieldTest().EnumField = None
-
-        self.assertRaises(TypeError, test)
 
 
 def test_suite():

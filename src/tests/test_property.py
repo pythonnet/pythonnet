@@ -16,10 +16,8 @@ class PropertyTests(unittest.TestCase):
         ob.PublicProperty = 1
         self.assertTrue(ob.PublicProperty == 1)
 
-        def test():
+        with self.assertRaises(TypeError):
             del PropertyTest().PublicProperty
-
-        self.assertRaises(TypeError, test)
 
     def test_public_static_property(self):
         """Test public static properties."""
@@ -33,15 +31,11 @@ class PropertyTests(unittest.TestCase):
         ob.PublicStaticProperty = 0
         self.assertTrue(ob.PublicStaticProperty == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             del PropertyTest.PublicStaticProperty
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del PropertyTest().PublicStaticProperty
-
-        self.assertRaises(TypeError, test)
 
     def test_protected_instance_property(self):
         """Test protected instance properties."""
@@ -51,10 +45,8 @@ class PropertyTests(unittest.TestCase):
         ob.ProtectedProperty = 1
         self.assertTrue(ob.ProtectedProperty == 1)
 
-        def test():
+        with self.assertRaises(TypeError):
             del PropertyTest().ProtectedProperty
-
-        self.assertRaises(TypeError, test)
 
     def test_protected_static_property(self):
         """Test protected static properties."""
@@ -68,51 +60,35 @@ class PropertyTests(unittest.TestCase):
         ob.ProtectedStaticProperty = 0
         self.assertTrue(ob.ProtectedStaticProperty == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             del PropertyTest.ProtectedStaticProperty
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del PropertyTest().ProtectedStaticProperty
-
-        self.assertRaises(TypeError, test)
 
     def test_internal_property(self):
         """Test internal properties."""
 
-        def test():
-            return PropertyTest().InternalProperty
+        with self.assertRaises(AttributeError):
+            PropertyTest().InternalProperty
 
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            PropertyTest().InternalStaticProperty
 
-        def test():
-            return PropertyTest().InternalStaticProperty
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            return PropertyTest.InternalStaticProperty
-
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            PropertyTest.InternalStaticProperty
 
     def test_private_property(self):
         """Test private properties."""
 
-        def test():
-            return PropertyTest().PrivateProperty
+        with self.assertRaises(AttributeError):
+            PropertyTest().PrivateProperty
 
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            PropertyTest().PrivateStaticProperty
 
-        def test():
-            return PropertyTest().PrivateStaticProperty
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            return PropertyTest.PrivateStaticProperty
-
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            PropertyTest.PrivateStaticProperty
 
     def test_property_descriptor_get_set(self):
         """Test property descriptor get / set."""
@@ -140,25 +116,19 @@ class PropertyTests(unittest.TestCase):
     def test_property_descriptor_wrong_type(self):
         """Test setting a property using a value of the wrong type."""
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = PropertyTest()
             ob.PublicProperty = "spam"
-
-        self.assertTrue(TypeError, test)
 
     def test_property_descriptor_abuse(self):
         """Test property descriptor abuse."""
         desc = PropertyTest.__dict__['PublicProperty']
 
-        def test():
+        with self.assertRaises(TypeError):
             desc.__get__(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             desc.__set__(0, 0)
-
-        self.assertRaises(TypeError, test)
 
     def test_interface_property(self):
         """Test properties of interfaces. Added after a bug report

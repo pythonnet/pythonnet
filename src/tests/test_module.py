@@ -244,12 +244,9 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(isCLRClass(System.UriBuilder))
 
     def test_import_non_existant_module(self):
-        """Test import failure for a non-existant module."""
-
-        def test():
+        """Test import failure for a non-existent module."""
+        with self.assertRaises(ImportError):
             import System.SpamSpamSpam
-
-        self.assertTrue(ImportError, test)
 
     def test_lookup_no_namespace_type(self):
         """Test lookup of types without a qualified namespace."""
@@ -260,16 +257,12 @@ class ModuleTests(unittest.TestCase):
     def test_module_lookup_recursion(self):
         """Test for recursive lookup handling."""
 
-        def test1():
+        with self.assertRaises(ImportError):
             from System import System
 
-        self.assertTrue(ImportError, test1)
-
-        def test2():
+        with self.assertRaises(AttributeError):
             import System
             x = System.System
-
-        self.assertTrue(AttributeError, test2)
 
     def test_module_get_attr(self):
         """Test module getattr behavior."""
@@ -281,15 +274,11 @@ class ModuleTests(unittest.TestCase):
         module = System.Xml
         self.assertTrue(isCLRModule(module))
 
-        def test():
+        with self.assertRaises(AttributeError):
             spam = System.Spam
 
-        self.assertTrue(AttributeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             spam = getattr(System, 1)
-
-        self.assertTrue(TypeError, test)
 
     def test_module_attr_abuse(self):
         """Test handling of attempts to set module attributes."""
@@ -310,20 +299,14 @@ class ModuleTests(unittest.TestCase):
         import System
         mtype = type(System)
 
-        def test():
+        with self.assertRaises(TypeError):
             mtype.__getattribute__(0, 'spam')
 
-        self.assertTrue(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             mtype.__setattr__(0, 'spam', 1)
 
-        self.assertTrue(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             mtype.__repr__(0)
-
-        self.assertTrue(TypeError, test)
 
     def test_clr_list_assemblies(self):
         from clr import ListAssemblies
@@ -342,8 +325,8 @@ class ModuleTests(unittest.TestCase):
             assyName = assy.GetName().Name
             self.assertEqual(assyName, name)
 
-        self.assertRaises(FileNotFoundException,
-                          AddReference, "somethingtotallysilly")
+        with self.assertRaises(FileNotFoundException):
+            AddReference("somethingtotallysilly")
 
     def test_assembly_load_thread_safety(self):
         import time

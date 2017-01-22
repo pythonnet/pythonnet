@@ -30,15 +30,11 @@ class DelegateTests(unittest.TestCase):
         self.assertTrue(PublicDelegate.__name__ == 'PublicDelegate')
         self.assertTrue(Test.PublicDelegate.__name__ == 'PublicDelegate')
 
-        def test():
+        with self.assertRaises(ImportError):
             from Python.Test import InternalDelegate
 
-        self.assertRaises(ImportError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             i = Test.InternalDelegate
-
-        self.assertRaises(AttributeError, test)
 
     def test_nested_delegate_visibility(self):
         """Test visibility of nested delegates."""
@@ -48,15 +44,11 @@ class DelegateTests(unittest.TestCase):
         ob = DelegateTest.ProtectedDelegate
         self.assertTrue(ob.__name__ == 'ProtectedDelegate')
 
-        def test():
+        with self.assertRaises(AttributeError):
             ob = DelegateTest.InternalDelegate
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             ob = DelegateTest.PrivateDelegate
-
-        self.assertRaises(AttributeError, test)
 
     def test_delegate_from_function(self):
         """Test delegate implemented with a Python function."""
@@ -88,11 +80,9 @@ class DelegateTests(unittest.TestCase):
     def test_delegate_from_unbound_method(self):
         """Test failure mode for unbound methods."""
 
-        def test():
+        with self.assertRaises(TypeError):
             d = StringDelegate(HelloClass.hello)
             d()
-
-        self.assertRaises(TypeError, test)
 
     def test_delegate_from_static_method(self):
         """Test delegate implemented with a Python static method."""
@@ -196,20 +186,14 @@ class DelegateTests(unittest.TestCase):
     def test_delegate_with_invalid_args(self):
         """Test delegate instantiation with invalid (non-callable) args."""
 
-        def test():
+        with self.assertRaises(TypeError):
             d = StringDelegate(None)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             d = StringDelegate("spam")
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             d = StringDelegate(1)
-
-        self.assertRaises(TypeError, test)
 
     def test_multicast_delegate(self):
         """Test multicast delegates."""
@@ -231,11 +215,9 @@ class DelegateTests(unittest.TestCase):
         """Test that subclassing of a delegate type fails."""
         from Python.Test import PublicDelegate
 
-        def test():
+        with self.assertRaises(TypeError):
             class Boom(PublicDelegate):
                 pass
-
-        self.assertRaises(TypeError, test)
 
     def test_delegate_equality(self):
         """Test delegate equality."""
