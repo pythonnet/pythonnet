@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using Python.Runtime;
 
 namespace Python.Test

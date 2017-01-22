@@ -86,7 +86,7 @@ namespace Python.Test
         Five
     }
 
-    [FlagsAttribute]
+    [Flags]
     public enum FlagsEnum
     {
         Zero,
