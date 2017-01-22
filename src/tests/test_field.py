@@ -1,4 +1,7 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import unittest
+import types
 from Python.Test import FieldTest
 from Python.Test import ShortEnum
 import System
@@ -15,7 +18,7 @@ class FieldTests(unittest.TestCase):
 
     def testPublicInstanceField(self):
         """Test public instance fields."""
-        object = FieldTest();
+        object = FieldTest()
         self.assertTrue(object.PublicField == 0)
 
         object.PublicField = 1
@@ -28,7 +31,7 @@ class FieldTests(unittest.TestCase):
 
     def testPublicStaticField(self):
         """Test public static fields."""
-        object = FieldTest();
+        object = FieldTest()
         self.assertTrue(FieldTest.PublicStaticField == 0)
 
         FieldTest.PublicStaticField = 1
@@ -50,7 +53,7 @@ class FieldTests(unittest.TestCase):
 
     def testProtectedInstanceField(self):
         """Test protected instance fields."""
-        object = FieldTest();
+        object = FieldTest()
         self.assertTrue(object.ProtectedField == 0)
 
         object.ProtectedField = 1
@@ -63,7 +66,7 @@ class FieldTests(unittest.TestCase):
 
     def testProtectedStaticField(self):
         """Test protected static fields."""
-        object = FieldTest();
+        object = FieldTest()
         self.assertTrue(FieldTest.ProtectedStaticField == 0)
 
         FieldTest.ProtectedStaticField = 1
@@ -99,7 +102,7 @@ class FieldTests(unittest.TestCase):
 
     def testReadOnlyStaticField(self):
         """Test readonly static fields."""
-        object = FieldTest();
+        object = FieldTest()
 
         self.assertTrue(FieldTest.ReadOnlyStaticField == 0)
         self.assertTrue(object.ReadOnlyStaticField == 0)
@@ -126,7 +129,7 @@ class FieldTests(unittest.TestCase):
 
     def testConstantField(self):
         """Test const fields."""
-        object = FieldTest();
+        object = FieldTest()
 
         self.assertTrue(FieldTest.ConstField == 0)
         self.assertTrue(object.ConstField == 0)

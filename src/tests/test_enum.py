@@ -1,4 +1,7 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import unittest
+import types
 from System import DayOfWeek
 from Python import Test
 import six

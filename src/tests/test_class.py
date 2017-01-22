@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import clr
 import types
 import unittest
@@ -202,7 +204,7 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(table.Count == 3)
 
     def testAddAndRemoveClassAttribute(self):
-        
+
         from System import TimeSpan
 
         for i in range(100):
@@ -260,7 +262,7 @@ class ClassTests(unittest.TestCase):
             def PyCallback(self, self2):
                 self.PyCallbackWasCalled = True
                 self.SameReference = self == self2
-                
+
         testobj = CallbackUser()
         testobj.DoCallback()
         self.assertTrue(testobj.PyCallbackWasCalled)

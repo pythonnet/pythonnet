@@ -1,9 +1,18 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# FIXME: TypeError: 'EventBinding' object is not callable
+
 from __future__ import print_function
-import System
+
+import clr
 import gc
 
+import System
 
-class LeakTest:
+from _compat import range
+
+
+class LeakTest(object):
     """A leak-check test for the objects implemented in the managed
        runtime. For each kind of object tested, memory should reach
        a particular level after warming up and stay essentially the
@@ -54,7 +63,7 @@ class LeakTest:
     def testModules(self):
         self.notify("Running module leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -73,7 +82,7 @@ class LeakTest:
 
         self.notify("Running class leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -86,7 +95,7 @@ class LeakTest:
             del x
 
             # Delegate type
-            x = StringDelegate(hello)
+            x = StringDelegate(hello_func)
             del x
 
         self.end_test()
@@ -96,7 +105,7 @@ class LeakTest:
 
         self.notify("Running enum leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -131,7 +140,7 @@ class LeakTest:
 
         self.notify("Running event leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -210,13 +219,13 @@ class LeakTest:
 
         self.notify("Running delegate leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
             # Delegate from function
             testob = DelegateTest()
-            d = StringDelegate(hello)
+            d = StringDelegate(hello_func)
             testob.CallStringDelegate(d)
             testob.stringDelegate = d
             testob.stringDelegate()
@@ -225,7 +234,7 @@ class LeakTest:
             del d
 
             # Delegate from instance method
-            inst = Hello()
+            inst = HelloClass()
             testob = DelegateTest()
             d = StringDelegate(inst.hello)
             testob.CallStringDelegate(d)
@@ -238,7 +247,7 @@ class LeakTest:
 
             # Delegate from static method
             testob = DelegateTest()
-            d = StringDelegate(Hello.s_hello)
+            d = StringDelegate(HelloClass.s_hello)
             testob.CallStringDelegate(d)
             testob.stringDelegate = d
             testob.stringDelegate()
@@ -248,7 +257,7 @@ class LeakTest:
 
             # Delegate from class method
             testob = DelegateTest()
-            d = StringDelegate(Hello.c_hello)
+            d = StringDelegate(HelloClass.c_hello)
             testob.CallStringDelegate(d)
             testob.stringDelegate = d
             testob.stringDelegate()
@@ -257,7 +266,7 @@ class LeakTest:
             del d
 
             # Delegate from callable object
-            inst = Hello()
+            inst = HelloClass()
             testob = DelegateTest()
             d = StringDelegate(inst)
             testob.CallStringDelegate(d)
@@ -290,7 +299,7 @@ class LeakTest:
 
             # Nested delegates
             testob = DelegateTest()
-            d1 = StringDelegate(hello)
+            d1 = StringDelegate(hello_func)
             d2 = StringDelegate(d1)
             testob.CallStringDelegate(d2)
             testob.stringDelegate = d2
@@ -302,8 +311,8 @@ class LeakTest:
 
             # Multicast delegates
             testob = DelegateTest()
-            d1 = StringDelegate(hello)
-            d2 = StringDelegate(hello)
+            d1 = StringDelegate(hello_func)
+            d2 = StringDelegate(hello_func)
             md = System.Delegate.Combine(d1, d2)
             testob.CallStringDelegate(md)
             testob.stringDelegate = md
@@ -317,7 +326,7 @@ class LeakTest:
         self.end_test()
 
 
-class GenericHandler:
+class GenericHandler(object):
     """A generic handler to test event callbacks."""
 
     def __init__(self):
@@ -327,7 +336,7 @@ class GenericHandler:
         self.value = args.value
 
 
-class VariableArgsHandler:
+class VariableArgsHandler(object):
     """A variable args handler to test event callbacks."""
 
     def __init__(self):
@@ -338,7 +347,7 @@ class VariableArgsHandler:
         self.value = eventargs.value
 
 
-class CallableHandler:
+class CallableHandler(object):
     """A callable handler to test event callbacks."""
 
     def __init__(self):
@@ -348,7 +357,7 @@ class CallableHandler:
         self.value = args.value
 
 
-class VarCallableHandler:
+class VarCallableHandler(object):
     """A variable args callable handler to test event callbacks."""
 
     def __init__(self):
@@ -381,7 +390,7 @@ class ClassMethodHandler(object):
     handler = classmethod(handler)
 
 
-class Hello:
+class HelloClass(object):
     def hello(self):
         return "hello"
 
@@ -399,7 +408,7 @@ class Hello:
     c_hello = classmethod(c_hello)
 
 
-def hello():
+def hello_func():
     return "hello"
 
 

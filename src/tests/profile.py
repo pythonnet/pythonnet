@@ -1,14 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# FIXME: FAIL: testImplicitAssemblyLoad AssertionError: 0 != 1
+
 """Run all of the unit tests for this package over and over,
-   in order to provide for better profiling."""
+   in order to provide for better profiling.
+"""
+
 from __future__ import print_function
+
+import gc
+import os
+import sys
+import time
+
+import runtests
+from _compat import range
 
 
 def main():
-    import sys, os, gc, time
-
     dirname = os.path.split(__file__)
     sys.path.append(dirname)
-    import runtests
 
     gc.set_debug(gc.DEBUG_LEAK)
 
@@ -28,4 +39,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    sys.exit(0)

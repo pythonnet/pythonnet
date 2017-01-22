@@ -1,4 +1,7 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import sys
+import unittest
 from Python.Runtime import PythonEngine
 
 
@@ -9,9 +12,9 @@ class EngineTests(unittest.TestCase):
 
     def testMultipleCallsToInitialize(self):
         """Test that multiple initialize calls are harmless."""
-        PythonEngine.Initialize();
-        PythonEngine.Initialize();
-        PythonEngine.Initialize();
+        PythonEngine.Initialize()
+        PythonEngine.Initialize()
+        PythonEngine.Initialize()
 
     def testImportModule(self):
         """Test module import."""

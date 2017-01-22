@@ -1,6 +1,12 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+import unittest
 from Python.Test import ThreadTest
 import six
+import threading
+import time
 
 if six.PY3:
     import _thread as thread
@@ -10,7 +16,8 @@ else:
 
 def dprint(msg):
     # Debugging helper to trace thread-related tests.
-    if 0: print(msg)
+    if 0:
+        print(msg)
 
 
 class ThreadTests(unittest.TestCase):
@@ -34,7 +41,6 @@ class ThreadTests(unittest.TestCase):
     def testPythonThreadCallsToCLR(self):
         """Test calls by Python-spawned threads into managed code."""
         # This test is very likely to hang if something is wrong ;)
-        import threading, time
         from System import String
 
         done = []
@@ -44,7 +50,7 @@ class ThreadTests(unittest.TestCase):
                 time.sleep(0.1)
                 dprint("thread %s %d" % (thread.get_ident(), i))
                 mstr = String("thread %s %d" % (thread.get_ident(), i))
-                pstr = mstr.ToString()
+                dprint(mstr.ToString())
                 done.append(None)
                 dprint("thread %s %d done" % (thread.get_ident(), i))
 
@@ -58,8 +64,6 @@ class ThreadTests(unittest.TestCase):
         while len(done) < 50:
             dprint(len(done))
             time.sleep(0.1)
-
-        return
 
 
 def test_suite():

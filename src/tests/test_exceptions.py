@@ -1,4 +1,7 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import sys
+import unittest
 import System
 import six
 

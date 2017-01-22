@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import clr
 
 clr.AddReference('Python.Test')
@@ -5,7 +7,9 @@ clr.AddReference('System.Data')
 
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
 ##clr.AddReference('System.Windows.Forms')
-import sys, os, string, unittest, types, warnings
+import unittest
+import types
+import warnings
 from fnmatch import fnmatch
 import six
 

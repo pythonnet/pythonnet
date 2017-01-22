@@ -1,4 +1,7 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+#
+import unittest
+import types
 from Python.Test import PropertyTest
 import six
 
@@ -13,7 +16,7 @@ class PropertyTests(unittest.TestCase):
 
     def testPublicInstanceProperty(self):
         """Test public instance properties."""
-        object = PropertyTest();
+        object = PropertyTest()
 
         self.assertTrue(object.PublicProperty == 0)
         object.PublicProperty = 1
@@ -26,7 +29,7 @@ class PropertyTests(unittest.TestCase):
 
     def testPublicStaticProperty(self):
         """Test public static properties."""
-        object = PropertyTest();
+        object = PropertyTest()
 
         self.assertTrue(PropertyTest.PublicStaticProperty == 0)
         PropertyTest.PublicStaticProperty = 1
@@ -48,7 +51,7 @@ class PropertyTests(unittest.TestCase):
 
     def testProtectedInstanceProperty(self):
         """Test protected instance properties."""
-        object = PropertyTest();
+        object = PropertyTest()
 
         self.assertTrue(object.ProtectedProperty == 0)
         object.ProtectedProperty = 1
@@ -61,7 +64,7 @@ class PropertyTests(unittest.TestCase):
 
     def testProtectedStaticProperty(self):
         """Test protected static properties."""
-        object = PropertyTest();
+        object = PropertyTest()
 
         self.assertTrue(PropertyTest.ProtectedStaticProperty == 0)
         PropertyTest.ProtectedStaticProperty = 1

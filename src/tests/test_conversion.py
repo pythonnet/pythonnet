@@ -1,4 +1,6 @@
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+
+import unittest
 from Python.Test import ConversionTest
 import System
 import six
