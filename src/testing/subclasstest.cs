@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Python.Test
 {
@@ -70,7 +68,6 @@ namespace Python.Test
         {
             public void SomeMethod()
             {
-
             }
         }
     }

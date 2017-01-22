@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 
 namespace Python.Test
 {
@@ -156,13 +155,13 @@ namespace Python.Test
 
         public static bool TestObjectOutParams(object o, out object o1)
         {
-            o1 = new System.Exception("test");
+            o1 = new Exception("test");
             return true;
         }
 
         public static bool TestObjectRefParams(object o, ref object o1)
         {
-            o1 = new System.Exception("test");
+            o1 = new Exception("test");
             return true;
         }
 
