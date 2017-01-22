@@ -306,23 +306,22 @@ class ExceptionTests(unittest.TestCase):
 
         self.assertEqual(exc.args, loaded.args)
 
+    @unittest.skipIf(PY2, "__cause__ isn't implemented in PY2")
     def test_chained_exceptions(self):
-        # __cause__ is py3 only
-        if PY3:
-            from Python.Test import ExceptionTest
+        from Python.Test import ExceptionTest
 
-            try:
-                ExceptionTest.ThrowChainedExceptions()
-            except Exception as exc:
-                msgs = ("Outer exception",
-                        "Inner exception",
-                        "Innermost exception",)
-                for msg in msgs:
-                    self.assertEqual(exc.Message, msg)
-                    self.assertEqual(exc.__cause__, exc.InnerException)
-                    exc = exc.__cause__
-            else:
-                self.fail("Test should raise an exception")
+        with self.assertRaises(Exception) as cm:
+            ExceptionTest.ThrowChainedExceptions()
+
+        exc = cm.exception
+
+        msgs = ("Outer exception",
+                "Inner exception",
+                "Innermost exception",)
+        for msg in msgs:
+            self.assertEqual(exc.Message, msg)
+            self.assertEqual(exc.__cause__, exc.InnerException)
+            exc = exc.__cause__
 
 
 def test_suite():
