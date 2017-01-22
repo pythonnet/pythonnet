@@ -4,14 +4,10 @@ from __future__ import print_function
 
 import unittest
 from Python.Test import ThreadTest
-import six
 import threading
 import time
 
-if six.PY3:
-    import _thread as thread
-else:
-    import thread
+from _compat import thread
 
 
 def dprint(msg):

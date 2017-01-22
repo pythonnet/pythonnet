@@ -3,10 +3,7 @@
 import sys
 import unittest
 import System
-import six
-
-if six.PY3:
-    unicode = str
+from _compat import PY2, PY3, pickle, text_type
 
 
 class ExceptionTests(unittest.TestCase):
@@ -17,7 +14,7 @@ class ExceptionTests(unittest.TestCase):
         from System import Exception, Object
 
         e = Exception('Something bad happened')
-        if not six.PY3:
+        if PY2:
             import exceptions
             self.assertTrue(isinstance(e, exceptions.Exception))
         self.assertTrue(isinstance(e, Exception))
@@ -212,9 +209,9 @@ class ExceptionTests(unittest.TestCase):
     def testCatchExceptionPythonClass(self):
         """Test catching the python class of an exception."""
         from System import OverflowException
-        if six.PY3:
+        if PY3:
             from builtins import Exception
-        else:
+        elif PY2:
             from exceptions import Exception
 
         try:
@@ -288,8 +285,8 @@ class ExceptionTests(unittest.TestCase):
             Convert.ToDateTime('this will fail')
         except FormatException:
             e = sys.exc_info()[1]
-            msg = unicode(e).encode("utf8")  # fix for international installation
-            self.assertTrue(msg.find(unicode('System.Convert.ToDateTime').encode("utf8")) > -1, msg)
+            msg = text_type(e).encode("utf8")  # fix for international installation
+            self.assertTrue(msg.find(text_type('System.Convert.ToDateTime').encode("utf8")) > -1, msg)
 
     def testPythonCompatOfManagedExceptions(self):
         """Test if managed exceptions are compatible with Python's implementation
@@ -299,14 +296,14 @@ class ExceptionTests(unittest.TestCase):
 
         e = OverflowException(msg)
         self.assertEqual(str(e), msg)
-        self.assertEqual(unicode(e), msg)
+        self.assertEqual(text_type(e), msg)
 
         self.assertEqual(e.args, (msg,))
         self.assertTrue(isinstance(e.args, tuple))
-        if six.PY2:
-            self.assertEqual(repr(e), "OverflowException(u'A simple message',)")
-        else:
+        if PY3:
             self.assertEqual(repr(e), "OverflowException('A simple message',)")
+        elif PY2:
+            self.assertEqual(repr(e), "OverflowException(u'A simple message',)")
 
     def testExceptionIsInstanceOfSystemObject(self):
         """Test behavior of isinstance(<managed exception>, System.Object)."""
@@ -337,10 +334,6 @@ class ExceptionTests(unittest.TestCase):
 
     def testPicklingExceptions(self):
         from System import Exception
-        try:
-            import cPickle as pickle
-        except ImportError:
-            import pickle
 
         exc = Exception("test")
         dumped = pickle.dumps(exc)
@@ -349,7 +342,8 @@ class ExceptionTests(unittest.TestCase):
         self.assertEqual(exc.args, loaded.args)
 
     def testChainedExceptions(self):
-        if six.PY3:
+        # TODO: Why is this test PY3 only?
+        if PY3:
             from Python.Test import ExceptionTest
 
             try:
@@ -358,7 +352,7 @@ class ExceptionTests(unittest.TestCase):
                 msgs = [
                     "Outer exception",
                     "Inner exception",
-                    "Innermost exception"
+                    "Innermost exception",
                 ]
 
                 for msg in msgs:

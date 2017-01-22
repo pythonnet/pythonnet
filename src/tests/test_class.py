@@ -1,18 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import types
 import unittest
 
 import Python.Test as Test
 import System
-import six
 from Python.Test import ClassTest
 from System.Collections import Hashtable
 
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-else:
-    DictProxyType = types.DictProxyType
+from _compat import DictProxyType
 
 
 class ClassTests(unittest.TestCase):

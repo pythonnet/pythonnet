@@ -3,11 +3,7 @@
 import unittest
 import Python.Test as Test
 import System
-import six
-
-if six.PY3:
-    long = int
-    unichr = chr
+from _compat import UserList, PY2, long, unichr
 
 
 class ArrayTests(unittest.TestCase):
@@ -1098,10 +1094,6 @@ class ArrayTests(unittest.TestCase):
         """Test conversion of sequence-like objects to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
-        if six.PY3:
-            from collections import UserList
-        else:
-            from UserList import UserList
 
         items = UserList()
         for i in range(10):
@@ -1115,10 +1107,6 @@ class ArrayTests(unittest.TestCase):
         """Test conversion of sequences to array-of-array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
-        if six.PY3:
-            from collections import UserList
-        else:
-            from UserList import UserList
 
         items = UserList()
         for i in range(10):
@@ -1204,10 +1192,6 @@ class ArrayTests(unittest.TestCase):
         """Test error handling for sequence conversion to array arguments."""
         from Python.Test import ArrayConversionTest
         from Python.Test import Spam
-        if six.PY3:
-            from collections import UserList
-        else:
-            from UserList import UserList
 
         # This should work, because null / None is a valid value in an
         # array of reference types.
@@ -1322,9 +1306,9 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(value[1] == 127)
         self.assertTrue(value.Length == 2)
 
-        value = Array[System.Char]([six.u('A'), six.u('Z')])
-        self.assertTrue(value[0] == six.u('A'))
-        self.assertTrue(value[1] == six.u('Z'))
+        value = Array[System.Char]([u'A', u'Z'])
+        self.assertTrue(value[0] == u'A')
+        self.assertTrue(value[1] == u'Z')
         self.assertTrue(value.Length == 2)
 
         value = Array[System.Char]([0, 65535])
@@ -1353,7 +1337,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(value.Length == 2)
 
         # there's no explicit long type in python3, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             value = Array[long]([0, long(9223372036854775807)])
             self.assertTrue(value[0] == 0)
             self.assertTrue(value[1] == long(9223372036854775807))

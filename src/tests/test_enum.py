@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import types
 from System import DayOfWeek
 from Python import Test
-import six
-
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-    long = int
-else:
-    DictProxyType = types.DictProxyType
+from _compat import DictProxyType, long
 
 
 class EnumTests(unittest.TestCase):

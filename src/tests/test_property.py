@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 import unittest
-import types
 from Python.Test import PropertyTest
-import six
-
-if six.PY3:
-    IntType = int
-else:
-    IntType = types.IntType
 
 
 class PropertyTests(unittest.TestCase):
@@ -133,15 +126,15 @@ class PropertyTests(unittest.TestCase):
         self.assertTrue(object.PublicStaticProperty == 0)
 
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != IntType)
+        self.assertTrue(type(descriptor) != int)
 
         object.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != IntType)
+        self.assertTrue(type(descriptor) != int)
 
         PropertyTest.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != IntType)
+        self.assertTrue(type(descriptor) != int)
 
     def testPropertyDescriptorWrongType(self):
         """Test setting a property using a value of the wrong type."""

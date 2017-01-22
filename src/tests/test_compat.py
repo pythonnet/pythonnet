@@ -2,12 +2,7 @@
 
 import unittest
 import types
-import six
-
-if six.PY3:
-    ClassType = type
-else:
-    ClassType = types.ClassType
+from _compat import PY2, PY3, ClassType
 
 
 class CompatibilityTests(unittest.TestCase):
@@ -19,10 +14,11 @@ class CompatibilityTests(unittest.TestCase):
         return type(object).__name__ == 'ModuleObject'
 
     def isCLRRootModule(self, object):
-        if six.PY3:
+        if PY3:
             # in Python 3 the clr module is a normal python module
             return object.__name__ == "clr"
-        return type(object).__name__ == 'CLRModule'
+        elif PY2:
+            return type(object).__name__ == 'CLRModule'
 
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype'  # for now
@@ -39,12 +35,12 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(sys) == types.ModuleType)
         self.assertTrue(sys.__name__ == 'sys')
 
-        if six.PY3:
+        if PY3:
             import http.client
             self.assertTrue(type(http.client) == types.ModuleType)
             self.assertTrue(http.client.__name__ == 'http.client')
 
-        else:
+        elif PY2:
             import httplib
             self.assertTrue(type(httplib) == types.ModuleType)
             self.assertTrue(httplib.__name__ == 'httplib')
@@ -59,12 +55,12 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(type(mySys) == types.ModuleType)
         self.assertTrue(mySys.__name__ == 'sys')
 
-        if six.PY3:
+        if PY3:
             import http.client as myHttplib
             self.assertTrue(type(myHttplib) == types.ModuleType)
             self.assertTrue(myHttplib.__name__ == 'http.client')
 
-        else:
+        elif PY2:
             import httplib as myHttplib
             self.assertTrue(type(myHttplib) == types.ModuleType)
             self.assertTrue(myHttplib.__name__ == 'httplib')

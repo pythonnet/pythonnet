@@ -4,15 +4,9 @@ from Python.Test import DelegateTest, PublicDelegate
 from Python.Test import StringDelegate, ObjectDelegate
 from Python.Test import BoolDelegate
 import unittest
-import types
 import Python.Test as Test
 import System
-import six
-
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-else:
-    DictProxyType = types.DictProxyType
+from _compat import DictProxyType
 
 
 class DelegateTests(unittest.TestCase):

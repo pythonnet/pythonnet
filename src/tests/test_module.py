@@ -6,12 +6,8 @@ import unittest
 import types
 import warnings
 from fnmatch import fnmatch
-import six
 
-if six.PY3:
-    ClassType = type
-else:
-    ClassType = types.ClassType
+from _compat import ClassType, PY2, PY3
 
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
 # clr.AddReference('System.Windows.Forms')
@@ -24,10 +20,11 @@ class ModuleTests(unittest.TestCase):
         return type(object).__name__ == 'ModuleObject'
 
     def isCLRRootModule(self, object):
-        if six.PY3:
+        if PY3:
             # in Python 3 the clr module is a normal python module
             return object.__name__ == "clr"
-        return type(object).__name__ == 'CLRModule'
+        elif PY2:
+            return type(object).__name__ == 'CLRModule'
 
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype'  # for now
@@ -90,11 +87,11 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(type(sys) == types.ModuleType)
         self.assertTrue(sys.__name__ == 'sys')
 
-        if six.PY3:
+        if PY3:
             import http.client as httplib
             self.assertTrue(type(httplib) == types.ModuleType)
             self.assertTrue(httplib.__name__ == 'http.client')
-        else:
+        elif PY2:
             import httplib
             self.assertTrue(type(httplib) == types.ModuleType)
             self.assertTrue(httplib.__name__ == 'httplib')
@@ -109,11 +106,11 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(type(mySys) == types.ModuleType)
         self.assertTrue(mySys.__name__ == 'sys')
 
-        if six.PY3:
+        if PY3:
             import http.client as myHttplib
             self.assertTrue(type(myHttplib) == types.ModuleType)
             self.assertTrue(myHttplib.__name__ == 'http.client')
-        else:
+        elif PY2:
             import httplib as myHttplib
             self.assertTrue(type(myHttplib) == types.ModuleType)
             self.assertTrue(myHttplib.__name__ == 'httplib')
@@ -346,10 +343,10 @@ class ModuleTests(unittest.TestCase):
         from clr import ListAssemblies
         verbose = list(ListAssemblies(True))
         short = list(ListAssemblies(False))
-        self.assertTrue(six.u('mscorlib') in short)
-        self.assertTrue(six.u('System') in short)
-        self.assertTrue(six.u('Culture=') in verbose[0])
-        self.assertTrue(six.u('Version=') in verbose[0])
+        self.assertTrue(u'mscorlib' in short)
+        self.assertTrue(u'System' in short)
+        self.assertTrue(u'Culture=' in verbose[0])
+        self.assertTrue(u'Version=' in verbose[0])
 
     def test_ClrAddReference(self):
         from clr import AddReference

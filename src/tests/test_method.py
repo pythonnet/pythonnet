@@ -4,11 +4,8 @@ import unittest
 
 from Python.Test import MethodTest, MethodTestSub
 import System
-import six
 
-if six.PY3:
-    long = int
-    unichr = chr
+from _compat import PY2, long, unichr
 
 
 class MethodTests(unittest.TestCase):
@@ -495,8 +492,8 @@ class MethodTests(unittest.TestCase):
         value = MethodTest.Overloaded.__overloads__[System.SByte](127)
         self.assertTrue(value == 127)
 
-        value = MethodTest.Overloaded.__overloads__[System.Char](six.u('A'))
-        self.assertTrue(value == six.u('A'))
+        value = MethodTest.Overloaded.__overloads__[System.Char](u'A')
+        self.assertTrue(value == u'A')
 
         value = MethodTest.Overloaded.__overloads__[System.Char](65535)
         self.assertTrue(value == unichr(65535))
@@ -516,7 +513,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value == long(9223372036854775807))
 
         # Python 3 has no explicit long type, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             value = MethodTest.Overloaded.__overloads__[long](
                 long(9223372036854775807)
             )
@@ -612,10 +609,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value[1] == 127)
 
         vtype = Array[System.Char]
-        input = vtype([six.u('A'), six.u('Z')])
+        input = vtype([u'A', u'Z'])
         value = MethodTest.Overloaded.__overloads__[vtype](input)
-        self.assertTrue(value[0] == six.u('A'))
-        self.assertTrue(value[1] == six.u('Z'))
+        self.assertTrue(value[0] == u'A')
+        self.assertTrue(value[1] == u'Z')
 
         vtype = Array[System.Char]
         input = vtype([0, 65535])
@@ -648,7 +645,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value[1] == long(9223372036854775807))
 
         # Python 3 has no explicit long type, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             vtype = Array[long]
             input = vtype([0, long(9223372036854775807)])
             value = MethodTest.Overloaded.__overloads__[vtype](input)
