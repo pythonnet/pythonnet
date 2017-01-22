@@ -52,8 +52,10 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestDottedName()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
-            Assert.IsNotNull(module, ">>>  import PyImportTest.test.one  # FAILED");
+            PyObject module1 = PythonEngine.ImportModule("PyImportTest.test.one");
+            Assert.IsNotNull(module1, ">>>  import PyImportTest.test.one  # FAILED");
+            PyObject module2 = PythonEngine.ImportModule("PyImportTest.sysargv");
+            Assert.IsNotNull(module2, ">>>  import PyImportTest.sysargv  # FAILED");
         }
     }
 }

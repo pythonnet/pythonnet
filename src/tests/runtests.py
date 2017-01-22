@@ -23,6 +23,9 @@ except ImportError:
     clr.AddReference("System.Management")
 
 test_modules = (
+    # has to be first test before other module import clr
+	'test_sysargv',
+	
     # test_module passes on its own, but not here if
     # other test modules that import System.Windows.Forms
     # run first. They must not do module level import/AddReference()

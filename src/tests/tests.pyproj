@@ -29,12 +29,14 @@
   <ItemGroup>
     <Compile Include="leaktest.py" />
     <Compile Include="profile.py" />
+    <Compile Include="PyImportTest\sysargv.py" />
     <Compile Include="PyImportTest\test\one.py" />
     <Compile Include="PyImportTest\test\__init__.py" />
     <Compile Include="PyImportTest\__init__.py" />
     <Compile Include="runtests.py" />
     <Compile Include="stress.py" />
     <Compile Include="stresstest.py" />
+    <Compile Include="test_sysargv.py" />
     <Compile Include="test_array.py" />
     <Compile Include="test_class.py" />
     <Compile Include="test_compat.py" />
