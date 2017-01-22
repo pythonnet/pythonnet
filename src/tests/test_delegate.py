@@ -20,8 +20,8 @@ class DelegateTests(unittest.TestCase):
 
         self.assertTrue(PublicDelegate.__name__ == 'PublicDelegate')
         self.assertTrue(PublicDelegate.__module__ == 'Python.Test')
-        self.assertTrue(type(PublicDelegate.__dict__) == DictProxyType)
-        self.assertTrue(PublicDelegate.__doc__ == None)
+        self.assertTrue(isinstance(PublicDelegate.__dict__, DictProxyType))
+        self.assertTrue(PublicDelegate.__doc__ is None)
 
     def test_global_delegate_visibility(self):
         """Test visibility of module-level delegates."""

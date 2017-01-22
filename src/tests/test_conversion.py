@@ -14,52 +14,52 @@ class ConversionTests(unittest.TestCase):
     def test_bool_conversion(self):
         """Test bool conversion."""
         ob = ConversionTest()
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField == 0)
 
         ob.BooleanField = True
-        self.assertTrue(ob.BooleanField == True)
+        self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField == 1)
 
         ob.BooleanField = False
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField == 0)
 
         ob.BooleanField = 1
-        self.assertTrue(ob.BooleanField == True)
+        self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField == 1)
 
         ob.BooleanField = 0
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField == 0)
 
         ob.BooleanField = System.Boolean(None)
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField == 0)
 
         ob.BooleanField = System.Boolean('')
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField == 0)
 
         ob.BooleanField = System.Boolean(0)
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField is False)
         self.assertTrue(ob.BooleanField == 0)
 
         ob.BooleanField = System.Boolean(1)
-        self.assertTrue(ob.BooleanField == True)
+        self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField == 1)
 
         ob.BooleanField = System.Boolean('a')
-        self.assertTrue(ob.BooleanField == True)
+        self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField == 1)
 
@@ -531,7 +531,7 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(ob.StringField == u'\uffff\uffff')
 
         ob.StringField = None
-        self.assertTrue(ob.StringField == None)
+        self.assertTrue(ob.StringField is None)
 
         with self.assertRaises(TypeError):
             ConversionTest().StringField = 1
@@ -552,7 +552,7 @@ class ConversionTests(unittest.TestCase):
         # need to test spam subclass here.
 
         ob.SpamField = None
-        self.assertTrue(ob.SpamField == None)
+        self.assertTrue(ob.SpamField is None)
 
         with self.assertRaises(TypeError):
             ob = ConversionTest()
@@ -567,14 +567,14 @@ class ConversionTests(unittest.TestCase):
         from Python.Test import Spam
 
         ob = ConversionTest()
-        self.assertTrue(ob.ObjectField == None)
+        self.assertTrue(ob.ObjectField is None)
 
         ob.ObjectField = Spam("eggs")
         self.assertTrue(ob.ObjectField.__class__.__name__ == "Spam")
         self.assertTrue(ob.ObjectField.GetValue() == "eggs")
 
         ob.ObjectField = None
-        self.assertTrue(ob.ObjectField == None)
+        self.assertTrue(ob.ObjectField is None)
 
         ob.ObjectField = System.String("spam")
         self.assertTrue(ob.ObjectField == "spam")
@@ -627,13 +627,13 @@ class ConversionTests(unittest.TestCase):
         ob = ConversionTest()
 
         ob.StringField = None
-        self.assertTrue(ob.StringField == None)
+        self.assertTrue(ob.StringField is None)
 
         ob.ObjectField = None
-        self.assertTrue(ob.ObjectField == None)
+        self.assertTrue(ob.ObjectField is None)
 
         ob.SpamField = None
-        self.assertTrue(ob.SpamField == None)
+        self.assertTrue(ob.SpamField is None)
 
         # Primitive types and enums should not be set to null.
 
@@ -647,7 +647,7 @@ class ConversionTests(unittest.TestCase):
         """Test byte array conversion."""
         ob = ConversionTest()
 
-        self.assertTrue(ob.ByteArrayField == None)
+        self.assertTrue(ob.ByteArrayField is None)
 
         ob.ByteArrayField = [0, 1, 2, 3, 4]
         array = ob.ByteArrayField
@@ -665,7 +665,7 @@ class ConversionTests(unittest.TestCase):
         """Test sbyte array conversion."""
         ob = ConversionTest()
 
-        self.assertTrue(ob.SByteArrayField == None)
+        self.assertTrue(ob.SByteArrayField is None)
 
         ob.SByteArrayField = [0, 1, 2, 3, 4]
         array = ob.SByteArrayField

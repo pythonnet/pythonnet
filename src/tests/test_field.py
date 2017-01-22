@@ -182,19 +182,19 @@ class FieldTests(unittest.TestCase):
         """Test boolean fields."""
         # change this to true / false later for Python 2.3?
         ob = FieldTest()
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
 
         ob.BooleanField = True
-        self.assertTrue(ob.BooleanField == True)
+        self.assertTrue(ob.BooleanField is True)
 
         ob.BooleanField = False
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
 
         ob.BooleanField = 1
-        self.assertTrue(ob.BooleanField == True)
+        self.assertTrue(ob.BooleanField is True)
 
         ob.BooleanField = 0
-        self.assertTrue(ob.BooleanField == False)
+        self.assertTrue(ob.BooleanField is False)
 
     def test_sbyte_field(self):
         """Test sbyte fields."""
@@ -322,7 +322,7 @@ class FieldTests(unittest.TestCase):
     def test_object_field(self):
         """Test ob fields."""
         ob = FieldTest()
-        self.assertTrue(ob.ObjectField == None)
+        self.assertTrue(ob.ObjectField is None)
 
         ob.ObjectField = System.String("spam")
         self.assertTrue(ob.ObjectField == "spam")
@@ -331,7 +331,7 @@ class FieldTests(unittest.TestCase):
         self.assertTrue(ob.ObjectField == 1)
 
         ob.ObjectField = None
-        self.assertTrue(ob.ObjectField == None)
+        self.assertTrue(ob.ObjectField is None)
 
     def test_enum_field(self):
         """Test enum fields."""
@@ -348,13 +348,13 @@ class FieldTests(unittest.TestCase):
         ob = FieldTest()
 
         ob.StringField = None
-        self.assertTrue(ob.StringField == None)
+        self.assertTrue(ob.StringField is None)
 
         ob.ObjectField = None
-        self.assertTrue(ob.ObjectField == None)
+        self.assertTrue(ob.ObjectField is None)
 
         ob.SpamField = None
-        self.assertTrue(ob.SpamField == None)
+        self.assertTrue(ob.SpamField is None)
 
         # Primitive types and enums should not be set to null.
 
