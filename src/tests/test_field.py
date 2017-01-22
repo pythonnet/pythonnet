@@ -11,11 +11,11 @@ class FieldTests(unittest.TestCase):
 
     def testPublicInstanceField(self):
         """Test public instance fields."""
-        object = FieldTest()
-        self.assertTrue(object.PublicField == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.PublicField == 0)
 
-        object.PublicField = 1
-        self.assertTrue(object.PublicField == 1)
+        ob.PublicField = 1
+        self.assertTrue(ob.PublicField == 1)
 
         def test():
             del FieldTest().PublicField
@@ -24,15 +24,15 @@ class FieldTests(unittest.TestCase):
 
     def testPublicStaticField(self):
         """Test public static fields."""
-        object = FieldTest()
+        ob = FieldTest()
         self.assertTrue(FieldTest.PublicStaticField == 0)
 
         FieldTest.PublicStaticField = 1
         self.assertTrue(FieldTest.PublicStaticField == 1)
 
-        self.assertTrue(object.PublicStaticField == 1)
-        object.PublicStaticField = 0
-        self.assertTrue(object.PublicStaticField == 0)
+        self.assertTrue(ob.PublicStaticField == 1)
+        ob.PublicStaticField = 0
+        self.assertTrue(ob.PublicStaticField == 0)
 
         def test():
             del FieldTest.PublicStaticField
@@ -46,11 +46,11 @@ class FieldTests(unittest.TestCase):
 
     def testProtectedInstanceField(self):
         """Test protected instance fields."""
-        object = FieldTest()
-        self.assertTrue(object.ProtectedField == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.ProtectedField == 0)
 
-        object.ProtectedField = 1
-        self.assertTrue(object.ProtectedField == 1)
+        ob.ProtectedField = 1
+        self.assertTrue(ob.ProtectedField == 1)
 
         def test():
             del FieldTest().ProtectedField
@@ -59,15 +59,15 @@ class FieldTests(unittest.TestCase):
 
     def testProtectedStaticField(self):
         """Test protected static fields."""
-        object = FieldTest()
+        ob = FieldTest()
         self.assertTrue(FieldTest.ProtectedStaticField == 0)
 
         FieldTest.ProtectedStaticField = 1
         self.assertTrue(FieldTest.ProtectedStaticField == 1)
 
-        self.assertTrue(object.ProtectedStaticField == 1)
-        object.ProtectedStaticField = 0
-        self.assertTrue(object.ProtectedStaticField == 0)
+        self.assertTrue(ob.ProtectedStaticField == 1)
+        ob.ProtectedStaticField = 0
+        self.assertTrue(ob.ProtectedStaticField == 0)
 
         def test():
             del FieldTest.ProtectedStaticField
@@ -95,10 +95,10 @@ class FieldTests(unittest.TestCase):
 
     def testReadOnlyStaticField(self):
         """Test readonly static fields."""
-        object = FieldTest()
+        ob = FieldTest()
 
         self.assertTrue(FieldTest.ReadOnlyStaticField == 0)
-        self.assertTrue(object.ReadOnlyStaticField == 0)
+        self.assertTrue(ob.ReadOnlyStaticField == 0)
 
         def test():
             FieldTest.ReadOnlyStaticField = 1
@@ -122,10 +122,10 @@ class FieldTests(unittest.TestCase):
 
     def testConstantField(self):
         """Test const fields."""
-        object = FieldTest()
+        ob = FieldTest()
 
         self.assertTrue(FieldTest.ConstField == 0)
-        self.assertTrue(object.ConstField == 0)
+        self.assertTrue(ob.ConstField == 0)
 
         def test():
             FieldTest().ConstField = 1
@@ -190,15 +190,15 @@ class FieldTests(unittest.TestCase):
         # a descriptor actually goes through the descriptor (rather than
         # silently replacing the descriptor in the instance or type dict.
 
-        object = FieldTest()
+        ob = FieldTest()
 
         self.assertTrue(FieldTest.PublicStaticField == 0)
-        self.assertTrue(object.PublicStaticField == 0)
+        self.assertTrue(ob.PublicStaticField == 0)
 
         descriptor = FieldTest.__dict__['PublicStaticField']
         self.assertTrue(type(descriptor) != int)
 
-        object.PublicStaticField = 0
+        ob.PublicStaticField = 0
         descriptor = FieldTest.__dict__['PublicStaticField']
         self.assertTrue(type(descriptor) != int)
 
@@ -231,180 +231,180 @@ class FieldTests(unittest.TestCase):
     def testBooleanField(self):
         """Test boolean fields."""
         # change this to true / false later for Python 2.3?
-        object = FieldTest()
-        self.assertTrue(object.BooleanField == False)
+        ob = FieldTest()
+        self.assertTrue(ob.BooleanField == False)
 
-        object.BooleanField = True
-        self.assertTrue(object.BooleanField == True)
+        ob.BooleanField = True
+        self.assertTrue(ob.BooleanField == True)
 
-        object.BooleanField = False
-        self.assertTrue(object.BooleanField == False)
+        ob.BooleanField = False
+        self.assertTrue(ob.BooleanField == False)
 
-        object.BooleanField = 1
-        self.assertTrue(object.BooleanField == True)
+        ob.BooleanField = 1
+        self.assertTrue(ob.BooleanField == True)
 
-        object.BooleanField = 0
-        self.assertTrue(object.BooleanField == False)
+        ob.BooleanField = 0
+        self.assertTrue(ob.BooleanField == False)
 
     def testSByteField(self):
         """Test sbyte fields."""
-        object = FieldTest()
-        self.assertTrue(object.SByteField == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.SByteField == 0)
 
-        object.SByteField = 1
-        self.assertTrue(object.SByteField == 1)
+        ob.SByteField = 1
+        self.assertTrue(ob.SByteField == 1)
 
     def testByteField(self):
         """Test byte fields."""
-        object = FieldTest()
-        self.assertTrue(object.ByteField == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.ByteField == 0)
 
-        object.ByteField = 1
-        self.assertTrue(object.ByteField == 1)
+        ob.ByteField = 1
+        self.assertTrue(ob.ByteField == 1)
 
     def testCharField(self):
         """Test char fields."""
-        object = FieldTest()
-        self.assertTrue(object.CharField == u'A')
-        self.assertTrue(object.CharField == 'A')
+        ob = FieldTest()
+        self.assertTrue(ob.CharField == u'A')
+        self.assertTrue(ob.CharField == 'A')
 
-        object.CharField = 'B'
-        self.assertTrue(object.CharField == u'B')
-        self.assertTrue(object.CharField == 'B')
+        ob.CharField = 'B'
+        self.assertTrue(ob.CharField == u'B')
+        self.assertTrue(ob.CharField == 'B')
 
-        object.CharField = u'C'
-        self.assertTrue(object.CharField == u'C')
-        self.assertTrue(object.CharField == 'C')
+        ob.CharField = u'C'
+        self.assertTrue(ob.CharField == u'C')
+        self.assertTrue(ob.CharField == 'C')
 
     def testInt16Field(self):
         """Test int16 fields."""
-        object = FieldTest()
-        self.assertTrue(object.Int16Field == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.Int16Field == 0)
 
-        object.Int16Field = 1
-        self.assertTrue(object.Int16Field == 1)
+        ob.Int16Field = 1
+        self.assertTrue(ob.Int16Field == 1)
 
     def testInt32Field(self):
         """Test int32 fields."""
-        object = FieldTest()
-        self.assertTrue(object.Int32Field == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.Int32Field == 0)
 
-        object.Int32Field = 1
-        self.assertTrue(object.Int32Field == 1)
+        ob.Int32Field = 1
+        self.assertTrue(ob.Int32Field == 1)
 
     def testInt64Field(self):
         """Test int64 fields."""
-        object = FieldTest()
-        self.assertTrue(object.Int64Field == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.Int64Field == 0)
 
-        object.Int64Field = 1
-        self.assertTrue(object.Int64Field == 1)
+        ob.Int64Field = 1
+        self.assertTrue(ob.Int64Field == 1)
 
     def testUInt16Field(self):
         """Test uint16 fields."""
-        object = FieldTest()
-        self.assertTrue(object.UInt16Field == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.UInt16Field == 0)
 
-        object.UInt16Field = 1
-        self.assertTrue(object.UInt16Field == 1)
+        ob.UInt16Field = 1
+        self.assertTrue(ob.UInt16Field == 1)
 
     def testUInt32Field(self):
         """Test uint32 fields."""
-        object = FieldTest()
-        self.assertTrue(object.UInt32Field == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.UInt32Field == 0)
 
-        object.UInt32Field = 1
-        self.assertTrue(object.UInt32Field == 1)
+        ob.UInt32Field = 1
+        self.assertTrue(ob.UInt32Field == 1)
 
     def testUInt64Field(self):
         """Test uint64 fields."""
-        object = FieldTest()
-        self.assertTrue(object.UInt64Field == 0)
+        ob = FieldTest()
+        self.assertTrue(ob.UInt64Field == 0)
 
-        object.UInt64Field = 1
-        self.assertTrue(object.UInt64Field == 1)
+        ob.UInt64Field = 1
+        self.assertTrue(ob.UInt64Field == 1)
 
     def testSingleField(self):
         """Test single fields."""
-        object = FieldTest()
-        self.assertTrue(object.SingleField == 0.0)
+        ob = FieldTest()
+        self.assertTrue(ob.SingleField == 0.0)
 
-        object.SingleField = 1.1
-        self.assertTrue(object.SingleField == 1.1)
+        ob.SingleField = 1.1
+        self.assertTrue(ob.SingleField == 1.1)
 
     def testDoubleField(self):
         """Test double fields."""
-        object = FieldTest()
-        self.assertTrue(object.DoubleField == 0.0)
+        ob = FieldTest()
+        self.assertTrue(ob.DoubleField == 0.0)
 
-        object.DoubleField = 1.1
-        self.assertTrue(object.DoubleField == 1.1)
+        ob.DoubleField = 1.1
+        self.assertTrue(ob.DoubleField == 1.1)
 
     def testDecimalField(self):
         """Test decimal fields."""
-        object = FieldTest()
-        self.assertTrue(object.DecimalField == System.Decimal(0))
+        ob = FieldTest()
+        self.assertTrue(ob.DecimalField == System.Decimal(0))
 
-        object.DecimalField = System.Decimal(1)
-        self.assertTrue(object.DecimalField == System.Decimal(1))
+        ob.DecimalField = System.Decimal(1)
+        self.assertTrue(ob.DecimalField == System.Decimal(1))
 
     def testStringField(self):
         """Test string fields."""
-        object = FieldTest()
-        self.assertTrue(object.StringField == "spam")
+        ob = FieldTest()
+        self.assertTrue(ob.StringField == "spam")
 
-        object.StringField = "eggs"
-        self.assertTrue(object.StringField == "eggs")
+        ob.StringField = "eggs"
+        self.assertTrue(ob.StringField == "eggs")
 
     def testInterfaceField(self):
         """Test interface fields."""
         from Python.Test import Spam, ISpam
 
-        object = FieldTest()
+        ob = FieldTest()
 
-        self.assertTrue(ISpam(object.SpamField).GetValue() == "spam")
-        self.assertTrue(object.SpamField.GetValue() == "spam")
+        self.assertTrue(ISpam(ob.SpamField).GetValue() == "spam")
+        self.assertTrue(ob.SpamField.GetValue() == "spam")
 
-        object.SpamField = Spam("eggs")
-        self.assertTrue(ISpam(object.SpamField).GetValue() == "eggs")
-        self.assertTrue(object.SpamField.GetValue() == "eggs")
+        ob.SpamField = Spam("eggs")
+        self.assertTrue(ISpam(ob.SpamField).GetValue() == "eggs")
+        self.assertTrue(ob.SpamField.GetValue() == "eggs")
 
     def testObjectField(self):
-        """Test object fields."""
-        object = FieldTest()
-        self.assertTrue(object.ObjectField == None)
+        """Test ob fields."""
+        ob = FieldTest()
+        self.assertTrue(ob.ObjectField == None)
 
-        object.ObjectField = System.String("spam")
-        self.assertTrue(object.ObjectField == "spam")
+        ob.ObjectField = System.String("spam")
+        self.assertTrue(ob.ObjectField == "spam")
 
-        object.ObjectField = System.Int32(1)
-        self.assertTrue(object.ObjectField == 1)
+        ob.ObjectField = System.Int32(1)
+        self.assertTrue(ob.ObjectField == 1)
 
-        object.ObjectField = None
-        self.assertTrue(object.ObjectField == None)
+        ob.ObjectField = None
+        self.assertTrue(ob.ObjectField == None)
 
     def testEnumField(self):
         """Test enum fields."""
         from Python.Test import ShortEnum
 
-        object = FieldTest()
-        self.assertTrue(object.EnumField == ShortEnum.Zero)
+        ob = FieldTest()
+        self.assertTrue(ob.EnumField == ShortEnum.Zero)
 
-        object.EnumField = ShortEnum.One
-        self.assertTrue(object.EnumField == ShortEnum.One)
+        ob.EnumField = ShortEnum.One
+        self.assertTrue(ob.EnumField == ShortEnum.One)
 
     def testNullableField(self):
         """Test nullable fields."""
-        object = FieldTest()
+        ob = FieldTest()
 
-        object.StringField = None
-        self.assertTrue(object.StringField == None)
+        ob.StringField = None
+        self.assertTrue(ob.StringField == None)
 
-        object.ObjectField = None
-        self.assertTrue(object.ObjectField == None)
+        ob.ObjectField = None
+        self.assertTrue(ob.ObjectField == None)
 
-        object.SpamField = None
-        self.assertTrue(object.SpamField == None)
+        ob.SpamField = None
+        self.assertTrue(ob.SpamField == None)
 
         # Primitive types and enums should not be set to null.
 

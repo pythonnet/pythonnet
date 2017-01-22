@@ -10,11 +10,11 @@ class PropertyTests(unittest.TestCase):
 
     def testPublicInstanceProperty(self):
         """Test public instance properties."""
-        object = PropertyTest()
+        ob = PropertyTest()
 
-        self.assertTrue(object.PublicProperty == 0)
-        object.PublicProperty = 1
-        self.assertTrue(object.PublicProperty == 1)
+        self.assertTrue(ob.PublicProperty == 0)
+        ob.PublicProperty = 1
+        self.assertTrue(ob.PublicProperty == 1)
 
         def test():
             del PropertyTest().PublicProperty
@@ -23,15 +23,15 @@ class PropertyTests(unittest.TestCase):
 
     def testPublicStaticProperty(self):
         """Test public static properties."""
-        object = PropertyTest()
+        ob = PropertyTest()
 
         self.assertTrue(PropertyTest.PublicStaticProperty == 0)
         PropertyTest.PublicStaticProperty = 1
         self.assertTrue(PropertyTest.PublicStaticProperty == 1)
 
-        self.assertTrue(object.PublicStaticProperty == 1)
-        object.PublicStaticProperty = 0
-        self.assertTrue(object.PublicStaticProperty == 0)
+        self.assertTrue(ob.PublicStaticProperty == 1)
+        ob.PublicStaticProperty = 0
+        self.assertTrue(ob.PublicStaticProperty == 0)
 
         def test():
             del PropertyTest.PublicStaticProperty
@@ -45,11 +45,11 @@ class PropertyTests(unittest.TestCase):
 
     def testProtectedInstanceProperty(self):
         """Test protected instance properties."""
-        object = PropertyTest()
+        ob = PropertyTest()
 
-        self.assertTrue(object.ProtectedProperty == 0)
-        object.ProtectedProperty = 1
-        self.assertTrue(object.ProtectedProperty == 1)
+        self.assertTrue(ob.ProtectedProperty == 0)
+        ob.ProtectedProperty = 1
+        self.assertTrue(ob.ProtectedProperty == 1)
 
         def test():
             del PropertyTest().ProtectedProperty
@@ -58,15 +58,15 @@ class PropertyTests(unittest.TestCase):
 
     def testProtectedStaticProperty(self):
         """Test protected static properties."""
-        object = PropertyTest()
+        ob = PropertyTest()
 
         self.assertTrue(PropertyTest.ProtectedStaticProperty == 0)
         PropertyTest.ProtectedStaticProperty = 1
         self.assertTrue(PropertyTest.ProtectedStaticProperty == 1)
 
-        self.assertTrue(object.ProtectedStaticProperty == 1)
-        object.ProtectedStaticProperty = 0
-        self.assertTrue(object.ProtectedStaticProperty == 0)
+        self.assertTrue(ob.ProtectedStaticProperty == 1)
+        ob.ProtectedStaticProperty = 0
+        self.assertTrue(ob.ProtectedStaticProperty == 0)
 
         def test():
             del PropertyTest.ProtectedStaticProperty
@@ -82,17 +82,17 @@ class PropertyTests(unittest.TestCase):
         """Test internal properties."""
 
         def test():
-            f = PropertyTest().InternalProperty
+            return PropertyTest().InternalProperty
 
         self.assertRaises(AttributeError, test)
 
         def test():
-            f = PropertyTest().InternalStaticProperty
+            return PropertyTest().InternalStaticProperty
 
         self.assertRaises(AttributeError, test)
 
         def test():
-            f = PropertyTest.InternalStaticProperty
+            return PropertyTest.InternalStaticProperty
 
         self.assertRaises(AttributeError, test)
 
@@ -100,17 +100,17 @@ class PropertyTests(unittest.TestCase):
         """Test private properties."""
 
         def test():
-            f = PropertyTest().PrivateProperty
+            return PropertyTest().PrivateProperty
 
         self.assertRaises(AttributeError, test)
 
         def test():
-            f = PropertyTest().PrivateStaticProperty
+            return PropertyTest().PrivateStaticProperty
 
         self.assertRaises(AttributeError, test)
 
         def test():
-            f = PropertyTest.PrivateStaticProperty
+            return PropertyTest.PrivateStaticProperty
 
         self.assertRaises(AttributeError, test)
 
@@ -121,15 +121,15 @@ class PropertyTests(unittest.TestCase):
         # a descriptor actually goes through the descriptor (rather than
         # silently replacing the descriptor in the instance or type dict.
 
-        object = PropertyTest()
+        ob = PropertyTest()
 
         self.assertTrue(PropertyTest.PublicStaticProperty == 0)
-        self.assertTrue(object.PublicStaticProperty == 0)
+        self.assertTrue(ob.PublicStaticProperty == 0)
 
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
         self.assertTrue(type(descriptor) != int)
 
-        object.PublicStaticProperty = 0
+        ob.PublicStaticProperty = 0
         descriptor = PropertyTest.__dict__['PublicStaticProperty']
         self.assertTrue(type(descriptor) != int)
 
@@ -141,8 +141,8 @@ class PropertyTests(unittest.TestCase):
         """Test setting a property using a value of the wrong type."""
 
         def test():
-            object = PropertyTest()
-            object.PublicProperty = "spam"
+            ob = PropertyTest()
+            ob.PublicProperty = "spam"
 
         self.assertTrue(TypeError, test)
 
@@ -164,8 +164,8 @@ class PropertyTests(unittest.TestCase):
         """Test properties of interfaces. Added after a bug report
            that an IsAbstract check was inappropriate and prevented
            use of properties when only the interface is known."""
-
         from System.Collections import Hashtable, ICollection
+
         mapping = Hashtable()
         coll = ICollection(mapping)
         self.assertTrue(coll.Count == 0)

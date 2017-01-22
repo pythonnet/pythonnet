@@ -125,11 +125,11 @@ class EnumTests(unittest.TestCase):
 
     def testEnumConversion(self):
         """Test enumeration conversion."""
-        object = Test.FieldTest()
-        self.assertTrue(object.EnumField == 0)
+        ob = Test.FieldTest()
+        self.assertTrue(ob.EnumField == 0)
 
-        object.EnumField = Test.ShortEnum.One
-        self.assertTrue(object.EnumField == 1)
+        ob.EnumField = Test.ShortEnum.One
+        self.assertTrue(ob.EnumField == 1)
 
         def test():
             Test.FieldTest().EnumField = 20
