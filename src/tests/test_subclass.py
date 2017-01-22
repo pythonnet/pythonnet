@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import clr
-
-clr.AddReference('Python.Test')
-clr.AddReference('System')
-
 import unittest
 from Python.Test import TestFunctions, SubClassTest, IInterfaceTest, TestEventArgs
 from System.Collections.Generic import List
@@ -167,11 +163,3 @@ class SubClassTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(SubClassTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

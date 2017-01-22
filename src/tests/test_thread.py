@@ -68,12 +68,3 @@ class ThreadTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(ThreadTests)
-
-
-def main():
-    for i in range(50):
-        unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

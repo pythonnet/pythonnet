@@ -16,6 +16,10 @@ try:
 except ImportError:
     print("Load clr import hook")
     import clr
+    clr.AddReference("Python.Test")
+    clr.AddReference("System.Collections")
+    clr.AddReference("System.Data")
+    clr.AddReference("System.Management")
 
 test_modules = (
     # Passes on its own, but not here if

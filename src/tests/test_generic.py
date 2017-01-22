@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import clr
-
-clr.AddReference('Python.Test')
-
 from System.Collections.Generic import Dictionary, List
 import unittest
 import Python.Test as Test
@@ -795,11 +792,3 @@ class GenericTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(GenericTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

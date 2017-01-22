@@ -2,11 +2,6 @@
 
 import clr
 
-clr.AddReference('Python.Test')
-clr.AddReference('System.Data')
-
-# testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
-##clr.AddReference('System.Windows.Forms')
 import unittest
 import types
 import warnings
@@ -17,6 +12,9 @@ if six.PY3:
     ClassType = type
 else:
     ClassType = types.ClassType
+
+# testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
+# clr.AddReference('System.Windows.Forms')
 
 
 class ModuleTests(unittest.TestCase):
@@ -383,11 +381,3 @@ class ModuleTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(ModuleTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

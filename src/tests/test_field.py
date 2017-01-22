@@ -426,11 +426,3 @@ class FieldTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(FieldTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

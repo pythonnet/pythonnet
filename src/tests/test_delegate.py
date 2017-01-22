@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import clr
-
-clr.AddReference('Python.Test')
-
 from Python.Test import DelegateTest, PublicDelegate
 from Python.Test import StringDelegate, ObjectDelegate
 from Python.Test import BoolDelegate
@@ -319,11 +315,3 @@ class DelegateTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(DelegateTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

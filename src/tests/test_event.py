@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import clr
-
-clr.AddReference('Python.Test')
-
 import unittest
 from Python.Test import EventTest, TestEventHandler
 from Python.Test import TestEventArgs
@@ -678,11 +674,3 @@ class MultipleHandler:
 
 def test_suite():
     return unittest.makeSuite(EventTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

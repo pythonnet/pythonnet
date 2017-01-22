@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import clr
 
-clr.AddReference("Python.Test")
 import Python.Test as Test
 import six
 
@@ -679,11 +677,3 @@ class IndexerTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(IndexerTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()
