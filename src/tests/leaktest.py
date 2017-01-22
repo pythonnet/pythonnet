@@ -138,7 +138,7 @@ class LeakTest(object):
         self.end_test()
 
     def test_events(self):
-        from Python.Test import EventTest, TestEventArgs
+        from Python.Test import EventTest, EventArgsTest
 
         self.notify("Running event leak check...")
 
@@ -151,28 +151,28 @@ class LeakTest(object):
             # Instance method event handler
             handler = GenericHandler()
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
             # Vararg method event handler
             handler = VariableArgsHandler()
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
             # Callable object event handler
             handler = CallableHandler()
             testob.PublicEvent += handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler
             del handler
 
             # Callable vararg event handler
             handler = VarCallableHandler()
             testob.PublicEvent += handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler
             del handler
 
@@ -180,7 +180,7 @@ class LeakTest(object):
             handler = StaticMethodHandler()
             StaticMethodHandler.value = None
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
@@ -188,18 +188,18 @@ class LeakTest(object):
             handler = ClassMethodHandler()
             ClassMethodHandler.value = None
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
             # Managed instance event handler
             testob.PublicEvent += testob.GenericHandler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= testob.GenericHandler
 
             # Static managed event handler
             testob.PublicEvent += EventTest.StaticHandler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= EventTest.StaticHandler
 
             # Function event handler
@@ -209,7 +209,7 @@ class LeakTest(object):
                 dict_['value'] = args.value
 
             testob.PublicEvent += handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler
             del handler
 

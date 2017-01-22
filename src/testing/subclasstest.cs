@@ -14,14 +14,14 @@ namespace Python.Test
         string bar(string s, int i);
 
         // test events on interfaces
-        event TestEventHandler TestEvent;
+        event EventHandlerTest TestEvent;
 
         void OnTestEvent(int value);
     }
 
     public class SubClassTest : IInterfaceTest
     {
-        public event TestEventHandler TestEvent;
+        public event EventHandlerTest TestEvent;
 
         public SubClassTest()
         {
@@ -60,7 +60,7 @@ namespace Python.Test
         public virtual void OnTestEvent(int value)
         {
             if (null != TestEvent)
-                TestEvent(this, new TestEventArgs(value));
+                TestEvent(this, new EventArgsTest(value));
         }
     }
 
@@ -75,7 +75,7 @@ namespace Python.Test
         }
     }
 
-    public class TestFunctions
+    public class FunctionsTest
     {
         public static string test_foo(IInterfaceTest x)
         {
