@@ -16,13 +16,14 @@ try:
 except ImportError:
     print("Load clr import hook")
     import clr
+
     clr.AddReference("Python.Test")
     clr.AddReference("System.Collections")
     clr.AddReference("System.Data")
     clr.AddReference("System.Management")
 
 test_modules = (
-    # Passes on its own, but not here if
+    # test_module passes on its own, but not here if
     # other test modules that import System.Windows.Forms
     # run first. They must not do module level import/AddReference()
     # of the System.Windows.Forms namespace.
@@ -47,11 +48,11 @@ test_modules = (
     'test_thread',
     'test_docstring',
 
-    # FIXME: Fails due to unhandled exception
-    # 'test_engine',
+    # FIXME: Has tests that are being skipped.
+    'test_engine',
 
-    # FIXME: Fails in Linux
-    # 'test_subclass',
+    # FIXME: Has tests that are being skipped.
+    'test_subclass',
 )
 
 
