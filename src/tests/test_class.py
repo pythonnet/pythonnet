@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# TODO: Add tests for ClassicClass, NewStyleClass?
 
 import unittest
 
@@ -8,28 +9,16 @@ import System
 from _compat import DictProxyType, range
 
 
-class ClassicClass:
-    def kind(self):
-        return 'classic'
-
-
-class NewStyleClass(object):
-    def kind(self):
-        return 'new-style'
-
-
 class ClassTests(unittest.TestCase):
     """Test CLR class support."""
 
     def test_basic_reference_type(self):
         """Test usage of CLR defined reference types."""
-        String = System.String
-        self.assertEquals(String.Empty, "")
+        self.assertEquals(System.String.Empty, "")
 
     def test_basic_value_type(self):
         """Test usage of CLR defined value types."""
-        Int32 = System.Int32
-        self.assertEquals(Int32.MaxValue, 2147483647)
+        self.assertEquals(System.Int32.MaxValue, 2147483647)
 
     def test_class_standard_attrs(self):
         """Test standard class attributes."""
@@ -63,14 +52,14 @@ class ClassTests(unittest.TestCase):
             from Python.Test import InternalClass
 
         with self.assertRaises(AttributeError):
-            x = Test.InternalClass
+            _ = Test.InternalClass
 
     def test_basic_subclass(self):
         """Test basic subclass of a managed class."""
         from System.Collections import Hashtable
 
         class MyTable(Hashtable):
-            def howMany(self):
+            def how_many(self):
                 return self.Count
 
         table = MyTable()
@@ -80,15 +69,13 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(len(table.__class__.__bases__) == 1)
         self.assertTrue(table.__class__.__bases__[0] == Hashtable)
 
-        self.assertTrue(table.howMany() == 0)
+        self.assertTrue(table.how_many() == 0)
         self.assertTrue(table.Count == 0)
 
         table.set_Item('one', 'one')
 
-        self.assertTrue(table.howMany() == 1)
+        self.assertTrue(table.how_many() == 1)
         self.assertTrue(table.Count == 1)
-
-        MyTable = None
 
     def test_subclass_with_no_arg_constructor(self):
         """Test subclass of a managed class with a no-arg constructor."""
@@ -99,7 +86,7 @@ class ClassTests(unittest.TestCase):
                 self.name = name
 
         # This failed in earlier versions
-        inst = SubClass('test')
+        _ = SubClass('test')
 
     def test_subclass_with_various_constructors(self):
         """Test subclass of a managed class with various constructors."""
@@ -145,19 +132,18 @@ class ClassTests(unittest.TestCase):
     # test recursion
     # test
 
-
     def test_ienumerable_iteration(self):
         """Test iteration over objects supporting IEnumerable."""
         from Python.Test import ClassTest
 
-        list = ClassTest.GetArrayList()
+        list_ = ClassTest.GetArrayList()
 
-        for item in list:
+        for item in list_:
             self.assertTrue((item > -1) and (item < 10))
 
-        dict = ClassTest.GetHashtable()
+        dict_ = ClassTest.GetHashtable()
 
-        for item in dict:
+        for item in dict_:
             cname = item.__class__.__name__
             self.assertTrue(cname.endswith('DictionaryEntry'))
 
@@ -214,7 +200,7 @@ class ClassTests(unittest.TestCase):
         from System import TimeSpan
 
         for _ in range(100):
-            TimeSpan.new_method = lambda self: self.TotalMinutes
+            TimeSpan.new_method = lambda self_: self_.TotalMinutes
             ts = TimeSpan.FromHours(1)
             self.assertTrue(ts.new_method() == 60)
             del TimeSpan.new_method

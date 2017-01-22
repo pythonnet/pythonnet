@@ -11,7 +11,7 @@ from _compat import PY2, long, unicode, unichr, zip
 class GenericTests(unittest.TestCase):
     """Test CLR generics support."""
 
-    def _testGenericWrapperByType(self, ptype, value):
+    def _assert_generic_wrapper_by_type(self, ptype, value):
         """Test Helper"""
         from Python.Test import GenericWrapper
         import System
@@ -26,7 +26,7 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(inst.value[0] == value)
         self.assertTrue(inst.value[1] == value)
 
-    def _testGenericMethodByType(self, ptype, value, test_type=0):
+    def _assert_generic_method_by_type(self, ptype, value, test_type=0):
         """Test Helper"""
         from Python.Test import GenericMethodTest, GenericStaticMethodTest
         import System
@@ -116,55 +116,55 @@ class GenericTests(unittest.TestCase):
         """Test python type alias support with generics."""
         from System.Collections.Generic import Dictionary
 
-        dict = Dictionary[str, str]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add("one", "one")
-        self.assertTrue(dict["one"] == "one")
+        dict_ = Dictionary[str, str]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add("one", "one")
+        self.assertTrue(dict_["one"] == "one")
 
-        dict = Dictionary[System.String, System.String]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add("one", "one")
-        self.assertTrue(dict["one"] == "one")
+        dict_ = Dictionary[System.String, System.String]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add("one", "one")
+        self.assertTrue(dict_["one"] == "one")
 
-        dict = Dictionary[int, int]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1, 1)
-        self.assertTrue(dict[1] == 1)
+        dict_ = Dictionary[int, int]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(1, 1)
+        self.assertTrue(dict_[1] == 1)
 
-        dict = Dictionary[System.Int32, System.Int32]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1, 1)
-        self.assertTrue(dict[1] == 1)
+        dict_ = Dictionary[System.Int32, System.Int32]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(1, 1)
+        self.assertTrue(dict_[1] == 1)
 
-        dict = Dictionary[long, long]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(long(1), long(1))
-        self.assertTrue(dict[long(1)] == long(1))
+        dict_ = Dictionary[long, long]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(long(1), long(1))
+        self.assertTrue(dict_[long(1)] == long(1))
 
-        dict = Dictionary[System.Int64, System.Int64]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(long(1), long(1))
-        self.assertTrue(dict[long(1)] == long(1))
+        dict_ = Dictionary[System.Int64, System.Int64]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(long(1), long(1))
+        self.assertTrue(dict_[long(1)] == long(1))
 
-        dict = Dictionary[float, float]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1.5, 1.5)
-        self.assertTrue(dict[1.5] == 1.5)
+        dict_ = Dictionary[float, float]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(1.5, 1.5)
+        self.assertTrue(dict_[1.5] == 1.5)
 
-        dict = Dictionary[System.Double, System.Double]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1.5, 1.5)
-        self.assertTrue(dict[1.5] == 1.5)
+        dict_ = Dictionary[System.Double, System.Double]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(1.5, 1.5)
+        self.assertTrue(dict_[1.5] == 1.5)
 
-        dict = Dictionary[bool, bool]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(True, False)
-        self.assertTrue(dict[True] == False)
+        dict_ = Dictionary[bool, bool]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(True, False)
+        self.assertTrue(dict_[True] == False)
 
-        dict = Dictionary[System.Boolean, System.Boolean]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(True, False)
-        self.assertTrue(dict[True] == False)
+        dict_ = Dictionary[System.Boolean, System.Boolean]()
+        self.assertEquals(dict_.Count, 0)
+        dict_.Add(True, False)
+        self.assertTrue(dict_[True] == False)
 
     def test_generic_reference_type(self):
         """Test usage of generic reference type definitions."""
@@ -192,20 +192,20 @@ class GenericTests(unittest.TestCase):
         """Test behavior of reflected open constructed generic types."""
         from Python.Test import DerivedFromOpenGeneric
 
-        OpenGenericType = DerivedFromOpenGeneric.__bases__[0]
+        open_generic_type = DerivedFromOpenGeneric.__bases__[0]
 
         with self.assertRaises(TypeError):
-            inst = OpenGenericType()
+            _ = open_generic_type()
 
         with self.assertRaises(TypeError):
-            type = OpenGenericType[System.String]
+            _ = open_generic_type[System.String]
 
     def test_derived_from_open_generic_type(self):
         """Test a generic type derived from an open generic type."""
         from Python.Test import DerivedFromOpenGeneric
 
-        type = DerivedFromOpenGeneric[System.String, System.String]
-        inst = type(1, 'two', 'three')
+        type_ = DerivedFromOpenGeneric[System.String, System.String]
+        inst = type_(1, 'two', 'three')
 
         self.assertTrue(inst.value1 == 1)
         self.assertTrue(inst.value2 == 'two')
@@ -225,7 +225,7 @@ class GenericTests(unittest.TestCase):
         # cannot be instantiated. It can only be used to bind a generic.
 
         with self.assertRaises(TypeError):
-            inst = GenericNameTest2()
+            _ = GenericNameTest2()
 
         _class = GenericNameTest2[int]
         self.assertTrue(_class().value == 1)
@@ -240,32 +240,32 @@ class GenericTests(unittest.TestCase):
         from Python.Test import InterfaceTest, ISayHello1, ShortEnum
         import System
 
-        self._testGenericWrapperByType(System.Boolean, True)
-        self._testGenericWrapperByType(bool, True)
-        self._testGenericWrapperByType(System.Byte, 255)
-        self._testGenericWrapperByType(System.SByte, 127)
-        self._testGenericWrapperByType(System.Char, u'A')
-        self._testGenericWrapperByType(System.Int16, 32767)
-        self._testGenericWrapperByType(System.Int32, 2147483647)
-        self._testGenericWrapperByType(int, 2147483647)
-        self._testGenericWrapperByType(System.Int64, long(9223372036854775807))
+        self._assert_generic_wrapper_by_type(System.Boolean, True)
+        self._assert_generic_wrapper_by_type(bool, True)
+        self._assert_generic_wrapper_by_type(System.Byte, 255)
+        self._assert_generic_wrapper_by_type(System.SByte, 127)
+        self._assert_generic_wrapper_by_type(System.Char, u'A')
+        self._assert_generic_wrapper_by_type(System.Int16, 32767)
+        self._assert_generic_wrapper_by_type(System.Int32, 2147483647)
+        self._assert_generic_wrapper_by_type(int, 2147483647)
+        self._assert_generic_wrapper_by_type(System.Int64, long(9223372036854775807))
         # Python 3 has no explicit long type, use System.Int64 instead
         if PY2:
-            self._testGenericWrapperByType(long, long(9223372036854775807))
-        self._testGenericWrapperByType(System.UInt16, 65000)
-        self._testGenericWrapperByType(System.UInt32, long(4294967295))
-        self._testGenericWrapperByType(System.UInt64, long(18446744073709551615))
-        self._testGenericWrapperByType(System.Single, 3.402823e38)
-        self._testGenericWrapperByType(System.Double, 1.7976931348623157e308)
-        self._testGenericWrapperByType(float, 1.7976931348623157e308)
-        self._testGenericWrapperByType(System.Decimal, System.Decimal.One)
-        self._testGenericWrapperByType(System.String, "test")
-        self._testGenericWrapperByType(unicode, "test")
-        self._testGenericWrapperByType(str, "test")
-        self._testGenericWrapperByType(ShortEnum, ShortEnum.Zero)
-        self._testGenericWrapperByType(System.Object, InterfaceTest())
-        self._testGenericWrapperByType(InterfaceTest, InterfaceTest())
-        self._testGenericWrapperByType(ISayHello1, InterfaceTest())
+            self._assert_generic_wrapper_by_type(long, long(9223372036854775807))
+        self._assert_generic_wrapper_by_type(System.UInt16, 65000)
+        self._assert_generic_wrapper_by_type(System.UInt32, long(4294967295))
+        self._assert_generic_wrapper_by_type(System.UInt64, long(18446744073709551615))
+        self._assert_generic_wrapper_by_type(System.Single, 3.402823e38)
+        self._assert_generic_wrapper_by_type(System.Double, 1.7976931348623157e308)
+        self._assert_generic_wrapper_by_type(float, 1.7976931348623157e308)
+        self._assert_generic_wrapper_by_type(System.Decimal, System.Decimal.One)
+        self._assert_generic_wrapper_by_type(System.String, "test")
+        self._assert_generic_wrapper_by_type(unicode, "test")
+        self._assert_generic_wrapper_by_type(str, "test")
+        self._assert_generic_wrapper_by_type(ShortEnum, ShortEnum.Zero)
+        self._assert_generic_wrapper_by_type(System.Object, InterfaceTest())
+        self._assert_generic_wrapper_by_type(InterfaceTest, InterfaceTest())
+        self._assert_generic_wrapper_by_type(ISayHello1, InterfaceTest())
 
     def test_generic_method_binding(self):
         from Python.Test import GenericMethodTest, GenericStaticMethodTest
@@ -293,40 +293,38 @@ class GenericTests(unittest.TestCase):
         from Python.Test import InterfaceTest, ISayHello1, ShortEnum
         import System
 
-        # XXX BUG: The value doesn't fit into Int64 and PythonNet doesn't
+        # FIXME: The value doesn't fit into Int64 and PythonNet doesn't
         # recognize it as UInt64 for unknown reasons.
-        # self._testGenericMethodByType(System.UInt64, 18446744073709551615L)
-        self._testGenericMethodByType(System.Boolean, True)
-        self._testGenericMethodByType(bool, True)
-        self._testGenericMethodByType(System.Byte, 255)
-        self._testGenericMethodByType(System.SByte, 127)
-        self._testGenericMethodByType(System.Char, u'A')
-        self._testGenericMethodByType(System.Int16, 32767)
-        self._testGenericMethodByType(System.Int32, 2147483647)
-        self._testGenericMethodByType(int, 2147483647)
+        # self._assert_generic_method_by_type(System.UInt64, 18446744073709551615L)
+        self._assert_generic_method_by_type(System.Boolean, True)
+        self._assert_generic_method_by_type(bool, True)
+        self._assert_generic_method_by_type(System.Byte, 255)
+        self._assert_generic_method_by_type(System.SByte, 127)
+        self._assert_generic_method_by_type(System.Char, u'A')
+        self._assert_generic_method_by_type(System.Int16, 32767)
+        self._assert_generic_method_by_type(System.Int32, 2147483647)
+        self._assert_generic_method_by_type(int, 2147483647)
         # Python 3 has no explicit long type, use System.Int64 instead
         if PY2:
-            self._testGenericMethodByType(System.Int64, long(9223372036854775807))
-            self._testGenericMethodByType(long, long(9223372036854775807))
-            self._testGenericMethodByType(System.UInt32, long(4294967295))
-            self._testGenericMethodByType(System.Int64, long(1844674407370955161))
-        self._testGenericMethodByType(System.UInt16, 65000)
-        self._testGenericMethodByType(System.Single, 3.402823e38)
-        self._testGenericMethodByType(System.Double, 1.7976931348623157e308)
-        self._testGenericMethodByType(float, 1.7976931348623157e308)
-        self._testGenericMethodByType(System.Decimal, System.Decimal.One)
-        self._testGenericMethodByType(System.String, "test")
-        self._testGenericMethodByType(unicode, "test")
-        self._testGenericMethodByType(str, "test")
-        self._testGenericMethodByType(ShortEnum, ShortEnum.Zero)
-        self._testGenericMethodByType(System.Object, InterfaceTest())
-        self._testGenericMethodByType(InterfaceTest, InterfaceTest(), 1)
-        self._testGenericMethodByType(ISayHello1, InterfaceTest(), 1)
+            self._assert_generic_method_by_type(System.Int64, long(9223372036854775807))
+            self._assert_generic_method_by_type(long, long(9223372036854775807))
+            self._assert_generic_method_by_type(System.UInt32, long(4294967295))
+            self._assert_generic_method_by_type(System.Int64, long(1844674407370955161))
+        self._assert_generic_method_by_type(System.UInt16, 65000)
+        self._assert_generic_method_by_type(System.Single, 3.402823e38)
+        self._assert_generic_method_by_type(System.Double, 1.7976931348623157e308)
+        self._assert_generic_method_by_type(float, 1.7976931348623157e308)
+        self._assert_generic_method_by_type(System.Decimal, System.Decimal.One)
+        self._assert_generic_method_by_type(System.String, "test")
+        self._assert_generic_method_by_type(unicode, "test")
+        self._assert_generic_method_by_type(str, "test")
+        self._assert_generic_method_by_type(ShortEnum, ShortEnum.Zero)
+        self._assert_generic_method_by_type(System.Object, InterfaceTest())
+        self._assert_generic_method_by_type(InterfaceTest, InterfaceTest(), 1)
+        self._assert_generic_method_by_type(ISayHello1, InterfaceTest(), 1)
 
     def test_correct_overload_selection(self):
         """Test correct overloading selection for common types."""
-        from System.Drawing import Font
-
         from System import (String, Double, Single,
                             Int16, Int32, Int64)
         from System import Math
@@ -345,21 +343,19 @@ class GenericTests(unittest.TestCase):
             self.assertTrue(
                 Math.Max(atype(value1),
                          atype(value2)) == Math.Max.__overloads__[atype, atype](
-                    atype(value1),
-                    atype(value2)))
+                    atype(value1), atype(value2)))
             if PY2 and atype is Int64:
                 value2 = long(value2)
             self.assertTrue(
                 Math.Max(atype(value1),
                          value2) == Math.Max.__overloads__[atype, atype](
-                    atype(value1),
-                    atype(value2)))
+                    atype(value1), atype(value2)))
 
         clr.AddReference("System.Runtime.InteropServices")
         from System.Runtime.InteropServices import GCHandle, GCHandleType
         from System import Array, Byte
-        CSArray = Array.CreateInstance(Byte, 1000)
-        handler = GCHandle.Alloc(CSArray, GCHandleType.Pinned)
+        cs_array = Array.CreateInstance(Byte, 1000)
+        handler = GCHandle.Alloc(cs_array, GCHandleType.Pinned)
 
     def test_generic_method_overload_selection(self):
         """Test explicit overload selection with generic methods."""
@@ -433,10 +429,10 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(value == "success")
 
         with self.assertRaises(TypeError):
-            value = type.Overloaded[str, bool, int]("true", True, 1)
+            _ = type.Overloaded[str, bool, int]("true", True, 1)
 
         with self.assertRaises(TypeError):
-            value = inst.Overloaded[str, bool, int]("true", True, 1)
+            _ = inst.Overloaded[str, bool, int]("true", True, 1)
 
     def test_method_overload_selection_with_generic_types(self):
         """Check method overload selection using generic types."""
@@ -446,130 +442,130 @@ class GenericTests(unittest.TestCase):
         inst = InterfaceTest()
 
         vtype = GenericWrapper[System.Boolean]
-        input = vtype(True)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(True)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == True)
 
         vtype = GenericWrapper[bool]
-        input = vtype(True)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(True)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == True)
 
         vtype = GenericWrapper[System.Byte]
-        input = vtype(255)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(255)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 255)
 
         vtype = GenericWrapper[System.SByte]
-        input = vtype(127)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(127)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 127)
 
         vtype = GenericWrapper[System.Char]
-        input = vtype(u'A')
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(u'A')
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == u'A')
 
         vtype = GenericWrapper[System.Char]
-        input = vtype(65535)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(65535)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == unichr(65535))
 
         vtype = GenericWrapper[System.Int16]
-        input = vtype(32767)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(32767)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 32767)
 
         vtype = GenericWrapper[System.Int32]
-        input = vtype(2147483647)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(2147483647)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 2147483647)
 
         vtype = GenericWrapper[int]
-        input = vtype(2147483647)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(2147483647)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 2147483647)
 
         vtype = GenericWrapper[System.Int64]
-        input = vtype(long(9223372036854775807))
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(long(9223372036854775807))
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == long(9223372036854775807))
 
         # Python 3 has no explicit long type, use System.Int64 instead
         if PY2:
             vtype = GenericWrapper[long]
-            input = vtype(long(9223372036854775807))
-            value = MethodTest.Overloaded.__overloads__[vtype](input)
+            input_ = vtype(long(9223372036854775807))
+            value = MethodTest.Overloaded.__overloads__[vtype](input_)
             self.assertTrue(value.value == long(9223372036854775807))
 
         vtype = GenericWrapper[System.UInt16]
-        input = vtype(65000)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(65000)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 65000)
 
         vtype = GenericWrapper[System.UInt32]
-        input = vtype(long(4294967295))
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(long(4294967295))
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == long(4294967295))
 
         vtype = GenericWrapper[System.UInt64]
-        input = vtype(long(18446744073709551615))
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(long(18446744073709551615))
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == long(18446744073709551615))
 
         vtype = GenericWrapper[System.Single]
-        input = vtype(3.402823e38)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(3.402823e38)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 3.402823e38)
 
         vtype = GenericWrapper[System.Double]
-        input = vtype(1.7976931348623157e308)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(1.7976931348623157e308)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 1.7976931348623157e308)
 
         vtype = GenericWrapper[float]
-        input = vtype(1.7976931348623157e308)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(1.7976931348623157e308)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == 1.7976931348623157e308)
 
         vtype = GenericWrapper[System.Decimal]
-        input = vtype(System.Decimal.One)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(System.Decimal.One)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == System.Decimal.One)
 
         vtype = GenericWrapper[System.String]
-        input = vtype("spam")
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype("spam")
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == "spam")
 
         vtype = GenericWrapper[str]
-        input = vtype("spam")
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype("spam")
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == "spam")
 
         vtype = GenericWrapper[ShortEnum]
-        input = vtype(ShortEnum.Zero)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(ShortEnum.Zero)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value == ShortEnum.Zero)
 
         vtype = GenericWrapper[System.Object]
-        input = vtype(inst)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(inst)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value.__class__ == inst.__class__)
 
         vtype = GenericWrapper[InterfaceTest]
-        input = vtype(inst)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(inst)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value.__class__ == inst.__class__)
 
         vtype = GenericWrapper[ISayHello1]
-        input = vtype(inst)
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(inst)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value.value.__class__ == inst.__class__)
 
         vtype = System.Array[GenericWrapper[int]]
-        input = vtype([GenericWrapper[int](0), GenericWrapper[int](1)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([GenericWrapper[int](0), GenericWrapper[int](1)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 0)
         self.assertTrue(value[1].value == 1)
 
@@ -582,72 +578,72 @@ class GenericTests(unittest.TestCase):
 
         gtype = GenericWrapper[System.Boolean]
         vtype = System.Array[gtype]
-        input = vtype([gtype(True), gtype(True)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(True), gtype(True)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == True)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[bool]
         vtype = System.Array[gtype]
-        input = vtype([gtype(True), gtype(True)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(True), gtype(True)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == True)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Byte]
         vtype = System.Array[gtype]
-        input = vtype([gtype(255), gtype(255)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(255), gtype(255)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 255)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.SByte]
         vtype = System.Array[gtype]
-        input = vtype([gtype(127), gtype(127)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(127), gtype(127)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 127)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Char]
         vtype = System.Array[gtype]
-        input = vtype([gtype(u'A'), gtype(u'A')])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(u'A'), gtype(u'A')])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == u'A')
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Char]
         vtype = System.Array[gtype]
-        input = vtype([gtype(65535), gtype(65535)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(65535), gtype(65535)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == unichr(65535))
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Int16]
         vtype = System.Array[gtype]
-        input = vtype([gtype(32767), gtype(32767)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(32767), gtype(32767)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 32767)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Int32]
         vtype = System.Array[gtype]
-        input = vtype([gtype(2147483647), gtype(2147483647)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(2147483647), gtype(2147483647)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 2147483647)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[int]
         vtype = System.Array[gtype]
-        input = vtype([gtype(2147483647), gtype(2147483647)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(2147483647), gtype(2147483647)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 2147483647)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Int64]
         vtype = System.Array[gtype]
-        input = vtype([gtype(long(9223372036854775807)),
+        input_ = vtype([gtype(long(9223372036854775807)),
                        gtype(long(9223372036854775807))])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == long(9223372036854775807))
         self.assertTrue(value.Length == 2)
 
@@ -655,104 +651,104 @@ class GenericTests(unittest.TestCase):
         if PY2:
             gtype = GenericWrapper[long]
             vtype = System.Array[gtype]
-            input = vtype([gtype(long(9223372036854775807)),
+            input_ = vtype([gtype(long(9223372036854775807)),
                            gtype(long(9223372036854775807))])
-            value = MethodTest.Overloaded.__overloads__[vtype](input)
+            value = MethodTest.Overloaded.__overloads__[vtype](input_)
             self.assertTrue(value[0].value == long(9223372036854775807))
             self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.UInt16]
         vtype = System.Array[gtype]
-        input = vtype([gtype(65000), gtype(65000)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(65000), gtype(65000)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 65000)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.UInt32]
         vtype = System.Array[gtype]
-        input = vtype([gtype(long(4294967295)), gtype(long(4294967295))])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(long(4294967295)), gtype(long(4294967295))])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == long(4294967295))
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.UInt64]
         vtype = System.Array[gtype]
-        input = vtype([gtype(long(18446744073709551615)),
+        input_ = vtype([gtype(long(18446744073709551615)),
                        gtype(long(18446744073709551615))])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == long(18446744073709551615))
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Single]
         vtype = System.Array[gtype]
-        input = vtype([gtype(3.402823e38), gtype(3.402823e38)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(3.402823e38), gtype(3.402823e38)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 3.402823e38)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Double]
         vtype = System.Array[gtype]
-        input = vtype([gtype(1.7976931348623157e308),
+        input_ = vtype([gtype(1.7976931348623157e308),
                        gtype(1.7976931348623157e308)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 1.7976931348623157e308)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[float]
         vtype = System.Array[gtype]
-        input = vtype([gtype(1.7976931348623157e308),
+        input_ = vtype([gtype(1.7976931348623157e308),
                        gtype(1.7976931348623157e308)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == 1.7976931348623157e308)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Decimal]
         vtype = System.Array[gtype]
-        input = vtype([gtype(System.Decimal.One),
+        input_ = vtype([gtype(System.Decimal.One),
                        gtype(System.Decimal.One)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == System.Decimal.One)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.String]
         vtype = System.Array[gtype]
-        input = vtype([gtype("spam"), gtype("spam")])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype("spam"), gtype("spam")])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == "spam")
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[str]
         vtype = System.Array[gtype]
-        input = vtype([gtype("spam"), gtype("spam")])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype("spam"), gtype("spam")])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == "spam")
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[ShortEnum]
         vtype = System.Array[gtype]
-        input = vtype([gtype(ShortEnum.Zero), gtype(ShortEnum.Zero)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(ShortEnum.Zero), gtype(ShortEnum.Zero)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value == ShortEnum.Zero)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Object]
         vtype = System.Array[gtype]
-        input = vtype([gtype(inst), gtype(inst)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(inst), gtype(inst)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value.__class__ == inst.__class__)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[InterfaceTest]
         vtype = System.Array[gtype]
-        input = vtype([gtype(inst), gtype(inst)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(inst), gtype(inst)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value.__class__ == inst.__class__)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[ISayHello1]
         vtype = System.Array[gtype]
-        input = vtype([gtype(inst), gtype(inst)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([gtype(inst), gtype(inst)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].value.__class__ == inst.__class__)
         self.assertTrue(value.Length == 2)
 

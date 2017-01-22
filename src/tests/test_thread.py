@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
 import threading
 import time
 import unittest
 
 from _compat import range, thread
-
-
-def dprint(msg):
-    # Debugging helper to trace thread-related tests.
-    if 0:
-        print(msg)
+from utils import dprint
 
 
 class ThreadTests(unittest.TestCase):

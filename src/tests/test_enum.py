@@ -84,7 +84,7 @@ class EnumTests(unittest.TestCase):
         from System import DayOfWeek
 
         with self.assertRaises(TypeError):
-            ob = DayOfWeek()
+            _ = DayOfWeek()
 
     def test_subclass_enum_fails(self):
         """Test that subclassing of an enumeration fails."""
@@ -93,6 +93,7 @@ class EnumTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             class Boom(DayOfWeek):
                 pass
+            _ = Boom
 
     def test_enum_set_member_fails(self):
         """Test that setattr operations on enumerations fail."""

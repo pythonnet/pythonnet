@@ -119,25 +119,25 @@ class FieldTests(unittest.TestCase):
         """Test internal fields."""
 
         with self.assertRaises(AttributeError):
-            f = FieldTest().InternalField
+            _ = FieldTest().InternalField
 
         with self.assertRaises(AttributeError):
-            f = FieldTest().InternalStaticField
+            _ = FieldTest().InternalStaticField
 
         with self.assertRaises(AttributeError):
-            f = FieldTest.InternalStaticField
+            _ = FieldTest.InternalStaticField
 
     def test_private_field(self):
         """Test private fields."""
 
         with self.assertRaises(AttributeError):
-            f = FieldTest().PrivateField
+            _ = FieldTest().PrivateField
 
         with self.assertRaises(AttributeError):
-            f = FieldTest().PrivateStaticField
+            _ = FieldTest().PrivateStaticField
 
         with self.assertRaises(AttributeError):
-            f = FieldTest.PrivateStaticField
+            _ = FieldTest.PrivateStaticField
 
     def test_field_descriptor_get_set(self):
         """Test field descriptor get / set."""

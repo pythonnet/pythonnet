@@ -58,7 +58,7 @@ test_modules = (
 def remove_pyc():
     path = os.path.dirname(os.path.abspath(__file__))
     for name in test_modules:
-        pyc = os.path.join(path, "%s.pyc" % name)
+        pyc = os.path.join(path, "{0}.pyc".format(name))
         if os.path.isfile(pyc):
             os.unlink(pyc)
 

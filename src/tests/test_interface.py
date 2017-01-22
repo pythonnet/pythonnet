@@ -26,9 +26,10 @@ class InterfaceTests(unittest.TestCase):
 
         with self.assertRaises(ImportError):
             from Python.Test import IInternalInterface
+            _ = IInternalInterface
 
         with self.assertRaises(AttributeError):
-            Test.IInternalInterface
+            _ = Test.IInternalInterface
 
     def test_nested_interface_visibility(self):
         """Test visibility of nested interfaces."""
@@ -41,10 +42,10 @@ class InterfaceTests(unittest.TestCase):
         self.assertTrue(ob.__name__ == 'IProtected')
 
         with self.assertRaises(AttributeError):
-            ob = InterfaceTest.IInternal
+            _ = InterfaceTest.IInternal
 
         with self.assertRaises(AttributeError):
-            ob = InterfaceTest.IPrivate
+            _ = InterfaceTest.IPrivate
 
     def test_explicit_cast_to_interface(self):
         """Test explicit cast to an interface."""

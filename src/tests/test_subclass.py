@@ -11,8 +11,8 @@ from System.Collections.Generic import List
 from _compat import range
 
 
-# class that implements the test interface
 class InterfaceTestClass(IInterfaceTest):
+    """class that implements the test interface"""
     __namespace__ = "Python.Test"
 
     def foo(self):
@@ -22,8 +22,8 @@ class InterfaceTestClass(IInterfaceTest):
         return "/".join([x] * i)
 
 
-# class that derives from a class deriving from IInterfaceTest
 class DerivedClass(SubClassTest):
+    """class that derives from a class deriving from IInterfaceTest"""
     __namespace__ = "Python.Test"
 
     def foo(self):
@@ -46,8 +46,8 @@ class DerivedClass(SubClassTest):
         return l
 
 
-# class that implements IInterfaceTest.TestEvent
 class DerivedEventTest(IInterfaceTest):
+    """class that implements IInterfaceTest.TestEvent"""
     __namespace__ = "Python.Test"
 
     def __init__(self):
@@ -67,7 +67,7 @@ class DerivedEventTest(IInterfaceTest):
 
 
 class SubClassTests(unittest.TestCase):
-    """Test subclassing managed types"""
+    """Test sub-classing managed types"""
 
     def test_base_class(self):
         """Test base class managed type"""

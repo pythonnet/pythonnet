@@ -50,7 +50,7 @@ def main():
 
     stop = time.clock()
     took = str(stop - start)
-    print('Total Time: %s' % took)
+    print('Total Time: {0}'.format(took))
 
     for i in gc.get_objects():
         print(i)

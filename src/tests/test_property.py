@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#
+
 import unittest
 
 from Python.Test import PropertyTest
@@ -70,25 +70,25 @@ class PropertyTests(unittest.TestCase):
         """Test internal properties."""
 
         with self.assertRaises(AttributeError):
-            PropertyTest().InternalProperty
+            _ = PropertyTest().InternalProperty
 
         with self.assertRaises(AttributeError):
-            PropertyTest().InternalStaticProperty
+            _ = PropertyTest().InternalStaticProperty
 
         with self.assertRaises(AttributeError):
-            PropertyTest.InternalStaticProperty
+            _ = PropertyTest.InternalStaticProperty
 
     def test_private_property(self):
         """Test private properties."""
 
         with self.assertRaises(AttributeError):
-            PropertyTest().PrivateProperty
+            _ = PropertyTest().PrivateProperty
 
         with self.assertRaises(AttributeError):
-            PropertyTest().PrivateStaticProperty
+            _ = PropertyTest().PrivateStaticProperty
 
         with self.assertRaises(AttributeError):
-            PropertyTest.PrivateStaticProperty
+            _ = PropertyTest.PrivateStaticProperty
 
     def test_property_descriptor_get_set(self):
         """Test property descriptor get / set."""
