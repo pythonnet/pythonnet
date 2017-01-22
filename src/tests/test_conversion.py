@@ -3,11 +3,7 @@
 import unittest
 from Python.Test import ConversionTest
 import System
-import six
-
-if six.PY3:
-    long = int
-    unichr = chr
+from _compat import indexbytes, long, unichr
 
 
 class ConversionTests(unittest.TestCase):
@@ -171,16 +167,16 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(System.Char.MinValue == unichr(0))
 
         object = ConversionTest()
-        self.assertTrue(object.CharField == six.u('A'))
+        self.assertTrue(object.CharField == u'A')
 
         object.CharField = 'B'
-        self.assertTrue(object.CharField == six.u('B'))
+        self.assertTrue(object.CharField == u'B')
 
-        object.CharField = six.u('B')
-        self.assertTrue(object.CharField == six.u('B'))
+        object.CharField = u'B'
+        self.assertTrue(object.CharField == u'B')
 
         object.CharField = 67
-        self.assertTrue(object.CharField == six.u('C'))
+        self.assertTrue(object.CharField == u'C')
 
         def test():
             ConversionTest().CharField = 65536
@@ -644,25 +640,25 @@ class ConversionTests(unittest.TestCase):
         object = ConversionTest()
 
         self.assertTrue(object.StringField == "spam")
-        self.assertTrue(object.StringField == six.u("spam"))
+        self.assertTrue(object.StringField == u"spam")
 
         object.StringField = "eggs"
         self.assertTrue(object.StringField == "eggs")
-        self.assertTrue(object.StringField == six.u("eggs"))
+        self.assertTrue(object.StringField == u"eggs")
 
-        object.StringField = six.u("spam")
+        object.StringField = u"spam"
         self.assertTrue(object.StringField == "spam")
-        self.assertTrue(object.StringField == six.u("spam"))
+        self.assertTrue(object.StringField == u"spam")
 
-        object.StringField = six.u('\uffff\uffff')
-        self.assertTrue(object.StringField == six.u('\uffff\uffff'))
+        object.StringField = u'\uffff\uffff'
+        self.assertTrue(object.StringField == u'\uffff\uffff')
 
         object.StringField = System.String("spam")
         self.assertTrue(object.StringField == "spam")
-        self.assertTrue(object.StringField == six.u("spam"))
+        self.assertTrue(object.StringField == u"spam")
 
-        object.StringField = System.String(six.u('\uffff\uffff'))
-        self.assertTrue(object.StringField == six.u('\uffff\uffff'))
+        object.StringField = System.String(u'\uffff\uffff')
+        self.assertTrue(object.StringField == u'\uffff\uffff')
 
         object.StringField = None
         self.assertTrue(object.StringField == None)
@@ -809,11 +805,11 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(array[0] == 0)
         self.assertTrue(array[4] == 4)
 
-        value = six.b("testing")
+        value = b"testing"
         object.ByteArrayField = value
         array = object.ByteArrayField
         for i in range(len(value)):
-            self.assertTrue(array[i] == six.indexbytes(value, i))
+            self.assertTrue(array[i] == indexbytes(value, i))
 
     def testSByteArrayConversion(self):
         """Test sbyte array conversion."""
@@ -827,11 +823,11 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(array[0] == 0)
         self.assertTrue(array[4] == 4)
 
-        value = six.b("testing")
+        value = b"testing"
         object.SByteArrayField = value
         array = object.SByteArrayField
         for i in range(len(value)):
-            self.assertTrue(array[i] == six.indexbytes(value, i))
+            self.assertTrue(array[i] == indexbytes(value, i))
 
 
 def test_suite():

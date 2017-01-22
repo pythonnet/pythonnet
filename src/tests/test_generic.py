@@ -5,12 +5,7 @@ from System.Collections.Generic import Dictionary, List
 import unittest
 import Python.Test as Test
 import System
-import six
-
-if six.PY3:
-    long = int
-    unichr = chr
-    unicode = str
+from _compat import PY2, long, unichr, unicode
 
 
 class GenericTests(unittest.TestCase):
@@ -171,13 +166,13 @@ class GenericTests(unittest.TestCase):
         self._testGenericWrapperByType(bool, True)
         self._testGenericWrapperByType(System.Byte, 255)
         self._testGenericWrapperByType(System.SByte, 127)
-        self._testGenericWrapperByType(System.Char, six.u('A'))
+        self._testGenericWrapperByType(System.Char, u'A')
         self._testGenericWrapperByType(System.Int16, 32767)
         self._testGenericWrapperByType(System.Int32, 2147483647)
         self._testGenericWrapperByType(int, 2147483647)
         self._testGenericWrapperByType(System.Int64, long(9223372036854775807))
         # Python 3 has no explicit long type, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             self._testGenericWrapperByType(long, long(9223372036854775807))
         self._testGenericWrapperByType(System.UInt16, 65000)
         self._testGenericWrapperByType(System.UInt32, long(4294967295))
@@ -318,12 +313,12 @@ class GenericTests(unittest.TestCase):
         self._testGenericMethodByType(bool, True)
         self._testGenericMethodByType(System.Byte, 255)
         self._testGenericMethodByType(System.SByte, 127)
-        self._testGenericMethodByType(System.Char, six.u('A'))
+        self._testGenericMethodByType(System.Char, u'A')
         self._testGenericMethodByType(System.Int16, 32767)
         self._testGenericMethodByType(System.Int32, 2147483647)
         self._testGenericMethodByType(int, 2147483647)
         # Python 3 has no explicit long type, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             self._testGenericMethodByType(System.Int64, long(9223372036854775807))
             self._testGenericMethodByType(long, long(9223372036854775807))
             self._testGenericMethodByType(System.UInt32, long(4294967295))
@@ -367,7 +362,7 @@ class GenericTests(unittest.TestCase):
                          atype(value2)) == Math.Max.__overloads__[atype, atype](
                     atype(value1),
                     atype(value2)))
-            if (atype is Int64) and six.PY2:
+            if PY2 and atype is Int64:
                 value2 = long(value2)
             self.assertTrue(
                 Math.Max(atype(value1),
@@ -490,9 +485,9 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(value.value == 127)
 
         vtype = GenericWrapper[System.Char]
-        input = vtype(six.u('A'))
+        input = vtype(u'A')
         value = MethodTest.Overloaded.__overloads__[vtype](input)
-        self.assertTrue(value.value == six.u('A'))
+        self.assertTrue(value.value == u'A')
 
         vtype = GenericWrapper[System.Char]
         input = vtype(65535)
@@ -520,7 +515,7 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(value.value == long(9223372036854775807))
 
         # Python 3 has no explicit long type, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             vtype = GenericWrapper[long]
             input = vtype(long(9223372036854775807))
             value = MethodTest.Overloaded.__overloads__[vtype](input)
@@ -633,9 +628,9 @@ class GenericTests(unittest.TestCase):
 
         gtype = GenericWrapper[System.Char]
         vtype = System.Array[gtype]
-        input = vtype([gtype(six.u('A')), gtype(six.u('A'))])
+        input = vtype([gtype(u'A'), gtype(u'A')])
         value = MethodTest.Overloaded.__overloads__[vtype](input)
-        self.assertTrue(value[0].value == six.u('A'))
+        self.assertTrue(value[0].value == u'A')
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Char]
@@ -675,7 +670,7 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(value.Length == 2)
 
         # Python 3 has no explicit long type, use System.Int64 instead
-        if not six.PY3:
+        if PY2:
             gtype = GenericWrapper[long]
             vtype = System.Array[gtype]
             input = vtype([gtype(long(9223372036854775807)),

@@ -3,11 +3,7 @@
 import unittest
 
 import Python.Test as Test
-import six
-
-if six.PY3:
-    long = int
-    unichr = chr
+from _compat import long, unichr
 
 
 class IndexerTests(unittest.TestCase):
@@ -413,19 +409,19 @@ class IndexerTests(unittest.TestCase):
         object = Test.StringIndexerTest()
 
         self.assertTrue(object["spam"] == None)
-        self.assertTrue(object[six.u("spam")] == None)
+        self.assertTrue(object[u"spam"] == None)
 
         object["spam"] = "spam"
         self.assertTrue(object["spam"] == "spam")
-        self.assertTrue(object["spam"] == six.u("spam"))
-        self.assertTrue(object[six.u("spam")] == "spam")
-        self.assertTrue(object[six.u("spam")] == six.u("spam"))
+        self.assertTrue(object["spam"] == u"spam")
+        self.assertTrue(object[u"spam"] == "spam")
+        self.assertTrue(object[u"spam"] == u"spam")
 
-        object[six.u("eggs")] = six.u("eggs")
+        object[u"eggs"] = u"eggs"
         self.assertTrue(object["eggs"] == "eggs")
-        self.assertTrue(object["eggs"] == six.u("eggs"))
-        self.assertTrue(object[six.u("eggs")] == "eggs")
-        self.assertTrue(object[six.u("eggs")] == six.u("eggs"))
+        self.assertTrue(object["eggs"] == u"eggs")
+        self.assertTrue(object[u"eggs"] == "eggs")
+        self.assertTrue(object[u"eggs"] == u"eggs")
 
         def test():
             object = Test.StringIndexerTest()
