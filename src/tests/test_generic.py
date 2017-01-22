@@ -194,15 +194,11 @@ class GenericTests(unittest.TestCase):
 
         OpenGenericType = DerivedFromOpenGeneric.__bases__[0]
 
-        def test():
+        with self.assertRaises(TypeError):
             inst = OpenGenericType()
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             type = OpenGenericType[System.String]
-
-        self.assertRaises(TypeError, test)
 
     def test_derived_from_open_generic_type(self):
         """Test a generic type derived from an open generic type."""
@@ -228,10 +224,8 @@ class GenericTests(unittest.TestCase):
         # If no non-generic type exists for a name, the unadorned name
         # cannot be instantiated. It can only be used to bind a generic.
 
-        def test():
+        with self.assertRaises(TypeError):
             inst = GenericNameTest2()
-
-        self.assertRaises(TypeError, test)
 
         _class = GenericNameTest2[int]
         self.assertTrue(_class().value == 1)
@@ -281,22 +275,18 @@ class GenericTests(unittest.TestCase):
         value = GenericStaticMethodTest[str].Overloaded()
         self.assertTrue(value == 1)
 
-        def test():
+        with self.assertRaises(InvalidOperationException):
             # Cannot invoke a static member on an open type.
             GenericStaticMethodTest.Overloaded()
-
-        self.assertRaises(InvalidOperationException, test)
 
         # Can invoke an instance member on a closed generic type.
         value = GenericMethodTest[str]().Overloaded()
         self.assertTrue(value == 1)
 
-        def test():
+        with self.assertRaises(TypeError):
             # Cannot invoke an instance member on an open type,
             # because the open type cannot be instantiated.
             GenericMethodTest().Overloaded()
-
-        self.assertRaises(TypeError, test)
 
     def test_generic_method_type_handling(self):
         """Test argument conversion / binding for generic methods."""
@@ -442,15 +432,11 @@ class GenericTests(unittest.TestCase):
         value = inst.Overloaded[str](123, 456, "success")
         self.assertTrue(value == "success")
 
-        def test():
+        with self.assertRaises(TypeError):
             value = type.Overloaded[str, bool, int]("true", True, 1)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             value = inst.Overloaded[str, bool, int]("true", True, 1)
-
-        self.assertRaises(TypeError, test)
 
     def test_method_overload_selection_with_generic_types(self):
         """Check method overload selection using generic types."""

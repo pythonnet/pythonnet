@@ -14,48 +14,32 @@ class MethodTests(unittest.TestCase):
     def test_instance_method_descriptor(self):
         """Test instance method descriptor behavior."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             MethodTest().PublicMethod = 0
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             MethodTest.PublicMethod = 0
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del MethodTest().PublicMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del MethodTest.PublicMethod
-
-        self.assertRaises(AttributeError, test)
 
     def test_static_method_descriptor(self):
         """Test static method descriptor behavior."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             MethodTest().PublicStaticMethod = 0
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             MethodTest.PublicStaticMethod = 0
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del MethodTest().PublicStaticMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del MethodTest.PublicStaticMethod
-
-        self.assertRaises(AttributeError, test)
 
     def test_public_instance_method(self):
         """Test public instance method visibility."""
@@ -83,48 +67,32 @@ class MethodTests(unittest.TestCase):
     def test_internal_method(self):
         """Test internal method visibility."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest().InternalMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest.InternalMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest().InternalStaticMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest.InternalStaticMethod
-
-        self.assertRaises(AttributeError, test)
 
     def test_private_method(self):
         """Test private method visibility."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest().PrivateMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest.PrivateMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest().PrivateStaticMethod
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             f = MethodTest.PrivateStaticMethod
-
-        self.assertRaises(AttributeError, test)
 
     def test_unbound_managed_method_call(self):
         """Test calling unbound managed methods."""
@@ -133,19 +101,15 @@ class MethodTests(unittest.TestCase):
         ob = MethodTest()
         self.assertTrue(MethodTest.PublicMethod(ob) == "public")
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.PublicMethod()
-
-        self.assertRaises(TypeError, test)
 
         ob = MethodTestSub()
         self.assertTrue(MethodTestSub.PublicMethod(ob) == "public")
         self.assertTrue(MethodTestSub.PublicMethod(ob, "echo") == "echo")
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTestSub.PublicMethod("echo")
-
-        self.assertRaises(TypeError, test)
 
     def test_overloaded_method_inheritance(self):
         """Test that overloads are inherited properly."""
@@ -154,11 +118,9 @@ class MethodTests(unittest.TestCase):
         ob = MethodTest()
         self.assertTrue(ob.PublicMethod() == "public")
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = MethodTest()
             ob.PublicMethod("echo")
-
-        self.assertRaises(TypeError, test)
 
         ob = MethodTestSub()
         self.assertTrue(ob.PublicMethod() == "public")
@@ -169,15 +131,11 @@ class MethodTests(unittest.TestCase):
         """Test method descriptor abuse."""
         desc = MethodTest.__dict__['PublicMethod']
 
-        def test():
+        with self.assertRaises(TypeError):
             desc.__get__(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             desc.__set__(0, 0)
-
-        self.assertRaises(AttributeError, test)
 
     def test_method_docstrings(self):
         """Test standard method docstring generation"""
@@ -319,12 +277,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == 42)
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.TestValueOutParams("hi", None)
 
         # None cannot be converted to a value type like int, long, etc.
-        self.assertRaises(TypeError, test)
-
     def test_value_ref_params(self):
         """Test use of value type byref parameters."""
         result = MethodTest.TestValueRefParams("hi", 1)
@@ -333,12 +289,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == 42)
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.TestValueRefParams("hi", None)
 
         # None cannot be converted to a value type like int, long, etc.
-        self.assertRaises(TypeError, test)
-
     def test_object_out_params(self):
         """Test use of object out-parameters."""
         result = MethodTest.TestObjectOutParams("hi", MethodTest())
@@ -375,12 +329,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(isinstance(result[1], System.Guid))
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.TestValueRefParams("hi", None)
 
         # None cannot be converted to a value type like a struct
-        self.assertRaises(TypeError, test)
-
     def test_struct_ref_params(self):
         """Test use of struct byref parameters."""
         result = MethodTest.TestStructRefParams("hi", System.Guid.NewGuid())
@@ -389,34 +341,28 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(isinstance(result[1], System.Guid))
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.TestValueRefParams("hi", None)
 
         # None cannot be converted to a value type like a struct
-        self.assertRaises(TypeError, test)
-
     def test_void_single_out_param(self):
         """Test void method with single out-parameter."""
         result = MethodTest.TestVoidSingleOutParam(9)
         self.assertTrue(result == 42)
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.TestVoidSingleOutParam(None)
 
         # None cannot be converted to a value type
-        self.assertRaises(TypeError, test)
-
     def test_void_single_ref_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestVoidSingleRefParam(9)
         self.assertTrue(result == 42)
 
-        def test():
+        with self.assertRaises(TypeError):
             MethodTest.TestVoidSingleRefParam(None)
 
         # None cannot be converted to a value type
-        self.assertRaises(TypeError, test)
-
     def test_single_default_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestSingleDefaultParam()
@@ -735,27 +681,19 @@ class MethodTests(unittest.TestCase):
     def test_explicit_overload_selection_failure(self):
         """Check that overload selection fails correctly."""
 
-        def test():
+        with self.assertRaises(TypeError):
             value = MethodTest.Overloaded.__overloads__[System.Type](True)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             value = MethodTest.Overloaded.__overloads__[int, int](1, 1)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             value = MethodTest.Overloaded.__overloads__[str, int, int](
                 "", 1, 1
             )
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             value = MethodTest.Overloaded.__overloads__[int, long](1)
-
-        self.assertRaises(TypeError, test)
 
     def test_we_can_bind_to_encoding_get_string(self):
         """Check that we can bind to the Encoding.GetString method with variables."""

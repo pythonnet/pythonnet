@@ -58,20 +58,16 @@ class ArrayTests(unittest.TestCase):
     def test_internal_array(self):
         """Test internal arrays."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             ob = Test.InternalArrayTest()
             items = ob.items
-
-        self.assertRaises(AttributeError, test)
 
     def test_private_array(self):
         """Test private arrays."""
 
-        def test():
+        with self.assertRaises(AttributeError):
             ob = Test.PrivateArrayTest()
             items = ob.items
-
-        self.assertRaises(AttributeError, test)
 
     def test_array_bounds_checking(self):
         """Test array bounds checking."""
@@ -91,29 +87,21 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[-2] == 3)
         self.assertTrue(items[-1] == 4)
 
-        def test():
+        with self.assertRaises(IndexError):
             ob = Test.Int32ArrayTest()
             ob.items[5]
 
-        self.assertRaises(IndexError, test)
-
-        def test():
+        with self.assertRaises(IndexError):
             ob = Test.Int32ArrayTest()
             ob.items[5] = 0
 
-        self.assertRaises(IndexError, test)
-
-        def test():
+        with self.assertRaises(IndexError):
             ob = Test.Int32ArrayTest()
             items[-6]
 
-        self.assertRaises(IndexError, test)
-
-        def test():
+        with self.assertRaises(IndexError):
             ob = Test.Int32ArrayTest()
             items[-6] = 0
-
-        self.assertRaises(IndexError, test)
 
     def test_array_contains(self):
         """Test array support for __contains__."""
@@ -151,17 +139,13 @@ class ArrayTests(unittest.TestCase):
         items[0] = True
         self.assertTrue(items[0] == True)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_byte_array(self):
         """Test byte arrays."""
@@ -188,29 +172,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.ByteArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.ByteArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_sbyte_array(self):
         """Test sbyte arrays."""
@@ -237,29 +213,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.SByteArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.SByteArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.SByteArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.SByteArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_char_array(self):
         """Test char arrays."""
@@ -286,17 +254,13 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.CharArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.CharArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_int16_array(self):
         """Test Int16 arrays."""
@@ -323,29 +287,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.Int16ArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.Int16ArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int16ArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int16ArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_int32_array(self):
         """Test Int32 arrays."""
@@ -372,29 +328,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.Int32ArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.Int32ArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int32ArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int32ArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_int64_array(self):
         """Test Int64 arrays."""
@@ -421,29 +369,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.Int64ArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.Int64ArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int64ArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int64ArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_uint16_array(self):
         """Test UInt16 arrays."""
@@ -470,29 +410,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.UInt16ArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.UInt16ArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.UInt16ArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.UInt16ArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_uint32_array(self):
         """Test UInt32 arrays."""
@@ -519,29 +451,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.UInt32ArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.UInt32ArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.UInt32ArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.UInt32ArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_uint64_array(self):
         """Test UInt64 arrays."""
@@ -568,29 +492,21 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.UInt64ArrayTest()
             ob.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.UInt64ArrayTest()
             ob.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.UInt64ArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.UInt64ArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_single_array(self):
         """Test Single arrays."""
@@ -617,17 +533,13 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.SingleArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.SingleArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_double_array(self):
         """Test Double arrays."""
@@ -654,17 +566,13 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min
         self.assertTrue(items[-1] == min)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.DoubleArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.DoubleArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_decimal_array(self):
         """Test Decimal arrays."""
@@ -692,17 +600,13 @@ class ArrayTests(unittest.TestCase):
         items[-1] = min_d
         self.assertTrue(items[-1] == min_d)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.DecimalArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.DecimalArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_string_array(self):
         """Test String arrays."""
@@ -726,17 +630,13 @@ class ArrayTests(unittest.TestCase):
         items[-1] = "eggs"
         self.assertTrue(items[-1] == "eggs")
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.StringArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.Int64ArrayTest()
             ob[0] = 0
-
-        self.assertRaises(TypeError, test)
 
     def test_enum_array(self):
         """Test enum arrays."""
@@ -761,23 +661,17 @@ class ArrayTests(unittest.TestCase):
         items[-1] = ShortEnum.Zero
         self.assertTrue(items[-1] == ShortEnum.Zero)
 
-        def test():
+        with self.assertRaises(ValueError):
             ob = Test.EnumArrayTest()
             ob.items[0] = 99
 
-        self.assertRaises(ValueError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.EnumArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.EnumArrayTest()
             ob[0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_object_array(self):
         """Test ob arrays."""
@@ -808,17 +702,13 @@ class ArrayTests(unittest.TestCase):
         items[0] = None
         self.assertTrue(items[0] == None)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.ObjectArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.ObjectArrayTest()
             ob.items["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_null_array(self):
         """Test null arrays."""
@@ -845,11 +735,9 @@ class ArrayTests(unittest.TestCase):
         empty = ob.empty
         self.assertTrue(len(empty) == 0)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.NullArrayTest()
             v = ob.items["wrong"]
-
-        self.assertRaises(TypeError, test)
 
     def test_interface_array(self):
         """Test interface arrays."""
@@ -877,23 +765,17 @@ class ArrayTests(unittest.TestCase):
         items[0] = None
         self.assertTrue(items[0] == None)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.InterfaceArrayTest()
             ob.items[0] = 99
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.InterfaceArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.InterfaceArrayTest()
             ob.items["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_typed_array(self):
         """Test typed arrays."""
@@ -921,23 +803,17 @@ class ArrayTests(unittest.TestCase):
         items[0] = None
         self.assertTrue(items[0] == None)
 
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.TypedArrayTest()
             ob.items[0] = 99
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.TypedArrayTest()
             v = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.TypedArrayTest()
             ob.items["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_multi_dimensional_array(self):
         """Test multi-dimensional arrays."""
@@ -987,29 +863,21 @@ class ArrayTests(unittest.TestCase):
         items[-1, -1] = min
         self.assertTrue(items[-1, -1] == min)
 
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.MultiDimensionalArrayTest()
             ob.items[0, 0] = max + 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             ob = Test.MultiDimensionalArrayTest()
             ob.items[0, 0] = min - 1
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.MultiDimensionalArrayTest()
             v = ob.items["wrong", 0]
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             ob = Test.MultiDimensionalArrayTest()
             ob[0, 0] = "wrong"
-
-        self.assertRaises(TypeError, test)
 
     def test_array_iteration(self):
         """Test array iteration."""
@@ -1143,21 +1011,15 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[1] == None)
         self.assertTrue(len(result) == 10)
 
-        def test(items=items):
+        with self.assertRaises(TypeError):
             temp = list(items)
             temp[1] = 1
-
             result = ArrayConversionTest.EchoRange(tuple(temp))
 
-        self.assertRaises(TypeError, test)
-
-        def test(items=items):
+        with self.assertRaises(TypeError):
             temp = list(items)
             temp[1] = "spam"
-
             result = ArrayConversionTest.EchoRange(tuple(temp))
-
-        self.assertRaises(TypeError, test)
 
     def test_list_array_conversion_type_checking(self):
         """Test error handling for list conversion to array arguments."""
@@ -1178,17 +1040,13 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[1] == None)
         self.assertTrue(len(result) == 10)
 
-        def test(items=items):
+        with self.assertRaises(TypeError):
             items[1] = 1
             result = ArrayConversionTest.EchoRange(items)
 
-        self.assertRaises(TypeError, test)
-
-        def test(items=items):
+        with self.assertRaises(TypeError):
             items[1] = "spam"
             result = ArrayConversionTest.EchoRange(items)
-
-        self.assertRaises(TypeError, test)
 
     def test_sequence_array_conversion_type_checking(self):
         """Test error handling for sequence conversion to array arguments."""
@@ -1209,17 +1067,13 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(result[1] == None)
         self.assertTrue(len(result) == 10)
 
-        def test(items=items):
+        with self.assertRaises(TypeError):
             items[1] = 1
             result = ArrayConversionTest.EchoRange(items)
 
-        self.assertRaises(TypeError, test)
-
-        def test(items=items):
+        with self.assertRaises(TypeError):
             items[1] = "spam"
             result = ArrayConversionTest.EchoRange(items)
-
-        self.assertRaises(TypeError, test)
 
     def test_md_array_conversion(self):
         """Test passing of multi-dimensional array arguments."""
@@ -1263,7 +1117,7 @@ class ArrayTests(unittest.TestCase):
             items[i] = Point(i, i)
 
         for i in range(5):
-            # Boxed items, so settr will not change the array member.
+            # Boxed items, so set_attr will not change the array member.
             self.assertTrue(items[i].X == i)
             self.assertTrue(items[i].Y == i)
             items[i].X = i + 1
@@ -1421,47 +1275,31 @@ class ArrayTests(unittest.TestCase):
         _class = Test.PublicArrayTest
         ob = Test.PublicArrayTest()
 
-        def test():
+        with self.assertRaises(AttributeError):
             del _class.__getitem__
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del ob.__getitem__
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del _class.__setitem__
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del ob.__setitem__
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             Test.PublicArrayTest.__getitem__(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             Test.PublicArrayTest.__setitem__(0, 0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             desc = Test.PublicArrayTest.__dict__['__getitem__']
             desc(0, 0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             desc = Test.PublicArrayTest.__dict__['__setitem__']
             desc(0, 0, 0)
-
-        self.assertRaises(TypeError, test)
 
 
 def test_suite():

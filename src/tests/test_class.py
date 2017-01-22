@@ -59,16 +59,11 @@ class ClassTests(unittest.TestCase):
 
     def test_non_public_class(self):
         """Test that non-public classes are inaccessible."""
-
-        def test():
+        with self.assertRaises(ImportError):
             from Python.Test import InternalClass
 
-        self.assertRaises(ImportError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             x = Test.InternalClass
-
-        self.assertRaises(AttributeError, test)
 
     def test_basic_subclass(self):
         """Test basic subclass of a managed class."""
@@ -256,13 +251,17 @@ class ClassTests(unittest.TestCase):
         self.assertEqual(d2 >= d1, True)
         self.assertEqual(d2 > d1, True)
 
-        self.assertRaises(TypeError, lambda: d1 < None)
-        self.assertRaises(TypeError, lambda: d1 < System.Guid())
+        with self.assertRaises(TypeError):
+            d1 < None
+
+        with self.assertRaises(TypeError):
+            d1 < System.Guid()
 
         # ClassTest does not implement IComparable
         c1 = ClassTest()
         c2 = ClassTest()
-        self.assertRaises(TypeError, lambda: c1 < c2)
+        with self.assertRaises(TypeError):
+            c1 < c2
 
     def test_self_callback(self):
         """Test calling back and forth between this and a c# baseclass."""
