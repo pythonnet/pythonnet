@@ -5,7 +5,7 @@ import unittest
 import System
 from Python.Test import ConversionTest
 
-from _compat import indexbytes, long, range, unichr
+from _compat import indexbytes, long, unichr
 
 
 class ConversionTests(unittest.TestCase):
@@ -96,10 +96,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().SByteField = -129
 
         with self.assertRaises(OverflowError):
-            value = System.SByte(128)
+            _ = System.SByte(128)
 
         with self.assertRaises(OverflowError):
-            value = System.SByte(-129)
+            _ = System.SByte(-129)
 
     def test_byte_conversion(self):
         """Test byte conversion."""
@@ -134,10 +134,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().ByteField = -1
 
         with self.assertRaises(OverflowError):
-            value = System.Byte(256)
+            _ = System.Byte(256)
 
         with self.assertRaises(OverflowError):
-            value = System.Byte(-1)
+            _ = System.Byte(-1)
 
     def test_char_conversion(self):
         """Test char conversion."""
@@ -198,10 +198,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().Int16Field = -32769
 
         with self.assertRaises(OverflowError):
-            value = System.Int16(32768)
+            _ = System.Int16(32768)
 
         with self.assertRaises(OverflowError):
-            value = System.Int16(-32769)
+            _ = System.Int16(-32769)
 
     def test_int32_conversion(self):
         """Test int32 conversion."""
@@ -236,10 +236,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().Int32Field = -2147483649
 
         with self.assertRaises(OverflowError):
-            value = System.Int32(2147483648)
+            _ = System.Int32(2147483648)
 
         with self.assertRaises(OverflowError):
-            value = System.Int32(-2147483649)
+            _ = System.Int32(-2147483649)
 
     def test_int64_conversion(self):
         """Test int64 conversion."""
@@ -274,10 +274,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().Int64Field = long(-9223372036854775809)
 
         with self.assertRaises(OverflowError):
-            value = System.Int64(long(9223372036854775808))
+            _ = System.Int64(long(9223372036854775808))
 
         with self.assertRaises(OverflowError):
-            value = System.Int64(long(-9223372036854775809))
+            _ = System.Int64(long(-9223372036854775809))
 
     def test_uint16_conversion(self):
         """Test uint16 conversion."""
@@ -312,10 +312,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().UInt16Field = -1
 
         with self.assertRaises(OverflowError):
-            value = System.UInt16(65536)
+            _ = System.UInt16(65536)
 
         with self.assertRaises(OverflowError):
-            value = System.UInt16(-1)
+            _ = System.UInt16(-1)
 
     def test_uint32_conversion(self):
         """Test uint32 conversion."""
@@ -350,10 +350,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().UInt32Field = -1
 
         with self.assertRaises(OverflowError):
-            value = System.UInt32(long(4294967296))
+            _ = System.UInt32(long(4294967296))
 
         with self.assertRaises(OverflowError):
-            value = System.UInt32(-1)
+            _ = System.UInt32(-1)
 
     def test_uint64_conversion(self):
         """Test uint64 conversion."""
@@ -388,10 +388,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().UInt64Field = -1
 
         with self.assertRaises(OverflowError):
-            value = System.UInt64(long(18446744073709551616))
+            _ = System.UInt64(long(18446744073709551616))
 
         with self.assertRaises(OverflowError):
-            value = System.UInt64(-1)
+            _ = System.UInt64(-1)
 
     def test_single_conversion(self):
         """Test single conversion."""
@@ -426,10 +426,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().SingleField = -3.402824e38
 
         with self.assertRaises(OverflowError):
-            value = System.Single(3.402824e38)
+            _ = System.Single(3.402824e38)
 
         with self.assertRaises(OverflowError):
-            value = System.Single(-3.402824e38)
+            _ = System.Single(-3.402824e38)
 
     def test_double_conversion(self):
         """Test double conversion."""
@@ -464,10 +464,10 @@ class ConversionTests(unittest.TestCase):
             ConversionTest().DoubleField = -1.7976931348623159e308
 
         with self.assertRaises(OverflowError):
-            value = System.Double(1.7976931348623159e308)
+            _ = System.Double(1.7976931348623159e308)
 
         with self.assertRaises(OverflowError):
-            value = System.Double(-1.7976931348623159e308)
+            _ = System.Double(-1.7976931348623159e308)
 
     def test_decimal_conversion(self):
         """Test decimal conversion."""
@@ -658,7 +658,7 @@ class ConversionTests(unittest.TestCase):
         value = b"testing"
         ob.ByteArrayField = value
         array = ob.ByteArrayField
-        for i in range(len(value)):
+        for i, _ in enumerate(value):
             self.assertTrue(array[i] == indexbytes(value, i))
 
     def test_sbyte_array_conversion(self):
@@ -676,7 +676,7 @@ class ConversionTests(unittest.TestCase):
         value = b"testing"
         ob.SByteArrayField = value
         array = ob.SByteArrayField
-        for i in range(len(value)):
+        for i, _ in enumerate(value):
             self.assertTrue(array[i] == indexbytes(value, i))
 
 

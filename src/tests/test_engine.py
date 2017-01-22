@@ -13,9 +13,12 @@ class EngineTests(unittest.TestCase):
 
     def test_multiple_calls_to_initialize(self):
         """Test that multiple initialize calls are harmless."""
-        PythonEngine.Initialize()
-        PythonEngine.Initialize()
-        PythonEngine.Initialize()
+        try:
+            PythonEngine.Initialize()
+            PythonEngine.Initialize()
+            PythonEngine.Initialize()
+        except BaseException:
+            self.fail("Initialize() raise an exception.")
 
     def test_import_module(self):
         """Test module import."""

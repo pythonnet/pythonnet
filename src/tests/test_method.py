@@ -68,31 +68,31 @@ class MethodTests(unittest.TestCase):
         """Test internal method visibility."""
 
         with self.assertRaises(AttributeError):
-            f = MethodTest().InternalMethod
+            _ = MethodTest().InternalMethod
 
         with self.assertRaises(AttributeError):
-            f = MethodTest.InternalMethod
+            _ = MethodTest.InternalMethod
 
         with self.assertRaises(AttributeError):
-            f = MethodTest().InternalStaticMethod
+            _ = MethodTest().InternalStaticMethod
 
         with self.assertRaises(AttributeError):
-            f = MethodTest.InternalStaticMethod
+            _ = MethodTest.InternalStaticMethod
 
     def test_private_method(self):
         """Test private method visibility."""
 
         with self.assertRaises(AttributeError):
-            f = MethodTest().PrivateMethod
+            _ = MethodTest().PrivateMethod
 
         with self.assertRaises(AttributeError):
-            f = MethodTest.PrivateMethod
+            _ = MethodTest.PrivateMethod
 
         with self.assertRaises(AttributeError):
-            f = MethodTest().PrivateStaticMethod
+            _ = MethodTest().PrivateStaticMethod
 
         with self.assertRaises(AttributeError):
-            f = MethodTest.PrivateStaticMethod
+            _ = MethodTest.PrivateStaticMethod
 
     def test_unbound_managed_method_call(self):
         """Test calling unbound managed methods."""
@@ -187,8 +187,6 @@ class MethodTests(unittest.TestCase):
 
     def test_null_array_conversion(self):
         """Test null array conversion in method call."""
-        from System import Type
-
         ob = MethodTest()
         r = ob.TestNullArrayConversion(None)
         self.assertTrue(r == None)
@@ -237,7 +235,8 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[2] == 3)
 
     def test_non_params_array_in_last_place(self):
-        """Test overload resolution with of non-"params" array as last parameter."""
+        """Test overload resolution with of non-"params" array as
+        last parameter."""
         result = MethodTest.TestNonParamsArrayInLastPlace(1, 2, 3)
         self.assertTrue(result)
 
@@ -277,10 +276,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == 42)
 
+        # None cannot be converted to a value type like int, long, etc.
         with self.assertRaises(TypeError):
             MethodTest.TestValueOutParams("hi", None)
 
-        # None cannot be converted to a value type like int, long, etc.
     def test_value_ref_params(self):
         """Test use of value type byref parameters."""
         result = MethodTest.TestValueRefParams("hi", 1)
@@ -289,10 +288,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == 42)
 
+        # None cannot be converted to a value type like int, long, etc.
         with self.assertRaises(TypeError):
             MethodTest.TestValueRefParams("hi", None)
 
-        # None cannot be converted to a value type like int, long, etc.
     def test_object_out_params(self):
         """Test use of object out-parameters."""
         result = MethodTest.TestObjectOutParams("hi", MethodTest())
@@ -329,10 +328,10 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(isinstance(result[1], System.Guid))
 
+        # None cannot be converted to a value type like a struct
         with self.assertRaises(TypeError):
             MethodTest.TestValueRefParams("hi", None)
 
-        # None cannot be converted to a value type like a struct
     def test_struct_ref_params(self):
         """Test use of struct byref parameters."""
         result = MethodTest.TestStructRefParams("hi", System.Guid.NewGuid())
@@ -341,28 +340,28 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(isinstance(result[1], System.Guid))
 
+        # None cannot be converted to a value type like a struct
         with self.assertRaises(TypeError):
             MethodTest.TestValueRefParams("hi", None)
 
-        # None cannot be converted to a value type like a struct
     def test_void_single_out_param(self):
         """Test void method with single out-parameter."""
         result = MethodTest.TestVoidSingleOutParam(9)
         self.assertTrue(result == 42)
 
+        # None cannot be converted to a value type
         with self.assertRaises(TypeError):
             MethodTest.TestVoidSingleOutParam(None)
 
-        # None cannot be converted to a value type
     def test_void_single_ref_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestVoidSingleRefParam(9)
         self.assertTrue(result == 42)
 
+        # None cannot be converted to a value type
         with self.assertRaises(TypeError):
             MethodTest.TestVoidSingleRefParam(None)
 
-        # None cannot be converted to a value type
     def test_single_default_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestSingleDefaultParam()
@@ -388,16 +387,14 @@ class MethodTests(unittest.TestCase):
         """Check explicit overload selection with out modifiers."""
         refstr = System.String("").GetType().MakeByRefType()
         result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
-            "hi", "there"
-        )
+            "hi", "there")
         self.assertTrue(type(result) == type(()))
         self.assertTrue(len(result) == 2)
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == "output string")
 
         result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
-            "hi", None
-        )
+            "hi", None)
         self.assertTrue(type(result) == type(()))
         self.assertTrue(len(result) == 2)
         self.assertTrue(result[0] == True)
@@ -407,16 +404,14 @@ class MethodTests(unittest.TestCase):
         """Check explicit overload selection with ref modifiers."""
         refstr = System.String("").GetType().MakeByRefType()
         result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
-            "hi", "there"
-        )
+            "hi", "there")
         self.assertTrue(type(result) == type(()))
         self.assertTrue(len(result) == 2)
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == "output string")
 
         result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
-            "hi", None
-        )
+            "hi", None)
         self.assertTrue(type(result) == type(()))
         self.assertTrue(len(result) == 2)
         self.assertTrue(result[0] == True)
@@ -426,6 +421,7 @@ class MethodTests(unittest.TestCase):
         """Check explicit overload selection using [] syntax."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from System import Array
+
         inst = InterfaceTest()
 
         value = MethodTest.Overloaded.__overloads__[System.Boolean](True)
@@ -456,44 +452,39 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value == 2147483647)
 
         value = MethodTest.Overloaded.__overloads__[System.Int64](
-            long(9223372036854775807)
-        )
+            long(9223372036854775807))
         self.assertTrue(value == long(9223372036854775807))
 
         # Python 3 has no explicit long type, use System.Int64 instead
         if PY2:
             value = MethodTest.Overloaded.__overloads__[long](
-                long(9223372036854775807)
-            )
+                long(9223372036854775807))
             self.assertTrue(value == long(9223372036854775807))
 
         value = MethodTest.Overloaded.__overloads__[System.UInt16](65000)
         self.assertTrue(value == 65000)
 
-        value = MethodTest.Overloaded.__overloads__[System.UInt32](long(4294967295))
+        value = MethodTest.Overloaded.__overloads__[System.UInt32](
+            long(4294967295))
         self.assertTrue(value == long(4294967295))
 
         value = MethodTest.Overloaded.__overloads__[System.UInt64](
-            long(18446744073709551615)
-        )
+            long(18446744073709551615))
         self.assertTrue(value == long(18446744073709551615))
 
         value = MethodTest.Overloaded.__overloads__[System.Single](3.402823e38)
         self.assertTrue(value == 3.402823e38)
 
         value = MethodTest.Overloaded.__overloads__[System.Double](
-            1.7976931348623157e308
-        )
+            1.7976931348623157e308)
         self.assertTrue(value == 1.7976931348623157e308)
 
         value = MethodTest.Overloaded.__overloads__[float](
-            1.7976931348623157e308
-        )
+            1.7976931348623157e308)
         self.assertTrue(value == 1.7976931348623157e308)
 
         value = MethodTest.Overloaded.__overloads__[System.Decimal](
-            System.Decimal.One
-        )
+            System.Decimal.One)
         self.assertTrue(value == System.Decimal.One)
 
         value = MethodTest.Overloaded.__overloads__[System.String]("spam")
@@ -516,8 +507,7 @@ class MethodTests(unittest.TestCase):
 
         atype = Array[System.Object]
         value = MethodTest.Overloaded.__overloads__[str, int, atype](
-            "one", 1, atype([1, 2, 3])
-        )
+            "one", 1, atype([1, 2, 3]))
         self.assertTrue(value == 3)
 
         value = MethodTest.Overloaded.__overloads__[str, int]("one", 1)
@@ -530,151 +520,152 @@ class MethodTests(unittest.TestCase):
         """Check overload selection using array types."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from System import Array
+
         inst = InterfaceTest()
 
         vtype = Array[System.Boolean]
-        input = vtype([True, True])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([True, True])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == True)
         self.assertTrue(value[1] == True)
 
         vtype = Array[bool]
-        input = vtype([True, True])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([True, True])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == True)
         self.assertTrue(value[1] == True)
 
         vtype = Array[System.Byte]
-        input = vtype([0, 255])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 255])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == 255)
 
         vtype = Array[System.SByte]
-        input = vtype([0, 127])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 127])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == 127)
 
         vtype = Array[System.Char]
-        input = vtype([u'A', u'Z'])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([u'A', u'Z'])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == u'A')
         self.assertTrue(value[1] == u'Z')
 
         vtype = Array[System.Char]
-        input = vtype([0, 65535])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 65535])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == unichr(0))
         self.assertTrue(value[1] == unichr(65535))
 
         vtype = Array[System.Int16]
-        input = vtype([0, 32767])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 32767])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == 32767)
 
         vtype = Array[System.Int32]
-        input = vtype([0, 2147483647])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 2147483647])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == 2147483647)
 
         vtype = Array[int]
-        input = vtype([0, 2147483647])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 2147483647])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == 2147483647)
 
         vtype = Array[System.Int64]
-        input = vtype([0, long(9223372036854775807)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, long(9223372036854775807)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == long(9223372036854775807))
 
         # Python 3 has no explicit long type, use System.Int64 instead
         if PY2:
             vtype = Array[long]
-            input = vtype([0, long(9223372036854775807)])
-            value = MethodTest.Overloaded.__overloads__[vtype](input)
+            input_ = vtype([0, long(9223372036854775807)])
+            value = MethodTest.Overloaded.__overloads__[vtype](input_)
             self.assertTrue(value[0] == 0)
             self.assertTrue(value[1] == long(9223372036854775807))
 
         vtype = Array[System.UInt16]
-        input = vtype([0, 65000])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, 65000])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == 65000)
 
         vtype = Array[System.UInt32]
-        input = vtype([0, long(4294967295)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, long(4294967295)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == long(4294967295))
 
         vtype = Array[System.UInt64]
-        input = vtype([0, long(18446744073709551615)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0, long(18446744073709551615)])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0)
         self.assertTrue(value[1] == long(18446744073709551615))
 
         vtype = Array[System.Single]
-        input = vtype([0.0, 3.402823e38])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0.0, 3.402823e38])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0.0)
         self.assertTrue(value[1] == 3.402823e38)
 
         vtype = Array[System.Double]
-        input = vtype([0.0, 1.7976931348623157e308])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0.0, 1.7976931348623157e308])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0.0)
         self.assertTrue(value[1] == 1.7976931348623157e308)
 
         vtype = Array[float]
-        input = vtype([0.0, 1.7976931348623157e308])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([0.0, 1.7976931348623157e308])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == 0.0)
         self.assertTrue(value[1] == 1.7976931348623157e308)
 
         vtype = Array[System.Decimal]
-        input = vtype([System.Decimal.Zero, System.Decimal.One])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([System.Decimal.Zero, System.Decimal.One])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == System.Decimal.Zero)
         self.assertTrue(value[1] == System.Decimal.One)
 
         vtype = Array[System.String]
-        input = vtype(["one", "two"])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(["one", "two"])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == "one")
         self.assertTrue(value[1] == "two")
 
         vtype = Array[str]
-        input = vtype(["one", "two"])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype(["one", "two"])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == "one")
         self.assertTrue(value[1] == "two")
 
         vtype = Array[ShortEnum]
-        input = vtype([ShortEnum.Zero, ShortEnum.One])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([ShortEnum.Zero, ShortEnum.One])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0] == ShortEnum.Zero)
         self.assertTrue(value[1] == ShortEnum.One)
 
         vtype = Array[System.Object]
-        input = vtype([inst, inst])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([inst, inst])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].__class__ == inst.__class__)
         self.assertTrue(value[1].__class__ == inst.__class__)
 
         vtype = Array[InterfaceTest]
-        input = vtype([inst, inst])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([inst, inst])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].__class__ == inst.__class__)
         self.assertTrue(value[1].__class__ == inst.__class__)
 
         vtype = Array[ISayHello1]
-        input = vtype([inst, inst])
-        value = MethodTest.Overloaded.__overloads__[vtype](input)
+        input_ = vtype([inst, inst])
+        value = MethodTest.Overloaded.__overloads__[vtype](input_)
         self.assertTrue(value[0].__class__ == inst.__class__)
         self.assertTrue(value[1].__class__ == inst.__class__)
 
@@ -682,27 +673,26 @@ class MethodTests(unittest.TestCase):
         """Check that overload selection fails correctly."""
 
         with self.assertRaises(TypeError):
-            value = MethodTest.Overloaded.__overloads__[System.Type](True)
+            _ = MethodTest.Overloaded.__overloads__[System.Type](True)
 
         with self.assertRaises(TypeError):
-            value = MethodTest.Overloaded.__overloads__[int, int](1, 1)
+            _ = MethodTest.Overloaded.__overloads__[int, int](1, 1)
 
         with self.assertRaises(TypeError):
-            value = MethodTest.Overloaded.__overloads__[str, int, int](
-                "", 1, 1
-            )
+            _ = MethodTest.Overloaded.__overloads__[str, int, int]("", 1, 1)
 
         with self.assertRaises(TypeError):
-            value = MethodTest.Overloaded.__overloads__[int, long](1)
+            _ = MethodTest.Overloaded.__overloads__[int, long](1)
 
     def test_we_can_bind_to_encoding_get_string(self):
-        """Check that we can bind to the Encoding.GetString method with variables."""
-
+        """Check that we can bind to the Encoding.GetString method
+        with variables."""
         from System.Text import Encoding
         from System.IO import MemoryStream
-        myBytes = Encoding.UTF8.GetBytes('Some testing string')
+
+        my_bytes = Encoding.UTF8.GetBytes('Some testing string')
         stream = MemoryStream()
-        stream.Write(myBytes, 0, myBytes.Length)
+        stream.Write(my_bytes, 0, my_bytes.Length)
         stream.Position = 0
 
         buff = System.Array.CreateInstance(System.Byte, 3)

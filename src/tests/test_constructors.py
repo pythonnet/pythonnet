@@ -38,10 +38,10 @@ class ConstructorTests(unittest.TestCase):
         """Test subclass constructor args"""
         from Python.Test import SubclassConstructorTest
 
-        class sub(System.Exception):
+        class Sub(System.Exception):
             pass
 
-        instance = sub()
+        instance = Sub()
         ob = SubclassConstructorTest(instance)
         self.assertTrue(isinstance(ob.value, System.Exception))
 

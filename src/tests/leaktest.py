@@ -43,10 +43,10 @@ class LeakTest(object):
         end = System.Environment.WorkingSet
         diff = end - start
         if diff > 0:
-            diff = '+%d' % diff
+            diff = '+{0}'.format(diff)
         else:
-            diff = '%d' % diff
-        print("  start: %d  end: %d diff: %s" % (start, end, diff))
+            diff = '{0}'.format(diff)
+        print("  start: {0}  end: {1} diff: {2}".format(start, end, diff))
         print("")
 
     def run(self):
@@ -203,10 +203,10 @@ class LeakTest(object):
             testob.PublicEvent -= EventTest.StaticHandler
 
             # Function event handler
-            dict = {'value': None}
+            dict_ = {'value': None}
 
-            def handler(sender, args, dict=dict):
-                dict['value'] = args.value
+            def handler(sender, args, dict_=dict_):
+                dict_['value'] = args.value
 
             testob.PublicEvent += handler
             testob.PublicEvent(testob, TestEventArgs(10))

@@ -220,7 +220,7 @@ class ExceptionTests(unittest.TestCase):
         try:
             raise OverflowException('overflow')
         except:
-            return
+            pass
         else:
             self.fail("failed to catch unqualified exception")
 
@@ -240,22 +240,22 @@ class ExceptionTests(unittest.TestCase):
 
     def test_str_of_exception(self):
         """Test the str() representation of an exception."""
-        from System import NullReferenceException
-        from System import Convert, FormatException
+        from System import NullReferenceException, Convert, FormatException
+
         e = NullReferenceException('')
         self.assertEqual(str(e), '')
 
         e = NullReferenceException('Something bad happened')
         self.assertTrue(str(e).startswith('Something bad happened'))
 
-        try:
+        with self.assertRaises(FormatException) as cm:
             Convert.ToDateTime('this will fail')
-        except FormatException:
-            e = sys.exc_info()[1]
-            # fix for international installation
-            msg = text_type(e).encode("utf8")
-            fnd = text_type('System.Convert.ToDateTime').encode("utf8")
-            self.assertTrue(msg.find(fnd) > -1, msg)
+
+        e = cm.exception
+        # fix for international installation
+        msg = text_type(e).encode("utf8")
+        fnd = text_type('System.Convert.ToDateTime').encode("utf8")
+        self.assertTrue(msg.find(fnd) > -1, msg)
 
     def test_python_compat_of_managed_exceptions(self):
         """Test managed exceptions compatible with Python's implementation"""
@@ -286,12 +286,11 @@ class ExceptionTests(unittest.TestCase):
         # here mainly to remind me to update the caveat in the documentation
         # one day when when exceptions can be new-style classes.
 
-        # This behaviour is now over-shadowed by the implementation of
+        # This behavior is now over-shadowed by the implementation of
         # __instancecheck__ (i.e., overloading isinstance), so for all Python
         # version >= 2.6 we expect isinstance(<managed exception>, Object) to
         # be true, even though it does not really subclass Object.
-        from System import OverflowException
-        from System import Object
+        from System import OverflowException, Object
 
         o = OverflowException('error')
 

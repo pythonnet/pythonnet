@@ -53,8 +53,6 @@ class EventTests(unittest.TestCase):
 
     def test_protected_static_event(self):
         """Test protected static events."""
-        ob = EventTest
-
         handler = GenericHandler()
         self.assertTrue(handler.value == None)
 
@@ -69,25 +67,25 @@ class EventTests(unittest.TestCase):
         """Test internal events."""
 
         with self.assertRaises(AttributeError):
-            f = EventTest().InternalEvent
+            _ = EventTest().InternalEvent
 
         with self.assertRaises(AttributeError):
-            f = EventTest().InternalStaticEvent
+            _ = EventTest().InternalStaticEvent
 
         with self.assertRaises(AttributeError):
-            f = EventTest.InternalStaticEvent
+            _ = EventTest.InternalStaticEvent
 
     def test_private_events(self):
         """Test private events."""
 
         with self.assertRaises(AttributeError):
-            f = EventTest().PrivateEvent
+            _ = EventTest().PrivateEvent
 
         with self.assertRaises(AttributeError):
-            f = EventTest().PrivateStaticEvent
+            _ = EventTest().PrivateStaticEvent
 
         with self.assertRaises(AttributeError):
-            f = EventTest.PrivateStaticEvent
+            _ = EventTest.PrivateStaticEvent
 
     def test_multicast_event(self):
         """Test multicast events."""
@@ -258,33 +256,31 @@ class EventTests(unittest.TestCase):
         """Test failure mode for unbound method handlers."""
         ob = EventTest()
         ob.PublicEvent += GenericHandler.handler
-        try:
-            ob.OnPublicEvent(TestEventArgs(10))
-        except TypeError:
-            ob.PublicEvent -= GenericHandler.handler
-            return
 
-        raise TypeError("should have raised a TypeError")
+        with self.assertRaises(TypeError):
+            ob.OnPublicEvent(TestEventArgs(10))
+
+        ob.PublicEvent -= GenericHandler.handler
 
     def test_function_handler(self):
         """Test function handlers."""
         ob = EventTest()
-        dict = {'value': None}
+        dict_ = {'value': None}
 
-        def handler(sender, args, dict=dict):
-            dict['value'] = args.value
+        def handler(sender, args, dict_=dict_):
+            dict_['value'] = args.value
 
         ob.PublicEvent += handler
-        self.assertTrue(dict['value'] == None)
+        self.assertTrue(dict_['value'] == None)
 
         ob.OnPublicEvent(TestEventArgs(10))
-        self.assertTrue(dict['value'] == 10)
+        self.assertTrue(dict_['value'] == 10)
 
         ob.PublicEvent -= handler
-        self.assertTrue(dict['value'] == 10)
+        self.assertTrue(dict_['value'] == 10)
 
         ob.OnPublicEvent(TestEventArgs(20))
-        self.assertTrue(dict['value'] == 10)
+        self.assertTrue(dict_['value'] == 10)
 
     def test_add_non_callable_handler(self):
         """Test handling of attempts to add non-callable handlers."""
@@ -298,11 +294,11 @@ class EventTests(unittest.TestCase):
             ob.PublicEvent += "spam"
 
         with self.assertRaises(TypeError):
-            class spam(object):
+            class Spam(object):
                 pass
 
             ob = EventTest()
-            ob.PublicEvent += spam()
+            ob.PublicEvent += Spam()
 
     def test_remove_multiple_handlers(self):
         """Test removing multiple instances of the same handler."""
@@ -411,7 +407,7 @@ class EventTests(unittest.TestCase):
         ob.PublicEvent += handler2.handler
 
         handlers = []
-        for i in range(30):
+        for _ in range(30):
             method = handler.handler
             ob.PublicEvent += method
             handlers.append(method)

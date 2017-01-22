@@ -26,12 +26,12 @@ def main():
     start = time.clock()
 
     for i in range(50):
-        print('iteration: %d' % i)
+        print('iteration: {0:d}'.format(i))
         runtests.main()
 
     stop = time.clock()
     took = str(stop - start)
-    print('Total Time: %s' % took)
+    print('Total Time: {0}'.format(took))
 
     for item in gc.get_objects():
         print(item, sys.getrefcount(item))

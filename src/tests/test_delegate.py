@@ -32,9 +32,10 @@ class DelegateTests(unittest.TestCase):
 
         with self.assertRaises(ImportError):
             from Python.Test import InternalDelegate
+            _ = InternalDelegate
 
         with self.assertRaises(AttributeError):
-            i = Test.InternalDelegate
+            _ = Test.InternalDelegate
 
     def test_nested_delegate_visibility(self):
         """Test visibility of nested delegates."""
@@ -45,10 +46,10 @@ class DelegateTests(unittest.TestCase):
         self.assertTrue(ob.__name__ == 'ProtectedDelegate')
 
         with self.assertRaises(AttributeError):
-            ob = DelegateTest.InternalDelegate
+            _ = DelegateTest.InternalDelegate
 
         with self.assertRaises(AttributeError):
-            ob = DelegateTest.PrivateDelegate
+            _ = DelegateTest.PrivateDelegate
 
     def test_delegate_from_function(self):
         """Test delegate implemented with a Python function."""
@@ -187,13 +188,13 @@ class DelegateTests(unittest.TestCase):
         """Test delegate instantiation with invalid (non-callable) args."""
 
         with self.assertRaises(TypeError):
-            d = StringDelegate(None)
+            _ = StringDelegate(None)
 
         with self.assertRaises(TypeError):
-            d = StringDelegate("spam")
+            _ = StringDelegate("spam")
 
         with self.assertRaises(TypeError):
-            d = StringDelegate(1)
+            _ = StringDelegate(1)
 
     def test_multicast_delegate(self):
         """Test multicast delegates."""
@@ -218,14 +219,12 @@ class DelegateTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             class Boom(PublicDelegate):
                 pass
+            _ = Boom
 
     def test_delegate_equality(self):
         """Test delegate equality."""
 
-        def sayhello():
-            return "hello"
-
-        d = StringDelegate(sayhello)
+        d = StringDelegate(hello_func)
         ob = DelegateTest()
         ob.stringDelegate = d
         self.assertTrue(ob.stringDelegate == d)
@@ -242,7 +241,6 @@ class DelegateTests(unittest.TestCase):
         ob.CallBoolDelegate(d)
 
         self.assertTrue(not d())
-
         self.assertTrue(not ob.CallBoolDelegate(d))
 
         # test async delegates

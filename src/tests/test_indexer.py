@@ -82,16 +82,16 @@ class IndexerTests(unittest.TestCase):
     def test_byte_indexer(self):
         """Test byte indexers."""
         ob = Test.ByteIndexerTest()
-        max = 255
-        min = 0
+        max_ = 255
+        min_ = 0
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.ByteIndexerTest()
@@ -104,16 +104,16 @@ class IndexerTests(unittest.TestCase):
     def test_sbyte_indexer(self):
         """Test sbyte indexers."""
         ob = Test.SByteIndexerTest()
-        max = 127
-        min = -128
+        max_ = 127
+        min_ = -128
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.SByteIndexerTest()
@@ -126,16 +126,16 @@ class IndexerTests(unittest.TestCase):
     def test_char_indexer(self):
         """Test char indexers."""
         ob = Test.CharIndexerTest()
-        max = unichr(65535)
-        min = unichr(0)
+        max_ = unichr(65535)
+        min_ = unichr(0)
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = "max"
-        self.assertTrue(ob[max] == "max")
+        ob[max_] = "max_"
+        self.assertTrue(ob[max_] == "max_")
 
-        ob[min] = "min"
-        self.assertTrue(ob[min] == "min")
+        ob[min_] = "min_"
+        self.assertTrue(ob[min_] == "min_")
 
         with self.assertRaises(TypeError):
             ob = Test.CharIndexerTest()
@@ -148,16 +148,16 @@ class IndexerTests(unittest.TestCase):
     def test_int16_indexer(self):
         """Test Int16 indexers."""
         ob = Test.Int16IndexerTest()
-        max = 32767
-        min = -32768
+        max_ = 32767
+        min_ = -32768
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.Int16IndexerTest()
@@ -170,16 +170,16 @@ class IndexerTests(unittest.TestCase):
     def test_int32_indexer(self):
         """Test Int32 indexers."""
         ob = Test.Int32IndexerTest()
-        max = 2147483647
-        min = -2147483648
+        max_ = 2147483647
+        min_ = -2147483648
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.Int32IndexerTest()
@@ -192,16 +192,16 @@ class IndexerTests(unittest.TestCase):
     def test_int64_indexer(self):
         """Test Int64 indexers."""
         ob = Test.Int64IndexerTest()
-        max = long(9223372036854775807)
-        min = long(-9223372036854775808)
+        max_ = long(9223372036854775807)
+        min_ = long(-9223372036854775808)
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.Int64IndexerTest()
@@ -214,16 +214,16 @@ class IndexerTests(unittest.TestCase):
     def test_uint16_indexer(self):
         """Test UInt16 indexers."""
         ob = Test.UInt16IndexerTest()
-        max = 65535
-        min = 0
+        max_ = 65535
+        min_ = 0
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.UInt16IndexerTest()
@@ -236,16 +236,16 @@ class IndexerTests(unittest.TestCase):
     def test_uint32_indexer(self):
         """Test UInt32 indexers."""
         ob = Test.UInt32IndexerTest()
-        max = long(4294967295)
-        min = 0
+        max_ = long(4294967295)
+        min_ = 0
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.UInt32IndexerTest()
@@ -258,16 +258,16 @@ class IndexerTests(unittest.TestCase):
     def test_uint64_indexer(self):
         """Test UInt64 indexers."""
         ob = Test.UInt64IndexerTest()
-        max = long(18446744073709551615)
-        min = 0
+        max_ = long(18446744073709551615)
+        min_ = 0
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = str(max)
-        self.assertTrue(ob[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        ob[min] = str(min)
-        self.assertTrue(ob[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
         with self.assertRaises(TypeError):
             ob = Test.UInt64IndexerTest()
@@ -280,16 +280,16 @@ class IndexerTests(unittest.TestCase):
     def test_single_indexer(self):
         """Test Single indexers."""
         ob = Test.SingleIndexerTest()
-        max = 3.402823e38
-        min = -3.402823e38
+        max_ = 3.402823e38
+        min_ = -3.402823e38
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = "max"
-        self.assertTrue(ob[max] == "max")
+        ob[max_] = "max_"
+        self.assertTrue(ob[max_] == "max_")
 
-        ob[min] = "min"
-        self.assertTrue(ob[min] == "min")
+        ob[min_] = "min_"
+        self.assertTrue(ob[min_] == "min_")
 
         with self.assertRaises(TypeError):
             ob = Test.SingleIndexerTest()
@@ -302,16 +302,16 @@ class IndexerTests(unittest.TestCase):
     def test_double_indexer(self):
         """Test Double indexers."""
         ob = Test.DoubleIndexerTest()
-        max = 1.7976931348623157e308
-        min = -1.7976931348623157e308
+        max_ = 1.7976931348623157e308
+        min_ = -1.7976931348623157e308
 
-        self.assertTrue(ob[max] == None)
+        self.assertTrue(ob[max_] == None)
 
-        ob[max] = "max"
-        self.assertTrue(ob[max] == "max")
+        ob[max_] = "max_"
+        self.assertTrue(ob[max_] == "max_")
 
-        ob[min] = "min"
-        self.assertTrue(ob[min] == "min")
+        ob[min_] = "min_"
+        self.assertTrue(ob[min_] == "min_")
 
         with self.assertRaises(TypeError):
             ob = Test.DoubleIndexerTest()
@@ -331,11 +331,11 @@ class IndexerTests(unittest.TestCase):
 
         self.assertTrue(ob[max_d] == None)
 
-        ob[max_d] = "max"
-        self.assertTrue(ob[max_d] == "max")
+        ob[max_d] = "max_"
+        self.assertTrue(ob[max_d] == "max_")
 
-        ob[min_d] = "min"
-        self.assertTrue(ob[min_d] == "min")
+        ob[min_d] = "min_"
+        self.assertTrue(ob[min_d] == "min_")
 
         with self.assertRaises(TypeError):
             ob = Test.DecimalIndexerTest()
@@ -422,10 +422,10 @@ class IndexerTests(unittest.TestCase):
         self.assertTrue(ob[long(1)] == "long")
 
         with self.assertRaises(TypeError):
-            class eggs(object):
+            class Eggs(object):
                 pass
 
-            key = eggs()
+            key = Eggs()
             ob = Test.ObjectIndexerTest()
             ob[key] = "wrong"
 
@@ -489,7 +489,7 @@ class IndexerTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.MultiArgIndexerTest()
-            v = ob[0, "one"]
+            _ = ob[0, "one"]
 
         with self.assertRaises(TypeError):
             ob = Test.MultiArgIndexerTest()
@@ -508,14 +508,15 @@ class IndexerTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.MultiTypeIndexerTest()
-            v = ob[0, 1, spam]
+            _ = ob[0, 1, spam]
 
         with self.assertRaises(TypeError):
             ob = Test.MultiTypeIndexerTest()
             ob[0, 1, spam] = "wrong"
 
     def test_multi_default_key_indexer(self):
-        """Test indexers that take multiple indices with a default key arguments."""
+        """Test indexers that take multiple indices with a default
+        key arguments."""
         # default argument is 2 in the MultiDefaultKeyIndexerTest object
         ob = Test.MultiDefaultKeyIndexerTest()
         ob[0, 2] = "zero one spam"
@@ -529,7 +530,7 @@ class IndexerTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.PublicIndexerTest()
-            v = ob["wrong"]
+            _ = ob["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.PublicIndexerTest()

@@ -15,18 +15,18 @@ class CallbackTests(unittest.TestCase):
         from Python.Test import CallbackTest
 
         test_instance = CallbackTest()
-        retVal = test_instance.Call_simpleDefaultArg_WithNull(__name__)
-        pythonRetVal = simpleDefaultArg(None)
-        self.assertEquals(retVal, pythonRetVal)
+        ret_val = test_instance.Call_simpleDefaultArg_WithNull(__name__)
+        python_ret_val = simpleDefaultArg(None)
+        self.assertEquals(ret_val, python_ret_val)
 
     def test_default_for_none(self):
         """Test that C# can use no argument for an optional python argument"""
         from Python.Test import CallbackTest
 
         test_instance = CallbackTest()
-        retVal = test_instance.Call_simpleDefaultArg_WithEmptyArgs(__name__)
-        pythonRetVal = simpleDefaultArg()
-        self.assertEquals(retVal, pythonRetVal)
+        ret_val = test_instance.Call_simpleDefaultArg_WithEmptyArgs(__name__)
+        python_ret_val = simpleDefaultArg()
+        self.assertEquals(ret_val, python_ret_val)
 
 
 def test_suite():

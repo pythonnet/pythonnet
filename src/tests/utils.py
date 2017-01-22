@@ -5,14 +5,22 @@
 Refactor utility functions and classes
 """
 
+from __future__ import print_function
+
 from _compat import PY2, PY3
 
 
-def isCLRModule(ob):
+def dprint(msg):
+    # Debugging helper to trace thread-related tests.
+    if 0:
+        print(msg)
+
+
+def is_clr_module(ob):
     return type(ob).__name__ == 'ModuleObject'
 
 
-def isCLRRootModule(ob):
+def is_clr_root_module(ob):
     if PY3:
         # in Python 3 the clr module is a normal python module
         return ob.__name__ == "clr"
@@ -20,7 +28,7 @@ def isCLRRootModule(ob):
         return type(ob).__name__ == 'CLRModule'
 
 
-def isCLRClass(ob):
+def is_clr_class(ob):
     return type(ob).__name__ == 'CLR Metatype'  # for now
 
 

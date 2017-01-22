@@ -60,14 +60,14 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(AttributeError):
             ob = Test.InternalArrayTest()
-            items = ob.items
+            _ = ob.items
 
     def test_private_array(self):
         """Test private arrays."""
 
         with self.assertRaises(AttributeError):
             ob = Test.PrivateArrayTest()
-            items = ob.items
+            _ = ob.items
 
     def test_array_bounds_checking(self):
         """Test array bounds checking."""
@@ -89,7 +89,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(IndexError):
             ob = Test.Int32ArrayTest()
-            ob.items[5]
+            _ = ob.items[5]
 
         with self.assertRaises(IndexError):
             ob = Test.Int32ArrayTest()
@@ -141,7 +141,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
@@ -157,32 +157,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = 255
-        min = 0
+        max_ = 255
+        min_ = 0
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.ByteArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.ByteArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.ByteArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
@@ -198,32 +198,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = 127
-        min = -128
+        max_ = 127
+        min_ = -128
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.SByteArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.SByteArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.SByteArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.SByteArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.SByteArrayTest()
@@ -239,24 +239,24 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 'a')
         self.assertTrue(items[4] == 'e')
 
-        max = unichr(65535)
-        min = unichr(0)
+        max_ = unichr(65535)
+        min_ = unichr(0)
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(TypeError):
             ob = Test.CharArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.CharArrayTest()
@@ -272,32 +272,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = 32767
-        min = -32768
+        max_ = 32767
+        min_ = -32768
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.Int16ArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.Int16ArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.Int16ArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.Int16ArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.Int16ArrayTest()
@@ -313,32 +313,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = 2147483647
-        min = -2147483648
+        max_ = 2147483647
+        min_ = -2147483648
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.Int32ArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.Int32ArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.Int32ArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.Int32ArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.Int32ArrayTest()
@@ -354,32 +354,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = long(9223372036854775807)
-        min = long(-9223372036854775808)
+        max_ = long(9223372036854775807)
+        min_ = long(-9223372036854775808)
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.Int64ArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.Int64ArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.Int64ArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.Int64ArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.Int64ArrayTest()
@@ -395,32 +395,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = 65535
-        min = 0
+        max_ = 65535
+        min_ = 0
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.UInt16ArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.UInt16ArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.UInt16ArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.UInt16ArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.UInt16ArrayTest()
@@ -436,32 +436,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = long(4294967295)
-        min = 0
+        max_ = long(4294967295)
+        min_ = 0
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.UInt32ArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.UInt32ArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.UInt32ArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.UInt32ArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.UInt32ArrayTest()
@@ -477,32 +477,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0)
         self.assertTrue(items[4] == 4)
 
-        max = long(18446744073709551615)
-        min = 0
+        max_ = long(18446744073709551615)
+        min_ = 0
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.UInt64ArrayTest()
-            ob.items[0] = max + 1
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.UInt64ArrayTest()
-            ob.items[0] = min - 1
+            ob.items[0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.UInt64ArrayTest()
+            ob.items[0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.UInt64ArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.UInt64ArrayTest()
@@ -518,24 +518,24 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0.0)
         self.assertTrue(items[4] == 4.0)
 
-        max = 3.402823e38
-        min = -3.402823e38
+        max_ = 3.402823e38
+        min_ = -3.402823e38
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(TypeError):
             ob = Test.SingleArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.SingleArrayTest()
@@ -551,24 +551,24 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 0.0)
         self.assertTrue(items[4] == 4.0)
 
-        max = 1.7976931348623157e308
-        min = -1.7976931348623157e308
+        max_ = 1.7976931348623157e308
+        min_ = -1.7976931348623157e308
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+        items[0] = max_
+        self.assertTrue(items[0] == max_)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+        items[0] = min_
+        self.assertTrue(items[0] == min_)
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+        items[-4] = max_
+        self.assertTrue(items[-4] == max_)
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+        items[-1] = min_
+        self.assertTrue(items[-1] == min_)
 
         with self.assertRaises(TypeError):
             ob = Test.DoubleArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.DoubleArrayTest()
@@ -602,7 +602,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.DecimalArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.DecimalArrayTest()
@@ -632,7 +632,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.StringArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.Int64ArrayTest()
@@ -667,7 +667,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.EnumArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.EnumArrayTest()
@@ -704,7 +704,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.ObjectArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.ObjectArrayTest()
@@ -737,7 +737,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.NullArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
     def test_interface_array(self):
         """Test interface arrays."""
@@ -771,7 +771,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.InterfaceArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.InterfaceArrayTest()
@@ -809,7 +809,7 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             ob = Test.TypedArrayTest()
-            v = ob.items["wrong"]
+            _ = ob.items["wrong"]
 
         with self.assertRaises(TypeError):
             ob = Test.TypedArrayTest()
@@ -848,32 +848,32 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[4, 3] == 23)
         self.assertTrue(items[4, 4] == 24)
 
-        max = 2147483647
-        min = -2147483648
+        max_ = 2147483647
+        min_ = -2147483648
 
-        items[0, 0] = max
-        self.assertTrue(items[0, 0] == max)
+        items[0, 0] = max_
+        self.assertTrue(items[0, 0] == max_)
 
-        items[0, 0] = min
-        self.assertTrue(items[0, 0] == min)
+        items[0, 0] = min_
+        self.assertTrue(items[0, 0] == min_)
 
-        items[-4, 0] = max
-        self.assertTrue(items[-4, 0] == max)
+        items[-4, 0] = max_
+        self.assertTrue(items[-4, 0] == max_)
 
-        items[-1, -1] = min
-        self.assertTrue(items[-1, -1] == min)
-
-        with self.assertRaises(OverflowError):
-            ob = Test.MultiDimensionalArrayTest()
-            ob.items[0, 0] = max + 1
+        items[-1, -1] = min_
+        self.assertTrue(items[-1, -1] == min_)
 
         with self.assertRaises(OverflowError):
             ob = Test.MultiDimensionalArrayTest()
-            ob.items[0, 0] = min - 1
+            ob.items[0, 0] = max_ + 1
+
+        with self.assertRaises(OverflowError):
+            ob = Test.MultiDimensionalArrayTest()
+            ob.items[0, 0] = min_ - 1
 
         with self.assertRaises(TypeError):
             ob = Test.MultiDimensionalArrayTest()
-            v = ob.items["wrong", 0]
+            _ = ob.items["wrong", 0]
 
         with self.assertRaises(TypeError):
             ob = Test.MultiDimensionalArrayTest()
@@ -918,7 +918,7 @@ class ArrayTests(unittest.TestCase):
         items = []
         for i in range(10):
             subs = []
-            for n in range(10):
+            for _ in range(10):
                 subs.append(Spam(str(i)))
             items.append(tuple(subs))
         items = tuple(items)
@@ -950,7 +950,7 @@ class ArrayTests(unittest.TestCase):
         items = []
         for i in range(10):
             subs = []
-            for n in range(10):
+            for _ in range(10):
                 subs.append(Spam(str(i)))
             items.append(subs)
 
@@ -981,7 +981,7 @@ class ArrayTests(unittest.TestCase):
         items = UserList()
         for i in range(10):
             subs = UserList()
-            for n in range(10):
+            for _ in range(10):
                 subs.append(Spam(str(i)))
             items.append(subs)
 
@@ -1014,12 +1014,12 @@ class ArrayTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             temp = list(items)
             temp[1] = 1
-            result = ArrayConversionTest.EchoRange(tuple(temp))
+            _ = ArrayConversionTest.EchoRange(tuple(temp))
 
         with self.assertRaises(TypeError):
             temp = list(items)
             temp[1] = "spam"
-            result = ArrayConversionTest.EchoRange(tuple(temp))
+            _ = ArrayConversionTest.EchoRange(tuple(temp))
 
     def test_list_array_conversion_type_checking(self):
         """Test error handling for list conversion to array arguments."""
@@ -1042,11 +1042,11 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             items[1] = 1
-            result = ArrayConversionTest.EchoRange(items)
+            _ = ArrayConversionTest.EchoRange(items)
 
         with self.assertRaises(TypeError):
             items[1] = "spam"
-            result = ArrayConversionTest.EchoRange(items)
+            _ = ArrayConversionTest.EchoRange(items)
 
     def test_sequence_array_conversion_type_checking(self):
         """Test error handling for sequence conversion to array arguments."""
@@ -1069,11 +1069,11 @@ class ArrayTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             items[1] = 1
-            result = ArrayConversionTest.EchoRange(items)
+            _ = ArrayConversionTest.EchoRange(items)
 
         with self.assertRaises(TypeError):
             items[1] = "spam"
-            result = ArrayConversionTest.EchoRange(items)
+            _ = ArrayConversionTest.EchoRange(items)
 
     def test_md_array_conversion(self):
         """Test passing of multi-dimensional array arguments."""
