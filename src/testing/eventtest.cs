@@ -6,26 +6,26 @@ namespace Python.Test
     // Supports CLR event unit tests.
     //========================================================================
 
-    public delegate void TestEventHandler(object sender, TestEventArgs e);
+    public delegate void EventHandlerTest(object sender, EventArgsTest e);
 
 
     public class EventTest
     {
-        public static event TestEventHandler PublicStaticEvent;
+        public static event EventHandlerTest PublicStaticEvent;
 
-        protected static event TestEventHandler ProtectedStaticEvent;
+        protected static event EventHandlerTest ProtectedStaticEvent;
 
-        internal static event TestEventHandler InternalStaticEvent;
+        internal static event EventHandlerTest InternalStaticEvent;
 
-        private static event TestEventHandler PrivateStaticEvent;
+        private static event EventHandlerTest PrivateStaticEvent;
 
-        public event TestEventHandler PublicEvent;
+        public event EventHandlerTest PublicEvent;
 
-        protected event TestEventHandler ProtectedEvent;
+        protected event EventHandlerTest ProtectedEvent;
 
-        internal event TestEventHandler InternalEvent;
+        internal event EventHandlerTest InternalEvent;
 
-        private event TestEventHandler PrivateEvent;
+        private event EventHandlerTest PrivateEvent;
 
 
         public static int s_value;
@@ -42,7 +42,7 @@ namespace Python.Test
         }
 
 
-        public void OnPublicEvent(TestEventArgs e)
+        public void OnPublicEvent(EventArgsTest e)
         {
             if (PublicEvent != null)
             {
@@ -51,7 +51,7 @@ namespace Python.Test
         }
 
 
-        public void OnProtectedEvent(TestEventArgs e)
+        public void OnProtectedEvent(EventArgsTest e)
         {
             if (ProtectedEvent != null)
             {
@@ -60,7 +60,7 @@ namespace Python.Test
         }
 
 
-        public static void OnPublicStaticEvent(TestEventArgs e)
+        public static void OnPublicStaticEvent(EventArgsTest e)
         {
             if (PublicStaticEvent != null)
             {
@@ -69,7 +69,7 @@ namespace Python.Test
         }
 
 
-        protected static void OnProtectedStaticEvent(TestEventArgs e)
+        protected static void OnProtectedStaticEvent(EventArgsTest e)
         {
             if (ProtectedStaticEvent != null)
             {
@@ -78,12 +78,12 @@ namespace Python.Test
         }
 
 
-        public void GenericHandler(object sender, TestEventArgs e)
+        public void GenericHandler(object sender, EventArgsTest e)
         {
             this.value = e.value;
         }
 
-        public static void StaticHandler(object sender, TestEventArgs e)
+        public static void StaticHandler(object sender, EventArgsTest e)
         {
             s_value = e.value;
         }
@@ -92,7 +92,7 @@ namespace Python.Test
         {
             // Quiet compiler warnings.
             EventTest e = new EventTest();
-            TestEventHandler f = new TestEventHandler(e.GenericHandler);
+            EventHandlerTest f = new EventHandlerTest(e.GenericHandler);
             ProtectedStaticEvent += f;
             InternalStaticEvent += f;
             PrivateStaticEvent += f;
@@ -103,11 +103,11 @@ namespace Python.Test
     }
 
 
-    public class TestEventArgs : EventArgs
+    public class EventArgsTest : EventArgs
     {
         public int value;
 
-        public TestEventArgs(int v)
+        public EventArgsTest(int v)
         {
             this.value = v;
         }
