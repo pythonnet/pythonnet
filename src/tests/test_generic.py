@@ -11,134 +11,8 @@ from _compat import PY2, long, unicode, unichr, zip
 class GenericTests(unittest.TestCase):
     """Test CLR generics support."""
 
-    def testPythonTypeAliasing(self):
-        """Test python type alias support with generics."""
-        from System.Collections.Generic import Dictionary
-
-        dict = Dictionary[str, str]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add("one", "one")
-        self.assertTrue(dict["one"] == "one")
-
-        dict = Dictionary[System.String, System.String]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add("one", "one")
-        self.assertTrue(dict["one"] == "one")
-
-        dict = Dictionary[int, int]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1, 1)
-        self.assertTrue(dict[1] == 1)
-
-        dict = Dictionary[System.Int32, System.Int32]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1, 1)
-        self.assertTrue(dict[1] == 1)
-
-        dict = Dictionary[long, long]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(long(1), long(1))
-        self.assertTrue(dict[long(1)] == long(1))
-
-        dict = Dictionary[System.Int64, System.Int64]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(long(1), long(1))
-        self.assertTrue(dict[long(1)] == long(1))
-
-        dict = Dictionary[float, float]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1.5, 1.5)
-        self.assertTrue(dict[1.5] == 1.5)
-
-        dict = Dictionary[System.Double, System.Double]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(1.5, 1.5)
-        self.assertTrue(dict[1.5] == 1.5)
-
-        dict = Dictionary[bool, bool]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(True, False)
-        self.assertTrue(dict[True] == False)
-
-        dict = Dictionary[System.Boolean, System.Boolean]()
-        self.assertEquals(dict.Count, 0)
-        dict.Add(True, False)
-        self.assertTrue(dict[True] == False)
-
-    def testGenericReferenceType(self):
-        """Test usage of generic reference type definitions."""
-        from Python.Test import GenericTypeDefinition
-
-        inst = GenericTypeDefinition[System.String, System.Int32]("one", 2)
-        self.assertTrue(inst.value1 == "one")
-        self.assertTrue(inst.value2 == 2)
-
-    def testGenericValueType(self):
-        """Test usage of generic value type definitions."""
-        inst = System.Nullable[System.Int32](10)
-        self.assertTrue(inst.HasValue)
-        self.assertTrue(inst.Value == 10)
-
-    def testGenericInterface(self):
-        pass
-
-    def testGenericDelegate(self):
-        pass
-
-    def testOpenGenericType(self):
-        """Test behavior of reflected open constructed generic types."""
-        from Python.Test import DerivedFromOpenGeneric
-
-        OpenGenericType = DerivedFromOpenGeneric.__bases__[0]
-
-        def test():
-            inst = OpenGenericType()
-
-        self.assertRaises(TypeError, test)
-
-        def test():
-            type = OpenGenericType[System.String]
-
-        self.assertRaises(TypeError, test)
-
-    def testDerivedFromOpenGenericType(self):
-        """Test a generic type derived from an open generic type."""
-        from Python.Test import DerivedFromOpenGeneric
-
-        type = DerivedFromOpenGeneric[System.String, System.String]
-        inst = type(1, 'two', 'three')
-
-        self.assertTrue(inst.value1 == 1)
-        self.assertTrue(inst.value2 == 'two')
-        self.assertTrue(inst.value3 == 'three')
-
-    def testGenericTypeNameResolution(self):
-        """Test the ability to disambiguate generic type names."""
-        from Python.Test import GenericNameTest1, GenericNameTest2
-
-        # If both a non-generic and generic type exist for a name, the
-        # unadorned name always resolves to the non-generic type.
-        _class = GenericNameTest1
-        self.assertTrue(_class().value == 0)
-        self.assertTrue(_class.value == 0)
-
-        # If no non-generic type exists for a name, the unadorned name
-        # cannot be instantiated. It can only be used to bind a generic.
-
-        def test():
-            inst = GenericNameTest2()
-
-        self.assertRaises(TypeError, test)
-
-        _class = GenericNameTest2[int]
-        self.assertTrue(_class().value == 1)
-        self.assertTrue(_class.value == 1)
-
-        _class = GenericNameTest2[int, int]
-        self.assertTrue(_class().value == 2)
-        self.assertTrue(_class.value == 2)
-
-    def _testGenericWrapperByType(self, ptype, value, test_type=0):
+    def _testGenericWrapperByType(self, ptype, value):
+        """Test Helper"""
         from Python.Test import GenericWrapper
         import System
 
@@ -152,39 +26,8 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(inst.value[0] == value)
         self.assertTrue(inst.value[1] == value)
 
-    def testGenericTypeBinding(self):
-        """Test argument conversion / binding for generic methods."""
-        from Python.Test import InterfaceTest, ISayHello1, ShortEnum
-        import System
-
-        self._testGenericWrapperByType(System.Boolean, True)
-        self._testGenericWrapperByType(bool, True)
-        self._testGenericWrapperByType(System.Byte, 255)
-        self._testGenericWrapperByType(System.SByte, 127)
-        self._testGenericWrapperByType(System.Char, u'A')
-        self._testGenericWrapperByType(System.Int16, 32767)
-        self._testGenericWrapperByType(System.Int32, 2147483647)
-        self._testGenericWrapperByType(int, 2147483647)
-        self._testGenericWrapperByType(System.Int64, long(9223372036854775807))
-        # Python 3 has no explicit long type, use System.Int64 instead
-        if PY2:
-            self._testGenericWrapperByType(long, long(9223372036854775807))
-        self._testGenericWrapperByType(System.UInt16, 65000)
-        self._testGenericWrapperByType(System.UInt32, long(4294967295))
-        self._testGenericWrapperByType(System.UInt64, long(18446744073709551615))
-        self._testGenericWrapperByType(System.Single, 3.402823e38)
-        self._testGenericWrapperByType(System.Double, 1.7976931348623157e308)
-        self._testGenericWrapperByType(float, 1.7976931348623157e308)
-        self._testGenericWrapperByType(System.Decimal, System.Decimal.One)
-        self._testGenericWrapperByType(System.String, "test")
-        self._testGenericWrapperByType(unicode, "test")
-        self._testGenericWrapperByType(str, "test")
-        self._testGenericWrapperByType(ShortEnum, ShortEnum.Zero)
-        self._testGenericWrapperByType(System.Object, InterfaceTest())
-        self._testGenericWrapperByType(InterfaceTest, InterfaceTest())
-        self._testGenericWrapperByType(ISayHello1, InterfaceTest())
-
     def _testGenericMethodByType(self, ptype, value, test_type=0):
+        """Test Helper"""
         from Python.Test import GenericMethodTest, GenericStaticMethodTest
         import System
 
@@ -268,6 +111,167 @@ class GenericTests(unittest.TestCase):
             self.assertTrue(len(result) == 3)
             self.assertTrue(result[0] == value)
             self.assertTrue(result[1] == value)
+
+    def testPythonTypeAliasing(self):
+        """Test python type alias support with generics."""
+        from System.Collections.Generic import Dictionary
+
+        dict = Dictionary[str, str]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add("one", "one")
+        self.assertTrue(dict["one"] == "one")
+
+        dict = Dictionary[System.String, System.String]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add("one", "one")
+        self.assertTrue(dict["one"] == "one")
+
+        dict = Dictionary[int, int]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(1, 1)
+        self.assertTrue(dict[1] == 1)
+
+        dict = Dictionary[System.Int32, System.Int32]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(1, 1)
+        self.assertTrue(dict[1] == 1)
+
+        dict = Dictionary[long, long]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(long(1), long(1))
+        self.assertTrue(dict[long(1)] == long(1))
+
+        dict = Dictionary[System.Int64, System.Int64]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(long(1), long(1))
+        self.assertTrue(dict[long(1)] == long(1))
+
+        dict = Dictionary[float, float]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(1.5, 1.5)
+        self.assertTrue(dict[1.5] == 1.5)
+
+        dict = Dictionary[System.Double, System.Double]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(1.5, 1.5)
+        self.assertTrue(dict[1.5] == 1.5)
+
+        dict = Dictionary[bool, bool]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(True, False)
+        self.assertTrue(dict[True] == False)
+
+        dict = Dictionary[System.Boolean, System.Boolean]()
+        self.assertEquals(dict.Count, 0)
+        dict.Add(True, False)
+        self.assertTrue(dict[True] == False)
+
+    def testGenericReferenceType(self):
+        """Test usage of generic reference type definitions."""
+        from Python.Test import GenericTypeDefinition
+
+        inst = GenericTypeDefinition[System.String, System.Int32]("one", 2)
+        self.assertTrue(inst.value1 == "one")
+        self.assertTrue(inst.value2 == 2)
+
+    def testGenericValueType(self):
+        """Test usage of generic value type definitions."""
+        inst = System.Nullable[System.Int32](10)
+        self.assertTrue(inst.HasValue)
+        self.assertTrue(inst.Value == 10)
+
+    def testGenericInterface(self):
+        # TODO NotImplemented
+        pass
+
+    def testGenericDelegate(self):
+        # TODO NotImplemented
+        pass
+
+    def testOpenGenericType(self):
+        """Test behavior of reflected open constructed generic types."""
+        from Python.Test import DerivedFromOpenGeneric
+
+        OpenGenericType = DerivedFromOpenGeneric.__bases__[0]
+
+        def test():
+            inst = OpenGenericType()
+
+        self.assertRaises(TypeError, test)
+
+        def test():
+            type = OpenGenericType[System.String]
+
+        self.assertRaises(TypeError, test)
+
+    def testDerivedFromOpenGenericType(self):
+        """Test a generic type derived from an open generic type."""
+        from Python.Test import DerivedFromOpenGeneric
+
+        type = DerivedFromOpenGeneric[System.String, System.String]
+        inst = type(1, 'two', 'three')
+
+        self.assertTrue(inst.value1 == 1)
+        self.assertTrue(inst.value2 == 'two')
+        self.assertTrue(inst.value3 == 'three')
+
+    def testGenericTypeNameResolution(self):
+        """Test the ability to disambiguate generic type names."""
+        from Python.Test import GenericNameTest1, GenericNameTest2
+
+        # If both a non-generic and generic type exist for a name, the
+        # unadorned name always resolves to the non-generic type.
+        _class = GenericNameTest1
+        self.assertTrue(_class().value == 0)
+        self.assertTrue(_class.value == 0)
+
+        # If no non-generic type exists for a name, the unadorned name
+        # cannot be instantiated. It can only be used to bind a generic.
+
+        def test():
+            inst = GenericNameTest2()
+
+        self.assertRaises(TypeError, test)
+
+        _class = GenericNameTest2[int]
+        self.assertTrue(_class().value == 1)
+        self.assertTrue(_class.value == 1)
+
+        _class = GenericNameTest2[int, int]
+        self.assertTrue(_class().value == 2)
+        self.assertTrue(_class.value == 2)
+
+    def testGenericTypeBinding(self):
+        """Test argument conversion / binding for generic methods."""
+        from Python.Test import InterfaceTest, ISayHello1, ShortEnum
+        import System
+
+        self._testGenericWrapperByType(System.Boolean, True)
+        self._testGenericWrapperByType(bool, True)
+        self._testGenericWrapperByType(System.Byte, 255)
+        self._testGenericWrapperByType(System.SByte, 127)
+        self._testGenericWrapperByType(System.Char, u'A')
+        self._testGenericWrapperByType(System.Int16, 32767)
+        self._testGenericWrapperByType(System.Int32, 2147483647)
+        self._testGenericWrapperByType(int, 2147483647)
+        self._testGenericWrapperByType(System.Int64, long(9223372036854775807))
+        # Python 3 has no explicit long type, use System.Int64 instead
+        if PY2:
+            self._testGenericWrapperByType(long, long(9223372036854775807))
+        self._testGenericWrapperByType(System.UInt16, 65000)
+        self._testGenericWrapperByType(System.UInt32, long(4294967295))
+        self._testGenericWrapperByType(System.UInt64, long(18446744073709551615))
+        self._testGenericWrapperByType(System.Single, 3.402823e38)
+        self._testGenericWrapperByType(System.Double, 1.7976931348623157e308)
+        self._testGenericWrapperByType(float, 1.7976931348623157e308)
+        self._testGenericWrapperByType(System.Decimal, System.Decimal.One)
+        self._testGenericWrapperByType(System.String, "test")
+        self._testGenericWrapperByType(unicode, "test")
+        self._testGenericWrapperByType(str, "test")
+        self._testGenericWrapperByType(ShortEnum, ShortEnum.Zero)
+        self._testGenericWrapperByType(System.Object, InterfaceTest())
+        self._testGenericWrapperByType(InterfaceTest, InterfaceTest())
+        self._testGenericWrapperByType(ISayHello1, InterfaceTest())
 
     def testGenericMethodBinding(self):
         from Python.Test import GenericMethodTest, GenericStaticMethodTest

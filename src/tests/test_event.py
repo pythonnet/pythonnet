@@ -5,6 +5,9 @@ import unittest
 from Python.Test import EventTest, TestEventArgs
 
 from _compat import range
+from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
+                   MultipleHandler, StaticMethodHandler, VarCallableHandler,
+                   VariableArgsHandler)
 
 
 class EventTests(unittest.TestCase):
@@ -311,7 +314,7 @@ class EventTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
         def test():
-            class spam:
+            class spam(object):
                 pass
 
             ob = EventTest()
@@ -486,7 +489,7 @@ class EventTests(unittest.TestCase):
     def testHandlerCallbackFailure(self):
         """Test failure mode for inappropriate handlers."""
 
-        class BadHandler:
+        class BadHandler(object):
             def handler(self, one):
                 return 'too many'
 
@@ -501,7 +504,7 @@ class EventTests(unittest.TestCase):
 
         ob.PublicEvent -= handler.handler
 
-        class BadHandler:
+        class BadHandler(object):
             def handler(self, one, two, three, four, five):
                 return 'not enough'
 
@@ -600,80 +603,6 @@ class EventTests(unittest.TestCase):
             EventTest.PublicStaticEvent = 0
 
         self.assertRaises(TypeError, test)
-
-
-class GenericHandler:
-    """A generic handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def handler(self, sender, args):
-        self.value = args.value
-
-
-class VariableArgsHandler:
-    """A variable args handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def handler(self, *args):
-        ob, eventargs = args
-        self.value = eventargs.value
-
-
-class CallableHandler:
-    """A callable handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def __call__(self, sender, args):
-        self.value = args.value
-
-
-class VarCallableHandler:
-    """A variable args callable handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def __call__(self, *args):
-        ob, eventargs = args
-        self.value = eventargs.value
-
-
-class StaticMethodHandler(object):
-    """A static method handler to test event callbacks."""
-
-    value = None
-
-    def handler(sender, args):
-        StaticMethodHandler.value = args.value
-
-    handler = staticmethod(handler)
-
-
-class ClassMethodHandler(object):
-    """A class method handler to test event callbacks."""
-
-    value = None
-
-    def handler(cls, sender, args):
-        cls.value = args.value
-
-    handler = classmethod(handler)
-
-
-class MultipleHandler:
-    """A generic handler to test multiple callbacks."""
-
-    def __init__(self):
-        self.value = 0
-
-    def handler(self, sender, args):
-        self.value += args.value
 
 
 def test_suite():

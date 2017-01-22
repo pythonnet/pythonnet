@@ -490,7 +490,7 @@ class IndexerTests(unittest.TestCase):
         self.assertTrue(ob[long(1)] == "long")
 
         def test():
-            class eggs:
+            class eggs(object):
                 pass
 
             key = eggs()
