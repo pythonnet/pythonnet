@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+# FIXME: This test module fails on Linux
 
-import clr
 import unittest
-from Python.Test import TestFunctions, SubClassTest, IInterfaceTest, TestEventArgs
+
+import System
+from Python.Test import (IInterfaceTest, SubClassTest, TestEventArgs,
+                         TestFunctions)
 from System.Collections.Generic import List
-from System import NotImplementedException
+
+from _compat import range
 
 
 # class that implements the test interface
@@ -137,7 +141,8 @@ class SubClassTests(unittest.TestCase):
         self.assertEqual(event_handler.value, 1)
 
         i = InterfaceTestClass()
-        self.assertRaises(NotImplementedException, TestFunctions.test_event, i, 2)
+        with self.assertRaises(System.NotImplementedException):
+            TestFunctions.test_event(i, 2)
 
         d = DerivedEventTest()
         d.add_TestEvent(event_handler.handler)
@@ -146,19 +151,16 @@ class SubClassTests(unittest.TestCase):
         self.assertEqual(len(d.event_handlers), 1)
 
     def test_isinstance(self):
-        from System import Object
-        from System import String
-
         a = [str(x) for x in range(0, 1000)]
-        b = [String(x) for x in a]
+        b = [System.String(x) for x in a]
 
         for x in a:
-            self.assertFalse(isinstance(x, Object))
-            self.assertFalse(isinstance(x, String))
+            self.assertFalse(isinstance(x, System.Object))
+            self.assertFalse(isinstance(x, System.String))
 
         for x in b:
-            self.assertTrue(isinstance(x, Object))
-            self.assertTrue(isinstance(x, String))
+            self.assertTrue(isinstance(x, System.Object))
+            self.assertTrue(isinstance(x, System.String))
 
 
 def test_suite():

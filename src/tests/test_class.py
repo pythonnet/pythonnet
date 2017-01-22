@@ -4,10 +4,8 @@ import unittest
 
 import Python.Test as Test
 import System
-from Python.Test import ClassTest
-from System.Collections import Hashtable
 
-from _compat import DictProxyType
+from _compat import DictProxyType, range
 
 
 class ClassTests(unittest.TestCase):
@@ -25,6 +23,8 @@ class ClassTests(unittest.TestCase):
 
     def testClassStandardAttrs(self):
         """Test standard class attributes."""
+        from Python.Test import ClassTest
+
         self.assertTrue(ClassTest.__name__ == 'ClassTest')
         self.assertTrue(ClassTest.__module__ == 'Python.Test')
         self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
@@ -32,6 +32,8 @@ class ClassTests(unittest.TestCase):
 
     def testClassDocstrings(self):
         """Test standard class docstring generation"""
+        from Python.Test import ClassTest
+
         value = 'Void .ctor()'
         self.assertTrue(ClassTest.__doc__ == value)
 
@@ -47,7 +49,6 @@ class ClassTests(unittest.TestCase):
 
     def testNonPublicClass(self):
         """Test that non-public classes are inaccessible."""
-        from Python import Test
 
         def test():
             from Python.Test import InternalClass
@@ -61,6 +62,7 @@ class ClassTests(unittest.TestCase):
 
     def testBasicSubclass(self):
         """Test basic subclass of a managed class."""
+        from System.Collections import Hashtable
 
         class MyTable(Hashtable):
             def howMany(self):
@@ -141,12 +143,14 @@ class ClassTests(unittest.TestCase):
 
     def testIEnumerableIteration(self):
         """Test iteration over objects supporting IEnumerable."""
-        list = Test.ClassTest.GetArrayList()
+        from Python.Test import ClassTest
+
+        list = ClassTest.GetArrayList()
 
         for item in list:
             self.assertTrue((item > -1) and (item < 10))
 
-        dict = Test.ClassTest.GetHashtable()
+        dict = ClassTest.GetHashtable()
 
         for item in dict:
             cname = item.__class__.__name__
@@ -154,13 +158,16 @@ class ClassTests(unittest.TestCase):
 
     def testIEnumeratorIteration(self):
         """Test iteration over objects supporting IEnumerator."""
-        chars = Test.ClassTest.GetEnumerator()
+        from Python.Test import ClassTest
+
+        chars = ClassTest.GetEnumerator()
 
         for item in chars:
             self.assertTrue(item in 'test string')
 
     def testOverrideGetItem(self):
         """Test managed subclass overriding __getitem__."""
+        from System.Collections import Hashtable
 
         class MyTable(Hashtable):
             def __getitem__(self, key):
@@ -180,6 +187,7 @@ class ClassTests(unittest.TestCase):
 
     def testOverrideSetItem(self):
         """Test managed subclass overriding __setitem__."""
+        from System.Collections import Hashtable
 
         class MyTable(Hashtable):
             def __setitem__(self, key, value):
@@ -198,10 +206,9 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(table.Count == 3)
 
     def testAddAndRemoveClassAttribute(self):
-
         from System import TimeSpan
 
-        for i in range(100):
+        for _ in range(100):
             TimeSpan.new_method = lambda self: self.TotalMinutes
             ts = TimeSpan.FromHours(1)
             self.assertTrue(ts.new_method() == 60)
@@ -210,6 +217,7 @@ class ClassTests(unittest.TestCase):
 
     def testComparisons(self):
         from System import DateTimeOffset
+        from Python.Test import ClassTest
 
         d1 = DateTimeOffset.Parse("2016-11-14")
         d2 = DateTimeOffset.Parse("2016-11-15")
@@ -247,12 +255,14 @@ class ClassTests(unittest.TestCase):
         self.assertRaises(TypeError, lambda: c1 < c2)
 
     def testSelfCallback(self):
-        """ Test calling back and forth between this and a c# baseclass."""
+        """Test calling back and forth between this and a c# baseclass."""
+
         class CallbackUser(Test.SelfCallbackTest):
             def DoCallback(self):
                 self.PyCallbackWasCalled = False
                 self.SameReference = False
                 return self.Callback(self)
+
             def PyCallback(self, self2):
                 self.PyCallbackWasCalled = True
                 self.SameReference = self == self2
@@ -261,6 +271,7 @@ class ClassTests(unittest.TestCase):
         testobj.DoCallback()
         self.assertTrue(testobj.PyCallbackWasCalled)
         self.assertTrue(testobj.SameReference)
+
 
 class ClassicClass:
     def kind(self):

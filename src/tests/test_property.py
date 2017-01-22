@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 import unittest
+
 from Python.Test import PropertyTest
 
 

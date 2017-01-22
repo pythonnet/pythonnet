@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+# FIXME: This test module fails due to unhandled exceptions
 
 import sys
 import unittest
+
+import System
 from Python.Runtime import PythonEngine
 
-
-# XXX This test module isn't used!
 
 class EngineTests(unittest.TestCase):
     """Test PythonEngine embedding APIs."""

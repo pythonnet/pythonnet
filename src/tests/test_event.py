@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from Python.Test import EventTest, TestEventHandler
-from Python.Test import TestEventArgs
+
+from Python.Test import EventTest, TestEventArgs
+
+from _compat import range
 
 
 class EventTests(unittest.TestCase):
@@ -515,7 +517,7 @@ class EventTests(unittest.TestCase):
         object.PublicEvent -= handler.handler
 
     def testIncorrectInvokation(self):
-        """Test incorrect invokation of events."""
+        """Test incorrect invocation of events."""
         object = EventTest()
 
         handler = GenericHandler()
@@ -535,6 +537,8 @@ class EventTests(unittest.TestCase):
 
     def testExplicitCLSEventRegistration(self):
         """Test explicit CLS event registration."""
+        from Python.Test import TestEventHandler
+
         object = EventTest()
         handler = GenericHandler()
 

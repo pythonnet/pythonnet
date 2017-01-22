@@ -3,6 +3,7 @@
 import unittest
 
 import Python.Test as Test
+
 from _compat import long, unichr
 
 

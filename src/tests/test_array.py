@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+
 import Python.Test as Test
 import System
-from _compat import UserList, PY2, long, unichr
+
+from _compat import PY2, UserList, long, range, unichr
 
 
 class ArrayTests(unittest.TestCase):

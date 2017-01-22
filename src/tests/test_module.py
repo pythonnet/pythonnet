@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import clr
-
-import unittest
 import types
+import unittest
 import warnings
 from fnmatch import fnmatch
 
-from _compat import ClassType, PY2, PY3
+from _compat import ClassType, PY2, PY3, range
+
 
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
 # clr.AddReference('System.Windows.Forms')
@@ -372,7 +372,7 @@ class ModuleTests(unittest.TestCase):
             from System import DateTime
             from System import Guid
             from System.Collections.Generic import Dictionary
-            dict = Dictionary[Guid,DateTime]()
+            dict = Dictionary[Guid, DateTime]()
         ModuleTest.JoinThreads()
 
 
