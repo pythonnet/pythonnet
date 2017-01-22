@@ -16,5 +16,5 @@ Check all those that are applicable and complete.
 
 -   [ ] Make sure to include one or more tests for your change
 -   [ ] If an enhancement PR, please create docs and at best an example
--   [ ] Add yourself to [`AUTHORS`](../AUTHORS.md)
--   [ ] Updated the [`CHANGELOG`](../CHANGELOG.md)
+-   [ ] Add yourself to [`AUTHORS`](../blob/master/AUTHORS.md)
+-   [ ] Updated the [`CHANGELOG`](../blob/master/CHANGELOG.md)
