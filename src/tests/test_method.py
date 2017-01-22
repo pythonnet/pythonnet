@@ -59,26 +59,26 @@ class MethodTests(unittest.TestCase):
 
     def testPublicInstanceMethod(self):
         """Test public instance method visibility."""
-        object = MethodTest()
-        self.assertTrue(object.PublicMethod() == "public")
+        ob = MethodTest()
+        self.assertTrue(ob.PublicMethod() == "public")
 
     def testPublicStaticMethod(self):
         """Test public static method visibility."""
-        object = MethodTest()
+        ob = MethodTest()
         self.assertTrue(MethodTest.PublicStaticMethod() == "public static")
-        self.assertTrue(object.PublicStaticMethod() == "public static")
+        self.assertTrue(ob.PublicStaticMethod() == "public static")
 
     def testProtectedInstanceMethod(self):
         """Test protected instance method visibility."""
-        object = MethodTest()
-        self.assertTrue(object.ProtectedMethod() == "protected")
+        ob = MethodTest()
+        self.assertTrue(ob.ProtectedMethod() == "protected")
 
     def testProtectedStaticMethod(self):
         """Test protected static method visibility."""
-        object = MethodTest()
+        ob = MethodTest()
         result = "protected static"
         self.assertTrue(MethodTest.ProtectedStaticMethod() == result)
-        self.assertTrue(object.ProtectedStaticMethod() == result)
+        self.assertTrue(ob.ProtectedStaticMethod() == result)
 
     def testInternalMethod(self):
         """Test internal method visibility."""
@@ -130,17 +130,17 @@ class MethodTests(unittest.TestCase):
         """Test calling unbound managed methods."""
         from Python.Test import MethodTestSub
 
-        object = MethodTest()
-        self.assertTrue(MethodTest.PublicMethod(object) == "public")
+        ob = MethodTest()
+        self.assertTrue(MethodTest.PublicMethod(ob) == "public")
 
         def test():
             MethodTest.PublicMethod()
 
         self.assertRaises(TypeError, test)
 
-        object = MethodTestSub()
-        self.assertTrue(MethodTestSub.PublicMethod(object) == "public")
-        self.assertTrue(MethodTestSub.PublicMethod(object, "echo") == "echo")
+        ob = MethodTestSub()
+        self.assertTrue(MethodTestSub.PublicMethod(ob) == "public")
+        self.assertTrue(MethodTestSub.PublicMethod(ob, "echo") == "echo")
 
         def test():
             MethodTestSub.PublicMethod("echo")
@@ -151,19 +151,19 @@ class MethodTests(unittest.TestCase):
         """Test that overloads are inherited properly."""
         from Python.Test import MethodTestSub
 
-        object = MethodTest()
-        self.assertTrue(object.PublicMethod() == "public")
+        ob = MethodTest()
+        self.assertTrue(ob.PublicMethod() == "public")
 
         def test():
-            object = MethodTest()
-            object.PublicMethod("echo")
+            ob = MethodTest()
+            ob.PublicMethod("echo")
 
         self.assertRaises(TypeError, test)
 
-        object = MethodTestSub()
-        self.assertTrue(object.PublicMethod() == "public")
+        ob = MethodTestSub()
+        self.assertTrue(ob.PublicMethod() == "public")
 
-        self.assertTrue(object.PublicMethod("echo") == "echo")
+        self.assertTrue(ob.PublicMethod("echo") == "echo")
 
     def testMethodDescriptorAbuse(self):
         """Test method descriptor abuse."""
@@ -193,27 +193,27 @@ class MethodTests(unittest.TestCase):
         """Test enum conversion in method call."""
         from System import TypeCode
 
-        object = MethodTest()
-        r = object.TestEnumConversion(TypeCode.Int32)
+        ob = MethodTest()
+        r = ob.TestEnumConversion(TypeCode.Int32)
         self.assertTrue(r == TypeCode.Int32)
 
     def testMethodCallFlagsConversion(self):
         """Test flags conversion in method call."""
         from System.IO import FileAccess
 
-        object = MethodTest()
+        ob = MethodTest()
         flags = FileAccess.Read | FileAccess.Write
-        r = object.TestFlagsConversion(flags)
+        r = ob.TestFlagsConversion(flags)
         self.assertTrue(r == flags)
 
     def testMethodCallStructConversion(self):
         """Test struct conversion in method call."""
         from System import Guid
 
-        object = MethodTest()
+        ob = MethodTest()
         guid = Guid.NewGuid()
         temp = guid.ToString()
-        r = object.TestStructConversion(guid)
+        r = ob.TestStructConversion(guid)
         self.assertTrue(r.ToString() == temp)
 
     def testSubclassInstanceConversion(self):
@@ -222,17 +222,17 @@ class MethodTests(unittest.TestCase):
         class TestSubException(System.Exception):
             pass
 
-        object = MethodTest()
+        ob = MethodTest()
         instance = TestSubException()
-        result = object.TestSubclassConversion(instance)
+        result = ob.TestSubclassConversion(instance)
         self.assertTrue(isinstance(result, System.Exception))
 
     def testNullArrayConversion(self):
         """Test null array conversion in method call."""
         from System import Type
 
-        object = MethodTest()
-        r = object.TestNullArrayConversion(None)
+        ob = MethodTest()
+        r = ob.TestNullArrayConversion(None)
         self.assertTrue(r == None)
 
     def testStringParamsArgs(self):

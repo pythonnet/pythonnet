@@ -12,17 +12,17 @@ class EventTests(unittest.TestCase):
 
     def testPublicInstanceEvent(self):
         """Test public instance events."""
-        object = EventTest()
+        ob = EventTest()
 
         handler = GenericHandler()
         self.assertTrue(handler.value == None)
 
-        object.PublicEvent += handler.handler
+        ob.PublicEvent += handler.handler
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
 
     def testPublicStaticEvent(self):
         """Test public static events."""
@@ -36,21 +36,21 @@ class EventTests(unittest.TestCase):
 
     def testProtectedInstanceEvent(self):
         """Test protected instance events."""
-        object = EventTest()
+        ob = EventTest()
 
         handler = GenericHandler()
         self.assertTrue(handler.value == None)
 
-        object.ProtectedEvent += handler.handler
+        ob.ProtectedEvent += handler.handler
 
-        object.OnProtectedEvent(TestEventArgs(10))
+        ob.OnProtectedEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.ProtectedEvent -= handler.handler
+        ob.ProtectedEvent -= handler.handler
 
     def testProtectedStaticEvent(self):
         """Test protected static events."""
-        object = EventTest
+        ob = EventTest
 
         handler = GenericHandler()
         self.assertTrue(handler.value == None)
@@ -100,213 +100,213 @@ class EventTests(unittest.TestCase):
 
     def testMulticastEvent(self):
         """Test multicast events."""
-        object = EventTest()
+        ob = EventTest()
 
         handler1 = GenericHandler()
         handler2 = GenericHandler()
         handler3 = GenericHandler()
 
-        object.PublicEvent += handler1.handler
-        object.PublicEvent += handler2.handler
-        object.PublicEvent += handler3.handler
+        ob.PublicEvent += handler1.handler
+        ob.PublicEvent += handler2.handler
+        ob.PublicEvent += handler3.handler
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
 
         self.assertTrue(handler1.value == 10)
         self.assertTrue(handler2.value == 10)
         self.assertTrue(handler3.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
 
         self.assertTrue(handler1.value == 20)
         self.assertTrue(handler2.value == 20)
         self.assertTrue(handler3.value == 20)
 
-        object.PublicEvent -= handler1.handler
-        object.PublicEvent -= handler2.handler
-        object.PublicEvent -= handler3.handler
+        ob.PublicEvent -= handler1.handler
+        ob.PublicEvent -= handler2.handler
+        ob.PublicEvent -= handler3.handler
 
     def testInstanceMethodHandler(self):
         """Test instance method handlers."""
-        object = EventTest()
+        ob = EventTest()
         handler = GenericHandler()
 
-        object.PublicEvent += handler.handler
+        ob.PublicEvent += handler.handler
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
     def testVarArgsInstanceMethodHandler(self):
         """Test vararg instance method handlers."""
-        object = EventTest()
+        ob = EventTest()
         handler = VariableArgsHandler()
 
-        object.PublicEvent += handler.handler
+        ob.PublicEvent += handler.handler
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testCallableObjectHandler(self):
-        """Test callable object handlers."""
-        object = EventTest()
+    def testCallableobHandler(self):
+        """Test callable ob handlers."""
+        ob = EventTest()
         handler = CallableHandler()
 
-        object.PublicEvent += handler
+        ob.PublicEvent += handler
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler
+        ob.PublicEvent -= handler
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
     def testVarArgsCallableHandler(self):
         """Test varargs callable handlers."""
-        object = EventTest()
+        ob = EventTest()
         handler = VarCallableHandler()
 
-        object.PublicEvent += handler
+        ob.PublicEvent += handler
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler
+        ob.PublicEvent -= handler
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
     def testStaticMethodHandler(self):
         """Test static method handlers."""
-        object = EventTest()
+        ob = EventTest()
         handler = StaticMethodHandler()
         StaticMethodHandler.value = None
 
-        object.PublicEvent += handler.handler
+        ob.PublicEvent += handler.handler
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
     def testClassMethodHandler(self):
         """Test class method handlers."""
-        object = EventTest()
+        ob = EventTest()
         handler = ClassMethodHandler()
         ClassMethodHandler.value = None
 
-        object.PublicEvent += handler.handler
+        ob.PublicEvent += handler.handler
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
     def testManagedInstanceMethodHandler(self):
         """Test managed instance method handlers."""
-        object = EventTest()
+        ob = EventTest()
 
-        object.PublicEvent += object.GenericHandler
-        self.assertTrue(object.value == 0)
+        ob.PublicEvent += ob.GenericHandler
+        self.assertTrue(ob.value == 0)
 
-        object.OnPublicEvent(TestEventArgs(10))
-        self.assertTrue(object.value == 10)
+        ob.OnPublicEvent(TestEventArgs(10))
+        self.assertTrue(ob.value == 10)
 
-        object.PublicEvent -= object.GenericHandler
-        self.assertTrue(object.value == 10)
+        ob.PublicEvent -= ob.GenericHandler
+        self.assertTrue(ob.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
-        self.assertTrue(object.value == 10)
+        ob.OnPublicEvent(TestEventArgs(20))
+        self.assertTrue(ob.value == 10)
 
     def testManagedStaticMethodHandler(self):
         """Test managed static method handlers."""
-        object = EventTest()
+        ob = EventTest()
         EventTest.s_value = 0
 
-        object.PublicEvent += object.StaticHandler
+        ob.PublicEvent += ob.StaticHandler
         self.assertTrue(EventTest.s_value == 0)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(EventTest.s_value == 10)
 
-        object.PublicEvent -= object.StaticHandler
+        ob.PublicEvent -= ob.StaticHandler
         self.assertTrue(EventTest.s_value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(EventTest.s_value == 10)
 
     def testUnboundMethodHandler(self):
         """Test failure mode for unbound method handlers."""
-        object = EventTest()
-        object.PublicEvent += GenericHandler.handler
+        ob = EventTest()
+        ob.PublicEvent += GenericHandler.handler
         try:
-            object.OnPublicEvent(TestEventArgs(10))
+            ob.OnPublicEvent(TestEventArgs(10))
         except TypeError:
-            object.PublicEvent -= GenericHandler.handler
+            ob.PublicEvent -= GenericHandler.handler
             return
 
         raise TypeError("should have raised a TypeError")
 
     def testFunctionHandler(self):
         """Test function handlers."""
-        object = EventTest()
+        ob = EventTest()
         dict = {'value': None}
 
         def handler(sender, args, dict=dict):
             dict['value'] = args.value
 
-        object.PublicEvent += handler
+        ob.PublicEvent += handler
         self.assertTrue(dict['value'] == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(dict['value'] == 10)
 
-        object.PublicEvent -= handler
+        ob.PublicEvent -= handler
         self.assertTrue(dict['value'] == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(dict['value'] == 10)
 
     def testAddNonCallableHandler(self):
         """Test handling of attempts to add non-callable handlers."""
 
         def test():
-            object = EventTest()
-            object.PublicEvent += 10
+            ob = EventTest()
+            ob.PublicEvent += 10
 
         self.assertRaises(TypeError, test)
 
         def test():
-            object = EventTest()
-            object.PublicEvent += "spam"
+            ob = EventTest()
+            ob.PublicEvent += "spam"
 
         self.assertRaises(TypeError, test)
 
@@ -314,124 +314,124 @@ class EventTests(unittest.TestCase):
             class spam:
                 pass
 
-            object = EventTest()
-            object.PublicEvent += spam()
+            ob = EventTest()
+            ob.PublicEvent += spam()
 
         self.assertRaises(TypeError, test)
 
     def testRemoveMultipleHandlers(self):
         """Test removing multiple instances of the same handler."""
-        object = EventTest()
+        ob = EventTest()
         handler = MultipleHandler()
 
         h1 = handler.handler
-        object.PublicEvent += h1
+        ob.PublicEvent += h1
 
         h2 = handler.handler
-        object.PublicEvent += h2
+        ob.PublicEvent += h2
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 20)
 
-        object.PublicEvent -= h1
+        ob.PublicEvent -= h1
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
-        object.PublicEvent -= h2
+        ob.PublicEvent -= h2
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
         # try again, removing in a different order.
 
-        object = EventTest()
+        ob = EventTest()
         handler = MultipleHandler()
 
         h1 = handler.handler
-        object.PublicEvent += h1
+        ob.PublicEvent += h1
 
         h2 = handler.handler
-        object.PublicEvent += h2
+        ob.PublicEvent += h2
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 20)
 
-        object.PublicEvent -= h2
+        ob.PublicEvent -= h2
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
-        object.PublicEvent -= h1
+        ob.PublicEvent -= h1
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
     def testRemoveMultipleStaticHandlers(self):
         """Test removing multiple instances of a static handler."""
-        object = EventTest()
+        ob = EventTest()
         handler = MultipleHandler()
 
         h1 = handler.handler
-        object.PublicStaticEvent += h1
+        ob.PublicStaticEvent += h1
 
         h2 = handler.handler
-        object.PublicStaticEvent += h2
+        ob.PublicStaticEvent += h2
 
-        object.OnPublicStaticEvent(TestEventArgs(10))
+        ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 20)
 
-        object.PublicStaticEvent -= h1
+        ob.PublicStaticEvent -= h1
 
-        object.OnPublicStaticEvent(TestEventArgs(10))
+        ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
-        object.PublicStaticEvent -= h2
+        ob.PublicStaticEvent -= h2
 
-        object.OnPublicStaticEvent(TestEventArgs(10))
+        ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
         # try again, removing in a different order.
 
-        object = EventTest()
+        ob = EventTest()
         handler = MultipleHandler()
 
         h1 = handler.handler
-        object.PublicStaticEvent += h1
+        ob.PublicStaticEvent += h1
 
         h2 = handler.handler
-        object.PublicStaticEvent += h2
+        ob.PublicStaticEvent += h2
 
-        object.OnPublicStaticEvent(TestEventArgs(10))
+        ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 20)
 
-        object.PublicStaticEvent -= h2
+        ob.PublicStaticEvent -= h2
 
-        object.OnPublicStaticEvent(TestEventArgs(10))
+        ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
-        object.PublicStaticEvent -= h1
+        ob.PublicStaticEvent -= h1
 
-        object.OnPublicStaticEvent(TestEventArgs(10))
+        ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
     def testRandomMultipleHandlers(self):
         """Test random subscribe / unsubscribe of the same handlers."""
         import random
-        object = EventTest()
+        ob = EventTest()
         handler = MultipleHandler()
         handler2 = MultipleHandler()
 
-        object.PublicEvent += handler2.handler
-        object.PublicEvent += handler2.handler
+        ob.PublicEvent += handler2.handler
+        ob.PublicEvent += handler2.handler
 
         handlers = []
         for i in range(30):
             method = handler.handler
-            object.PublicEvent += method
+            ob.PublicEvent += method
             handlers.append(method)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 300)
         self.assertTrue(handler2.value == 20)
         handler.value = 0
@@ -440,46 +440,46 @@ class EventTests(unittest.TestCase):
         for i in range(30):
             item = random.choice(handlers)
             handlers.remove(item)
-            object.PublicEvent -= item
+            ob.PublicEvent -= item
             handler.value = 0
-            object.OnPublicEvent(TestEventArgs(10))
+            ob.OnPublicEvent(TestEventArgs(10))
             self.assertTrue(handler.value == (len(handlers) * 10))
             self.assertTrue(handler2.value == ((i + 1) * 20))
 
         handler2.value = 0
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler2.value == 20)
 
-        object.PublicEvent -= handler2.handler
+        ob.PublicEvent -= handler2.handler
 
         handler2.value = 0
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler2.value == 10)
 
-        object.PublicEvent -= handler2.handler
+        ob.PublicEvent -= handler2.handler
 
         handler2.value = 0
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler2.value == 0)
 
     def testRemoveInternalCallHandler(self):
         """Test remove on an event sink implemented w/internalcall."""
-        object = EventTest()
+        ob = EventTest()
 
         def h(sender, args):
             pass
 
-        object.PublicEvent += h
-        object.PublicEvent -= h
+        ob.PublicEvent += h
+        ob.PublicEvent -= h
 
     def testRemoveUnknownHandler(self):
         """Test removing an event handler that was never added."""
 
         def test():
-            object = EventTest()
+            ob = EventTest()
             handler = GenericHandler()
 
-            object.PublicEvent -= handler.handler
+            ob.PublicEvent -= handler.handler
 
         self.assertRaises(ValueError, test)
 
@@ -490,78 +490,78 @@ class EventTests(unittest.TestCase):
             def handler(self, one):
                 return 'too many'
 
-        object = EventTest()
+        ob = EventTest()
         handler = BadHandler()
 
         def test():
-            object.PublicEvent += handler.handler
-            object.OnPublicEvent(TestEventArgs(10))
+            ob.PublicEvent += handler.handler
+            ob.OnPublicEvent(TestEventArgs(10))
 
         self.assertRaises(TypeError, test)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
 
         class BadHandler:
             def handler(self, one, two, three, four, five):
                 return 'not enough'
 
-        object = EventTest()
+        ob = EventTest()
         handler = BadHandler()
 
         def test():
-            object.PublicEvent += handler.handler
-            object.OnPublicEvent(TestEventArgs(10))
+            ob.PublicEvent += handler.handler
+            ob.OnPublicEvent(TestEventArgs(10))
 
         self.assertRaises(TypeError, test)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
 
     def testIncorrectInvokation(self):
         """Test incorrect invocation of events."""
-        object = EventTest()
+        ob = EventTest()
 
         handler = GenericHandler()
-        object.PublicEvent += handler.handler
+        ob.PublicEvent += handler.handler
 
         def test():
-            object.OnPublicEvent()
+            ob.OnPublicEvent()
 
         self.assertRaises(TypeError, test)
 
         def test():
-            object.OnPublicEvent(32)
+            ob.OnPublicEvent(32)
 
         self.assertRaises(TypeError, test)
 
-        object.PublicEvent -= handler.handler
+        ob.PublicEvent -= handler.handler
 
     def testExplicitCLSEventRegistration(self):
         """Test explicit CLS event registration."""
         from Python.Test import TestEventHandler
 
-        object = EventTest()
+        ob = EventTest()
         handler = GenericHandler()
 
         delegate = TestEventHandler(handler.handler)
-        object.add_PublicEvent(delegate)
+        ob.add_PublicEvent(delegate)
         self.assertTrue(handler.value == None)
 
-        object.OnPublicEvent(TestEventArgs(10))
+        ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-        object.remove_PublicEvent(delegate)
+        ob.remove_PublicEvent(delegate)
         self.assertTrue(handler.value == 10)
 
-        object.OnPublicEvent(TestEventArgs(20))
+        ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
     def testImplicitCLSEventRegistration(self):
         """Test implicit CLS event registration."""
 
         def test():
-            object = EventTest()
+            ob = EventTest()
             handler = GenericHandler()
-            object.add_PublicEvent(handler.handler)
+            ob.add_PublicEvent(handler.handler)
 
         self.assertRaises(TypeError, test)
 
@@ -591,8 +591,8 @@ class EventTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
         def test():
-            object = EventTest()
-            object.PublicEvent = 0
+            ob = EventTest()
+            ob.PublicEvent = 0
 
         self.assertRaises(TypeError, test)
 
