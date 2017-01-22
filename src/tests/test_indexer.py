@@ -20,7 +20,7 @@ class IndexerTests(unittest.TestCase):
         ob[1] = "one"
         self.assertTrue(ob[1] == "one")
 
-        self.assertTrue(ob[10] == None)
+        self.assertTrue(ob[10] is None)
 
     def test_protected_indexer(self):
         """Test protected indexers."""
@@ -32,7 +32,7 @@ class IndexerTests(unittest.TestCase):
         ob[1] = "one"
         self.assertTrue(ob[1] == "one")
 
-        self.assertTrue(ob[10] == None)
+        self.assertTrue(ob[10] is None)
 
     def test_internal_indexer(self):
         """Test internal indexers."""
@@ -64,8 +64,8 @@ class IndexerTests(unittest.TestCase):
         """Test boolean indexers."""
         ob = Test.BooleanIndexerTest()
 
-        self.assertTrue(ob[True] == None)
-        self.assertTrue(ob[1] == None)
+        self.assertTrue(ob[True] is None)
+        self.assertTrue(ob[1] is None)
 
         ob[0] = "false"
         self.assertTrue(ob[0] == "false")
@@ -85,7 +85,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 255
         min_ = 0
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -107,7 +107,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 127
         min_ = -128
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -129,7 +129,7 @@ class IndexerTests(unittest.TestCase):
         max_ = unichr(65535)
         min_ = unichr(0)
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = "max_"
         self.assertTrue(ob[max_] == "max_")
@@ -151,7 +151,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 32767
         min_ = -32768
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -173,7 +173,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 2147483647
         min_ = -2147483648
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -195,7 +195,7 @@ class IndexerTests(unittest.TestCase):
         max_ = long(9223372036854775807)
         min_ = long(-9223372036854775808)
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -217,7 +217,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 65535
         min_ = 0
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -239,7 +239,7 @@ class IndexerTests(unittest.TestCase):
         max_ = long(4294967295)
         min_ = 0
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -261,7 +261,7 @@ class IndexerTests(unittest.TestCase):
         max_ = long(18446744073709551615)
         min_ = 0
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = str(max_)
         self.assertTrue(ob[max_] == str(max_))
@@ -283,7 +283,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 3.402823e38
         min_ = -3.402823e38
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = "max_"
         self.assertTrue(ob[max_] == "max_")
@@ -305,7 +305,7 @@ class IndexerTests(unittest.TestCase):
         max_ = 1.7976931348623157e308
         min_ = -1.7976931348623157e308
 
-        self.assertTrue(ob[max_] == None)
+        self.assertTrue(ob[max_] is None)
 
         ob[max_] = "max_"
         self.assertTrue(ob[max_] == "max_")
@@ -329,7 +329,7 @@ class IndexerTests(unittest.TestCase):
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
 
-        self.assertTrue(ob[max_d] == None)
+        self.assertTrue(ob[max_d] is None)
 
         ob[max_d] = "max_"
         self.assertTrue(ob[max_d] == "max_")
@@ -349,8 +349,8 @@ class IndexerTests(unittest.TestCase):
         """Test String indexers."""
         ob = Test.StringIndexerTest()
 
-        self.assertTrue(ob["spam"] == None)
-        self.assertTrue(ob[u"spam"] == None)
+        self.assertTrue(ob["spam"] is None)
+        self.assertTrue(ob[u"spam"] is None)
 
         ob["spam"] = "spam"
         self.assertTrue(ob["spam"] == "spam")
@@ -378,7 +378,7 @@ class IndexerTests(unittest.TestCase):
 
         key = Test.ShortEnum.One
 
-        self.assertTrue(ob[key] == None)
+        self.assertTrue(ob[key] is None)
 
         ob[key] = "spam"
         self.assertTrue(ob[key] == "spam")
@@ -404,10 +404,10 @@ class IndexerTests(unittest.TestCase):
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.assertTrue(ob[spam] == None)
-        self.assertTrue(ob["spam"] == None)
-        self.assertTrue(ob[1] == None)
-        self.assertTrue(ob[None] == None)
+        self.assertTrue(ob[spam] is None)
+        self.assertTrue(ob["spam"] is None)
+        self.assertTrue(ob[1] is None)
+        self.assertTrue(ob[None] is None)
 
         ob[spam] = "spam"
         self.assertTrue(ob[spam] == "spam")
@@ -436,7 +436,7 @@ class IndexerTests(unittest.TestCase):
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.assertTrue(ob[spam] == None)
+        self.assertTrue(ob[spam] is None)
 
         ob[spam] = "spam"
         self.assertTrue(ob[spam] == "spam")
@@ -459,7 +459,7 @@ class IndexerTests(unittest.TestCase):
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.assertTrue(ob[spam] == None)
+        self.assertTrue(ob[spam] is None)
 
         ob[spam] = "spam"
         self.assertTrue(ob[spam] == "spam")
@@ -485,7 +485,7 @@ class IndexerTests(unittest.TestCase):
         ob[1, 9] = "one nine"
         self.assertTrue(ob[1, 9] == "one nine")
 
-        self.assertTrue(ob[10, 50] == None)
+        self.assertTrue(ob[10, 50] is None)
 
         with self.assertRaises(TypeError):
             ob = Test.MultiArgIndexerTest()
@@ -553,7 +553,7 @@ class IndexerTests(unittest.TestCase):
         Test.PublicIndexerTest.__setitem__(ob, 1, "one")
         self.assertTrue(ob[1] == "one")
 
-        self.assertTrue(ob[10] == None)
+        self.assertTrue(ob[10] is None)
 
     def test_indexer_abuse(self):
         """Test indexer abuse."""

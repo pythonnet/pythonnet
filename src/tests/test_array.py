@@ -127,17 +127,17 @@ class ArrayTests(unittest.TestCase):
 
         self.assertTrue(len(items) == 5)
 
-        self.assertTrue(items[0] == True)
-        self.assertTrue(items[1] == False)
-        self.assertTrue(items[2] == True)
-        self.assertTrue(items[3] == False)
-        self.assertTrue(items[4] == True)
+        self.assertTrue(items[0] is True)
+        self.assertTrue(items[1] is False)
+        self.assertTrue(items[2] is True)
+        self.assertTrue(items[3] is False)
+        self.assertTrue(items[4] is True)
 
         items[0] = False
-        self.assertTrue(items[0] == False)
+        self.assertTrue(items[0] is False)
 
         items[0] = True
-        self.assertTrue(items[0] == True)
+        self.assertTrue(items[0] is True)
 
         with self.assertRaises(TypeError):
             ob = Test.ByteArrayTest()
@@ -700,7 +700,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[0] == 99)
 
         items[0] = None
-        self.assertTrue(items[0] == None)
+        self.assertTrue(items[0] is None)
 
         with self.assertRaises(TypeError):
             ob = Test.ObjectArrayTest()
@@ -717,20 +717,20 @@ class ArrayTests(unittest.TestCase):
 
         self.assertTrue(len(items) == 5)
 
-        self.assertTrue(items[0] == None)
-        self.assertTrue(items[4] == None)
+        self.assertTrue(items[0] is None)
+        self.assertTrue(items[4] is None)
 
         items[0] = "spam"
         self.assertTrue(items[0] == "spam")
 
         items[0] = None
-        self.assertTrue(items[0] == None)
+        self.assertTrue(items[0] is None)
 
         items[-4] = "spam"
         self.assertTrue(items[-4] == "spam")
 
         items[-1] = None
-        self.assertTrue(items[-1] == None)
+        self.assertTrue(items[-1] is None)
 
         empty = ob.empty
         self.assertTrue(len(empty) == 0)
@@ -763,7 +763,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[-1].GetValue() == "0")
 
         items[0] = None
-        self.assertTrue(items[0] == None)
+        self.assertTrue(items[0] is None)
 
         with self.assertRaises(TypeError):
             ob = Test.InterfaceArrayTest()
@@ -801,7 +801,7 @@ class ArrayTests(unittest.TestCase):
         self.assertTrue(items[-1].GetValue() == "0")
 
         items[0] = None
-        self.assertTrue(items[0] == None)
+        self.assertTrue(items[0] is None)
 
         with self.assertRaises(TypeError):
             ob = Test.TypedArrayTest()
@@ -889,7 +889,7 @@ class ArrayTests(unittest.TestCase):
         items = Test.NullArrayTest().items
 
         for i in items:
-            self.assertTrue(i == None)
+            self.assertTrue(i is None)
 
         empty = Test.NullArrayTest().empty
 
@@ -1008,7 +1008,7 @@ class ArrayTests(unittest.TestCase):
         result = ArrayConversionTest.EchoRange(items)
 
         self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(result[1] == None)
+        self.assertTrue(result[1] is None)
         self.assertTrue(len(result) == 10)
 
         with self.assertRaises(TypeError):
@@ -1037,7 +1037,7 @@ class ArrayTests(unittest.TestCase):
         result = ArrayConversionTest.EchoRange(items)
 
         self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(result[1] == None)
+        self.assertTrue(result[1] is None)
         self.assertTrue(len(result) == 10)
 
         with self.assertRaises(TypeError):
@@ -1064,7 +1064,7 @@ class ArrayTests(unittest.TestCase):
         result = ArrayConversionTest.EchoRange(items)
 
         self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(result[1] == None)
+        self.assertTrue(result[1] is None)
         self.assertTrue(len(result) == 10)
 
         with self.assertRaises(TypeError):
@@ -1143,13 +1143,13 @@ class ArrayTests(unittest.TestCase):
         inst = InterfaceTest()
 
         value = Array[System.Boolean]([True, True])
-        self.assertTrue(value[0] == True)
-        self.assertTrue(value[1] == True)
+        self.assertTrue(value[0] is True)
+        self.assertTrue(value[1] is True)
         self.assertTrue(value.Length == 2)
 
         value = Array[bool]([True, True])
-        self.assertTrue(value[0] == True)
-        self.assertTrue(value[1] == True)
+        self.assertTrue(value[0] is True)
+        self.assertTrue(value[1] is True)
         self.assertTrue(value.Length == 2)
 
         value = Array[System.Byte]([0, 255])

@@ -16,8 +16,8 @@ class EnumTests(unittest.TestCase):
 
         self.assertTrue(DayOfWeek.__name__ == 'DayOfWeek')
         self.assertTrue(DayOfWeek.__module__ == 'System')
-        self.assertTrue(type(DayOfWeek.__dict__) == DictProxyType)
-        self.assertTrue(DayOfWeek.__doc__ == None)
+        self.assertTrue(isinstance(DayOfWeek.__dict__, DictProxyType))
+        self.assertTrue(DayOfWeek.__doc__ is None)
 
     def test_enum_get_member(self):
         """Test access to enum members."""

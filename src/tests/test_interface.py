@@ -16,7 +16,7 @@ class InterfaceTests(unittest.TestCase):
 
         self.assertTrue(IPublicInterface.__name__ == 'IPublicInterface')
         self.assertTrue(IPublicInterface.__module__ == 'Python.Test')
-        self.assertTrue(type(IPublicInterface.__dict__) == DictProxyType)
+        self.assertTrue(isinstance(IPublicInterface.__dict__, DictProxyType))
 
     def test_global_interface_visibility(self):
         """Test visibility of module-level interfaces."""

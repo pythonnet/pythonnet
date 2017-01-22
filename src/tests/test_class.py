@@ -26,7 +26,7 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(ClassTest.__name__ == 'ClassTest')
         self.assertTrue(ClassTest.__module__ == 'Python.Test')
-        self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
+        self.assertTrue(isinstance(ClassTest.__dict__, DictProxyType))
         self.assertTrue(len(ClassTest.__doc__) > 0)
 
     def test_class_docstrings(self):

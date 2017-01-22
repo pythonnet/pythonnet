@@ -20,17 +20,17 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(CLR.__name__ == 'clr')
 
         import sys
-        self.assertTrue(type(sys) == types.ModuleType)
+        self.assertTrue(isinstance(sys, types.ModuleType))
         self.assertTrue(sys.__name__ == 'sys')
 
         if PY3:
             import http.client
-            self.assertTrue(type(http.client) == types.ModuleType)
+            self.assertTrue(isinstance(http.client, types.ModuleType))
             self.assertTrue(http.client.__name__ == 'http.client')
 
         elif PY2:
             import httplib
-            self.assertTrue(type(httplib) == types.ModuleType)
+            self.assertTrue(isinstance(httplib, types.ModuleType))
             self.assertTrue(httplib.__name__ == 'httplib')
 
     def test_simple_import_with_alias(self):
@@ -40,17 +40,17 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(myCLR.__name__ == 'clr')
 
         import sys as mySys
-        self.assertTrue(type(mySys) == types.ModuleType)
+        self.assertTrue(isinstance(mySys, types.ModuleType))
         self.assertTrue(mySys.__name__ == 'sys')
 
         if PY3:
             import http.client as myHttplib
-            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(isinstance(myHttplib, types.ModuleType))
             self.assertTrue(myHttplib.__name__ == 'http.client')
 
         elif PY2:
             import httplib as myHttplib
-            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(isinstance(myHttplib, types.ModuleType))
             self.assertTrue(myHttplib.__name__ == 'httplib')
 
     def test_dotted_name_import(self):
@@ -66,7 +66,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(System is CLR.System)
 
         import xml.dom
-        self.assertTrue(type(xml.dom) == types.ModuleType)
+        self.assertTrue(isinstance(xml.dom, types.ModuleType))
         self.assertTrue(xml.dom.__name__ == 'xml.dom')
 
     def test_dotted_name_import_with_alias(self):
@@ -82,7 +82,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(mySystem is myCLRSystem)
 
         import xml.dom as myDom
-        self.assertTrue(type(myDom) == types.ModuleType)
+        self.assertTrue(isinstance(myDom, types.ModuleType))
         self.assertTrue(myDom.__name__ == 'xml.dom')
 
     def test_simple_import_from(self):
@@ -92,7 +92,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(System.__name__ == 'System')
 
         from xml import dom
-        self.assertTrue(type(dom) == types.ModuleType)
+        self.assertTrue(isinstance(dom, types.ModuleType))
         self.assertTrue(dom.__name__ == 'xml.dom')
 
     def test_simple_import_from_with_alias(self):
@@ -102,7 +102,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(mySystem.__name__ == 'System')
 
         from xml import dom as myDom
-        self.assertTrue(type(myDom) == types.ModuleType)
+        self.assertTrue(isinstance(myDom, types.ModuleType))
         self.assertTrue(myDom.__name__ == 'xml.dom')
 
     def test_dotted_name_import_from(self):
@@ -116,11 +116,11 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(XmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom
-        self.assertTrue(type(pulldom) == types.ModuleType)
+        self.assertTrue(isinstance(pulldom, types.ModuleType))
         self.assertTrue(pulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM
-        self.assertTrue(type(PullDOM) == ClassType)
+        self.assertTrue(isinstance(PullDOM, ClassType))
         self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
     def test_dotted_name_import_from_with_alias(self):
@@ -134,11 +134,11 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(myXmlDocument.__name__ == 'XmlDocument')
 
         from xml.dom import pulldom as myPulldom
-        self.assertTrue(type(myPulldom) == types.ModuleType)
+        self.assertTrue(isinstance(myPulldom, types.ModuleType))
         self.assertTrue(myPulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM as myPullDOM
-        self.assertTrue(type(myPullDOM) == ClassType)
+        self.assertTrue(isinstance(myPullDOM, ClassType))
         self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
     def test_from_module_import_star(self):
@@ -163,13 +163,13 @@ class CompatibilityTests(unittest.TestCase):
         import sys
 
         assembly = Assembly.LoadWithPartialName('System.Data')
-        self.assertTrue(assembly != None)
+        self.assertTrue(assembly is not None)
 
         import CLR.System.Data
         self.assertTrue('System.Data' in sys.modules)
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
-        self.assertTrue(assembly == None)
+        self.assertTrue(assembly is None)
 
     def test_implicit_load_already_valid_namespace(self):
         """Test implicit assembly load over an already valid namespace."""

@@ -189,7 +189,7 @@ class MethodTests(unittest.TestCase):
         """Test null array conversion in method call."""
         ob = MethodTest()
         r = ob.TestNullArrayConversion(None)
-        self.assertTrue(r == None)
+        self.assertTrue(r is None)
 
     def test_string_params_args(self):
         """Test use of string params."""
@@ -243,37 +243,37 @@ class MethodTests(unittest.TestCase):
     def test_string_out_params(self):
         """Test use of string out-parameters."""
         result = MethodTest.TestStringOutParams("hi", "there")
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
         result = MethodTest.TestStringOutParams("hi", None)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
     def test_string_ref_params(self):
         """Test use of string byref parameters."""
         result = MethodTest.TestStringRefParams("hi", "there")
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
         result = MethodTest.TestStringRefParams("hi", None)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
     def test_value_out_params(self):
         """Test use of value type out-parameters."""
         result = MethodTest.TestValueOutParams("hi", 1)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == 42)
 
         # None cannot be converted to a value type like int, long, etc.
@@ -283,9 +283,9 @@ class MethodTests(unittest.TestCase):
     def test_value_ref_params(self):
         """Test use of value type byref parameters."""
         result = MethodTest.TestValueRefParams("hi", 1)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == 42)
 
         # None cannot be converted to a value type like int, long, etc.
@@ -295,37 +295,37 @@ class MethodTests(unittest.TestCase):
     def test_object_out_params(self):
         """Test use of object out-parameters."""
         result = MethodTest.TestObjectOutParams("hi", MethodTest())
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertTrue(len(result) == 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(isinstance(result[1], System.Exception))
 
         result = MethodTest.TestObjectOutParams("hi", None)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(isinstance(result[1], System.Exception))
 
     def test_object_ref_params(self):
         """Test use of object byref parameters."""
         result = MethodTest.TestObjectRefParams("hi", MethodTest())
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(isinstance(result[1], System.Exception))
 
         result = MethodTest.TestObjectRefParams("hi", None)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(isinstance(result[1], System.Exception))
 
     def test_struct_out_params(self):
         """Test use of struct out-parameters."""
         result = MethodTest.TestStructOutParams("hi", System.Guid.NewGuid())
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertEqual(len(result), 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(isinstance(result[1], System.Guid))
 
         # None cannot be converted to a value type like a struct
@@ -335,9 +335,9 @@ class MethodTests(unittest.TestCase):
     def test_struct_ref_params(self):
         """Test use of struct byref parameters."""
         result = MethodTest.TestStructRefParams("hi", System.Guid.NewGuid())
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertTrue(len(result) == 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(isinstance(result[1], System.Guid))
 
         # None cannot be converted to a value type like a struct
@@ -388,16 +388,16 @@ class MethodTests(unittest.TestCase):
         refstr = System.String("").GetType().MakeByRefType()
         result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
             "hi", "there")
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertTrue(len(result) == 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
         result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
             "hi", None)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertTrue(len(result) == 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
     def test_explicit_selection_with_ref_modifier(self):
@@ -405,16 +405,16 @@ class MethodTests(unittest.TestCase):
         refstr = System.String("").GetType().MakeByRefType()
         result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
             "hi", "there")
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertTrue(len(result) == 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
         result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
             "hi", None)
-        self.assertTrue(type(result) == type(()))
+        self.assertTrue(isinstance(result, tuple))
         self.assertTrue(len(result) == 2)
-        self.assertTrue(result[0] == True)
+        self.assertTrue(result[0] is True)
         self.assertTrue(result[1] == "output string")
 
     def test_explicit_overload_selection(self):
@@ -425,10 +425,10 @@ class MethodTests(unittest.TestCase):
         inst = InterfaceTest()
 
         value = MethodTest.Overloaded.__overloads__[System.Boolean](True)
-        self.assertTrue(value == True)
+        self.assertTrue(value is True)
 
         value = MethodTest.Overloaded.__overloads__[bool](True)
-        self.assertTrue(value == True)
+        self.assertTrue(value is True)
 
         value = MethodTest.Overloaded.__overloads__[System.Byte](255)
         self.assertTrue(value == 255)
@@ -526,14 +526,14 @@ class MethodTests(unittest.TestCase):
         vtype = Array[System.Boolean]
         input_ = vtype([True, True])
         value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        self.assertTrue(value[0] == True)
-        self.assertTrue(value[1] == True)
+        self.assertTrue(value[0] is True)
+        self.assertTrue(value[1] is True)
 
         vtype = Array[bool]
         input_ = vtype([True, True])
         value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        self.assertTrue(value[0] == True)
-        self.assertTrue(value[1] == True)
+        self.assertTrue(value[0] is True)
+        self.assertTrue(value[1] is True)
 
         vtype = Array[System.Byte]
         input_ = vtype([0, 255])

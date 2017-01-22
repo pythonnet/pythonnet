@@ -18,7 +18,7 @@ class EventTests(unittest.TestCase):
         ob = EventTest()
 
         handler = GenericHandler()
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.PublicEvent += handler.handler
 
@@ -30,7 +30,7 @@ class EventTests(unittest.TestCase):
     def test_public_static_event(self):
         """Test public static events."""
         handler = GenericHandler()
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         EventTest.PublicStaticEvent += handler.handler
 
@@ -42,7 +42,7 @@ class EventTests(unittest.TestCase):
         ob = EventTest()
 
         handler = GenericHandler()
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.ProtectedEvent += handler.handler
 
@@ -54,7 +54,7 @@ class EventTests(unittest.TestCase):
     def test_protected_static_event(self):
         """Test protected static events."""
         handler = GenericHandler()
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         EventTest.ProtectedStaticEvent += handler.handler
 
@@ -121,7 +121,7 @@ class EventTests(unittest.TestCase):
         handler = GenericHandler()
 
         ob.PublicEvent += handler.handler
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
@@ -138,7 +138,7 @@ class EventTests(unittest.TestCase):
         handler = VariableArgsHandler()
 
         ob.PublicEvent += handler.handler
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
@@ -155,7 +155,7 @@ class EventTests(unittest.TestCase):
         handler = CallableHandler()
 
         ob.PublicEvent += handler
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
@@ -172,7 +172,7 @@ class EventTests(unittest.TestCase):
         handler = VarCallableHandler()
 
         ob.PublicEvent += handler
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
@@ -190,7 +190,7 @@ class EventTests(unittest.TestCase):
         StaticMethodHandler.value = None
 
         ob.PublicEvent += handler.handler
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
@@ -208,7 +208,7 @@ class EventTests(unittest.TestCase):
         ClassMethodHandler.value = None
 
         ob.PublicEvent += handler.handler
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
@@ -271,7 +271,7 @@ class EventTests(unittest.TestCase):
             dict_['value'] = args.value
 
         ob.PublicEvent += handler
-        self.assertTrue(dict_['value'] == None)
+        self.assertTrue(dict_['value'] is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(dict_['value'] == 10)
@@ -515,7 +515,7 @@ class EventTests(unittest.TestCase):
 
         delegate = TestEventHandler(handler.handler)
         ob.add_PublicEvent(delegate)
-        self.assertTrue(handler.value == None)
+        self.assertTrue(handler.value is None)
 
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)

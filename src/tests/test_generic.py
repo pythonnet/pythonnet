@@ -159,12 +159,12 @@ class GenericTests(unittest.TestCase):
         dict_ = Dictionary[bool, bool]()
         self.assertEquals(dict_.Count, 0)
         dict_.Add(True, False)
-        self.assertTrue(dict_[True] == False)
+        self.assertTrue(dict_[True] is False)
 
         dict_ = Dictionary[System.Boolean, System.Boolean]()
         self.assertEquals(dict_.Count, 0)
         dict_.Add(True, False)
-        self.assertTrue(dict_[True] == False)
+        self.assertTrue(dict_[True] is False)
 
     def test_generic_reference_type(self):
         """Test usage of generic reference type definitions."""
@@ -398,11 +398,11 @@ class GenericTests(unittest.TestCase):
 
         # public static Q Overloaded<Q>(Q arg)
         value = type.Overloaded[bool](True)
-        self.assertTrue(value == True)
+        self.assertTrue(value is True)
 
         # public Q Overloaded<Q>(Q arg)
         value = inst.Overloaded[bool](True)
-        self.assertTrue(value == True)
+        self.assertTrue(value is True)
 
         # public static U Overloaded<Q, U>(Q arg1, U arg2)
         value = type.Overloaded[bool, str](True, "true")
@@ -414,11 +414,11 @@ class GenericTests(unittest.TestCase):
 
         # public static U Overloaded<Q, U>(Q arg1, U arg2)
         value = type.Overloaded[str, bool]("true", True)
-        self.assertTrue(value == True)
+        self.assertTrue(value is True)
 
         # public U Overloaded<Q, U>(Q arg1, U arg2)
         value = inst.Overloaded[str, bool]("true", True)
-        self.assertTrue(value == True)
+        self.assertTrue(value is True)
 
         # public static string Overloaded<T>(int arg1, int arg2, string arg3)
         value = type.Overloaded[str](123, 456, "success")
@@ -444,12 +444,12 @@ class GenericTests(unittest.TestCase):
         vtype = GenericWrapper[System.Boolean]
         input_ = vtype(True)
         value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        self.assertTrue(value.value == True)
+        self.assertTrue(value.value is True)
 
         vtype = GenericWrapper[bool]
         input_ = vtype(True)
         value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        self.assertTrue(value.value == True)
+        self.assertTrue(value.value is True)
 
         vtype = GenericWrapper[System.Byte]
         input_ = vtype(255)
@@ -580,14 +580,14 @@ class GenericTests(unittest.TestCase):
         vtype = System.Array[gtype]
         input_ = vtype([gtype(True), gtype(True)])
         value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        self.assertTrue(value[0].value == True)
+        self.assertTrue(value[0].value is True)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[bool]
         vtype = System.Array[gtype]
         input_ = vtype([gtype(True), gtype(True)])
         value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        self.assertTrue(value[0].value == True)
+        self.assertTrue(value[0].value is True)
         self.assertTrue(value.Length == 2)
 
         gtype = GenericWrapper[System.Byte]
