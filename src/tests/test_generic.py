@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import clr
-from System.Collections.Generic import Dictionary, List
 import unittest
-import Python.Test as Test
+
 import System
-from _compat import PY2, long, unichr, unicode
+
+from _compat import PY2, long, unicode, unichr, zip
 
 
 class GenericTests(unittest.TestCase):
@@ -13,6 +13,8 @@ class GenericTests(unittest.TestCase):
 
     def testPythonTypeAliasing(self):
         """Test python type alias support with generics."""
+        from System.Collections.Generic import Dictionary
+
         dict = Dictionary[str, str]()
         self.assertEquals(dict.Count, 0)
         dict.Add("one", "one")
@@ -66,6 +68,7 @@ class GenericTests(unittest.TestCase):
     def testGenericReferenceType(self):
         """Test usage of generic reference type definitions."""
         from Python.Test import GenericTypeDefinition
+
         inst = GenericTypeDefinition[System.String, System.Int32]("one", 2)
         self.assertTrue(inst.value1 == "one")
         self.assertTrue(inst.value2 == 2)
@@ -83,9 +86,7 @@ class GenericTests(unittest.TestCase):
         pass
 
     def testOpenGenericType(self):
-        """
-        Test behavior of reflected open constructed generic types.
-        """
+        """Test behavior of reflected open constructed generic types."""
         from Python.Test import DerivedFromOpenGeneric
 
         OpenGenericType = DerivedFromOpenGeneric.__bases__[0]
@@ -101,9 +102,7 @@ class GenericTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
     def testDerivedFromOpenGenericType(self):
-        """
-        Test a generic type derived from an open generic type.
-        """
+        """Test a generic type derived from an open generic type."""
         from Python.Test import DerivedFromOpenGeneric
 
         type = DerivedFromOpenGeneric[System.String, System.String]
@@ -114,9 +113,7 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(inst.value3 == 'three')
 
     def testGenericTypeNameResolution(self):
-        """
-        Test the ability to disambiguate generic type names.
-        """
+        """Test the ability to disambiguate generic type names."""
         from Python.Test import GenericNameTest1, GenericNameTest2
 
         # If both a non-generic and generic type exist for a name, the
@@ -156,9 +153,7 @@ class GenericTests(unittest.TestCase):
         self.assertTrue(inst.value[1] == value)
 
     def testGenericTypeBinding(self):
-        """
-        Test argument conversion / binding for generic methods.
-        """
+        """Test argument conversion / binding for generic methods."""
         from Python.Test import InterfaceTest, ISayHello1, ShortEnum
         import System
 
@@ -300,15 +295,13 @@ class GenericTests(unittest.TestCase):
         self.assertRaises(TypeError, test)
 
     def testGenericMethodTypeHandling(self):
-        """
-        Test argument conversion / binding for generic methods.
-        """
+        """Test argument conversion / binding for generic methods."""
         from Python.Test import InterfaceTest, ISayHello1, ShortEnum
         import System
 
         # XXX BUG: The value doesn't fit into Int64 and PythonNet doesn't
         # recognize it as UInt64 for unknown reasons.
-        ##        self._testGenericMethodByType(System.UInt64, 18446744073709551615L)
+        # self._testGenericMethodByType(System.UInt64, 18446744073709551615L)
         self._testGenericMethodByType(System.Boolean, True)
         self._testGenericMethodByType(bool, True)
         self._testGenericMethodByType(System.Byte, 255)
@@ -337,9 +330,7 @@ class GenericTests(unittest.TestCase):
         self._testGenericMethodByType(ISayHello1, InterfaceTest(), 1)
 
     def testCorrectOverloadSelection(self):
-        """
-        Test correct overloading selection for common types.
-        """
+        """Test correct overloading selection for common types."""
         from System.Drawing import Font
 
         from System import (String, Double, Single,
@@ -377,10 +368,9 @@ class GenericTests(unittest.TestCase):
         handler = GCHandle.Alloc(CSArray, GCHandleType.Pinned)
 
     def testGenericMethodOverloadSelection(self):
-        """
-        Test explicit overload selection with generic methods.
-        """
+        """Test explicit overload selection with generic methods."""
         from Python.Test import GenericMethodTest, GenericStaticMethodTest
+
         type = GenericStaticMethodTest[str]
         inst = GenericMethodTest[str]()
 
@@ -462,6 +452,7 @@ class GenericTests(unittest.TestCase):
         """Check method overload selection using generic types."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from Python.Test import MethodTest, GenericWrapper
+
         inst = InterfaceTest()
 
         vtype = GenericWrapper[System.Boolean]
@@ -596,6 +587,7 @@ class GenericTests(unittest.TestCase):
         """Check overload selection using arrays of generic types."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from Python.Test import MethodTest, GenericWrapper
+
         inst = InterfaceTest()
 
         gtype = GenericWrapper[System.Boolean]
@@ -776,12 +768,12 @@ class GenericTests(unittest.TestCase):
 
     def testGenericOverloadSelectionMagicNameOnly(self):
         """Test using only __overloads__ to select on type & sig"""
-        # XXX NotImplemented
+        # TODO NotImplemented
         pass
 
     def testNestedGenericClass(self):
         """Check nested generic classes."""
-        # XXX NotImplemented
+        # TODO NotImplemented
         pass
 
 

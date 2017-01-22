@@ -2,8 +2,8 @@
 
 import unittest
 
-from Python.Test import MethodTest, MethodTestSub
 import System
+from Python.Test import MethodTest
 
 from _compat import PY2, long, unichr
 
@@ -128,6 +128,7 @@ class MethodTests(unittest.TestCase):
 
     def testUnboundManagedMethodCall(self):
         """Test calling unbound managed methods."""
+        from Python.Test import MethodTestSub
 
         object = MethodTest()
         self.assertTrue(MethodTest.PublicMethod(object) == "public")
@@ -148,6 +149,7 @@ class MethodTests(unittest.TestCase):
 
     def testOverloadedMethodInheritance(self):
         """Test that overloads are inherited properly."""
+        from Python.Test import MethodTestSub
 
         object = MethodTest()
         self.assertTrue(object.PublicMethod() == "public")
@@ -777,6 +779,7 @@ class MethodTests(unittest.TestCase):
 
         data = ''.join(data)
         self.assertEqual(data, 'Some testing string')
+
 
 def test_suite():
     return unittest.makeSuite(MethodTests)

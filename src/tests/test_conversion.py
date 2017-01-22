@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from Python.Test import ConversionTest
+
 import System
-from _compat import indexbytes, long, unichr
+from Python.Test import ConversionTest
+
+from _compat import indexbytes, long, range, unichr
 
 
 class ConversionTests(unittest.TestCase):

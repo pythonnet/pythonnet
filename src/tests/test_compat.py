@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import unittest
 import types
-from _compat import PY2, PY3, ClassType
+import unittest
+
+from _compat import ClassType, PY2, PY3, range
 
 
 class CompatibilityTests(unittest.TestCase):

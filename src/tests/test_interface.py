@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from Python.Test import InterfaceTest
 import unittest
+
 import Python.Test as Test
-import System
+
 from _compat import DictProxyType
 
 
@@ -12,14 +12,16 @@ class InterfaceTests(unittest.TestCase):
 
     def testInterfaceStandardAttrs(self):
         """Test standard class attributes."""
-        from Python.Test import IPublicInterface as ip
-        self.assertTrue(ip.__name__ == 'IPublicInterface')
-        self.assertTrue(ip.__module__ == 'Python.Test')
-        self.assertTrue(type(ip.__dict__) == DictProxyType)
+        from Python.Test import IPublicInterface
+
+        self.assertTrue(IPublicInterface.__name__ == 'IPublicInterface')
+        self.assertTrue(IPublicInterface.__module__ == 'Python.Test')
+        self.assertTrue(type(IPublicInterface.__dict__) == DictProxyType)
 
     def testGlobalInterfaceVisibility(self):
         """Test visibility of module-level interfaces."""
         from Python.Test import IPublicInterface
+
         self.assertTrue(IPublicInterface.__name__ == 'IPublicInterface')
 
         def test():
@@ -34,6 +36,8 @@ class InterfaceTests(unittest.TestCase):
 
     def testNestedInterfaceVisibility(self):
         """Test visibility of nested interfaces."""
+        from Python.Test import InterfaceTest
+
         ob = InterfaceTest.IPublic
         self.assertTrue(ob.__name__ == 'IPublic')
 
@@ -52,6 +56,8 @@ class InterfaceTests(unittest.TestCase):
 
     def testExplicitCastToInterface(self):
         """Test explicit cast to an interface."""
+        from Python.Test import InterfaceTest
+
         ob = InterfaceTest()
         self.assertTrue(type(ob).__name__ == 'InterfaceTest')
         self.assertTrue(hasattr(ob, 'HelloProperty'))

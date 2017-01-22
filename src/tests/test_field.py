@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from Python.Test import FieldTest
-from Python.Test import ShortEnum
+
 import System
+from Python.Test import FieldTest
 
 
 class FieldTests(unittest.TestCase):
@@ -385,6 +385,8 @@ class FieldTests(unittest.TestCase):
 
     def testEnumField(self):
         """Test enum fields."""
+        from Python.Test import ShortEnum
+
         object = FieldTest()
         self.assertTrue(object.EnumField == ShortEnum.Zero)
 

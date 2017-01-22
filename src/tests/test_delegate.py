@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+# TODO: Add test for ObjectDelegate
 
-from Python.Test import DelegateTest, PublicDelegate
-from Python.Test import StringDelegate, ObjectDelegate
-from Python.Test import BoolDelegate
 import unittest
+
 import Python.Test as Test
 import System
+from Python.Test import DelegateTest, StringDelegate
+
 from _compat import DictProxyType
 
 
@@ -14,6 +15,8 @@ class DelegateTests(unittest.TestCase):
 
     def testDelegateStandardAttrs(self):
         """Test standard delegate attributes."""
+        from Python.Test import PublicDelegate
+
         self.assertTrue(PublicDelegate.__name__ == 'PublicDelegate')
         self.assertTrue(PublicDelegate.__module__ == 'Python.Test')
         self.assertTrue(type(PublicDelegate.__dict__) == DictProxyType)
@@ -264,6 +267,7 @@ class DelegateTests(unittest.TestCase):
 
     def testSubclassDelegateFails(self):
         """Test that subclassing of a delegate type fails."""
+        from Python.Test import PublicDelegate
 
         def test():
             class Boom(PublicDelegate):
@@ -284,6 +288,7 @@ class DelegateTests(unittest.TestCase):
 
     def testBoolDelegate(self):
         """Test boolean delegate."""
+        from Python.Test import BoolDelegate
 
         def always_so_negative():
             return 0

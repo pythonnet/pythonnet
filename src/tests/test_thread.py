@@ -2,12 +2,11 @@
 
 from __future__ import print_function
 
-import unittest
-from Python.Test import ThreadTest
 import threading
 import time
+import unittest
 
-from _compat import thread
+from _compat import range, thread
 
 
 def dprint(msg):
@@ -21,6 +20,8 @@ class ThreadTests(unittest.TestCase):
 
     def testSimpleCallbackToPython(self):
         """Test a call to managed code that then calls back into Python."""
+        from Python.Test import ThreadTest
+
         dprint("thread %s SimpleCallBack" % thread.get_ident())
         result = ThreadTest.CallEchoString("spam")
         self.assertTrue(result == "spam")
@@ -29,6 +30,8 @@ class ThreadTests(unittest.TestCase):
     def testDoubleCallbackToPython(self):
         """Test a call to managed code that then calls back into Python
            that then calls managed code that then calls Python again."""
+        from Python.Test import ThreadTest
+
         dprint("thread %s DoubleCallBack" % thread.get_ident())
         result = ThreadTest.CallEchoString2("spam")
         self.assertTrue(result == "spam")
@@ -37,7 +40,7 @@ class ThreadTests(unittest.TestCase):
     def testPythonThreadCallsToCLR(self):
         """Test calls by Python-spawned threads into managed code."""
         # This test is very likely to hang if something is wrong ;)
-        from System import String
+        import System
 
         done = []
 
@@ -45,15 +48,15 @@ class ThreadTests(unittest.TestCase):
             for i in range(10):
                 time.sleep(0.1)
                 dprint("thread %s %d" % (thread.get_ident(), i))
-                mstr = String("thread %s %d" % (thread.get_ident(), i))
+                mstr = System.String("thread %s %d" % (thread.get_ident(), i))
                 dprint(mstr.ToString())
                 done.append(None)
                 dprint("thread %s %d done" % (thread.get_ident(), i))
 
         def start_threads(count):
-            for i in range(count):
-                thread = threading.Thread(target=run_thread)
-                thread.start()
+            for _ in range(count):
+                thread_ = threading.Thread(target=run_thread)
+                thread_.start()
 
         start_threads(5)
 

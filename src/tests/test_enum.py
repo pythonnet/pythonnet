@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from System import DayOfWeek
-from Python import Test
+
+import Python.Test as Test
+
 from _compat import DictProxyType, long
 
 
@@ -11,6 +12,8 @@ class EnumTests(unittest.TestCase):
 
     def testEnumStandardAttrs(self):
         """Test standard enum attributes."""
+        from System import DayOfWeek
+
         self.assertTrue(DayOfWeek.__name__ == 'DayOfWeek')
         self.assertTrue(DayOfWeek.__module__ == 'System')
         self.assertTrue(type(DayOfWeek.__dict__) == DictProxyType)
@@ -18,6 +21,8 @@ class EnumTests(unittest.TestCase):
 
     def testEnumGetMember(self):
         """Test access to enum members."""
+        from System import DayOfWeek
+
         self.assertTrue(DayOfWeek.Sunday == 0)
         self.assertTrue(DayOfWeek.Monday == 1)
         self.assertTrue(DayOfWeek.Tuesday == 2)
@@ -76,6 +81,7 @@ class EnumTests(unittest.TestCase):
 
     def testInstantiateEnumFails(self):
         """Test that instantiation of an enum class fails."""
+        from System import DayOfWeek
 
         def test():
             ob = DayOfWeek()
@@ -84,6 +90,7 @@ class EnumTests(unittest.TestCase):
 
     def testSubclassEnumFails(self):
         """Test that subclassing of an enumeration fails."""
+        from System import DayOfWeek
 
         def test():
             class Boom(DayOfWeek):
@@ -93,6 +100,7 @@ class EnumTests(unittest.TestCase):
 
     def testEnumSetMemberFails(self):
         """Test that setattr operations on enumerations fail."""
+        from System import DayOfWeek
 
         def test():
             DayOfWeek.Sunday = 13

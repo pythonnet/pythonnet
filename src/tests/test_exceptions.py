@@ -2,7 +2,9 @@
 
 import sys
 import unittest
+
 import System
+
 from _compat import PY2, PY3, pickle, text_type
 
 
@@ -11,13 +13,9 @@ class ExceptionTests(unittest.TestCase):
 
     def testUnifiedExceptionSemantics(self):
         """Test unified exception semantics."""
-        from System import Exception, Object
-
-        e = Exception('Something bad happened')
-        if PY2:
-            import exceptions
-            self.assertTrue(isinstance(e, exceptions.Exception))
+        e = System.Exception('Something bad happened')
         self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
     def testStandardExceptionAttributes(self):
         """Test accessing standard exception attributes."""
@@ -38,12 +36,12 @@ class ExceptionTests(unittest.TestCase):
     def testExtendedExceptionAttributes(self):
         """Test accessing extended exception attributes."""
         from Python.Test import ExceptionTest, ExtendedException
-        from System import Exception, OverflowException
+        from System import OverflowException
 
         e = ExceptionTest.GetExtendedException()
         self.assertTrue(isinstance(e, ExtendedException))
         self.assertTrue(isinstance(e, OverflowException))
-        self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
         self.assertTrue(e.Message == 'error')
 
@@ -333,9 +331,7 @@ class ExceptionTests(unittest.TestCase):
             self.assertFalse(isinstance(o, Object))
 
     def testPicklingExceptions(self):
-        from System import Exception
-
-        exc = Exception("test")
+        exc = System.Exception("test")
         dumped = pickle.dumps(exc)
         loaded = pickle.loads(dumped)
 
