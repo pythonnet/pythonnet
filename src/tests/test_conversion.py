@@ -11,7 +11,7 @@ from _compat import indexbytes, long, range, unichr
 class ConversionTests(unittest.TestCase):
     """Test CLR <-> Python type conversions."""
 
-    def testBoolConversion(self):
+    def test_bool_conversion(self):
         """Test bool conversion."""
         ob = ConversionTest()
         self.assertTrue(ob.BooleanField == False)
@@ -63,7 +63,7 @@ class ConversionTests(unittest.TestCase):
         self.assertTrue(ob.BooleanField is True)
         self.assertTrue(ob.BooleanField == 1)
 
-    def testSByteConversion(self):
+    def test_sbyte_conversion(self):
         """Test sbyte conversion."""
         self.assertTrue(System.SByte.MaxValue == 127)
         self.assertTrue(System.SByte.MinValue == -128)
@@ -113,7 +113,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testByteConversion(self):
+    def test_byte_conversion(self):
         """Test byte conversion."""
         self.assertTrue(System.Byte.MaxValue == 255)
         self.assertTrue(System.Byte.MinValue == 0)
@@ -163,7 +163,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testCharConversion(self):
+    def test_char_conversion(self):
         """Test char conversion."""
         self.assertTrue(System.Char.MaxValue == unichr(65535))
         self.assertTrue(System.Char.MinValue == unichr(0))
@@ -195,7 +195,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInt16Conversion(self):
+    def test_int16_conversion(self):
         """Test int16 conversion."""
         self.assertTrue(System.Int16.MaxValue == 32767)
         self.assertTrue(System.Int16.MinValue == -32768)
@@ -245,7 +245,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testInt32Conversion(self):
+    def test_int32_conversion(self):
         """Test int32 conversion."""
         self.assertTrue(System.Int32.MaxValue == 2147483647)
         self.assertTrue(System.Int32.MinValue == -2147483648)
@@ -295,7 +295,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testInt64Conversion(self):
+    def test_int64_conversion(self):
         """Test int64 conversion."""
         self.assertTrue(System.Int64.MaxValue == long(9223372036854775807))
         self.assertTrue(System.Int64.MinValue == long(-9223372036854775808))
@@ -345,7 +345,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testUInt16Conversion(self):
+    def test_uint16_conversion(self):
         """Test uint16 conversion."""
         self.assertTrue(System.UInt16.MaxValue == 65535)
         self.assertTrue(System.UInt16.MinValue == 0)
@@ -395,7 +395,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testUInt32Conversion(self):
+    def test_uint32_conversion(self):
         """Test uint32 conversion."""
         self.assertTrue(System.UInt32.MaxValue == long(4294967295))
         self.assertTrue(System.UInt32.MinValue == 0)
@@ -445,7 +445,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testUInt64Conversion(self):
+    def test_uint64_conversion(self):
         """Test uint64 conversion."""
         self.assertTrue(System.UInt64.MaxValue == long(18446744073709551615))
         self.assertTrue(System.UInt64.MinValue == 0)
@@ -495,7 +495,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testSingleConversion(self):
+    def test_single_conversion(self):
         """Test single conversion."""
         self.assertTrue(System.Single.MaxValue == 3.402823e38)
         self.assertTrue(System.Single.MinValue == -3.402823e38)
@@ -545,7 +545,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testDoubleConversion(self):
+    def test_double_conversion(self):
         """Test double conversion."""
         self.assertTrue(System.Double.MaxValue == 1.7976931348623157e308)
         self.assertTrue(System.Double.MinValue == -1.7976931348623157e308)
@@ -595,7 +595,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(OverflowError, test)
 
-    def testDecimalConversion(self):
+    def test_decimal_conversion(self):
         """Test decimal conversion."""
         from System import Decimal
 
@@ -637,7 +637,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testStringConversion(self):
+    def test_string_conversion(self):
         """Test string / unicode conversion."""
         ob = ConversionTest()
 
@@ -670,7 +670,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testInterfaceConversion(self):
+    def test_interface_conversion(self):
         """Test interface conversion."""
         from Python.Test import Spam, ISpam
 
@@ -700,7 +700,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testObjectConversion(self):
+    def test_object_conversion(self):
         """Test ob conversion."""
         from Python.Test import Spam
 
@@ -728,7 +728,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testEnumConversion(self):
+    def test_enum_conversion(self):
         """Test enum conversion."""
         from Python.Test import ShortEnum
 
@@ -770,7 +770,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testNullConversion(self):
+    def test_null_conversion(self):
         """Test null conversion."""
         ob = ConversionTest()
 
@@ -795,7 +795,7 @@ class ConversionTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testByteArrayConversion(self):
+    def test_byte_array_conversion(self):
         """Test byte array conversion."""
         ob = ConversionTest()
 
@@ -813,7 +813,7 @@ class ConversionTests(unittest.TestCase):
         for i in range(len(value)):
             self.assertTrue(array[i] == indexbytes(value, i))
 
-    def testSByteArrayConversion(self):
+    def test_sbyte_array_conversion(self):
         """Test sbyte array conversion."""
         ob = ConversionTest()
 

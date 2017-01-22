@@ -13,7 +13,7 @@ from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
 class EventTests(unittest.TestCase):
     """Test CLR event support."""
 
-    def testPublicInstanceEvent(self):
+    def test_public_instance_event(self):
         """Test public instance events."""
         ob = EventTest()
 
@@ -27,7 +27,7 @@ class EventTests(unittest.TestCase):
 
         ob.PublicEvent -= handler.handler
 
-    def testPublicStaticEvent(self):
+    def test_public_static_event(self):
         """Test public static events."""
         handler = GenericHandler()
         self.assertTrue(handler.value == None)
@@ -37,7 +37,7 @@ class EventTests(unittest.TestCase):
         EventTest.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 10)
 
-    def testProtectedInstanceEvent(self):
+    def test_protected_instance_event(self):
         """Test protected instance events."""
         ob = EventTest()
 
@@ -51,7 +51,7 @@ class EventTests(unittest.TestCase):
 
         ob.ProtectedEvent -= handler.handler
 
-    def testProtectedStaticEvent(self):
+    def test_protected_static_event(self):
         """Test protected static events."""
         ob = EventTest
 
@@ -65,7 +65,7 @@ class EventTests(unittest.TestCase):
 
         EventTest.ProtectedStaticEvent -= handler.handler
 
-    def testInternalEvents(self):
+    def test_internal_events(self):
         """Test internal events."""
 
         def test():
@@ -83,7 +83,7 @@ class EventTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPrivateEvents(self):
+    def test_private_events(self):
         """Test private events."""
 
         def test():
@@ -101,7 +101,7 @@ class EventTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testMulticastEvent(self):
+    def test_multicast_event(self):
         """Test multicast events."""
         ob = EventTest()
 
@@ -129,7 +129,7 @@ class EventTests(unittest.TestCase):
         ob.PublicEvent -= handler2.handler
         ob.PublicEvent -= handler3.handler
 
-    def testInstanceMethodHandler(self):
+    def test_instance_method_handler(self):
         """Test instance method handlers."""
         ob = EventTest()
         handler = GenericHandler()
@@ -146,7 +146,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testVarArgsInstanceMethodHandler(self):
+    def test_var_args_instance_method_handler(self):
         """Test vararg instance method handlers."""
         ob = EventTest()
         handler = VariableArgsHandler()
@@ -163,7 +163,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testCallableobHandler(self):
+    def test_callableob_handler(self):
         """Test callable ob handlers."""
         ob = EventTest()
         handler = CallableHandler()
@@ -180,7 +180,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testVarArgsCallableHandler(self):
+    def test_var_args_callable_handler(self):
         """Test varargs callable handlers."""
         ob = EventTest()
         handler = VarCallableHandler()
@@ -197,7 +197,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testStaticMethodHandler(self):
+    def test_static_method_handler(self):
         """Test static method handlers."""
         ob = EventTest()
         handler = StaticMethodHandler()
@@ -215,7 +215,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testClassMethodHandler(self):
+    def test_class_method_handler(self):
         """Test class method handlers."""
         ob = EventTest()
         handler = ClassMethodHandler()
@@ -233,7 +233,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testManagedInstanceMethodHandler(self):
+    def test_managed_instance_method_handler(self):
         """Test managed instance method handlers."""
         ob = EventTest()
 
@@ -249,7 +249,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(ob.value == 10)
 
-    def testManagedStaticMethodHandler(self):
+    def test_managed_static_method_handler(self):
         """Test managed static method handlers."""
         ob = EventTest()
         EventTest.s_value = 0
@@ -266,7 +266,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(EventTest.s_value == 10)
 
-    def testUnboundMethodHandler(self):
+    def test_unbound_method_handler(self):
         """Test failure mode for unbound method handlers."""
         ob = EventTest()
         ob.PublicEvent += GenericHandler.handler
@@ -278,7 +278,7 @@ class EventTests(unittest.TestCase):
 
         raise TypeError("should have raised a TypeError")
 
-    def testFunctionHandler(self):
+    def test_function_handler(self):
         """Test function handlers."""
         ob = EventTest()
         dict = {'value': None}
@@ -298,7 +298,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(dict['value'] == 10)
 
-    def testAddNonCallableHandler(self):
+    def test_add_non_callable_handler(self):
         """Test handling of attempts to add non-callable handlers."""
 
         def test():
@@ -322,7 +322,7 @@ class EventTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testRemoveMultipleHandlers(self):
+    def test_remove_multiple_handlers(self):
         """Test removing multiple instances of the same handler."""
         ob = EventTest()
         handler = MultipleHandler()
@@ -370,7 +370,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
-    def testRemoveMultipleStaticHandlers(self):
+    def test_remove_multiple_static_handlers(self):
         """Test removing multiple instances of a static handler."""
         ob = EventTest()
         handler = MultipleHandler()
@@ -418,7 +418,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicStaticEvent(TestEventArgs(10))
         self.assertTrue(handler.value == 30)
 
-    def testRandomMultipleHandlers(self):
+    def test_random_multiple_handlers(self):
         """Test random subscribe / unsubscribe of the same handlers."""
         import random
         ob = EventTest()
@@ -465,7 +465,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(10))
         self.assertTrue(handler2.value == 0)
 
-    def testRemoveInternalCallHandler(self):
+    def test_remove_internal_call_handler(self):
         """Test remove on an event sink implemented w/internalcall."""
         ob = EventTest()
 
@@ -475,7 +475,7 @@ class EventTests(unittest.TestCase):
         ob.PublicEvent += h
         ob.PublicEvent -= h
 
-    def testRemoveUnknownHandler(self):
+    def test_remove_unknown_handler(self):
         """Test removing an event handler that was never added."""
 
         def test():
@@ -486,7 +486,7 @@ class EventTests(unittest.TestCase):
 
         self.assertRaises(ValueError, test)
 
-    def testHandlerCallbackFailure(self):
+    def test_handler_callback_failure(self):
         """Test failure mode for inappropriate handlers."""
 
         class BadHandler(object):
@@ -519,7 +519,7 @@ class EventTests(unittest.TestCase):
 
         ob.PublicEvent -= handler.handler
 
-    def testIncorrectInvokation(self):
+    def test_incorrect_invokation(self):
         """Test incorrect invocation of events."""
         ob = EventTest()
 
@@ -538,7 +538,7 @@ class EventTests(unittest.TestCase):
 
         ob.PublicEvent -= handler.handler
 
-    def testExplicitCLSEventRegistration(self):
+    def test_explicit_cls_event_registration(self):
         """Test explicit CLS event registration."""
         from Python.Test import TestEventHandler
 
@@ -558,7 +558,7 @@ class EventTests(unittest.TestCase):
         ob.OnPublicEvent(TestEventArgs(20))
         self.assertTrue(handler.value == 10)
 
-    def testImplicitCLSEventRegistration(self):
+    def test_implicit_cls_event_registration(self):
         """Test implicit CLS event registration."""
 
         def test():
@@ -568,7 +568,7 @@ class EventTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testEventDescriptorAbuse(self):
+    def test_event_descriptor_abuse(self):
         """Test event descriptor abuse."""
 
         def test():

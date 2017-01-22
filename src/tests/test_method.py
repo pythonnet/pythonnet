@@ -11,7 +11,7 @@ from _compat import PY2, long, unichr
 class MethodTests(unittest.TestCase):
     """Test CLR method support."""
 
-    def testInstanceMethodDescriptor(self):
+    def test_instance_method_descriptor(self):
         """Test instance method descriptor behavior."""
 
         def test():
@@ -34,7 +34,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testStaticMethodDescriptor(self):
+    def test_static_method_descriptor(self):
         """Test static method descriptor behavior."""
 
         def test():
@@ -57,30 +57,30 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPublicInstanceMethod(self):
+    def test_public_instance_method(self):
         """Test public instance method visibility."""
         ob = MethodTest()
         self.assertTrue(ob.PublicMethod() == "public")
 
-    def testPublicStaticMethod(self):
+    def test_public_static_method(self):
         """Test public static method visibility."""
         ob = MethodTest()
         self.assertTrue(MethodTest.PublicStaticMethod() == "public static")
         self.assertTrue(ob.PublicStaticMethod() == "public static")
 
-    def testProtectedInstanceMethod(self):
+    def test_protected_instance_method(self):
         """Test protected instance method visibility."""
         ob = MethodTest()
         self.assertTrue(ob.ProtectedMethod() == "protected")
 
-    def testProtectedStaticMethod(self):
+    def test_protected_static_method(self):
         """Test protected static method visibility."""
         ob = MethodTest()
         result = "protected static"
         self.assertTrue(MethodTest.ProtectedStaticMethod() == result)
         self.assertTrue(ob.ProtectedStaticMethod() == result)
 
-    def testInternalMethod(self):
+    def test_internal_method(self):
         """Test internal method visibility."""
 
         def test():
@@ -103,7 +103,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testPrivateMethod(self):
+    def test_private_method(self):
         """Test private method visibility."""
 
         def test():
@@ -126,7 +126,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testUnboundManagedMethodCall(self):
+    def test_unbound_managed_method_call(self):
         """Test calling unbound managed methods."""
         from Python.Test import MethodTestSub
 
@@ -147,7 +147,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testOverloadedMethodInheritance(self):
+    def test_overloaded_method_inheritance(self):
         """Test that overloads are inherited properly."""
         from Python.Test import MethodTestSub
 
@@ -165,7 +165,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertTrue(ob.PublicMethod("echo") == "echo")
 
-    def testMethodDescriptorAbuse(self):
+    def test_method_descriptor_abuse(self):
         """Test method descriptor abuse."""
         desc = MethodTest.__dict__['PublicMethod']
 
@@ -179,7 +179,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testMethodDocstrings(self):
+    def test_method_docstrings(self):
         """Test standard method docstring generation"""
         method = MethodTest.GetType
         value = 'System.Type GetType()'
@@ -189,7 +189,7 @@ class MethodTests(unittest.TestCase):
     # Tests of specific argument and result conversion scenarios
     # ======================================================================
 
-    def testMethodCallEnumConversion(self):
+    def test_method_call_enum_conversion(self):
         """Test enum conversion in method call."""
         from System import TypeCode
 
@@ -197,7 +197,7 @@ class MethodTests(unittest.TestCase):
         r = ob.TestEnumConversion(TypeCode.Int32)
         self.assertTrue(r == TypeCode.Int32)
 
-    def testMethodCallFlagsConversion(self):
+    def test_method_call_flags_conversion(self):
         """Test flags conversion in method call."""
         from System.IO import FileAccess
 
@@ -206,7 +206,7 @@ class MethodTests(unittest.TestCase):
         r = ob.TestFlagsConversion(flags)
         self.assertTrue(r == flags)
 
-    def testMethodCallStructConversion(self):
+    def test_method_call_struct_conversion(self):
         """Test struct conversion in method call."""
         from System import Guid
 
@@ -216,7 +216,7 @@ class MethodTests(unittest.TestCase):
         r = ob.TestStructConversion(guid)
         self.assertTrue(r.ToString() == temp)
 
-    def testSubclassInstanceConversion(self):
+    def test_subclass_instance_conversion(self):
         """Test subclass instance conversion in method call."""
 
         class TestSubException(System.Exception):
@@ -227,7 +227,7 @@ class MethodTests(unittest.TestCase):
         result = ob.TestSubclassConversion(instance)
         self.assertTrue(isinstance(result, System.Exception))
 
-    def testNullArrayConversion(self):
+    def test_null_array_conversion(self):
         """Test null array conversion in method call."""
         from System import Type
 
@@ -235,7 +235,7 @@ class MethodTests(unittest.TestCase):
         r = ob.TestNullArrayConversion(None)
         self.assertTrue(r == None)
 
-    def testStringParamsArgs(self):
+    def test_string_params_args(self):
         """Test use of string params."""
         result = MethodTest.TestStringParamsArg('one', 'two', 'three')
         self.assertEqual(result.Length, 3)
@@ -250,7 +250,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[1] == 'two')
         self.assertTrue(result[2] == 'three')
 
-    def testObjectParamsArgs(self):
+    def test_object_params_args(self):
         """Test use of object params."""
         result = MethodTest.TestObjectParamsArg('one', 'two', 'three')
         self.assertEqual(len(result), 3, result)
@@ -264,7 +264,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[1] == 'two')
         self.assertTrue(result[2] == 'three')
 
-    def testValueParamsArgs(self):
+    def test_value_params_args(self):
         """Test use of value type params."""
         result = MethodTest.TestValueParamsArg(1, 2, 3)
         self.assertEqual(len(result), 3)
@@ -278,12 +278,12 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[1] == 2)
         self.assertTrue(result[2] == 3)
 
-    def testNonParamsArrayInLastPlace(self):
+    def test_non_params_array_in_last_place(self):
         """Test overload resolution with of non-"params" array as last parameter."""
         result = MethodTest.TestNonParamsArrayInLastPlace(1, 2, 3)
         self.assertTrue(result)
 
-    def testStringOutParams(self):
+    def test_string_out_params(self):
         """Test use of string out-parameters."""
         result = MethodTest.TestStringOutParams("hi", "there")
         self.assertTrue(type(result) == type(()))
@@ -297,7 +297,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == "output string")
 
-    def testStringRefParams(self):
+    def test_string_ref_params(self):
         """Test use of string byref parameters."""
         result = MethodTest.TestStringRefParams("hi", "there")
         self.assertTrue(type(result) == type(()))
@@ -311,7 +311,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == "output string")
 
-    def testValueOutParams(self):
+    def test_value_out_params(self):
         """Test use of value type out-parameters."""
         result = MethodTest.TestValueOutParams("hi", 1)
         self.assertTrue(type(result) == type(()))
@@ -325,7 +325,7 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type like int, long, etc.
         self.assertRaises(TypeError, test)
 
-    def testValueRefParams(self):
+    def test_value_ref_params(self):
         """Test use of value type byref parameters."""
         result = MethodTest.TestValueRefParams("hi", 1)
         self.assertTrue(type(result) == type(()))
@@ -339,7 +339,7 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type like int, long, etc.
         self.assertRaises(TypeError, test)
 
-    def testObjectOutParams(self):
+    def test_object_out_params(self):
         """Test use of object out-parameters."""
         result = MethodTest.TestObjectOutParams("hi", MethodTest())
         self.assertTrue(type(result) == type(()))
@@ -353,7 +353,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(isinstance(result[1], System.Exception))
 
-    def testObjectRefParams(self):
+    def test_object_ref_params(self):
         """Test use of object byref parameters."""
         result = MethodTest.TestObjectRefParams("hi", MethodTest())
         self.assertTrue(type(result) == type(()))
@@ -367,7 +367,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(isinstance(result[1], System.Exception))
 
-    def testStructOutParams(self):
+    def test_struct_out_params(self):
         """Test use of struct out-parameters."""
         result = MethodTest.TestStructOutParams("hi", System.Guid.NewGuid())
         self.assertTrue(type(result) == type(()))
@@ -381,7 +381,7 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type like a struct
         self.assertRaises(TypeError, test)
 
-    def testStructRefParams(self):
+    def test_struct_ref_params(self):
         """Test use of struct byref parameters."""
         result = MethodTest.TestStructRefParams("hi", System.Guid.NewGuid())
         self.assertTrue(type(result) == type(()))
@@ -395,7 +395,7 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type like a struct
         self.assertRaises(TypeError, test)
 
-    def testVoidSingleOutParam(self):
+    def test_void_single_out_param(self):
         """Test void method with single out-parameter."""
         result = MethodTest.TestVoidSingleOutParam(9)
         self.assertTrue(result == 42)
@@ -406,7 +406,7 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type
         self.assertRaises(TypeError, test)
 
-    def testVoidSingleRefParam(self):
+    def test_void_single_ref_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestVoidSingleRefParam(9)
         self.assertTrue(result == 42)
@@ -417,12 +417,12 @@ class MethodTests(unittest.TestCase):
         # None cannot be converted to a value type
         self.assertRaises(TypeError, test)
 
-    def testSingleDefaultParam(self):
+    def test_single_default_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestSingleDefaultParam()
         self.assertTrue(result == 5)
 
-    def testOneArgAndTwoDefaultParam(self):
+    def test_one_arg_and_two_default_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestOneArgAndTwoDefaultParam(11)
         self.assertTrue(result == 22)
@@ -433,12 +433,12 @@ class MethodTests(unittest.TestCase):
         result = MethodTest.TestOneArgAndTwoDefaultParam(20)
         self.assertTrue(result == 31)
 
-    def testTwoDefaultParam(self):
+    def test_two_default_param(self):
         """Test void method with single ref-parameter."""
         result = MethodTest.TestTwoDefaultParam()
         self.assertTrue(result == 11)
 
-    def testExplicitSelectionWithOutModifier(self):
+    def test_explicit_selection_with_out_modifier(self):
         """Check explicit overload selection with out modifiers."""
         refstr = System.String("").GetType().MakeByRefType()
         result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
@@ -457,7 +457,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == "output string")
 
-    def testExplicitSelectionWithRefModifier(self):
+    def test_explicit_selection_with_ref_modifier(self):
         """Check explicit overload selection with ref modifiers."""
         refstr = System.String("").GetType().MakeByRefType()
         result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
@@ -476,7 +476,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(result[0] == True)
         self.assertTrue(result[1] == "output string")
 
-    def testExplicitOverloadSelection(self):
+    def test_explicit_overload_selection(self):
         """Check explicit overload selection using [] syntax."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from System import Array
@@ -580,7 +580,7 @@ class MethodTests(unittest.TestCase):
         value = MethodTest.Overloaded.__overloads__[int, str](1, "one")
         self.assertTrue(value == 1)
 
-    def testOverloadSelectionWithArrayTypes(self):
+    def test_overload_selection_with_array_types(self):
         """Check overload selection using array types."""
         from Python.Test import ISayHello1, InterfaceTest, ShortEnum
         from System import Array
@@ -732,7 +732,7 @@ class MethodTests(unittest.TestCase):
         self.assertTrue(value[0].__class__ == inst.__class__)
         self.assertTrue(value[1].__class__ == inst.__class__)
 
-    def testExplicitOverloadSelectionFailure(self):
+    def test_explicit_overload_selection_failure(self):
         """Check that overload selection fails correctly."""
 
         def test():
@@ -757,7 +757,7 @@ class MethodTests(unittest.TestCase):
 
         self.assertRaises(TypeError, test)
 
-    def testWeCanBindToEncodingGetString(self):
+    def test_we_can_bind_to_encoding_get_string(self):
         """Check that we can bind to the Encoding.GetString method with variables."""
 
         from System.Text import Encoding

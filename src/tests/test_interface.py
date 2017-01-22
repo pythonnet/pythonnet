@@ -10,7 +10,7 @@ from _compat import DictProxyType
 class InterfaceTests(unittest.TestCase):
     """Test CLR interface support."""
 
-    def testInterfaceStandardAttrs(self):
+    def test_interface_standard_attrs(self):
         """Test standard class attributes."""
         from Python.Test import IPublicInterface
 
@@ -18,7 +18,7 @@ class InterfaceTests(unittest.TestCase):
         self.assertTrue(IPublicInterface.__module__ == 'Python.Test')
         self.assertTrue(type(IPublicInterface.__dict__) == DictProxyType)
 
-    def testGlobalInterfaceVisibility(self):
+    def test_global_interface_visibility(self):
         """Test visibility of module-level interfaces."""
         from Python.Test import IPublicInterface
 
@@ -34,7 +34,7 @@ class InterfaceTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testNestedInterfaceVisibility(self):
+    def test_nested_interface_visibility(self):
         """Test visibility of nested interfaces."""
         from Python.Test import InterfaceTest
 
@@ -54,7 +54,7 @@ class InterfaceTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, test)
 
-    def testExplicitCastToInterface(self):
+    def test_explicit_cast_to_interface(self):
         """Test explicit cast to an interface."""
         from Python.Test import InterfaceTest
 

@@ -63,7 +63,7 @@ class LeakTest(object):
             if type(item) != dicttype:
                 print(item, sys.getrefcount(item))
 
-    def testModules(self):
+    def test_modules(self):
         self.notify("Running module leak check...")
 
         for i in range(self.count):
@@ -78,7 +78,7 @@ class LeakTest(object):
 
         self.end_test()
 
-    def testClasses(self):
+    def test_classes(self):
         from System.Collections import Hashtable
         from Python.Test import StringDelegate
 
@@ -102,7 +102,7 @@ class LeakTest(object):
 
         self.end_test()
 
-    def testEnumerations(self):
+    def test_enumerations(self):
         import Python.Test as Test
 
         self.notify("Running enum leak check...")
@@ -137,7 +137,7 @@ class LeakTest(object):
 
         self.end_test()
 
-    def testEvents(self):
+    def test_events(self):
         from Python.Test import EventTest, TestEventArgs
 
         self.notify("Running event leak check...")
@@ -215,7 +215,7 @@ class LeakTest(object):
 
         self.end_test()
 
-    def testDelegates(self):
+    def test_delegates(self):
         from Python.Test import DelegateTest, StringDelegate
 
         self.notify("Running delegate leak check...")

@@ -6,7 +6,7 @@ import unittest
 class RecursiveTypesTests(unittest.TestCase):
     """Test if interop with recursive type inheritance works."""
 
-    def testRecursiveTypeCreation(self):
+    def test_recursive_type_creation(self):
         """Test that a recursive types don't crash with a
         StackOverflowException"""
         from Python.Test import RecursiveInheritance
