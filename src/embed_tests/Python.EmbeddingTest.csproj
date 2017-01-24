@@ -128,20 +128,23 @@
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework, Version=3.5.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\NUnit.3.5.0\lib\net40\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Embeddingtest.nunit" />
     <None Include="..\pythonnet.snk" />
     <None Include="packages.config" />
+    <None Include="pythonnet.snk" Condition="Exists('pythonnet.snk')" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InitializeTest.cs" />
     <Compile Include="pyimport.cs" />
     <Compile Include="pyiter.cs">
       <SubType>Code</SubType>
@@ -171,6 +174,9 @@
       <Project>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</Project>
       <Name>Python.Runtime</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
