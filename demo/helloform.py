@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import clr
 
 SWF = clr.AddReference("System.Windows.Forms")
@@ -13,7 +16,7 @@ class HelloApp(WinForms.Form):
     def __init__(self):
         self.Text = "Hello World From Python"
         self.AutoScaleBaseSize = Size(5, 13)
-        self.ClientSize = Size(392, 117);
+        self.ClientSize = Size(392, 117)
         h = WinForms.SystemInformation.CaptionHeight
         self.MinimumSize = Size(392, (117 + h))
 
@@ -36,8 +39,8 @@ class HelloApp(WinForms.Form):
 
         # Add the controls to the form
         self.AcceptButton = self.button
-        self.Controls.Add(self.button);
-        self.Controls.Add(self.textbox);
+        self.Controls.Add(self.button)
+        self.Controls.Add(self.textbox)
 
     def button_Click(self, sender, args):
         """Button click event handler"""

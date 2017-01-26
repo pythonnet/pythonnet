@@ -1,10 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import clr
-import System.Windows.Forms as WinForms
-from System.Threading import Thread, ThreadStart, ApartmentState
-from System.Drawing import Color, Size, Point
-from System.Text import Encoding
-from System.IO import File
 import System
+import System.Windows.Forms as WinForms
+
+from System.IO import File
+from System.Text import Encoding
+from System.Drawing import Color, Point, Size
+from System.Threading import ApartmentState, Thread, ThreadStart
 
 
 class Wordpad(WinForms.Form):

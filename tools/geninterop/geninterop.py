@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 TypeOffset is a C# class that mirrors the in-memory layout of heap
 allocated Python objects.
@@ -9,6 +12,9 @@ Requirements:
     - pycparser
     - clang
 """
+
+from __future__ import print_function
+
 from distutils.sysconfig import get_config_var
 from subprocess import Popen, CalledProcessError, PIPE
 from pycparser import c_parser, c_ast
@@ -86,8 +92,8 @@ class AstParser(object):
                 self.__struct_members_stack.pop(0)
             self.__struct_stack.pop(0)
         elif self.__ptr_decl_depth:
-            # the struct is empty, but add it as a member to the current struct
-            # as the current member maybe a pointer to it.
+            # the struct is empty, but add it as a member to the current
+            # struct as the current member maybe a pointer to it.
             self.__add_struct_member(struct.name)
 
     def visit_decl(self, decl):
@@ -109,7 +115,8 @@ class AstParser(object):
         # add member to current struct
         current_struct = self.__struct_stack[0]
         member_name = self.__struct_members_stack[0]
-        struct_members = self.__struct_members.setdefault(self.__get_struct_name(current_struct), [])
+        struct_members = self.__struct_members.setdefault(
+            self.__get_struct_name(current_struct), [])
 
         # get the node associated with this type
         node = None
@@ -118,7 +125,8 @@ class AstParser(object):
         elif type_name in self.__structs:
             node = self.__structs[type_name]
 
-        # If it's a struct (and not a pointer to a struct) expand it into the current struct definition
+        # If it's a struct (and not a pointer to a struct) expand
+        # it into the current struct definition
         if not self.__ptr_decl_depth and isinstance(node, c_ast.Struct):
             for decl in node.decls or []:
                 self.__struct_members_stack.insert(0, decl.name)
@@ -141,8 +149,7 @@ class AstParser(object):
 
 def check_output(*popenargs, **kwargs):
     """subprocess.check_output from python 2.7.
-    Added here to support building for earlier versions
-    of Python.
+    Added here to support building for earlier versions of Python.
     """
     process = Popen(stdout=PIPE, *popenargs, **kwargs)
     output, unused_err = process.communicate()
@@ -161,7 +168,8 @@ def preprocess_python_headers():
     """Return Python.h pre-processed, ready for parsing.
     Requires clang.
     """
-    fake_libc_include = os.path.join(os.path.dirname(__file__), "fake_libc_include")
+    fake_libc_include = os.path.join(os.path.dirname(__file__),
+                                     "fake_libc_include")
     include_dirs = [fake_libc_include]
 
     include_py = get_config_var("INCLUDEPY")
@@ -198,7 +206,7 @@ def gen_interop_code(members):
     """Generate the TypeOffset C# class"""
 
     defines = [
-        "PYTHON%d%s" % (sys.version_info[:2])
+        "PYTHON%d%d" % (sys.version_info[:2])
     ]
 
     if hasattr(sys, "abiflags"):
@@ -278,7 +286,7 @@ def main():
     interop_cs = gen_interop_code(members)
 
     if len(sys.argv) > 1:
-        with open(sys.argv[1], "wt") as fh:
+        with open(sys.argv[1], "w") as fh:
             fh.write(interop_cs)
     else:
         print(interop_cs)
