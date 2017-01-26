@@ -549,5 +549,13 @@ namespace Python.Runtime
                 Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
             }
         }
+
+        internal static void Throw()
+        {
+            if (Runtime.PyErr_Occurred() != 0)
+            {
+                throw new PythonException();
+            }
+        }
     }
 }
