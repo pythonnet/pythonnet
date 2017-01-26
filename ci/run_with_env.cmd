@@ -43,38 +43,25 @@
 SET COMMAND_TO_RUN=%*
 SET WIN_SDK_ROOT=C:\Program Files\Microsoft SDKs\Windows
 
-:: Extract the major and minor versions, and allow for the minor version to be
-:: more than 9.  This requires the version number to have two dots in it.
+:: CONDA_PY style, such as 27, 34 etc.
 SET MAJOR_PYTHON_VERSION=%CONDA_PY:~0,1%
-
-IF "%CONDA_PY:~2,1%" == "" (
-    :: CONDA_PY style, such as 27, 34 etc.
-    SET MINOR_PYTHON_VERSION=%CONDA_PY:~1,1%
-) ELSE (
-    IF "%CONDA_PY:~3,1%" == "." (
-        SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,1%
-    ) ELSE (
-        SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,2%
-    )
-)
+SET MINOR_PYTHON_VERSION=%CONDA_PY:~1,1%
 
 :: Based on the Python version, determine what SDK version to use, and whether
 :: to set the SDK for 64-bit.
 IF %MAJOR_PYTHON_VERSION% == 2 (
     SET WINDOWS_SDK_VERSION="v7.0"
     SET SET_SDK_64=Y
-) ELSE (
-    IF %MAJOR_PYTHON_VERSION% == 3 (
-        SET WINDOWS_SDK_VERSION="v7.1"
-        IF %MINOR_PYTHON_VERSION% LEQ 4 (
-            SET SET_SDK_64=Y
-        ) ELSE (
-            SET SET_SDK_64=N
-        )
+) ELSE IF %MAJOR_PYTHON_VERSION% == 3 (
+    SET WINDOWS_SDK_VERSION="v7.1"
+    IF %MINOR_PYTHON_VERSION% LEQ 4 (
+        SET SET_SDK_64=Y
     ) ELSE (
-        ECHO Unsupported Python version: "%MAJOR_PYTHON_VERSION%"
-        EXIT /B 1
+        SET SET_SDK_64=N
     )
+) ELSE (
+    ECHO Unsupported Python version: "%MAJOR_PYTHON_VERSION%"
+    EXIT /B 1
 )
 
 IF "%PYTHON_ARCH%"=="64" (

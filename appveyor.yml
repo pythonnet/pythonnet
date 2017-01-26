@@ -38,10 +38,7 @@ init:
 
 install:
   # install conda and deps
-  - ps: ".\\ci\\install.ps1"
-  - "%CONDA_BLD%\\Scripts\\conda config --set show_channel_urls true --set always_yes true --set changeps1 false"
-  - "%CONDA_BLD%\\Scripts\\conda update -q conda"
-  - "%CONDA_BLD%\\Scripts\\conda info -a"
+  - ps: .\ci\install_miniconda.ps1
 
   # install for wheels
   - "%PYTHON%\\python.exe -m pip install --upgrade pip"
