@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Python.Runtime;
+using System.IO;
 
 namespace Python.EmbeddingTest
 {
@@ -16,9 +17,6 @@ namespace Python.EmbeddingTest
         {
             PythonEngine.Initialize();
             gs = PythonEngine.AcquireLock();
-
-            //string here = Environment.CurrentDirectory;
-            //trunk\pythonnet\src\embed_tests\bin\x86\DebugWin
 
             /*
              * Append the tests directory to sys.path
