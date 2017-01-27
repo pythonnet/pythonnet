@@ -103,21 +103,6 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     raise RuntimeError("%s could not be found" % tool)
 
 
-if DEVTOOLS == "MsDev":
-    _xbuild = "\"%s\"" % _find_msbuild_tool("msbuild.exe")
-    _defines_sep = ";"
-    _config = "%sWin" % CONFIG
-
-elif DEVTOOLS == "Mono":
-    _xbuild = "xbuild"
-    _defines_sep = ","
-    _config = "%sMono" % CONFIG
-
-else:
-    raise NotImplementedError(
-        "DevTools %s not supported (use MsDev or Mono)" % DEVTOOLS)
-
-
 class BuildExtPythonnet(build_ext.build_ext):
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
@@ -179,6 +164,19 @@ class BuildExtPythonnet(build_ext.build_ext):
         if not os.path.exists(interop_file):
             geninterop = os.path.join("tools", "geninterop", "geninterop.py")
             subprocess.check_call([sys.executable, geninterop, interop_file])
+
+        if DEVTOOLS == "MsDev":
+            _xbuild = '"{0}"'.format(_find_msbuild_tool("msbuild.exe"))
+            _defines_sep = ";"
+            _config = "{0}Win".format(CONFIG)
+
+        elif DEVTOOLS == "Mono":
+            _xbuild = "xbuild"
+            _defines_sep = ","
+            _config = "{0}Mono".format(CONFIG)
+        else:
+            raise NotImplementedError(
+                "DevTool {0} not supported (use MsDev/Mono)".format(DEVTOOLS))
 
         cmd = [
             _xbuild,
