@@ -1,4 +1,4 @@
-version: 2.2.0-build{build}
+version: 2.2.1-build{build}
 
 platform:
   - x86
@@ -46,8 +46,8 @@ install:
   - "%PYTHON%\\python.exe -m pip install six"
 
 build_script:
-  # build wheel
-  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  # build clean sdist & wheel
+  - "%PYTHON%\\python.exe setup.py sdist bdist_wheel"
 
   # build and dist conda package
   - cmd: "%CMD_IN_ENV% %CONDA_BLD%\\Scripts\\conda build conda.recipe"

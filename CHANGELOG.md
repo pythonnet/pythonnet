@@ -5,7 +5,9 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## [2.2.0][]
+## [2.2.1][] - 2017-01-26
+
+`v2.2.0` had a release issue on pypi. Bumped to `v2.2.1`
 
 ### Added
 
@@ -455,9 +457,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.2.0...HEAD
+[unreleased]: ../../compare/v2.2.1...HEAD
 
-[2.2.0]: ../../compare/v2.2.0-dev1...v2.2.0
+[2.2.1]: ../../compare/v2.2.0-dev1...v2.2.1
 
 [2.2.0-dev1]: ../../compare/v2.1.0...v2.2.0-dev1
 
