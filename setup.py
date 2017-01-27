@@ -6,6 +6,7 @@ Setup script for building clr.pyd and dependencies using mono and into
 an egg or wheel.
 """
 
+import collections
 import fnmatch
 import glob
 import os
@@ -24,83 +25,100 @@ VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 ARCH = "x64" if platform.architecture()[0] == "64bit" else "x86"
 
+###############################################################################
+# Windows Keys Constants for MSBUILD tools
+RegKey = collections.namedtuple('RegKey', 'sdk_name key value_name suffix')
+vs_python = "Programs\\Common\\Microsoft\\Visual C++ for Python\\9.0\\WinSDK"
+vs_root = "SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\{0}"
+sdks_root = "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v{0}Win32Tools"
+kits_root = "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"
+kits_suffix = os.path.join("bin", ARCH)
 
+WIN_SDK_KEYS = (
+    RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
+           value_name="KitsRoot10", suffix=kits_suffix),
+
+    RegKey(sdk_name="Windows Kit 8.1", key=kits_root,
+           value_name="KitsRoot81", suffix=kits_suffix),
+
+    RegKey(sdk_name="Windows Kit 8.0", key=kits_root,
+           value_name="KitsRoot", suffix=kits_suffix),
+
+    RegKey(sdk_name="Windows SDK 7.1A", key=sdks_root.format("7.1A\\WinSDK-"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 7.1", key=sdks_root.format("7.1\\WinSDK"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 7.0A", key=sdks_root.format("7.0A\\WinSDK-"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 7.0", key=sdks_root.format("7.0\\WinSDK"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 6.0A", key=sdks_root.format("6.0A\\WinSDK"),
+           value_name="InstallationFolder", suffix=""),
+)
+
+VS_KEYS = (
+    RegKey(sdk_name="MSBuild 14", key=vs_root.format("14.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 12", key=vs_root.format("12.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 4", key=vs_root.format("4.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 3.5", key=vs_root.format("3.5"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 2.0", key=vs_root.format("2.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+)
+
+
+###############################################################################
 def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     """Return full path to one of the Microsoft build tools"""
+    # Search in PATH first
     path = spawn.find_executable(tool)
     if path:
         return path
 
+    # Search within registry to find build tools
     try:  # PY2
         import _winreg as winreg
     except ImportError:  # PY3
         import winreg
 
-    keys_to_check = []
-    if use_windows_sdk:
-        sdks_root = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows"
-        kits_root = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
-        kits_suffix = os.path.join("bin", ARCH)
-        keys_to_check.extend([
-            ("Windows Kit 10.0", kits_root, "KitsRoot10", kits_suffix),
-            ("Windows Kit 8.1", kits_root, "KitsRoot81", kits_suffix),
-            ("Windows Kit 8.0", kits_root, "KitsRoot", kits_suffix),
-            ("Windows SDK 7.1A", sdks_root + r"\v7.1A\WinSDK-Win32Tools", "InstallationFolder"),
-            ("Windows SDK 7.1", sdks_root + r"\v7.1\WinSDKWin32Tools", "InstallationFolder"),
-            ("Windows SDK 7.0A", sdks_root + r"\v7.0A\WinSDK-Win32Tools", "InstallationFolder"),
-            ("Windows SDK 7.0", sdks_root + r"\v7.0\WinSDKWin32Tools", "InstallationFolder"),
-            ("Windows SDK 6.0A", sdks_root + r"\v6.0A\WinSDKWin32Tools", "InstallationFolder")
-        ])
-    else:
-        vs_root = r"SOFTWARE\Microsoft\MSBuild\ToolsVersions"
-        keys_to_check.extend([
-            ("MSBuild 14", vs_root + r"\14.0", "MSBuildToolsPath"),
-            ("MSBuild 12", vs_root + r"\12.0", "MSBuildToolsPath"),
-            ("MSBuild 4", vs_root + r"\4.0", "MSBuildToolsPath"),
-            ("MSBuild 3.5", vs_root + r"\3.5", "MSBuildToolsPath"),
-            ("MSBuild 2.0", vs_root + r"\2.0", "MSBuildToolsPath")
-        ])
-
-    # read the possible tools paths from the various registry locations
-    paths_to_check = []
-    hreg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-    try:
-        for key_to_check in keys_to_check:
-            sdk_name, key, value_name = key_to_check[:3]
-            suffix = key_to_check[3] if len(key_to_check) > 3 else None
-            hkey = None
-            try:
-                hkey = winreg.OpenKey(hreg, key)
-                val, type_ = winreg.QueryValueEx(hkey, value_name)
+    keys_to_check = WIN_SDK_KEYS if use_windows_sdk else VS_KEYS
+    for rkey in keys_to_check:
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, rkey.key) as hkey:
+                val, type_ = winreg.QueryValueEx(hkey, rkey.value_name)
                 if type_ != winreg.REG_SZ:
                     continue
-                if suffix:
-                    val = os.path.join(val, suffix)
-                paths_to_check.append((sdk_name, val))
-            except WindowsError:
-                pass
-            finally:
-                if hkey:
-                    hkey.Close()
-    finally:
-        hreg.Close()
+                path = os.path.join(val, rkey.suffix, tool)
+                if os.path.exists(path):
+                    log.info("Using {0} from {1}".format(tool, rkey.sdk_name))
+                    return path
+        except WindowsError:
+            # Key doesn't exist
+            pass
 
     # Add Visual C++ for Python as a fall-back in case one
     # of the other Windows SDKs isn't installed
     if use_windows_sdk:
+        sdk_name = "Visual C++ for Python"
         localappdata = os.environ["LOCALAPPDATA"]
-        pywinsdk = localappdata + r"\Programs\Common\Microsoft\Visual C++ for Python\9.0\WinSDK\Bin"
-        if ARCH == "x64":
-            pywinsdk += r"\x64"
-        paths_to_check.append(("Visual C++ for Python", pywinsdk))
-
-    for sdk_name, path in paths_to_check:
-        path = os.path.join(path, tool)
+        suffix = "Bin\\x64" if ARCH == "x64" else "Bin"
+        path = os.path.join(localappdata, vs_python, suffix, tool)
         if os.path.exists(path):
-            log.info("Using %s from %s" % (tool, sdk_name))
+            log.info("Using {0} from {1}".format(tool, sdk_name))
             return path
 
-    raise RuntimeError("%s could not be found" % tool)
+    raise RuntimeError("{0} could not be found".format(tool))
 
 
 class BuildExtPythonnet(build_ext.build_ext):
