@@ -47,9 +47,6 @@ init:
   - python -c "import ctypes; print(ctypes.sizeof(ctypes.c_wchar))"
 
 install:
-  # install conda and deps
-  - ps: .\ci\install_miniconda.ps1
-
   # install for wheels
   - pip install --upgrade pip wheel six
 
@@ -57,16 +54,14 @@ build_script:
   # build clean sdist & wheel
   - python setup.py sdist bdist_wheel
 
-  # build and dist conda package
-  - '%CMD_IN_ENV% %CONDA_BLD%\Scripts\conda build conda.recipe'
-  - ps: $CONDA_PKG=(&"$env:CONDA_BLD\Scripts\conda" build conda.recipe --output -q)
-  - ps: Copy-Item $CONDA_PKG "$env:APPVEYOR_BUILD_FOLDER\dist\"
-
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: Copy-Item (Resolve-Path .\build\*\Python.Test.dll) C:\testdir
   - python src\tests\runtests.py
   # - "%NUNIT% src/embed_tests/bin/%PLATFORM%/ReleaseWin/Python.EmbeddingTest.dll"
+
+  # Build conda-recipe on Pull Requests
+  - ps: .\ci\appveyor_build_recipe.ps1
 
 artifacts:
   - path: dist\*
