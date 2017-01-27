@@ -5,12 +5,32 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## [Unreleased][]
+## [2.2.0][]
 
 ### Added
 
--   Python 3.6 support.
--   Added `__version__` to module.
+-   Python 3.6 support (#310)
+-   Added `__version__` to module (#312)
+-   Added `conda` recipe (#281)
+-   Nuget update on build (#268)
+-   Added `__cause__` attribute on exception (#287)
+
+### Changed
+
+-   License to MIT (#314)
+-   Project clean-up (#320)
+-   Refactor `#if` directives
+-   Rename Decref/Incref to XDecref/XIncre (#275)
+-   Remove printing if Decref is called with NULL (#275)
+
+### Removed
+
+-   Python 3.2 support
+-   Python 3.3 support
+
+### Fixed
+
+-   Fixed `isinstance` refcount_leak (#273)
 
 ## [2.2.0-dev1][] - 2016-09-19
 
@@ -435,7 +455,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.2.0-dev1...HEAD
+[unreleased]: ../../compare/v2.2.0...HEAD
+
+[2.2.0]: ../../compare/v2.2.0-dev1...v2.2.0
 
 [2.2.0-dev1]: ../../compare/v2.1.0...v2.2.0-dev1
 

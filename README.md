@@ -1,14 +1,16 @@
 # pythonnet - Python for .NET
 
+[![appveyor shield][]](https://ci.appveyor.com/project/pythonnet/pythonnet/branch/master)
+[![travis shield][]](https://travis-ci.org/pythonnet/pythonnet)
+[![license shield][]](./LICENSE)
+[![pypi package version][]](https://pypi.python.org/pypi/pythonnet)
+[![python supported shield][]](https://pypi.python.org/pypi/pythonnet)
+
 Python for .NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
 provides a powerful application scripting tool for .NET developers.
 It allows Python code to interact with the CLR, and may also be used to
 embed Python into a .NET application.
-
-[![travis shield][]](https://travis-ci.org/pythonnet/pythonnet)
-[![appveyor shield][]](https://ci.appveyor.com/project/pythonnet/pythonnet-0kq5d/branch/master)
-[![license shield][]](./LICENSE)
 
 ## Calling .NET code from Python
 
@@ -76,8 +78,12 @@ int32
 [6.  10.  12.]
 ```
 
-[travis shield]: https://img.shields.io/travis/pythonnet/pythonnet/master.svg?style=flat-square
+[appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
 
-[appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet-0kq5d/master.svg?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%2C%3Csvg+xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27+width%3D%2740%27+height%3D%2740%27+viewBox%3D%270+0+40+40%27%3E%3Cpath+fill%3D%27%23BBB%27+d%3D%27M20+0c11+0+20+9+20+20s-9+20-20+20S0+31+0+20+9+0+20+0zm4.9+23.9c2.2-2.8+1.9-6.8-.9-8.9-2.7-2.1-6.7-1.6-9+1.2-2.2+2.8-1.9+6.8.9+8.9+2.8+2.1+6.8+1.6+9-1.2zm-10.7+13c1.2.5+3.8+1+5.1+1L28+25.3c2.8-4.2+2.1-9.9-1.8-13-3.5-2.8-8.4-2.7-11.9+0L2.2+21.6c.3+3.2+1.2+4.8+1.2+4.9l6.9-7.5c-.5+3.3.7+6.7+3.5+8.8+2.4+1.9+5.3+2.4+8.1+1.8l-7.7+7.3z%27%2F%3E%3C%2Fsvg%3E
+[license shield]: https://img.shields.io/badge/license-MIT-blue.svg
 
-[license shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
+[pypi package version]: https://img.shields.io/pypi/v/pythonnet.svg
+
+[python supported shield]: https://img.shields.io/pypi/pyversions/pythonnet.svg
+
+[travis shield]: https://img.shields.io/travis/pythonnet/pythonnet/master.svg?label=Travis
