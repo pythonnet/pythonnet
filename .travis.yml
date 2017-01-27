@@ -25,14 +25,20 @@ addons:
       - nunit-console
 
 install:
-  - pip install six
-  - pip install pycparser
-  - python setup.py build_ext --inplace
+  - pip install pycparser coverage codecov six
+  - coverage run setup.py build_ext --inplace
 
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python src/tests/runtests.py
   # - nunit-console src/embed_tests/bin/x64/ReleaseMono/Python.EmbeddingTest.dll
+
+after_success:
+  # Uncomment if need to geninterop, ie. py37 final
+  # - python tools/geninterop/geninterop.py
+
+  # Waiting on mono-cov support or SharpCover
+  - codecov
 
 notifications:
   email: false

@@ -10,7 +10,6 @@ environment:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
     PYTHONPATH: C:\testdir
-    NUNIT: nunit-console
     CONDA_BLD: C:\conda
     CONDA_BLD_VERSION: 3.5
 
@@ -35,7 +34,6 @@ init:
   - set CONDA_BLD_ARCH=%PLATFORM:x=%
   - set PYTHON=C:\PYTHON%PYTHON_VERSION:.=%
   - if %PLATFORM%==x86 (set CONDA_BLD_ARCH=32)
-  - if %PLATFORM%==x86 (set NUNIT=%NUNIT%-x86)
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
 
   # Prepend newly installed Python to the PATH of this build
@@ -47,21 +45,29 @@ init:
   - python -c "import ctypes; print(ctypes.sizeof(ctypes.c_wchar))"
 
 install:
-  # install for wheels
-  - pip install --upgrade pip wheel six
+  # install for wheels & coverage
+  - pip install --upgrade pip wheel coverage codecov six
+
+  # Install OpenCover. Can't put on packages.config; not Linux/Mono compatible
+  - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages
 
 build_script:
-  # build clean sdist & wheel
-  - python setup.py sdist bdist_wheel
+  # build clean sdist & wheel with coverage of setup.py, install local wheel
+  - coverage run setup.py sdist bdist_wheel
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: Copy-Item (Resolve-Path .\build\*\Python.Test.dll) C:\testdir
-  - python src\tests\runtests.py
-  # - "%NUNIT% src/embed_tests/bin/%PLATFORM%/ReleaseWin/Python.EmbeddingTest.dll"
+
+  # Test runner
+  - ps: .\ci\appveyor_run_tests.ps1
 
   # Build conda-recipe on Pull Requests
   - ps: .\ci\appveyor_build_recipe.ps1
+
+on_finish:
+  # Upload coverage
+  - codecov
 
 artifacts:
   - path: dist\*
