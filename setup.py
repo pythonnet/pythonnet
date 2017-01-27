@@ -6,36 +6,35 @@ Setup script for building clr.pyd and dependencies using mono and into
 an egg or wheel.
 """
 
-from setuptools import setup, Extension
-from distutils.command.build_ext import build_ext
-from distutils.command.install_lib import install_lib
-from distutils.command.install_data import install_data
-from distutils.sysconfig import get_config_var
-from distutils.spawn import find_executable
-from distutils import log
-from platform import architecture
-from subprocess import check_output, check_call
-from glob import glob
 import fnmatch
-import sys
+import glob
 import os
+import platform
+import subprocess
+import sys
+import sysconfig
+from distutils import log, spawn
+from distutils.command import build_ext, install_data, install_lib
+
+from setuptools import Extension, setup
 
 CONFIG = "Release"  # Release or Debug
-DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
-ARCH = "x64" if architecture()[0] == "64bit" else "x86"
+
+DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
+ARCH = "x64" if platform.architecture()[0] == "64bit" else "x86"
 
 
 def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     """Return full path to one of the Microsoft build tools"""
-    path = find_executable(tool)
+    path = spawn.find_executable(tool)
     if path:
         return path
 
-    try:
-        import _winreg
-    except ImportError:
-        import winreg as _winreg
+    try:  # PY2
+        import _winreg as winreg
+    except ImportError:  # PY3
+        import winreg
 
     keys_to_check = []
     if use_windows_sdk:
@@ -64,16 +63,16 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
 
     # read the possible tools paths from the various registry locations
     paths_to_check = []
-    hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+    hreg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
     try:
         for key_to_check in keys_to_check:
             sdk_name, key, value_name = key_to_check[:3]
             suffix = key_to_check[3] if len(key_to_check) > 3 else None
             hkey = None
             try:
-                hkey = _winreg.OpenKey(hreg, key)
-                val, type_ = _winreg.QueryValueEx(hkey, value_name)
-                if type_ != _winreg.REG_SZ:
+                hkey = winreg.OpenKey(hreg, key)
+                val, type_ = winreg.QueryValueEx(hkey, value_name)
+                if type_ != winreg.REG_SZ:
                     continue
                 if suffix:
                     val = os.path.join(val, suffix)
@@ -119,11 +118,11 @@ else:
         "DevTools %s not supported (use MsDev or Mono)" % DEVTOOLS)
 
 
-class BuildExtPythonnet(build_ext):
+class BuildExtPythonnet(build_ext.build_ext):
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
         if ext.name != "clr":
-            return build_ext.build_extension(self, ext)
+            return build_ext.build_ext.build_extension(self, ext)
 
         # install packages using nuget
         self._install_packages()
@@ -157,7 +156,7 @@ class BuildExtPythonnet(build_ext):
                 defines.append("MONO_LINUX")
 
             # Check if --enable-shared was set when Python was built
-            enable_shared = get_config_var("Py_ENABLE_SHARED")
+            enable_shared = sysconfig.get_config_var("Py_ENABLE_SHARED")
             if enable_shared:
                 # Double-check if libpython is linked dynamically with python
                 lddout = _check_output(["ldd", sys.executable])
@@ -179,7 +178,7 @@ class BuildExtPythonnet(build_ext):
         interop_file = _get_interop_filename()
         if not os.path.exists(interop_file):
             geninterop = os.path.join("tools", "geninterop", "geninterop.py")
-            check_call([sys.executable, geninterop, interop_file])
+            subprocess.check_call([sys.executable, geninterop, interop_file])
 
         cmd = [
             _xbuild,
@@ -198,8 +197,8 @@ class BuildExtPythonnet(build_ext):
 
         self.announce("Building: %s" % " ".join(cmd))
         use_shell = True if DEVTOOLS == "Mono" else False
-        check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
-        check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
+        subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
+        subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
 
         if DEVTOOLS == "Mono":
             self._build_monoclr(ext)
@@ -211,7 +210,7 @@ class BuildExtPythonnet(build_ext):
             cmd = [mt, '-inputresource:"%s"' % sys.executable,
                    '-out:"%s"' % manifest]
             self.announce("Extracting manifest from %s" % sys.executable)
-            check_call(" ".join(cmd), shell=False)
+            subprocess.check_call(" ".join(cmd), shell=False)
             return manifest
 
     def _build_monoclr(self, ext):
@@ -231,7 +230,7 @@ class BuildExtPythonnet(build_ext):
                             extra_compile_args=cflags.split(" "),
                             extra_link_args=libs.split(" "))
 
-        build_ext.build_extension(self, clr_ext)
+        build_ext.build_ext.build_extension(self, clr_ext)
 
     def _install_packages(self):
         """install packages using nuget"""
@@ -243,14 +242,14 @@ class BuildExtPythonnet(build_ext):
 
         cmd = "%s update -self" % nuget
         self.announce("Updating NuGet: %s" % cmd)
-        check_call(cmd, shell=use_shell)
+        subprocess.check_call(cmd, shell=use_shell)
 
         cmd = "%s restore pythonnet.sln -o packages" % nuget
         self.announce("Installing packages: %s" % cmd)
-        check_call(cmd, shell=use_shell)
+        subprocess.check_call(cmd, shell=use_shell)
 
 
-class InstallLibPythonnet(install_lib):
+class InstallLibPythonnet(install_lib.install_lib):
     def install(self):
         if not os.path.isdir(self.build_dir):
             self.warn("'%s' does not exist -- no Python modules to install" %
@@ -261,13 +260,13 @@ class InstallLibPythonnet(install_lib):
             self.mkpath(self.install_dir)
 
         # only copy clr.pyd/.so
-        for srcfile in glob(os.path.join(self.build_dir, "clr.*")):
+        for srcfile in glob.glob(os.path.join(self.build_dir, "clr.*")):
             destfile = os.path.join(
                 self.install_dir, os.path.basename(srcfile))
             self.copy_file(srcfile, destfile)
 
 
-class InstallDataPythonnet(install_data):
+class InstallDataPythonnet(install_data.install_data):
     def run(self):
         build_cmd = self.get_finalized_command("build_ext")
         install_cmd = self.get_finalized_command("install")
@@ -284,12 +283,12 @@ class InstallDataPythonnet(install_data):
                 dest = data_files[0].format(install_platlib=install_platlib)
                 self.data_files[i] = dest, data_files[1]
 
-        return install_data.run(self)
+        return install_data.install_data.run(self)
 
 
 def _check_output(*args, **kwargs):
     """Check output wrapper for py2/py3 compatibility"""
-    output = check_output(*args, **kwargs)
+    output = subprocess.check_output(*args, **kwargs)
     if sys.version_info[0] > 2:
         return output.decode("ascii")
     return output
@@ -312,7 +311,7 @@ if __name__ == "__main__":
 
     sources = []
     for ext in (".sln", ".snk", ".config"):
-        sources.extend(glob("*" + ext))
+        sources.extend(glob.glob("*" + ext))
 
     for root, dirnames, filenames in os.walk("src"):
         for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il",
