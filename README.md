@@ -2,6 +2,7 @@
 
 [![appveyor shield][]](https://ci.appveyor.com/project/pythonnet/pythonnet/branch/master)
 [![travis shield][]](https://travis-ci.org/pythonnet/pythonnet)
+[![codecov shield][]](https://codecov.io/github/pythonnet/pythonnet)
 [![license shield][]](./LICENSE)
 [![pypi package version][]](https://pypi.python.org/pypi/pythonnet)
 [![python supported shield][]](https://pypi.python.org/pypi/pythonnet)
@@ -79,6 +80,8 @@ int32
 ```
 
 [appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
+
+[codecov shield]: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/pytest.svg?label=codecov
 
 [license shield]: https://img.shields.io/badge/license-MIT-blue.svg
 
