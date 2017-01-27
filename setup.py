@@ -23,7 +23,7 @@ import os
 CONFIG = "Release"  # Release or Debug
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
-PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
+ARCH = "x64" if architecture()[0] == "64bit" else "x86"
 
 
 def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
@@ -41,7 +41,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     if use_windows_sdk:
         sdks_root = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows"
         kits_root = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
-        kits_suffix = os.path.join("bin", PLATFORM)
+        kits_suffix = os.path.join("bin", ARCH)
         keys_to_check.extend([
             ("Windows Kit 10.0", kits_root, "KitsRoot10", kits_suffix),
             ("Windows Kit 8.1", kits_root, "KitsRoot81", kits_suffix),
@@ -91,7 +91,7 @@ def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
     if use_windows_sdk:
         localappdata = os.environ["LOCALAPPDATA"]
         pywinsdk = localappdata + r"\Programs\Common\Microsoft\Visual C++ for Python\9.0\WinSDK\Bin"
-        if PLATFORM == "x64":
+        if ARCH == "x64":
             pywinsdk += r"\x64"
         paths_to_check.append(("Visual C++ for Python", pywinsdk))
 
@@ -119,7 +119,7 @@ else:
         "DevTools %s not supported (use MsDev or Mono)" % DEVTOOLS)
 
 
-class PythonNET_BuildExt(build_ext):
+class BuildExtPythonnet(build_ext):
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
         if ext.name != "clr":
@@ -185,7 +185,7 @@ class PythonNET_BuildExt(build_ext):
             _xbuild,
             "pythonnet.sln",
             "/p:Configuration=%s" % _config,
-            "/p:Platform=%s" % PLATFORM,
+            "/p:Platform=%s" % ARCH,
             "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
             "/p:PythonBuildDir=\"%s\"" % os.path.abspath(dest_dir),
             "/p:PythonInteropFile=\"%s\"" % os.path.basename(interop_file),
@@ -250,7 +250,7 @@ class PythonNET_BuildExt(build_ext):
         check_call(cmd, shell=use_shell)
 
 
-class PythonNET_InstallLib(install_lib):
+class InstallLibPythonnet(install_lib):
     def install(self):
         if not os.path.isdir(self.build_dir):
             self.warn("'%s' does not exist -- no Python modules to install" %
@@ -262,16 +262,18 @@ class PythonNET_InstallLib(install_lib):
 
         # only copy clr.pyd/.so
         for srcfile in glob(os.path.join(self.build_dir, "clr.*")):
-            destfile = os.path.join(self.install_dir, os.path.basename(srcfile))
+            destfile = os.path.join(
+                self.install_dir, os.path.basename(srcfile))
             self.copy_file(srcfile, destfile)
 
 
-class PythonNET_InstallData(install_data):
+class InstallDataPythonnet(install_data):
     def run(self):
         build_cmd = self.get_finalized_command("build_ext")
         install_cmd = self.get_finalized_command("install")
         build_lib = os.path.abspath(build_cmd.build_lib)
-        install_platlib = os.path.relpath(install_cmd.install_platlib, self.install_dir)
+        install_platlib = os.path.relpath(
+            install_cmd.install_platlib, self.install_dir)
 
         for i, data_files in enumerate(self.data_files):
             if isinstance(data_files, str):
@@ -313,7 +315,8 @@ if __name__ == "__main__":
         sources.extend(glob("*" + ext))
 
     for root, dirnames, filenames in os.walk("src"):
-        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il", ".py", ".c", ".h", ".ico"):
+        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il",
+                    ".py", ".c", ".h", ".ico"):
             for filename in fnmatch.filter(filenames, "*" + ext):
                 sources.append(os.path.join(root, filename))
 
@@ -360,9 +363,9 @@ if __name__ == "__main__":
         ],
         zip_safe=False,
         cmdclass={
-            "build_ext": PythonNET_BuildExt,
-            "install_lib": PythonNET_InstallLib,
-            "install_data": PythonNET_InstallData,
+            "build_ext": BuildExtPythonnet,
+            "install_lib": InstallLibPythonnet,
+            "install_data": InstallDataPythonnet,
         },
         setup_requires=setup_requires
     )
