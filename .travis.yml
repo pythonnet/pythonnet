@@ -1,6 +1,6 @@
-sudo: required
-language: python
+sudo: false
 
+language: python
 python:
   - 2.7
   - 3.3
@@ -8,14 +8,21 @@ python:
   - 3.5
   - 3.6
 
-before_install:
-  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
-  - sudo apt-get install software-properties-common
-  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-  - echo "deb http://download.mono-project.com/repo/debian wheezy/snapshots/4.2.4.4 main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
-  - echo "deb http://download.mono-project.com/repo/debian wheezy-libtiff-compat main" | sudo tee -a /etc/apt/sources.list.d/mono-xamarin.list
-  - sudo apt-get update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install mono-devel mono-complete referenceassemblies-pcl ca-certificates-mono nunit-console
+env:
+  global:
+    - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+    - SEGFAULT_SIGNALS=all
+    - PYTHONUNBUFFERED=True
+
+addons:
+  apt:
+    sources:
+      - mono
+      - mono-libtiff-compat
+    packages:
+      - mono-devel
+      - ca-certificates-mono
+      - nunit-console
 
 install:
   - pip install six
