@@ -120,6 +120,15 @@ def _get_source_files():
                 yield os.path.join(root, filename)
 
 
+def _get_long_description():
+    """Helper to populate long_description for pypi releases"""
+    try:
+        import pypandoc
+        return pypandoc.convert('README.md', 'rst')
+    except ImportError:
+        return '.Net and Mono integration for Python'
+
+
 class BuildExtPythonnet(build_ext.build_ext):
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
@@ -364,6 +373,7 @@ setup(
     license='MIT',
     author="The Python for .Net developers",
     setup_requires=setup_requires,
+    long_description=_get_long_description(),
     ext_modules=[
         Extension("clr", sources=list(_get_source_files()))
     ],
