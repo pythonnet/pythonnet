@@ -19,6 +19,8 @@ from distutils.command import build_ext, install_data, install_lib
 
 from setuptools import Extension, setup
 
+# Allow config/verbosity to be set from cli
+# http://stackoverflow.com/a/4792601/5208670
 CONFIG = "Release"  # Release or Debug
 VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
 
@@ -346,52 +348,50 @@ class InstallDataPythonnet(install_data.install_data):
 
 
 ###############################################################################
-if __name__ == "__main__":
-    setupdir = os.path.dirname(__file__)
-    if setupdir:
-        os.chdir(setupdir)
+setupdir = os.path.dirname(__file__)
+if setupdir:
+    os.chdir(setupdir)
 
-    setup_requires = []
-    interop_file = _get_interop_filename()
-    if not os.path.exists(interop_file):
-        setup_requires.append("pycparser")
+setup_requires = []
+if not os.path.exists(_get_interop_filename()):
+    setup_requires.append("pycparser")
 
-    setup(
-        name="pythonnet",
-        version="2.2.2",
-        description=".Net and Mono integration for Python",
-        url='https://pythonnet.github.io/',
-        license='MIT',
-        author="The Python for .Net developers",
-        classifiers=[
-            'Development Status :: 5 - Production/Stable',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: MIT License',
-            'Programming Language :: C#',
-            'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.3',
-            'Programming Language :: Python :: 3.4',
-            'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: POSIX :: Linux',
-            'Operating System :: MacOS :: MacOS X',
-        ],
-        ext_modules=[
-            Extension("clr", sources=list(_get_source_files()))
-        ],
-        data_files=[
-            ("{install_platlib}", [
-                "{build_lib}/Python.Runtime.dll",
-                "Python.Runtime.dll.config"]),
-        ],
-        zip_safe=False,
-        cmdclass={
-            "build_ext": BuildExtPythonnet,
-            "install_lib": InstallLibPythonnet,
-            "install_data": InstallDataPythonnet,
-        },
-        setup_requires=setup_requires,
-    )
+setup(
+    name="pythonnet",
+    version="2.2.2",
+    description=".Net and Mono integration for Python",
+    url='https://pythonnet.github.io/',
+    license='MIT',
+    author="The Python for .Net developers",
+    setup_requires=setup_requires,
+    ext_modules=[
+        Extension("clr", sources=list(_get_source_files()))
+    ],
+    data_files=[
+        ("{install_platlib}", [
+            "{build_lib}/Python.Runtime.dll",
+            "Python.Runtime.dll.config"]),
+    ],
+    cmdclass={
+        "build_ext": BuildExtPythonnet,
+        "install_lib": InstallLibPythonnet,
+        "install_data": InstallDataPythonnet,
+    },
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: C#',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
+    ],
+    zip_safe=False,
+)
