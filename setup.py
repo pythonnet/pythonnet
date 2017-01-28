@@ -100,6 +100,24 @@ def _get_interop_filename():
     return os.path.join("src", "runtime", interop_filename)
 
 
+def _get_source_files():
+    """Walk project and collect the files needed for ext_module"""
+    for ext in (".sln", ".snk", ".config"):
+        for path in glob.glob("*" + ext):
+            yield path
+
+    for root, dirnames, filenames in os.walk("src"):
+        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il",
+                    ".py", ".c", ".h", ".ico"):
+            for filename in fnmatch.filter(filenames, "*" + ext):
+                yield os.path.join(root, filename)
+
+    for root, dirnames, filenames in os.walk("tools"):
+        for ext in (".exe", ".py", ".c", ".h"):
+            for filename in fnmatch.filter(filenames, "*" + ext):
+                yield os.path.join(root, filename)
+
+
 class BuildExtPythonnet(build_ext.build_ext):
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
@@ -333,21 +351,6 @@ if __name__ == "__main__":
     if setupdir:
         os.chdir(setupdir)
 
-    sources = []
-    for ext in (".sln", ".snk", ".config"):
-        sources.extend(glob.glob("*" + ext))
-
-    for root, dirnames, filenames in os.walk("src"):
-        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il",
-                    ".py", ".c", ".h", ".ico"):
-            for filename in fnmatch.filter(filenames, "*" + ext):
-                sources.append(os.path.join(root, filename))
-
-    for root, dirnames, filenames in os.walk("tools"):
-        for ext in (".exe", ".py", ".c", ".h"):
-            for filename in fnmatch.filter(filenames, "*" + ext):
-                sources.append(os.path.join(root, filename))
-
     setup_requires = []
     interop_file = _get_interop_filename()
     if not os.path.exists(interop_file):
@@ -377,7 +380,7 @@ if __name__ == "__main__":
             'Operating System :: MacOS :: MacOS X',
         ],
         ext_modules=[
-            Extension("clr", sources=sources)
+            Extension("clr", sources=list(_get_source_files()))
         ],
         data_files=[
             ("{install_platlib}", [
