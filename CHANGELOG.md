@@ -5,6 +5,20 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
+## [unreleased][]
+
+### Added
+
+-   New `Foo` feature
+
+### Changed
+
+-   Changed `Bar` feature
+
+### Fixed
+
+-   Fixed `FooBar` bug
+
 ## [2.2.1][] - 2017-01-26
 
 `v2.2.0` had a release issue on pypi. Bumped to `v2.2.1`
@@ -27,32 +41,49 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Removed
 
--   Python 3.2 support
--   Python 3.3 support
+-   Python 2.6 support (#270)
+-   Python 3.2 support (#270)
 
 ### Fixed
 
 -   Fixed `isinstance` refcount_leak (#273)
+-   Comparison Operators (#294)
+-   Improved Linux support (#300)
+-   Exception pickling (#286)
 
 ## [2.2.0-dev1][] - 2016-09-19
 
+### Changed
+
 -   Switch to C# 6.0 (#219)
--   Relative imports (#219)
--   Recursive types (#250)
--   Demo fix - stream reading (#225)
--   setup.py improvements for locating build tools (#208)
+-   `setup.py` improvements for locating build tools (#208)
 -   unmanaged exports updated (#206)
 -   Mono update pinned to 4.2.4.4 (#233)
+
+### Fixed
+
+-   Fixed relative imports (#219)
+-   Fixed recursive types (#250)
+-   Demo fix - stream reading (#225)
 
 ## [2.1.0][] - 2016-04-12
 
 ### Added
 
--   Added Python 3.x support.
+-   Added Python 3.2 support. (#78)
+-   Added Python 3.3 support. (#78)
+-   Added Python 3.4 support. (#78)
+-   Added Python 3.5 support. (#163)
+-   Managed types can be sub-classed in Python (#78)
+-   Uses dynamic objects for cleaner code when embedding Python (#78)
+
+### Changed
+
+-   Better Linux support (with or without --enable-shared option) (#78)
 
 ### Removed
 
--   Implicit Type Casting.
+-   Implicit Type Casting (#131)
 
 ## [2.0.0][] - 2015-06-26
 
