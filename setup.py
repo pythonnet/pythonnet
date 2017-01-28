@@ -24,6 +24,8 @@ VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
 
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 ARCH = "x64" if platform.architecture()[0] == "64bit" else "x86"
+PY_MAJOR = sys.version_info[0]
+PY_MINOR = sys.version_info[1]
 
 ###############################################################################
 # Windows Keys Constants for MSBUILD tools
@@ -144,9 +146,9 @@ class BuildExtPythonnet(build_ext.build_ext):
             unicode_width = ctypes.sizeof(ctypes.c_wchar)
 
         defines = [
-            "PYTHON%d%d" % (sys.version_info[:2]),
-            "PYTHON%d" % (sys.version_info[:1]),  # Python Major Version
-            "UCS%d" % unicode_width,
+            "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR),
+            "PYTHON{0}".format(PY_MAJOR),  # Python Major Version
+            "UCS{0}".format(unicode_width),
         ]
 
         if CONFIG == "Debug":
@@ -185,12 +187,10 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         if DEVTOOLS == "MsDev":
             _xbuild = '"{0}"'.format(_find_msbuild_tool("msbuild.exe"))
-            _defines_sep = ";"
             _config = "{0}Win".format(CONFIG)
 
         elif DEVTOOLS == "Mono":
             _xbuild = "xbuild"
-            _defines_sep = ","
             _config = "{0}Mono".format(CONFIG)
         else:
             raise NotImplementedError(
@@ -198,38 +198,38 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         cmd = [
             _xbuild,
-            "pythonnet.sln",
-            "/p:Configuration=%s" % _config,
-            "/p:Platform=%s" % ARCH,
-            "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
-            "/p:PythonBuildDir=\"%s\"" % os.path.abspath(dest_dir),
-            "/p:PythonInteropFile=\"%s\"" % os.path.basename(interop_file),
-            "/verbosity:%s" % VERBOSITY,
+            'pythonnet.sln',
+            '/p:Configuration={}'.format(_config),
+            '/p:Platform={}'.format(ARCH),
+            '/p:DefineConstants="{}"'.format(','.join(defines)),
+            '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
+            '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
+            '/verbosity:{}'.format(VERBOSITY),
         ]
 
         manifest = self._get_manifest(dest_dir)
         if manifest:
-            cmd.append("/p:PythonManifest=\"%s\"" % manifest)
+            cmd.append('/p:PythonManifest="{0}"'.format(manifest))
 
-        self.announce("Building: %s" % " ".join(cmd))
+        self.announce("Building: {0}".format(" ".join(cmd)))
         use_shell = True if DEVTOOLS == "Mono" else False
         subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
 
         if DEVTOOLS == "Mono":
-            self._build_monoclr(ext)
+            self._build_monoclr()
 
     def _get_manifest(self, build_dir):
         if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2, 5):
             mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
             manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
-            cmd = [mt, '-inputresource:"%s"' % sys.executable,
-                   '-out:"%s"' % manifest]
-            self.announce("Extracting manifest from %s" % sys.executable)
+            cmd = [mt, '-inputresource:"{0}"'.format(sys.executable),
+                   '-out:"{0}"'.format(manifest)]
+            self.announce("Extracting manifest from {}".format(sys.executable))
             subprocess.check_call(" ".join(cmd), shell=False)
             return manifest
 
-    def _build_monoclr(self, ext):
+    def _build_monoclr(self):
         mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
         glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
@@ -238,13 +238,15 @@ class BuildExtPythonnet(build_ext.build_ext):
         libs = mono_libs.strip() + " " + glib_libs.strip()
 
         # build the clr python module
-        clr_ext = Extension("clr",
-                            sources=[
-                                "src/monoclr/pynetinit.c",
-                                "src/monoclr/clrmod.c"
-                            ],
-                            extra_compile_args=cflags.split(" "),
-                            extra_link_args=libs.split(" "))
+        clr_ext = Extension(
+            "clr",
+            sources=[
+                "src/monoclr/pynetinit.c",
+                "src/monoclr/clrmod.c"
+            ],
+            extra_compile_args=cflags.split(" "),
+            extra_link_args=libs.split(" ")
+        )
 
         build_ext.build_ext.build_extension(self, clr_ext)
 
@@ -253,23 +255,23 @@ class BuildExtPythonnet(build_ext.build_ext):
         nuget = os.path.join("tools", "nuget", "nuget.exe")
         use_shell = False
         if DEVTOOLS == "Mono":
-            nuget = "mono %s" % nuget
+            nuget = "mono {0}".format(nuget)
             use_shell = True
 
-        cmd = "%s update -self" % nuget
-        self.announce("Updating NuGet: %s" % cmd)
+        cmd = "{0} update -self".format(nuget)
+        self.announce("Updating NuGet: {0}".format(cmd))
         subprocess.check_call(cmd, shell=use_shell)
 
-        cmd = "%s restore pythonnet.sln -o packages" % nuget
-        self.announce("Installing packages: %s" % cmd)
+        cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
+        self.announce("Installing packages: {0}".format(cmd))
         subprocess.check_call(cmd, shell=use_shell)
 
 
 class InstallLibPythonnet(install_lib.install_lib):
     def install(self):
         if not os.path.isdir(self.build_dir):
-            self.warn("'%s' does not exist -- no Python modules to install" %
-                      self.build_dir)
+            self.warn("'{0}' does not exist -- no Python modules"
+                      " to install".format(self.build_dir))
             return
 
         if not os.path.exists(self.install_dir):
@@ -305,9 +307,9 @@ class InstallDataPythonnet(install_data.install_data):
 def _check_output(*args, **kwargs):
     """Check output wrapper for py2/py3 compatibility"""
     output = subprocess.check_output(*args, **kwargs)
-    if sys.version_info[0] > 2:
-        return output.decode("ascii")
-    return output
+    if PY_MAJOR == 2:
+        return output
+    return output.decode("ascii")
 
 
 def _get_interop_filename():
@@ -316,8 +318,9 @@ def _get_interop_filename():
     as most windows users won't have Clang installed, which is
     required to generate the file.
     """
-    interop_file = "interop%d%d%s.cs" % (sys.version_info[0], sys.version_info[1], getattr(sys, "abiflags", ""))
-    return os.path.join("src", "runtime", interop_file)
+    interop_filename = "interop{0}{1}{2}.cs".format(
+        PY_MAJOR, PY_MINOR, getattr(sys, "abiflags", ""))
+    return os.path.join("src", "runtime", interop_filename)
 
 
 if __name__ == "__main__":
@@ -382,5 +385,5 @@ if __name__ == "__main__":
             "install_lib": InstallLibPythonnet,
             "install_data": InstallDataPythonnet,
         },
-        setup_requires=setup_requires
+        setup_requires=setup_requires,
     )
