@@ -14,7 +14,7 @@ import platform
 import subprocess
 import sys
 import sysconfig
-from distutils import log, spawn
+from distutils import spawn
 from distutils.command import build_ext, install_data, install_lib
 
 from setuptools import Extension, setup
@@ -81,46 +81,23 @@ VS_KEYS = (
 
 
 ###############################################################################
-def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
-    """Return full path to one of the Microsoft build tools"""
-    # Search in PATH first
-    path = spawn.find_executable(tool)
-    if path:
-        return path
+def _check_output(*args, **kwargs):
+    """Check output wrapper for py2/py3 compatibility"""
+    output = subprocess.check_output(*args, **kwargs)
+    if PY_MAJOR == 2:
+        return output
+    return output.decode("ascii")
 
-    # Search within registry to find build tools
-    try:  # PY2
-        import _winreg as winreg
-    except ImportError:  # PY3
-        import winreg
 
-    keys_to_check = WIN_SDK_KEYS if use_windows_sdk else VS_KEYS
-    for rkey in keys_to_check:
-        try:
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, rkey.key) as hkey:
-                val, type_ = winreg.QueryValueEx(hkey, rkey.value_name)
-                if type_ != winreg.REG_SZ:
-                    continue
-                path = os.path.join(val, rkey.suffix, tool)
-                if os.path.exists(path):
-                    log.info("Using {0} from {1}".format(tool, rkey.sdk_name))
-                    return path
-        except WindowsError:
-            # Key doesn't exist
-            pass
-
-    # Add Visual C++ for Python as a fall-back in case one
-    # of the other Windows SDKs isn't installed
-    if use_windows_sdk:
-        sdk_name = "Visual C++ for Python"
-        localappdata = os.environ["LOCALAPPDATA"]
-        suffix = "Bin\\x64" if ARCH == "x64" else "Bin"
-        path = os.path.join(localappdata, vs_python, suffix, tool)
-        if os.path.exists(path):
-            log.info("Using {0} from {1}".format(tool, sdk_name))
-            return path
-
-    raise RuntimeError("{0} could not be found".format(tool))
+def _get_interop_filename():
+    """interopXX.cs is auto-generated as part of the build.
+    For common windows platforms pre-generated files are included
+    as most windows users won't have Clang installed, which is
+    required to generate the file.
+    """
+    interop_filename = "interop{0}{1}{2}.cs".format(
+        PY_MAJOR, PY_MINOR, getattr(sys, "abiflags", ""))
+    return os.path.join("src", "runtime", interop_filename)
 
 
 class BuildExtPythonnet(build_ext.build_ext):
@@ -139,6 +116,7 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         # Up to Python 3.2 sys.maxunicode is used to determine the size of
         # Py_UNICODE, but from 3.3 onwards Py_UNICODE is a typedef of wchar_t.
+        # TODO: Is this doing the right check for Py27?
         if sys.version_info[:2] <= (3, 2):
             unicode_width = 2 if sys.maxunicode < 0x10FFFF else 4
         else:
@@ -186,7 +164,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             subprocess.check_call([sys.executable, geninterop, interop_file])
 
         if DEVTOOLS == "MsDev":
-            _xbuild = '"{0}"'.format(_find_msbuild_tool("msbuild.exe"))
+            _xbuild = '"{0}"'.format(self._find_msbuild_tool("msbuild.exe"))
             _config = "{0}Win".format(CONFIG)
 
         elif DEVTOOLS == "Mono":
@@ -220,14 +198,15 @@ class BuildExtPythonnet(build_ext.build_ext):
             self._build_monoclr()
 
     def _get_manifest(self, build_dir):
-        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2, 5):
-            mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
-            manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
-            cmd = [mt, '-inputresource:"{0}"'.format(sys.executable),
-                   '-out:"{0}"'.format(manifest)]
-            self.announce("Extracting manifest from {}".format(sys.executable))
-            subprocess.check_call(" ".join(cmd), shell=False)
-            return manifest
+        if DEVTOOLS != "MsDev":
+            return
+        mt = self._find_msbuild_tool("mt.exe", use_windows_sdk=True)
+        manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
+        cmd = [mt, '-inputresource:"{0}"'.format(sys.executable),
+               '-out:"{0}"'.format(manifest)]
+        self.announce("Extracting manifest from {}".format(sys.executable))
+        subprocess.check_call(" ".join(cmd), shell=False)
+        return manifest
 
     def _build_monoclr(self):
         mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
@@ -265,6 +244,50 @@ class BuildExtPythonnet(build_ext.build_ext):
         cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
         self.announce("Installing packages: {0}".format(cmd))
         subprocess.check_call(cmd, shell=use_shell)
+
+    def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
+        """Return full path to one of the Microsoft build tools"""
+        # Search in PATH first
+        path = spawn.find_executable(tool)
+        if path:
+            return path
+
+        # Search within registry to find build tools
+        try:  # PY2
+            import _winreg as winreg
+        except ImportError:  # PY3
+            import winreg
+
+        keys_to_check = WIN_SDK_KEYS if use_windows_sdk else VS_KEYS
+        hklm = winreg.HKEY_LOCAL_MACHINE
+        for rkey in keys_to_check:
+            try:
+                with winreg.OpenKey(hklm, rkey.key) as hkey:
+                    val, type_ = winreg.QueryValueEx(hkey, rkey.value_name)
+                    if type_ != winreg.REG_SZ:
+                        continue
+                    path = os.path.join(val, rkey.suffix, tool)
+                    if os.path.exists(path):
+                        self.announce("Using {0} from {1}".format(
+                            tool, rkey.sdk_name))
+                        return path
+            except WindowsError:
+                # Key doesn't exist
+                pass
+
+        # Add Visual C++ for Python as a fall-back in case one
+        # of the other Windows SDKs isn't installed.
+        # TODO: Extend checking by using setuptools/msvc.py?
+        if use_windows_sdk:
+            sdk_name = "Visual C++ for Python"
+            localappdata = os.environ["LOCALAPPDATA"]
+            suffix = "Bin\\x64" if ARCH == "x64" else "Bin"
+            path = os.path.join(localappdata, vs_python, suffix, tool)
+            if os.path.exists(path):
+                self.announce("Using {0} from {1}".format(tool, sdk_name))
+                return path
+
+        raise RuntimeError("{0} could not be found".format(tool))
 
 
 class InstallLibPythonnet(install_lib.install_lib):
@@ -304,25 +327,7 @@ class InstallDataPythonnet(install_data.install_data):
         return install_data.install_data.run(self)
 
 
-def _check_output(*args, **kwargs):
-    """Check output wrapper for py2/py3 compatibility"""
-    output = subprocess.check_output(*args, **kwargs)
-    if PY_MAJOR == 2:
-        return output
-    return output.decode("ascii")
-
-
-def _get_interop_filename():
-    """interopXX.cs is auto-generated as part of the build.
-    For common windows platforms pre-generated files are included
-    as most windows users won't have Clang installed, which is
-    required to generate the file.
-    """
-    interop_filename = "interop{0}{1}{2}.cs".format(
-        PY_MAJOR, PY_MINOR, getattr(sys, "abiflags", ""))
-    return os.path.join("src", "runtime", interop_filename)
-
-
+###############################################################################
 if __name__ == "__main__":
     setupdir = os.path.dirname(__file__)
     if setupdir:
