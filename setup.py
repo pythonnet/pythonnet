@@ -189,6 +189,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         # check the interop file exists, and create it if it doesn't
         interop_file = _get_interop_filename()
         if not os.path.exists(interop_file):
+            self.debug_print("Creating {0}".format(interop_file))
             geninterop = os.path.join("tools", "geninterop", "geninterop.py")
             subprocess.check_call([sys.executable, geninterop, interop_file])
 
@@ -218,7 +219,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         if manifest:
             cmd.append('/p:PythonManifest="{0}"'.format(manifest))
 
-        self.announce("Building: {0}".format(" ".join(cmd)))
+        self.debug_print("Building: {0}".format(" ".join(cmd)))
         use_shell = True if DEVTOOLS == "Mono" else False
         subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
@@ -233,7 +234,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
         cmd = [mt, '-inputresource:"{0}"'.format(sys.executable),
                '-out:"{0}"'.format(manifest)]
-        self.announce("Extracting manifest from {}".format(sys.executable))
+        self.debug_print("Extracting manifest from {}".format(sys.executable))
         subprocess.check_call(" ".join(cmd), shell=False)
         return manifest
 
@@ -267,11 +268,11 @@ class BuildExtPythonnet(build_ext.build_ext):
             use_shell = True
 
         cmd = "{0} update -self".format(nuget)
-        self.announce("Updating NuGet: {0}".format(cmd))
+        self.debug_print("Updating NuGet: {0}".format(cmd))
         subprocess.check_call(cmd, shell=use_shell)
 
         cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
-        self.announce("Installing packages: {0}".format(cmd))
+        self.debug_print("Installing packages: {0}".format(cmd))
         subprocess.check_call(cmd, shell=use_shell)
 
     def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
@@ -297,7 +298,7 @@ class BuildExtPythonnet(build_ext.build_ext):
                         continue
                     path = os.path.join(val, rkey.suffix, tool)
                     if os.path.exists(path):
-                        self.announce("Using {0} from {1}".format(
+                        self.debug_print("Using {0} from {1}".format(
                             tool, rkey.sdk_name))
                         return path
             except WindowsError:
@@ -313,7 +314,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             suffix = "Bin\\x64" if ARCH == "x64" else "Bin"
             path = os.path.join(localappdata, vs_python, suffix, tool)
             if os.path.exists(path):
-                self.announce("Using {0} from {1}".format(tool, sdk_name))
+                self.debug_print("Using {0} from {1}".format(tool, sdk_name))
                 return path
 
         raise RuntimeError("{0} could not be found".format(tool))
