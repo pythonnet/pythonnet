@@ -1590,8 +1590,7 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == Runtime.PyUnicodeType;
         }
 
-#if (UCS2)
-#if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if UCS2 && PYTHON3
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
@@ -1633,8 +1632,7 @@ namespace Python.Runtime
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-
-#else
+#elif UCS2 && PYTHON2
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_FromObject",
         ExactSpelling=true, CharSet=CharSet.Unicode)]
@@ -1676,10 +1674,7 @@ namespace Python.Runtime
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-#endif
-#endif
-#if (UCS4)
-#if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#elif UCS4 && PYTHON3
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
@@ -1723,8 +1718,7 @@ namespace Python.Runtime
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-
-#else
+#elif UCS4 && PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS4_FromObject",
             ExactSpelling = true, CharSet = CharSet.Unicode)]
@@ -1768,8 +1762,6 @@ namespace Python.Runtime
             ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
-
-#endif
 #endif
 
         internal static IntPtr PyUnicode_FromString(string s)
