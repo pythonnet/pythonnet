@@ -327,7 +327,7 @@ if __name__ == "__main__":
                 sources.append(os.path.join(root, filename))
 
     for root, dirnames, filenames in os.walk("tools"):
-        for ext in (".exe", ".py"):
+        for ext in (".exe", ".py", ".c", ".h"):
             for filename in fnmatch.filter(filenames, "*" + ext):
                 sources.append(os.path.join(root, filename))
 
