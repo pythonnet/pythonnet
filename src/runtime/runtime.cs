@@ -1,13 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
-#if (UCS4)
+#if UCS4
 using System.Text;
 using Mono.Unix;
-
-#endif
-
-#if (UCS2 && PYTHON3)
+#elif UCS2 && PYTHON3
 using System.Text;
 #endif
 
@@ -16,7 +13,7 @@ namespace Python.Runtime
     [SuppressUnmanagedCodeSecurityAttribute()]
     static class NativeMethods
     {
-#if (MONO_LINUX || MONO_OSX)
+#if MONO_LINUX || MONO_OSX
         static public IntPtr LoadLibrary(string fileName) {
             return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
         }
@@ -40,7 +37,7 @@ namespace Python.Runtime
             return res;
         }
 
-#if (MONO_OSX)
+#if MONO_OSX
         static int RTLD_NOW = 0x2;
         static int RTLD_SHARED = 0x20;
         static IntPtr RTLD_DEFAULT = new IntPtr(-2);
@@ -56,7 +53,7 @@ namespace Python.Runtime
 
         [DllImport("__Internal")]
         private static extern IntPtr dlerror();
-#else
+#elif MONO_LINUX
         static int RTLD_NOW = 0x2;
         static int RTLD_SHARED = 0x20;
         static IntPtr RTLD_DEFAULT = IntPtr.Zero;
@@ -74,7 +71,7 @@ namespace Python.Runtime
         private static extern IntPtr dlerror();
 #endif
 
-#else
+#else // Windows
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string dllToLoad);
 
@@ -93,13 +90,11 @@ namespace Python.Runtime
         /// the responsibility of the caller to have acquired the GIL
         /// before calling any of these methods.
         /// </summary>
-#if (UCS4)
+#if UCS4
         public const int UCS = 4;
-#endif
-#if (UCS2)
+#elif UCS2
         public const int UCS = 2;
-#endif
-#if ! (UCS2 || UCS4)
+#else
 #error You must define either UCS2 or UCS4!
 #endif
 
@@ -156,23 +151,23 @@ namespace Python.Runtime
 #endif
 #endif
 
-#if (PYTHON_WITH_PYDEBUG)
+#if PYTHON_WITH_PYDEBUG
         internal const string dllWithPyDebug = "d";
 #else
         internal const string dllWithPyDebug = "";
 #endif
-#if (PYTHON_WITH_PYMALLOC)
+#if PYTHON_WITH_PYMALLOC
         internal const string dllWithPyMalloc = "m";
 #else
         internal const string dllWithPyMalloc = "";
 #endif
-#if (PYTHON_WITH_WIDE_UNICODE)
+#if PYTHON_WITH_WIDE_UNICODE
         internal const string dllWithWideUnicode = "u";
 #else
         internal const string dllWithWideUnicode = "";
 #endif
 
-#if (PYTHON_WITHOUT_ENABLE_SHARED)
+#if PYTHON_WITHOUT_ENABLE_SHARED
         public const string dll = "__Internal";
 #else
         public const string dll = dllBase + dllWithPyDebug + dllWithPyMalloc + dllWithWideUnicode;
@@ -504,7 +499,7 @@ namespace Python.Runtime
 
         internal unsafe static void XIncref(IntPtr op)
         {
-#if (Py_DEBUG)
+#if Py_DEBUG
         // according to Python doc, Py_IncRef() is Py_XINCREF()
         Py_IncRef(op);
         return;
@@ -526,7 +521,7 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
-#if (Py_DEBUG)
+#if Py_DEBUG
         // Py_DecRef calls Python's Py_DECREF
         // according to Python doc, Py_DecRef() is Py_XDECREF()
         Py_DecRef(op);
@@ -581,7 +576,7 @@ namespace Python.Runtime
             return 0;
         }
 
-#if (Py_DEBUG)
+#if Py_DEBUG
     // Py_IncRef and Py_DecRef are taking care of the extra payload
     // in Py_DEBUG builds of Python like _Py_RefTotal
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
@@ -892,7 +887,7 @@ namespace Python.Runtime
             {
                 return IntPtr.Zero;
             }
-#if (Py_DEBUG)
+#if Py_DEBUG
         int n = 3;
 #else
             int n = 1;
