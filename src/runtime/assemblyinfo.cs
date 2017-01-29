@@ -15,20 +15,19 @@ using System.Runtime.InteropServices;
 #if PYTHON27
 [assembly: AssemblyTitle("Python.Runtime for Python 2.7")]
 [assembly: AssemblyDescription("Python Runtime for Python 2.7")]
-#endif
-#if PYTHON33
+#elif PYTHON33
 [assembly: AssemblyTitle("Python.Runtime for Python 3.3")]
 [assembly: AssemblyDescription("Python Runtime for Python 3.3")]
-#endif
-#if PYTHON34
+#elif PYTHON34
 [assembly: AssemblyTitle("Python.Runtime for Python 3.4")]
 [assembly: AssemblyDescription("Python Runtime for Python 3.4")]
-#endif
-#if PYTHON35
+#elif PYTHON35
 [assembly: AssemblyTitle("Python.Runtime for Python 3.5")]
 [assembly: AssemblyDescription("Python Runtime for Python 3.5")]
-#endif
-#if PYTHON36
+#elif PYTHON36
 [assembly: AssemblyTitle("Python.Runtime for Python 3.6")]
 [assembly: AssemblyDescription("Python Runtime for Python 3.6")]
+#elif PYTHON37
+[assembly: AssemblyTitle("Python.Runtime for Python 3.7")]
+[assembly: AssemblyDescription("Python Runtime for Python 3.7")]
 #endif

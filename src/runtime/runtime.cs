@@ -103,96 +103,56 @@ namespace Python.Runtime
 #error You must define either UCS2 or UCS4!
 #endif
 
-#if (PYTHON23)
-        public const string pyversion = "2.3";
-        public const int pyversionnumber = 23;
-#endif
-#if (PYTHON24)
-        public const string pyversion = "2.4";
-        public const int pyversionnumber = 24;
-#endif
-#if (PYTHON25)
-        public const string pyversion = "2.5";
-        public const int pyversionnumber = 25;
-#endif
-#if (PYTHON26)
-        public const string pyversion = "2.6";
-        public const int pyversionnumber = 26;
-#endif
-#if (PYTHON27)
+#if PYTHON27
         public const string pyversion = "2.7";
         public const int pyversionnumber = 27;
-#endif
-#if (PYTHON32)
-        public const string pyversion = "3.2";
-        public const int pyversionnumber = 32;
-#endif
-#if (PYTHON33)
+#elif PYTHON33
         public const string pyversion = "3.3";
         public const int pyversionnumber = 33;
-#endif
-#if (PYTHON34)
+#elif PYTHON34
         public const string pyversion = "3.4";
         public const int pyversionnumber = 34;
-#endif
-#if (PYTHON35)
+#elif PYTHON35
         public const string pyversion = "3.5";
         public const int pyversionnumber = 35;
-#endif
-#if (PYTHON36)
+#elif PYTHON36
         public const string pyversion = "3.6";
         public const int pyversionnumber = 36;
-#endif
-#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
-#error You must define one of PYTHON23 to PYTHON36
+#elif PYTHON37
+        // TODO: Add interop37 after Python3.7 is released
+        public const string pyversion = "3.7";
+        public const int pyversionnumber = 37;
+#else
+#error You must define one of PYTHON33 to PYTHON37 or PYTHON27
 #endif
 
-#if (PYTHON23)
-        internal const string dllBase = "python23";
-#endif
-#if (PYTHON24)
-        internal const string dllBase = "python24";
-#endif
-#if (PYTHON25)
-        internal const string dllBase = "python25";
-#endif
-#if (PYTHON26)
-        internal const string dllBase = "python26";
-#endif
-#if (PYTHON27)
+#if MONO_LINUX || MONO_OSX
+#if PYTHON27
         internal const string dllBase = "python27";
-#endif
-#if (MONO_LINUX || MONO_OSX)
-#if (PYTHON32)
-        internal const string dllBase = "python3.2";
-#endif
-#if (PYTHON33)
+#elif PYTHON33
         internal const string dllBase = "python3.3";
-#endif
-#if (PYTHON34)
+#elif PYTHON34
         internal const string dllBase = "python3.4";
-#endif
-#if (PYTHON35)
+#elif PYTHON35
         internal const string dllBase = "python3.5";
-#endif
-#if (PYTHON36)
+#elif PYTHON36
         internal const string dllBase = "python3.6";
+#elif PYTHON37
+        internal const string dllBase = "python3.7";
 #endif
-#else
-#if (PYTHON32)
-        internal const string dllBase = "python32";
-#endif
-#if (PYTHON33)
+#else // Windows
+#if PYTHON27
+        internal const string dllBase = "python27";
+#elif PYTHON33
         internal const string dllBase = "python33";
-#endif
-#if (PYTHON34)
+#elif PYTHON34
         internal const string dllBase = "python34";
-#endif
-#if (PYTHON35)
+#elif PYTHON35
         internal const string dllBase = "python35";
-#endif
-#if (PYTHON36)
+#elif PYTHON36
         internal const string dllBase = "python36";
+#elif PYTHON37
+        internal const string dllBase = "python37";
 #endif
 #endif
 
