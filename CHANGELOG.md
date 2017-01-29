@@ -5,19 +5,11 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## [unreleased][]
-
-### Added
-
--   New `Foo` feature
-
-### Changed
-
--   Changed `Bar` feature
+## [2.2.2][] - 2017-01-29
 
 ### Fixed
 
--   Fixed `FooBar` bug
+-   Missing files from packaging (#336)
 
 ## [2.2.1][] - 2017-01-26
 
@@ -488,7 +480,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.2.1...HEAD
+[unreleased]: ../../compare/v2.2.2...HEAD
+
+[2.2.2]: ../../compare/v2.2.1...v2.2.2
 
 [2.2.1]: ../../compare/v2.2.0-dev1...v2.2.1
 

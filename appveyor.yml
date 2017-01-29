@@ -1,4 +1,4 @@
-version: 2.2.1-build{build}
+version: '{branch}-{build}'
 
 platform:
   - x86
