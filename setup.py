@@ -6,124 +6,134 @@ Setup script for building clr.pyd and dependencies using mono and into
 an egg or wheel.
 """
 
-from setuptools import setup, Extension
-from distutils.command.build_ext import build_ext
-from distutils.command.install_lib import install_lib
-from distutils.command.install_data import install_data
-from distutils.sysconfig import get_config_var
-from distutils.spawn import find_executable
-from distutils import log
-from platform import architecture
-from subprocess import Popen, CalledProcessError, PIPE, check_call
-from glob import glob
+import collections
 import fnmatch
-import sys
+import glob
 import os
+import platform
+import subprocess
+import sys
+import sysconfig
+from distutils import spawn
+from distutils.command import build_ext, install_data, install_lib
 
+from setuptools import Extension, setup
+
+# Allow config/verbosity to be set from cli
+# http://stackoverflow.com/a/4792601/5208670
 CONFIG = "Release"  # Release or Debug
-DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
 VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
-PLATFORM = "x64" if architecture()[0] == "64bit" else "x86"
+
+DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
+ARCH = "x64" if platform.architecture()[0] == "64bit" else "x86"
+PY_MAJOR = sys.version_info[0]
+PY_MINOR = sys.version_info[1]
+
+###############################################################################
+# Windows Keys Constants for MSBUILD tools
+RegKey = collections.namedtuple('RegKey', 'sdk_name key value_name suffix')
+vs_python = "Programs\\Common\\Microsoft\\Visual C++ for Python\\9.0\\WinSDK"
+vs_root = "SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\{0}"
+sdks_root = "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v{0}Win32Tools"
+kits_root = "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"
+kits_suffix = os.path.join("bin", ARCH)
+
+WIN_SDK_KEYS = (
+    RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
+           value_name="KitsRoot10", suffix=kits_suffix),
+
+    RegKey(sdk_name="Windows Kit 8.1", key=kits_root,
+           value_name="KitsRoot81", suffix=kits_suffix),
+
+    RegKey(sdk_name="Windows Kit 8.0", key=kits_root,
+           value_name="KitsRoot", suffix=kits_suffix),
+
+    RegKey(sdk_name="Windows SDK 7.1A", key=sdks_root.format("7.1A\\WinSDK-"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 7.1", key=sdks_root.format("7.1\\WinSDK"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 7.0A", key=sdks_root.format("7.0A\\WinSDK-"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 7.0", key=sdks_root.format("7.0\\WinSDK"),
+           value_name="InstallationFolder", suffix=""),
+
+    RegKey(sdk_name="Windows SDK 6.0A", key=sdks_root.format("6.0A\\WinSDK"),
+           value_name="InstallationFolder", suffix=""),
+)
+
+VS_KEYS = (
+    RegKey(sdk_name="MSBuild 14", key=vs_root.format("14.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 12", key=vs_root.format("12.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 4", key=vs_root.format("4.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 3.5", key=vs_root.format("3.5"),
+           value_name="MSBuildToolsPath", suffix=""),
+
+    RegKey(sdk_name="MSBuild 2.0", key=vs_root.format("2.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+)
 
 
-def _find_msbuild_tool(tool="msbuild.exe", use_windows_sdk=False):
-    """Return full path to one of the Microsoft build tools"""
-    path = find_executable(tool)
-    if path:
-        return path
+###############################################################################
+def _check_output(*args, **kwargs):
+    """Check output wrapper for py2/py3 compatibility"""
+    output = subprocess.check_output(*args, **kwargs)
+    if PY_MAJOR == 2:
+        return output
+    return output.decode("ascii")
 
+
+def _get_interop_filename():
+    """interopXX.cs is auto-generated as part of the build.
+    For common windows platforms pre-generated files are included
+    as most windows users won't have Clang installed, which is
+    required to generate the file.
+    """
+    interop_filename = "interop{0}{1}{2}.cs".format(
+        PY_MAJOR, PY_MINOR, getattr(sys, "abiflags", ""))
+    return os.path.join("src", "runtime", interop_filename)
+
+
+def _get_source_files():
+    """Walk project and collect the files needed for ext_module"""
+    for ext in (".sln", ".snk", ".config"):
+        for path in glob.glob("*" + ext):
+            yield path
+
+    for root, dirnames, filenames in os.walk("src"):
+        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il",
+                    ".py", ".c", ".h", ".ico"):
+            for filename in fnmatch.filter(filenames, "*" + ext):
+                yield os.path.join(root, filename)
+
+    for root, dirnames, filenames in os.walk("tools"):
+        for ext in (".exe", ".py", ".c", ".h"):
+            for filename in fnmatch.filter(filenames, "*" + ext):
+                yield os.path.join(root, filename)
+
+
+def _get_long_description():
+    """Helper to populate long_description for pypi releases"""
     try:
-        import _winreg
+        import pypandoc
+        return pypandoc.convert('README.md', 'rst')
     except ImportError:
-        import winreg as _winreg
-
-    keys_to_check = []
-    if use_windows_sdk:
-        sdks_root = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows"
-        kits_root = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots"
-        kits_suffix = os.path.join("bin", PLATFORM)
-        keys_to_check.extend([
-            ("Windows Kit 10.0", kits_root, "KitsRoot10", kits_suffix),
-            ("Windows Kit 8.1", kits_root, "KitsRoot81", kits_suffix),
-            ("Windows Kit 8.0", kits_root, "KitsRoot", kits_suffix),
-            ("Windows SDK 7.1A", sdks_root + r"\v7.1A\WinSDK-Win32Tools", "InstallationFolder"),
-            ("Windows SDK 7.1", sdks_root + r"\v7.1\WinSDKWin32Tools", "InstallationFolder"),
-            ("Windows SDK 7.0A", sdks_root + r"\v7.0A\WinSDK-Win32Tools", "InstallationFolder"),
-            ("Windows SDK 7.0", sdks_root + r"\v7.0\WinSDKWin32Tools", "InstallationFolder"),
-            ("Windows SDK 6.0A", sdks_root + r"\v6.0A\WinSDKWin32Tools", "InstallationFolder")
-        ])
-    else:
-        vs_root = r"SOFTWARE\Microsoft\MSBuild\ToolsVersions"
-        keys_to_check.extend([
-            ("MSBuild 14", vs_root + r"\14.0", "MSBuildToolsPath"),
-            ("MSBuild 12", vs_root + r"\12.0", "MSBuildToolsPath"),
-            ("MSBuild 4", vs_root + r"\4.0", "MSBuildToolsPath"),
-            ("MSBuild 3.5", vs_root + r"\3.5", "MSBuildToolsPath"),
-            ("MSBuild 2.0", vs_root + r"\2.0", "MSBuildToolsPath")
-        ])
-
-    # read the possible tools paths from the various registry locations
-    paths_to_check = []
-    hreg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-    try:
-        for key_to_check in keys_to_check:
-            sdk_name, key, value_name = key_to_check[:3]
-            suffix = key_to_check[3] if len(key_to_check) > 3 else None
-            hkey = None
-            try:
-                hkey = _winreg.OpenKey(hreg, key)
-                val, type_ = _winreg.QueryValueEx(hkey, value_name)
-                if type_ != _winreg.REG_SZ:
-                    continue
-                if suffix:
-                    val = os.path.join(val, suffix)
-                paths_to_check.append((sdk_name, val))
-            except WindowsError:
-                pass
-            finally:
-                if hkey:
-                    hkey.Close()
-    finally:
-        hreg.Close()
-
-    # Add Visual C++ for Python as a fall-back in case one
-    # of the other Windows SDKs isn't installed
-    if use_windows_sdk:
-        localappdata = os.environ["LOCALAPPDATA"]
-        pywinsdk = localappdata + r"\Programs\Common\Microsoft\Visual C++ for Python\9.0\WinSDK\Bin"
-        if PLATFORM == "x64":
-            pywinsdk += r"\x64"
-        paths_to_check.append(("Visual C++ for Python", pywinsdk))
-
-    for sdk_name, path in paths_to_check:
-        path = os.path.join(path, tool)
-        if os.path.exists(path):
-            log.info("Using %s from %s" % (tool, sdk_name))
-            return path
-
-    raise RuntimeError("%s could not be found" % tool)
+        return '.Net and Mono integration for Python'
 
 
-if DEVTOOLS == "MsDev":
-    _xbuild = "\"%s\"" % _find_msbuild_tool("msbuild.exe")
-    _defines_sep = ";"
-    _config = "%sWin" % CONFIG
-
-elif DEVTOOLS == "Mono":
-    _xbuild = "xbuild"
-    _defines_sep = ","
-    _config = "%sMono" % CONFIG
-
-else:
-    raise NotImplementedError(
-        "DevTools %s not supported (use MsDev or Mono)" % DEVTOOLS)
-
-
-class PythonNET_BuildExt(build_ext):
+class BuildExtPythonnet(build_ext.build_ext):
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
         if ext.name != "clr":
-            return build_ext.build_extension(self, ext)
+            return build_ext.build_ext.build_extension(self, ext)
 
         # install packages using nuget
         self._install_packages()
@@ -135,6 +145,7 @@ class PythonNET_BuildExt(build_ext):
 
         # Up to Python 3.2 sys.maxunicode is used to determine the size of
         # Py_UNICODE, but from 3.3 onwards Py_UNICODE is a typedef of wchar_t.
+        # TODO: Is this doing the right check for Py27?
         if sys.version_info[:2] <= (3, 2):
             unicode_width = 2 if sys.maxunicode < 0x10FFFF else 4
         else:
@@ -142,9 +153,9 @@ class PythonNET_BuildExt(build_ext):
             unicode_width = ctypes.sizeof(ctypes.c_wchar)
 
         defines = [
-            "PYTHON%d%d" % (sys.version_info[:2]),
-            "PYTHON%d" % (sys.version_info[:1]),  # Python Major Version
-            "UCS%d" % unicode_width,
+            "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR),
+            "PYTHON{0}".format(PY_MAJOR),  # Python Major Version
+            "UCS{0}".format(unicode_width),
         ]
 
         if CONFIG == "Debug":
@@ -157,7 +168,7 @@ class PythonNET_BuildExt(build_ext):
                 defines.append("MONO_LINUX")
 
             # Check if --enable-shared was set when Python was built
-            enable_shared = get_config_var("Py_ENABLE_SHARED")
+            enable_shared = sysconfig.get_config_var("Py_ENABLE_SHARED")
             if enable_shared:
                 # Double-check if libpython is linked dynamically with python
                 lddout = _check_output(["ldd", sys.executable])
@@ -178,43 +189,56 @@ class PythonNET_BuildExt(build_ext):
         # check the interop file exists, and create it if it doesn't
         interop_file = _get_interop_filename()
         if not os.path.exists(interop_file):
+            self.debug_print("Creating {0}".format(interop_file))
             geninterop = os.path.join("tools", "geninterop", "geninterop.py")
-            _check_output([sys.executable, geninterop, interop_file])
+            subprocess.check_call([sys.executable, geninterop, interop_file])
+
+        if DEVTOOLS == "MsDev":
+            _xbuild = '"{0}"'.format(self._find_msbuild_tool("msbuild.exe"))
+            _config = "{0}Win".format(CONFIG)
+
+        elif DEVTOOLS == "Mono":
+            _xbuild = "xbuild"
+            _config = "{0}Mono".format(CONFIG)
+        else:
+            raise NotImplementedError(
+                "DevTool {0} not supported (use MsDev/Mono)".format(DEVTOOLS))
 
         cmd = [
             _xbuild,
-            "pythonnet.sln",
-            "/p:Configuration=%s" % _config,
-            "/p:Platform=%s" % PLATFORM,
-            "/p:DefineConstants=\"%s\"" % _defines_sep.join(defines),
-            "/p:PythonBuildDir=\"%s\"" % os.path.abspath(dest_dir),
-            "/p:PythonInteropFile=\"%s\"" % os.path.basename(interop_file),
-            "/verbosity:%s" % VERBOSITY,
+            'pythonnet.sln',
+            '/p:Configuration={}'.format(_config),
+            '/p:Platform={}'.format(ARCH),
+            '/p:DefineConstants="{}"'.format(','.join(defines)),
+            '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
+            '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
+            '/verbosity:{}'.format(VERBOSITY),
         ]
 
         manifest = self._get_manifest(dest_dir)
         if manifest:
-            cmd.append("/p:PythonManifest=\"%s\"" % manifest)
+            cmd.append('/p:PythonManifest="{0}"'.format(manifest))
 
-        self.announce("Building: %s" % " ".join(cmd))
+        self.debug_print("Building: {0}".format(" ".join(cmd)))
         use_shell = True if DEVTOOLS == "Mono" else False
-        check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
-        check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
+        subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
+        subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
 
         if DEVTOOLS == "Mono":
-            self._build_monoclr(ext)
+            self._build_monoclr()
 
     def _get_manifest(self, build_dir):
-        if DEVTOOLS == "MsDev" and sys.version_info[:2] > (2, 5):
-            mt = _find_msbuild_tool("mt.exe", use_windows_sdk=True)
-            manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
-            cmd = [mt, '-inputresource:"%s"' % sys.executable,
-                   '-out:"%s"' % manifest]
-            self.announce("Extracting manifest from %s" % sys.executable)
-            check_call(" ".join(cmd), shell=False)
-            return manifest
+        if DEVTOOLS != "MsDev":
+            return
+        mt = self._find_msbuild_tool("mt.exe", use_windows_sdk=True)
+        manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
+        cmd = [mt, '-inputresource:"{0}"'.format(sys.executable),
+               '-out:"{0}"'.format(manifest)]
+        self.debug_print("Extracting manifest from {}".format(sys.executable))
+        subprocess.check_call(" ".join(cmd), shell=False)
+        return manifest
 
-    def _build_monoclr(self, ext):
+    def _build_monoclr(self):
         mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
         glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
@@ -223,55 +247,103 @@ class PythonNET_BuildExt(build_ext):
         libs = mono_libs.strip() + " " + glib_libs.strip()
 
         # build the clr python module
-        clr_ext = Extension("clr",
-                            sources=[
-                                "src/monoclr/pynetinit.c",
-                                "src/monoclr/clrmod.c"
-                            ],
-                            extra_compile_args=cflags.split(" "),
-                            extra_link_args=libs.split(" "))
+        clr_ext = Extension(
+            "clr",
+            sources=[
+                "src/monoclr/pynetinit.c",
+                "src/monoclr/clrmod.c"
+            ],
+            extra_compile_args=cflags.split(" "),
+            extra_link_args=libs.split(" ")
+        )
 
-        build_ext.build_extension(self, clr_ext)
+        build_ext.build_ext.build_extension(self, clr_ext)
 
     def _install_packages(self):
         """install packages using nuget"""
         nuget = os.path.join("tools", "nuget", "nuget.exe")
         use_shell = False
         if DEVTOOLS == "Mono":
-            nuget = "mono %s" % nuget
+            nuget = "mono {0}".format(nuget)
             use_shell = True
 
-        cmd = "%s update -self" % nuget
-        self.announce("Updating NuGet: %s" % cmd)
-        check_call(cmd, shell=use_shell)
+        cmd = "{0} update -self".format(nuget)
+        self.debug_print("Updating NuGet: {0}".format(cmd))
+        subprocess.check_call(cmd, shell=use_shell)
 
-        cmd = "%s restore pythonnet.sln -o packages" % nuget
-        self.announce("Installing packages: %s" % cmd)
-        check_call(cmd, shell=use_shell)
+        cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
+        self.debug_print("Installing packages: {0}".format(cmd))
+        subprocess.check_call(cmd, shell=use_shell)
+
+    def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
+        """Return full path to one of the Microsoft build tools"""
+        # Search in PATH first
+        path = spawn.find_executable(tool)
+        if path:
+            return path
+
+        # Search within registry to find build tools
+        try:  # PY2
+            import _winreg as winreg
+        except ImportError:  # PY3
+            import winreg
+
+        keys_to_check = WIN_SDK_KEYS if use_windows_sdk else VS_KEYS
+        hklm = winreg.HKEY_LOCAL_MACHINE
+        for rkey in keys_to_check:
+            try:
+                with winreg.OpenKey(hklm, rkey.key) as hkey:
+                    val, type_ = winreg.QueryValueEx(hkey, rkey.value_name)
+                    if type_ != winreg.REG_SZ:
+                        continue
+                    path = os.path.join(val, rkey.suffix, tool)
+                    if os.path.exists(path):
+                        self.debug_print("Using {0} from {1}".format(
+                            tool, rkey.sdk_name))
+                        return path
+            except WindowsError:
+                # Key doesn't exist
+                pass
+
+        # Add Visual C++ for Python as a fall-back in case one
+        # of the other Windows SDKs isn't installed.
+        # TODO: Extend checking by using setuptools/msvc.py?
+        if use_windows_sdk:
+            sdk_name = "Visual C++ for Python"
+            localappdata = os.environ["LOCALAPPDATA"]
+            suffix = "Bin\\x64" if ARCH == "x64" else "Bin"
+            path = os.path.join(localappdata, vs_python, suffix, tool)
+            if os.path.exists(path):
+                self.debug_print("Using {0} from {1}".format(tool, sdk_name))
+                return path
+
+        raise RuntimeError("{0} could not be found".format(tool))
 
 
-class PythonNET_InstallLib(install_lib):
+class InstallLibPythonnet(install_lib.install_lib):
     def install(self):
         if not os.path.isdir(self.build_dir):
-            self.warn("'%s' does not exist -- no Python modules to install" %
-                      self.build_dir)
+            self.warn("'{0}' does not exist -- no Python modules"
+                      " to install".format(self.build_dir))
             return
 
         if not os.path.exists(self.install_dir):
             self.mkpath(self.install_dir)
 
         # only copy clr.pyd/.so
-        for srcfile in glob(os.path.join(self.build_dir, "clr.*")):
-            destfile = os.path.join(self.install_dir, os.path.basename(srcfile))
+        for srcfile in glob.glob(os.path.join(self.build_dir, "clr.*")):
+            destfile = os.path.join(
+                self.install_dir, os.path.basename(srcfile))
             self.copy_file(srcfile, destfile)
 
 
-class PythonNET_InstallData(install_data):
+class InstallDataPythonnet(install_data.install_data):
     def run(self):
         build_cmd = self.get_finalized_command("build_ext")
         install_cmd = self.get_finalized_command("install")
         build_lib = os.path.abspath(build_cmd.build_lib)
-        install_platlib = os.path.relpath(install_cmd.install_platlib, self.install_dir)
+        install_platlib = os.path.relpath(
+            install_cmd.install_platlib, self.install_dir)
 
         for i, data_files in enumerate(self.data_files):
             if isinstance(data_files, str):
@@ -282,96 +354,55 @@ class PythonNET_InstallData(install_data):
                 dest = data_files[0].format(install_platlib=install_platlib)
                 self.data_files[i] = dest, data_files[1]
 
-        return install_data.run(self)
+        return install_data.install_data.run(self)
 
 
-def _check_output(*popenargs, **kwargs):
-    """subprocess.check_output from python 2.7.
-    Added here to support building for earlier versions of Python.
-    """
-    process = Popen(stdout=PIPE, *popenargs, **kwargs)
-    output, unused_err = process.communicate()
-    retcode = process.poll()
-    if retcode:
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        raise CalledProcessError(retcode, cmd, output=output)
-    if sys.version_info[0] > 2:
-        return output.decode("ascii")
-    return output
+###############################################################################
+setupdir = os.path.dirname(__file__)
+if setupdir:
+    os.chdir(setupdir)
 
+setup_requires = []
+if not os.path.exists(_get_interop_filename()):
+    setup_requires.append("pycparser")
 
-def _get_interop_filename():
-    """interopXX.cs is auto-generated as part of the build.
-    For common windows platforms pre-generated files are included
-    as most windows users won't have Clang installed, which is
-    required to generate the file.
-    """
-    interop_file = "interop%d%d%s.cs" % (sys.version_info[0], sys.version_info[1], getattr(sys, "abiflags", ""))
-    return os.path.join("src", "runtime", interop_file)
-
-
-if __name__ == "__main__":
-    setupdir = os.path.dirname(__file__)
-    if setupdir:
-        os.chdir(setupdir)
-
-    sources = []
-    for ext in (".sln", ".snk", ".config"):
-        sources.extend(glob("*" + ext))
-
-    for root, dirnames, filenames in os.walk("src"):
-        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il", ".py", ".c", ".h", ".ico"):
-            for filename in fnmatch.filter(filenames, "*" + ext):
-                sources.append(os.path.join(root, filename))
-
-    for root, dirnames, filenames in os.walk("tools"):
-        for ext in (".exe", ".py", ".c", ".h"):
-            for filename in fnmatch.filter(filenames, "*" + ext):
-                sources.append(os.path.join(root, filename))
-
-    setup_requires = []
-    interop_file = _get_interop_filename()
-    if not os.path.exists(interop_file):
-        setup_requires.append("pycparser")
-
-    setup(
-        name="pythonnet",
-        version="2.2.2",
-        description=".Net and Mono integration for Python",
-        url='https://pythonnet.github.io/',
-        license='MIT',
-        author="The Python for .Net developers",
-        classifiers=[
-            'Development Status :: 5 - Production/Stable',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: MIT License',
-            'Programming Language :: C#',
-            'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.3',
-            'Programming Language :: Python :: 3.4',
-            'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: POSIX :: Linux',
-            'Operating System :: MacOS :: MacOS X',
-        ],
-        ext_modules=[
-            Extension("clr", sources=sources)
-        ],
-        data_files=[
-            ("{install_platlib}", [
-                "{build_lib}/Python.Runtime.dll",
-                "Python.Runtime.dll.config"]),
-        ],
-        zip_safe=False,
-        cmdclass={
-            "build_ext": PythonNET_BuildExt,
-            "install_lib": PythonNET_InstallLib,
-            "install_data": PythonNET_InstallData,
-        },
-        setup_requires=setup_requires
-    )
+setup(
+    name="pythonnet",
+    version="2.2.2",
+    description=".Net and Mono integration for Python",
+    url='https://pythonnet.github.io/',
+    license='MIT',
+    author="The Python for .Net developers",
+    setup_requires=setup_requires,
+    long_description=_get_long_description(),
+    ext_modules=[
+        Extension("clr", sources=list(_get_source_files()))
+    ],
+    data_files=[
+        ("{install_platlib}", [
+            "{build_lib}/Python.Runtime.dll",
+            "Python.Runtime.dll.config"]),
+    ],
+    cmdclass={
+        "build_ext": BuildExtPythonnet,
+        "install_lib": InstallLibPythonnet,
+        "install_data": InstallDataPythonnet,
+    },
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: C#',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
+    ],
+    zip_safe=False,
+)

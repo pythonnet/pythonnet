@@ -12,5 +12,4 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyCopyright("MIT License")]
 [assembly: AssemblyFileVersion("2.0.0.2")]
 [assembly: NeutralResourcesLanguage("en")]
-
 [assembly: InternalsVisibleTo("Python.EmbeddingTest")]
