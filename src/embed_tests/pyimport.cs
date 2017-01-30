@@ -20,7 +20,7 @@ namespace Python.EmbeddingTest
 
             /*
              * Append the tests directory to sys.path
-             * using reflection to circumvent the private modifires placed on most Runtime methods.
+             * using reflection to circumvent the private modifiers placed on most Runtime methods.
              */
             const string s = @"../../../../tests";
 

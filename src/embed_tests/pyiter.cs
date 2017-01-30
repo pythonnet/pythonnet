@@ -33,7 +33,9 @@ namespace Python.EmbeddingTest
             list.Append(new PyString("baz"));
             List<string> result = new List<string>();
             foreach (PyObject item in list)
+            {
                 result.Add(item.ToString());
+            }
             Assert.AreEqual(3, result.Count);
             Assert.AreEqual("foo", result[0]);
             Assert.AreEqual("bar", result[1]);

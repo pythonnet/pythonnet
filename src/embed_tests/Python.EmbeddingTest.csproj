@@ -138,7 +138,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Embeddingtest.nunit" />
     <None Include="..\pythonnet.snk" />
     <None Include="packages.config" />
     <None Include="pythonnet.snk" Condition="Exists('pythonnet.snk')" />
@@ -146,9 +145,7 @@
   <ItemGroup>
     <Compile Include="InitializeTest.cs" />
     <Compile Include="pyimport.cs" />
-    <Compile Include="pyiter.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="pyiter.cs" />
     <Compile Include="pyobject.cs" />
     <Compile Include="pythonexception.cs" />
   </ItemGroup>
