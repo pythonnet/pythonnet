@@ -38,6 +38,13 @@ init:
   - if %PLATFORM%==x86 (set NUNIT=%NUNIT%-x86)
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
 
+  # Shortcut path to executables. Mostly because of OpenCover
+  - set PYTHON_EXE=%PYTHON%\python.exe
+  - set NUNIT_EXE=.\packages\NUnit.Runners.2.6.2\tools\%NUNIT%.exe
+  - set OPENCOVER_EXE=.\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe
+  - set RUNTIME_DIR=.\src\runtime\bin\%PLATFORM%\ReleaseWin\
+  - set CS_TESTS=.\src\embed_tests\bin\%PLATFORM%\ReleaseWin\Python.EmbeddingTest.dll
+
   # Prepend newly installed Python to the PATH of this build
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
@@ -47,26 +54,33 @@ init:
   - python -c "import ctypes; print(ctypes.sizeof(ctypes.c_wchar))"
 
 install:
-  # install conda and deps
-  - ps: .\ci\install_miniconda.ps1
+  # install for wheels & coverage
+  - pip install --upgrade pip wheel coverage codecov six
 
-  # install for wheels
-  - pip install --upgrade pip wheel six
+  # Install OpenCover. Can't put on packages.config; not Linux/Mono compatible
+  - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages
 
 build_script:
-  # build clean sdist & wheel
-  - python setup.py sdist bdist_wheel
-
-  # build and dist conda package
-  - '%CMD_IN_ENV% %CONDA_BLD%\Scripts\conda build conda.recipe'
-  - ps: $CONDA_PKG=(&"$env:CONDA_BLD\Scripts\conda" build conda.recipe --output -q)
-  - ps: Copy-Item $CONDA_PKG "$env:APPVEYOR_BUILD_FOLDER\dist\"
+  # build clean sdist & wheel with coverage of setup.py, install local wheel
+  - coverage run setup.py sdist bdist_wheel
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: Copy-Item (Resolve-Path .\build\*\Python.Test.dll) C:\testdir
-  - python src\tests\runtests.py
-  # - "%NUNIT% src/embed_tests/bin/%PLATFORM%/ReleaseWin/Python.EmbeddingTest.dll"
+
+  # Run python tests with C# coverage
+  - '%OPENCOVER_EXE% -register:user -searchdirs:%RUNTIME_DIR% -output:py.coverage -target:%PYTHON_EXE% -targetargs:src\tests\runtests.py -returntargetcode'
+
+  # Run Embedded tests with C# coverage
+  # Embedded tests disabled due to open issues
+  # - '%OPENCOVER_EXE% -register:user -searchdirs:%RUNTIME_DIR% -output:cs.coverage -target:%NUNIT_EXE% -targetargs:%CS_TESTS% -returntargetcode'
+
+  # Build conda-recipe on Pull Requests
+  - ps: .\ci\appveyor_build_recipe.ps1
+
+on_finish:
+  # Upload coverage
+  - codecov
 
 artifacts:
   - path: dist\*
