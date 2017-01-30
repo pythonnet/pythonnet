@@ -782,6 +782,11 @@ class MethodTests(unittest.TestCase):
         data = ''.join(data)
         self.assertEqual(data, 'Some testing string')
 
+    def testStringAsObjectArg(self):
+        s = "hello world"
+        self.assertEqual(s, MethodTest.ObjectParam(s))
+
+
 def test_suite():
     return unittest.makeSuite(MethodTests)
 

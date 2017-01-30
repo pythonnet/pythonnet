@@ -616,6 +616,10 @@ namespace Python.Test
         {
             return i;
         }
+
+        public static object ObjectParam(object o) {
+            return o;
+        }
     }
 
 
