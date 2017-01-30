@@ -5,6 +5,22 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
+## [unreleased][]
+
+### Added
+
+-   New `Foo` feature
+
+### Changed
+
+-   Refactored `setup.py` (#337)
+-   Upgraded NUnit framework to 3.5 (#341)
+-   Completed refactor of Build Directives on `Runtime.cs` (#339)
+
+### Fixed
+
+-   Fixed `FooBar` bug
+
 ## [2.2.2][] - 2017-01-29
 
 ### Fixed
