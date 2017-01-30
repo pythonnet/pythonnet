@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Collections;
-using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -30,13 +28,13 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                int flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+                var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
-                    IntPtr op = (tp == ob)
+                    IntPtr op = tp == ob
                         ? Marshal.ReadIntPtr(tp, TypeOffset.magic())
                         : Marshal.ReadIntPtr(ob, ObjectOffset.magic(ob));
-                    GCHandle gc = (GCHandle)op;
+                    var gc = (GCHandle)op;
                     return (ManagedType)gc.Target;
                 }
             }
@@ -65,7 +63,7 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                int flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+                var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
                     return true;

@@ -15,26 +15,26 @@ namespace Python.Runtime
         private string _message = "";
         private bool disposed = false;
 
-        public PythonException() : base()
+        public PythonException()
         {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
             Runtime.XIncref(_pyType);
             Runtime.XIncref(_pyValue);
             Runtime.XIncref(_pyTB);
-            if ((_pyType != IntPtr.Zero) && (_pyValue != IntPtr.Zero))
+            if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;
                 string message;
                 Runtime.XIncref(_pyType);
-                using (PyObject pyType = new PyObject(_pyType))
+                using (var pyType = new PyObject(_pyType))
                 using (PyObject pyTypeName = pyType.GetAttr("__name__"))
                 {
                     type = pyTypeName.ToString();
                 }
 
                 Runtime.XIncref(_pyValue);
-                using (PyObject pyValue = new PyObject(_pyValue))
+                using (var pyValue = new PyObject(_pyValue))
                 {
                     message = pyValue.ToString();
                 }
@@ -44,7 +44,7 @@ namespace Python.Runtime
             {
                 PyObject tb_module = PythonEngine.ImportModule("traceback");
                 Runtime.XIncref(_pyTB);
-                using (PyObject pyTB = new PyObject(_pyTB))
+                using (var pyTB = new PyObject(_pyTB))
                 {
                     _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
                 }

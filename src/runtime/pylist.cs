@@ -31,7 +31,7 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python list object.
         /// </remarks>
-        public PyList(PyObject o) : base()
+        public PyList(PyObject o)
         {
             if (!IsListType(o))
             {
@@ -48,7 +48,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new empty Python list object.
         /// </remarks>
-        public PyList() : base()
+        public PyList()
         {
             obj = Runtime.PyList_New(0);
             if (obj == IntPtr.Zero)
@@ -64,11 +64,11 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python list object from an array of PyObjects.
         /// </remarks>
-        public PyList(PyObject[] items) : base()
+        public PyList(PyObject[] items)
         {
             int count = items.Length;
             obj = Runtime.PyList_New(count);
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 IntPtr ptr = items[i].obj;
                 Runtime.XIncref(ptr);

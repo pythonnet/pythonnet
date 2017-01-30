@@ -12,7 +12,7 @@ namespace Python.Runtime
         MethodObject m;
         IntPtr target;
 
-        public OverloadMapper(MethodObject m, IntPtr target) : base()
+        public OverloadMapper(MethodObject m, IntPtr target)
         {
             Runtime.XIncref(target);
             this.target = target;
@@ -24,7 +24,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
         {
-            OverloadMapper self = (OverloadMapper)GetManagedObject(tp);
+            var self = (OverloadMapper)GetManagedObject(tp);
 
             // Note: if the type provides a non-generic method with N args
             // and a generic method that takes N params, then we always
@@ -39,12 +39,11 @@ namespace Python.Runtime
             MethodInfo mi = MethodBinder.MatchSignature(self.m.info, types);
             if (mi == null)
             {
-                string e = "No match found for signature";
+                var e = "No match found for signature";
                 return Exceptions.RaiseTypeError(e);
             }
 
-            MethodBinding mb = new MethodBinding(self.m, self.target);
-            mb.info = mi;
+            var mb = new MethodBinding(self.m, self.target) { info = mi };
             Runtime.XIncref(mb.pyHandle);
             return mb.pyHandle;
         }
@@ -54,7 +53,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_repr(IntPtr op)
         {
-            OverloadMapper self = (OverloadMapper)GetManagedObject(op);
+            var self = (OverloadMapper)GetManagedObject(op);
             IntPtr doc = self.m.GetDocString();
             Runtime.XIncref(doc);
             return doc;
@@ -63,11 +62,11 @@ namespace Python.Runtime
         /// <summary>
         /// OverloadMapper dealloc implementation.
         /// </summary>
-        public static new void tp_dealloc(IntPtr ob)
+        public new static void tp_dealloc(IntPtr ob)
         {
-            OverloadMapper self = (OverloadMapper)GetManagedObject(ob);
+            var self = (OverloadMapper)GetManagedObject(ob);
             Runtime.XDecref(self.target);
-            ExtensionType.FinalizeObject(self);
+            FinalizeObject(self);
         }
     }
 }

@@ -31,10 +31,8 @@ namespace Python.Runtime
 
         public IntPtr MarshalManagedToNative(object obj)
         {
-            string s = obj as string;
-            if (s == null)
-                return IntPtr.Zero;
-            return UnixMarshal.StringToHeap(s, Encoding.UTF32);
+            var s = obj as string;
+            return s == null ? IntPtr.Zero : UnixMarshal.StringToHeap(s, Encoding.UTF32);
         }
 
         public object MarshalNativeToManaged(IntPtr pNativeData)

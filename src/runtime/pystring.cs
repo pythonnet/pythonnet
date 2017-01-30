@@ -34,7 +34,7 @@ namespace Python.Runtime
         /// An ArgumentException will be thrown if the given object is not
         /// a Python string object.
         /// </remarks>
-        public PyString(PyObject o) : base()
+        public PyString(PyObject o)
         {
             if (!IsStringType(o))
             {
@@ -51,7 +51,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-        public PyString(string s) : base()
+        public PyString(string s)
         {
             obj = Runtime.PyUnicode_FromUnicode(s, s.Length);
             if (obj == IntPtr.Zero)

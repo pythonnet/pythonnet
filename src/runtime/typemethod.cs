@@ -21,15 +21,15 @@ namespace Python.Runtime
 
         public override IntPtr Invoke(IntPtr ob, IntPtr args, IntPtr kw)
         {
-            MethodInfo mi = this.info[0];
-            Object[] arglist = new Object[3];
+            MethodInfo mi = info[0];
+            var arglist = new object[3];
             arglist[0] = ob;
             arglist[1] = args;
             arglist[2] = kw;
 
             try
             {
-                Object inst = null;
+                object inst = null;
                 if (ob != IntPtr.Zero)
                 {
                     inst = GetManagedObject(ob);

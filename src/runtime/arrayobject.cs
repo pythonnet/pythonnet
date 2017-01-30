@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -22,13 +21,13 @@ namespace Python.Runtime
 
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
-            ArrayObject self = GetManagedObject(tp) as ArrayObject;
+            var self = GetManagedObject(tp) as ArrayObject;
             if (Runtime.PyTuple_Size(args) != 1)
             {
                 return Exceptions.RaiseTypeError("array expects 1 argument");
             }
             IntPtr op = Runtime.PyTuple_GetItem(args, 0);
-            Object result;
+            object result;
 
             if (!Converter.ToManaged(op, self.type, out result, true))
             {
@@ -43,11 +42,11 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
-            CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
-            Array items = obj.inst as Array;
+            var obj = (CLRObject)GetManagedObject(ob);
+            var items = obj.inst as Array;
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
-            int index = 0;
+            int index;
             object value;
 
             // Note that CLR 1.0 only supports int indexes - methods to
@@ -61,7 +60,7 @@ namespace Python.Runtime
 
             if (rank == 1)
             {
-                index = (int)Runtime.PyInt_AsLong(idx);
+                index = Runtime.PyInt_AsLong(idx);
 
                 if (Exceptions.ErrorOccurred())
                 {
@@ -83,7 +82,7 @@ namespace Python.Runtime
                     return IntPtr.Zero;
                 }
 
-                return Converter.ToPython(items.GetValue(index), itemType);
+                return Converter.ToPython(value, itemType);
             }
 
             // Multi-dimensional arrays can be indexed a la: list[1, 2, 3].
@@ -96,12 +95,12 @@ namespace Python.Runtime
 
             int count = Runtime.PyTuple_Size(idx);
 
-            Array args = Array.CreateInstance(typeof(Int32), count);
+            var args = new int[count];
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
-                index = (int)Runtime.PyInt_AsLong(op);
+                index = Runtime.PyInt_AsLong(op);
 
                 if (Exceptions.ErrorOccurred())
                 {
@@ -135,11 +134,11 @@ namespace Python.Runtime
         /// </summary>
         public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
         {
-            CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
-            Array items = obj.inst as Array;
+            var obj = (CLRObject)GetManagedObject(ob);
+            var items = obj.inst as Array;
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
-            int index = 0;
+            int index;
             object value;
 
             if (items.IsReadOnly)
@@ -155,7 +154,7 @@ namespace Python.Runtime
 
             if (rank == 1)
             {
-                index = (int)Runtime.PyInt_AsLong(idx);
+                index = Runtime.PyInt_AsLong(idx);
 
                 if (Exceptions.ErrorOccurred())
                 {
@@ -188,13 +187,12 @@ namespace Python.Runtime
             }
 
             int count = Runtime.PyTuple_Size(idx);
+            var args = new int[count];
 
-            Array args = Array.CreateInstance(typeof(Int32), count);
-
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
-                index = (int)Runtime.PyInt_AsLong(op);
+                index = Runtime.PyInt_AsLong(op);
 
                 if (Exceptions.ErrorOccurred())
                 {
@@ -229,9 +227,9 @@ namespace Python.Runtime
         /// </summary>
         public static int sq_contains(IntPtr ob, IntPtr v)
         {
-            CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
+            var obj = (CLRObject)GetManagedObject(ob);
             Type itemType = obj.inst.GetType().GetElementType();
-            IList items = obj.inst as IList;
+            var items = obj.inst as IList;
             object value;
 
             if (!Converter.ToManaged(v, itemType, out value, false))
@@ -253,8 +251,8 @@ namespace Python.Runtime
         /// </summary>
         public static int mp_length(IntPtr ob)
         {
-            CLRObject self = (CLRObject)ManagedType.GetManagedObject(ob);
-            Array items = self.inst as Array;
+            var self = (CLRObject)GetManagedObject(ob);
+            var items = self.inst as Array;
             return items.Length;
         }
     }

@@ -1,10 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
-using System.Threading;
 
 namespace Python.Runtime
 {
@@ -34,7 +32,7 @@ namespace Python.Runtime
         {
             // Note that these types are cached with a refcount of 1, so they
             // effectively exist until the CPython runtime is finalized.
-            IntPtr handle = IntPtr.Zero;
+            IntPtr handle;
             cache.TryGetValue(type, out handle);
             if (handle != IntPtr.Zero)
             {
@@ -53,7 +51,7 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr GetTypeHandle(ManagedType obj, Type type)
         {
-            IntPtr handle = IntPtr.Zero;
+            IntPtr handle;
             cache.TryGetValue(type, out handle);
             if (handle != IntPtr.Zero)
             {
@@ -81,7 +79,7 @@ namespace Python.Runtime
             // Set tp_basicsize to the size of our managed instance objects.
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
 
-            IntPtr offset = (IntPtr)ObjectOffset.DictOffset(type);
+            var offset = (IntPtr)ObjectOffset.DictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             InitializeSlots(type, impl);
@@ -124,13 +122,13 @@ namespace Python.Runtime
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
             // subclass BaseException (or better Exception).
-            if (typeof(System.Exception).IsAssignableFrom(clrType))
+            if (typeof(Exception).IsAssignableFrom(clrType))
             {
                 ob_size = ObjectOffset.Size(Exceptions.Exception);
                 tp_dictoffset = ObjectOffset.DictOffset(Exceptions.Exception);
             }
 
-            if (clrType == typeof(System.Exception))
+            if (clrType == typeof(Exception))
             {
                 base_ = Exceptions.Exception;
             }
@@ -171,7 +169,7 @@ namespace Python.Runtime
             Runtime.PyType_Ready(type);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            string mn = clrType.Namespace != null ? clrType.Namespace : "";
+            string mn = clrType.Namespace ?? "";
             IntPtr mod = Runtime.PyString_FromString(mn);
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
 
@@ -200,37 +198,43 @@ namespace Python.Runtime
             object assembly = null;
             object namespaceStr = null;
 
-            List<PyObject> disposeList = new List<PyObject>();
+            var disposeList = new List<PyObject>();
             try
             {
-                PyObject assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(String)));
+                var assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(string)));
                 disposeList.Add(assemblyKey);
                 if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
                 {
-                    PyObject pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
+                    var pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
                     disposeList.Add(pyAssembly);
-                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(String), out assembly, false))
+                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(string), out assembly, false))
+                    {
                         throw new InvalidCastException("Couldn't convert __assembly__ value to string");
+                    }
                 }
 
-                PyObject namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
+                var namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
                 disposeList.Add(namespaceKey);
                 if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
                 {
-                    PyObject pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
+                    var pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
                     disposeList.Add(pyNamespace);
-                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(String), out namespaceStr, false))
+                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(string), out namespaceStr, false))
+                    {
                         throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+                    }
                 }
             }
             finally
             {
                 foreach (PyObject o in disposeList)
+                {
                     o.Dispose();
+                }
             }
 
             // create the new managed type subclassing the base managed type
-            ClassBase baseClass = ManagedType.GetManagedObject(py_base_type) as ClassBase;
+            var baseClass = ManagedType.GetManagedObject(py_base_type) as ClassBase;
             if (null == baseClass)
             {
                 return Exceptions.RaiseTypeError("invalid base class, expected CLR class type");
@@ -264,9 +268,9 @@ namespace Python.Runtime
         internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, int flags, IntPtr doc)
         {
             Marshal.WriteIntPtr(mdef, name);
-            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), func);
-            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), flags);
-            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), doc);
+            Marshal.WriteIntPtr(mdef, 1 * IntPtr.Size, func);
+            Marshal.WriteInt32(mdef, 2 * IntPtr.Size, flags);
+            Marshal.WriteIntPtr(mdef, 3 * IntPtr.Size, doc);
             return mdef + 4 * IntPtr.Size;
         }
 
@@ -321,7 +325,7 @@ namespace Python.Runtime
 
             // We need space for 3 PyMethodDef structs, each of them
             // 4 int-ptrs in size.
-            IntPtr mdef = Runtime.PyMem_Malloc(3 * (4 * IntPtr.Size));
+            IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
             IntPtr mdefStart = mdef;
             mdef = WriteMethodDef(
                 mdef,
@@ -335,6 +339,7 @@ namespace Python.Runtime
                 Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
             );
 
+            // FIXME: mdef is not used
             mdef = WriteMethodDefSentinel(mdef);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
@@ -447,15 +452,14 @@ namespace Python.Runtime
         /// </summary>
         internal static void InitializeSlots(IntPtr type, Type impl)
         {
-            Hashtable seen = new Hashtable(8);
+            var seen = new Hashtable(8);
             Type offsetType = typeof(TypeOffset);
 
             while (impl != null)
             {
                 MethodInfo[] methods = impl.GetMethods(tbFlags);
-                for (int i = 0; i < methods.Length; i++)
+                foreach (MethodInfo method in methods)
                 {
-                    MethodInfo method = methods[i];
                     string name = method.Name;
                     if (!(name.StartsWith("tp_") ||
                           name.StartsWith("nb_") ||
@@ -473,7 +477,7 @@ namespace Python.Runtime
                     }
 
                     FieldInfo fi = offsetType.GetField(name);
-                    int offset = (int)fi.GetValue(offsetType);
+                    var offset = (int)fi.GetValue(offsetType);
 
                     IntPtr slot = Interop.GetThunk(method);
                     Marshal.WriteIntPtr(type, offset, slot);
@@ -497,21 +501,20 @@ namespace Python.Runtime
             Type marker = typeof(PythonMethodAttribute);
 
             BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
-            HashSet<string> addedMethods = new HashSet<string>();
+            var addedMethods = new HashSet<string>();
 
             while (type != null)
             {
                 MethodInfo[] methods = type.GetMethods(flags);
-                for (int i = 0; i < methods.Length; i++)
+                foreach (MethodInfo method in methods)
                 {
-                    MethodInfo method = methods[i];
                     if (!addedMethods.Contains(method.Name))
                     {
                         object[] attrs = method.GetCustomAttributes(marker, false);
                         if (attrs.Length > 0)
                         {
                             string method_name = method.Name;
-                            MethodInfo[] mi = new MethodInfo[1];
+                            var mi = new MethodInfo[1];
                             mi[0] = method;
                             MethodObject m = new TypeMethod(type, method_name, mi);
                             Runtime.PyDict_SetItemString(dict, method_name, m.pyHandle);

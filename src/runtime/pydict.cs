@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -30,7 +29,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python dictionary object.
         /// </remarks>
-        public PyDict() : base()
+        public PyDict()
         {
             obj = Runtime.PyDict_New();
             if (obj == IntPtr.Zero)
@@ -48,7 +47,7 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python dictionary object.
         /// </remarks>
-        public PyDict(PyObject o) : base()
+        public PyDict(PyObject o)
         {
             if (!IsDictType(o))
             {
@@ -79,7 +78,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool HasKey(PyObject key)
         {
-            return (Runtime.PyMapping_HasKey(obj, key.obj) != 0);
+            return Runtime.PyMapping_HasKey(obj, key.obj) != 0;
         }
 
 
@@ -91,8 +90,10 @@ namespace Python.Runtime
         /// </remarks>
         public bool HasKey(string key)
         {
-            using (PyString str = new PyString(key))
+            using (var str = new PyString(key))
+            {
                 return HasKey(str);
+            }
         }
 
 

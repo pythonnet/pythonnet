@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -12,7 +10,7 @@ namespace Python.Runtime
     {
         FieldInfo info;
 
-        public FieldObject(FieldInfo info) : base()
+        public FieldObject(FieldInfo info)
         {
             this.info = info;
         }
@@ -24,8 +22,8 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
-            FieldObject self = (FieldObject)GetManagedObject(ds);
-            Object result;
+            var self = (FieldObject)GetManagedObject(ds);
+            object result;
 
             if (self == null)
             {
@@ -34,12 +32,12 @@ namespace Python.Runtime
 
             FieldInfo info = self.info;
 
-            if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone))
+            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
             {
                 if (!info.IsStatic)
                 {
                     Exceptions.SetError(Exceptions.TypeError,
-                        "instance attribute must be accessed " + "through a class instance");
+                        "instance attribute must be accessed through a class instance");
                     return IntPtr.Zero;
                 }
                 try
@@ -56,7 +54,7 @@ namespace Python.Runtime
 
             try
             {
-                CLRObject co = (CLRObject)GetManagedObject(ob);
+                var co = (CLRObject)GetManagedObject(ob);
                 result = info.GetValue(co.inst);
                 return Converter.ToPython(result, info.FieldType);
             }
@@ -72,10 +70,10 @@ namespace Python.Runtime
         /// a field based on the given Python value. The Python value must be
         /// convertible to the type of the field.
         /// </summary>
-        public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
-            FieldObject self = (FieldObject)GetManagedObject(ds);
-            Object newval;
+            var self = (FieldObject)GetManagedObject(ds);
+            object newval;
 
             if (self == null)
             {
@@ -98,12 +96,11 @@ namespace Python.Runtime
 
             bool is_static = info.IsStatic;
 
-            if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone))
+            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
             {
                 if (!is_static)
                 {
-                    Exceptions.SetError(Exceptions.TypeError,
-                        "instance attribute must be set " + "through a class instance");
+                    Exceptions.SetError(Exceptions.TypeError, "instance attribute must be set through a class instance");
                     return -1;
                 }
             }
@@ -117,7 +114,7 @@ namespace Python.Runtime
             {
                 if (!is_static)
                 {
-                    CLRObject co = (CLRObject)GetManagedObject(ob);
+                    var co = (CLRObject)GetManagedObject(ob);
                     info.SetValue(co.inst, newval);
                 }
                 else
@@ -138,8 +135,8 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
-            FieldObject self = (FieldObject)GetManagedObject(ob);
-            string s = String.Format("<field '{0}'>", self.info.Name);
+            var self = (FieldObject)GetManagedObject(ob);
+            string s = $"<field '{self.info.Name}'>";
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
     }

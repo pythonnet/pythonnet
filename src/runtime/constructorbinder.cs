@@ -12,9 +12,9 @@ namespace Python.Runtime
     /// </summary>
     internal class ConstructorBinder : MethodBinder
     {
-        private Type _containingType = null;
+        private Type _containingType;
 
-        internal ConstructorBinder(Type containingType) : base()
+        internal ConstructorBinder(Type containingType)
         {
             _containingType = containingType;
         }
@@ -29,7 +29,7 @@ namespace Python.Runtime
         /// </summary>
         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw)
         {
-            return this.InvokeRaw(inst, args, kw, null);
+            return InvokeRaw(inst, args, kw, null);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Python.Runtime
         /// </remarks>
         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
-            Object result;
+            object result;
 
             if (_containingType.IsValueType && !_containingType.IsPrimitive &&
                 !_containingType.IsEnum && _containingType != typeof(decimal) &&
@@ -76,7 +76,7 @@ namespace Python.Runtime
                 return result;
             }
 
-            Binding binding = this.Bind(inst, args, kw, info);
+            Binding binding = Bind(inst, args, kw, info);
 
             if (binding == null)
             {
@@ -88,7 +88,7 @@ namespace Python.Runtime
                 // any extra args are intended for the subclass' __init__.
 
                 IntPtr eargs = Runtime.PyTuple_New(0);
-                binding = this.Bind(inst, eargs, kw);
+                binding = Bind(inst, eargs, kw);
                 Runtime.XDecref(eargs);
 
                 if (binding == null)
@@ -99,7 +99,7 @@ namespace Python.Runtime
             }
 
             // Fire the selected ctor and catch errors...
-            ConstructorInfo ci = (ConstructorInfo)binding.info;
+            var ci = (ConstructorInfo)binding.info;
             // Object construction is presumed to be non-blocking and fast
             // enough that we shouldn't really need to release the GIL.
             try

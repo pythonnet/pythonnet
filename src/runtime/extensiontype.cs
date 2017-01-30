@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Collections;
-using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -12,14 +10,14 @@ namespace Python.Runtime
     /// </summary>
     internal abstract class ExtensionType : ManagedType
     {
-        public ExtensionType() : base()
+        public ExtensionType()
         {
             // Create a new PyObject whose type is a generated type that is
             // implemented by the particuar concrete ExtensionType subclass.
             // The Python instance object is related to an instance of a
             // particular concrete subclass with a hidden CLR gchandle.
 
-            IntPtr tp = TypeManager.GetTypeHandle(this.GetType());
+            IntPtr tp = TypeManager.GetTypeHandle(GetType());
 
             //int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
             //if (rc > 1050)
@@ -40,9 +38,9 @@ namespace Python.Runtime
 
             Runtime.PyObject_GC_UnTrack(py);
 
-            this.tpHandle = tp;
-            this.pyHandle = py;
-            this.gcHandle = gc;
+            tpHandle = tp;
+            pyHandle = py;
+            gcHandle = gc;
         }
 
 
@@ -62,7 +60,7 @@ namespace Python.Runtime
         /// </summary>
         public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
         {
-            string message = "type does not support setting attributes";
+            var message = "type does not support setting attributes";
             if (val == IntPtr.Zero)
             {
                 message = "readonly attribute";
@@ -78,8 +76,7 @@ namespace Python.Runtime
         /// </summary>
         public static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
-            string message = "attribute is read-only";
-            Exceptions.SetError(Exceptions.AttributeError, message);
+            Exceptions.SetError(Exceptions.AttributeError, "attribute is read-only");
             return -1;
         }
 

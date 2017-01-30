@@ -21,8 +21,10 @@ namespace Python.Runtime
         //static Dictionary<string, Dictionary<string, string>> generics;
         static AssemblyLoadEventHandler lhandler;
         static ResolveEventHandler rhandler;
+
         // updated only under GIL?
         static Dictionary<string, int> probed;
+
         // modified from event handlers below, potentially triggered from different .NET threads
         static AssemblyList assemblies;
         internal static List<string> pypath;
@@ -53,7 +55,7 @@ namespace Python.Runtime
             domain.AssemblyResolve += rhandler;
 
             Assembly[] items = domain.GetAssemblies();
-            foreach (var a in items)
+            foreach (Assembly a in items)
             {
                 try
                 {
@@ -62,7 +64,7 @@ namespace Python.Runtime
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(string.Format("Error scanning assembly {0}. {1}", a, ex));
+                    Debug.WriteLine("Error scanning assembly {0}. {1}", a, ex);
                 }
             }
         }
@@ -86,7 +88,7 @@ namespace Python.Runtime
         /// so that we can know about assemblies that get loaded after the
         /// Python runtime is initialized.
         /// </summary>
-        static void AssemblyLoadHandler(Object ob, AssemblyLoadEventArgs args)
+        private static void AssemblyLoadHandler(object ob, AssemblyLoadEventArgs args)
         {
             Assembly assembly = args.LoadedAssembly;
             assemblies.Add(assembly);
@@ -101,7 +103,7 @@ namespace Python.Runtime
         /// for failed loads, because they might be dependencies of something
         /// we loaded from Python which also needs to be found on PYTHONPATH.
         /// </summary>
-        static Assembly ResolveHandler(Object ob, ResolveEventArgs args)
+        private static Assembly ResolveHandler(object ob, ResolveEventArgs args)
         {
             string name = args.Name.ToLower();
             foreach (Assembly a in assemblies)
@@ -135,7 +137,7 @@ namespace Python.Runtime
             {
                 pypath.Clear();
                 probed.Clear();
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     IntPtr item = Runtime.PyList_GetItem(list, i);
                     string path = Runtime.GetManagedString(item);
@@ -159,7 +161,7 @@ namespace Python.Runtime
             string path;
             string temp;
 
-            for (int i = 0; i < pypath.Count; i++)
+            for (var i = 0; i < pypath.Count; i++)
             {
                 string head = pypath[i];
                 if (head == null || head.Length == 0)
@@ -197,7 +199,7 @@ namespace Python.Runtime
             {
                 assembly = Assembly.Load(name);
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 //if (!(e is System.IO.FileNotFoundException))
                 //{
@@ -221,7 +223,7 @@ namespace Python.Runtime
                 {
                     assembly = Assembly.LoadFrom(path);
                 }
-                catch
+                catch (Exception)
                 {
                 }
             }
@@ -241,7 +243,9 @@ namespace Python.Runtime
             if (Path.IsPathRooted(name))
             {
                 if (!Path.HasExtension(name))
+                {
                     name = name + ".dll";
+                }
                 if (File.Exists(name))
                 {
                     try
@@ -287,13 +291,13 @@ namespace Python.Runtime
         public static bool LoadImplicit(string name, bool warn = true)
         {
             string[] names = name.Split('.');
-            bool loaded = false;
-            string s = "";
+            var loaded = false;
+            var s = "";
             Assembly lastAssembly = null;
             HashSet<Assembly> assembliesSet = null;
-            for (int i = 0; i < names.Length; i++)
+            for (var i = 0; i < names.Length; i++)
             {
-                s = (i == 0) ? names[0] : s + "." + names[i];
+                s = i == 0 ? names[0] : s + "." + names[i];
                 if (!probed.ContainsKey(s))
                 {
                     if (assembliesSet == null)
@@ -321,7 +325,7 @@ namespace Python.Runtime
             // Deprecation warning
             if (warn && loaded)
             {
-                string deprWarning = String.Format(
+                string deprWarning = string.Format(
                     "\nThe module was found, but not in a referenced namespace.\n" +
                     "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").",
                     Path.GetFileNameWithoutExtension(lastAssembly.Location));
@@ -345,24 +349,23 @@ namespace Python.Runtime
             // the assembly.
 
             Type[] types = assembly.GetTypes();
-            for (int i = 0; i < types.Length; i++)
+            foreach (Type t in types)
             {
-                Type t = types[i];
                 string ns = t.Namespace ?? "";
                 if (!namespaces.ContainsKey(ns))
                 {
                     string[] names = ns.Split('.');
-                    string s = "";
-                    for (int n = 0; n < names.Length; n++)
+                    var s = "";
+                    for (var n = 0; n < names.Length; n++)
                     {
-                        s = (n == 0) ? names[0] : s + "." + names[n];
+                        s = n == 0 ? names[0] : s + "." + names[n];
                         namespaces.TryAdd(s, new ConcurrentDictionary<Assembly, string>());
                     }
                 }
 
                 if (ns != null)
                 {
-                    namespaces[ns].TryAdd(assembly, String.Empty);
+                    namespaces[ns].TryAdd(assembly, string.Empty);
                 }
 
                 if (ns != null && t.IsGenericTypeDefinition)
@@ -374,7 +377,7 @@ namespace Python.Runtime
 
         public static AssemblyName[] ListAssemblies()
         {
-            List<AssemblyName> names = new List<AssemblyName>(assemblies.Count);
+            var names = new List<AssemblyName>(assemblies.Count);
             foreach (Assembly assembly in assemblies)
             {
                 names.Add(assembly.GetName());
@@ -388,7 +391,7 @@ namespace Python.Runtime
         /// </summary>
         public static bool IsValidNamespace(string name)
         {
-            return !String.IsNullOrEmpty(name) && namespaces.ContainsKey(name);
+            return !string.IsNullOrEmpty(name) && namespaces.ContainsKey(name);
         }
 
         /// <summary>
@@ -396,10 +399,7 @@ namespace Python.Runtime
         /// </summary>
         public static IEnumerable<Assembly> GetAssemblies(string nsname)
         {
-            if (!namespaces.ContainsKey(nsname))
-                return new List<Assembly>();
-
-            return namespaces[nsname].Keys;
+            return !namespaces.ContainsKey(nsname) ? new List<Assembly>() : namespaces[nsname].Keys;
         }
 
         /// <summary>
@@ -408,7 +408,7 @@ namespace Python.Runtime
         public static List<string> GetNames(string nsname)
         {
             //Dictionary<string, int> seen = new Dictionary<string, int>();
-            List<string> names = new List<string>(8);
+            var names = new List<string>(8);
 
             List<string> g = GenericUtil.GetGenericBaseNames(nsname);
             if (g != null)
@@ -424,9 +424,8 @@ namespace Python.Runtime
                 foreach (Assembly a in namespaces[nsname].Keys)
                 {
                     Type[] types = a.GetTypes();
-                    for (int i = 0; i < types.Length; i++)
+                    foreach (Type t in types)
                     {
-                        Type t = types[i];
                         if ((t.Namespace ?? "") == nsname)
                         {
                             names.Add(t.Name);

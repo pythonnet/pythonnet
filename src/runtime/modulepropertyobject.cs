@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Reflection;
-using System.Security.Permissions;
 
 namespace Python.Runtime
 {
@@ -10,7 +8,7 @@ namespace Python.Runtime
     /// </summary>
     internal class ModulePropertyObject : ExtensionType
     {
-        public ModulePropertyObject(PropertyInfo md) : base()
+        public ModulePropertyObject(PropertyInfo md)
         {
             throw new NotImplementedException("ModulePropertyObject");
         }

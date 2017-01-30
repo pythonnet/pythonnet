@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// </summary>
     public class PyIter : PyObject, IEnumerator<object>
     {
-        private PyObject _current = null;
+        private PyObject _current;
 
         /// <summary>
         /// PyIter Constructor
@@ -31,11 +31,13 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
         /// </remarks>
-        public PyIter(PyObject iterable) : base()
+        public PyIter(PyObject iterable)
         {
             obj = Runtime.PyObject_GetIter(iterable.obj);
             if (obj == IntPtr.Zero)
+            {
                 throw new PythonException();
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -61,7 +63,9 @@ namespace Python.Runtime
 
             IntPtr next = Runtime.PyIter_Next(obj);
             if (next == IntPtr.Zero)
+            {
                 return false;
+            }
 
             _current = new PyObject(next);
             return true;
