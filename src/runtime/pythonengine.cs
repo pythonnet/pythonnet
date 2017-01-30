@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -102,6 +104,11 @@ namespace Python.Runtime
 
         #endregion
 
+        public static void Initialize()
+        {
+            Initialize(Enumerable.Empty<string>());
+        }
+
         /// <summary>
         /// Initialize Method
         /// </summary>
@@ -112,7 +119,7 @@ namespace Python.Runtime
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
         /// </remarks>
-        public static void Initialize()
+        public static void Initialize(IEnumerable<string> args)
         {
             if (!initialized)
             {
@@ -125,6 +132,9 @@ namespace Python.Runtime
                 Runtime.Initialize();
                 initialized = true;
                 Exceptions.Clear();
+
+                Py.SetArgv(args);
+                Py.Throw();
 
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
@@ -552,9 +562,12 @@ namespace Python.Runtime
 
         internal static void Throw()
         {
-            if (Runtime.PyErr_Occurred() != 0)
+            using (GIL())
             {
-                throw new PythonException();
+                if (Runtime.PyErr_Occurred() != 0)
+                {
+                    throw new PythonException();
+                }
             }
         }
     }
