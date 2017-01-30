@@ -1,13 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
-#if (UCS4)
+#if UCS4
 using System.Text;
 using Mono.Unix;
-
-#endif
-
-#if (UCS2 && PYTHON3)
+#elif UCS2 && PYTHON3
 using System.Text;
 #endif
 
@@ -16,7 +13,7 @@ namespace Python.Runtime
     [SuppressUnmanagedCodeSecurityAttribute()]
     static class NativeMethods
     {
-#if (MONO_LINUX || MONO_OSX)
+#if MONO_LINUX || MONO_OSX
         static public IntPtr LoadLibrary(string fileName) {
             return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
         }
@@ -40,7 +37,7 @@ namespace Python.Runtime
             return res;
         }
 
-#if (MONO_OSX)
+#if MONO_OSX
         static int RTLD_NOW = 0x2;
         static int RTLD_SHARED = 0x20;
         static IntPtr RTLD_DEFAULT = new IntPtr(-2);
@@ -56,7 +53,7 @@ namespace Python.Runtime
 
         [DllImport("__Internal")]
         private static extern IntPtr dlerror();
-#else
+#elif MONO_LINUX
         static int RTLD_NOW = 0x2;
         static int RTLD_SHARED = 0x20;
         static IntPtr RTLD_DEFAULT = IntPtr.Zero;
@@ -74,7 +71,7 @@ namespace Python.Runtime
         private static extern IntPtr dlerror();
 #endif
 
-#else
+#else // Windows
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string dllToLoad);
 
@@ -93,126 +90,84 @@ namespace Python.Runtime
         /// the responsibility of the caller to have acquired the GIL
         /// before calling any of these methods.
         /// </summary>
-#if (UCS4)
+#if UCS4
         public const int UCS = 4;
-#endif
-#if (UCS2)
+#elif UCS2
         public const int UCS = 2;
-#endif
-#if ! (UCS2 || UCS4)
+#else
 #error You must define either UCS2 or UCS4!
 #endif
 
-#if (PYTHON23)
-        public const string pyversion = "2.3";
-        public const int pyversionnumber = 23;
-#endif
-#if (PYTHON24)
-        public const string pyversion = "2.4";
-        public const int pyversionnumber = 24;
-#endif
-#if (PYTHON25)
-        public const string pyversion = "2.5";
-        public const int pyversionnumber = 25;
-#endif
-#if (PYTHON26)
-        public const string pyversion = "2.6";
-        public const int pyversionnumber = 26;
-#endif
-#if (PYTHON27)
+#if PYTHON27
         public const string pyversion = "2.7";
         public const int pyversionnumber = 27;
-#endif
-#if (PYTHON32)
-        public const string pyversion = "3.2";
-        public const int pyversionnumber = 32;
-#endif
-#if (PYTHON33)
+#elif PYTHON33
         public const string pyversion = "3.3";
         public const int pyversionnumber = 33;
-#endif
-#if (PYTHON34)
+#elif PYTHON34
         public const string pyversion = "3.4";
         public const int pyversionnumber = 34;
-#endif
-#if (PYTHON35)
+#elif PYTHON35
         public const string pyversion = "3.5";
         public const int pyversionnumber = 35;
-#endif
-#if (PYTHON36)
+#elif PYTHON36
         public const string pyversion = "3.6";
         public const int pyversionnumber = 36;
-#endif
-#if ! (PYTHON23 || PYTHON24 || PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
-#error You must define one of PYTHON23 to PYTHON36
-#endif
-
-#if (PYTHON23)
-        internal const string dllBase = "python23";
-#endif
-#if (PYTHON24)
-        internal const string dllBase = "python24";
-#endif
-#if (PYTHON25)
-        internal const string dllBase = "python25";
-#endif
-#if (PYTHON26)
-        internal const string dllBase = "python26";
-#endif
-#if (PYTHON27)
-        internal const string dllBase = "python27";
-#endif
-#if (MONO_LINUX || MONO_OSX)
-#if (PYTHON32)
-        internal const string dllBase = "python3.2";
-#endif
-#if (PYTHON33)
-        internal const string dllBase = "python3.3";
-#endif
-#if (PYTHON34)
-        internal const string dllBase = "python3.4";
-#endif
-#if (PYTHON35)
-        internal const string dllBase = "python3.5";
-#endif
-#if (PYTHON36)
-        internal const string dllBase = "python3.6";
-#endif
+#elif PYTHON37
+        // TODO: Add interop37 after Python3.7 is released
+        public const string pyversion = "3.7";
+        public const int pyversionnumber = 37;
 #else
-#if (PYTHON32)
-        internal const string dllBase = "python32";
+#error You must define one of PYTHON33 to PYTHON37 or PYTHON27
 #endif
-#if (PYTHON33)
+
+#if MONO_LINUX || MONO_OSX
+#if PYTHON27
+        internal const string dllBase = "python27";
+#elif PYTHON33
+        internal const string dllBase = "python3.3";
+#elif PYTHON34
+        internal const string dllBase = "python3.4";
+#elif PYTHON35
+        internal const string dllBase = "python3.5";
+#elif PYTHON36
+        internal const string dllBase = "python3.6";
+#elif PYTHON37
+        internal const string dllBase = "python3.7";
+#endif
+#else // Windows
+#if PYTHON27
+        internal const string dllBase = "python27";
+#elif PYTHON33
         internal const string dllBase = "python33";
-#endif
-#if (PYTHON34)
+#elif PYTHON34
         internal const string dllBase = "python34";
-#endif
-#if (PYTHON35)
+#elif PYTHON35
         internal const string dllBase = "python35";
-#endif
-#if (PYTHON36)
+#elif PYTHON36
         internal const string dllBase = "python36";
+#elif PYTHON37
+        internal const string dllBase = "python37";
 #endif
 #endif
 
-#if (PYTHON_WITH_PYDEBUG)
+#if PYTHON_WITH_PYDEBUG
         internal const string dllWithPyDebug = "d";
 #else
         internal const string dllWithPyDebug = "";
 #endif
-#if (PYTHON_WITH_PYMALLOC)
+#if PYTHON_WITH_PYMALLOC
         internal const string dllWithPyMalloc = "m";
 #else
         internal const string dllWithPyMalloc = "";
 #endif
-#if (PYTHON_WITH_WIDE_UNICODE)
+#if PYTHON_WITH_WIDE_UNICODE
         internal const string dllWithWideUnicode = "u";
 #else
         internal const string dllWithWideUnicode = "";
 #endif
 
-#if (PYTHON_WITHOUT_ENABLE_SHARED)
+#if PYTHON_WITHOUT_ENABLE_SHARED
         public const string dll = "__Internal";
 #else
         public const string dll = dllBase + dllWithPyDebug + dllWithPyMalloc + dllWithWideUnicode;
@@ -544,7 +499,7 @@ namespace Python.Runtime
 
         internal unsafe static void XIncref(IntPtr op)
         {
-#if (Py_DEBUG)
+#if Py_DEBUG
         // according to Python doc, Py_IncRef() is Py_XINCREF()
         Py_IncRef(op);
         return;
@@ -566,7 +521,7 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
-#if (Py_DEBUG)
+#if Py_DEBUG
         // Py_DecRef calls Python's Py_DECREF
         // according to Python doc, Py_DecRef() is Py_XDECREF()
         Py_DecRef(op);
@@ -621,7 +576,7 @@ namespace Python.Runtime
             return 0;
         }
 
-#if (Py_DEBUG)
+#if Py_DEBUG
     // Py_IncRef and Py_DecRef are taking care of the extra payload
     // in Py_DEBUG builds of Python like _Py_RefTotal
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
@@ -932,7 +887,7 @@ namespace Python.Runtime
             {
                 return IntPtr.Zero;
             }
-#if (Py_DEBUG)
+#if Py_DEBUG
         int n = 3;
 #else
             int n = 1;
@@ -1563,27 +1518,11 @@ namespace Python.Runtime
         }
     }
 
-#if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromStringAndSize(IntPtr value, int size);
-#elif (UCS2)
-    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "PyUnicodeUCS2_FromStringAndSize",
-        ExactSpelling = true, CharSet = CharSet.Unicode)]
-    internal unsafe static extern IntPtr
-    PyUnicode_FromStringAndSize(IntPtr value, int size);
-#else
-    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "PyUnicodeUCS4_FromStringAndSize",
-        ExactSpelling = true, CharSet = CharSet.Ansi)]
-    internal unsafe static extern IntPtr
-    PyUnicode_FromStringAndSize(IntPtr value, int size);
-#endif
-
-#else // Python2x
-
+#elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern IntPtr
@@ -1606,8 +1545,7 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == Runtime.PyUnicodeType;
         }
 
-#if (UCS2)
-#if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#if UCS2 && PYTHON3
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
@@ -1649,8 +1587,7 @@ namespace Python.Runtime
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-
-#else
+#elif UCS2 && PYTHON2
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_FromObject",
         ExactSpelling=true, CharSet=CharSet.Unicode)]
@@ -1692,41 +1629,7 @@ namespace Python.Runtime
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-#endif
-
-    internal static IntPtr PyUnicode_FromString(string s)
-    {
-        return PyUnicode_FromUnicode(s, (s.Length));
-    }
-
-    internal unsafe static string GetManagedString(IntPtr op)
-    {
-        IntPtr type = PyObject_TYPE(op);
-
-// Python 3 strings are all unicode
-#if PYTHON2
-        if (type == Runtime.PyStringType)
-        {
-            return Marshal.PtrToStringAnsi(
-                       PyString_AS_STRING(op),
-                       Runtime.PyString_Size(op)
-                       );
-        }
-#endif
-
-        if (type == Runtime.PyUnicodeType)
-        {
-            char* p = Runtime.PyUnicode_AsUnicode(op);
-            int size = Runtime.PyUnicode_GetSize(op);
-            return new String(p, 0, size);
-        }
-
-        return null;
-    }
-
-#endif
-#if (UCS4)
-#if (PYTHON33 || PYTHON34 || PYTHON35 || PYTHON36)
+#elif UCS4 && PYTHON3
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
         ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
@@ -1770,8 +1673,7 @@ namespace Python.Runtime
         ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-
-#else
+#elif UCS4 && PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS4_FromObject",
             ExactSpelling = true, CharSet = CharSet.Unicode)]
@@ -1815,7 +1717,6 @@ namespace Python.Runtime
             ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
-
 #endif
 
         internal static IntPtr PyUnicode_FromString(string s)
@@ -1827,8 +1728,7 @@ namespace Python.Runtime
         {
             IntPtr type = PyObject_TYPE(op);
 
-// Python 3 strings are all unicode
-#if PYTHON2
+#if PYTHON2 // Python 3 strings are all Unicode
             if (type == Runtime.PyStringType)
             {
                 return Marshal.PtrToStringAnsi(
@@ -1840,17 +1740,22 @@ namespace Python.Runtime
 
             if (type == Runtime.PyUnicodeType)
             {
+#if UCS4
                 IntPtr p = Runtime.PyUnicode_AsUnicode(op);
                 int length = Runtime.PyUnicode_GetSize(op);
                 int size = length*4;
                 byte[] buffer = new byte[size];
                 Marshal.Copy(p, buffer, 0, size);
                 return Encoding.UTF32.GetString(buffer, 0, size);
+#elif UCS2
+                char* p = Runtime.PyUnicode_AsUnicode(op);
+                int size = Runtime.PyUnicode_GetSize(op);
+                return new String(p, 0, size);
+#endif
             }
 
             return null;
         }
-#endif
 
         //====================================================================
         // Python dictionary API
