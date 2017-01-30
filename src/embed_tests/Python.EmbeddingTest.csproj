@@ -140,7 +140,6 @@
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
     <None Include="packages.config" />
-    <None Include="pythonnet.snk" Condition="Exists('pythonnet.snk')" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InitializeTest.cs" />
