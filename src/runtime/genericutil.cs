@@ -24,10 +24,9 @@ namespace Python.Runtime
             mapping = new Dictionary<string, Dictionary<string, List<string>>>();
         }
 
-        //====================================================================
-        // Register a generic type that appears in a given namespace.
-        //====================================================================
-
+        /// <summary>
+        /// Register a generic type that appears in a given namespace.
+        /// </summary>
         internal static void Register(Type t)
         {
             if (null == t.Namespace || null == t.Name)
@@ -56,10 +55,9 @@ namespace Python.Runtime
             gnames.Add(t.Name);
         }
 
-        //====================================================================
-        // xxx
-        //====================================================================
-
+        /// <summary>
+        /// xxx
+        /// </summary>
         public static List<string> GetGenericBaseNames(string ns)
         {
             Dictionary<string, List<string>> nsmap = null;
@@ -76,10 +74,9 @@ namespace Python.Runtime
             return names;
         }
 
-        //====================================================================
-        // xxx
-        //====================================================================
-
+        /// <summary>
+        /// xxx
+        /// </summary>
         public static Type GenericForType(Type t, int paramCount)
         {
             return GenericByName(t.Namespace, t.Name, paramCount);
@@ -136,10 +133,9 @@ namespace Python.Runtime
             return result;
         }
 
-        //====================================================================
-        // xxx
-        //====================================================================
-
+        /// <summary>
+        /// xxx
+        /// </summary>
         public static string GenericNameForBaseName(string ns, string name)
         {
             Dictionary<string, List<string>> nsmap = null;

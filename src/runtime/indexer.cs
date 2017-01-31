@@ -5,10 +5,9 @@ using System.Security.Permissions;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Bundles the information required to support an indexer property.
-    //========================================================================
-
+    /// <summary>
+    /// Bundles the information required to support an indexer property.
+    /// </summary>
     internal class Indexer
     {
         public MethodBinder GetterBinder;
@@ -81,7 +80,7 @@ namespace Python.Runtime
 
         /// <summary>
         /// This will return default arguments a new instance of a tuple. The size
-        ///  of the tuple will indicate the number of default arguments.
+        /// of the tuple will indicate the number of default arguments.
         /// </summary>
         /// <param name="args">This is pointing to the tuple args passed in</param>
         /// <returns>a new instance of the tuple containing the default args</returns>

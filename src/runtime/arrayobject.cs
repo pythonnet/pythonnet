@@ -38,10 +38,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __getitem__ for array types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __getitem__ for array types.
+        /// </summary>
         public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
             CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
@@ -131,10 +130,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __setitem__ for array types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __setitem__ for array types.
+        /// </summary>
         public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
         {
             CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
@@ -226,10 +224,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __contains__ for array types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __contains__ for array types.
+        /// </summary>
         public static int sq_contains(IntPtr ob, IntPtr v)
         {
             CLRObject obj = (CLRObject)ManagedType.GetManagedObject(ob);
@@ -251,10 +248,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __len__ for array types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __len__ for array types.
+        /// </summary>
         public static int mp_length(IntPtr ob)
         {
             CLRObject self = (CLRObject)ManagedType.GetManagedObject(ob);

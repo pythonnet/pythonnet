@@ -210,11 +210,11 @@ namespace Python.Runtime
             }
         }
 
-        //====================================================================
-        // A helper to perform initialization from the context of an active
-        // CPython interpreter process - this bootstraps the managed runtime
-        // when it is imported by the CLR extension module.
-        //====================================================================
+        /// <summary>
+        /// A helper to perform initialization from the context of an active
+        /// CPython interpreter process - this bootstraps the managed runtime
+        /// when it is imported by the CLR extension module.
+        /// </summary>
 #if PYTHON3
         public static IntPtr InitExt()
 #elif PYTHON2

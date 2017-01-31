@@ -5,12 +5,11 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Common base class for all objects that are implemented in managed
-    // code. It defines the common fields that associate CLR and Python
-    // objects and common utilities to convert between those identities.
-    //========================================================================
-
+    /// <summary>
+    /// Common base class for all objects that are implemented in managed
+    /// code. It defines the common fields that associate CLR and Python
+    /// objects and common utilities to convert between those identities.
+    /// </summary>
     internal abstract class ManagedType
     {
         internal GCHandle gcHandle; // Native handle
@@ -18,10 +17,9 @@ namespace Python.Runtime
         internal IntPtr tpHandle; // PyType *
 
 
-        //====================================================================
-        // Given a Python object, return the associated managed object or null.
-        //====================================================================
-
+        /// <summary>
+        /// Given a Python object, return the associated managed object or null.
+        /// </summary>
         internal static ManagedType GetManagedObject(IntPtr ob)
         {
             if (ob != IntPtr.Zero)

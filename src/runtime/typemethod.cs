@@ -4,10 +4,9 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python type that provides access to CLR object methods.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python type that provides access to CLR object methods.
+    /// </summary>
     internal class TypeMethod : MethodObject
     {
         public TypeMethod(Type type, string name, MethodInfo[] info) :

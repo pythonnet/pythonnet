@@ -14,7 +14,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyIter Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyIter from an existing iterator reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -27,7 +26,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyIter Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
         /// </remarks>

@@ -12,7 +12,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyFloat Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyFloat from an existing object reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -26,7 +25,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyFloat Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Copy constructor - obtain a PyFloat from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
@@ -46,7 +44,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyFloat Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python float from a double value.
         /// </remarks>
@@ -63,7 +60,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyFloat Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python float from a string value.
         /// </remarks>
@@ -83,7 +79,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsFloatType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python float.
         /// </remarks>
@@ -96,8 +91,6 @@ namespace Python.Runtime
         /// <summary>
         /// AsFloat Method
         /// </summary>
-        ///
-        /// <remarks>
         /// <remarks>
         /// Convert a Python object to a Python float if possible, raising
         /// a PythonException if the conversion is not possible. This is

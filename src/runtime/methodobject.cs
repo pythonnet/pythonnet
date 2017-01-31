@@ -4,12 +4,13 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python type that represents a CLR method. Method objects
-    // support a subscript syntax [] to allow explicit overload selection.
-    //========================================================================
-    // TODO: ForbidPythonThreadsAttribute per method info
-
+    /// <summary>
+    /// Implements a Python type that represents a CLR method. Method objects
+    /// support a subscript syntax [] to allow explicit overload selection.
+    /// </summary>
+    /// <remarks>
+    /// TODO: ForbidPythonThreadsAttribute per method info
+    /// </remarks>
     internal class MethodObject : ExtensionType
     {
         internal MethodInfo[] info;
@@ -58,10 +59,9 @@ namespace Python.Runtime
             return binder.Invoke(target, args, kw, info, this.info);
         }
 
-        //====================================================================
-        // Helper to get docstrings from reflected method / param info.
-        //====================================================================
-
+        /// <summary>
+        /// Helper to get docstrings from reflected method / param info.
+        /// </summary>
         internal IntPtr GetDocString()
         {
             if (doc != IntPtr.Zero)
@@ -91,28 +91,27 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // This is a little tricky: a class can actually have a static method
-        // and instance methods all with the same name. That makes it tough
-        // to support calling a method 'unbound' (passing the instance as the
-        // first argument), because in this case we can't know whether to call
-        // the instance method unbound or call the static method.
-        //
-        // The rule we is that if there are both instance and static methods
-        // with the same name, then we always call the static method. So this
-        // method returns true if any of the methods that are represented by
-        // the descriptor are static methods (called by MethodBinding).
-        //====================================================================
-
+        /// <summary>
+        /// This is a little tricky: a class can actually have a static method
+        /// and instance methods all with the same name. That makes it tough
+        /// to support calling a method 'unbound' (passing the instance as the
+        /// first argument), because in this case we can't know whether to call
+        /// the instance method unbound or call the static method.
+        /// </summary>
+        /// <remarks>
+        /// The rule we is that if there are both instance and static methods
+        /// with the same name, then we always call the static method. So this
+        /// method returns true if any of the methods that are represented by
+        /// the descriptor are static methods (called by MethodBinding).
+        /// </remarks>
         internal bool IsStatic()
         {
             return this.is_static;
         }
 
-        //====================================================================
-        // Descriptor __getattribute__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __getattribute__ implementation.
+        /// </summary>
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
         {
             MethodObject self = (MethodObject)GetManagedObject(ob);
@@ -133,11 +132,10 @@ namespace Python.Runtime
             return Runtime.PyObject_GenericGetAttr(ob, key);
         }
 
-        //====================================================================
-        // Descriptor __get__ implementation. Accessing a CLR method returns
-        // a "bound" method similar to a Python bound method.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __get__ implementation. Accessing a CLR method returns
+        /// a "bound" method similar to a Python bound method.
+        /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
             MethodObject self = (MethodObject)GetManagedObject(ds);
@@ -183,10 +181,9 @@ namespace Python.Runtime
             return binding.pyHandle;
         }
 
-        //====================================================================
-        // Descriptor __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             MethodObject self = (MethodObject)GetManagedObject(ob);
@@ -194,10 +191,9 @@ namespace Python.Runtime
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
 
-        //====================================================================
-        // Descriptor dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             MethodObject self = (MethodObject)GetManagedObject(ob);

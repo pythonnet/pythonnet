@@ -4,10 +4,9 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python descriptor type that provides access to CLR events.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python descriptor type that provides access to CLR events.
+    /// </summary>
     internal class EventObject : ExtensionType
     {
         internal string name;
@@ -22,10 +21,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Register a new Python object event handler with the event.
-        //====================================================================
-
+        /// <summary>
+        /// Register a new Python object event handler with the event.
+        /// </summary>
         internal bool AddEventHandler(IntPtr target, IntPtr handler)
         {
             Object obj = null;
@@ -71,10 +69,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Remove the given Python object event handler.
-        //====================================================================
-
+        /// <summary>
+        /// Remove the given Python object event handler.
+        /// </summary>
         internal bool RemoveEventHandler(IntPtr target, IntPtr handler)
         {
             Object obj = null;
@@ -128,11 +125,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor __get__ implementation. A getattr on an event returns
-        // a "bound" event that keeps a reference to the object instance.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __get__ implementation. A getattr on an event returns
+        /// a "bound" event that keeps a reference to the object instance.
+        /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
             EventObject self = GetManagedObject(ds) as EventObject;
@@ -168,14 +164,13 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor __set__ implementation. This actually never allows you
-        // to set anything; it exists solely to support the '+=' spelling of
-        // event handler registration. The reason is that given code like:
-        // 'ob.SomeEvent += method', Python will attempt to set the attribute
-        // SomeEvent on ob to the result of the '+=' operation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __set__ implementation. This actually never allows you
+        /// to set anything; it exists solely to support the '+=' spelling of
+        /// event handler registration. The reason is that given code like:
+        /// 'ob.SomeEvent += method', Python will attempt to set the attribute
+        /// SomeEvent on ob to the result of the '+=' operation.
+        /// </summary>
         public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
             EventBinding e = GetManagedObject(val) as EventBinding;
@@ -191,10 +186,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             EventObject self = (EventObject)GetManagedObject(ob);
@@ -203,10 +197,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             EventObject self = (EventObject)GetManagedObject(ob);

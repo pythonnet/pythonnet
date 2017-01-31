@@ -4,13 +4,12 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // A MethodBinder encapsulates information about a (possibly overloaded)
-    // managed method, and is responsible for selecting the right method given
-    // a set of Python arguments. This is also used as a base class for the
-    // ConstructorBinder, a minor variation used to invoke constructors.
-    //========================================================================
-
+    /// <summary>
+    /// A MethodBinder encapsulates information about a (possibly overloaded)
+    /// managed method, and is responsible for selecting the right method given
+    /// a set of Python arguments. This is also used as a base class for the
+    /// ConstructorBinder, a minor variation used to invoke constructors.
+    /// </summary>
     internal class MethodBinder
     {
         public ArrayList list;
@@ -39,11 +38,10 @@ namespace Python.Runtime
             this.list.Add(m);
         }
 
-        //====================================================================
-        // Given a sequence of MethodInfo and a sequence of types, return the
-        // MethodInfo that matches the signature represented by those types.
-        //====================================================================
-
+        /// <summary>
+        /// Given a sequence of MethodInfo and a sequence of types, return the
+        /// MethodInfo that matches the signature represented by those types.
+        /// </summary>
         internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp)
         {
             if (tp == null)
@@ -73,11 +71,10 @@ namespace Python.Runtime
             return null;
         }
 
-        //====================================================================
-        // Given a sequence of MethodInfo and a sequence of type parameters,
-        // return the MethodInfo that represents the matching closed generic.
-        //====================================================================
-
+        /// <summary>
+        /// Given a sequence of MethodInfo and a sequence of type parameters,
+        /// return the MethodInfo that represents the matching closed generic.
+        /// </summary>
         internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp)
         {
             if (tp == null)
@@ -102,11 +99,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Given a sequence of MethodInfo and two sequences of type parameters,
-        // return the MethodInfo that matches the signature and the closed generic.
-        //====================================================================
-
+        /// <summary>
+        /// Given a sequence of MethodInfo and two sequences of type parameters,
+        /// return the MethodInfo that matches the signature and the closed generic.
+        /// </summary>
         internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
         {
             if ((genericTp == null) || (sigTp == null))
@@ -153,12 +149,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Return the array of MethodInfo for this method. The result array
-        // is arranged in order of precendence (done lazily to avoid doing it
-        // at all for methods that are never called).
-        //====================================================================
-
+        /// <summary>
+        /// Return the array of MethodInfo for this method. The result array
+        /// is arranged in order of precendence (done lazily to avoid doing it
+        /// at all for methods that are never called).
+        /// </summary>
         internal MethodBase[] GetMethods()
         {
             if (!init)
@@ -171,11 +166,10 @@ namespace Python.Runtime
             return methods;
         }
 
-        //====================================================================
-        // Precedence algorithm largely lifted from jython - the concerns are
-        // generally the same so we'll start w/this and tweak as necessary.
-        //====================================================================
-
+        /// <summary>
+        /// Precedence algorithm largely lifted from jython - the concerns are
+        /// generally the same so we'll start w/this and tweak as necessary.
+        /// </summary>
         internal static int GetPrecedence(MethodBase mi)
         {
             ParameterInfo[] pi = mi.GetParameters();
@@ -191,10 +185,9 @@ namespace Python.Runtime
             return val;
         }
 
-        //====================================================================
-        // Return a precedence value for a particular Type object.
-        //====================================================================
-
+        /// <summary>
+        /// Return a precedence value for a particular Type object.
+        /// </summary>
         internal static int ArgPrecedence(Type t)
         {
             Type objectType = typeof(Object);
@@ -242,12 +235,11 @@ namespace Python.Runtime
             return 2000;
         }
 
-        //====================================================================
-        // Bind the given Python instance and arguments to a particular method
-        // overload and return a structure that contains the converted Python
-        // instance, converted arguments and the correct method to call.
-        //====================================================================
-
+        /// <summary>
+        /// Bind the given Python instance and arguments to a particular method
+        /// overload and return a structure that contains the converted Python
+        /// instance, converted arguments and the correct method to call.
+        /// </summary>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw)
         {
             return this.Bind(inst, args, kw, null, null);
@@ -567,10 +559,9 @@ namespace Python.Runtime
     }
 
 
-    //========================================================================
-    // Utility class to sort method info by parameter type precedence.
-    //========================================================================
-
+    /// <summary>
+    /// Utility class to sort method info by parameter type precedence.
+    /// </summary>
     internal class MethodSorter : IComparer
     {
         int IComparer.Compare(Object m1, Object m2)
@@ -586,12 +577,11 @@ namespace Python.Runtime
     }
 
 
-    //========================================================================
-    // A Binding is a utility instance that bundles together a MethodInfo
-    // representing a method to call, a (possibly null) target instance for
-    // the call, and the arguments for the call (all as managed values).
-    //========================================================================
-
+    /// <summary>
+    /// A Binding is a utility instance that bundles together a MethodInfo
+    /// representing a method to call, a (possibly null) target instance for
+    /// the call, and the arguments for the call (all as managed values).
+    /// </summary>
     internal class Binding
     {
         public MethodBase info;

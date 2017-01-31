@@ -35,11 +35,10 @@ namespace Python.Runtime
             dtype = typeof(System.MulticastDelegate);
         }
 
-        //====================================================================
-        // Return the ClassBase-derived instance that implements a particular
-        // reflected managed type, creating it if it doesn't yet exist.
-        //====================================================================
-
+        /// <summary>
+        /// Return the ClassBase-derived instance that implements a particular
+        /// reflected managed type, creating it if it doesn't yet exist.
+        /// </summary>
         internal static ClassBase GetClass(Type type)
         {
             ClassBase cb = null;
@@ -56,12 +55,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Create a new ClassBase-derived instance that implements a reflected
-        // managed type. The new object will be associated with a generated
-        // Python type object.
-        //====================================================================
-
+        /// <summary>
+        /// Create a new ClassBase-derived instance that implements a reflected
+        /// managed type. The new object will be associated with a generated
+        /// Python type object.
+        /// </summary>
         private static ClassBase CreateClass(Type type)
         {
             // Next, select the appropriate managed implementation class.

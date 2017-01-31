@@ -33,12 +33,11 @@ namespace Python.Runtime
             codeGenerator = new CodeGenerator();
         }
 
-        //====================================================================
-        // Given a true delegate instance, return the PyObject handle of the
-        // Python object implementing the delegate (or IntPtr.Zero if the
-        // delegate is not implemented in Python code.
-        //====================================================================
-
+        /// <summary>
+        /// Given a true delegate instance, return the PyObject handle of the
+        /// Python object implementing the delegate (or IntPtr.Zero if the
+        /// delegate is not implemented in Python code.
+        /// </summary>
         public IntPtr GetPythonHandle(Delegate d)
         {
             if ((d != null) && (d.Target is Dispatcher))
@@ -49,11 +48,10 @@ namespace Python.Runtime
             return IntPtr.Zero;
         }
 
-        //====================================================================
-        // GetDispatcher is responsible for creating a class that provides
-        // an appropriate managed callback method for a given delegate type.
-        //====================================================================
-
+        /// <summary>
+        /// GetDispatcher is responsible for creating a class that provides
+        /// an appropriate managed callback method for a given delegate type.
+        /// </summary>
         private Type GetDispatcher(Type dtype)
         {
             // If a dispatcher type for the given delegate type has already
@@ -154,12 +152,11 @@ namespace Python.Runtime
             return disp;
         }
 
-        //====================================================================
-        // Given a delegate type and a callable Python object, GetDelegate
-        // returns an instance of the delegate type. The delegate instance
-        // returned will dispatch calls to the given Python object.
-        //====================================================================
-
+        /// <summary>
+        /// Given a delegate type and a callable Python object, GetDelegate
+        /// returns an instance of the delegate type. The delegate instance
+        /// returned will dispatch calls to the given Python object.
+        /// </summary>
         internal Delegate GetDelegate(Type dtype, IntPtr callable)
         {
             Type dispatcher = GetDispatcher(dtype);

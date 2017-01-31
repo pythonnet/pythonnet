@@ -38,10 +38,9 @@ namespace Python.Runtime
             return e;
         }
 
-        //====================================================================
-        // Exception __str__ implementation
-        //====================================================================
-
+        /// <summary>
+        /// Exception __str__ implementation
+        /// </summary>
         public new static IntPtr tp_str(IntPtr ob)
         {
             Exception e = ToException(ob);
@@ -78,10 +77,9 @@ namespace Python.Runtime
         {
         }
 
-        //===================================================================
-        // Initialization performed on startup of the Python runtime.
-        //===================================================================
-
+        /// <summary>
+        /// Initialization performed on startup of the Python runtime.
+        /// </summary>
         internal static void Initialize()
         {
 #if PYTHON3
@@ -111,10 +109,9 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Cleanup resources upon shutdown of the Python runtime.
-        //===================================================================
-
+        /// <summary>
+        /// Cleanup resources upon shutdown of the Python runtime.
+        /// </summary>
         internal static void Shutdown()
         {
             if (0 != Runtime.Py_IsInitialized())

@@ -21,7 +21,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsNumberType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python numeric type.
         /// </remarks>

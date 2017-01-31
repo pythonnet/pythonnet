@@ -11,7 +11,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an existing object reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -25,7 +24,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Copy constructor - obtain a PyLong from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
@@ -45,7 +43,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an int32 value.
         /// </remarks>
@@ -62,7 +59,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from a uint32 value.
         /// </remarks>
@@ -80,7 +76,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an int64 value.
         /// </remarks>
@@ -97,7 +92,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from a uint64 value.
         /// </remarks>
@@ -115,7 +109,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an int16 value.
         /// </remarks>
@@ -132,7 +125,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an uint16 value.
         /// </remarks>
@@ -150,7 +142,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from a byte value.
         /// </remarks>
@@ -167,7 +158,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an sbyte value.
         /// </remarks>
@@ -185,7 +175,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from an double value.
         /// </remarks>
@@ -202,7 +191,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyLong Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyLong from a string value.
         /// </remarks>
@@ -219,7 +207,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsLongType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python long.
         /// </remarks>
@@ -232,8 +219,6 @@ namespace Python.Runtime
         /// <summary>
         /// AsLong Method
         /// </summary>
-        ///
-        /// <remarks>
         /// <remarks>
         /// Convert a Python object to a Python long if possible, raising
         /// a PythonException if the conversion is not possible. This is
@@ -252,7 +237,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToInt16 Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the value of the Python long object as an int16.
         /// </remarks>
@@ -265,7 +249,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToInt32 Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the value of the Python long object as an int32.
         /// </remarks>
@@ -278,7 +261,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToInt64 Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the value of the Python long object as an int64.
         /// </remarks>

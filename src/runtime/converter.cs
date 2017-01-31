@@ -7,10 +7,9 @@ using System.Collections;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Performs data conversions between managed types and Python types.
-    //========================================================================
-
+    /// <summary>
+    /// Performs data conversions between managed types and Python types.
+    /// </summary>
     [SuppressUnmanagedCodeSecurityAttribute()]
     internal class Converter
     {
@@ -48,10 +47,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Given a builtin Python type, return the corresponding CLR type.
-        //====================================================================
-
+        /// <summary>
+        /// Given a builtin Python type, return the corresponding CLR type.
+        /// </summary>
         internal static Type GetTypeByAlias(IntPtr op)
         {
             if ((op == Runtime.PyStringType) ||
@@ -113,12 +111,12 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Return a Python object for the given native object, converting
-        // basic types (string, int, etc.) into equivalent Python objects.
-        // This always returns a new reference. Note that the System.Decimal
-        // type has no Python equivalent and converts to a managed instance.
-        //====================================================================
+        /// <summary>
+        /// Return a Python object for the given native object, converting
+        /// basic types (string, int, etc.) into equivalent Python objects.
+        /// This always returns a new reference. Note that the System.Decimal
+        /// type has no Python equivalent and converts to a managed instance.
+        /// </summary>
         internal static IntPtr ToPython<T>(T value)
         {
             return ToPython(value, typeof(T));
@@ -234,11 +232,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // In a few situations, we don't have any advisory type information
-        // when we want to convert an object to Python.
-        //====================================================================
-
+        /// <summary>
+        /// In a few situations, we don't have any advisory type information
+        /// when we want to convert an object to Python.
+        /// </summary>
         internal static IntPtr ToPythonImplicit(Object value)
         {
             if (value == null)
@@ -252,11 +249,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Return a managed object for the given Python object, taking funny
-        // byref types into account.
-        //====================================================================
-
+        /// <summary>
+        /// Return a managed object for the given Python object, taking funny
+        /// byref types into account.
+        /// </summary>
         internal static bool ToManaged(IntPtr value, Type type,
             out object result, bool setError)
         {
@@ -415,10 +411,9 @@ namespace Python.Runtime
             return ToPrimitive(value, obType, out result, setError);
         }
 
-        //====================================================================
-        // Convert a Python value to an instance of a primitive managed type.
-        //====================================================================
-
+        /// <summary>
+        /// Convert a Python value to an instance of a primitive managed type.
+        /// </summary>
         static bool ToPrimitive(IntPtr value, Type obType, out Object result, bool setError)
         {
             IntPtr overflow = Exceptions.OverflowError;
@@ -826,12 +821,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Convert a Python value to a correctly typed managed array instance.
-        // The Python value must support the Python sequence protocol and the
-        // items in the sequence must be convertible to the target array type.
-        //====================================================================
-
+        /// <summary>
+        /// Convert a Python value to a correctly typed managed array instance.
+        /// The Python value must support the Python sequence protocol and the
+        /// items in the sequence must be convertible to the target array type.
+        /// </summary>
         static bool ToArray(IntPtr value, Type obType, out Object result, bool setError)
         {
             Type elementType = obType.GetElementType();
@@ -878,10 +872,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Convert a Python value to a correctly typed managed enum instance.
-        //====================================================================
-
+        /// <summary>
+        /// Convert a Python value to a correctly typed managed enum instance.
+        /// </summary>
         static bool ToEnum(IntPtr value, Type obType, out Object result, bool setError)
         {
             Type etype = Enum.GetUnderlyingType(obType);

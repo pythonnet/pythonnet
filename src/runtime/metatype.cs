@@ -5,21 +5,19 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // The managed metatype. This object implements the type of all reflected
-    // types. It also provides support for single-inheritance from reflected
-    // managed types.
-    //========================================================================
-
+    /// <summary>
+    /// The managed metatype. This object implements the type of all reflected
+    /// types. It also provides support for single-inheritance from reflected
+    /// managed types.
+    /// </summary>
     internal class MetaType : ManagedType
     {
         static IntPtr PyCLRMetaType;
 
 
-        //====================================================================
-        // Metatype initialization. This bootstraps the CLR metatype to life.
-        //====================================================================
-
+        /// <summary>
+        /// Metatype initialization. This bootstraps the CLR metatype to life.
+        /// </summary>
         public static IntPtr Initialize()
         {
             PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType));
@@ -27,11 +25,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Metatype __new__ implementation. This is called to create a new
-        // class / type when a reflected class is subclassed.
-        //====================================================================
-
+        /// <summary>
+        /// Metatype __new__ implementation. This is called to create a new
+        /// class / type when a reflected class is subclassed.
+        /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             int len = Runtime.PyTuple_Size(args);
@@ -141,12 +138,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Metatype __call__ implementation. This is needed to ensure correct
-        // initialization (__init__ support), because the tp_call we inherit
-        // from PyType_Type won't call __init__ for metatypes it doesnt know.
-        //====================================================================
-
+        /// <summary>
+        /// Metatype __call__ implementation. This is needed to ensure correct
+        /// initialization (__init__ support), because the tp_call we inherit
+        /// from PyType_Type won't call __init__ for metatypes it doesnt know.
+        /// </summary>
         public static IntPtr tp_call(IntPtr tp, IntPtr args, IntPtr kw)
         {
             IntPtr func = Marshal.ReadIntPtr(tp, TypeOffset.tp_new);
@@ -192,14 +188,13 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Type __setattr__ implementation for reflected types. Note that this
-        // is slightly different than the standard setattr implementation for
-        // the normal Python metatype (PyTypeType). We need to look first in
-        // the type object of a reflected type for a descriptor in order to
-        // support the right setattr behavior for static fields and properties.
-        //====================================================================
-
+        /// <summary>
+        /// Type __setattr__ implementation for reflected types. Note that this
+        /// is slightly different than the standard setattr implementation for
+        /// the normal Python metatype (PyTypeType). We need to look first in
+        /// the type object of a reflected type for a descriptor in order to
+        /// support the right setattr behavior for static fields and properties.
+        /// </summary>
         public static int tp_setattro(IntPtr tp, IntPtr name, IntPtr value)
         {
             IntPtr descr = Runtime._PyType_Lookup(tp, name);
@@ -232,11 +227,11 @@ namespace Python.Runtime
             return res;
         }
 
-        //====================================================================
-        // The metatype has to implement [] semantics for generic types, so
-        // here we just delegate to the generic type def implementation. Its
-        // own mp_subscript
-        //====================================================================
+        /// <summary>
+        /// The metatype has to implement [] semantics for generic types, so
+        /// here we just delegate to the generic type def implementation. Its
+        /// own mp_subscript
+        /// </summary>
         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
         {
             ClassBase cb = GetManagedObject(tp) as ClassBase;
@@ -247,11 +242,10 @@ namespace Python.Runtime
             return Exceptions.RaiseTypeError("unsubscriptable object");
         }
 
-        //====================================================================
-        // Dealloc implementation. This is called when a Python type generated
-        // by this metatype is no longer referenced from the Python runtime.
-        //====================================================================
-
+        /// <summary>
+        /// Dealloc implementation. This is called when a Python type generated
+        /// by this metatype is no longer referenced from the Python runtime.
+        /// </summary>
         public static void tp_dealloc(IntPtr tp)
         {
             // Fix this when we dont cheat on the handle for subclasses!

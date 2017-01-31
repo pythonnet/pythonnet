@@ -16,7 +16,6 @@ namespace Python.Runtime
     /// Python type objects. Each of those type objects is associated with
     /// an instance of ClassObject, which provides its implementation.
     /// </summary>
-
     // interface used to idenfity which C# types were dynamically created as python subclasses
     public interface IPythonDerivedType
     {
@@ -569,13 +568,13 @@ namespace Python.Runtime
     //
     public class PythonDerivedType
     {
-        //====================================================================
-        // This is the implementaion of the overriden methods in the derived
-        // type. It looks for a python method with the same name as the method
-        // on the managed base class and if it exists and isn't the managed
-        // method binding (ie it has been overriden in the derived python
-        // class) it calls it, otherwise it calls the base method.
-        //====================================================================
+        /// <summary>
+        /// This is the implementaion of the overriden methods in the derived
+        /// type. It looks for a python method with the same name as the method
+        /// on the managed base class and if it exists and isn't the managed
+        /// method binding (ie it has been overriden in the derived python
+        /// class) it calls it, otherwise it calls the base method.
+        /// </summary>
         public static T InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName, Object[] args)
         {
             FieldInfo fi = obj.GetType().GetField("__pyobj__");

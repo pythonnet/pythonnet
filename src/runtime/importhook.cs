@@ -4,10 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements the "import hook" used to integrate Python with the CLR.
-    //========================================================================
-
+    /// <summary>
+    /// Implements the "import hook" used to integrate Python with the CLR.
+    /// </summary>
     internal class ImportHook
     {
         static IntPtr py_import;
@@ -25,10 +24,9 @@ namespace Python.Runtime
         }
 #endif
 
-        //===================================================================
-        // Initialization performed on startup of the Python runtime.
-        //===================================================================
-
+        /// <summary>
+        /// Initialization performed on startup of the Python runtime.
+        /// </summary>
         internal static void Initialize()
         {
             // Initialize the Python <--> CLR module hook. We replace the
@@ -70,10 +68,9 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Cleanup resources upon shutdown of the Python runtime.
-        //===================================================================
-
+        /// <summary>
+        /// Cleanup resources upon shutdown of the Python runtime.
+        /// </summary>
         internal static void Shutdown()
         {
             if (0 != Runtime.Py_IsInitialized())
@@ -88,9 +85,9 @@ namespace Python.Runtime
             }
         }
 
-        //===================================================================
-        // Return the clr python module (new reference)
-        //===================================================================
+        /// <summary>
+        /// Return the clr python module (new reference)
+        /// </summary>
         public static IntPtr GetCLRModule(IntPtr? fromList = null)
         {
             root.InitializePreload();
@@ -146,10 +143,9 @@ namespace Python.Runtime
 #endif
         }
 
-        //===================================================================
-        // The actual import hook that ties Python to the managed world.
-        //===================================================================
-
+        /// <summary>
+        /// The actual import hook that ties Python to the managed world.
+        /// </summary>
         public static IntPtr __import__(IntPtr self, IntPtr args, IntPtr kw)
         {
             // Replacement for the builtin __import__. The original import

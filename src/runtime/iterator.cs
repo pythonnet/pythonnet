@@ -4,11 +4,10 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a generic Python iterator for IEnumerable objects and
-    // managed array objects. This supports 'for i in object:' in Python.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a generic Python iterator for IEnumerable objects and
+    /// managed array objects. This supports 'for i in object:' in Python.
+    /// </summary>
     internal class Iterator : ExtensionType
     {
         IEnumerator iter;
@@ -19,10 +18,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements support for the Python iteration protocol.
-        //====================================================================
-
+        /// <summary>
+        /// Implements support for the Python iteration protocol.
+        /// </summary>
         public static IntPtr tp_iternext(IntPtr ob)
         {
             Iterator self = GetManagedObject(ob) as Iterator;

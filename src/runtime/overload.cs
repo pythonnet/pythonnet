@@ -3,11 +3,10 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements the __overloads__ attribute of method objects. This object
-    // supports the [] syntax to explicitly select an overload by signature.
-    //========================================================================
-
+    /// <summary>
+    /// Implements the __overloads__ attribute of method objects. This object
+    /// supports the [] syntax to explicitly select an overload by signature.
+    /// </summary>
     internal class OverloadMapper : ExtensionType
     {
         MethodObject m;
@@ -20,10 +19,9 @@ namespace Python.Runtime
             this.m = m;
         }
 
-        //====================================================================
-        // Implement explicit overload selection using subscript syntax ([]).
-        //====================================================================
-
+        /// <summary>
+        /// Implement explicit overload selection using subscript syntax ([]).
+        /// </summary>
         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
         {
             OverloadMapper self = (OverloadMapper)GetManagedObject(tp);
@@ -51,10 +49,9 @@ namespace Python.Runtime
             return mb.pyHandle;
         }
 
-        //====================================================================
-        // OverloadMapper  __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// OverloadMapper  __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr op)
         {
             OverloadMapper self = (OverloadMapper)GetManagedObject(op);
@@ -63,10 +60,9 @@ namespace Python.Runtime
             return doc;
         }
 
-        //====================================================================
-        // OverloadMapper dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// OverloadMapper dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             OverloadMapper self = (OverloadMapper)GetManagedObject(ob);

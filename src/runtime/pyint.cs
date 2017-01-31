@@ -12,7 +12,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyInt from an existing object reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -26,7 +25,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Copy constructor - obtain a PyInt from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
@@ -46,7 +44,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from an int32 value.
         /// </remarks>
@@ -63,7 +60,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from a uint32 value.
         /// </remarks>
@@ -81,7 +77,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from an int64 value.
         /// </remarks>
@@ -98,7 +93,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from a uint64 value.
         /// </remarks>
@@ -116,7 +110,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from an int16 value.
         /// </remarks>
@@ -128,7 +121,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from a uint16 value.
         /// </remarks>
@@ -141,7 +133,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from a byte value.
         /// </remarks>
@@ -153,7 +144,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from an sbyte value.
         /// </remarks>
@@ -166,7 +156,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyInt Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python int from a string value.
         /// </remarks>
@@ -183,7 +172,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsIntType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python int.
         /// </remarks>
@@ -196,8 +184,6 @@ namespace Python.Runtime
         /// <summary>
         /// AsInt Method
         /// </summary>
-        ///
-        /// <remarks>
         /// <remarks>
         /// Convert a Python object to a Python int if possible, raising
         /// a PythonException if the conversion is not possible. This is
@@ -217,7 +203,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToInt16 Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the value of the Python int object as an int16.
         /// </remarks>
@@ -230,7 +215,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToInt32 Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the value of the Python int object as an int32.
         /// </remarks>
@@ -243,7 +227,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToInt64 Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the value of the Python int object as an int64.
         /// </remarks>

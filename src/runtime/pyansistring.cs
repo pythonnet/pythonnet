@@ -7,7 +7,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyAnsiString Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyAnsiString from an existing object reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -21,7 +20,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyString Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Copy constructor - obtain a PyAnsiString from a generic PyObject.
         /// An ArgumentException will be thrown if the given object is not
@@ -41,7 +39,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyAnsiString Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
@@ -58,7 +55,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsStringType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python string.
         /// </remarks>

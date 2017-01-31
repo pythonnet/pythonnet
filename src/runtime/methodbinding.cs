@@ -4,12 +4,11 @@ using System.Collections.Generic;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python binding type for CLR methods. These work much like
-    // standard Python method bindings, but the same type is used to bind
-    // both static and instance methods.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python binding type for CLR methods. These work much like
+    /// standard Python method bindings, but the same type is used to bind
+    /// both static and instance methods.
+    /// </summary>
     internal class MethodBinding : ExtensionType
     {
         internal MethodInfo info;
@@ -35,10 +34,9 @@ namespace Python.Runtime
         {
         }
 
-        //====================================================================
-        // Implement binding of generic methods using the subscript syntax [].
-        //====================================================================
-
+        /// <summary>
+        /// Implement binding of generic methods using the subscript syntax [].
+        /// </summary>
         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(tp);
@@ -63,10 +61,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // MethodBinding __getattribute__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// MethodBinding __getattribute__ implementation.
+        /// </summary>
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
@@ -97,10 +94,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // MethodBinding  __call__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// MethodBinding  __call__ implementation.
+        /// </summary>
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
@@ -187,10 +183,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // MethodBinding  __hash__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// MethodBinding  __hash__ implementation.
+        /// </summary>
         public static IntPtr tp_hash(IntPtr ob)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
@@ -222,10 +217,9 @@ namespace Python.Runtime
             return new IntPtr(x);
         }
 
-        //====================================================================
-        // MethodBinding  __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// MethodBinding  __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
@@ -234,10 +228,9 @@ namespace Python.Runtime
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
 
-        //====================================================================
-        // MethodBinding dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// MethodBinding dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
