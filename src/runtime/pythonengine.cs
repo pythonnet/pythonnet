@@ -10,10 +10,30 @@ namespace Python.Runtime
     /// <summary>
     /// This class provides the public interface of the Python runtime.
     /// </summary>
-    public class PythonEngine
+    public class PythonEngine : IDisposable
     {
         private static DelegateManager delegateManager;
         private static bool initialized;
+
+        public PythonEngine()
+        {
+            Initialize();
+        }
+
+        public PythonEngine(params string[] args)
+        {
+            Initialize(args);
+        }
+
+        public PythonEngine(IEnumerable<string> args)
+        {
+            Initialize(args);
+        }
+
+        public void Dispose()
+        {
+            Shutdown();
+        }
 
         #region Properties
 
@@ -197,7 +217,8 @@ namespace Python.Runtime
         // when it is imported by the CLR extension module.
         //====================================================================
 #if PYTHON3
-        public static IntPtr InitExt() {
+        public static IntPtr InitExt()
+        {
 #elif PYTHON2
         public static void InitExt()
         {
@@ -549,6 +570,11 @@ namespace Python.Runtime
                     Environment.GetCommandLineArgs().Skip(1)
                 )
             );
+        }
+
+        public static void SetArgv(params string[] argv)
+        {
+            SetArgv(argv as IEnumerable<string>);
         }
 
         public static void SetArgv(IEnumerable<string> argv)

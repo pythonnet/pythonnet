@@ -13,40 +13,26 @@ namespace Python.EmbeddingTest
         public static void LoadSpecificArgs()
         {
             var args = new[] { "test1", "test2" };
-            PythonEngine.Initialize(args);
-            try
+            using (new PythonEngine(args))
+            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
             {
-                using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
-                {
-                    Assert.That(argv[0].ToString() == args[0]);
-                    Assert.That(argv[1].ToString() == args[1]);
-                }
-            }
-            finally
-            {
-                PythonEngine.Shutdown();
+                Assert.That(argv[0].ToString() == args[0]);
+                Assert.That(argv[1].ToString() == args[1]);
             }
         }
 
         [Test]
         public static void LoadDefaultArgs()
         {
-            PythonEngine.Initialize();
-            try
+            using (new PythonEngine())
+            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
             {
-                using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
-                {
-                    Assert.That(argv.Length() != 0);
-                }
-            }
-            finally
-            {
-                PythonEngine.Shutdown();
+                Assert.That(argv.Length() != 0);
             }
         }
 
         [Test]
-        public static void Test()
+        public static void StartAndStopTwice()
         {
             PythonEngine.Initialize();
             PythonEngine.Shutdown();
