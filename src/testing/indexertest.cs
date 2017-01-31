@@ -2,10 +2,9 @@ using System.Collections;
 
 namespace Python.Test
 {
-    //========================================================================
-    // Supports units tests for indexer access.
-    //========================================================================
-
+    /// <summary>
+    /// Supports units tests for indexer access.
+    /// </summary>
     public class IndexerBase
     {
         protected Hashtable t;

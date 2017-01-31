@@ -2,10 +2,9 @@ using System;
 
 namespace Python.Test
 {
-    //========================================================================
-    // Supports CLR event unit tests.
-    //========================================================================
-
+    /// <summary>
+    /// Supports CLR event unit tests.
+    /// </summary>
     public delegate void EventHandlerTest(object sender, EventArgsTest e);
 
 

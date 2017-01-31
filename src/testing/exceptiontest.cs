@@ -2,10 +2,9 @@ using System;
 
 namespace Python.Test
 {
-    //========================================================================
-    // Supports CLR Exception unit tests.
-    //========================================================================
-
+    /// <summary>
+    /// Supports CLR Exception unit tests.
+    /// </summary>
     public class ExceptionTest
     {
         public int ThrowProperty

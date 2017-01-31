@@ -2,10 +2,9 @@ using System.Collections;
 
 namespace Python.Test
 {
-    //========================================================================
-    // Supports CLR class unit tests.
-    //========================================================================
-
+    /// <summary>
+    /// Supports CLR class unit tests.
+    /// </summary>
     public class ClassTest
     {
         public static ArrayList GetArrayList()

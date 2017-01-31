@@ -1,9 +1,8 @@
 namespace Python.Test
 {
-    //========================================================================
-    // Supports units tests for property access.
-    //========================================================================
-
+    /// <summary>
+    /// Supports units tests for property access.
+    /// </summary>
     public class PropertyTest
     {
         public PropertyTest()

@@ -2,12 +2,13 @@ using Python.Runtime;
 
 namespace Python.Test
 {
-    //========================================================================
-    // Supports units tests for exposing docstrings from C# to Python
-    //========================================================================
-
-    // Classes with a constructor have their docstring set to the ctor signature.
-    // Test if a class has an explicit doc string it gets set correctly.
+    /// <summary>
+    /// Supports units tests for exposing docstrings from C# to Python
+    /// </summary>
+    /// <remarks>
+    /// Classes with a constructor have their docstring set to the ctor signature.
+    /// Test if a class has an explicit doc string it gets set correctly.
+    /// </remarks>
     [DocString("DocWithCtorTest Class")]
     public class DocWithCtorTest
     {

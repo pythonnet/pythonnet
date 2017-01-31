@@ -1,9 +1,8 @@
 namespace Python.Test
 {
-    //========================================================================
-    // Supports units tests for field access.
-    //========================================================================
-
+    /// <summary>
+    /// Supports units tests for field access.
+    /// </summary>
     public class FieldTest
     {
         public FieldTest()

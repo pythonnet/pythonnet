@@ -1,9 +1,8 @@
 namespace Python.Test
 {
-    //========================================================================
-    // Supports CLR class unit tests.
-    //========================================================================
-
+    /// <summary>
+    /// Supports CLR class unit tests.
+    /// </summary>
     public delegate void PublicDelegate();
 
     internal delegate void InternalDelegate();

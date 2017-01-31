@@ -3,10 +3,9 @@ using System.IO;
 
 namespace Python.Test
 {
-    //========================================================================
-    // Supports units tests for method access.
-    //========================================================================
-
+    /// <summary>
+    /// Supports units tests for method access.
+    /// </summary>
     public class MethodTest
     {
         public MethodTest()
@@ -54,10 +53,9 @@ namespace Python.Test
         }
 
 
-        //===================================================================
-        // Methods to support specific argument conversion unit tests
-        //===================================================================
-
+        /// <summary>
+        /// Methods to support specific argument conversion unit tests
+        /// </summary>
         public TypeCode TestEnumConversion(TypeCode v)
         {
             return v;
