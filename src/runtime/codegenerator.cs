@@ -29,20 +29,18 @@ namespace Python.Runtime
             mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
         }
 
-        //====================================================================
-        // DefineType is a shortcut utility to get a new TypeBuilder.
-        //====================================================================
-
+        /// <summary>
+        /// DefineType is a shortcut utility to get a new TypeBuilder.
+        /// </summary>
         internal TypeBuilder DefineType(string name)
         {
             TypeAttributes attrs = TypeAttributes.Public;
             return mBuilder.DefineType(name, attrs);
         }
 
-        //====================================================================
-        // DefineType is a shortcut utility to get a new TypeBuilder.
-        //====================================================================
-
+        /// <summary>
+        /// DefineType is a shortcut utility to get a new TypeBuilder.
+        /// </summary>
         internal TypeBuilder DefineType(string name, Type basetype)
         {
             TypeAttributes attrs = TypeAttributes.Public;

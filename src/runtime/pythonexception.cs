@@ -76,7 +76,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyType Property
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the exception type as a Python object.
         /// </remarks>
@@ -88,7 +87,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyValue Property
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the exception value as a Python object.
         /// </remarks>
@@ -100,7 +98,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyTB Property
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the TraceBack as a Python object.
         /// </remarks>
@@ -112,7 +109,6 @@ namespace Python.Runtime
         /// <summary>
         /// Message Property
         /// </summary>
-        ///
         /// <remarks>
         /// A string representing the python exception message.
         /// </remarks>
@@ -124,7 +120,6 @@ namespace Python.Runtime
         /// <summary>
         /// StackTrace Property
         /// </summary>
-        ///
         /// <remarks>
         /// A string representing the python exception stack trace.
         /// </remarks>
@@ -137,7 +132,6 @@ namespace Python.Runtime
         /// <summary>
         /// Dispose Method
         /// </summary>
-        ///
         /// <remarks>
         /// The Dispose method provides a way to explicitly release the
         /// Python objects represented by a PythonException.
@@ -166,7 +160,6 @@ namespace Python.Runtime
         /// <summary>
         /// Matches Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the Python exception type represented by the
         /// PythonException instance matches the given exception type.

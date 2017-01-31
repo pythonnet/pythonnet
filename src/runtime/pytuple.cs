@@ -11,7 +11,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyTuple Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyTuple from an existing object reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -25,7 +24,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyTuple Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Copy constructor - obtain a PyTuple from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
@@ -45,7 +43,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyTuple Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new empty PyTuple.
         /// </remarks>
@@ -62,7 +59,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyTuple Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyTuple from an array of PyObject instances.
         /// </remarks>
@@ -86,7 +82,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsTupleType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python tuple.
         /// </remarks>
@@ -99,7 +94,6 @@ namespace Python.Runtime
         /// <summary>
         /// AsTuple Method
         /// </summary>
-        ///
         /// <remarks>
         /// Convert a Python object to a Python tuple if possible, raising
         /// a PythonException if the conversion is not possible. This is

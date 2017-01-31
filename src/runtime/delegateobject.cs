@@ -20,11 +20,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Given a PyObject pointer to an instance of a delegate type, return
-        // the true managed delegate the Python object represents (or null).
-        //====================================================================
-
+        /// <summary>
+        /// Given a PyObject pointer to an instance of a delegate type, return
+        /// the true managed delegate the Python object represents (or null).
+        /// </summary>
         private static Delegate GetTrueDelegate(IntPtr op)
         {
             CLRObject o = GetManagedObject(op) as CLRObject;
@@ -43,14 +42,13 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // DelegateObject __new__ implementation. The result of this is a new
-        // PyObject whose type is DelegateObject and whose ob_data is a handle
-        // to an actual delegate instance. The method wrapped by the actual
-        // delegate instance belongs to an object generated to relay the call
-        // to the Python callable passed in.
-        //====================================================================
-
+        /// <summary>
+        /// DelegateObject __new__ implementation. The result of this is a new
+        /// PyObject whose type is DelegateObject and whose ob_data is a handle
+        /// to an actual delegate instance. The method wrapped by the actual
+        /// delegate instance belongs to an object generated to relay the call
+        /// to the Python callable passed in.
+        /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             DelegateObject self = (DelegateObject)GetManagedObject(tp);
@@ -73,10 +71,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __call__ for reflected delegate types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __call__ for reflected delegate types.
+        /// </summary>
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
         {
             // todo: add fast type check!
@@ -99,9 +96,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __cmp__ for reflected delegate types.
-        //====================================================================
+        /// <summary>
+        /// Implements __cmp__ for reflected delegate types.
+        /// </summary>
 #if PYTHON3
         public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
         {

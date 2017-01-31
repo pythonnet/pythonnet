@@ -26,10 +26,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Helper to get docstring from reflected constructor info.
-        //====================================================================
-
+        /// <summary>
+        /// Helper to get docstring from reflected constructor info.
+        /// </summary>
         internal IntPtr GetDocString()
         {
             MethodBase[] methods = binder.GetMethods();
@@ -44,10 +43,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __new__ for reflected classes and value types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __new__ for reflected classes and value types.
+        /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             ClassObject self = GetManagedObject(tp) as ClassObject;
@@ -108,12 +106,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implementation of [] semantics for reflected types. This exists
-        // both to implement the Array[int] syntax for creating arrays and
-        // to support generic name overload resolution using [].
-        //====================================================================
-
+        /// <summary>
+        /// Implementation of [] semantics for reflected types. This exists
+        /// both to implement the Array[int] syntax for creating arrays and
+        /// to support generic name overload resolution using [].
+        /// </summary>
         public override IntPtr type_subscript(IntPtr idx)
         {
             // If this type is the Array type, the [<type>] means we need to
@@ -160,10 +157,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __getitem__ for reflected classes and value types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __getitem__ for reflected classes and value types.
+        /// </summary>
         public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
             //ManagedType self = GetManagedObject(ob);
@@ -208,10 +204,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Implements __setitem__ for reflected classes and value types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __setitem__ for reflected classes and value types.
+        /// </summary>
         public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
         {
             //ManagedType self = GetManagedObject(ob);
@@ -289,13 +284,12 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // This is a hack. Generally, no managed class is considered callable
-        // from Python - with the exception of System.Delegate. It is useful
-        // to be able to call a System.Delegate instance directly, especially
-        // when working with multicast delegates.
-        //====================================================================
-
+        /// <summary>
+        /// This is a hack. Generally, no managed class is considered callable
+        /// from Python - with the exception of System.Delegate. It is useful
+        /// to be able to call a System.Delegate instance directly, especially
+        /// when working with multicast delegates.
+        /// </summary>
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
         {
             //ManagedType self = GetManagedObject(ob);

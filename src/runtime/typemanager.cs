@@ -8,11 +8,10 @@ using System.Threading;
 
 namespace Python.Runtime
 {
-    //=======================================================================
-    // The TypeManager class is responsible for building binary-compatible
-    // Python type objects that are implemented in managed code.
-    //=======================================================================
-
+    /// <summary>
+    /// The TypeManager class is responsible for building binary-compatible
+    /// Python type objects that are implemented in managed code.
+    /// </summary>
     internal class TypeManager
     {
         static BindingFlags tbFlags;
@@ -25,13 +24,12 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Given a managed Type derived from ExtensionType, get the handle to
-        // a Python type object that delegates its implementation to the Type
-        // object. These Python type instances are used to implement internal
-        // descriptor and utility types like ModuleObject, PropertyObject, etc.
-        //====================================================================
-
+        /// <summary>
+        /// Given a managed Type derived from ExtensionType, get the handle to
+        /// a Python type object that delegates its implementation to the Type
+        /// object. These Python type instances are used to implement internal
+        /// descriptor and utility types like ModuleObject, PropertyObject, etc.
+        /// </summary>
         internal static IntPtr GetTypeHandle(Type type)
         {
             // Note that these types are cached with a refcount of 1, so they
@@ -48,12 +46,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Get the handle of a Python type that reflects the given CLR type.
-        // The given ManagedType instance is a managed object that implements
-        // the appropriate semantics in Python for the reflected managed type.
-        //====================================================================
-
+        /// <summary>
+        /// Get the handle of a Python type that reflects the given CLR type.
+        /// The given ManagedType instance is a managed object that implements
+        /// the appropriate semantics in Python for the reflected managed type.
+        /// </summary>
         internal static IntPtr GetTypeHandle(ManagedType obj, Type type)
         {
             IntPtr handle = IntPtr.Zero;
@@ -68,15 +65,14 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // The following CreateType implementations do the necessary work to
-        // create Python types to represent managed extension types, reflected
-        // types, subclasses of reflected types and the managed metatype. The
-        // dance is slightly different for each kind of type due to different
-        // behavior needed and the desire to have the existing Python runtime
-        // do as much of the allocation and initialization work as possible.
-        //====================================================================
-
+        /// <summary>
+        /// The following CreateType implementations do the necessary work to
+        /// create Python types to represent managed extension types, reflected
+        /// types, subclasses of reflected types and the managed metatype. The
+        /// dance is slightly different for each kind of type due to different
+        /// behavior needed and the desire to have the existing Python runtime
+        /// do as much of the allocation and initialization work as possible.
+        /// </summary>
         internal static IntPtr CreateType(Type impl)
         {
             IntPtr type = AllocateTypeObject(impl.Name);
@@ -395,10 +391,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Utility method to allocate a type object & do basic initialization.
-        //====================================================================
-
+        /// <summary>
+        /// Utility method to allocate a type object &amp; do basic initialization.
+        /// </summary>
         internal static IntPtr AllocateTypeObject(string name)
         {
             IntPtr type = Runtime.PyType_GenericAlloc(Runtime.PyTypeType, 0);
@@ -445,12 +440,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Given a newly allocated Python type object and a managed Type that
-        // provides the implementation for the type, connect the type slots of
-        // the Python object to the managed methods of the implementing Type.
-        //====================================================================
-
+        /// <summary>
+        /// Given a newly allocated Python type object and a managed Type that
+        /// provides the implementation for the type, connect the type slots of
+        /// the Python object to the managed methods of the implementing Type.
+        /// </summary>
         internal static void InitializeSlots(IntPtr type, Type impl)
         {
             Hashtable seen = new Hashtable(8);
@@ -492,12 +486,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Given a newly allocated Python type object and a managed Type that
-        // implements it, initialize any methods defined by the Type that need
-        // to appear in the Python type __dict__ (based on custom attribute).
-        //====================================================================
-
+        /// <summary>
+        /// Given a newly allocated Python type object and a managed Type that
+        /// implements it, initialize any methods defined by the Type that need
+        /// to appear in the Python type __dict__ (based on custom attribute).
+        /// </summary>
         private static void InitMethods(IntPtr pytype, Type type)
         {
             IntPtr dict = Marshal.ReadIntPtr(pytype, TypeOffset.tp_dict);
@@ -531,10 +524,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Utility method to copy slots from a given type to another type.
-        //====================================================================
-
+        /// <summary>
+        /// Utility method to copy slots from a given type to another type.
+        /// </summary>
         internal static void CopySlot(IntPtr from, IntPtr to, int offset)
         {
             IntPtr fp = Marshal.ReadIntPtr(from, offset);

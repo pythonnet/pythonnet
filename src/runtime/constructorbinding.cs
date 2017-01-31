@@ -77,9 +77,9 @@ namespace Python.Runtime
             return self.pyHandle;
         }
 
-        //====================================================================
-        // Implement explicit overload selection using subscript syntax ([]).
-        //====================================================================
+        /// <summary>
+        /// Implement explicit overload selection using subscript syntax ([]).
+        /// </summary>
         /// <summary>
         /// ConstructorBinding.GetItem(PyObject *o, PyObject *key)
         /// Return element of o corresponding to the object key or NULL on failure.
@@ -112,10 +112,9 @@ namespace Python.Runtime
             return boundCtor.pyHandle;
         }
 
-        //====================================================================
-        // ConstructorBinding  __repr__ implementation [borrowed from MethodObject].
-        //====================================================================
-
+        /// <summary>
+        /// ConstructorBinding  __repr__ implementation [borrowed from MethodObject].
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             ConstructorBinding self = (ConstructorBinding)GetManagedObject(ob);
@@ -140,10 +139,9 @@ namespace Python.Runtime
             return self.repr;
         }
 
-        //====================================================================
-        // ConstructorBinding dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// ConstructorBinding dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             ConstructorBinding self = (ConstructorBinding)GetManagedObject(ob);
@@ -207,10 +205,9 @@ namespace Python.Runtime
             return CLRObject.GetInstHandle(obj, self.pyTypeHndl);
         }
 
-        //====================================================================
-        // BoundContructor  __repr__ implementation [borrowed from MethodObject].
-        //====================================================================
-
+        /// <summary>
+        /// BoundContructor  __repr__ implementation [borrowed from MethodObject].
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             BoundContructor self = (BoundContructor)GetManagedObject(ob);
@@ -228,10 +225,9 @@ namespace Python.Runtime
             return self.repr;
         }
 
-        //====================================================================
-        // ConstructorBinding dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// ConstructorBinding dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             BoundContructor self = (BoundContructor)GetManagedObject(ob);

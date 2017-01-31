@@ -30,19 +30,17 @@ namespace Python.Runtime
             return (!this.type.IsEnum);
         }
 
-        //====================================================================
-        // Implements __init__ for reflected classes and value types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __init__ for reflected classes and value types.
+        /// </summary>
         public static int tp_init(IntPtr ob, IntPtr args, IntPtr kw)
         {
             return 0;
         }
 
-        //====================================================================
-        // Default implementation of [] semantics for reflected types.
-        //====================================================================
-
+        /// <summary>
+        /// Default implementation of [] semantics for reflected types.
+        /// </summary>
         public virtual IntPtr type_subscript(IntPtr idx)
         {
             Type[] types = Runtime.PythonArgsToTypeArray(idx);
@@ -64,10 +62,9 @@ namespace Python.Runtime
             return Exceptions.RaiseTypeError("no type matches params");
         }
 
-        //====================================================================
-        // Standard comparison implementation for instances of reflected types.
-        //====================================================================
-
+        /// <summary>
+        /// Standard comparison implementation for instances of reflected types.
+        /// </summary>
         public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
         {
             CLRObject co1;
@@ -173,12 +170,11 @@ namespace Python.Runtime
             }
         }
 
-        //====================================================================
-        // Standard iteration support for instances of reflected types. This
-        // allows natural iteration over objects that either are IEnumerable
-        // or themselves support IEnumerator directly.
-        //====================================================================
-
+        /// <summary>
+        /// Standard iteration support for instances of reflected types. This
+        /// allows natural iteration over objects that either are IEnumerable
+        /// or themselves support IEnumerator directly.
+        /// </summary>
         public static IntPtr tp_iter(IntPtr ob)
         {
             CLRObject co = GetManagedObject(ob) as CLRObject;
@@ -209,10 +205,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Standard __hash__ implementation for instances of reflected types.
-        //====================================================================
-
+        /// <summary>
+        /// Standard __hash__ implementation for instances of reflected types.
+        /// </summary>
         public static IntPtr tp_hash(IntPtr ob)
         {
             CLRObject co = GetManagedObject(ob) as CLRObject;
@@ -224,10 +219,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Standard __str__ implementation for instances of reflected types.
-        //====================================================================
-
+        /// <summary>
+        /// Standard __str__ implementation for instances of reflected types.
+        /// </summary>
         public static IntPtr tp_str(IntPtr ob)
         {
             CLRObject co = GetManagedObject(ob) as CLRObject;
@@ -251,10 +245,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Default implementations for required Python GC support.
-        //====================================================================
-
+        /// <summary>
+        /// Default implementations for required Python GC support.
+        /// </summary>
         public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args)
         {
             return 0;
@@ -270,10 +263,9 @@ namespace Python.Runtime
             return 1;
         }
 
-        //====================================================================
-        // Standard dealloc implementation for instances of reflected types.
-        //====================================================================
-
+        /// <summary>
+        /// Standard dealloc implementation for instances of reflected types.
+        /// </summary>
         public static void tp_dealloc(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);

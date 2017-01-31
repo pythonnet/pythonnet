@@ -22,20 +22,18 @@ namespace Python.Runtime
             }
         }
 
-        //====================================================================
-        // __call__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// __call__ implementation.
+        /// </summary>
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
         {
             ModuleFunctionObject self = (ModuleFunctionObject)GetManagedObject(ob);
             return self.Invoke(ob, args, kw);
         }
 
-        //====================================================================
-        // __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// __repr__ implementation.
+        /// </summary>
         public static new IntPtr tp_repr(IntPtr ob)
         {
             ModuleFunctionObject self = (ModuleFunctionObject)GetManagedObject(ob);

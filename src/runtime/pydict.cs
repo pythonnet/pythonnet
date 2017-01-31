@@ -12,7 +12,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyDict Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyDict from an existing object reference. Note
         /// that the instance assumes ownership of the object reference.
@@ -26,7 +25,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyDict Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new Python dictionary object.
         /// </remarks>
@@ -43,7 +41,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyDict Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Copy constructor - obtain a PyDict from a generic PyObject. An
         /// ArgumentException will be thrown if the given object is not a
@@ -63,7 +60,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsDictType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given object is a Python dictionary.
         /// </remarks>
@@ -76,7 +72,6 @@ namespace Python.Runtime
         /// <summary>
         /// HasKey Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the object key appears in the dictionary.
         /// </remarks>
@@ -89,7 +84,6 @@ namespace Python.Runtime
         /// <summary>
         /// HasKey Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the string key appears in the dictionary.
         /// </remarks>
@@ -103,7 +97,6 @@ namespace Python.Runtime
         /// <summary>
         /// Keys Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns a sequence containing the keys of the dictionary.
         /// </remarks>
@@ -121,7 +114,6 @@ namespace Python.Runtime
         /// <summary>
         /// Values Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns a sequence containing the values of the dictionary.
         /// </remarks>
@@ -139,7 +131,6 @@ namespace Python.Runtime
         /// <summary>
         /// Items Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns a sequence containing the items of the dictionary.
         /// </remarks>
@@ -157,7 +148,6 @@ namespace Python.Runtime
         /// <summary>
         /// Copy Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns a copy of the dictionary.
         /// </remarks>
@@ -175,7 +165,6 @@ namespace Python.Runtime
         /// <summary>
         /// Update Method
         /// </summary>
-        ///
         /// <remarks>
         /// Update the dictionary from another dictionary.
         /// </remarks>
@@ -192,7 +181,6 @@ namespace Python.Runtime
         /// <summary>
         /// Clear Method
         /// </summary>
-        ///
         /// <remarks>
         /// Clears the dictionary.
         /// </remarks>

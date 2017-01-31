@@ -5,10 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python descriptor type that provides access to CLR fields.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python descriptor type that provides access to CLR fields.
+    /// </summary>
     internal class FieldObject : ExtensionType
     {
         FieldInfo info;
@@ -18,12 +17,11 @@ namespace Python.Runtime
             this.info = info;
         }
 
-        //====================================================================
-        // Descriptor __get__ implementation. This method returns the
-        // value of the field on the given object. The returned value
-        // is converted to an appropriately typed Python object.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __get__ implementation. This method returns the
+        /// value of the field on the given object. The returned value
+        /// is converted to an appropriately typed Python object.
+        /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
             FieldObject self = (FieldObject)GetManagedObject(ds);
@@ -69,12 +67,11 @@ namespace Python.Runtime
             }
         }
 
-        //====================================================================
-        // Descriptor __set__ implementation. This method sets the value of
-        // a field based on the given Python value. The Python value must be
-        // convertible to the type of the field.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __set__ implementation. This method sets the value of
+        /// a field based on the given Python value. The Python value must be
+        /// convertible to the type of the field.
+        /// </summary>
         public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
             FieldObject self = (FieldObject)GetManagedObject(ds);
@@ -136,10 +133,9 @@ namespace Python.Runtime
             }
         }
 
-        //====================================================================
-        // Descriptor __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             FieldObject self = (FieldObject)GetManagedObject(ob);

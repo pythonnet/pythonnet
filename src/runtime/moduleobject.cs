@@ -7,11 +7,10 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python type that provides access to CLR namespaces. The
-    // type behaves like a Python module, and can contain other sub-modules.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python type that provides access to CLR namespaces. The
+    /// type behaves like a Python module, and can contain other sub-modules.
+    /// </summary>
     internal class ModuleObject : ExtensionType
     {
         Dictionary<string, ManagedType> cache;
@@ -61,13 +60,12 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Returns a ClassBase object representing a type that appears in
-        // this module's namespace or a ModuleObject representing a child
-        // namespace (or null if the name is not found). This method does
-        // not increment the Python refcount of the returned object.
-        //===================================================================
-
+        /// <summary>
+        /// Returns a ClassBase object representing a type that appears in
+        /// this module's namespace or a ModuleObject representing a child
+        /// namespace (or null if the name is not found). This method does
+        /// not increment the Python refcount of the returned object.
+        /// </summary>
         public ManagedType GetAttribute(string name, bool guess)
         {
             ManagedType cached = null;
@@ -175,10 +173,9 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Stores an attribute in the instance dict for future lookups.
-        //===================================================================
-
+        /// <summary>
+        /// Stores an attribute in the instance dict for future lookups.
+        /// </summary>
         private void StoreAttribute(string name, ManagedType ob)
         {
             Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
@@ -186,12 +183,11 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Preloads all currently-known names for the module namespace. This
-        // can be called multiple times, to add names from assemblies that
-        // may have been loaded since the last call to the method.
-        //===================================================================
-
+        /// <summary>
+        /// Preloads all currently-known names for the module namespace. This
+        /// can be called multiple times, to add names from assemblies that
+        /// may have been loaded since the last call to the method.
+        /// </summary>
         public void LoadNames()
         {
             ManagedType m = null;
@@ -253,13 +249,12 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // ModuleObject __getattribute__ implementation. Module attributes
-        // are always either classes or sub-modules representing subordinate
-        // namespaces. CLR modules implement a lazy pattern - the sub-modules
-        // and classes are created when accessed and cached for future use.
-        //====================================================================
-
+        /// <summary>
+        /// ModuleObject __getattribute__ implementation. Module attributes
+        /// are always either classes or sub-modules representing subordinate
+        /// namespaces. CLR modules implement a lazy pattern - the sub-modules
+        /// and classes are created when accessed and cached for future use.
+        /// </summary>
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
         {
             ModuleObject self = (ModuleObject)GetManagedObject(ob);
@@ -296,10 +291,9 @@ namespace Python.Runtime
             return attr.pyHandle;
         }
 
-        //====================================================================
-        // ModuleObject __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// ModuleObject __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             ModuleObject self = (ModuleObject)GetManagedObject(ob);

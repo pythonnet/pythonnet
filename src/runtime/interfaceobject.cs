@@ -30,10 +30,9 @@ namespace Python.Runtime
             cc_attr = typeof(CoClassAttribute);
         }
 
-        //====================================================================
-        // Implements __new__ for reflected interface types.
-        //====================================================================
-
+        /// <summary>
+        /// Implements __new__ for reflected interface types.
+        /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             InterfaceObject self = (InterfaceObject)GetManagedObject(tp);

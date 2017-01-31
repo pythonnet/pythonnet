@@ -46,10 +46,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Common finalization code to support custom tp_deallocs.
-        //====================================================================
-
+        /// <summary>
+        /// Common finalization code to support custom tp_deallocs.
+        /// </summary>
         public static void FinalizeObject(ManagedType self)
         {
             Runtime.PyObject_GC_Del(self.pyHandle);
@@ -58,10 +57,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Type __setattr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Type __setattr__ implementation.
+        /// </summary>
         public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
         {
             string message = "type does not support setting attributes";
@@ -74,11 +72,10 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Default __set__ implementation - this prevents descriptor instances
-        // being silently replaced in a type __dict__ by default __setattr__.
-        //====================================================================
-
+        /// <summary>
+        /// Default __set__ implementation - this prevents descriptor instances
+        /// being silently replaced in a type __dict__ by default __setattr__.
+        /// </summary>
         public static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
             string message = "attribute is read-only";
@@ -87,10 +84,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Required Python GC support.
-        //====================================================================
-
+        /// <summary>
+        /// Required Python GC support.
+        /// </summary>
         public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args)
         {
             return 0;
@@ -109,10 +105,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Default dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Default dealloc implementation.
+        /// </summary>
         public static void tp_dealloc(IntPtr ob)
         {
             // Clean up a Python instance of this extension type. This

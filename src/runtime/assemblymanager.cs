@@ -31,12 +31,11 @@ namespace Python.Runtime
         {
         }
 
-        //===================================================================
-        // Initialization performed on startup of the Python runtime. Here we
-        // scan all of the currently loaded assemblies to determine exported
-        // names, and register to be notified of new assembly loads.
-        //===================================================================
-
+        /// <summary>
+        /// Initialization performed on startup of the Python runtime. Here we
+        /// scan all of the currently loaded assemblies to determine exported
+        /// names, and register to be notified of new assembly loads.
+        /// </summary>
         internal static void Initialize()
         {
             namespaces = new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
@@ -69,10 +68,9 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Cleanup resources upon shutdown of the Python runtime.
-        //===================================================================
-
+        /// <summary>
+        /// Cleanup resources upon shutdown of the Python runtime.
+        /// </summary>
         internal static void Shutdown()
         {
             AppDomain domain = AppDomain.CurrentDomain;
@@ -81,14 +79,13 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Event handler for assembly load events. At the time the Python
-        // runtime loads, we scan the app domain to map the assemblies that
-        // are loaded at the time. We also have to register this event handler
-        // so that we can know about assemblies that get loaded after the
-        // Python runtime is initialized.
-        //===================================================================
-
+        /// <summary>
+        /// Event handler for assembly load events. At the time the Python
+        /// runtime loads, we scan the app domain to map the assemblies that
+        /// are loaded at the time. We also have to register this event handler
+        /// so that we can know about assemblies that get loaded after the
+        /// Python runtime is initialized.
+        /// </summary>
         static void AssemblyLoadHandler(Object ob, AssemblyLoadEventArgs args)
         {
             Assembly assembly = args.LoadedAssembly;
@@ -97,14 +94,13 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Event handler for assembly resolve events. This is needed because
-        // we augment the assembly search path with the PYTHONPATH when we
-        // load an assembly from Python. Because of that, we need to listen
-        // for failed loads, because they might be dependencies of something
-        // we loaded from Python which also needs to be found on PYTHONPATH.
-        //===================================================================
-
+        /// <summary>
+        /// Event handler for assembly resolve events. This is needed because
+        /// we augment the assembly search path with the PYTHONPATH when we
+        /// load an assembly from Python. Because of that, we need to listen
+        /// for failed loads, because they might be dependencies of something
+        /// we loaded from Python which also needs to be found on PYTHONPATH.
+        /// </summary>
         static Assembly ResolveHandler(Object ob, ResolveEventArgs args)
         {
             string name = args.Name.ToLower();
@@ -120,19 +116,17 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // We __really__ want to avoid using Python objects or APIs when
-        // probing for assemblies to load, since our ResolveHandler may be
-        // called in contexts where we don't have the Python GIL and can't
-        // even safely try to get it without risking a deadlock ;(
-        //
-        // To work around that, we update a managed copy of sys.path (which
-        // is the main thing we care about) when UpdatePath is called. The
-        // import hook calls this whenever it knows its about to use the
-        // assembly manager, which lets us keep up with changes to sys.path
-        // in a relatively lightweight and low-overhead way.
-        //===================================================================
-
+        /// <summary>
+        /// We __really__ want to avoid using Python objects or APIs when
+        /// probing for assemblies to load, since our ResolveHandler may be
+        /// called in contexts where we don't have the Python GIL and can't
+        /// even safely try to get it without risking a deadlock ;(
+        /// To work around that, we update a managed copy of sys.path (which
+        /// is the main thing we care about) when UpdatePath is called. The
+        /// import hook calls this whenever it knows its about to use the
+        /// assembly manager, which lets us keep up with changes to sys.path
+        /// in a relatively lightweight and low-overhead way.
+        /// </summary>
         internal static void UpdatePath()
         {
             IntPtr list = Runtime.PySys_GetObject("path");
@@ -154,12 +148,11 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Given an assembly name, try to find this assembly file using the
-        // PYTHONPATH. If not found, return null to indicate implicit load
-        // using standard load semantics (app base directory then GAC, etc.)
-        //===================================================================
-
+        /// <summary>
+        /// Given an assembly name, try to find this assembly file using the
+        /// PYTHONPATH. If not found, return null to indicate implicit load
+        /// using standard load semantics (app base directory then GAC, etc.)
+        /// </summary>
         public static string FindAssembly(string name)
         {
             char sep = Path.DirectorySeparatorChar;
@@ -193,11 +186,10 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Loads an assembly from the application directory or the GAC
-        // given a simple assembly name. Returns the assembly if loaded.
-        //===================================================================
-
+        /// <summary>
+        /// Loads an assembly from the application directory or the GAC
+        /// given a simple assembly name. Returns the assembly if loaded.
+        /// </summary>
         public static Assembly LoadAssembly(string name)
         {
             Assembly assembly = null;
@@ -216,10 +208,9 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Loads an assembly using an augmented search path (the python path).
-        //===================================================================
-
+        /// <summary>
+        /// Loads an assembly using an augmented search path (the python path).
+        /// </summary>
         public static Assembly LoadAssemblyPath(string name)
         {
             string path = FindAssembly(name);
@@ -240,8 +231,10 @@ namespace Python.Runtime
         /// <summary>
         /// Loads an assembly using full path.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
+        /// <param name="name">
+        /// </param>
+        /// <returns>
+        /// </returns>
         public static Assembly LoadAssemblyFullPath(string name)
         {
             Assembly assembly = null;
@@ -263,10 +256,9 @@ namespace Python.Runtime
             return assembly;
         }
 
-        //===================================================================
-        // Returns an assembly that's already been loaded
-        //===================================================================
-
+        /// <summary>
+        /// Returns an assembly that's already been loaded
+        /// </summary>
         public static Assembly FindLoadedAssembly(string name)
         {
             foreach (Assembly a in assemblies)
@@ -279,18 +271,19 @@ namespace Python.Runtime
             return null;
         }
 
-        //===================================================================
-        // Given a qualified name of the form A.B.C.D, attempt to load
-        // an assembly named after each of A.B.C.D, A.B.C, A.B, A. This
-        // will only actually probe for the assembly once for each unique
-        // namespace. Returns true if any assemblies were loaded.
-        // TODO item 3 "* Deprecate implicit loading of assemblies":
-        //  Set the fromFile flag if the name of the loaded assembly matches
-        //  the fully qualified name that was requested if the framework
-        //  actually loads an assembly.
-        // Call ONLY for namespaces that HAVE NOT been cached yet.
-        //===================================================================
-
+        /// <summary>
+        /// Given a qualified name of the form A.B.C.D, attempt to load
+        /// an assembly named after each of A.B.C.D, A.B.C, A.B, A. This
+        /// will only actually probe for the assembly once for each unique
+        /// namespace. Returns true if any assemblies were loaded.
+        /// </summary>
+        /// <remarks>
+        /// TODO item 3 "* Deprecate implicit loading of assemblies":
+        /// Set the fromFile flag if the name of the loaded assembly matches
+        /// the fully qualified name that was requested if the framework
+        /// actually loads an assembly.
+        /// Call ONLY for namespaces that HAVE NOT been cached yet.
+        /// </remarks>
         public static bool LoadImplicit(string name, bool warn = true)
         {
             string[] names = name.Split('.');
@@ -339,13 +332,12 @@ namespace Python.Runtime
         }
 
 
-        //===================================================================
-        // Scans an assembly for exported namespaces, adding them to the
-        // mapping of valid namespaces. Note that for a given namespace
-        // a.b.c.d, each of a, a.b, a.b.c and a.b.c.d are considered to
-        // be valid namespaces (to better match Python import semantics).
-        //===================================================================
-
+        /// <summary>
+        /// Scans an assembly for exported namespaces, adding them to the
+        /// mapping of valid namespaces. Note that for a given namespace
+        /// a.b.c.d, each of a, a.b, a.b.c and a.b.c.d are considered to
+        /// be valid namespaces (to better match Python import semantics).
+        /// </summary>
         internal static void ScanAssembly(Assembly assembly)
         {
             // A couple of things we want to do here: first, we want to
@@ -390,20 +382,18 @@ namespace Python.Runtime
             return names.ToArray();
         }
 
-        //===================================================================
-        // Returns true if the given qualified name matches a namespace
-        // exported by an assembly loaded in the current app domain.
-        //===================================================================
-
+        /// <summary>
+        /// Returns true if the given qualified name matches a namespace
+        /// exported by an assembly loaded in the current app domain.
+        /// </summary>
         public static bool IsValidNamespace(string name)
         {
             return !String.IsNullOrEmpty(name) && namespaces.ContainsKey(name);
         }
 
-        //===================================================================
-        // Returns list of assemblies that declare types in a given namespace
-        //===================================================================
-
+        /// <summary>
+        /// Returns list of assemblies that declare types in a given namespace
+        /// </summary>
         public static IEnumerable<Assembly> GetAssemblies(string nsname)
         {
             if (!namespaces.ContainsKey(nsname))
@@ -412,10 +402,9 @@ namespace Python.Runtime
             return namespaces[nsname].Keys;
         }
 
-        //===================================================================
-        // Returns the current list of valid names for the input namespace.
-        //===================================================================
-
+        /// <summary>
+        /// Returns the current list of valid names for the input namespace.
+        /// </summary>
         public static List<string> GetNames(string nsname)
         {
             //Dictionary<string, int> seen = new Dictionary<string, int>();
@@ -460,12 +449,11 @@ namespace Python.Runtime
             return names;
         }
 
-        //===================================================================
-        // Returns the System.Type object for a given qualified name,
-        // looking in the currently loaded assemblies for the named
-        // type. Returns null if the named type cannot be found.
-        //===================================================================
-
+        /// <summary>
+        /// Returns the System.Type object for a given qualified name,
+        /// looking in the currently loaded assemblies for the named
+        /// type. Returns null if the named type cannot be found.
+        /// </summary>
         public static Type LookupType(string qname)
         {
             foreach (Assembly assembly in assemblies)
@@ -528,8 +516,8 @@ namespace Python.Runtime
             }
 
             /// <summary>
-            /// Enumerator wrapping around <see cref="AssemblyList._list"/>'s enumerator.
-            /// Acquires and releases a read lock on <see cref="AssemblyList._lock"/> during enumeration
+            /// Enumerator wrapping around <see cref="AssemblyList._list" />'s enumerator.
+            /// Acquires and releases a read lock on <see cref="AssemblyList._lock" /> during enumeration
             /// </summary>
             private class Enumerator : IEnumerator<Assembly>
             {

@@ -2,10 +2,9 @@ using System;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python event binding type, similar to a method binding.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python event binding type, similar to a method binding.
+    /// </summary>
     internal class EventBinding : ExtensionType
     {
         EventObject e;
@@ -19,10 +18,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // EventBinding += operator implementation.
-        //====================================================================
-
+        /// <summary>
+        /// EventBinding += operator implementation.
+        /// </summary>
         public static IntPtr nb_inplace_add(IntPtr ob, IntPtr arg)
         {
             EventBinding self = (EventBinding)GetManagedObject(ob);
@@ -43,10 +41,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // EventBinding -= operator implementation.
-        //====================================================================
-
+        /// <summary>
+        /// EventBinding -= operator implementation.
+        /// </summary>
         public static IntPtr nb_inplace_subtract(IntPtr ob, IntPtr arg)
         {
             EventBinding self = (EventBinding)GetManagedObject(ob);
@@ -67,10 +64,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // EventBinding  __hash__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// EventBinding  __hash__ implementation.
+        /// </summary>
         public static IntPtr tp_hash(IntPtr ob)
         {
             EventBinding self = (EventBinding)GetManagedObject(ob);
@@ -103,10 +99,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // EventBinding __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// EventBinding __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             EventBinding self = (EventBinding)GetManagedObject(ob);
@@ -116,10 +111,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // EventBinding dealloc implementation.
-        //====================================================================
-
+        /// <summary>
+        /// EventBinding dealloc implementation.
+        /// </summary>
         public static new void tp_dealloc(IntPtr ob)
         {
             EventBinding self = (EventBinding)GetManagedObject(ob);

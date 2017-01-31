@@ -5,10 +5,9 @@ using System.Security.Permissions;
 
 namespace Python.Runtime
 {
-    //========================================================================
-    // Implements a Python descriptor type that manages CLR properties.
-    //========================================================================
-
+    /// <summary>
+    /// Implements a Python descriptor type that manages CLR properties.
+    /// </summary>
     internal class PropertyObject : ExtensionType
     {
         PropertyInfo info;
@@ -24,12 +23,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor __get__ implementation. This method returns the
-        // value of the property on the given object. The returned value
-        // is converted to an appropriately typed Python object.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __get__ implementation. This method returns the
+        /// value of the property on the given object. The returned value
+        /// is converted to an appropriately typed Python object.
+        /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
             PropertyObject self = (PropertyObject)GetManagedObject(ds);
@@ -85,12 +83,11 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor __set__ implementation. This method sets the value of
-        // a property based on the given Python value. The Python value must
-        // be convertible to the type of the property.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __set__ implementation. This method sets the value of
+        /// a property based on the given Python value. The Python value must
+        /// be convertible to the type of the property.
+        /// </summary>
         public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
             PropertyObject self = (PropertyObject)GetManagedObject(ds);
@@ -156,10 +153,9 @@ namespace Python.Runtime
         }
 
 
-        //====================================================================
-        // Descriptor __repr__ implementation.
-        //====================================================================
-
+        /// <summary>
+        /// Descriptor __repr__ implementation.
+        /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
             PropertyObject self = (PropertyObject)GetManagedObject(ob);
