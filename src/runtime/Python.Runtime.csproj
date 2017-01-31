@@ -12,7 +12,7 @@
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
-    <OutputPath>bin\x86\ReleaseMono\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
@@ -20,7 +20,7 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
-    <OutputPath>bin\x64\ReleaseMono\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
@@ -28,7 +28,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
-    <OutputPath>bin\x86\ReleaseWin\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
@@ -36,7 +36,7 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
-    <OutputPath>bin\x64\ReleaseWin\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
@@ -45,7 +45,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\DebugMono\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON2;PYTHON27;UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
@@ -54,7 +54,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\DebugMono\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON2;PYTHON27;UCS4</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
@@ -63,7 +63,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\DebugWin\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON2;PYTHON27;UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
@@ -72,7 +72,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\DebugWin\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON2;PYTHON27;UCS2</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>

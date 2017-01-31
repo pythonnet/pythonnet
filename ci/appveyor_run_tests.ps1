@@ -7,8 +7,8 @@ $NUNIT = Resolve-Path .\packages\NUnit.ConsoleRunner*\tools\nunit3-console.exe
 $PY = Get-Command python
 
 # Can't use ".\build\*\Python.EmbeddingTest.dll". Missing framework files.
-$CS_TESTS = Resolve-Path .\src\embed_tests\bin\*\*\Python.EmbeddingTest.dll
-$RUNTIME_DIR = Resolve-Path .\src\runtime\bin\*\ReleaseWin\
+$CS_TESTS = ".\src\embed_tests\bin\Python.EmbeddingTest.dll"
+$RUNTIME_DIR = ".\src\runtime\bin\"
 
 # Run python tests with C# coverage
 # why `2>&1 | %{ "$_" }`? see: http://stackoverflow.com/a/20950421/5208670

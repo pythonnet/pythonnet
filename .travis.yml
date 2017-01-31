@@ -36,7 +36,7 @@ install:
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python src/tests/runtests.py
-  # - nunit-console src/embed_tests/bin/x64/ReleaseMono/Python.EmbeddingTest.dll
+  # - nunit-console src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_success:
   # Uncomment if need to geninterop, ie. py37 final
