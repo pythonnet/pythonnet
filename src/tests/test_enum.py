@@ -1,27 +1,28 @@
-import sys, os, string, unittest, types
-from System import DayOfWeek
-from Python import Test
-import six
+# -*- coding: utf-8 -*-
 
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-    long = int
-else:
-    DictProxyType = types.DictProxyType
+import unittest
+
+import Python.Test as Test
+
+from _compat import DictProxyType, long
 
 
 class EnumTests(unittest.TestCase):
     """Test CLR enum support."""
 
-    def testEnumStandardAttrs(self):
+    def test_enum_standard_attrs(self):
         """Test standard enum attributes."""
+        from System import DayOfWeek
+
         self.assertTrue(DayOfWeek.__name__ == 'DayOfWeek')
         self.assertTrue(DayOfWeek.__module__ == 'System')
-        self.assertTrue(type(DayOfWeek.__dict__) == DictProxyType)
-        self.assertTrue(DayOfWeek.__doc__ == None)
+        self.assertTrue(isinstance(DayOfWeek.__dict__, DictProxyType))
+        self.assertTrue(DayOfWeek.__doc__ is None)
 
-    def testEnumGetMember(self):
+    def test_enum_get_member(self):
         """Test access to enum members."""
+        from System import DayOfWeek
+
         self.assertTrue(DayOfWeek.Sunday == 0)
         self.assertTrue(DayOfWeek.Monday == 1)
         self.assertTrue(DayOfWeek.Tuesday == 2)
@@ -30,126 +31,106 @@ class EnumTests(unittest.TestCase):
         self.assertTrue(DayOfWeek.Friday == 5)
         self.assertTrue(DayOfWeek.Saturday == 6)
 
-    def testByteEnum(self):
+    def test_byte_enum(self):
         """Test byte enum."""
         self.assertTrue(Test.ByteEnum.Zero == 0)
         self.assertTrue(Test.ByteEnum.One == 1)
         self.assertTrue(Test.ByteEnum.Two == 2)
 
-    def testSByteEnum(self):
+    def test_sbyte_enum(self):
         """Test sbyte enum."""
         self.assertTrue(Test.SByteEnum.Zero == 0)
         self.assertTrue(Test.SByteEnum.One == 1)
         self.assertTrue(Test.SByteEnum.Two == 2)
 
-    def testShortEnum(self):
+    def test_short_enum(self):
         """Test short enum."""
         self.assertTrue(Test.ShortEnum.Zero == 0)
         self.assertTrue(Test.ShortEnum.One == 1)
         self.assertTrue(Test.ShortEnum.Two == 2)
 
-    def testUShortEnum(self):
+    def test_ushort_enum(self):
         """Test ushort enum."""
         self.assertTrue(Test.UShortEnum.Zero == 0)
         self.assertTrue(Test.UShortEnum.One == 1)
         self.assertTrue(Test.UShortEnum.Two == 2)
 
-    def testIntEnum(self):
+    def test_int_enum(self):
         """Test int enum."""
         self.assertTrue(Test.IntEnum.Zero == 0)
         self.assertTrue(Test.IntEnum.One == 1)
         self.assertTrue(Test.IntEnum.Two == 2)
 
-    def testUIntEnum(self):
+    def test_uint_enum(self):
         """Test uint enum."""
         self.assertTrue(Test.UIntEnum.Zero == long(0))
         self.assertTrue(Test.UIntEnum.One == long(1))
         self.assertTrue(Test.UIntEnum.Two == long(2))
 
-    def testLongEnum(self):
+    def test_long_enum(self):
         """Test long enum."""
         self.assertTrue(Test.LongEnum.Zero == long(0))
         self.assertTrue(Test.LongEnum.One == long(1))
         self.assertTrue(Test.LongEnum.Two == long(2))
 
-    def testULongEnum(self):
+    def test_ulong_enum(self):
         """Test ulong enum."""
         self.assertTrue(Test.ULongEnum.Zero == long(0))
         self.assertTrue(Test.ULongEnum.One == long(1))
         self.assertTrue(Test.ULongEnum.Two == long(2))
 
-    def testInstantiateEnumFails(self):
+    def test_instantiate_enum_fails(self):
         """Test that instantiation of an enum class fails."""
+        from System import DayOfWeek
 
-        def test():
-            ob = DayOfWeek()
+        with self.assertRaises(TypeError):
+            _ = DayOfWeek()
 
-        self.assertRaises(TypeError, test)
-
-    def testSubclassEnumFails(self):
+    def test_subclass_enum_fails(self):
         """Test that subclassing of an enumeration fails."""
+        from System import DayOfWeek
 
-        def test():
+        with self.assertRaises(TypeError):
             class Boom(DayOfWeek):
                 pass
+            _ = Boom
 
-        self.assertRaises(TypeError, test)
-
-    def testEnumSetMemberFails(self):
+    def test_enum_set_member_fails(self):
         """Test that setattr operations on enumerations fail."""
+        from System import DayOfWeek
 
-        def test():
+        with self.assertRaises(TypeError):
             DayOfWeek.Sunday = 13
 
-        self.assertRaises(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             del DayOfWeek.Sunday
 
-        self.assertRaises(TypeError, test)
-
-    def testEnumWithFlagsAttrConversion(self):
+    def test_enum_with_flags_attr_conversion(self):
         """Test enumeration conversion with FlagsAttribute set."""
         # This works because the FlagsField enum has FlagsAttribute.
         Test.FieldTest().FlagsField = 99
 
         # This should fail because our test enum doesn't have it.
-        def test():
+        with self.assertRaises(ValueError):
             Test.FieldTest().EnumField = 99
 
-        self.assertRaises(ValueError, test)
-
-    def testEnumConversion(self):
+    def test_enum_conversion(self):
         """Test enumeration conversion."""
-        object = Test.FieldTest()
-        self.assertTrue(object.EnumField == 0)
+        ob = Test.FieldTest()
+        self.assertTrue(ob.EnumField == 0)
 
-        object.EnumField = Test.ShortEnum.One
-        self.assertTrue(object.EnumField == 1)
+        ob.EnumField = Test.ShortEnum.One
+        self.assertTrue(ob.EnumField == 1)
 
-        def test():
+        with self.assertRaises(ValueError):
             Test.FieldTest().EnumField = 20
 
-        self.assertRaises(ValueError, test)
-
-        def test():
+        with self.assertRaises(OverflowError):
             Test.FieldTest().EnumField = 100000
 
-        self.assertRaises(OverflowError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             Test.FieldTest().EnumField = "str"
-
-        self.assertRaises(TypeError, test)
 
 
 def test_suite():
     return unittest.makeSuite(EnumTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

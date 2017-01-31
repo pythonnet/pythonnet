@@ -1,60 +1,56 @@
-from Python.Test import InterfaceTest
-import sys, os, string, unittest, types
-import Python.Test as Test
-import System
-import six
+# -*- coding: utf-8 -*-
 
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-else:
-    DictProxyType = types.DictProxyType
+import unittest
+
+import Python.Test as Test
+
+from _compat import DictProxyType
 
 
 class InterfaceTests(unittest.TestCase):
     """Test CLR interface support."""
 
-    def testInterfaceStandardAttrs(self):
+    def test_interface_standard_attrs(self):
         """Test standard class attributes."""
-        from Python.Test import IPublicInterface as ip
-        self.assertTrue(ip.__name__ == 'IPublicInterface')
-        self.assertTrue(ip.__module__ == 'Python.Test')
-        self.assertTrue(type(ip.__dict__) == DictProxyType)
+        from Python.Test import IPublicInterface
 
-    def testGlobalInterfaceVisibility(self):
+        self.assertTrue(IPublicInterface.__name__ == 'IPublicInterface')
+        self.assertTrue(IPublicInterface.__module__ == 'Python.Test')
+        self.assertTrue(isinstance(IPublicInterface.__dict__, DictProxyType))
+
+    def test_global_interface_visibility(self):
         """Test visibility of module-level interfaces."""
         from Python.Test import IPublicInterface
+
         self.assertTrue(IPublicInterface.__name__ == 'IPublicInterface')
 
-        def test():
+        with self.assertRaises(ImportError):
             from Python.Test import IInternalInterface
+            _ = IInternalInterface
 
-        self.assertRaises(ImportError, test)
+        with self.assertRaises(AttributeError):
+            _ = Test.IInternalInterface
 
-        def test():
-            i = Test.IInternalInterface
-
-        self.assertRaises(AttributeError, test)
-
-    def testNestedInterfaceVisibility(self):
+    def test_nested_interface_visibility(self):
         """Test visibility of nested interfaces."""
+        from Python.Test import InterfaceTest
+
         ob = InterfaceTest.IPublic
         self.assertTrue(ob.__name__ == 'IPublic')
 
         ob = InterfaceTest.IProtected
         self.assertTrue(ob.__name__ == 'IProtected')
 
-        def test():
-            ob = InterfaceTest.IInternal
+        with self.assertRaises(AttributeError):
+            _ = InterfaceTest.IInternal
 
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            _ = InterfaceTest.IPrivate
 
-        def test():
-            ob = InterfaceTest.IPrivate
-
-        self.assertRaises(AttributeError, test)
-
-    def testExplicitCastToInterface(self):
+    def test_explicit_cast_to_interface(self):
         """Test explicit cast to an interface."""
+        from Python.Test import InterfaceTest
+
         ob = InterfaceTest()
         self.assertTrue(type(ob).__name__ == 'InterfaceTest')
         self.assertTrue(hasattr(ob, 'HelloProperty'))
@@ -74,11 +70,3 @@ class InterfaceTests(unittest.TestCase):
 
 def test_suite():
     return unittest.makeSuite(InterfaceTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

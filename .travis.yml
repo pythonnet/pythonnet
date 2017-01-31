@@ -25,7 +25,7 @@ addons:
       - nunit-console
 
 install:
-  - pip install pycparser coverage codecov six
+  - pip install pycparser coverage codecov
   - coverage run setup.py build_ext --inplace
 
 script:

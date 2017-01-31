@@ -1,73 +1,65 @@
-import clr
-import types
+# -*- coding: utf-8 -*-
+# TODO: Add tests for ClassicClass, NewStyleClass?
+
 import unittest
 
 import Python.Test as Test
 import System
-import six
-from Python.Test import ClassTest
-from System.Collections import Hashtable
 
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-else:
-    DictProxyType = types.DictProxyType
+from _compat import DictProxyType, range
 
 
 class ClassTests(unittest.TestCase):
     """Test CLR class support."""
 
-    def testBasicReferenceType(self):
+    def test_basic_reference_type(self):
         """Test usage of CLR defined reference types."""
-        String = System.String
-        self.assertEquals(String.Empty, "")
+        self.assertEquals(System.String.Empty, "")
 
-    def testBasicValueType(self):
+    def test_basic_value_type(self):
         """Test usage of CLR defined value types."""
-        Int32 = System.Int32
-        self.assertEquals(Int32.MaxValue, 2147483647)
+        self.assertEquals(System.Int32.MaxValue, 2147483647)
 
-    def testClassStandardAttrs(self):
+    def test_class_standard_attrs(self):
         """Test standard class attributes."""
+        from Python.Test import ClassTest
+
         self.assertTrue(ClassTest.__name__ == 'ClassTest')
         self.assertTrue(ClassTest.__module__ == 'Python.Test')
-        self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
+        self.assertTrue(isinstance(ClassTest.__dict__, DictProxyType))
         self.assertTrue(len(ClassTest.__doc__) > 0)
 
-    def testClassDocstrings(self):
+    def test_class_docstrings(self):
         """Test standard class docstring generation"""
+        from Python.Test import ClassTest
+
         value = 'Void .ctor()'
         self.assertTrue(ClassTest.__doc__ == value)
 
-    def testClassDefaultStr(self):
+    def test_class_default_str(self):
         """Test the default __str__ implementation for managed objects."""
         s = System.String("this is a test")
         self.assertTrue(str(s) == "this is a test")
 
-    def testClassDefaultRepr(self):
+    def test_class_default_repr(self):
         """Test the default __repr__ implementation for managed objects."""
         s = System.String("this is a test")
         self.assertTrue(repr(s).startswith("<System.String object"))
 
-    def testNonPublicClass(self):
+    def test_non_public_class(self):
         """Test that non-public classes are inaccessible."""
-        from Python import Test
-
-        def test():
+        with self.assertRaises(ImportError):
             from Python.Test import InternalClass
 
-        self.assertRaises(ImportError, test)
+        with self.assertRaises(AttributeError):
+            _ = Test.InternalClass
 
-        def test():
-            x = Test.InternalClass
-
-        self.assertRaises(AttributeError, test)
-
-    def testBasicSubclass(self):
+    def test_basic_subclass(self):
         """Test basic subclass of a managed class."""
+        from System.Collections import Hashtable
 
         class MyTable(Hashtable):
-            def howMany(self):
+            def how_many(self):
                 return self.Count
 
         table = MyTable()
@@ -77,17 +69,15 @@ class ClassTests(unittest.TestCase):
         self.assertTrue(len(table.__class__.__bases__) == 1)
         self.assertTrue(table.__class__.__bases__[0] == Hashtable)
 
-        self.assertTrue(table.howMany() == 0)
+        self.assertTrue(table.how_many() == 0)
         self.assertTrue(table.Count == 0)
 
         table.set_Item('one', 'one')
 
-        self.assertTrue(table.howMany() == 1)
+        self.assertTrue(table.how_many() == 1)
         self.assertTrue(table.Count == 1)
 
-        MyTable = None
-
-    def testSubclassWithNoArgConstructor(self):
+    def test_subclass_with_no_arg_constructor(self):
         """Test subclass of a managed class with a no-arg constructor."""
         from Python.Test import ClassCtorTest1
 
@@ -96,9 +86,9 @@ class ClassTests(unittest.TestCase):
                 self.name = name
 
         # This failed in earlier versions
-        inst = SubClass('test')
+        _ = SubClass('test')
 
-    def testSubclassWithVariousConstructors(self):
+    def test_subclass_with_various_constructors(self):
         """Test subclass of a managed class with various constructors."""
         from Python.Test import ClassCtorTest2
 
@@ -118,7 +108,7 @@ class ClassTests(unittest.TestCase):
         inst = SubClass2('test')
         self.assertTrue(inst.value == 'test')
 
-    def testStructConstruction(self):
+    def test_struct_construction(self):
         """Test construction of structs."""
         from System.Drawing import Point
 
@@ -142,29 +132,33 @@ class ClassTests(unittest.TestCase):
     # test recursion
     # test
 
-
-    def testIEnumerableIteration(self):
+    def test_ienumerable_iteration(self):
         """Test iteration over objects supporting IEnumerable."""
-        list = Test.ClassTest.GetArrayList()
+        from Python.Test import ClassTest
 
-        for item in list:
+        list_ = ClassTest.GetArrayList()
+
+        for item in list_:
             self.assertTrue((item > -1) and (item < 10))
 
-        dict = Test.ClassTest.GetHashtable()
+        dict_ = ClassTest.GetHashtable()
 
-        for item in dict:
+        for item in dict_:
             cname = item.__class__.__name__
             self.assertTrue(cname.endswith('DictionaryEntry'))
 
-    def testIEnumeratorIteration(self):
+    def test_ienumerator_iteration(self):
         """Test iteration over objects supporting IEnumerator."""
-        chars = Test.ClassTest.GetEnumerator()
+        from Python.Test import ClassTest
+
+        chars = ClassTest.GetEnumerator()
 
         for item in chars:
             self.assertTrue(item in 'test string')
 
-    def testOverrideGetItem(self):
+    def test_override_get_item(self):
         """Test managed subclass overriding __getitem__."""
+        from System.Collections import Hashtable
 
         class MyTable(Hashtable):
             def __getitem__(self, key):
@@ -182,8 +176,9 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(table.Count == 3)
 
-    def testOverrideSetItem(self):
+    def test_override_set_item(self):
         """Test managed subclass overriding __setitem__."""
+        from System.Collections import Hashtable
 
         class MyTable(Hashtable):
             def __setitem__(self, key, value):
@@ -201,19 +196,19 @@ class ClassTests(unittest.TestCase):
 
         self.assertTrue(table.Count == 3)
 
-    def testAddAndRemoveClassAttribute(self):
-        
+    def test_add_and_remove_class_attribute(self):
         from System import TimeSpan
 
-        for i in range(100):
-            TimeSpan.new_method = lambda self: self.TotalMinutes
+        for _ in range(100):
+            TimeSpan.new_method = lambda self_: self_.TotalMinutes
             ts = TimeSpan.FromHours(1)
             self.assertTrue(ts.new_method() == 60)
             del TimeSpan.new_method
             self.assertFalse(hasattr(ts, "new_method"))
 
-    def testComparisons(self):
+    def test_comparisons(self):
         from System import DateTimeOffset
+        from Python.Test import ClassTest
 
         d1 = DateTimeOffset.Parse("2016-11-14")
         d2 = DateTimeOffset.Parse("2016-11-15")
@@ -242,47 +237,36 @@ class ClassTests(unittest.TestCase):
         self.assertEqual(d2 >= d1, True)
         self.assertEqual(d2 > d1, True)
 
-        self.assertRaises(TypeError, lambda: d1 < None)
-        self.assertRaises(TypeError, lambda: d1 < System.Guid())
+        with self.assertRaises(TypeError):
+            d1 < None
+
+        with self.assertRaises(TypeError):
+            d1 < System.Guid()
 
         # ClassTest does not implement IComparable
         c1 = ClassTest()
         c2 = ClassTest()
-        self.assertRaises(TypeError, lambda: c1 < c2)
+        with self.assertRaises(TypeError):
+            c1 < c2
 
-    def testSelfCallback(self):
-        """ Test calling back and forth between this and a c# baseclass."""
+    def test_self_callback(self):
+        """Test calling back and forth between this and a c# baseclass."""
+
         class CallbackUser(Test.SelfCallbackTest):
             def DoCallback(self):
                 self.PyCallbackWasCalled = False
                 self.SameReference = False
                 return self.Callback(self)
+
             def PyCallback(self, self2):
                 self.PyCallbackWasCalled = True
                 self.SameReference = self == self2
-                
+
         testobj = CallbackUser()
         testobj.DoCallback()
         self.assertTrue(testobj.PyCallbackWasCalled)
         self.assertTrue(testobj.SameReference)
 
-class ClassicClass:
-    def kind(self):
-        return 'classic'
-
-
-class NewStyleClass(object):
-    def kind(self):
-        return 'new-style'
-
 
 def test_suite():
     return unittest.makeSuite(ClassTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

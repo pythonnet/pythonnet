@@ -1,9 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# FIXME: TypeError: 'EventBinding' object is not callable
+
 from __future__ import print_function
-import System
+
+import clr
 import gc
+import sys
+
+import System
+
+from _compat import range
+from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
+                   HelloClass, StaticMethodHandler, VarCallableHandler,
+                   VariableArgsHandler, hello_func)
 
 
-class LeakTest:
+class LeakTest(object):
     """A leak-check test for the objects implemented in the managed
        runtime. For each kind of object tested, memory should reach
        a particular level after warming up and stay essentially the
@@ -30,10 +43,10 @@ class LeakTest:
         end = System.Environment.WorkingSet
         diff = end - start
         if diff > 0:
-            diff = '+%d' % diff
+            diff = '+{0}'.format(diff)
         else:
-            diff = '%d' % diff
-        print("  start: %d  end: %d diff: %s" % (start, end, diff))
+            diff = '{0}'.format(diff)
+        print("  start: {0}  end: {1} diff: {2}".format(start, end, diff))
         print("")
 
     def run(self):
@@ -44,17 +57,16 @@ class LeakTest:
         self.testDelegates()
 
     def report(self):
-        import sys, gc
         gc.collect()
         dicttype = type({})
         for item in gc.get_objects():
             if type(item) != dicttype:
                 print(item, sys.getrefcount(item))
 
-    def testModules(self):
+    def test_modules(self):
         self.notify("Running module leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -66,14 +78,13 @@ class LeakTest:
 
         self.end_test()
 
-    def testClasses(self):
+    def test_classes(self):
         from System.Collections import Hashtable
         from Python.Test import StringDelegate
-        from System import Int32
 
         self.notify("Running class leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -82,21 +93,21 @@ class LeakTest:
             del x
 
             # Value type
-            x = Int32(99)
+            x = System.Int32(99)
             del x
 
             # Delegate type
-            x = StringDelegate(hello)
+            x = StringDelegate(hello_func)
             del x
 
         self.end_test()
 
-    def testEnumerations(self):
-        from Python import Test
+    def test_enumerations(self):
+        import Python.Test as Test
 
         self.notify("Running enum leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -126,12 +137,12 @@ class LeakTest:
 
         self.end_test()
 
-    def testEvents(self):
-        from Python.Test import EventTest, TestEventArgs
+    def test_events(self):
+        from Python.Test import EventTest, EventArgsTest
 
         self.notify("Running event leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
@@ -140,28 +151,28 @@ class LeakTest:
             # Instance method event handler
             handler = GenericHandler()
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
             # Vararg method event handler
             handler = VariableArgsHandler()
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
             # Callable object event handler
             handler = CallableHandler()
             testob.PublicEvent += handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler
             del handler
 
             # Callable vararg event handler
             handler = VarCallableHandler()
             testob.PublicEvent += handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler
             del handler
 
@@ -169,7 +180,7 @@ class LeakTest:
             handler = StaticMethodHandler()
             StaticMethodHandler.value = None
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
@@ -177,46 +188,45 @@ class LeakTest:
             handler = ClassMethodHandler()
             ClassMethodHandler.value = None
             testob.PublicEvent += handler.handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler.handler
             del handler
 
             # Managed instance event handler
             testob.PublicEvent += testob.GenericHandler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= testob.GenericHandler
 
             # Static managed event handler
             testob.PublicEvent += EventTest.StaticHandler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= EventTest.StaticHandler
 
             # Function event handler
-            dict = {'value': None}
+            dict_ = {'value': None}
 
-            def handler(sender, args, dict=dict):
-                dict['value'] = args.value
+            def handler(sender, args, dict_=dict_):
+                dict_['value'] = args.value
 
             testob.PublicEvent += handler
-            testob.PublicEvent(testob, TestEventArgs(10))
+            testob.PublicEvent(testob, EventArgsTest(10))
             testob.PublicEvent -= handler
             del handler
 
         self.end_test()
 
-    def testDelegates(self):
+    def test_delegates(self):
         from Python.Test import DelegateTest, StringDelegate
-        import System
 
         self.notify("Running delegate leak check...")
 
-        for i in xrange(self.count):
+        for i in range(self.count):
             if i == 10:
                 self.start_test()
 
             # Delegate from function
             testob = DelegateTest()
-            d = StringDelegate(hello)
+            d = StringDelegate(hello_func)
             testob.CallStringDelegate(d)
             testob.stringDelegate = d
             testob.stringDelegate()
@@ -225,7 +235,7 @@ class LeakTest:
             del d
 
             # Delegate from instance method
-            inst = Hello()
+            inst = HelloClass()
             testob = DelegateTest()
             d = StringDelegate(inst.hello)
             testob.CallStringDelegate(d)
@@ -238,7 +248,7 @@ class LeakTest:
 
             # Delegate from static method
             testob = DelegateTest()
-            d = StringDelegate(Hello.s_hello)
+            d = StringDelegate(HelloClass.s_hello)
             testob.CallStringDelegate(d)
             testob.stringDelegate = d
             testob.stringDelegate()
@@ -248,7 +258,7 @@ class LeakTest:
 
             # Delegate from class method
             testob = DelegateTest()
-            d = StringDelegate(Hello.c_hello)
+            d = StringDelegate(HelloClass.c_hello)
             testob.CallStringDelegate(d)
             testob.stringDelegate = d
             testob.stringDelegate()
@@ -257,7 +267,7 @@ class LeakTest:
             del d
 
             # Delegate from callable object
-            inst = Hello()
+            inst = HelloClass()
             testob = DelegateTest()
             d = StringDelegate(inst)
             testob.CallStringDelegate(d)
@@ -290,7 +300,7 @@ class LeakTest:
 
             # Nested delegates
             testob = DelegateTest()
-            d1 = StringDelegate(hello)
+            d1 = StringDelegate(hello_func)
             d2 = StringDelegate(d1)
             testob.CallStringDelegate(d2)
             testob.stringDelegate = d2
@@ -302,8 +312,8 @@ class LeakTest:
 
             # Multicast delegates
             testob = DelegateTest()
-            d1 = StringDelegate(hello)
-            d2 = StringDelegate(hello)
+            d1 = StringDelegate(hello_func)
+            d2 = StringDelegate(hello_func)
             md = System.Delegate.Combine(d1, d2)
             testob.CallStringDelegate(md)
             testob.stringDelegate = md
@@ -315,92 +325,6 @@ class LeakTest:
             del md
 
         self.end_test()
-
-
-class GenericHandler:
-    """A generic handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def handler(self, sender, args):
-        self.value = args.value
-
-
-class VariableArgsHandler:
-    """A variable args handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def handler(self, *args):
-        ob, eventargs = args
-        self.value = eventargs.value
-
-
-class CallableHandler:
-    """A callable handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def __call__(self, sender, args):
-        self.value = args.value
-
-
-class VarCallableHandler:
-    """A variable args callable handler to test event callbacks."""
-
-    def __init__(self):
-        self.value = None
-
-    def __call__(self, *args):
-        ob, eventargs = args
-        self.value = eventargs.value
-
-
-class StaticMethodHandler(object):
-    """A static method handler to test event callbacks."""
-
-    value = None
-
-    def handler(sender, args):
-        StaticMethodHandler.value = args.value
-
-    handler = staticmethod(handler)
-
-
-class ClassMethodHandler(object):
-    """A class method handler to test event callbacks."""
-
-    value = None
-
-    def handler(cls, sender, args):
-        cls.value = args.value
-
-    handler = classmethod(handler)
-
-
-class Hello:
-    def hello(self):
-        return "hello"
-
-    def __call__(self):
-        return "hello"
-
-    def s_hello():
-        return "hello"
-
-    s_hello = staticmethod(s_hello)
-
-    def c_hello(cls):
-        return "hello"
-
-    c_hello = classmethod(c_hello)
-
-
-def hello():
-    return "hello"
 
 
 if __name__ == '__main__':

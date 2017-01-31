@@ -46,7 +46,7 @@ init:
 
 install:
   # install for wheels & coverage
-  - pip install --upgrade pip wheel coverage codecov six
+  - pip install --upgrade pip wheel coverage codecov
 
   # Install OpenCover. Can't put on packages.config; not Linux/Mono compatible
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages

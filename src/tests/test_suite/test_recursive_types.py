@@ -1,20 +1,19 @@
-import unittest, sys
-import clr
+# -*- coding: utf-8 -*-
 
-this_module = sys.modules[__name__]
-clr.AddReference("Python.Test")
+import unittest
+
+
 class RecursiveTypesTests(unittest.TestCase):
     """Test if interop with recursive type inheritance works."""
 
-    def testRecursiveTypeCreation(self):
-        """Test that a recursive types don't crash with a StackOverflowException"""
-        import Python.Test as Test
+    def test_recursive_type_creation(self):
+        """Test that a recursive types don't crash with a
+        StackOverflowException"""
         from Python.Test import RecursiveInheritance
+
         test_instance = RecursiveInheritance.SubClass()
         test_instance.SomeMethod()
-        pass
 
 
 def test_suite():
     return unittest.makeSuite(RecursiveTypesTests)
-

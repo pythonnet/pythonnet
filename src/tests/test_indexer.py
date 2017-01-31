@@ -1,687 +1,577 @@
-import sys, os, string, unittest, types
-import clr
+# -*- coding: utf-8 -*-
 
-clr.AddReference("Python.Test")
+import unittest
+
 import Python.Test as Test
-import six
 
-if six.PY3:
-    long = int
-    unichr = chr
+from _compat import long, unichr
 
 
 class IndexerTests(unittest.TestCase):
     """Test support for indexer properties."""
 
-    def testPublicIndexer(self):
+    def test_public_indexer(self):
         """Test public indexers."""
-        object = Test.PublicIndexerTest()
+        ob = Test.PublicIndexerTest()
 
-        object[0] = "zero"
-        self.assertTrue(object[0] == "zero")
+        ob[0] = "zero"
+        self.assertTrue(ob[0] == "zero")
 
-        object[1] = "one"
-        self.assertTrue(object[1] == "one")
+        ob[1] = "one"
+        self.assertTrue(ob[1] == "one")
 
-        self.assertTrue(object[10] == None)
+        self.assertTrue(ob[10] is None)
 
-    def testProtectedIndexer(self):
+    def test_protected_indexer(self):
         """Test protected indexers."""
-        object = Test.ProtectedIndexerTest()
+        ob = Test.ProtectedIndexerTest()
 
-        object[0] = "zero"
-        self.assertTrue(object[0] == "zero")
+        ob[0] = "zero"
+        self.assertTrue(ob[0] == "zero")
 
-        object[1] = "one"
-        self.assertTrue(object[1] == "one")
+        ob[1] = "one"
+        self.assertTrue(ob[1] == "one")
 
-        self.assertTrue(object[10] == None)
+        self.assertTrue(ob[10] is None)
 
-    def testInternalIndexer(self):
+    def test_internal_indexer(self):
         """Test internal indexers."""
-        object = Test.InternalIndexerTest()
+        ob = Test.InternalIndexerTest()
 
-        def test():
-            object[0] = "zero"
+        with self.assertRaises(TypeError):
+            ob[0] = "zero"
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            Test.InternalIndexerTest.__getitem__(ob, 0)
 
-        def test():
-            Test.InternalIndexerTest.__getitem__(object, 0)
+        with self.assertRaises(TypeError):
+            ob.__getitem__(0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
-            object.__getitem__(0)
-
-        self.assertRaises(TypeError, test)
-
-    def testPrivateIndexer(self):
+    def test_private_indexer(self):
         """Test private indexers."""
-        object = Test.PrivateIndexerTest()
+        ob = Test.PrivateIndexerTest()
 
-        def test():
-            object[0] = "zero"
+        with self.assertRaises(TypeError):
+            ob[0] = "zero"
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            Test.PrivateIndexerTest.__getitem__(ob, 0)
 
-        def test():
-            Test.PrivateIndexerTest.__getitem__(object, 0)
+        with self.assertRaises(TypeError):
+            ob.__getitem__(0)
 
-        self.assertRaises(TypeError, test)
-
-        def test():
-            object.__getitem__(0)
-
-        self.assertRaises(TypeError, test)
-
-    def testBooleanIndexer(self):
+    def test_boolean_indexer(self):
         """Test boolean indexers."""
-        object = Test.BooleanIndexerTest()
+        ob = Test.BooleanIndexerTest()
 
-        self.assertTrue(object[True] == None)
-        self.assertTrue(object[1] == None)
+        self.assertTrue(ob[True] is None)
+        self.assertTrue(ob[1] is None)
 
-        object[0] = "false"
-        self.assertTrue(object[0] == "false")
+        ob[0] = "false"
+        self.assertTrue(ob[0] == "false")
 
-        object[1] = "true"
-        self.assertTrue(object[1] == "true")
+        ob[1] = "true"
+        self.assertTrue(ob[1] == "true")
 
-        object[False] = "false"
-        self.assertTrue(object[False] == "false")
+        ob[False] = "false"
+        self.assertTrue(ob[False] == "false")
 
-        object[True] = "true"
-        self.assertTrue(object[True] == "true")
+        ob[True] = "true"
+        self.assertTrue(ob[True] == "true")
 
-    def testByteIndexer(self):
+    def test_byte_indexer(self):
         """Test byte indexers."""
-        object = Test.ByteIndexerTest()
-        max = 255
-        min = 0
+        ob = Test.ByteIndexerTest()
+        max_ = 255
+        min_ = 0
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.ByteIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.ByteIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.ByteIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.ByteIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testSByteIndexer(self):
+    def test_sbyte_indexer(self):
         """Test sbyte indexers."""
-        object = Test.SByteIndexerTest()
-        max = 127
-        min = -128
+        ob = Test.SByteIndexerTest()
+        max_ = 127
+        min_ = -128
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.SByteIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.SByteIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.SByteIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.SByteIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testCharIndexer(self):
+    def test_char_indexer(self):
         """Test char indexers."""
-        object = Test.CharIndexerTest()
-        max = unichr(65535)
-        min = unichr(0)
+        ob = Test.CharIndexerTest()
+        max_ = unichr(65535)
+        min_ = unichr(0)
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = "max"
-        self.assertTrue(object[max] == "max")
+        ob[max_] = "max_"
+        self.assertTrue(ob[max_] == "max_")
 
-        object[min] = "min"
-        self.assertTrue(object[min] == "min")
+        ob[min_] = "min_"
+        self.assertTrue(ob[min_] == "min_")
 
-        def test():
-            object = Test.CharIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.CharIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.CharIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.CharIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testInt16Indexer(self):
+    def test_int16_indexer(self):
         """Test Int16 indexers."""
-        object = Test.Int16IndexerTest()
-        max = 32767
-        min = -32768
+        ob = Test.Int16IndexerTest()
+        max_ = 32767
+        min_ = -32768
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.Int16IndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.Int16IndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.Int16IndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.Int16IndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testInt32Indexer(self):
+    def test_int32_indexer(self):
         """Test Int32 indexers."""
-        object = Test.Int32IndexerTest()
-        max = 2147483647
-        min = -2147483648
+        ob = Test.Int32IndexerTest()
+        max_ = 2147483647
+        min_ = -2147483648
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.Int32IndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.Int32IndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.Int32IndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.Int32IndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testInt64Indexer(self):
+    def test_int64_indexer(self):
         """Test Int64 indexers."""
-        object = Test.Int64IndexerTest()
-        max = long(9223372036854775807)
-        min = long(-9223372036854775808)
+        ob = Test.Int64IndexerTest()
+        max_ = long(9223372036854775807)
+        min_ = long(-9223372036854775808)
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.Int64IndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.Int64IndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.Int64IndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.Int64IndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testUInt16Indexer(self):
+    def test_uint16_indexer(self):
         """Test UInt16 indexers."""
-        object = Test.UInt16IndexerTest()
-        max = 65535
-        min = 0
+        ob = Test.UInt16IndexerTest()
+        max_ = 65535
+        min_ = 0
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.UInt16IndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.UInt16IndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.UInt16IndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.UInt16IndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testUInt32Indexer(self):
+    def test_uint32_indexer(self):
         """Test UInt32 indexers."""
-        object = Test.UInt32IndexerTest()
-        max = long(4294967295)
-        min = 0
+        ob = Test.UInt32IndexerTest()
+        max_ = long(4294967295)
+        min_ = 0
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.UInt32IndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.UInt32IndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.UInt32IndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.UInt32IndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testUInt64Indexer(self):
+    def test_uint64_indexer(self):
         """Test UInt64 indexers."""
-        object = Test.UInt64IndexerTest()
-        max = long(18446744073709551615)
-        min = 0
+        ob = Test.UInt64IndexerTest()
+        max_ = long(18446744073709551615)
+        min_ = 0
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = str(max)
-        self.assertTrue(object[max] == str(max))
+        ob[max_] = str(max_)
+        self.assertTrue(ob[max_] == str(max_))
 
-        object[min] = str(min)
-        self.assertTrue(object[min] == str(min))
+        ob[min_] = str(min_)
+        self.assertTrue(ob[min_] == str(min_))
 
-        def test():
-            object = Test.UInt64IndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.UInt64IndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.UInt64IndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.UInt64IndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testSingleIndexer(self):
+    def test_single_indexer(self):
         """Test Single indexers."""
-        object = Test.SingleIndexerTest()
-        max = 3.402823e38
-        min = -3.402823e38
+        ob = Test.SingleIndexerTest()
+        max_ = 3.402823e38
+        min_ = -3.402823e38
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = "max"
-        self.assertTrue(object[max] == "max")
+        ob[max_] = "max_"
+        self.assertTrue(ob[max_] == "max_")
 
-        object[min] = "min"
-        self.assertTrue(object[min] == "min")
+        ob[min_] = "min_"
+        self.assertTrue(ob[min_] == "min_")
 
-        def test():
-            object = Test.SingleIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.SingleIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.SingleIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.SingleIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testDoubleIndexer(self):
+    def test_double_indexer(self):
         """Test Double indexers."""
-        object = Test.DoubleIndexerTest()
-        max = 1.7976931348623157e308
-        min = -1.7976931348623157e308
+        ob = Test.DoubleIndexerTest()
+        max_ = 1.7976931348623157e308
+        min_ = -1.7976931348623157e308
 
-        self.assertTrue(object[max] == None)
+        self.assertTrue(ob[max_] is None)
 
-        object[max] = "max"
-        self.assertTrue(object[max] == "max")
+        ob[max_] = "max_"
+        self.assertTrue(ob[max_] == "max_")
 
-        object[min] = "min"
-        self.assertTrue(object[min] == "min")
+        ob[min_] = "min_"
+        self.assertTrue(ob[min_] == "min_")
 
-        def test():
-            object = Test.DoubleIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.DoubleIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.DoubleIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.DoubleIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testDecimalIndexer(self):
+    def test_decimal_indexer(self):
         """Test Decimal indexers."""
-        object = Test.DecimalIndexerTest()
+        ob = Test.DecimalIndexerTest()
 
         from System import Decimal
         max_d = Decimal.Parse("79228162514264337593543950335")
         min_d = Decimal.Parse("-79228162514264337593543950335")
 
-        self.assertTrue(object[max_d] == None)
+        self.assertTrue(ob[max_d] is None)
 
-        object[max_d] = "max"
-        self.assertTrue(object[max_d] == "max")
+        ob[max_d] = "max_"
+        self.assertTrue(ob[max_d] == "max_")
 
-        object[min_d] = "min"
-        self.assertTrue(object[min_d] == "min")
+        ob[min_d] = "min_"
+        self.assertTrue(ob[min_d] == "min_")
 
-        def test():
-            object = Test.DecimalIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.DecimalIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.DecimalIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.DecimalIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testStringIndexer(self):
+    def test_string_indexer(self):
         """Test String indexers."""
-        object = Test.StringIndexerTest()
+        ob = Test.StringIndexerTest()
 
-        self.assertTrue(object["spam"] == None)
-        self.assertTrue(object[six.u("spam")] == None)
+        self.assertTrue(ob["spam"] is None)
+        self.assertTrue(ob[u"spam"] is None)
 
-        object["spam"] = "spam"
-        self.assertTrue(object["spam"] == "spam")
-        self.assertTrue(object["spam"] == six.u("spam"))
-        self.assertTrue(object[six.u("spam")] == "spam")
-        self.assertTrue(object[six.u("spam")] == six.u("spam"))
+        ob["spam"] = "spam"
+        self.assertTrue(ob["spam"] == "spam")
+        self.assertTrue(ob["spam"] == u"spam")
+        self.assertTrue(ob[u"spam"] == "spam")
+        self.assertTrue(ob[u"spam"] == u"spam")
 
-        object[six.u("eggs")] = six.u("eggs")
-        self.assertTrue(object["eggs"] == "eggs")
-        self.assertTrue(object["eggs"] == six.u("eggs"))
-        self.assertTrue(object[six.u("eggs")] == "eggs")
-        self.assertTrue(object[six.u("eggs")] == six.u("eggs"))
+        ob[u"eggs"] = u"eggs"
+        self.assertTrue(ob["eggs"] == "eggs")
+        self.assertTrue(ob["eggs"] == u"eggs")
+        self.assertTrue(ob[u"eggs"] == "eggs")
+        self.assertTrue(ob[u"eggs"] == u"eggs")
 
-        def test():
-            object = Test.StringIndexerTest()
-            object[1]
+        with self.assertRaises(TypeError):
+            ob = Test.StringIndexerTest()
+            ob[1]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.StringIndexerTest()
+            ob[1] = "wrong"
 
-        def test():
-            object = Test.StringIndexerTest()
-            object[1] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testEnumIndexer(self):
+    def test_enum_indexer(self):
         """Test enum indexers."""
-        object = Test.EnumIndexerTest()
+        ob = Test.EnumIndexerTest()
 
         key = Test.ShortEnum.One
 
-        self.assertTrue(object[key] == None)
+        self.assertTrue(ob[key] is None)
 
-        object[key] = "spam"
-        self.assertTrue(object[key] == "spam")
+        ob[key] = "spam"
+        self.assertTrue(ob[key] == "spam")
 
-        object[key] = "eggs"
-        self.assertTrue(object[key] == "eggs")
+        ob[key] = "eggs"
+        self.assertTrue(ob[key] == "eggs")
 
-        object[1] = "spam"
-        self.assertTrue(object[1] == "spam")
+        ob[1] = "spam"
+        self.assertTrue(ob[1] == "spam")
 
-        def test():
-            object = Test.EnumIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.EnumIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.EnumIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.EnumIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testObjectIndexer(self):
-        """Test object indexers."""
-        object = Test.ObjectIndexerTest()
+    def test_object_indexer(self):
+        """Test ob indexers."""
+        ob = Test.ObjectIndexerTest()
 
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.assertTrue(object[spam] == None)
-        self.assertTrue(object["spam"] == None)
-        self.assertTrue(object[1] == None)
-        self.assertTrue(object[None] == None)
+        self.assertTrue(ob[spam] is None)
+        self.assertTrue(ob["spam"] is None)
+        self.assertTrue(ob[1] is None)
+        self.assertTrue(ob[None] is None)
 
-        object[spam] = "spam"
-        self.assertTrue(object[spam] == "spam")
+        ob[spam] = "spam"
+        self.assertTrue(ob[spam] == "spam")
 
-        object["spam"] = "eggs"
-        self.assertTrue(object["spam"] == "eggs")
+        ob["spam"] = "eggs"
+        self.assertTrue(ob["spam"] == "eggs")
 
-        object[1] = "one"
-        self.assertTrue(object[1] == "one")
+        ob[1] = "one"
+        self.assertTrue(ob[1] == "one")
 
-        object[long(1)] = "long"
-        self.assertTrue(object[long(1)] == "long")
+        ob[long(1)] = "long"
+        self.assertTrue(ob[long(1)] == "long")
 
-        def test():
-            class eggs:
+        with self.assertRaises(TypeError):
+            class Eggs(object):
                 pass
 
-            key = eggs()
-            object = Test.ObjectIndexerTest()
-            object[key] = "wrong"
+            key = Eggs()
+            ob = Test.ObjectIndexerTest()
+            ob[key] = "wrong"
 
-        self.assertRaises(TypeError, test)
-
-    def testInterfaceIndexer(self):
+    def test_interface_indexer(self):
         """Test interface indexers."""
-        object = Test.InterfaceIndexerTest()
+        ob = Test.InterfaceIndexerTest()
 
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.assertTrue(object[spam] == None)
+        self.assertTrue(ob[spam] is None)
 
-        object[spam] = "spam"
-        self.assertTrue(object[spam] == "spam")
+        ob[spam] = "spam"
+        self.assertTrue(ob[spam] == "spam")
 
-        object[spam] = "eggs"
-        self.assertTrue(object[spam] == "eggs")
+        ob[spam] = "eggs"
+        self.assertTrue(ob[spam] == "eggs")
 
-        def test():
-            object = Test.InterfaceIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.InterfaceIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.InterfaceIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.InterfaceIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testTypedIndexer(self):
+    def test_typed_indexer(self):
         """Test typed indexers."""
-        object = Test.TypedIndexerTest()
+        ob = Test.TypedIndexerTest()
 
         from Python.Test import Spam
         spam = Spam("spam")
 
-        self.assertTrue(object[spam] == None)
+        self.assertTrue(ob[spam] is None)
 
-        object[spam] = "spam"
-        self.assertTrue(object[spam] == "spam")
+        ob[spam] = "spam"
+        self.assertTrue(ob[spam] == "spam")
 
-        object[spam] = "eggs"
-        self.assertTrue(object[spam] == "eggs")
+        ob[spam] = "eggs"
+        self.assertTrue(ob[spam] == "eggs")
 
-        def test():
-            object = Test.TypedIndexerTest()
-            object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.TypedIndexerTest()
+            ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.TypedIndexerTest()
+            ob["wrong"] = "wrong"
 
-        def test():
-            object = Test.TypedIndexerTest()
-            object["wrong"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testMultiArgIndexer(self):
+    def test_multi_arg_indexer(self):
         """Test indexers that take multiple index arguments."""
-        object = Test.MultiArgIndexerTest()
+        ob = Test.MultiArgIndexerTest()
 
-        object[0, 1] = "zero one"
-        self.assertTrue(object[0, 1] == "zero one")
+        ob[0, 1] = "zero one"
+        self.assertTrue(ob[0, 1] == "zero one")
 
-        object[1, 9] = "one nine"
-        self.assertTrue(object[1, 9] == "one nine")
+        ob[1, 9] = "one nine"
+        self.assertTrue(ob[1, 9] == "one nine")
 
-        self.assertTrue(object[10, 50] == None)
+        self.assertTrue(ob[10, 50] is None)
 
-        def test():
-            object = Test.MultiArgIndexerTest()
-            v = object[0, "one"]
+        with self.assertRaises(TypeError):
+            ob = Test.MultiArgIndexerTest()
+            _ = ob[0, "one"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.MultiArgIndexerTest()
+            ob[0, "one"] = "wrong"
 
-        def test():
-            object = Test.MultiArgIndexerTest()
-            object[0, "one"] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testMultiTypeIndexer(self):
+    def test_multi_type_indexer(self):
         """Test indexers that take multiple indices of different types."""
-        object = Test.MultiTypeIndexerTest()
+        ob = Test.MultiTypeIndexerTest()
         spam = Test.Spam("spam")
 
-        object[0, "one", spam] = "zero one spam"
-        self.assertTrue(object[0, "one", spam] == "zero one spam")
+        ob[0, "one", spam] = "zero one spam"
+        self.assertTrue(ob[0, "one", spam] == "zero one spam")
 
-        object[1, "nine", spam] = "one nine spam"
-        self.assertTrue(object[1, "nine", spam] == "one nine spam")
+        ob[1, "nine", spam] = "one nine spam"
+        self.assertTrue(ob[1, "nine", spam] == "one nine spam")
 
-        def test():
-            object = Test.MultiTypeIndexerTest()
-            v = object[0, 1, spam]
+        with self.assertRaises(TypeError):
+            ob = Test.MultiTypeIndexerTest()
+            _ = ob[0, 1, spam]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.MultiTypeIndexerTest()
+            ob[0, 1, spam] = "wrong"
 
-        def test():
-            object = Test.MultiTypeIndexerTest()
-            object[0, 1, spam] = "wrong"
-
-        self.assertRaises(TypeError, test)
-
-    def testMultiDefaultKeyIndexer(self):
-        """Test indexers that take multiple indices with a default key arguments."""
+    def test_multi_default_key_indexer(self):
+        """Test indexers that take multiple indices with a default
+        key arguments."""
         # default argument is 2 in the MultiDefaultKeyIndexerTest object
-        object = Test.MultiDefaultKeyIndexerTest()
-        object[0, 2] = "zero one spam"
-        self.assertTrue(object[0] == "zero one spam")
+        ob = Test.MultiDefaultKeyIndexerTest()
+        ob[0, 2] = "zero one spam"
+        self.assertTrue(ob[0] == "zero one spam")
 
-        object[1] = "one nine spam"
-        self.assertTrue(object[1, 2] == "one nine spam")
+        ob[1] = "one nine spam"
+        self.assertTrue(ob[1, 2] == "one nine spam")
 
-    def testIndexerWrongKeyType(self):
+    def test_indexer_wrong_key_type(self):
         """Test calling an indexer using a key of the wrong type."""
 
-        def test():
-            object = Test.PublicIndexerTest()
-            v = object["wrong"]
+        with self.assertRaises(TypeError):
+            ob = Test.PublicIndexerTest()
+            _ = ob["wrong"]
 
-        self.assertRaises(TypeError, test)
+        with self.assertRaises(TypeError):
+            ob = Test.PublicIndexerTest()
+            ob["wrong"] = "spam"
 
-        def test():
-            object = Test.PublicIndexerTest()
-            object["wrong"] = "spam"
-
-        self.assertRaises(TypeError, test)
-
-    def testIndexerWrongValueType(self):
+    def test_indexer_wrong_value_type(self):
         """Test calling an indexer using a value of the wrong type."""
 
-        def test():
-            object = Test.PublicIndexerTest()
-            object[1] = 9993.9
+        with self.assertRaises(TypeError):
+            ob = Test.PublicIndexerTest()
+            ob[1] = 9993.9
 
-        self.assertRaises(TypeError, test)
-
-    def testUnboundIndexer(self):
+    def test_unbound_indexer(self):
         """Test calling an unbound indexer."""
-        object = Test.PublicIndexerTest()
+        ob = Test.PublicIndexerTest()
 
-        Test.PublicIndexerTest.__setitem__(object, 0, "zero")
-        self.assertTrue(object[0] == "zero")
+        Test.PublicIndexerTest.__setitem__(ob, 0, "zero")
+        self.assertTrue(ob[0] == "zero")
 
-        Test.PublicIndexerTest.__setitem__(object, 1, "one")
-        self.assertTrue(object[1] == "one")
+        Test.PublicIndexerTest.__setitem__(ob, 1, "one")
+        self.assertTrue(ob[1] == "one")
 
-        self.assertTrue(object[10] == None)
+        self.assertTrue(ob[10] is None)
 
-    def testIndexerAbuse(self):
+    def test_indexer_abuse(self):
         """Test indexer abuse."""
         _class = Test.PublicIndexerTest
-        object = Test.PublicIndexerTest()
+        ob = Test.PublicIndexerTest()
 
-        def test():
+        with self.assertRaises(AttributeError):
             del _class.__getitem__
 
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            del ob.__getitem__
 
-        def test():
-            del object.__getitem__
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
+        with self.assertRaises(AttributeError):
             del _class.__setitem__
 
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            del object.__setitem__
-
-        self.assertRaises(AttributeError, test)
+        with self.assertRaises(AttributeError):
+            del ob.__setitem__
 
 
 def test_suite():
     return unittest.makeSuite(IndexerTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

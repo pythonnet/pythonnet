@@ -1,25 +1,23 @@
-import sys, os, string, unittest, types
-import System
-import six
+# -*- coding: utf-8 -*-
 
-if six.PY3:
-    unicode = str
+import sys
+import unittest
+
+import System
+
+from _compat import PY2, PY3, pickle, text_type
 
 
 class ExceptionTests(unittest.TestCase):
     """Test exception support."""
 
-    def testUnifiedExceptionSemantics(self):
+    def test_unified_exception_semantics(self):
         """Test unified exception semantics."""
-        from System import Exception, Object
-
-        e = Exception('Something bad happened')
-        if not six.PY3:
-            import exceptions
-            self.assertTrue(isinstance(e, exceptions.Exception))
+        e = System.Exception('Something bad happened')
         self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
-    def testStandardExceptionAttributes(self):
+    def test_standard_exception_attributes(self):
         """Test accessing standard exception attributes."""
         from System import OverflowException
         from Python.Test import ExceptionTest
@@ -35,15 +33,15 @@ class ExceptionTests(unittest.TestCase):
         v = e.ToString()
         self.assertTrue(len(v) > 0)
 
-    def testExtendedExceptionAttributes(self):
+    def test_extended_exception_attributes(self):
         """Test accessing extended exception attributes."""
         from Python.Test import ExceptionTest, ExtendedException
-        from System import Exception, OverflowException
+        from System import OverflowException
 
         e = ExceptionTest.GetExtendedException()
         self.assertTrue(isinstance(e, ExtendedException))
         self.assertTrue(isinstance(e, OverflowException))
-        self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
         self.assertTrue(e.Message == 'error')
 
@@ -59,99 +57,88 @@ class ExceptionTests(unittest.TestCase):
 
         self.assertTrue(e.GetExtraInfo() == 'changed')
 
-    def testRaiseClassException(self):
+    def test_raise_class_exception(self):
         """Test class exception propagation."""
         from System import NullReferenceException
 
-        def test():
+        with self.assertRaises(NullReferenceException) as cm:
             raise NullReferenceException
 
-        self.assertRaises(NullReferenceException, test)
+        exc = cm.exception
+        self.assertTrue(isinstance(exc, NullReferenceException))
 
+    def test_exc_info(self):
+        """Test class exception propagation.
+        Behavior of exc_info changed in Py3. Refactoring its test"""
+        from System import NullReferenceException
         try:
-            raise NullReferenceException
-        except:
-            type, value, tb = sys.exc_info()
-            self.assertTrue(type is NullReferenceException)
-            self.assertTrue(isinstance(value, NullReferenceException))
+            raise NullReferenceException("message")
+        except Exception as exc:
+            type_, value, tb = sys.exc_info()
+            self.assertTrue(type_ is NullReferenceException)
+            self.assertTrue(value.Message == "message")
+            self.assertTrue(exc.Message == "message")
+            # FIXME: Lower-case message isn't implemented
+            # self.assertTrue(exc.message == "message")
+            self.assertTrue(value is exc)
 
-    def testRaiseClassExceptionWithValue(self):
+    def test_raise_class_exception_with_value(self):
         """Test class exception propagation with associated value."""
         from System import NullReferenceException
 
-        def test():
+        with self.assertRaises(NullReferenceException) as cm:
             raise NullReferenceException('Aiiieee!')
 
-        self.assertRaises(NullReferenceException, test)
+        exc = cm.exception
+        self.assertTrue(isinstance(exc, NullReferenceException))
+        self.assertTrue(exc.Message == 'Aiiieee!')
 
-        try:
-            raise NullReferenceException('Aiiieee!')
-        except:
-            type, value, tb = sys.exc_info()
-            self.assertTrue(type is NullReferenceException)
-            self.assertTrue(isinstance(value, NullReferenceException))
-            self.assertTrue(value.Message == 'Aiiieee!')
-
-    def testRaiseInstanceException(self):
+    def test_raise_instance_exception(self):
         """Test instance exception propagation."""
         from System import NullReferenceException
 
-        def test():
+        with self.assertRaises(NullReferenceException) as cm:
             raise NullReferenceException()
 
-        self.assertRaises(NullReferenceException, test)
+        exc = cm.exception
+        self.assertTrue(isinstance(exc, NullReferenceException))
+        self.assertTrue(len(exc.Message) > 0)
 
-        try:
-            raise NullReferenceException()
-        except:
-            type, value, tb = sys.exc_info()
-            self.assertTrue(type is NullReferenceException)
-            self.assertTrue(isinstance(value, NullReferenceException))
-            self.assertTrue(len(value.Message) > 0)
-
-    def testRaiseInstanceExceptionWithArgs(self):
+    def test_raise_instance_exception_with_args(self):
         """Test instance exception propagation with args."""
         from System import NullReferenceException
 
-        def test():
-            raise NullReferenceException("Aiieeee!")
+        with self.assertRaises(NullReferenceException) as cm:
+            raise NullReferenceException("Aiiieee!")
 
-        self.assertRaises(NullReferenceException, test)
+        exc = cm.exception
+        self.assertTrue(isinstance(exc, NullReferenceException))
+        self.assertTrue(exc.Message == 'Aiiieee!')
 
-        try:
-            raise NullReferenceException('Aiiieee!')
-        except:
-            type, value, tb = sys.exc_info()
-            self.assertTrue(type is NullReferenceException)
-            self.assertTrue(isinstance(value, NullReferenceException))
-            self.assertTrue(value.Message == 'Aiiieee!')
-
-    def testManagedExceptionPropagation(self):
+    def test_managed_exception_propagation(self):
         """Test propagation of exceptions raised in managed code."""
         from System import Decimal, OverflowException
 
-        def test():
-            l = Decimal.ToInt64(Decimal.MaxValue)
+        with self.assertRaises(OverflowException):
+            Decimal.ToInt64(Decimal.MaxValue)
 
-        self.assertRaises(OverflowException, test)
-
-    def testManagedExceptionConversion(self):
+    def test_managed_exception_conversion(self):
         """Test conversion of managed exceptions."""
-        from System import Exception, OverflowException
+        from System import OverflowException
         from Python.Test import ExceptionTest
 
         e = ExceptionTest.GetBaseException()
-        self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
         e = ExceptionTest.GetExplicitException()
         self.assertTrue(isinstance(e, OverflowException))
-        self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
         e = ExceptionTest.GetWidenedException()
         self.assertTrue(isinstance(e, OverflowException))
-        self.assertTrue(isinstance(e, Exception))
+        self.assertTrue(isinstance(e, System.Exception))
 
-        v = ExceptionTest.SetBaseException(Exception('error'))
+        v = ExceptionTest.SetBaseException(System.Exception('error'))
         self.assertTrue(v)
 
         v = ExceptionTest.SetExplicitException(OverflowException('error'))
@@ -160,152 +147,133 @@ class ExceptionTests(unittest.TestCase):
         v = ExceptionTest.SetWidenedException(OverflowException('error'))
         self.assertTrue(v)
 
-    def testCatchExceptionFromManagedMethod(self):
+    def test_catch_exception_from_managed_method(self):
         """Test catching an exception from a managed method."""
         from Python.Test import ExceptionTest
         from System import OverflowException
 
-        try:
+        with self.assertRaises(OverflowException) as cm:
             ExceptionTest().ThrowException()
-        except OverflowException:
-            e = sys.exc_info()[1]
-            self.assertTrue(isinstance(e, OverflowException))
-            return
 
-        raise SystemError('failed to catch exception from managed method')
+        e = cm.exception
+        self.assertTrue(isinstance(e, OverflowException))
 
-    def testCatchExceptionFromManagedProperty(self):
+    def test_catch_exception_from_managed_property(self):
         """Test catching an exception from a managed property."""
         from Python.Test import ExceptionTest
         from System import OverflowException
 
-        try:
-            v = ExceptionTest().ThrowProperty
-        except OverflowException:
-            e = sys.exc_info()[1]
-            self.assertTrue(isinstance(e, OverflowException))
-            return
+        with self.assertRaises(OverflowException) as cm:
+            _ = ExceptionTest().ThrowProperty
 
-        try:
+        e = cm.exception
+        self.assertTrue(isinstance(e, OverflowException))
+
+        with self.assertRaises(OverflowException) as cm:
             ExceptionTest().ThrowProperty = 1
-        except OverflowException:
-            e = sys.exc_info()[1]
-            self.assertTrue(isinstance(e, OverflowException))
-            return
 
-        raise SystemError('failed to catch exception from managed property')
+        e = cm.exception
+        self.assertTrue(isinstance(e, OverflowException))
 
-    def testCatchExceptionManagedClass(self):
+    def test_catch_exception_managed_class(self):
         """Test catching the managed class of an exception."""
         from System import OverflowException
 
-        try:
+        with self.assertRaises(OverflowException):
             raise OverflowException('overflow')
-        except OverflowException:
-            return
 
-        raise SystemError('failed to catch managed class exception')
-
-    def testCatchExceptionPythonClass(self):
+    def test_catch_exception_python_class(self):
         """Test catching the python class of an exception."""
         from System import OverflowException
-        if six.PY3:
-            from builtins import Exception
-        else:
-            from exceptions import Exception
 
-        try:
+        with self.assertRaises(Exception):
             raise OverflowException('overflow')
-        except Exception:
-            return
 
-        raise SystemError('failed to catch python class exception')
-
-    def testCatchExceptionBaseClass(self):
+    def test_catch_exception_base_class(self):
         """Test catching the base of an exception."""
         from System import OverflowException, ArithmeticException
 
-        try:
+        with self.assertRaises(ArithmeticException):
             raise OverflowException('overflow')
-        except ArithmeticException:
-            return
 
-        raise SystemError('failed to catch base exception')
-
-    def testCatchExceptionNestedBaseClass(self):
+    def test_catch_exception_nested_base_class(self):
         """Test catching the nested base of an exception."""
         from System import OverflowException, SystemException
 
-        try:
+        with self.assertRaises(SystemException):
             raise OverflowException('overflow')
-        except SystemException:
-            return
 
-        raise SystemError('failed to catch nested base exception')
-
-    def testCatchExceptionWithAssignment(self):
+    def test_catch_exception_with_assignment(self):
         """Test catching an exception with assignment."""
         from System import OverflowException
 
-        try:
+        with self.assertRaises(OverflowException) as cm:
             raise OverflowException('overflow')
-        except OverflowException:
-            e = sys.exc_info()[1]
-            self.assertTrue(isinstance(e, OverflowException))
 
-    def testCatchExceptionUnqualified(self):
+        e = cm.exception
+        self.assertTrue(isinstance(e, OverflowException))
+
+    def test_catch_exception_unqualified(self):
         """Test catching an unqualified exception."""
         from System import OverflowException
 
         try:
             raise OverflowException('overflow')
         except:
-            return
+            pass
+        else:
+            self.fail("failed to catch unqualified exception")
 
-        raise SystemError('failed to catch unqualified exception')
+    def test_catch_baseexception(self):
+        """Test catching an unqualified exception with BaseException."""
+        from System import OverflowException
 
-    def testApparentModuleOfException(self):
+        with self.assertRaises(BaseException):
+            raise OverflowException('overflow')
+
+    def test_apparent_module_of_exception(self):
         """Test the apparent module of an exception."""
-        from System import Exception, OverflowException
+        from System import OverflowException
 
-        self.assertTrue(Exception.__module__ == 'System')
+        self.assertTrue(System.Exception.__module__ == 'System')
         self.assertTrue(OverflowException.__module__ == 'System')
 
-    def testStrOfException(self):
+    def test_str_of_exception(self):
         """Test the str() representation of an exception."""
-        from System import NullReferenceException
-        from System import Convert, FormatException
+        from System import NullReferenceException, Convert, FormatException
+
         e = NullReferenceException('')
         self.assertEqual(str(e), '')
 
         e = NullReferenceException('Something bad happened')
         self.assertTrue(str(e).startswith('Something bad happened'))
 
-        try:
+        with self.assertRaises(FormatException) as cm:
             Convert.ToDateTime('this will fail')
-        except FormatException:
-            e = sys.exc_info()[1]
-            msg = unicode(e).encode("utf8")  # fix for international installation
-            self.assertTrue(msg.find(unicode('System.Convert.ToDateTime').encode("utf8")) > -1, msg)
 
-    def testPythonCompatOfManagedExceptions(self):
-        """Test if managed exceptions are compatible with Python's implementation
-        """
+        e = cm.exception
+        # fix for international installation
+        msg = text_type(e).encode("utf8")
+        fnd = text_type('System.Convert.ToDateTime').encode("utf8")
+        self.assertTrue(msg.find(fnd) > -1, msg)
+
+    def test_python_compat_of_managed_exceptions(self):
+        """Test managed exceptions compatible with Python's implementation"""
         from System import OverflowException
-        msg = "A simple message"
+        msg = "Simple message"
 
         e = OverflowException(msg)
         self.assertEqual(str(e), msg)
-        self.assertEqual(unicode(e), msg)
+        self.assertEqual(text_type(e), msg)
 
         self.assertEqual(e.args, (msg,))
         self.assertTrue(isinstance(e.args, tuple))
-        if six.PY2:
-            self.assertEqual(repr(e), "OverflowException(u'A simple message',)")
-        else:
-            self.assertEqual(repr(e), "OverflowException('A simple message',)")
+        if PY3:
+            self.assertEqual(repr(e), "OverflowException('Simple message',)")
+        elif PY2:
+            self.assertEqual(repr(e), "OverflowException(u'Simple message',)")
 
-    def testExceptionIsInstanceOfSystemObject(self):
+    def test_exception_is_instance_of_system_object(self):
         """Test behavior of isinstance(<managed exception>, System.Object)."""
         # This is an anti-test, in that this is a caveat of the current
         # implementation. Because exceptions are not allowed to be new-style
@@ -318,12 +286,11 @@ class ExceptionTests(unittest.TestCase):
         # here mainly to remind me to update the caveat in the documentation
         # one day when when exceptions can be new-style classes.
 
-        # This behaviour is now over-shadowed by the implementation of
+        # This behavior is now over-shadowed by the implementation of
         # __instancecheck__ (i.e., overloading isinstance), so for all Python
         # version >= 2.6 we expect isinstance(<managed exception>, Object) to
         # be true, even though it does not really subclass Object.
-        from System import OverflowException
-        from System import Object
+        from System import OverflowException, Object
 
         o = OverflowException('error')
 
@@ -332,48 +299,30 @@ class ExceptionTests(unittest.TestCase):
         else:
             self.assertFalse(isinstance(o, Object))
 
-    def testPicklingExceptions(self):
-        from System import Exception
-        try:
-            import cPickle as pickle
-        except ImportError:
-            import pickle
-
-        exc = Exception("test")
+    def test_pickling_exceptions(self):
+        exc = System.Exception("test")
         dumped = pickle.dumps(exc)
         loaded = pickle.loads(dumped)
 
         self.assertEqual(exc.args, loaded.args)
 
-    def testChainedExceptions(self):
-        if six.PY3:
-            from Python.Test import ExceptionTest
+    @unittest.skipIf(PY2, "__cause__ isn't implemented in PY2")
+    def test_chained_exceptions(self):
+        from Python.Test import ExceptionTest
 
-            try:
-                ExceptionTest.ThrowChainedExceptions()
-            except Exception as exc:
-                msgs = [
-                    "Outer exception",
-                    "Inner exception",
-                    "Innermost exception"
-                ]
+        with self.assertRaises(Exception) as cm:
+            ExceptionTest.ThrowChainedExceptions()
 
-                for msg in msgs:
-                    self.assertEqual(exc.Message, msg)
-                    self.assertEqual(exc.__cause__, exc.InnerException)
-                    exc = exc.__cause__
+        exc = cm.exception
 
-            else:
-                self.fail("Test should raise an exception")
+        msgs = ("Outer exception",
+                "Inner exception",
+                "Innermost exception",)
+        for msg in msgs:
+            self.assertEqual(exc.Message, msg)
+            self.assertEqual(exc.__cause__, exc.InnerException)
+            exc = exc.__cause__
 
 
 def test_suite():
     return unittest.makeSuite(ExceptionTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

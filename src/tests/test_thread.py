@@ -1,41 +1,39 @@
-import sys, os, string, unittest, types
-from Python.Test import ThreadTest
-import six
+# -*- coding: utf-8 -*-
 
-if six.PY3:
-    import _thread as thread
-else:
-    import thread
+import threading
+import time
+import unittest
 
-
-def dprint(msg):
-    # Debugging helper to trace thread-related tests.
-    if 0: print(msg)
+from _compat import range, thread
+from utils import dprint
 
 
 class ThreadTests(unittest.TestCase):
     """Test CLR bridge threading and GIL handling."""
 
-    def testSimpleCallbackToPython(self):
+    def test_simple_callback_to_python(self):
         """Test a call to managed code that then calls back into Python."""
+        from Python.Test import ThreadTest
+
         dprint("thread %s SimpleCallBack" % thread.get_ident())
         result = ThreadTest.CallEchoString("spam")
         self.assertTrue(result == "spam")
         dprint("thread %s SimpleCallBack ret" % thread.get_ident())
 
-    def testDoubleCallbackToPython(self):
+    def test_double_callback_to_python(self):
         """Test a call to managed code that then calls back into Python
            that then calls managed code that then calls Python again."""
+        from Python.Test import ThreadTest
+
         dprint("thread %s DoubleCallBack" % thread.get_ident())
         result = ThreadTest.CallEchoString2("spam")
         self.assertTrue(result == "spam")
         dprint("thread %s DoubleCallBack ret" % thread.get_ident())
 
-    def testPythonThreadCallsToCLR(self):
+    def test_python_thread_calls_to_clr(self):
         """Test calls by Python-spawned threads into managed code."""
         # This test is very likely to hang if something is wrong ;)
-        import threading, time
-        from System import String
+        import System
 
         done = []
 
@@ -43,15 +41,15 @@ class ThreadTests(unittest.TestCase):
             for i in range(10):
                 time.sleep(0.1)
                 dprint("thread %s %d" % (thread.get_ident(), i))
-                mstr = String("thread %s %d" % (thread.get_ident(), i))
-                pstr = mstr.ToString()
+                mstr = System.String("thread %s %d" % (thread.get_ident(), i))
+                dprint(mstr.ToString())
                 done.append(None)
                 dprint("thread %s %d done" % (thread.get_ident(), i))
 
         def start_threads(count):
-            for i in range(count):
-                thread = threading.Thread(target=run_thread)
-                thread.start()
+            for _ in range(count):
+                thread_ = threading.Thread(target=run_thread)
+                thread_.start()
 
         start_threads(5)
 
@@ -59,17 +57,6 @@ class ThreadTests(unittest.TestCase):
             dprint(len(done))
             time.sleep(0.1)
 
-        return
-
 
 def test_suite():
     return unittest.makeSuite(ThreadTests)
-
-
-def main():
-    for i in range(50):
-        unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

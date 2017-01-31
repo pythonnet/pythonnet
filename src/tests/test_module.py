@@ -1,51 +1,37 @@
-import clr
+# -*- coding: utf-8 -*-
 
-clr.AddReference('Python.Test')
-clr.AddReference('System.Data')
+import clr
+import time
+import types
+import unittest
+import warnings
+from fnmatch import fnmatch
+
+from _compat import ClassType, PY2, PY3, range
+from utils import is_clr_class, is_clr_module, is_clr_root_module
+
 
 # testImplicitAssemblyLoad() passes on deprecation warning; perfect! #
-##clr.AddReference('System.Windows.Forms')
-import sys, os, string, unittest, types, warnings
-from fnmatch import fnmatch
-import six
-
-if six.PY3:
-    ClassType = type
-else:
-    ClassType = types.ClassType
-
+# clr.AddReference('System.Windows.Forms')
 
 class ModuleTests(unittest.TestCase):
     """Test CLR modules and the CLR import hook."""
 
-    def isCLRModule(self, object):
-        return type(object).__name__ == 'ModuleObject'
-
-    def isCLRRootModule(self, object):
-        if six.PY3:
-            # in Python 3 the clr module is a normal python module
-            return object.__name__ == "clr"
-        return type(object).__name__ == 'CLRModule'
-
-    def isCLRClass(self, object):
-        return type(object).__name__ == 'CLR Metatype'  # for now
-
-    def testAAAImportHookWorks(self):
+    def test_import_hook_works(self):
         """Test that the import hook works correctly both using the
            included runtime and an external runtime. This must be
            the first test run in the unit tests!"""
-
         from System import String
 
-    def test000importClr(self):
+    def test_import_clr(self):
         import clr
-        self.assertTrue(self.isCLRRootModule(clr))
+        self.assertTrue(is_clr_root_module(clr))
 
-    def testVersionClr(self):
+    def test_version_clr(self):
         import clr
         self.assertTrue(clr.__version__ >= "2.2.0")
 
-    def testPreloadVar(self):
+    def test_preload_var(self):
         import clr
         self.assertTrue(clr.getPreload() is False, clr.getPreload())
         clr.setPreload(False)
@@ -64,7 +50,7 @@ class ModuleTests(unittest.TestCase):
         finally:
             clr.setPreload(False)
 
-    def testModuleInterface(self):
+    def test_module_interface(self):
         """Test the interface exposed by CLR module objects."""
         import System
         self.assertEquals(type(System.__dict__), type({}))
@@ -75,143 +61,142 @@ class ModuleTests(unittest.TestCase):
         self.assertTrue(fnmatch(system_file, "*System*.dll") or fnmatch(system_file, "*mscorlib.dll"),
                         "unexpected System.__file__: " + system_file)
         self.assertTrue(System.__doc__.startswith("Namespace containing types from the following assemblies:"))
-        self.assertTrue(self.isCLRClass(System.String))
-        self.assertTrue(self.isCLRClass(System.Int32))
+        self.assertTrue(is_clr_class(System.String))
+        self.assertTrue(is_clr_class(System.Int32))
 
-    def testSimpleImport(self):
+    def test_simple_import(self):
         """Test simple import."""
         import System
-        self.assertTrue(self.isCLRModule(System))
+        self.assertTrue(is_clr_module(System))
         self.assertTrue(System.__name__ == 'System')
 
         import sys
-        self.assertTrue(type(sys) == types.ModuleType)
+        self.assertTrue(isinstance(sys, types.ModuleType))
         self.assertTrue(sys.__name__ == 'sys')
 
-        if six.PY3:
+        if PY3:
             import http.client as httplib
-            self.assertTrue(type(httplib) == types.ModuleType)
+            self.assertTrue(isinstance(httplib, types.ModuleType))
             self.assertTrue(httplib.__name__ == 'http.client')
-        else:
+        elif PY2:
             import httplib
-            self.assertTrue(type(httplib) == types.ModuleType)
+            self.assertTrue(isinstance(httplib, types.ModuleType))
             self.assertTrue(httplib.__name__ == 'httplib')
 
-    def testSimpleImportWithAlias(self):
+    def test_simple_import_with_alias(self):
         """Test simple import with aliasing."""
         import System as mySystem
-        self.assertTrue(self.isCLRModule(mySystem))
+        self.assertTrue(is_clr_module(mySystem))
         self.assertTrue(mySystem.__name__ == 'System')
 
         import sys as mySys
-        self.assertTrue(type(mySys) == types.ModuleType)
+        self.assertTrue(isinstance(mySys, types.ModuleType))
         self.assertTrue(mySys.__name__ == 'sys')
 
-        if six.PY3:
+        if PY3:
             import http.client as myHttplib
-            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(isinstance(myHttplib, types.ModuleType))
             self.assertTrue(myHttplib.__name__ == 'http.client')
-        else:
+        elif PY2:
             import httplib as myHttplib
-            self.assertTrue(type(myHttplib) == types.ModuleType)
+            self.assertTrue(isinstance(myHttplib, types.ModuleType))
             self.assertTrue(myHttplib.__name__ == 'httplib')
 
-    def testDottedNameImport(self):
+    def test_dotted_name_import(self):
         """Test dotted-name import."""
         import System.Reflection
-        self.assertTrue(self.isCLRModule(System.Reflection))
+        self.assertTrue(is_clr_module(System.Reflection))
         self.assertTrue(System.Reflection.__name__ == 'System.Reflection')
 
         import xml.dom
-        self.assertTrue(type(xml.dom) == types.ModuleType)
+        self.assertTrue(isinstance(xml.dom, types.ModuleType))
         self.assertTrue(xml.dom.__name__ == 'xml.dom')
 
-    def testMultipleDottedNameImport(self):
+    def test_multiple_dotted_name_import(self):
         """Test an import bug with multiple dotted imports."""
         import System.Data
-        self.assertTrue(self.isCLRModule(System.Data))
+        self.assertTrue(is_clr_module(System.Data))
         self.assertTrue(System.Data.__name__ == 'System.Data')
         import System.Data
-        self.assertTrue(self.isCLRModule(System.Data))
+        self.assertTrue(is_clr_module(System.Data))
         self.assertTrue(System.Data.__name__ == 'System.Data')
 
-    def testDottedNameImportWithAlias(self):
+    def test_dotted_name_import_with_alias(self):
         """Test dotted-name import with aliasing."""
         import System.Reflection as SysRef
-        self.assertTrue(self.isCLRModule(SysRef))
+        self.assertTrue(is_clr_module(SysRef))
         self.assertTrue(SysRef.__name__ == 'System.Reflection')
 
         import xml.dom as myDom
-        self.assertTrue(type(myDom) == types.ModuleType)
+        self.assertTrue(isinstance(myDom, types.ModuleType))
         self.assertTrue(myDom.__name__ == 'xml.dom')
 
-    def testSimpleImportFrom(self):
+    def test_simple_import_from(self):
         """Test simple 'import from'."""
         from System import Reflection
-        self.assertTrue(self.isCLRModule(Reflection))
+        self.assertTrue(is_clr_module(Reflection))
         self.assertTrue(Reflection.__name__ == 'System.Reflection')
 
         from xml import dom
-        self.assertTrue(type(dom) == types.ModuleType)
+        self.assertTrue(isinstance(dom, types.ModuleType))
         self.assertTrue(dom.__name__ == 'xml.dom')
 
-    def testSimpleImportFromWithAlias(self):
+    def test_simple_import_from_with_alias(self):
         """Test simple 'import from' with aliasing."""
         from System import Collections as Coll
-        self.assertTrue(self.isCLRModule(Coll))
+        self.assertTrue(is_clr_module(Coll))
         self.assertTrue(Coll.__name__ == 'System.Collections')
 
         from xml import dom as myDom
-        self.assertTrue(type(myDom) == types.ModuleType)
+        self.assertTrue(isinstance(myDom, types.ModuleType))
         self.assertTrue(myDom.__name__ == 'xml.dom')
 
-    def testDottedNameImportFrom(self):
+    def test_dotted_name_import_from(self):
         """Test dotted-name 'import from'."""
         from System.Collections import Specialized
-        self.assertTrue(self.isCLRModule(Specialized))
+        self.assertTrue(is_clr_module(Specialized))
         self.assertTrue(
-            Specialized.__name__ == 'System.Collections.Specialized'
-        )
+            Specialized.__name__ == 'System.Collections.Specialized')
 
         from System.Collections.Specialized import StringCollection
-        self.assertTrue(self.isCLRClass(StringCollection))
+        self.assertTrue(is_clr_class(StringCollection))
         self.assertTrue(StringCollection.__name__ == 'StringCollection')
 
         from xml.dom import pulldom
-        self.assertTrue(type(pulldom) == types.ModuleType)
+        self.assertTrue(isinstance(pulldom, types.ModuleType))
         self.assertTrue(pulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM
-        self.assertTrue(type(PullDOM) == ClassType)
+        self.assertTrue(isinstance(PullDOM, ClassType))
         self.assertTrue(PullDOM.__name__ == 'PullDOM')
 
-    def testDottedNameImportFromWithAlias(self):
+    def test_dotted_name_import_from_with_alias(self):
         """Test dotted-name 'import from' with aliasing."""
         from System.Collections import Specialized as Spec
-        self.assertTrue(self.isCLRModule(Spec))
+        self.assertTrue(is_clr_module(Spec))
         self.assertTrue(Spec.__name__ == 'System.Collections.Specialized')
 
         from System.Collections.Specialized import StringCollection as SC
-        self.assertTrue(self.isCLRClass(SC))
+        self.assertTrue(is_clr_class(SC))
         self.assertTrue(SC.__name__ == 'StringCollection')
 
         from xml.dom import pulldom as myPulldom
-        self.assertTrue(type(myPulldom) == types.ModuleType)
+        self.assertTrue(isinstance(myPulldom, types.ModuleType))
         self.assertTrue(myPulldom.__name__ == 'xml.dom.pulldom')
 
         from xml.dom.pulldom import PullDOM as myPullDOM
-        self.assertTrue(type(myPullDOM) == ClassType)
+        self.assertTrue(isinstance(myPullDOM, ClassType))
         self.assertTrue(myPullDOM.__name__ == 'PullDOM')
 
-    def testFromModuleImportStar(self):
+    def test_from_module_import_star(self):
         """Test from module import * behavior."""
         count = len(locals().keys())
         m = __import__('System.Xml', globals(), locals(), ['*'])
         self.assertTrue(m.__name__ == 'System.Xml')
-        self.assertTrue(self.isCLRModule(m))
+        self.assertTrue(is_clr_module(m))
         self.assertTrue(len(locals().keys()) > count + 1)
 
-    def testImplicitAssemblyLoad(self):
+    def test_implicit_assembly_load(self):
         """Test implicit assembly loading via import."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -226,28 +211,28 @@ class ModuleTests(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             clr.AddReference("System.Windows.Forms")
             import System.Windows.Forms as Forms
-            self.assertTrue(self.isCLRModule(Forms))
+            self.assertTrue(is_clr_module(Forms))
             self.assertTrue(Forms.__name__ == 'System.Windows.Forms')
             from System.Windows.Forms import Form
-            self.assertTrue(self.isCLRClass(Form))
+            self.assertTrue(is_clr_class(Form))
             self.assertTrue(Form.__name__ == 'Form')
             self.assertEqual(len(w), 0)
 
-    def testExplicitAssemblyLoad(self):
+    def test_explicit_assembly_load(self):
         """Test explicit assembly loading using standard CLR tools."""
         from System.Reflection import Assembly
         import System, sys
 
         assembly = Assembly.LoadWithPartialName('System.Data')
-        self.assertTrue(assembly != None)
+        self.assertTrue(assembly is not None)
 
         import System.Data
         self.assertTrue('System.Data' in sys.modules)
 
         assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
-        self.assertTrue(assembly == None)
+        self.assertTrue(assembly is None)
 
-    def testImplicitLoadAlreadyValidNamespace(self):
+    def test_implicit_load_already_valid_namespace(self):
         """Test implicit assembly load over an already valid namespace."""
         # In this case, the mscorlib assembly (loaded by default) defines
         # a number of types in the System namespace. There is also a System
@@ -256,57 +241,46 @@ class ModuleTests(unittest.TestCase):
         # Python runtime to "do the right thing", allowing types from both
         # assemblies to be found in the System module implicitly.
         import System
-        self.assertTrue(self.isCLRClass(System.UriBuilder))
+        self.assertTrue(is_clr_class(System.UriBuilder))
 
-    def testImportNonExistantModule(self):
-        """Test import failure for a non-existant module."""
-
-        def test():
+    def test_import_non_existant_module(self):
+        """Test import failure for a non-existent module."""
+        with self.assertRaises(ImportError):
             import System.SpamSpamSpam
 
-        self.assertTrue(ImportError, test)
-
-    def testLookupNoNamespaceType(self):
+    def test_lookup_no_namespace_type(self):
         """Test lookup of types without a qualified namespace."""
         import Python.Test
         import clr
-        self.assertTrue(self.isCLRClass(clr.NoNamespaceType))
+        self.assertTrue(is_clr_class(clr.NoNamespaceType))
 
-    def testModuleLookupRecursion(self):
+    def test_module_lookup_recursion(self):
         """Test for recursive lookup handling."""
 
-        def test1():
+        with self.assertRaises(ImportError):
             from System import System
 
-        self.assertTrue(ImportError, test1)
-
-        def test2():
+        with self.assertRaises(AttributeError):
             import System
-            x = System.System
+            _ = System.System
 
-        self.assertTrue(AttributeError, test2)
-
-    def testModuleGetAttr(self):
+    def test_module_get_attr(self):
         """Test module getattr behavior."""
         import System
 
         int_type = System.Int32
-        self.assertTrue(self.isCLRClass(int_type))
+        self.assertTrue(is_clr_class(int_type))
 
         module = System.Xml
-        self.assertTrue(self.isCLRModule(module))
+        self.assertTrue(is_clr_module(module))
 
-        def test():
-            spam = System.Spam
+        with self.assertRaises(AttributeError):
+            _ = System.Spam
 
-        self.assertTrue(AttributeError, test)
+        with self.assertRaises(TypeError):
+            _ = getattr(System, 1)
 
-        def test():
-            spam = getattr(System, 1)
-
-        self.assertTrue(TypeError, test)
-
-    def testModuleAttrAbuse(self):
+    def test_module_attr_abuse(self):
         """Test handling of attempts to set module attributes."""
 
         # It would be safer to use a dict-proxy as the __dict__ for CLR
@@ -320,70 +294,55 @@ class ModuleTests(unittest.TestCase):
 
         self.assertTrue(test())
 
-    def testModuleTypeAbuse(self):
+    def test_module_type_abuse(self):
         """Test handling of attempts to break the module type."""
         import System
         mtype = type(System)
 
-        def test():
+        with self.assertRaises(TypeError):
             mtype.__getattribute__(0, 'spam')
 
-        self.assertTrue(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             mtype.__setattr__(0, 'spam', 1)
 
-        self.assertTrue(TypeError, test)
-
-        def test():
+        with self.assertRaises(TypeError):
             mtype.__repr__(0)
 
-        self.assertTrue(TypeError, test)
-
-    def test_ClrListAssemblies(self):
+    def test_clr_list_assemblies(self):
         from clr import ListAssemblies
         verbose = list(ListAssemblies(True))
         short = list(ListAssemblies(False))
-        self.assertTrue(six.u('mscorlib') in short)
-        self.assertTrue(six.u('System') in short)
-        self.assertTrue(six.u('Culture=') in verbose[0])
-        self.assertTrue(six.u('Version=') in verbose[0])
+        self.assertTrue(u'mscorlib' in short)
+        self.assertTrue(u'System' in short)
+        self.assertTrue(u'Culture=' in verbose[0])
+        self.assertTrue(u'Version=' in verbose[0])
 
-    def test_ClrAddReference(self):
+    def test_clr_add_reference(self):
         from clr import AddReference
         from System.IO import FileNotFoundException
         for name in ("System", "Python.Runtime"):
             assy = AddReference(name)
-            assyName = assy.GetName().Name
-            self.assertEqual(assyName, name)
+            assy_name = assy.GetName().Name
+            self.assertEqual(assy_name, name)
 
-        self.assertRaises(FileNotFoundException,
-                          AddReference, "somethingtotallysilly")
+        with self.assertRaises(FileNotFoundException):
+            AddReference("somethingtotallysilly")
 
-    def test_AssemblyLoadThreadSafety(self):
-        import time
+    def test_assembly_load_thread_safety(self):
         from Python.Test import ModuleTest
         # spin up .NET thread which loads assemblies and triggers AppDomain.AssemblyLoad event
         ModuleTest.RunThreads()
         time.sleep(1e-5)
-        for i in range(1, 100):
+        for _ in range(1, 100):
             # call import clr, which in AssemblyManager.GetNames iterates through the loaded types
             import clr
             # import some .NET types
             from System import DateTime
             from System import Guid
             from System.Collections.Generic import Dictionary
-            dict = Dictionary[Guid,DateTime]()
+            _ = Dictionary[Guid, DateTime]()
         ModuleTest.JoinThreads()
 
 
 def test_suite():
     return unittest.makeSuite(ModuleTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()

@@ -1,15 +1,14 @@
-import sys, os, string, unittest, types
-import clr
+# -*- coding: utf-8 -*-
 
-clr.AddReference("Python.Test")
-import Python.Test as Test
+import unittest
+
 import System
 
 
 class ConstructorTests(unittest.TestCase):
     """Test CLR class constructor support."""
 
-    def testEnumConstructor(self):
+    def test_enum_constructor(self):
         """Test enum constructor args"""
         from System import TypeCode
         from Python.Test import EnumConstructorTest
@@ -17,7 +16,7 @@ class ConstructorTests(unittest.TestCase):
         ob = EnumConstructorTest(TypeCode.Int32)
         self.assertTrue(ob.value == TypeCode.Int32)
 
-    def testFlagsConstructor(self):
+    def test_flags_constructor(self):
         """Test flags constructor args"""
         from Python.Test import FlagsConstructorTest
         from System.IO import FileAccess
@@ -26,7 +25,7 @@ class ConstructorTests(unittest.TestCase):
         ob = FlagsConstructorTest(flags)
         self.assertTrue(ob.value == flags)
 
-    def testStructConstructor(self):
+    def test_struct_constructor(self):
         """Test struct constructor args"""
         from System import Guid
         from Python.Test import StructConstructorTest
@@ -35,25 +34,17 @@ class ConstructorTests(unittest.TestCase):
         ob = StructConstructorTest(guid)
         self.assertTrue(ob.value == guid)
 
-    def testSubclassConstructor(self):
+    def test_subclass_constructor(self):
         """Test subclass constructor args"""
         from Python.Test import SubclassConstructorTest
 
-        class sub(System.Exception):
+        class Sub(System.Exception):
             pass
 
-        instance = sub()
+        instance = Sub()
         ob = SubclassConstructorTest(instance)
         self.assertTrue(isinstance(ob.value, System.Exception))
 
 
 def test_suite():
     return unittest.makeSuite(ConstructorTests)
-
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-
-if __name__ == '__main__':
-    main()
