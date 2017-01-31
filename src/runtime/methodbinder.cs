@@ -375,8 +375,20 @@ namespace Python.Runtime
                                     Runtime.XDecref(pyoptype);
                                     if (!typematch)
                                     {
-                                        margs = null;
-                                        break;
+                                        if (SimplePromotableType(clrtype, pi[n].ParameterType))
+                                        {
+                                            if (!Converter.ToManaged(op, pi[n].ParameterType, out arg, false))
+                                            {
+                                                margs = null;// basically we are failing this match, but can't throw yet
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            margs = null;
+                                            break;
+                                        }
+
                                     }
                                 }
                                 else
@@ -454,6 +466,19 @@ namespace Python.Runtime
                 return Bind(inst, args, kw, mi, null);
             }
             return null;
+        }
+        /// <summary>
+        /// Returns true if src type (int -type) is promotable to a higher resolution type (float|double)
+        /// <note>no sanity check for overflow is done, this is done elsewhere when performing
+        ///  the actual conversion.
+        ///  </note>
+        /// </summary>
+        /// <param name="src"></param>
+        /// <param name="dst"></param>
+        /// <returns></returns>
+        private bool SimplePromotableType(Type src, Type dst)
+        {
+            return (((src == typeof(int) || src == typeof(short) || src == typeof(long) ) && (dst == typeof(double) || dst == typeof(float))));
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
