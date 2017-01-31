@@ -81,7 +81,7 @@ int32
 
 [appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
 
-[codecov shield]: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/pytest.svg?label=codecov
+[codecov shield]: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/master.svg?label=codecov
 
 [license shield]: https://img.shields.io/badge/license-MIT-blue.svg
 
