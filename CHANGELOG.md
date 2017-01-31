@@ -9,17 +9,19 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
--   New `Foo` feature
+-   Code Coverage (#345)
 
 ### Changed
 
 -   Refactored `setup.py` (#337)
 -   Upgraded NUnit framework to 3.5 (#341)
 -   Completed refactor of Build Directives on `Runtime.cs` (#339)
+-   Refactor tests and removed dependency on `six` (#329)
+-   Unfroze Mono version on Travis (#345)
 
 ### Fixed
 
--   Fixed `FooBar` bug
+-   Fixed crash during Shutdown (#343)
 
 ## [2.2.2][] - 2017-01-29
 
