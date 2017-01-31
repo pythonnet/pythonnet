@@ -154,7 +154,6 @@ namespace Python.Runtime
                 Exceptions.Clear();
 
                 Py.SetArgv(args);
-                Py.Throw();
 
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
@@ -382,10 +381,7 @@ namespace Python.Runtime
         public static PyObject ImportModule(string name)
         {
             IntPtr op = Runtime.PyImport_ImportModule(name);
-            if (op == IntPtr.Zero)
-            {
-                return null;
-            }
+            Py.Throw();
             return new PyObject(op);
         }
 
@@ -401,10 +397,7 @@ namespace Python.Runtime
         public static PyObject ReloadModule(PyObject module)
         {
             IntPtr op = Runtime.PyImport_ReloadModule(module.Handle);
-            if (op == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Py.Throw();
             return new PyObject(op);
         }
 
@@ -420,15 +413,9 @@ namespace Python.Runtime
         public static PyObject ModuleFromString(string name, string code)
         {
             IntPtr c = Runtime.Py_CompileString(code, "none", (IntPtr)257);
-            if (c == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Py.Throw();
             IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
-            if (m == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Py.Throw();
             return new PyObject(m);
         }
 
@@ -476,10 +463,7 @@ namespace Python.Runtime
                     code, flag, globals.Value, locals.Value
                     );
 
-                if (Runtime.PyErr_Occurred() != 0)
-                {
-                    throw new PythonException();
-                }
+                Py.Throw();
 
                 return new PyObject(result);
             }
@@ -583,6 +567,7 @@ namespace Python.Runtime
             {
                 var arr = argv.ToArray();
                 Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
+                Py.Throw();
             }
         }
 
