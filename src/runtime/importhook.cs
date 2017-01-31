@@ -16,7 +16,13 @@ namespace Python.Runtime
 
 #if PYTHON3
         static IntPtr py_clr_module;
-        static IntPtr module_def;
+        static IntPtr module_def = IntPtr.Zero;
+
+        internal static void InitializeModuleDef()
+        {
+            if (module_def == IntPtr.Zero)
+                module_def = ModuleDefOffset.AllocModuleDef("clr");
+        }
 #endif
 
         //===================================================================
@@ -44,8 +50,8 @@ namespace Python.Runtime
             root = new CLRModule();
 
 #if PYTHON3
-    // create a python module with the same methods as the clr module-like object
-            module_def = ModuleDefOffset.AllocModuleDef("clr");
+            // create a python module with the same methods as the clr module-like object
+            InitializeModuleDef();
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
 
             // both dicts are borrowed references
@@ -70,21 +76,13 @@ namespace Python.Runtime
 
         internal static void Shutdown()
         {
-#if PYTHON3
             if (0 != Runtime.Py_IsInitialized()) {
+#if PYTHON3
                 Runtime.XDecref(py_clr_module);
-                Runtime.XDecref(root.pyHandle);
-            }
-            ModuleDefOffset.FreeModuleDef(module_def);
 #elif PYTHON2
-            if (0 != Runtime.Py_IsInitialized())
-            {
                 Runtime.XDecref(root.pyHandle);
-                Runtime.XDecref(root.pyHandle);
-            }
 #endif
-            if (0 != Runtime.Py_IsInitialized())
-            {
+                Runtime.XDecref(root.pyHandle);
                 Runtime.XDecref(py_import);
             }
         }

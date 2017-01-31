@@ -411,33 +411,54 @@ namespace Python.Runtime
         /// executing the code string as a PyObject instance, or null if
         /// an exception was raised.
         /// </remarks>
-        public static PyObject RunString(string code)
+        public static PyObject RunString(
+            string code, IntPtr? globals = null, IntPtr? locals = null
+            )
         {
-            IntPtr globals = Runtime.PyEval_GetGlobals();
-            IntPtr locals = Runtime.PyDict_New();
+            bool borrowedGlobals = true;
+            if (globals == null)
+            {
+                globals = Runtime.PyEval_GetGlobals();
+                if (globals == IntPtr.Zero)
+                {
+                    globals = Runtime.PyDict_New();
+                    Runtime.PyDict_SetItemString(
+                        globals.Value, "__builtins__",
+                        Runtime.PyEval_GetBuiltins()
+                        );
+                    borrowedGlobals = false;
+                }
+            }
 
-            IntPtr builtins = Runtime.PyEval_GetBuiltins();
-            Runtime.PyDict_SetItemString(locals, "__builtins__", builtins);
+            bool borrowedLocals = true;
+            if (locals == null)
+            {
+                locals = Runtime.PyDict_New();
+                borrowedLocals = false;
+            }
 
             IntPtr flag = (IntPtr)257; /* Py_file_input */
-            IntPtr result = Runtime.PyRun_String(code, flag, globals, locals);
-            Runtime.XDecref(locals);
-            if (result == IntPtr.Zero)
-            {
-                return null;
-            }
-            return new PyObject(result);
-        }
 
-        public static PyObject RunString(string code, IntPtr globals, IntPtr locals)
-        {
-            IntPtr flag = (IntPtr)257; /* Py_file_input */
-            IntPtr result = Runtime.PyRun_String(code, flag, globals, locals);
-            if (result == IntPtr.Zero)
+            try
             {
-                return null;
+                IntPtr result = Runtime.PyRun_String(
+                    code, flag, globals.Value, locals.Value
+                    );
+
+                if (Runtime.PyErr_Occurred() != 0)
+                {
+                    throw new PythonException();
+                }
+
+                return new PyObject(result);
             }
-            return new PyObject(result);
+            finally
+            {
+                if (!borrowedLocals)
+                    Runtime.XDecref(locals.Value);
+                if (!borrowedGlobals)
+                    Runtime.XDecref(globals.Value);
+            }
         }
     }
 
