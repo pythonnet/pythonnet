@@ -33,7 +33,7 @@ namespace Python.Test
 
         public EventTest()
         {
-            this.value = 0;
+            value = 0;
         }
 
         static EventTest()
@@ -80,7 +80,7 @@ namespace Python.Test
 
         public void GenericHandler(object sender, EventArgsTest e)
         {
-            this.value = e.value;
+            value = e.value;
         }
 
         public static void StaticHandler(object sender, EventArgsTest e)
@@ -91,8 +91,8 @@ namespace Python.Test
         public static void ShutUpCompiler()
         {
             // Quiet compiler warnings.
-            EventTest e = new EventTest();
-            EventHandlerTest f = new EventHandlerTest(e.GenericHandler);
+            var e = new EventTest();
+            EventHandlerTest f = e.GenericHandler;
             ProtectedStaticEvent += f;
             InternalStaticEvent += f;
             PrivateStaticEvent += f;
@@ -109,7 +109,7 @@ namespace Python.Test
 
         public EventArgsTest(int v)
         {
-            this.value = v;
+            value = v;
         }
     }
 }

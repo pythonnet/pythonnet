@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 
 namespace Python.Test
@@ -11,9 +12,9 @@ namespace Python.Test
         {
             _thread = new Thread(() =>
             {
-                var appdomain = AppDomain.CurrentDomain;
-                var assemblies = appdomain.GetAssemblies();
-                foreach (var assembly in assemblies)
+                AppDomain appdomain = AppDomain.CurrentDomain;
+                Assembly[] assemblies = appdomain.GetAssemblies();
+                foreach (Assembly assembly in assemblies)
                 {
                     assembly.GetTypes();
                 }

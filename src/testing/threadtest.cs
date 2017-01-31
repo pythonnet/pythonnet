@@ -37,9 +37,9 @@ namespace Python.Test
                     module = PythonEngine.ModuleFromString("tt", testmod);
                 }
                 PyObject func = module.GetAttr("echostring");
-                PyString parg = new PyString(arg);
+                var parg = new PyString(arg);
                 PyObject temp = func.Invoke(parg);
-                string result = (string)temp.AsManagedObject(typeof(String));
+                var result = (string)temp.AsManagedObject(typeof(string));
                 func.Dispose();
                 parg.Dispose();
                 temp.Dispose();
@@ -62,9 +62,9 @@ namespace Python.Test
                 }
 
                 PyObject func = module.GetAttr("echostring2");
-                PyString parg = new PyString(arg);
+                var parg = new PyString(arg);
                 PyObject temp = func.Invoke(parg);
-                string result = (string)temp.AsManagedObject(typeof(String));
+                var result = (string)temp.AsManagedObject(typeof(string));
                 func.Dispose();
                 parg.Dispose();
                 temp.Dispose();

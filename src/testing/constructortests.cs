@@ -13,7 +13,7 @@ namespace Python.Test
 
         public EnumConstructorTest(TypeCode v)
         {
-            this.value = v;
+            value = v;
         }
     }
 
@@ -24,7 +24,7 @@ namespace Python.Test
 
         public FlagsConstructorTest(FileAccess v)
         {
-            this.value = v;
+            value = v;
         }
     }
 
@@ -35,7 +35,7 @@ namespace Python.Test
 
         public StructConstructorTest(Guid v)
         {
-            this.value = v;
+            value = v;
         }
     }
 
@@ -46,7 +46,7 @@ namespace Python.Test
 
         public SubclassConstructorTest(Exception v)
         {
-            this.value = v;
+            value = v;
         }
     }
 }

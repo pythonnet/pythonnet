@@ -10,8 +10,8 @@ namespace Python.Test
     {
         public static ArrayList GetArrayList()
         {
-            ArrayList list = new ArrayList();
-            for (int i = 0; i < 10; i++)
+            var list = new ArrayList();
+            for (var i = 0; i < 10; i++)
             {
                 list.Add(i);
             }
@@ -20,7 +20,7 @@ namespace Python.Test
 
         public static Hashtable GetHashtable()
         {
-            Hashtable dict = new Hashtable();
+            var dict = new Hashtable();
             dict.Add("one", 1);
             dict.Add("two", 2);
             dict.Add("three", 3);
@@ -31,7 +31,7 @@ namespace Python.Test
 
         public static IEnumerator GetEnumerator()
         {
-            string temp = "test string";
+            var temp = "test string";
             return temp.GetEnumerator();
         }
     }

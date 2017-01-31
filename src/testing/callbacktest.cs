@@ -37,7 +37,9 @@ namespace Python.Test
         public void Callback(PyObject self)
         {
             using (Py.GIL())
+            {
                 ((dynamic)self).PyCallback(self);
+            }
         }
     }
 }

@@ -21,8 +21,8 @@ namespace Python.Test
 
         public GenericTypeDefinition(T arg1, U arg2)
         {
-            this.value1 = arg1;
-            this.value2 = arg2;
+            value1 = arg1;
+            value2 = arg2;
         }
     }
 
@@ -34,7 +34,7 @@ namespace Python.Test
         public DerivedFromOpenGeneric(int arg1, V arg2, W arg3) :
             base(arg1, arg2)
         {
-            this.value3 = arg3;
+            value3 = arg3;
         }
     }
 

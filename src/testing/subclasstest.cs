@@ -58,7 +58,9 @@ namespace Python.Test
         public virtual void OnTestEvent(int value)
         {
             if (null != TestEvent)
+            {
                 TestEvent(this, new EventArgsTest(value));
+            }
         }
     }
 
@@ -89,7 +91,7 @@ namespace Python.Test
         // test instances can be constructed in managed code
         public static IInterfaceTest create_instance(Type t)
         {
-            return (IInterfaceTest)t.GetConstructor(new Type[] { }).Invoke(new Object[] { });
+            return (IInterfaceTest)t.GetConstructor(new Type[] { }).Invoke(new object[] { });
         }
 
         // test instances pass through managed code unchanged
@@ -101,7 +103,7 @@ namespace Python.Test
         public static int test_event(IInterfaceTest x, int value)
         {
             // reuse the event handler from eventtest.cs
-            EventTest et = new EventTest();
+            var et = new EventTest();
             x.TestEvent += et.GenericHandler;
 
             // raise the event (should trigger both python and managed handlers)

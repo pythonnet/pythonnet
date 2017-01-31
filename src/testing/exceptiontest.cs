@@ -78,7 +78,7 @@ namespace Python.Test
 
     public class ExtendedException : OverflowException
     {
-        public ExtendedException() : base()
+        public ExtendedException()
         {
         }
 

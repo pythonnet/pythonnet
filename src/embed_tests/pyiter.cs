@@ -27,11 +27,11 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestOnPyList()
         {
-            PyList list = new PyList();
+            var list = new PyList();
             list.Append(new PyString("foo"));
             list.Append(new PyString("bar"));
             list.Append(new PyString("baz"));
-            List<string> result = new List<string>();
+            var result = new List<string>();
             foreach (PyObject item in list)
             {
                 result.Add(item.ToString());

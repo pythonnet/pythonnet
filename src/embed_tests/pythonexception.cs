@@ -26,7 +26,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestMessage()
         {
-            PyList list = new PyList();
+            var list = new PyList();
             try
             {
                 PyObject junk = list[0];
@@ -40,7 +40,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestNoError()
         {
-            PythonException e = new PythonException(); //There is no PyErr to fetch
+            var e = new PythonException(); //There is no PyErr to fetch
             Assert.AreEqual("", e.Message);
         }
     }
