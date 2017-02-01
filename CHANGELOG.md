@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Code Coverage (#345)
+-   Add `pysetargv` (#347)
 
 ### Changed
 
