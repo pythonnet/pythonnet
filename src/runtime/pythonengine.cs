@@ -2,16 +2,38 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Python.Runtime
 {
     /// <summary>
     /// This class provides the public interface of the Python runtime.
     /// </summary>
-    public class PythonEngine
+    public class PythonEngine : IDisposable
     {
         private static DelegateManager delegateManager;
         private static bool initialized;
+
+        public PythonEngine()
+        {
+            Initialize();
+        }
+
+        public PythonEngine(params string[] args)
+        {
+            Initialize(args);
+        }
+
+        public PythonEngine(IEnumerable<string> args)
+        {
+            Initialize(args);
+        }
+
+        public void Dispose()
+        {
+            Shutdown();
+        }
 
         #region Properties
 
@@ -102,6 +124,11 @@ namespace Python.Runtime
 
         #endregion
 
+        public static void Initialize()
+        {
+            Initialize(Enumerable.Empty<string>());
+        }
+
         /// <summary>
         /// Initialize Method
         /// </summary>
@@ -112,7 +139,7 @@ namespace Python.Runtime
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
         /// </remarks>
-        public static void Initialize()
+        public static void Initialize(IEnumerable<string> args)
         {
             if (!initialized)
             {
@@ -125,6 +152,8 @@ namespace Python.Runtime
                 Runtime.Initialize();
                 initialized = true;
                 Exceptions.Clear();
+
+                Py.SetArgv(args);
 
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
@@ -187,7 +216,8 @@ namespace Python.Runtime
         // when it is imported by the CLR extension module.
         //====================================================================
 #if PYTHON3
-        public static IntPtr InitExt() {
+        public static IntPtr InitExt()
+        {
 #elif PYTHON2
         public static void InitExt()
         {
@@ -351,10 +381,7 @@ namespace Python.Runtime
         public static PyObject ImportModule(string name)
         {
             IntPtr op = Runtime.PyImport_ImportModule(name);
-            if (op == IntPtr.Zero)
-            {
-                return null;
-            }
+            Py.Throw();
             return new PyObject(op);
         }
 
@@ -370,10 +397,7 @@ namespace Python.Runtime
         public static PyObject ReloadModule(PyObject module)
         {
             IntPtr op = Runtime.PyImport_ReloadModule(module.Handle);
-            if (op == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Py.Throw();
             return new PyObject(op);
         }
 
@@ -389,15 +413,9 @@ namespace Python.Runtime
         public static PyObject ModuleFromString(string name, string code)
         {
             IntPtr c = Runtime.Py_CompileString(code, "none", (IntPtr)257);
-            if (c == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Py.Throw();
             IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
-            if (m == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Py.Throw();
             return new PyObject(m);
         }
 
@@ -445,10 +463,7 @@ namespace Python.Runtime
                     code, flag, globals.Value, locals.Value
                     );
 
-                if (Runtime.PyErr_Occurred() != 0)
-                {
-                    throw new PythonException();
-                }
+                Py.Throw();
 
                 return new PyObject(result);
             }
@@ -500,7 +515,7 @@ namespace Python.Runtime
         public static KeywordArguments kw(params object[] kv)
         {
             var dict = new KeywordArguments();
-            if (kv.Length%2 != 0)
+            if (kv.Length % 2 != 0)
                 throw new ArgumentException("Must have an equal number of keys and values");
             for (int i = 0; i < kv.Length; i += 2)
             {
@@ -520,6 +535,51 @@ namespace Python.Runtime
         public static PyObject Import(string name)
         {
             return PythonEngine.ImportModule(name);
+        }
+
+        public static void SetArgv()
+        {
+            IEnumerable<string> args;
+            try
+            {
+                args = Environment.GetCommandLineArgs();
+            }
+            catch (NotSupportedException)
+            {
+                args = Enumerable.Empty<string>();
+            }
+
+            SetArgv(
+                new[] { "" }.Concat(
+                    Environment.GetCommandLineArgs().Skip(1)
+                )
+            );
+        }
+
+        public static void SetArgv(params string[] argv)
+        {
+            SetArgv(argv as IEnumerable<string>);
+        }
+
+        public static void SetArgv(IEnumerable<string> argv)
+        {
+            using (GIL())
+            {
+                var arr = argv.ToArray();
+                Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
+                Py.Throw();
+            }
+        }
+
+        internal static void Throw()
+        {
+            using (GIL())
+            {
+                if (Runtime.PyErr_Occurred() != 0)
+                {
+                    throw new PythonException();
+                }
+            }
         }
     }
 }
