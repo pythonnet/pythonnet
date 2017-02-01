@@ -12,9 +12,9 @@ namespace Python.Runtime
         static IntPtr py_import;
         static CLRModule root;
         static MethodWrapper hook;
+        static IntPtr py_clr_module;
 
 #if PYTHON3
-        static IntPtr py_clr_module;
         static IntPtr module_def = IntPtr.Zero;
 
         internal static void InitializeModuleDef()
@@ -36,11 +36,10 @@ namespace Python.Runtime
             IntPtr dict = Runtime.PyImport_GetModuleDict();
 #if PYTHON3
             IntPtr mod = Runtime.PyImport_ImportModule("builtins");
-            py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
 #elif PYTHON2
             IntPtr mod = Runtime.PyDict_GetItemString(dict, "__builtin__");
-            py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
 #endif
+            py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
             Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
             Runtime.XDecref(hook.ptr);
@@ -58,13 +57,12 @@ namespace Python.Runtime
             clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
 
             Runtime.PyDict_Update(mod_dict, clr_dict);
-            Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
-            Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
 #elif PYTHON2
             Runtime.XIncref(root.pyHandle); // we are using the module two times
-            Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
-            Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
+            py_clr_module = root.pyHandle;  // Alias handle for PY2/PY3
 #endif
+            Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
+            Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
         }
 
 
@@ -75,11 +73,7 @@ namespace Python.Runtime
         {
             if (0 != Runtime.Py_IsInitialized())
             {
-#if PYTHON3
                 Runtime.XDecref(py_clr_module);
-#elif PYTHON2
-                Runtime.XDecref(root.pyHandle);
-#endif
                 Runtime.XDecref(root.pyHandle);
                 Runtime.XDecref(py_import);
             }
@@ -134,13 +128,9 @@ namespace Python.Runtime
                     }
                 }
             }
-
+#endif
             Runtime.XIncref(py_clr_module);
             return py_clr_module;
-#elif PYTHON2
-            Runtime.XIncref(root.pyHandle);
-            return root.pyHandle;
-#endif
         }
 
         /// <summary>
