@@ -16,8 +16,7 @@ namespace Python.Runtime
 
         internal InterfaceObject(Type tp) : base(tp)
         {
-            CoClassAttribute coclass = (CoClassAttribute)
-                Attribute.GetCustomAttribute(tp, cc_attr);
+            CoClassAttribute coclass = (CoClassAttribute)Attribute.GetCustomAttribute(tp, cc_attr);
             if (coclass != null)
             {
                 ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);
@@ -63,18 +62,14 @@ namespace Python.Runtime
 
                 if (obj == null || !type.IsInstanceOfType(obj))
                 {
-                    Exceptions.SetError(Exceptions.TypeError,
-                        "CoClass default constructor failed"
-                        );
+                    Exceptions.SetError(Exceptions.TypeError, "CoClass default constructor failed");
                     return IntPtr.Zero;
                 }
             }
 
             else
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "interface takes exactly one argument"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "interface takes exactly one argument");
                 return IntPtr.Zero;
             }
 

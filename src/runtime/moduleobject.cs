@@ -159,8 +159,7 @@ namespace Python.Runtime
 
             if (guess)
             {
-                string gname = GenericUtil.GenericNameForBaseName(
-                    _namespace, name);
+                string gname = GenericUtil.GenericNameForBaseName(_namespace, name);
                 if (gname != null)
                 {
                     ManagedType o = GetAttribute(gname, false);

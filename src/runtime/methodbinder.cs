@@ -198,23 +198,38 @@ namespace Python.Runtime
         internal static int ArgPrecedence(Type t)
         {
             Type objectType = typeof(Object);
-            if (t == objectType) return 3000;
+            if (t == objectType)
+                return 3000;
 
             TypeCode tc = Type.GetTypeCode(t);
-            if (tc == TypeCode.Object) return 1;
-            if (tc == TypeCode.UInt64) return 10;
-            if (tc == TypeCode.UInt32) return 11;
-            if (tc == TypeCode.UInt16) return 12;
-            if (tc == TypeCode.Int64) return 13;
-            if (tc == TypeCode.Int32) return 14;
-            if (tc == TypeCode.Int16) return 15;
-            if (tc == TypeCode.Char) return 16;
-            if (tc == TypeCode.SByte) return 17;
-            if (tc == TypeCode.Byte) return 18;
-            if (tc == TypeCode.Single) return 20;
-            if (tc == TypeCode.Double) return 21;
-            if (tc == TypeCode.String) return 30;
-            if (tc == TypeCode.Boolean) return 40;
+            if (tc == TypeCode.Object)
+                return 1;
+            if (tc == TypeCode.UInt64)
+                return 10;
+            if (tc == TypeCode.UInt32)
+                return 11;
+            if (tc == TypeCode.UInt16)
+                return 12;
+            if (tc == TypeCode.Int64)
+                return 13;
+            if (tc == TypeCode.Int32)
+                return 14;
+            if (tc == TypeCode.Int16)
+                return 15;
+            if (tc == TypeCode.Char)
+                return 16;
+            if (tc == TypeCode.SByte)
+                return 17;
+            if (tc == TypeCode.Byte)
+                return 18;
+            if (tc == TypeCode.Single)
+                return 20;
+            if (tc == TypeCode.Double)
+                return 21;
+            if (tc == TypeCode.String)
+                return 30;
+            if (tc == TypeCode.Boolean)
+                return 40;
 
             if (t.IsArray)
             {
@@ -238,14 +253,12 @@ namespace Python.Runtime
             return this.Bind(inst, args, kw, null, null);
         }
 
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw,
-            MethodBase info)
+        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
             return this.Bind(inst, args, kw, info, null);
         }
 
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw,
-            MethodBase info, MethodInfo[] methodinfo)
+        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
@@ -255,9 +268,7 @@ namespace Python.Runtime
             ArrayList defaultArgList = null;
             if (info != null)
             {
-                _methods = (MethodBase[])Array.CreateInstance(
-                    typeof(MethodBase), 1
-                    );
+                _methods = (MethodBase[])Array.CreateInstance(typeof(MethodBase), 1);
                 _methods.SetValue(info, 0);
             }
             else
@@ -461,14 +472,12 @@ namespace Python.Runtime
             return this.Invoke(inst, args, kw, null, null);
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw,
-            MethodBase info)
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
             return this.Invoke(inst, args, kw, info, null);
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw,
-            MethodBase info, MethodInfo[] methodinfo)
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             Binding binding = this.Bind(inst, args, kw, info, methodinfo);
             Object result;
@@ -476,9 +485,7 @@ namespace Python.Runtime
 
             if (binding == null)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "No method matches given arguments"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "No method matches given arguments");
                 return IntPtr.Zero;
             }
 
@@ -489,11 +496,7 @@ namespace Python.Runtime
 
             try
             {
-                result = binding.info.Invoke(binding.inst,
-                    BindingFlags.Default,
-                    null,
-                    binding.args,
-                    null);
+                result = binding.info.Invoke(binding.inst, BindingFlags.Default, null, binding.args, null);
             }
             catch (Exception e)
             {
@@ -574,8 +577,10 @@ namespace Python.Runtime
         {
             int p1 = MethodBinder.GetPrecedence((MethodBase)m1);
             int p2 = MethodBinder.GetPrecedence((MethodBase)m2);
-            if (p1 < p2) return -1;
-            if (p1 > p2) return 1;
+            if (p1 < p2)
+                return -1;
+            if (p1 > p2)
+                return 1;
             return 0;
         }
     }
@@ -594,8 +599,7 @@ namespace Python.Runtime
         public Object inst;
         public int outs;
 
-        internal Binding(MethodBase info, Object inst, Object[] args,
-            int outs)
+        internal Binding(MethodBase info, Object inst, Object[] args, int outs)
         {
             this.info = info;
             this.inst = inst;

@@ -268,10 +268,10 @@ namespace Python.Runtime
         internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, int flags, IntPtr doc)
         {
             Marshal.WriteIntPtr(mdef, name);
-            Marshal.WriteIntPtr(mdef, (1*IntPtr.Size), func);
-            Marshal.WriteInt32(mdef, (2*IntPtr.Size), flags);
-            Marshal.WriteIntPtr(mdef, (3*IntPtr.Size), doc);
-            return mdef + 4*IntPtr.Size;
+            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), func);
+            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), flags);
+            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), doc);
+            return mdef + 4 * IntPtr.Size;
         }
 
         internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001,
@@ -325,19 +325,19 @@ namespace Python.Runtime
 
             // We need space for 3 PyMethodDef structs, each of them
             // 4 int-ptrs in size.
-            IntPtr mdef = Runtime.PyMem_Malloc(3*(4*IntPtr.Size));
+            IntPtr mdef = Runtime.PyMem_Malloc(3 * (4 * IntPtr.Size));
             IntPtr mdefStart = mdef;
             mdef = WriteMethodDef(
                 mdef,
                 "__instancecheck__",
                 Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc")
-                );
+            );
 
             mdef = WriteMethodDef(
                 mdef,
                 "__subclasscheck__",
                 Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
-                );
+            );
 
             mdef = WriteMethodDefSentinel(mdef);
 
@@ -355,8 +355,7 @@ namespace Python.Runtime
         }
 
 
-        internal static IntPtr BasicSubType(string name, IntPtr base_,
-            Type impl)
+        internal static IntPtr BasicSubType(string name, IntPtr base_, Type impl)
         {
             // Utility to create a subtype of a std Python type, but with
             // a managed type able to override implementation
@@ -408,9 +407,9 @@ namespace Python.Runtime
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
 #if PYTHON3
-    // For python3 we leak two objects. One for the ascii representation
-    // required for tp_name, and another for the unicode representation
-    // for ht_name.
+            // For python3 we leak two objects. One for the ASCII representation
+            // required for tp_name, and another for the Unicode representation
+            // for ht_name.
             IntPtr temp = Runtime.PyBytes_FromString(name);
             IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
             temp = Runtime.PyUnicode_FromString(name);
@@ -438,12 +437,10 @@ namespace Python.Runtime
 
 #if PYTHON3
             temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
 #elif PYTHON2
             temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
 #endif
-
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
             return type;
         }
 
@@ -471,7 +468,7 @@ namespace Python.Runtime
                           name.StartsWith("sq_") ||
                           name.StartsWith("mp_") ||
                           name.StartsWith("bf_")
-                        ))
+                    ))
                     {
                         continue;
                     }

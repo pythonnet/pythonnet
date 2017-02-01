@@ -117,7 +117,8 @@ namespace Python.Runtime
                     {
                         Type[] genericTp = self.info.GetGenericArguments();
                         MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
-                        if (betterMatch != null) self.info = betterMatch;
+                        if (betterMatch != null)
+                            self.info = betterMatch;
                     }
                 }
             }

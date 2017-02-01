@@ -68,7 +68,8 @@ namespace Python.Runtime
         // Standard comparison implementation for instances of reflected types.
         //====================================================================
 
-        public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
+        public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
+        {
             CLRObject co1;
             CLRObject co2;
             switch (op)
@@ -116,7 +117,7 @@ namespace Python.Runtime
                 case Runtime.Py_GE:
                     co1 = GetManagedObject(ob) as CLRObject;
                     co2 = GetManagedObject(other) as CLRObject;
-                    if(co1 == null || co2 == null)
+                    if (co1 == null || co2 == null)
                         return Exceptions.RaiseTypeError("Cannot get managed object");
                     var co1Comp = co1.inst as IComparable;
                     if (co1Comp == null)
@@ -150,10 +151,12 @@ namespace Python.Runtime
                         }
                         else
                         {
-                            if (op == Runtime.Py_GE || op == Runtime.Py_GT) {
+                            if (op == Runtime.Py_GE || op == Runtime.Py_GT)
+                            {
                                 pyCmp = Runtime.PyTrue;
                             }
-                            else {
+                            else
+                            {
                                 pyCmp = Runtime.PyFalse;
                             }
                         }

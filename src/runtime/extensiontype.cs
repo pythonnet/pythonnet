@@ -21,11 +21,12 @@ namespace Python.Runtime
 
             IntPtr tp = TypeManager.GetTypeHandle(this.GetType());
 
-//              int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
-//              if (rc > 1050) {
-//              DebugUtil.Print("tp is: ", tp);
-//              DebugUtil.DumpType(tp);
-//              }
+            //int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
+            //if (rc > 1050)
+            //{
+            //    DebugUtil.Print("tp is: ", tp);
+            //    DebugUtil.DumpType(tp);
+            //}
 
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 

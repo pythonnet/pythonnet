@@ -80,9 +80,7 @@ namespace Python.Runtime
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    Exceptions.SetError(Exceptions.IndexError,
-                        "array index out of range"
-                        );
+                    Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                     return IntPtr.Zero;
                 }
 
@@ -93,9 +91,7 @@ namespace Python.Runtime
 
             if (!Runtime.PyTuple_Check(idx))
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "invalid index value"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "invalid index value");
                 return IntPtr.Zero;
             }
 
@@ -127,9 +123,7 @@ namespace Python.Runtime
             }
             catch (IndexOutOfRangeException)
             {
-                Exceptions.SetError(Exceptions.IndexError,
-                    "array index out of range"
-                    );
+                Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                 return IntPtr.Zero;
             }
 
@@ -182,9 +176,7 @@ namespace Python.Runtime
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    Exceptions.SetError(Exceptions.IndexError,
-                        "array index out of range"
-                        );
+                    Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                     return -1;
                 }
 
@@ -226,9 +218,7 @@ namespace Python.Runtime
             }
             catch (IndexOutOfRangeException)
             {
-                Exceptions.SetError(Exceptions.IndexError,
-                    "array index out of range"
-                    );
+                Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                 return -1;
             }
 

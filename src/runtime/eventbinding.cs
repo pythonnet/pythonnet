@@ -29,9 +29,7 @@ namespace Python.Runtime
 
             if (Runtime.PyCallable_Check(arg) < 1)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "event handlers must be callable"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "event handlers must be callable");
                 return IntPtr.Zero;
             }
 
@@ -55,9 +53,7 @@ namespace Python.Runtime
 
             if (Runtime.PyCallable_Check(arg) < 1)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "invalid event handler"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "invalid event handler");
                 return IntPtr.Zero;
             }
 

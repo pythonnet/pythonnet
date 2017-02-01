@@ -41,9 +41,7 @@ namespace Python.Runtime
                 if (!info.IsStatic)
                 {
                     Exceptions.SetError(Exceptions.TypeError,
-                        "instance attribute must be accessed " +
-                        "through a class instance"
-                        );
+                        "instance attribute must be accessed " + "through a class instance");
                     return IntPtr.Zero;
                 }
                 try
@@ -89,9 +87,7 @@ namespace Python.Runtime
 
             if (val == IntPtr.Zero)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "cannot delete field"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "cannot delete field");
                 return -1;
             }
 
@@ -99,9 +95,7 @@ namespace Python.Runtime
 
             if (info.IsLiteral || info.IsInitOnly)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "field is read-only"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "field is read-only");
                 return -1;
             }
 
@@ -112,15 +106,12 @@ namespace Python.Runtime
                 if (!is_static)
                 {
                     Exceptions.SetError(Exceptions.TypeError,
-                        "instance attribute must be set " +
-                        "through a class instance"
-                        );
+                        "instance attribute must be set " + "through a class instance");
                     return -1;
                 }
             }
 
-            if (!Converter.ToManaged(val, info.FieldType, out newval,
-                true))
+            if (!Converter.ToManaged(val, info.FieldType, out newval, true))
             {
                 return -1;
             }

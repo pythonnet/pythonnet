@@ -76,7 +76,8 @@ namespace Python.Runtime
 
         internal static void Shutdown()
         {
-            if (0 != Runtime.Py_IsInitialized()) {
+            if (0 != Runtime.Py_IsInitialized())
+            {
 #if PYTHON3
                 Runtime.XDecref(py_clr_module);
 #elif PYTHON2
@@ -94,23 +95,27 @@ namespace Python.Runtime
         {
             root.InitializePreload();
 #if PYTHON3
-    // update the module dictionary with the contents of the root dictionary
+            // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);
             IntPtr clr_dict = Runtime._PyObject_GetDictPtr(root.pyHandle); // PyObject**
             clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
             Runtime.PyDict_Update(py_mod_dict, clr_dict);
 
-            // find any items from the fromlist and get them from the root if they're not
-            // aleady in the module dictionary
-            if (fromList != null && fromList != IntPtr.Zero) {
+            // find any items from the from list and get them from the root if they're not
+            // already in the module dictionary
+            if (fromList != null && fromList != IntPtr.Zero)
+            {
                 if (Runtime.PyTuple_Check(fromList.GetValueOrDefault()))
                 {
                     Runtime.XIncref(py_mod_dict);
-                    using(PyDict mod_dict = new PyDict(py_mod_dict)) {
+                    using (PyDict mod_dict = new PyDict(py_mod_dict))
+                    {
                         Runtime.XIncref(fromList.GetValueOrDefault());
-                        using (PyTuple from = new PyTuple(fromList.GetValueOrDefault())) {
-                            foreach (PyObject item in from) {
+                        using (PyTuple from = new PyTuple(fromList.GetValueOrDefault()))
+                        {
+                            foreach (PyObject item in from)
+                            {
                                 if (mod_dict.HasKey(item))
                                     continue;
 
@@ -123,7 +128,8 @@ namespace Python.Runtime
                                     continue;
 
                                 Runtime.XIncref(attr.pyHandle);
-                                using (PyObject obj = new PyObject(attr.pyHandle)) {
+                                using (PyObject obj = new PyObject(attr.pyHandle))
+                                {
                                     mod_dict.SetItem(s, obj);
                                 }
                             }
@@ -153,9 +159,7 @@ namespace Python.Runtime
             int num_args = Runtime.PyTuple_Size(args);
             if (num_args < 1)
             {
-                return Exceptions.RaiseTypeError(
-                    "__import__() takes at least 1 argument (0 given)"
-                    );
+                return Exceptions.RaiseTypeError("__import__() takes at least 1 argument (0 given)");
             }
 
             // borrowed reference
@@ -200,8 +204,7 @@ namespace Python.Runtime
             }
             if (mod_name == "CLR")
             {
-                Exceptions.deprecation("The CLR module is deprecated. " +
-                                       "Please use 'clr'.");
+                Exceptions.deprecation("The CLR module is deprecated. " + "Please use 'clr'.");
                 IntPtr clr_module = GetCLRModule(fromList);
                 if (clr_module != IntPtr.Zero)
                 {
@@ -337,16 +340,12 @@ namespace Python.Runtime
                 }
 
                 // Add the module to sys.modules
-                Runtime.PyDict_SetItemString(modules,
-                    tail.moduleName,
-                    tail.pyHandle);
+                Runtime.PyDict_SetItemString(modules, tail.moduleName, tail.pyHandle);
 
                 // If imported from CLR add CLR.<modulename> to sys.modules as well
                 if (clr_prefix != null)
                 {
-                    Runtime.PyDict_SetItemString(modules,
-                        clr_prefix + tail.moduleName,
-                        tail.pyHandle);
+                    Runtime.PyDict_SetItemString(modules, clr_prefix + tail.moduleName, tail.pyHandle);
                 }
             }
 

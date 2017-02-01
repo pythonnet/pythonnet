@@ -51,9 +51,7 @@ namespace Python.Runtime
             ManagedType result = GetManagedObject(ob);
             if (result == null)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "invalid argument, expected CLR type"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "invalid argument, expected CLR type");
             }
             return result;
         }

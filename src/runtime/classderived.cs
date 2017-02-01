@@ -33,8 +33,7 @@ namespace Python.Runtime
             moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();
         }
 
-        internal ClassDerivedObject(Type tp)
-            : base(tp)
+        internal ClassDerivedObject(Type tp): base(tp)
         {
         }
 

@@ -108,12 +108,7 @@ namespace Python.Runtime
                 signature[i] = pi[i].ParameterType;
             }
 
-            MethodBuilder mb = tb.DefineMethod(
-                "Invoke",
-                MethodAttributes.Public,
-                method.ReturnType,
-                signature
-                );
+            MethodBuilder mb = tb.DefineMethod("Invoke", MethodAttributes.Public, method.ReturnType, signature);
 
             ConstructorInfo ctor = listtype.GetConstructor(Type.EmptyTypes);
             MethodInfo dispatch = basetype.GetMethod("Dispatch");
@@ -271,8 +266,7 @@ namespace Python.Runtime
             Object result = null;
             if (!Converter.ToManaged(op, rtype, out result, false))
             {
-                string s = "could not convert Python result to " +
-                           rtype.ToString();
+                string s = "could not convert Python result to " + rtype.ToString();
                 Runtime.XDecref(op);
                 throw new ConversionException(s);
             }

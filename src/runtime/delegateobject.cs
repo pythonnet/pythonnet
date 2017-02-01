@@ -103,7 +103,8 @@ namespace Python.Runtime
         // Implements __cmp__ for reflected delegate types.
         //====================================================================
 #if PYTHON3
-        public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op) {
+        public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
+        {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
                 Runtime.XIncref(Runtime.PyNotImplemented);

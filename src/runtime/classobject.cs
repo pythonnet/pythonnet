@@ -71,9 +71,7 @@ namespace Python.Runtime
             {
                 if (Runtime.PyTuple_Size(args) != 1)
                 {
-                    Exceptions.SetError(Exceptions.TypeError,
-                        "no constructors match given arguments"
-                        );
+                    Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
                     return IntPtr.Zero;
                 }
 
@@ -90,17 +88,13 @@ namespace Python.Runtime
 
             if (type.IsAbstract)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "cannot instantiate abstract class"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "cannot instantiate abstract class");
                 return IntPtr.Zero;
             }
 
             if (type.IsEnum)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "cannot instantiate enumeration"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "cannot instantiate enumeration");
                 return IntPtr.Zero;
             }
 
@@ -178,9 +172,7 @@ namespace Python.Runtime
 
             if (cls.indexer == null || !cls.indexer.CanGet)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "unindexable object"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "unindexable object");
                 return IntPtr.Zero;
             }
 
@@ -228,9 +220,7 @@ namespace Python.Runtime
 
             if (cls.indexer == null || !cls.indexer.CanSet)
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "object doesn't support item assignment"
-                    );
+                Exceptions.SetError(Exceptions.TypeError, "object doesn't support item assignment");
                 return -1;
             }
 
@@ -314,8 +304,7 @@ namespace Python.Runtime
 
             if (cb.type != typeof(System.Delegate))
             {
-                Exceptions.SetError(Exceptions.TypeError,
-                    "object is not callable");
+                Exceptions.SetError(Exceptions.TypeError, "object is not callable");
                 return IntPtr.Zero;
             }
 

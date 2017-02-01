@@ -35,8 +35,7 @@ namespace Python.Runtime
                 {
                     inst = GetManagedObject(ob);
                 }
-                return (IntPtr)mi.Invoke(inst, BindingFlags.Default, null, arglist,
-                    null);
+                return (IntPtr)mi.Invoke(inst, BindingFlags.Default, null, arglist, null);
             }
             catch (Exception e)
             {

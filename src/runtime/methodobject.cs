@@ -53,8 +53,7 @@ namespace Python.Runtime
             return this.Invoke(inst, args, kw, null);
         }
 
-        public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw,
-            MethodBase info)
+        public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw, MethodBase info)
         {
             return binder.Invoke(target, args, kw, info, this.info);
         }

@@ -217,11 +217,10 @@ namespace Python.Runtime
         //====================================================================
 #if PYTHON3
         public static IntPtr InitExt()
-        {
 #elif PYTHON2
         public static void InitExt()
-        {
 #endif
+        {
             try
             {
                 Initialize();

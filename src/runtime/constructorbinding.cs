@@ -169,8 +169,7 @@ namespace Python.Runtime
         ConstructorInfo ctorInfo;
         IntPtr repr;
 
-        public BoundContructor(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder, ConstructorInfo ci)
-            : base()
+        public BoundContructor(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder, ConstructorInfo ci) : base()
         {
             this.type = type;
             Runtime.XIncref(pyTypeHndl);

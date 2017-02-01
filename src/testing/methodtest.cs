@@ -101,8 +101,7 @@ namespace Python.Test
             return args;
         }
 
-        public static int[] TestTwoArgWithParams(string s, string x,
-            params int[] args)
+        public static int[] TestTwoArgWithParams(string s, string x, params int[] args)
         {
             return args;
         }
@@ -383,218 +382,182 @@ namespace Python.Test
             return v;
         }
 
-        public static GenericWrapper<bool> Overloaded(
-            GenericWrapper<bool> v)
+        public static GenericWrapper<bool> Overloaded(GenericWrapper<bool> v)
         {
             return v;
         }
 
-        public static GenericWrapper<byte> Overloaded(
-            GenericWrapper<byte> v)
+        public static GenericWrapper<byte> Overloaded(GenericWrapper<byte> v)
         {
             return v;
         }
 
-        public static GenericWrapper<sbyte> Overloaded(
-            GenericWrapper<sbyte> v)
+        public static GenericWrapper<sbyte> Overloaded(GenericWrapper<sbyte> v)
         {
             return v;
         }
 
-        public static GenericWrapper<char> Overloaded(
-            GenericWrapper<char> v)
+        public static GenericWrapper<char> Overloaded(GenericWrapper<char> v)
         {
             return v;
         }
 
-        public static GenericWrapper<short> Overloaded(
-            GenericWrapper<short> v)
+        public static GenericWrapper<short> Overloaded(GenericWrapper<short> v)
         {
             return v;
         }
 
-        public static GenericWrapper<int> Overloaded(
-            GenericWrapper<int> v)
+        public static GenericWrapper<int> Overloaded(GenericWrapper<int> v)
         {
             return v;
         }
 
-        public static GenericWrapper<long> Overloaded(
-            GenericWrapper<long> v)
+        public static GenericWrapper<long> Overloaded(GenericWrapper<long> v)
         {
             return v;
         }
 
-        public static GenericWrapper<ushort> Overloaded(
-            GenericWrapper<ushort> v)
+        public static GenericWrapper<ushort> Overloaded(GenericWrapper<ushort> v)
         {
             return v;
         }
 
-        public static GenericWrapper<uint> Overloaded(
-            GenericWrapper<uint> v)
+        public static GenericWrapper<uint> Overloaded(GenericWrapper<uint> v)
         {
             return v;
         }
 
-        public static GenericWrapper<ulong> Overloaded(
-            GenericWrapper<ulong> v)
+        public static GenericWrapper<ulong> Overloaded(GenericWrapper<ulong> v)
         {
             return v;
         }
 
-        public static GenericWrapper<float> Overloaded(
-            GenericWrapper<float> v)
+        public static GenericWrapper<float> Overloaded(GenericWrapper<float> v)
         {
             return v;
         }
 
-        public static GenericWrapper<double> Overloaded(
-            GenericWrapper<double> v)
+        public static GenericWrapper<double> Overloaded(GenericWrapper<double> v)
         {
             return v;
         }
 
-        public static GenericWrapper<decimal> Overloaded(
-            GenericWrapper<decimal> v)
+        public static GenericWrapper<decimal> Overloaded(GenericWrapper<decimal> v)
         {
             return v;
         }
 
-        public static GenericWrapper<string> Overloaded(
-            GenericWrapper<string> v)
+        public static GenericWrapper<string> Overloaded(GenericWrapper<string> v)
         {
             return v;
         }
 
-        public static GenericWrapper<ShortEnum> Overloaded(
-            GenericWrapper<ShortEnum> v)
+        public static GenericWrapper<ShortEnum> Overloaded(GenericWrapper<ShortEnum> v)
         {
             return v;
         }
 
-        public static GenericWrapper<object> Overloaded(
-            GenericWrapper<object> v)
+        public static GenericWrapper<object> Overloaded(GenericWrapper<object> v)
         {
             return v;
         }
 
-        public static GenericWrapper<InterfaceTest> Overloaded(
-            GenericWrapper<InterfaceTest> v)
+        public static GenericWrapper<InterfaceTest> Overloaded(GenericWrapper<InterfaceTest> v)
         {
             return v;
         }
 
-        public static GenericWrapper<ISayHello1> Overloaded(
-            GenericWrapper<ISayHello1> v)
+        public static GenericWrapper<ISayHello1> Overloaded(GenericWrapper<ISayHello1> v)
         {
             return v;
         }
 
-        public static GenericWrapper<bool>[] Overloaded(
-            GenericWrapper<bool>[] v)
+        public static GenericWrapper<bool>[] Overloaded(GenericWrapper<bool>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<byte>[] Overloaded(
-            GenericWrapper<byte>[] v)
+        public static GenericWrapper<byte>[] Overloaded(GenericWrapper<byte>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<sbyte>[] Overloaded(
-            GenericWrapper<sbyte>[] v)
+        public static GenericWrapper<sbyte>[] Overloaded(GenericWrapper<sbyte>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<char>[] Overloaded(
-            GenericWrapper<char>[] v)
+        public static GenericWrapper<char>[] Overloaded(GenericWrapper<char>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<short>[] Overloaded(
-            GenericWrapper<short>[] v)
+        public static GenericWrapper<short>[] Overloaded(GenericWrapper<short>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<int>[] Overloaded(
-            GenericWrapper<int>[] v)
+        public static GenericWrapper<int>[] Overloaded(GenericWrapper<int>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<long>[] Overloaded(
-            GenericWrapper<long>[] v)
+        public static GenericWrapper<long>[] Overloaded(GenericWrapper<long>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<ushort>[] Overloaded(
-            GenericWrapper<ushort>[] v)
+        public static GenericWrapper<ushort>[] Overloaded(GenericWrapper<ushort>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<uint>[] Overloaded(
-            GenericWrapper<uint>[] v)
+        public static GenericWrapper<uint>[] Overloaded(GenericWrapper<uint>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<ulong>[] Overloaded(
-            GenericWrapper<ulong>[] v)
+        public static GenericWrapper<ulong>[] Overloaded(GenericWrapper<ulong>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<float>[] Overloaded(
-            GenericWrapper<float>[] v)
+        public static GenericWrapper<float>[] Overloaded(GenericWrapper<float>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<double>[] Overloaded(
-            GenericWrapper<double>[] v)
+        public static GenericWrapper<double>[] Overloaded(GenericWrapper<double>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<decimal>[] Overloaded(
-            GenericWrapper<decimal>[] v)
+        public static GenericWrapper<decimal>[] Overloaded(GenericWrapper<decimal>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<string>[] Overloaded(
-            GenericWrapper<string>[] v)
+        public static GenericWrapper<string>[] Overloaded(GenericWrapper<string>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<ShortEnum>[] Overloaded(
-            GenericWrapper<ShortEnum>[] v)
+        public static GenericWrapper<ShortEnum>[] Overloaded(GenericWrapper<ShortEnum>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<object>[] Overloaded(
-            GenericWrapper<object>[] v)
+        public static GenericWrapper<object>[] Overloaded(GenericWrapper<object>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<InterfaceTest>[] Overloaded(
-            GenericWrapper<InterfaceTest>[] v)
+        public static GenericWrapper<InterfaceTest>[] Overloaded(GenericWrapper<InterfaceTest>[] v)
         {
             return v;
         }
 
-        public static GenericWrapper<ISayHello1>[] Overloaded(
-            GenericWrapper<ISayHello1>[] v)
+        public static GenericWrapper<ISayHello1>[] Overloaded(GenericWrapper<ISayHello1>[] v)
         {
             return v;
         }

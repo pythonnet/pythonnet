@@ -49,8 +49,7 @@ namespace Python.Runtime
         /// Binding binding = this.Bind(inst, args, kw, info);
         /// to take advantage of Bind()'s ability to use a single MethodBase (CI or MI).
         /// </remarks>
-        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw,
-            MethodBase info)
+        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
             Object result;
 
@@ -96,9 +95,7 @@ namespace Python.Runtime
 
                 if (binding == null)
                 {
-                    Exceptions.SetError(Exceptions.TypeError,
-                        "no constructor matches given arguments"
-                        );
+                    Exceptions.SetError(Exceptions.TypeError, "no constructor matches given arguments");
                     return null;
                 }
             }

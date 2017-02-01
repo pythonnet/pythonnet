@@ -51,9 +51,7 @@ namespace Python.Runtime
 
             if (Runtime.PyTuple_Size(bases) != 1)
             {
-                return Exceptions.RaiseTypeError(
-                    "cannot use multiple inheritance with managed classes"
-                    );
+                return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
             }
 
             IntPtr base_type = Runtime.PyTuple_GetItem(bases, 0);
@@ -72,18 +70,14 @@ namespace Python.Runtime
             {
                 if (!cb.CanSubclass())
                 {
-                    return Exceptions.RaiseTypeError(
-                        "delegates, enums and array types cannot be subclassed"
-                        );
+                    return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
                 }
             }
 
             IntPtr slots = Runtime.PyDict_GetItemString(dict, "__slots__");
             if (slots != IntPtr.Zero)
             {
-                return Exceptions.RaiseTypeError(
-                    "subclasses of managed classes do not support __slots__"
-                    );
+                return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
             }
 
             // If __assembly__ or __namespace__ are in the class dictionary then create
@@ -101,8 +95,7 @@ namespace Python.Runtime
             }
 
             // otherwise just create a basic type without reflecting back into the managed side.
-            IntPtr func = Marshal.ReadIntPtr(Runtime.PyTypeType,
-                TypeOffset.tp_new);
+            IntPtr func = Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_new);
             IntPtr type = NativeCall.Call_3(func, tp, args, kw);
             if (type == IntPtr.Zero)
             {
@@ -227,8 +220,7 @@ namespace Python.Runtime
                     }
                     else
                     {
-                        Exceptions.SetError(Exceptions.AttributeError,
-                            "attribute is read-only");
+                        Exceptions.SetError(Exceptions.AttributeError, "attribute is read-only");
                         return -1;
                     }
                 }

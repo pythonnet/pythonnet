@@ -27,8 +27,7 @@ namespace Python.Runtime
         /// An ArgumentException will be thrown if the given object is not
         /// a Python string object.
         /// </remarks>
-        public PyAnsiString(PyObject o)
-            : base()
+        public PyAnsiString(PyObject o) : base()
         {
             if (!IsStringType(o))
             {
@@ -46,8 +45,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-        public PyAnsiString(string s)
-            : base()
+        public PyAnsiString(string s) : base()
         {
             obj = Runtime.PyString_FromStringAndSize(s, s.Length);
             if (obj == IntPtr.Zero)

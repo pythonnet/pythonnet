@@ -81,16 +81,16 @@ namespace Python.Runtime
             _ob_prev = 1 * size;
             n = 2;
 #endif
-            ob_refcnt = (n + 0)*size;
-            ob_type = (n + 1)*size;
-            ob_dict = (n + 2)*size;
-            ob_data = (n + 3)*size;
+            ob_refcnt = (n + 0) * size;
+            ob_type = (n + 1) * size;
+            ob_dict = (n + 2) * size;
+            ob_data = (n + 3) * size;
         }
 
         public static int magic(IntPtr ob)
         {
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
                 return ExceptionOffset.ob_data;
             }
@@ -100,7 +100,7 @@ namespace Python.Runtime
         public static int DictOffset(IntPtr ob)
         {
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
                 return ExceptionOffset.ob_dict;
             }
@@ -110,7 +110,7 @@ namespace Python.Runtime
         public static int Size(IntPtr ob)
         {
             if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
             {
                 return ExceptionOffset.Size();
             }
@@ -186,7 +186,7 @@ namespace Python.Runtime
 
         /* The *real* layout of a type object when allocated on the heap */
         //typedef struct _heaptypeobject {
-#if Py_DEBUG  // #ifdef Py_TRACE_REFS
+#if Py_DEBUG // #ifdef Py_TRACE_REFS
 /* _PyObject_HEAD_EXTRA defines pointers to support a doubly-linked list of all live heap objects. */
         public static int _ob_next = 0;
         public static int _ob_prev = 0;
@@ -196,7 +196,7 @@ namespace Python.Runtime
         public static int ob_refcnt = 0;
         public static int ob_type = 0;
         // }
-        public static int ob_size = 0;      /* Number of items in _VAR_iable part */
+        public static int ob_size = 0; /* Number of items in _VAR_iable part */
         // }
         public static int ob_shash = 0;
         public static int ob_sval = 0; /* start of data */
@@ -223,7 +223,8 @@ namespace Python.Runtime
             }
         }
 
-        public static IntPtr AllocModuleDef(string modulename) {
+        public static IntPtr AllocModuleDef(string modulename)
+        {
             byte[] ascii = Encoding.ASCII.GetBytes(modulename);
             int size = name + ascii.Length + 1;
             IntPtr ptr = Marshal.AllocHGlobal(size);
@@ -235,7 +236,8 @@ namespace Python.Runtime
             return ptr;
         }
 
-        public static void FreeModuleDef(IntPtr ptr) {
+        public static void FreeModuleDef(IntPtr ptr)
+        {
             Marshal.FreeHGlobal(ptr);
         }
 
@@ -268,8 +270,7 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeFlags
     {
-#if PYTHON2
-        // these flags were removed in Python 3
+#if PYTHON2 // these flags were removed in Python 3
         public static int HaveGetCharBuffer = (1 << 0);
         public static int HaveSequenceIn = (1 << 1);
         public static int GC = 0;
@@ -307,8 +308,7 @@ namespace Python.Runtime
         public static int BaseExceptionSubclass = (1 << 30);
         public static int TypeSubclass = (1 << 31);
 
-#if PYTHON2
-        // Default flags for Python 2
+#if PYTHON2 // Default flags for Python 2
         public static int Default = (
             HaveGetCharBuffer |
             HaveSequenceIn |
@@ -318,13 +318,12 @@ namespace Python.Runtime
             HaveIter |
             HaveClass |
             HaveStacklessExtension |
-                HaveIndex |
-                0);
-#elif PYTHON3
-        // Default flags for Python 3
+            HaveIndex |
+            0);
+#elif PYTHON3 // Default flags for Python 3
         public static int Default = (
-                            HaveStacklessExtension |
-                            HaveVersionTag);
+            HaveStacklessExtension |
+            HaveVersionTag);
 #endif
     }
 

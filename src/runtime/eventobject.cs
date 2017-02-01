@@ -87,9 +87,7 @@ namespace Python.Runtime
             IntPtr hash = Runtime.PyObject_Hash(handler);
             if (Exceptions.ErrorOccurred() || (reg == null))
             {
-                Exceptions.SetError(Exceptions.ValueError,
-                    "unknown event handler"
-                    );
+                Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
                 return false;
             }
 
@@ -98,9 +96,7 @@ namespace Python.Runtime
 
             if (list == null)
             {
-                Exceptions.SetError(Exceptions.ValueError,
-                    "unknown event handler"
-                    );
+                Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
                 return false;
             }
 
@@ -127,9 +123,7 @@ namespace Python.Runtime
                 return true;
             }
 
-            Exceptions.SetError(Exceptions.ValueError,
-                "unknown event handler"
-                );
+            Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
             return false;
         }
 

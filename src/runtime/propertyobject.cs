@@ -47,9 +47,7 @@ namespace Python.Runtime
                 if (!(getter.IsStatic))
                 {
                     Exceptions.SetError(Exceptions.TypeError,
-                        "instance property must be accessed through " +
-                        "a class instance"
-                        );
+                        "instance property must be accessed through " + "a class instance");
                     return IntPtr.Zero;
                 }
 
@@ -112,8 +110,7 @@ namespace Python.Runtime
             }
 
 
-            if (!Converter.ToManaged(val, self.info.PropertyType, out newval,
-                true))
+            if (!Converter.ToManaged(val, self.info.PropertyType, out newval, true))
             {
                 return -1;
             }
@@ -124,9 +121,7 @@ namespace Python.Runtime
             {
                 if (!(is_static))
                 {
-                    Exceptions.RaiseTypeError(
-                        "instance property must be set on an instance"
-                        );
+                    Exceptions.RaiseTypeError("instance property must be set on an instance");
                     return -1;
                 }
             }

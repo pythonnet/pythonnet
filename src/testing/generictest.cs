@@ -25,13 +25,11 @@ namespace Python.Test
         }
     }
 
-    public class DerivedFromOpenGeneric<V, W> :
-        GenericTypeDefinition<int, V>
+    public class DerivedFromOpenGeneric<V, W> : GenericTypeDefinition<int, V>
     {
         public W value3;
 
-        public DerivedFromOpenGeneric(int arg1, V arg2, W arg3) :
-            base(arg1, arg2)
+        public DerivedFromOpenGeneric(int arg1, V arg2, W arg3) : base(arg1, arg2)
         {
             value3 = arg3;
         }

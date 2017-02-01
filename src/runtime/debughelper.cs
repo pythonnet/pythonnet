@@ -67,7 +67,7 @@ namespace Python.Runtime
 
             for (int i = 0; i < slots.Length; i++)
             {
-                int offset = i*size;
+                int offset = i * size;
                 name = slots[i].Name;
                 op = Marshal.ReadIntPtr(type, offset);
                 Console.WriteLine("  {0}: {1}", name, op);

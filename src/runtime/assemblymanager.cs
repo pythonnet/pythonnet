@@ -39,8 +39,7 @@ namespace Python.Runtime
 
         internal static void Initialize()
         {
-            namespaces = new
-                ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
+            namespaces = new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
             probed = new Dictionary<string, int>(32);
             //generics = new Dictionary<string, Dictionary<string, string>>();
             assemblies = new AssemblyList(16);
@@ -206,9 +205,10 @@ namespace Python.Runtime
             {
                 assembly = Assembly.Load(name);
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                //if (!(e is System.IO.FileNotFoundException)) {
+                //if (!(e is System.IO.FileNotFoundException))
+                //{
                 //    throw;
                 //}
             }
@@ -480,13 +480,15 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Wrapper around List<Assembly> for thread safe access
+        /// Wrapper around List&lt;Assembly&gt; for thread safe access
         /// </summary>
-        private class AssemblyList : IEnumerable<Assembly>{
+        private class AssemblyList : IEnumerable<Assembly>
+        {
             private readonly List<Assembly> _list;
             private readonly ReaderWriterLockSlim _lock;
 
-            public AssemblyList(int capacity) {
+            public AssemblyList(int capacity)
+            {
                 _list = new List<Assembly>(capacity);
                 _lock = new ReaderWriterLockSlim();
             }
@@ -496,16 +498,19 @@ namespace Python.Runtime
                 get
                 {
                     _lock.EnterReadLock();
-                    try {
+                    try
+                    {
                         return _list.Count;
                     }
-                    finally {
+                    finally
+                    {
                         _lock.ExitReadLock();
                     }
                 }
             }
 
-            public void Add(Assembly assembly) {
+            public void Add(Assembly assembly)
+            {
                 _lock.EnterWriteLock();
                 try
                 {
@@ -519,7 +524,7 @@ namespace Python.Runtime
 
             public IEnumerator GetEnumerator()
             {
-                return ((IEnumerable<Assembly>) this).GetEnumerator();
+                return ((IEnumerable<Assembly>)this).GetEnumerator();
             }
 
             /// <summary>
@@ -555,9 +560,15 @@ namespace Python.Runtime
                     _listEnumerator.Reset();
                 }
 
-                public Assembly Current { get { return _listEnumerator.Current; } }
+                public Assembly Current
+                {
+                    get { return _listEnumerator.Current; }
+                }
 
-                object IEnumerator.Current { get { return Current; } }
+                object IEnumerator.Current
+                {
+                    get { return Current; }
+                }
             }
 
             IEnumerator<Assembly> IEnumerable<Assembly>.GetEnumerator()

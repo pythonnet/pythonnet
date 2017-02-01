@@ -6,12 +6,9 @@ using Mono.Unix;
 
 namespace Python.Runtime
 {
-    // The Utf32Marshaler was written Jonathan Pryor and has been placed
-    // in the PUBLIC DOMAIN.
     public class Utf32Marshaler : ICustomMarshaler
     {
-        private static Utf32Marshaler instance = new
-            Utf32Marshaler();
+        private static Utf32Marshaler instance = new Utf32Marshaler();
 
         public static ICustomMarshaler GetInstance(string s)
         {
@@ -37,17 +34,13 @@ namespace Python.Runtime
             string s = obj as string;
             if (s == null)
                 return IntPtr.Zero;
-            return UnixMarshal.StringToHeap(s,
-                Encoding.UTF32);
+            return UnixMarshal.StringToHeap(s, Encoding.UTF32);
         }
 
-        public object MarshalNativeToManaged(IntPtr
-            pNativeData)
+        public object MarshalNativeToManaged(IntPtr pNativeData)
         {
-            return UnixMarshal.PtrToString(pNativeData,
-                Encoding.UTF32);
+            return UnixMarshal.PtrToString(pNativeData, Encoding.UTF32);
         }
     }
 }
-
 #endif

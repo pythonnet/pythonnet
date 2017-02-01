@@ -375,8 +375,7 @@ namespace Python.Test
         {
             get
             {
-                string key = i1.ToString() + i2.ToString() +
-                             i3.GetHashCode().ToString();
+                string key = i1.ToString() + i2.ToString() + i3.GetHashCode().ToString();
                 object value = t[key];
                 if (value != null)
                 {
@@ -386,8 +385,7 @@ namespace Python.Test
             }
             set
             {
-                string key = i1.ToString() + i2.ToString() +
-                             i3.GetHashCode().ToString();
+                string key = i1.ToString() + i2.ToString() + i3.GetHashCode().ToString();
                 t[key] = value;
             }
         }

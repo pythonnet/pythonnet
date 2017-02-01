@@ -10,8 +10,7 @@ using System.Security.Permissions;
 [assembly: AssemblyDefaultAlias("python.exe")]
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
-[assembly: PermissionSet(SecurityAction.RequestMinimum,
-    Name = "FullTrust")]
+[assembly: PermissionSet(SecurityAction.RequestMinimum, Name = "FullTrust")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCopyright("MIT License")]
 [assembly: AssemblyFileVersion("2.0.0.4")]

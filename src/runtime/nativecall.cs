@@ -128,14 +128,12 @@ namespace Python.Runtime
             Impl.Void_Call_1(fp, a1);
         }
 
-        public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2,
-            IntPtr a3)
+        public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
         {
             return Impl.Call_3(fp, a1, a2, a3);
         }
 
-        public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2,
-            IntPtr a3)
+        public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
         {
             return Impl.Int_Call_3(fp, a1, a2, a3);
         }

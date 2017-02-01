@@ -126,7 +126,7 @@ namespace Python.Runtime
                 disposed = true;
             }
         }
-        
+
         public void Dispose()
         {
             Dispose(true);

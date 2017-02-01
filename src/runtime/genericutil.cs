@@ -21,8 +21,7 @@ namespace Python.Runtime
 
         static GenericUtil()
         {
-            mapping = new
-                Dictionary<string, Dictionary<string, List<string>>>();
+            mapping = new Dictionary<string, Dictionary<string, List<string>>>();
         }
 
         //====================================================================
