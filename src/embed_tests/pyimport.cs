@@ -22,7 +22,7 @@ namespace Python.EmbeddingTest
              * using reflection to circumvent the private
              * modifiers placed on most Runtime methods.
              */
-            const string s = @"../../../../tests";
+            const string s = @"../../tests";
 
             string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
 
