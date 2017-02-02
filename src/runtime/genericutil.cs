@@ -30,7 +30,9 @@ namespace Python.Runtime
         internal static void Register(Type t)
         {
             if (null == t.Namespace || null == t.Name)
+            {
                 return;
+            }
 
             Dictionary<string, List<string>> nsmap = null;
             mapping.TryGetValue(t.Namespace, out nsmap);
@@ -66,7 +68,7 @@ namespace Python.Runtime
             {
                 return null;
             }
-            List<string> names = new List<string>();
+            var names = new List<string>();
             foreach (string key in nsmap.Keys)
             {
                 names.Add(key);
@@ -87,7 +89,9 @@ namespace Python.Runtime
             foreach (Type t in GenericsByName(ns, name))
             {
                 if (t.GetGenericArguments().Length == paramCount)
+                {
                     return t;
+                }
             }
             return null;
         }
@@ -119,7 +123,7 @@ namespace Python.Runtime
                 return null;
             }
 
-            List<Type> result = new List<Type>();
+            var result = new List<Type>();
             foreach (string name in names)
             {
                 string qname = ns + "." + name;

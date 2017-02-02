@@ -16,7 +16,7 @@ namespace Python.Runtime
 
         internal InterfaceObject(Type tp) : base(tp)
         {
-            CoClassAttribute coclass = (CoClassAttribute)Attribute.GetCustomAttribute(tp, cc_attr);
+            var coclass = (CoClassAttribute)Attribute.GetCustomAttribute(tp, cc_attr);
             if (coclass != null)
             {
                 ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);
@@ -35,17 +35,17 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
-            InterfaceObject self = (InterfaceObject)GetManagedObject(tp);
+            var self = (InterfaceObject)GetManagedObject(tp);
             int nargs = Runtime.PyTuple_Size(args);
             Type type = self.type;
-            Object obj;
+            object obj;
 
             if (nargs == 1)
             {
                 IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
-                CLRObject co = GetManagedObject(inst) as CLRObject;
+                var co = GetManagedObject(inst) as CLRObject;
 
-                if ((co == null) || (!type.IsInstanceOfType(co.inst)))
+                if (co == null || !type.IsInstanceOfType(co.inst))
                 {
                     string msg = "object does not implement " + type.Name;
                     Exceptions.SetError(Exceptions.TypeError, msg);
@@ -55,7 +55,7 @@ namespace Python.Runtime
                 obj = co.inst;
             }
 
-            else if ((nargs == 0) && (self.ctor != null))
+            else if (nargs == 0 && self.ctor != null)
             {
                 obj = self.ctor.Invoke(null);
 

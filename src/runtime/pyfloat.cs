@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -32,7 +31,7 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python float object.
         /// </remarks>
-        public PyFloat(PyObject o) : base()
+        public PyFloat(PyObject o)
         {
             if (!IsFloatType(o))
             {
@@ -49,7 +48,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python float from a double value.
         /// </remarks>
-        public PyFloat(double value) : base()
+        public PyFloat(double value)
         {
             obj = Runtime.PyFloat_FromDouble(value);
             if (obj == IntPtr.Zero)
@@ -65,9 +64,9 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python float from a string value.
         /// </remarks>
-        public PyFloat(string value) : base()
+        public PyFloat(string value)
         {
-            using (PyString s = new PyString(value))
+            using (var s = new PyString(value))
             {
                 obj = Runtime.PyFloat_FromString(s.obj, IntPtr.Zero);
                 if (obj == IntPtr.Zero)

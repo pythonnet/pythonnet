@@ -16,7 +16,7 @@ namespace Python.Runtime
         {
         }
 
-        protected PySequence() : base()
+        protected PySequence()
         {
         }
 
@@ -115,7 +115,7 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
-            return (r != 0);
+            return r != 0;
         }
 
 

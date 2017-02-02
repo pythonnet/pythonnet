@@ -15,7 +15,7 @@ namespace Python.Runtime
         {
         }
 
-        protected PyNumber() : base()
+        protected PyNumber()
         {
         }
 

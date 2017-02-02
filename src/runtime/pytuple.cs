@@ -31,7 +31,7 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python tuple object.
         /// </remarks>
-        public PyTuple(PyObject o) : base()
+        public PyTuple(PyObject o)
         {
             if (!IsTupleType(o))
             {
@@ -48,7 +48,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new empty PyTuple.
         /// </remarks>
-        public PyTuple() : base()
+        public PyTuple()
         {
             obj = Runtime.PyTuple_New(0);
             if (obj == IntPtr.Zero)
@@ -64,11 +64,11 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyTuple from an array of PyObject instances.
         /// </remarks>
-        public PyTuple(PyObject[] items) : base()
+        public PyTuple(PyObject[] items)
         {
             int count = items.Length;
             obj = Runtime.PyTuple_New(count);
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 IntPtr ptr = items[i].obj;
                 Runtime.XIncref(ptr);

@@ -26,10 +26,10 @@ namespace Python.Runtime
         /// </summary>
         private static Delegate GetTrueDelegate(IntPtr op)
         {
-            CLRObject o = GetManagedObject(op) as CLRObject;
+            var o = GetManagedObject(op) as CLRObject;
             if (o != null)
             {
-                Delegate d = o.inst as Delegate;
+                var d = o.inst as Delegate;
                 return d;
             }
             return null;
@@ -51,11 +51,11 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
-            DelegateObject self = (DelegateObject)GetManagedObject(tp);
+            var self = (DelegateObject)GetManagedObject(tp);
 
             if (Runtime.PyTuple_Size(args) != 1)
             {
-                string message = "class takes exactly one argument";
+                var message = "class takes exactly one argument";
                 return Exceptions.RaiseTypeError(message);
             }
 
@@ -78,15 +78,15 @@ namespace Python.Runtime
         {
             // todo: add fast type check!
             IntPtr pytype = Runtime.PyObject_TYPE(ob);
-            DelegateObject self = (DelegateObject)GetManagedObject(pytype);
-            CLRObject o = GetManagedObject(ob) as CLRObject;
+            var self = (DelegateObject)GetManagedObject(pytype);
+            var o = GetManagedObject(ob) as CLRObject;
 
             if (o == null)
             {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            Delegate d = o.inst as Delegate;
+            var d = o.inst as Delegate;
 
             if (d == null)
             {

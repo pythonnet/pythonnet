@@ -19,7 +19,7 @@ namespace Python.Runtime
         internal Indexer indexer;
         internal Type type;
 
-        internal ClassBase(Type tp) : base()
+        internal ClassBase(Type tp)
         {
             indexer = null;
             type = tp;
@@ -97,10 +97,10 @@ namespace Python.Runtime
                         return pyfalse;
                     }
 
-                    Object o1 = co1.inst;
-                    Object o2 = co2.inst;
+                    object o1 = co1.inst;
+                    object o2 = co2.inst;
 
-                    if (Object.Equals(o1, o2))
+                    if (Equals(o1, o2))
                     {
                         Runtime.XIncref(pytrue);
                         return pytrue;
@@ -121,7 +121,7 @@ namespace Python.Runtime
                         return Exceptions.RaiseTypeError("Cannot convert object of type " + co1.GetType() + " to IComparable");
                     try
                     {
-                        var cmp = co1Comp.CompareTo(co2.inst);
+                        int cmp = co1Comp.CompareTo(co2.inst);
 
                         IntPtr pyCmp;
                         if (cmp < 0)
@@ -177,13 +177,13 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_iter(IntPtr ob)
         {
-            CLRObject co = GetManagedObject(ob) as CLRObject;
+            var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
-            IEnumerable e = co.inst as IEnumerable;
+            var e = co.inst as IEnumerable;
             IEnumerator o;
 
             if (e != null)
@@ -196,7 +196,7 @@ namespace Python.Runtime
 
                 if (o == null)
                 {
-                    string message = "iteration over non-sequence";
+                    var message = "iteration over non-sequence";
                     return Exceptions.RaiseTypeError(message);
                 }
             }
@@ -210,7 +210,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_hash(IntPtr ob)
         {
-            CLRObject co = GetManagedObject(ob) as CLRObject;
+            var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("unhashable type");
@@ -224,7 +224,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_str(IntPtr ob)
         {
-            CLRObject co = GetManagedObject(ob) as CLRObject;
+            var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");

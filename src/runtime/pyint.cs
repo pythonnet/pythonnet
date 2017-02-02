@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -32,7 +31,7 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python int object.
         /// </remarks>
-        public PyInt(PyObject o) : base()
+        public PyInt(PyObject o)
         {
             if (!IsIntType(o))
             {
@@ -49,7 +48,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an int32 value.
         /// </remarks>
-        public PyInt(int value) : base()
+        public PyInt(int value)
         {
             obj = Runtime.PyInt_FromInt32(value);
             if (obj == IntPtr.Zero)
@@ -68,7 +67,7 @@ namespace Python.Runtime
         [CLSCompliant(false)]
         public PyInt(uint value) : base(IntPtr.Zero)
         {
-            obj = Runtime.PyInt_FromInt64((long)value);
+            obj = Runtime.PyInt_FromInt64(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -161,7 +160,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from a string value.
         /// </remarks>
-        public PyInt(string value) : base()
+        public PyInt(string value)
         {
             obj = Runtime.PyInt_FromString(value, IntPtr.Zero, 0);
             if (obj == IntPtr.Zero)
@@ -210,7 +209,7 @@ namespace Python.Runtime
         /// </remarks>
         public short ToInt16()
         {
-            return System.Convert.ToInt16(this.ToInt32());
+            return Convert.ToInt16(ToInt32());
         }
 
 
@@ -234,7 +233,7 @@ namespace Python.Runtime
         /// </remarks>
         public long ToInt64()
         {
-            return System.Convert.ToInt64(this.ToInt32());
+            return Convert.ToInt64(ToInt32());
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Reflection;
 using System.Security.Permissions;
 
@@ -14,8 +13,8 @@ namespace Python.Runtime
         MethodInfo getter;
         MethodInfo setter;
 
-        [StrongNameIdentityPermissionAttribute(SecurityAction.Assert)]
-        public PropertyObject(PropertyInfo md) : base()
+        [StrongNameIdentityPermission(SecurityAction.Assert)]
+        public PropertyObject(PropertyInfo md)
         {
             getter = md.GetGetMethod(true);
             setter = md.GetSetMethod(true);
@@ -30,9 +29,9 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
-            PropertyObject self = (PropertyObject)GetManagedObject(ds);
+            var self = (PropertyObject)GetManagedObject(ds);
             MethodInfo getter = self.getter;
-            Object result;
+            object result;
 
 
             if (getter == null)
@@ -40,12 +39,12 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("property cannot be read");
             }
 
-            if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone))
+            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
             {
-                if (!(getter.IsStatic))
+                if (!getter.IsStatic)
                 {
                     Exceptions.SetError(Exceptions.TypeError,
-                        "instance property must be accessed through " + "a class instance");
+                        "instance property must be accessed through a class instance");
                     return IntPtr.Zero;
                 }
 
@@ -60,7 +59,7 @@ namespace Python.Runtime
                 }
             }
 
-            CLRObject co = GetManagedObject(ob) as CLRObject;
+            var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("invalid target");
@@ -88,11 +87,11 @@ namespace Python.Runtime
         /// a property based on the given Python value. The Python value must
         /// be convertible to the type of the property.
         /// </summary>
-        public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
-            PropertyObject self = (PropertyObject)GetManagedObject(ds);
+            var self = (PropertyObject)GetManagedObject(ds);
             MethodInfo setter = self.setter;
-            Object newval;
+            object newval;
 
             if (val == IntPtr.Zero)
             {
@@ -114,9 +113,9 @@ namespace Python.Runtime
 
             bool is_static = setter.IsStatic;
 
-            if ((ob == IntPtr.Zero) || (ob == Runtime.PyNone))
+            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
             {
-                if (!(is_static))
+                if (!is_static)
                 {
                     Exceptions.RaiseTypeError("instance property must be set on an instance");
                     return -1;
@@ -127,7 +126,7 @@ namespace Python.Runtime
             {
                 if (!is_static)
                 {
-                    CLRObject co = GetManagedObject(ob) as CLRObject;
+                    var co = GetManagedObject(ob) as CLRObject;
                     if (co == null)
                     {
                         Exceptions.RaiseTypeError("invalid target");
@@ -158,8 +157,8 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
-            PropertyObject self = (PropertyObject)GetManagedObject(ob);
-            string s = String.Format("<property '{0}'>", self.info.Name);
+            var self = (PropertyObject)GetManagedObject(ob);
+            string s = $"<property '{self.info.Name}'>";
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
     }

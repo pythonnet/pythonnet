@@ -59,7 +59,7 @@ namespace Python.Runtime
             Runtime.PyDict_Update(mod_dict, clr_dict);
 #elif PYTHON2
             Runtime.XIncref(root.pyHandle); // we are using the module two times
-            py_clr_module = root.pyHandle;  // Alias handle for PY2/PY3
+            py_clr_module = root.pyHandle; // Alias handle for PY2/PY3
 #endif
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
@@ -150,8 +150,8 @@ namespace Python.Runtime
 
             // borrowed reference
             IntPtr py_mod_name = Runtime.PyTuple_GetItem(args, 0);
-            if ((py_mod_name == IntPtr.Zero) ||
-                (!Runtime.IsStringType(py_mod_name)))
+            if (py_mod_name == IntPtr.Zero ||
+                !Runtime.IsStringType(py_mod_name))
             {
                 return Exceptions.RaiseTypeError("string expected");
             }
@@ -160,12 +160,12 @@ namespace Python.Runtime
             // This determines whether we return the head or tail module.
 
             IntPtr fromList = IntPtr.Zero;
-            bool fromlist = false;
+            var fromlist = false;
             if (num_args >= 4)
             {
                 fromList = Runtime.PyTuple_GetItem(args, 3);
-                if ((fromList != IntPtr.Zero) &&
-                    (Runtime.PyObject_IsTrue(fromList) == 1))
+                if (fromList != IntPtr.Zero &&
+                    Runtime.PyObject_IsTrue(fromList) == 1)
                 {
                     fromlist = true;
                 }
@@ -208,7 +208,7 @@ namespace Python.Runtime
             {
                 clr_prefix = "CLR."; // prepend when adding the module to sys.modules
                 realname = mod_name.Substring(4);
-                string msg = String.Format("Importing from the CLR.* namespace " +
+                string msg = string.Format("Importing from the CLR.* namespace " +
                                            "is deprecated. Please import '{0}' directly.", realname);
                 Exceptions.deprecation(msg);
             }
@@ -301,7 +301,7 @@ namespace Python.Runtime
             // enable preloading in a non-interactive python processing by
             // setting clr.preload = True
 
-            ModuleObject head = (mod_name == realname) ? null : root;
+            ModuleObject head = mod_name == realname ? null : root;
             ModuleObject tail = root;
             root.InitializePreload();
 
@@ -310,7 +310,7 @@ namespace Python.Runtime
                 ManagedType mt = tail.GetAttribute(name, true);
                 if (!(mt is ModuleObject))
                 {
-                    string error = String.Format("No module named {0}", name);
+                    string error = string.Format("No module named {0}", name);
                     Exceptions.SetError(Exceptions.ImportError, error);
                     return IntPtr.Zero;
                 }
@@ -339,7 +339,7 @@ namespace Python.Runtime
             if (fromlist && Runtime.PySequence_Size(fromList) == 1)
             {
                 IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
-                if ((!CLRModule.preload) && Runtime.GetManagedString(fp) == "*")
+                if (!CLRModule.preload && Runtime.GetManagedString(fp) == "*")
                 {
                     mod.LoadNames();
                 }

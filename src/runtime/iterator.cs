@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -12,9 +11,9 @@ namespace Python.Runtime
     {
         IEnumerator iter;
 
-        public Iterator(IEnumerator e) : base()
+        public Iterator(IEnumerator e)
         {
-            this.iter = e;
+            iter = e;
         }
 
 
@@ -23,7 +22,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_iternext(IntPtr ob)
         {
-            Iterator self = GetManagedObject(ob) as Iterator;
+            var self = GetManagedObject(ob) as Iterator;
             if (!self.iter.MoveNext())
             {
                 Exceptions.SetError(Exceptions.StopIteration, Runtime.PyNone);

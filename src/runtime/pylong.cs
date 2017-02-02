@@ -31,7 +31,7 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python long object.
         /// </remarks>
-        public PyLong(PyObject o) : base()
+        public PyLong(PyObject o)
         {
             if (!IsLongType(o))
             {
@@ -48,9 +48,9 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an int32 value.
         /// </remarks>
-        public PyLong(int value) : base()
+        public PyLong(int value)
         {
-            obj = Runtime.PyLong_FromLong((long)value);
+            obj = Runtime.PyLong_FromLong(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -65,9 +65,9 @@ namespace Python.Runtime
         /// Creates a new PyLong from a uint32 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(uint value) : base()
+        public PyLong(uint value)
         {
-            obj = Runtime.PyLong_FromLong((long)value);
+            obj = Runtime.PyLong_FromLong(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -81,7 +81,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an int64 value.
         /// </remarks>
-        public PyLong(long value) : base()
+        public PyLong(long value)
         {
             obj = Runtime.PyLong_FromLongLong(value);
             if (obj == IntPtr.Zero)
@@ -98,7 +98,7 @@ namespace Python.Runtime
         /// Creates a new PyLong from a uint64 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(ulong value) : base()
+        public PyLong(ulong value)
         {
             obj = Runtime.PyLong_FromUnsignedLongLong(value);
             if (obj == IntPtr.Zero)
@@ -114,9 +114,9 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an int16 value.
         /// </remarks>
-        public PyLong(short value) : base()
+        public PyLong(short value)
         {
-            obj = Runtime.PyLong_FromLong((long)value);
+            obj = Runtime.PyLong_FromLong(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -131,9 +131,9 @@ namespace Python.Runtime
         /// Creates a new PyLong from an uint16 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(ushort value) : base()
+        public PyLong(ushort value)
         {
-            obj = Runtime.PyLong_FromLong((long)value);
+            obj = Runtime.PyLong_FromLong(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -147,9 +147,9 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from a byte value.
         /// </remarks>
-        public PyLong(byte value) : base()
+        public PyLong(byte value)
         {
-            obj = Runtime.PyLong_FromLong((long)value);
+            obj = Runtime.PyLong_FromLong(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -164,9 +164,9 @@ namespace Python.Runtime
         /// Creates a new PyLong from an sbyte value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(sbyte value) : base()
+        public PyLong(sbyte value)
         {
-            obj = Runtime.PyLong_FromLong((long)value);
+            obj = Runtime.PyLong_FromLong(value);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -180,7 +180,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an double value.
         /// </remarks>
-        public PyLong(double value) : base()
+        public PyLong(double value)
         {
             obj = Runtime.PyLong_FromDouble(value);
             if (obj == IntPtr.Zero)
@@ -196,7 +196,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from a string value.
         /// </remarks>
-        public PyLong(string value) : base()
+        public PyLong(string value)
         {
             obj = Runtime.PyLong_FromString(value, IntPtr.Zero, 0);
             if (obj == IntPtr.Zero)
@@ -244,7 +244,7 @@ namespace Python.Runtime
         /// </remarks>
         public short ToInt16()
         {
-            return System.Convert.ToInt16(this.ToInt64());
+            return Convert.ToInt16(ToInt64());
         }
 
 
@@ -256,7 +256,7 @@ namespace Python.Runtime
         /// </remarks>
         public int ToInt32()
         {
-            return System.Convert.ToInt32(this.ToInt64());
+            return Convert.ToInt32(ToInt64());
         }
 
 
