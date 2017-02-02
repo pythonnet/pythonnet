@@ -10,7 +10,6 @@ namespace Python.Runtime
     /// <summary>
     /// The ClassManager is responsible for creating and managing instances
     /// that implement the Python type objects that reflect managed classes.
-    ///
     /// Each managed type reflected to Python is represented by an instance
     /// of a concrete subclass of ClassBase. Each instance is associated with
     /// a generated Python type object, whose slots point to static methods

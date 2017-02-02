@@ -20,7 +20,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyObject Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyObject from an IntPtr object reference. Note that
         /// the PyObject instance assumes ownership of the object reference
@@ -51,7 +50,6 @@ namespace Python.Runtime
         /// <summary>
         /// Handle Property
         /// </summary>
-        ///
         /// <remarks>
         /// Gets the native handle of the underlying Python object. This
         /// value is generally for internal use by the PythonNet runtime.
@@ -65,7 +63,6 @@ namespace Python.Runtime
         /// <summary>
         /// FromManagedObject Method
         /// </summary>
-        ///
         /// <remarks>
         /// Given an arbitrary managed object, return a Python instance that
         /// reflects the managed object.
@@ -86,7 +83,6 @@ namespace Python.Runtime
         /// <summary>
         /// AsManagedObject Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return a managed object of the given type, based on the
         /// value of the Python object.
@@ -105,7 +101,6 @@ namespace Python.Runtime
         /// <summary>
         /// Dispose Method
         /// </summary>
-        ///
         /// <remarks>
         /// The Dispose method provides a way to explicitly release the
         /// Python object represented by a PyObject instance. It is a good
@@ -139,7 +134,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetPythonType Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the Python type of the object. This method is equivalent
         /// to the Python expression: type(object).
@@ -154,7 +148,6 @@ namespace Python.Runtime
         /// <summary>
         /// TypeCheck Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the object o is of type typeOrClass or a subtype
         /// of typeOrClass.
@@ -168,7 +161,6 @@ namespace Python.Runtime
         /// <summary>
         /// HasAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the object has an attribute with the given name.
         /// </remarks>
@@ -181,7 +173,6 @@ namespace Python.Runtime
         /// <summary>
         /// HasAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the object has an attribute with the given name,
         /// where name is a PyObject wrapping a string or unicode object.
@@ -195,7 +186,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the named attribute of the Python object, or raises a
         /// PythonException if the attribute access fails.
@@ -214,7 +204,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the named attribute of the Python object, or the given
         /// default object if the attribute access fails.
@@ -234,7 +223,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the named attribute of the Python object or raises a
         /// PythonException if the attribute access fails. The name argument
@@ -254,7 +242,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the named attribute of the Python object, or the given
         /// default object if the attribute access fails. The name argument
@@ -275,7 +262,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Set an attribute of the object with the given name and value. This
         /// method throws a PythonException if the attribute set fails.
@@ -293,7 +279,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Set an attribute of the object with the given name and value,
         /// where the name is a Python string or unicode object. This method
@@ -312,7 +297,6 @@ namespace Python.Runtime
         /// <summary>
         /// DelAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Delete the named attribute of the Python object. This method
         /// throws a PythonException if the attribute set fails.
@@ -330,7 +314,6 @@ namespace Python.Runtime
         /// <summary>
         /// DelAttr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Delete the named attribute of the Python object, where name is a
         /// PyObject wrapping a Python string or unicode object. This method
@@ -349,7 +332,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// return the item at the given object index. This method raises a
@@ -369,7 +351,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// return the item at the given string index. This method raises a
@@ -387,7 +368,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// return the item at the given numeric index. This method raises a
@@ -405,7 +385,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// set the item at the given object index to the given value. This
@@ -424,7 +403,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// set the item at the given string index to the given value. This
@@ -442,7 +420,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// set the item at the given numeric index to the given value. This
@@ -460,7 +437,6 @@ namespace Python.Runtime
         /// <summary>
         /// DelItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// delete the item at the given object index. This method raises a
@@ -479,7 +455,6 @@ namespace Python.Runtime
         /// <summary>
         /// DelItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// delete the item at the given string index. This method raises a
@@ -497,7 +472,6 @@ namespace Python.Runtime
         /// <summary>
         /// DelItem Method
         /// </summary>
-        ///
         /// <remarks>
         /// For objects that support the Python sequence or mapping protocols,
         /// delete the item at the given numeric index. This method raises a
@@ -515,7 +489,6 @@ namespace Python.Runtime
         /// <summary>
         /// Length Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns the length for objects that support the Python sequence
         /// protocol, or 0 if the object does not support the protocol.
@@ -535,7 +508,6 @@ namespace Python.Runtime
         /// <summary>
         /// String Indexer
         /// </summary>
-        ///
         /// <remarks>
         /// Provides a shorthand for the string versions of the GetItem and
         /// SetItem methods.
@@ -550,7 +522,6 @@ namespace Python.Runtime
         /// <summary>
         /// PyObject Indexer
         /// </summary>
-        ///
         /// <remarks>
         /// Provides a shorthand for the object versions of the GetItem and
         /// SetItem methods.
@@ -565,7 +536,6 @@ namespace Python.Runtime
         /// <summary>
         /// Numeric Indexer
         /// </summary>
-        ///
         /// <remarks>
         /// Provides a shorthand for the numeric versions of the GetItem and
         /// SetItem methods.
@@ -580,7 +550,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetIterator Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return a new (Python) iterator for the object. This is equivalent
         /// to the Python expression "iter(object)". A PythonException will be
@@ -599,7 +568,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetEnumerator Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return a new PyIter object for the object. This allows any iterable
         /// python object to be iterated over in C#. A PythonException will be
@@ -614,7 +582,6 @@ namespace Python.Runtime
         /// <summary>
         /// Invoke Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the callable object with the given arguments, passed as a
         /// PyObject[]. A PythonException is raised if the invokation fails.
@@ -635,7 +602,6 @@ namespace Python.Runtime
         /// <summary>
         /// Invoke Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the callable object with the given arguments, passed as a
         /// Python tuple. A PythonException is raised if the invokation fails.
@@ -654,7 +620,6 @@ namespace Python.Runtime
         /// <summary>
         /// Invoke Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the callable object with the given positional and keyword
         /// arguments. A PythonException is raised if the invokation fails.
@@ -675,7 +640,6 @@ namespace Python.Runtime
         /// <summary>
         /// Invoke Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the callable object with the given positional and keyword
         /// arguments. A PythonException is raised if the invokation fails.
@@ -694,7 +658,6 @@ namespace Python.Runtime
         /// <summary>
         /// InvokeMethod Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the named method of the object with the given arguments.
         /// A PythonException is raised if the invokation is unsuccessful.
@@ -711,7 +674,6 @@ namespace Python.Runtime
         /// <summary>
         /// InvokeMethod Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the named method of the object with the given arguments.
         /// A PythonException is raised if the invokation is unsuccessful.
@@ -728,7 +690,6 @@ namespace Python.Runtime
         /// <summary>
         /// InvokeMethod Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the named method of the object with the given arguments
         /// and keyword arguments. Keyword args are passed as a PyDict object.
@@ -746,7 +707,6 @@ namespace Python.Runtime
         /// <summary>
         /// InvokeMethod Method
         /// </summary>
-        ///
         /// <remarks>
         /// Invoke the named method of the object with the given arguments
         /// and keyword arguments. Keyword args are passed as a PyDict object.
@@ -764,7 +724,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsInstance Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return true if the object is an instance of the given Python type
         /// or class. This method always succeeds.
@@ -784,7 +743,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsSubclass Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return true if the object is identical to or derived from the
         /// given Python type or class. This method always succeeds.
@@ -804,7 +762,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsCallable Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the object is a callable object. This method
         /// always succeeds.
@@ -818,7 +775,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsIterable Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the object is iterable object. This method
         /// always succeeds.
@@ -832,7 +788,6 @@ namespace Python.Runtime
         /// <summary>
         /// IsTrue Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return true if the object is true according to Python semantics.
         /// This method always succeeds.
@@ -846,7 +801,6 @@ namespace Python.Runtime
         /// <summary>
         /// Dir Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return a list of the names of the attributes of the object. This
         /// is equivalent to the Python expression "dir(object)".
@@ -865,7 +819,6 @@ namespace Python.Runtime
         /// <summary>
         /// Repr Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return a string representation of the object. This method is
         /// the managed equivalent of the Python expression "repr(object)".
@@ -882,7 +835,6 @@ namespace Python.Runtime
         /// <summary>
         /// ToString Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return the string representation of the object. This method is
         /// the managed equivalent of the Python expression "str(object)".
@@ -899,7 +851,6 @@ namespace Python.Runtime
         /// <summary>
         /// Equals Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return true if this object is equal to the given object. This
         /// method is based on Python equality semantics.
@@ -926,7 +877,6 @@ namespace Python.Runtime
         /// <summary>
         /// GetHashCode Method
         /// </summary>
-        ///
         /// <remarks>
         /// Return a hashcode based on the Python object. This returns the
         /// hash as computed by Python, equivalent to the Python expression

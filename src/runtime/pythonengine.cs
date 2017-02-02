@@ -132,7 +132,6 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize Method
         /// </summary>
-        ///
         /// <remarks>
         /// Initialize the Python runtime. It is safe to call this method
         /// more than once, though initialization will only happen on the
@@ -276,7 +275,6 @@ namespace Python.Runtime
         /// <summary>
         /// Shutdown Method
         /// </summary>
-        ///
         /// <remarks>
         /// Shutdown and release resources held by the Python runtime. The
         /// Python runtime can no longer be used in the current process
@@ -295,17 +293,14 @@ namespace Python.Runtime
         /// <summary>
         /// AcquireLock Method
         /// </summary>
-        ///
         /// <remarks>
         /// Acquire the Python global interpreter lock (GIL). Managed code
         /// *must* call this method before using any objects or calling any
         /// methods on objects in the Python.Runtime namespace. The only
         /// exception is PythonEngine.Initialize, which may be called without
         /// first calling AcquireLock.
-        ///
         /// Each call to AcquireLock must be matched by a corresponding call
         /// to ReleaseLock, passing the token obtained from AcquireLock.
-        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
@@ -318,11 +313,9 @@ namespace Python.Runtime
         /// <summary>
         /// ReleaseLock Method
         /// </summary>
-        ///
         /// <remarks>
         /// Release the Python global interpreter lock using a token obtained
         /// from a previous call to AcquireLock.
-        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
@@ -335,12 +328,10 @@ namespace Python.Runtime
         /// <summary>
         /// BeginAllowThreads Method
         /// </summary>
-        ///
         /// <remarks>
         /// Release the Python global interpreter lock to allow other threads
         /// to run. This is equivalent to the Py_BEGIN_ALLOW_THREADS macro
         /// provided by the C Python API.
-        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
@@ -353,12 +344,10 @@ namespace Python.Runtime
         /// <summary>
         /// EndAllowThreads Method
         /// </summary>
-        ///
         /// <remarks>
         /// Re-aquire the Python global interpreter lock for the current
         /// thread. This is equivalent to the Py_END_ALLOW_THREADS macro
         /// provided by the C Python API.
-        ///
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
@@ -371,7 +360,6 @@ namespace Python.Runtime
         /// <summary>
         /// ImportModule Method
         /// </summary>
-        ///
         /// <remarks>
         /// Given a fully-qualified module or package name, import the
         /// module and return the resulting module object as a PyObject
@@ -388,7 +376,6 @@ namespace Python.Runtime
         /// <summary>
         /// ReloadModule Method
         /// </summary>
-        ///
         /// <remarks>
         /// Given a PyObject representing a previously loaded module, reload
         /// the module.
@@ -404,7 +391,6 @@ namespace Python.Runtime
         /// <summary>
         /// ModuleFromString Method
         /// </summary>
-        ///
         /// <remarks>
         /// Given a string module name and a string containing Python code,
         /// execute the code in and return a module of the given name.
@@ -422,7 +408,6 @@ namespace Python.Runtime
         /// <summary>
         /// RunString Method
         /// </summary>
-        ///
         /// <remarks>
         /// Run a string containing Python code. Returns the result of
         /// executing the code string as a PyObject instance, or null if

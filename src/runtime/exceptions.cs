@@ -183,9 +183,8 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        ///  Shortcut for (pointer == NULL or ErrorOccurred()) -> throw PythonException
+        /// Shortcut for (pointer == NULL or ErrorOccurred()) -&gt; throw PythonException
         /// </summary>
-        ///  Shortcut for (pointer == NULL) -> throw PythonException
         internal unsafe static void ErrorOccurredCheck(IntPtr pointer)
         {
             if ((pointer == IntPtr.Zero) || Exceptions.ErrorOccurred())
@@ -197,7 +196,6 @@ namespace Python.Runtime
         /// <summary>
         /// ExceptionMatches Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the current Python exception matches the given
         /// Python object. This is a wrapper for PyErr_ExceptionMatches.
@@ -210,7 +208,6 @@ namespace Python.Runtime
         /// <summary>
         /// ExceptionMatches Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if the given Python exception matches the given
         /// Python object. This is a wrapper for PyErr_GivenExceptionMatches.
@@ -224,7 +221,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetError Method
         /// </summary>
-        ///
         /// <remarks>
         /// Sets the current Python exception given a native string.
         /// This is a wrapper for the Python PyErr_SetString call.
@@ -237,7 +233,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetError Method
         /// </summary>
-        ///
         /// <remarks>
         /// Sets the current Python exception given a Python object.
         /// This is a wrapper for the Python PyErr_SetObject call.
@@ -250,7 +245,6 @@ namespace Python.Runtime
         /// <summary>
         /// SetError Method
         /// </summary>
-        ///
         /// <remarks>
         /// Sets the current Python exception given a CLR exception
         /// object. The CLR exception instance is wrapped as a Python
@@ -280,7 +274,6 @@ namespace Python.Runtime
         /// <summary>
         /// ErrorOccurred Method
         /// </summary>
-        ///
         /// <remarks>
         /// Returns true if an exception occurred in the Python runtime.
         /// This is a wrapper for the Python PyErr_Occurred call.
@@ -293,7 +286,6 @@ namespace Python.Runtime
         /// <summary>
         /// Clear Method
         /// </summary>
-        ///
         /// <remarks>
         /// Clear any exception that has been set in the Python runtime.
         /// </remarks>

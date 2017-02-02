@@ -9,14 +9,13 @@ namespace Python.Runtime
     /// </summary>
     /// <remarks>
     /// ClassManager stores a ConstructorBinding instance in the class's __dict__['Overloads']
-    ///
     /// SomeType.Overloads[Type, ...] works like this:
     /// 1) Python retreives the Overloads attribute from this ClassObject's dictionary normally
     /// and finds a non-null tp_descr_get slot which is called by the interpreter
     /// and returns an IncRef()ed pyHandle to itself.
     /// 2) The ConstructorBinding object handles the [] syntax in its mp_subscript by matching
     /// the Type object parameters to a contructor overload using Type.GetConstructor()
-    ///  [NOTE: I don't know why method overloads are not searched the same way.]
+    /// [NOTE: I don't know why method overloads are not searched the same way.]
     /// and creating the BoundContructor oject which contains ContructorInfo object.
     /// 3) In tp_call, if ctorInfo is not null, ctorBinder.InvokeRaw() is called.
     /// </remarks>
@@ -43,12 +42,15 @@ namespace Python.Runtime
         /// selection.
         /// </summary>
         /// <param name="op"> PyObject* to a Constructors wrapper </param>
-        /// <param name="instance"> the instance that the attribute was accessed through,
-        /// or None when the attribute is accessed through the owner </param>
+        /// <param name="instance">
+        /// the instance that the attribute was accessed through,
+        /// or None when the attribute is accessed through the owner
+        /// </param>
         /// <param name="owner"> always the owner class </param>
-        /// <returns> a CtorMapper (that borrows a reference to this python type and the
-        /// ClassObject's ConstructorBinder) wrapper. </returns>
-        ///
+        /// <returns>
+        /// a CtorMapper (that borrows a reference to this python type and the
+        /// ClassObject's ConstructorBinder) wrapper.
+        /// </returns>
         /// <remarks>
         /// Python 2.6.5 docs:
         /// object.__get__(self, instance, owner)
