@@ -1,8 +1,8 @@
 using System;
 using System.Reflection;
 using System.Resources;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 [assembly: AssemblyProduct("Python for .NET")]
 [assembly: AssemblyVersion("4.0.0.1")]

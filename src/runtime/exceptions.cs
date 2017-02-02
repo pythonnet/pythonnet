@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using System.Collections;
 using System.Runtime.InteropServices;
 
 
@@ -25,12 +24,12 @@ namespace Python.Runtime
 
         internal static Exception ToException(IntPtr ob)
         {
-            CLRObject co = GetManagedObject(ob) as CLRObject;
+            var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return null;
             }
-            Exception e = co.inst as Exception;
+            var e = co.inst as Exception;
             if (e == null)
             {
                 return null;
@@ -49,8 +48,8 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
-            string message = String.Empty;
-            if (e.Message != String.Empty)
+            string message = string.Empty;
+            if (e.Message != string.Empty)
             {
                 message = e.Message;
             }
@@ -102,7 +101,7 @@ namespace Python.Runtime
                 else
                 {
                     fi.SetValue(type, IntPtr.Zero);
-                    DebugUtil.Print("Unknown exception: " + fi.Name);
+                    DebugUtil.Print($"Unknown exception: {fi.Name}");
                 }
             }
             Runtime.PyErr_Clear();
@@ -114,13 +113,13 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (0 != Runtime.Py_IsInitialized())
+            if (Runtime.Py_IsInitialized() != 0)
             {
                 Type type = typeof(Exceptions);
                 foreach (FieldInfo fi in type.GetFields(BindingFlags.Public |
                                                         BindingFlags.Static))
                 {
-                    IntPtr op = (IntPtr)fi.GetValue(type);
+                    var op = (IntPtr)fi.GetValue(type);
                     if (op != IntPtr.Zero)
                     {
                         Runtime.XDecref(op);
@@ -143,15 +142,17 @@ namespace Python.Runtime
         /// <param name="ob">The python object wrapping </param>
         internal static void SetArgsAndCause(IntPtr ob)
         {
-            var e = ExceptionClassObject.ToException(ob);
+            Exception e = ExceptionClassObject.ToException(ob);
             if (e == null)
+            {
                 return;
+            }
 
             IntPtr args;
             if (!string.IsNullOrEmpty(e.Message))
             {
                 args = Runtime.PyTuple_New(1);
-                var msg = Runtime.PyUnicode_FromString(e.Message);
+                IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
                 Runtime.PyTuple_SetItem(args, 0, msg);
             }
             else
@@ -171,7 +172,7 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        ///  Shortcut for (pointer == NULL) -> throw PythonException
+        /// Shortcut for (pointer == NULL) -&gt; throw PythonException
         /// </summary>
         /// <param name="pointer">Pointer to a Python object</param>
         internal unsafe static void ErrorCheck(IntPtr pointer)
@@ -187,7 +188,7 @@ namespace Python.Runtime
         /// </summary>
         internal unsafe static void ErrorOccurredCheck(IntPtr pointer)
         {
-            if ((pointer == IntPtr.Zero) || Exceptions.ErrorOccurred())
+            if (pointer == IntPtr.Zero || ErrorOccurred())
             {
                 throw new PythonException();
             }
@@ -215,7 +216,7 @@ namespace Python.Runtime
         public static bool ExceptionMatches(IntPtr exc, IntPtr ob)
         {
             int i = Runtime.PyErr_GivenExceptionMatches(exc, ob);
-            return (i != 0);
+            return i != 0;
         }
 
         /// <summary>
@@ -252,12 +253,12 @@ namespace Python.Runtime
         /// </remarks>
         public static void SetError(Exception e)
         {
-            // Because delegates allow arbitrary nestings of Python calling
+            // Because delegates allow arbitrary nesting of Python calling
             // managed calling Python calling... etc. it is possible that we
             // might get a managed exception raised that is a wrapper for a
             // Python exception. In that case we'd rather have the real thing.
 
-            PythonException pe = e as PythonException;
+            var pe = e as PythonException;
             if (pe != null)
             {
                 Runtime.PyErr_SetObject(pe.PyType, pe.PyValue);
@@ -303,7 +304,7 @@ namespace Python.Runtime
         /// </summary>
         public static void warn(string message, IntPtr exception, int stacklevel)
         {
-            if ((exception == IntPtr.Zero) ||
+            if (exception == IntPtr.Zero ||
                 (Runtime.PyObject_IsSubclass(exception, Exceptions.Warning) != 1))
             {
                 Exceptions.RaiseTypeError("Invalid exception");

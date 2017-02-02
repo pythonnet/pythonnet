@@ -158,12 +158,10 @@ namespace Python.Runtime
         public static string FindAssembly(string name)
         {
             char sep = Path.DirectorySeparatorChar;
-            string path;
-            string temp;
 
-            for (var i = 0; i < pypath.Count; i++)
+            foreach (string head in pypath)
             {
-                string head = pypath[i];
+                string path;
                 if (head == null || head.Length == 0)
                 {
                     path = name;
@@ -173,11 +171,12 @@ namespace Python.Runtime
                     path = head + sep + name;
                 }
 
-                temp = path + ".dll";
+                string temp = path + ".dll";
                 if (File.Exists(temp))
                 {
                     return temp;
                 }
+
                 temp = path + ".exe";
                 if (File.Exists(temp))
                 {
@@ -233,10 +232,8 @@ namespace Python.Runtime
         /// <summary>
         /// Loads an assembly using full path.
         /// </summary>
-        /// <param name="name">
-        /// </param>
-        /// <returns>
-        /// </returns>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static Assembly LoadAssemblyFullPath(string name)
         {
             Assembly assembly = null;
@@ -252,7 +249,7 @@ namespace Python.Runtime
                     {
                         assembly = Assembly.LoadFrom(name);
                     }
-                    catch
+                    catch (Exception)
                     {
                     }
                 }

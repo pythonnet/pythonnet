@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -21,12 +20,12 @@ namespace Python.Runtime
         internal IntPtr doc;
         internal Type type;
 
-        public MethodObject(Type type, string name, MethodInfo[] info) : base()
+        public MethodObject(Type type, string name, MethodInfo[] info)
         {
             _MethodObject(type, name, info);
         }
 
-        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads) : base()
+        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads)
         {
             _MethodObject(type, name, info);
             binder.allow_threads = allow_threads;
@@ -38,9 +37,8 @@ namespace Python.Runtime
             this.name = name;
             this.info = info;
             binder = new MethodBinder();
-            for (int i = 0; i < info.Length; i++)
+            foreach (MethodInfo item in info)
             {
-                MethodInfo item = (MethodInfo)info[i];
                 binder.AddMethod(item);
                 if (item.IsStatic)
                 {
@@ -51,7 +49,7 @@ namespace Python.Runtime
 
         public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
         {
-            return this.Invoke(inst, args, kw, null);
+            return Invoke(inst, args, kw, null);
         }
 
         public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw, MethodBase info)
@@ -68,21 +66,23 @@ namespace Python.Runtime
             {
                 return doc;
             }
-            string str = "";
+            var str = "";
             Type marker = typeof(DocStringAttribute);
             MethodBase[] methods = binder.GetMethods();
             foreach (MethodBase method in methods)
             {
                 if (str.Length > 0)
+                {
                     str += Environment.NewLine;
-                Attribute[] attrs = (Attribute[])method.GetCustomAttributes(marker, false);
+                }
+                var attrs = (Attribute[])method.GetCustomAttributes(marker, false);
                 if (attrs.Length == 0)
                 {
                     str += method.ToString();
                 }
                 else
                 {
-                    DocStringAttribute attr = (DocStringAttribute)attrs[0];
+                    var attr = (DocStringAttribute)attrs[0];
                     str += attr.DocString;
                 }
             }
@@ -106,7 +106,7 @@ namespace Python.Runtime
         /// </remarks>
         internal bool IsStatic()
         {
-            return this.is_static;
+            return is_static;
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
         {
-            MethodObject self = (MethodObject)GetManagedObject(ob);
+            var self = (MethodObject)GetManagedObject(ob);
 
             if (!Runtime.PyString_Check(key))
             {
@@ -138,7 +138,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
-            MethodObject self = (MethodObject)GetManagedObject(ds);
+            var self = (MethodObject)GetManagedObject(ds);
             MethodBinding binding;
 
             // If the method is accessed through its type (rather than via
@@ -166,11 +166,11 @@ namespace Python.Runtime
             // this descriptor was defined on then it will be because the base class method
             // is being called via super(Derived, self).method(...).
             // In which case create a MethodBinding bound to the base class.
-            CLRObject obj = GetManagedObject(ob) as CLRObject;
+            var obj = GetManagedObject(ob) as CLRObject;
             if (obj != null
                 && obj.inst.GetType() != self.type
                 && obj.inst is IPythonDerivedType
-                && self.type.IsAssignableFrom(obj.inst.GetType()))
+                && self.type.IsInstanceOfType(obj.inst))
             {
                 ClassBase basecls = ClassManager.GetClass(self.type);
                 binding = new MethodBinding(self, ob, basecls.pyHandle);
@@ -186,17 +186,17 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
-            MethodObject self = (MethodObject)GetManagedObject(ob);
-            string s = String.Format("<method '{0}'>", self.name);
+            var self = (MethodObject)GetManagedObject(ob);
+            string s = string.Format("<method '{0}'>", self.name);
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
 
         /// <summary>
         /// Descriptor dealloc implementation.
         /// </summary>
-        public static new void tp_dealloc(IntPtr ob)
+        public new static void tp_dealloc(IntPtr ob)
         {
-            MethodObject self = (MethodObject)GetManagedObject(ob);
+            var self = (MethodObject)GetManagedObject(ob);
             Runtime.XDecref(self.doc);
             if (self.unbound != null)
             {

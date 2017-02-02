@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Collections;
-using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -54,7 +52,7 @@ namespace Python.Runtime
             IntPtr base_type = Runtime.PyTuple_GetItem(bases, 0);
             IntPtr mt = Runtime.PyObject_TYPE(base_type);
 
-            if (!((mt == PyCLRMetaType) || (mt == Runtime.PyTypeType)))
+            if (!(mt == PyCLRMetaType || mt == Runtime.PyTypeType))
             {
                 return Exceptions.RaiseTypeError("invalid metatype");
             }
@@ -62,7 +60,7 @@ namespace Python.Runtime
             // Ensure that the reflected type is appropriate for subclassing,
             // disallowing subclassing of delegates, enums and array types.
 
-            ClassBase cb = GetManagedObject(base_type) as ClassBase;
+            var cb = GetManagedObject(base_type) as ClassBase;
             if (cb != null)
             {
                 if (!cb.CanSubclass())
@@ -84,10 +82,12 @@ namespace Python.Runtime
             if (IntPtr.Zero != dict)
             {
                 Runtime.XIncref(dict);
-                using (PyDict clsDict = new PyDict(dict))
+                using (var clsDict = new PyDict(dict))
                 {
                     if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
+                    {
                         return TypeManager.CreateSubType(name, base_type, dict);
+                    }
                 }
             }
 
@@ -141,7 +141,7 @@ namespace Python.Runtime
         /// <summary>
         /// Metatype __call__ implementation. This is needed to ensure correct
         /// initialization (__init__ support), because the tp_call we inherit
-        /// from PyType_Type won't call __init__ for metatypes it doesnt know.
+        /// from PyType_Type won't call __init__ for metatypes it doesn't know.
         /// </summary>
         public static IntPtr tp_call(IntPtr tp, IntPtr args, IntPtr kw)
         {
@@ -206,22 +206,19 @@ namespace Python.Runtime
                 if (dt == Runtime.PyWrapperDescriptorType
                     || dt == Runtime.PyMethodType
                     || typeof(ExtensionType).IsInstanceOfType(GetManagedObject(descr))
-                    )
+                )
                 {
                     IntPtr fp = Marshal.ReadIntPtr(dt, TypeOffset.tp_descr_set);
                     if (fp != IntPtr.Zero)
                     {
                         return NativeCall.Impl.Int_Call_3(fp, descr, name, value);
                     }
-                    else
-                    {
-                        Exceptions.SetError(Exceptions.AttributeError, "attribute is read-only");
-                        return -1;
-                    }
+                    Exceptions.SetError(Exceptions.AttributeError, "attribute is read-only");
+                    return -1;
                 }
             }
 
-            var res = Runtime.PyObject_GenericSetAttr(tp, name, value);
+            int res = Runtime.PyObject_GenericSetAttr(tp, name, value);
             Runtime.PyType_Modified(tp);
 
             return res;
@@ -234,7 +231,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
         {
-            ClassBase cb = GetManagedObject(tp) as ClassBase;
+            var cb = GetManagedObject(tp) as ClassBase;
             if (cb != null)
             {
                 return cb.type_subscript(idx);
@@ -250,7 +247,7 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            int flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+            var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
                 IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());
@@ -267,13 +264,11 @@ namespace Python.Runtime
 
             op = Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_dealloc);
             NativeCall.Void_Call_1(op, tp);
-
-            return;
         }
 
         static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
         {
-            ClassBase cb = GetManagedObject(tp) as ClassBase;
+            var cb = GetManagedObject(tp) as ClassBase;
 
             if (cb == null)
             {
@@ -281,17 +276,23 @@ namespace Python.Runtime
                 return Runtime.PyFalse;
             }
 
-            using (PyList argsObj = new PyList(args))
+            using (var argsObj = new PyList(args))
             {
                 if (argsObj.Length() != 1)
+                {
                     return Exceptions.RaiseTypeError("Invalid parameter count");
+                }
 
                 PyObject arg = argsObj[0];
                 PyObject otherType;
                 if (checkType)
+                {
                     otherType = arg;
+                }
                 else
+                {
                     otherType = arg.GetPythonType();
+                }
 
                 if (Runtime.PyObject_TYPE(otherType.Handle) != PyCLRMetaType)
                 {
@@ -299,7 +300,7 @@ namespace Python.Runtime
                     return Runtime.PyFalse;
                 }
 
-                ClassBase otherCb = GetManagedObject(otherType.Handle) as ClassBase;
+                var otherCb = GetManagedObject(otherType.Handle) as ClassBase;
                 if (otherCb == null)
                 {
                     Runtime.XIncref(Runtime.PyFalse);

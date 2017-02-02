@@ -436,7 +436,7 @@ namespace Python.Runtime
                 case TypeCode.Int32:
 #if PYTHON2 // Trickery to support 64-bit platforms.
 
-                    if (IntPtr.Size == 4)
+                    if (Runtime.is32bit)
                     {
                         op = Runtime.PyNumber_Int(value);
 
@@ -612,14 +612,14 @@ namespace Python.Runtime
                         if (Runtime.PyUnicode_GetSize(value) == 1)
                         {
                             op = Runtime.PyUnicode_AS_UNICODE(value);
-#if !UCS4
+#if UCS2
                             // 2011-01-02: Marshal as character array because the cast
                             // result = (char)Marshal.ReadInt16(op); throws an OverflowException
                             // on negative numbers with Check Overflow option set on the project
                             Char[] buff = new Char[1];
                             Marshal.Copy(op, buff, 0, 1);
                             result = buff[0];
-#else
+#elif UCS4
                             // XXX this is probably NOT correct?
                             result = (char)Marshal.ReadInt32(op);
 #endif

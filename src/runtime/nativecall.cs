@@ -1,9 +1,8 @@
 using System;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Collections;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -38,8 +37,7 @@ namespace Python.Runtime
             // interface (defined below) and generate the required thunk
             // code based on the method signatures.
 
-            var aname = new AssemblyName();
-            aname.Name = "e__NativeCall_Assembly";
+            var aname = new AssemblyName { Name = "e__NativeCall_Assembly" };
             var aa = AssemblyBuilderAccess.Run;
 
             aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);

@@ -1,9 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Collections;
-using System.Reflection;
-using System.Security;
 
 namespace Python.Runtime
 {
@@ -150,11 +146,7 @@ namespace Python.Runtime
             }
             List<string> gnames = null;
             nsmap.TryGetValue(name, out gnames);
-            if (gnames == null)
-            {
-                return null;
-            }
-            if (gnames.Count > 0)
+            if (gnames?.Count > 0)
             {
                 return gnames[0];
             }

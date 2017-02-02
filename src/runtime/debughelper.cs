@@ -1,7 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Diagnostics;
 using System.Threading;
 
 namespace Python.Runtime
@@ -9,7 +9,7 @@ namespace Python.Runtime
     /// <summary>
     /// Debugging helper utilities.
     /// The methods are only executed when the DEBUG flag is set. Otherwise
-    /// they are automagically hidden by the compiler and silently surpressed.
+    /// they are automagically hidden by the compiler and silently suppressed.
     /// </summary>
     internal class DebugUtil
     {

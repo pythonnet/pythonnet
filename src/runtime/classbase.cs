@@ -1,7 +1,5 @@
 using System;
 using System.Collections;
-using System.Reflection;
-using System.Security;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -27,7 +25,7 @@ namespace Python.Runtime
 
         internal virtual bool CanSubclass()
         {
-            return (!this.type.IsEnum);
+            return !type.IsEnum;
         }
 
         /// <summary>
@@ -49,12 +47,12 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            Type target = GenericUtil.GenericForType(this.type, types.Length);
+            Type target = GenericUtil.GenericForType(type, types.Length);
 
             if (target != null)
             {
                 Type t = target.MakeGenericType(types);
-                ManagedType c = (ManagedType)ClassManager.GetClass(t);
+                ManagedType c = ClassManager.GetClass(t);
                 Runtime.XIncref(c.pyHandle);
                 return c.pyHandle;
             }
@@ -115,10 +113,15 @@ namespace Python.Runtime
                     co1 = GetManagedObject(ob) as CLRObject;
                     co2 = GetManagedObject(other) as CLRObject;
                     if (co1 == null || co2 == null)
+                    {
                         return Exceptions.RaiseTypeError("Cannot get managed object");
+                    }
                     var co1Comp = co1.inst as IComparable;
                     if (co1Comp == null)
-                        return Exceptions.RaiseTypeError("Cannot convert object of type " + co1.GetType() + " to IComparable");
+                    {
+                        Type co1Type = co1.GetType();
+                        return Exceptions.RaiseTypeError($"Cannot convert object of type {co1Type} to IComparable");
+                    }
                     try
                     {
                         int cmp = co1Comp.CompareTo(co2.inst);

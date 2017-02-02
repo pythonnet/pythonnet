@@ -3,7 +3,7 @@ using System;
 namespace Python.Runtime
 {
     /// <summary>
-    /// Represents a Python (ansi) string object. See the documentation at
+    /// Represents a Python (ANSI) string object. See the documentation at
     /// PY2: https://docs.python.org/2/c-api/string.html
     /// PY3: No Equivalent
     /// for details.

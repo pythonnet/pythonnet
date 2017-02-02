@@ -117,7 +117,7 @@ namespace Python.Runtime
 
             try
             {
-                value = items.GetValue((int[])args);
+                value = items.GetValue(args);
             }
             catch (IndexOutOfRangeException)
             {
@@ -210,7 +210,7 @@ namespace Python.Runtime
 
             try
             {
-                items.SetValue(value, (int[])args);
+                items.SetValue(value, args);
             }
             catch (IndexOutOfRangeException)
             {

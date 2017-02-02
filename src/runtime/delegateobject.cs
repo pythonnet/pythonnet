@@ -1,6 +1,4 @@
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -55,8 +53,7 @@ namespace Python.Runtime
 
             if (Runtime.PyTuple_Size(args) != 1)
             {
-                var message = "class takes exactly one argument";
-                return Exceptions.RaiseTypeError(message);
+                return Exceptions.RaiseTypeError("class takes exactly one argument");
             }
 
             IntPtr method = Runtime.PyTuple_GetItem(args, 0);
@@ -76,7 +73,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
         {
-            // todo: add fast type check!
+            // TODO: add fast type check!
             IntPtr pytype = Runtime.PyObject_TYPE(ob);
             var self = (DelegateObject)GetManagedObject(pytype);
             var o = GetManagedObject(ob) as CLRObject;
@@ -99,8 +96,8 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __cmp__ for reflected delegate types.
         /// </summary>
-#if PYTHON3
-        public static new IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
+#if PYTHON3 // TODO: Doesn't PY2 implement tp_richcompare too?
+        public new static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
         {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
@@ -130,15 +127,11 @@ namespace Python.Runtime
             return pyfalse;
         }
 #elif PYTHON2
-        public static new int tp_compare(IntPtr ob, IntPtr other)
+        public static int tp_compare(IntPtr ob, IntPtr other)
         {
             Delegate d1 = GetTrueDelegate(ob);
             Delegate d2 = GetTrueDelegate(other);
-            if (d1 == d2)
-            {
-                return 0;
-            }
-            return -1;
+            return d1 == d2 ? 0 : -1;
         }
 #endif
     }

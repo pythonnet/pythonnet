@@ -14,7 +14,7 @@ namespace Python.Runtime
         internal EventInfo info;
         internal Hashtable reg;
 
-        public EventObject(EventInfo info) : base()
+        public EventObject(EventInfo info)
         {
             this.name = info.Name;
             this.info = info;
@@ -26,31 +26,29 @@ namespace Python.Runtime
         /// </summary>
         internal bool AddEventHandler(IntPtr target, IntPtr handler)
         {
-            Object obj = null;
+            object obj = null;
             if (target != IntPtr.Zero)
             {
-                CLRObject co = (CLRObject)ManagedType.GetManagedObject(target);
+                var co = (CLRObject)GetManagedObject(target);
                 obj = co.inst;
             }
 
             // Create a true delegate instance of the appropriate type to
             // wrap the Python handler. Note that wrapper delegate creation
             // always succeeds, though calling the wrapper may fail.
-
-            Type type = this.info.EventHandlerType;
+            Type type = info.EventHandlerType;
             Delegate d = PythonEngine.DelegateManager.GetDelegate(type, handler);
 
             // Now register the handler in a mapping from instance to pairs
             // of (handler hash, delegate) so we can lookup to remove later.
             // All this is done lazily to avoid overhead until an event is
             // actually subscribed to by a Python event handler.
-
             if (reg == null)
             {
                 reg = new Hashtable();
             }
-            object key = (obj != null) ? obj : this.info.ReflectedType;
-            ArrayList list = reg[key] as ArrayList;
+            object key = obj ?? info.ReflectedType;
+            var list = reg[key] as ArrayList;
             if (list == null)
             {
                 list = new ArrayList();
@@ -60,9 +58,8 @@ namespace Python.Runtime
 
             // Note that AddEventHandler helper only works for public events,
             // so we have to get the underlying add method explicitly.
-
             object[] args = { d };
-            MethodInfo mi = this.info.GetAddMethod(true);
+            MethodInfo mi = info.GetAddMethod(true);
             mi.Invoke(obj, BindingFlags.Default, null, args, null);
 
             return true;
@@ -74,22 +71,22 @@ namespace Python.Runtime
         /// </summary>
         internal bool RemoveEventHandler(IntPtr target, IntPtr handler)
         {
-            Object obj = null;
+            object obj = null;
             if (target != IntPtr.Zero)
             {
-                CLRObject co = (CLRObject)ManagedType.GetManagedObject(target);
+                var co = (CLRObject)GetManagedObject(target);
                 obj = co.inst;
             }
 
             IntPtr hash = Runtime.PyObject_Hash(handler);
-            if (Exceptions.ErrorOccurred() || (reg == null))
+            if (Exceptions.ErrorOccurred() || reg == null)
             {
                 Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
                 return false;
             }
 
-            object key = (obj != null) ? obj : this.info.ReflectedType;
-            ArrayList list = reg[key] as ArrayList;
+            object key = obj ?? info.ReflectedType;
+            var list = reg[key] as ArrayList;
 
             if (list == null)
             {
@@ -98,11 +95,11 @@ namespace Python.Runtime
             }
 
             object[] args = { null };
-            MethodInfo mi = this.info.GetRemoveMethod(true);
+            MethodInfo mi = info.GetRemoveMethod(true);
 
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
             {
-                Handler item = (Handler)list[i];
+                var item = (Handler)list[i];
                 if (item.hash != hash)
                 {
                     continue;
@@ -131,7 +128,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
-            EventObject self = GetManagedObject(ds) as EventObject;
+            var self = GetManagedObject(ds) as EventObject;
             EventBinding binding;
 
             if (self == null)
@@ -171,17 +168,16 @@ namespace Python.Runtime
         /// 'ob.SomeEvent += method', Python will attempt to set the attribute
         /// SomeEvent on ob to the result of the '+=' operation.
         /// </summary>
-        public static new int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
-            EventBinding e = GetManagedObject(val) as EventBinding;
+            var e = GetManagedObject(val) as EventBinding;
 
             if (e != null)
             {
                 return 0;
             }
 
-            string message = "cannot set event attributes";
-            Exceptions.RaiseTypeError(message);
+            Exceptions.RaiseTypeError("cannot set event attributes");
             return -1;
         }
 
@@ -191,23 +187,22 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
-            EventObject self = (EventObject)GetManagedObject(ob);
-            string s = String.Format("<event '{0}'>", self.name);
-            return Runtime.PyString_FromString(s);
+            var self = (EventObject)GetManagedObject(ob);
+            return Runtime.PyString_FromString($"<event '{self.name}'>");
         }
 
 
         /// <summary>
         /// Descriptor dealloc implementation.
         /// </summary>
-        public static new void tp_dealloc(IntPtr ob)
+        public new static void tp_dealloc(IntPtr ob)
         {
-            EventObject self = (EventObject)GetManagedObject(ob);
+            var self = (EventObject)GetManagedObject(ob);
             if (self.unbound != null)
             {
                 Runtime.XDecref(self.unbound.pyHandle);
             }
-            ExtensionType.FinalizeObject(self);
+            FinalizeObject(self);
         }
     }
 

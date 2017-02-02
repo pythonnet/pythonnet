@@ -9,6 +9,9 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/number.html
     /// for details.
     /// </summary>
+    /// <remarks>
+    /// TODO: add all of the PyNumber_XXX methods.
+    /// </remarks>
     public class PyNumber : PyObject
     {
         protected PyNumber(IntPtr ptr) : base(ptr)
@@ -30,8 +33,5 @@ namespace Python.Runtime
         {
             return Runtime.PyNumber_Check(value.obj);
         }
-
-
-        // TODO: add all of the PyNumber_XXX methods.
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -20,7 +19,9 @@ namespace Python.Runtime
         internal static void InitializeModuleDef()
         {
             if (module_def == IntPtr.Zero)
+            {
                 module_def = ModuleDefOffset.AllocModuleDef("clr");
+            }
         }
 #endif
 
@@ -100,26 +101,32 @@ namespace Python.Runtime
                 if (Runtime.PyTuple_Check(fromList.GetValueOrDefault()))
                 {
                     Runtime.XIncref(py_mod_dict);
-                    using (PyDict mod_dict = new PyDict(py_mod_dict))
+                    using (var mod_dict = new PyDict(py_mod_dict))
                     {
                         Runtime.XIncref(fromList.GetValueOrDefault());
-                        using (PyTuple from = new PyTuple(fromList.GetValueOrDefault()))
+                        using (var from = new PyTuple(fromList.GetValueOrDefault()))
                         {
                             foreach (PyObject item in from)
                             {
                                 if (mod_dict.HasKey(item))
+                                {
                                     continue;
+                                }
 
-                                string s = item.AsManagedObject(typeof(string)) as string;
+                                var s = item.AsManagedObject(typeof(string)) as string;
                                 if (s == null)
+                                {
                                     continue;
+                                }
 
                                 ManagedType attr = root.GetAttribute(s, true);
                                 if (attr == null)
+                                {
                                     continue;
+                                }
 
                                 Runtime.XIncref(attr.pyHandle);
-                                using (PyObject obj = new PyObject(attr.pyHandle))
+                                using (var obj = new PyObject(attr.pyHandle))
                                 {
                                     mod_dict.SetItem(s, obj);
                                 }
@@ -208,8 +215,7 @@ namespace Python.Runtime
             {
                 clr_prefix = "CLR."; // prepend when adding the module to sys.modules
                 realname = mod_name.Substring(4);
-                string msg = string.Format("Importing from the CLR.* namespace " +
-                                           "is deprecated. Please import '{0}' directly.", realname);
+                string msg = $"Importing from the CLR.* namespace is deprecated. Please import '{realname}' directly.";
                 Exceptions.deprecation(msg);
             }
             else
@@ -270,7 +276,7 @@ namespace Python.Runtime
             }
 
             // See if sys.modules for this interpreter already has the
-            // requested module. If so, just return the exising module.
+            // requested module. If so, just return the existing module.
             IntPtr modules = Runtime.PyImport_GetModuleDict();
             IntPtr module = Runtime.PyDict_GetItem(modules, py_mod_name);
 
@@ -310,8 +316,7 @@ namespace Python.Runtime
                 ManagedType mt = tail.GetAttribute(name, true);
                 if (!(mt is ModuleObject))
                 {
-                    string error = string.Format("No module named {0}", name);
-                    Exceptions.SetError(Exceptions.ImportError, error);
+                    Exceptions.SetError(Exceptions.ImportError, $"No module named {name}");
                     return IntPtr.Zero;
                 }
                 if (head == null)

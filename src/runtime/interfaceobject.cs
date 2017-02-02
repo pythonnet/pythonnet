@@ -47,8 +47,7 @@ namespace Python.Runtime
 
                 if (co == null || !type.IsInstanceOfType(co.inst))
                 {
-                    string msg = "object does not implement " + type.Name;
-                    Exceptions.SetError(Exceptions.TypeError, msg);
+                    Exceptions.SetError(Exceptions.TypeError, $"object does not implement {type.Name}");
                     return IntPtr.Zero;
                 }
 

@@ -1,7 +1,7 @@
 using System;
+using System.Collections;
 using System.Dynamic;
 using System.Linq.Expressions;
-using System.Collections;
 
 namespace Python.Runtime
 {
@@ -89,8 +89,8 @@ namespace Python.Runtime
         /// </remarks>
         public object AsManagedObject(Type t)
         {
-            Object result;
-            if (!Converter.ToManaged(this.obj, t, out result, false))
+            object result;
+            if (!Converter.ToManaged(obj, t, out result, false))
             {
                 throw new InvalidCastException("cannot convert object to target type");
             }
@@ -166,7 +166,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool HasAttr(string name)
         {
-            return (Runtime.PyObject_HasAttrString(obj, name) != 0);
+            return Runtime.PyObject_HasAttrString(obj, name) != 0;
         }
 
 
@@ -179,7 +179,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool HasAttr(PyObject name)
         {
-            return (Runtime.PyObject_HasAttr(obj, name.obj) != 0);
+            return Runtime.PyObject_HasAttr(obj, name.obj) != 0;
         }
 
 
@@ -358,7 +358,7 @@ namespace Python.Runtime
         /// </remarks>
         public virtual PyObject GetItem(string key)
         {
-            using (PyString pyKey = new PyString(key))
+            using (var pyKey = new PyString(key))
             {
                 return GetItem(pyKey);
             }
@@ -375,9 +375,9 @@ namespace Python.Runtime
         /// </remarks>
         public virtual PyObject GetItem(int index)
         {
-            using (PyInt key = new PyInt(index))
+            using (var key = new PyInt(index))
             {
-                return GetItem((PyObject)key);
+                return GetItem(key);
             }
         }
 
@@ -410,7 +410,7 @@ namespace Python.Runtime
         /// </remarks>
         public virtual void SetItem(string key, PyObject value)
         {
-            using (PyString pyKey = new PyString(key))
+            using (var pyKey = new PyString(key))
             {
                 SetItem(pyKey, value);
             }
@@ -427,7 +427,7 @@ namespace Python.Runtime
         /// </remarks>
         public virtual void SetItem(int index, PyObject value)
         {
-            using (PyInt pyindex = new PyInt(index))
+            using (var pyindex = new PyInt(index))
             {
                 SetItem(pyindex, value);
             }
@@ -462,7 +462,7 @@ namespace Python.Runtime
         /// </remarks>
         public virtual void DelItem(string key)
         {
-            using (PyString pyKey = new PyString(key))
+            using (var pyKey = new PyString(key))
             {
                 DelItem(pyKey);
             }
@@ -479,7 +479,7 @@ namespace Python.Runtime
         /// </remarks>
         public virtual void DelItem(int index)
         {
-            using (PyInt pyindex = new PyInt(index))
+            using (var pyindex = new PyInt(index))
             {
                 DelItem(pyindex);
             }
@@ -588,7 +588,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Invoke(params PyObject[] args)
         {
-            PyTuple t = new PyTuple(args);
+            var t = new PyTuple(args);
             IntPtr r = Runtime.PyObject_Call(obj, t.obj, IntPtr.Zero);
             t.Dispose();
             if (r == IntPtr.Zero)
@@ -626,7 +626,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Invoke(PyObject[] args, PyDict kw)
         {
-            PyTuple t = new PyTuple(args);
+            var t = new PyTuple(args);
             IntPtr r = Runtime.PyObject_Call(obj, t.obj, kw != null ? kw.obj : IntPtr.Zero);
             t.Dispose();
             if (r == IntPtr.Zero)
@@ -736,7 +736,7 @@ namespace Python.Runtime
                 Runtime.PyErr_Clear();
                 return false;
             }
-            return (r != 0);
+            return r != 0;
         }
 
 
@@ -755,7 +755,7 @@ namespace Python.Runtime
                 Runtime.PyErr_Clear();
                 return false;
             }
-            return (r != 0);
+            return r != 0;
         }
 
 
@@ -768,7 +768,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool IsCallable()
         {
-            return (Runtime.PyCallable_Check(obj) != 0);
+            return Runtime.PyCallable_Check(obj) != 0;
         }
 
 
@@ -794,7 +794,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool IsTrue()
         {
-            return (Runtime.PyObject_IsTrue(obj) != 0);
+            return Runtime.PyObject_IsTrue(obj) != 0;
         }
 
 
@@ -870,7 +870,7 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
-            return (r == 0);
+            return r == 0;
         }
 
 
@@ -914,7 +914,7 @@ namespace Python.Runtime
             int arg_count;
             for (arg_count = 0; arg_count < inargs.Length && !(inargs[arg_count] is Py.KeywordArguments); ++arg_count) ;
             IntPtr argtuple = Runtime.PyTuple_New(arg_count);
-            for (int i = 0; i < arg_count; i++)
+            for (var i = 0; i < arg_count; i++)
             {
                 IntPtr ptr;
                 if (inargs[i] is PyObject)
@@ -927,18 +927,26 @@ namespace Python.Runtime
                     ptr = Converter.ToPython(inargs[i], inargs[i]?.GetType());
                 }
                 if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
+                {
                     throw new PythonException();
+                }
             }
             args = new PyTuple(argtuple);
             kwargs = null;
             for (int i = arg_count; i < inargs.Length; i++)
             {
                 if (!(inargs[i] is Py.KeywordArguments))
+                {
                     throw new ArgumentException("Keyword arguments must come after normal arguments.");
+                }
                 if (kwargs == null)
+                {
                     kwargs = (Py.KeywordArguments)inargs[i];
+                }
                 else
+                {
                     kwargs.Update((Py.KeywordArguments)inargs[i]);
+                }
             }
         }
 
@@ -956,9 +964,13 @@ namespace Python.Runtime
                 finally
                 {
                     if (null != pyargs)
+                    {
                         pyargs.Dispose();
+                    }
                     if (null != kwargs)
+                    {
                         kwargs.Dispose();
+                    }
                 }
                 return true;
             }
@@ -980,9 +992,13 @@ namespace Python.Runtime
                 finally
                 {
                     if (null != pyargs)
+                    {
                         pyargs.Dispose();
+                    }
                     if (null != kwargs)
+                    {
                         kwargs.Dispose();
+                    }
                 }
                 return true;
             }
@@ -995,11 +1011,13 @@ namespace Python.Runtime
             return Converter.ToManaged(this.obj, binder.Type, out result, false);
         }
 
-        public override bool TryBinaryOperation(BinaryOperationBinder binder, Object arg, out Object result)
+        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
         {
             IntPtr res;
             if (!(arg is PyObject))
+            {
                 arg = arg.ToPython();
+            }
 
             switch (binder.Operation)
             {
@@ -1104,7 +1122,7 @@ namespace Python.Runtime
             return pyObj;
         }
 
-        public override bool TryUnaryOperation(UnaryOperationBinder binder, out Object result)
+        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
         {
             int r;
             IntPtr res;

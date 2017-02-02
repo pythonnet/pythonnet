@@ -6,14 +6,14 @@ namespace Python.Runtime
     /// <summary>
     /// Base class for extensions whose instances *share* a single Python
     /// type object, such as the types that represent CLR methods, fields,
-    /// etc. Instances implemented by this class do not support subtyping.
+    /// etc. Instances implemented by this class do not support sub-typing.
     /// </summary>
     internal abstract class ExtensionType : ManagedType
     {
         public ExtensionType()
         {
             // Create a new PyObject whose type is a generated type that is
-            // implemented by the particuar concrete ExtensionType subclass.
+            // implemented by the particular concrete ExtensionType subclass.
             // The Python instance object is related to an instance of a
             // particular concrete subclass with a hidden CLR gchandle.
 

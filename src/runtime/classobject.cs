@@ -19,9 +19,9 @@ namespace Python.Runtime
             ctors = type.GetConstructors();
             binder = new ConstructorBinder(type);
 
-            for (int i = 0; i < ctors.Length; i++)
+            foreach (ConstructorInfo t in ctors)
             {
-                binder.AddMethod(ctors[i]);
+                binder.AddMethod(t);
             }
         }
 
@@ -33,11 +33,11 @@ namespace Python.Runtime
         {
             MethodBase[] methods = binder.GetMethods();
             string str = "";
-            for (int i = 0; i < methods.Length; i++)
+            foreach (MethodBase t in methods)
             {
                 if (str.Length > 0)
                     str += Environment.NewLine;
-                str += methods[i].ToString();
+                str += t.ToString();
             }
             return Runtime.PyString_FromString(str);
         }
@@ -53,7 +53,6 @@ namespace Python.Runtime
             // Sanity check: this ensures a graceful error if someone does
             // something intentially wrong like use the managed metatype for
             // a class that is not really derived from a managed class.
-
             if (self == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");
@@ -64,8 +63,7 @@ namespace Python.Runtime
             // Primitive types do not have constructors, but they look like
             // they do from Python. If the ClassObject represents one of the
             // convertible primitive types, just convert the arg directly.
-
-            if (type.IsPrimitive || type == typeof(String))
+            if (type.IsPrimitive || type == typeof(string))
             {
                 if (Runtime.PyTuple_Size(args) != 1)
                 {
@@ -115,8 +113,7 @@ namespace Python.Runtime
         {
             // If this type is the Array type, the [<type>] means we need to
             // construct and return an array type of the given element type.
-
-            if ((this.type) == typeof(Array))
+            if (type == typeof(Array))
             {
                 if (Runtime.PyTuple_Check(idx))
                 {
@@ -137,21 +134,19 @@ namespace Python.Runtime
             // If there are generics in our namespace with the same base name
             // as the current type, then [<type>] means the caller wants to
             // bind the generic type matching the given type parameters.
-
             Type[] types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            string gname = this.type.FullName + "`" + types.Length.ToString();
-            Type gtype = AssemblyManager.LookupType(gname);
+            Type gtype = AssemblyManager.LookupType($"{type.FullName}`{types.Length}");
             if (gtype != null)
             {
-                GenericType g = ClassManager.GetClass(gtype) as GenericType;
+                var g = ClassManager.GetClass(gtype) as GenericType;
                 return g.type_subscript(idx);
-                /*Runtime.XIncref(g.pyHandle);
-                return g.pyHandle;*/
+                //Runtime.XIncref(g.pyHandle);
+                //return g.pyHandle;
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
         }
@@ -175,7 +170,6 @@ namespace Python.Runtime
             // Arg may be a tuple in the case of an indexer with multiple
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
-
             IntPtr args = idx;
             bool free = false;
 
@@ -187,7 +181,7 @@ namespace Python.Runtime
                 free = true;
             }
 
-            IntPtr value = IntPtr.Zero;
+            IntPtr value;
 
             try
             {
@@ -296,7 +290,7 @@ namespace Python.Runtime
             IntPtr tp = Runtime.PyObject_TYPE(ob);
             ClassBase cb = (ClassBase)GetManagedObject(tp);
 
-            if (cb.type != typeof(System.Delegate))
+            if (cb.type != typeof(Delegate))
             {
                 Exceptions.SetError(Exceptions.TypeError, "object is not callable");
                 return IntPtr.Zero;

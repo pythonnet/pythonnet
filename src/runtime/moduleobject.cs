@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Specialized;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -18,9 +16,9 @@ namespace Python.Runtime
         internal IntPtr dict;
         protected string _namespace;
 
-        public ModuleObject(string name) : base()
+        public ModuleObject(string name)
         {
-            if (name == String.Empty)
+            if (name == string.Empty)
             {
                 throw new ArgumentException("Name must not be empty!");
             }
@@ -30,8 +28,8 @@ namespace Python.Runtime
 
             // Use the filename from any of the assemblies just so there's something for
             // anything that expects __file__ to be set.
-            string filename = "unknown";
-            string docstring = "Namespace containing types from the following assemblies:\n\n";
+            var filename = "unknown";
+            var docstring = "Namespace containing types from the following assemblies:\n\n";
             foreach (Assembly a in AssemblyManager.GetAssemblies(name))
             {
                 if (!a.IsDynamic && a.Location != null)
@@ -54,7 +52,7 @@ namespace Python.Runtime
             Runtime.XDecref(pyfilename);
             Runtime.XDecref(pydocstring);
 
-            Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.DictOffset(this.pyHandle), dict);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.DictOffset(pyHandle), dict);
 
             InitializeModuleMembers();
         }
@@ -69,7 +67,7 @@ namespace Python.Runtime
         public ManagedType GetAttribute(string name, bool guess)
         {
             ManagedType cached = null;
-            this.cache.TryGetValue(name, out cached);
+            cache.TryGetValue(name, out cached);
             if (cached != null)
             {
                 return cached;
@@ -89,25 +87,23 @@ namespace Python.Runtime
             //    return null;
             //}
 
-            string qname = (_namespace == String.Empty)
+            string qname = _namespace == string.Empty
                 ? name
                 : _namespace + "." + name;
 
             // If the fully-qualified name of the requested attribute is
             // a namespace exported by a currently loaded assembly, return
             // a new ModuleObject representing that namespace.
-
             if (AssemblyManager.IsValidNamespace(qname))
             {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
-                return (ManagedType)m;
+                return m;
             }
 
             // Look for a type in the current namespace. Note that this
             // includes types, delegates, enums, interfaces and structs.
             // Only public namespace members are exposed to Python.
-
             type = AssemblyManager.LookupType(qname);
             if (type != null)
             {
@@ -117,7 +113,7 @@ namespace Python.Runtime
                 }
                 c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
-                return (ManagedType)c;
+                return c;
             }
 
             // This is a little repetitive, but it ensures that the right
@@ -131,7 +127,7 @@ namespace Python.Runtime
                 {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
-                    return (ManagedType)m;
+                    return m;
                 }
 
                 type = AssemblyManager.LookupType(qname);
@@ -143,7 +139,7 @@ namespace Python.Runtime
                     }
                     c = ClassManager.GetClass(type);
                     StoreAttribute(name, c);
-                    return (ManagedType)c;
+                    return c;
                 }
             }
 
@@ -154,7 +150,6 @@ namespace Python.Runtime
             // future assembly load could contribute a non-generic type to
             // the current namespace with the given basename, but unlikely
             // enough to complicate the implementation for now.
-
             if (guess)
             {
                 string gname = GenericUtil.GenericNameForBaseName(_namespace, name);
@@ -193,10 +188,10 @@ namespace Python.Runtime
             ManagedType m = null;
             foreach (string name in AssemblyManager.GetNames(_namespace))
             {
-                this.cache.TryGetValue(name, out m);
+                cache.TryGetValue(name, out m);
                 if (m == null)
                 {
-                    ManagedType attr = this.GetAttribute(name, true);
+                    ManagedType attr = GetAttribute(name, true);
                 }
             }
         }
@@ -209,38 +204,36 @@ namespace Python.Runtime
             Type funcmarker = typeof(ModuleFunctionAttribute);
             Type propmarker = typeof(ModulePropertyAttribute);
             Type ftmarker = typeof(ForbidPythonThreadsAttribute);
-            Type type = this.GetType();
+            Type type = GetType();
 
             BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
 
             while (type != null)
             {
                 MethodInfo[] methods = type.GetMethods(flags);
-                for (int i = 0; i < methods.Length; i++)
+                foreach (MethodInfo method in methods)
                 {
-                    MethodInfo method = methods[i];
                     object[] attrs = method.GetCustomAttributes(funcmarker, false);
                     object[] forbid = method.GetCustomAttributes(ftmarker, false);
-                    bool allow_threads = (forbid.Length == 0);
+                    bool allow_threads = forbid.Length == 0;
                     if (attrs.Length > 0)
                     {
                         string name = method.Name;
-                        MethodInfo[] mi = new MethodInfo[1];
+                        var mi = new MethodInfo[1];
                         mi[0] = method;
-                        ModuleFunctionObject m = new ModuleFunctionObject(type, name, mi, allow_threads);
+                        var m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
                     }
                 }
 
                 PropertyInfo[] properties = type.GetProperties();
-                for (int i = 0; i < properties.Length; i++)
+                foreach (PropertyInfo property in properties)
                 {
-                    PropertyInfo property = properties[i];
                     object[] attrs = property.GetCustomAttributes(propmarker, false);
                     if (attrs.Length > 0)
                     {
                         string name = property.Name;
-                        ModulePropertyObject p = new ModulePropertyObject(property);
+                        var p = new ModulePropertyObject(property);
                         StoreAttribute(name, p);
                     }
                 }
@@ -257,7 +250,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
         {
-            ModuleObject self = (ModuleObject)GetManagedObject(ob);
+            var self = (ModuleObject)GetManagedObject(ob);
 
             if (!Runtime.PyString_Check(key))
             {
@@ -296,9 +289,8 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_repr(IntPtr ob)
         {
-            ModuleObject self = (ModuleObject)GetManagedObject(ob);
-            string s = String.Format("<module '{0}'>", self.moduleName);
-            return Runtime.PyString_FromString(s);
+            var self = (ModuleObject)GetManagedObject(ob);
+            return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
     }
 
@@ -318,7 +310,7 @@ namespace Python.Runtime
 
         public CLRModule() : base("clr")
         {
-            _namespace = String.Empty;
+            _namespace = string.Empty;
 
             // This hackery is required in order to allow a plain Python to
             // import the managed runtime via the CLR bootstrapper module.
@@ -357,13 +349,13 @@ namespace Python.Runtime
             }
         }
 
-        [ModuleFunctionAttribute()]
+        [ModuleFunctionAttribute]
         public static bool getPreload()
         {
             return preload;
         }
 
-        [ModuleFunctionAttribute()]
+        [ModuleFunctionAttribute]
         public static void setPreload(bool preloadFlag)
         {
             preload = preloadFlag;
@@ -383,8 +375,8 @@ namespace Python.Runtime
             set { _SuppressOverloads = value; }
         }
 
-        [ModuleFunctionAttribute()]
-        [ForbidPythonThreadsAttribute()]
+        [ModuleFunctionAttribute]
+        [ForbidPythonThreadsAttribute]
         public static Assembly AddReference(string name)
         {
             AssemblyManager.UpdatePath();
@@ -404,37 +396,40 @@ namespace Python.Runtime
             }
             if (assembly == null)
             {
-                string msg = String.Format("Unable to find assembly '{0}'.", name);
-                throw new System.IO.FileNotFoundException(msg);
+                throw new System.IO.FileNotFoundException($"Unable to find assembly '{name}'.");
             }
 
             return assembly;
         }
 
-        [ModuleFunctionAttribute()]
-        [ForbidPythonThreadsAttribute()]
+        [ModuleFunctionAttribute]
+        [ForbidPythonThreadsAttribute]
         public static string FindAssembly(string name)
         {
             AssemblyManager.UpdatePath();
             return AssemblyManager.FindAssembly(name);
         }
 
-        [ModuleFunctionAttribute()]
-        public static String[] ListAssemblies(bool verbose)
+        [ModuleFunctionAttribute]
+        public static string[] ListAssemblies(bool verbose)
         {
             AssemblyName[] assnames = AssemblyManager.ListAssemblies();
-            String[] names = new String[assnames.Length];
-            for (int i = 0; i < assnames.Length; i++)
+            var names = new string[assnames.Length];
+            for (var i = 0; i < assnames.Length; i++)
             {
                 if (verbose)
+                {
                     names[i] = assnames[i].FullName;
+                }
                 else
+                {
                     names[i] = assnames[i].Name;
+                }
             }
             return names;
         }
 
-        [ModuleFunctionAttribute()]
+        [ModuleFunctionAttribute]
         public static int _AtExit()
         {
             return Runtime.AtExit();

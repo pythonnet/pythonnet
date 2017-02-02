@@ -1,7 +1,4 @@
 using System;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 using System.Collections;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -40,9 +37,9 @@ namespace Python.Runtime
         /// </summary>
         public IntPtr GetPythonHandle(Delegate d)
         {
-            if ((d != null) && (d.Target is Dispatcher))
+            if (d?.Target is Dispatcher)
             {
-                Dispatcher disp = d.Target as Dispatcher;
+                var disp = (Dispatcher)d.Target;
                 return disp.target;
             }
             return IntPtr.Zero;
@@ -61,25 +58,24 @@ namespace Python.Runtime
             // unique signatures rather than delegate types, since multiple
             // delegate types with the same sig could use the same dispatcher.
 
-            Object item = cache[dtype];
+            object item = cache[dtype];
             if (item != null)
             {
                 return (Type)item;
             }
 
-            string name = "__" + dtype.FullName + "Dispatcher";
+            string name = $"__{dtype.FullName}Dispatcher";
             name = name.Replace('.', '_');
             name = name.Replace('+', '_');
             TypeBuilder tb = codeGenerator.DefineType(name, basetype);
 
             // Generate a constructor for the generated type that calls the
             // appropriate constructor of the Dispatcher base type.
-
             MethodAttributes ma = MethodAttributes.Public |
                                   MethodAttributes.HideBySig |
                                   MethodAttributes.SpecialName |
                                   MethodAttributes.RTSpecialName;
-            CallingConventions cc = CallingConventions.Standard;
+            var cc = CallingConventions.Standard;
             Type[] args = { ptrtype, typetype };
             ConstructorBuilder cb = tb.DefineConstructor(ma, cc, args);
             ConstructorInfo ci = basetype.GetConstructor(args);
@@ -96,12 +92,11 @@ namespace Python.Runtime
             // arguments and hands them to the Dispatch() method, which deals
             // with converting the arguments, calling the Python method and
             // converting the result of the call.
-
             MethodInfo method = dtype.GetMethod("Invoke");
             ParameterInfo[] pi = method.GetParameters();
 
-            Type[] signature = new Type[pi.Length];
-            for (int i = 0; i < pi.Length; i++)
+            var signature = new Type[pi.Length];
+            for (var i = 0; i < pi.Length; i++)
             {
                 signature[i] = pi[i].ParameterType;
             }
@@ -117,7 +112,7 @@ namespace Python.Runtime
             il.Emit(OpCodes.Newobj, ctor);
             il.Emit(OpCodes.Stloc_0);
 
-            for (int c = 0; c < signature.Length; c++)
+            for (var c = 0; c < signature.Length; c++)
             {
                 Type t = signature[c];
                 il.Emit(OpCodes.Ldloc_0);
@@ -184,10 +179,7 @@ namespace Python.Runtime
        of the required delegate type, storing the IntPtr in it directly.
        This would be slightly cleaner, but I'm not sure if delegates are
        too "special" for this to work. It would be more work, so for now
-       the 80/20 rule applies :)
-
-    */
-
+       the 80/20 rule applies :) */
     public class Dispatcher
     {
         public IntPtr target;
@@ -238,7 +230,7 @@ namespace Python.Runtime
             IntPtr pyargs = Runtime.PyTuple_New(pi.Length);
             Type rtype = method.ReturnType;
 
-            for (int i = 0; i < pi.Length; i++)
+            for (var i = 0; i < pi.Length; i++)
             {
                 // Here we own the reference to the Python value, and we
                 // give the ownership to the arg tuple.
@@ -251,7 +243,7 @@ namespace Python.Runtime
 
             if (op == IntPtr.Zero)
             {
-                PythonException e = new PythonException();
+                var e = new PythonException();
                 throw e;
             }
 
@@ -260,12 +252,11 @@ namespace Python.Runtime
                 return null;
             }
 
-            Object result = null;
+            object result = null;
             if (!Converter.ToManaged(op, rtype, out result, false))
             {
-                string s = "could not convert Python result to " + rtype.ToString();
                 Runtime.XDecref(op);
-                throw new ConversionException(s);
+                throw new ConversionException($"could not convert Python result to {rtype}");
             }
 
             Runtime.XDecref(op);
@@ -274,9 +265,9 @@ namespace Python.Runtime
     }
 
 
-    public class ConversionException : System.Exception
+    public class ConversionException : Exception
     {
-        public ConversionException() : base()
+        public ConversionException()
         {
         }
 
