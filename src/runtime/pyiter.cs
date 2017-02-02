@@ -5,7 +5,9 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Represents a standard Python iterator object. See the documentation at
-    /// http://www.python.org/doc/2.4.4/api/iterator.html for details.
+    /// PY2: https://docs.python.org/2/c-api/iterator.html
+    /// PY3: https://docs.python.org/3/c-api/iterator.html
+    /// for details.
     /// </summary>
     public class PyIter : PyObject, IEnumerator<object>
     {

@@ -5,7 +5,9 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Represents a Python integer object. See the documentation at
-    /// http://www.python.org/doc/current/api/intObjects.html for details.
+    /// PY2: https://docs.python.org/2/c-api/int.html
+    /// PY3: No equivalent
+    /// for details.
     /// </summary>
     public class PyInt : PyNumber
     {

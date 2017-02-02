@@ -6,7 +6,9 @@ namespace Python.Runtime
     /// <summary>
     /// Represents a generic Python sequence. The methods of this class are
     /// equivalent to the Python "abstract sequence API". See
-    /// http://www.python.org/doc/current/api/sequence.html for details.
+    /// PY2: https://docs.python.org/2/c-api/sequence.html
+    /// PY3: https://docs.python.org/3/c-api/sequence.html
+    /// for details.
     /// </summary>
     public class PySequence : PyObject, IEnumerable
     {

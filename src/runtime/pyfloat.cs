@@ -5,7 +5,9 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Represents a Python float object. See the documentation at
-    /// http://www.python.org/doc/current/api/floatObjects.html
+    /// PY2: https://docs.python.org/2/c-api/float.html
+    /// PY3: https://docs.python.org/3/c-api/float.html
+    /// for details.
     /// </summary>
     public class PyFloat : PyNumber
     {

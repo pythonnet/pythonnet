@@ -8,7 +8,9 @@ namespace Python.Runtime
     /// <summary>
     /// Represents a generic Python object. The methods of this class are
     /// generally equivalent to the Python "abstract object API". See
-    /// http://www.python.org/doc/current/api/object.html for details.
+    /// PY2: https://docs.python.org/2/c-api/object.html
+    /// PY3: https://docs.python.org/3/c-api/object.html
+    /// for details.
     /// </summary>
     public class PyObject : DynamicObject, IDisposable
     {

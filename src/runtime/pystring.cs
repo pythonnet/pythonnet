@@ -4,9 +4,13 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Represents a Python (ansi) string object. See the documentation at
-    /// http://www.python.org/doc/current/api/stringObjects.html for details.
-    /// 2011-01-29: ...Then why does the string constructor call PyUnicode_FromUnicode()???
+    /// PY2: https://docs.python.org/2/c-api/string.html
+    /// PY3: No Equivalent
+    /// for details.
     /// </summary>
+    /// <remarks>
+    /// 2011-01-29: ...Then why does the string constructor call PyUnicode_FromUnicode()???
+    /// </remarks>
     public class PyString : PySequence
     {
         /// <summary>

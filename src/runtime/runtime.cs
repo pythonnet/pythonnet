@@ -88,13 +88,13 @@ namespace Python.Runtime
 #endif
     }
 
+    /// <summary>
+    /// Encapsulates the low-level Python C API. Note that it is
+    /// the responsibility of the caller to have acquired the GIL
+    /// before calling any of these methods.
+    /// </summary>
     public class Runtime
     {
-        /// <summary>
-        /// Encapsulates the low-level Python C API. Note that it is
-        /// the responsibility of the caller to have acquired the GIL
-        /// before calling any of these methods.
-        /// </summary>
 #if UCS4
         public const int UCS = 4;
 #elif UCS2
@@ -876,14 +876,15 @@ namespace Python.Runtime
             PyMethod_New(IntPtr func, IntPtr self, IntPtr cls);
 
 
+        //====================================================================
+        // Python abstract object API
+        //====================================================================
+
         /// <summary>
-        /// Python abstract object API
-        /// </summary>
-        /// <remarks>
         /// A macro-like method to get the type of a Python object. This is
         /// designed to be lean and mean in IL &amp; avoid managed &lt;-&gt; unmanaged
         /// transitions. Note that this does not incref the type object.
-        /// </remarks>
+        /// </summary>
         internal unsafe static IntPtr
             PyObject_TYPE(IntPtr op)
         {
@@ -1089,9 +1090,10 @@ namespace Python.Runtime
             PyObject_Dir(IntPtr pointer);
 
 
-        /// <summary>
-        /// Python number API
-        /// </summary>
+        //====================================================================
+        // Python number API
+        //====================================================================
+
 #if PYTHON3
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyNumber_Long",
@@ -1393,9 +1395,10 @@ namespace Python.Runtime
         internal unsafe static extern IntPtr
             PyNumber_Invert(IntPtr o1);
 
-        /// <summary>
-        /// Python sequence API
-        /// </summary>
+        //====================================================================
+        // Python sequence API
+        //====================================================================
+
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern bool
@@ -1472,9 +1475,10 @@ namespace Python.Runtime
             PySequence_List(IntPtr pointer);
 
 
-        /// <summary>
-        /// Python string API
-        /// </summary>
+        //====================================================================
+        // Python string API
+        //====================================================================
+
         internal static bool IsStringType(IntPtr op)
         {
             IntPtr t = PyObject_TYPE(op);
@@ -1766,9 +1770,10 @@ namespace Python.Runtime
             return null;
         }
 
-        /// <summary>
-        /// Python dictionary API
-        /// </summary>
+        //====================================================================
+        // Python dictionary API
+        //====================================================================
+
         internal static bool PyDict_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == Runtime.PyDictType;
@@ -1855,9 +1860,10 @@ namespace Python.Runtime
             PyDict_Size(IntPtr pointer);
 
 
-        /// <summary>
-        /// Python list API
-        /// </summary>
+        //====================================================================
+        // Python list API
+        //====================================================================
+
         internal static bool PyList_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == Runtime.PyListType;
@@ -1919,9 +1925,10 @@ namespace Python.Runtime
             PyList_Size(IntPtr pointer);
 
 
-        /// <summary>
-        /// Python tuple API
-        /// </summary>
+        //====================================================================
+        // Python tuple API
+        //====================================================================
+
         internal static bool PyTuple_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == Runtime.PyTupleType;
@@ -1953,9 +1960,10 @@ namespace Python.Runtime
             PyTuple_Size(IntPtr pointer);
 
 
-        /// <summary>
-        /// Python iterator API
-        /// </summary>
+        //====================================================================
+        // Python iterator API
+        //====================================================================
+
 #if PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -1976,9 +1984,10 @@ namespace Python.Runtime
         internal unsafe static extern IntPtr
             PyIter_Next(IntPtr pointer);
 
-        /// <summary>
-        /// Python module API
-        /// </summary>
+        //====================================================================
+        // Python module API
+        //====================================================================
+
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern IntPtr
@@ -2062,9 +2071,10 @@ namespace Python.Runtime
             PySys_SetObject(string name, IntPtr ob);
 
 
-        /// <summary>
-        /// Python type object API
-        /// </summary>
+        //====================================================================
+        // Python type object API
+        //====================================================================
+
         internal static bool PyType_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, Runtime.PyTypeType);
@@ -2142,9 +2152,10 @@ namespace Python.Runtime
             PyObject_GC_UnTrack(IntPtr tp);
 
 
-        /// <summary>
-        /// Python memory API
-        /// </summary>
+        //====================================================================
+        // Python memory API
+        //====================================================================
+
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern IntPtr
@@ -2161,9 +2172,10 @@ namespace Python.Runtime
             PyMem_Free(IntPtr ptr);
 
 
-        /// <summary>
-        /// Python exception API
-        /// </summary>
+        //====================================================================
+        // Python exception API
+        //====================================================================
+
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern void
@@ -2225,9 +2237,10 @@ namespace Python.Runtime
             PyErr_Print();
 
 
-        /// <summary>
-        /// Miscellaneous
-        /// </summary>
+        //====================================================================
+        // Miscellaneous
+        //====================================================================
+
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern IntPtr

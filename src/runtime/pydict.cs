@@ -5,7 +5,9 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Represents a Python dictionary object. See the documentation at
-    /// http://www.python.org/doc/current/api/dictObjects.html for details.
+    /// PY2: https://docs.python.org/2/c-api/dict.html
+    /// PY3: https://docs.python.org/3/c-api/dict.html
+    /// for details.
     /// </summary>
     public class PyDict : PyObject
     {
