@@ -3,7 +3,7 @@
 # Executable paths for OpenCover
 # Note if OpenCover fails, it won't affect the exit codes.
 $OPENCOVER = Resolve-Path .\packages\OpenCover.*\tools\OpenCover.Console.exe
-$NUNIT = Resolve-Path .\packages\NUnit.ConsoleRunner*\tools\nunit3-console.exe
+$NUNIT = Resolve-Path .\packages\NUnit.Runners*\tools\"$env:NUNIT".exe
 $PY = Get-Command python
 
 # Can't use ".\build\*\Python.EmbeddingTest.dll". Missing framework files.
@@ -19,11 +19,11 @@ if ($PYTHON_STATUS -ne 0) {
 }
 
 # Run Embedded tests with C# coverage
-# .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage -target:"$NUNIT" -targetargs:"$CS_TESTS" -returntargetcode
-# $NUNIT_STATUS = $LastExitCode
-# if ($NUNIT_STATUS -ne 0) {
-#     Write-Host "Embedded tests failed" -ForegroundColor "Red"
-# }
+.$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage -target:"$NUNIT" -targetargs:"$CS_TESTS" -returntargetcode
+$NUNIT_STATUS = $LastExitCode
+if ($NUNIT_STATUS -ne 0) {
+    Write-Host "Embedded tests failed" -ForegroundColor "Red"
+}
 
 # Embedded tests failing due to open issues, pass/fail only on Python exit code
 # if ($PYTHON_STATUS -ne 0 -or $NUNIT_STATUS -ne 0) {

@@ -10,6 +10,7 @@ environment:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
     PYTHONPATH: C:\testdir
+    NUNIT: nunit-console
     CONDA_BLD: C:\conda
     CONDA_BLD_VERSION: 3.5
 
@@ -34,6 +35,7 @@ init:
   - set CONDA_BLD_ARCH=%PLATFORM:x=%
   - set PYTHON=C:\PYTHON%PYTHON_VERSION:.=%
   - if %PLATFORM%==x86 (set CONDA_BLD_ARCH=32)
+  - if %PLATFORM%==x86 (set NUNIT=%NUNIT%-x86)
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
 
   # Prepend newly installed Python to the PATH of this build
