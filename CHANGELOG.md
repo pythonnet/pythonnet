@@ -10,15 +10,18 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Code Coverage (#345)
--   Add `pysetargv` (#347)
+-   Added `pysetargv` (#347)
+-   Added XML Documentation (#349)
+-   Added PY3 settings to configuration-manager (#346)
 
 ### Changed
 
 -   Refactored `setup.py` (#337)
--   Upgraded NUnit framework to 3.5 (#341)
+-   Upgraded NUnit framework to 2.6.4 (#353)
 -   Completed refactor of Build Directives on `Runtime.cs` (#339)
 -   Refactor tests and removed dependency on `six` (#329)
 -   Unfroze Mono version on Travis (#345)
+-   Enabled Embedded tests on Appveyor (#353)
 
 ### Fixed
 
