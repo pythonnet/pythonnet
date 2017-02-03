@@ -437,7 +437,7 @@ namespace Python.Runtime
                 case TypeCode.Int32:
 #if PYTHON2 // Trickery to support 64-bit platforms.
 
-                    if (Runtime.is32bit)
+                    if (Runtime.Is32Bit)
                     {
                         op = Runtime.PyNumber_Int(value);
 

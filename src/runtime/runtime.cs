@@ -170,14 +170,14 @@ namespace Python.Runtime
         internal static Object IsFinalizingLock = new Object();
         internal static bool IsFinalizing = false;
 
-        internal static bool is32bit;
+        internal static bool Is32Bit;
 
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
         internal static void Initialize()
         {
-            is32bit = IntPtr.Size == 4;
+            Is32Bit = IntPtr.Size == 4;
 
             if (Runtime.Py_IsInitialized() == 0)
             {
@@ -501,7 +501,7 @@ namespace Python.Runtime
             void* p = (void*)op;
             if ((void*)0 != p)
             {
-                if (is32bit)
+                if (Is32Bit)
                 {
                     (*(int*)p)++;
                 }
@@ -524,7 +524,7 @@ namespace Python.Runtime
             void* p = (void*)op;
             if ((void*)0 != p)
             {
-                if (is32bit)
+                if (Is32Bit)
                 {
                     --(*(int*)p);
                 }
@@ -535,11 +535,11 @@ namespace Python.Runtime
                 if ((*(int*)p) == 0)
                 {
                     // PyObject_HEAD: struct _typeobject *ob_type
-                    void* t = is32bit
+                    void* t = Is32Bit
                         ? (void*)(*((uint*)p + 1))
                         : (void*)(*((ulong*)p + 1));
                     // PyTypeObject: destructor tp_dealloc
-                    void* f = is32bit
+                    void* f = Is32Bit
                         ? (void*)(*((uint*)t + 6))
                         : (void*)(*((ulong*)t + 6));
                     if ((void*)0 == f)
@@ -558,7 +558,7 @@ namespace Python.Runtime
             void* p = (void*)op;
             if ((void*)0 != p)
             {
-                if (is32bit)
+                if (Is32Bit)
                 {
                     return (*(int*)p);
                 }
@@ -887,7 +887,7 @@ namespace Python.Runtime
 #else
             int n = 1;
 #endif
-            if (is32bit)
+            if (Is32Bit)
             {
                 return new IntPtr((void*)(*((uint*)p + n)));
             }
