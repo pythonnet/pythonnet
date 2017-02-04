@@ -169,8 +169,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="arrayobject.cs" />
-    <Compile Include="assemblyinfo.cs" />
     <Compile Include="assemblymanager.cs" />
     <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />

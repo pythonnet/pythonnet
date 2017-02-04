@@ -161,7 +161,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="assemblyinfo.cs" />
+    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="pythonconsole.cs" />
   </ItemGroup>
   <ItemGroup>
