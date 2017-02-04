@@ -170,14 +170,18 @@ namespace Python.Runtime
         internal static Object IsFinalizingLock = new Object();
         internal static bool IsFinalizing = false;
 
-        internal static bool is32bit;
+        internal static bool Is32Bit;
+        internal static bool IsPython2;
+        internal static bool IsPython3;
 
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
         internal static void Initialize()
         {
-            is32bit = IntPtr.Size == 4;
+            Is32Bit = IntPtr.Size == 4;
+            IsPython2 = pyversionnumber < 30;
+            IsPython3 = pyversionnumber >= 30;
 
             if (Runtime.Py_IsInitialized() == 0)
             {
@@ -189,13 +193,19 @@ namespace Python.Runtime
                 Runtime.PyEval_InitThreads();
             }
 
-#if PYTHON3
-            IntPtr op = Runtime.PyImport_ImportModule("builtins");
-            IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
-#elif PYTHON2
-            IntPtr dict = Runtime.PyImport_GetModuleDict();
-            IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");
-#endif
+            IntPtr op;
+            IntPtr dict;
+            if (IsPython3)
+            {
+                op = Runtime.PyImport_ImportModule("builtins");
+                dict = Runtime.PyObject_GetAttrString(op, "__dict__");
+
+            }
+            else // Python2
+            {
+                dict = Runtime.PyImport_GetModuleDict();
+                op = Runtime.PyDict_GetItemString(dict, "__builtin__");
+            }
             PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
 
@@ -501,7 +511,7 @@ namespace Python.Runtime
             void* p = (void*)op;
             if ((void*)0 != p)
             {
-                if (is32bit)
+                if (Is32Bit)
                 {
                     (*(int*)p)++;
                 }
@@ -524,7 +534,7 @@ namespace Python.Runtime
             void* p = (void*)op;
             if ((void*)0 != p)
             {
-                if (is32bit)
+                if (Is32Bit)
                 {
                     --(*(int*)p);
                 }
@@ -535,11 +545,11 @@ namespace Python.Runtime
                 if ((*(int*)p) == 0)
                 {
                     // PyObject_HEAD: struct _typeobject *ob_type
-                    void* t = is32bit
+                    void* t = Is32Bit
                         ? (void*)(*((uint*)p + 1))
                         : (void*)(*((ulong*)p + 1));
                     // PyTypeObject: destructor tp_dealloc
-                    void* f = is32bit
+                    void* f = Is32Bit
                         ? (void*)(*((uint*)t + 6))
                         : (void*)(*((ulong*)t + 6));
                     if ((void*)0 == f)
@@ -558,7 +568,7 @@ namespace Python.Runtime
             void* p = (void*)op;
             if ((void*)0 != p)
             {
-                if (is32bit)
+                if (Is32Bit)
                 {
                     return (*(int*)p);
                 }
@@ -887,7 +897,7 @@ namespace Python.Runtime
 #else
             int n = 1;
 #endif
-            if (is32bit)
+            if (Is32Bit)
             {
                 return new IntPtr((void*)(*((uint*)p + n)));
             }

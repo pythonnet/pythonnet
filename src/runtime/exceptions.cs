@@ -81,17 +81,14 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-#if PYTHON3
-            exceptions_module = Runtime.PyImport_ImportModule("builtins");
-#elif PYTHON2
-            exceptions_module = Runtime.PyImport_ImportModule("exceptions");
-#endif
+            string exceptionsModuleName = Runtime.IsPython3 ? "builtins" : "exceptions";
+            exceptions_module = Runtime.PyImport_ImportModule(exceptionsModuleName);
+
             Exceptions.ErrorCheck(exceptions_module);
             warnings_module = Runtime.PyImport_ImportModule("warnings");
             Exceptions.ErrorCheck(warnings_module);
             Type type = typeof(Exceptions);
-            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public |
-                                                    BindingFlags.Static))
+            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
                 IntPtr op = Runtime.PyObject_GetAttrString(exceptions_module, fi.Name);
                 if (op != IntPtr.Zero)
@@ -116,8 +113,7 @@ namespace Python.Runtime
             if (Runtime.Py_IsInitialized() != 0)
             {
                 Type type = typeof(Exceptions);
-                foreach (FieldInfo fi in type.GetFields(BindingFlags.Public |
-                                                        BindingFlags.Static))
+                foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
                 {
                     var op = (IntPtr)fi.GetValue(type);
                     if (op != IntPtr.Zero)

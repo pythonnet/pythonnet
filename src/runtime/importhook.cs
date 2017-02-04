@@ -35,11 +35,11 @@ namespace Python.Runtime
             // but it provides the most "Pythonic" way of dealing with CLR
             // modules (Python doesn't provide a way to emulate packages).
             IntPtr dict = Runtime.PyImport_GetModuleDict();
-#if PYTHON3
-            IntPtr mod = Runtime.PyImport_ImportModule("builtins");
-#elif PYTHON2
-            IntPtr mod = Runtime.PyDict_GetItemString(dict, "__builtin__");
-#endif
+
+            IntPtr mod = Runtime.IsPython3 
+                ? Runtime.PyImport_ImportModule("builtins") 
+                : Runtime.PyDict_GetItemString(dict, "__builtin__");
+
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
             Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
@@ -86,7 +86,14 @@ namespace Python.Runtime
         public static IntPtr GetCLRModule(IntPtr? fromList = null)
         {
             root.InitializePreload();
-#if PYTHON3
+
+            if (Runtime.IsPython2)
+            {
+                Runtime.XIncref(py_clr_module);
+                return py_clr_module;
+            }
+
+            // Python 3
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);
@@ -135,7 +142,6 @@ namespace Python.Runtime
                     }
                 }
             }
-#endif
             Runtime.XIncref(py_clr_module);
             return py_clr_module;
         }

@@ -82,14 +82,14 @@ namespace Python.Runtime
             {
                 return Runtime.PyUnicodeType;
             }
-#if PYTHON3
-            else if ((op == int16Type) ||
-                     (op == int32Type) ||
-                     (op == int64Type))
+
+            else if (Runtime.IsPython3 && ((op == int16Type) ||
+                                           (op == int32Type) ||
+                                           (op == int64Type)))
             {
                 return Runtime.PyIntType;
             }
-#endif
+
             else if ((op == int16Type) ||
                      (op == int32Type))
             {
@@ -435,9 +435,8 @@ namespace Python.Runtime
                     return true;
 
                 case TypeCode.Int32:
-#if PYTHON2 // Trickery to support 64-bit platforms.
-
-                    if (Runtime.is32bit)
+                    // Trickery to support 64-bit platforms.
+                    if (Runtime.IsPython2 && Runtime.Is32Bit)
                     {
                         op = Runtime.PyNumber_Int(value);
 
@@ -461,11 +460,8 @@ namespace Python.Runtime
                         result = ival;
                         return true;
                     }
-                    else
+                    else // Python3 always use PyLong API
                     {
-#elif PYTHON3 // When using Python3 always use the PyLong API
-                {
-#endif
                         op = Runtime.PyNumber_Long(value);
                         if (op == IntPtr.Zero)
                         {
@@ -613,17 +609,20 @@ namespace Python.Runtime
                         if (Runtime.PyUnicode_GetSize(value) == 1)
                         {
                             op = Runtime.PyUnicode_AS_UNICODE(value);
-#if UCS2
-                            // 2011-01-02: Marshal as character array because the cast
-                            // result = (char)Marshal.ReadInt16(op); throws an OverflowException
-                            // on negative numbers with Check Overflow option set on the project
-                            Char[] buff = new Char[1];
-                            Marshal.Copy(op, buff, 0, 1);
-                            result = buff[0];
-#elif UCS4
-                            // XXX this is probably NOT correct?
-                            result = (char)Marshal.ReadInt32(op);
-#endif
+                            if (Runtime.UCS == 2) // Don't trust linter, statement not always true.
+                            {
+                                // 2011-01-02: Marshal as character array because the cast
+                                // result = (char)Marshal.ReadInt16(op); throws an OverflowException
+                                // on negative numbers with Check Overflow option set on the project
+                                Char[] buff = new Char[1];
+                                Marshal.Copy(op, buff, 0, 1);
+                                result = buff[0];
+                            }
+                            else // UCS4
+                            {
+                                // XXX this is probably NOT correct?
+                                result = (char)Marshal.ReadInt32(op);
+                            }
                             return true;
                         }
                         goto type_error;
