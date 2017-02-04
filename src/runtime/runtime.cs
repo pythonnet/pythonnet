@@ -171,6 +171,8 @@ namespace Python.Runtime
         internal static bool IsFinalizing = false;
 
         internal static bool Is32Bit;
+        internal static bool IsPython2;
+        internal static bool IsPython3;
 
         /// <summary>
         /// Initialize the runtime...
@@ -178,6 +180,8 @@ namespace Python.Runtime
         internal static void Initialize()
         {
             Is32Bit = IntPtr.Size == 4;
+            IsPython2 = pyversionnumber < 30;
+            IsPython3 = pyversionnumber >= 30;
 
             if (Runtime.Py_IsInitialized() == 0)
             {
@@ -189,13 +193,19 @@ namespace Python.Runtime
                 Runtime.PyEval_InitThreads();
             }
 
-#if PYTHON3
-            IntPtr op = Runtime.PyImport_ImportModule("builtins");
-            IntPtr dict = Runtime.PyObject_GetAttrString(op, "__dict__");
-#elif PYTHON2
-            IntPtr dict = Runtime.PyImport_GetModuleDict();
-            IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");
-#endif
+            IntPtr op;
+            IntPtr dict;
+            if (IsPython3)
+            {
+                op = Runtime.PyImport_ImportModule("builtins");
+                dict = Runtime.PyObject_GetAttrString(op, "__dict__");
+
+            }
+            else // Python2
+            {
+                dict = Runtime.PyImport_GetModuleDict();
+                op = Runtime.PyDict_GetItemString(dict, "__builtin__");
+            }
             PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
 
