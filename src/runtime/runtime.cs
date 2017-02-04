@@ -9,30 +9,42 @@ using Mono.Unix;
 
 namespace Python.Runtime
 {
-    [SuppressUnmanagedCodeSecurityAttribute()]
+    [SuppressUnmanagedCodeSecurity()]
     static class NativeMethods
     {
 #if MONO_LINUX || MONO_OSX
-        static public IntPtr LoadLibrary(string fileName)
+        private static int RTLD_NOW = 0x2;
+        private static int RTLD_SHARED = 0x20;
+#if MONO_OSX
+        private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
+        private const string NativeDll = "__Internal";
+#elif MONO_LINUX
+        private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
+        private const string NativeDll = "libdl.so";
+#endif
+
+        public static IntPtr LoadLibrary(string fileName)
         {
             return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
         }
 
-        static public void FreeLibrary(IntPtr handle)
+        public static void FreeLibrary(IntPtr handle)
         {
             dlclose(handle);
         }
 
-        static public IntPtr GetProcAddress(IntPtr dllHandle, string name)
+        public static IntPtr GetProcAddress(IntPtr dllHandle, string name)
         {
             // look in the exe if dllHandle is NULL
-            if (IntPtr.Zero == dllHandle)
+            if (dllHandle == IntPtr.Zero)
+            {
                 dllHandle = RTLD_DEFAULT;
+            }
 
             // clear previous errors if any
             dlerror();
-            var res = dlsym(dllHandle, name);
-            var errPtr = dlerror();
+            IntPtr res = dlsym(dllHandle, name);
+            IntPtr errPtr = dlerror();
             if (errPtr != IntPtr.Zero)
             {
                 throw new Exception("dlsym: " + Marshal.PtrToStringAnsi(errPtr));
@@ -40,49 +52,27 @@ namespace Python.Runtime
             return res;
         }
 
-#if MONO_OSX
-        static int RTLD_NOW = 0x2;
-        static int RTLD_SHARED = 0x20;
-        static IntPtr RTLD_DEFAULT = new IntPtr(-2);
-
-        [DllImport("__Internal")]
+        [DllImport(NativeDll)]
         private static extern IntPtr dlopen(String fileName, int flags);
 
-        [DllImport("__Internal")]
+        [DllImport(NativeDll)]
         private static extern IntPtr dlsym(IntPtr handle, String symbol);
 
-        [DllImport("__Internal")]
+        [DllImport(NativeDll)]
         private static extern int dlclose(IntPtr handle);
 
-        [DllImport("__Internal")]
+        [DllImport(NativeDll)]
         private static extern IntPtr dlerror();
-#elif MONO_LINUX
-        static int RTLD_NOW = 0x2;
-        static int RTLD_SHARED = 0x20;
-        static IntPtr RTLD_DEFAULT = IntPtr.Zero;
-
-        [DllImport("libdl.so")]
-        private static extern IntPtr dlopen(String fileName, int flags);
-
-        [DllImport("libdl.so")]
-        private static extern IntPtr dlsym(IntPtr handle, String symbol);
-
-        [DllImport("libdl.so")]
-        private static extern int dlclose(IntPtr handle);
-
-        [DllImport("libdl.so")]
-        private static extern IntPtr dlerror();
-#endif
-
 #else // Windows
+        private const string NativeDll = "kernel32.dll";
 
-        [DllImport("kernel32.dll")]
+        [DllImport(NativeDll)]
         public static extern IntPtr LoadLibrary(string dllToLoad);
 
-        [DllImport("kernel32.dll")]
+        [DllImport(NativeDll)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
 
-        [DllImport("kernel32.dll")]
+        [DllImport(NativeDll)]
         public static extern bool FreeLibrary(IntPtr hModule);
 #endif
     }
@@ -189,12 +179,12 @@ namespace Python.Runtime
         {
             is32bit = IntPtr.Size == 4;
 
-            if (0 == Runtime.Py_IsInitialized())
+            if (Runtime.Py_IsInitialized() == 0)
             {
                 Runtime.Py_Initialize();
             }
 
-            if (0 == Runtime.PyEval_ThreadsInitialized())
+            if (Runtime.PyEval_ThreadsInitialized() == 0)
             {
                 Runtime.PyEval_InitThreads();
             }
