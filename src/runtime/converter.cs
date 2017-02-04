@@ -85,7 +85,8 @@ namespace Python.Runtime
 #if PYTHON3
             else if ((op == int16Type) ||
                      (op == int32Type) ||
-                     (op == int64Type)) {
+                     (op == int64Type))
+            {
                 return Runtime.PyIntType;
             }
 #endif
@@ -465,29 +466,29 @@ namespace Python.Runtime
 #elif PYTHON3 // When using Python3 always use the PyLong API
                 {
 #endif
-                    op = Runtime.PyNumber_Long(value);
-                    if (op == IntPtr.Zero)
-                    {
-                        Exceptions.Clear();
-                        if (Exceptions.ExceptionMatches(overflow))
+                        op = Runtime.PyNumber_Long(value);
+                        if (op == IntPtr.Zero)
+                        {
+                            Exceptions.Clear();
+                            if (Exceptions.ExceptionMatches(overflow))
+                            {
+                                goto overflow;
+                            }
+                            goto type_error;
+                        }
+                        long ll = (long)Runtime.PyLong_AsLongLong(op);
+                        Runtime.XDecref(op);
+                        if ((ll == -1) && Exceptions.ErrorOccurred())
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        if (ll > Int32.MaxValue || ll < Int32.MinValue)
+                        {
+                            goto overflow;
+                        }
+                        result = (int)ll;
+                        return true;
                     }
-                    long ll = (long)Runtime.PyLong_AsLongLong(op);
-                    Runtime.XDecref(op);
-                    if ((ll == -1) && Exceptions.ErrorOccurred())
-                    {
-                        goto overflow;
-                    }
-                    if (ll > Int32.MaxValue || ll < Int32.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    result = (int)ll;
-                    return true;
-                }
 
                 case TypeCode.Boolean:
                     result = (Runtime.PyObject_IsTrue(value) != 0);
