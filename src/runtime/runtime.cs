@@ -1,11 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
+
 #if UCS4
-using System.Text;
 using Mono.Unix;
-#elif UCS2 && PYTHON3
-using System.Text;
 #endif
 
 namespace Python.Runtime

@@ -135,7 +135,7 @@ void main_thread_handler(gpointer user_data)
     int ii = 0;
     for (ii = 0; ii < PyList_Size(syspath); ++ii)
     {
-#if PY_MAJOR_VERSION > 2
+#if PY_MAJOR_VERSION >= 3
         Py_ssize_t wlen;
         wchar_t *wstr = PyUnicode_AsWideCharString(PyList_GetItem(syspath, ii), &wlen);
         char *pydir = (char*)malloc(wlen + 1);
@@ -150,7 +150,7 @@ void main_thread_handler(gpointer user_data)
         strncpy(curdir, strlen(pydir) > 0 ? pydir : ".", 1024);
         strncat(curdir, slash, 1024);
 
-#if PY_MAJOR_VERSION > 2
+#if PY_MAJOR_VERSION >= 3
         free(pydir);
 #endif
 
