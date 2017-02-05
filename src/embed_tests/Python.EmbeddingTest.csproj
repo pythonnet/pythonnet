@@ -78,6 +78,7 @@
     <Compile Include="InitializeTest.cs" />
     <Compile Include="pyimport.cs" />
     <Compile Include="pyiter.cs" />
+    <Compile Include="pylong.cs" />
     <Compile Include="pyobject.cs" />
     <Compile Include="pythonexception.cs" />
   </ItemGroup>
