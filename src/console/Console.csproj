@@ -5,160 +5,70 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{E29DCF0A-5114-4A98-B1DD-71264B6EA349}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>nPython</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <ApplicationIcon>python-clear.ico</ApplicationIcon>
-    <ProductVersion>10.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
+    <DocumentationFile>bin\nPython.xml</DocumentationFile>
+    <OutputPath>bin\</OutputPath>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
+    <!--If need to freeze language version: <LangVersion>5</LangVersion> !-->
+    <ApplicationIcon>python-clear.ico</ApplicationIcon>
+    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x86'">
+  <PropertyGroup Condition=" '$(Platform)' == 'x86'">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x64'">
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x64'">
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
     <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''"></DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMonoPY3|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMonoPY3|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMonoPY3|x86'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMonoPY3|x64'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWinPY3|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWinPY3|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWinPY3|x86'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWinPY3|x64'">
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(PythonManifest)' != ''">
     <ApplicationManifest>$(PythonManifest)</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -171,18 +81,12 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">
       <Project>{097b4ac0-74e9-4c58-bcf8-c69746ec8271}</Project>
       <Name>Python.Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
-  <ProjectExtensions>
-    <VisualStudio AllowExistingFolder="true" />
-  </ProjectExtensions>
   <Target Name="AfterBuild">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
   </Target>
