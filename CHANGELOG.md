@@ -19,13 +19,18 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Refactored `setup.py` (#337)
 -   Upgraded NUnit framework to 2.6.4 (#353)
 -   Completed refactor of Build Directives on `Runtime.cs` (#339)
--   Refactor tests and removed dependency on `six` (#329)
+-   Refactor python unittests (#329)
 -   Unfroze Mono version on Travis (#345)
 -   Enabled Embedded tests on Appveyor (#353)
 
 ### Fixed
 
 -   Fixed crash during Shutdown (#343)
+
+### Removed
+
+-   Removed `six` dependency for unittests (#329)
+-   Removed `Mono.Unix` dependency for `UCS4` (#360)
 
 ## [2.2.2][] - 2017-01-29
 
