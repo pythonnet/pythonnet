@@ -21,6 +21,7 @@
 // calls are made to indicate what's going on during the load...
 //============================================================================
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -37,9 +38,7 @@ public class clrModule
     public static void initclr()
 #endif
     {
-#if DEBUG
-        Console.WriteLine("Attempting to load Python.Runtime using standard binding rules... ");
-#endif
+        debugPrint("Attempting to load 'Python.Runtime' using standard binding rules.");
 #if USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
         var pythonRuntimePublicKeyTokenData = new byte[] { 0x50, 0x00, 0xfe, 0xa6, 0xcb, 0xa7, 0x02, 0xdd };
 #endif
@@ -65,12 +64,11 @@ public class clrModule
         try
         {
             pythonRuntime = Assembly.Load(pythonRuntimeName);
-#if DEBUG
-            Console.WriteLine("Success!");
-#endif
+            debugPrint("Success loading 'Python.Runtime' using standard binding rules.");
         }
         catch (IOException)
         {
+            debugPrint("'Python.Runtime' not found using standard binding rules.");
             try
             {
                 // If the above fails for any reason, we fallback to attempting to load "Python.Runtime.dll"
@@ -89,16 +87,13 @@ public class clrModule
                     throw new InvalidOperationException(executingAssembly.Location);
                 }
                 string pythonRuntimeDllPath = Path.Combine(assemblyDirectory, "Python.Runtime.dll");
-#if DEBUG
-                Console.WriteLine("Attempting to load Python.Runtime from: '{0}'...", pythonRuntimeDllPath);
-#endif
+                debugPrint($"Attempting to load Python.Runtime from: '{pythonRuntimeDllPath}.'");
                 pythonRuntime = Assembly.LoadFrom(pythonRuntimeDllPath);
+                debugPrint($"Success loading 'Python.Runtime' from: '{pythonRuntimeDllPath}'.");
             }
             catch (InvalidOperationException)
             {
-#if DEBUG
-                Console.WriteLine("Could not load Python.Runtime");
-#endif
+                debugPrint("Could not load 'Python.Runtime'.");
 #if PYTHON3
                 return IntPtr.Zero;
 #elif PYTHON2
@@ -116,5 +111,15 @@ public class clrModule
 #elif PYTHON2
         pythonEngineType.InvokeMember("InitExt", BindingFlags.InvokeMethod, null, null, null);
 #endif
+    }
+
+    /// <summary>
+    /// Substitute for Debug.Writeline(...). Ideally we would use Debug.Writeline
+    /// but haven't been able to configure the TRACE from within Python.
+    /// </summary>
+    [Conditional("DEBUG")]
+    private static void debugPrint(string str)
+    {
+        Console.WriteLine(str);
     }
 }
