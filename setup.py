@@ -109,7 +109,7 @@ def _get_source_files():
             yield path
 
     for root, dirnames, filenames in os.walk("src"):
-        for ext in (".cs", ".csproj", ".snk", ".config", ".il",
+        for ext in (".cs", ".csproj", ".snk", ".config",
                     ".py", ".c", ".h", ".ico"):
             for filename in fnmatch.filter(filenames, "*" + ext):
                 yield os.path.join(root, filename)
