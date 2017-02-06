@@ -38,7 +38,7 @@ public class clrModule
     public static void initclr()
 #endif
     {
-        debugPrint("Attempting to load 'Python.Runtime' using standard binding rules.");
+        DebugPrint("Attempting to load 'Python.Runtime' using standard binding rules.");
 #if USE_PYTHON_RUNTIME_PUBLIC_KEY_TOKEN
         var pythonRuntimePublicKeyTokenData = new byte[] { 0x50, 0x00, 0xfe, 0xa6, 0xcb, 0xa7, 0x02, 0xdd };
 #endif
@@ -64,11 +64,11 @@ public class clrModule
         try
         {
             pythonRuntime = Assembly.Load(pythonRuntimeName);
-            debugPrint("Success loading 'Python.Runtime' using standard binding rules.");
+            DebugPrint("Success loading 'Python.Runtime' using standard binding rules.");
         }
         catch (IOException)
         {
-            debugPrint("'Python.Runtime' not found using standard binding rules.");
+            DebugPrint("'Python.Runtime' not found using standard binding rules.");
             try
             {
                 // If the above fails for any reason, we fallback to attempting to load "Python.Runtime.dll"
@@ -87,13 +87,13 @@ public class clrModule
                     throw new InvalidOperationException(executingAssembly.Location);
                 }
                 string pythonRuntimeDllPath = Path.Combine(assemblyDirectory, "Python.Runtime.dll");
-                debugPrint($"Attempting to load Python.Runtime from: '{pythonRuntimeDllPath}.'");
+                DebugPrint($"Attempting to load Python.Runtime from: '{pythonRuntimeDllPath}'.");
                 pythonRuntime = Assembly.LoadFrom(pythonRuntimeDllPath);
-                debugPrint($"Success loading 'Python.Runtime' from: '{pythonRuntimeDllPath}'.");
+                DebugPrint($"Success loading 'Python.Runtime' from: '{pythonRuntimeDllPath}'.");
             }
             catch (InvalidOperationException)
             {
-                debugPrint("Could not load 'Python.Runtime'.");
+                DebugPrint("Could not load 'Python.Runtime'.");
 #if PYTHON3
                 return IntPtr.Zero;
 #elif PYTHON2
@@ -118,7 +118,7 @@ public class clrModule
     /// but haven't been able to configure the TRACE from within Python.
     /// </summary>
     [Conditional("DEBUG")]
-    private static void debugPrint(string str)
+    private static void DebugPrint(string str)
     {
         Console.WriteLine(str);
     }
