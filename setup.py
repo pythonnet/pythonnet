@@ -104,12 +104,12 @@ def _get_interop_filename():
 
 def _get_source_files():
     """Walk project and collect the files needed for ext_module"""
-    for ext in (".sln", ".snk", ".config"):
+    for ext in (".sln", ".config"):
         for path in glob.glob("*" + ext):
             yield path
 
     for root, dirnames, filenames in os.walk("src"):
-        for ext in (".cs", ".csproj", ".sln", ".snk", ".config", ".il",
+        for ext in (".cs", ".csproj", ".snk", ".config", ".il",
                     ".py", ".c", ".h", ".ico"):
             for filename in fnmatch.filter(filenames, "*" + ext):
                 yield os.path.join(root, filename)
