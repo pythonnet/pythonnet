@@ -5,6 +5,14 @@ using Python.Runtime;
 
 namespace Python.Runtime
 {
+    /// <summary>
+    /// Example of Embedding Python inside of a .NET program.
+    /// </summary>
+    /// <remarks>
+    /// It has similar functionality to doing `import clr` from within Python, but this does it
+    /// the other way around; That is, it loads Python inside of .NET program.
+    /// See https://github.com/pythonnet/pythonnet/issues/358 for more info.
+    /// </remarks>
     public sealed class PythonConsole
     {
         private static AssemblyLoader assemblyLoader = new AssemblyLoader();
@@ -41,7 +49,7 @@ namespace Python.Runtime
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
                 {
                     string shortName = args.Name.Split(',')[0];
-                    string resourceName = string.Format("{0}.dll", shortName);
+                    string resourceName = $"{shortName}.dll";
 
                     if (loadedAssemblies.ContainsKey(resourceName))
                     {
@@ -60,7 +68,6 @@ namespace Python.Runtime
                             return assembly;
                         }
                     }
-
                     return null;
                 };
             }
