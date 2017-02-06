@@ -116,7 +116,6 @@
     <Compile Include="modulefunctionobject.cs" />
     <Compile Include="moduleobject.cs" />
     <Compile Include="modulepropertyobject.cs" />
-    <Compile Include="monosupport.cs" />
     <Compile Include="nativecall.cs" />
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
