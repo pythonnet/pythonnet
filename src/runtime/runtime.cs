@@ -1669,7 +1669,7 @@ namespace Python.Runtime
                     Encoding.UTF32.GetBytes(ps, s.Length, (byte*)mem, bufLength);
                 }
 
-                var result = PyUnicode_FromKindAndString(kind, mem, bufLength);
+                var result = PyUnicode_FromKindAndString(kind, mem, size);
                 return result;
             }
             finally
@@ -1734,7 +1734,7 @@ namespace Python.Runtime
                     Encoding.UTF32.GetBytes(ps, s.Length, (byte*)mem, bufLength);
                 }
 
-                var result = PyUnicode_FromUnicode(mem, bufLength);
+                var result = PyUnicode_FromUnicode(mem, size);
                 return result;
             }
             finally
