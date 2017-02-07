@@ -322,10 +322,10 @@ namespace Python.Runtime
             // Deprecation warning
             if (warn && loaded)
             {
-                string deprWarning = string.Format(
-                    "\nThe module was found, but not in a referenced namespace.\n" +
-                    "Implicit loading is deprecated. Please use clr.AddReference(\"{0}\").",
-                    Path.GetFileNameWithoutExtension(lastAssembly.Location));
+                string location = Path.GetFileNameWithoutExtension(lastAssembly.Location);
+                string deprWarning = $@"
+The module was found, but not in a referenced namespace.
+Implicit loading is deprecated. Please use clr.AddReference(""{location}"").";
                 Exceptions.deprecation(deprWarning);
             }
 
