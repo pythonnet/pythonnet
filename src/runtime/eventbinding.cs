@@ -7,8 +7,8 @@ namespace Python.Runtime
     /// </summary>
     internal class EventBinding : ExtensionType
     {
-        EventObject e;
-        IntPtr target;
+        private EventObject e;
+        private IntPtr target;
 
         public EventBinding(EventObject e, IntPtr target)
         {

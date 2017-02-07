@@ -21,10 +21,10 @@ namespace Python.Runtime
     /// </remarks>
     internal class ConstructorBinding : ExtensionType
     {
-        Type type; // The managed Type being wrapped in a ClassObject
-        IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
-        ConstructorBinder ctorBinder;
-        IntPtr repr;
+        private Type type; // The managed Type being wrapped in a ClassObject
+        private IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
+        private ConstructorBinder ctorBinder;
+        private IntPtr repr;
 
         public ConstructorBinding(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder)
         {
@@ -165,11 +165,11 @@ namespace Python.Runtime
     /// </remarks>
     internal class BoundContructor : ExtensionType
     {
-        Type type; // The managed Type being wrapped in a ClassObject
-        IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
-        ConstructorBinder ctorBinder;
-        ConstructorInfo ctorInfo;
-        IntPtr repr;
+        private Type type; // The managed Type being wrapped in a ClassObject
+        private IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
+        private ConstructorBinder ctorBinder;
+        private ConstructorInfo ctorInfo;
+        private IntPtr repr;
 
         public BoundContructor(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder, ConstructorInfo ci)
         {

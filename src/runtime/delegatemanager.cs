@@ -11,13 +11,13 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateManager
     {
-        Hashtable cache;
-        Type basetype;
-        Type listtype;
-        Type voidtype;
-        Type typetype;
-        Type ptrtype;
-        CodeGenerator codeGenerator;
+        private Hashtable cache;
+        private Type basetype;
+        private Type listtype;
+        private Type voidtype;
+        private Type typetype;
+        private Type ptrtype;
+        private CodeGenerator codeGenerator;
 
         public DelegateManager()
         {
@@ -180,6 +180,7 @@ namespace Python.Runtime
        This would be slightly cleaner, but I'm not sure if delegates are
        too "special" for this to work. It would be more work, so for now
        the 80/20 rule applies :) */
+
     public class Dispatcher
     {
         public IntPtr target;

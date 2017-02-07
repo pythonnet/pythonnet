@@ -6,7 +6,7 @@ using System.Text;
 namespace Python.Runtime
 {
     [SuppressUnmanagedCodeSecurity]
-    static class NativeMethods
+    internal static class NativeMethods
     {
 #if MONO_LINUX || MONO_OSX
         private static int RTLD_NOW = 0x2;

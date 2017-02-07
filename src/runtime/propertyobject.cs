@@ -9,9 +9,9 @@ namespace Python.Runtime
     /// </summary>
     internal class PropertyObject : ExtensionType
     {
-        PropertyInfo info;
-        MethodInfo getter;
-        MethodInfo setter;
+        private PropertyInfo info;
+        private MethodInfo getter;
+        private MethodInfo setter;
 
         [StrongNameIdentityPermission(SecurityAction.Assert)]
         public PropertyObject(PropertyInfo md)

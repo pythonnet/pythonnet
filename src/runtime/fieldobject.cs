@@ -8,7 +8,7 @@ namespace Python.Runtime
     /// </summary>
     internal class FieldObject : ExtensionType
     {
-        FieldInfo info;
+        private FieldInfo info;
 
         public FieldObject(FieldInfo info)
         {

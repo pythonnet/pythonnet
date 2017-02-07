@@ -8,13 +8,13 @@ namespace Python.Runtime
     /// </summary>
     internal class ImportHook
     {
-        static IntPtr py_import;
-        static CLRModule root;
-        static MethodWrapper hook;
-        static IntPtr py_clr_module;
+        private static IntPtr py_import;
+        private static CLRModule root;
+        private static MethodWrapper hook;
+        private static IntPtr py_clr_module;
 
 #if PYTHON3
-        static IntPtr module_def = IntPtr.Zero;
+        private static IntPtr module_def = IntPtr.Zero;
 
         internal static void InitializeModuleDef()
         {
@@ -36,8 +36,8 @@ namespace Python.Runtime
             // modules (Python doesn't provide a way to emulate packages).
             IntPtr dict = Runtime.PyImport_GetModuleDict();
 
-            IntPtr mod = Runtime.IsPython3 
-                ? Runtime.PyImport_ImportModule("builtins") 
+            IntPtr mod = Runtime.IsPython3
+                ? Runtime.PyImport_ImportModule("builtins")
                 : Runtime.PyDict_GetItemString(dict, "__builtin__");
 
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");

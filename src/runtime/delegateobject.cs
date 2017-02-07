@@ -10,7 +10,7 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateObject : ClassBase
     {
-        MethodBinder binder;
+        private MethodBinder binder;
 
         internal DelegateObject(Type tp) : base(tp)
         {

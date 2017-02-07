@@ -9,7 +9,7 @@ namespace Python.Runtime
     /// </summary>
     internal class GenericUtil
     {
-        static Dictionary<string, Dictionary<string, List<string>>> mapping;
+        private static Dictionary<string, Dictionary<string, List<string>>> mapping;
 
         private GenericUtil()
         {

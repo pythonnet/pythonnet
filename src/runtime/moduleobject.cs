@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// </summary>
     internal class ModuleObject : ExtensionType
     {
-        Dictionary<string, ManagedType> cache;
+        private Dictionary<string, ManagedType> cache;
         internal string moduleName;
         internal IntPtr dict;
         protected string _namespace;

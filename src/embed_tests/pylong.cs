@@ -27,7 +27,7 @@ namespace Python.EmbeddingTest
         public void TestToInt64()
         {
             long largeNumber = 8L * 1024L * 1024L * 1024L; // 8 GB
-            PyLong pyLargeNumber = new PyLong(largeNumber);
+            var pyLargeNumber = new PyLong(largeNumber);
             Assert.AreEqual(largeNumber, pyLargeNumber.ToInt64());
         }
     }

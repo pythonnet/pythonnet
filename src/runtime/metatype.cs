@@ -10,7 +10,7 @@ namespace Python.Runtime
     /// </summary>
     internal class MetaType : ManagedType
     {
-        static IntPtr PyCLRMetaType;
+        private static IntPtr PyCLRMetaType;
 
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace Python.Runtime
             NativeCall.Void_Call_1(op, tp);
         }
 
-        static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
+        private static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
         {
             var cb = GetManagedObject(tp) as ClassBase;
 

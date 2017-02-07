@@ -23,8 +23,8 @@ namespace Python.Runtime
     /// </summary>
     internal class NativeCall
     {
-        static AssemblyBuilder aBuilder;
-        static ModuleBuilder mBuilder;
+        private static AssemblyBuilder aBuilder;
+        private static ModuleBuilder mBuilder;
 
         public static INativeCall Impl;
 

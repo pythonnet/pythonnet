@@ -42,7 +42,7 @@ namespace Python.Test
 
     public class Spam : ISpam
     {
-        string value;
+        private string value;
 
         public Spam(string value)
         {

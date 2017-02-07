@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using Python.Runtime;
 
@@ -40,7 +41,7 @@ namespace Python.Runtime
         // (Python.Runtime.dll is included as a resource)
         private sealed class AssemblyLoader
         {
-            Dictionary<string, Assembly> loadedAssemblies;
+            private Dictionary<string, Assembly> loadedAssemblies;
 
             public AssemblyLoader()
             {
@@ -57,7 +58,7 @@ namespace Python.Runtime
                     }
 
                     // looks for the assembly from the resources and load it
-                    using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+                    using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
                     {
                         if (stream != null)
                         {

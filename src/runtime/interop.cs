@@ -334,8 +334,8 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        static ArrayList keepAlive;
-        static Hashtable pmap;
+        private static ArrayList keepAlive;
+        private static Hashtable pmap;
 
         static Interop()
         {

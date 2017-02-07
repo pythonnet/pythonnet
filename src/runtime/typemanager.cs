@@ -12,8 +12,8 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeManager
     {
-        static BindingFlags tbFlags;
-        static Dictionary<Type, IntPtr> cache;
+        private static BindingFlags tbFlags;
+        private static Dictionary<Type, IntPtr> cache;
 
         static TypeManager()
         {

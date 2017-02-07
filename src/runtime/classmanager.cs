@@ -17,8 +17,8 @@ namespace Python.Runtime
     /// </summary>
     internal class ClassManager
     {
-        static Dictionary<Type, ClassBase> cache;
-        static Type dtype;
+        private static Dictionary<Type, ClassBase> cache;
+        private static Type dtype;
 
         private ClassManager()
         {

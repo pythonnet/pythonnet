@@ -17,16 +17,16 @@ namespace Python.Runtime
     {
         // modified from event handlers below, potentially triggered from different .NET threads
         // therefore this should be a ConcurrentDictionary
-        static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
-        //static Dictionary<string, Dictionary<string, string>> generics;
-        static AssemblyLoadEventHandler lhandler;
-        static ResolveEventHandler rhandler;
+        private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
+        //private static Dictionary<string, Dictionary<string, string>> generics;
+        private static AssemblyLoadEventHandler lhandler;
+        private static ResolveEventHandler rhandler;
 
         // updated only under GIL?
-        static Dictionary<string, int> probed;
+        private static Dictionary<string, int> probed;
 
         // modified from event handlers below, potentially triggered from different .NET threads
-        static AssemblyList assemblies;
+        private static AssemblyList assemblies;
         internal static List<string> pypath;
 
         private AssemblyManager()

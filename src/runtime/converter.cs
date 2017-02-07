@@ -17,18 +17,18 @@ namespace Python.Runtime
         {
         }
 
-        static NumberFormatInfo nfi;
-        static Type objectType;
-        static Type stringType;
-        static Type singleType;
-        static Type doubleType;
-        static Type decimalType;
-        static Type int16Type;
-        static Type int32Type;
-        static Type int64Type;
-        static Type flagsType;
-        static Type boolType;
-        static Type typeType;
+        private static NumberFormatInfo nfi;
+        private static Type objectType;
+        private static Type stringType;
+        private static Type singleType;
+        private static Type doubleType;
+        private static Type decimalType;
+        private static Type int16Type;
+        private static Type int32Type;
+        private static Type int64Type;
+        private static Type flagsType;
+        private static Type boolType;
+        private static Type typeType;
 
         static Converter()
         {
@@ -415,7 +415,7 @@ namespace Python.Runtime
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>
-        static bool ToPrimitive(IntPtr value, Type obType, out Object result, bool setError)
+        private static bool ToPrimitive(IntPtr value, Type obType, out object result, bool setError)
         {
             IntPtr overflow = Exceptions.OverflowError;
             TypeCode tc = Type.GetTypeCode(obType);
@@ -826,7 +826,7 @@ namespace Python.Runtime
         /// The Python value must support the Python sequence protocol and the
         /// items in the sequence must be convertible to the target array type.
         /// </summary>
-        static bool ToArray(IntPtr value, Type obType, out Object result, bool setError)
+        private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
             int size = Runtime.PySequence_Size(value);
@@ -875,7 +875,7 @@ namespace Python.Runtime
         /// <summary>
         /// Convert a Python value to a correctly typed managed enum instance.
         /// </summary>
-        static bool ToEnum(IntPtr value, Type obType, out Object result, bool setError)
+        private static bool ToEnum(IntPtr value, Type obType, out object result, bool setError)
         {
             Type etype = Enum.GetUnderlyingType(obType);
             result = null;

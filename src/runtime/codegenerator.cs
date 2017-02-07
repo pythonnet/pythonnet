@@ -13,8 +13,8 @@ namespace Python.Runtime
     /// </summary>
     internal class CodeGenerator
     {
-        AssemblyBuilder aBuilder;
-        ModuleBuilder mBuilder;
+        private AssemblyBuilder aBuilder;
+        private ModuleBuilder mBuilder;
 
         internal CodeGenerator()
         {

@@ -23,7 +23,7 @@ namespace Python.Runtime
             }
         }
 
-        static Type cc_attr;
+        private static Type cc_attr;
 
         static InterfaceObject()
         {
