@@ -349,34 +349,34 @@ namespace Python.Runtime
             }
         }
 
-        [ModuleFunctionAttribute]
+        [ModuleFunction]
         public static bool getPreload()
         {
             return preload;
         }
 
-        [ModuleFunctionAttribute]
+        [ModuleFunction]
         public static void setPreload(bool preloadFlag)
         {
             preload = preloadFlag;
         }
 
-        //[ModulePropertyAttribute]
+        //[ModuleProperty]
         public static bool SuppressDocs
         {
             get { return _SuppressDocs; }
             set { _SuppressDocs = value; }
         }
 
-        //[ModulePropertyAttribute]
+        //[ModuleProperty]
         public static bool SuppressOverloads
         {
             get { return _SuppressOverloads; }
             set { _SuppressOverloads = value; }
         }
 
-        [ModuleFunctionAttribute]
-        [ForbidPythonThreadsAttribute]
+        [ModuleFunction]
+        [ForbidPythonThreads]
         public static Assembly AddReference(string name)
         {
             AssemblyManager.UpdatePath();
@@ -402,15 +402,15 @@ namespace Python.Runtime
             return assembly;
         }
 
-        [ModuleFunctionAttribute]
-        [ForbidPythonThreadsAttribute]
+        [ModuleFunction]
+        [ForbidPythonThreads]
         public static string FindAssembly(string name)
         {
             AssemblyManager.UpdatePath();
             return AssemblyManager.FindAssembly(name);
         }
 
-        [ModuleFunctionAttribute]
+        [ModuleFunction]
         public static string[] ListAssemblies(bool verbose)
         {
             AssemblyName[] assnames = AssemblyManager.ListAssemblies();
@@ -429,7 +429,7 @@ namespace Python.Runtime
             return names;
         }
 
-        [ModuleFunctionAttribute]
+        [ModuleFunction]
         public static int _AtExit()
         {
             return Runtime.AtExit();

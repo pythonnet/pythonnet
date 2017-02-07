@@ -12,7 +12,7 @@ namespace Python.Runtime
     /// runtime. Generally, the definitions here need to be kept up to date
     /// when moving to new Python versions.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     [AttributeUsage(AttributeTargets.All)]
     public class DocStringAttribute : Attribute
     {
@@ -30,7 +30,7 @@ namespace Python.Runtime
         private string docStr;
     }
 
-    [Serializable()]
+    [Serializable]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class PythonMethodAttribute : Attribute
     {
@@ -39,7 +39,7 @@ namespace Python.Runtime
         }
     }
 
-    [Serializable()]
+    [Serializable]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class ModuleFunctionAttribute : Attribute
     {
@@ -48,7 +48,7 @@ namespace Python.Runtime
         }
     }
 
-    [Serializable()]
+    [Serializable]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class ForbidPythonThreadsAttribute : Attribute
     {
@@ -58,7 +58,7 @@ namespace Python.Runtime
     }
 
 
-    [Serializable()]
+    [Serializable]
     [AttributeUsage(AttributeTargets.Property)]
     internal class ModulePropertyAttribute : Attribute
     {

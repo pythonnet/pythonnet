@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Python.Runtime
 {
-    [SuppressUnmanagedCodeSecurity()]
+    [SuppressUnmanagedCodeSecurity]
     static class NativeMethods
     {
 #if MONO_LINUX || MONO_OSX

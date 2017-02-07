@@ -10,7 +10,7 @@ namespace Python.Runtime
     /// <summary>
     /// Performs data conversions between managed types and Python types.
     /// </summary>
-    [SuppressUnmanagedCodeSecurityAttribute()]
+    [SuppressUnmanagedCodeSecurity]
     internal class Converter
     {
         private Converter()
