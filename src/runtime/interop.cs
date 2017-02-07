@@ -74,7 +74,7 @@ namespace Python.Runtime
         static ObjectOffset()
         {
             int size = IntPtr.Size;
-            int n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
+            var n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
 #if Py_DEBUG
             _ob_next = 0;
             _ob_prev = 1 * size;

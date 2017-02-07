@@ -162,13 +162,15 @@ namespace Python.Runtime
                     "atexit.register(clr._AtExit)\n";
                 PyObject r = PythonEngine.RunString(code);
                 if (r != null)
+                {
                     r.Dispose();
+                }
 
                 // Load the clr.py resource into the clr module
                 IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
                 IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
 
-                PyDict locals = new PyDict();
+                var locals = new PyDict();
                 try
                 {
                     IntPtr module = Runtime.PyImport_AddModule("clr._extras");
@@ -176,15 +178,17 @@ namespace Python.Runtime
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
                     Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
-                    var assembly = Assembly.GetExecutingAssembly();
+                    Assembly assembly = Assembly.GetExecutingAssembly();
                     using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
-                    using (StreamReader reader = new StreamReader(stream))
+                    using (var reader = new StreamReader(stream))
                     {
                         // add the contents of clr.py to the module
                         string clr_py = reader.ReadToEnd();
                         PyObject result = RunString(clr_py, module_globals, locals.Handle);
                         if (null == result)
+                        {
                             throw new PythonException();
+                        }
                         result.Dispose();
                     }
 
@@ -415,9 +419,9 @@ namespace Python.Runtime
         /// </remarks>
         public static PyObject RunString(
             string code, IntPtr? globals = null, IntPtr? locals = null
-            )
+        )
         {
-            bool borrowedGlobals = true;
+            var borrowedGlobals = true;
             if (globals == null)
             {
                 globals = Runtime.PyEval_GetGlobals();
@@ -427,25 +431,25 @@ namespace Python.Runtime
                     Runtime.PyDict_SetItemString(
                         globals.Value, "__builtins__",
                         Runtime.PyEval_GetBuiltins()
-                        );
+                    );
                     borrowedGlobals = false;
                 }
             }
 
-            bool borrowedLocals = true;
+            var borrowedLocals = true;
             if (locals == null)
             {
                 locals = Runtime.PyDict_New();
                 borrowedLocals = false;
             }
 
-            IntPtr flag = (IntPtr)257; /* Py_file_input */
+            var flag = (IntPtr)257; /* Py_file_input */
 
             try
             {
                 IntPtr result = Runtime.PyRun_String(
                     code, flag, globals.Value, locals.Value
-                    );
+                );
 
                 Py.Throw();
 
@@ -454,9 +458,13 @@ namespace Python.Runtime
             finally
             {
                 if (!borrowedLocals)
+                {
                     Runtime.XDecref(locals.Value);
+                }
                 if (!borrowedGlobals)
+                {
                     Runtime.XDecref(globals.Value);
+                }
             }
         }
     }
@@ -466,7 +474,9 @@ namespace Python.Runtime
         public static GILState GIL()
         {
             if (!PythonEngine.IsInitialized)
+            {
                 PythonEngine.Initialize();
+            }
 
             return new GILState();
         }
@@ -500,18 +510,28 @@ namespace Python.Runtime
         {
             var dict = new KeywordArguments();
             if (kv.Length % 2 != 0)
+            {
                 throw new ArgumentException("Must have an equal number of keys and values");
-            for (int i = 0; i < kv.Length; i += 2)
+            }
+            for (var i = 0; i < kv.Length; i += 2)
             {
                 IntPtr value;
                 if (kv[i + 1] is PyObject)
+                {
                     value = ((PyObject)kv[i + 1]).Handle;
+                }
                 else
+                {
                     value = Converter.ToPython(kv[i + 1], kv[i + 1]?.GetType());
+                }
                 if (Runtime.PyDict_SetItemString(dict.Handle, (string)kv[i], value) != 0)
+                {
                     throw new ArgumentException(string.Format("Cannot add key '{0}' to dictionary.", (string)kv[i]));
+                }
                 if (!(kv[i + 1] is PyObject))
+                {
                     Runtime.XDecref(value);
+                }
             }
             return dict;
         }
@@ -549,7 +569,7 @@ namespace Python.Runtime
         {
             using (GIL())
             {
-                var arr = argv.ToArray();
+                string[] arr = argv.ToArray();
                 Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
                 Py.Throw();
             }

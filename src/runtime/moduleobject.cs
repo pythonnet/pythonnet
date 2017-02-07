@@ -43,7 +43,7 @@ namespace Python.Runtime
             IntPtr pyname = Runtime.PyString_FromString(moduleName);
             IntPtr pyfilename = Runtime.PyString_FromString(filename);
             IntPtr pydocstring = Runtime.PyString_FromString(docstring);
-            IntPtr pycls = TypeManager.GetTypeHandle(this.GetType());
+            IntPtr pycls = TypeManager.GetTypeHandle(GetType());
             Runtime.PyDict_SetItemString(dict, "__name__", pyname);
             Runtime.PyDict_SetItemString(dict, "__file__", pyfilename);
             Runtime.PyDict_SetItemString(dict, "__doc__", pydocstring);
@@ -318,7 +318,7 @@ namespace Python.Runtime
             // import requires the module to pass PyModule_Check. :(
             if (!hacked)
             {
-                IntPtr type = this.tpHandle;
+                IntPtr type = tpHandle;
                 IntPtr mro = Marshal.ReadIntPtr(type, TypeOffset.tp_mro);
                 IntPtr ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
                 Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);

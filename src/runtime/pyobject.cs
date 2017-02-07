@@ -895,7 +895,9 @@ namespace Python.Runtime
                 return true;
             }
             else
+            {
                 return base.TryGetMember(binder, out result);
+            }
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
@@ -906,13 +908,18 @@ namespace Python.Runtime
                 return true;
             }
             else
+            {
                 return base.TrySetMember(binder, value);
+            }
         }
 
         private void GetArgs(object[] inargs, out PyTuple args, out PyDict kwargs)
         {
             int arg_count;
-            for (arg_count = 0; arg_count < inargs.Length && !(inargs[arg_count] is Py.KeywordArguments); ++arg_count) ;
+            for (arg_count = 0; arg_count < inargs.Length && !(inargs[arg_count] is Py.KeywordArguments); ++arg_count)
+            {
+                ;
+            }
             IntPtr argtuple = Runtime.PyTuple_New(arg_count);
             for (var i = 0; i < arg_count; i++)
             {
@@ -975,7 +982,9 @@ namespace Python.Runtime
                 return true;
             }
             else
+            {
                 return base.TryInvokeMember(binder, args, out result);
+            }
         }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
@@ -1003,7 +1012,9 @@ namespace Python.Runtime
                 return true;
             }
             else
+            {
                 return base.TryInvoke(binder, args, out result);
+            }
         }
 
         public override bool TryConvert(ConvertBinder binder, out object result)

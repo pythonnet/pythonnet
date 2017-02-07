@@ -52,8 +52,8 @@ namespace Python.Runtime
         /// </summary>
         internal static Type GetTypeByAlias(IntPtr op)
         {
-            if ((op == Runtime.PyStringType) ||
-                (op == Runtime.PyUnicodeType))
+            if (op == Runtime.PyStringType ||
+                op == Runtime.PyUnicodeType)
             {
                 return stringType;
             }
@@ -83,15 +83,15 @@ namespace Python.Runtime
                 return Runtime.PyUnicodeType;
             }
 
-            else if (Runtime.IsPython3 && ((op == int16Type) ||
-                                           (op == int32Type) ||
-                                           (op == int64Type)))
+            else if (Runtime.IsPython3 && (op == int16Type ||
+                                           op == int32Type ||
+                                           op == int64Type))
             {
                 return Runtime.PyIntType;
             }
 
-            else if ((op == int16Type) ||
-                     (op == int32Type))
+            else if (op == int16Type ||
+                     op == int32Type)
             {
                 return Runtime.PyIntType;
             }
@@ -99,8 +99,8 @@ namespace Python.Runtime
             {
                 return Runtime.PyLongType;
             }
-            else if ((op == doubleType) ||
-                     (op == singleType))
+            else if (op == doubleType ||
+                     op == singleType)
             {
                 return Runtime.PyFloatType;
             }
@@ -123,7 +123,7 @@ namespace Python.Runtime
             return ToPython(value, typeof(T));
         }
 
-        internal static IntPtr ToPython(Object value, Type type)
+        internal static IntPtr ToPython(object value, Type type)
         {
             if (value is PyObject)
             {
@@ -144,7 +144,7 @@ namespace Python.Runtime
 
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
-            IPythonDerivedType pyderived = value as IPythonDerivedType;
+            var pyderived = value as IPythonDerivedType;
             if (null != pyderived)
             {
                 return ClassDerivedObject.ToPython(pyderived);
@@ -221,7 +221,9 @@ namespace Python.Runtime
                             foreach (object o in (IEnumerable)value)
                             {
                                 using (var p = new PyObject(ToPython(o, o?.GetType())))
+                                {
                                     resultlist.Append(p);
+                                }
                             }
                             Runtime.XIncref(resultlist.Handle);
                             return resultlist.Handle;
@@ -237,7 +239,7 @@ namespace Python.Runtime
         /// In a few situations, we don't have any advisory type information
         /// when we want to convert an object to Python.
         /// </summary>
-        internal static IntPtr ToPythonImplicit(Object value)
+        internal static IntPtr ToPythonImplicit(object value)
         {
             if (value == null)
             {
@@ -266,7 +268,7 @@ namespace Python.Runtime
 
 
         internal static bool ToManagedValue(IntPtr value, Type obType,
-            out Object result, bool setError)
+            out object result, bool setError)
         {
             if (obType == typeof(PyObject))
             {
@@ -290,8 +292,8 @@ namespace Python.Runtime
                         result = tmp;
                         return true;
                     }
-                    string err = "value cannot be converted to {0}";
-                    err = String.Format(err, obType);
+                    var err = "value cannot be converted to {0}";
+                    err = string.Format(err, obType);
                     Exceptions.SetError(Exceptions.TypeError, err);
                     return false;
                 }
@@ -474,7 +476,7 @@ namespace Python.Runtime
                         }
                         long ll = (long)Runtime.PyLong_AsLongLong(op);
                         Runtime.XDecref(op);
-                        if ((ll == -1) && Exceptions.ErrorOccurred())
+                        if (ll == -1 && Exceptions.ErrorOccurred())
                         {
                             goto overflow;
                         }
@@ -487,7 +489,7 @@ namespace Python.Runtime
                     }
 
                 case TypeCode.Boolean:
-                    result = (Runtime.PyObject_IsTrue(value) != 0);
+                    result = Runtime.PyObject_IsTrue(value) != 0;
                     return true;
 
                 case TypeCode.Byte:
@@ -791,9 +793,9 @@ namespace Python.Runtime
 
             if (setError)
             {
-                string format = "'{0}' value cannot be converted to {1}";
+                var format = "'{0}' value cannot be converted to {1}";
                 string tpName = Runtime.PyObject_GetTypeName(value);
-                string error = String.Format(format, tpName, obType);
+                string error = string.Format(format, tpName, obType);
                 Exceptions.SetError(Exceptions.TypeError, error);
             }
 
@@ -803,7 +805,7 @@ namespace Python.Runtime
 
             if (setError)
             {
-                string error = "value too large to convert";
+                var error = "value too large to convert";
                 Exceptions.SetError(Exceptions.OverflowError, error);
             }
 
@@ -811,12 +813,12 @@ namespace Python.Runtime
         }
 
 
-        static void SetConversionError(IntPtr value, Type target)
+        private static void SetConversionError(IntPtr value, Type target)
         {
             IntPtr ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
-            string error = String.Format("Cannot convert {0} to {1}", src, target);
+            string error = string.Format("Cannot convert {0} to {1}", src, target);
             Exceptions.SetError(Exceptions.TypeError, error);
         }
 
@@ -844,9 +846,9 @@ namespace Python.Runtime
             Array items = Array.CreateInstance(elementType, size);
 
             // XXX - is there a better way to unwrap this if it is a real array?
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
             {
-                Object obj = null;
+                object obj = null;
                 IntPtr item = Runtime.PySequence_GetItem(value, i);
                 if (item == IntPtr.Zero)
                 {
@@ -899,7 +901,7 @@ namespace Python.Runtime
 
             if (setError)
             {
-                string error = "invalid enumeration value";
+                var error = "invalid enumeration value";
                 Exceptions.SetError(Exceptions.ValueError, error);
             }
 

@@ -32,11 +32,13 @@ namespace Python.Runtime
         internal IntPtr GetDocString()
         {
             MethodBase[] methods = binder.GetMethods();
-            string str = "";
+            var str = "";
             foreach (MethodBase t in methods)
             {
                 if (str.Length > 0)
+                {
                     str += Environment.NewLine;
+                }
                 str += t.ToString();
             }
             return Runtime.PyString_FromString(str);
@@ -48,7 +50,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
-            ClassObject self = GetManagedObject(tp) as ClassObject;
+            var self = GetManagedObject(tp) as ClassObject;
 
             // Sanity check: this ensures a graceful error if someone does
             // something intentially wrong like use the managed metatype for
@@ -72,7 +74,7 @@ namespace Python.Runtime
                 }
 
                 IntPtr op = Runtime.PyTuple_GetItem(args, 0);
-                Object result;
+                object result;
 
                 if (!Converter.ToManaged(op, type, out result, true))
                 {
@@ -94,7 +96,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            Object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
+            object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
             if (obj == null)
             {
                 return IntPtr.Zero;
@@ -119,8 +121,8 @@ namespace Python.Runtime
                 {
                     return Exceptions.RaiseTypeError("type expected");
                 }
-                ClassBase c = GetManagedObject(idx) as ClassBase;
-                Type t = (c != null) ? c.type : Converter.GetTypeByAlias(idx);
+                var c = GetManagedObject(idx) as ClassBase;
+                Type t = c != null ? c.type : Converter.GetTypeByAlias(idx);
                 if (t == null)
                 {
                     return Exceptions.RaiseTypeError("type expected");
@@ -159,7 +161,7 @@ namespace Python.Runtime
         {
             //ManagedType self = GetManagedObject(ob);
             IntPtr tp = Runtime.PyObject_TYPE(ob);
-            ClassBase cls = (ClassBase)GetManagedObject(tp);
+            var cls = (ClassBase)GetManagedObject(tp);
 
             if (cls.indexer == null || !cls.indexer.CanGet)
             {
@@ -171,7 +173,7 @@ namespace Python.Runtime
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
             IntPtr args = idx;
-            bool free = false;
+            var free = false;
 
             if (!Runtime.PyTuple_Check(idx))
             {
@@ -205,7 +207,7 @@ namespace Python.Runtime
         {
             //ManagedType self = GetManagedObject(ob);
             IntPtr tp = Runtime.PyObject_TYPE(ob);
-            ClassBase cls = (ClassBase)GetManagedObject(tp);
+            var cls = (ClassBase)GetManagedObject(tp);
 
             if (cls.indexer == null || !cls.indexer.CanSet)
             {
@@ -217,7 +219,7 @@ namespace Python.Runtime
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
             IntPtr args = idx;
-            bool free = false;
+            var free = false;
 
             if (!Runtime.PyTuple_Check(idx))
             {
@@ -233,7 +235,7 @@ namespace Python.Runtime
             int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
             int temp = i + numOfDefaultArgs;
             IntPtr real = Runtime.PyTuple_New(temp + 1);
-            for (int n = 0; n < i; n++)
+            for (var n = 0; n < i; n++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
                 Runtime.XIncref(item);
@@ -241,7 +243,7 @@ namespace Python.Runtime
             }
 
             // Add Default Args if needed
-            for (int n = 0; n < numOfDefaultArgs; n++)
+            for (var n = 0; n < numOfDefaultArgs; n++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
                 Runtime.XIncref(item);
@@ -288,7 +290,7 @@ namespace Python.Runtime
         {
             //ManagedType self = GetManagedObject(ob);
             IntPtr tp = Runtime.PyObject_TYPE(ob);
-            ClassBase cb = (ClassBase)GetManagedObject(tp);
+            var cb = (ClassBase)GetManagedObject(tp);
 
             if (cb.type != typeof(Delegate))
             {
@@ -296,15 +298,15 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            CLRObject co = (CLRObject)ManagedType.GetManagedObject(ob);
-            Delegate d = co.inst as Delegate;
+            var co = (CLRObject)GetManagedObject(ob);
+            var d = co.inst as Delegate;
             BindingFlags flags = BindingFlags.Public |
                                  BindingFlags.NonPublic |
                                  BindingFlags.Instance |
                                  BindingFlags.Static;
 
             MethodInfo method = d.GetType().GetMethod("Invoke", flags);
-            MethodBinder binder = new MethodBinder(method);
+            var binder = new MethodBinder(method);
             return binder.Invoke(ob, args, kw);
         }
     }
