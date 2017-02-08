@@ -75,7 +75,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InitializeTest.cs" />
+    <Compile Include="pyinitialize.cs" />
     <Compile Include="pyimport.cs" />
     <Compile Include="pyiter.cs" />
     <Compile Include="pylong.cs" />
