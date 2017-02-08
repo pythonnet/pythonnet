@@ -1,9 +1,7 @@
 using System;
-using System.Reflection;
-using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using Python.Runtime;
-using System.IO;
 
 namespace Python.EmbeddingTest
 {
@@ -54,6 +52,16 @@ namespace Python.EmbeddingTest
         {
             PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
             Assert.IsNotNull(module, ">>>  import PyImportTest.test.one  # FAILED");
+        }
+
+        /// <summary>
+        /// Tests that sys.args is set. If it wasn't exception would be raised.
+        /// </summary>
+        [Test]
+        public void TestSysArgsImportException()
+        {
+            PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
+            Assert.IsNotNull(module, ">>>  import PyImportTest.sysargv  # FAILED");
         }
     }
 }
