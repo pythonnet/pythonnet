@@ -26,8 +26,7 @@ if ($NUNIT_STATUS -ne 0) {
 }
 
 # Embedded tests failing due to open issues, pass/fail only on Python exit code
-# if ($PYTHON_STATUS -ne 0 -or $NUNIT_STATUS -ne 0) {
-if ($PYTHON_STATUS -ne 0) {
+if ($PYTHON_STATUS -ne 0 -or $NUNIT_STATUS -ne 0) {
     Write-Host "Tests failed" -ForegroundColor "Red"
     $host.SetShouldExit(1)
 }
