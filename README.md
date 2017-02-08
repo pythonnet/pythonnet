@@ -83,7 +83,7 @@ int32
 
 [codecov shield]: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/master.svg?label=codecov
 
-[license shield]: https://img.shields.io/badge/license-MIT-blue.svg
+[license shield]: https://img.shields.io/badge/license-MIT-blue.svg?maxAge=3600
 
 [pypi package version]: https://img.shields.io/pypi/v/pythonnet.svg
 
