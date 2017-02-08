@@ -12,6 +12,7 @@ $RUNTIME_DIR = ".\src\runtime\bin\"
 
 # Run python tests with C# coverage
 # why `2>&1 | %{ "$_" }`? see: http://stackoverflow.com/a/20950421/5208670
+Write-Host ("Starting Python tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:py.coverage -target:"$PY" -targetargs:src\tests\runtests.py -returntargetcode 2>&1 | %{ "$_" }
 $PYTHON_STATUS = $LastExitCode
 if ($PYTHON_STATUS -ne 0) {
@@ -19,13 +20,14 @@ if ($PYTHON_STATUS -ne 0) {
 }
 
 # Run Embedded tests with C# coverage
+Write-Host ("Starting embedded tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage -target:"$NUNIT" -targetargs:"$CS_TESTS" -returntargetcode
 $NUNIT_STATUS = $LastExitCode
 if ($NUNIT_STATUS -ne 0) {
     Write-Host "Embedded tests failed" -ForegroundColor "Red"
 }
 
-# Embedded tests failing due to open issues, pass/fail only on Python exit code
+# Set exit code to fail if either Python or Embedded tests failed
 if ($PYTHON_STATUS -ne 0 -or $NUNIT_STATUS -ne 0) {
     Write-Host "Tests failed" -ForegroundColor "Red"
     $host.SetShouldExit(1)
