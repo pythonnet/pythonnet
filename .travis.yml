@@ -37,7 +37,7 @@ install:
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python -m pytest
-  # - mono ./packages/NUnit.*/tools/nunit-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
+  # - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_success:
   # Uncomment if need to geninterop, ie. py37 final
