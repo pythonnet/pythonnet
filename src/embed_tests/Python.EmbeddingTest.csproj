@@ -81,6 +81,7 @@
     <Compile Include="pylong.cs" />
     <Compile Include="pyobject.cs" />
     <Compile Include="pythonexception.cs" />
+    <Compile Include="pytuple.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">
