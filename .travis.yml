@@ -27,7 +27,6 @@ addons:
     packages:
       - mono-devel
       - ca-certificates-mono
-      - nunit-console
 
 install:
   - pip install pycparser coverage codecov
@@ -36,7 +35,7 @@ install:
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python src/tests/runtests.py
-  # - nunit-console src/embed_tests/bin/Python.EmbeddingTest.dll
+  # - mono ./packages/NUnit.Runners*/tools/nunit-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_success:
   # Uncomment if need to geninterop, ie. py37 final
