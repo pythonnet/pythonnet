@@ -12,6 +12,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Code Coverage (#345)
 -   Added `pysetargv` (#347)
 -   Added XML Documentation (#349)
+-   Added Embedded tests on Appveyor (#353)
 -   Added PY3 settings to configuration-manager (#346)
 
 ### Changed
@@ -21,11 +22,11 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Completed refactor of Build Directives on `Runtime.cs` (#339)
 -   Refactor python unittests (#329)
 -   Unfroze Mono version on Travis (#345)
--   Enabled Embedded tests on Appveyor (#353)
 
 ### Fixed
 
--   Fixed crash during Shutdown (#343)
+-   Fixed crash during Initialization (#343)
+-   Fixed crash during Shutdown (#365)
 
 ### Removed
 
