@@ -50,8 +50,6 @@ namespace Python.Runtime
             base.Dispose(disposing);
         }
 
-        #region IEnumerator Members
-
         public bool MoveNext()
         {
             // dispose of the previous object, if there was one
@@ -80,7 +78,5 @@ namespace Python.Runtime
         {
             get { return _current; }
         }
-
-        #endregion
     }
 }

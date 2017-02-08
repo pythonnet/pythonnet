@@ -35,8 +35,6 @@ namespace Python.Runtime
             Shutdown();
         }
 
-        #region Properties
-
         public static bool IsInitialized
         {
             get { return initialized; }
@@ -121,8 +119,6 @@ namespace Python.Runtime
         {
             return Runtime.PyRun_SimpleString(code);
         }
-
-        #endregion
 
         public static void Initialize()
         {
