@@ -170,6 +170,9 @@ namespace Python.Runtime
         /// Precedence algorithm largely lifted from jython - the concerns are
         /// generally the same so we'll start w/this and tweak as necessary.
         /// </summary>
+        /// <remarks>
+        /// TODO: Add link to specific Jython Section/Code/File
+        /// </remarks>
         internal static int GetPrecedence(MethodBase mi)
         {
             ParameterInfo[] pi = mi.GetParameters();
@@ -198,61 +201,49 @@ namespace Python.Runtime
 
             TypeCode tc = Type.GetTypeCode(t);
             // TODO: Clean up
-            if (tc == TypeCode.Object)
+            switch (tc)
             {
-                return 1;
-            }
-            if (tc == TypeCode.UInt64)
-            {
-                return 10;
-            }
-            if (tc == TypeCode.UInt32)
-            {
-                return 11;
-            }
-            if (tc == TypeCode.UInt16)
-            {
-                return 12;
-            }
-            if (tc == TypeCode.Int64)
-            {
-                return 13;
-            }
-            if (tc == TypeCode.Int32)
-            {
-                return 14;
-            }
-            if (tc == TypeCode.Int16)
-            {
-                return 15;
-            }
-            if (tc == TypeCode.Char)
-            {
-                return 16;
-            }
-            if (tc == TypeCode.SByte)
-            {
-                return 17;
-            }
-            if (tc == TypeCode.Byte)
-            {
-                return 18;
-            }
-            if (tc == TypeCode.Single)
-            {
-                return 20;
-            }
-            if (tc == TypeCode.Double)
-            {
-                return 21;
-            }
-            if (tc == TypeCode.String)
-            {
-                return 30;
-            }
-            if (tc == TypeCode.Boolean)
-            {
-                return 40;
+                case TypeCode.Object:
+                    return 1;
+
+                case TypeCode.UInt64:
+                    return 10;
+
+                case TypeCode.UInt32:
+                    return 11;
+
+                case TypeCode.UInt16:
+                    return 12;
+
+                case TypeCode.Int64:
+                    return 13;
+
+                case TypeCode.Int32:
+                    return 14;
+
+                case TypeCode.Int16:
+                    return 15;
+
+                case TypeCode.Char:
+                    return 16;
+
+                case TypeCode.SByte:
+                    return 17;
+
+                case TypeCode.Byte:
+                    return 18;
+
+                case TypeCode.Single:
+                    return 20;
+
+                case TypeCode.Double:
+                    return 21;
+
+                case TypeCode.String:
+                    return 30;
+
+                case TypeCode.Boolean:
+                    return 40;
             }
 
             if (t.IsArray)

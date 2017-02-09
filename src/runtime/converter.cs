@@ -52,62 +52,53 @@ namespace Python.Runtime
         /// </summary>
         internal static Type GetTypeByAlias(IntPtr op)
         {
-            if (op == Runtime.PyStringType ||
-                op == Runtime.PyUnicodeType)
-            {
+            if (op == Runtime.PyStringType)
                 return stringType;
-            }
-            else if (op == Runtime.PyIntType)
-            {
+
+            if (op == Runtime.PyUnicodeType)
+                return stringType;
+
+            if (op == Runtime.PyIntType)
                 return int32Type;
-            }
-            else if (op == Runtime.PyLongType)
-            {
+
+            if (op == Runtime.PyLongType)
                 return int64Type;
-            }
-            else if (op == Runtime.PyFloatType)
-            {
+
+            if (op == Runtime.PyFloatType)
                 return doubleType;
-            }
-            else if (op == Runtime.PyBoolType)
-            {
+
+            if (op == Runtime.PyBoolType)
                 return boolType;
-            }
+
             return null;
         }
 
         internal static IntPtr GetPythonTypeByAlias(Type op)
         {
             if (op == stringType)
-            {
                 return Runtime.PyUnicodeType;
-            }
 
-            else if (Runtime.IsPython3 && (op == int16Type ||
-                                           op == int32Type ||
-                                           op == int64Type))
-            {
+            if (op == int16Type)
                 return Runtime.PyIntType;
-            }
 
-            else if (op == int16Type ||
-                     op == int32Type)
-            {
+            if (op == int32Type)
                 return Runtime.PyIntType;
-            }
-            else if (op == int64Type)
-            {
+
+            if (op == int64Type && Runtime.IsPython2)
                 return Runtime.PyLongType;
-            }
-            else if (op == doubleType ||
-                     op == singleType)
-            {
+
+            if (op == int64Type)
+                return Runtime.PyIntType;
+
+            if (op == doubleType)
                 return Runtime.PyFloatType;
-            }
-            else if (op == boolType)
-            {
+
+            if (op == singleType)
+                return Runtime.PyFloatType;
+
+            if (op == boolType)
                 return Runtime.PyBoolType;
-            }
+
             return IntPtr.Zero;
         }
 
@@ -329,27 +320,27 @@ namespace Python.Runtime
                     return ToPrimitive(value, stringType, out result, setError);
                 }
 
-                else if (Runtime.PyBool_Check(value))
+                if (Runtime.PyBool_Check(value))
                 {
                     return ToPrimitive(value, boolType, out result, setError);
                 }
 
-                else if (Runtime.PyInt_Check(value))
+                if (Runtime.PyInt_Check(value))
                 {
                     return ToPrimitive(value, int32Type, out result, setError);
                 }
 
-                else if (Runtime.PyLong_Check(value))
+                if (Runtime.PyLong_Check(value))
                 {
                     return ToPrimitive(value, int64Type, out result, setError);
                 }
 
-                else if (Runtime.PyFloat_Check(value))
+                if (Runtime.PyFloat_Check(value))
                 {
                     return ToPrimitive(value, doubleType, out result, setError);
                 }
 
-                else if (Runtime.PySequence_Check(value))
+                if (Runtime.PySequence_Check(value))
                 {
                     return ToArray(value, typeof(object[]), out result, setError);
                 }
@@ -371,31 +362,31 @@ namespace Python.Runtime
                     return true;
                 }
 
-                else if (value == Runtime.PyBoolType)
+                if (value == Runtime.PyBoolType)
                 {
                     result = boolType;
                     return true;
                 }
 
-                else if (value == Runtime.PyIntType)
+                if (value == Runtime.PyIntType)
                 {
                     result = int32Type;
                     return true;
                 }
 
-                else if (value == Runtime.PyLongType)
+                if (value == Runtime.PyLongType)
                 {
                     result = int64Type;
                     return true;
                 }
 
-                else if (value == Runtime.PyFloatType)
+                if (value == Runtime.PyFloatType)
                 {
                     result = doubleType;
                     return true;
                 }
 
-                else if (value == Runtime.PyListType || value == Runtime.PyTupleType)
+                if (value == Runtime.PyListType || value == Runtime.PyTupleType)
                 {
                     result = typeof(object[]);
                     return true;

@@ -55,8 +55,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("No match found for given type params");
             }
 
-            var mb = new MethodBinding(self.m, self.target);
-            mb.info = mi;
+            var mb = new MethodBinding(self.m, self.target) { info = mi };
             Runtime.XIncref(mb.pyHandle);
             return mb.pyHandle;
         }
@@ -76,22 +75,21 @@ namespace Python.Runtime
             }
 
             string name = Runtime.GetManagedString(key);
-            if (name == "__doc__")
+            switch (name)
             {
-                IntPtr doc = self.m.GetDocString();
-                Runtime.XIncref(doc);
-                return doc;
+                case "__doc__":
+                    IntPtr doc = self.m.GetDocString();
+                    Runtime.XIncref(doc);
+                    return doc;
+                // FIXME: deprecate __overloads__ soon...
+                case "__overloads__":
+                case "Overloads":
+                    var om = new OverloadMapper(self.m, self.target);
+                    Runtime.XIncref(om.pyHandle);
+                    return om.pyHandle;
+                default:
+                    return Runtime.PyObject_GenericGetAttr(ob, key);
             }
-
-            // FIXME: deprecate __overloads__ soon...
-            if (name == "__overloads__" || name == "Overloads")
-            {
-                var om = new OverloadMapper(self.m, self.target);
-                Runtime.XIncref(om.pyHandle);
-                return om.pyHandle;
-            }
-
-            return Runtime.PyObject_GenericGetAttr(ob, key);
         }
 
 
