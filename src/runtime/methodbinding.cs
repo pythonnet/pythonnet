@@ -231,8 +231,8 @@ namespace Python.Runtime
         {
             var self = (MethodBinding)GetManagedObject(ob);
             string type = self.target == IntPtr.Zero ? "unbound" : "bound";
-            string s = string.Format("<{0} method '{1}'>", type, self.m.name);
-            return Runtime.PyString_FromStringAndSize(s, s.Length);
+            string name = self.m.name;
+            return Runtime.PyString_FromString($"<{type} method '{name}'>");
         }
 
         /// <summary>

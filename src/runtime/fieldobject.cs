@@ -136,8 +136,7 @@ namespace Python.Runtime
         public static IntPtr tp_repr(IntPtr ob)
         {
             var self = (FieldObject)GetManagedObject(ob);
-            string s = $"<field '{self.info.Name}'>";
-            return Runtime.PyString_FromStringAndSize(s, s.Length);
+            return Runtime.PyString_FromString($"<field '{self.info.Name}'>");
         }
     }
 }

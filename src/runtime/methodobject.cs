@@ -187,8 +187,7 @@ namespace Python.Runtime
         public static IntPtr tp_repr(IntPtr ob)
         {
             var self = (MethodObject)GetManagedObject(ob);
-            string s = string.Format("<method '{0}'>", self.name);
-            return Runtime.PyString_FromStringAndSize(s, s.Length);
+            return Runtime.PyString_FromString($"<method '{self.name}'>");
         }
 
         /// <summary>
