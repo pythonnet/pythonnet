@@ -4,6 +4,13 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
+    /// <summary>
+    /// Test Python Exceptions
+    /// </summary>
+    /// <remarks>
+    /// Keeping this in the old-style SetUp/TearDown
+    /// to ensure that setup still works.
+    /// </remarks>
     [TestFixture]
     public class PythonExceptionTest
     {

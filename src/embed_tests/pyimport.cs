@@ -5,6 +5,18 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
+    /// <summary>
+    /// Test Import unittests and regressions
+    /// </summary>
+    /// <remarks>
+    /// Keeping in old-style SetUp/TearDown due to required SetUp.
+    /// The required directory structure was added to .\pythonnet\src\tests\ directory:
+    /// + PyImportTest/
+    /// | - __init__.py
+    /// | + test/
+    /// | | - __init__.py
+    /// | | - one.py
+    /// </remarks>
     [TestFixture]
     public class PyImportTest
     {
@@ -18,10 +30,8 @@ namespace Python.EmbeddingTest
 
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
-             * modifiers placed on most Runtime methods.
-             */
-            const string s = @"../../tests";
-
+             * modifiers placed on most Runtime methods. */
+            const string s = "../../tests";
             string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
@@ -39,19 +49,11 @@ namespace Python.EmbeddingTest
         /// <summary>
         /// Test subdirectory import
         /// </summary>
-        /// <remarks>
-        /// The required directory structure was added to .\pythonnet\src\tests\ directory:
-        /// + PyImportTest/
-        /// | - __init__.py
-        /// | + test/
-        /// | | - __init__.py
-        /// | | - one.py
-        /// </remarks>
         [Test]
         public void TestDottedName()
         {
             PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
-            Assert.IsNotNull(module, ">>>  import PyImportTest.test.one  # FAILED");
+            Assert.IsNotNull(module);
         }
 
         /// <summary>
@@ -61,7 +63,7 @@ namespace Python.EmbeddingTest
         public void TestSysArgsImportException()
         {
             PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
-            Assert.IsNotNull(module, ">>>  import PyImportTest.sysargv  # FAILED");
+            Assert.IsNotNull(module);
         }
     }
 }

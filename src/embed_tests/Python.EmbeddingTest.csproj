@@ -75,12 +75,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InitializeTest.cs" />
+    <Compile Include="pyinitialize.cs" />
     <Compile Include="pyimport.cs" />
     <Compile Include="pyiter.cs" />
     <Compile Include="pylong.cs" />
     <Compile Include="pyobject.cs" />
     <Compile Include="pythonexception.cs" />
+    <Compile Include="pytuple.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">
