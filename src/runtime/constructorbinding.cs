@@ -104,8 +104,7 @@ namespace Python.Runtime
             ConstructorInfo ci = self.type.GetConstructor(types);
             if (ci == null)
             {
-                var msg = "No match found for constructor signature";
-                return Exceptions.RaiseTypeError(msg);
+                return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
             var boundCtor = new BoundContructor(self.type, self.pyTypeHndl, self.ctorBinder, ci);
 

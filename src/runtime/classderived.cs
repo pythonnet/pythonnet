@@ -737,7 +737,7 @@ namespace Python.Runtime
 
             if (origMethodName == null)
             {
-                throw new NotImplementedException("Python object does not have a '" + methodName + "' method");
+                throw new NotImplementedException($"Python object does not have a '{methodName}' method");
             }
 
             obj.GetType().InvokeMember(origMethodName,

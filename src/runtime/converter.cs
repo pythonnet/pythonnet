@@ -1,9 +1,9 @@
 using System;
+using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Globalization;
 using System.Security;
-using System.Collections;
 
 namespace Python.Runtime
 {
@@ -292,9 +292,7 @@ namespace Python.Runtime
                         result = tmp;
                         return true;
                     }
-                    var err = "value cannot be converted to {0}";
-                    err = string.Format(err, obType);
-                    Exceptions.SetError(Exceptions.TypeError, err);
+                    Exceptions.SetError(Exceptions.TypeError, $"value cannot be converted to {obType}");
                     return false;
                 }
                 if (mt is ClassBase)
@@ -793,10 +791,8 @@ namespace Python.Runtime
 
             if (setError)
             {
-                var format = "'{0}' value cannot be converted to {1}";
                 string tpName = Runtime.PyObject_GetTypeName(value);
-                string error = string.Format(format, tpName, obType);
-                Exceptions.SetError(Exceptions.TypeError, error);
+                Exceptions.SetError(Exceptions.TypeError, $"'{tpName}' value cannot be converted to {obType}");
             }
 
             return false;
@@ -805,8 +801,7 @@ namespace Python.Runtime
 
             if (setError)
             {
-                var error = "value too large to convert";
-                Exceptions.SetError(Exceptions.OverflowError, error);
+                Exceptions.SetError(Exceptions.OverflowError, "value too large to convert");
             }
 
             return false;
@@ -818,8 +813,7 @@ namespace Python.Runtime
             IntPtr ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
-            string error = string.Format("Cannot convert {0} to {1}", src, target);
-            Exceptions.SetError(Exceptions.TypeError, error);
+            Exceptions.SetError(Exceptions.TypeError, $"Cannot convert {src} to {target}");
         }
 
 
@@ -901,8 +895,7 @@ namespace Python.Runtime
 
             if (setError)
             {
-                var error = "invalid enumeration value";
-                Exceptions.SetError(Exceptions.ValueError, error);
+                Exceptions.SetError(Exceptions.ValueError, "invalid enumeration value");
             }
 
             return false;

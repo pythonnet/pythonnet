@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -396,7 +397,7 @@ namespace Python.Runtime
             }
             if (assembly == null)
             {
-                throw new System.IO.FileNotFoundException($"Unable to find assembly '{name}'.");
+                throw new FileNotFoundException($"Unable to find assembly '{name}'.");
             }
 
             return assembly;

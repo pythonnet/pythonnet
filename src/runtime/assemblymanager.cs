@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
-using System.IO;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Threading;
 
@@ -323,9 +323,8 @@ namespace Python.Runtime
             if (warn && loaded)
             {
                 string location = Path.GetFileNameWithoutExtension(lastAssembly.Location);
-                string deprWarning = $@"
-The module was found, but not in a referenced namespace.
-Implicit loading is deprecated. Please use clr.AddReference(""{location}"").";
+                string deprWarning = "The module was found, but not in a referenced namespace.\n" +
+                                     $"Implicit loading is deprecated. Please use clr.AddReference('{location}').";
                 Exceptions.deprecation(deprWarning);
             }
 

@@ -199,8 +199,7 @@ namespace Python.Runtime
 
                 if (o == null)
                 {
-                    var message = "iteration over non-sequence";
-                    return Exceptions.RaiseTypeError(message);
+                    return Exceptions.RaiseTypeError("iteration over non-sequence");
                 }
             }
 
