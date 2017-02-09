@@ -16,14 +16,13 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        [ExpectedException("Python.Runtime.PythonException")]
         public void TestPyTupleInvalidAppend()
         {
             using (Py.GIL())
             {
                 PyObject s = new PyString("foo");
                 var t = new PyTuple();
-                t.Concat(s);
+                Assert.Throws<PythonException>(() => t.Concat(s));
             }
         }
 

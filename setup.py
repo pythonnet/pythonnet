@@ -373,7 +373,7 @@ setup(
     url='https://pythonnet.github.io/',
     license='MIT',
     author="The Python for .Net developers",
-    email="pythondotnet@python.org",
+    author_email="pythondotnet@python.org",
     setup_requires=setup_requires,
     long_description=_get_long_description(),
     ext_modules=[
