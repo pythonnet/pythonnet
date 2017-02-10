@@ -15,6 +15,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added Embedded tests on Appveyor (#353)
 -   Added PY3 settings to configuration-manager (#346)
 -   Added `Slack` chat (#384)(#383)(#386)
+-   Added function of passing an arbitrary .NET object as the value
+    of an attribute of PyObject (#370)(#373)
 
 ### Changed
 
