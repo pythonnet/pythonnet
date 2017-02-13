@@ -82,14 +82,11 @@ namespace Python.Runtime
         /// <summary>
         /// Implement explicit overload selection using subscript syntax ([]).
         /// </summary>
-        /// <summary>
+        /// <remarks>
         /// ConstructorBinding.GetItem(PyObject *o, PyObject *key)
         /// Return element of o corresponding to the object key or NULL on failure.
         /// This is the equivalent of the Python expression o[key].
-        /// </summary>
-        /// <param name="tp"></param>
-        /// <param name="idx"></param>
-        /// <returns></returns>
+        /// </remarks>
         public static IntPtr mp_subscript(IntPtr op, IntPtr key)
         {
             var self = (ConstructorBinding)GetManagedObject(op);
@@ -183,7 +180,7 @@ namespace Python.Runtime
         /// <summary>
         /// BoundContructor.__call__(PyObject *callable_object, PyObject *args, PyObject *kw)
         /// </summary>
-        /// <param name="ob"> PyObject *callable_object </param>
+        /// <param name="op"> PyObject *callable_object </param>
         /// <param name="args"> PyObject *args </param>
         /// <param name="kw"> PyObject *kw </param>
         /// <returns> A reference to a new instance of the class by invoking the selected ctor(). </returns>

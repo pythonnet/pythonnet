@@ -134,10 +134,10 @@ namespace Python.Runtime
         /// __getattr__ implementation, and thus dereferencing a NULL
         /// pointer.
         /// </summary>
-        /// <param name="e">A CLR exception</param>
         /// <param name="ob">The python object wrapping </param>
         internal static void SetArgsAndCause(IntPtr ob)
         {
+            // e: A CLR Exception
             Exception e = ExceptionClassObject.ToException(ob);
             if (e == null)
             {
