@@ -35,8 +35,17 @@ install:
   - coverage run setup.py build_ext --inplace
 
 script:
+  # Set-up and run python tests
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python -m pytest
+
+  # Set-up dll path for embedded tests
+  - OUTPUT=$(python --version 2>&1)
+  - PY_VER=${OUTPUT:7:9}
+  - export LD_LIBRARY_PATH=/opt/python/$PY_VER/lib:$LD_LIBRARY_PATH
+  - echo $LD_LIBRARY_PATH
+  - cp Python.Runtime.dll.config src/embed_tests/bin/Python.Runtime.dll.config
+  # Run embedded tests
   # - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_success:
