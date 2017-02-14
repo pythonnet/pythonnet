@@ -47,6 +47,7 @@ script:
   - export LD_LIBRARY_PATH=/opt/python/3.6.0/lib:$LD_LIBRARY_PATH
   - export LD_LIBRARY_PATH=/opt/python/3.7.0/lib:$LD_LIBRARY_PATH
   - echo $LD_LIBRARY_PATH
+  - cp Python.Runtime.dll.config src/embed_tests/bin/Python.Runtime.dll.config
   # Run embedded tests
   - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
