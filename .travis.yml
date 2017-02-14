@@ -39,6 +39,14 @@ script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python -m pytest
 
+  # Set-up dll path for embedded tests
+  - export LD_LIBRARY_PATH=/opt/python/2.7.9/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=/opt/python/3.3.5/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=/opt/python/3.4.2/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=/opt/python/3.5.2/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=/opt/python/3.6.0/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=/opt/python/3.7.0/lib:$LD_LIBRARY_PATH
+  - echo $LD_LIBRARY_PATH
   # Run embedded tests
   - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
