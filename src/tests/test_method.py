@@ -743,3 +743,29 @@ def test_we_can_bind_to_encoding_get_string():
 
     data = ''.join(data)
     assert data == 'Some testing string'
+
+
+def test_wrong_overload():
+    """Test regression in which implicit conversion caused the wrong types
+    to be used. See #131 for issue. Fixed by #137, #151"""
+
+    # Used to return `50L`
+    res = System.Math.Abs(50.5)
+    assert res == 50.5
+    assert type(res) == float
+
+    res = System.Math.Abs(-50.5)
+    assert res == 50.5
+    assert type(res) == float
+
+    res = System.Math.Max(50.5, 50.1)
+    assert res == 50.5
+    assert type(res) == float
+
+    res = System.Math.Max(System.Double(10.5), System.Double(50.5))
+    assert res == 50.5
+    assert type(res) == float  # Should it return a System.Double?
+
+    res = System.Math.Max(System.Double(50.5), 50.1)
+    assert res == 50.5
+    assert type(res) == float
