@@ -167,11 +167,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Precedence algorithm largely lifted from jython - the concerns are
-        /// generally the same so we'll start w/this and tweak as necessary.
+        /// Precedence algorithm largely lifted from Jython - the concerns are
+        /// generally the same so we'll start with this and tweak as necessary.
         /// </summary>
         /// <remarks>
-        /// TODO: Add link to specific Jython Section/Code/File
+        /// Based from Jython `org.python.core.ReflectedArgs.precedence`
+        /// See: https://github.com/jythontools/jython/blob/master/src/org/python/core/ReflectedArgs.java#L192
         /// </remarks>
         internal static int GetPrecedence(MethodBase mi)
         {
@@ -328,7 +329,7 @@ namespace Python.Runtime
                 else if (pynargs > clrnargs && clrnargs > 0 &&
                          Attribute.IsDefined(pi[clrnargs - 1], typeof(ParamArrayAttribute)))
                 {
-                    // This is a spam(params object[] egg) style method
+                    // This is a `foo(params object[] bar)` style method
                     match = true;
                     arrayStart = clrnargs - 1;
                 }
