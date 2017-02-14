@@ -28,6 +28,7 @@ if ($PYTHON_STATUS -ne 0) {
 Write-Host ("Starting embedded tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage `
             -target:"$NUNIT" -targetargs:"$CS_TESTS" `
+            -filter:"+[*]Python.Runtime*" `
             -returntargetcode
 $NUNIT_STATUS = $LastExitCode
 if ($NUNIT_STATUS -ne 0) {
