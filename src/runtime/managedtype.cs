@@ -28,7 +28,7 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+                var flags = (long)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
                     IntPtr op = tp == ob
@@ -63,7 +63,7 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+                var flags = (long)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
                     return true;

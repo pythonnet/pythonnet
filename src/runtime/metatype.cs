@@ -247,7 +247,7 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+            var flags = (long)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
                 IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());
