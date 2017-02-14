@@ -7,7 +7,7 @@ Refactor utility functions and classes
 
 from __future__ import print_function
 
-from _compat import PY2, PY3
+from ._compat import PY2, PY3
 
 
 def dprint(msg):

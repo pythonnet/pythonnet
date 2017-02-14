@@ -33,7 +33,7 @@ if PY3:
     unicode = str
 
     # from nowhere import Nothing
-    cmp = lambda a, b: (a > b) - (a < b)  # No Py3 equivalent
+    cmp = lambda a, b: (a > b) - (a < b)  # No PY3 equivalent
     map = map
     range = range
     zip = zip

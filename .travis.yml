@@ -1,5 +1,6 @@
 sudo: false
 
+# language: csharp installs mono/dotnet but has limited python.
 language: python
 python:
   - 2.7
@@ -29,12 +30,13 @@ addons:
       - ca-certificates-mono
 
 install:
-  - pip install pycparser coverage codecov
+  - pip install --upgrade pycparser coverage codecov pytest
+  # setup.py install works too, but need to deal w Python.test then
   - coverage run setup.py build_ext --inplace
 
 script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
-  - python src/tests/runtests.py
+  - python -m pytest
   # - mono ./packages/NUnit.*/tools/nunit-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_success:

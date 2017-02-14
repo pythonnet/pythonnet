@@ -11,7 +11,7 @@ import time
 import unittest
 # import pdb
 
-from _compat import range
+from ._compat import range
 
 try:
     import System

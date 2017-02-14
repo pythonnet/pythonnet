@@ -14,7 +14,7 @@ import sys
 import time
 
 import runtests
-from _compat import range
+from ._compat import range
 
 
 def main():
