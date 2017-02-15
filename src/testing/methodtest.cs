@@ -131,6 +131,56 @@ namespace Python.Test
             return "Got object";
         }
 
+        public static string TestOverloadedObjectTwo(int a, int b)
+        {
+            return "Got int-int";
+        }
+
+        public static string TestOverloadedObjectTwo(string a, string b)
+        {
+            return "Got string-string";
+        }
+
+        public static string TestOverloadedObjectTwo(string a, int b)
+        {
+            return "Got string-int";
+        }
+
+        public static string TestOverloadedObjectTwo(string a, object b)
+        {
+            return "Got string-object";
+        }
+
+        public static string TestOverloadedObjectTwo(int a, object b)
+        {
+            return "Got int-object";
+        }
+
+        public static string TestOverloadedObjectTwo(object a, int b)
+        {
+            return "Got object-int";
+        }
+
+        public static string TestOverloadedObjectTwo(object a, object b)
+        {
+            return "Got object-object";
+        }
+
+        public static string TestOverloadedObjectTwo(int a, string b)
+        {
+            return "Got int-string";
+        }
+
+        public static string TestOverloadedObjectThree(object a, int b)
+        {
+            return "Got object-int";
+        }
+
+        public static string TestOverloadedObjectThree(int a, object b)
+        {
+            return "Got int-object";
+        }
+
         public static bool TestStringOutParams(string s, out string s1)
         {
             s1 = "output string";

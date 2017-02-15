@@ -790,3 +790,32 @@ def test_object_in_param():
 
     res = MethodTest.TestOverloadedObject("test")
     assert res == "Got object"
+
+
+def test_object_in_multiparam():
+    """Test method with object multiparams behaves"""
+
+    res = MethodTest.TestOverloadedObjectTwo(5, 5)
+    assert res == "Got int-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(5, "foo")
+    assert res == "Got int-string"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", 7.24)
+    assert res == "Got string-object"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", "bar")
+    assert res == "Got string-string"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", 5)
+    assert res == "Got string-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(7.24, 7.24)
+    assert res == "Got object-object"
+
+
+def test_object_in_multiparam_exception():
+    """Test method with object multiparams behaves"""
+
+    with pytest.raises(TypeError):
+        MethodTest.TestOverloadedObjectThree("foo", "bar")
