@@ -11,13 +11,7 @@ environment:
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
     PYTHONPATH: C:\testdir
     NUNIT: nunit3-console
-    CONDA_BLD: C:\conda
-    CONDA_BLD_VERSION: 3.5
-
-    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
-    # /E:ON and /V:ON options are not enabled in the batch script interpreter
-    # See: http://stackoverflow.com/a/13751649/163740
-    CMD_IN_ENV: 'cmd /E:ON /V:ON /C .\ci\run_with_env.cmd'
+    CONDA_BLD: C:\miniconda35
 
   matrix:
     - PYTHON_VERSION: 2.7
@@ -37,6 +31,7 @@ init:
   - if %PLATFORM%==x86 (set CONDA_BLD_ARCH=32)
   # - if %PLATFORM%==x86 (set NUNIT=%NUNIT%-x86)
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
+  - if %PLATFORM%==x64 (set CONDA_BLD=%CONDA_BLD%-x64)
 
   # Prepend newly installed Python to the PATH of this build
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
