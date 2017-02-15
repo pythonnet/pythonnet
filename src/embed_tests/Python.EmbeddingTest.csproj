@@ -98,6 +98,7 @@
     <Compile Include="TestPythonEngineProperties.cs" />
     <Compile Include="TestPyTuple.cs" />
     <Compile Include="TestRuntime.cs" />
+    <Compile Include="pyscope.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">

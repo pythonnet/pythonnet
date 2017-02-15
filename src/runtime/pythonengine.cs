@@ -527,6 +527,415 @@ namespace Python.Runtime
         Eval = 258
     }
 
+    public class PySessionDisposedException: Exception
+    {
+
+    }
+
+    public class PyScope : IDisposable
+    {
+        public class GILState : IDisposable
+        {
+            private bool isGetGIL;
+            private IntPtr state;
+
+            internal GILState()
+            {
+            }
+
+            public void AcquireLock()
+            {
+                if (isGetGIL)
+                {
+                    return;
+                }
+                state = PythonEngine.AcquireLock();
+                isGetGIL = true;
+            }
+
+            public void ReleaseLock()
+            {
+                if (isGetGIL)
+                {
+                    PythonEngine.ReleaseLock(state);
+                    isGetGIL = false;
+                }
+            }
+
+            public void Dispose()
+            {
+                this.ReleaseLock();
+                GC.SuppressFinalize(this);
+            }
+
+            ~GILState()
+            {
+                Dispose();
+            }
+        }
+
+        private string name;
+
+        private PyScope parent;
+
+        private GILState state;
+
+        private bool isDisposed;
+
+        private PyScope(GILState state)
+        {
+            this.isDisposed = false;
+            this.state = state;
+            globals = Runtime.PyDict_New();
+            if (globals == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            locals = Runtime.PyDict_New();
+            if (locals == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+        }
+
+        internal PyScope(string name, GILState state)
+            :this(state)
+        {
+            this.state = state;
+            this.name = name;
+            Runtime.PyDict_SetItemString(
+                    globals, "__builtins__",
+                    Runtime.PyEval_GetBuiltins()
+                );
+        }
+
+        internal PyScope(PyScope parent, GILState state)
+            : this(state)
+        {
+            this.state = state;
+            this.parent = parent;
+            globals = Runtime.PyDict_New();
+            if (globals == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            locals = Runtime.PyDict_New();
+            if (locals == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            int result = Runtime.PyDict_Update(globals, parent.globals);
+            if (result < 0)
+            {
+                throw new PythonException();
+            }
+            result = Runtime.PyDict_Update(globals, parent.locals);
+            if (result < 0)
+            {
+                throw new PythonException();
+            }
+        }
+
+        /// <summary>
+        /// the dict for global variables
+        /// </summary>
+        public IntPtr globals
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// the dict for local variables
+        /// </summary>
+        public IntPtr locals
+        {
+            get;
+            private set;
+        }
+
+        public PyScope SubScope()
+        {
+            return new PyScope(this, this.state);
+        }
+
+        public void Suspend()
+        {
+            this.state.ReleaseLock();
+        }
+
+        /// <summary>
+        /// Import Method
+        /// </summary>
+        /// <remarks>
+        /// The import .. as .. statement in Python.
+        /// Import a module ,add it to the local variable dict and return the resulting module object as a PyObject.
+        /// </remarks>
+        public PyObject Import(string name)
+        {
+            return ImportAs(name, name);
+        }
+
+        /// <summary>
+        /// Import Method
+        /// </summary>
+        /// <remarks>
+        /// The import .. as .. statement in Python.
+        /// Import a module ,add it to the local variable dict and return the resulting module object as a PyObject.
+        /// </remarks>
+        public PyObject ImportAs(string name, string asname)
+        {
+            this.AcquireLock();
+            PyObject module = PythonEngine.ImportModule(name);
+            if (asname == null)
+            {
+                asname = name;
+            }
+            SetLocal(asname, module);
+            return module;
+        }
+
+        /// <summary>
+        /// Evaluate a Python expression
+        /// </summary>
+        /// <remarks>
+        /// Evaluate a Python expression and return the result as a PyObject
+        /// or null if an exception is raised.
+        /// </remarks>
+        public PyObject Eval(string code)
+        {
+            this.AcquireLock();
+            var flag = (IntPtr)Runtime.Py_eval_input;
+            IntPtr ptr = Runtime.PyRun_String(
+                code, flag, globals, locals
+            );
+            Py.Throw();
+            return new PyObject(ptr);
+        }
+
+        /// <summary>
+        /// Evaluate a Python expression
+        /// </summary>
+        /// <remarks>
+        /// Evaluate a Python expression and convert the result to Managed Object.
+        /// </remarks>
+        public T Eval<T>(string code)
+        {
+            PyObject pyObj = Eval(code);
+            T obj = (T)pyObj.AsManagedObject(typeof(T));
+            return obj;
+        }
+
+        /// <summary>
+        /// Exec Method
+        /// </summary>
+        /// <remarks>
+        /// Evaluate a Python script and save its local variables in the current local variable dict.
+        /// </remarks>
+        public void Exec(string code)
+        {
+            this.AcquireLock();
+            Exec(code, this.globals, this.locals);
+        }
+        
+        private void Exec(string code, IntPtr _globals, IntPtr _locals)
+        {
+            var flag = (IntPtr)Runtime.Py_file_input;
+            IntPtr ptr = Runtime.PyRun_String(
+                code, flag, _globals, _locals
+            );
+            Py.Throw();
+            if (ptr != Runtime.PyNone)
+            {
+                throw new PythonException();
+            }
+            Runtime.XDecref(ptr);
+        }
+        
+        /// <summary>
+        /// SetGlobal Method
+        /// </summary>
+        /// <remarks>
+        /// Add a new variable to global variable dict if it not exists
+        /// or set the value of the global variable if it exists.
+        /// </remarks>
+        public void SetGlobal(string name, object value)
+        {
+            this.AcquireLock();
+            using (var pyKey = new PyString(name))
+            {
+                IntPtr _value = GetInstHandle(value);
+                int r = Runtime.PyObject_SetItem(globals, pyKey.obj, _value);
+                if (r < 0)
+                {
+                    throw new PythonException();
+                }
+                Runtime.XDecref(_value);
+            }
+        }
+
+        /// <summary>
+        /// DelGlobal Method
+        /// </summary>
+        /// <remarks>
+        /// Remove a variable from the global variable dict.
+        /// </remarks>
+        public void DelGlobal(string name)
+        {
+            this.AcquireLock();
+            using (var pyKey = new PyString(name))
+            {
+                int r = Runtime.PyObject_DelItem(globals, pyKey.obj);
+                if (r < 0)
+                {
+                    throw new PythonException();
+                }
+            }
+        }
+
+        /// <summary>
+        /// SetLocal Method
+        /// </summary>
+        /// <remarks>
+        /// Add a new variable to local variable dict if it not exists
+        /// or set the value of the local variable if it exists.
+        /// </remarks>
+        public void SetLocal(string name, object value)
+        {
+            this.AcquireLock();
+            using (var pyKey = new PyString(name))
+            {
+                IntPtr _value = GetInstHandle(value);
+                int r = Runtime.PyObject_SetItem(locals, pyKey.obj, _value);
+                if (r < 0)
+                {
+                    throw new PythonException();
+                }
+                Runtime.XDecref(_value);
+            }
+        }
+
+        /// <summary>
+        /// DelLocal Method
+        /// </summary>
+        /// <remarks>
+        /// Remove a variable from the local variable dict.
+        /// </remarks>
+        public void DelLocal(string name)
+        {
+            this.AcquireLock();
+            using (var pyKey = new PyString(name))
+            {
+                int r = Runtime.PyObject_DelItem(locals, pyKey.obj);
+                if (r < 0)
+                {
+                    throw new PythonException();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Exists Method
+        /// </summary>
+        /// <remarks>
+        /// Returns true if the variable appears in the local variable dict or the global variable dict.
+        /// </remarks>
+        public bool Exists(string name)
+        {
+            this.AcquireLock();
+            using (var pyKey = new PyString(name))
+            {
+                if (Runtime.PyMapping_HasKey(locals, pyKey.obj) != 0)
+                {
+                    return true;
+                }
+                return Runtime.PyMapping_HasKey(globals, pyKey.obj) != 0;
+            }
+        }
+
+        /// <summary>
+        /// Get Method
+        /// </summary>
+        /// <remarks>
+        /// Returns the value of the variable, local variable first.
+        /// If the variable is not exists, return null.
+        /// </remarks>
+        public PyObject Get(string name)
+        {
+            this.AcquireLock();
+            using (var pyKey = new PyString(name))
+            {
+                IntPtr op;
+                if (Runtime.PyMapping_HasKey(locals, pyKey.obj) != 0)
+                {
+                    op = Runtime.PyObject_GetItem(locals, pyKey.obj);
+                }
+                else if (Runtime.PyMapping_HasKey(globals, pyKey.obj) != 0)
+                {
+                    op = Runtime.PyObject_GetItem(globals, pyKey.obj);
+                }
+                else
+                {
+                    return null; //name not exists
+                }
+                if (op == IntPtr.Zero)
+                {
+                    throw new PythonException();
+                }
+                return new PyObject(op);
+            }
+        }
+
+        public T Get<T>(string name)
+        {
+            PyObject obj = this.Get(name);
+            return (T)obj.AsManagedObject(typeof(T));
+        }
+
+        private static IntPtr GetInstHandle(object value)
+        {
+            if (value == null)
+            {
+                Runtime.XIncref(Runtime.PyNone);
+                return Runtime.PyNone;
+            }
+            else
+            {
+                var ptr = Converter.ToPython(value, value.GetType());
+                return ptr;
+            }
+        }
+
+        private void AcquireLock()
+        {
+            if(isDisposed)
+            {
+                throw new PySessionDisposedException();
+            }
+            this.state.AcquireLock();
+        }
+
+        public virtual void Dispose()
+        {
+            if(isDisposed)
+            {
+                return;
+            }
+            Runtime.XDecref(globals);
+            Runtime.XDecref(locals);
+            if (this.parent == null)
+            {
+                Py.RemoveSession(name);
+            }
+            isDisposed = true;
+        }
+
+        ~PyScope()
+        {
+            Dispose();
+        }
+    }
+
     public static class Py
     {
         public static GILState GIL()
@@ -537,6 +946,34 @@ namespace Python.Runtime
             }
 
             return new GILState();
+        }
+
+        private static PyScope.GILState gil = new PyScope.GILState();
+
+        /// <summary>
+        /// Sessions should be cleared after shut down.
+        /// Currently, the seperation of static methods into Py and PythonEngine makes the code ugly.
+        /// </summary>
+        private static Dictionary<string, PyScope> Sessions = new Dictionary<string, PyScope>();
+
+        public static PyScope Session(string name)
+        {
+            if (!PythonEngine.IsInitialized)
+            {
+                PythonEngine.Initialize();
+            }
+            if(Sessions.ContainsKey(name))
+            {
+                return Sessions[name];
+            }
+            var session = new PyScope(name, gil);
+            Sessions[name] = session;
+            return session;
+        }
+
+        internal static void RemoveSession(string name)
+        {
+            Sessions.Remove(name);
         }
 
         public class GILState : IDisposable
