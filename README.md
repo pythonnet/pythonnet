@@ -6,6 +6,8 @@
 [![license shield][]](./LICENSE)
 [![pypi package version][]](https://pypi.python.org/pypi/pythonnet)
 [![python supported shield][]](https://pypi.python.org/pypi/pythonnet)
+[![StackExchange](https://img.shields.io/stackexchange/stackoverflow/t/python.net.svg)](http://stackoverflow.com/questions/tagged/python.net)
+[![Slack](https://img.shields.io/badge/chat-slack-color.svg?style=social?link=http://left&link=http://right)](https://pythonnet.slack.com)
 
 Python for .NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
