@@ -1,5 +1,16 @@
 # Build `conda.recipe` only if this is a Pull_Request. Saves time for CI.
 
+$env:CONDA_PY = "$env:PY_VER"
+# Use pre-installed miniconda. Note that location differs if 64bit
+$env:CONDA_BLD = "C:\miniconda35"
+
+if ($env:PLATFORM -eq "x86"){
+    $env:CONDA_BLD_ARCH=32
+} else {
+    $env:CONDA_BLD_ARCH=64
+    $env:CONDA_BLD = "$env:CONDA_BLD" + "-x64"
+}
+
 if ($env:APPVEYOR_PULL_REQUEST_NUMBER) {
     # Update PATH, and keep a copy to restore at end of this PowerShell script
     $old_path = $env:path

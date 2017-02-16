@@ -9,7 +9,6 @@ environment:
   global:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
-    CONDA_BLD: C:\miniconda35
 
   matrix:
     - PYTHON_VERSION: 2.7
@@ -22,15 +21,12 @@ init:
   # Prepare Environment
   - mkdir C:\testdir
 
-  # Set environment variables depending based on build cfg
-  - set CONDA_PY=%PYTHON_VERSION:.=%
-  - set CONDA_BLD_ARCH=%PLATFORM:x=%
-  - set PYTHON=C:\PYTHON%PYTHON_VERSION:.=%
-  - if %PLATFORM%==x86 (set CONDA_BLD_ARCH=32)
+  # Update Environment Variables based on matrix/platform
+  - set PY_VER=%PYTHON_VERSION:.=%
+  - set PYTHON=C:\PYTHON%PY_VER%
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
-  - if %PLATFORM%==x64 (set CONDA_BLD=%CONDA_BLD%-x64)
 
-  # Prepend newly installed Python to the PATH of this build
+  # Put desired Python version first in PATH
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 install:
