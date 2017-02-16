@@ -57,4 +57,5 @@ after_success:
 
 notifications:
   email: false
-  slack: pythonnet:2Mlau3hYCvTOg6fvblzq6BYf
+  slack:
+    secure: "UiQdSK1/uNnHl8/gQgfLj/F5JGxtJuaT3QYtKNcw3Ddpr3FX8tfXJ/RjsCsSlRQzDm7AdBAeMzcBQmvH4iRIV2y7qVywLyru5MPiwY4ZjMN6fJK/zaaxetOct9fasIBYzHguNPDAtiBGFh2iK1H1MXTY8rkmU3WZvl18b8EsrP0="
