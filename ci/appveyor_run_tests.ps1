@@ -19,20 +19,16 @@ $CS_TESTS = ".\src\embed_tests\bin\Python.EmbeddingTest.dll"
 $RUNTIME_DIR = ".\src\runtime\bin\"
 
 # Run python tests with C# coverage
-# why `2>&1 | %{ "$_" }`? see: http://stackoverflow.com/a/20950421/5208670
 Write-Host ("Starting Python tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:py.coverage `
             -target:"$PY" -targetargs:"-m pytest" `
-            -returntargetcode `
-            2>&1 | %{ "$_" }
+            -returntargetcode
 $PYTHON_STATUS = $LastExitCode
 if ($PYTHON_STATUS -ne 0) {
     Write-Host "Python tests failed, continuing to embedded tests" -ForegroundColor "Red"
 }
 
 # Run Embedded tests with C# coverage
-# Powershell continuation: http://stackoverflow.com/a/2608186/5208670
-# Powershell options splatting: http://stackoverflow.com/a/24313253/5208670
 Write-Host ("Starting embedded tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage `
             -target:"$CS_RUNNER" -targetargs:"$CS_TESTS" `
