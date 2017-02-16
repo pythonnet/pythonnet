@@ -20,7 +20,7 @@ environment:
     - PYTHON_VERSION: 3.6
 
 init:
-  # Prepare environment
+  # Prepare Environment
   - mkdir C:\testdir
 
   # Set environment variables depending based on build cfg
@@ -46,17 +46,16 @@ install:
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages
 
 build_script:
-  # build clean sdist & wheel with coverage of setup.py, install local wheel
-  - coverage run setup.py sdist bdist_wheel
+  # Create clean `sdist`. Only used for releases
+  - python setup.py --quiet sdist
+  # Build `wheel` with coverage of `setup.py`
+  - coverage run setup.py bdist_wheel
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: Copy-Item (Resolve-Path .\build\*\Python.Test.dll) C:\testdir
 
-  # Test runner
   - ps: .\ci\appveyor_run_tests.ps1
-
-  # Build conda-recipe on Pull Requests
   - ps: .\ci\appveyor_build_recipe.ps1
 
 on_finish:
