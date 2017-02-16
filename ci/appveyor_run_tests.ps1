@@ -1,9 +1,17 @@
-# Script to simplify appveyor configuration and resolve path to tools
+# Script to simplify AppVeyor configuration and resolve path to tools
+
+# Test Runner framework being used for embedded tests
+$CS_RUNNER = "nunit3-console"
+
+# Needed for ARCH specific runners(NUnit2/XUnit3). Skip for NUnit3
+if ($FALSE -and $env:PLATFORM -eq "x86"){
+    $CS_RUNNER = $CS_RUNNER + "-x86"
+}
 
 # Executable paths for OpenCover
 # Note if OpenCover fails, it won't affect the exit codes.
 $OPENCOVER = Resolve-Path .\packages\OpenCover.*\tools\OpenCover.Console.exe
-$NUNIT = Resolve-Path .\packages\NUnit.*\tools\"$env:NUNIT".exe
+$CS_RUNNER = Resolve-Path .\packages\NUnit.*\tools\"$CS_RUNNER".exe
 $PY = Get-Command python
 
 # Can't use ".\build\*\Python.EmbeddingTest.dll". Missing framework files.
@@ -27,16 +35,16 @@ if ($PYTHON_STATUS -ne 0) {
 # Powershell options splatting: http://stackoverflow.com/a/24313253/5208670
 Write-Host ("Starting embedded tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage `
-            -target:"$NUNIT" -targetargs:"$CS_TESTS" `
+            -target:"$CS_RUNNER" -targetargs:"$CS_TESTS" `
             -filter:"+[*]Python.Runtime*" `
             -returntargetcode
-$NUNIT_STATUS = $LastExitCode
-if ($NUNIT_STATUS -ne 0) {
+$CS_STATUS = $LastExitCode
+if ($CS_STATUS -ne 0) {
     Write-Host "Embedded tests failed" -ForegroundColor "Red"
 }
 
 # Set exit code to fail if either Python or Embedded tests failed
-if ($PYTHON_STATUS -ne 0 -or $NUNIT_STATUS -ne 0) {
+if ($PYTHON_STATUS -ne 0 -or $CS_STATUS -ne 0) {
     Write-Host "Tests failed" -ForegroundColor "Red"
     $host.SetShouldExit(1)
 }

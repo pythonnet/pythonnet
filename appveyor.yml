@@ -10,7 +10,6 @@ environment:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
     PYTHONPATH: C:\testdir
-    NUNIT: nunit3-console
     CONDA_BLD: C:\miniconda35
 
   matrix:
@@ -29,7 +28,6 @@ init:
   - set CONDA_BLD_ARCH=%PLATFORM:x=%
   - set PYTHON=C:\PYTHON%PYTHON_VERSION:.=%
   - if %PLATFORM%==x86 (set CONDA_BLD_ARCH=32)
-  # - if %PLATFORM%==x86 (set NUNIT=%NUNIT%-x86)
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
   - if %PLATFORM%==x64 (set CONDA_BLD=%CONDA_BLD%-x64)
 
