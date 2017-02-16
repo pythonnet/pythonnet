@@ -6,8 +6,8 @@
 [![license shield][]](./LICENSE)
 [![pypi package version][]](https://pypi.python.org/pypi/pythonnet)
 [![python supported shield][]](https://pypi.python.org/pypi/pythonnet)
-[![StackExchange](https://img.shields.io/stackexchange/stackoverflow/t/python.net.svg)](http://stackoverflow.com/questions/tagged/python.net)
-[![Slack](https://img.shields.io/badge/chat-slack-color.svg?style=social?link=http://left&link=http://right)](https://pythonnet.slack.com)
+[![stackexchange shield][]](http://stackoverflow.com/questions/tagged/python.net)
+[![slack][]](https://pythonnet.slack.com)
 
 Python for .NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
@@ -90,5 +90,9 @@ int32
 [pypi package version]: https://img.shields.io/pypi/v/pythonnet.svg
 
 [python supported shield]: https://img.shields.io/pypi/pyversions/pythonnet.svg
+
+[slack]: https://img.shields.io/badge/chat-slack-color.svg?style=social
+
+[stackexchange shield]: https://img.shields.io/badge/StackOverflow-python.net-blue.svg
 
 [travis shield]: https://img.shields.io/travis/pythonnet/pythonnet/master.svg?label=Travis
