@@ -1,6 +1,5 @@
 sudo: false
 
-# language: csharp installs mono/dotnet but has limited python.
 language: python
 python:
   - 2.7
@@ -29,6 +28,11 @@ addons:
       - mono-devel
       - ca-certificates-mono
 
+before_install:
+  # Set-up dll path for embedded tests
+  - PY_LIBDIR=$(python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
+  - export LD_LIBRARY_PATH=$PY_LIBDIR:$LD_LIBRARY_PATH
+
 install:
   - pip install --upgrade pycparser coverage codecov pytest
   # setup.py install works too, but need to deal w Python.test then
@@ -39,11 +43,6 @@ script:
   - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python -m pytest
 
-  # Set-up dll path for embedded tests
-  - OUTPUT=$(python --version 2>&1)
-  - PY_VER=${OUTPUT:7:9}
-  - export LD_LIBRARY_PATH=/opt/python/$PY_VER/lib:$LD_LIBRARY_PATH
-  - echo $LD_LIBRARY_PATH
   - cp Python.Runtime.dll.config src/embed_tests/bin/Python.Runtime.dll.config
   # Run embedded tests
   # - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
