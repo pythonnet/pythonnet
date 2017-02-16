@@ -9,7 +9,6 @@ environment:
   global:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
-    PYTHONPATH: C:\testdir
     CONDA_BLD: C:\miniconda35
 
   matrix:
@@ -33,11 +32,6 @@ init:
 
   # Prepend newly installed Python to the PATH of this build
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-
-  # Check that we have the expected version, architecture for Python
-  - python --version
-  - python -c "import struct; print(struct.calcsize('P') * 8)"
-  - python -c "import ctypes; print(ctypes.sizeof(ctypes.c_wchar))"
 
 install:
   - pip install --upgrade -r requirements.txt
