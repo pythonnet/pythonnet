@@ -68,3 +68,8 @@ on_finish:
 
 artifacts:
   - path: dist\*
+
+notifications:
+  - provider: Slack
+    incoming_webhook:
+      secure: 2S/t6rGHdbwoxehnvn5KgfsHrBFEtwnPD7M5olGErmz70oWFVpqoWd/EvDwh7rKZGdOTjDmpwcukc2xi5VRaGHbBAqFYS3tAdgAMrcaTNWs=
