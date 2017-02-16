@@ -18,6 +18,7 @@ env:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
     - SEGFAULT_SIGNALS=all
     - PYTHONUNBUFFERED=True
+    - CODECOV_ENV=TRAVIS_PYTHON_VERSION
 
 addons:
   apt:
@@ -51,8 +52,9 @@ after_success:
   # Uncomment if need to geninterop, ie. py37 final
   # - python tools/geninterop/geninterop.py
 
-  # Waiting on mono-cov support or SharpCover
-  - codecov
+  # Waiting on mono-coverage, SharpCover or xr.Baboon
+  - coverage xml -i
+  - codecov --file coverage.xml --flags Setup_Linux
 
 notifications:
   email: false

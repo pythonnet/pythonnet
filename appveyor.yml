@@ -9,6 +9,7 @@ environment:
   global:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
+    CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
     - PYTHON_VERSION: 2.7
@@ -49,8 +50,10 @@ test_script:
   - ps: .\ci\appveyor_build_recipe.ps1
 
 on_finish:
-  # Upload coverage
-  - codecov
+  - coverage xml -i
+  - codecov --file coverage.xml --flags Setup_Windows
+  - codecov --file py.coverage --flags Python_Tests
+  - codecov --file cs.coverage --flags Embedded_Tests
 
 artifacts:
   - path: dist\*
