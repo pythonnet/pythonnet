@@ -57,3 +57,4 @@ after_success:
 
 notifications:
   email: false
+  slack: pythonnet:2Mlau3hYCvTOg6fvblzq6BYf
