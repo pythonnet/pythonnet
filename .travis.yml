@@ -34,8 +34,8 @@ before_install:
   - export LD_LIBRARY_PATH=$PY_LIBDIR:$LD_LIBRARY_PATH
 
 install:
-  - pip install --upgrade pycparser coverage codecov pytest
-  # setup.py install works too, but need to deal w Python.test then
+  - pip install --upgrade -r requirements.txt
+  # `setup.py install` works too, but need to deal with `Python.Test` PATH
   - coverage run setup.py build_ext --inplace
 
 script:

@@ -40,10 +40,9 @@ init:
   - python -c "import ctypes; print(ctypes.sizeof(ctypes.c_wchar))"
 
 install:
-  # install for wheels & coverage
-  - pip install --upgrade pip wheel coverage codecov pytest
+  - pip install --upgrade -r requirements.txt
 
-  # Install OpenCover. Can't put on packages.config; not Linux/Mono compatible
+  # Install OpenCover. Can't put on `packages.config`, not Mono compatible
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages
 
 build_script:
