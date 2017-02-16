@@ -3,9 +3,12 @@
 [![appveyor shield][]](https://ci.appveyor.com/project/pythonnet/pythonnet/branch/master)
 [![travis shield][]](https://travis-ci.org/pythonnet/pythonnet)
 [![codecov shield][]](https://codecov.io/github/pythonnet/pythonnet)
+
 [![license shield][]](./LICENSE)
 [![pypi package version][]](https://pypi.python.org/pypi/pythonnet)
 [![python supported shield][]](https://pypi.python.org/pypi/pythonnet)
+[![stackexchange shield][]](http://stackoverflow.com/questions/tagged/python.net)
+[![slack][]](https://pythonnet.slack.com)
 
 Python for .NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
@@ -35,14 +38,14 @@ from System.Windows.Forms import Form
 ## Embedding Python in .NET
 
 -   All calls to python should be inside
-    a `using (Py.GIL()) {/_ Your code here _/}` block.
+    a `using (Py.GIL()) {/* Your code here */}` block.
 -   Import python modules using `dynamic mod = Py.Import("mod")`,
     then you can call functions as normal, eg `mod.func(args)`.
 -   Use `mod.func(args, Py.kw("keywordargname", keywordargvalue))`
     to apply keyword arguments.
 -   All python objects should be declared as `dynamic` type.
 -   Mathematical operations involving python and literal/managed types must
-    have the python object first, eg `np.pi_2` works, `2_np.pi` doesn't.
+    have the python object first, eg. `np.pi_2` works, `2_np.pi` doesn't.
 
 ### Example
 
@@ -57,7 +60,7 @@ static void Main(string[] args)
         Console.WriteLine(sin(5));
         double c = np.cos(5) + sin(5);
         Console.WriteLine(c);
-        /* this block is temporarily disabled due to regression
+        /* this block is temporarily disabled due to regression #249
         dynamic a = np.array(new List<float> { 1, 2, 3 });
         dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
         Console.WriteLine(a.dtype);
@@ -81,12 +84,16 @@ int32
 
 [appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
 
-[codecov shield]: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/master.svg?label=codecov
+[codecov shield]: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/master.svg?label=Codecov
 
 [license shield]: https://img.shields.io/badge/license-MIT-blue.svg?maxAge=3600
 
 [pypi package version]: https://img.shields.io/pypi/v/pythonnet.svg
 
 [python supported shield]: https://img.shields.io/pypi/pyversions/pythonnet.svg
+
+[slack]: https://img.shields.io/badge/chat-slack-color.svg?style=social
+
+[stackexchange shield]: https://img.shields.io/badge/StackOverflow-python.net-blue.svg
 
 [travis shield]: https://img.shields.io/travis/pythonnet/pythonnet/master.svg?label=Travis
