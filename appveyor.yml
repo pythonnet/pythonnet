@@ -9,9 +9,7 @@ environment:
   global:
     PYTHONUNBUFFERED: True
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
-    PYTHONPATH: C:\testdir
-    NUNIT: nunit3-console
-    CONDA_BLD: C:\miniconda35
+    CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
     - PYTHON_VERSION: 2.7
@@ -21,50 +19,41 @@ environment:
     - PYTHON_VERSION: 3.6
 
 init:
-  # Prepare environment
+  # Prepare Environment
   - mkdir C:\testdir
 
-  # Set environment variables depending based on build cfg
-  - set CONDA_PY=%PYTHON_VERSION:.=%
-  - set CONDA_BLD_ARCH=%PLATFORM:x=%
-  - set PYTHON=C:\PYTHON%PYTHON_VERSION:.=%
-  - if %PLATFORM%==x86 (set CONDA_BLD_ARCH=32)
-  # - if %PLATFORM%==x86 (set NUNIT=%NUNIT%-x86)
+  # Update Environment Variables based on matrix/platform
+  - set PY_VER=%PYTHON_VERSION:.=%
+  - set PYTHON=C:\PYTHON%PY_VER%
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
-  - if %PLATFORM%==x64 (set CONDA_BLD=%CONDA_BLD%-x64)
 
-  # Prepend newly installed Python to the PATH of this build
+  # Put desired Python version first in PATH
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
-  # Check that we have the expected version, architecture for Python
-  - python --version
-  - python -c "import struct; print(struct.calcsize('P') * 8)"
-  - python -c "import ctypes; print(ctypes.sizeof(ctypes.c_wchar))"
-
 install:
-  # install for wheels & coverage
-  - pip install --upgrade pip wheel coverage codecov pytest
+  - pip install --upgrade -r requirements.txt
 
-  # Install OpenCover. Can't put on packages.config; not Linux/Mono compatible
+  # Install OpenCover. Can't put on `packages.config`, not Mono compatible
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages
 
 build_script:
-  # build clean sdist & wheel with coverage of setup.py, install local wheel
-  - coverage run setup.py sdist bdist_wheel
+  # Create clean `sdist`. Only used for releases
+  - python setup.py --quiet sdist
+  # Build `wheel` with coverage of `setup.py`
+  - coverage run setup.py bdist_wheel
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
-  - ps: Copy-Item (Resolve-Path .\build\*\Python.Test.dll) C:\testdir
+  - ps: Copy-Item .\src\testing\bin\Python.Test.dll C:\testdir\
 
-  # Test runner
   - ps: .\ci\appveyor_run_tests.ps1
-
-  # Build conda-recipe on Pull Requests
   - ps: .\ci\appveyor_build_recipe.ps1
 
 on_finish:
-  # Upload coverage
-  - codecov
+  - coverage xml -i
+  - codecov --file coverage.xml --flags Setup_Windows
+  - codecov --file py.coverage --flags Python_Tests
+  - codecov --file cs.coverage --flags Embedded_Tests
 
 artifacts:
   - path: dist\*
