@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added XML Documentation (#349)
 -   Added Embedded tests on Appveyor (#353)
 -   Added PY3 settings to configuration-manager (#346)
+-   Added `Slack` chat (#384)(#383)(#386)
 
 ### Changed
 
@@ -22,11 +23,14 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Completed refactor of Build Directives on `Runtime.cs` (#339)
 -   Refactor python unittests (#329)
 -   Unfroze Mono version on Travis (#345)
+-   Changed `unittests` to `pytest` (#368)
+-   Upgraded NUnit framework from 2.6.4 to 3.6.0 (#371)
 
 ### Fixed
 
 -   Fixed crash during Initialization (#343)
 -   Fixed crash during Shutdown (#365)
+-   Fixed multiple build warnings
 
 ### Removed
 
