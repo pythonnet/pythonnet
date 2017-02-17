@@ -44,7 +44,7 @@ build_script:
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
-  - ps: Copy-Item (Resolve-Path .\build\*\Python.Test.dll) C:\testdir
+  - ps: Copy-Item .\src\testing\bin\Python.Test.dll C:\testdir\
 
   - ps: .\ci\appveyor_run_tests.ps1
   - ps: .\ci\appveyor_build_recipe.ps1

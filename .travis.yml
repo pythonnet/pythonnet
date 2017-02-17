@@ -30,6 +30,9 @@ addons:
       - ca-certificates-mono
 
 before_install:
+  # Set-up location where `Python.Test.dll` will be output
+  - export PYTHONPATH=`pwd`:$PYTHONPATH
+
   # Set-up dll path for embedded tests
   - PY_LIBDIR=$(python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
   - export LD_LIBRARY_PATH=$PY_LIBDIR:$LD_LIBRARY_PATH
@@ -40,15 +43,12 @@ install:
   - coverage run setup.py build_ext --inplace
 
 script:
-  # Set-up and run python tests
-  - export PYTHONPATH=`pwd`:$PYTHONPATH
   - python -m pytest
 
-  - cp Python.Runtime.dll.config src/embed_tests/bin/Python.Runtime.dll.config
-  # Run embedded tests
+  - cp Python.Runtime.dll.config src/embed_tests/bin/
   # - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
-after_success:
+after_script:
   # Uncomment if need to geninterop, ie. py37 final
   # - python tools/geninterop/geninterop.py
 
