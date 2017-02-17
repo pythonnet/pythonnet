@@ -887,30 +887,32 @@ namespace Python.Runtime
             return Runtime.PyObject_Hash(obj).ToInt32();
         }
 
+
+        public long Refcount
+        {
+            get
+            {
+                return Runtime.Refcount(obj);
+            }
+        }
+
+
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            if (this.HasAttr(binder.Name))
-            {
-                result = CheckNone(this.GetAttr(binder.Name));
-                return true;
-            }
-            else
-            {
-                return base.TryGetMember(binder, out result);
-            }
+            result = CheckNone(this.GetAttr(binder.Name));
+            return true;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            if (this.HasAttr(binder.Name))
+            IntPtr ptr = Converter.ToPython(value, value?.GetType());
+            int r = Runtime.PyObject_SetAttrString(obj, binder.Name, ptr);
+            if (r < 0)
             {
-                this.SetAttr(binder.Name, (PyObject)value);
-                return true;
+                throw new PythonException();
             }
-            else
-            {
-                return base.TrySetMember(binder, value);
-            }
+            Runtime.XDecref(ptr);
+            return true;
         }
 
         private void GetArgs(object[] inargs, out PyTuple args, out PyDict kwargs)

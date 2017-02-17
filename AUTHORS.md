@@ -29,6 +29,7 @@
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))
+-   Wenguang Yang ([@yagweb](https://github.com/yagweb))
 -   Xavier Dupré ([@sdpython](https://github.com/sdpython))
 -   Zane Purvis ([@zanedp](https://github.com/zanedp))
 -   ([@ArvidJB](https://github.com/ArvidJB))
