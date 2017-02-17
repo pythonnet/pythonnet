@@ -17,6 +17,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `Slack` chat (#384)(#383)(#386)
 -   Added function of passing an arbitrary .NET object as the value
     of an attribute of PyObject (#370)(#373)
+-   Added Coverity (#390)
 
 ### Changed
 
