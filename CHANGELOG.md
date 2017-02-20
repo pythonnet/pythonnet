@@ -17,7 +17,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `Slack` chat (#384)(#383)(#386)
 -   Added function of passing an arbitrary .NET object as the value
     of an attribute of PyObject (#370)(#373)
--   Added Coverity (#390)
+-   Added `Coverity scan` (#390)
 
 ### Changed
 
@@ -48,7 +48,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ## [2.2.1][] - 2017-01-26
 
-`v2.2.0` had a release issue on pypi. Bumped to `v2.2.1`
+-   `v2.2.0` had a release issue on pypi. Bumped to `v2.2.1`
 
 ### Added
 
@@ -114,7 +114,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ## [2.0.0][] - 2015-06-26
 
-    Release
+-   Release
 
 ## 2.0.0-alpha.2
 
