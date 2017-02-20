@@ -6,7 +6,7 @@
     <ProjectGuid>{250c535c-c060-4f0c-bd80-41f2bf373565}</ProjectGuid>
     <ProjectHome />
     <StartupFile>runtests.py</StartupFile>
-    <SearchPath />
+    <SearchPath>..\..\</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
@@ -62,6 +62,8 @@
     <Compile Include="test_suite\_missing_import.py" />
     <Compile Include="test_suite\__init__.py" />
     <Compile Include="test_thread.py" />
+    <Compile Include="utils.py" />
+    <Compile Include="_compat.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="PyImportTest" />
