@@ -42,7 +42,15 @@ namespace Python.EmbeddingTest
             }
         }
 
+        /// <remarks>
+        /// FIXME: Unable to unload AppDomain, Unload thread timed out.
+        /// Seen on Travis/AppVeyor on both PY2 and PY3. Causes Embedded_Tests
+        /// to hang after they are finished for ~40 seconds until nunit3 forces
+        /// a timeout on unloading tests. Doesn't fail the tests though but
+        /// greatly slows down CI. nunit2 silently has this issue.
+        /// </remarks>
         [Test]
+        [Ignore("GH#397: Travis/AppVeyor: Unable to unload AppDomain, Unload thread timed out")]
         public void TestPyTupleInvalidAppend()
         {
             using (Py.GIL())
@@ -93,6 +101,9 @@ namespace Python.EmbeddingTest
             }
         }
 
+        /// <remarks>
+        /// FIXME: Possible source of intermittent AppVeyor PY27: Unable to unload AppDomain.
+        /// </remarks>
         [Test]
         public void TestNewPyTupleFromPyTuple()
         {
