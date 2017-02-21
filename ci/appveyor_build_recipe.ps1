@@ -11,7 +11,7 @@ if ($env:PLATFORM -eq "x86"){
     $env:CONDA_BLD = "$env:CONDA_BLD" + "-x64"
 }
 
-if ($env:APPVEYOR_PULL_REQUEST_NUMBER) {
+if ($env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:FORCE_CONDA_BUILD -eq "True") {
     # Update PATH, and keep a copy to restore at end of this PowerShell script
     $old_path = $env:path
     $env:path = "$env:CONDA_BLD;$env:CONDA_BLD\Scripts;" + $env:path
