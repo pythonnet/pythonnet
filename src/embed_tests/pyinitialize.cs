@@ -41,8 +41,13 @@ namespace Python.EmbeddingTest
             }
         }
 
+        /// <summary>
+        /// Failing test demonstrating current issue with OverflowException (#376)
+        /// and ArgumentException issue after that one is fixed.
+        /// More complex version of StartAndStopTwice test
+        /// </summary>
         [Test]
-        [Ignore("System.OverflowException : Arithmetic operation resulted in an overflow")]
+        [Ignore("GH#376: System.OverflowException : Arithmetic operation resulted in an overflow")]
         //[Ignore("System.ArgumentException : Cannot pass a GCHandle across AppDomains")]
         public void ReInitialize()
         {
