@@ -19,10 +19,14 @@ if ($env:APPVEYOR_PULL_REQUEST_NUMBER) {
     Write-Host "Starting conda install" -ForegroundColor "Green"
     conda config --set always_yes True
     conda config --set changeps1 False
+    conda config --set auto_update_conda False
     conda install conda-build jinja2 anaconda-client --quiet
+    conda info
 
+    # why `2>&1 | %{ "$_" }`? Redirect STDERR to STDOUT
+    # see: http://stackoverflow.com/a/20950421/5208670
     Write-Host "Starting conda build recipe" -ForegroundColor "Green"
-    conda build conda.recipe --dirty --quiet
+    conda build conda.recipe --quiet 2>&1 | %{ "$_" }
 
     $CONDA_PKG=(conda build conda.recipe --output)
     Copy-Item $CONDA_PKG .\dist\
