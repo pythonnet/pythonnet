@@ -5,7 +5,6 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    [TestFixture]
     public class dynamicTest
     {
         private Py.GILState gil;
@@ -23,16 +22,16 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Set the attribute of a pyobject with a .NET object.
+        /// Set the attribute of a PyObject with a .NET object.
         /// </summary>
         [Test]
         public void AssignObject()
         {
-            StringBuilder stream = new StringBuilder();
+            var stream = new StringBuilder();
             dynamic sys = Py.Import("sys");
             sys.testattr = stream;
             // Check whether there are the same object.
-            var _stream = sys.testattr.AsManagedObject(typeof(StringBuilder));
+            dynamic _stream = sys.testattr.AsManagedObject(typeof(StringBuilder));
             Assert.AreEqual(_stream, stream);
 
             PythonEngine.RunSimpleString(
@@ -42,7 +41,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Set the attribute of a pyobject to null.
+        /// Set the attribute of a PyObject to null.
         /// </summary>
         [Test]
         public void AssignNone()
@@ -76,24 +75,24 @@ namespace Python.EmbeddingTest
         [Test]
         public void PassObjectInPython()
         {
-            StringBuilder stream = new StringBuilder();
+            var stream = new StringBuilder();
             dynamic sys = Py.Import("sys");
             sys.testattr1 = stream;
 
-            //Pass the .NET object in Python side
+            // Pass the .NET object in Python side
             PythonEngine.RunSimpleString(
                 "import sys\n" +
                 "sys.testattr2 = sys.testattr1\n"
             );
 
-            //Compare in Python
+            // Compare in Python
             PythonEngine.RunSimpleString(
                 "import sys\n" +
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
             Assert.AreEqual(sys.testattr3.ToString(), "True");
 
-            //Compare in .NET
+            // Compare in .NET
             Assert.AreEqual(sys.testattr1, sys.testattr2);
         }
 
@@ -103,19 +102,19 @@ namespace Python.EmbeddingTest
         [Test]
         public void PassPyObjectInNet()
         {
-            StringBuilder stream = new StringBuilder();
+            var stream = new StringBuilder();
             dynamic sys = Py.Import("sys");
             sys.testattr1 = stream;
             sys.testattr2 = sys.testattr1;
 
-            //Compare in Python
+            // Compare in Python
             PyObject res = PythonEngine.RunString(
                 "import sys\n" +
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
             Assert.AreEqual(sys.testattr3.ToString(), "True");
 
-            //Compare in .NET
+            // Compare in .NET
             Assert.AreEqual(sys.testattr1, sys.testattr2);
         }
     }

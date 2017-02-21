@@ -11,7 +11,6 @@ namespace Python.EmbeddingTest
     /// Keeping this in the old-style SetUp/TearDown
     /// to ensure that setup still works.
     /// </remarks>
-    [TestFixture]
     public class PythonExceptionTest
     {
         private IntPtr gs;

@@ -17,7 +17,6 @@ namespace Python.EmbeddingTest
     /// | | - __init__.py
     /// | | - one.py
     /// </remarks>
-    [TestFixture]
     public class PyImportTest
     {
         private IntPtr gs;
