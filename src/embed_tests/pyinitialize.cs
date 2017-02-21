@@ -5,16 +5,18 @@ namespace Python.EmbeddingTest
 {
     public class PyInitializeTest
     {
+        /// <summary>
+        /// Tests issue with multiple simple Initialize/Shutdowns.
+        /// Fixed by #343
+        /// </summary>
         [Test]
-        public static void LoadSpecificArgs()
+        public static void StartAndStopTwice()
         {
-            var args = new[] { "test1", "test2" };
-            using (new PythonEngine(args))
-            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
-            {
-                Assert.AreEqual(args[0], argv[0].ToString());
-                Assert.AreEqual(args[1], argv[1].ToString());
-            }
+            PythonEngine.Initialize();
+            PythonEngine.Shutdown();
+
+            PythonEngine.Initialize();
+            PythonEngine.Shutdown();
         }
 
         [Test]
@@ -28,17 +30,24 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        public static void StartAndStopTwice()
+        public static void LoadSpecificArgs()
         {
-            PythonEngine.Initialize();
-            PythonEngine.Shutdown();
-
-            PythonEngine.Initialize();
-            PythonEngine.Shutdown();
+            var args = new[] { "test1", "test2" };
+            using (new PythonEngine(args))
+            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
+            {
+                Assert.AreEqual(args[0], argv[0].ToString());
+                Assert.AreEqual(args[1], argv[1].ToString());
+            }
         }
 
+        /// <summary>
+        /// Failing test demonstrating current issue with OverflowException (#376)
+        /// and ArgumentException issue after that one is fixed.
+        /// More complex version of StartAndStopTwice test
+        /// </summary>
         [Test]
-        [Ignore("System.OverflowException : Arithmetic operation resulted in an overflow")]
+        [Ignore("GH#376: System.OverflowException : Arithmetic operation resulted in an overflow")]
         //[Ignore("System.ArgumentException : Cannot pass a GCHandle across AppDomains")]
         public void ReInitialize()
         {
