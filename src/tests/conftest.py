@@ -5,13 +5,18 @@
 """Helpers for testing."""
 
 import ctypes
+import os
 import sys
 import sysconfig
 
 import clr
 
-# Add path for Python.Test & Add References
-sys.path.append('C:/testdir/')
+# Add path for `Python.Test`
+cwd = os.path.dirname(__file__)
+fixtures = os.path.join(cwd, 'fixtures')
+sys.path.append(fixtures)
+
+# Add References for tests
 clr.AddReference("Python.Test")
 clr.AddReference("System.Collections")
 clr.AddReference("System.Data")
