@@ -12,11 +12,14 @@
 
 ## Contributors
 
+-   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
 -   Christian Heimes ([@tiran](https://github.com/tiran))
 -   Christoph Gohlke ([@cgohlke](https://github.com/cgohlke))
+-   Daniel Fernandez ([@fdanny](https://github.com/fdanny))
 -   Daniel Santana ([@dgsantana](https://github.com/dgsantana))
 -   David Lechner ([@dlech](https://github.com/dlech))
+-   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
 -   He-chien Tsai ([@t3476](https://github.com/t3476))
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
@@ -32,10 +35,7 @@
 -   Wenguang Yang ([@yagweb](https://github.com/yagweb))
 -   Xavier Dupré ([@sdpython](https://github.com/sdpython))
 -   Zane Purvis ([@zanedp](https://github.com/zanedp))
--   ([@ArvidJB](https://github.com/ArvidJB))
 -   ([@bltribble](https://github.com/bltribble))
--   ([@dmitriyse](https://github.com/dmitriyse))
--   ([@fdanny](https://github.com/fdanny))
 -   ([@omnicognate](https://github.com/omnicognate))
 -   ([@rico-chet](https://github.com/rico-chet))
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
