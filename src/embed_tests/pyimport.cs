@@ -10,7 +10,7 @@ namespace Python.EmbeddingTest
     /// </summary>
     /// <remarks>
     /// Keeping in old-style SetUp/TearDown due to required SetUp.
-    /// The required directory structure was added to .\pythonnet\src\tests\ directory:
+    /// The required directory structure was added to .\pythonnet\src\embed_tests\fixtures\ directory:
     /// + PyImportTest/
     /// | - __init__.py
     /// | + test/
@@ -30,7 +30,7 @@ namespace Python.EmbeddingTest
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
              * modifiers placed on most Runtime methods. */
-            const string s = "../../tests";
+            const string s = "../fixtures";
             string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
