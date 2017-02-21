@@ -23,7 +23,7 @@ namespace Python.EmbeddingTest
         }
 
         [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             PythonEngine.ReleaseLock(gs);
             PythonEngine.Shutdown();

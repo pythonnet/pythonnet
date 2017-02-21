@@ -16,7 +16,7 @@ namespace Python.EmbeddingTest
         }
 
         [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             gil.Dispose();
         }
