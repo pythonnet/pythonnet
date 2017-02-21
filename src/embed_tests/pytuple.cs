@@ -5,6 +5,33 @@ namespace Python.EmbeddingTest
 {
     public class PyTupleTest
     {
+        /// <summary>
+        /// Test IsTupleType without having to Initialize a tuple.
+        /// PyTuple constructor use IsTupleType. This decouples the tests.
+        /// </summary>
+        [Test]
+        public void TestStringIsTupleType()
+        {
+            using (Py.GIL())
+            {
+                var s = new PyString("foo");
+                Assert.IsFalse(PyTuple.IsTupleType(s));
+            }
+        }
+
+        /// <summary>
+        /// Test IsTupleType with Tuple.
+        /// </summary>
+        [Test]
+        public void TestPyTupleIsTupleType()
+        {
+            using (Py.GIL())
+            {
+                var t = new PyTuple();
+                Assert.IsTrue(PyTuple.IsTupleType(t));
+            }
+        }
+
         [Test]
         public void TestPyTupleEmpty()
         {
@@ -36,18 +63,6 @@ namespace Python.EmbeddingTest
                 t.Concat(t0);
                 Assert.IsNotNull(t);
                 Assert.IsInstanceOf(typeof(PyTuple), t);
-            }
-        }
-
-        [Test]
-        public void TestPyTupleIsTupleType()
-        {
-            using (Py.GIL())
-            {
-                var s = new PyString("foo");
-                var t = new PyTuple();
-                Assert.IsTrue(PyTuple.IsTupleType(t));
-                Assert.IsFalse(PyTuple.IsTupleType(s));
             }
         }
 
