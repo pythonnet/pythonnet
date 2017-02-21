@@ -36,5 +36,33 @@ namespace Python.EmbeddingTest
             PythonEngine.Initialize();
             PythonEngine.Shutdown();
         }
+
+        [Test]
+        [Ignore("System.OverflowException : Arithmetic operation resulted in an overflow")]
+        //[Ignore("System.ArgumentException : Cannot pass a GCHandle across AppDomains")]
+        public void ReInitialize()
+        {
+            string code = "from System import Int32\n";
+            PythonEngine.Initialize();
+            using (Py.GIL())
+            {
+                //import any class or struct from .NET
+                PythonEngine.RunSimpleString(code);
+            }
+            PythonEngine.Shutdown();
+
+            PythonEngine.Initialize();
+            using (Py.GIL())
+            {
+                //Import a class/struct from .NET
+                //This class/struct must be imported during the first initialization.
+                PythonEngine.RunSimpleString(code);
+                //Create an instance of the class/struct
+                //System.OverflowException Exception will be raised here.
+                //If replacing int with Int64, OverflowException will be replaced with AppDomain exception.
+                PythonEngine.RunSimpleString("Int32(1)");
+            }
+            PythonEngine.Shutdown();
+        }
     }
 }
