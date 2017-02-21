@@ -42,7 +42,7 @@ script:
   - python -m pytest
 
   - cp Python.Runtime.dll.config src/embed_tests/bin/
-  # - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
+  - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_script:
   # Uncomment if need to geninterop, ie. py37 final
