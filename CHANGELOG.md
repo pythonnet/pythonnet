@@ -9,35 +9,45 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
--   Code Coverage (#345)
--   Added `pysetargv` (#347)
+-   Added Code Coverage (#345)
+-   Added `PySys_SetArgvEx` (#347)
 -   Added XML Documentation (#349)
--   Added Embedded tests on Appveyor (#353)
--   Added PY3 settings to configuration-manager (#346)
--   Added `Slack` chat (#384)(#383)(#386)
+-   Added `Embedded_Tests` on AppVeyor (#353)
+-   Added PY3 settings to solution configuration-manager (#346)
+-   Added `Slack` (#384)(#383)(#386)
 -   Added function of passing an arbitrary .NET object as the value
-    of an attribute of PyObject (#370)(#373)
+    of an attribute of `PyObject` (#370)(#373)
 -   Added `Coverity scan` (#390)
+-   Added `bumpversion` for version control (#319)(#398)
+-   Added `tox` for local testing (#345)
+-   Added `requirements.txt`
 
 ### Changed
 
--   Refactored `setup.py` (#337)
--   Upgraded NUnit framework to 2.6.4 (#353)
--   Completed refactor of Build Directives on `Runtime.cs` (#339)
--   Refactor python unittests (#329)
--   Unfroze Mono version on Travis (#345)
+-   Refactored python `unittests` (#329)
+-   Refactored python `setup.py` (#337)
+-   Refactored remaining of Build Directives on `runtime.cs` (#339)
+-   Refactored `Embedded_Tests` to make easier to write tests (#369)
 -   Changed `unittests` to `pytest` (#368)
--   Upgraded NUnit framework from 2.6.4 to 3.6.0 (#371)
+-   Upgraded NUnit framework from `2.6.3` to `3.5.0` (#341)
+-   Downgraded NUnit framework from `3.5.0` to `2.6.4` (#353)
+-   Upgraded NUnit framework from `2.6.4` to `3.6.0` (#371)
+-   Unfroze Mono version on Travis (#345)
+-   Changed `conda.recipe` build to only pull-requests (#345)
 
 ### Fixed
 
--   Fixed crash during Initialization (#343)
+-   Fixed crash during Initialization (#262)(#343)
 -   Fixed crash during Shutdown (#365)
 -   Fixed multiple build warnings
+-   Fixed method signature match for Object Type (#203)(#377)
+-   Fixed outdated version number in AssemblyInfo (#398)
+-   Fixed wrong version number in `conda.recipe` (#398)
+-   Fixed fixture location for Python tests and `Embedded_Tests`
 
 ### Removed
 
--   Removed `six` dependency for unittests (#329)
+-   Removed `six` dependency for `unittests` (#329)
 -   Removed `Mono.Unix` dependency for `UCS4` (#360)
 
 ## [2.2.2][] - 2017-01-29
