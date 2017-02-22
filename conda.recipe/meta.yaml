@@ -26,3 +26,4 @@ test:
 about:
   home: https://github.com/pythonnet/pythonnet
   license: MIT
+  license_file: LICENSE
