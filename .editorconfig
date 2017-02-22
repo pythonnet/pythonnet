@@ -22,3 +22,8 @@ indent_size = 2
 # Solution
 [*.sln]
 indent_style = tab
+
+# bumpversion reformats itself after every bump
+[.bumpversion.cfg]
+trim_trailing_whitespace = false
+indent_style = tab
