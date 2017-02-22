@@ -12,7 +12,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added Code Coverage (#345)
 -   Added `PySys_SetArgvEx` (#347)
 -   Added XML Documentation (#349)
--   Added `Embedded_Tests` on AppVeyor (#353)
+-   Added `Embedded_Tests` on AppVeyor (#224)(#353)
+-   Added `Embedded_Tests` on Travis (#224)(#391)
 -   Added PY3 settings to solution configuration-manager (#346)
 -   Added `Slack` (#384)(#383)(#386)
 -   Added function of passing an arbitrary .NET object as the value
