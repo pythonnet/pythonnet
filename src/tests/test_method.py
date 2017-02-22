@@ -769,3 +769,53 @@ def test_wrong_overload():
     res = System.Math.Max(System.Double(50.5), 50.1)
     assert res == 50.5
     assert type(res) == float
+
+
+def test_no_object_in_param():
+    """Test that fix for #203 doesn't break behavior w/ no object overload"""
+
+    res = MethodTest.TestOverloadedNoObject(5)
+    assert res == "Got int"
+
+    with pytest.raises(TypeError):
+        MethodTest.TestOverloadedNoObject("test")
+
+
+def test_object_in_param():
+    """Test regression introduced by #151 in which Object method overloads
+    aren't being used. See #203 for issue."""
+
+    res = MethodTest.TestOverloadedObject(5)
+    assert res == "Got int"
+
+    res = MethodTest.TestOverloadedObject("test")
+    assert res == "Got object"
+
+
+def test_object_in_multiparam():
+    """Test method with object multiparams behaves"""
+
+    res = MethodTest.TestOverloadedObjectTwo(5, 5)
+    assert res == "Got int-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(5, "foo")
+    assert res == "Got int-string"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", 7.24)
+    assert res == "Got string-object"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", "bar")
+    assert res == "Got string-string"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", 5)
+    assert res == "Got string-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(7.24, 7.24)
+    assert res == "Got object-object"
+
+
+def test_object_in_multiparam_exception():
+    """Test method with object multiparams behaves"""
+
+    with pytest.raises(TypeError):
+        MethodTest.TestOverloadedObjectThree("foo", "bar")
