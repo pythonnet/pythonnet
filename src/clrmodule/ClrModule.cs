@@ -52,7 +52,8 @@ public class clrModule
         var pythonRuntimeName = new AssemblyName("Python.Runtime")
         {
 #if USE_PYTHON_RUNTIME_VERSION
-            Version = new Version("4.0.0.1"),
+            // Has no effect until SNK works. Keep updated anyways.
+            Version = new Version("2.3.0"),
 #endif
             CultureInfo = CultureInfo.InvariantCulture
         };
