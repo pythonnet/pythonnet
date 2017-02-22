@@ -195,7 +195,6 @@ namespace Python.Runtime
             {
                 op = Runtime.PyImport_ImportModule("builtins");
                 dict = Runtime.PyObject_GetAttrString(op, "__dict__");
-
             }
             else // Python2
             {
