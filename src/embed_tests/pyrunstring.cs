@@ -24,10 +24,10 @@ namespace Python.EmbeddingTest
         public void TestRunSimpleString()
         {
             int aa = PythonEngine.RunSimpleString("import sys");
-            Assert.AreEqual(aa, 0);
+            Assert.AreEqual(0, aa);
 
             int bb = PythonEngine.RunSimpleString("import 1234");
-            Assert.AreEqual(bb, -1);
+            Assert.AreEqual(-1, bb);
         }
 
         [Test]
@@ -40,8 +40,8 @@ namespace Python.EmbeddingTest
             locals.SetItem("a", new PyInt(10));
 
             object b = PythonEngine.Eval("sys.attr1 + a + 1", null, locals.Handle)
-                .AsManagedObject(typeof(Int32));
-            Assert.AreEqual(b, 111);
+                .AsManagedObject(typeof(int));
+            Assert.AreEqual(111, b);
         }
 
         [Test]
@@ -54,8 +54,8 @@ namespace Python.EmbeddingTest
             locals.SetItem("a", new PyInt(10));
 
             PythonEngine.Exec("c = sys.attr1 + a + 1", null, locals.Handle);
-            object c = locals.GetItem("c").AsManagedObject(typeof(Int32));
-            Assert.AreEqual(c, 111);
+            object c = locals.GetItem("c").AsManagedObject(typeof(int));
+            Assert.AreEqual(111, c);
         }
     }
 }

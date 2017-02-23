@@ -432,7 +432,7 @@ namespace Python.Runtime
         /// executing the code string as a PyObject instance, or null if
         /// an exception was raised.
         /// </remarks>
-        internal static PyObject RunString(
+        public static PyObject RunString(
             string code, IntPtr? globals = null, IntPtr? locals = null, RunFlagType _flag = RunFlagType.File
         )
         {
