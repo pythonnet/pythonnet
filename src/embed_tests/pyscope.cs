@@ -26,7 +26,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestEval()
         {
-            ps.SetLocal("a", 1);
+            ps.SetVariable("a", 1);
             int result = ps.Eval<int>("a+2");
             Assert.AreEqual(result, 3);
         }
@@ -37,10 +37,40 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestExec()
         {
-            ps.SetGlobal("bb", 100); //declare a global variable
-            ps.SetLocal("cc", 10); //declare a local variable
+            ps.SetVariable("bb", 100); //declare a global variable
+            ps.SetVariable("cc", 10); //declare a local variable
             ps.Exec("aa=bb+cc+3");
-            int result = ps.Get<System.Int32>("aa");
+            int result = ps.GetVariable<System.Int32>("aa");
+            Assert.AreEqual(result, 113);
+        }
+
+        /// <summary>
+        /// Compile an expression into an ast object;
+        /// Execute the ast and obtain its return value.
+        /// </summary>
+        [Test]
+        public void TestCompileExpression()
+        {
+            ps.SetVariable("bb", 100); //declare a global variable
+            ps.SetVariable("cc", 10); //declare a local variable
+            var script = ps.Compile("bb+cc+3", "", CompileMode.Eval);
+            var result = ps.Execute<int>(script);
+            Assert.AreEqual(result, 113);
+        }
+
+        /// <summary>
+        /// Compile Python statements into an ast object;
+        /// Execute the ast;
+        /// Obtain the local variables created.
+        /// </summary>
+        [Test]
+        public void TestCompileStatements()
+        {
+            ps.SetVariable("bb", 100); //declare a global variable
+            ps.SetVariable("cc", 10); //declare a local variable
+            var script = ps.Compile("aa=bb+cc+3", "", CompileMode.File);
+            ps.Execute(script);
+            int result = ps.GetVariable<int>("aa");
             Assert.AreEqual(result, 113);
         }
 
@@ -50,16 +80,16 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestSubScope()
         {
-            ps.SetGlobal("bb", 100); //declare a global variable
-            ps.SetLocal("cc", 10); //declare a local variable
+            ps.SetVariable("bb", 100); //declare a global variable
+            ps.SetVariable("cc", 10); //declare a local variable
 
             PyScope scope = ps.SubScope();
             scope.Exec("aa=bb+cc+3");
-            int result = scope.Get<System.Int32>("aa");
+            int result = scope.GetVariable<System.Int32>("aa");
             Assert.AreEqual(result, 113); //
             scope.Dispose();
 
-            Assert.IsFalse(ps.Exists("aa"));
+            Assert.IsFalse(ps.ContainsVariable("aa"));
         }
 
         /// <summary>
@@ -70,7 +100,7 @@ namespace Python.EmbeddingTest
         public void TestImport()
         {
             dynamic sys = ps.Import("sys");
-            Assert.IsTrue(ps.Exists("sys"));
+            Assert.IsTrue(ps.ContainsVariable("sys"));
 
             ps.Exec("sys.attr1 = 2");
             int value1 = ps.Eval<int>("sys.attr1");
@@ -87,7 +117,7 @@ namespace Python.EmbeddingTest
         public void TestImportAs()
         {
             ps.ImportAs("sys", "sys1");
-            Assert.IsTrue(ps.Exists("sys1"));
+            Assert.IsTrue(ps.ContainsVariable("sys1"));
         }
 
         /// <summary>
@@ -96,8 +126,8 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestSuspend()
         {
-            ps.SetGlobal("bb", 100);
-            ps.SetLocal("cc", 10);
+            ps.SetVariable("bb", 100);
+            ps.SetVariable("cc", 10);
             ps.Suspend();
 
             using (Py.GIL())
@@ -106,7 +136,7 @@ namespace Python.EmbeddingTest
             }
 
             ps.Exec("aa=bb+cc+3");
-            int result = ps.Get<System.Int32>("aa");
+            int result = ps.GetVariable<System.Int32>("aa");
             Assert.AreEqual(result, 113);
         }
     }

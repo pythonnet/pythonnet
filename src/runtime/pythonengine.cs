@@ -532,6 +532,13 @@ namespace Python.Runtime
 
     }
 
+    public enum CompileMode
+    {
+        Single = 256,
+        File = 257,
+        Eval = 258
+    }
+
     public class PyScope : IDisposable
     {
         public class GILState : IDisposable
@@ -691,8 +698,45 @@ namespace Python.Runtime
             {
                 asname = name;
             }
-            SetLocal(asname, module);
+            SetVariable(asname, module);
             return module;
+        }
+
+        public PyObject Execute(PyObject script)
+        {
+            IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, globals, locals);
+            Py.Throw();
+            if(ptr == Runtime.PyNone)
+            {
+                Runtime.XDecref(ptr);
+                return null;
+            }
+            return new PyObject(ptr);
+        }
+
+        public T Execute<T>(PyObject script)
+        {
+            var pyObj = this.Execute(script);
+            if(pyObj == null)
+            {
+                return default(T);
+            }
+            T obj = (T)pyObj.AsManagedObject(typeof(T));
+            return obj;
+        }
+
+        /// <summary>
+        /// Compile Method
+        /// </summary>
+        /// <remarks>
+        /// Compile Python expression/statements into ast.
+        /// </remarks>
+        public PyObject Compile(string code, string filename = "", CompileMode mode = CompileMode.File)
+        {
+            IntPtr flag = (IntPtr)mode;
+            IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
+            Py.Throw();
+            return new PyObject(ptr);
         }
 
         /// <summary>
@@ -751,15 +795,15 @@ namespace Python.Runtime
             }
             Runtime.XDecref(ptr);
         }
-        
+
         /// <summary>
-        /// SetGlobal Method
+        /// SetGlobalVariable Method
         /// </summary>
         /// <remarks>
         /// Add a new variable to global variable dict if it not exists
         /// or set the value of the global variable if it exists.
         /// </remarks>
-        public void SetGlobal(string name, object value)
+        internal void SetGlobalVariable(string name, object value)
         {
             this.AcquireLock();
             using (var pyKey = new PyString(name))
@@ -775,12 +819,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// DelGlobal Method
+        /// RemoveGlobalVariable Method
         /// </summary>
         /// <remarks>
         /// Remove a variable from the global variable dict.
         /// </remarks>
-        public void DelGlobal(string name)
+        internal void RemoveGlobalVariable(string name)
         {
             this.AcquireLock();
             using (var pyKey = new PyString(name))
@@ -800,7 +844,7 @@ namespace Python.Runtime
         /// Add a new variable to local variable dict if it not exists
         /// or set the value of the local variable if it exists.
         /// </remarks>
-        public void SetLocal(string name, object value)
+        public void SetVariable(string name, object value)
         {
             this.AcquireLock();
             using (var pyKey = new PyString(name))
@@ -821,7 +865,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Remove a variable from the local variable dict.
         /// </remarks>
-        public void DelLocal(string name)
+        public void RemoveVariable(string name)
         {
             this.AcquireLock();
             using (var pyKey = new PyString(name))
@@ -840,7 +884,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Returns true if the variable appears in the local variable dict or the global variable dict.
         /// </remarks>
-        public bool Exists(string name)
+        public bool ContainsVariable(string name)
         {
             this.AcquireLock();
             using (var pyKey = new PyString(name))
@@ -860,7 +904,7 @@ namespace Python.Runtime
         /// Returns the value of the variable, local variable first.
         /// If the variable is not exists, return null.
         /// </remarks>
-        public PyObject Get(string name)
+        public PyObject GetVariable(string name)
         {
             this.AcquireLock();
             using (var pyKey = new PyString(name))
@@ -886,9 +930,9 @@ namespace Python.Runtime
             }
         }
 
-        public T Get<T>(string name)
+        public T GetVariable<T>(string name)
         {
-            PyObject obj = this.Get(name);
+            PyObject obj = this.GetVariable(name);
             return (T)obj.AsManagedObject(typeof(T));
         }
 
