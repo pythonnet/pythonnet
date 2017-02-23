@@ -7,29 +7,6 @@ namespace Python.EmbeddingTest
     public class PyTupleTest
     {
         /// <summary>
-        /// Tests set-up. Being used to skip class on Travis/PY27
-        /// </summary>
-        /// <remarks>
-        /// FIXME: Fails on Travis/PY27: All tests below (unless otherwise stated)
-        /// Fatal Python error: auto-releasing thread-state, but no thread-state for this thread
-        /// Stacktrace:
-        /// at (wrapper managed-to-native) Python.Runtime.Runtime.PyGILState_Release (intptr)
-        /// at Python.Runtime.PythonEngine.ReleaseLock (intptr)
-        /// at Python.Runtime.PythonException.Dispose ()
-        /// at Python.Runtime.PythonException.Finalize ()
-        /// at (wrapper runtime-invoke) object.runtime_invoke_virtual_void__this__ (object,intptr,intptr,intptr)
-        /// </remarks>
-        [SetUp]
-        public void SetUp()
-        {
-            if (Environment.GetEnvironmentVariable("TRAVIS") == "true" &&
-                Environment.GetEnvironmentVariable("TRAVIS_PYTHON_VERSION") == "2.7")
-            {
-                Assert.Ignore("Fails on Travis/PY27: Fatal Python error: auto-releasing thread-state, but no thread-state for this thread");
-            }
-        }
-
-        /// <summary>
         /// Test IsTupleType without having to Initialize a tuple.
         /// PyTuple constructor use IsTupleType. This decouples the tests.
         /// </summary>

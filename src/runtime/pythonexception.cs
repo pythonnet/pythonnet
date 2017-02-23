@@ -140,7 +140,7 @@ namespace Python.Runtime
         {
             if (!disposed)
             {
-                if (Runtime.Py_IsInitialized() > 0)
+                if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
                 {
                     IntPtr gs = PythonEngine.AcquireLock();
                     Runtime.XDecref(_pyType);
