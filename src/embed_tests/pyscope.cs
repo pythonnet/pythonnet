@@ -53,7 +53,7 @@ namespace Python.EmbeddingTest
         {
             ps.SetVariable("bb", 100); //declare a global variable
             ps.SetVariable("cc", 10); //declare a local variable
-            var script = ps.Compile("bb+cc+3", "", CompileMode.Eval);
+            var script = ps.Compile("bb+cc+3", "", RunFlagType.Eval);
             var result = ps.Execute<int>(script);
             Assert.AreEqual(result, 113);
         }
@@ -68,7 +68,7 @@ namespace Python.EmbeddingTest
         {
             ps.SetVariable("bb", 100); //declare a global variable
             ps.SetVariable("cc", 10); //declare a local variable
-            var script = ps.Compile("aa=bb+cc+3", "", CompileMode.File);
+            var script = ps.Compile("aa=bb+cc+3", "", RunFlagType.File);
             ps.Execute(script);
             int result = ps.GetVariable<int>("aa");
             Assert.AreEqual(result, 113);

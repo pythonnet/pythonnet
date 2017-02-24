@@ -531,14 +531,7 @@ namespace Python.Runtime
     {
 
     }
-
-    public enum CompileMode
-    {
-        Single = 256,
-        File = 257,
-        Eval = 258
-    }
-
+    
     public class PyScope : IDisposable
     {
         public class GILState : IDisposable
@@ -731,7 +724,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Compile Python expression/statements into ast.
         /// </remarks>
-        public PyObject Compile(string code, string filename = "", CompileMode mode = CompileMode.File)
+        public PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
         {
             IntPtr flag = (IntPtr)mode;
             IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
