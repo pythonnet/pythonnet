@@ -22,6 +22,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `bumpversion` for version control (#319)(#398)
 -   Added `tox` for local testing (#345)
 -   Added `requirements.txt`
+-   Added to `PythonEngine` methods `Eval` and `Exec` (#389)
 
 ### Changed
 
@@ -45,6 +46,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed outdated version number in AssemblyInfo (#398)
 -   Fixed wrong version number in `conda.recipe` (#398)
 -   Fixed fixture location for Python tests and `Embedded_Tests`
+-   Fixed `PythonException` crash during Shutdown (#400)
 
 ### Removed
 
