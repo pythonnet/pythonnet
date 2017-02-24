@@ -6,7 +6,7 @@
     <ProjectGuid>{250c535c-c060-4f0c-bd80-41f2bf373565}</ProjectGuid>
     <ProjectHome />
     <StartupFile>runtests.py</StartupFile>
-    <SearchPath />
+    <SearchPath>..\..\</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
@@ -27,17 +27,17 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="__init__.py" />
+    <Compile Include="_compat.py" />
+    <Compile Include="_missing_import.py" />
     <Compile Include="leaktest.py" />
     <Compile Include="profile.py" />
-    <Compile Include="PyImportTest\sysargv.py" />
-    <Compile Include="PyImportTest\test\one.py" />
-    <Compile Include="PyImportTest\test\__init__.py" />
-    <Compile Include="PyImportTest\__init__.py" />
     <Compile Include="runtests.py" />
     <Compile Include="stress.py" />
     <Compile Include="stresstest.py" />
     <Compile Include="test_sysargv.py" />
     <Compile Include="test_array.py" />
+    <Compile Include="test_callback.py" />
     <Compile Include="test_class.py" />
     <Compile Include="test_compat.py" />
     <Compile Include="test_constructors.py" />
@@ -50,23 +50,20 @@
     <Compile Include="test_exceptions.py" />
     <Compile Include="test_field.py" />
     <Compile Include="test_generic.py" />
+    <Compile Include="test_import.py" />
     <Compile Include="test_indexer.py" />
     <Compile Include="test_interface.py" />
     <Compile Include="test_method.py" />
     <Compile Include="test_module.py" />
     <Compile Include="test_property.py" />
+    <Compile Include="test_recursive_types.py" />
     <Compile Include="test_subclass.py" />
-    <Compile Include="test_suite\test_callback.py" />
-    <Compile Include="test_suite\test_import.py" />
-    <Compile Include="test_suite\test_recursive_types.py" />
-    <Compile Include="test_suite\_missing_import.py" />
-    <Compile Include="test_suite\__init__.py" />
     <Compile Include="test_thread.py" />
+    <Compile Include="utils.py" />
+    <Compile Include="fixtures\argv-fixture.py" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="PyImportTest" />
-    <Folder Include="PyImportTest\test" />
-    <Folder Include="test_suite" />
+    <Folder Include="fixtures" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
