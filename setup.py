@@ -162,16 +162,15 @@ class BuildExtPythonnet(build_ext.build_ext):
             defines.extend(["DEBUG", "TRACE"])
 
         if sys.platform != "win32" and DEVTOOLS == "Mono":
-            if sys.platform == "darwin":
-                defines.append("MONO_OSX")
-            else:
-                defines.append("MONO_LINUX")
+            on_darwin = sys.platform == "darwin"
+            defines.append("MONO_OSX" if on_darwin else "MONO_LINUX")
 
             # Check if --enable-shared was set when Python was built
             enable_shared = sysconfig.get_config_var("Py_ENABLE_SHARED")
             if enable_shared:
                 # Double-check if libpython is linked dynamically with python
-                lddout = _check_output(["ldd", sys.executable])
+                ldd_cmd = ["otool", "-L"] if on_darwin else ["ldd"]
+                lddout = _check_output(ldd_cmd + [sys.executable])
                 if 'libpython' not in lddout:
                     enable_shared = False
 
