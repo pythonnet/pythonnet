@@ -16,7 +16,7 @@ trim_trailing_whitespace = true
 indent_size = 2
 
 # Xml project files
-[*.{csproj,config,build,config}]
+[*.{csproj,pyproj,config}]
 indent_size = 2
 
 # Solution
