@@ -290,13 +290,13 @@ namespace Python.Runtime
 
 #if PYTHON3
             IntPtr dll = IntPtr.Zero;
-            if ("__Internal" != Runtime.dll)
+            if (Runtime.dll != "__Internal")
             {
                 NativeMethods.LoadLibrary(Runtime.dll);
             }
             _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dll, "_PyObject_NextNotImplemented");
 #if !(MONO_LINUX || MONO_OSX)
-            if (IntPtr.Zero != dll)
+            if (dll != IntPtr.Zero)
             {
                 NativeMethods.FreeLibrary(dll);
             }
@@ -665,7 +665,10 @@ namespace Python.Runtime
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         public unsafe static extern int
-            Py_Main(int argc, [MarshalAsAttribute(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] argv);
+            Py_Main(
+                int argc,
+                [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] argv
+            );
 #elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -739,7 +742,7 @@ namespace Python.Runtime
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern void
-            Py_SetProgramName([MarshalAsAttribute(UnmanagedType.LPWStr)] string name);
+            Py_SetProgramName([MarshalAs(UnmanagedType.LPWStr)] string name);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -750,7 +753,7 @@ namespace Python.Runtime
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern void
-            Py_SetPythonHome([MarshalAsAttribute(UnmanagedType.LPWStr)] string home);
+            Py_SetPythonHome([MarshalAs(UnmanagedType.LPWStr)] string home);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -761,7 +764,7 @@ namespace Python.Runtime
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
         internal unsafe static extern void
-            Py_SetPath([MarshalAsAttribute(UnmanagedType.LPWStr)] string home);
+            Py_SetPath([MarshalAs(UnmanagedType.LPWStr)] string home);
 #elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -2081,7 +2084,7 @@ namespace Python.Runtime
         internal unsafe static extern void
             PySys_SetArgvEx(
                 int argc,
-                [MarshalAsAttribute(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] argv,
+                [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] argv,
                 int updatepath
             );
 #elif PYTHON2
