@@ -1370,8 +1370,7 @@ namespace Python.Runtime
                 int size
             );
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromStringAndSize(IntPtr value, int size);
 #elif PYTHON2
@@ -1395,13 +1394,11 @@ namespace Python.Runtime
         }
 
 #if UCS2 && PYTHON3
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromObject(IntPtr ob);
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
@@ -1416,30 +1413,25 @@ namespace Python.Runtime
             return PyUnicode_FromKindAndString(2, s, size);
         }
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern int
             PyUnicode_GetSize(IntPtr ob);
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
 #elif UCS2 && PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS2_FromObject",
-            CharSet = CharSet.Unicode)]
+            EntryPoint = "PyUnicodeUCS2_FromObject")]
         internal unsafe static extern IntPtr
             PyUnicode_FromObject(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS2_FromEncodedObject",
-            CharSet = CharSet.Unicode)]
+            EntryPoint = "PyUnicodeUCS2_FromEncodedObject")]
         internal unsafe static extern IntPtr
             PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
@@ -1460,18 +1452,15 @@ namespace Python.Runtime
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS2_FromOrdinal",
-            CharSet = CharSet.Unicode)]
+            EntryPoint = "PyUnicodeUCS2_FromOrdinal")]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
 #elif UCS4 && PYTHON3
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromObject(IntPtr ob);
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
@@ -1497,20 +1486,17 @@ namespace Python.Runtime
         internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
 
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            CharSet = CharSet.Unicode)]
+        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl)]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
 #elif UCS4 && PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS4_FromObject",
-            CharSet = CharSet.Unicode)]
+            EntryPoint = "PyUnicodeUCS4_FromObject")]
         internal unsafe static extern IntPtr
             PyUnicode_FromObject(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS4_FromEncodedObject",
-            CharSet = CharSet.Unicode)]
+            EntryPoint = "PyUnicodeUCS4_FromEncodedObject")]
         internal unsafe static extern IntPtr
             PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
@@ -1533,8 +1519,7 @@ namespace Python.Runtime
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS4_FromOrdinal",
-            CharSet = CharSet.Unicode)]
+            EntryPoint = "PyUnicodeUCS4_FromOrdinal")]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
 #endif
