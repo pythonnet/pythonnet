@@ -9,12 +9,13 @@ import os
 import sys
 import sysconfig
 
+import pytest
 import clr
 
 # Add path for `Python.Test`
 cwd = os.path.dirname(__file__)
-fixtures = os.path.join(cwd, 'fixtures')
-sys.path.append(fixtures)
+fixtures_path = os.path.join(cwd, "fixtures")
+sys.path.append(fixtures_path)
 
 # Add References for tests
 clr.AddReference("Python.Test")
@@ -34,3 +35,14 @@ def pytest_report_header(config):
     header = ("Arch: {arch}, UCS: {ucs}, LIBDIR: {libdir}, "
               "Py_ENABLE_SHARED: {shared}".format(**locals()))
     return header
+
+
+@pytest.fixture()
+def filepath():
+    """Returns full filepath for file in `fixtures` directory."""
+
+    def make_filepath(filename):
+        # http://stackoverflow.com/questions/18011902/parameter-to-a-fixture
+        return os.path.join(fixtures_path, filename)
+
+    return make_filepath
