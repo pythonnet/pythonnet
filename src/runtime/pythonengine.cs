@@ -122,7 +122,12 @@ namespace Python.Runtime
 
         public static void Initialize()
         {
-            Initialize(Enumerable.Empty<string>());
+            Initialize(setSysArgv: true);
+        }
+
+        public static void Initialize(bool setSysArgv = true)
+        {
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv);
         }
 
         /// <summary>
@@ -134,7 +139,7 @@ namespace Python.Runtime
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true)
         {
             if (!initialized)
             {
@@ -148,7 +153,8 @@ namespace Python.Runtime
                 initialized = true;
                 Exceptions.Clear();
 
-                Py.SetArgv(args);
+                if (setSysArgv)
+                    Py.SetArgv(args);
 
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
@@ -213,7 +219,7 @@ namespace Python.Runtime
         {
             try
             {
-                Initialize();
+                Initialize(setSysArgv: false);
 
                 // Trickery - when the import hook is installed into an already
                 // running Python, the standard import machinery is still in
