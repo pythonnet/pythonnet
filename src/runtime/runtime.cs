@@ -289,16 +289,16 @@ namespace Python.Runtime
             Error = new IntPtr(-1);
 
 #if PYTHON3
-            IntPtr dll = IntPtr.Zero;
+            IntPtr dllLocal = IntPtr.Zero;
             if (Runtime.dll != "__Internal")
             {
                 NativeMethods.LoadLibrary(Runtime.dll);
             }
-            _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dll, "_PyObject_NextNotImplemented");
+            _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dllLocal, "_PyObject_NextNotImplemented");
 #if !(MONO_LINUX || MONO_OSX)
-            if (dll != IntPtr.Zero)
+            if (dllLocal != IntPtr.Zero)
             {
-                NativeMethods.FreeLibrary(dll);
+                NativeMethods.FreeLibrary(dllLocal);
             }
 #endif
 #endif
