@@ -86,6 +86,7 @@
     <Compile Include="pyiter.cs" />
     <Compile Include="pylong.cs" />
     <Compile Include="pyobject.cs" />
+    <Compile Include="pyrunstring.cs" />
     <Compile Include="pythonexception.cs" />
     <Compile Include="pytuple.cs" />
   </ItemGroup>

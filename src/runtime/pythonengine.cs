@@ -156,11 +156,7 @@ namespace Python.Runtime
                 string code =
                     "import atexit, clr\n" +
                     "atexit.register(clr._AtExit)\n";
-                PyObject r = PythonEngine.RunString(code);
-                if (r != null)
-                {
-                    r.Dispose();
-                }
+                PythonEngine.Exec(code);
 
                 // Load the clr.py resource into the clr module
                 IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
@@ -180,12 +176,7 @@ namespace Python.Runtime
                     {
                         // add the contents of clr.py to the module
                         string clr_py = reader.ReadToEnd();
-                        PyObject result = RunString(clr_py, module_globals, locals.Handle);
-                        if (null == result)
-                        {
-                            throw new PythonException();
-                        }
-                        result.Dispose();
+                        Exec(clr_py, module_globals, locals.Handle);
                     }
 
                     // add the imported module to the clr module, and copy the API functions
@@ -253,11 +244,7 @@ namespace Python.Runtime
                     "            exec(line)\n" +
                     "            break\n";
 
-                PyObject r = PythonEngine.RunString(code);
-                if (r != null)
-                {
-                    r.Dispose();
-                }
+                PythonEngine.Exec(code);
             }
             catch (PythonException e)
             {
@@ -406,6 +393,38 @@ namespace Python.Runtime
 
 
         /// <summary>
+        /// Eval Method
+        /// </summary>
+        /// <remarks>
+        /// Evaluate a Python expression and returns the result.
+        /// It's a subset of Python eval function.
+        /// </remarks>
+        public static PyObject Eval(string code, IntPtr? globals = null, IntPtr? locals = null)
+        {
+            PyObject result = RunString(code, globals, locals, RunFlagType.Eval);
+            return result;
+        }
+
+
+        /// <summary>
+        /// Exec Method
+        /// </summary>
+        /// <remarks>
+        /// Run a string containing Python code.
+        /// It's a subset of Python exec function.
+        /// </remarks>
+        public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
+        {
+            PyObject result = RunString(code, globals, locals, RunFlagType.File);
+            if (result.obj != Runtime.PyNone)
+            {
+                throw new PythonException();
+            }
+            result.Dispose();
+        }
+
+
+        /// <summary>
         /// RunString Method
         /// </summary>
         /// <remarks>
@@ -414,7 +433,7 @@ namespace Python.Runtime
         /// an exception was raised.
         /// </remarks>
         public static PyObject RunString(
-            string code, IntPtr? globals = null, IntPtr? locals = null
+            string code, IntPtr? globals = null, IntPtr? locals = null, RunFlagType _flag = RunFlagType.File
         )
         {
             var borrowedGlobals = true;
@@ -439,7 +458,7 @@ namespace Python.Runtime
                 borrowedLocals = false;
             }
 
-            var flag = (IntPtr)257; /* Py_file_input */
+            var flag = (IntPtr)_flag;
 
             try
             {
@@ -463,6 +482,13 @@ namespace Python.Runtime
                 }
             }
         }
+    }
+
+    public enum RunFlagType
+    {
+        Single = 256,
+        File = 257, /* Py_file_input */
+        Eval = 258
     }
 
     public static class Py
