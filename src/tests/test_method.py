@@ -819,3 +819,16 @@ def test_object_in_multiparam_exception():
 
     with pytest.raises(TypeError):
         MethodTest.TestOverloadedObjectThree("foo", "bar")
+
+
+def test_case_sensitive():
+    """Test that case-sensitivity is respected. GH#81"""
+
+    res = MethodTest.CaseSensitive()
+    assert res == "CaseSensitive"
+
+    res = MethodTest.Casesensitive()
+    assert res == "Casesensitive"
+
+    with pytest.raises(AttributeError):
+        MethodTest.casesensitive()

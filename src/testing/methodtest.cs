@@ -641,6 +641,16 @@ namespace Python.Test
         {
             return i;
         }
+
+        public static string CaseSensitive()
+        {
+            return "CaseSensitive";
+        }
+
+        public static string Casesensitive()
+        {
+            return "Casesensitive";
+        }
     }
 
 
