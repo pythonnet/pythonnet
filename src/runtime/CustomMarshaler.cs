@@ -123,4 +123,49 @@ namespace Python.Runtime
             return Instance;
         }
     }
+
+
+    /// <summary>
+    /// Custom Marshaler to deal with Managed String to Native
+    /// conversion on UTF-8. Use on functions that expect UTF-8 encoded
+    /// strings like `PyUnicode_FromStringAndSize`
+    /// </summary>
+    /// <remarks>
+    /// If instead we used `MarshalAs(UnmanagedType.LPWStr)` the output to
+    /// `foo` would be `f\x00o\x00o\x00`.
+    /// </remarks>
+    public class Utf8Marshaler : MarshalerBase
+    {
+        private static readonly MarshalerBase Instance = new Utf8Marshaler();
+        private static readonly Encoding PyEncoding = Encoding.UTF8;
+
+        public override IntPtr MarshalManagedToNative(object managedObj)
+        {
+            var s = managedObj as string;
+
+            if (s == null)
+            {
+                return IntPtr.Zero;
+            }
+
+            byte[] bStr = PyEncoding.GetBytes(s + "\0");
+            IntPtr mem = Marshal.AllocHGlobal(bStr.Length);
+            try
+            {
+                Marshal.Copy(bStr, 0, mem, bStr.Length);
+            }
+            catch (Exception)
+            {
+                Marshal.FreeHGlobal(mem);
+                throw;
+            }
+
+            return mem;
+        }
+
+        public static ICustomMarshaler GetInstance(string cookie)
+        {
+            return Instance;
+        }
+    }
 }

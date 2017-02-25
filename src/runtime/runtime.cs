@@ -1508,23 +1508,12 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
-        internal static IntPtr PyString_FromStringAndSize(string value, int length)
-        {
-            // copy the string into an unmanaged UTF-8 buffer
-            int len = Encoding.UTF8.GetByteCount(value);
-            byte[] buffer = new byte[len + 1];
-            Encoding.UTF8.GetBytes(value, 0, value.Length, buffer, 0);
-            IntPtr nativeUtf8 = Marshal.AllocHGlobal(buffer.Length);
-            try
-            {
-                Marshal.Copy(buffer, 0, nativeUtf8, buffer.Length);
-                return PyUnicode_FromStringAndSize(nativeUtf8, length);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(nativeUtf8);
-            }
-        }
+        [DllImport(Runtime.dll, EntryPoint = "PyUnicode_FromStringAndSize")]
+        internal static extern IntPtr
+            PyString_FromStringAndSize(
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
+                int size
+            );
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
