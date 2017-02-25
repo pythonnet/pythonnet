@@ -667,7 +667,7 @@ namespace Python.Runtime
         public unsafe static extern int
             Py_Main(
                 int argc,
-                [MarshalAs(UnmanagedType.SysUInt)] IntPtr lplpargv
+                IntPtr lplpargv
             );
 
         public static int Py_Main(int argc, string[] argv)
@@ -2120,7 +2120,7 @@ namespace Python.Runtime
         internal unsafe static extern void
             PySys_SetArgvEx(
                 int argc,
-                [MarshalAs(UnmanagedType.SysUInt)] IntPtr lplpargv,
+                IntPtr lplpargv,
                 int updatepath
             );
 

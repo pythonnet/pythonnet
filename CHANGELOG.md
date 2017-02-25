@@ -47,6 +47,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed wrong version number in `conda.recipe` (#398)
 -   Fixed fixture location for Python tests and `Embedded_Tests`
 -   Fixed `PythonException` crash during Shutdown (#400)
+-   Fixed `Py_Main` & `PySys_SetArgvEx` no mem error on `UCS4/PY3` (#399)
 
 ### Removed
 
