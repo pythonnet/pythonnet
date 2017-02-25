@@ -1653,11 +1653,14 @@ namespace Python.Runtime
             EntryPoint = "PyUnicode_FromKindAndData",
             ExactSpelling = true)]
         internal unsafe static extern IntPtr
-            PyUnicode_FromKindAndString(int kind,
+            PyUnicode_FromKindAndString(
+                int kind,
                 IntPtr s,
-                int size);
+                int size
+            );
 
-        internal static unsafe IntPtr PyUnicode_FromKindAndString(int kind,
+        internal static unsafe IntPtr PyUnicode_FromKindAndString(
+            int kind,
             string s,
             int size)
         {

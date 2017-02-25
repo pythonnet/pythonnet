@@ -1,9 +1,8 @@
 using System;
-using System.IO;
-using System.Threading;
-using System.Reflection;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -154,7 +153,9 @@ namespace Python.Runtime
                 Exceptions.Clear();
 
                 if (setSysArgv)
+                {
                     Py.SetArgv(args);
+                }
 
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
