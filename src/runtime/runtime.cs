@@ -667,41 +667,8 @@ namespace Python.Runtime
         public unsafe static extern int
             Py_Main(
                 int argc,
-                IntPtr lplpargv
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv
             );
-
-        public static int Py_Main(int argc, string[] argv)
-        {
-            // Totally ignoring argc.
-            argc = argv.Length;
-
-            var allStringsLength = 0;
-            foreach (string x in argv)
-            {
-                allStringsLength += x.Length + 1;
-            }
-            int requiredSize = IntPtr.Size * argc + allStringsLength * UCS;
-            IntPtr mem = Marshal.AllocHGlobal(requiredSize);
-            try
-            {
-                // Preparing array of pointers to UTF32 strings.
-                IntPtr curStrPtr = mem + argc * IntPtr.Size;
-                for (var i = 0; i < argv.Length; i++)
-                {
-                    // Unicode or UTF8 work
-                    Encoding enc = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
-                    byte[] zstr = enc.GetBytes(argv[i] + "\0");
-                    Marshal.Copy(zstr, 0, curStrPtr, zstr.Length);
-                    Marshal.WriteIntPtr(mem + IntPtr.Size * i, curStrPtr);
-                    curStrPtr += zstr.Length;
-                }
-                return Py_Main(argc, mem);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
 #elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -2078,41 +2045,9 @@ namespace Python.Runtime
         internal unsafe static extern void
             PySys_SetArgvEx(
                 int argc,
-                IntPtr lplpargv,
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv,
                 int updatepath
             );
-
-        internal static void PySys_SetArgvEx(int argc, string[] argv, int updatepath)
-        {
-            // Totally ignoring argc.
-            argc = argv.Length;
-
-            var allStringsLength = 0;
-            foreach (string x in argv)
-            {
-                allStringsLength += x.Length + 1;
-            }
-            int requiredSize = IntPtr.Size * argc + allStringsLength * UCS;
-            IntPtr mem = Marshal.AllocHGlobal(requiredSize);
-            try
-            {
-                // Preparing array of pointers to UTF32 strings.
-                IntPtr curStrPtr = mem + argc * IntPtr.Size;
-                for (var i = 0; i < argv.Length; i++)
-                {
-                    Encoding enc = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
-                    byte[] zstr = enc.GetBytes(argv[i] + "\0");
-                    Marshal.Copy(zstr, 0, curStrPtr, zstr.Length);
-                    Marshal.WriteIntPtr(mem + IntPtr.Size * i, curStrPtr);
-                    curStrPtr += zstr.Length;
-                }
-                PySys_SetArgvEx(argc, mem, updatepath);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
 #elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
