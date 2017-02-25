@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -41,10 +42,10 @@ namespace Python.Runtime
     public class StrMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrMarshaler();
+        private static readonly Encoding PyEncoding = Runtime.UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
-            Encoding encoding = Runtime.UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
             var s = managedObj as string;
 
             if (s == null)
@@ -52,12 +53,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            int minByteCount = encoding.GetMaxByteCount(1);
-            char[] cStr = s.ToCharArray(0, s.Length);
-            byte[] bStr = new byte[encoding.GetByteCount(cStr) + minByteCount];
-            encoding.GetBytes(cStr, 0, cStr.Length, bStr, 0);
-            DebugUtil.PrintHexBytes(bStr);
-
+            byte[] bStr = PyEncoding.GetBytes(s + "\0");
             IntPtr mem = Marshal.AllocHGlobal(bStr.Length);
             try
             {
@@ -86,6 +82,7 @@ namespace Python.Runtime
     public class StrArrayMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrArrayMarshaler();
+        private static readonly Encoding PyEncoding = Runtime.UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
@@ -96,11 +93,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            var totalStrLength = 0;
-            foreach (string arg in argv)
-            {
-                totalStrLength += arg.Length + 1;
-            }
+            int totalStrLength = argv.Sum(arg => arg.Length + 1);
             int memSize = argv.Length * IntPtr.Size + totalStrLength * Runtime.UCS;
 
             IntPtr mem = Marshal.AllocHGlobal(memSize);
@@ -110,8 +103,7 @@ namespace Python.Runtime
                 IntPtr curStrPtr = mem + argv.Length * IntPtr.Size;
                 for (var i = 0; i < argv.Length; i++)
                 {
-                    Encoding encoding = Runtime.UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
-                    byte[] bStr = encoding.GetBytes(argv[i] + "\0");
+                    byte[] bStr = PyEncoding.GetBytes(argv[i] + "\0");
                     Marshal.Copy(bStr, 0, curStrPtr, bStr.Length);
                     Marshal.WriteIntPtr(mem + i * IntPtr.Size, curStrPtr);
                     curStrPtr += bStr.Length;
