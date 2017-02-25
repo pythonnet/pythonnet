@@ -115,5 +115,27 @@ namespace Python.Runtime
             Console.WriteLine("thread {0} : {1}", tid, caller);
             Console.WriteLine("  {0}", msg);
         }
+
+        /// <summary>
+        /// Helper function to inspect/compare managed to native conversions.
+        /// Especially useful when debugging CustomMarshaler.
+        /// </summary>
+        /// <param name="bytes"></param>
+        [Conditional("DEBUG")]
+        public static void PrintHexBytes(byte[] bytes)
+        {
+            if ((bytes == null) || (bytes.Length == 0))
+            {
+                Console.WriteLine("<none>");
+            }
+            else
+            {
+                foreach (byte t in bytes)
+                {
+                    Console.Write("{0:X2} ", t);
+                }
+                Console.WriteLine();
+            }
+        }
     }
 }

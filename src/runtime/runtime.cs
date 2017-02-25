@@ -1688,33 +1688,9 @@ namespace Python.Runtime
         internal unsafe static extern IntPtr
             PyUnicode_FromKindAndString(
                 int kind,
-                IntPtr s,
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
                 int size
             );
-
-        internal static unsafe IntPtr PyUnicode_FromKindAndString(
-            int kind,
-            string s,
-            int size)
-        {
-            var bufLength = Math.Max(s.Length, size) * 4;
-
-            IntPtr mem = Marshal.AllocHGlobal(bufLength);
-            try
-            {
-                fixed (char* ps = s)
-                {
-                    Encoding.UTF32.GetBytes(ps, s.Length, (byte*)mem, bufLength);
-                }
-
-                var result = PyUnicode_FromKindAndString(kind, mem, size);
-                return result;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
 
         internal static IntPtr PyUnicode_FromUnicode(string s, int size)
         {
@@ -1758,28 +1734,10 @@ namespace Python.Runtime
             EntryPoint = "PyUnicodeUCS4_FromUnicode",
             ExactSpelling = true)]
         internal unsafe static extern IntPtr
-            PyUnicode_FromUnicode(IntPtr s, int size);
-
-        internal static unsafe IntPtr PyUnicode_FromUnicode(string s, int size)
-        {
-            var bufLength = Math.Max(s.Length, size) * 4;
-
-            IntPtr mem = Marshal.AllocHGlobal(bufLength);
-            try
-            {
-                fixed (char* ps = s)
-                {
-                    Encoding.UTF32.GetBytes(ps, s.Length, (byte*)mem, bufLength);
-                }
-
-                var result = PyUnicode_FromUnicode(mem, size);
-                return result;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
+            PyUnicode_FromUnicode(
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+                int size
+            );
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS4_GetSize",
