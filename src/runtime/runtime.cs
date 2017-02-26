@@ -1725,7 +1725,20 @@ namespace Python.Runtime
             return PyUnicode_FromUnicode(s, (s.Length));
         }
 
-        internal unsafe static string GetManagedString(IntPtr op)
+        /// <summary>
+        /// Function to access the internal PyUnicode/PyString object and
+        /// convert it to a managed string with the correct encoding.
+        /// </summary>
+        /// <remarks>
+        /// We can't easily do this through through the CustomMarshaler's on
+        /// the returns because will have access to the IntPtr but not size.
+        /// <para />
+        /// For PyUnicodeType, we can't convert with Marshal.PtrToStringUni
+        /// since it only works for UCS2.
+        /// </remarks>
+        /// <param name="op">PyStringType or PyUnicodeType object to convert</param>
+        /// <returns>Managed String</returns>
+        internal static string GetManagedString(IntPtr op)
         {
             IntPtr type = PyObject_TYPE(op);
 
@@ -1741,18 +1754,15 @@ namespace Python.Runtime
 
             if (type == Runtime.PyUnicodeType)
             {
-#if UCS4
-                IntPtr p = Runtime.PyUnicode_AsUnicode(op);
-                int length = Runtime.PyUnicode_GetSize(op);
-                int size = length * 4;
-                byte[] buffer = new byte[size];
+                Encoding encoding = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+
+                IntPtr p = PyUnicode_AsUnicode(op);
+                int length = PyUnicode_GetSize(op);
+
+                int size = length * UCS;
+                var buffer = new byte[size];
                 Marshal.Copy(p, buffer, 0, size);
-                return Encoding.UTF32.GetString(buffer, 0, size);
-#elif UCS2
-                IntPtr p = Runtime.PyUnicode_AsUnicode(op);
-                int length = Runtime.PyUnicode_GetSize(op);
-                return Marshal.PtrToStringUni(p, length);
-#endif
+                return encoding.GetString(buffer, 0, size);
             }
 
             return null;
