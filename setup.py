@@ -10,7 +10,6 @@ import collections
 import fnmatch
 import glob
 import os
-import platform
 import subprocess
 import sys
 import sysconfig
@@ -24,8 +23,9 @@ from setuptools import Extension, setup
 CONFIG = "Release"  # Release or Debug
 VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
 
+is_64bits = sys.maxsize > 2**32
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
-ARCH = "x64" if platform.architecture()[0] == "64bit" else "x86"
+ARCH = "x64" if is_64bits else "x86"
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
 
