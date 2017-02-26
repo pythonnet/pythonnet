@@ -1576,12 +1576,6 @@ namespace Python.Runtime
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
@@ -1615,12 +1609,6 @@ namespace Python.Runtime
             ExactSpelling = true)]
         internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS2_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS2_FromOrdinal",
@@ -1664,12 +1652,6 @@ namespace Python.Runtime
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
             PyUnicode_FromOrdinal(int c);
@@ -1706,12 +1688,6 @@ namespace Python.Runtime
             ExactSpelling = true)]
         internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS4_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS4_FromOrdinal",
