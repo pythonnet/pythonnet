@@ -171,6 +171,11 @@ namespace Python.Runtime
         internal static bool IsPython3;
 
         /// <summary>
+        /// Encoding to use to convert Unicode to/from Managed to Native
+        /// </summary>
+        internal static readonly Encoding PyEncoding = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+
+        /// <summary>
         /// Initialize the runtime...
         /// </summary>
         internal static void Initialize()
@@ -1730,15 +1735,13 @@ namespace Python.Runtime
 
             if (type == Runtime.PyUnicodeType)
             {
-                Encoding encoding = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
-
                 IntPtr p = PyUnicode_AsUnicode(op);
                 int length = PyUnicode_GetSize(op);
 
                 int size = length * UCS;
                 var buffer = new byte[size];
                 Marshal.Copy(p, buffer, 0, size);
-                return encoding.GetString(buffer, 0, size);
+                return PyEncoding.GetString(buffer, 0, size);
             }
 
             return null;

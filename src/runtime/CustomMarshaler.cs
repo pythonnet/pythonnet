@@ -42,7 +42,7 @@ namespace Python.Runtime
     public class StrMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrMarshaler();
-        private static readonly Encoding PyEncoding = Runtime.UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+        private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
@@ -82,7 +82,7 @@ namespace Python.Runtime
     public class StrArrayMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrArrayMarshaler();
-        private static readonly Encoding PyEncoding = Runtime.UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+        private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
