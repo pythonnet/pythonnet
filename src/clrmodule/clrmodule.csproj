@@ -13,7 +13,7 @@
     <TargetFrameworkProfile />
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
+    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <!--If need to freeze language version: <LangVersion>5</LangVersion> !-->
     <RestorePackages>true</RestorePackages>
