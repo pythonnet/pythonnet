@@ -1572,7 +1572,7 @@ namespace Python.Runtime
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern char*
+        internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
@@ -1613,7 +1613,7 @@ namespace Python.Runtime
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS2_AsUnicode",
             ExactSpelling = true)]
-        internal unsafe static extern char*
+        internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
@@ -1749,9 +1749,9 @@ namespace Python.Runtime
                 Marshal.Copy(p, buffer, 0, size);
                 return Encoding.UTF32.GetString(buffer, 0, size);
 #elif UCS2
-                char* p = Runtime.PyUnicode_AsUnicode(op);
-                int size = Runtime.PyUnicode_GetSize(op);
-                return new String(p, 0, size);
+                IntPtr p = Runtime.PyUnicode_AsUnicode(op);
+                int length = Runtime.PyUnicode_GetSize(op);
+                return Marshal.PtrToStringUni(p, length);
 #endif
             }
 
