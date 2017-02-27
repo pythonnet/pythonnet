@@ -43,6 +43,21 @@ namespace Python.EmbeddingTest
             }
         }
 
+        [Test]
+        public void TestPyTupleBadCtor()
+        {
+            using (Py.GIL())
+            {
+                var i = new PyInt(5);
+                PyTuple t = null;
+
+                var ex = Assert.Throws<ArgumentException>(() => t = new PyTuple(i));
+
+                Assert.AreEqual("object is not a tuple", ex.Message);
+                Assert.IsNull(t);
+            }
+        }
+
         /// <summary>
         /// Test PyTuple.Concat(...) doesn't let invalid appends happen
         /// and throws and exception.
@@ -51,6 +66,8 @@ namespace Python.EmbeddingTest
         /// Test has second purpose. Currently it generated an Exception
         /// that the GC failed to remove often and caused AppDomain unload
         /// errors at the end of tests. See GH#397 for more info.
+        /// <para />
+        /// Curious, on PY27 it gets a Unicode on the ex.Message. On PY3+ its string.
         /// </remarks>
         [Test]
         public void TestPyTupleInvalidAppend()
@@ -59,7 +76,12 @@ namespace Python.EmbeddingTest
             {
                 PyObject s = new PyString("foo");
                 var t = new PyTuple();
-                Assert.Throws<PythonException>(() => t.Concat(s));
+
+                var ex = Assert.Throws<PythonException>(() => t.Concat(s));
+
+                StringAssert.StartsWith("TypeError : can only concatenate tuple", ex.Message);
+                Assert.AreEqual(0, t.Length());
+                Assert.IsEmpty(t);
             }
         }
 
@@ -112,6 +134,24 @@ namespace Python.EmbeddingTest
                 var t = new PyTuple(t0);
                 Assert.IsNotNull(t);
                 Assert.IsInstanceOf(typeof(PyTuple), t);
+            }
+        }
+
+        /// <remarks>
+        /// TODO: Should this throw ArgumentError instead?
+        /// </remarks>
+        [Test]
+        public void TestInvalidAsTuple()
+        {
+            using (Py.GIL())
+            {
+                var i = new PyInt(5);
+                PyTuple t = null;
+
+                var ex = Assert.Throws<PythonException>(() => t = PyTuple.AsTuple(i));
+
+                Assert.AreEqual("TypeError : 'int' object is not iterable", ex.Message);
+                Assert.IsNull(t);
             }
         }
     }

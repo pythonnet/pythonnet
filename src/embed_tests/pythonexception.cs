@@ -33,14 +33,12 @@ namespace Python.EmbeddingTest
         public void TestMessage()
         {
             var list = new PyList();
-            try
-            {
-                PyObject junk = list[0];
-            }
-            catch (PythonException e)
-            {
-                Assert.AreEqual("IndexError : list index out of range", e.Message);
-            }
+            PyObject foo = null;
+
+            var ex = Assert.Throws<PythonException>(() => foo = list[0]);
+
+            Assert.AreEqual("IndexError : list index out of range", ex.Message);
+            Assert.IsNull(foo);
         }
 
         [Test]

@@ -5,7 +5,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class dynamicTest
+    public class DynamicTest
     {
         private Py.GILState gil;
 
