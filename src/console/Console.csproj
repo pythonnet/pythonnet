@@ -15,7 +15,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <!--If need to freeze language version: <LangVersion>5</LangVersion> !-->
+    <LangVersion>6</LangVersion>
     <ApplicationIcon>python-clear.ico</ApplicationIcon>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
