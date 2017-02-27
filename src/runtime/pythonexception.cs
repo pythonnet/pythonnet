@@ -135,6 +135,8 @@ namespace Python.Runtime
         /// <remarks>
         /// The Dispose method provides a way to explicitly release the
         /// Python objects represented by a PythonException.
+        /// If object not properly disposed can cause AppDomain unload issue.
+        /// See GH#397 and GH#400.
         /// </remarks>
         public void Dispose()
         {

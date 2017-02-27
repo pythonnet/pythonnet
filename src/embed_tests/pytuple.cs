@@ -10,10 +10,6 @@ namespace Python.EmbeddingTest
         /// Test IsTupleType without having to Initialize a tuple.
         /// PyTuple constructor use IsTupleType. This decouples the tests.
         /// </summary>
-        /// <remarks>
-        /// Travis PY27 intermittently fails this test. Indicates issue is
-        /// most likely with PyTuple.IsTupleType
-        /// </remarks>
         [Test]
         public void TestStringIsTupleType()
         {
@@ -47,15 +43,16 @@ namespace Python.EmbeddingTest
             }
         }
 
+        /// <summary>
+        /// Test PyTuple.Concat(...) doesn't let invalid appends happen
+        /// and throws and exception.
+        /// </summary>
         /// <remarks>
-        /// FIXME: Unable to unload AppDomain, Unload thread timed out.
-        /// Seen on Travis/AppVeyor on both PY2 and PY3. Causes Embedded_Tests
-        /// to hang after they are finished for ~40 seconds until nunit3 forces
-        /// a timeout on unloading tests. Doesn't fail the tests though but
-        /// greatly slows down CI. nunit2 silently has this issue.
+        /// Test has second purpose. Currently it generated an Exception
+        /// that the GC failed to remove often and caused AppDomain unload
+        /// errors at the end of tests. See GH#397 for more info.
         /// </remarks>
         [Test]
-        [Ignore("GH#397: Travis/AppVeyor: Unable to unload AppDomain, Unload thread timed out")]
         public void TestPyTupleInvalidAppend()
         {
             using (Py.GIL())
@@ -106,10 +103,6 @@ namespace Python.EmbeddingTest
             }
         }
 
-        /// <remarks>
-        /// FIXME: Possible source of intermittent AppVeyor PY27: Unable to unload AppDomain.
-        /// FIXME: Intermittent Issue on Travis PY33: Fatal Python error: PyMUTEX_LOCK(gil_mutex) failed. Seen twice.
-        /// </remarks>
         [Test]
         public void TestNewPyTupleFromPyTuple()
         {

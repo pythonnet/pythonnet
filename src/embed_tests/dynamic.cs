@@ -68,8 +68,6 @@ namespace Python.EmbeddingTest
             if (Environment.GetEnvironmentVariable("TRAVIS") == "true" &&
                 Environment.GetEnvironmentVariable("TRAVIS_PYTHON_VERSION") == "2.7")
             {
-                // Most recently threw `auto-releasing thread-state, but no thread-state for this thread`
-                // instead of the error below. Maybe had bad mapping to library?
                 Assert.Ignore("Fails on Travis/PY27: ImportError: ... undefined symbol: _PyLong_AsInt");
             }
 
@@ -84,9 +82,6 @@ namespace Python.EmbeddingTest
         /// <summary>
         /// Pass the .NET object in Python side.
         /// </summary>
-        /// <remarks>
-        /// FIXME: Possible source of intermittent Travis PY27: Unable to unload AppDomain.
-        /// </remarks>
         [Test]
         public void PassObjectInPython()
         {
