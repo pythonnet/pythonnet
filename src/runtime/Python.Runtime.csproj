@@ -89,6 +89,7 @@
     <Compile Include="constructorbinder.cs" />
     <Compile Include="constructorbinding.cs" />
     <Compile Include="converter.cs" />
+    <Compile Include="CustomMarshaler.cs" />
     <Compile Include="debughelper.cs" />
     <Compile Include="delegatemanager.cs" />
     <Compile Include="delegateobject.cs" />

@@ -171,6 +171,11 @@ namespace Python.Runtime
         internal static bool IsPython3;
 
         /// <summary>
+        /// Encoding to use to convert Unicode to/from Managed to Native
+        /// </summary>
+        internal static readonly Encoding PyEncoding = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+
+        /// <summary>
         /// Initialize the runtime...
         /// </summary>
         internal static void Initialize()
@@ -667,41 +672,8 @@ namespace Python.Runtime
         public unsafe static extern int
             Py_Main(
                 int argc,
-                IntPtr lplpargv
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv
             );
-
-        public static int Py_Main(int argc, string[] argv)
-        {
-            // Totally ignoring argc.
-            argc = argv.Length;
-
-            var allStringsLength = 0;
-            foreach (string x in argv)
-            {
-                allStringsLength += x.Length + 1;
-            }
-            int requiredSize = IntPtr.Size * argc + allStringsLength * UCS;
-            IntPtr mem = Marshal.AllocHGlobal(requiredSize);
-            try
-            {
-                // Preparing array of pointers to UTF32 strings.
-                IntPtr curStrPtr = mem + argc * IntPtr.Size;
-                for (var i = 0; i < argv.Length; i++)
-                {
-                    // Unicode or UTF8 work
-                    Encoding enc = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
-                    byte[] zstr = enc.GetBytes(argv[i] + "\0");
-                    Marshal.Copy(zstr, 0, curStrPtr, zstr.Length);
-                    Marshal.WriteIntPtr(mem + IntPtr.Size * i, curStrPtr);
-                    curStrPtr += zstr.Length;
-                }
-                return Py_Main(argc, mem);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
 #elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
@@ -1541,23 +1513,12 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
-        internal static IntPtr PyString_FromStringAndSize(string value, int length)
-        {
-            // copy the string into an unmanaged UTF-8 buffer
-            int len = Encoding.UTF8.GetByteCount(value);
-            byte[] buffer = new byte[len + 1];
-            Encoding.UTF8.GetBytes(value, 0, value.Length, buffer, 0);
-            IntPtr nativeUtf8 = Marshal.AllocHGlobal(buffer.Length);
-            try
-            {
-                Marshal.Copy(buffer, 0, nativeUtf8, buffer.Length);
-                return PyUnicode_FromStringAndSize(nativeUtf8, length);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(nativeUtf8);
-            }
-        }
+        [DllImport(Runtime.dll, EntryPoint = "PyUnicode_FromStringAndSize")]
+        internal static extern IntPtr
+            PyString_FromStringAndSize(
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
+                int size
+            );
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
@@ -1616,14 +1577,8 @@ namespace Python.Runtime
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern char*
-            PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
+            PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
@@ -1657,14 +1612,8 @@ namespace Python.Runtime
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS2_AsUnicode",
             ExactSpelling = true)]
-        internal unsafe static extern char*
-            PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS2_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
+            PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS2_FromOrdinal",
@@ -1688,33 +1637,9 @@ namespace Python.Runtime
         internal unsafe static extern IntPtr
             PyUnicode_FromKindAndString(
                 int kind,
-                IntPtr s,
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
                 int size
             );
-
-        internal static unsafe IntPtr PyUnicode_FromKindAndString(
-            int kind,
-            string s,
-            int size)
-        {
-            var bufLength = Math.Max(s.Length, size) * 4;
-
-            IntPtr mem = Marshal.AllocHGlobal(bufLength);
-            try
-            {
-                fixed (char* ps = s)
-                {
-                    Encoding.UTF32.GetBytes(ps, s.Length, (byte*)mem, bufLength);
-                }
-
-                var result = PyUnicode_FromKindAndString(kind, mem, size);
-                return result;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
 
         internal static IntPtr PyUnicode_FromUnicode(string s, int size)
         {
@@ -1730,12 +1655,6 @@ namespace Python.Runtime
             ExactSpelling = true)]
         internal unsafe static extern IntPtr
             PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Unicode)]
@@ -1758,28 +1677,10 @@ namespace Python.Runtime
             EntryPoint = "PyUnicodeUCS4_FromUnicode",
             ExactSpelling = true)]
         internal unsafe static extern IntPtr
-            PyUnicode_FromUnicode(IntPtr s, int size);
-
-        internal static unsafe IntPtr PyUnicode_FromUnicode(string s, int size)
-        {
-            var bufLength = Math.Max(s.Length, size) * 4;
-
-            IntPtr mem = Marshal.AllocHGlobal(bufLength);
-            try
-            {
-                fixed (char* ps = s)
-                {
-                    Encoding.UTF32.GetBytes(ps, s.Length, (byte*)mem, bufLength);
-                }
-
-                var result = PyUnicode_FromUnicode(mem, size);
-                return result;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
+            PyUnicode_FromUnicode(
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+                int size
+            );
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS4_GetSize",
@@ -1794,12 +1695,6 @@ namespace Python.Runtime
             PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicodeUCS4_AsUnicode",
-            ExactSpelling = true, CharSet = CharSet.Unicode)]
-        internal unsafe static extern IntPtr
-            PyUnicode_AS_UNICODE(IntPtr op);
-
-        [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicodeUCS4_FromOrdinal",
             ExactSpelling = true, CharSet = CharSet.Unicode)]
         internal unsafe static extern IntPtr
@@ -1811,7 +1706,20 @@ namespace Python.Runtime
             return PyUnicode_FromUnicode(s, (s.Length));
         }
 
-        internal unsafe static string GetManagedString(IntPtr op)
+        /// <summary>
+        /// Function to access the internal PyUnicode/PyString object and
+        /// convert it to a managed string with the correct encoding.
+        /// </summary>
+        /// <remarks>
+        /// We can't easily do this through through the CustomMarshaler's on
+        /// the returns because will have access to the IntPtr but not size.
+        /// <para />
+        /// For PyUnicodeType, we can't convert with Marshal.PtrToStringUni
+        /// since it only works for UCS2.
+        /// </remarks>
+        /// <param name="op">PyStringType or PyUnicodeType object to convert</param>
+        /// <returns>Managed String</returns>
+        internal static string GetManagedString(IntPtr op)
         {
             IntPtr type = PyObject_TYPE(op);
 
@@ -1827,18 +1735,13 @@ namespace Python.Runtime
 
             if (type == Runtime.PyUnicodeType)
             {
-#if UCS4
-                IntPtr p = Runtime.PyUnicode_AsUnicode(op);
-                int length = Runtime.PyUnicode_GetSize(op);
-                int size = length * 4;
-                byte[] buffer = new byte[size];
+                IntPtr p = PyUnicode_AsUnicode(op);
+                int length = PyUnicode_GetSize(op);
+
+                int size = length * UCS;
+                var buffer = new byte[size];
                 Marshal.Copy(p, buffer, 0, size);
-                return Encoding.UTF32.GetString(buffer, 0, size);
-#elif UCS2
-                char* p = Runtime.PyUnicode_AsUnicode(op);
-                int size = Runtime.PyUnicode_GetSize(op);
-                return new String(p, 0, size);
-#endif
+                return PyEncoding.GetString(buffer, 0, size);
             }
 
             return null;
@@ -2120,41 +2023,9 @@ namespace Python.Runtime
         internal unsafe static extern void
             PySys_SetArgvEx(
                 int argc,
-                IntPtr lplpargv,
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv,
                 int updatepath
             );
-
-        internal static void PySys_SetArgvEx(int argc, string[] argv, int updatepath)
-        {
-            // Totally ignoring argc.
-            argc = argv.Length;
-
-            var allStringsLength = 0;
-            foreach (string x in argv)
-            {
-                allStringsLength += x.Length + 1;
-            }
-            int requiredSize = IntPtr.Size * argc + allStringsLength * UCS;
-            IntPtr mem = Marshal.AllocHGlobal(requiredSize);
-            try
-            {
-                // Preparing array of pointers to UTF32 strings.
-                IntPtr curStrPtr = mem + argc * IntPtr.Size;
-                for (var i = 0; i < argv.Length; i++)
-                {
-                    Encoding enc = UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
-                    byte[] zstr = enc.GetBytes(argv[i] + "\0");
-                    Marshal.Copy(zstr, 0, curStrPtr, zstr.Length);
-                    Marshal.WriteIntPtr(mem + IntPtr.Size * i, curStrPtr);
-                    curStrPtr += zstr.Length;
-                }
-                PySys_SetArgvEx(argc, mem, updatepath);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(mem);
-            }
-        }
 #elif PYTHON2
         [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
             ExactSpelling = true, CharSet = CharSet.Ansi)]
