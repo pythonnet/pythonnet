@@ -23,6 +23,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `tox` for local testing (#345)
 -   Added `requirements.txt`
 -   Added to `PythonEngine` methods `Eval` and `Exec` (#389)
+-   Added implementations of `ICustomMarshal` (#407)
 
 ### Changed
 
