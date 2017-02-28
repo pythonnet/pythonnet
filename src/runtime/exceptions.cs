@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-
 namespace Python.Runtime
 {
     /// <summary>
@@ -171,7 +170,7 @@ namespace Python.Runtime
         /// Shortcut for (pointer == NULL) -&gt; throw PythonException
         /// </summary>
         /// <param name="pointer">Pointer to a Python object</param>
-        internal static unsafe void ErrorCheck(IntPtr pointer)
+        internal static void ErrorCheck(IntPtr pointer)
         {
             if (pointer == IntPtr.Zero)
             {
@@ -182,7 +181,7 @@ namespace Python.Runtime
         /// <summary>
         /// Shortcut for (pointer == NULL or ErrorOccurred()) -&gt; throw PythonException
         /// </summary>
-        internal static unsafe void ErrorOccurredCheck(IntPtr pointer)
+        internal static void ErrorOccurredCheck(IntPtr pointer)
         {
             if (pointer == IntPtr.Zero || ErrorOccurred())
             {
