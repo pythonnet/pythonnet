@@ -527,9 +527,8 @@ namespace Python.Runtime
         Eval = 258
     }
 
-    public class PySessionDisposedException: Exception
+    public class PySessionDisposedException : Exception
     {
-
     }
 
     public class PyScope : IDisposable
@@ -564,7 +563,7 @@ namespace Python.Runtime
 
             public void Dispose()
             {
-                this.ReleaseLock();
+                ReleaseLock();
                 GC.SuppressFinalize(this);
             }
 
@@ -584,7 +583,7 @@ namespace Python.Runtime
 
         private PyScope(GILState state)
         {
-            this.isDisposed = false;
+            isDisposed = false;
             this.state = state;
             globals = Runtime.PyDict_New();
             if (globals == IntPtr.Zero)
@@ -599,14 +598,14 @@ namespace Python.Runtime
         }
 
         internal PyScope(string name, GILState state)
-            :this(state)
+            : this(state)
         {
             this.state = state;
             this.name = name;
             Runtime.PyDict_SetItemString(
-                    globals, "__builtins__",
-                    Runtime.PyEval_GetBuiltins()
-                );
+                globals, "__builtins__",
+                Runtime.PyEval_GetBuiltins()
+            );
         }
 
         internal PyScope(PyScope parent, GILState state)
@@ -639,29 +638,21 @@ namespace Python.Runtime
         /// <summary>
         /// the dict for global variables
         /// </summary>
-        public IntPtr globals
-        {
-            get;
-            private set;
-        }
+        public IntPtr globals { get; private set; }
 
         /// <summary>
         /// the dict for local variables
         /// </summary>
-        public IntPtr locals
-        {
-            get;
-            private set;
-        }
+        public IntPtr locals { get; private set; }
 
         public PyScope SubScope()
         {
-            return new PyScope(this, this.state);
+            return new PyScope(this, state);
         }
 
         public void Suspend()
         {
-            this.state.ReleaseLock();
+            state.ReleaseLock();
         }
 
         /// <summary>
@@ -685,7 +676,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject ImportAs(string name, string asname)
         {
-            this.AcquireLock();
+            AcquireLock();
             PyObject module = PythonEngine.ImportModule(name);
             if (asname == null)
             {
@@ -699,7 +690,7 @@ namespace Python.Runtime
         {
             IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, globals, locals);
             Runtime.CheckExceptionOccurred();
-            if(ptr == Runtime.PyNone)
+            if (ptr == Runtime.PyNone)
             {
                 Runtime.XDecref(ptr);
                 return null;
@@ -709,12 +700,12 @@ namespace Python.Runtime
 
         public T Execute<T>(PyObject script)
         {
-            var pyObj = this.Execute(script);
-            if(pyObj == null)
+            PyObject pyObj = Execute(script);
+            if (pyObj == null)
             {
                 return default(T);
             }
-            T obj = (T)pyObj.AsManagedObject(typeof(T));
+            var obj = (T)pyObj.AsManagedObject(typeof(T));
             return obj;
         }
 
@@ -726,7 +717,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
         {
-            IntPtr flag = (IntPtr)mode;
+            var flag = (IntPtr)mode;
             IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
             Runtime.CheckExceptionOccurred();
             return new PyObject(ptr);
@@ -741,7 +732,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Eval(string code)
         {
-            this.AcquireLock();
+            AcquireLock();
             var flag = (IntPtr)Runtime.Py_eval_input;
             IntPtr ptr = Runtime.PyRun_String(
                 code, flag, globals, locals
@@ -759,7 +750,7 @@ namespace Python.Runtime
         public T Eval<T>(string code)
         {
             PyObject pyObj = Eval(code);
-            T obj = (T)pyObj.AsManagedObject(typeof(T));
+            var obj = (T)pyObj.AsManagedObject(typeof(T));
             return obj;
         }
 
@@ -771,8 +762,8 @@ namespace Python.Runtime
         /// </remarks>
         public void Exec(string code)
         {
-            this.AcquireLock();
-            Exec(code, this.globals, this.locals);
+            AcquireLock();
+            Exec(code, globals, locals);
         }
 
         private void Exec(string code, IntPtr _globals, IntPtr _locals)
@@ -798,7 +789,7 @@ namespace Python.Runtime
         /// </remarks>
         internal void SetGlobalVariable(string name, object value)
         {
-            this.AcquireLock();
+            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 IntPtr _value = GetInstHandle(value);
@@ -819,7 +810,7 @@ namespace Python.Runtime
         /// </remarks>
         internal void RemoveGlobalVariable(string name)
         {
-            this.AcquireLock();
+            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 int r = Runtime.PyObject_DelItem(globals, pyKey.obj);
@@ -839,7 +830,7 @@ namespace Python.Runtime
         /// </remarks>
         public void SetVariable(string name, object value)
         {
-            this.AcquireLock();
+            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 IntPtr _value = GetInstHandle(value);
@@ -860,7 +851,7 @@ namespace Python.Runtime
         /// </remarks>
         public void RemoveVariable(string name)
         {
-            this.AcquireLock();
+            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 int r = Runtime.PyObject_DelItem(locals, pyKey.obj);
@@ -879,7 +870,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool ContainsVariable(string name)
         {
-            this.AcquireLock();
+            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 if (Runtime.PyMapping_HasKey(locals, pyKey.obj) != 0)
@@ -899,7 +890,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject GetVariable(string name)
         {
-            this.AcquireLock();
+            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 IntPtr op;
@@ -925,7 +916,7 @@ namespace Python.Runtime
 
         public T GetVariable<T>(string name)
         {
-            PyObject obj = this.GetVariable(name);
+            PyObject obj = GetVariable(name);
             return (T)obj.AsManagedObject(typeof(T));
         }
 
@@ -938,29 +929,29 @@ namespace Python.Runtime
             }
             else
             {
-                var ptr = Converter.ToPython(value, value.GetType());
+                IntPtr ptr = Converter.ToPython(value, value.GetType());
                 return ptr;
             }
         }
 
         private void AcquireLock()
         {
-            if(isDisposed)
+            if (isDisposed)
             {
                 throw new PySessionDisposedException();
             }
-            this.state.AcquireLock();
+            state.AcquireLock();
         }
 
         public virtual void Dispose()
         {
-            if(isDisposed)
+            if (isDisposed)
             {
                 return;
             }
             Runtime.XDecref(globals);
             Runtime.XDecref(locals);
-            if (this.parent == null)
+            if (parent == null)
             {
                 Py.RemoveSession(name);
             }
@@ -999,7 +990,7 @@ namespace Python.Runtime
             {
                 PythonEngine.Initialize();
             }
-            if(Sessions.ContainsKey(name))
+            if (Sessions.ContainsKey(name))
             {
                 return Sessions[name];
             }

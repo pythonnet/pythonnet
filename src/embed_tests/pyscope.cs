@@ -1,13 +1,13 @@
+using System;
 using NUnit.Framework;
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    [TestFixture]
     public class PyScopeTest
     {
-        PyScope ps;
-        
+        private PyScope ps;
+
         [SetUp]
         public void SetUp()
         {
@@ -15,7 +15,7 @@ namespace Python.EmbeddingTest
         }
 
         [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             ps.Dispose();
         }
@@ -27,7 +27,7 @@ namespace Python.EmbeddingTest
         public void TestEval()
         {
             ps.SetVariable("a", 1);
-            int result = ps.Eval<int>("a+2");
+            var result = ps.Eval<int>("a + 2");
             Assert.AreEqual(result, 3);
         }
 
@@ -39,8 +39,8 @@ namespace Python.EmbeddingTest
         {
             ps.SetVariable("bb", 100); //declare a global variable
             ps.SetVariable("cc", 10); //declare a local variable
-            ps.Exec("aa=bb+cc+3");
-            int result = ps.GetVariable<System.Int32>("aa");
+            ps.Exec("aa = bb + cc + 3");
+            var result = ps.GetVariable<int>("aa");
             Assert.AreEqual(result, 113);
         }
 
@@ -53,7 +53,7 @@ namespace Python.EmbeddingTest
         {
             ps.SetVariable("bb", 100); //declare a global variable
             ps.SetVariable("cc", 10); //declare a local variable
-            var script = ps.Compile("bb+cc+3", "", RunFlagType.Eval);
+            PyObject script = ps.Compile("bb + cc + 3", "", RunFlagType.Eval);
             var result = ps.Execute<int>(script);
             Assert.AreEqual(result, 113);
         }
@@ -68,14 +68,14 @@ namespace Python.EmbeddingTest
         {
             ps.SetVariable("bb", 100); //declare a global variable
             ps.SetVariable("cc", 10); //declare a local variable
-            var script = ps.Compile("aa=bb+cc+3", "", RunFlagType.File);
+            PyObject script = ps.Compile("aa = bb + cc + 3", "", RunFlagType.File);
             ps.Execute(script);
-            int result = ps.GetVariable<int>("aa");
+            var result = ps.GetVariable<int>("aa");
             Assert.AreEqual(result, 113);
         }
 
         /// <summary>
-        /// Exec Python statements in a subscope of the session then discard it.
+        /// Exec Python statements in a SubScope of the session then discard it.
         /// </summary>
         [Test]
         public void TestSubScope()
@@ -84,8 +84,8 @@ namespace Python.EmbeddingTest
             ps.SetVariable("cc", 10); //declare a local variable
 
             PyScope scope = ps.SubScope();
-            scope.Exec("aa=bb+cc+3");
-            int result = scope.GetVariable<System.Int32>("aa");
+            scope.Exec("aa = bb + cc + 3");
+            var result = scope.GetVariable<int>("aa");
             Assert.AreEqual(result, 113); //
             scope.Dispose();
 
@@ -103,8 +103,8 @@ namespace Python.EmbeddingTest
             Assert.IsTrue(ps.ContainsVariable("sys"));
 
             ps.Exec("sys.attr1 = 2");
-            int value1 = ps.Eval<int>("sys.attr1");
-            int value2 = (int)sys.attr1.AsManagedObject(typeof(int));
+            var value1 = ps.Eval<int>("sys.attr1");
+            var value2 = (int)sys.attr1.AsManagedObject(typeof(int));
             Assert.AreEqual(value1, 2);
             Assert.AreEqual(value2, 2);
         }
@@ -135,8 +135,8 @@ namespace Python.EmbeddingTest
                 PythonEngine.RunSimpleString("import sys;");
             }
 
-            ps.Exec("aa=bb+cc+3");
-            int result = ps.GetVariable<System.Int32>("aa");
+            ps.Exec("aa = bb + cc + 3");
+            var result = ps.GetVariable<int>("aa");
             Assert.AreEqual(result, 113);
         }
     }
