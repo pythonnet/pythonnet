@@ -531,7 +531,7 @@ namespace Python.Runtime
     {
 
     }
-    
+
     public class PyScope : IDisposable
     {
         public class GILState : IDisposable
@@ -698,7 +698,7 @@ namespace Python.Runtime
         public PyObject Execute(PyObject script)
         {
             IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, globals, locals);
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             if(ptr == Runtime.PyNone)
             {
                 Runtime.XDecref(ptr);
@@ -728,7 +728,7 @@ namespace Python.Runtime
         {
             IntPtr flag = (IntPtr)mode;
             IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             return new PyObject(ptr);
         }
 
@@ -746,7 +746,7 @@ namespace Python.Runtime
             IntPtr ptr = Runtime.PyRun_String(
                 code, flag, globals, locals
             );
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             return new PyObject(ptr);
         }
 
@@ -774,14 +774,14 @@ namespace Python.Runtime
             this.AcquireLock();
             Exec(code, this.globals, this.locals);
         }
-        
+
         private void Exec(string code, IntPtr _globals, IntPtr _locals)
         {
             var flag = (IntPtr)Runtime.Py_file_input;
             IntPtr ptr = Runtime.PyRun_String(
                 code, flag, _globals, _locals
             );
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             if (ptr != Runtime.PyNone)
             {
                 throw new PythonException();

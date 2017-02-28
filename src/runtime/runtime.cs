@@ -707,10 +707,8 @@ namespace Python.Runtime
         [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
 
-        [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl,
-            ExactSpelling = true, CharSet = CharSet.Ansi)]
-        internal unsafe static extern IntPtr
-            PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
+        [DllImport(PythonDll)]
+        internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
 
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_CompileString(string code, string file, IntPtr tok);
