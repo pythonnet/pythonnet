@@ -362,7 +362,7 @@ namespace Python.Runtime
         public static PyObject ImportModule(string name)
         {
             IntPtr op = Runtime.PyImport_ImportModule(name);
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             return new PyObject(op);
         }
 
@@ -377,7 +377,7 @@ namespace Python.Runtime
         public static PyObject ReloadModule(PyObject module)
         {
             IntPtr op = Runtime.PyImport_ReloadModule(module.Handle);
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             return new PyObject(op);
         }
 
@@ -392,9 +392,9 @@ namespace Python.Runtime
         public static PyObject ModuleFromString(string name, string code)
         {
             IntPtr c = Runtime.Py_CompileString(code, "none", (IntPtr)257);
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
-            Py.Throw();
+            Runtime.CheckExceptionOccurred();
             return new PyObject(m);
         }
 
@@ -473,7 +473,7 @@ namespace Python.Runtime
                     code, flag, globals.Value, locals.Value
                 );
 
-                Py.Throw();
+                Runtime.CheckExceptionOccurred();
 
                 return new PyObject(result);
             }
@@ -600,18 +600,7 @@ namespace Python.Runtime
             {
                 string[] arr = argv.ToArray();
                 Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
-                Py.Throw();
-            }
-        }
-
-        internal static void Throw()
-        {
-            using (GIL())
-            {
-                if (Runtime.PyErr_Occurred() != 0)
-                {
-                    throw new PythonException();
-                }
+                Runtime.CheckExceptionOccurred();
             }
         }
     }
