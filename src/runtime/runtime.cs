@@ -384,6 +384,21 @@ namespace Python.Runtime
         internal static IntPtr PyNone;
         internal static IntPtr Error;
 
+        /// <summary>
+        /// Check if any Python Exceptions occurred.
+        /// If any exist throw new PythonException.
+        /// </summary>
+        /// <remarks>
+        /// Can be used instead of `obj == IntPtr.Zero` for example.
+        /// </remarks>
+        internal static void CheckExceptionOccurred()
+        {
+            if (PyErr_Occurred() != 0)
+            {
+                throw new PythonException();
+            }
+        }
+
         internal static IntPtr GetBoundArgTuple(IntPtr obj, IntPtr args)
         {
             if (Runtime.PyObject_TYPE(args) != Runtime.PyTupleType)

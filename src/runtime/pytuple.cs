@@ -51,10 +51,7 @@ namespace Python.Runtime
         public PyTuple()
         {
             obj = Runtime.PyTuple_New(0);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -63,6 +60,9 @@ namespace Python.Runtime
         /// </summary>
         /// <remarks>
         /// Creates a new PyTuple from an array of PyObject instances.
+        /// <para />
+        /// See caveats about PyTuple_SetItem:
+        /// https://www.coursehero.com/file/p4j2ogg/important-exceptions-to-this-rule-PyTupleSetItem-and-PyListSetItem-These/
         /// </remarks>
         public PyTuple(PyObject[] items)
         {
@@ -72,11 +72,8 @@ namespace Python.Runtime
             {
                 IntPtr ptr = items[i].obj;
                 Runtime.XIncref(ptr);
-                int r = Runtime.PyTuple_SetItem(obj, i, ptr);
-                if (r < 0)
-                {
-                    throw new PythonException();
-                }
+                Runtime.PyTuple_SetItem(obj, i, ptr);
+                Runtime.CheckExceptionOccurred();
             }
         }
 
@@ -104,10 +101,7 @@ namespace Python.Runtime
         public static PyTuple AsTuple(PyObject value)
         {
             IntPtr op = Runtime.PySequence_Tuple(value.obj);
-            if (op == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
             return new PyTuple(op);
         }
     }
