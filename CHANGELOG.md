@@ -49,12 +49,14 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed fixture location for Python tests and `Embedded_Tests`
 -   Fixed `PythonException` crash during Shutdown (#400)
 -   Fixed `AppDomain` unload during GC (#397)(#400)
--   Fixed `Py_Main` & `PySys_SetArgvEx` no mem error on `UCS4/PY3` (#399)
+-   Fixed `Py_Main` & `PySys_SetArgvEx` `no mem error` on `UCS4/PY3` (#399)
+-   Fixed `Python.Runtime.dll.config` on macOS (#120)
 
 ### Removed
 
 -   Removed `six` dependency for `unittests` (#329)
 -   Removed `Mono.Unix` dependency for `UCS4` (#360)
+-   Removed need for `Python.Runtime.dll.config`
 
 ## [2.2.2][] - 2017-01-29
 
@@ -64,7 +66,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ## [2.2.1][] - 2017-01-26
 
--   `v2.2.0` had a release issue on pypi. Bumped to `v2.2.1`
+-   `v2.2.0` had a release issue on PyPi. Bumped to `v2.2.1`
 
 ### Added
 

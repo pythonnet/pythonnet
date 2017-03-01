@@ -124,7 +124,7 @@ namespace Python.Runtime
 
 #if MONO_LINUX || MONO_OSX
 #if PYTHON27
-        internal const string dllBase = "python27";
+        internal const string dllBase = "python2.7";
 #elif PYTHON33
         internal const string dllBase = "python3.3";
 #elif PYTHON34

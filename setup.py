@@ -104,7 +104,7 @@ def _get_interop_filename():
 
 def _get_source_files():
     """Walk project and collect the files needed for ext_module"""
-    for ext in (".sln", ".config"):
+    for ext in (".sln", ):
         for path in glob.glob("*" + ext):
             yield path
 
@@ -381,7 +381,7 @@ setup(
     data_files=[
         ("{install_platlib}", [
             "{build_lib}/Python.Runtime.dll",
-            "Python.Runtime.dll.config"]),
+        ]),
     ],
     cmdclass={
         "build_ext": BuildExtPythonnet,
