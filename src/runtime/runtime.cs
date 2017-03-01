@@ -102,54 +102,30 @@ namespace Python.Runtime
 
 #if PYTHON27
         public const string pyversion = "2.7";
-        public const int pyversionnumber = 27;
+        public const string pyver = "27";
 #elif PYTHON33
         public const string pyversion = "3.3";
-        public const int pyversionnumber = 33;
+        public const string pyver = "33";
 #elif PYTHON34
         public const string pyversion = "3.4";
-        public const int pyversionnumber = 34;
+        public const string pyver = "34";
 #elif PYTHON35
         public const string pyversion = "3.5";
-        public const int pyversionnumber = 35;
+        public const string pyver = "35";
 #elif PYTHON36
         public const string pyversion = "3.6";
-        public const int pyversionnumber = 36;
+        public const string pyver = "36";
 #elif PYTHON37 // TODO: Add interop37 after Python3.7 is released
         public const string pyversion = "3.7";
-        public const int pyversionnumber = 37;
+        public const string pyver = "37";
 #else
 #error You must define one of PYTHON33 to PYTHON37 or PYTHON27
 #endif
 
-#if MONO_LINUX || MONO_OSX
-#if PYTHON27
-        internal const string dllBase = "python2.7";
-#elif PYTHON33
-        internal const string dllBase = "python3.3";
-#elif PYTHON34
-        internal const string dllBase = "python3.4";
-#elif PYTHON35
-        internal const string dllBase = "python3.5";
-#elif PYTHON36
-        internal const string dllBase = "python3.6";
-#elif PYTHON37
-        internal const string dllBase = "python3.7";
-#endif
+#if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
+        internal const string dllBase = "python" + pyversion;
 #else // Windows
-#if PYTHON27
-        internal const string dllBase = "python27";
-#elif PYTHON33
-        internal const string dllBase = "python33";
-#elif PYTHON34
-        internal const string dllBase = "python34";
-#elif PYTHON35
-        internal const string dllBase = "python35";
-#elif PYTHON36
-        internal const string dllBase = "python36";
-#elif PYTHON37
-        internal const string dllBase = "python37";
-#endif
+        internal const string dllBase = "python" + pyver;
 #endif
 
 #if PYTHON_WITH_PYDEBUG
@@ -173,6 +149,8 @@ namespace Python.Runtime
 #else
         public const string PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc + dllWithWideUnicode;
 #endif
+
+        public static readonly int pyversionnumber = Convert.ToInt32(pyver);
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();
