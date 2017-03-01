@@ -82,8 +82,20 @@ namespace Python.Runtime
     {
 #if UCS4
         public const int UCS = 4;
+
+        /// <summary>
+        /// EntryPoint to be used in DllImport to map to correct Unicode
+        /// methods prior to PEP393. Only used for PY27.
+        /// </summary>
+        private const string PyUnicodeEntryPoint = "PyUnicodeUCS4_";
 #elif UCS2
         public const int UCS = 2;
+
+        /// <summary>
+        /// EntryPoint to be used in DllImport to map to correct Unicode
+        /// methods prior to PEP393. Only used for PY27.
+        /// </summary>
+        private const string PyUnicodeEntryPoint = "PyUnicodeUCS2_";
 #else
 #error You must define either UCS2 or UCS4!
 #endif
@@ -1270,44 +1282,26 @@ namespace Python.Runtime
 
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromOrdinal(int c);
-#elif UCS2 && PYTHON2
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_FromObject")]
+#elif PYTHON2
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromObject")]
         internal static extern IntPtr PyUnicode_FromObject(IntPtr ob);
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_FromEncodedObject")]
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromEncodedObject")]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_FromUnicode", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr PyUnicode_FromUnicode(string s, int size);
-
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_GetSize")]
-        internal static extern int PyUnicode_GetSize(IntPtr ob);
-
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_AsUnicode")]
-        internal static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_FromOrdinal")]
-        internal static extern IntPtr PyUnicode_FromOrdinal(int c);
-#elif UCS4 && PYTHON2
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_FromObject")]
-        internal static extern IntPtr PyUnicode_FromObject(IntPtr ob);
-
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_FromEncodedObject")]
-        internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
-
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_FromUnicode")]
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromUnicode")]
         internal static extern IntPtr PyUnicode_FromUnicode(
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
             int size
         );
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_GetSize")]
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "GetSize")]
         internal static extern int PyUnicode_GetSize(IntPtr ob);
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_AsUnicode")]
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "AsUnicode")]
         internal static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_FromOrdinal")]
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromOrdinal")]
         internal static extern IntPtr PyUnicode_FromOrdinal(int c);
 #endif
 
