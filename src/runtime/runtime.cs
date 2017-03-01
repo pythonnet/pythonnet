@@ -1243,19 +1243,23 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyUnicodeType;
         }
 
-#if UCS2 && PYTHON3
+#if PYTHON3
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromObject(IntPtr ob);
 
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicode_FromKindAndData", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr PyUnicode_FromKindAndString(int kind, string s, int size);
+        [DllImport(PythonDll, EntryPoint = "PyUnicode_FromKindAndData")]
+        internal static extern IntPtr PyUnicode_FromKindAndString(
+            int kind,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+            int size
+        );
 
         internal static IntPtr PyUnicode_FromUnicode(string s, int size)
         {
-            return PyUnicode_FromKindAndString(2, s, size);
+            return PyUnicode_FromKindAndString(UCS, s, size);
         }
 
         [DllImport(PythonDll)]
@@ -1283,33 +1287,6 @@ namespace Python.Runtime
         internal static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS2_FromOrdinal")]
-        internal static extern IntPtr PyUnicode_FromOrdinal(int c);
-#elif UCS4 && PYTHON3
-        [DllImport(PythonDll)]
-        internal static extern IntPtr PyUnicode_FromObject(IntPtr ob);
-
-        [DllImport(PythonDll)]
-        internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
-
-        [DllImport(PythonDll, EntryPoint = "PyUnicode_FromKindAndData")]
-        internal static extern IntPtr PyUnicode_FromKindAndString(
-            int kind,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
-            int size
-        );
-
-        internal static IntPtr PyUnicode_FromUnicode(string s, int size)
-        {
-            return PyUnicode_FromKindAndString(4, s, size);
-        }
-
-        [DllImport(PythonDll)]
-        internal static extern int PyUnicode_GetSize(IntPtr ob);
-
-        [DllImport(PythonDll)]
-        internal static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
-
-        [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromOrdinal(int c);
 #elif UCS4 && PYTHON2
         [DllImport(PythonDll, EntryPoint = "PyUnicodeUCS4_FromObject")]
