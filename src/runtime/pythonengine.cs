@@ -536,10 +536,15 @@ namespace Python.Runtime
         public class GILState : IDisposable
         {
             private bool isGetGIL;
+
+            private bool isDisposed;
+
             private IntPtr state;
 
             internal GILState()
             {
+                isGetGIL = false;
+                isDisposed = false;
             }
 
             public void AcquireLock()
@@ -563,6 +568,12 @@ namespace Python.Runtime
 
             public void Dispose()
             {
+                if (isDisposed)
+                {
+                    return;
+                }
+                isDisposed = true;
+                AcquireLock();
                 ReleaseLock();
                 GC.SuppressFinalize(this);
             }
@@ -573,9 +584,17 @@ namespace Python.Runtime
             }
         }
 
-        private string name;
+        public string Name
+        {
+            get;
+            private set;
+        }
 
-        private PyScope parent;
+        public PyScope Parent
+        {
+            get;
+            private set;
+        }
 
         private GILState state;
 
@@ -601,7 +620,7 @@ namespace Python.Runtime
             : this(state)
         {
             this.state = state;
-            this.name = name;
+            this.Name = name;
             Runtime.PyDict_SetItemString(
                 globals, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
@@ -612,7 +631,7 @@ namespace Python.Runtime
             : this(state)
         {
             this.state = state;
-            this.parent = parent;
+            this.Parent = parent;
             globals = Runtime.PyDict_New();
             if (globals == IntPtr.Zero)
             {
@@ -792,7 +811,7 @@ namespace Python.Runtime
             AcquireLock();
             using (var pyKey = new PyString(name))
             {
-                IntPtr _value = GetInstHandle(value);
+                IntPtr _value = Converter.ToPython(value, value?.GetType());
                 int r = Runtime.PyObject_SetItem(globals, pyKey.obj, _value);
                 if (r < 0)
                 {
@@ -833,7 +852,7 @@ namespace Python.Runtime
             AcquireLock();
             using (var pyKey = new PyString(name))
             {
-                IntPtr _value = GetInstHandle(value);
+                IntPtr _value = Converter.ToPython(value, value?.GetType());
                 int r = Runtime.PyObject_SetItem(locals, pyKey.obj, _value);
                 if (r < 0)
                 {
@@ -919,21 +938,7 @@ namespace Python.Runtime
             PyObject obj = GetVariable(name);
             return (T)obj.AsManagedObject(typeof(T));
         }
-
-        private static IntPtr GetInstHandle(object value)
-        {
-            if (value == null)
-            {
-                Runtime.XIncref(Runtime.PyNone);
-                return Runtime.PyNone;
-            }
-            else
-            {
-                IntPtr ptr = Converter.ToPython(value, value.GetType());
-                return ptr;
-            }
-        }
-
+        
         private void AcquireLock()
         {
             if (isDisposed)
@@ -949,12 +954,10 @@ namespace Python.Runtime
             {
                 return;
             }
+            AcquireLock();
             Runtime.XDecref(globals);
             Runtime.XDecref(locals);
-            if (parent == null)
-            {
-                Py.RemoveSession(name);
-            }
+            Py.RemoveSession(this);
             isDisposed = true;
         }
 
@@ -978,30 +981,43 @@ namespace Python.Runtime
 
         private static PyScope.GILState gil = new PyScope.GILState();
 
+        private static List<PyScope> Sessions = new List<PyScope>();
+
         /// <summary>
         /// Sessions should be cleared after shut down.
         /// Currently, the seperation of static methods into Py and PythonEngine makes the code ugly.
         /// </summary>
-        private static Dictionary<string, PyScope> Sessions = new Dictionary<string, PyScope>();
+        private static Dictionary<string, PyScope> NamedSessions = new Dictionary<string, PyScope>();
 
-        public static PyScope Session(string name)
+        public static PyScope Session(string name = null)
         {
             if (!PythonEngine.IsInitialized)
             {
                 PythonEngine.Initialize();
             }
-            if (Sessions.ContainsKey(name))
+            if (name != null && NamedSessions.ContainsKey(name))
             {
-                return Sessions[name];
+                return NamedSessions[name];
             }
             var session = new PyScope(name, gil);
-            Sessions[name] = session;
+            if(name != null)
+            {
+                NamedSessions[name] = session;
+            }            
+            Sessions.Add(session);
             return session;
         }
 
-        internal static void RemoveSession(string name)
+        internal static void RemoveSession(PyScope scope)
         {
-            Sessions.Remove(name);
+            if(scope.Parent == null)//top session
+            {
+                Sessions.Remove(scope);
+                if(scope.Name != null)
+                {
+                    NamedSessions.Remove(scope.Name);
+                }                
+            }
         }
 
         public class GILState : IDisposable
