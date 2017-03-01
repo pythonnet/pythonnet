@@ -115,7 +115,7 @@ namespace Python.Runtime
 #elif PYTHON36
         public const string pyversion = "3.6";
         public const string pyver = "36";
-#elif PYTHON37 // TODO: Add interop37 after Python3.7 is released
+#elif PYTHON37 // TODO: Add `interop37.cs` after PY37 is released
         public const string pyversion = "3.7";
         public const string pyver = "37";
 #else
@@ -154,7 +154,7 @@ namespace Python.Runtime
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();
-        internal static bool IsFinalizing = false;
+        internal static bool IsFinalizing;
 
         internal static bool Is32Bit;
         internal static bool IsPython2;
@@ -401,7 +401,7 @@ namespace Python.Runtime
             PyTuple_SetItem(items, 0, obj);
             XIncref(obj);
 
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
             {
                 IntPtr item = PyTuple_GetItem(args, i);
                 XIncref(item);
@@ -419,14 +419,14 @@ namespace Python.Runtime
             IntPtr item;
 
             IntPtr items = PyTuple_New(size + add);
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
             {
                 item = PyTuple_GetItem(t, i);
                 XIncref(item);
                 PyTuple_SetItem(items, i, item);
             }
 
-            for (int n = 0; n < add; n++)
+            for (var n = 0; n < add; n++)
             {
                 item = args[n];
                 XIncref(item);
@@ -447,7 +447,7 @@ namespace Python.Runtime
             // tuple of (managed or unmanaged) type objects, return a Type[]
             // containing the CLR Type objects that map to those types.
             IntPtr args = arg;
-            bool free = false;
+            var free = false;
 
             if (!PyTuple_Check(arg))
             {
@@ -458,10 +458,10 @@ namespace Python.Runtime
             }
 
             int n = PyTuple_Size(args);
-            Type[] types = new Type[n];
+            var types = new Type[n];
             Type t = null;
 
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
                 IntPtr op = PyTuple_GetItem(args, i);
                 if (mangleObjects && (!PyType_Check(op)))
@@ -513,7 +513,7 @@ namespace Python.Runtime
             Py_IncRef(op);
             return;
 #else
-            void* p = (void*)op;
+            var p = (void*)op;
             if ((void*)0 != p)
             {
                 if (Is32Bit)
@@ -536,7 +536,7 @@ namespace Python.Runtime
             Py_DecRef(op);
             return;
 #else
-            void* p = (void*)op;
+            var p = (void*)op;
             if ((void*)0 != p)
             {
                 if (Is32Bit)
@@ -562,7 +562,6 @@ namespace Python.Runtime
                         return;
                     }
                     NativeCall.Impl.Void_Call_1(new IntPtr(f), op);
-                    return;
                 }
             }
 #endif
@@ -570,7 +569,7 @@ namespace Python.Runtime
 
         internal static unsafe long Refcount(IntPtr op)
         {
-            void* p = (void*)op;
+            var p = (void*)op;
             if ((void*)0 != p)
             {
                 if (Is32Bit)
@@ -786,15 +785,15 @@ namespace Python.Runtime
         /// </summary>
         internal static unsafe IntPtr PyObject_TYPE(IntPtr op)
         {
-            void* p = (void*)op;
+            var p = (void*)op;
             if ((void*)0 == p)
             {
                 return IntPtr.Zero;
             }
 #if Py_DEBUG
-            int n = 3;
+            var n = 3;
 #else
-            int n = 1;
+            var n = 1;
 #endif
             if (Is32Bit)
             {
@@ -966,13 +965,13 @@ namespace Python.Runtime
 
         internal static IntPtr PyInt_FromInt32(int value)
         {
-            IntPtr v = new IntPtr(value);
+            var v = new IntPtr(value);
             return PyInt_FromLong(v);
         }
 
         internal static IntPtr PyInt_FromInt64(long value)
         {
-            IntPtr v = new IntPtr(value);
+            var v = new IntPtr(value);
             return PyInt_FromLong(v);
         }
 
@@ -1285,7 +1284,7 @@ namespace Python.Runtime
 
         internal static IntPtr PyUnicode_FromString(string s)
         {
-            return PyUnicode_FromUnicode(s, (s.Length));
+            return PyUnicode_FromUnicode(s, s.Length);
         }
 
         /// <summary>
@@ -1463,7 +1462,7 @@ namespace Python.Runtime
 #elif PYTHON3
         internal static bool PyIter_Check(IntPtr pointer)
         {
-            IntPtr ob_type = (IntPtr)Marshal.PtrToStructure(pointer + ObjectOffset.ob_type, typeof(IntPtr));
+            var ob_type = (IntPtr)Marshal.PtrToStructure(pointer + ObjectOffset.ob_type, typeof(IntPtr));
             IntPtr tp_iternext = ob_type + TypeOffset.tp_iternext;
             return tp_iternext != null && tp_iternext != _PyObject_NextNotImplemented;
         }
