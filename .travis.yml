@@ -48,7 +48,7 @@ after_script:
 
   # Waiting on mono-coverage, SharpCover or xr.Baboon
   - coverage xml -i
-  - codecov --file coverage.xml --flags Setup_Linux
+  - codecov --file coverage.xml --flags setup_linux
 
 notifications:
   email: false
