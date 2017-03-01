@@ -498,7 +498,7 @@ namespace Python.Runtime
                     {
                         if (Runtime.PyString_Size(value) == 1)
                         {
-                            op = Runtime.PyString_AS_STRING(value);
+                            op = Runtime.PyString_AsString(value);
                             result = (byte)Marshal.ReadByte(op);
                             return true;
                         }
@@ -543,7 +543,7 @@ namespace Python.Runtime
                     {
                         if (Runtime.PyString_Size(value) == 1)
                         {
-                            op = Runtime.PyString_AS_STRING(value);
+                            op = Runtime.PyString_AsString(value);
                             result = (sbyte)Marshal.ReadByte(op);
                             return true;
                         }
@@ -588,7 +588,7 @@ namespace Python.Runtime
                     {
                         if (Runtime.PyString_Size(value) == 1)
                         {
-                            op = Runtime.PyString_AS_STRING(value);
+                            op = Runtime.PyString_AsString(value);
                             result = (char)Marshal.ReadByte(op);
                             return true;
                         }
