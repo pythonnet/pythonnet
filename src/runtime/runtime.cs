@@ -1243,8 +1243,8 @@ namespace Python.Runtime
         [DllImport(PythonDll)]
         internal static extern IntPtr PyString_FromStringAndSize(string value, int size);
 
-        [DllImport(PythonDll, EntryPoint = "PyString_AsString")]
-        internal static extern IntPtr PyString_AS_STRING(IntPtr op);
+        [DllImport(PythonDll)]
+        internal static extern IntPtr PyString_AsString(IntPtr op);
 
         [DllImport(PythonDll)]
         internal static extern int PyString_Size(IntPtr pointer);
@@ -1262,8 +1262,8 @@ namespace Python.Runtime
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
-        [DllImport(PythonDll, EntryPoint = "PyUnicode_FromKindAndData")]
-        internal static extern IntPtr PyUnicode_FromKindAndString(
+        [DllImport(PythonDll)]
+        internal static extern IntPtr PyUnicode_FromKindAndData(
             int kind,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
             int size
@@ -1271,7 +1271,7 @@ namespace Python.Runtime
 
         internal static IntPtr PyUnicode_FromUnicode(string s, int size)
         {
-            return PyUnicode_FromKindAndString(UCS, s, size);
+            return PyUnicode_FromKindAndData(UCS, s, size);
         }
 
         [DllImport(PythonDll)]
@@ -1330,7 +1330,7 @@ namespace Python.Runtime
 #if PYTHON2 // Python 3 strings are all Unicode
             if (type == PyStringType)
             {
-                return Marshal.PtrToStringAnsi(PyString_AS_STRING(op), PyString_Size(op));
+                return Marshal.PtrToStringAnsi(PyString_AsString(op), PyString_Size(op));
             }
 #endif
 

@@ -415,7 +415,7 @@ namespace Python.Runtime
             temp = Runtime.PyUnicode_FromString(name);
 #elif PYTHON2
             IntPtr temp = Runtime.PyString_FromString(name);
-            IntPtr raw = Runtime.PyString_AS_STRING(temp);
+            IntPtr raw = Runtime.PyString_AsString(temp);
 #endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
