@@ -184,111 +184,111 @@ namespace Python.Runtime
             IsPython2 = pyversionnumber < 30;
             IsPython3 = pyversionnumber >= 30;
 
-            if (Runtime.Py_IsInitialized() == 0)
+            if (Py_IsInitialized() == 0)
             {
-                Runtime.Py_Initialize();
+                Py_Initialize();
             }
 
-            if (Runtime.PyEval_ThreadsInitialized() == 0)
+            if (PyEval_ThreadsInitialized() == 0)
             {
-                Runtime.PyEval_InitThreads();
+                PyEval_InitThreads();
             }
 
             IntPtr op;
             IntPtr dict;
             if (IsPython3)
             {
-                op = Runtime.PyImport_ImportModule("builtins");
-                dict = Runtime.PyObject_GetAttrString(op, "__dict__");
+                op = PyImport_ImportModule("builtins");
+                dict = PyObject_GetAttrString(op, "__dict__");
             }
             else // Python2
             {
-                dict = Runtime.PyImport_GetModuleDict();
-                op = Runtime.PyDict_GetItemString(dict, "__builtin__");
+                dict = PyImport_GetModuleDict();
+                op = PyDict_GetItemString(dict, "__builtin__");
             }
-            PyNotImplemented = Runtime.PyObject_GetAttrString(op, "NotImplemented");
-            PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
+            PyNotImplemented = PyObject_GetAttrString(op, "NotImplemented");
+            PyBaseObjectType = PyObject_GetAttrString(op, "object");
 
-            PyModuleType = Runtime.PyObject_Type(op);
-            PyNone = Runtime.PyObject_GetAttrString(op, "None");
-            PyTrue = Runtime.PyObject_GetAttrString(op, "True");
-            PyFalse = Runtime.PyObject_GetAttrString(op, "False");
+            PyModuleType = PyObject_Type(op);
+            PyNone = PyObject_GetAttrString(op, "None");
+            PyTrue = PyObject_GetAttrString(op, "True");
+            PyFalse = PyObject_GetAttrString(op, "False");
 
-            PyBoolType = Runtime.PyObject_Type(PyTrue);
-            PyNoneType = Runtime.PyObject_Type(PyNone);
-            PyTypeType = Runtime.PyObject_Type(PyNoneType);
+            PyBoolType = PyObject_Type(PyTrue);
+            PyNoneType = PyObject_Type(PyNone);
+            PyTypeType = PyObject_Type(PyNoneType);
 
-            op = Runtime.PyObject_GetAttrString(dict, "keys");
-            PyMethodType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyObject_GetAttrString(dict, "keys");
+            PyMethodType = PyObject_Type(op);
+            XDecref(op);
 
             // For some arcane reason, builtins.__dict__.__setitem__ is *not*
             // a wrapper_descriptor, even though dict.__setitem__ is.
             //
             // object.__init__ seems safe, though.
-            op = Runtime.PyObject_GetAttrString(PyBaseObjectType, "__init__");
-            PyWrapperDescriptorType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyObject_GetAttrString(PyBaseObjectType, "__init__");
+            PyWrapperDescriptorType = PyObject_Type(op);
+            XDecref(op);
 
 #if PYTHON3
-            Runtime.XDecref(dict);
+            XDecref(dict);
 #endif
 
-            op = Runtime.PyString_FromString("string");
-            PyStringType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyString_FromString("string");
+            PyStringType = PyObject_Type(op);
+            XDecref(op);
 
-            op = Runtime.PyUnicode_FromString("unicode");
-            PyUnicodeType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyUnicode_FromString("unicode");
+            PyUnicodeType = PyObject_Type(op);
+            XDecref(op);
 
 #if PYTHON3
-            op = Runtime.PyBytes_FromString("bytes");
-            PyBytesType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyBytes_FromString("bytes");
+            PyBytesType = PyObject_Type(op);
+            XDecref(op);
 #endif
 
-            op = Runtime.PyTuple_New(0);
-            PyTupleType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyTuple_New(0);
+            PyTupleType = PyObject_Type(op);
+            XDecref(op);
 
-            op = Runtime.PyList_New(0);
-            PyListType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyList_New(0);
+            PyListType = PyObject_Type(op);
+            XDecref(op);
 
-            op = Runtime.PyDict_New();
-            PyDictType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyDict_New();
+            PyDictType = PyObject_Type(op);
+            XDecref(op);
 
-            op = Runtime.PyInt_FromInt32(0);
-            PyIntType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyInt_FromInt32(0);
+            PyIntType = PyObject_Type(op);
+            XDecref(op);
 
-            op = Runtime.PyLong_FromLong(0);
-            PyLongType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyLong_FromLong(0);
+            PyLongType = PyObject_Type(op);
+            XDecref(op);
 
-            op = Runtime.PyFloat_FromDouble(0);
-            PyFloatType = Runtime.PyObject_Type(op);
-            Runtime.XDecref(op);
+            op = PyFloat_FromDouble(0);
+            PyFloatType = PyObject_Type(op);
+            XDecref(op);
 
 #if PYTHON3
             PyClassType = IntPtr.Zero;
             PyInstanceType = IntPtr.Zero;
 #elif PYTHON2
-            IntPtr s = Runtime.PyString_FromString("_temp");
-            IntPtr d = Runtime.PyDict_New();
+            IntPtr s = PyString_FromString("_temp");
+            IntPtr d = PyDict_New();
 
-            IntPtr c = Runtime.PyClass_New(IntPtr.Zero, d, s);
-            PyClassType = Runtime.PyObject_Type(c);
+            IntPtr c = PyClass_New(IntPtr.Zero, d, s);
+            PyClassType = PyObject_Type(c);
 
-            IntPtr i = Runtime.PyInstance_New(c, IntPtr.Zero, IntPtr.Zero);
-            PyInstanceType = Runtime.PyObject_Type(i);
+            IntPtr i = PyInstance_New(c, IntPtr.Zero, IntPtr.Zero);
+            PyInstanceType = PyObject_Type(i);
 
-            Runtime.XDecref(s);
-            Runtime.XDecref(i);
-            Runtime.XDecref(c);
-            Runtime.XDecref(d);
+            XDecref(s);
+            XDecref(i);
+            XDecref(c);
+            XDecref(d);
 #endif
 
             Error = new IntPtr(-1);
@@ -317,10 +317,10 @@ namespace Python.Runtime
             // Need to add the runtime directory to sys.path so that we
             // can find built-in assemblies like System.Data, et. al.
             string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
-            IntPtr path = Runtime.PySys_GetObject("path");
-            IntPtr item = Runtime.PyString_FromString(rtdir);
-            Runtime.PyList_Append(path, item);
-            Runtime.XDecref(item);
+            IntPtr path = PySys_GetObject("path");
+            IntPtr item = PyString_FromString(rtdir);
+            PyList_Append(path, item);
+            XDecref(item);
             AssemblyManager.UpdatePath();
         }
 
@@ -401,21 +401,21 @@ namespace Python.Runtime
 
         internal static IntPtr GetBoundArgTuple(IntPtr obj, IntPtr args)
         {
-            if (Runtime.PyObject_TYPE(args) != Runtime.PyTupleType)
+            if (PyObject_TYPE(args) != PyTupleType)
             {
                 Exceptions.SetError(Exceptions.TypeError, "tuple expected");
                 return IntPtr.Zero;
             }
-            int size = Runtime.PyTuple_Size(args);
-            IntPtr items = Runtime.PyTuple_New(size + 1);
-            Runtime.PyTuple_SetItem(items, 0, obj);
-            Runtime.XIncref(obj);
+            int size = PyTuple_Size(args);
+            IntPtr items = PyTuple_New(size + 1);
+            PyTuple_SetItem(items, 0, obj);
+            XIncref(obj);
 
             for (int i = 0; i < size; i++)
             {
-                IntPtr item = Runtime.PyTuple_GetItem(args, i);
-                Runtime.XIncref(item);
-                Runtime.PyTuple_SetItem(items, i + 1, item);
+                IntPtr item = PyTuple_GetItem(args, i);
+                XIncref(item);
+                PyTuple_SetItem(items, i + 1, item);
             }
 
             return items;
@@ -424,23 +424,23 @@ namespace Python.Runtime
 
         internal static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args)
         {
-            int size = Runtime.PyTuple_Size(t);
+            int size = PyTuple_Size(t);
             int add = args.Length;
             IntPtr item;
 
-            IntPtr items = Runtime.PyTuple_New(size + add);
+            IntPtr items = PyTuple_New(size + add);
             for (int i = 0; i < size; i++)
             {
-                item = Runtime.PyTuple_GetItem(t, i);
-                Runtime.XIncref(item);
-                Runtime.PyTuple_SetItem(items, i, item);
+                item = PyTuple_GetItem(t, i);
+                XIncref(item);
+                PyTuple_SetItem(items, i, item);
             }
 
             for (int n = 0; n < add; n++)
             {
                 item = args[n];
-                Runtime.XIncref(item);
-                Runtime.PyTuple_SetItem(items, size + n, item);
+                XIncref(item);
+                PyTuple_SetItem(items, size + n, item);
             }
 
             return items;
@@ -459,24 +459,24 @@ namespace Python.Runtime
             IntPtr args = arg;
             bool free = false;
 
-            if (!Runtime.PyTuple_Check(arg))
+            if (!PyTuple_Check(arg))
             {
-                args = Runtime.PyTuple_New(1);
-                Runtime.XIncref(arg);
-                Runtime.PyTuple_SetItem(args, 0, arg);
+                args = PyTuple_New(1);
+                XIncref(arg);
+                PyTuple_SetItem(args, 0, arg);
                 free = true;
             }
 
-            int n = Runtime.PyTuple_Size(args);
+            int n = PyTuple_Size(args);
             Type[] types = new Type[n];
             Type t = null;
 
             for (int i = 0; i < n; i++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(args, i);
-                if (mangleObjects && (!Runtime.PyType_Check(op)))
+                IntPtr op = PyTuple_GetItem(args, i);
+                if (mangleObjects && (!PyType_Check(op)))
                 {
-                    op = Runtime.PyObject_TYPE(op);
+                    op = PyObject_TYPE(op);
                 }
                 ManagedType mt = ManagedType.GetManagedObject(op);
 
@@ -506,7 +506,7 @@ namespace Python.Runtime
             }
             if (free)
             {
-                Runtime.XDecref(args);
+                XDecref(args);
             }
             return types;
         }
@@ -824,7 +824,7 @@ namespace Python.Runtime
         internal static IntPtr PyObject_Type(IntPtr op)
         {
             IntPtr tp = PyObject_TYPE(op);
-            Runtime.XIncref(tp);
+            XIncref(tp);
             return tp;
         }
 
@@ -966,12 +966,12 @@ namespace Python.Runtime
 
         internal static bool PyInt_Check(IntPtr ob)
         {
-            return PyObject_TypeCheck(ob, Runtime.PyIntType);
+            return PyObject_TypeCheck(ob, PyIntType);
         }
 
         internal static bool PyBool_Check(IntPtr ob)
         {
-            return PyObject_TypeCheck(ob, Runtime.PyBoolType);
+            return PyObject_TypeCheck(ob, PyBoolType);
         }
 
         internal static IntPtr PyInt_FromInt32(int value)
@@ -1014,7 +1014,7 @@ namespace Python.Runtime
 
         internal static bool PyLong_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyLongType;
+            return PyObject_TYPE(ob) == PyLongType;
         }
 
         [DllImport(PythonDll)]
@@ -1049,7 +1049,7 @@ namespace Python.Runtime
 
         internal static bool PyFloat_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyFloatType;
+            return PyObject_TYPE(ob) == PyFloatType;
         }
 
         [DllImport(PythonDll)]
@@ -1199,7 +1199,7 @@ namespace Python.Runtime
 
         internal static bool PyString_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyStringType;
+            return PyObject_TYPE(ob) == PyStringType;
         }
 
         internal static IntPtr PyString_FromString(string value)
@@ -1240,7 +1240,7 @@ namespace Python.Runtime
 
         internal static bool PyUnicode_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyUnicodeType;
+            return PyObject_TYPE(ob) == PyUnicodeType;
         }
 
 #if UCS2 && PYTHON3
@@ -1357,13 +1357,13 @@ namespace Python.Runtime
             IntPtr type = PyObject_TYPE(op);
 
 #if PYTHON2 // Python 3 strings are all Unicode
-            if (type == Runtime.PyStringType)
+            if (type == PyStringType)
             {
-                return Marshal.PtrToStringAnsi(PyString_AS_STRING(op), Runtime.PyString_Size(op));
+                return Marshal.PtrToStringAnsi(PyString_AS_STRING(op), PyString_Size(op));
             }
 #endif
 
-            if (type == Runtime.PyUnicodeType)
+            if (type == PyUnicodeType)
             {
                 IntPtr p = PyUnicode_AsUnicode(op);
                 int length = PyUnicode_GetSize(op);
@@ -1384,7 +1384,7 @@ namespace Python.Runtime
 
         internal static bool PyDict_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyDictType;
+            return PyObject_TYPE(ob) == PyDictType;
         }
 
         [DllImport(PythonDll)]
@@ -1442,7 +1442,7 @@ namespace Python.Runtime
 
         internal static bool PyList_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyListType;
+            return PyObject_TYPE(ob) == PyListType;
         }
 
         [DllImport(PythonDll)]
@@ -1485,7 +1485,7 @@ namespace Python.Runtime
 
         internal static bool PyTuple_Check(IntPtr ob)
         {
-            return PyObject_TYPE(ob) == Runtime.PyTupleType;
+            return PyObject_TYPE(ob) == PyTupleType;
         }
 
         [DllImport(PythonDll)]
@@ -1589,7 +1589,7 @@ namespace Python.Runtime
 
         internal static bool PyType_Check(IntPtr ob)
         {
-            return PyObject_TypeCheck(ob, Runtime.PyTypeType);
+            return PyObject_TypeCheck(ob, PyTypeType);
         }
 
         [DllImport(PythonDll)]
