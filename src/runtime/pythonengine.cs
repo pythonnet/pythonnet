@@ -14,6 +14,7 @@ namespace Python.Runtime
     {
         private static DelegateManager delegateManager;
         private static bool initialized;
+        private static IntPtr _pythonHome = IntPtr.Zero;
 
         public PythonEngine()
         {
@@ -78,7 +79,17 @@ namespace Python.Runtime
 
                 return result ?? "";
             }
-            set { Runtime.Py_SetPythonHome(value); }
+            set
+            {
+                if (_pythonHome != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(_pythonHome);
+                }
+                _pythonHome = Runtime.IsPython3
+                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
+                    : Marshal.StringToHGlobalAnsi(value);
+                Runtime.Py_SetPythonHome(_pythonHome);
+            }
         }
 
         public static string PythonPath
@@ -284,6 +295,8 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                Marshal.FreeHGlobal(_pythonHome);
+                _pythonHome = IntPtr.Zero;
                 Runtime.Shutdown();
                 initialized = false;
             }

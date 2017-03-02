@@ -105,5 +105,30 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(envPythonHome, enginePythonHome);
             PythonEngine.Shutdown();
         }
+
+        [Test]
+        public void SetPythonHome()
+        {
+            var pythonHome = "/dummypath/";
+
+            PythonEngine.PythonHome = pythonHome;
+            PythonEngine.Initialize();
+
+            Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
+            PythonEngine.Shutdown();
+        }
+
+        [Test]
+        public void SetPythonHomeTwice()
+        {
+            var pythonHome = "/dummypath/";
+
+            PythonEngine.PythonHome = "/dummypath2/";
+            PythonEngine.PythonHome = pythonHome;
+            PythonEngine.Initialize();
+
+            Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
+            PythonEngine.Shutdown();
+        }
     }
 }

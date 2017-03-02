@@ -694,9 +694,7 @@ namespace Python.Runtime
         internal static extern IntPtr Py_GetPythonHome();
 
         [DllImport(PythonDll)]
-        internal static extern void Py_SetPythonHome(
-            [MarshalAs(UnmanagedType.LPWStr)] string home
-        );
+        internal static extern void Py_SetPythonHome(IntPtr home);
 
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetPath();
@@ -716,7 +714,7 @@ namespace Python.Runtime
         internal static extern IntPtr Py_GetPythonHome();
 
         [DllImport(PythonDll)]
-        internal static extern void Py_SetPythonHome(string home);
+        internal static extern void Py_SetPythonHome(IntPtr home);
 
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetPath();
