@@ -573,7 +573,6 @@ namespace Python.Runtime
                     return;
                 }
                 isDisposed = true;
-                AcquireLock();
                 ReleaseLock();
                 GC.SuppressFinalize(this);
             }
@@ -957,7 +956,10 @@ namespace Python.Runtime
             AcquireLock();
             Runtime.XDecref(globals);
             Runtime.XDecref(locals);
-            Py.RemoveSession(this);
+            if(this.Parent == null)
+            {
+                Py.RemoveSession(this);
+            }            
             isDisposed = true;
         }
 
@@ -1010,7 +1012,7 @@ namespace Python.Runtime
 
         internal static void RemoveSession(PyScope scope)
         {
-            if(scope.Parent == null)//top session
+            if(scope.Parent == null)//top scope
             {
                 Sessions.Remove(scope);
                 if(scope.Name != null)
