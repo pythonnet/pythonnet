@@ -72,6 +72,33 @@ namespace Python.Runtime
         {
             return Instance;
         }
+
+        public static string PtrToStringUni(IntPtr p)
+        {
+            if (p == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            int size = GetUnicodeByteLength(p);
+            var buffer = new byte[size];
+            Marshal.Copy(p, buffer, 0, size);
+            return PyEncoding.GetString(buffer, 0, size);
+        }
+
+        public static int GetUnicodeByteLength(IntPtr p)
+        {
+            var len = 0;
+            while (true)
+            {
+                int c = Runtime.UCS == 2
+                    ? Marshal.ReadInt16(p, len * 2)
+                    : Marshal.ReadInt32(p, len * 4);
+
+                if (c == 0) return len* Runtime.UCS;
+                checked{ ++len; }
+            }
+        }
     }
 
 
