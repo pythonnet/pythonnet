@@ -683,8 +683,7 @@ namespace Python.Runtime
 
 #if PYTHON3
         [DllImport(PythonDll)]
-        [return: MarshalAs(UnmanagedType.LPWStr)]
-        internal static extern string Py_GetProgramName();
+        internal static extern IntPtr Py_GetProgramName();
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetProgramName(
@@ -692,8 +691,7 @@ namespace Python.Runtime
         );
 
         [DllImport(PythonDll)]
-        [return: MarshalAs(UnmanagedType.LPWStr)]
-        internal static extern string Py_GetPythonHome();
+        internal static extern IntPtr Py_GetPythonHome();
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetPythonHome(
@@ -701,8 +699,7 @@ namespace Python.Runtime
         );
 
         [DllImport(PythonDll)]
-        [return: MarshalAs(UnmanagedType.LPWStr)]
-        internal static extern string Py_GetPath();
+        internal static extern IntPtr Py_GetPath();
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetPath(
@@ -710,19 +707,19 @@ namespace Python.Runtime
         );
 #elif PYTHON2
         [DllImport(PythonDll)]
-        internal static extern string Py_GetProgramName();
+        internal static extern IntPtr Py_GetProgramName();
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetProgramName(string name);
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetPythonHome();
+        internal static extern IntPtr Py_GetPythonHome();
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetPythonHome(string home);
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetPath();
+        internal static extern IntPtr Py_GetPath();
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetPath(string home);
@@ -1242,7 +1239,7 @@ namespace Python.Runtime
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromKindAndData(
             int kind,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UcsMarshaler))] string s,
             int size
         );
 
@@ -1268,7 +1265,7 @@ namespace Python.Runtime
 
         [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromUnicode")]
         internal static extern IntPtr PyUnicode_FromUnicode(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UcsMarshaler))] string s,
             int size
         );
 

@@ -52,6 +52,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed `Py_Main` & `PySys_SetArgvEx` `no mem error` on `UCS4/PY3` (#399)
 -   Fixed `Python.Runtime.dll.config` on macOS (#120)
 -   Fixed crash on `PythonEngine.Version` (#413)
+-   Fixed `PythonEngine.PythonPath` issues (#414)
 
 ### Removed
 

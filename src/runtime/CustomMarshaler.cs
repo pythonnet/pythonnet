@@ -9,7 +9,7 @@ namespace Python.Runtime
     /// Abstract class defining boiler plate methods that
     /// Custom Marshalers will use.
     /// </summary>
-    public abstract class MarshalerBase : ICustomMarshaler
+    internal abstract class MarshalerBase : ICustomMarshaler
     {
         public object MarshalNativeToManaged(IntPtr pNativeData)
         {
@@ -39,9 +39,9 @@ namespace Python.Runtime
     /// Custom Marshaler to deal with Managed String to Native
     /// conversion differences on UCS2/UCS4.
     /// </summary>
-    public class StrMarshaler : MarshalerBase
+    internal class UcsMarshaler : MarshalerBase
     {
-        private static readonly MarshalerBase Instance = new StrMarshaler();
+        private static readonly MarshalerBase Instance = new UcsMarshaler();
         private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
@@ -72,6 +72,33 @@ namespace Python.Runtime
         {
             return Instance;
         }
+
+        public static string PtrToStringUni(IntPtr p)
+        {
+            if (p == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            int size = GetUnicodeByteLength(p);
+            var buffer = new byte[size];
+            Marshal.Copy(p, buffer, 0, size);
+            return PyEncoding.GetString(buffer, 0, size);
+        }
+
+        public static int GetUnicodeByteLength(IntPtr p)
+        {
+            var len = 0;
+            while (true)
+            {
+                int c = Runtime.UCS == 2
+                    ? Marshal.ReadInt16(p, len * 2)
+                    : Marshal.ReadInt32(p, len * 4);
+
+                if (c == 0) return len* Runtime.UCS;
+                checked{ ++len; }
+            }
+        }
     }
 
 
@@ -79,7 +106,7 @@ namespace Python.Runtime
     /// Custom Marshaler to deal with Managed String Arrays to Native
     /// conversion differences on UCS2/UCS4.
     /// </summary>
-    public class StrArrayMarshaler : MarshalerBase
+    internal class StrArrayMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrArrayMarshaler();
         private static readonly Encoding PyEncoding = Runtime.PyEncoding;
@@ -134,7 +161,7 @@ namespace Python.Runtime
     /// If instead we used `MarshalAs(UnmanagedType.LPWStr)` the output to
     /// `foo` would be `f\x00o\x00o\x00`.
     /// </remarks>
-    public class Utf8Marshaler : MarshalerBase
+    internal class Utf8Marshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new Utf8Marshaler();
         private static readonly Encoding PyEncoding = Encoding.UTF8;

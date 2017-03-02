@@ -57,12 +57,12 @@ namespace Python.Runtime
         {
             get
             {
-                string result = Runtime.Py_GetProgramName();
-                if (result == null)
-                {
-                    return "";
-                }
-                return result;
+                IntPtr p = Runtime.Py_GetProgramName();
+                string result = Runtime.IsPython3
+                    ? UcsMarshaler.PtrToStringUni(p)
+                    : Marshal.PtrToStringAnsi(p);
+
+                return result ?? "";
             }
             set { Runtime.Py_SetProgramName(value); }
         }
@@ -71,12 +71,12 @@ namespace Python.Runtime
         {
             get
             {
-                string result = Runtime.Py_GetPythonHome();
-                if (result == null)
-                {
-                    return "";
-                }
-                return result;
+                IntPtr p = Runtime.Py_GetPythonHome();
+                string result = Runtime.IsPython3
+                    ? UcsMarshaler.PtrToStringUni(p)
+                    : Marshal.PtrToStringAnsi(p);
+
+                return result ?? "";
             }
             set { Runtime.Py_SetPythonHome(value); }
         }
@@ -85,12 +85,12 @@ namespace Python.Runtime
         {
             get
             {
-                string result = Runtime.Py_GetPath();
-                if (result == null)
-                {
-                    return "";
-                }
-                return result;
+                IntPtr p = Runtime.Py_GetPath();
+                string result = Runtime.IsPython3
+                    ? UcsMarshaler.PtrToStringUni(p)
+                    : Marshal.PtrToStringAnsi(p);
+
+                return result ?? "";
             }
             set { Runtime.Py_SetPath(value); }
         }
