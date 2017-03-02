@@ -686,9 +686,7 @@ namespace Python.Runtime
         internal static extern IntPtr Py_GetProgramName();
 
         [DllImport(PythonDll)]
-        internal static extern void Py_SetProgramName(
-            [MarshalAs(UnmanagedType.LPWStr)] string name
-        );
+        internal static extern void Py_SetProgramName(IntPtr name);
 
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetPythonHome();
@@ -700,15 +698,13 @@ namespace Python.Runtime
         internal static extern IntPtr Py_GetPath();
 
         [DllImport(PythonDll)]
-        internal static extern void Py_SetPath(
-            [MarshalAs(UnmanagedType.LPWStr)] string home
-        );
+        internal static extern void Py_SetPath(IntPtr home);
 #elif PYTHON2
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetProgramName();
 
         [DllImport(PythonDll)]
-        internal static extern void Py_SetProgramName(string name);
+        internal static extern void Py_SetProgramName(IntPtr name);
 
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetPythonHome();
@@ -720,7 +716,7 @@ namespace Python.Runtime
         internal static extern IntPtr Py_GetPath();
 
         [DllImport(PythonDll)]
-        internal static extern void Py_SetPath(string home);
+        internal static extern void Py_SetPath(IntPtr home);
 #endif
 
         [DllImport(PythonDll)]

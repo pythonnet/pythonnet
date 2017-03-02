@@ -130,5 +130,17 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
             PythonEngine.Shutdown();
         }
+
+        [Test]
+        public void SetProgramName()
+        {
+            var programName = "FooBar";
+
+            PythonEngine.ProgramName = programName;
+            PythonEngine.Initialize();
+
+            Assert.AreEqual(programName, PythonEngine.ProgramName);
+            PythonEngine.Shutdown();
+        }
     }
 }
