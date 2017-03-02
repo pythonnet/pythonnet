@@ -66,5 +66,44 @@ namespace Python.EmbeddingTest
                 Assert.IsTrue(s.Contains(","));
             }
         }
+
+        [Test]
+        public static void GetPythonPathDefault()
+        {
+            PythonEngine.Initialize();
+            string s = PythonEngine.PythonPath;
+
+            StringAssert.Contains("python", s.ToLower());
+            PythonEngine.Shutdown();
+        }
+
+        [Test]
+        public static void GetProgramNameDefault()
+        {
+            PythonEngine.Initialize();
+            string s = PythonEngine.PythonHome;
+
+            Assert.NotNull(s);
+            PythonEngine.Shutdown();
+        }
+
+        /// <summary>
+        /// Test default behavior of PYTHONHOME. If ENVVAR is set it will
+        /// return the same value. If not, returns EmptyString.
+        /// </summary>
+        /// <remarks>
+        /// AppVeyor.yml has been update to tests with ENVVAR set.
+        /// </remarks>
+        [Test]
+        public static void GetPythonHomeDefault()
+        {
+            string envPythonHome = Environment.GetEnvironmentVariable("PYTHONHOME") ?? "";
+
+            PythonEngine.Initialize();
+            string enginePythonHome = PythonEngine.PythonHome;
+
+            Assert.AreEqual(envPythonHome, enginePythonHome);
+            PythonEngine.Shutdown();
+        }
     }
 }
