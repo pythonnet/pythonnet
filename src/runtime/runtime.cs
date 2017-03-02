@@ -729,19 +729,19 @@ namespace Python.Runtime
 #endif
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetVersion();
+        internal static extern IntPtr Py_GetVersion();
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetPlatform();
+        internal static extern IntPtr Py_GetPlatform();
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetCopyright();
+        internal static extern IntPtr Py_GetCopyright();
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetCompiler();
+        internal static extern IntPtr Py_GetCompiler();
 
         [DllImport(PythonDll)]
-        internal static extern string Py_GetBuildInfo();
+        internal static extern IntPtr Py_GetBuildInfo();
 
         [DllImport(PythonDll)]
         internal static extern int PyRun_SimpleString(string code);

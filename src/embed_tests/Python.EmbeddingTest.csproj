@@ -89,6 +89,7 @@
     <Compile Include="pyrunstring.cs" />
     <Compile Include="pythonexception.cs" />
     <Compile Include="pytuple.cs" />
+    <Compile Include="TestPythonEngineProperties.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">

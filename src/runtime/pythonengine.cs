@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -96,22 +97,27 @@ namespace Python.Runtime
 
         public static string Version
         {
-            get { return Runtime.Py_GetVersion(); }
+            get { return Marshal.PtrToStringAnsi(Runtime.Py_GetVersion()); }
         }
 
         public static string BuildInfo
         {
-            get { return Runtime.Py_GetBuildInfo(); }
+            get { return Marshal.PtrToStringAnsi(Runtime.Py_GetBuildInfo()); }
         }
 
         public static string Platform
         {
-            get { return Runtime.Py_GetPlatform(); }
+            get { return Marshal.PtrToStringAnsi(Runtime.Py_GetPlatform()); }
         }
 
         public static string Copyright
         {
-            get { return Runtime.Py_GetCopyright(); }
+            get { return Marshal.PtrToStringAnsi(Runtime.Py_GetCopyright()); }
+        }
+
+        public static string Compiler
+        {
+            get { return Marshal.PtrToStringAnsi(Runtime.Py_GetCompiler()); }
         }
 
         public static int RunSimpleString(string code)
