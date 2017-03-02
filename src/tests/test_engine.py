@@ -15,8 +15,8 @@ def test_multiple_calls_to_initialize():
         PythonEngine.Initialize()
         PythonEngine.Initialize()
         PythonEngine.Initialize()
-    except BaseException:
-        self.fail("Initialize() raise an exception.")
+    except Exception:
+        assert False  # Initialize() raise an exception.
 
 
 @pytest.mark.skip(reason="FIXME: test crashes")
