@@ -59,7 +59,7 @@ namespace Python.Runtime
             {
                 IntPtr p = Runtime.Py_GetProgramName();
                 string result = Runtime.IsPython3
-                    ? StrMarshaler.PtrToStringUni(p)
+                    ? UcsMarshaler.PtrToStringUni(p)
                     : Marshal.PtrToStringAnsi(p);
 
                 return result ?? "";
@@ -73,7 +73,7 @@ namespace Python.Runtime
             {
                 IntPtr p = Runtime.Py_GetPythonHome();
                 string result = Runtime.IsPython3
-                    ? StrMarshaler.PtrToStringUni(p)
+                    ? UcsMarshaler.PtrToStringUni(p)
                     : Marshal.PtrToStringAnsi(p);
 
                 return result ?? "";
@@ -87,7 +87,7 @@ namespace Python.Runtime
             {
                 IntPtr p = Runtime.Py_GetPath();
                 string result = Runtime.IsPython3
-                    ? StrMarshaler.PtrToStringUni(p)
+                    ? UcsMarshaler.PtrToStringUni(p)
                     : Marshal.PtrToStringAnsi(p);
 
                 return result ?? "";

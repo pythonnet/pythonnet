@@ -1239,7 +1239,7 @@ namespace Python.Runtime
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromKindAndData(
             int kind,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UcsMarshaler))] string s,
             int size
         );
 
@@ -1265,7 +1265,7 @@ namespace Python.Runtime
 
         [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromUnicode")]
         internal static extern IntPtr PyUnicode_FromUnicode(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrMarshaler))] string s,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UcsMarshaler))] string s,
             int size
         );
 
