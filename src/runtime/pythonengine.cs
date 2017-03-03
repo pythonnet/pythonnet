@@ -469,16 +469,24 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// RunString Method
+        /// RunString Method. Function has been deprecated and will be removed.
+        /// Use Exec/Eval/RunSimpleString instead.
+        /// </summary>
+        [Obsolete("RunString is deprecated and will be removed. Use Exec/Eval/RunSimpleString instead.")]
+        public static PyObject RunString(string code, IntPtr? globals = null, IntPtr? locals = null)
+        {
+            return RunString(code, globals, locals, RunFlagType.File);
+        }
+
+        /// <summary>
+        /// Internal RunString Method.
         /// </summary>
         /// <remarks>
         /// Run a string containing Python code. Returns the result of
         /// executing the code string as a PyObject instance, or null if
         /// an exception was raised.
         /// </remarks>
-        public static PyObject RunString(
-            string code, IntPtr? globals = null, IntPtr? locals = null, RunFlagType _flag = RunFlagType.File
-        )
+        internal static PyObject RunString(string code, IntPtr? globals, IntPtr? locals, RunFlagType flag)
         {
             var borrowedGlobals = true;
             if (globals == null)
@@ -502,12 +510,10 @@ namespace Python.Runtime
                 borrowedLocals = false;
             }
 
-            var flag = (IntPtr)_flag;
-
             try
             {
                 IntPtr result = Runtime.PyRun_String(
-                    code, flag, globals.Value, locals.Value
+                    code, (IntPtr)flag, globals.Value, locals.Value
                 );
 
                 Runtime.CheckExceptionOccurred();

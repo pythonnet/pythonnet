@@ -38,6 +38,10 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Unfroze Mono version on Travis (#345)
 -   Changed `conda.recipe` build to only pull-requests (#345)
 
+### Deprecated
+
+-   Deprecated `RunString` (#401)
+
 ### Fixed
 
 -   Fixed crash during Initialization (#262)(#343)
@@ -52,7 +56,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed `Py_Main` & `PySys_SetArgvEx` `no mem error` on `UCS4/PY3` (#399)
 -   Fixed `Python.Runtime.dll.config` on macOS (#120)
 -   Fixed crash on `PythonEngine.Version` (#413)
--   Fixed `PythonEngine.PythonPath` issues (#414)
+-   Fixed `PythonEngine.PythonPath` issues (#179)(#414)(#415)
 
 ### Removed
 
