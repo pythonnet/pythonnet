@@ -151,9 +151,9 @@ namespace Python.Runtime
         internal static object IsFinalizingLock = new object();
         internal static bool IsFinalizing;
 
-        internal static bool Is32Bit;
-        internal static bool IsPython2;
-        internal static bool IsPython3;
+        internal static bool Is32Bit = IntPtr.Size == 4;
+        internal static bool IsPython2 = pyversionnumber < 30;
+        internal static bool IsPython3 = pyversionnumber >= 30;
 
         /// <summary>
         /// Encoding to use to convert Unicode to/from Managed to Native
@@ -165,10 +165,6 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-            Is32Bit = IntPtr.Size == 4;
-            IsPython2 = pyversionnumber < 30;
-            IsPython3 = pyversionnumber >= 30;
-
             if (Py_IsInitialized() == 0)
             {
                 Py_Initialize();
