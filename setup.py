@@ -182,8 +182,6 @@ class BuildExtPythonnet(build_ext.build_ext):
                 defines.append("PYTHON_WITH_PYDEBUG")
             if "m" in sys.abiflags:
                 defines.append("PYTHON_WITH_PYMALLOC")
-            if "u" in sys.abiflags:
-                defines.append("PYTHON_WITH_WIDE_UNICODE")
 
         # check the interop file exists, and create it if it doesn't
         interop_file = _get_interop_filename()

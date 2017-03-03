@@ -37,6 +37,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Upgraded NUnit framework from `2.6.4` to `3.6.0` (#371)
 -   Unfroze Mono version on Travis (#345)
 -   Changed `conda.recipe` build to only pull-requests (#345)
+-   Combine `Py_DEBUG` and `PYTHON_WITH_PYDEBUG` flags (#362)
 
 ### Deprecated
 
@@ -63,6 +64,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Removed `six` dependency for `unittests` (#329)
 -   Removed `Mono.Unix` dependency for `UCS4` (#360)
 -   Removed need for `Python.Runtime.dll.config`
+-   Removed PY32 build option `PYTHON_WITH_WIDE_UNICODE` (#417)
 
 ## [2.2.2][] - 2017-01-29
 

@@ -138,16 +138,11 @@ namespace Python.Runtime
 #else
         internal const string dllWithPyMalloc = "";
 #endif
-#if PYTHON_WITH_WIDE_UNICODE
-        internal const string dllWithWideUnicode = "u";
-#else
-        internal const string dllWithWideUnicode = "";
-#endif
 
 #if PYTHON_WITHOUT_ENABLE_SHARED
         public const string PythonDll = "__Internal";
 #else
-        public const string PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc + dllWithWideUnicode;
+        public const string PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
 #endif
 
         public static readonly int pyversionnumber = Convert.ToInt32(pyver);
