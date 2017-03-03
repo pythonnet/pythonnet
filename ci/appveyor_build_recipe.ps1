@@ -2,7 +2,7 @@
 
 $env:CONDA_PY = "$env:PY_VER"
 # Use pre-installed miniconda. Note that location differs if 64bit
-$env:CONDA_BLD = "C:\miniconda35"
+$env:CONDA_BLD = "C:\miniconda36"
 
 if ($env:PLATFORM -eq "x86"){
     $env:CONDA_BLD_ARCH=32
