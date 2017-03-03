@@ -14,6 +14,9 @@ namespace Python.Runtime
     {
         private static DelegateManager delegateManager;
         private static bool initialized;
+        private static IntPtr _pythonHome = IntPtr.Zero;
+        private static IntPtr _programName = IntPtr.Zero;
+        private static IntPtr _pythonPath = IntPtr.Zero;
 
         public PythonEngine()
         {
@@ -64,7 +67,14 @@ namespace Python.Runtime
 
                 return result ?? "";
             }
-            set { Runtime.Py_SetProgramName(value); }
+            set
+            {
+                Marshal.FreeHGlobal(_programName);
+                _programName = Runtime.IsPython3
+                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
+                    : Marshal.StringToHGlobalAnsi(value);
+                Runtime.Py_SetProgramName(_programName);
+            }
         }
 
         public static string PythonHome
@@ -78,7 +88,14 @@ namespace Python.Runtime
 
                 return result ?? "";
             }
-            set { Runtime.Py_SetPythonHome(value); }
+            set
+            {
+                Marshal.FreeHGlobal(_pythonHome);
+                _pythonHome = Runtime.IsPython3
+                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
+                    : Marshal.StringToHGlobalAnsi(value);
+                Runtime.Py_SetPythonHome(_pythonHome);
+            }
         }
 
         public static string PythonPath
@@ -92,7 +109,14 @@ namespace Python.Runtime
 
                 return result ?? "";
             }
-            set { Runtime.Py_SetPath(value); }
+            set
+            {
+                Marshal.FreeHGlobal(_pythonPath);
+                _pythonPath = Runtime.IsPython3
+                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
+                    : Marshal.StringToHGlobalAnsi(value);
+                Runtime.Py_SetPath(_pythonPath);
+            }
         }
 
         public static string Version
@@ -284,6 +308,13 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                Marshal.FreeHGlobal(_pythonHome);
+                _pythonHome = IntPtr.Zero;
+                Marshal.FreeHGlobal(_programName);
+                _programName = IntPtr.Zero;
+                Marshal.FreeHGlobal(_pythonPath);
+                _pythonPath = IntPtr.Zero;
+
                 Runtime.Shutdown();
                 initialized = false;
             }
