@@ -508,7 +508,7 @@ namespace Python.Runtime
         /// </summary>
         internal static unsafe void XIncref(IntPtr op)
         {
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
             // according to Python doc, Py_IncRef() is Py_XINCREF()
             Py_IncRef(op);
             return;
@@ -530,7 +530,7 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
             // Py_DecRef calls Python's Py_DECREF
             // according to Python doc, Py_DecRef() is Py_XDECREF()
             Py_DecRef(op);
@@ -584,7 +584,7 @@ namespace Python.Runtime
             return 0;
         }
 
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
         // Py_IncRef and Py_DecRef are taking care of the extra payload
         // in Py_DEBUG builds of Python like _Py_RefTotal
         [DllImport(PythonDll)]
@@ -781,7 +781,7 @@ namespace Python.Runtime
             {
                 return IntPtr.Zero;
             }
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
             var n = 3;
 #else
             var n = 1;

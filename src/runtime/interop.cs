@@ -75,7 +75,7 @@ namespace Python.Runtime
         {
             int size = IntPtr.Size;
             var n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
             _ob_next = 0;
             _ob_prev = 1 * size;
             n = 2;
@@ -113,14 +113,14 @@ namespace Python.Runtime
             {
                 return ExceptionOffset.Size();
             }
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
             return 6 * IntPtr.Size;
 #else
             return 4 * IntPtr.Size;
 #endif
         }
 
-#if Py_DEBUG
+#if PYTHON_WITH_PYDEBUG
         public static int _ob_next;
         public static int _ob_prev;
 #endif
@@ -185,7 +185,7 @@ namespace Python.Runtime
 
         /* The *real* layout of a type object when allocated on the heap */
         //typedef struct _heaptypeobject {
-#if Py_DEBUG // #ifdef Py_TRACE_REFS
+#if PYTHON_WITH_PYDEBUG
 /* _PyObject_HEAD_EXTRA defines pointers to support a doubly-linked list of all live heap objects. */
         public static int _ob_next = 0;
         public static int _ob_prev = 0;
