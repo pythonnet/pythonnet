@@ -60,6 +60,10 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -   Deprecated `RunString` (#401)
 
+### Deprecated
+
+-   Deprecated `RunString` (#401)
+
 ### Fixed
 
 -   Fixed crash during Initialization (#262)(#343)
