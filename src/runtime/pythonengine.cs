@@ -95,6 +95,10 @@ namespace Python.Runtime
             }
             set
             {
+                if (Runtime.IsPython2)
+                {
+                    throw new NotSupportedException("Set PythonPath not supported on Python 2");
+                }
                 Marshal.FreeHGlobal(_pythonPath);
                 _pythonPath = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
                 Runtime.Py_SetPath(_pythonPath);
