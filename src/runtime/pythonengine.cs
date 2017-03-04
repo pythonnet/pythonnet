@@ -61,18 +61,12 @@ namespace Python.Runtime
             get
             {
                 IntPtr p = Runtime.Py_GetProgramName();
-                string result = Runtime.IsPython3
-                    ? UcsMarshaler.PtrToStringUni(p)
-                    : Marshal.PtrToStringAnsi(p);
-
-                return result ?? "";
+                return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
             set
             {
                 Marshal.FreeHGlobal(_programName);
-                _programName = Runtime.IsPython3
-                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
-                    : Marshal.StringToHGlobalAnsi(value);
+                _programName = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
                 Runtime.Py_SetProgramName(_programName);
             }
         }
@@ -82,18 +76,12 @@ namespace Python.Runtime
             get
             {
                 IntPtr p = Runtime.Py_GetPythonHome();
-                string result = Runtime.IsPython3
-                    ? UcsMarshaler.PtrToStringUni(p)
-                    : Marshal.PtrToStringAnsi(p);
-
-                return result ?? "";
+                return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
             set
             {
                 Marshal.FreeHGlobal(_pythonHome);
-                _pythonHome = Runtime.IsPython3
-                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
-                    : Marshal.StringToHGlobalAnsi(value);
+                _pythonHome = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
                 Runtime.Py_SetPythonHome(_pythonHome);
             }
         }
@@ -103,18 +91,12 @@ namespace Python.Runtime
             get
             {
                 IntPtr p = Runtime.Py_GetPath();
-                string result = Runtime.IsPython3
-                    ? UcsMarshaler.PtrToStringUni(p)
-                    : Marshal.PtrToStringAnsi(p);
-
-                return result ?? "";
+                return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
             set
             {
                 Marshal.FreeHGlobal(_pythonPath);
-                _pythonPath = Runtime.IsPython3
-                    ? UcsMarshaler.GetInstance("").MarshalManagedToNative(value)
-                    : Marshal.StringToHGlobalAnsi(value);
+                _pythonPath = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
                 Runtime.Py_SetPath(_pythonPath);
             }
         }

@@ -95,9 +95,51 @@ namespace Python.Runtime
                     ? Marshal.ReadInt16(p, len * 2)
                     : Marshal.ReadInt32(p, len * 4);
 
-                if (c == 0) return len* Runtime.UCS;
-                checked{ ++len; }
+                if (c == 0)
+                {
+                    return len * Runtime.UCS;
+                }
+                checked
+                {
+                    ++len;
+                }
             }
+        }
+
+        /// <summary>
+        /// Utility function for Marshaling Unicode on PY3 and AnsiStr on PY2.
+        /// Use on functions whose Input signatures changed between PY2/PY3.
+        /// Ex. Py_SetPythonHome
+        /// </summary>
+        /// <param name="s">Managed String</param>
+        /// <returns>
+        /// Ptr to Native String ANSI(PY2)/Unicode(PY3/UCS2)/UTF32(PY3/UCS4.
+        /// </returns>
+        /// <remarks>
+        /// You MUST deallocate the IntPtr of the Return when done with it.
+        /// </remarks>
+        public static IntPtr Py3UnicodePy2StringtoPtr(string s)
+        {
+            return Runtime.IsPython3
+                ? Instance.MarshalManagedToNative(s)
+                : Marshal.StringToHGlobalAnsi(s);
+        }
+
+        /// <summary>
+        /// Utility function for Marshaling Unicode IntPtr on PY3 and
+        /// AnsiStr IntPtr on PY2 to Managed Strings. Use on Python functions
+        /// whose return type changed between PY2/PY3.
+        /// Ex. Py_GetPythonHome
+        /// </summary>
+        /// <param name="p">Native Ansi/Unicode/UTF32 String</param>
+        /// <returns>
+        /// Managed String
+        /// </returns>
+        public static string PtrToPy3UnicodePy2String(IntPtr p)
+        {
+            return Runtime.IsPython3
+                ? PtrToStringUni(p)
+                : Marshal.PtrToStringAnsi(p);
         }
     }
 

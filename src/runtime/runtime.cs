@@ -565,18 +565,11 @@ namespace Python.Runtime
         internal static unsafe long Refcount(IntPtr op)
         {
             var p = (void*)op;
-            if ((void*)0 != p)
+            if ((void*)0 == p)
             {
-                if (Is32Bit)
-                {
-                    return (*(int*)p);
-                }
-                else
-                {
-                    return (*(long*)p);
-                }
+                return 0;
             }
-            return 0;
+            return Is32Bit ? (*(int*)p) : (*(long*)p);
         }
 
 #if PYTHON_WITH_PYDEBUG
@@ -676,7 +669,6 @@ namespace Python.Runtime
         [DllImport(PythonDll)]
         internal static extern IntPtr PyEval_GetLocals();
 
-#if PYTHON3
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetProgramName();
 
@@ -694,25 +686,6 @@ namespace Python.Runtime
 
         [DllImport(PythonDll)]
         internal static extern void Py_SetPath(IntPtr home);
-#elif PYTHON2
-        [DllImport(PythonDll)]
-        internal static extern IntPtr Py_GetProgramName();
-
-        [DllImport(PythonDll)]
-        internal static extern void Py_SetProgramName(IntPtr name);
-
-        [DllImport(PythonDll)]
-        internal static extern IntPtr Py_GetPythonHome();
-
-        [DllImport(PythonDll)]
-        internal static extern void Py_SetPythonHome(IntPtr home);
-
-        [DllImport(PythonDll)]
-        internal static extern IntPtr Py_GetPath();
-
-        [DllImport(PythonDll)]
-        internal static extern void Py_SetPath(IntPtr home);
-#endif
 
         [DllImport(PythonDll)]
         internal static extern IntPtr Py_GetVersion();
@@ -781,20 +754,15 @@ namespace Python.Runtime
 #else
             var n = 1;
 #endif
-            if (Is32Bit)
-            {
-                return new IntPtr((void*)(*((uint*)p + n)));
-            }
-            else
-            {
-                return new IntPtr((void*)(*((ulong*)p + n)));
-            }
+            return Is32Bit
+                ? new IntPtr((void*)(*((uint*)p + n)))
+                : new IntPtr((void*)(*((ulong*)p + n)));
         }
 
         /// <summary>
         /// Managed version of the standard Python C API PyObject_Type call.
-        /// This version avoids a managed  &lt;-&gt; unmanaged transition. This one
-        /// does incref the returned type object.
+        /// This version avoids a managed  &lt;-&gt; unmanaged transition.
+        /// This one does incref the returned type object.
         /// </summary>
         internal static IntPtr PyObject_Type(IntPtr op)
         {
