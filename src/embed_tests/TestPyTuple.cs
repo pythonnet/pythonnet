@@ -58,6 +58,42 @@ namespace Python.EmbeddingTest
             }
         }
 
+        [Test]
+        public void TestPyTupleCtorEmptyArray()
+        {
+            using (Py.GIL())
+            {
+                var a = new PyObject[] { };
+                var t = new PyTuple(a);
+
+                Assert.AreEqual(0, t.Length());
+            }
+        }
+
+        [Test]
+        public void TestPyTupleCtorArrayPyIntEmpty()
+        {
+            using (Py.GIL())
+            {
+                var a = new PyInt[] { };
+                var t = new PyTuple(a);
+
+                Assert.AreEqual(0, t.Length());
+            }
+        }
+
+        [Test]
+        public void TestPyTupleCtorArray()
+        {
+            using (Py.GIL())
+            {
+                var a = new PyObject[] {new PyInt(1), new PyString("Foo") };
+                var t = new PyTuple(a);
+
+                Assert.AreEqual(2, t.Length());
+            }
+        }
+
         /// <summary>
         /// Test PyTuple.Concat(...) doesn't let invalid appends happen
         /// and throws and exception.
