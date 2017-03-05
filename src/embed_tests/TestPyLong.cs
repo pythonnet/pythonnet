@@ -4,7 +4,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class PyLongTest
+    public class TestPyLong
     {
         [Test]
         public void TestToInt64()

@@ -4,7 +4,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class PyObjectTest
+    public class TestPyString
     {
         [Test]
         public void TestUnicode()

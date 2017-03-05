@@ -11,7 +11,7 @@ namespace Python.EmbeddingTest
     /// Keeping this in the old-style SetUp/TearDown
     /// to ensure that setup still works.
     /// </remarks>
-    public class PythonExceptionTest
+    public class TestPythonException
     {
         private IntPtr gs;
 

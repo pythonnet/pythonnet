@@ -4,7 +4,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class PyTupleTest
+    public class TestPyTuple
     {
         /// <summary>
         /// Test IsTupleType without having to Initialize a tuple.

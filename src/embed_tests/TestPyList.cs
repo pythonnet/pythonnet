@@ -5,7 +5,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class PyIterTest
+    public class TestPyList
     {
         [Test]
         public void TestOnPyList()
