@@ -4,7 +4,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class TestPyString
+    public class TestPyAnsiString
     {
         [OneTimeSetUp]
         public void SetUp()
@@ -22,7 +22,7 @@ namespace Python.EmbeddingTest
         public void TestStringCtor()
         {
             const string expected = "foo";
-            var actual = new PyString(expected);
+            var actual = new PyAnsiString(expected);
             Assert.AreEqual(expected, actual.ToString());
         }
 
@@ -30,18 +30,17 @@ namespace Python.EmbeddingTest
         public void TestEmptyStringCtor()
         {
             const string expected = "";
-            var actual = new PyString(expected);
+            var actual = new PyAnsiString(expected);
             Assert.AreEqual(expected, actual.ToString());
         }
 
         [Test]
-        [Ignore("Ambiguous behavior between PY2/PY3. Needs remapping")]
         public void TestPyObjectCtor()
         {
             const string expected = "Foo";
 
-            var t = new PyString(expected);
-            var actual = new PyString(t);
+            var t = new PyAnsiString(expected);
+            var actual = new PyAnsiString(t);
 
             Assert.AreEqual(expected, actual.ToString());
         }
@@ -50,9 +49,9 @@ namespace Python.EmbeddingTest
         public void TestBadPyObjectCtor()
         {
             var t = new PyInt(5);
-            PyString actual = null;
+            PyAnsiString actual = null;
 
-            var ex = Assert.Throws<ArgumentException>(() => actual = new PyString(t));
+            var ex = Assert.Throws<ArgumentException>(() => actual = new PyAnsiString(t));
 
             StringAssert.StartsWith("object is not a string", ex.Message);
             Assert.IsNull(actual);
@@ -63,19 +62,18 @@ namespace Python.EmbeddingTest
         {
             const string expected = "foo";
 
-            var t = new PyString(expected);
-            var actual = new PyString(t.Handle);
+            var t = new PyAnsiString(expected);
+            var actual = new PyAnsiString(t.Handle);
 
             Assert.AreEqual(expected, actual.ToString());
         }
 
         [Test]
-        [Ignore("Ambiguous behavior between PY2/PY3. Needs remapping")]
         public void IsStringTrue()
         {
-            var t = new PyString("foo");
+            var t = new PyAnsiString("foo");
 
-            Assert.True(PyString.IsStringType(t));
+            Assert.True(PyAnsiString.IsStringType(t));
         }
 
         [Test]
@@ -83,14 +81,15 @@ namespace Python.EmbeddingTest
         {
             var t = new PyInt(5);
 
-            Assert.False(PyString.IsStringType(t));
+            Assert.False(PyAnsiString.IsStringType(t));
         }
 
         [Test]
+        [Ignore("Ambiguous behavior between PY2/PY3")]
         public void TestUnicode()
         {
             const string expected = "foo\u00e9";
-            PyObject actual = new PyString(expected);
+            PyObject actual = new PyAnsiString(expected);
             Assert.AreEqual(expected, actual.ToString());
         }
     }

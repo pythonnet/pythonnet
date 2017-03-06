@@ -4,7 +4,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class TestPyLong
+    public class TestPyInt
     {
         [OneTimeSetUp]
         public void SetUp()
@@ -19,18 +19,10 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        public void TestToInt64()
-        {
-            long largeNumber = 8L * 1024L * 1024L * 1024L; // 8 GB
-            var pyLargeNumber = new PyLong(largeNumber);
-            Assert.AreEqual(largeNumber, pyLargeNumber.ToInt64());
-        }
-
-        [Test]
         public void TestCtorInt()
         {
             const int i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -38,7 +30,7 @@ namespace Python.EmbeddingTest
         public void TestCtorUInt()
         {
             const uint i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -46,7 +38,7 @@ namespace Python.EmbeddingTest
         public void TestCtorLong()
         {
             const long i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -54,7 +46,7 @@ namespace Python.EmbeddingTest
         public void TestCtorULong()
         {
             const ulong i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -62,7 +54,7 @@ namespace Python.EmbeddingTest
         public void TestCtorShort()
         {
             const short i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -70,7 +62,7 @@ namespace Python.EmbeddingTest
         public void TestCtorUShort()
         {
             const ushort i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -78,7 +70,7 @@ namespace Python.EmbeddingTest
         public void TestCtorByte()
         {
             const byte i = 5;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
@@ -86,31 +78,23 @@ namespace Python.EmbeddingTest
         public void TestCtorSByte()
         {
             const sbyte i = 5;
-            var a = new PyLong(i);
-            Assert.AreEqual(i, a.ToInt32());
-        }
-
-        [Test]
-        public void TestCtorDouble()
-        {
-            double i = 5.0;
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(i, a.ToInt32());
         }
 
         [Test]
         public void TestCtorPtr()
         {
-            var i = new PyLong(5);
-            var a = new PyLong(i.Handle);
+            var i = new PyInt(5);
+            var a = new PyInt(i.Handle);
             Assert.AreEqual(5, a.ToInt32());
         }
 
         [Test]
         public void TestCtorPyObject()
         {
-            var i = new PyLong(5);
-            var a = new PyLong(i);
+            var i = new PyInt(5);
+            var a = new PyInt(i);
             Assert.AreEqual(5, a.ToInt32());
         }
 
@@ -118,11 +102,11 @@ namespace Python.EmbeddingTest
         public void TestCtorBadPyObject()
         {
             var i = new PyString("Foo");
-            PyLong a = null;
+            PyInt a = null;
 
-            var ex = Assert.Throws<ArgumentException>(() => a = new PyLong(i));
+            var ex = Assert.Throws<ArgumentException>(() => a = new PyInt(i));
 
-            StringAssert.StartsWith("object is not a long", ex.Message);
+            StringAssert.StartsWith("object is not an int", ex.Message);
             Assert.IsNull(a);
         }
 
@@ -130,7 +114,7 @@ namespace Python.EmbeddingTest
         public void TestCtorString()
         {
             const string i = "5";
-            var a = new PyLong(i);
+            var a = new PyInt(i);
             Assert.AreEqual(5, a.ToInt32());
         }
 
@@ -138,51 +122,51 @@ namespace Python.EmbeddingTest
         public void TestCtorBadString()
         {
             const string i = "Foo";
-            PyLong a = null;
+            PyInt a = null;
 
-            var ex = Assert.Throws<PythonException>(() => a = new PyLong(i));
+            var ex = Assert.Throws<PythonException>(() => a = new PyInt(i));
 
-            StringAssert.StartsWith("ValueError : invalid literal", ex.Message);
+            StringAssert.StartsWith("ValueError : invalid literal for int", ex.Message);
             Assert.IsNull(a);
         }
 
         [Test]
         public void TestIsIntTypeTrue()
         {
-            var i = new PyLong(5);
-            Assert.IsTrue(PyLong.IsLongType(i));
+            var i = new PyInt(5);
+            Assert.IsTrue(PyInt.IsIntType(i));
         }
 
         [Test]
-        public void TestIsLongTypeFalse()
+        public void TestIsIntTypeFalse()
         {
             var s = new PyString("Foo");
-            Assert.IsFalse(PyLong.IsLongType(s));
+            Assert.IsFalse(PyInt.IsIntType(s));
         }
 
         [Test]
-        public void TestAsLongGood()
+        public void TestAsIntGood()
         {
-            var i = new PyLong(5);
-            var a = PyLong.AsLong(i);
+            var i = new PyInt(5);
+            var a = PyInt.AsInt(i);
             Assert.AreEqual(5, a.ToInt32());
         }
 
         [Test]
-        public void TestAsLongBad()
+        public void TestAsIntBad()
         {
             var s = new PyString("Foo");
-            PyLong a = null;
+            PyInt a = null;
 
-            var ex = Assert.Throws<PythonException>(() => a = PyLong.AsLong(s));
-            StringAssert.StartsWith("ValueError : invalid literal", ex.Message);
+            var ex = Assert.Throws<PythonException>(() => a = PyInt.AsInt(s));
+            StringAssert.StartsWith("ValueError : invalid literal for int", ex.Message);
             Assert.IsNull(a);
         }
 
         [Test]
         public void TestConvertToInt32()
         {
-            var a = new PyLong(5);
+            var a = new PyInt(5);
             Assert.IsInstanceOf(typeof(int), a.ToInt32());
             Assert.AreEqual(5, a.ToInt32());
         }
@@ -190,7 +174,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestConvertToInt16()
         {
-            var a = new PyLong(5);
+            var a = new PyInt(5);
             Assert.IsInstanceOf(typeof(short), a.ToInt16());
             Assert.AreEqual(5, a.ToInt16());
         }
@@ -198,7 +182,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestConvertToInt64()
         {
-            var a = new PyLong(5);
+            var a = new PyInt(5);
             Assert.IsInstanceOf(typeof(long), a.ToInt64());
             Assert.AreEqual(5, a.ToInt64());
         }
