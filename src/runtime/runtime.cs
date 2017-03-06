@@ -500,7 +500,6 @@ namespace Python.Runtime
         internal static unsafe void XIncref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG
-            // according to Python doc, Py_IncRef() is Py_XINCREF()
             Py_IncRef(op);
             return;
 #else
@@ -522,8 +521,6 @@ namespace Python.Runtime
         internal static unsafe void XDecref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG
-            // Py_DecRef calls Python's Py_DECREF
-            // according to Python doc, Py_DecRef() is Py_XDECREF()
             Py_DecRef(op);
             return;
 #else
@@ -568,15 +565,21 @@ namespace Python.Runtime
             return Is32Bit ? (*(int*)p) : (*(long*)p);
         }
 
-#if PYTHON_WITH_PYDEBUG
-        // Py_IncRef and Py_DecRef are taking care of the extra payload
-        // in Py_DEBUG builds of Python like _Py_RefTotal
+        /// <summary>
+        /// Export of Macro Py_XIncRef. Use XIncref instead.
+        /// Limit this function usage for Testing and Py_Debug builds
+        /// </summary>
+        /// <param name="ob">PyObject Ptr</param>
         [DllImport(PythonDll)]
-        private static extern void Py_IncRef(IntPtr ob);
+        internal static extern void Py_IncRef(IntPtr ob);
 
+        /// <summary>
+        /// Export of Macro Py_XDecRef. Use XDecref instead.
+        /// Limit this function usage for Testing and Py_Debug builds
+        /// </summary>
+        /// <param name="ob">PyObject Ptr</param>
         [DllImport(PythonDll)]
-        private static extern void Py_DecRef(IntPtr ob);
-#endif
+        internal static extern void Py_DecRef(IntPtr ob);
 
         [DllImport(PythonDll)]
         internal static extern void Py_Initialize();
