@@ -51,10 +51,7 @@ namespace Python.Runtime
         public PyLong(int value)
         {
             obj = Runtime.PyLong_FromLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -68,10 +65,7 @@ namespace Python.Runtime
         public PyLong(uint value)
         {
             obj = Runtime.PyLong_FromLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -84,10 +78,7 @@ namespace Python.Runtime
         public PyLong(long value)
         {
             obj = Runtime.PyLong_FromLongLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -101,10 +92,7 @@ namespace Python.Runtime
         public PyLong(ulong value)
         {
             obj = Runtime.PyLong_FromUnsignedLongLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -117,10 +105,7 @@ namespace Python.Runtime
         public PyLong(short value)
         {
             obj = Runtime.PyLong_FromLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -134,10 +119,7 @@ namespace Python.Runtime
         public PyLong(ushort value)
         {
             obj = Runtime.PyLong_FromLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -150,10 +132,7 @@ namespace Python.Runtime
         public PyLong(byte value)
         {
             obj = Runtime.PyLong_FromLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -167,10 +146,7 @@ namespace Python.Runtime
         public PyLong(sbyte value)
         {
             obj = Runtime.PyLong_FromLong(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -183,10 +159,7 @@ namespace Python.Runtime
         public PyLong(double value)
         {
             obj = Runtime.PyLong_FromDouble(value);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -199,10 +172,7 @@ namespace Python.Runtime
         public PyLong(string value)
         {
             obj = Runtime.PyLong_FromString(value, IntPtr.Zero, 0);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -229,10 +199,7 @@ namespace Python.Runtime
         public static PyLong AsLong(PyObject value)
         {
             IntPtr op = Runtime.PyNumber_Long(value.obj);
-            if (op == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
             return new PyLong(op);
         }
 
