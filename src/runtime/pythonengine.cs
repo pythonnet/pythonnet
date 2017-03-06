@@ -21,6 +21,7 @@ namespace Python.Runtime
         public PythonEngine()
         {
             Initialize();
+            Runtime.PyGILState_Ensure(); //Used to pass the unit test in PyInitializeTest, need refactoring
         }
 
         public PythonEngine(params string[] args)
@@ -137,7 +138,12 @@ namespace Python.Runtime
 
         public static void Initialize()
         {
+            if (initialized)
+            {
+                return;
+            }
             Initialize(setSysArgv: true);
+            Runtime.PyEval_ReleaseThread(Runtime.PyThreadState_Get());
         }
 
         public static void Initialize(bool setSysArgv = true)
@@ -294,6 +300,7 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                Runtime.PyGILState_Ensure();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
                 Marshal.FreeHGlobal(_programName);
