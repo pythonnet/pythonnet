@@ -6,18 +6,18 @@ namespace Python.EmbeddingTest
 {
     public class RunStringTest
     {
-        private Py.GILState gil;
+        private Py.GILState _gs;
 
         [SetUp]
         public void SetUp()
         {
-            gil = Py.GIL();
+            _gs = Py.GIL();
         }
 
         [TearDown]
         public void Dispose()
         {
-            gil.Dispose();
+            _gs.Dispose();
         }
 
         [Test]

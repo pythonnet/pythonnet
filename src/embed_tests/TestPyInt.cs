@@ -134,14 +134,14 @@ namespace Python.EmbeddingTest
         public void TestIsIntTypeTrue()
         {
             var i = new PyInt(5);
-            Assert.IsTrue(PyInt.IsIntType(i));
+            Assert.True(PyInt.IsIntType(i));
         }
 
         [Test]
         public void TestIsIntTypeFalse()
         {
             var s = new PyString("Foo");
-            Assert.IsFalse(PyInt.IsIntType(s));
+            Assert.False(PyInt.IsIntType(s));
         }
 
         [Test]

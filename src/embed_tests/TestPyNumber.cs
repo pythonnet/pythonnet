@@ -22,14 +22,14 @@ namespace Python.EmbeddingTest
         public void IsNumberTypeTrue()
         {
             var i = new PyInt(1);
-            Assert.IsTrue(PyNumber.IsNumberType(i));
+            Assert.True(PyNumber.IsNumberType(i));
         }
 
         [Test]
         public void IsNumberTypeFalse()
         {
             var s = new PyString("Foo");
-            Assert.IsFalse(PyNumber.IsNumberType(s));
+            Assert.False(PyNumber.IsNumberType(s));
         }
     }
 }

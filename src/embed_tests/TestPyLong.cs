@@ -150,14 +150,14 @@ namespace Python.EmbeddingTest
         public void TestIsIntTypeTrue()
         {
             var i = new PyLong(5);
-            Assert.IsTrue(PyLong.IsLongType(i));
+            Assert.True(PyLong.IsLongType(i));
         }
 
         [Test]
         public void TestIsLongTypeFalse()
         {
             var s = new PyString("Foo");
-            Assert.IsFalse(PyLong.IsLongType(s));
+            Assert.False(PyLong.IsLongType(s));
         }
 
         [Test]
