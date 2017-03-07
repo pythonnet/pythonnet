@@ -85,6 +85,7 @@
     <Compile Include="pyinitialize.cs" />
     <Compile Include="pyrunstring.cs" />
     <Compile Include="TestCustomMarshal.cs" />
+    <Compile Include="TestExample.cs" />
     <Compile Include="TestPyAnsiString.cs" />
     <Compile Include="TestPyFloat.cs" />
     <Compile Include="TestPyInt.cs" />
