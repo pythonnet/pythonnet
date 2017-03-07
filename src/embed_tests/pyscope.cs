@@ -11,13 +11,20 @@ namespace Python.EmbeddingTest
         [SetUp]
         public void SetUp()
         {
-            ps = Py.Session("test");
+            using (Py.GIL())
+            {
+                ps = Py.Scope("test");
+            }                
         }
 
         [TearDown]
         public void Dispose()
         {
-            ps.Dispose();
+            using (Py.GIL())
+            {
+                ps.Dispose();
+                ps = null;
+            }
         }
 
         /// <summary>
@@ -26,9 +33,12 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestEval()
         {
-            ps.SetVariable("a", 1);
-            var result = ps.Eval<int>("a + 2");
-            Assert.AreEqual(result, 3);
+            using (Py.GIL())
+            {
+                ps.SetVariable("a", 1);
+                var result = ps.Eval<int>("a + 2");
+                Assert.AreEqual(result, 3);
+            }                
         }
 
         /// <summary>
@@ -37,11 +47,14 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestExec()
         {
-            ps.SetVariable("bb", 100); //declare a global variable
-            ps.SetVariable("cc", 10); //declare a local variable
-            ps.Exec("aa = bb + cc + 3");
-            var result = ps.GetVariable<int>("aa");
-            Assert.AreEqual(result, 113);
+            using (Py.GIL())
+            {
+                ps.SetVariable("bb", 100); //declare a global variable
+                ps.SetVariable("cc", 10); //declare a local variable
+                ps.Exec("aa = bb + cc + 3");
+                var result = ps.GetVariable<int>("aa");
+                Assert.AreEqual(result, 113);
+            }
         }
 
         /// <summary>
@@ -51,11 +64,14 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestCompileExpression()
         {
-            ps.SetVariable("bb", 100); //declare a global variable
-            ps.SetVariable("cc", 10); //declare a local variable
-            PyObject script = ps.Compile("bb + cc + 3", "", RunFlagType.Eval);
-            var result = ps.Execute<int>(script);
-            Assert.AreEqual(result, 113);
+            using (Py.GIL())
+            {
+                ps.SetVariable("bb", 100); //declare a global variable
+                ps.SetVariable("cc", 10); //declare a local variable
+                PyObject script = ps.Compile("bb + cc + 3", "", RunFlagType.Eval);
+                var result = ps.Execute<int>(script);
+                Assert.AreEqual(result, 113);
+            }
         }
 
         /// <summary>
@@ -66,12 +82,15 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestCompileStatements()
         {
-            ps.SetVariable("bb", 100); //declare a global variable
-            ps.SetVariable("cc", 10); //declare a local variable
-            PyObject script = ps.Compile("aa = bb + cc + 3", "", RunFlagType.File);
-            ps.Execute(script);
-            var result = ps.GetVariable<int>("aa");
-            Assert.AreEqual(result, 113);
+            using (Py.GIL())
+            {
+                ps.SetVariable("bb", 100); //declare a global variable
+                ps.SetVariable("cc", 10); //declare a local variable
+                PyObject script = ps.Compile("aa = bb + cc + 3", "", RunFlagType.File);
+                ps.Execute(script);
+                var result = ps.GetVariable<int>("aa");
+                Assert.AreEqual(result, 113);
+            }
         }
 
         /// <summary>
@@ -80,16 +99,19 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestSubScope()
         {
-            ps.SetVariable("bb", 100); //declare a global variable
-            ps.SetVariable("cc", 10); //declare a local variable
+            using (Py.GIL())
+            {
+                ps.SetVariable("bb", 100); //declare a global variable
+                ps.SetVariable("cc", 10); //declare a local variable
 
-            PyScope scope = ps.SubScope();
-            scope.Exec("aa = bb + cc + 3");
-            var result = scope.GetVariable<int>("aa");
-            Assert.AreEqual(result, 113); //
-            scope.Dispose();
+                PyScope scope = ps.SubScope();
+                scope.Exec("aa = bb + cc + 3");
+                var result = scope.GetVariable<int>("aa");
+                Assert.AreEqual(result, 113); //
+                scope.Dispose();
 
-            Assert.IsFalse(ps.ContainsVariable("aa"));
+                Assert.IsFalse(ps.ContainsVariable("aa"));
+            }
         }
 
         /// <summary>
@@ -99,14 +121,17 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestImport()
         {
-            dynamic sys = ps.Import("sys");
-            Assert.IsTrue(ps.ContainsVariable("sys"));
+            using (Py.GIL())
+            {
+                dynamic sys = ps.Import("sys");
+                Assert.IsTrue(ps.ContainsVariable("sys"));
 
-            ps.Exec("sys.attr1 = 2");
-            var value1 = ps.Eval<int>("sys.attr1");
-            var value2 = (int)sys.attr1.AsManagedObject(typeof(int));
-            Assert.AreEqual(value1, 2);
-            Assert.AreEqual(value2, 2);
+                ps.Exec("sys.attr1 = 2");
+                var value1 = ps.Eval<int>("sys.attr1");
+                var value2 = (int)sys.attr1.AsManagedObject(typeof(int));
+                Assert.AreEqual(value1, 2);
+                Assert.AreEqual(value2, 2);
+            }
         }
 
         /// <summary>
@@ -116,28 +141,59 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestImportAs()
         {
-            ps.ImportAs("sys", "sys1");
-            Assert.IsTrue(ps.ContainsVariable("sys1"));
+            using (Py.GIL())
+            {
+                ps.ImportAs("sys", "sys1");
+                Assert.IsTrue(ps.ContainsVariable("sys1"));
+            }
         }
 
         /// <summary>
         /// Suspend the Session, and reuse it later.
         /// </summary>
         [Test]
-        public void TestSuspend()
+        public void TestThread()
         {
-            ps.SetVariable("bb", 100);
-            ps.SetVariable("cc", 10);
-            ps.Suspend();
-
+            //I open an proposal here https://github.com/pythonnet/pythonnet/pull/419
+            //after it merged, the BeginAllowThreads statement blow and the last EndAllowThreads statement
+            //should be removed.
+            var ts = PythonEngine.BeginAllowThreads();
             using (Py.GIL())
             {
-                PythonEngine.RunSimpleString("import sys;");
+                ps.SetVariable("res", 0);
+                ps.SetVariable("bb", 100);
+                ps.SetVariable("th_cnt", 0);
             }
-
-            ps.Exec("aa = bb + cc + 3");
-            var result = ps.GetVariable<int>("aa");
-            Assert.AreEqual(result, 113);
+            int th_cnt = 3;
+            for (int i =0; i< th_cnt; i++)
+            {
+                System.Threading.Thread th = new System.Threading.Thread(()=>
+                {
+                    using (Py.GIL())
+                    {
+                        ps.Exec(
+                            "res += bb + 1\n" +
+                            "th_cnt += 1\n");
+                    }
+                });
+                th.Start();
+            }
+            //do not use Thread.Join to make this test more complicate
+            int cnt = 0;
+            while(cnt != th_cnt)
+            {
+                using (Py.GIL())
+                {
+                    cnt = ps.GetVariable<int>("th_cnt");
+                }
+                System.Threading.Thread.Sleep(10);
+            }
+            using (Py.GIL())
+            {
+                var result = ps.GetVariable<int>("res");
+                Assert.AreEqual(101* th_cnt, result);
+            }
+            PythonEngine.EndAllowThreads(ts);
         }
     }
 }

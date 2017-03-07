@@ -294,13 +294,13 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                Py.ClearScopes();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
                 Marshal.FreeHGlobal(_programName);
                 _programName = IntPtr.Zero;
                 Marshal.FreeHGlobal(_pythonPath);
                 _pythonPath = IntPtr.Zero;
-
                 Runtime.Shutdown();
                 initialized = false;
             }
@@ -527,110 +527,32 @@ namespace Python.Runtime
         Eval = 258
     }
 
-    public class PySessionDisposedException : Exception
+    public class PyScopeException : Exception
+    {
+        public PyScopeException(string message)
+            :base(message)
+        {
+
+        }
+    }
+
+    public interface IPyObject : IDisposable
     {
     }
 
-    public class PyScope : IDisposable
+    public class PyScope : IPyObject
     {
-        public class GILState : IDisposable
-        {
-            private bool isGetGIL;
-
-            private bool isDisposed;
-
-            private IntPtr state;
-
-            internal GILState()
-            {
-                isGetGIL = false;
-                isDisposed = false;
-            }
-
-            public void AcquireLock()
-            {
-                if (isGetGIL)
-                {
-                    return;
-                }
-                state = PythonEngine.AcquireLock();
-                isGetGIL = true;
-            }
-
-            public void ReleaseLock()
-            {
-                if (isGetGIL)
-                {
-                    PythonEngine.ReleaseLock(state);
-                    isGetGIL = false;
-                }
-            }
-
-            public void Dispose()
-            {
-                if (isDisposed)
-                {
-                    return;
-                }
-                isDisposed = true;
-                ReleaseLock();
-                GC.SuppressFinalize(this);
-            }
-
-            ~GILState()
-            {
-                Dispose();
-            }
-        }
-
         public string Name
         {
             get;
             private set;
         }
-
-        public PyScope Parent
-        {
-            get;
-            private set;
-        }
-
-        private GILState state;
-
+                
         private bool isDisposed;
-
-        private PyScope(GILState state)
+        
+        internal PyScope(string name, PyScope origin)
         {
-            isDisposed = false;
-            this.state = state;
-            globals = Runtime.PyDict_New();
-            if (globals == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
-            locals = Runtime.PyDict_New();
-            if (locals == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
-        }
-
-        internal PyScope(string name, GILState state)
-            : this(state)
-        {
-            this.state = state;
             this.Name = name;
-            Runtime.PyDict_SetItemString(
-                globals, "__builtins__",
-                Runtime.PyEval_GetBuiltins()
-            );
-        }
-
-        internal PyScope(PyScope parent, GILState state)
-            : this(state)
-        {
-            this.state = state;
-            this.Parent = parent;
             globals = Runtime.PyDict_New();
             if (globals == IntPtr.Zero)
             {
@@ -641,38 +563,43 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
-            int result = Runtime.PyDict_Update(globals, parent.globals);
-            if (result < 0)
+            if(origin == null)
             {
-                throw new PythonException();
+                Runtime.PyDict_SetItemString(
+                    globals, "__builtins__",
+                    Runtime.PyEval_GetBuiltins()
+                );
             }
-            result = Runtime.PyDict_Update(globals, parent.locals);
-            if (result < 0)
+            else
             {
-                throw new PythonException();
-            }
+                int result = Runtime.PyDict_Update(globals, origin.globals);
+                if (result < 0)
+                {
+                    throw new PythonException();
+                }
+                result = Runtime.PyDict_Update(globals, origin.locals);
+                if (result < 0)
+                {
+                    throw new PythonException();
+                }
+            }            
         }
 
         /// <summary>
         /// the dict for global variables
         /// </summary>
-        public IntPtr globals { get; private set; }
+        internal IntPtr globals { get; private set; }
 
         /// <summary>
         /// the dict for local variables
         /// </summary>
-        public IntPtr locals { get; private set; }
+        internal IntPtr locals { get; private set; }
 
         public PyScope SubScope()
         {
-            return new PyScope(this, state);
+            return new PyScope(null, this);
         }
-
-        public void Suspend()
-        {
-            state.ReleaseLock();
-        }
-
+        
         /// <summary>
         /// Import Method
         /// </summary>
@@ -694,7 +621,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject ImportAs(string name, string asname)
         {
-            AcquireLock();
+            Check();
             PyObject module = PythonEngine.ImportModule(name);
             if (asname == null)
             {
@@ -706,6 +633,7 @@ namespace Python.Runtime
 
         public PyObject Execute(PyObject script)
         {
+            Check();
             IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, globals, locals);
             Runtime.CheckExceptionOccurred();
             if (ptr == Runtime.PyNone)
@@ -718,6 +646,7 @@ namespace Python.Runtime
 
         public T Execute<T>(PyObject script)
         {
+            Check();
             PyObject pyObj = Execute(script);
             if (pyObj == null)
             {
@@ -735,6 +664,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
         {
+            Check();
             var flag = (IntPtr)mode;
             IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
             Runtime.CheckExceptionOccurred();
@@ -750,7 +680,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Eval(string code)
         {
-            AcquireLock();
+            Check();
             var flag = (IntPtr)Runtime.Py_eval_input;
             IntPtr ptr = Runtime.PyRun_String(
                 code, flag, globals, locals
@@ -767,6 +697,7 @@ namespace Python.Runtime
         /// </remarks>
         public T Eval<T>(string code)
         {
+            Check();
             PyObject pyObj = Eval(code);
             var obj = (T)pyObj.AsManagedObject(typeof(T));
             return obj;
@@ -780,7 +711,7 @@ namespace Python.Runtime
         /// </remarks>
         public void Exec(string code)
         {
-            AcquireLock();
+            Check();
             Exec(code, globals, locals);
         }
 
@@ -807,7 +738,7 @@ namespace Python.Runtime
         /// </remarks>
         internal void SetGlobalVariable(string name, object value)
         {
-            AcquireLock();
+            Check();
             using (var pyKey = new PyString(name))
             {
                 IntPtr _value = Converter.ToPython(value, value?.GetType());
@@ -828,7 +759,7 @@ namespace Python.Runtime
         /// </remarks>
         internal void RemoveGlobalVariable(string name)
         {
-            AcquireLock();
+            Check();
             using (var pyKey = new PyString(name))
             {
                 int r = Runtime.PyObject_DelItem(globals, pyKey.obj);
@@ -848,7 +779,7 @@ namespace Python.Runtime
         /// </remarks>
         public void SetVariable(string name, object value)
         {
-            AcquireLock();
+            Check();
             using (var pyKey = new PyString(name))
             {
                 IntPtr _value = Converter.ToPython(value, value?.GetType());
@@ -869,7 +800,7 @@ namespace Python.Runtime
         /// </remarks>
         public void RemoveVariable(string name)
         {
-            AcquireLock();
+            Check();
             using (var pyKey = new PyString(name))
             {
                 int r = Runtime.PyObject_DelItem(locals, pyKey.obj);
@@ -888,7 +819,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool ContainsVariable(string name)
         {
-            AcquireLock();
+            Check();
             using (var pyKey = new PyString(name))
             {
                 if (Runtime.PyMapping_HasKey(locals, pyKey.obj) != 0)
@@ -899,16 +830,8 @@ namespace Python.Runtime
             }
         }
 
-        /// <summary>
-        /// Get Method
-        /// </summary>
-        /// <remarks>
-        /// Returns the value of the variable, local variable first.
-        /// If the variable is not exists, return null.
-        /// </remarks>
-        public PyObject GetVariable(string name)
+        private PyObject _GetVariable(string name)
         {
-            AcquireLock();
             using (var pyKey = new PyString(name))
             {
                 IntPtr op;
@@ -922,7 +845,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    return null; //name not exists
+                    return null;
                 }
                 if (op == IntPtr.Zero)
                 {
@@ -932,35 +855,105 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// GetVariable Method
+        /// </summary>
+        /// <remarks>
+        /// Returns the value of the variable, local variable first.
+        /// If the variable is not exists, return null.
+        /// </remarks>
+        public PyObject GetVariable(string name)
+        {
+            Check();
+            var variable = _GetVariable(name);
+            if(variable == null)
+            {
+                throw new PyScopeException(String.Format("'ScopeStorage' object has no attribute '{0}'", name));
+            }
+            if (variable.Handle == Runtime.PyNone)
+            {
+                variable.Dispose();
+                return null;
+            }
+            return variable;
+        }
+
+        /// <summary>
+        /// GetVariable Method
+        /// </summary>
+        /// <remarks>
+        /// Returns the value of the variable, local variable first.
+        /// If the variable is not exists, return null.
+        /// </remarks>
+        public bool TryGetVariable(string name, out PyObject value)
+        {
+            Check();
+            var variable = _GetVariable(name);
+            if (variable == null)
+            {
+                value = null;
+                return false;
+            }
+            if (variable.Handle == Runtime.PyNone)
+            {
+                value = null;
+                return true;
+            }
+            value = variable;
+            return true;
+        }
+
         public T GetVariable<T>(string name)
         {
+            Check();
             PyObject obj = GetVariable(name);
+            if (obj == null)
+            {
+                return default(T);
+            }
             return (T)obj.AsManagedObject(typeof(T));
         }
-        
-        private void AcquireLock()
+
+        public bool TryGetVariable<T>(string name, out T value)
+        {
+            Check();
+            PyObject obj;
+            var result = TryGetVariable(name, out obj);
+            if(!result)
+            {
+                value = default(T);
+                return false;
+            }
+            if(obj == null)
+            {
+                value = default(T);
+                return true;
+            }
+            value = (T)obj.AsManagedObject(typeof(T));
+            return true;
+        }
+
+        private void Check()
         {
             if (isDisposed)
             {
-                throw new PySessionDisposedException();
+                throw new PyScopeException("'ScopeStorage' object has been disposed");
             }
-            state.AcquireLock();
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             if (isDisposed)
             {
                 return;
-            }
-            AcquireLock();
+            }          
+            isDisposed = true;
             Runtime.XDecref(globals);
             Runtime.XDecref(locals);
-            if(this.Parent == null)
+            if(this.Name != null)
             {
-                Py.RemoveSession(this);
-            }            
-            isDisposed = true;
+                Py.RemoveScope(this);
+            }  
         }
 
         ~PyScope()
@@ -980,45 +973,49 @@ namespace Python.Runtime
 
             return new GILState();
         }
+        
+        private static Dictionary<string, PyScope> NamedScopes = new Dictionary<string, PyScope>();
 
-        private static PyScope.GILState gil = new PyScope.GILState();
-
-        private static List<PyScope> Sessions = new List<PyScope>();
-
-        /// <summary>
-        /// Sessions should be cleared after shut down.
-        /// Currently, the seperation of static methods into Py and PythonEngine makes the code ugly.
-        /// </summary>
-        private static Dictionary<string, PyScope> NamedSessions = new Dictionary<string, PyScope>();
-
-        public static PyScope Session(string name = null)
+        public static PyScope Scope()
         {
-            if (!PythonEngine.IsInitialized)
-            {
-                PythonEngine.Initialize();
-            }
-            if (name != null && NamedSessions.ContainsKey(name))
-            {
-                return NamedSessions[name];
-            }
-            var session = new PyScope(name, gil);
-            if(name != null)
-            {
-                NamedSessions[name] = session;
-            }            
-            Sessions.Add(session);
-            return session;
+            return Scope(null, null);
         }
 
-        internal static void RemoveSession(PyScope scope)
+        public static PyScope Scope(string name)
         {
-            if(scope.Parent == null)//top scope
+            return Scope(name, null);
+        }
+
+        public static PyScope Scope(string name, PyScope origin)
+        {
+            if (name != null && NamedScopes.ContainsKey(name))
             {
-                Sessions.Remove(scope);
-                if(scope.Name != null)
-                {
-                    NamedSessions.Remove(scope.Name);
-                }                
+                return NamedScopes[name];
+            }
+            var scope = new PyScope(name, origin);
+            if(name != null)
+            {
+                NamedScopes[name] = scope;
+            }  
+            return scope;
+        }
+
+        internal static void RemoveScope(PyScope scope)
+        {
+            PyScope _scope;
+            NamedScopes.TryGetValue(scope.Name, out _scope);
+            if (_scope == scope)
+            {
+                NamedScopes.Remove(scope.Name);
+            }
+        }
+
+        internal static void ClearScopes()
+        {
+            var scopes = NamedScopes.Values.ToList();
+            foreach (var scope in scopes)
+            {
+                scope.Dispose();
             }
         }
 
