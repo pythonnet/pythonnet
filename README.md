@@ -46,7 +46,7 @@ from System.Windows.Forms import Form
     to apply keyword arguments.
 -   All python objects should be declared as `dynamic` type.
 -   Mathematical operations involving python and literal/managed types must
-    have the python object first, eg. `np.pi_2` works, `2_np.pi` doesn't.
+    have the python object first, eg. `np.pi * 2` works, `2 * np.pi` doesn't.
 
 ### Example
 
