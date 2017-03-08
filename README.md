@@ -56,17 +56,22 @@ static void Main(string[] args)
     using (Py.GIL())
     {
         dynamic np = Py.Import("numpy");
+        Console.WriteLine(np.cos(np.pi * 2));
+
         dynamic sin = np.sin;
-        Console.WriteLine(np.cos(np.pi*2));
         Console.WriteLine(sin(5));
+
         double c = np.cos(5) + sin(5);
         Console.WriteLine(c);
         /* this block is temporarily disabled due to regression #249
         dynamic a = np.array(new List<float> { 1, 2, 3 });
-        dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
         Console.WriteLine(a.dtype);
+
+        dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
         Console.WriteLine(b.dtype);
-        Console.WriteLine(a * b); */
+
+        Console.WriteLine(a * b);
+        */
         Console.ReadKey();
     }
 }
@@ -80,7 +85,7 @@ Output:
 -0.6752620892
 float64
 int32
-[6.  10.  12.]
+[  6.  10.  12.]
 ```
 
 [appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
