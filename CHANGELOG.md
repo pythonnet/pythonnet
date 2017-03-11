@@ -24,6 +24,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `requirements.txt`
 -   Added to `PythonEngine` methods `Eval` and `Exec` (#389)
 -   Added implementations of `ICustomMarshal` (#407)
+-   Added docker images
+-   Added hooks in pyinstaller and cx_freeze for pythonnet
 
 ### Changed
 
