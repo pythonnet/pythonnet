@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## [unreleased][]
+## [2.3.0][] - 2017-03-11
 
 ### Added
 
@@ -24,8 +24,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `requirements.txt`
 -   Added to `PythonEngine` methods `Eval` and `Exec` (#389)
 -   Added implementations of `ICustomMarshal` (#407)
--   Added docker images
--   Added hooks in pyinstaller and cx_freeze for pythonnet
+-   Added docker images (#322)
+-   Added hooks in `pyinstaller` and `cx_freeze` for `pythonnet` (#66)
 
 ### Changed
 
@@ -543,7 +543,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.2.2...HEAD
+[unreleased]: ../../compare/v2.3.0...HEAD
+
+[2.3.0]: ../../compare/v2.2.2...v2.3.0
 
 [2.2.2]: ../../compare/v2.2.1...v2.2.2
 
