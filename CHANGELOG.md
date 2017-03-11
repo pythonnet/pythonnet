@@ -5,6 +5,20 @@ This project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
+## [unreleased][]
+
+### Added
+
+-   Added `Foo` feature
+
+### Changed
+
+-   Changed `Bar` feature
+
+### Fixed
+
+-   Fixed `FooBar` bug
+
 ## [2.3.0][] - 2017-03-11
 
 ### Added
