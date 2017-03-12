@@ -136,12 +136,18 @@ namespace Python.Runtime
 
             if (value is IList && value.GetType().IsGenericType)
             {
-                var resultlist = new PyList();
-                foreach (object o in (IEnumerable)value)
+                using (var resultlist = new PyList())
                 {
-                    resultlist.Append(new PyObject(ToPython(o, o.GetType())));
+                    foreach (object o in (IEnumerable)value)
+                    {
+                        using (var p = new PyObject(ToPython(o, o?.GetType())))
+                        {
+                            resultlist.Append(p);
+                        }
+                    }
+                    Runtime.XIncref(resultlist.Handle);
+                    return resultlist.Handle;
                 }
-                return resultlist.Handle;
             }
 
             // it the type is a python subclass of a managed type then return the
