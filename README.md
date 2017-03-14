@@ -63,7 +63,7 @@ static void Main(string[] args)
 
         double c = np.cos(5) + sin(5);
         Console.WriteLine(c);
-        /* this block is temporarily disabled due to regression #249
+
         dynamic a = np.array(new List<float> { 1, 2, 3 });
         Console.WriteLine(a.dtype);
 
@@ -71,7 +71,6 @@ static void Main(string[] args)
         Console.WriteLine(b.dtype);
 
         Console.WriteLine(a * b);
-        */
         Console.ReadKey();
     }
 }
