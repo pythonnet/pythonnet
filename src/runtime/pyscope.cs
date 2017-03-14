@@ -12,6 +12,9 @@ namespace Python.Runtime
         }
     }
 
+    /// <summary>
+    /// Classes implement this interface must be used with GIL obtained.
+    /// </summary>
     public interface IPyObject : IDisposable
     {
     }
@@ -38,6 +41,8 @@ namespace Python.Runtime
                 variables, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
             );
+            SetVariable("locals", (Func<PyDict>)Variables);
+            SetVariable("globals", (Func<PyDict>)Variables);
         }
         
         /// <summary>
@@ -46,6 +51,11 @@ namespace Python.Runtime
         internal IntPtr variables { get; private set; }
 
         public event Action<PyScope> OnDispose;
+
+        public PyDict Variables()
+        {
+            return new PyDict(variables);
+        }
 
         public PyScope CreateScope()
         {
@@ -276,17 +286,26 @@ namespace Python.Runtime
         public PyObject GetVariable(string name)
         {
             Check();
-            var variable = _GetVariable(name);
-            if (variable == null)
+            using (var pyKey = new PyString(name))
             {
-                throw new PyScopeException(String.Format("'ScopeStorage' object has no attribute '{0}'", name));
+                if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
+                {
+                    IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
+                    if (op == IntPtr.Zero)
+                    {
+                        throw new PythonException();
+                    }
+                    if (op == Runtime.PyNone)
+                    {
+                        return null;
+                    }
+                    return new PyObject(op);
+                }
+                else
+                {
+                    throw new PyScopeException(String.Format("'ScopeStorage' object has no attribute '{0}'", name));
+                }
             }
-            if (variable.Handle == Runtime.PyNone)
-            {
-                variable.Dispose();
-                return null;
-            }
-            return variable;
         }
 
         /// <summary>
@@ -299,19 +318,29 @@ namespace Python.Runtime
         public bool TryGetVariable(string name, out PyObject value)
         {
             Check();
-            var variable = _GetVariable(name);
-            if (variable == null)
+            using (var pyKey = new PyString(name))
             {
-                value = null;
-                return false;
+                if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
+                {
+                    IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
+                    if (op == IntPtr.Zero)
+                    {
+                        throw new PythonException();
+                    }
+                    if (op == Runtime.PyNone)
+                    {
+                        value = null;
+                        return true;
+                    }
+                    value = new PyObject(op);
+                    return true;
+                }
+                else
+                {
+                    value = null;
+                    return false;
+                }
             }
-            if (variable.Handle == Runtime.PyNone)
-            {
-                value = null;
-                return true;
-            }
-            value = variable;
-            return true;
         }
 
         public T GetVariable<T>(string name)
