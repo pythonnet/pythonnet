@@ -270,28 +270,7 @@ namespace Python.Runtime
                 return Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0;
             }
         }
-
-        private PyObject _GetVariable(string name)
-        {
-            using (var pyKey = new PyString(name))
-            {
-                IntPtr op;
-                if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
-                {
-                    op = Runtime.PyObject_GetItem(variables, pyKey.obj);
-                }
-                else
-                {
-                    return null;
-                }
-                if (op == IntPtr.Zero)
-                {
-                    throw new PythonException();
-                }
-                return new PyObject(op);
-            }
-        }
-
+        
         /// <summary>
         /// GetVariable Method
         /// </summary>
