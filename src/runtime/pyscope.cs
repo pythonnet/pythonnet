@@ -41,6 +41,12 @@ namespace Python.Runtime
                 variables, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
             );
+            InitVariables();
+        }
+
+        //To compitable with the python module
+        private void InitVariables()
+        {
             SetVariable("locals", (Func<PyDict>)Variables);
             SetVariable("globals", (Func<PyDict>)Variables);
         }
@@ -50,10 +56,19 @@ namespace Python.Runtime
         /// </summary>
         internal IntPtr variables { get; private set; }
 
+        public long Refcount
+        {
+            get
+            {
+                return Runtime.Refcount(variables);
+            }
+        }
+
         public event Action<PyScope> OnDispose;
 
         public PyDict Variables()
         {
+            Runtime.XIncref(variables);
             return new PyDict(variables);
         }
 
@@ -77,6 +92,7 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
+            InitVariables();
         }
 
         /// <summary>
