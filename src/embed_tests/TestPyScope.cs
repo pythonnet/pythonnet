@@ -263,6 +263,31 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
+        /// Use the locals() and globals() method just like in python module
+        /// </summary>
+        [Test]
+        public void TestVariables()
+        {
+            (ps.Variables() as dynamic)["ee"] = new PyInt(200);
+            var a0 = ps.GetVariable<int>("ee");
+            Assert.AreEqual(200, a0);
+
+            ps.Exec("locals()['ee'] = 210");
+            var a1 = ps.GetVariable<int>("ee");
+            Assert.AreEqual(210, a1);
+
+            ps.Exec("globals()['ee'] = 220");
+            var a2 = ps.GetVariable<int>("ee");
+            Assert.AreEqual(220, a2);
+
+            var item = (ps as dynamic).locals();
+            item["ee"] = new PyInt(230);
+            item.Dispose();
+            var a3 = ps.GetVariable<int>("ee");
+            Assert.AreEqual(230, a3);
+        }
+
+        /// <summary>
         /// Share a pyscope by multiple threads.
         /// </summary>
         [Test]

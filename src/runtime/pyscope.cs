@@ -44,7 +44,8 @@ namespace Python.Runtime
             InitVariables();
         }
 
-        //To compitable with the python module
+        //To compitable with the python module.
+        //Enable locals() and glocals() usage in the python script.
         private void InitVariables()
         {
             SetVariable("locals", (Func<PyDict>)Variables);
@@ -52,7 +53,7 @@ namespace Python.Runtime
         }
         
         /// <summary>
-        /// the dict for local variables
+        /// the dict for scope variables
         /// </summary>
         internal IntPtr variables { get; private set; }
 
@@ -96,11 +97,11 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Import Method
+        /// ImportModule Method
         /// </summary>
         /// <remarks>
         /// The import .. as .. statement in Python.
-        /// Import a module ,add it to the local variable dict and return the resulting module object as a PyObject.
+        /// Import a module ,add it to the variables dict and return the resulting module object as a PyObject.
         /// </remarks>
         public PyObject ImportModule(string name)
         {
@@ -108,11 +109,11 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Import Method
+        /// ImportModule Method
         /// </summary>
         /// <remarks>
         /// The import .. as .. statement in Python.
-        /// Import a module ,add it to the local variable dict and return the resulting module object as a PyObject.
+        /// Import a module ,add it to the variables dict and return the resulting module object as a PyObject.
         /// </remarks>
         public PyObject ImportModule(string name, string asname)
         {
@@ -126,6 +127,13 @@ namespace Python.Runtime
             return module;
         }
 
+        /// <summary>
+        /// Execute method
+        /// </summary>
+        /// <remarks>
+        /// Execute a Python ast and return the result as a PyObject.
+        /// The ast can be either an expression or stmts.
+        /// </remarks>
         public PyObject Execute(PyObject script)
         {
             Check();
@@ -156,9 +164,9 @@ namespace Python.Runtime
             PyObject script = GetVariable(name);
             return Execute<T>(script);
         }
-        
+
         /// <summary>
-        /// Evaluate a Python expression
+        /// Eval method
         /// </summary>
         /// <remarks>
         /// Evaluate a Python expression and return the result as a PyObject
@@ -193,7 +201,7 @@ namespace Python.Runtime
         /// Exec Method
         /// </summary>
         /// <remarks>
-        /// Evaluate a Python script and save its local variables in the current local variable dict.
+        /// Exec a Python script and save its local variables in the current local variable dict.
         /// </remarks>
         public void Exec(string code)
         {
@@ -214,13 +222,13 @@ namespace Python.Runtime
             }
             Runtime.XDecref(ptr);
         }
-        
+
         /// <summary>
-        /// SetLocal Method
+        /// SetVariable Method
         /// </summary>
         /// <remarks>
-        /// Add a new variable to local variable dict if it not exists
-        /// or set the value of the local variable if it exists.
+        /// Add a new variable to the variables dict if it not exists
+        /// or update its value if the variable exists.
         /// </remarks>
         public void SetVariable(string name, object value)
         {
@@ -238,10 +246,10 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// DelLocal Method
+        /// RemoveVariable Method
         /// </summary>
         /// <remarks>
-        /// Remove a variable from the local variable dict.
+        /// Remove a variable from the variables dict.
         /// </remarks>
         public void RemoveVariable(string name)
         {
@@ -257,10 +265,10 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Exists Method
+        /// ContainsVariable Method
         /// </summary>
         /// <remarks>
-        /// Returns true if the variable appears in the local variable dict or the global variable dict.
+        /// Returns true if the variable exists in the variables dict.
         /// </remarks>
         public bool ContainsVariable(string name)
         {
@@ -270,13 +278,13 @@ namespace Python.Runtime
                 return Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0;
             }
         }
-        
+
         /// <summary>
         /// GetVariable Method
         /// </summary>
         /// <remarks>
         /// Returns the value of the variable, local variable first.
-        /// If the variable is not exists, return null.
+        /// If the variable is not exists, throw an Exception.
         /// </remarks>
         public PyObject GetVariable(string name)
         {
@@ -304,7 +312,7 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// GetVariable Method
+        /// TryGetVariable Method
         /// </summary>
         /// <remarks>
         /// Returns the value of the variable, local variable first.
@@ -380,7 +388,6 @@ namespace Python.Runtime
             return true;
         }
 
-        // Currently, AsManagedObject method cannot accept 'dynamic' for the T parameter
         private object ToManagedObject<T>(PyObject pyObj)
         {
             if(typeof(T) == typeof(PyObject) || typeof(T) == typeof(object))
