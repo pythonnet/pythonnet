@@ -8,7 +8,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [unreleased][]
 
 ### Added
-
+-   Added clr.GetClrType (#432)(#433)
 -   Added `Foo` feature
 
 ### Changed

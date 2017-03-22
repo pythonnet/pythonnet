@@ -403,6 +403,14 @@ namespace Python.Runtime
             return assembly;
         }
 
+        /// <summary>
+        /// Get a Type instance for a class object.
+        /// clr.GetClrType(IComparable) gives you the Type for IComparable,
+        /// that you can e.g. perform reflection on. Similar to typeof(IComparable) in C#
+        /// or clr.GetClrType(IComparable) in IronPython
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns>The Type object</returns>
         [ModuleFunction]
         [ForbidPythonThreads]
         public static Type GetClrType(object type)
