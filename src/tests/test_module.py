@@ -352,6 +352,16 @@ def test_clr_add_reference():
     with pytest.raises(FileNotFoundException):
         AddReference("somethingtotallysilly")
 
+def test_clr_get_clr_type():
+    """Test clr.GetClrType()."""
+    from clr import GetClrType
+    from System import String
+    from System import IComparable
+
+    assert GetClrType(String).FullName == "System.String"
+    comparable = GetClrType(IComparable)
+    assert comparable.FullName == "System.IComparable"
+    assert comparable.IsInterface
 
 def test_assembly_load_thread_safety():
     from Python.Test import ModuleTest
