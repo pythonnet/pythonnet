@@ -16,6 +16,7 @@
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
 -   Christian Heimes ([@tiran](https://github.com/tiran))
 -   Christoph Gohlke ([@cgohlke](https://github.com/cgohlke))
+-   Christopher Pow ([@christopherpow](https://github.com/christopherpow))
 -   Daniel Fernandez ([@fdanny](https://github.com/fdanny))
 -   Daniel Santana ([@dgsantana](https://github.com/dgsantana))
 -   David Lechner ([@dlech](https://github.com/dlech))
