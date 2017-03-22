@@ -405,6 +405,18 @@ namespace Python.Runtime
 
         [ModuleFunction]
         [ForbidPythonThreads]
+        public static Type GetClrType(object type)
+        {
+            var converted = type as Type;
+            if (converted == null)
+            {
+                throw new ArgumentException("Cannot convert object to Type");
+            }
+            return converted;
+        }
+
+        [ModuleFunction]
+        [ForbidPythonThreads]
         public static string FindAssembly(string name)
         {
             AssemblyManager.UpdatePath();
