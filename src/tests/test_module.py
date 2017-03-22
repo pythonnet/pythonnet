@@ -357,11 +357,15 @@ def test_clr_get_clr_type():
     from clr import GetClrType
     from System import String
     from System import IComparable
+    from System import ArgumentException
 
     assert GetClrType(String).FullName == "System.String"
     comparable = GetClrType(IComparable)
     assert comparable.FullName == "System.IComparable"
     assert comparable.IsInterface
+
+    with pytest.raises(ArgumentException):
+        GetClrType("thiswillfail")
 
 def test_assembly_load_thread_safety():
     from Python.Test import ModuleTest
