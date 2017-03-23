@@ -1,0 +1,29 @@
+# EditorConfig is awesome: http://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+charset = utf-8
+indent_size = 4
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# config files
+[*.{ini,yaml,yml}]
+indent_size = 2
+
+# Xml project files
+[*.{csproj,pyproj,config}]
+indent_size = 2
+
+# Solution
+[*.sln]
+indent_style = tab
+
+# bumpversion reformats itself after every bump
+[.bumpversion.cfg]
+trim_trailing_whitespace = false
+indent_style = tab

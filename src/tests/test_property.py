@@ -1,203 +1,148 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
+# -*- coding: utf-8 -*-
 
-import sys, os, string, unittest, types
+"""Test CLR property support."""
+
+import pytest
 from Python.Test import PropertyTest
-import six
 
-if six.PY3:
-    IntType = int
-else:
-    IntType = types.IntType
 
+def test_public_instance_property():
+    """Test public instance properties."""
+    ob = PropertyTest()
 
-class PropertyTests(unittest.TestCase):
-    """Test CLR property support."""
+    assert ob.PublicProperty == 0
+    ob.PublicProperty = 1
+    assert ob.PublicProperty == 1
 
-    def testPublicInstanceProperty(self):
-        """Test public instance properties."""
-        object = PropertyTest();
+    with pytest.raises(TypeError):
+        del PropertyTest().PublicProperty
 
-        self.assertTrue(object.PublicProperty == 0)
-        object.PublicProperty = 1
-        self.assertTrue(object.PublicProperty == 1)
 
-        def test():
-            del PropertyTest().PublicProperty
+def test_public_static_property():
+    """Test public static properties."""
+    ob = PropertyTest()
 
-        self.assertRaises(TypeError, test)
+    assert PropertyTest.PublicStaticProperty == 0
+    PropertyTest.PublicStaticProperty = 1
+    assert PropertyTest.PublicStaticProperty == 1
 
+    assert ob.PublicStaticProperty == 1
+    ob.PublicStaticProperty = 0
+    assert ob.PublicStaticProperty == 0
 
-    def testPublicStaticProperty(self):
-        """Test public static properties."""
-        object = PropertyTest();
+    with pytest.raises(TypeError):
+        del PropertyTest.PublicStaticProperty
 
-        self.assertTrue(PropertyTest.PublicStaticProperty == 0)
-        PropertyTest.PublicStaticProperty = 1
-        self.assertTrue(PropertyTest.PublicStaticProperty == 1)
+    with pytest.raises(TypeError):
+        del PropertyTest().PublicStaticProperty
 
-        self.assertTrue(object.PublicStaticProperty == 1)
-        object.PublicStaticProperty = 0
-        self.assertTrue(object.PublicStaticProperty == 0)
 
-        def test():
-            del PropertyTest.PublicStaticProperty
+def test_protected_instance_property():
+    """Test protected instance properties."""
+    ob = PropertyTest()
 
-        self.assertRaises(TypeError, test)
+    assert ob.ProtectedProperty == 0
+    ob.ProtectedProperty = 1
+    assert ob.ProtectedProperty == 1
 
-        def test():
-            del PropertyTest().PublicStaticProperty
+    with pytest.raises(TypeError):
+        del PropertyTest().ProtectedProperty
 
-        self.assertRaises(TypeError, test)
 
+def test_protected_static_property():
+    """Test protected static properties."""
+    ob = PropertyTest()
 
-    def testProtectedInstanceProperty(self):
-        """Test protected instance properties."""
-        object = PropertyTest();
+    assert PropertyTest.ProtectedStaticProperty == 0
+    PropertyTest.ProtectedStaticProperty = 1
+    assert PropertyTest.ProtectedStaticProperty == 1
 
-        self.assertTrue(object.ProtectedProperty == 0)
-        object.ProtectedProperty = 1
-        self.assertTrue(object.ProtectedProperty == 1)
+    assert ob.ProtectedStaticProperty == 1
+    ob.ProtectedStaticProperty = 0
+    assert ob.ProtectedStaticProperty == 0
 
-        def test():
-            del PropertyTest().ProtectedProperty
+    with pytest.raises(TypeError):
+        del PropertyTest.ProtectedStaticProperty
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        del PropertyTest().ProtectedStaticProperty
 
 
-    def testProtectedStaticProperty(self):
-        """Test protected static properties."""
-        object = PropertyTest();
+def test_internal_property():
+    """Test internal properties."""
 
-        self.assertTrue(PropertyTest.ProtectedStaticProperty == 0)
-        PropertyTest.ProtectedStaticProperty = 1
-        self.assertTrue(PropertyTest.ProtectedStaticProperty == 1)
+    with pytest.raises(AttributeError):
+        _ = PropertyTest().InternalProperty
 
-        self.assertTrue(object.ProtectedStaticProperty == 1)
-        object.ProtectedStaticProperty = 0
-        self.assertTrue(object.ProtectedStaticProperty == 0)
+    with pytest.raises(AttributeError):
+        _ = PropertyTest().InternalStaticProperty
 
-        def test():
-            del PropertyTest.ProtectedStaticProperty
+    with pytest.raises(AttributeError):
+        _ = PropertyTest.InternalStaticProperty
 
-        self.assertRaises(TypeError, test)
 
-        def test():
-            del PropertyTest().ProtectedStaticProperty
+def test_private_property():
+    """Test private properties."""
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(AttributeError):
+        _ = PropertyTest().PrivateProperty
 
+    with pytest.raises(AttributeError):
+        _ = PropertyTest().PrivateStaticProperty
 
-    def testInternalProperty(self):
-        """Test internal properties."""
+    with pytest.raises(AttributeError):
+        _ = PropertyTest.PrivateStaticProperty
 
-        def test():
-            f = PropertyTest().InternalProperty
 
-        self.assertRaises(AttributeError, test)
+def test_property_descriptor_get_set():
+    """Test property descriptor get / set."""
 
-        def test():
-            f = PropertyTest().InternalStaticProperty
+    # This test ensures that setting an attribute implemented with
+    # a descriptor actually goes through the descriptor (rather than
+    # silently replacing the descriptor in the instance or type dict.
 
-        self.assertRaises(AttributeError, test)
+    ob = PropertyTest()
 
-        def test():
-            f = PropertyTest.InternalStaticProperty
+    assert PropertyTest.PublicStaticProperty == 0
+    assert ob.PublicStaticProperty == 0
 
-        self.assertRaises(AttributeError, test)
+    descriptor = PropertyTest.__dict__['PublicStaticProperty']
+    assert type(descriptor) != int
 
+    ob.PublicStaticProperty = 0
+    descriptor = PropertyTest.__dict__['PublicStaticProperty']
+    assert type(descriptor) != int
 
-    def testPrivateProperty(self):
-        """Test private properties."""
+    PropertyTest.PublicStaticProperty = 0
+    descriptor = PropertyTest.__dict__['PublicStaticProperty']
+    assert type(descriptor) != int
 
-        def test():
-            f = PropertyTest().PrivateProperty
 
-        self.assertRaises(AttributeError, test)
+def test_property_descriptor_wrong_type():
+    """Test setting a property using a value of the wrong type."""
 
-        def test():
-            f = PropertyTest().PrivateStaticProperty
+    with pytest.raises(TypeError):
+        ob = PropertyTest()
+        ob.PublicProperty = "spam"
 
-        self.assertRaises(AttributeError, test)
 
-        def test():
-            f = PropertyTest.PrivateStaticProperty
+def test_property_descriptor_abuse():
+    """Test property descriptor abuse."""
+    desc = PropertyTest.__dict__['PublicProperty']
 
-        self.assertRaises(AttributeError, test)
+    with pytest.raises(TypeError):
+        desc.__get__(0, 0)
 
+    with pytest.raises(TypeError):
+        desc.__set__(0, 0)
 
-    def testPropertyDescriptorGetSet(self):
-        """Test property descriptor get / set."""
 
-        # This test ensures that setting an attribute implemented with
-        # a descriptor actually goes through the descriptor (rather than
-        # silently replacing the descriptor in the instance or type dict.
+def test_interface_property():
+    """Test properties of interfaces. Added after a bug report
+       that an IsAbstract check was inappropriate and prevented
+       use of properties when only the interface is known."""
+    from System.Collections import Hashtable, ICollection
 
-        object = PropertyTest()
-
-        self.assertTrue(PropertyTest.PublicStaticProperty == 0)
-        self.assertTrue(object.PublicStaticProperty == 0)
-
-        descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != IntType)
-
-        object.PublicStaticProperty = 0
-        descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != IntType)
-
-        PropertyTest.PublicStaticProperty = 0
-        descriptor = PropertyTest.__dict__['PublicStaticProperty']
-        self.assertTrue(type(descriptor) != IntType)
-
-
-    def testPropertyDescriptorWrongType(self):
-        """Test setting a property using a value of the wrong type."""
-        def test():
-            object = PropertyTest()
-            object.PublicProperty = "spam"
-
-        self.assertTrue(TypeError, test)
-
-
-    def testPropertyDescriptorAbuse(self):
-        """Test property descriptor abuse."""
-        desc = PropertyTest.__dict__['PublicProperty']
-
-        def test():
-            desc.__get__(0, 0)
-
-        self.assertRaises(TypeError, test)
-
-        def test():
-            desc.__set__(0, 0)
-
-        self.assertRaises(TypeError, test)
-
-
-    def testInterfaceProperty(self):
-        """Test properties of interfaces. Added after a bug report
-           that an IsAbstract check was inappropriate and prevented
-           use of properties when only the interface is known."""
-
-        from System.Collections import Hashtable, ICollection
-        mapping = Hashtable()
-        coll = ICollection(mapping)
-        self.assertTrue(coll.Count == 0)
-
-
-
-def test_suite():
-    return unittest.makeSuite(PropertyTests)
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-if __name__ == '__main__':
-    main()
-
+    mapping = Hashtable()
+    coll = ICollection(mapping)
+    assert coll.Count == 0

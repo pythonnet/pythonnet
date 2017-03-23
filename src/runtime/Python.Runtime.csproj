@@ -1,123 +1,84 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Python.Runtime</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
+    <DocumentationFile>bin\Python.Runtime.xml</DocumentationFile>
+    <OutputPath>bin\</OutputPath>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-  	<PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)</PythonBuildDir>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x86'">
-    <OutputPath>bin\x86\ReleaseMono\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS4</DefineConstants>
+    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <LangVersion>6</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'x86'">
     <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-    <DefineConstants>PYTHON27,UCS2</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMono|x64'">
-    <OutputPath>bin\x64\ReleaseMono\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS4</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x86'">
-    <OutputPath>bin\x86\ReleaseWin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin|x64'">
-    <OutputPath>bin\x64\ReleaseWin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON27, UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\DebugMono\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMono|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\DebugMono\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS4</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
+  <PropertyGroup Condition=" '$(Platform)' == 'x64'">
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x86'">
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS4</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\DebugWin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin|x64'">
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\DebugWin\</OutputPath>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">TRACE;DEBUG;PYTHON27,UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-	<Choose>
-        <When Condition=" '$(Configuration)'=='DebugMono' ">
-            <ItemGroup>
-				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-				  <SpecificVersion>False</SpecificVersion>
-				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
-				</Reference>
-            </ItemGroup>
-        </When>
-        <When Condition=" '$(Configuration)'=='ReleaseMono' ">
-            <ItemGroup>
-				<Reference Include="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-				  <SpecificVersion>False</SpecificVersion>
-				  <HintPath>..\..\packages\MonoGAC\Mono.Posix\4.0.0.0__0738eb9f132ed756\Mono.Posix.dll</HintPath>
-				</Reference>
-            </ItemGroup>
-        </When>
-    </Choose>
-	<ItemGroup>
-		<Reference Include="System" />
-	</ItemGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS2</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2;TRACE;DEBUG</DefineConstants>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS2;TRACE;DEBUG</DefineConstants>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="arrayobject.cs" />
-    <Compile Include="assemblyinfo.cs" />
     <Compile Include="assemblymanager.cs" />
     <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
@@ -128,6 +89,7 @@
     <Compile Include="constructorbinder.cs" />
     <Compile Include="constructorbinding.cs" />
     <Compile Include="converter.cs" />
+    <Compile Include="CustomMarshaler.cs" />
     <Compile Include="debughelper.cs" />
     <Compile Include="delegatemanager.cs" />
     <Compile Include="delegateobject.cs" />
@@ -153,7 +115,6 @@
     <Compile Include="modulefunctionobject.cs" />
     <Compile Include="moduleobject.cs" />
     <Compile Include="modulepropertyobject.cs" />
-    <Compile Include="monosupport.cs" />
     <Compile Include="nativecall.cs" />
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
@@ -179,34 +140,27 @@
     <Compile Include="$(PythonInteropFile)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' == '' ">
-    <Compile Include="interop26.cs" />
     <Compile Include="interop27.cs" />
-    <Compile Include="interop32.cs" />
+    <Compile Include="interop33.cs" />
     <Compile Include="interop34.cs" />
     <Compile Include="interop35.cs" />
+    <Compile Include="interop36.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="buildclrmodule.bat" />
-    <None Include="clrmodule.il" />
-    <None Include="pythonnet.snk" />
-    <None Include="x64\clrmodule-platform.il" />
-    <None Include="x86\clrmodule-platform.il" />
+    <None Include="..\pythonnet.snk" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\clr.py">
-        <LogicalName>clr.py</LogicalName>
+      <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
-  <ProjectExtensions>
-    <VisualStudio AllowExistingFolder="true" />
-  </ProjectExtensions>
   <PropertyGroup>
     <TargetAssembly>$(TargetPath)</TargetAssembly>
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
   </PropertyGroup>
   <Target Name="AfterBuild">
-	<Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-	<Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
+    <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>

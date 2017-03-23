@@ -1,6 +1,9 @@
-﻿"""
+"""
 Code in this module gets loaded into the main clr module.
 """
+
+__version__ = "2.4.0.dev0"
+
 
 class clrproperty(object):
     """
@@ -13,7 +16,7 @@ class clrproperty(object):
             @clrproperty(string)
             def test(self):
                 return "x"
-                
+
     Properties decorated this way can be called from .NET, e.g.::
 
         dynamic x = getX(); // get an instance of X declared in Python
@@ -28,8 +31,8 @@ class clrproperty(object):
 
     def __call__(self, fget):
         return self.__class__(self._clr_property_type_,
-                                fget=fget,
-                                fset=self.fset)
+                              fget=fget,
+                              fset=self.fset)
 
     def setter(self, fset):
         self.fset = fset
@@ -75,9 +78,9 @@ class clrmethod(object):
 
     def __call__(self, func):
         return self.__class__(self._clr_return_type_,
-                                self._clr_arg_types_,
-                                clrname=self._clr_method_name_,
-                                func=func)
+                              self._clr_arg_types_,
+                              clrname=self._clr_method_name_,
+                              func=func)
 
     def __get__(self, instance, owner):
         return self.__func.__get__(instance, owner)

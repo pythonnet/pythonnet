@@ -1,7 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Python.Test
 {
@@ -12,10 +10,17 @@ namespace Python.Test
 
         // test passing objects and boxing primitives
         string bar(string s, int i);
+
+        // test events on interfaces
+        event EventHandlerTest TestEvent;
+
+        void OnTestEvent(int value);
     }
 
     public class SubClassTest : IInterfaceTest
     {
+        public event EventHandlerTest TestEvent;
+
         public SubClassTest()
         {
         }
@@ -48,9 +53,28 @@ namespace Python.Test
             // calls into python if return_list is overriden
             return x.return_list();
         }
+
+        // raise the test event
+        public virtual void OnTestEvent(int value)
+        {
+            if (null != TestEvent)
+            {
+                TestEvent(this, new EventArgsTest(value));
+            }
+        }
     }
 
-    public class TestFunctions
+    public abstract class RecursiveInheritance
+    {
+        public class SubClass : RecursiveInheritance
+        {
+            public void SomeMethod()
+            {
+            }
+        }
+    }
+
+    public class FunctionsTest
     {
         public static string test_foo(IInterfaceTest x)
         {
@@ -67,13 +91,26 @@ namespace Python.Test
         // test instances can be constructed in managed code
         public static IInterfaceTest create_instance(Type t)
         {
-            return (IInterfaceTest)t.GetConstructor(new Type[] {}).Invoke(new Object[] {});
+            return (IInterfaceTest)t.GetConstructor(new Type[] { }).Invoke(new object[] { });
         }
 
         // test instances pass through managed code unchanged
         public static IInterfaceTest pass_through(IInterfaceTest s)
         {
             return s;
+        }
+
+        public static int test_event(IInterfaceTest x, int value)
+        {
+            // reuse the event handler from eventtest.cs
+            var et = new EventTest();
+            x.TestEvent += et.GenericHandler;
+
+            // raise the event (should trigger both python and managed handlers)
+            x.OnTestEvent(value);
+
+            x.TestEvent -= et.GenericHandler;
+            return et.value;
         }
     }
 }

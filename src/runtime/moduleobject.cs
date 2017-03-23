@@ -1,35 +1,25 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
-using System.Collections.Specialized;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Collections;
+using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
-namespace Python.Runtime {
-
-    //========================================================================
-    // Implements a Python type that provides access to CLR namespaces. The 
-    // type behaves like a Python module, and can contain other sub-modules.
-    //========================================================================
-
-    internal class ModuleObject : ExtensionType {
-
-        Dictionary<string, ManagedType> cache;
+namespace Python.Runtime
+{
+    /// <summary>
+    /// Implements a Python type that provides access to CLR namespaces. The
+    /// type behaves like a Python module, and can contain other sub-modules.
+    /// </summary>
+    internal class ModuleObject : ExtensionType
+    {
+        private Dictionary<string, ManagedType> cache;
         internal string moduleName;
         internal IntPtr dict;
         protected string _namespace;
 
-        public ModuleObject(string name) : base() {
-            if (name == String.Empty)
+        public ModuleObject(string name)
+        {
+            if (name == string.Empty)
             {
                 throw new ArgumentException("Name must not be empty!");
             }
@@ -39,10 +29,14 @@ namespace Python.Runtime {
 
             // Use the filename from any of the assemblies just so there's something for
             // anything that expects __file__ to be set.
-            string filename = "unknown";
-            string docstring = "Namespace containing types from the following assemblies:\n\n";
-            foreach (Assembly a in AssemblyManager.GetAssemblies(name)) {
-                filename = a.Location;
+            var filename = "unknown";
+            var docstring = "Namespace containing types from the following assemblies:\n\n";
+            foreach (Assembly a in AssemblyManager.GetAssemblies(name))
+            {
+                if (!a.IsDynamic && a.Location != null)
+                {
+                    filename = a.Location;
+                }
                 docstring += "- " + a.FullName + "\n";
             }
 
@@ -50,32 +44,33 @@ namespace Python.Runtime {
             IntPtr pyname = Runtime.PyString_FromString(moduleName);
             IntPtr pyfilename = Runtime.PyString_FromString(filename);
             IntPtr pydocstring = Runtime.PyString_FromString(docstring);
-            IntPtr pycls = TypeManager.GetTypeHandle(this.GetType());
+            IntPtr pycls = TypeManager.GetTypeHandle(GetType());
             Runtime.PyDict_SetItemString(dict, "__name__", pyname);
             Runtime.PyDict_SetItemString(dict, "__file__", pyfilename);
             Runtime.PyDict_SetItemString(dict, "__doc__", pydocstring);
             Runtime.PyDict_SetItemString(dict, "__class__", pycls);
-            Runtime.Decref(pyname);
-            Runtime.Decref(pyfilename);
-            Runtime.Decref(pydocstring);
+            Runtime.XDecref(pyname);
+            Runtime.XDecref(pyfilename);
+            Runtime.XDecref(pydocstring);
 
-            Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.DictOffset(this.pyHandle), dict);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.DictOffset(pyHandle), dict);
 
             InitializeModuleMembers();
         }
 
 
-        //===================================================================
-        // Returns a ClassBase object representing a type that appears in
-        // this module's namespace or a ModuleObject representing a child 
-        // namespace (or null if the name is not found). This method does
-        // not increment the Python refcount of the returned object.
-        //===================================================================
-
-        public ManagedType GetAttribute(string name, bool guess) {
+        /// <summary>
+        /// Returns a ClassBase object representing a type that appears in
+        /// this module's namespace or a ModuleObject representing a child
+        /// namespace (or null if the name is not found). This method does
+        /// not increment the Python refcount of the returned object.
+        /// </summary>
+        public ManagedType GetAttribute(string name, bool guess)
+        {
             ManagedType cached = null;
-            this.cache.TryGetValue(name, out cached);
-            if (cached != null) {
+            cache.TryGetValue(name, out cached);
+            if (cached != null)
+            {
                 return cached;
             }
 
@@ -93,70 +88,77 @@ namespace Python.Runtime {
             //    return null;
             //}
 
-            string qname = (_namespace == String.Empty) ? name : 
-                            _namespace + "." + name;
+            string qname = _namespace == string.Empty
+                ? name
+                : _namespace + "." + name;
 
-            // If the fully-qualified name of the requested attribute is 
-            // a namespace exported by a currently loaded assembly, return 
+            // If the fully-qualified name of the requested attribute is
+            // a namespace exported by a currently loaded assembly, return
             // a new ModuleObject representing that namespace.
-
-            if (AssemblyManager.IsValidNamespace(qname)) {
+            if (AssemblyManager.IsValidNamespace(qname))
+            {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
-                return (ManagedType) m;
+                return m;
             }
 
-            // Look for a type in the current namespace. Note that this 
+            // Look for a type in the current namespace. Note that this
             // includes types, delegates, enums, interfaces and structs.
             // Only public namespace members are exposed to Python.
-
             type = AssemblyManager.LookupType(qname);
-            if (type != null) {
-                if (!type.IsPublic) {
+            if (type != null)
+            {
+                if (!type.IsPublic)
+                {
                     return null;
                 }
                 c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
-                return (ManagedType) c;
+                return c;
             }
 
             // This is a little repetitive, but it ensures that the right
             // thing happens with implicit assembly loading at a reasonable
-            // cost. Ask the AssemblyManager to do implicit loading for each 
+            // cost. Ask the AssemblyManager to do implicit loading for each
             // of the steps in the qualified name, then try it again.
             bool ignore = name.StartsWith("__");
-            if (AssemblyManager.LoadImplicit(qname, !ignore)) {
-                if (AssemblyManager.IsValidNamespace(qname)) {
+            if (AssemblyManager.LoadImplicit(qname, !ignore))
+            {
+                if (AssemblyManager.IsValidNamespace(qname))
+                {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
-                    return (ManagedType) m;
+                    return m;
                 }
 
                 type = AssemblyManager.LookupType(qname);
-                if (type != null) {
-                    if (!type.IsPublic) {
+                if (type != null)
+                {
+                    if (!type.IsPublic)
+                    {
                         return null;
                     }
                     c = ClassManager.GetClass(type);
                     StoreAttribute(name, c);
-                    return (ManagedType) c;
+                    return c;
                 }
             }
 
-            // We didn't find the name, so we may need to see if there is a 
+            // We didn't find the name, so we may need to see if there is a
             // generic type with this base name. If so, we'll go ahead and
             // return it. Note that we store the mapping of the unmangled
             // name to generic type -  it is technically possible that some
             // future assembly load could contribute a non-generic type to
             // the current namespace with the given basename, but unlikely
             // enough to complicate the implementation for now.
-
-            if (guess) {
-                string gname = GenericUtil.GenericNameForBaseName(
-                                              _namespace, name);
-                if (gname != null) {
+            if (guess)
+            {
+                string gname = GenericUtil.GenericNameForBaseName(_namespace, name);
+                if (gname != null)
+                {
                     ManagedType o = GetAttribute(gname, false);
-                    if (o != null) {
+                    if (o != null)
+                    {
                         StoreAttribute(name, o);
                         return o;
                     }
@@ -167,40 +169,30 @@ namespace Python.Runtime {
         }
 
 
-        //===================================================================
-        // Stores an attribute in the instance dict for future lookups.
-         //===================================================================
-
-        private void StoreAttribute(string name, ManagedType ob) {
+        /// <summary>
+        /// Stores an attribute in the instance dict for future lookups.
+        /// </summary>
+        private void StoreAttribute(string name, ManagedType ob)
+        {
             Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
             cache[name] = ob;
         }
 
 
-        //===================================================================
-        // Preloads all currently-known names for the module namespace. This
-        // can be called multiple times, to add names from assemblies that
-        // may have been loaded since the last call to the method.
-         //===================================================================
-
-        public void LoadNames() {
+        /// <summary>
+        /// Preloads all currently-known names for the module namespace. This
+        /// can be called multiple times, to add names from assemblies that
+        /// may have been loaded since the last call to the method.
+        /// </summary>
+        public void LoadNames()
+        {
             ManagedType m = null;
-            foreach (string name in AssemblyManager.GetNames(_namespace)) {
-                this.cache.TryGetValue(name, out m);
-                if (m == null) {
-                    ManagedType attr = this.GetAttribute(name, true);
-                    if (Runtime.wrap_exceptions) {
-                        if (attr is ExceptionClassObject) {
-                            ExceptionClassObject c = attr as ExceptionClassObject;
-                            if (c != null) {
-                              IntPtr p = attr.pyHandle;
-                              IntPtr r =Exceptions.GetExceptionClassWrapper(p);
-                              Runtime.PyDict_SetItemString(dict, name, r);
-                              Runtime.Incref(r);
-
-                            }
-                        }
-                    }
+            foreach (string name in AssemblyManager.GetNames(_namespace))
+            {
+                cache.TryGetValue(name, out m);
+                if (m == null)
+                {
+                    ManagedType attr = GetAttribute(name, true);
                 }
             }
         }
@@ -213,38 +205,36 @@ namespace Python.Runtime {
             Type funcmarker = typeof(ModuleFunctionAttribute);
             Type propmarker = typeof(ModulePropertyAttribute);
             Type ftmarker = typeof(ForbidPythonThreadsAttribute);
-            Type type = this.GetType();
+            Type type = GetType();
 
             BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
 
             while (type != null)
             {
                 MethodInfo[] methods = type.GetMethods(flags);
-                for (int i = 0; i < methods.Length; i++)
+                foreach (MethodInfo method in methods)
                 {
-                    MethodInfo method = methods[i];
                     object[] attrs = method.GetCustomAttributes(funcmarker, false);
                     object[] forbid = method.GetCustomAttributes(ftmarker, false);
-                    bool allow_threads = (forbid.Length == 0);
+                    bool allow_threads = forbid.Length == 0;
                     if (attrs.Length > 0)
                     {
                         string name = method.Name;
-                        MethodInfo[] mi = new MethodInfo[1];
+                        var mi = new MethodInfo[1];
                         mi[0] = method;
-                        ModuleFunctionObject m = new ModuleFunctionObject(type, name, mi, allow_threads);
+                        var m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
                     }
                 }
 
                 PropertyInfo[] properties = type.GetProperties();
-                for (int i = 0; i < properties.Length; i++)
+                foreach (PropertyInfo property in properties)
                 {
-                    PropertyInfo property = properties[i];
                     object[] attrs = property.GetCustomAttributes(propmarker, false);
                     if (attrs.Length > 0)
                     {
                         string name = property.Name;
-                        ModulePropertyObject p = new ModulePropertyObject(property);
+                        var p = new ModulePropertyObject(property);
                         StoreAttribute(name, p);
                     }
                 }
@@ -253,73 +243,56 @@ namespace Python.Runtime {
         }
 
 
-        //====================================================================
-        // ModuleObject __getattribute__ implementation. Module attributes
-        // are always either classes or sub-modules representing subordinate 
-        // namespaces. CLR modules implement a lazy pattern - the sub-modules
-        // and classes are created when accessed and cached for future use.
-        //====================================================================
+        /// <summary>
+        /// ModuleObject __getattribute__ implementation. Module attributes
+        /// are always either classes or sub-modules representing subordinate
+        /// namespaces. CLR modules implement a lazy pattern - the sub-modules
+        /// and classes are created when accessed and cached for future use.
+        /// </summary>
+        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        {
+            var self = (ModuleObject)GetManagedObject(ob);
 
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
-            ModuleObject self = (ModuleObject)GetManagedObject(ob);
-
-            if (!Runtime.PyString_Check(key)) {
+            if (!Runtime.PyString_Check(key))
+            {
                 Exceptions.SetError(Exceptions.TypeError, "string expected");
                 return IntPtr.Zero;
             }
 
             IntPtr op = Runtime.PyDict_GetItem(self.dict, key);
-            if (op != IntPtr.Zero) {
-                Runtime.Incref(op);
+            if (op != IntPtr.Zero)
+            {
+                Runtime.XIncref(op);
                 return op;
             }
- 
+
             string name = Runtime.GetManagedString(key);
-            if (name == "__dict__") {
-                Runtime.Incref(self.dict);
+            if (name == "__dict__")
+            {
+                Runtime.XIncref(self.dict);
                 return self.dict;
             }
 
             ManagedType attr = self.GetAttribute(name, true);
 
-            if (attr == null) {
+            if (attr == null)
+            {
                 Exceptions.SetError(Exceptions.AttributeError, name);
-                return IntPtr.Zero;                
+                return IntPtr.Zero;
             }
 
-            // XXX - hack required to recognize exception types. These types
-            // may need to be wrapped in old-style class wrappers in versions
-            // of Python where new-style classes cannot be used as exceptions.
-
-            if (Runtime.wrap_exceptions) {
-                if (attr is ExceptionClassObject) {
-                    ExceptionClassObject c = attr as ExceptionClassObject;
-                    if (c != null) {
-                        IntPtr p = attr.pyHandle;
-                        IntPtr r = Exceptions.GetExceptionClassWrapper(p);
-                        Runtime.PyDict_SetItemString(self.dict, name, r);
-                        Runtime.Incref(r);
-                        return r;
-                    }
-                }
-            }
-
-            Runtime.Incref(attr.pyHandle);
+            Runtime.XIncref(attr.pyHandle);
             return attr.pyHandle;
         }
 
-        //====================================================================
-        // ModuleObject __repr__ implementation.
-        //====================================================================
-
-        public static IntPtr tp_repr(IntPtr ob) {
-            ModuleObject self = (ModuleObject)GetManagedObject(ob);
-            string s = String.Format("<module '{0}'>", self.moduleName);
-            return Runtime.PyString_FromString(s);
+        /// <summary>
+        /// ModuleObject __repr__ implementation.
+        /// </summary>
+        public static IntPtr tp_repr(IntPtr ob)
+        {
+            var self = (ModuleObject)GetManagedObject(ob);
+            return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
-
-
-
     }
 
     /// <summary>
@@ -336,66 +309,75 @@ namespace Python.Runtime {
         internal static bool _SuppressDocs = false;
         internal static bool _SuppressOverloads = false;
 
-        public CLRModule() : base("clr") {
-            _namespace = String.Empty;
-            
+        public CLRModule() : base("clr")
+        {
+            _namespace = string.Empty;
+
             // This hackery is required in order to allow a plain Python to
-            // import the managed runtime via the CLR bootstrapper module. 
+            // import the managed runtime via the CLR bootstrapper module.
             // The standard Python machinery in control at the time of the
             // import requires the module to pass PyModule_Check. :(
             if (!hacked)
             {
-                IntPtr type = this.tpHandle;
+                IntPtr type = tpHandle;
                 IntPtr mro = Marshal.ReadIntPtr(type, TypeOffset.tp_mro);
                 IntPtr ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
                 Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);
-                Runtime.Decref(mro);
+                Runtime.XDecref(mro);
                 hacked = true;
             }
         }
 
         /// <summary>
         /// The initializing of the preload hook has to happen as late as
-        /// possible since sys.ps1 is created after the CLR module is 
+        /// possible since sys.ps1 is created after the CLR module is
         /// created.
         /// </summary>
-        internal void InitializePreload() {
-            if (interactive_preload) {
+        internal void InitializePreload()
+        {
+            if (interactive_preload)
+            {
                 interactive_preload = false;
-                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
+                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero)
+                {
                     preload = true;
-                } else {
+                }
+                else
+                {
                     Exceptions.Clear();
                     preload = false;
                 }
             }
         }
 
-        [ModuleFunctionAttribute()]
-        public static bool getPreload() {
+        [ModuleFunction]
+        public static bool getPreload()
+        {
             return preload;
         }
 
-        [ModuleFunctionAttribute()]
+        [ModuleFunction]
         public static void setPreload(bool preloadFlag)
         {
             preload = preloadFlag;
         }
 
-        //[ModulePropertyAttribute]
-        public static bool SuppressDocs {
+        //[ModuleProperty]
+        public static bool SuppressDocs
+        {
             get { return _SuppressDocs; }
             set { _SuppressDocs = value; }
         }
 
-        //[ModulePropertyAttribute]
-        public static bool SuppressOverloads {
+        //[ModuleProperty]
+        public static bool SuppressOverloads
+        {
             get { return _SuppressOverloads; }
             set { _SuppressOverloads = value; }
         }
 
-        [ModuleFunctionAttribute()]
-        [ForbidPythonThreadsAttribute()]
+        [ModuleFunction]
+        [ForbidPythonThreads]
         public static Assembly AddReference(string name)
         {
             AssemblyManager.UpdatePath();
@@ -409,47 +391,49 @@ namespace Python.Runtime {
             {
                 assembly = AssemblyManager.LoadAssembly(name);
             }
-            if (assembly == null) {
+            if (assembly == null)
+            {
                 assembly = AssemblyManager.LoadAssemblyFullPath(name);
             }
             if (assembly == null)
             {
-                string msg = String.Format("Unable to find assembly '{0}'.", name);
-                throw new System.IO.FileNotFoundException(msg);
+                throw new FileNotFoundException($"Unable to find assembly '{name}'.");
             }
-            
-            return assembly ;
+
+            return assembly;
         }
 
-        [ModuleFunctionAttribute()]
-        [ForbidPythonThreadsAttribute()]
+        [ModuleFunction]
+        [ForbidPythonThreads]
         public static string FindAssembly(string name)
         {
             AssemblyManager.UpdatePath();
             return AssemblyManager.FindAssembly(name);
         }
 
-        [ModuleFunctionAttribute()]
-        public static String[] ListAssemblies(bool verbose)
+        [ModuleFunction]
+        public static string[] ListAssemblies(bool verbose)
         {
             AssemblyName[] assnames = AssemblyManager.ListAssemblies();
-            String[] names = new String[assnames.Length];
-            for (int i = 0; i < assnames.Length; i++)
+            var names = new string[assnames.Length];
+            for (var i = 0; i < assnames.Length; i++)
             {
                 if (verbose)
+                {
                     names[i] = assnames[i].FullName;
+                }
                 else
+                {
                     names[i] = assnames[i].Name;
+                }
             }
             return names;
         }
 
-        [ModuleFunctionAttribute()]
+        [ModuleFunction]
         public static int _AtExit()
         {
             return Runtime.AtExit();
         }
-
     }
-
 }

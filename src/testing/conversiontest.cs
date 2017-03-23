@@ -1,24 +1,12 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
-using System;
-
-
-namespace Python.Test {
-
-    //========================================================================
-    // Supports units tests for field access.
-    //========================================================================
-
-    public class ConversionTest {
-
-        public ConversionTest() {
+namespace Python.Test
+{
+    /// <summary>
+    /// Supports units tests for field access.
+    /// </summary>
+    public class ConversionTest
+    {
+        public ConversionTest()
+        {
             EnumField = ShortEnum.Zero;
             SpamField = new Spam("spam");
             StringField = "spam";
@@ -44,25 +32,26 @@ namespace Python.Test {
 
         public byte[] ByteArrayField;
         public sbyte[] SByteArrayField;
-
     }
 
 
-    public interface ISpam {
+    public interface ISpam
+    {
         string GetValue();
     }
 
-    public class Spam : ISpam {
-        string value;
+    public class Spam : ISpam
+    {
+        private string value;
 
-        public Spam(string value) {
+        public Spam(string value)
+        {
             this.value = value;
         }
 
-        public string GetValue() {
+        public string GetValue()
+        {
             return value;
-
         }
     }
-
 }

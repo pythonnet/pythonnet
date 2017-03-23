@@ -1,23 +1,56 @@
+sudo: false
+
 language: python
 python:
-  - 2.6
   - 2.7
-  - 3.2
+  - 3.3
   - 3.4
   - 3.5
+  - 3.6
+  - 3.7-dev
+
+matrix:
+  allow_failures:
+    - python: 3.7-dev
+
+env:
+  global:
+    - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+    - SEGFAULT_SIGNALS=all
+    - PYTHONUNBUFFERED=True
+    - CODECOV_ENV=TRAVIS_PYTHON_VERSION
+
+addons:
+  apt:
+    sources:
+      - mono
+      - mono-libtiff-compat
+    packages:
+      - mono-devel
+      - ca-certificates-mono
+
 before_install:
-  - sudo apt-get install software-properties-common
-  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
-  - sudo apt-get -qq update
-  - sudo apt-get -qq install mono-devel mono-gmcs mono-xbuild nunit-console
-  - sudo mozroots --import --machine --sync
-  - yes | sudo certmgr -ssl -m https://go.microsoft.com
-  - yes | sudo certmgr -ssl -m https://nugetgallery.blob.core.windows.net
-  - yes | sudo certmgr -ssl -m https://nuget.org
+  # Set-up dll path for embedded tests
+  - PY_LIBDIR=$(python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
+  - export LD_LIBRARY_PATH=$PY_LIBDIR:$LD_LIBRARY_PATH
+
 install:
-  - pip install six
-  - pip install pycparser
-  - python setup.py build_ext --inplace
+  - pip install --upgrade -r requirements.txt
+  - coverage run setup.py install
+
 script:
-  - export PYTHONPATH=`pwd`:$PYTHONPATH
-  - python src/tests/runtests.py
+  - python -m pytest
+  - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
+
+after_script:
+  # Uncomment if need to geninterop, ie. py37 final
+  # - python tools/geninterop/geninterop.py
+
+  # Waiting on mono-coverage, SharpCover or xr.Baboon
+  - coverage xml -i
+  - codecov --file coverage.xml --flags setup_linux
+
+notifications:
+  email: false
+  slack:
+    secure: "UiQdSK1/uNnHl8/gQgfLj/F5JGxtJuaT3QYtKNcw3Ddpr3FX8tfXJ/RjsCsSlRQzDm7AdBAeMzcBQmvH4iRIV2y7qVywLyru5MPiwY4ZjMN6fJK/zaaxetOct9fasIBYzHguNPDAtiBGFh2iK1H1MXTY8rkmU3WZvl18b8EsrP0="

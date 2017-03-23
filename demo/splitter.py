@@ -1,16 +1,12 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import clr
-import System.Windows.Forms as WinForms
-from System.Drawing import Color, Size, Point
+
 import System
+import System.Windows.Forms as WinForms
+
+from System.Drawing import Color, Size, Point
 
 
 class Splitter(WinForms.Form):
@@ -27,7 +23,6 @@ class Splitter(WinForms.Form):
         self.splitter1 = WinForms.Splitter()
         self.splitter2 = WinForms.Splitter()
         self.panel1 = WinForms.Panel()
-
 
         # Set properties of TreeView control.
         self.treeView1.Dock = WinForms.DockStyle.Left
@@ -48,14 +43,14 @@ class Splitter(WinForms.Form):
 
         # Set properties of Panel's Splitter control.
         self.splitter2.Dock = WinForms.DockStyle.Top
-        
+
         # Width is irrelevant if splitter is docked to Top.
         self.splitter2.Height = 3
-        
+
         # Use a different color to distinguish the two splitters.
         self.splitter2.BackColor = Color.Blue
         self.splitter2.TabIndex = 1
-        
+
         # Set TabStop to false for ease of use when negotiating UI.
         self.splitter2.TabStop = 0
 
@@ -67,7 +62,7 @@ class Splitter(WinForms.Form):
 
         # Set TabStop to false for ease of use when negotiating UI.
         self.splitter1.TabStop = 0
-        
+
         # Add the appropriate controls to the Panel.
         for item in (self.richTextBox1, self.splitter2, self.listView1):
             self.panel1.Controls.Add(item)
@@ -87,12 +82,11 @@ class Splitter(WinForms.Form):
         WinForms.Form.Dispose(self)
 
 
-
 def main():
     app = Splitter()
     WinForms.Application.Run(app)
     app.Dispose()
 
+
 if __name__ == '__main__':
     main()
-

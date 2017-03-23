@@ -1,175 +1,145 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
+# -*- coding: utf-8 -*-
 
-import sys, os, string, unittest, types
-from System import DayOfWeek
-from Python import Test
-import six
+"""Test clr enum support."""
 
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-    long = int
-else:
-    DictProxyType = types.DictProxyType
+import pytest
+import Python.Test as Test
+
+from ._compat import DictProxyType, long
 
 
-class EnumTests(unittest.TestCase):
-    """Test CLR enum support."""
+def test_enum_standard_attrs():
+    """Test standard enum attributes."""
+    from System import DayOfWeek
 
-    def testEnumStandardAttrs(self):
-        """Test standard enum attributes."""
-        self.assertTrue(DayOfWeek.__name__ == 'DayOfWeek')
-        self.assertTrue(DayOfWeek.__module__ == 'System')
-        self.assertTrue(type(DayOfWeek.__dict__) == DictProxyType)
-        self.assertTrue(DayOfWeek.__doc__ == None)
-
-
-    def testEnumGetMember(self):
-        """Test access to enum members."""
-        self.assertTrue(DayOfWeek.Sunday == 0)
-        self.assertTrue(DayOfWeek.Monday == 1)
-        self.assertTrue(DayOfWeek.Tuesday == 2)
-        self.assertTrue(DayOfWeek.Wednesday == 3)
-        self.assertTrue(DayOfWeek.Thursday == 4)
-        self.assertTrue(DayOfWeek.Friday == 5)
-        self.assertTrue(DayOfWeek.Saturday == 6)
+    assert DayOfWeek.__name__ == 'DayOfWeek'
+    assert DayOfWeek.__module__ == 'System'
+    assert isinstance(DayOfWeek.__dict__, DictProxyType)
+    assert DayOfWeek.__doc__ is None
 
 
-    def testByteEnum(self):
-        """Test byte enum."""
-        self.assertTrue(Test.ByteEnum.Zero == 0)
-        self.assertTrue(Test.ByteEnum.One == 1)
-        self.assertTrue(Test.ByteEnum.Two == 2)
+def test_enum_get_member():
+    """Test access to enum members."""
+    from System import DayOfWeek
+
+    assert DayOfWeek.Sunday == 0
+    assert DayOfWeek.Monday == 1
+    assert DayOfWeek.Tuesday == 2
+    assert DayOfWeek.Wednesday == 3
+    assert DayOfWeek.Thursday == 4
+    assert DayOfWeek.Friday == 5
+    assert DayOfWeek.Saturday == 6
 
 
-    def testSByteEnum(self):
-        """Test sbyte enum."""
-        self.assertTrue(Test.SByteEnum.Zero == 0)
-        self.assertTrue(Test.SByteEnum.One == 1)
-        self.assertTrue(Test.SByteEnum.Two == 2)
+def test_byte_enum():
+    """Test byte enum."""
+    assert Test.ByteEnum.Zero == 0
+    assert Test.ByteEnum.One == 1
+    assert Test.ByteEnum.Two == 2
 
 
-    def testShortEnum(self):
-        """Test short enum."""
-        self.assertTrue(Test.ShortEnum.Zero == 0)
-        self.assertTrue(Test.ShortEnum.One == 1)
-        self.assertTrue(Test.ShortEnum.Two == 2)
+def test_sbyte_enum():
+    """Test sbyte enum."""
+    assert Test.SByteEnum.Zero == 0
+    assert Test.SByteEnum.One == 1
+    assert Test.SByteEnum.Two == 2
 
 
-    def testUShortEnum(self):
-        """Test ushort enum."""
-        self.assertTrue(Test.UShortEnum.Zero == 0)
-        self.assertTrue(Test.UShortEnum.One == 1)
-        self.assertTrue(Test.UShortEnum.Two == 2)
+def test_short_enum():
+    """Test short enum."""
+    assert Test.ShortEnum.Zero == 0
+    assert Test.ShortEnum.One == 1
+    assert Test.ShortEnum.Two == 2
 
 
-    def testIntEnum(self):
-        """Test int enum."""
-        self.assertTrue(Test.IntEnum.Zero == 0)
-        self.assertTrue(Test.IntEnum.One == 1)
-        self.assertTrue(Test.IntEnum.Two == 2)
+def test_ushort_enum():
+    """Test ushort enum."""
+    assert Test.UShortEnum.Zero == 0
+    assert Test.UShortEnum.One == 1
+    assert Test.UShortEnum.Two == 2
 
 
-    def testUIntEnum(self):
-        """Test uint enum."""
-        self.assertTrue(Test.UIntEnum.Zero == long(0))
-        self.assertTrue(Test.UIntEnum.One == long(1))
-        self.assertTrue(Test.UIntEnum.Two == long(2))
+def test_int_enum():
+    """Test int enum."""
+    assert Test.IntEnum.Zero == 0
+    assert Test.IntEnum.One == 1
+    assert Test.IntEnum.Two == 2
 
 
-    def testLongEnum(self):
-        """Test long enum."""
-        self.assertTrue(Test.LongEnum.Zero == long(0))
-        self.assertTrue(Test.LongEnum.One == long(1))
-        self.assertTrue(Test.LongEnum.Two == long(2))
+def test_uint_enum():
+    """Test uint enum."""
+    assert Test.UIntEnum.Zero == long(0)
+    assert Test.UIntEnum.One == long(1)
+    assert Test.UIntEnum.Two == long(2)
 
 
-    def testULongEnum(self):
-        """Test ulong enum."""
-        self.assertTrue(Test.ULongEnum.Zero == long(0))
-        self.assertTrue(Test.ULongEnum.One == long(1))
-        self.assertTrue(Test.ULongEnum.Two == long(2))
+def test_long_enum():
+    """Test long enum."""
+    assert Test.LongEnum.Zero == long(0)
+    assert Test.LongEnum.One == long(1)
+    assert Test.LongEnum.Two == long(2)
 
 
-    def testInstantiateEnumFails(self):
-        """Test that instantiation of an enum class fails."""
-        def test():
-            ob = DayOfWeek()
-
-        self.assertRaises(TypeError, test)
-
-
-    def testSubclassEnumFails(self):
-        """Test that subclassing of an enumeration fails."""
-        def test():
-            class Boom(DayOfWeek):
-                pass
-
-        self.assertRaises(TypeError, test)
+def test_ulong_enum():
+    """Test ulong enum."""
+    assert Test.ULongEnum.Zero == long(0)
+    assert Test.ULongEnum.One == long(1)
+    assert Test.ULongEnum.Two == long(2)
 
 
-    def testEnumSetMemberFails(self):
-        """Test that setattr operations on enumerations fail."""
-        def test():
-            DayOfWeek.Sunday = 13
-            
-        self.assertRaises(TypeError, test)
+def test_instantiate_enum_fails():
+    """Test that instantiation of an enum class fails."""
+    from System import DayOfWeek
 
-        def test():
-            del DayOfWeek.Sunday
-
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        _ = DayOfWeek()
 
 
-    def testEnumWithFlagsAttrConversion(self):
-        """Test enumeration conversion with FlagsAttribute set."""
-        # This works because the FlagsField enum has FlagsAttribute.
-        Test.FieldTest().FlagsField = 99
+def test_subclass_enum_fails():
+    """Test that subclassing of an enumeration fails."""
+    from System import DayOfWeek
 
-        # This should fail because our test enum doesn't have it.
-        def test():
-            Test.FieldTest().EnumField = 99
- 
-        self.assertRaises(ValueError, test)
+    with pytest.raises(TypeError):
+        class Boom(DayOfWeek):
+            pass
 
-
-    def testEnumConversion(self):
-        """Test enumeration conversion."""
-        object = Test.FieldTest()
-        self.assertTrue(object.EnumField == 0)
-
-        object.EnumField = Test.ShortEnum.One
-        self.assertTrue(object.EnumField == 1)
-
-        def test():
-            Test.FieldTest().EnumField = 20
-            
-        self.assertRaises(ValueError, test)
-
-        def test():
-            Test.FieldTest().EnumField = 100000
-            
-        self.assertRaises(OverflowError, test)
-
-        def test():
-            Test.FieldTest().EnumField = "str"
-            
-        self.assertRaises(TypeError, test)
+        _ = Boom
 
 
+def test_enum_set_member_fails():
+    """Test that setattr operations on enumerations fail."""
+    from System import DayOfWeek
 
-def test_suite():
-    return unittest.makeSuite(EnumTests)
+    with pytest.raises(TypeError):
+        DayOfWeek.Sunday = 13
 
-def main():
-    unittest.TextTestRunner().run(test_suite())
+    with pytest.raises(TypeError):
+        del DayOfWeek.Sunday
 
-if __name__ == '__main__':
-    main()
 
+def test_enum_with_flags_attr_conversion():
+    """Test enumeration conversion with FlagsAttribute set."""
+    # This works because the FlagsField enum has FlagsAttribute.
+    Test.FieldTest().FlagsField = 99
+
+    # This should fail because our test enum doesn't have it.
+    with pytest.raises(ValueError):
+        Test.FieldTest().EnumField = 99
+
+
+def test_enum_conversion():
+    """Test enumeration conversion."""
+    ob = Test.FieldTest()
+    assert ob.EnumField == 0
+
+    ob.EnumField = Test.ShortEnum.One
+    assert ob.EnumField == 1
+
+    with pytest.raises(ValueError):
+        Test.FieldTest().EnumField = 20
+
+    with pytest.raises(OverflowError):
+        Test.FieldTest().EnumField = 100000
+
+    with pytest.raises(TypeError):
+        Test.FieldTest().EnumField = "str"

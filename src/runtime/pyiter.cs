@@ -1,12 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
 using System.Collections.Generic;
 
@@ -14,37 +5,39 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Represents a standard Python iterator object. See the documentation at
-    /// http://www.python.org/doc/2.4.4/api/iterator.html for details.
+    /// PY2: https://docs.python.org/2/c-api/iterator.html
+    /// PY3: https://docs.python.org/3/c-api/iterator.html
+    /// for details.
     /// </summary>
     public class PyIter : PyObject, IEnumerator<object>
     {
-        private PyObject _current = null;
+        private PyObject _current;
 
         /// <summary>
         /// PyIter Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a new PyIter from an existing iterator reference. Note
         /// that the instance assumes ownership of the object reference.
         /// The object reference is not checked for type-correctness.
         /// </remarks>
-
-        public PyIter(IntPtr ptr) : base(ptr) {}
+        public PyIter(IntPtr ptr) : base(ptr)
+        {
+        }
 
         /// <summary>
         /// PyIter Constructor
         /// </summary>
-        ///
         /// <remarks>
         /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
         /// </remarks>
-
-        public PyIter(PyObject iterable) : base()
+        public PyIter(PyObject iterable)
         {
             obj = Runtime.PyObject_GetIter(iterable.obj);
-                if (obj == IntPtr.Zero)
-                        throw new PythonException();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -57,8 +50,6 @@ namespace Python.Runtime
             base.Dispose(disposing);
         }
 
-        #region IEnumerator Members
-
         public bool MoveNext()
         {
             // dispose of the previous object, if there was one
@@ -70,7 +61,9 @@ namespace Python.Runtime
 
             IntPtr next = Runtime.PyIter_Next(obj);
             if (next == IntPtr.Zero)
+            {
                 return false;
+            }
 
             _current = new PyObject(next);
             return true;
@@ -85,7 +78,5 @@ namespace Python.Runtime
         {
             get { return _current; }
         }
-
-        #endregion
     }
 }

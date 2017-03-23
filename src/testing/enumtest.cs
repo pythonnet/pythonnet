@@ -1,21 +1,12 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
 
-namespace Python.Test {
-
-    //========================================================================
-    // Supports CLR enum unit tests.
-    //========================================================================
-
-    public enum ByteEnum : byte {
+namespace Python.Test
+{
+    /// <summary>
+    /// Supports CLR enum unit tests.
+    /// </summary>
+    public enum ByteEnum : byte
+    {
         Zero,
         One,
         Two,
@@ -24,8 +15,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum SByteEnum : sbyte {
-
+    public enum SByteEnum : sbyte
+    {
         Zero,
         One,
         Two,
@@ -34,7 +25,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum ShortEnum : short {
+    public enum ShortEnum : short
+    {
         Zero,
         One,
         Two,
@@ -43,7 +35,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum UShortEnum : ushort {
+    public enum UShortEnum : ushort
+    {
         Zero,
         One,
         Two,
@@ -52,7 +45,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum IntEnum : int{
+    public enum IntEnum : int
+    {
         Zero,
         One,
         Two,
@@ -61,7 +55,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum UIntEnum : uint {
+    public enum UIntEnum : uint
+    {
         Zero,
         One,
         Two,
@@ -70,7 +65,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum LongEnum : long {
+    public enum LongEnum : long
+    {
         Zero,
         One,
         Two,
@@ -79,7 +75,8 @@ namespace Python.Test {
         Five
     }
 
-    public enum ULongEnum : ulong {
+    public enum ULongEnum : ulong
+    {
         Zero,
         One,
         Two,
@@ -88,8 +85,9 @@ namespace Python.Test {
         Five
     }
 
-    [FlagsAttribute]
-    public enum FlagsEnum {
+    [Flags]
+    public enum FlagsEnum
+    {
         Zero,
         One,
         Two,
@@ -97,5 +95,4 @@ namespace Python.Test {
         Four,
         Five
     }
-
 }

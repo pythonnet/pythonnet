@@ -1,23 +1,27 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# FIXME: FAIL: testImplicitAssemblyLoad AssertionError: 0 != 1
 
 """
 Run all of the unit tests for this package multiple times in a highly
-multithreaded way to stress the system. This makes it possible to look
+multi-threaded way to stress the system. This makes it possible to look
 for memory leaks and threading issues and provides a good target for a
 profiler to accumulate better data.
 """
 
-import sys, os, gc, time, threading, thread
+from __future__ import print_function
 
-class StressTest:
+import gc
+import os
+import sys
+import threading
+import time
 
+from ._compat import range, thread
+from .utils import dprint
+
+
+class StressTest(object):
     def __init__(self):
         self.dirname = os.path.split(__file__)[0]
         sys.path.append(self.dirname)
@@ -26,55 +30,48 @@ class StressTest:
         self.module = runtests
         self.done = []
 
-    def dprint(self, msg):
-        # Debugging helper to trace thread-related tests.
-        if 1: print msg
-    
-    def markStart(self):
+    def mark_start(self):
         self._start = time.clock()
 
-    def markFinish(self):
+    def mark_finish(self):
         self._finish = time.clock()
 
     def elapsed(self):
         return self._finish - self._start
 
-    def printGCReport(self):
+    def print_gc_report(self):
         for item in gc.get_objects():
-            print item, sys.getrefcount(item)
+            print(item, sys.getrefcount(item))
 
-    def runThread(self, iterations):
+    def run_thread(self, iterations):
         thread_id = thread.get_ident()
-        self.dprint("thread %s starting..." % thread_id)
+        dprint("thread {0} starting...".format(thread_id))
         time.sleep(0.1)
         for i in range(iterations):
-            self.dprint("thread %s iter %d start" % (thread_id, i))
+            dprint("thread {0} iter {1} start".format(thread_id, i))
             self.module.main()
-            self.dprint("thread %s iter %d end" % (thread_id, i))
-        self.done.append(None)                
-        self.dprint("thread %s done" % thread_id)
-        
-    def stressTest(self, iterations=1, threads=1):
+            dprint("thread {0} iter {1} end".format(thread_id, i))
+        self.done.append(None)
+        dprint("thread {0} done".format(thread_id))
+
+    def stress_test(self, iterations=1, threads=1):
         args = (iterations,)
-        self.markStart()
-        for i in range(threads):
-            thread = threading.Thread(target=self.runThread, args=args)
+        self.mark_start()
+        for _ in range(threads):
+            thread = threading.Thread(target=self.run_thread, args=args)
             thread.start()
         while len(self.done) < (iterations * threads):
-            self.dprint(len(self.done))
+            dprint(len(self.done))
             time.sleep(0.1)
-        self.markFinish()
+        self.mark_finish()
         took = self.elapsed()
-        self.printGCReport()
-        
+        self.print_gc_report()
+
 
 def main():
     test = StressTest()
-    test.stressTest(2, 10)
+    test.stress_test(2, 10)
 
 
 if __name__ == '__main__':
     main()
-    sys.exit(0)
-    
-

@@ -1,35 +1,62 @@
-os: Windows Server 2012
+version: '{branch}-{build}'
+build: off
+
+platform:
+  - x86
+  - x64
 
 environment:
   global:
-    PYTHONPATH: c:\testdir
-    PYTHONWARNINGS: 'ignore:::pip.pep425tags:'
+    PYTHONUNBUFFERED: True
+    PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
+    CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
-    # http://www.appveyor.com/docs/installed-software#python
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python27-x64"
-    - PYTHON: "C:\\Python33"
-    - PYTHON: "C:\\Python33-x64"
-    - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python34-x64"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
+    - PYTHON_VERSION: 2.7
+    - PYTHON_VERSION: 3.3
+    - PYTHON_VERSION: 3.4
+    - PYTHON_VERSION: 3.5
+    - PYTHON_VERSION: 3.6
+
+init:
+  # Update Environment Variables based on matrix/platform
+  - set PY_VER=%PYTHON_VERSION:.=%
+  - set PYTHON=C:\PYTHON%PY_VER%
+  - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
+
+  # Put desired Python version first in PATH
+  - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 install:
-- "%PYTHON%\\python.exe -m pip install --upgrade pip"
-- "%PYTHON%\\python.exe -m pip install wheel"
-- "%PYTHON%\\python.exe -m pip install six"
+  - pip install --upgrade -r requirements.txt --quiet
+
+  # Install OpenCover. Can't put on `packages.config`, not Mono compatible
+  - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages -Verbosity quiet
 
 build_script:
-- "%PYTHON%\\python.exe setup.py bdist_wheel"
+  # Create clean `sdist`. Only used for releases
+  - python setup.py --quiet sdist
+  # Build `wheel` with coverage of `setup.py`
+  - coverage run setup.py bdist_wheel
 
 test_script:
-  - ps: '& "$env:PYTHON\\Scripts\\pip.exe" install --no-cache-dir --force-reinstall --ignore-installed ("dist\\" + (gci dist)[0].Name)'
-  - mkdir c:\testdir
-  - ps: copy-item (gci -path build -re -include Python.Test.dll)[0].FullName c:\testdir
-  - "%PYTHON%\\python.exe src\\tests\\runtests.py"
+  - pip install --no-index --find-links=.\dist\ pythonnet
+  - ps: .\ci\appveyor_run_tests.ps1
+  - ps: .\ci\appveyor_build_recipe.ps1
+
+on_finish:
+  # Temporary disable multiple upload due to codecov limit of 20 per commit.
+  # https://docs.codecov.io/blog/week-8-2017
+  # - coverage xml -i
+  # - codecov --file coverage.xml --flags setup_windows
+  # - codecov --file py.coverage --flags python_tests
+  # - codecov --file cs.coverage --flags embedded_tests
+  - codecov --flags setup_windows
 
 artifacts:
-  # bdist_wheel puts your built wheel in the dist directory
   - path: dist\*
+
+notifications:
+  - provider: Slack
+    incoming_webhook:
+      secure: 2S/t6rGHdbwoxehnvn5KgfsHrBFEtwnPD7M5olGErmz70oWFVpqoWd/EvDwh7rKZGdOTjDmpwcukc2xi5VRaGHbBAqFYS3tAdgAMrcaTNWs=

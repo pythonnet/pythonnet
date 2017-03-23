@@ -1,14 +1,3 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-//
-// Author: Christian Heimes <christian(at)cheimes(dot)de>
-
 #ifndef PYNET_CLR_H
 #define PYNET_CLR_H
 
@@ -24,7 +13,8 @@
 #define MONO_DOMAIN "Python.Runtime"
 #define PR_ASSEMBLY "Python.Runtime.dll"
 
-typedef struct {
+typedef struct
+{
     MonoDomain *domain;
     MonoAssembly *pr_assm;
     MonoMethod *shutdown;
@@ -32,13 +22,12 @@ typedef struct {
     char *error;
     char *init_name;
     char *shutdown_name;
-    PyObject* module;
+    PyObject *module;
 } PyNet_Args;
 
-PyNet_Args* PyNet_Init(int);
-void PyNet_Finalize(PyNet_Args*);
+PyNet_Args *PyNet_Init(int);
+void PyNet_Finalize(PyNet_Args *);
 void main_thread_handler(gpointer user_data);
-char* PyNet_ExceptionToString(MonoObject *);
+char *PyNet_ExceptionToString(MonoObject *);
 
 #endif // PYNET_CLR_H
-

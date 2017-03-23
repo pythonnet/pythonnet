@@ -1,51 +1,41 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
-using System.Runtime.InteropServices;
-using System.Reflection.Emit;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
-using System.Threading;
+using System.Runtime.InteropServices;
 
-namespace Python.Runtime {
+namespace Python.Runtime
+{
+    /// <summary>
+    /// The TypeManager class is responsible for building binary-compatible
+    /// Python type objects that are implemented in managed code.
+    /// </summary>
+    internal class TypeManager
+    {
+        private static BindingFlags tbFlags;
+        private static Dictionary<Type, IntPtr> cache;
 
-    //=======================================================================
-    // The TypeManager class is responsible for building binary-compatible
-    // Python type objects that are implemented in managed code.
-    //=======================================================================
-
-    internal class TypeManager {
-
-        static BindingFlags tbFlags;
-        static Dictionary<Type, IntPtr> cache;
-
-        static TypeManager() {
+        static TypeManager()
+        {
             tbFlags = BindingFlags.Public | BindingFlags.Static;
             cache = new Dictionary<Type, IntPtr>(128);
         }
 
 
-        //====================================================================
-        // Given a managed Type derived from ExtensionType, get the handle to
-        // a Python type object that delegates its implementation to the Type
-        // object. These Python type instances are used to implement internal
-        // descriptor and utility types like ModuleObject, PropertyObject, etc.
-        //====================================================================
-
-        internal static IntPtr GetTypeHandle(Type type) {
+        /// <summary>
+        /// Given a managed Type derived from ExtensionType, get the handle to
+        /// a Python type object that delegates its implementation to the Type
+        /// object. These Python type instances are used to implement internal
+        /// descriptor and utility types like ModuleObject, PropertyObject, etc.
+        /// </summary>
+        internal static IntPtr GetTypeHandle(Type type)
+        {
             // Note that these types are cached with a refcount of 1, so they
             // effectively exist until the CPython runtime is finalized.
-            IntPtr handle = IntPtr.Zero;
+            IntPtr handle;
             cache.TryGetValue(type, out handle);
-            if (handle != IntPtr.Zero) {
+            if (handle != IntPtr.Zero)
+            {
                 return handle;
             }
             handle = CreateType(type);
@@ -54,16 +44,17 @@ namespace Python.Runtime {
         }
 
 
-        //====================================================================
-        // Get the handle of a Python type that reflects the given CLR type.
-        // The given ManagedType instance is a managed object that implements
-        // the appropriate semantics in Python for the reflected managed type.
-        //====================================================================
-
-        internal static IntPtr GetTypeHandle(ManagedType obj, Type type) {
-            IntPtr handle = IntPtr.Zero;
+        /// <summary>
+        /// Get the handle of a Python type that reflects the given CLR type.
+        /// The given ManagedType instance is a managed object that implements
+        /// the appropriate semantics in Python for the reflected managed type.
+        /// </summary>
+        internal static IntPtr GetTypeHandle(ManagedType obj, Type type)
+        {
+            IntPtr handle;
             cache.TryGetValue(type, out handle);
-            if (handle != IntPtr.Zero) {
+            if (handle != IntPtr.Zero)
+            {
                 return handle;
             }
             handle = CreateType(obj, type);
@@ -72,24 +63,23 @@ namespace Python.Runtime {
         }
 
 
-        //====================================================================
-        // The following CreateType implementations do the necessary work to
-        // create Python types to represent managed extension types, reflected
-        // types, subclasses of reflected types and the managed metatype. The
-        // dance is slightly different for each kind of type due to different
-        // behavior needed and the desire to have the existing Python runtime
-        // do as much of the allocation and initialization work as possible.
-        //====================================================================
-
-        internal static IntPtr CreateType(Type impl) {
-
+        /// <summary>
+        /// The following CreateType implementations do the necessary work to
+        /// create Python types to represent managed extension types, reflected
+        /// types, subclasses of reflected types and the managed metatype. The
+        /// dance is slightly different for each kind of type due to different
+        /// behavior needed and the desire to have the existing Python runtime
+        /// do as much of the allocation and initialization work as possible.
+        /// </summary>
+        internal static IntPtr CreateType(Type impl)
+        {
             IntPtr type = AllocateTypeObject(impl.Name);
             int ob_size = ObjectOffset.Size(type);
 
             // Set tp_basicsize to the size of our managed instance objects.
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
 
-            IntPtr offset = (IntPtr)ObjectOffset.DictOffset(type);
+            var offset = (IntPtr)ObjectOffset.DictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             InitializeSlots(type, impl);
@@ -110,15 +100,18 @@ namespace Python.Runtime {
         }
 
 
-        internal static IntPtr CreateType(ManagedType impl, Type clrType) {
+        internal static IntPtr CreateType(ManagedType impl, Type clrType)
+        {
             // Cleanup the type name to get rid of funny nested type names.
             string name = "CLR." + clrType.FullName;
             int i = name.LastIndexOf('+');
-            if (i > -1) {
+            if (i > -1)
+            {
                 name = name.Substring(i + 1);
             }
             i = name.LastIndexOf('.');
-            if (i > -1) {
+            if (i > -1)
+            {
                 name = name.Substring(i + 1);
             }
 
@@ -129,28 +122,26 @@ namespace Python.Runtime {
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
             // subclass BaseException (or better Exception).
-#if (PYTHON25 || PYTHON26 || PYTHON27 || PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-            if (typeof(System.Exception).IsAssignableFrom(clrType))
+            if (typeof(Exception).IsAssignableFrom(clrType))
             {
-                ob_size = ObjectOffset.Size(Exceptions.BaseException);
-                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.BaseException);
+                ob_size = ObjectOffset.Size(Exceptions.Exception);
+                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.Exception);
             }
 
-            if (clrType == typeof(System.Exception))
+            if (clrType == typeof(Exception))
             {
                 base_ = Exceptions.Exception;
-                Runtime.Incref(base_);
-            } else
-#endif
-            if (clrType.BaseType != null) {
+            }
+            else if (clrType.BaseType != null)
+            {
                 ClassBase bc = ClassManager.GetClass(clrType.BaseType);
                 base_ = bc.pyHandle;
             }
 
             IntPtr type = AllocateTypeObject(name);
 
-            Marshal.WriteIntPtr(type,TypeOffset.ob_type,Runtime.PyCLRMetaType);
-            Runtime.Incref(Runtime.PyCLRMetaType);
+            Marshal.WriteIntPtr(type, TypeOffset.ob_type, Runtime.PyCLRMetaType);
+            Runtime.XIncref(Runtime.PyCLRMetaType);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
@@ -158,9 +149,10 @@ namespace Python.Runtime {
 
             InitializeSlots(type, impl.GetType());
 
-            if (base_ != IntPtr.Zero) {
+            if (base_ != IntPtr.Zero)
+            {
                 Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
-                Runtime.Incref(base_);
+                Runtime.XIncref(base_);
             }
 
             int flags = TypeFlags.Default;
@@ -177,7 +169,7 @@ namespace Python.Runtime {
             Runtime.PyType_Ready(type);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            string mn = clrType.Namespace != null ? clrType.Namespace : "";
+            string mn = clrType.Namespace ?? "";
             IntPtr mod = Runtime.PyString_FromString(mn);
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
 
@@ -206,37 +198,43 @@ namespace Python.Runtime {
             object assembly = null;
             object namespaceStr = null;
 
-            List<PyObject> disposeList = new List<PyObject>();
+            var disposeList = new List<PyObject>();
             try
             {
-                PyObject assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(String)));
+                var assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(string)));
                 disposeList.Add(assemblyKey);
                 if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
                 {
-                    PyObject pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
+                    var pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
                     disposeList.Add(pyAssembly);
-                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(String), out assembly, false))
+                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(string), out assembly, false))
+                    {
                         throw new InvalidCastException("Couldn't convert __assembly__ value to string");
+                    }
                 }
 
-                PyObject namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
+                var namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
                 disposeList.Add(namespaceKey);
                 if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
                 {
-                    PyObject pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
+                    var pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
                     disposeList.Add(pyNamespace);
-                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(String), out namespaceStr, false))
+                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(string), out namespaceStr, false))
+                    {
                         throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+                    }
                 }
             }
             finally
             {
                 foreach (PyObject o in disposeList)
+                {
                     o.Dispose();
+                }
             }
 
             // create the new managed type subclassing the base managed type
-            ClassBase baseClass = ManagedType.GetManagedObject(py_base_type) as ClassBase;
+            var baseClass = ManagedType.GetManagedObject(py_base_type) as ClassBase;
             if (null == baseClass)
             {
                 return Exceptions.RaiseTypeError("invalid base class, expected CLR class type");
@@ -245,10 +243,10 @@ namespace Python.Runtime {
             try
             {
                 Type subType = ClassDerivedObject.CreateDerivedType(name,
-                                                                    baseClass.type,
-                                                                    py_dict,
-                                                                    (string)namespaceStr,
-                                                                    (string)assembly);
+                    baseClass.type,
+                    py_dict,
+                    (string)namespaceStr,
+                    (string)assembly);
 
                 // create the new ManagedType and python type
                 ClassBase subClass = ClassManager.GetClass(subType);
@@ -270,13 +268,14 @@ namespace Python.Runtime {
         internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, int flags, IntPtr doc)
         {
             Marshal.WriteIntPtr(mdef, name);
-            Marshal.WriteIntPtr(mdef, (1 * IntPtr.Size), func);
-            Marshal.WriteInt32(mdef, (2 * IntPtr.Size), flags);
-            Marshal.WriteIntPtr(mdef, (3 * IntPtr.Size), doc);
+            Marshal.WriteIntPtr(mdef, 1 * IntPtr.Size, func);
+            Marshal.WriteInt32(mdef, 2 * IntPtr.Size, flags);
+            Marshal.WriteIntPtr(mdef, 3 * IntPtr.Size, doc);
             return mdef + 4 * IntPtr.Size;
         }
 
-        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001, string doc = null)
+        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001,
+            string doc = null)
         {
             IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
             IntPtr docPtr = doc != null ? Marshal.StringToHGlobalAnsi(doc) : IntPtr.Zero;
@@ -289,18 +288,18 @@ namespace Python.Runtime {
             return WriteMethodDef(mdef, IntPtr.Zero, IntPtr.Zero, 0, IntPtr.Zero);
         }
 
-        internal static IntPtr CreateMetaType(Type impl) {
-
+        internal static IntPtr CreateMetaType(Type impl)
+        {
             // The managed metatype is functionally little different than the
             // standard Python metatype (PyType_Type). It overrides certain of
-            // the standard type slots, and has to subclass PyType_Type for 
+            // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
             IntPtr type = AllocateTypeObject("CLR Metatype");
             IntPtr py_type = Runtime.PyTypeType;
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
-            Runtime.Incref(py_type);
+            Runtime.XIncref(py_type);
 
             // Copy gc and other type slots from the base Python metatype.
 
@@ -326,20 +325,21 @@ namespace Python.Runtime {
 
             // We need space for 3 PyMethodDef structs, each of them
             // 4 int-ptrs in size.
-            IntPtr mdef = Runtime.PyMem_Malloc(3 * (4 * IntPtr.Size));
+            IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
             IntPtr mdefStart = mdef;
             mdef = WriteMethodDef(
                 mdef,
                 "__instancecheck__",
                 Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc")
-                );
+            );
 
             mdef = WriteMethodDef(
                 mdef,
                 "__subclasscheck__",
                 Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
-                );
+            );
 
+            // FIXME: mdef is not used
             mdef = WriteMethodDefSentinel(mdef);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
@@ -356,9 +356,8 @@ namespace Python.Runtime {
         }
 
 
-        internal static IntPtr BasicSubType(string name, IntPtr base_,
-                                            Type impl) {
-
+        internal static IntPtr BasicSubType(string name, IntPtr base_, Type impl)
+        {
             // Utility to create a subtype of a std Python type, but with
             // a managed type able to override implementation
 
@@ -373,7 +372,7 @@ namespace Python.Runtime {
             //Marshal.WriteIntPtr(type, TypeOffset.tp_dict, dc);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
-            Runtime.Incref(base_);
+            Runtime.XIncref(base_);
 
             int flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
@@ -397,31 +396,31 @@ namespace Python.Runtime {
         }
 
 
-        //====================================================================
-        // Utility method to allocate a type object & do basic initialization.
-        //====================================================================
-
-        internal static IntPtr AllocateTypeObject(string name) {
+        /// <summary>
+        /// Utility method to allocate a type object &amp; do basic initialization.
+        /// </summary>
+        internal static IntPtr AllocateTypeObject(string name)
+        {
             IntPtr type = Runtime.PyType_GenericAlloc(Runtime.PyTypeType, 0);
 
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
-            // For python3 we leak two objects. One for the ascii representation
-            // required for tp_name, and another for the unicode representation
+#if PYTHON3
+            // For python3 we leak two objects. One for the ASCII representation
+            // required for tp_name, and another for the Unicode representation
             // for ht_name.
             IntPtr temp = Runtime.PyBytes_FromString(name);
             IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
             temp = Runtime.PyUnicode_FromString(name);
-#else
+#elif PYTHON2
             IntPtr temp = Runtime.PyString_FromString(name);
-            IntPtr raw = Runtime.PyString_AS_STRING(temp);
+            IntPtr raw = Runtime.PyString_AsString(temp);
 #endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
 
-#if (PYTHON33 || PYTHON34 || PYTHON35)
+#if PYTHON3
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
 #endif
 
@@ -436,48 +435,49 @@ namespace Python.Runtime {
             temp = new IntPtr(ptr + TypeOffset.mp_length);
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
-#if (PYTHON32 || PYTHON33 || PYTHON34 || PYTHON35)
+#if PYTHON3
             temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
-#else
+#elif PYTHON2
             temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
 #endif
-
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
             return type;
         }
 
 
-        //====================================================================
-        // Given a newly allocated Python type object and a managed Type that
-        // provides the implementation for the type, connect the type slots of
-        // the Python object to the managed methods of the implementing Type.
-        //====================================================================
-
-        internal static void InitializeSlots(IntPtr type, Type impl) {
-            Hashtable seen = new Hashtable(8);
+        /// <summary>
+        /// Given a newly allocated Python type object and a managed Type that
+        /// provides the implementation for the type, connect the type slots of
+        /// the Python object to the managed methods of the implementing Type.
+        /// </summary>
+        internal static void InitializeSlots(IntPtr type, Type impl)
+        {
+            var seen = new Hashtable(8);
             Type offsetType = typeof(TypeOffset);
 
-            while (impl != null) {
+            while (impl != null)
+            {
                 MethodInfo[] methods = impl.GetMethods(tbFlags);
-                for (int i = 0; i < methods.Length; i++) {
-                    MethodInfo method = methods[i];
+                foreach (MethodInfo method in methods)
+                {
                     string name = method.Name;
-                    if (! (name.StartsWith("tp_") ||
-                           name.StartsWith("nb_") ||
-                           name.StartsWith("sq_") ||
-                           name.StartsWith("mp_") ||
-                           name.StartsWith("bf_")
-                           ) ) {
+                    if (!(name.StartsWith("tp_") ||
+                          name.StartsWith("nb_") ||
+                          name.StartsWith("sq_") ||
+                          name.StartsWith("mp_") ||
+                          name.StartsWith("bf_")
+                    ))
+                    {
                         continue;
                     }
 
-                    if (seen[name] != null) {
+                    if (seen[name] != null)
+                    {
                         continue;
                     }
-                    
+
                     FieldInfo fi = offsetType.GetField(name);
-                    int offset = (int)fi.GetValue(offsetType);
+                    var offset = (int)fi.GetValue(offsetType);
 
                     IntPtr slot = Interop.GetThunk(method);
                     Marshal.WriteIntPtr(type, offset, slot);
@@ -487,32 +487,34 @@ namespace Python.Runtime {
 
                 impl = impl.BaseType;
             }
-
         }
 
 
-        //====================================================================
-        // Given a newly allocated Python type object and a managed Type that
-        // implements it, initialize any methods defined by the Type that need
-        // to appear in the Python type __dict__ (based on custom attribute).
-        //====================================================================
-
-        private static void InitMethods(IntPtr pytype, Type type) {
+        /// <summary>
+        /// Given a newly allocated Python type object and a managed Type that
+        /// implements it, initialize any methods defined by the Type that need
+        /// to appear in the Python type __dict__ (based on custom attribute).
+        /// </summary>
+        private static void InitMethods(IntPtr pytype, Type type)
+        {
             IntPtr dict = Marshal.ReadIntPtr(pytype, TypeOffset.tp_dict);
             Type marker = typeof(PythonMethodAttribute);
 
             BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
-            HashSet<string> addedMethods = new HashSet<string>();
+            var addedMethods = new HashSet<string>();
 
-            while (type != null) {
+            while (type != null)
+            {
                 MethodInfo[] methods = type.GetMethods(flags);
-                for (int i = 0; i < methods.Length; i++) {
-                    MethodInfo method = methods[i];
-                    if (!addedMethods.Contains(method.Name)) {
+                foreach (MethodInfo method in methods)
+                {
+                    if (!addedMethods.Contains(method.Name))
+                    {
                         object[] attrs = method.GetCustomAttributes(marker, false);
-                        if (attrs.Length > 0) {
+                        if (attrs.Length > 0)
+                        {
                             string method_name = method.Name;
-                            MethodInfo[] mi = new MethodInfo[1];
+                            var mi = new MethodInfo[1];
                             mi[0] = method;
                             MethodObject m = new TypeMethod(type, method_name, mi);
                             Runtime.PyDict_SetItemString(dict, method_name, m.pyHandle);
@@ -525,17 +527,13 @@ namespace Python.Runtime {
         }
 
 
-        //====================================================================
-        // Utility method to copy slots from a given type to another type.
-        //====================================================================
-
-        internal static void CopySlot(IntPtr from, IntPtr to, int offset) {
+        /// <summary>
+        /// Utility method to copy slots from a given type to another type.
+        /// </summary>
+        internal static void CopySlot(IntPtr from, IntPtr to, int offset)
+        {
             IntPtr fp = Marshal.ReadIntPtr(from, offset);
             Marshal.WriteIntPtr(to, offset, fp);
         }
-
-
     }
-
-
 }

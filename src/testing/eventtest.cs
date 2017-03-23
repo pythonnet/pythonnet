@@ -1,94 +1,97 @@
-// ==========================================================================
-// This software is subject to the provisions of the Zope Public License,
-// Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-// WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-// FOR A PARTICULAR PURPOSE.
-// ==========================================================================
-
 using System;
 
-namespace Python.Test {
+namespace Python.Test
+{
+    /// <summary>
+    /// Supports CLR event unit tests.
+    /// </summary>
+    public delegate void EventHandlerTest(object sender, EventArgsTest e);
 
-    //========================================================================
-    // Supports CLR event unit tests.
-    //========================================================================
 
-    public delegate void TestEventHandler(object sender, TestEventArgs e);
+    public class EventTest
+    {
+        public static event EventHandlerTest PublicStaticEvent;
 
+        protected static event EventHandlerTest ProtectedStaticEvent;
 
-    public class EventTest {
+        internal static event EventHandlerTest InternalStaticEvent;
 
-        public static event TestEventHandler PublicStaticEvent;
+        private static event EventHandlerTest PrivateStaticEvent;
 
-        protected static event TestEventHandler ProtectedStaticEvent;
+        public event EventHandlerTest PublicEvent;
 
-        internal static event TestEventHandler InternalStaticEvent;
+        protected event EventHandlerTest ProtectedEvent;
 
-        private static event TestEventHandler PrivateStaticEvent;
+        internal event EventHandlerTest InternalEvent;
 
-        public event TestEventHandler PublicEvent;
-
-        protected event TestEventHandler ProtectedEvent;
-
-        internal event TestEventHandler InternalEvent;
-
-        private event TestEventHandler PrivateEvent;
+        private event EventHandlerTest PrivateEvent;
 
 
         public static int s_value;
         public int value;
 
-        public EventTest () {
-            this.value = 0;
+        public EventTest()
+        {
+            value = 0;
         }
 
-        static EventTest () {
+        static EventTest()
+        {
             s_value = 0;
         }
 
 
-        public void OnPublicEvent(TestEventArgs e) {
-            if (PublicEvent != null) {
+        public void OnPublicEvent(EventArgsTest e)
+        {
+            if (PublicEvent != null)
+            {
                 PublicEvent(this, e);
             }
         }
 
 
-        public void OnProtectedEvent(TestEventArgs e) {
-            if (ProtectedEvent != null) {
+        public void OnProtectedEvent(EventArgsTest e)
+        {
+            if (ProtectedEvent != null)
+            {
                 ProtectedEvent(this, e);
             }
         }
 
 
-        public static void OnPublicStaticEvent(TestEventArgs e) {
-            if (PublicStaticEvent != null) {
+        public static void OnPublicStaticEvent(EventArgsTest e)
+        {
+            if (PublicStaticEvent != null)
+            {
                 PublicStaticEvent(null, e);
             }
         }
 
 
-        protected static void OnProtectedStaticEvent(TestEventArgs e) {
-            if (ProtectedStaticEvent != null) {
+        protected static void OnProtectedStaticEvent(EventArgsTest e)
+        {
+            if (ProtectedStaticEvent != null)
+            {
                 ProtectedStaticEvent(null, e);
             }
         }
 
 
-        public void GenericHandler(object sender, TestEventArgs e) {
-            this.value = e.value;
+        public void GenericHandler(object sender, EventArgsTest e)
+        {
+            value = e.value;
         }
 
-        public static void StaticHandler(object sender, TestEventArgs e) {
+        public static void StaticHandler(object sender, EventArgsTest e)
+        {
             s_value = e.value;
         }
 
-        public static void ShutUpCompiler() {
+        public static void ShutUpCompiler()
+        {
             // Quiet compiler warnings.
-            EventTest e = new EventTest();
-            TestEventHandler f = new TestEventHandler(e.GenericHandler);
+            var e = new EventTest();
+            EventHandlerTest f = e.GenericHandler;
             ProtectedStaticEvent += f;
             InternalStaticEvent += f;
             PrivateStaticEvent += f;
@@ -96,18 +99,16 @@ namespace Python.Test {
             e.InternalEvent += f;
             e.PrivateEvent += f;
         }
-
     }
 
 
-    public class TestEventArgs : EventArgs {
+    public class EventArgsTest : EventArgs
+    {
         public int value;
 
-        public TestEventArgs(int v) {
-            this.value = v;
+        public EventArgsTest(int v)
+        {
+            value = v;
         }
-
     }
-
-
 }

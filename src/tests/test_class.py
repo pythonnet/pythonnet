@@ -1,247 +1,283 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
-from System.Collections import Hashtable
-from Python.Test import ClassTest
-import sys, os, string, unittest, types
+# -*- coding: utf-8 -*-
+# TODO: Add tests for ClassicClass, NewStyleClass?
+
+"""Test CLR class support."""
+
 import Python.Test as Test
 import System
-import six
+import pytest
 
-if six.PY3:
-    DictProxyType = type(object.__dict__)
-else:
-    DictProxyType = types.DictProxyType
+from ._compat import DictProxyType, range
 
 
-class ClassTests(unittest.TestCase):
-    """Test CLR class support."""
-
-    def testBasicReferenceType(self):
-        """Test usage of CLR defined reference types."""
-        String = System.String
-        self.assertEquals(String.Empty, "")
+def test_basic_reference_type():
+    """Test usage of CLR defined reference types."""
+    assert System.String.Empty == ""
 
 
-    def testBasicValueType(self):
-        """Test usage of CLR defined value types."""
-        Int32 = System.Int32
-        self.assertEquals(Int32.MaxValue, 2147483647)
+def test_basic_value_type():
+    """Test usage of CLR defined value types."""
+    assert System.Int32.MaxValue == 2147483647
 
 
-    def testClassStandardAttrs(self):
-        """Test standard class attributes."""
-        self.assertTrue(ClassTest.__name__ == 'ClassTest')
-        self.assertTrue(ClassTest.__module__ == 'Python.Test')
-        self.assertTrue(type(ClassTest.__dict__) == DictProxyType)
-        self.assertTrue(len(ClassTest.__doc__) > 0)
+def test_class_standard_attrs():
+    """Test standard class attributes."""
+    from Python.Test import ClassTest
+
+    assert ClassTest.__name__ == 'ClassTest'
+    assert ClassTest.__module__ == 'Python.Test'
+    assert isinstance(ClassTest.__dict__, DictProxyType)
+    assert len(ClassTest.__doc__) > 0
 
 
-    def testClassDocstrings(self):
-        """Test standard class docstring generation"""
-        value = 'Void .ctor()'
-        self.assertTrue(ClassTest.__doc__ == value)
+def test_class_docstrings():
+    """Test standard class docstring generation"""
+    from Python.Test import ClassTest
+
+    value = 'Void .ctor()'
+    assert ClassTest.__doc__ == value
 
 
-    def testClassDefaultStr(self):
-        """Test the default __str__ implementation for managed objects."""
-        s = System.String("this is a test")
-        self.assertTrue(str(s) == "this is a test")
+def test_class_default_str():
+    """Test the default __str__ implementation for managed objects."""
+    s = System.String("this is a test")
+    assert str(s) == "this is a test"
 
 
-    def testClassDefaultRepr(self):
-        """Test the default __repr__ implementation for managed objects."""
-        s = System.String("this is a test")
-        self.assertTrue(repr(s).startswith("<System.String object"))
+def test_class_default_repr():
+    """Test the default __repr__ implementation for managed objects."""
+    s = System.String("this is a test")
+    assert repr(s).startswith("<System.String object")
 
 
-    def testNonPublicClass(self):
-        """Test that non-public classes are inaccessible."""
-        from Python import Test
+def test_non_public_class():
+    """Test that non-public classes are inaccessible."""
+    with pytest.raises(ImportError):
+        from Python.Test import InternalClass
 
-        def test():
-            from Python.Test import InternalClass
-
-        self.assertRaises(ImportError, test)
-
-        def test():
-            x = Test.InternalClass
-
-        self.assertRaises(AttributeError, test)
+    with pytest.raises(AttributeError):
+        _ = Test.InternalClass
 
 
-    def testBasicSubclass(self):
-        """Test basic subclass of a managed class."""
+def test_basic_subclass():
+    """Test basic subclass of a managed class."""
+    from System.Collections import Hashtable
 
-        class MyTable(Hashtable):
-            def howMany(self):
-                return self.Count
+    class MyTable(Hashtable):
+        def how_many(self):
+            return self.Count
 
-        table = MyTable()
+    table = MyTable()
 
-        self.assertTrue(table.__class__.__name__.endswith('MyTable'))
-        self.assertTrue(type(table).__name__.endswith('MyTable'))
-        self.assertTrue(len(table.__class__.__bases__) == 1)
-        self.assertTrue(table.__class__.__bases__[0] == Hashtable)
+    assert table.__class__.__name__.endswith('MyTable')
+    assert type(table).__name__.endswith('MyTable')
+    assert len(table.__class__.__bases__) == 1
+    assert table.__class__.__bases__[0] == Hashtable
 
-        self.assertTrue(table.howMany() == 0)
-        self.assertTrue(table.Count == 0)
+    assert table.how_many() == 0
+    assert table.Count == 0
 
-        table.set_Item('one', 'one')
-        
-        self.assertTrue(table.howMany() == 1)
-        self.assertTrue(table.Count == 1)
+    table.set_Item('one', 'one')
 
-        MyTable = None
-
-
-    def testSubclassWithNoArgConstructor(self):
-        """Test subclass of a managed class with a no-arg constructor."""
-        from Python.Test import ClassCtorTest1
-        
-        class SubClass(ClassCtorTest1):
-            def __init__(self, name):
-                self.name = name
-
-        # This failed in earlier versions
-        inst = SubClass('test')
-
-    def testSubclassWithVariousConstructors(self):
-        """Test subclass of a managed class with various constructors."""
-        from Python.Test import ClassCtorTest2
-        
-        class SubClass(ClassCtorTest2):
-            def __init__(self, v):
-                ClassCtorTest2.__init__(self)
-                self.value = v
-
-        inst = SubClass('test')
-        self.assertTrue(inst.value == 'test')
-
-        class SubClass2(ClassCtorTest2):
-            def __init__(self, v):
-                ClassCtorTest2.__init__(self)
-                self.value = v
-
-        inst = SubClass2('test')
-        self.assertTrue(inst.value == 'test')
+    assert table.how_many() == 1
+    assert table.Count == 1
 
 
-    def testStructConstruction(self):
-        """Test construction of structs."""
-        from System.Drawing import Point
+def test_subclass_with_no_arg_constructor():
+    """Test subclass of a managed class with a no-arg constructor."""
+    from Python.Test import ClassCtorTest1
 
-        p = Point()
-        self.assertTrue(p.X == 0)
-        self.assertTrue(p.Y == 0)
+    class SubClass(ClassCtorTest1):
+        def __init__(self, name):
+            self.name = name
 
-        p = Point(0, 0)
-        self.assertTrue(p.X == 0)
-        self.assertTrue(p.Y == 0)
-
-        p.X = 10
-        p.Y = 10
-
-        self.assertTrue(p.X == 10)
-        self.assertTrue(p.Y == 10)
+    # This failed in earlier versions
+    _ = SubClass('test')
 
 
+def test_subclass_with_various_constructors():
+    """Test subclass of a managed class with various constructors."""
+    from Python.Test import ClassCtorTest2
+
+    class SubClass(ClassCtorTest2):
+        def __init__(self, v):
+            ClassCtorTest2.__init__(self)
+            self.value = v
+
+    inst = SubClass('test')
+    assert inst.value == 'test'
+
+    class SubClass2(ClassCtorTest2):
+        def __init__(self, v):
+            ClassCtorTest2.__init__(self)
+            self.value = v
+
+    inst = SubClass2('test')
+    assert inst.value == 'test'
+
+
+def test_struct_construction():
+    """Test construction of structs."""
+    from System.Drawing import Point
+
+    p = Point()
+    assert p.X == 0
+    assert p.Y == 0
+
+    p = Point(0, 0)
+    assert p.X == 0
+    assert p.Y == 0
+
+    p.X = 10
+    p.Y = 10
+
+    assert p.X == 10
+    assert p.Y == 10
 
     # test strange __new__ interactions
-    
+
     # test weird metatype
     # test recursion
-    # test 
+    # test
 
 
-    def testIEnumerableIteration(self):
-        """Test iteration over objects supporting IEnumerable."""
-        list = Test.ClassTest.GetArrayList()
+def test_ienumerable_iteration():
+    """Test iteration over objects supporting IEnumerable."""
+    from Python.Test import ClassTest
 
-        for item in list:
-            self.assertTrue((item > -1) and (item < 10))
+    list_ = ClassTest.GetArrayList()
 
-        dict = Test.ClassTest.GetHashtable()
+    for item in list_:
+        assert (item > -1) and (item < 10)
 
-        for item in dict:
-            cname = item.__class__.__name__
-            self.assertTrue(cname.endswith('DictionaryEntry'))
+    dict_ = ClassTest.GetHashtable()
 
-
-    def testIEnumeratorIteration(self):
-        """Test iteration over objects supporting IEnumerator."""
-        chars = Test.ClassTest.GetEnumerator()
-
-        for item in chars:
-            self.assertTrue(item in 'test string')
+    for item in dict_:
+        cname = item.__class__.__name__
+        assert cname.endswith('DictionaryEntry')
 
 
+def test_ienumerator_iteration():
+    """Test iteration over objects supporting IEnumerator."""
+    from Python.Test import ClassTest
+
+    chars = ClassTest.GetEnumerator()
+
+    for item in chars:
+        assert item in 'test string'
 
 
-    def testOverrideGetItem(self):
-        """Test managed subclass overriding __getitem__."""
+def test_override_get_item():
+    """Test managed subclass overriding __getitem__."""
+    from System.Collections import Hashtable
 
-        class MyTable(Hashtable):
-                
-            def __getitem__(self, key):
-                value = Hashtable.__getitem__(self, key)
-                return 'my ' + str(value)
+    class MyTable(Hashtable):
+        def __getitem__(self, key):
+            value = Hashtable.__getitem__(self, key)
+            return 'my ' + str(value)
 
-        table = MyTable()
-        table['one'] = 'one'
-        table['two'] = 'two'
-        table['three'] = 'three'
+    table = MyTable()
+    table['one'] = 'one'
+    table['two'] = 'two'
+    table['three'] = 'three'
 
-        self.assertTrue(table['one'] == 'my one')
-        self.assertTrue(table['two'] == 'my two')
-        self.assertTrue(table['three'] == 'my three')
+    assert table['one'] == 'my one'
+    assert table['two'] == 'my two'
+    assert table['three'] == 'my three'
 
-        self.assertTrue(table.Count == 3)                    
-
-
-    def testOverrideSetItem(self):
-        """Test managed subclass overriding __setitem__."""
-
-        class MyTable(Hashtable):
-                
-            def __setitem__(self, key, value):
-                value = 'my ' + str(value)
-                Hashtable.__setitem__(self, key, value)
-
-        table = MyTable()
-        table['one'] = 'one'
-        table['two'] = 'two'
-        table['three'] = 'three'
-
-        self.assertTrue(table['one'] == 'my one')
-        self.assertTrue(table['two'] == 'my two')
-        self.assertTrue(table['three'] == 'my three')
-
-        self.assertTrue(table.Count == 3)                    
+    assert table.Count == 3
 
 
+def test_override_set_item():
+    """Test managed subclass overriding __setitem__."""
+    from System.Collections import Hashtable
 
-class ClassicClass:
-    def kind(self):
-        return 'classic'
+    class MyTable(Hashtable):
+        def __setitem__(self, key, value):
+            value = 'my ' + str(value)
+            Hashtable.__setitem__(self, key, value)
 
-class NewStyleClass(object):
-    def kind(self):
-        return 'new-style'
+    table = MyTable()
+    table['one'] = 'one'
+    table['two'] = 'two'
+    table['three'] = 'three'
+
+    assert table['one'] == 'my one'
+    assert table['two'] == 'my two'
+    assert table['three'] == 'my three'
+
+    assert table.Count == 3
 
 
+def test_add_and_remove_class_attribute():
+    from System import TimeSpan
 
-def test_suite():
-    return unittest.makeSuite(ClassTests)
+    for _ in range(100):
+        TimeSpan.new_method = lambda self_: self_.TotalMinutes
+        ts = TimeSpan.FromHours(1)
+        assert ts.new_method() == 60
+        del TimeSpan.new_method
+        assert not hasattr(ts, "new_method")
 
-def main():
-    unittest.TextTestRunner().run(test_suite())
 
-if __name__ == '__main__':
-    main()
+def test_comparisons():
+    from System import DateTimeOffset
+    from Python.Test import ClassTest
 
+    d1 = DateTimeOffset.Parse("2016-11-14")
+    d2 = DateTimeOffset.Parse("2016-11-15")
+
+    assert (d1 == d2) == False
+    assert (d1 != d2) == True
+
+    assert (d1 < d2) == True
+    assert (d1 <= d2) == True
+    assert (d1 >= d2) == False
+    assert (d1 > d2) == False
+
+    assert (d1 == d1) == True
+    assert (d1 != d1) == False
+
+    assert (d1 < d1) == False
+    assert (d1 <= d1) == True
+    assert (d1 >= d1) == True
+    assert (d1 > d1) == False
+
+    assert (d2 == d1) == False
+    assert (d2 != d1) == True
+
+    assert (d2 < d1) == False
+    assert (d2 <= d1) == False
+    assert (d2 >= d1) == True
+    assert (d2 > d1) == True
+
+    with pytest.raises(TypeError):
+        d1 < None
+
+    with pytest.raises(TypeError):
+        d1 < System.Guid()
+
+    # ClassTest does not implement IComparable
+    c1 = ClassTest()
+    c2 = ClassTest()
+    with pytest.raises(TypeError):
+        c1 < c2
+
+
+def test_self_callback():
+    """Test calling back and forth between this and a c# baseclass."""
+
+    class CallbackUser(Test.SelfCallbackTest):
+        def DoCallback(self):
+            self.PyCallbackWasCalled = False
+            self.SameReference = False
+            return self.Callback(self)
+
+        def PyCallback(self, self2):
+            self.PyCallbackWasCalled = True
+            self.SameReference = self == self2
+
+    testobj = CallbackUser()
+    testobj.DoCallback()
+    assert testobj.PyCallbackWasCalled
+    assert testobj.SameReference

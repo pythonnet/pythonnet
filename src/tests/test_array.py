@@ -1,1536 +1,1339 @@
-# ===========================================================================
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-# ===========================================================================
+# -*- coding: utf-8 -*-
 
-import sys, os, string, unittest, types
+"""Test support for managed arrays."""
+
 import Python.Test as Test
 import System
-import six
+import pytest
 
-if six.PY3:
-    long = int
-    unichr = chr
+from ._compat import PY2, UserList, long, range, unichr
 
 
-class ArrayTests(unittest.TestCase):
-    """Test support for managed arrays."""
+def test_public_array():
+    """Test public arrays."""
+    ob = Test.PublicArrayTest()
+    items = ob.items
 
-    def testPublicArray(self):
-        """Test public arrays."""
-        object = Test.PublicArrayTest()
-        items = object.items
+    assert len(items) == 5
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    assert items[0] == 0
+    assert items[4] == 4
 
-        items[0] = 8
-        self.assertTrue(items[0] == 8)
+    items[0] = 8
+    assert items[0] == 8
 
-        items[4] = 9
-        self.assertTrue(items[4] == 9)
+    items[4] = 9
+    assert items[4] == 9
 
-        items[-4] = 0
-        self.assertTrue(items[-4] == 0)
+    items[-4] = 0
+    assert items[-4] == 0
 
-        items[-1] = 4
-        self.assertTrue(items[-1] == 4)
+    items[-1] = 4
+    assert items[-1] == 4
 
 
-    def testProtectedArray(self):
-        """Test protected arrays."""
-        object = Test.ProtectedArrayTest()
-        items = object.items
+def test_protected_array():
+    """Test protected arrays."""
+    ob = Test.ProtectedArrayTest()
+    items = ob.items
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    assert len(items) == 5
 
-        items[0] = 8
-        self.assertTrue(items[0] == 8)
+    assert items[0] == 0
+    assert items[4] == 4
 
-        items[4] = 9
-        self.assertTrue(items[4] == 9)
+    items[0] = 8
+    assert items[0] == 8
 
-        items[-4] = 0
-        self.assertTrue(items[-4] == 0)
+    items[4] = 9
+    assert items[4] == 9
 
-        items[-1] = 4
-        self.assertTrue(items[-1] == 4)
+    items[-4] = 0
+    assert items[-4] == 0
 
+    items[-1] = 4
+    assert items[-1] == 4
 
-    def testInternalArray(self):
-        """Test internal arrays."""
 
-        def test():
-            object = Test.InternalArrayTest()
-            items = object.items
+def test_internal_array():
+    """Test internal arrays."""
 
-        self.assertRaises(AttributeError, test)
+    with pytest.raises(AttributeError):
+        ob = Test.InternalArrayTest()
+        _ = ob.items
 
 
-    def testPrivateArray(self):
-        """Test private arrays."""
+def test_private_array():
+    """Test private arrays."""
 
-        def test():
-            object = Test.PrivateArrayTest()
-            items = object.items
+    with pytest.raises(AttributeError):
+        ob = Test.PrivateArrayTest()
+        _ = ob.items
 
-        self.assertRaises(AttributeError, test)
 
+def test_array_bounds_checking():
+    """Test array bounds checking."""
 
-    def testArrayBoundsChecking(self):
-        """Test array bounds checking."""
+    ob = Test.Int32ArrayTest()
+    items = ob.items
 
-        object = Test.Int32ArrayTest()
-        items = object.items
+    assert items[0] == 0
+    assert items[1] == 1
+    assert items[2] == 2
+    assert items[3] == 3
+    assert items[4] == 4
 
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[1] == 1)
-        self.assertTrue(items[2] == 2)
-        self.assertTrue(items[3] == 3)
-        self.assertTrue(items[4] == 4)
+    assert items[-5] == 0
+    assert items[-4] == 1
+    assert items[-3] == 2
+    assert items[-2] == 3
+    assert items[-1] == 4
 
-        self.assertTrue(items[-5] == 0)
-        self.assertTrue(items[-4] == 1)
-        self.assertTrue(items[-3] == 2)
-        self.assertTrue(items[-2] == 3)
-        self.assertTrue(items[-1] == 4)
+    with pytest.raises(IndexError):
+        ob = Test.Int32ArrayTest()
+        _ = ob.items[5]
 
-        def test():
-            object = Test.Int32ArrayTest()
-            object.items[5]
+    with pytest.raises(IndexError):
+        ob = Test.Int32ArrayTest()
+        ob.items[5] = 0
 
-        self.assertRaises(IndexError, test)
+    with pytest.raises(IndexError):
+        ob = Test.Int32ArrayTest()
+        items[-6]
 
-        def test():
-            object = Test.Int32ArrayTest()
-            object.items[5] = 0
+    with pytest.raises(IndexError):
+        ob = Test.Int32ArrayTest()
+        items[-6] = 0
 
-        self.assertRaises(IndexError, test)
 
-        def test():
-            object = Test.Int32ArrayTest()
-            items[-6]
+def test_array_contains():
+    """Test array support for __contains__."""
 
-        self.assertRaises(IndexError, test)
+    ob = Test.Int32ArrayTest()
+    items = ob.items
 
-        def test():
-            object = Test.Int32ArrayTest()
-            items[-6] = 0
+    assert 0 in items
+    assert 1 in items
+    assert 2 in items
+    assert 3 in items
+    assert 4 in items
 
-        self.assertRaises(IndexError, test)
+    assert not (5 in items)  # "H:\Python27\Lib\unittest\case.py", line 592, in deprecated_func,
+    assert not (-1 in items)  # TypeError: int() argument must be a string or a number, not 'NoneType'
+    assert not (None in items)  # which threw ^ here which is a little odd.
+    # But when run from runtests.py. Not when this module ran by itself.
 
 
-    def testArrayContains(self):
-        """Test array support for __contains__."""
+def test_boolean_array():
+    """Test boolean arrays."""
+    ob = Test.BooleanArrayTest()
+    items = ob.items
 
-        object = Test.Int32ArrayTest()
-        items = object.items
+    assert len(items) == 5
 
-        self.assertTrue(0 in items)
-        self.assertTrue(1 in items)
-        self.assertTrue(2 in items)
-        self.assertTrue(3 in items)
-        self.assertTrue(4 in items)
+    assert items[0] is True
+    assert items[1] is False
+    assert items[2] is True
+    assert items[3] is False
+    assert items[4] is True
 
-        self.assertFalse(5 in items)    # "H:\Python27\Lib\unittest\case.py", line 592, in deprecated_func,
-        self.assertFalse(-1 in items)   #TypeError: int() argument must be a string or a number, not 'NoneType'
-        self.assertFalse(None in items) # which threw ^ here which is a little odd.
-        # But when run from runtests.py. Not when this module ran by itself.
+    items[0] = False
+    assert items[0] is False
 
+    items[0] = True
+    assert items[0] is True
 
-    def testBooleanArray(self):
-        """Test boolean arrays."""
-        object = Test.BooleanArrayTest()
-        items = object.items
+    with pytest.raises(TypeError):
+        ob = Test.ByteArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == True)
-        self.assertTrue(items[1] == False)
-        self.assertTrue(items[2] == True)
-        self.assertTrue(items[3] == False)
-        self.assertTrue(items[4] == True)
+    with pytest.raises(TypeError):
+        ob = Test.ByteArrayTest()
+        ob[0] = "wrong"
 
-        items[0] = False
-        self.assertTrue(items[0] == False)
 
-        items[0] = True
-        self.assertTrue(items[0] == True)
+def test_byte_array():
+    """Test byte arrays."""
+    ob = Test.ByteArrayTest()
+    items = ob.items
 
-        def test():
-            object = Test.ByteArrayTest()
-            v = object.items["wrong"]
+    assert len(items) == 5
 
-        self.assertRaises(TypeError, test)
+    assert items[0] == 0
+    assert items[4] == 4
 
-        def test():
-            object = Test.ByteArrayTest()
-            object[0] = "wrong"
+    max_ = 255
+    min_ = 0
 
-        self.assertRaises(TypeError, test)
+    items[0] = max_
+    assert items[0] == max_
 
+    items[0] = min_
+    assert items[0] == min_
 
-    def testByteArray(self):
-        """Test byte arrays."""
-        object = Test.ByteArrayTest()
-        items = object.items
+    items[-4] = max_
+    assert items[-4] == max_
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    items[-1] = min_
+    assert items[-1] == min_
 
-        max = 255
-        min = 0
+    with pytest.raises(OverflowError):
+        ob = Test.ByteArrayTest()
+        ob.items[0] = max_ + 1
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    with pytest.raises(OverflowError):
+        ob = Test.ByteArrayTest()
+        ob.items[0] = min_ - 1
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    with pytest.raises(TypeError):
+        ob = Test.ByteArrayTest()
+        _ = ob.items["wrong"]
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    with pytest.raises(TypeError):
+        ob = Test.ByteArrayTest()
+        ob[0] = "wrong"
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
 
-        def test():
-            object = Test.ByteArrayTest()
-            object.items[0] = max + 1
+def test_sbyte_array():
+    """Test sbyte arrays."""
+    ob = Test.SByteArrayTest()
+    items = ob.items
 
-        self.assertRaises(OverflowError, test)
+    assert len(items) == 5
 
-        def test():
-            object = Test.ByteArrayTest()
-            object.items[0] = min - 1
+    assert items[0] == 0
+    assert items[4] == 4
 
-        self.assertRaises(OverflowError, test)
+    max_ = 127
+    min_ = -128
 
-        def test():
-            object = Test.ByteArrayTest()
-            v = object.items["wrong"]
+    items[0] = max_
+    assert items[0] == max_
 
-        self.assertRaises(TypeError, test)
+    items[0] = min_
+    assert items[0] == min_
 
-        def test():
-            object = Test.ByteArrayTest()
-            object[0] = "wrong"
+    items[-4] = max_
+    assert items[-4] == max_
 
-        self.assertRaises(TypeError, test)
+    items[-1] = min_
+    assert items[-1] == min_
 
+    with pytest.raises(OverflowError):
+        ob = Test.SByteArrayTest()
+        ob.items[0] = max_ + 1
 
-    def testSByteArray(self):
-        """Test sbyte arrays."""
-        object = Test.SByteArrayTest()
-        items = object.items
+    with pytest.raises(OverflowError):
+        ob = Test.SByteArrayTest()
+        ob.items[0] = min_ - 1
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    with pytest.raises(TypeError):
+        ob = Test.SByteArrayTest()
+        _ = ob.items["wrong"]
 
-        max = 127
-        min = -128
+    with pytest.raises(TypeError):
+        ob = Test.SByteArrayTest()
+        ob[0] = "wrong"
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+def test_char_array():
+    """Test char arrays."""
+    ob = Test.CharArrayTest()
+    items = ob.items
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    assert len(items) == 5
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    assert items[0] == 'a'
+    assert items[4] == 'e'
 
-        def test():
-            object = Test.SByteArrayTest()
-            object.items[0] = max + 1
+    max_ = unichr(65535)
+    min_ = unichr(0)
 
-        self.assertRaises(OverflowError, test)
+    items[0] = max_
+    assert items[0] == max_
 
-        def test():
-            object = Test.SByteArrayTest()
-            object.items[0] = min - 1
+    items[0] = min_
+    assert items[0] == min_
 
-        self.assertRaises(OverflowError, test)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        def test():
-            object = Test.SByteArrayTest()
-            v = object.items["wrong"]
+    items[-1] = min_
+    assert items[-1] == min_
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.CharArrayTest()
+        _ = ob.items["wrong"]
 
-        def test():
-            object = Test.SByteArrayTest()
-            object[0] = "wrong"
+    with pytest.raises(TypeError):
+        ob = Test.CharArrayTest()
+        ob[0] = "wrong"
 
-        self.assertRaises(TypeError, test)
 
+def test_int16_array():
+    """Test Int16 arrays."""
+    ob = Test.Int16ArrayTest()
+    items = ob.items
 
-    def testCharArray(self):
-        """Test char arrays."""
-        object = Test.CharArrayTest()
-        items = object.items
+    assert len(items) == 5
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 'a')
-        self.assertTrue(items[4] == 'e')
+    assert items[0] == 0
+    assert items[4] == 4
 
-        max = unichr(65535)
-        min = unichr(0)
+    max_ = 32767
+    min_ = -32768
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    items[0] = max_
+    assert items[0] == max_
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    items[0] = min_
+    assert items[0] == min_
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    items[-1] = min_
+    assert items[-1] == min_
 
-        def test():
-            object = Test.CharArrayTest()
-            v = object.items["wrong"]
+    with pytest.raises(OverflowError):
+        ob = Test.Int16ArrayTest()
+        ob.items[0] = max_ + 1
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(OverflowError):
+        ob = Test.Int16ArrayTest()
+        ob.items[0] = min_ - 1
 
-        def test():
-            object = Test.CharArrayTest()
-            object[0] = "wrong"
+    with pytest.raises(TypeError):
+        ob = Test.Int16ArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.Int16ArrayTest()
+        ob[0] = "wrong"
 
 
-    def testInt16Array(self):
-        """Test Int16 arrays."""
-        object = Test.Int16ArrayTest()
-        items = object.items
+def test_int32_array():
+    """Test Int32 arrays."""
+    ob = Test.Int32ArrayTest()
+    items = ob.items
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    assert len(items) == 5
 
-        max = 32767
-        min = -32768
+    assert items[0] == 0
+    assert items[4] == 4
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    max_ = 2147483647
+    min_ = -2147483648
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    items[0] = max_
+    assert items[0] == max_
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    items[0] = min_
+    assert items[0] == min_
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        def test():
-            object = Test.Int16ArrayTest()
-            object.items[0] = max + 1
+    items[-1] = min_
+    assert items[-1] == min_
 
-        self.assertRaises(OverflowError, test)
+    with pytest.raises(OverflowError):
+        ob = Test.Int32ArrayTest()
+        ob.items[0] = max_ + 1
 
-        def test():
-            object = Test.Int16ArrayTest()
-            object.items[0] = min - 1
+    with pytest.raises(OverflowError):
+        ob = Test.Int32ArrayTest()
+        ob.items[0] = min_ - 1
 
-        self.assertRaises(OverflowError, test)
+    with pytest.raises(TypeError):
+        ob = Test.Int32ArrayTest()
+        _ = ob.items["wrong"]
 
-        def test():
-            object = Test.Int16ArrayTest()
-            v = object.items["wrong"]
+    with pytest.raises(TypeError):
+        ob = Test.Int32ArrayTest()
+        ob[0] = "wrong"
 
-        self.assertRaises(TypeError, test)
 
-        def test():
-            object = Test.Int16ArrayTest()
-            object[0] = "wrong"
+def test_int64_array():
+    """Test Int64 arrays."""
+    ob = Test.Int64ArrayTest()
+    items = ob.items
 
-        self.assertRaises(TypeError, test)
+    assert len(items) == 5
 
+    assert items[0] == 0
+    assert items[4] == 4
 
-    def testInt32Array(self):
-        """Test Int32 arrays."""
-        object = Test.Int32ArrayTest()
-        items = object.items
+    max_ = long(9223372036854775807)
+    min_ = long(-9223372036854775808)
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    items[0] = max_
+    assert items[0] == max_
 
-        max = 2147483647
-        min = -2147483648
+    items[0] = min_
+    assert items[0] == min_
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    items[-1] = min_
+    assert items[-1] == min_
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    with pytest.raises(OverflowError):
+        ob = Test.Int64ArrayTest()
+        ob.items[0] = max_ + 1
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    with pytest.raises(OverflowError):
+        ob = Test.Int64ArrayTest()
+        ob.items[0] = min_ - 1
 
-        def test():
-            object = Test.Int32ArrayTest()
-            object.items[0] = max + 1
+    with pytest.raises(TypeError):
+        ob = Test.Int64ArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertRaises(OverflowError, test)
+    with pytest.raises(TypeError):
+        ob = Test.Int64ArrayTest()
+        ob[0] = "wrong"
 
-        def test():
-            object = Test.Int32ArrayTest()
-            object.items[0] = min - 1
 
-        self.assertRaises(OverflowError, test)
+def test_uint16_array():
+    """Test UInt16 arrays."""
+    ob = Test.UInt16ArrayTest()
+    items = ob.items
 
-        def test():
-            object = Test.Int32ArrayTest()
-            v = object.items["wrong"]
+    assert len(items) == 5
 
-        self.assertRaises(TypeError, test)
+    assert items[0] == 0
+    assert items[4] == 4
 
-        def test():
-            object = Test.Int32ArrayTest()
-            object[0] = "wrong"
+    max_ = 65535
+    min_ = 0
 
-        self.assertRaises(TypeError, test)
+    items[0] = max_
+    assert items[0] == max_
 
+    items[0] = min_
+    assert items[0] == min_
 
-    def testInt64Array(self):
-        """Test Int64 arrays."""
-        object = Test.Int64ArrayTest()
-        items = object.items
+    items[-4] = max_
+    assert items[-4] == max_
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    items[-1] = min_
+    assert items[-1] == min_
 
-        max = long(9223372036854775807)
-        min = long(-9223372036854775808)
+    with pytest.raises(OverflowError):
+        ob = Test.UInt16ArrayTest()
+        ob.items[0] = max_ + 1
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    with pytest.raises(OverflowError):
+        ob = Test.UInt16ArrayTest()
+        ob.items[0] = min_ - 1
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    with pytest.raises(TypeError):
+        ob = Test.UInt16ArrayTest()
+        _ = ob.items["wrong"]
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    with pytest.raises(TypeError):
+        ob = Test.UInt16ArrayTest()
+        ob[0] = "wrong"
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
 
-        def test():
-            object = Test.Int64ArrayTest()
-            object.items[0] = max + 1
+def test_uint32_array():
+    """Test UInt32 arrays."""
+    ob = Test.UInt32ArrayTest()
+    items = ob.items
 
-        self.assertRaises(OverflowError, test)
+    assert len(items) == 5
 
-        def test():
-            object = Test.Int64ArrayTest()
-            object.items[0] = min - 1
+    assert items[0] == 0
+    assert items[4] == 4
 
-        self.assertRaises(OverflowError, test)
+    max_ = long(4294967295)
+    min_ = 0
 
-        def test():
-            object = Test.Int64ArrayTest()
-            v = object.items["wrong"]
+    items[0] = max_
+    assert items[0] == max_
 
-        self.assertRaises(TypeError, test)
+    items[0] = min_
+    assert items[0] == min_
 
-        def test():
-            object = Test.Int64ArrayTest()
-            object[0] = "wrong"
+    items[-4] = max_
+    assert items[-4] == max_
 
-        self.assertRaises(TypeError, test)
+    items[-1] = min_
+    assert items[-1] == min_
 
+    with pytest.raises(OverflowError):
+        ob = Test.UInt32ArrayTest()
+        ob.items[0] = max_ + 1
 
-    def testUInt16Array(self):
-        """Test UInt16 arrays."""
-        object = Test.UInt16ArrayTest()
-        items = object.items
+    with pytest.raises(OverflowError):
+        ob = Test.UInt32ArrayTest()
+        ob.items[0] = min_ - 1
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    with pytest.raises(TypeError):
+        ob = Test.UInt32ArrayTest()
+        _ = ob.items["wrong"]
 
-        max = 65535
-        min = 0
+    with pytest.raises(TypeError):
+        ob = Test.UInt32ArrayTest()
+        ob[0] = "wrong"
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+def test_uint64_array():
+    """Test UInt64 arrays."""
+    ob = Test.UInt64ArrayTest()
+    items = ob.items
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    assert len(items) == 5
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    assert items[0] == 0
+    assert items[4] == 4
 
-        def test():
-            object = Test.UInt16ArrayTest()
-            object.items[0] = max + 1
+    max_ = long(18446744073709551615)
+    min_ = 0
 
-        self.assertRaises(OverflowError, test)
+    items[0] = max_
+    assert items[0] == max_
 
-        def test():
-            object = Test.UInt16ArrayTest()
-            object.items[0] = min - 1
+    items[0] = min_
+    assert items[0] == min_
 
-        self.assertRaises(OverflowError, test)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        def test():
-            object = Test.UInt16ArrayTest()
-            v = object.items["wrong"]
+    items[-1] = min_
+    assert items[-1] == min_
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(OverflowError):
+        ob = Test.UInt64ArrayTest()
+        ob.items[0] = max_ + 1
 
-        def test():
-            object = Test.UInt16ArrayTest()
-            object[0] = "wrong"
+    with pytest.raises(OverflowError):
+        ob = Test.UInt64ArrayTest()
+        ob.items[0] = min_ - 1
 
-        self.assertRaises(TypeError, test)
-        
+    with pytest.raises(TypeError):
+        ob = Test.UInt64ArrayTest()
+        _ = ob.items["wrong"]
 
-    def testUInt32Array(self):
-        """Test UInt32 arrays."""
-        object = Test.UInt32ArrayTest()
-        items = object.items
+    with pytest.raises(TypeError):
+        ob = Test.UInt64ArrayTest()
+        ob[0] = "wrong"
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
 
-        max = long(4294967295)
-        min = 0
+def test_single_array():
+    """Test Single arrays."""
+    ob = Test.SingleArrayTest()
+    items = ob.items
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    assert len(items) == 5
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    assert items[0] == 0.0
+    assert items[4] == 4.0
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    max_ = 3.402823e38
+    min_ = -3.402823e38
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    items[0] = max_
+    assert items[0] == max_
 
-        def test():
-            object = Test.UInt32ArrayTest()
-            object.items[0] = max + 1
+    items[0] = min_
+    assert items[0] == min_
 
-        self.assertRaises(OverflowError, test)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        def test():
-            object = Test.UInt32ArrayTest()
-            object.items[0] = min - 1
+    items[-1] = min_
+    assert items[-1] == min_
 
-        self.assertRaises(OverflowError, test)
+    with pytest.raises(TypeError):
+        ob = Test.SingleArrayTest()
+        _ = ob.items["wrong"]
 
-        def test():
-            object = Test.UInt32ArrayTest()
-            v = object.items["wrong"]
+    with pytest.raises(TypeError):
+        ob = Test.SingleArrayTest()
+        ob[0] = "wrong"
 
-        self.assertRaises(TypeError, test)
 
-        def test():
-            object = Test.UInt32ArrayTest()
-            object[0] = "wrong"
+def test_double_array():
+    """Test Double arrays."""
+    ob = Test.DoubleArrayTest()
+    items = ob.items
 
-        self.assertRaises(TypeError, test)
+    assert len(items) == 5
 
+    assert items[0] == 0.0
+    assert items[4] == 4.0
 
-    def testUInt64Array(self):
-        """Test UInt64 arrays."""
-        object = Test.UInt64ArrayTest()
-        items = object.items
+    max_ = 1.7976931348623157e308
+    min_ = -1.7976931348623157e308
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0)
-        self.assertTrue(items[4] == 4)
+    items[0] = max_
+    assert items[0] == max_
 
-        max = long(18446744073709551615)
-        min = 0
+    items[0] = min_
+    assert items[0] == min_
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    items[-4] = max_
+    assert items[-4] == max_
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    items[-1] = min_
+    assert items[-1] == min_
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    with pytest.raises(TypeError):
+        ob = Test.DoubleArrayTest()
+        _ = ob.items["wrong"]
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    with pytest.raises(TypeError):
+        ob = Test.DoubleArrayTest()
+        ob[0] = "wrong"
 
-        def test():
-            object = Test.UInt64ArrayTest()
-            object.items[0] = max + 1
 
-        self.assertRaises(OverflowError, test)
+def test_decimal_array():
+    """Test Decimal arrays."""
+    ob = Test.DecimalArrayTest()
+    items = ob.items
 
-        def test():
-            object = Test.UInt64ArrayTest()
-            object.items[0] = min - 1
+    from System import Decimal
+    max_d = Decimal.Parse("79228162514264337593543950335")
+    min_d = Decimal.Parse("-79228162514264337593543950335")
 
-        self.assertRaises(OverflowError, test)
+    assert len(items) == 5
 
-        def test():
-            object = Test.UInt64ArrayTest()
-            v = object.items["wrong"]
+    assert items[0] == Decimal(0)
+    assert items[4] == Decimal(4)
 
-        self.assertRaises(TypeError, test)
+    items[0] = max_d
+    assert items[0] == max_d
 
-        def test():
-            object = Test.UInt64ArrayTest()
-            object[0] = "wrong"
+    items[0] = min_d
+    assert items[0] == min_d
 
-        self.assertRaises(TypeError, test)
+    items[-4] = max_d
+    assert items[-4] == max_d
 
+    items[-1] = min_d
+    assert items[-1] == min_d
 
-    def testSingleArray(self):
-        """Test Single arrays."""
-        object = Test.SingleArrayTest()
-        items = object.items
+    with pytest.raises(TypeError):
+        ob = Test.DecimalArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0.0)
-        self.assertTrue(items[4] == 4.0)
+    with pytest.raises(TypeError):
+        ob = Test.DecimalArrayTest()
+        ob[0] = "wrong"
 
-        max = 3.402823e38
-        min = -3.402823e38
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+def test_string_array():
+    """Test String arrays."""
+    ob = Test.StringArrayTest()
+    items = ob.items
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    assert len(items) == 5
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    assert items[0] == '0'
+    assert items[4] == '4'
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    items[0] = "spam"
+    assert items[0] == "spam"
 
-        def test():
-            object = Test.SingleArrayTest()
-            v = object.items["wrong"]
+    items[0] = "eggs"
+    assert items[0] == "eggs"
 
-        self.assertRaises(TypeError, test)
+    items[-4] = "spam"
+    assert items[-4] == "spam"
 
-        def test():
-            object = Test.SingleArrayTest()
-            object[0] = "wrong"
+    items[-1] = "eggs"
+    assert items[-1] == "eggs"
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.StringArrayTest()
+        _ = ob.items["wrong"]
 
+    with pytest.raises(TypeError):
+        ob = Test.Int64ArrayTest()
+        ob[0] = 0
 
-    def testDoubleArray(self):
-        """Test Double arrays."""
-        object = Test.DoubleArrayTest()
-        items = object.items
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == 0.0)
-        self.assertTrue(items[4] == 4.0)
+def test_enum_array():
+    """Test enum arrays."""
+    from Python.Test import ShortEnum
+    ob = Test.EnumArrayTest()
+    items = ob.items
 
-        max = 1.7976931348623157e308
-        min = -1.7976931348623157e308
+    assert len(items) == 5
 
-        items[0] = max
-        self.assertTrue(items[0] == max)
+    assert items[0] == ShortEnum.Zero
+    assert items[4] == ShortEnum.Four
 
-        items[0] = min
-        self.assertTrue(items[0] == min)
+    items[0] = ShortEnum.Four
+    assert items[0] == ShortEnum.Four
 
-        items[-4] = max
-        self.assertTrue(items[-4] == max)
+    items[0] = ShortEnum.Zero
+    assert items[0] == ShortEnum.Zero
 
-        items[-1] = min
-        self.assertTrue(items[-1] == min)
+    items[-4] = ShortEnum.Four
+    assert items[-4] == ShortEnum.Four
 
-        def test():
-            object = Test.DoubleArrayTest()
-            v = object.items["wrong"]
+    items[-1] = ShortEnum.Zero
+    assert items[-1] == ShortEnum.Zero
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(ValueError):
+        ob = Test.EnumArrayTest()
+        ob.items[0] = 99
 
-        def test():
-            object = Test.DoubleArrayTest()
-            object[0] = "wrong"
+    with pytest.raises(TypeError):
+        ob = Test.EnumArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.EnumArrayTest()
+        ob[0] = "wrong"
 
 
-    def testDecimalArray(self):
-        """Test Decimal arrays."""
-        object = Test.DecimalArrayTest()
-        items = object.items
+def test_object_array():
+    """Test ob arrays."""
+    from Python.Test import Spam
+    ob = Test.ObjectArrayTest()
+    items = ob.items
 
-        from System import Decimal
-        max_d = Decimal.Parse("79228162514264337593543950335")
-        min_d = Decimal.Parse("-79228162514264337593543950335")
+    assert len(items) == 5
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == Decimal(0))
-        self.assertTrue(items[4] == Decimal(4))
+    assert items[0].GetValue() == "0"
+    assert items[4].GetValue() == "4"
 
-        items[0] = max_d
-        self.assertTrue(items[0] == max_d)
+    items[0] = Spam("4")
+    assert items[0].GetValue() == "4"
 
-        items[0] = min_d
-        self.assertTrue(items[0] == min_d)
+    items[0] = Spam("0")
+    assert items[0].GetValue() == "0"
 
-        items[-4] = max_d
-        self.assertTrue(items[-4] == max_d)
+    items[-4] = Spam("4")
+    assert items[-4].GetValue() == "4"
 
-        items[-1] = min_d
-        self.assertTrue(items[-1] == min_d)
+    items[-1] = Spam("0")
+    assert items[-1].GetValue() == "0"
 
-        def test():
-            object = Test.DecimalArrayTest()
-            v = object.items["wrong"]
+    items[0] = 99
+    assert items[0] == 99
 
-        self.assertRaises(TypeError, test)
+    items[0] = None
+    assert items[0] is None
 
-        def test():
-            object = Test.DecimalArrayTest()
-            object[0] = "wrong"
+    with pytest.raises(TypeError):
+        ob = Test.ObjectArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.ObjectArrayTest()
+        ob.items["wrong"] = "wrong"
 
 
-    def testStringArray(self):
-        """Test String arrays."""
-        object = Test.StringArrayTest()
-        items = object.items
+def test_null_array():
+    """Test null arrays."""
+    ob = Test.NullArrayTest()
+    items = ob.items
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == '0')
-        self.assertTrue(items[4] == '4')
+    assert len(items) == 5
 
-        items[0] = "spam"
-        self.assertTrue(items[0] == "spam")
+    assert items[0] is None
+    assert items[4] is None
 
-        items[0] = "eggs"
-        self.assertTrue(items[0] == "eggs")
+    items[0] = "spam"
+    assert items[0] == "spam"
 
-        items[-4] = "spam"
-        self.assertTrue(items[-4] == "spam")
+    items[0] = None
+    assert items[0] is None
 
-        items[-1] = "eggs"
-        self.assertTrue(items[-1] == "eggs")
+    items[-4] = "spam"
+    assert items[-4] == "spam"
 
-        def test():
-            object = Test.StringArrayTest()
-            v = object.items["wrong"]
+    items[-1] = None
+    assert items[-1] is None
 
-        self.assertRaises(TypeError, test)
+    empty = ob.empty
+    assert len(empty) == 0
 
-        def test():
-            object = Test.Int64ArrayTest()
-            object[0] = 0
+    with pytest.raises(TypeError):
+        ob = Test.NullArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
 
+def test_interface_array():
+    """Test interface arrays."""
+    from Python.Test import Spam
+    ob = Test.InterfaceArrayTest()
+    items = ob.items
 
-    def testEnumArray(self):
-        """Test enum arrays."""
-        from Python.Test import ShortEnum
-        object = Test.EnumArrayTest()
-        items = object.items
+    assert len(items) == 5
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == ShortEnum.Zero)
-        self.assertTrue(items[4] == ShortEnum.Four)
+    assert items[0].GetValue() == "0"
+    assert items[4].GetValue() == "4"
 
-        items[0] = ShortEnum.Four
-        self.assertTrue(items[0] == ShortEnum.Four)
+    items[0] = Spam("4")
+    assert items[0].GetValue() == "4"
 
-        items[0] = ShortEnum.Zero
-        self.assertTrue(items[0] == ShortEnum.Zero)
+    items[0] = Spam("0")
+    assert items[0].GetValue() == "0"
 
-        items[-4] = ShortEnum.Four
-        self.assertTrue(items[-4] == ShortEnum.Four)
+    items[-4] = Spam("4")
+    assert items[-4].GetValue() == "4"
 
-        items[-1] = ShortEnum.Zero
-        self.assertTrue(items[-1] == ShortEnum.Zero)
+    items[-1] = Spam("0")
+    assert items[-1].GetValue() == "0"
 
-        def test():
-            object = Test.EnumArrayTest()
-            object.items[0] = 99
+    items[0] = None
+    assert items[0] is None
 
-        self.assertRaises(ValueError, test)
+    with pytest.raises(TypeError):
+        ob = Test.InterfaceArrayTest()
+        ob.items[0] = 99
 
-        def test():
-            object = Test.EnumArrayTest()
-            v = object.items["wrong"]
+    with pytest.raises(TypeError):
+        ob = Test.InterfaceArrayTest()
+        _ = ob.items["wrong"]
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.InterfaceArrayTest()
+        ob.items["wrong"] = "wrong"
 
-        def test():
-            object = Test.EnumArrayTest()
-            object[0] = "wrong"
 
-        self.assertRaises(TypeError, test)
+def test_typed_array():
+    """Test typed arrays."""
+    from Python.Test import Spam
+    ob = Test.TypedArrayTest()
+    items = ob.items
 
+    assert len(items) == 5
 
-    def testObjectArray(self):
-        """Test object arrays."""
-        from Python.Test import Spam
-        object = Test.ObjectArrayTest()
-        items = object.items
+    assert items[0].GetValue() == "0"
+    assert items[4].GetValue() == "4"
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0].GetValue() == "0")
-        self.assertTrue(items[4].GetValue() == "4")
+    items[0] = Spam("4")
+    assert items[0].GetValue() == "4"
 
-        items[0] = Spam("4")
-        self.assertTrue(items[0].GetValue() == "4")
+    items[0] = Spam("0")
+    assert items[0].GetValue() == "0"
 
-        items[0] = Spam("0")
-        self.assertTrue(items[0].GetValue() == "0")
+    items[-4] = Spam("4")
+    assert items[-4].GetValue() == "4"
 
-        items[-4] = Spam("4")
-        self.assertTrue(items[-4].GetValue() == "4")
+    items[-1] = Spam("0")
+    assert items[-1].GetValue() == "0"
 
-        items[-1] = Spam("0")
-        self.assertTrue(items[-1].GetValue() == "0")
+    items[0] = None
+    assert items[0] is None
 
-        items[0] = 99
-        self.assertTrue(items[0] == 99)
+    with pytest.raises(TypeError):
+        ob = Test.TypedArrayTest()
+        ob.items[0] = 99
 
-        items[0] = None
-        self.assertTrue(items[0] == None)
+    with pytest.raises(TypeError):
+        ob = Test.TypedArrayTest()
+        _ = ob.items["wrong"]
 
-        def test():
-            object = Test.ObjectArrayTest()
-            v = object.items["wrong"]
+    with pytest.raises(TypeError):
+        ob = Test.TypedArrayTest()
+        ob.items["wrong"] = "wrong"
 
-        self.assertRaises(TypeError, test)
 
-        def test():
-            object = Test.ObjectArrayTest()
-            object.items["wrong"] = "wrong"
+def test_multi_dimensional_array():
+    """Test multi-dimensional arrays."""
+    ob = Test.MultiDimensionalArrayTest()
+    items = ob.items
 
-        self.assertRaises(TypeError, test)
+    assert len(items) == 25
 
+    assert items[0, 0] == 0
+    assert items[0, 1] == 1
+    assert items[0, 2] == 2
+    assert items[0, 3] == 3
+    assert items[0, 4] == 4
+    assert items[1, 0] == 5
+    assert items[1, 1] == 6
+    assert items[1, 2] == 7
+    assert items[1, 3] == 8
+    assert items[1, 4] == 9
+    assert items[2, 0] == 10
+    assert items[2, 1] == 11
+    assert items[2, 2] == 12
+    assert items[2, 3] == 13
+    assert items[2, 4] == 14
+    assert items[3, 0] == 15
+    assert items[3, 1] == 16
+    assert items[3, 2] == 17
+    assert items[3, 3] == 18
+    assert items[3, 4] == 19
+    assert items[4, 0] == 20
+    assert items[4, 1] == 21
+    assert items[4, 2] == 22
+    assert items[4, 3] == 23
+    assert items[4, 4] == 24
 
-    def testNullArray(self):
-        """Test null arrays."""
-        object = Test.NullArrayTest()
-        items = object.items
+    max_ = 2147483647
+    min_ = -2147483648
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0] == None)
-        self.assertTrue(items[4] == None)
+    items[0, 0] = max_
+    assert items[0, 0] == max_
 
-        items[0] = "spam"
-        self.assertTrue(items[0] == "spam")
+    items[0, 0] = min_
+    assert items[0, 0] == min_
 
-        items[0] = None
-        self.assertTrue(items[0] == None)
+    items[-4, 0] = max_
+    assert items[-4, 0] == max_
 
-        items[-4] = "spam"
-        self.assertTrue(items[-4] == "spam")
+    items[-1, -1] = min_
+    assert items[-1, -1] == min_
 
-        items[-1] = None
-        self.assertTrue(items[-1] == None)
+    with pytest.raises(OverflowError):
+        ob = Test.MultiDimensionalArrayTest()
+        ob.items[0, 0] = max_ + 1
 
-        empty = object.empty
-        self.assertTrue(len(empty) == 0)
+    with pytest.raises(OverflowError):
+        ob = Test.MultiDimensionalArrayTest()
+        ob.items[0, 0] = min_ - 1
 
-        def test():
-            object = Test.NullArrayTest()
-            v = object.items["wrong"]
+    with pytest.raises(TypeError):
+        ob = Test.MultiDimensionalArrayTest()
+        _ = ob.items["wrong", 0]
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        ob = Test.MultiDimensionalArrayTest()
+        ob[0, 0] = "wrong"
 
 
-    def testInterfaceArray(self):
-        """Test interface arrays."""
-        from Python.Test import Spam
-        object = Test.InterfaceArrayTest()
-        items = object.items
+def test_array_iteration():
+    """Test array iteration."""
+    items = Test.Int32ArrayTest().items
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0].GetValue() == "0")
-        self.assertTrue(items[4].GetValue() == "4")
+    for i in items:
+        assert (i > -1) and (i < 5)
 
-        items[0] = Spam("4")
-        self.assertTrue(items[0].GetValue() == "4")
+    items = Test.NullArrayTest().items
 
-        items[0] = Spam("0")
-        self.assertTrue(items[0].GetValue() == "0")
+    for i in items:
+        assert i is None
 
-        items[-4] = Spam("4")
-        self.assertTrue(items[-4].GetValue() == "4")
+    empty = Test.NullArrayTest().empty
 
-        items[-1] = Spam("0")
-        self.assertTrue(items[-1].GetValue() == "0")
+    for i in empty:
+        raise TypeError('iteration over empty array')
 
-        items[0] = None
-        self.assertTrue(items[0] == None)
 
-        def test():
-            object = Test.InterfaceArrayTest()
-            object.items[0] = 99
+def test_tuple_array_conversion():
+    """Test conversion of tuples to array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        self.assertRaises(TypeError, test)
+    items = []
+    for i in range(10):
+        items.append(Spam(str(i)))
+    items = tuple(items)
 
-        def test():
-            object = Test.InterfaceArrayTest()
-            v = object.items["wrong"]
+    result = ArrayConversionTest.EchoRange(items)
+    assert result[0].__class__ == Spam
+    assert len(result) == 10
 
-        self.assertRaises(TypeError, test)
 
-        def test():
-            object = Test.InterfaceArrayTest()
-            object.items["wrong"] = "wrong"
+def test_tuple_nested_array_conversion():
+    """Test conversion of tuples to array-of-array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        self.assertRaises(TypeError, test)
+    items = []
+    for i in range(10):
+        subs = []
+        for _ in range(10):
+            subs.append(Spam(str(i)))
+        items.append(tuple(subs))
+    items = tuple(items)
 
+    result = ArrayConversionTest.EchoRangeAA(items)
 
-    def testTypedArray(self):
-        """Test typed arrays."""
-        from Python.Test import Spam
-        object = Test.TypedArrayTest()
-        items = object.items
+    assert len(result) == 10
+    assert len(result[0]) == 10
+    assert result[0][0].__class__ == Spam
 
-        self.assertTrue(len(items) == 5)
-        
-        self.assertTrue(items[0].GetValue() == "0")
-        self.assertTrue(items[4].GetValue() == "4")
 
-        items[0] = Spam("4")
-        self.assertTrue(items[0].GetValue() == "4")
+def test_list_array_conversion():
+    """Test conversion of lists to array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        items[0] = Spam("0")
-        self.assertTrue(items[0].GetValue() == "0")
+    items = []
+    for i in range(10):
+        items.append(Spam(str(i)))
 
-        items[-4] = Spam("4")
-        self.assertTrue(items[-4].GetValue() == "4")
+    result = ArrayConversionTest.EchoRange(items)
+    assert result[0].__class__ == Spam
+    assert len(result) == 10
 
-        items[-1] = Spam("0")
-        self.assertTrue(items[-1].GetValue() == "0")
 
-        items[0] = None
-        self.assertTrue(items[0] == None)
+def test_list_nested_array_conversion():
+    """Test conversion of lists to array-of-array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        def test():
-            object = Test.TypedArrayTest()
-            object.items[0] = 99
+    items = []
+    for i in range(10):
+        subs = []
+        for _ in range(10):
+            subs.append(Spam(str(i)))
+        items.append(subs)
 
-        self.assertRaises(TypeError, test)
+    result = ArrayConversionTest.EchoRangeAA(items)
 
-        def test():
-            object = Test.TypedArrayTest()
-            v = object.items["wrong"]
+    assert len(result) == 10
+    assert len(result[0]) == 10
+    assert result[0][0].__class__ == Spam
 
-        self.assertRaises(TypeError, test)
 
-        def test():
-            object = Test.TypedArrayTest()
-            object.items["wrong"] = "wrong"
+def test_sequence_array_conversion():
+    """Test conversion of sequence-like obs to array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        self.assertRaises(TypeError, test)
+    items = UserList()
+    for i in range(10):
+        items.append(Spam(str(i)))
 
+    result = ArrayConversionTest.EchoRange(items)
+    assert result[0].__class__ == Spam
+    assert len(result) == 10
 
-    def testMultiDimensionalArray(self):
-        """Test multi-dimensional arrays."""
-        object = Test.MultiDimensionalArrayTest()
-        items = object.items
 
-        self.assertTrue(len(items) == 25)
-        
-        self.assertTrue(items[0, 0] == 0)
-        self.assertTrue(items[0, 1] == 1)
-        self.assertTrue(items[0, 2] == 2)
-        self.assertTrue(items[0, 3] == 3)
-        self.assertTrue(items[0, 4] == 4)
-        self.assertTrue(items[1, 0] == 5)
-        self.assertTrue(items[1, 1] == 6)
-        self.assertTrue(items[1, 2] == 7)
-        self.assertTrue(items[1, 3] == 8)
-        self.assertTrue(items[1, 4] == 9)
-        self.assertTrue(items[2, 0] == 10)
-        self.assertTrue(items[2, 1] == 11)
-        self.assertTrue(items[2, 2] == 12)
-        self.assertTrue(items[2, 3] == 13)
-        self.assertTrue(items[2, 4] == 14)
-        self.assertTrue(items[3, 0] == 15)
-        self.assertTrue(items[3, 1] == 16)
-        self.assertTrue(items[3, 2] == 17)
-        self.assertTrue(items[3, 3] == 18)
-        self.assertTrue(items[3, 4] == 19)
-        self.assertTrue(items[4, 0] == 20)
-        self.assertTrue(items[4, 1] == 21)
-        self.assertTrue(items[4, 2] == 22)
-        self.assertTrue(items[4, 3] == 23)
-        self.assertTrue(items[4, 4] == 24)
-        
-        max = 2147483647
-        min = -2147483648
+def test_sequence_nested_array_conversion():
+    """Test conversion of sequences to array-of-array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        items[0, 0] = max
-        self.assertTrue(items[0, 0] == max)
+    items = UserList()
+    for i in range(10):
+        subs = UserList()
+        for _ in range(10):
+            subs.append(Spam(str(i)))
+        items.append(subs)
 
-        items[0, 0] = min
-        self.assertTrue(items[0, 0] == min)
+    result = ArrayConversionTest.EchoRangeAA(items)
 
-        items[-4, 0] = max
-        self.assertTrue(items[-4, 0] == max)
+    assert len(result) == 10
+    assert len(result[0]) == 10
+    assert result[0][0].__class__ == Spam
 
-        items[-1, -1] = min
-        self.assertTrue(items[-1, -1] == min)
 
-        def test():
-            object = Test.MultiDimensionalArrayTest()
-            object.items[0, 0] = max + 1
+def test_tuple_array_conversion_type_checking():
+    """Test error handling for tuple conversion to array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        self.assertRaises(OverflowError, test)
+    # This should work, because null / None is a valid value in an
+    # array of reference types.
 
-        def test():
-            object = Test.MultiDimensionalArrayTest()
-            object.items[0, 0] = min - 1
+    items = []
+    for i in range(10):
+        items.append(Spam(str(i)))
+    items[1] = None
+    items = tuple(items)
 
-        self.assertRaises(OverflowError, test)
+    result = ArrayConversionTest.EchoRange(items)
 
-        def test():
-            object = Test.MultiDimensionalArrayTest()
-            v = object.items["wrong", 0]
+    assert result[0].__class__ == Spam
+    assert result[1] is None
+    assert len(result) == 10
 
-        self.assertRaises(TypeError, test)
+    with pytest.raises(TypeError):
+        temp = list(items)
+        temp[1] = 1
+        _ = ArrayConversionTest.EchoRange(tuple(temp))
 
-        def test():
-            object = Test.MultiDimensionalArrayTest()
-            object[0, 0] = "wrong"
+    with pytest.raises(TypeError):
+        temp = list(items)
+        temp[1] = "spam"
+        _ = ArrayConversionTest.EchoRange(tuple(temp))
 
-        self.assertRaises(TypeError, test)
 
+def test_list_array_conversion_type_checking():
+    """Test error handling for list conversion to array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-    def testArrayIteration(self):
-        """Test array iteration."""
-        items = Test.Int32ArrayTest().items
+    # This should work, because null / None is a valid value in an
+    # array of reference types.
 
-        for i in items:
-            self.assertTrue((i > -1) and (i < 5))
+    items = []
+    for i in range(10):
+        items.append(Spam(str(i)))
+    items[1] = None
 
-        items = Test.NullArrayTest().items
+    result = ArrayConversionTest.EchoRange(items)
 
-        for i in items:
-            self.assertTrue(i == None)
+    assert result[0].__class__ == Spam
+    assert result[1] is None
+    assert len(result) == 10
 
-        empty = Test.NullArrayTest().empty
+    with pytest.raises(TypeError):
+        items[1] = 1
+        _ = ArrayConversionTest.EchoRange(items)
 
-        for i in empty:
-            raise TypeError('iteration over empty array')
+    with pytest.raises(TypeError):
+        items[1] = "spam"
+        _ = ArrayConversionTest.EchoRange(items)
 
 
-    def testTupleArrayConversion(self):
-        """Test conversion of tuples to array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
+def test_sequence_array_conversion_type_checking():
+    """Test error handling for sequence conversion to array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
 
-        items = []
-        for i in range(10):
-            items.append(Spam(str(i)))
-        items = tuple(items)
+    # This should work, because null / None is a valid value in an
+    # array of reference types.
 
-        result = ArrayConversionTest.EchoRange(items)
-        self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(len(result) == 10)
+    items = UserList()
+    for i in range(10):
+        items.append(Spam(str(i)))
+    items[1] = None
 
+    result = ArrayConversionTest.EchoRange(items)
 
-    def testTupleNestedArrayConversion(self):
-        """Test conversion of tuples to array-of-array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
+    assert result[0].__class__ == Spam
+    assert result[1] is None
+    assert len(result) == 10
 
-        items = []
-        for i in range(10):
-            subs = []
-            for n in range(10):
-                subs.append(Spam(str(i)))
-            items.append(tuple(subs))
-        items = tuple(items)
-        
-        result = ArrayConversionTest.EchoRangeAA(items)
-        
-        self.assertTrue(len(result) == 10)
-        self.assertTrue(len(result[0]) == 10)
-        self.assertTrue(result[0][0].__class__ == Spam)
+    with pytest.raises(TypeError):
+        items[1] = 1
+        _ = ArrayConversionTest.EchoRange(items)
 
+    with pytest.raises(TypeError):
+        items[1] = "spam"
+        _ = ArrayConversionTest.EchoRange(items)
 
-    def testListArrayConversion(self):
-        """Test conversion of lists to array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
 
-        items = []
-        for i in range(10):
-            items.append(Spam(str(i)))
+def test_md_array_conversion():
+    """Test passing of multi-dimensional array arguments."""
+    from Python.Test import ArrayConversionTest
+    from Python.Test import Spam
+    from System import Array
 
-        result = ArrayConversionTest.EchoRange(items)
-        self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(len(result) == 10)
+    # Currently, the runtime does not support automagic conversion of
+    # Python sequences to true multi-dimensional arrays (though it
+    # does support arrays-of-arrays). This test exists mostly as an
+    # example of how a multi-dimensional array can be created and used
+    # with managed code from Python.
 
+    items = Array.CreateInstance(Spam, 5, 5)
 
-    def testListNestedArrayConversion(self):
-        """Test conversion of lists to array-of-array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
+    for i in range(5):
+        for n in range(5):
+            items.SetValue(Spam(str((i, n))), (i, n))
 
-        items = []
-        for i in range(10):
-            subs = []
-            for n in range(10):
-                subs.append(Spam(str(i)))
-            items.append(subs)
-        
-        result = ArrayConversionTest.EchoRangeAA(items)
-        
-        self.assertTrue(len(result) == 10)
-        self.assertTrue(len(result[0]) == 10)
-        self.assertTrue(result[0][0].__class__ == Spam)
+    result = ArrayConversionTest.EchoRangeMD(items)
 
+    assert len(result) == 25
+    assert result[0, 0].__class__ == Spam
+    assert result[0, 0].__class__ == Spam
 
-    def testSequenceArrayConversion(self):
-        """Test conversion of sequence-like objects to array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
-        if six.PY3:
-            from collections import UserList
-        else:
-            from UserList import UserList
 
-        items = UserList()
-        for i in range(10):
-            items.append(Spam(str(i)))
+def test_boxed_value_type_mutation_result():
+    """Test behavior of boxed value types."""
 
-        result = ArrayConversionTest.EchoRange(items)
-        self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(len(result) == 10)
+    # This test actually exists mostly as documentation of an important
+    # concern when dealing with value types. Python does not have any
+    # value type semantics that can be mapped to the CLR, so it is easy
+    # to accidentally write code like the following which is not really
+    # mutating value types in-place but changing boxed copies.
 
+    from System.Drawing import Point
+    from System import Array
 
-    def testSequenceNestedArrayConversion(self):
-        """Test conversion of sequences to array-of-array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
-        if six.PY3:
-            from collections import UserList
-        else:
-            from UserList import UserList
+    items = Array.CreateInstance(Point, 5)
 
-        items = UserList()
-        for i in range(10):
-            subs = UserList()
-            for n in range(10):
-                subs.append(Spam(str(i)))
-            items.append(subs)
-        
-        result = ArrayConversionTest.EchoRangeAA(items)
-        
-        self.assertTrue(len(result) == 10)
-        self.assertTrue(len(result[0]) == 10)
-        self.assertTrue(result[0][0].__class__ == Spam)
+    for i in range(5):
+        items[i] = Point(i, i)
 
+    for i in range(5):
+        # Boxed items, so set_attr will not change the array member.
+        assert items[i].X == i
+        assert items[i].Y == i
+        items[i].X = i + 1
+        items[i].Y = i + 1
+        assert items[i].X == i
+        assert items[i].Y == i
 
-    def testTupleArrayConversionTypeChecking(self):
-        """Test error handling for tuple conversion to array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
+    for i in range(5):
+        # Demonstrates the workaround that will change the members.
+        assert items[i].X == i
+        assert items[i].Y == i
+        item = items[i]
+        item.X = i + 1
+        item.Y = i + 1
+        items[i] = item
+        assert items[i].X == i + 1
+        assert items[i].Y == i + 1
 
-        # This should work, because null / None is a valid value in an
-        # array of reference types.
 
-        items = []
-        for i in range(10):
-            items.append(Spam(str(i)))
-        items[1] = None
-        items = tuple(items)
+def test_special_array_creation():
+    """Test using the Array[<type>] syntax for creating arrays."""
+    from Python.Test import ISayHello1, InterfaceTest, ShortEnum
+    from System import Array
+    inst = InterfaceTest()
 
-        result = ArrayConversionTest.EchoRange(items)
+    value = Array[System.Boolean]([True, True])
+    assert value[0] is True
+    assert value[1] is True
+    assert value.Length == 2
 
-        self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(result[1] == None)
-        self.assertTrue(len(result) == 10)
+    value = Array[bool]([True, True])
+    assert value[0] is True
+    assert value[1] is True
+    assert value.Length == 2
 
-        def test(items = items):
-            temp = list(items)
-            temp[1] = 1
+    value = Array[System.Byte]([0, 255])
+    assert value[0] == 0
+    assert value[1] == 255
+    assert value.Length == 2
 
-            result = ArrayConversionTest.EchoRange(tuple(temp))
+    value = Array[System.SByte]([0, 127])
+    assert value[0] == 0
+    assert value[1] == 127
+    assert value.Length == 2
 
-        self.assertRaises(TypeError, test) 
+    value = Array[System.Char]([u'A', u'Z'])
+    assert value[0] == u'A'
+    assert value[1] == u'Z'
+    assert value.Length == 2
 
-        def test(items = items):
-            temp = list(items)
-            temp[1] = "spam"
+    value = Array[System.Char]([0, 65535])
+    assert value[0] == unichr(0)
+    assert value[1] == unichr(65535)
+    assert value.Length == 2
 
-            result = ArrayConversionTest.EchoRange(tuple(temp))
+    value = Array[System.Int16]([0, 32767])
+    assert value[0] == 0
+    assert value[1] == 32767
+    assert value.Length == 2
 
-        self.assertRaises(TypeError, test) 
+    value = Array[System.Int32]([0, 2147483647])
+    assert value[0] == 0
+    assert value[1] == 2147483647
+    assert value.Length == 2
 
+    value = Array[int]([0, 2147483647])
+    assert value[0] == 0
+    assert value[1] == 2147483647
+    assert value.Length == 2
 
-    def testListArrayConversionTypeChecking(self):
-        """Test error handling for list conversion to array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
+    value = Array[System.Int64]([0, long(9223372036854775807)])
+    assert value[0] == 0
+    assert value[1] == long(9223372036854775807)
+    assert value.Length == 2
 
-        # This should work, because null / None is a valid value in an
-        # array of reference types.
+    # there's no explicit long type in python3, use System.Int64 instead
+    if PY2:
+        value = Array[long]([0, long(9223372036854775807)])
+        assert value[0] == 0
+        assert value[1] == long(9223372036854775807)
+        assert value.Length == 2
 
-        items = []
-        for i in range(10):
-            items.append(Spam(str(i)))
-        items[1] = None
+    value = Array[System.UInt16]([0, 65000])
+    assert value[0] == 0
+    assert value[1] == 65000
+    assert value.Length == 2
 
-        result = ArrayConversionTest.EchoRange(items)
+    value = Array[System.UInt32]([0, long(4294967295)])
+    assert value[0] == 0
+    assert value[1] == long(4294967295)
+    assert value.Length == 2
 
-        self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(result[1] == None)
-        self.assertTrue(len(result) == 10)
+    value = Array[System.UInt64]([0, long(18446744073709551615)])
+    assert value[0] == 0
+    assert value[1] == long(18446744073709551615)
+    assert value.Length == 2
 
-        def test(items = items):
-            items[1] = 1
-            result = ArrayConversionTest.EchoRange(items)
+    value = Array[System.Single]([0.0, 3.402823e38])
+    assert value[0] == 0.0
+    assert value[1] == 3.402823e38
+    assert value.Length == 2
 
-        self.assertRaises(TypeError, test) 
+    value = Array[System.Double]([0.0, 1.7976931348623157e308])
+    assert value[0] == 0.0
+    assert value[1] == 1.7976931348623157e308
+    assert value.Length == 2
 
-        def test(items = items):
-            items[1] = "spam"
-            result = ArrayConversionTest.EchoRange(items)
+    value = Array[float]([0.0, 1.7976931348623157e308])
+    assert value[0] == 0.0
+    assert value[1] == 1.7976931348623157e308
+    assert value.Length == 2
 
-        self.assertRaises(TypeError, test) 
+    value = Array[System.Decimal]([System.Decimal.Zero, System.Decimal.One])
+    assert value[0] == System.Decimal.Zero
+    assert value[1] == System.Decimal.One
+    assert value.Length == 2
 
+    value = Array[System.String](["one", "two"])
+    assert value[0] == "one"
+    assert value[1] == "two"
+    assert value.Length == 2
 
-    def testSequenceArrayConversionTypeChecking(self):
-        """Test error handling for sequence conversion to array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
-        if six.PY3:
-            from collections import UserList
-        else:
-            from UserList import UserList
+    value = Array[str](["one", "two"])
+    assert value[0] == "one"
+    assert value[1] == "two"
+    assert value.Length == 2
 
-        # This should work, because null / None is a valid value in an
-        # array of reference types.
+    value = Array[ShortEnum]([ShortEnum.Zero, ShortEnum.One])
+    assert value[0] == ShortEnum.Zero
+    assert value[1] == ShortEnum.One
+    assert value.Length == 2
 
-        items = UserList()
-        for i in range(10):
-            items.append(Spam(str(i)))
-        items[1] = None
+    value = Array[System.Object]([inst, inst])
+    assert value[0].__class__ == inst.__class__
+    assert value[1].__class__ == inst.__class__
+    assert value.Length == 2
 
-        result = ArrayConversionTest.EchoRange(items)
+    value = Array[InterfaceTest]([inst, inst])
+    assert value[0].__class__ == inst.__class__
+    assert value[1].__class__ == inst.__class__
+    assert value.Length == 2
 
-        self.assertTrue(result[0].__class__ == Spam)
-        self.assertTrue(result[1] == None)
-        self.assertTrue(len(result) == 10)
+    value = Array[ISayHello1]([inst, inst])
+    assert value[0].__class__ == inst.__class__
+    assert value[1].__class__ == inst.__class__
+    assert value.Length == 2
 
-        def test(items = items):
-            items[1] = 1
-            result = ArrayConversionTest.EchoRange(items)
+    inst = System.Exception("badness")
+    value = Array[System.Exception]([inst, inst])
+    assert value[0].__class__ == inst.__class__
+    assert value[1].__class__ == inst.__class__
+    assert value.Length == 2
 
-        self.assertRaises(TypeError, test) 
 
-        def test(items = items):
-            items[1] = "spam"
-            result = ArrayConversionTest.EchoRange(items)
+def test_array_abuse():
+    """Test array abuse."""
+    _class = Test.PublicArrayTest
+    ob = Test.PublicArrayTest()
 
-        self.assertRaises(TypeError, test) 
+    with pytest.raises(AttributeError):
+        del _class.__getitem__
 
+    with pytest.raises(AttributeError):
+        del ob.__getitem__
 
-    def testMDArrayConversion(self):
-        """Test passing of multi-dimensional array arguments."""
-        from Python.Test import ArrayConversionTest
-        from Python.Test import Spam
-        from System import Array
+    with pytest.raises(AttributeError):
+        del _class.__setitem__
 
-        # Currently, the runtime does not support automagic conversion of
-        # Python sequences to true multi-dimensional arrays (though it
-        # does support arrays-of-arrays). This test exists mostly as an
-        # example of how a multi-dimensional array can be created and used
-        # with managed code from Python.
+    with pytest.raises(AttributeError):
+        del ob.__setitem__
 
-        items = Array.CreateInstance(Spam, 5, 5)
+    with pytest.raises(TypeError):
+        Test.PublicArrayTest.__getitem__(0, 0)
 
-        for i in range(5):
-            for n in range(5):
-                items.SetValue(Spam(str((i, n))), (i, n))
-        
-        result = ArrayConversionTest.EchoRangeMD(items)
-        
-        self.assertTrue(len(result) == 25)
-        self.assertTrue(result[0, 0].__class__ == Spam)
-        self.assertTrue(result[0, 0].__class__ == Spam)
+    with pytest.raises(TypeError):
+        Test.PublicArrayTest.__setitem__(0, 0, 0)
 
+    with pytest.raises(TypeError):
+        desc = Test.PublicArrayTest.__dict__['__getitem__']
+        desc(0, 0)
 
-    def testBoxedValueTypeMutationResult(self):
-        """Test behavior of boxed value types."""
-
-        # This test actually exists mostly as documentation of an important
-        # concern when dealing with value types. Python does not have any
-        # value type semantics that can be mapped to the CLR, so it is easy
-        # to accidentally write code like the following which is not really
-        # mutating value types in-place but changing boxed copies.
-        
-        from System.Drawing import Point
-        from System import Array
-
-        items = Array.CreateInstance(Point, 5)
-
-        for i in range(5):
-            items[i] = Point(i, i)
-
-        for i in range(5):
-            # Boxed items, so settr will not change the array member.
-            self.assertTrue(items[i].X == i)
-            self.assertTrue(items[i].Y == i)
-            items[i].X = i + 1
-            items[i].Y = i + 1
-            self.assertTrue(items[i].X == i)
-            self.assertTrue(items[i].Y == i)
-
-        for i in range(5):
-            # Demonstrates the workaround that will change the members.
-            self.assertTrue(items[i].X == i)
-            self.assertTrue(items[i].Y == i)
-            item = items[i]
-            item.X = i + 1
-            item.Y = i + 1
-            items[i] = item
-            self.assertTrue(items[i].X == i + 1)
-            self.assertTrue(items[i].Y == i + 1)
-
-
-    def testSpecialArrayCreation(self):
-        """Test using the Array[<type>] syntax for creating arrays."""
-        from Python.Test import ISayHello1, InterfaceTest, ShortEnum        
-        from System import Array
-        inst = InterfaceTest()
-
-        value = Array[System.Boolean]([True, True])
-        self.assertTrue(value[0] == True)
-        self.assertTrue(value[1] == True)
-        self.assertTrue(value.Length == 2)
-
-        value = Array[bool]([True, True])
-        self.assertTrue(value[0] == True)
-        self.assertTrue(value[1] == True)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Byte]([0, 255])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 255)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.SByte]([0, 127])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 127)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Char]([six.u('A'), six.u('Z')])
-        self.assertTrue(value[0] == six.u('A'))
-        self.assertTrue(value[1] == six.u('Z'))
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Char]([0, 65535])
-        self.assertTrue(value[0] == unichr(0))
-        self.assertTrue(value[1] == unichr(65535))        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Int16]([0, 32767])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 32767)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Int32]([0, 2147483647])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 2147483647)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[int]([0, 2147483647])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 2147483647)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Int64]([0, long(9223372036854775807)])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == long(9223372036854775807))
-        self.assertTrue(value.Length == 2)
-        
-        # there's no explicit long type in python3, use System.Int64 instead
-        if not six.PY3:
-            value = Array[long]([0, long(9223372036854775807)])
-            self.assertTrue(value[0] == 0)
-            self.assertTrue(value[1] == long(9223372036854775807))
-            self.assertTrue(value.Length == 2)
-        
-        value = Array[System.UInt16]([0, 65000])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == 65000)
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.UInt32]([0, long(4294967295)])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == long(4294967295))
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.UInt64]([0, long(18446744073709551615)])
-        self.assertTrue(value[0] == 0)
-        self.assertTrue(value[1] == long(18446744073709551615))
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Single]([0.0, 3.402823e38])
-        self.assertTrue(value[0] == 0.0)
-        self.assertTrue(value[1] == 3.402823e38)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Double]([0.0, 1.7976931348623157e308])
-        self.assertTrue(value[0] == 0.0)
-        self.assertTrue(value[1] == 1.7976931348623157e308)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[float]([0.0, 1.7976931348623157e308])
-        self.assertTrue(value[0] == 0.0)
-        self.assertTrue(value[1] == 1.7976931348623157e308)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Decimal]([System.Decimal.Zero,System.Decimal.One])
-        self.assertTrue(value[0] == System.Decimal.Zero)
-        self.assertTrue(value[1] == System.Decimal.One)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.String](["one", "two"])
-        self.assertTrue(value[0] == "one")
-        self.assertTrue(value[1] == "two")
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[str](["one", "two"])
-        self.assertTrue(value[0] == "one")
-        self.assertTrue(value[1] == "two")
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[ShortEnum]([ShortEnum.Zero, ShortEnum.One])
-        self.assertTrue(value[0] == ShortEnum.Zero)
-        self.assertTrue(value[1] == ShortEnum.One)
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[System.Object]([inst, inst])
-        self.assertTrue(value[0].__class__ == inst.__class__)
-        self.assertTrue(value[1].__class__ == inst.__class__)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[InterfaceTest]([inst, inst])
-        self.assertTrue(value[0].__class__ == inst.__class__)
-        self.assertTrue(value[1].__class__ == inst.__class__)        
-        self.assertTrue(value.Length == 2)
-        
-        value = Array[ISayHello1]([inst, inst])
-        self.assertTrue(value[0].__class__ == inst.__class__)
-        self.assertTrue(value[1].__class__ == inst.__class__)        
-        self.assertTrue(value.Length == 2)
-
-        inst = System.Exception("badness")
-        value = Array[System.Exception]([inst, inst])
-        self.assertTrue(value[0].__class__ == inst.__class__)
-        self.assertTrue(value[1].__class__ == inst.__class__)        
-        self.assertTrue(value.Length == 2)
-
-
-    def testArrayAbuse(self):
-        """Test array abuse."""
-        _class = Test.PublicArrayTest
-        object = Test.PublicArrayTest()
-
-        def test():
-            del _class.__getitem__
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            del object.__getitem__
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            del _class.__setitem__
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            del object.__setitem__
-
-        self.assertRaises(AttributeError, test)
-
-        def test():
-            Test.PublicArrayTest.__getitem__(0, 0)
-
-        self.assertRaises(TypeError, test)
-
-        def test():
-            Test.PublicArrayTest.__setitem__(0, 0, 0)
-
-        self.assertRaises(TypeError, test)
-
-        def test():
-            desc = Test.PublicArrayTest.__dict__['__getitem__']
-            desc(0, 0)
-
-        self.assertRaises(TypeError, test)
-
-        def test():
-            desc = Test.PublicArrayTest.__dict__['__setitem__']
-            desc(0, 0, 0)
-
-        self.assertRaises(TypeError, test)
-
-
-
-def test_suite():
-    return unittest.makeSuite(ArrayTests)
-
-def main():
-    unittest.TextTestRunner().run(test_suite())
-
-if __name__ == '__main__':
-    main()
-
+    with pytest.raises(TypeError):
+        desc = Test.PublicArrayTest.__dict__['__setitem__']
+        desc(0, 0, 0)

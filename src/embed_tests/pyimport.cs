@@ -1,74 +1,83 @@
 using System;
-using System.Reflection;
-using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    [TestFixture]
+    /// <summary>
+    /// Test Import unittests and regressions
+    /// </summary>
+    /// <remarks>
+    /// Keeping in old-style SetUp/TearDown due to required SetUp.
+    /// The required directory structure was added to .\pythonnet\src\embed_tests\fixtures\ directory:
+    /// + PyImportTest/
+    /// | - __init__.py
+    /// | + test/
+    /// | | - __init__.py
+    /// | | - one.py
+    /// </remarks>
     public class PyImportTest
     {
-        private IntPtr gs;
+        private IntPtr _gs;
 
         [SetUp]
         public void SetUp()
         {
             PythonEngine.Initialize();
-            gs = PythonEngine.AcquireLock();
+            _gs = PythonEngine.AcquireLock();
 
-            //string here = Environment.CurrentDirectory;
-            //trunk\pythonnet\src\embed_tests\bin\x86\DebugWin
+            /* Append the tests directory to sys.path
+             * using reflection to circumvent the private
+             * modifiers placed on most Runtime methods. */
+            const string s = "../fixtures";
+            string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
 
-            /* 
-             * Append the tests directory to sys.path
-             * using reflection to circumvent the private modifires placed on most Runtime methods.
-             */
-            const string s = @"../../../../tests";
-
-            Type RTClass = typeof(Runtime.Runtime);
-
-            /* pyStrPtr = PyString_FromString(s); */
-            MethodInfo PyString_FromString = RTClass.GetMethod("PyString_FromString", BindingFlags.NonPublic | BindingFlags.Static);
-            object[] funcArgs = new object[1];
-            funcArgs[0] = s;
-            IntPtr pyStrPtr = (IntPtr)PyString_FromString.Invoke(null, funcArgs);
-
-            /* SysDotPath = sys.path */
-            MethodInfo PySys_GetObject = RTClass.GetMethod("PySys_GetObject", BindingFlags.NonPublic | BindingFlags.Static);
-            funcArgs[0] = "path";
-            IntPtr SysDotPath = (IntPtr)PySys_GetObject.Invoke(null, funcArgs);
-
-            /* SysDotPath.append(*pyStrPtr) */
-            MethodInfo PyList_Append = RTClass.GetMethod("PyList_Append", BindingFlags.NonPublic | BindingFlags.Static);
-            funcArgs = new object[] {SysDotPath, pyStrPtr};
-            int r = (int)PyList_Append.Invoke(null, funcArgs);
+            IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
+            IntPtr path = Runtime.Runtime.PySys_GetObject("path");
+            Runtime.Runtime.PyList_Append(path, str);
         }
 
         [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
-            PythonEngine.ReleaseLock(gs);
+            PythonEngine.ReleaseLock(_gs);
             PythonEngine.Shutdown();
         }
 
         /// <summary>
         /// Test subdirectory import
         /// </summary>
-        /// <remarks>
-        /// The required directory structure was added to the \trunk\pythonnet\src\tests directory:
-        /// 
-        ///     PyImportTest/
-        ///         __init__.py
-        ///         test/
-        ///             __init__.py
-        ///             one.py
-        /// </remarks>
         [Test]
         public void TestDottedName()
         {
             PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
-            Assert.IsNotNull(module, ">>>  import PyImportTest.test.one  # FAILED");
+            Assert.IsNotNull(module);
+        }
+
+        /// <summary>
+        /// Tests that sys.args is set. If it wasn't exception would be raised.
+        /// </summary>
+        [Test]
+        public void TestSysArgsImportException()
+        {
+            PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
+            Assert.IsNotNull(module);
+        }
+
+        /// <summary>
+        /// Test Global Variable casting. GH#420
+        /// </summary>
+        [Test]
+        public void TestCastGlobalVar()
+        {
+            dynamic foo = Py.Import("PyImportTest.cast_global_var");
+            Assert.AreEqual("1", foo.FOO.ToString());
+            Assert.AreEqual("1", foo.test_foo().ToString());
+
+            foo.FOO = 2;
+            Assert.AreEqual("2", foo.FOO.ToString());
+            Assert.AreEqual("2", foo.test_foo().ToString());
         }
     }
 }
