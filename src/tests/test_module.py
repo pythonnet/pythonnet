@@ -355,16 +355,22 @@ def test_clr_add_reference():
 def test_clr_get_clr_type():
     """Test clr.GetClrType()."""
     from clr import GetClrType
-    from System import String
+    import System
     from System import IComparable
     from System import ArgumentException
-
-    assert GetClrType(String).FullName == "System.String"
+    assert GetClrType(System.String).FullName == "System.String"
     comparable = GetClrType(IComparable)
     assert comparable.FullName == "System.IComparable"
     assert comparable.IsInterface
+    assert GetClrType(int).FullName == "System.Int32"
+    assert GetClrType(str).FullName == "System.String"
+    assert GetClrType(float).FullName == "System.Double"
+    dblarr = System.Array[System.Double]
+    assert GetClrType(dblarr).FullName == "System.Double[]"
 
-    with pytest.raises(ArgumentException):
+    with pytest.raises(TypeError):
+        GetClrType(1)
+    with pytest.raises(TypeError):
         GetClrType("thiswillfail")
 
 def test_assembly_load_thread_safety():
