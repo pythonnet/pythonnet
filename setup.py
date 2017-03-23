@@ -65,6 +65,9 @@ WIN_SDK_KEYS = (
 )
 
 VS_KEYS = (
+    RegKey(sdk_name="MSBuild 15", key=vs_root.format("15.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
     RegKey(sdk_name="MSBuild 14", key=vs_root.format("14.0"),
            value_name="MSBuildToolsPath", suffix=""),
 
