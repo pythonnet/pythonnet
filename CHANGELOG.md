@@ -17,6 +17,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
+-   Fixed Visual Studio 2017 compat (#434) for setup.py
 -   Fixed `FooBar` bug
 
 ## [2.3.0][] - 2017-03-11
