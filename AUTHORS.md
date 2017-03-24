@@ -32,6 +32,7 @@
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
+-   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))
 -   Wenguang Yang ([@yagweb](https://github.com/yagweb))
 -   Xavier Dupré ([@sdpython](https://github.com/sdpython))
