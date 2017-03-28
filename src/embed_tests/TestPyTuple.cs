@@ -6,6 +6,18 @@ namespace Python.EmbeddingTest
 {
     public class TestPyTuple
     {
+        [OneTimeSetUp]
+        public void SetUp()
+        {
+            PythonEngine.Initialize();
+        }
+
+        [OneTimeTearDown]
+        public void Dispose()
+        {
+            PythonEngine.Shutdown();
+        }
+
         /// <summary>
         /// Test IsTupleType without having to Initialize a tuple.
         /// PyTuple constructor use IsTupleType. This decouples the tests.
@@ -13,11 +25,8 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestStringIsTupleType()
         {
-            using (Py.GIL())
-            {
-                var s = new PyString("foo");
-                Assert.IsFalse(PyTuple.IsTupleType(s));
-            }
+            var s = new PyString("foo");
+            Assert.False(PyTuple.IsTupleType(s));
         }
 
         /// <summary>
@@ -26,72 +35,54 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestPyTupleIsTupleType()
         {
-            using (Py.GIL())
-            {
-                var t = new PyTuple();
-                Assert.IsTrue(PyTuple.IsTupleType(t));
-            }
+            var t = new PyTuple();
+            Assert.True(PyTuple.IsTupleType(t));
         }
 
         [Test]
         public void TestPyTupleEmpty()
         {
-            using (Py.GIL())
-            {
-                var t = new PyTuple();
-                Assert.AreEqual(0, t.Length());
-            }
+            var t = new PyTuple();
+            Assert.AreEqual(0, t.Length());
         }
 
         [Test]
         public void TestPyTupleBadCtor()
         {
-            using (Py.GIL())
-            {
-                var i = new PyInt(5);
-                PyTuple t = null;
+            var i = new PyInt(5);
+            PyTuple t = null;
 
-                var ex = Assert.Throws<ArgumentException>(() => t = new PyTuple(i));
+            var ex = Assert.Throws<ArgumentException>(() => t = new PyTuple(i));
 
-                Assert.AreEqual("object is not a tuple", ex.Message);
-                Assert.IsNull(t);
-            }
+            Assert.AreEqual("object is not a tuple", ex.Message);
+            Assert.IsNull(t);
         }
 
         [Test]
         public void TestPyTupleCtorEmptyArray()
         {
-            using (Py.GIL())
-            {
-                var a = new PyObject[] { };
-                var t = new PyTuple(a);
+            var a = new PyObject[] { };
+            var t = new PyTuple(a);
 
-                Assert.AreEqual(0, t.Length());
-            }
+            Assert.AreEqual(0, t.Length());
         }
 
         [Test]
         public void TestPyTupleCtorArrayPyIntEmpty()
         {
-            using (Py.GIL())
-            {
-                var a = new PyInt[] { };
-                var t = new PyTuple(a);
+            var a = new PyInt[] { };
+            var t = new PyTuple(a);
 
-                Assert.AreEqual(0, t.Length());
-            }
+            Assert.AreEqual(0, t.Length());
         }
 
         [Test]
         public void TestPyTupleCtorArray()
         {
-            using (Py.GIL())
-            {
-                var a = new PyObject[] {new PyInt(1), new PyString("Foo") };
-                var t = new PyTuple(a);
+            var a = new PyObject[] { new PyInt(1), new PyString("Foo") };
+            var t = new PyTuple(a);
 
-                Assert.AreEqual(2, t.Length());
-            }
+            Assert.AreEqual(2, t.Length());
         }
 
         /// <summary>
@@ -108,69 +99,58 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestPyTupleInvalidAppend()
         {
-            using (Py.GIL())
-            {
-                PyObject s = new PyString("foo");
-                var t = new PyTuple();
+            PyObject s = new PyString("foo");
+            var t = new PyTuple();
 
-                var ex = Assert.Throws<PythonException>(() => t.Concat(s));
+            var ex = Assert.Throws<PythonException>(() => t.Concat(s));
 
-                StringAssert.StartsWith("TypeError : can only concatenate tuple", ex.Message);
-                Assert.AreEqual(0, t.Length());
-                Assert.IsEmpty(t);
-            }
+            StringAssert.StartsWith("TypeError : can only concatenate tuple", ex.Message);
+            Assert.AreEqual(0, t.Length());
+            Assert.IsEmpty(t);
         }
 
         [Test]
         public void TestPyTupleValidAppend()
         {
-            using (Py.GIL())
-            {
-                var t0 = new PyTuple();
-                var t = new PyTuple();
-                t.Concat(t0);
-                Assert.IsNotNull(t);
-                Assert.IsInstanceOf(typeof(PyTuple), t);
-            }
+            var t0 = new PyTuple();
+            var t = new PyTuple();
+            t.Concat(t0);
+
+            Assert.IsNotNull(t);
+            Assert.IsInstanceOf(typeof(PyTuple), t);
         }
 
         [Test]
         public void TestPyTupleStringConvert()
         {
-            using (Py.GIL())
-            {
-                PyObject s = new PyString("foo");
-                PyTuple t = PyTuple.AsTuple(s);
-                Assert.IsNotNull(t);
-                Assert.IsInstanceOf(typeof(PyTuple), t);
-                Assert.AreEqual("f", t[0].ToString());
-                Assert.AreEqual("o", t[1].ToString());
-                Assert.AreEqual("o", t[2].ToString());
-            }
+            PyObject s = new PyString("foo");
+            PyTuple t = PyTuple.AsTuple(s);
+
+            Assert.IsNotNull(t);
+            Assert.IsInstanceOf(typeof(PyTuple), t);
+            Assert.AreEqual("f", t[0].ToString());
+            Assert.AreEqual("o", t[1].ToString());
+            Assert.AreEqual("o", t[2].ToString());
         }
 
         [Test]
         public void TestPyTupleValidConvert()
         {
-            using (Py.GIL())
-            {
-                var l = new PyList();
-                PyTuple t = PyTuple.AsTuple(l);
-                Assert.IsNotNull(t);
-                Assert.IsInstanceOf(typeof(PyTuple), t);
-            }
+            var l = new PyList();
+            PyTuple t = PyTuple.AsTuple(l);
+
+            Assert.IsNotNull(t);
+            Assert.IsInstanceOf(typeof(PyTuple), t);
         }
 
         [Test]
         public void TestNewPyTupleFromPyTuple()
         {
-            using (Py.GIL())
-            {
-                var t0 = new PyTuple();
-                var t = new PyTuple(t0);
-                Assert.IsNotNull(t);
-                Assert.IsInstanceOf(typeof(PyTuple), t);
-            }
+            var t0 = new PyTuple();
+            var t = new PyTuple(t0);
+
+            Assert.IsNotNull(t);
+            Assert.IsInstanceOf(typeof(PyTuple), t);
         }
 
         /// <remarks>
@@ -179,16 +159,13 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestInvalidAsTuple()
         {
-            using (Py.GIL())
-            {
-                var i = new PyInt(5);
-                PyTuple t = null;
+            var i = new PyInt(5);
+            PyTuple t = null;
 
-                var ex = Assert.Throws<PythonException>(() => t = PyTuple.AsTuple(i));
+            var ex = Assert.Throws<PythonException>(() => t = PyTuple.AsTuple(i));
 
-                Assert.AreEqual("TypeError : 'int' object is not iterable", ex.Message);
-                Assert.IsNull(t);
-            }
+            Assert.AreEqual("TypeError : 'int' object is not iterable", ex.Message);
+            Assert.IsNull(t);
         }
     }
 }

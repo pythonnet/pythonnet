@@ -4,28 +4,21 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    /// <summary>
-    /// Test Python Exceptions
-    /// </summary>
-    /// <remarks>
-    /// Keeping this in the old-style SetUp/TearDown
-    /// to ensure that setup still works.
-    /// </remarks>
     public class TestPythonException
     {
-        private IntPtr gs;
+        private IntPtr _gs;
 
         [SetUp]
         public void SetUp()
         {
             PythonEngine.Initialize();
-            gs = PythonEngine.AcquireLock();
+            _gs = PythonEngine.AcquireLock();
         }
 
         [TearDown]
         public void Dispose()
         {
-            PythonEngine.ReleaseLock(gs);
+            PythonEngine.ReleaseLock(_gs);
             PythonEngine.Shutdown();
         }
 

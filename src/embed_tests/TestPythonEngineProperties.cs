@@ -13,8 +13,8 @@ namespace Python.EmbeddingTest
             {
                 string s = PythonEngine.BuildInfo;
 
-                Assert.IsTrue(s.Length > 5);
-                Assert.IsTrue(s.Contains(","));
+                Assert.True(s.Length > 5);
+                Assert.True(s.Contains(","));
             }
         }
 
@@ -25,9 +25,9 @@ namespace Python.EmbeddingTest
             {
                 string s = PythonEngine.Compiler;
 
-                Assert.IsTrue(s.Length > 0);
-                Assert.IsTrue(s.Contains("["));
-                Assert.IsTrue(s.Contains("]"));
+                Assert.True(s.Length > 0);
+                Assert.True(s.Contains("["));
+                Assert.True(s.Contains("]"));
             }
         }
 
@@ -38,8 +38,8 @@ namespace Python.EmbeddingTest
             {
                 string s = PythonEngine.Copyright;
 
-                Assert.IsTrue(s.Length > 0);
-                Assert.IsTrue(s.Contains("Python Software Foundation"));
+                Assert.True(s.Length > 0);
+                Assert.True(s.Contains("Python Software Foundation"));
             }
         }
 
@@ -50,8 +50,8 @@ namespace Python.EmbeddingTest
             {
                 string s = PythonEngine.Platform;
 
-                Assert.IsTrue(s.Length > 0);
-                Assert.IsTrue(s.Contains("x") || s.Contains("win"));
+                Assert.True(s.Length > 0);
+                Assert.True(s.Contains("x") || s.Contains("win"));
             }
         }
 
@@ -62,8 +62,8 @@ namespace Python.EmbeddingTest
             {
                 string s = PythonEngine.Version;
 
-                Assert.IsTrue(s.Length > 0);
-                Assert.IsTrue(s.Contains(","));
+                Assert.True(s.Length > 0);
+                Assert.True(s.Contains(","));
             }
         }
 

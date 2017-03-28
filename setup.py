@@ -65,6 +65,9 @@ WIN_SDK_KEYS = (
 )
 
 VS_KEYS = (
+    RegKey(sdk_name="MSBuild 15", key=vs_root.format("15.0"),
+           value_name="MSBuildToolsPath", suffix=""),
+
     RegKey(sdk_name="MSBuild 14", key=vs_root.format("14.0"),
            value_name="MSBuildToolsPath", suffix=""),
 
@@ -365,7 +368,7 @@ if not os.path.exists(_get_interop_filename()):
 
 setup(
     name="pythonnet",
-    version="2.3.0.dev1",
+    version="2.4.0.dev0",
     description=".Net and Mono integration for Python",
     url='https://pythonnet.github.io/',
     license='MIT',

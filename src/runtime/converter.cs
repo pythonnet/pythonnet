@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -131,6 +132,22 @@ namespace Python.Runtime
                 result = Runtime.PyNone;
                 Runtime.XIncref(result);
                 return result;
+            }
+
+            if (value is IList && value.GetType().IsGenericType)
+            {
+                using (var resultlist = new PyList())
+                {
+                    foreach (object o in (IEnumerable)value)
+                    {
+                        using (var p = new PyObject(ToPython(o, o?.GetType())))
+                        {
+                            resultlist.Append(p);
+                        }
+                    }
+                    Runtime.XIncref(resultlist.Handle);
+                    return resultlist.Handle;
+                }
             }
 
             // it the type is a python subclass of a managed type then return the

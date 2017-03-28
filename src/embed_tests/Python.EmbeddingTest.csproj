@@ -84,12 +84,20 @@
     <Compile Include="pyimport.cs" />
     <Compile Include="pyinitialize.cs" />
     <Compile Include="pyrunstring.cs" />
+    <Compile Include="TestCustomMarshal.cs" />
+    <Compile Include="TestExample.cs" />
+    <Compile Include="TestPyAnsiString.cs" />
+    <Compile Include="TestPyFloat.cs" />
+    <Compile Include="TestPyInt.cs" />
     <Compile Include="TestPyList.cs" />
     <Compile Include="TestPyLong.cs" />
+    <Compile Include="TestPyNumber.cs" />
+    <Compile Include="TestPySequence.cs" />
     <Compile Include="TestPyString.cs" />
     <Compile Include="TestPythonException.cs" />
     <Compile Include="TestPythonEngineProperties.cs" />
     <Compile Include="TestPyTuple.cs" />
+    <Compile Include="TestRuntime.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">

@@ -8,6 +8,21 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [unreleased][]
 
 ### Added
+-   Added clr.GetClrType (#432)(#433)
+-   Added `Foo` feature
+
+### Changed
+
+-   Changed `Bar` feature
+
+### Fixed
+
+-   Fixed Visual Studio 2017 compat (#434) for setup.py
+-   Fixed `FooBar` bug
+
+## [2.3.0][] - 2017-03-11
+
+### Added
 
 -   Added Code Coverage (#345)
 -   Added `PySys_SetArgvEx` (#347)
@@ -24,6 +39,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `requirements.txt`
 -   Added to `PythonEngine` methods `Eval` and `Exec` (#389)
 -   Added implementations of `ICustomMarshal` (#407)
+-   Added docker images (#322)
+-   Added hooks in `pyinstaller` and `cx_freeze` for `pythonnet` (#66)
 
 ### Changed
 
@@ -541,7 +558,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.2.2...HEAD
+[unreleased]: ../../compare/v2.3.0...HEAD
+
+[2.3.0]: ../../compare/v2.2.2...v2.3.0
 
 [2.2.2]: ../../compare/v2.2.1...v2.2.2
 

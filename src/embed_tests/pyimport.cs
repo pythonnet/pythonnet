@@ -19,13 +19,13 @@ namespace Python.EmbeddingTest
     /// </remarks>
     public class PyImportTest
     {
-        private IntPtr gs;
+        private IntPtr _gs;
 
         [SetUp]
         public void SetUp()
         {
             PythonEngine.Initialize();
-            gs = PythonEngine.AcquireLock();
+            _gs = PythonEngine.AcquireLock();
 
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
@@ -41,7 +41,7 @@ namespace Python.EmbeddingTest
         [TearDown]
         public void Dispose()
         {
-            PythonEngine.ReleaseLock(gs);
+            PythonEngine.ReleaseLock(_gs);
             PythonEngine.Shutdown();
         }
 
@@ -63,6 +63,21 @@ namespace Python.EmbeddingTest
         {
             PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
             Assert.IsNotNull(module);
+        }
+
+        /// <summary>
+        /// Test Global Variable casting. GH#420
+        /// </summary>
+        [Test]
+        public void TestCastGlobalVar()
+        {
+            dynamic foo = Py.Import("PyImportTest.cast_global_var");
+            Assert.AreEqual("1", foo.FOO.ToString());
+            Assert.AreEqual("1", foo.test_foo().ToString());
+
+            foo.FOO = 2;
+            Assert.AreEqual("2", foo.FOO.ToString());
+            Assert.AreEqual("2", foo.test_foo().ToString());
         }
     }
 }
