@@ -632,11 +632,33 @@ namespace Python.Runtime
         internal static extern IntPtr PyGILState_GetThisThreadState();
 
 #if PYTHON3
+#if NETSTANDARD1_5
+        [DllImport(PythonDll)]
+        private static extern int Py_Main(
+            int argc,
+            IntPtr argv
+        );
+
+        public static int Py_Main(
+            int argc,
+            string[] argv
+        )
+        {
+            var marshaler = StrArrayMarshaler.GetInstance(string.Empty);
+            var unmanagedDataPtr = marshaler.MarshalManagedToNative(argv);
+
+            int result = Py_Main(argc, unmanagedDataPtr);
+
+            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            return result;
+        }
+#else
         [DllImport(PythonDll)]
         public static extern int Py_Main(
             int argc,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv
         );
+#endif
 #elif PYTHON2
         [DllImport(PythonDll)]
         public static extern int Py_Main(int argc, string[] argv);
@@ -1168,11 +1190,33 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
+#if NETSTANDARD1_5
+        [DllImport(PythonDll, EntryPoint = "PyUnicode_FromStringAndSize")]
+        private static extern IntPtr PyString_FromStringAndSize(
+            IntPtr value,
+            int size
+        );
+
+        internal static IntPtr PyString_FromStringAndSize(
+            string value,
+            int size
+        )
+        {
+            var marshaler = Utf8Marshaler.GetInstance(string.Empty);
+            var unmanagedDataPtr = marshaler.MarshalManagedToNative(value);
+
+            IntPtr result = PyString_FromStringAndSize(unmanagedDataPtr, size);
+
+            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            return result;
+        }
+#else
         [DllImport(PythonDll, EntryPoint = "PyUnicode_FromStringAndSize")]
         internal static extern IntPtr PyString_FromStringAndSize(
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
             int size
         );
+#endif
 
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromStringAndSize(IntPtr value, int size);
@@ -1199,12 +1243,36 @@ namespace Python.Runtime
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
+#if NETSTANDARD1_5
+        [DllImport(PythonDll)]
+        private static extern IntPtr PyUnicode_FromKindAndData(
+            int kind,
+            IntPtr s,
+            int size
+        );
+
+        internal static IntPtr PyUnicode_FromKindAndData(
+            int kind,
+            string s,
+            int size
+        )
+        {
+            var marshaler = UcsMarshaler.GetInstance(string.Empty);
+            var unmanagedDataPtr = marshaler.MarshalManagedToNative(s);
+
+            IntPtr result = PyUnicode_FromKindAndData(kind, unmanagedDataPtr, size);
+
+            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            return result;
+        }
+#else
         [DllImport(PythonDll)]
         internal static extern IntPtr PyUnicode_FromKindAndData(
             int kind,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UcsMarshaler))] string s,
             int size
         );
+#endif
 
         internal static IntPtr PyUnicode_FromUnicode(string s, int size)
         {
@@ -1226,12 +1294,33 @@ namespace Python.Runtime
         [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromEncodedObject")]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
+#if NETSTANDARD1_5
+        [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromUnicode")]
+        private static extern IntPtr PyUnicode_FromUnicode(
+            IntPtr s,
+            int size
+        );
+
+        internal static IntPtr PyUnicode_FromUnicode(
+            string s,
+            int size
+        )
+        {
+            var marshaler = UcsMarshaler.GetInstance(string.Empty);
+            var unmanagedDataPtr = marshaler.MarshalManagedToNative(s);
+
+            IntPtr result = PyUnicode_FromUnicode(unmanagedDataPtr, size);
+
+            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            return result;
+        }
+#else
         [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "FromUnicode")]
         internal static extern IntPtr PyUnicode_FromUnicode(
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UcsMarshaler))] string s,
             int size
         );
-
+#endif
         [DllImport(PythonDll, EntryPoint = PyUnicodeEntryPoint + "GetSize")]
         internal static extern int PyUnicode_GetSize(IntPtr ob);
 
@@ -1469,12 +1558,35 @@ namespace Python.Runtime
         internal static extern IntPtr PyImport_GetModuleDict();
 
 #if PYTHON3
+#if NETSTANDARD1_5
+        [DllImport(PythonDll)]
+        private static extern void PySys_SetArgvEx(
+            int argc,
+            IntPtr argv,
+            int updatepath
+        );
+
+        internal static void PySys_SetArgvEx(
+            int argc,
+            string[] argv,
+            int updatepath
+        )
+        {
+            var marshaler = StrArrayMarshaler.GetInstance(string.Empty);
+            var unmanagedDataPtr = marshaler.MarshalManagedToNative(argv);
+
+            PySys_SetArgvEx(argc, unmanagedDataPtr, updatepath);
+
+            marshaler.CleanUpNativeData(unmanagedDataPtr);
+        }
+#else
         [DllImport(PythonDll)]
         internal static extern void PySys_SetArgvEx(
             int argc,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv,
             int updatepath
         );
+#endif
 #elif PYTHON2
         [DllImport(PythonDll)]
         internal static extern void PySys_SetArgvEx(
