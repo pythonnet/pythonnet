@@ -13,7 +13,7 @@
     {
       "name": "ghuser",
       "files": ["src/js/**/*.js"],
-      "skipTeamPrs": fals
+      "skipTeamPrs": false
     }
   ],
   "findPotentialReviewers": true,
