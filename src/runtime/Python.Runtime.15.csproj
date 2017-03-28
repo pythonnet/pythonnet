@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.4;net40</TargetFrameworks>
+    <RootNamespace>Python.Runtime</RootNamespace>
+    <AssemblyName>Python.Runtime</AssemblyName>
+    <PackageId>Python.Runtime</PackageId>
+    <PackageVersion>3.0.0-*</PackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Win-x64|net40|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NET40;UCS2;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Win-x64|net40|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NET40;UCS2;UCS2;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Win-x64|netstandard1.4|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NETSTANDARD1_4;UCS2;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Win-x64|netstandard1.4|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NETSTANDARD1_4;UCS2;</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);PYTHON3; PYTHON35</DefineConstants>
+  </PropertyGroup>
+
+</Project>
