@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
@@ -133,7 +134,7 @@ namespace Python.Runtime
 
             // if the base type is an interface then use System.Object as the base class
             // and add the base type to the list of interfaces this new class will implement.
-            if (baseType.IsInterface)
+            if (baseType.IsInterface())
             {
                 interfaces.Add(baseType);
                 baseClass = typeof(object);
@@ -309,7 +310,7 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldc_I4, i);
                 il.Emit(OpCodes.Ldarg, i + 1);
-                if (parameterTypes[i].IsValueType)
+                if (parameterTypes[i].IsValueType())
                 {
                     il.Emit(OpCodes.Box, parameterTypes[i]);
                 }
@@ -387,7 +388,7 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldc_I4, i);
                 il.Emit(OpCodes.Ldarg, i + 1);
-                if (parameterTypes[i].IsValueType)
+                if (parameterTypes[i].IsValueType())
                 {
                     il.Emit(OpCodes.Box, parameterTypes[i]);
                 }
@@ -474,7 +475,7 @@ namespace Python.Runtime
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Ldc_I4, i);
                     il.Emit(OpCodes.Ldarg, i + 1);
-                    if (argTypes[i].IsValueType)
+                    if (argTypes[i].IsValueType())
                     {
                         il.Emit(OpCodes.Box, argTypes[i]);
                     }

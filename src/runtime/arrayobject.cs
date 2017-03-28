@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 
 namespace Python.Runtime
@@ -140,8 +140,8 @@ namespace Python.Runtime
             int rank = items.Rank;
             int index;
             object value;
-
-            if (items.IsReadOnly)
+            
+            if (((IList)items).IsReadOnly)
             {
                 Exceptions.RaiseTypeError("array is read-only");
                 return -1;

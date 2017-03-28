@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -71,6 +71,10 @@
     <DebugType>full</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ReflectionBridge, Version=0.0.11.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\ReflectionBridge.0.0.11\lib\net40\ReflectionBridge.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\clr.py">

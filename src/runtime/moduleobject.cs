@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
@@ -108,7 +109,7 @@ namespace Python.Runtime
             type = AssemblyManager.LookupType(qname);
             if (type != null)
             {
-                if (!type.IsPublic)
+                if (!type.IsPublic())
                 {
                     return null;
                 }
@@ -134,7 +135,7 @@ namespace Python.Runtime
                 type = AssemblyManager.LookupType(qname);
                 if (type != null)
                 {
-                    if (!type.IsPublic)
+                    if (!type.IsPublic())
                     {
                         return null;
                     }
@@ -238,7 +239,7 @@ namespace Python.Runtime
                         StoreAttribute(name, p);
                     }
                 }
-                type = type.BaseType;
+                type = type.BaseType();
             }
         }
 

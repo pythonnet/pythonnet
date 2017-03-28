@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
@@ -342,7 +342,11 @@ namespace Python.Runtime
             // Here we build a mapping of PyTypeObject slot names to the
             // appropriate prototype (delegate) type to use for the slot.
 
+#if NETSTANDARD1_5
+            Type[] items = typeof(Interop).GetTypeInfo().GetNestedTypes();
+#else
             Type[] items = typeof(Interop).GetNestedTypes();
+#endif
             Hashtable p = new Hashtable();
 
             for (int i = 0; i < items.Length; i++)

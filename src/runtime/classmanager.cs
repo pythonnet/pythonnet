@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
@@ -73,7 +74,11 @@ namespace Python.Runtime
             // lets us check once (vs. on every lookup) in case we need to
             // wrap Exception-derived types in old-style classes
 
+#if NETSTANDARD1_5
+            if (type.GetTypeInfo().ContainsGenericParameters)
+#else
             if (type.ContainsGenericParameters)
+#endif
             {
                 impl = new GenericType(type);
             }
@@ -88,7 +93,7 @@ namespace Python.Runtime
                 impl = new ArrayObject(type);
             }
 
-            else if (type.IsInterface)
+            else if (type.IsInterface())
             {
                 impl = new InterfaceObject(type);
             }
@@ -236,7 +241,7 @@ namespace Python.Runtime
                 }
             }
 
-            if (type.IsInterface)
+            if (type.IsInterface())
             {
                 // Interface inheritance seems to be a different animal:
                 // more contractual, less structural.  Thus, a Type that
@@ -358,12 +363,21 @@ namespace Python.Runtime
                         continue;
 
                     case MemberTypes.NestedType:
+#if NETSTANDARD1_5
+                        tp = ((TypeInfo) mi).AsType();
+                        if (!(tp.IsNestedPublic() || tp.GetTypeInfo().IsNestedFamily ||
+                              tp.GetTypeInfo().IsNestedFamORAssem))
+                        {
+                            continue;
+                        }
+#else
                         tp = (Type)mi;
                         if (!(tp.IsNestedPublic || tp.IsNestedFamily ||
                               tp.IsNestedFamORAssem))
                         {
                             continue;
                         }
+#endif
                         // Note the given instance might be uninitialized
                         ob = GetClass(tp);
                         ci.members[mi.Name] = ob;
