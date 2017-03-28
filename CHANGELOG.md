@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning][].
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ## [unreleased][]
+-   Added VS 2017 build with net40 and NetStandard 1.5 targets
 
 ### Added
 -   Added clr.GetClrType (#432)(#433)
