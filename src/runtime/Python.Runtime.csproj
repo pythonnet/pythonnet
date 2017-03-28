@@ -71,13 +71,10 @@
     <DebugType>full</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ReflectionBridge, Version=0.0.11.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\ReflectionBridge.0.0.11\lib\net40\ReflectionBridge.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="polyfill\ReflectionBridge\ReflectionBridgeExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
@@ -152,12 +149,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\clr.py">
       <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="polyfill\ReflectionBridge\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <PropertyGroup>
