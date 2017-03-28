@@ -34,7 +34,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);REFLECTIONBRIDGE;PYTHON3;PYTHON35</DefineConstants>
+    <DefineConstants>$(DefineConstants);XPLAT;REFLECTIONBRIDGE;PYTHON3;PYTHON35</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.5'">
@@ -68,5 +68,13 @@
     <PackageReference Include="System.Threading.Thread">
       <Version>4.0.0</Version>
     </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="resources\clr.py" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="resources\clr.py" />
   </ItemGroup>
 </Project>

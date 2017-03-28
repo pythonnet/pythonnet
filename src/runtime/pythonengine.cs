@@ -198,7 +198,11 @@ namespace Python.Runtime
 #else
                     Assembly assembly = Assembly.GetExecutingAssembly();
 #endif
+#if XPLAT
+                    using (Stream stream = assembly.GetManifestResourceStream("Python.Runtime.resources.clr.py"))
+#else
                     using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
+#endif
                     using (var reader = new StreamReader(stream))
                     {
                         // add the contents of clr.py to the module

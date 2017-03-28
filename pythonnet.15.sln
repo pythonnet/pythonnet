@@ -1,26 +1,46 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.9
+VisualStudioVersion = 15.0.26228.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime.15", "src\runtime\Python.Runtime.15.csproj", "{4D2089E1-5B6A-4799-984B-178AE467902D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.EmbeddingTest.15", "src\embed_tests\Python.EmbeddingTest.15.csproj", "{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
 		Debug-Linux-x64|x64 = Debug-Linux-x64|x64
 		Debug-Win-x64|x64 = Debug-Win-x64|x64
+		Release|x64 = Release|x64
 		Release-Linux-x64|x64 = Release-Linux-x64|x64
 		Release-Win-x64|x64 = Release-Win-x64|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D2089E1-5B6A-4799-984B-178AE467902D}.Debug|x64.ActiveCfg = Debug|x64
+		{4D2089E1-5B6A-4799-984B-178AE467902D}.Debug|x64.Build.0 = Debug|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Debug-Linux-x64|x64.ActiveCfg = Release|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Debug-Linux-x64|x64.Build.0 = Debug|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Debug-Win-x64|x64.ActiveCfg = Debug-Win-x64|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Debug-Win-x64|x64.Build.0 = Debug-Win-x64|x64
+		{4D2089E1-5B6A-4799-984B-178AE467902D}.Release|x64.ActiveCfg = Release|x64
+		{4D2089E1-5B6A-4799-984B-178AE467902D}.Release|x64.Build.0 = Release|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Release-Linux-x64|x64.ActiveCfg = Release|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Release-Linux-x64|x64.Build.0 = Release|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Release-Win-x64|x64.ActiveCfg = Release|x64
 		{4D2089E1-5B6A-4799-984B-178AE467902D}.Release-Win-x64|x64.Build.0 = Release|x64
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Debug|x64.Build.0 = Debug|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Debug-Linux-x64|x64.ActiveCfg = Debug|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Debug-Linux-x64|x64.Build.0 = Debug|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Debug-Win-x64|x64.ActiveCfg = Debug|x64
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Debug-Win-x64|x64.Build.0 = Debug|x64
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Release|x64.ActiveCfg = Release|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Release|x64.Build.0 = Release|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Release-Linux-x64|x64.ActiveCfg = Release|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Release-Linux-x64|x64.Build.0 = Release|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Release-Win-x64|x64.ActiveCfg = Release|Any CPU
+		{4CACAA81-CC6A-4381-85B8-3A4B57EFE3BD}.Release-Win-x64|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

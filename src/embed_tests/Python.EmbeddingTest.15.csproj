@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net40;netstandard1.6</TargetFrameworks>
+    <!--<PackageTargetFallback>net</PackageTarg0etFallback>-->
+    <RootNamespace>Python.EmbeddingTest</RootNamespace>
+    <AssemblyName>Python.EmbeddingTest</AssemblyName>
+    <PackageId>Python.EmbeddingTest</PackageId>
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionSuffix>Alpha</VersionSuffix>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <!--<DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>-->
+    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
+    <DebugType>Full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'x86'">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|x64'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net40|x64'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard1.6|x64'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.6|x64'" />
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);XPLAT</DefineConstants>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="NUnit">
+      <Version>3.6.1</Version>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\runtime\Python.Runtime.15.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
+    <PackageReference Include="Microsoft.CSharp">
+      <Version>4.0.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="fixtures\**\*.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
