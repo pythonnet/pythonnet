@@ -143,7 +143,11 @@ namespace Python.Runtime
 
             il.Emit(OpCodes.Ret);
 
+#if NETSTANDARD1_5
+            Type disp = tb.CreateTypeInfo().AsType();
+#else
             Type disp = tb.CreateType();
+#endif
             cache[dtype] = disp;
             return disp;
         }
@@ -158,7 +162,11 @@ namespace Python.Runtime
             Type dispatcher = GetDispatcher(dtype);
             object[] args = { callable, dtype };
             object o = Activator.CreateInstance(dispatcher, args);
+#if NETSTANDARD1_5
+            return DelegateShim.CreateDelegate(dtype, o, "Invoke");
+#else            
             return Delegate.CreateDelegate(dtype, o, "Invoke");
+#endif
         }
     }
 

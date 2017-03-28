@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -193,7 +193,11 @@ namespace Python.Runtime
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
                     Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
+#if NETSTANDARD1_5
+                    Assembly assembly = typeof(Runtime).GetTypeInfo().Assembly;
+#else
                     Assembly assembly = Assembly.GetExecutingAssembly();
+#endif
                     using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
                     using (var reader = new StreamReader(stream))
                     {

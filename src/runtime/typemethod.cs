@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -33,7 +33,11 @@ namespace Python.Runtime
                 {
                     inst = GetManagedObject(ob);
                 }
+#if NETSTANDARD1_5
+                return (IntPtr)mi.Invoke(inst, arglist);
+#else
                 return (IntPtr)mi.Invoke(inst, BindingFlags.Default, null, arglist, null);
+#endif
             }
             catch (Exception e)
             {

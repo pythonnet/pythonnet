@@ -124,7 +124,11 @@ namespace Python.Runtime
 
             if (null == assemblyName)
             {
+#if NETSTANDARD1_5
+                assemblyName = Assembly.GetEntryAssembly().FullName;
+#else
                 assemblyName = Assembly.GetExecutingAssembly().FullName;
+#endif
             }
 
             ModuleBuilder moduleBuilder = GetModuleBuilder(assemblyName, moduleName);
@@ -182,7 +186,11 @@ namespace Python.Runtime
             }
 
             // override any virtual methods not already overridden by the properties above
+#if NETSTANDARD1_5
+            MethodInfo[] methods = baseType.GetTypeInfo().GetMethods();
+#else
             MethodInfo[] methods = baseType.GetMethods();
+#endif
             var virtualMethods = new HashSet<string>();
             foreach (MethodInfo method in methods)
             {
@@ -250,16 +258,25 @@ namespace Python.Runtime
             il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
             il.Emit(OpCodes.Ret);
 
+#if NETSTANDARD1_5
+            TypeInfo type = typeBuilder.CreateTypeInfo();
+            // scan the assembly so the newly added class can be imported
+            Assembly assembly = type.Assembly;
+#else
             Type type = typeBuilder.CreateType();
-
             // scan the assembly so the newly added class can be imported
             Assembly assembly = Assembly.GetAssembly(type);
+#endif
             AssemblyManager.ScanAssembly(assembly);
 
             // FIXME: assemblyBuilder not used
             AssemblyBuilder assemblyBuilder = assemblyBuilders[assemblyName];
 
+#if NETSTANDARD1_5
+            return type.AsType();
+#else
             return type;
+#endif
         }
 
         /// <summary>
@@ -592,8 +609,13 @@ namespace Python.Runtime
                 }
                 else
                 {
+#if NETSTANDARD1_5
+                    assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName),
+                        AssemblyBuilderAccess.Run);
+#else
                     assemblyBuilder = domain.DefineDynamicAssembly(new AssemblyName(assemblyName),
                         AssemblyBuilderAccess.Run);
+#endif
                     assemblyBuilders[assemblyName] = assemblyBuilder;
                 }
 
@@ -678,12 +700,18 @@ namespace Python.Runtime
             {
                 throw new NotImplementedException("Python object does not have a '" + methodName + "' method");
             }
-
+#if NETSTANDARD1_5
+            return (T)obj.GetType()
+                .GetTypeInfo()
+                .GetMethod(origMethodName, BindingFlags.InvokeMethod)
+                .Invoke(obj, args);
+#else
             return (T)obj.GetType().InvokeMember(origMethodName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
+#endif
         }
 
         public static void InvokeMethodVoid(IPythonDerivedType obj, string methodName, string origMethodName,
@@ -741,11 +769,18 @@ namespace Python.Runtime
                 throw new NotImplementedException($"Python object does not have a '{methodName}' method");
             }
 
+#if NETSTANDARD1_5
+            obj.GetType()
+                .GetTypeInfo()
+                .GetMethod(origMethodName, BindingFlags.InvokeMethod)
+                .Invoke(obj, args);
+#else
             obj.GetType().InvokeMember(origMethodName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
+#endif
         }
 
         public static T InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)
@@ -803,11 +838,17 @@ namespace Python.Runtime
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
             // call the base constructor
+#if NETSTANDARD1_5
+            obj.GetType()
+                .GetMethod(origCtorName, BindingFlags.InvokeMethod)
+                .Invoke(obj, args);
+#else
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
+#endif
 
             var disposeList = new List<PyObject>();
             CLRObject self = null;

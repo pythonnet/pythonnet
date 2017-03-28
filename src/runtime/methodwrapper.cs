@@ -1,4 +1,7 @@
-using System;
+﻿using System;
+#if NETSTANDARD1_5
+using System.Reflection;
+#endif
 
 namespace Python.Runtime
 {

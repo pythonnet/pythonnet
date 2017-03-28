@@ -1,4 +1,7 @@
 ﻿using System;
+#if NETSTANDARD1_5
+using System.Reflection;
+#endif
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime

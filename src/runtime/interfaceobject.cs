@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -16,7 +16,12 @@ namespace Python.Runtime
 
         internal InterfaceObject(Type tp) : base(tp)
         {
+#if NETSTANDARD1_5
+            CoClassAttribute coclass = (CoClassAttribute)
+                tp.GetTypeInfo().GetCustomAttribute(cc_attr);
+#else
             var coclass = (CoClassAttribute)Attribute.GetCustomAttribute(tp, cc_attr);
+#endif
             if (coclass != null)
             {
                 ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);

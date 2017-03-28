@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -21,7 +21,11 @@ namespace Python.Runtime
             var aname = new AssemblyName { Name = "__CodeGenerator_Assembly" };
             var aa = AssemblyBuilderAccess.Run;
 
+#if NETSTANDARD1_5
+            aBuilder = AssemblyBuilder.DefineDynamicAssembly(aname, aa);
+#else
             aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
+#endif
             mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
         }
 

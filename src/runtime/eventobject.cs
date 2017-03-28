@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Reflection;
 
@@ -47,7 +47,11 @@ namespace Python.Runtime
             {
                 reg = new Hashtable();
             }
+#if NETSTANDARD1_5
+            object key = obj ?? info.DeclaringType;
+#else
             object key = obj ?? info.ReflectedType;
+#endif
             var list = reg[key] as ArrayList;
             if (list == null)
             {
@@ -60,7 +64,11 @@ namespace Python.Runtime
             // so we have to get the underlying add method explicitly.
             object[] args = { d };
             MethodInfo mi = info.GetAddMethod(true);
+#if NETSTANDARD1_5
+            mi.Invoke(obj, args);
+#else
             mi.Invoke(obj, BindingFlags.Default, null, args, null);
+#endif
 
             return true;
         }
@@ -85,7 +93,11 @@ namespace Python.Runtime
                 return false;
             }
 
+#if NETSTANDARD1_5
+            object key = obj ?? info.DeclaringType;
+#else
             object key = obj ?? info.ReflectedType;
+#endif
             var list = reg[key] as ArrayList;
 
             if (list == null)
@@ -107,7 +119,11 @@ namespace Python.Runtime
                 args[0] = item.del;
                 try
                 {
+#if NETSTANDARD1_5
+                    mi.Invoke(obj,  args);
+#else
                     mi.Invoke(obj, BindingFlags.Default, null, args, null);
+#endif
                 }
                 catch
                 {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -39,8 +39,11 @@ namespace Python.Runtime
 
             var aname = new AssemblyName { Name = "e__NativeCall_Assembly" };
             var aa = AssemblyBuilderAccess.Run;
-
+#if NETSTANDARD1_5
+            aBuilder = AssemblyBuilder.DefineDynamicAssembly(aname, aa);
+#else
             aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
+#endif
             mBuilder = aBuilder.DefineDynamicModule("e__NativeCall_Module");
 
             var ta = TypeAttributes.Public;
@@ -57,7 +60,11 @@ namespace Python.Runtime
                 GenerateThunk(tBuilder, method);
             }
 
+#if NETSTANDARD1_5
+            Type theType = tBuilder.CreateTypeInfo().AsType();
+#else
             Type theType = tBuilder.CreateType();
+#endif
 
             Impl = (INativeCall)Activator.CreateInstance(theType);
         }
@@ -106,12 +113,19 @@ namespace Python.Runtime
 
             il.Emit(OpCodes.Ldarg_1);
 
+#if NETSTANDARD1_5
+            il.EmitCalli(OpCodes.Calli,
+                CallingConventions.ExplicitThis,
+                method.ReturnType,
+                nargs, null
+            );
+#else
             il.EmitCalli(OpCodes.Calli,
                 CallingConvention.Cdecl,
                 method.ReturnType,
                 nargs
             );
-
+#endif
             il.Emit(OpCodes.Ret);
 
             tb.DefineMethodOverride(mb, method);

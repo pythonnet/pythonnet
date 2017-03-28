@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Reflection;
 
@@ -327,7 +327,11 @@ namespace Python.Runtime
                     }
                 }
                 else if (pynargs > clrnargs && clrnargs > 0 &&
-                         Attribute.IsDefined(pi[clrnargs - 1], typeof(ParamArrayAttribute)))
+#if NETSTANDARD1_5
+                    pi[clrnargs - 1].IsDefined(typeof(ParamArrayAttribute)))
+#else
+                    Attribute.IsDefined(pi[clrnargs - 1], typeof(ParamArrayAttribute)))
+#endif
                 {
                     // This is a `foo(params object[] bar)` style method
                     match = true;
@@ -518,7 +522,11 @@ namespace Python.Runtime
 
             try
             {
+#if NETSTANDARD1_5
+                result = binding.info.Invoke(binding.inst, binding.args);
+#else
                 result = binding.info.Invoke(binding.inst, BindingFlags.Default, null, binding.args, null);
+#endif
             }
             catch (Exception e)
             {
