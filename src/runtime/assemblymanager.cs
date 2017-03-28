@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,6 +6,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+#if NETSTANDARD1_5
+using System.Runtime.Loader;
+#endif
 
 namespace Python.Runtime
 {
@@ -19,7 +22,9 @@ namespace Python.Runtime
         // therefore this should be a ConcurrentDictionary
         private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
         //private static Dictionary<string, Dictionary<string, string>> generics;
+#if !NETSTANDARD1_5
         private static AssemblyLoadEventHandler lhandler;
+#endif
         private static ResolveEventHandler rhandler;
 
         // updated only under GIL?
@@ -48,9 +53,10 @@ namespace Python.Runtime
 
             AppDomain domain = AppDomain.CurrentDomain;
 
+#if !NETSTANDARD1_5
             lhandler = new AssemblyLoadEventHandler(AssemblyLoadHandler);
             domain.AssemblyLoad += lhandler;
-
+#endif
             rhandler = new ResolveEventHandler(ResolveHandler);
             domain.AssemblyResolve += rhandler;
 
@@ -76,11 +82,13 @@ namespace Python.Runtime
         internal static void Shutdown()
         {
             AppDomain domain = AppDomain.CurrentDomain;
+#if !NETSTANDARD1_5
             domain.AssemblyLoad -= lhandler;
+#endif 
             domain.AssemblyResolve -= rhandler;
         }
 
-
+#if !NETSTANDARD1_5
         /// <summary>
         /// Event handler for assembly load events. At the time the Python
         /// runtime loads, we scan the app domain to map the assemblies that
@@ -94,7 +102,7 @@ namespace Python.Runtime
             assemblies.Add(assembly);
             ScanAssembly(assembly);
         }
-
+#endif
 
         /// <summary>
         /// Event handler for assembly resolve events. This is needed because
@@ -196,7 +204,11 @@ namespace Python.Runtime
             Assembly assembly = null;
             try
             {
+#if NETSTANDARD1_5
+                assembly = Assembly.Load(new AssemblyName(name));
+#else
                 assembly = Assembly.Load(name);
+#endif
             }
             catch (Exception)
             {
@@ -220,7 +232,11 @@ namespace Python.Runtime
             {
                 try
                 {
+#if NETSTANDARD1_5
+                    assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
+#else
                     assembly = Assembly.LoadFrom(path);
+#endif
                 }
                 catch (Exception)
                 {
@@ -247,7 +263,11 @@ namespace Python.Runtime
                 {
                     try
                     {
+#if NETSTANDARD1_5
+                        assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(name);
+#else
                         assembly = Assembly.LoadFrom(name);
+#endif
                     }
                     catch (Exception)
                     {
@@ -364,7 +384,11 @@ namespace Python.Runtime
                     namespaces[ns].TryAdd(assembly, string.Empty);
                 }
 
+#if !NETSTANDARD1_5
                 if (ns != null && t.IsGenericTypeDefinition)
+#else
+                if (ns != null && t.GetTypeInfo().IsGenericTypeDefinition)
+#endif
                 {
                     GenericUtil.Register(t);
                 }

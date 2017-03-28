@@ -62,9 +62,16 @@
     <PackageReference Include="System.Runtime.Loader">
       <Version>4.0.0</Version>
     </PackageReference>
+    <PackageReference Include="System.Runtime.Serialization.Formatters">
+      <Version>4.0.0-rc3-24212-01</Version>
+    </PackageReference>
     <PackageReference Include="System.Threading.Thread">
       <Version>4.0.0</Version>
     </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="ReflectionBridge" Version="0.0.11" />
   </ItemGroup>
  
 </Project>

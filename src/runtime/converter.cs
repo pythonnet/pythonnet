@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,7 +11,9 @@ namespace Python.Runtime
     /// <summary>
     /// Performs data conversions between managed types and Python types.
     /// </summary>
+#if !NETSTANDARD1_5
     [SuppressUnmanagedCodeSecurity]
+#endif
     internal class Converter
     {
         private Converter()
