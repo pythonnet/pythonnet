@@ -12,29 +12,48 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <!--<DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>-->
     <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
-  </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Win-x64|net40|x64'">
+ </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Linux-x64|net40|x64'">
     <PlatformTarget>x64</PlatformTarget>
-    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NET40;UCS2;</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Linux-x64|netstandard1.5|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Linux-x64|net40|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Linux-x64|netstandard1.5|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Win-x64|net40|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Win-x64|net40|x64'">
     <PlatformTarget>x64</PlatformTarget>
-    <DefineConstants>TRACE;X64;LINUX;UNIX;NET40;UCS2;</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;X64;UCS2</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug-Win-x64|netstandard1.5|x64'">
     <PlatformTarget>x64</PlatformTarget>
-    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NETSTANDARD1_5;UCS2;</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;X64;UCS2</DefineConstants>
   </PropertyGroup>
-
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Win-x64|net40|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE;X64;UCS2</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release-Win-x64|netstandard1.5|x64'">
     <PlatformTarget>x64</PlatformTarget>
-    <DefineConstants>TRACE;DEBUG;X64;LINUX;UNIX;NETSTANDARD1_5;UCS2;</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;X64;UCS2;</DefineConstants>
   </PropertyGroup>
   
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);XPLAT;REFLECTIONBRIDGE;PYTHON3;PYTHON35</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration.Substring(0,5))'=='Debug'">
+    <!--MS bug, publish makes no sense to configuration name.-->
+    <OutputPath>bin\Debug</OutputPath>
   </PropertyGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.5'">

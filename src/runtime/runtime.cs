@@ -24,7 +24,11 @@ namespace Python.Runtime
 
         public static IntPtr LoadLibrary(string fileName)
         {
+#if NETSTANDARD1_5
+            return dlopen(fileName, RTLD_NOW);
+#else
             return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
+#endif
         }
 
         public static void FreeLibrary(IntPtr handle)
@@ -281,9 +285,13 @@ namespace Python.Runtime
             IntPtr dllLocal = IntPtr.Zero;
             if (PythonDll != "__Internal")
             {
+#if !NETSTANDARD1_5
                 NativeMethods.LoadLibrary(PythonDll);
+#endif
             }
+#if !NETSTANDARD1_5
             _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dllLocal, "_PyObject_NextNotImplemented");
+#endif
 #if !(MONO_LINUX || MONO_OSX)
             if (dllLocal != IntPtr.Zero)
             {
@@ -648,8 +656,10 @@ namespace Python.Runtime
             var unmanagedDataPtr = marshaler.MarshalManagedToNative(argv);
 
             int result = Py_Main(argc, unmanagedDataPtr);
-
-            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            if (unmanagedDataPtr != IntPtr.Zero)
+            {
+                marshaler.CleanUpNativeData(unmanagedDataPtr);
+            }
             return result;
         }
 #else
@@ -1207,7 +1217,10 @@ namespace Python.Runtime
 
             IntPtr result = PyString_FromStringAndSize(unmanagedDataPtr, size);
 
-            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            if (unmanagedDataPtr != IntPtr.Zero)
+            {
+                marshaler.CleanUpNativeData(unmanagedDataPtr);
+            }
             return result;
         }
 #else
@@ -1262,7 +1275,11 @@ namespace Python.Runtime
 
             IntPtr result = PyUnicode_FromKindAndData(kind, unmanagedDataPtr, size);
 
-            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            if (unmanagedDataPtr != IntPtr.Zero)
+            {
+                marshaler.CleanUpNativeData(unmanagedDataPtr);
+            }
+
             return result;
         }
 #else
@@ -1310,8 +1327,11 @@ namespace Python.Runtime
             var unmanagedDataPtr = marshaler.MarshalManagedToNative(s);
 
             IntPtr result = PyUnicode_FromUnicode(unmanagedDataPtr, size);
+            if (unmanagedDataPtr != IntPtr.Zero)
+            {
+                marshaler.CleanUpNativeData(unmanagedDataPtr);
+            }
 
-            marshaler.CleanUpNativeData(unmanagedDataPtr);
             return result;
         }
 #else
@@ -1576,8 +1596,10 @@ namespace Python.Runtime
             var unmanagedDataPtr = marshaler.MarshalManagedToNative(argv);
 
             PySys_SetArgvEx(argc, unmanagedDataPtr, updatepath);
-
-            marshaler.CleanUpNativeData(unmanagedDataPtr);
+            if (unmanagedDataPtr != IntPtr.Zero)
+            {
+                marshaler.CleanUpNativeData(unmanagedDataPtr);
+            }
         }
 #else
         [DllImport(PythonDll)]
