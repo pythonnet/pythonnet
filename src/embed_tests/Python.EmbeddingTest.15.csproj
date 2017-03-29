@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net40;netstandard1.6</TargetFrameworks>
-    <!--<PackageTargetFallback>net</PackageTarg0etFallback>-->
+    <OutputType>exe</OutputType>
+    <TargetFrameworks><!--net40;-->netcoreapp1.0</TargetFrameworks>
+    <RuntimeIdentifiers>win7-x64;ubuntu.16.04-x64</RuntimeIdentifiers>
     <RootNamespace>Python.EmbeddingTest</RootNamespace>
     <AssemblyName>Python.EmbeddingTest</AssemblyName>
     <PackageId>Python.EmbeddingTest</PackageId>
@@ -12,6 +13,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <!--<DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>-->
     <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
+    <!--This is for NUnit Test Adaptor crash workaround.-->
     <DebugType>Full</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86'">
@@ -25,9 +27,9 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net40|x64'" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard1.6|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp1.0|x64'" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.6|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp1.0|x64'" />
 
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);XPLAT</DefineConstants>
@@ -37,6 +39,7 @@
     <PackageReference Include="NUnit">
       <Version>3.6.1</Version>
     </PackageReference>
+    <PackageReference Include="NUnitLite" Version="3.6.1" />
   </ItemGroup>
 
   <ItemGroup>
