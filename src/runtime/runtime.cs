@@ -269,11 +269,11 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize()
+        internal static void Initialize(bool initSigs)
         {
             if (Py_IsInitialized() == 0)
             {
-                Py_Initialize();
+                Py_InitializeEx(initSigs ? 1 : 0);
             }
 
             if (PyEval_ThreadsInitialized() == 0)
@@ -726,6 +726,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void Py_Initialize();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void Py_InitializeEx(int initsigs);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_IsInitialized();
