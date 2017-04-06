@@ -55,6 +55,9 @@ on_finish:
 
 artifacts:
   - path: dist\*
+  - path: TestResult.xml
+    name: TestResult
+    type: xml
 
 notifications:
   - provider: Slack
