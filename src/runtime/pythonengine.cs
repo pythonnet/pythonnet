@@ -551,16 +551,21 @@ namespace Python.Runtime
 
         public static PyScope CreateScope()
         {
-            return CreateScope(null);
+            var scope = PyScope.New();
+            return scope;
         }
 
         public static PyScope CreateScope(string name)
         {
+            if (String.IsNullOrEmpty(name))
+            {
+                throw new PyScopeException("Name of ScopeStorage must not be empty");
+            }
             if (name != null && NamedScopes.ContainsKey(name))
             {
                 throw new PyScopeException(String.Format("ScopeStorage '{0}' has existed", name));
             }
-            var scope = new PyScope(name);
+            var scope = PyScope.New(name);
             if (name != null)
             {
                 NamedScopes[name] = scope;

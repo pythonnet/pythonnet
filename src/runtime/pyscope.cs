@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Dynamic;
 
 namespace Python.Runtime
@@ -21,18 +23,36 @@ namespace Python.Runtime
 
     public class PyScope : DynamicObject, IPyObject
     {
-        public string Name
-        {
-            get;
-            private set;
-        }
+        public readonly string Name;
+
+        internal readonly IntPtr obj;
+
+        /// <summary>
+        /// the dict for local variables
+        /// </summary>
+        internal readonly IntPtr variables;
 
         private bool isDisposed;
-
-        internal PyScope(string name)
+        
+        internal static PyScope New(string name = null)
         {
-            this.Name = name;
-            variables = Runtime.PyDict_New();
+            if (name == null)
+            {
+                name = "";
+            }
+            var module = Runtime.PyModule_New(name);
+            if (module == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            return new PyScope(module);
+        }
+        
+        private PyScope(IntPtr ptr)
+        {
+            obj = ptr;
+            //Refcount of the variables not increase
+            variables = Runtime.PyModule_GetDict(obj);
             if (variables == IntPtr.Zero)
             {
                 throw new PythonException();
@@ -41,28 +61,7 @@ namespace Python.Runtime
                 variables, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
             );
-            InitVariables();
-        }
-
-        //To compitable with the python module.
-        //Enable locals() and glocals() usage in the python script.
-        private void InitVariables()
-        {
-            SetVariable("locals", (Func<PyDict>)Variables);
-            SetVariable("globals", (Func<PyDict>)Variables);
-        }
-        
-        /// <summary>
-        /// the dict for scope variables
-        /// </summary>
-        internal IntPtr variables { get; private set; }
-
-        public long Refcount
-        {
-            get
-            {
-                return Runtime.Refcount(variables);
-            }
+            this.Name = this.GetVariable<string>("__name__");
         }
 
         public event Action<PyScope> OnDispose;
@@ -73,27 +72,41 @@ namespace Python.Runtime
             return new PyDict(variables);
         }
 
-        public PyScope CreateScope()
+        public PyScope NewScope()
         {
-            var scope = new PyScope(null);
-            scope.ImportScope(this);
+            var scope = PyScope.New();
+            scope.ImportAllFromScope(this);
             return scope;
         }
 
-        public void ImportScope(string name)
+        public void ImportAllFromScope(string name)
         {
             var scope = Py.GetScope(name);
-            ImportScope(scope);
+            ImportAllFromScope(scope);
         }
 
-        public void ImportScope(PyScope scope)
+        public void ImportAllFromScope(PyScope scope)
         {
             int result = Runtime.PyDict_Update(variables, scope.variables);
             if (result < 0)
             {
                 throw new PythonException();
             }
-            InitVariables();
+        }
+
+        public void ImportScope(string name, string asname = null)
+        {
+            var scope = Py.GetScope(name);
+            if(asname == null)
+            {
+                asname = name;
+            }
+            ImportScope(scope, asname);
+        }
+
+        public void ImportScope(PyScope scope, string asname)
+        {
+            this.SetVariable(asname, scope.obj);
         }
 
         /// <summary>
@@ -134,10 +147,11 @@ namespace Python.Runtime
         /// Execute a Python ast and return the result as a PyObject.
         /// The ast can be either an expression or stmts.
         /// </remarks>
-        public PyObject Execute(PyObject script)
+        public PyObject Execute(PyObject script, PyDict locals = null)
         {
             Check();
-            IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, variables, variables);
+            IntPtr _locals = locals == null ? variables : locals.obj;
+            IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, variables, _locals);
             Runtime.CheckExceptionOccurred();
             if (ptr == Runtime.PyNone)
             {
@@ -147,22 +161,16 @@ namespace Python.Runtime
             return new PyObject(ptr);
         }
 
-        public T Execute<T>(PyObject script)
+        public T Execute<T>(PyObject script, PyDict locals = null)
         {
             Check();
-            PyObject pyObj = Execute(script);
+            PyObject pyObj = Execute(script, locals);
             if (pyObj == null)
             {
                 return default(T);
             }
-            var obj = (T)ToManagedObject<T>(pyObj);
+            var obj = pyObj.As<T>();
             return obj;
-        }
-
-        public T ExecuteVariable<T>(string name)
-        {
-            PyObject script = GetVariable(name);
-            return Execute<T>(script);
         }
 
         /// <summary>
@@ -172,12 +180,13 @@ namespace Python.Runtime
         /// Evaluate a Python expression and return the result as a PyObject
         /// or null if an exception is raised.
         /// </remarks>
-        public PyObject Eval(string code)
+        public PyObject Eval(string code, PyDict locals = null)
         {
             Check();
+            IntPtr _locals = locals == null ? variables : locals.obj;
             var flag = (IntPtr)Runtime.Py_eval_input;
             IntPtr ptr = Runtime.PyRun_String(
-                code, flag, variables, variables
+                code, flag, variables, _locals
             );
             Runtime.CheckExceptionOccurred();
             return new PyObject(ptr);
@@ -189,11 +198,11 @@ namespace Python.Runtime
         /// <remarks>
         /// Evaluate a Python expression and convert the result to Managed Object.
         /// </remarks>
-        public T Eval<T>(string code)
+        public T Eval<T>(string code, PyDict locals = null)
         {
             Check();
-            PyObject pyObj = Eval(code);
-            var obj = (T)ToManagedObject<T>(pyObj);
+            PyObject pyObj = Eval(code, locals);
+            var obj = pyObj.As<T>();
             return obj;
         }
 
@@ -203,10 +212,11 @@ namespace Python.Runtime
         /// <remarks>
         /// Exec a Python script and save its local variables in the current local variable dict.
         /// </remarks>
-        public void Exec(string code)
+        public void Exec(string code, PyDict locals = null)
         {
             Check();
-            Exec(code, variables, variables);
+            IntPtr _locals = locals == null ? variables : locals.obj;
+            Exec(code, variables, _locals);
         }
 
         private void Exec(string code, IntPtr _globals, IntPtr _locals)
@@ -232,16 +242,30 @@ namespace Python.Runtime
         /// </remarks>
         public void SetVariable(string name, object value)
         {
+            IntPtr _value = Converter.ToPython(value, value?.GetType());
+            SetVariable(name, _value);
+            Runtime.XDecref(_value);
+        }
+
+        private void SetVariable(string name, IntPtr value)
+        {
             Check();
             using (var pyKey = new PyString(name))
             {
-                IntPtr _value = Converter.ToPython(value, value?.GetType());
-                int r = Runtime.PyObject_SetItem(variables, pyKey.obj, _value);
+                int r = Runtime.PyObject_SetItem(variables, pyKey.obj, value);
                 if (r < 0)
                 {
                     throw new PythonException();
                 }
-                Runtime.XDecref(_value);
+            }
+        }
+
+        public void AddVariables(PyDict dict)
+        {
+            int result = Runtime.PyDict_Update(variables, dict.obj);
+            if (result < 0)
+            {
+                throw new PythonException();
             }
         }
 
@@ -354,7 +378,7 @@ namespace Python.Runtime
             {
                 return default(T);
             }
-            return (T)ToManagedObject<T>(pyObj);
+            return pyObj.As<T>();
         }
 
         public bool TryGetVariable<T>(string name, out T value)
@@ -372,7 +396,7 @@ namespace Python.Runtime
                 value = default(T);
                 return true;
             }
-            value = (T)ToManagedObject<T>(pyObj);
+            value = pyObj.As<T>();
             return true;
         }
 
@@ -386,15 +410,6 @@ namespace Python.Runtime
         {
             this.SetVariable(binder.Name, value);
             return true;
-        }
-
-        private object ToManagedObject<T>(PyObject pyObj)
-        {
-            if(typeof(T) == typeof(PyObject) || typeof(T) == typeof(object))
-            {
-                return pyObj;
-            }
-            return pyObj.AsManagedObject(typeof(T));
         }
 
         private void Check()
@@ -412,11 +427,8 @@ namespace Python.Runtime
                 return;
             }
             isDisposed = true;
-            Runtime.XDecref(variables);
-            if (this.OnDispose != null)
-            {
-                this.OnDispose(this);
-            }
+            Runtime.XDecref(obj);
+            this.OnDispose?.Invoke(this);
         }
 
         ~PyScope()

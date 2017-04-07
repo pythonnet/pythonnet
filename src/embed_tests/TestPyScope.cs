@@ -137,7 +137,7 @@ namespace Python.EmbeddingTest
                 dynamic _ps = ps;
                 _ps.bb = 100;
                 ps.Exec(
-                    "class class1():\n" +
+                    "class Class1():\n" +
                     "    def __init__(self, value):\n" +
                     "        self.value = value\n" +
                     "    def call(self, arg):\n" +
@@ -146,8 +146,8 @@ namespace Python.EmbeddingTest
                     "        global bb\n" +
                     "        bb = self.value + arg\n"  //update scope variable
                 );
-                dynamic obj1 = _ps.class1(20);
-                var result = obj1.call(10).AsManagedObject(typeof(int));
+                dynamic obj1 = _ps.Class1(20);
+                var result = obj1.call(10).As<int>();
                 Assert.AreEqual(130, result);
 
                 obj1.update(10);
@@ -170,7 +170,7 @@ namespace Python.EmbeddingTest
 
                 ps.Exec("sys.attr1 = 2");
                 var value1 = ps.Eval<int>("sys.attr1");
-                var value2 = (int)sys.attr1.AsManagedObject(typeof(int));
+                var value2 = (int)sys.attr1.As<int>();
                 Assert.AreEqual(2, value1);
                 Assert.AreEqual(2, value2);
 
@@ -192,12 +192,37 @@ namespace Python.EmbeddingTest
                 ps.SetVariable("bb", 100);
                 ps.SetVariable("cc", 10);
 
-                PyScope scope = ps.CreateScope();
+                PyScope scope = Py.CreateScope();
+                scope.ImportScope(ps, "ps");
+
+                scope.Exec("aa = ps.bb + ps.cc + 3");
+                var result = scope.GetVariable<int>("aa");
+                Assert.AreEqual(113, result);
+                
+                scope.Dispose();
+
+                Assert.IsFalse(ps.ContainsVariable("aa"));
+            }
+        }
+
+        /// <summary>
+        /// Create a scope and import variables from a scope, 
+        /// exec Python statements in the scope then discard it.
+        /// </summary>
+        [Test]
+        public void TestImportAllFromScope()
+        {
+            using (Py.GIL())
+            {
+                ps.SetVariable("bb", 100);
+                ps.SetVariable("cc", 10);
+
+                PyScope scope = ps.NewScope();
 
                 scope.Exec("aa = bb + cc + 3");
                 var result = scope.GetVariable<int>("aa");
                 Assert.AreEqual(113, result);
-                
+
                 scope.Dispose();
 
                 Assert.IsFalse(ps.ContainsVariable("aa"));
@@ -219,7 +244,7 @@ namespace Python.EmbeddingTest
                     "def func1():\n" +
                     "    return cc + bb\n");
 
-                PyScope scope = ps.CreateScope();
+                PyScope scope = ps.NewScope();
 
                 //'func1' is imported from the origion scope
                 scope.Exec(
@@ -227,16 +252,16 @@ namespace Python.EmbeddingTest
                     "    return func1() - cc - bb\n");
                 dynamic func2 = scope.GetVariable("func2");
 
-                var result1 = func2().AsManagedObject(typeof(int));
+                var result1 = func2().As<int>();
                 Assert.AreEqual(0, result1);
 
                 scope.SetVariable("cc", 20);//it has no effect on the globals of 'func1'
-                var result2 = func2().AsManagedObject(typeof(int));
+                var result2 = func2().As<int>();
                 Assert.AreEqual(-10, result2);
                 scope.SetVariable("cc", 10); //rollback
 
                 ps.SetVariable("cc", 20);
-                var result3 = func2().AsManagedObject(typeof(int));
+                var result3 = func2().As<int>();
                 Assert.AreEqual(10, result3);
                 ps.SetVariable("cc", 10); //rollback
 
@@ -256,7 +281,8 @@ namespace Python.EmbeddingTest
                 ps.SetVariable("bb", 100);
 
                 var scope = Py.CreateScope();
-                scope.ImportScope("test");
+                scope.ImportAllFromScope("test");
+                //scope.ImportModule("test");
 
                 Assert.IsTrue(scope.ContainsVariable("bb"));
             }

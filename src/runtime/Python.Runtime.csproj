@@ -70,9 +70,6 @@
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugWinPY3|x64'">
-    <DefineConstants>TRACE;DEBUG;PYTHON3;PYTHON36;UCS2</DefineConstants>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
