@@ -15,13 +15,14 @@ namespace Python.Runtime
     }
 
     /// <summary>
-    /// Classes implement this interface must be used with GIL obtained.
+    /// Classes/methods have this attribute must be used with GIL obtained.
     /// </summary>
-    public interface IPyObject : IDisposable
+    public class PyGILAttribute : Attribute
     {
     }
 
-    public class PyScope : DynamicObject, IPyObject
+    [PyGIL]
+    public class PyScope : DynamicObject, IDisposable
     {
         public readonly string Name;
 
@@ -33,6 +34,10 @@ namespace Python.Runtime
         internal readonly IntPtr variables;
 
         private bool isDisposed;
+
+        internal PyScopeManager Manager;
+
+        public event Action<PyScope> OnDispose;
         
         internal static PyScope New(string name = null)
         {
@@ -64,8 +69,6 @@ namespace Python.Runtime
             this.Name = this.GetVariable<string>("__name__");
         }
 
-        public event Action<PyScope> OnDispose;
-
         public PyDict Variables()
         {
             Runtime.XIncref(variables);
@@ -81,7 +84,7 @@ namespace Python.Runtime
 
         public void ImportAllFromScope(string name)
         {
-            var scope = Py.GetScope(name);
+            var scope = Manager.Get(name);
             ImportAllFromScope(scope);
         }
 
@@ -96,7 +99,7 @@ namespace Python.Runtime
 
         public void ImportScope(string name, string asname = null)
         {
-            var scope = Py.GetScope(name);
+            var scope = Manager.Get(name);
             if(asname == null)
             {
                 asname = name;
@@ -434,6 +437,66 @@ namespace Python.Runtime
         ~PyScope()
         {
             Dispose();
+        }
+    }
+
+    public class PyScopeManager
+    {
+        private Dictionary<string, PyScope> NamedScopes = new Dictionary<string, PyScope>();
+
+        [PyGIL]
+        public PyScope Create()
+        {
+            var scope = PyScope.New();
+            scope.Manager = this;
+            return scope;
+        }
+
+        [PyGIL]
+        public PyScope Create(string name)
+        {
+            if (String.IsNullOrEmpty(name))
+            {
+                throw new PyScopeException("Name of ScopeStorage must not be empty");
+            }
+            if (name != null && NamedScopes.ContainsKey(name))
+            {
+                throw new PyScopeException(String.Format("ScopeStorage '{0}' has existed", name));
+            }
+            var scope = PyScope.New(name);
+            scope.Manager = this;
+            scope.OnDispose += Remove;
+            NamedScopes[name] = scope;
+            return scope;
+        }
+
+        public bool Contains(string name)
+        {
+            return NamedScopes.ContainsKey(name);
+        }
+
+        public PyScope Get(string name)
+        {
+            if (name != null && NamedScopes.ContainsKey(name))
+            {
+                return NamedScopes[name];
+            }
+            throw new PyScopeException(String.Format("ScopeStorage '{0}' not exist", name));
+        }
+
+        public void Remove(PyScope scope)
+        {
+            NamedScopes.Remove(scope.Name);
+        }
+
+        [PyGIL]
+        public void Clear()
+        {
+            var scopes = NamedScopes.Values.ToList();
+            foreach (var scope in scopes)
+            {
+                scope.Dispose();
+            }
         }
     }
 }

@@ -294,7 +294,7 @@ namespace Python.Runtime
         {
             if (initialized)
             {
-                Py.ClearScopes();
+                Py.PyScopeManager.Clear();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
                 Marshal.FreeHGlobal(_programName);
@@ -547,61 +547,20 @@ namespace Python.Runtime
             return new GILState();
         }
         
-        private static Dictionary<string, PyScope> NamedScopes = new Dictionary<string, PyScope>();
+        internal static PyScopeManager PyScopeManager = new PyScopeManager();
 
         public static PyScope CreateScope()
         {
-            var scope = PyScope.New();
+            var scope = PyScopeManager.Create();
             return scope;
         }
 
         public static PyScope CreateScope(string name)
         {
-            if (String.IsNullOrEmpty(name))
-            {
-                throw new PyScopeException("Name of ScopeStorage must not be empty");
-            }
-            if (name != null && NamedScopes.ContainsKey(name))
-            {
-                throw new PyScopeException(String.Format("ScopeStorage '{0}' has existed", name));
-            }
-            var scope = PyScope.New(name);
-            if (name != null)
-            {
-                NamedScopes[name] = scope;
-                scope.OnDispose += RemoveScope;
-            }
+            var scope = PyScopeManager.Create(name);
             return scope;
         }
         
-        public static bool ContainsScope(string name)
-        {
-            return NamedScopes.ContainsKey(name);
-        }
-
-        public static PyScope GetScope(string name)
-        {
-            if (name != null && NamedScopes.ContainsKey(name))
-            {
-                return NamedScopes[name]; 
-            }
-            throw new PyScopeException(String.Format("ScopeStorage '{0}' not exist", name));
-        }
-
-        internal static void RemoveScope(PyScope scope)
-        {
-            NamedScopes.Remove(scope.Name);
-        }
-
-        internal static void ClearScopes()
-        {
-            var scopes = NamedScopes.Values.ToList();
-            foreach (var scope in scopes)
-            {
-                scope.Dispose();
-            }
-        }
-
         public class GILState : IDisposable
         {
             private IntPtr state;

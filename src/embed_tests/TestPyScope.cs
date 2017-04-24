@@ -306,7 +306,7 @@ namespace Python.EmbeddingTest
             var a2 = ps.GetVariable<int>("ee");
             Assert.AreEqual(220, a2);
 
-            var item = (ps as dynamic).locals();
+            var item = ps.Variables();
             item["ee"] = new PyInt(230);
             item.Dispose();
             var a3 = ps.GetVariable<int>("ee");
