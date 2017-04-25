@@ -131,7 +131,7 @@ namespace Python.Runtime
         public const string _pyver = "34";
 #elif PYTHON35
         public const string _pyversion = "3.5";
-        public const string pyver = "35";
+        public const string _pyver = "35";
 #elif PYTHON36
         public const string _pyversion = "3.6";
         public const string _pyver = "36";
