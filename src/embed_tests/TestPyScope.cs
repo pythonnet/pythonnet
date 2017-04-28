@@ -165,7 +165,7 @@ namespace Python.EmbeddingTest
         {
             using (Py.GIL())
             {
-                dynamic sys = ps.ImportModule("sys");
+                dynamic sys = ps.Import("sys");
                 Assert.IsTrue(ps.ContainsVariable("sys"));
 
                 ps.Exec("sys.attr1 = 2");
@@ -175,7 +175,7 @@ namespace Python.EmbeddingTest
                 Assert.AreEqual(2, value2);
 
                 //import as
-                ps.ImportModule("sys", "sys1");
+                ps.Import("sys", "sys1");
                 Assert.IsTrue(ps.ContainsVariable("sys1"));
             }
         }
@@ -193,7 +193,7 @@ namespace Python.EmbeddingTest
                 ps.SetVariable("cc", 10);
 
                 PyScope scope = Py.CreateScope();
-                scope.ImportScope(ps, "ps");
+                scope.Import(ps, "ps");
 
                 scope.Exec("aa = ps.bb + ps.cc + 3");
                 var result = scope.GetVariable<int>("aa");
@@ -281,7 +281,7 @@ namespace Python.EmbeddingTest
                 ps.SetVariable("bb", 100);
 
                 var scope = Py.CreateScope();
-                scope.ImportAllFromScope("test");
+                scope.ImportAll("test");
                 //scope.ImportModule("test");
 
                 Assert.IsTrue(scope.ContainsVariable("bb"));

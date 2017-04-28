@@ -294,7 +294,7 @@ namespace Python.Runtime
         {
             if (initialized)
             {
-                Py.PyScopeManager.Clear();
+                PyScopeManager.Global.Clear();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
                 Marshal.FreeHGlobal(_programName);
@@ -546,18 +546,16 @@ namespace Python.Runtime
 
             return new GILState();
         }
-        
-        internal static PyScopeManager PyScopeManager = new PyScopeManager();
 
         public static PyScope CreateScope()
         {
-            var scope = PyScopeManager.Create();
+            var scope = PyScopeManager.Global.Create();
             return scope;
         }
 
         public static PyScope CreateScope(string name)
         {
-            var scope = PyScopeManager.Create(name);
+            var scope = PyScopeManager.Global.Create(name);
             return scope;
         }
         

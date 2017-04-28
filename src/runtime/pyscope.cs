@@ -35,26 +35,21 @@ namespace Python.Runtime
 
         private bool isDisposed;
 
-        internal PyScopeManager Manager;
+        internal readonly PyScopeManager Manager;
 
         public event Action<PyScope> OnDispose;
         
-        internal static PyScope New(string name = null)
+        public PyScope(IntPtr ptr, PyScopeManager manager)
         {
-            if (name == null)
+            if (Runtime.PyObject_Type(ptr) != Runtime.PyModuleType)
             {
-                name = "";
+                throw new PyScopeException("object is not a module");
             }
-            var module = Runtime.PyModule_New(name);
-            if (module == IntPtr.Zero)
+            if(manager == null)
             {
-                throw new PythonException();
+                manager = PyScopeManager.Global;
             }
-            return new PyScope(module);
-        }
-        
-        private PyScope(IntPtr ptr)
-        {
+            Manager = manager;
             obj = ptr;
             //Refcount of the variables not increase
             variables = Runtime.PyModule_GetDict(obj);
@@ -77,18 +72,63 @@ namespace Python.Runtime
 
         public PyScope NewScope()
         {
-            var scope = PyScope.New();
-            scope.ImportAllFromScope(this);
+            var scope = Manager.Create();
+            scope.ImportAll(this);
             return scope;
         }
 
-        public void ImportAllFromScope(string name)
+        public dynamic Import(string name, string asname = null)
         {
-            var scope = Manager.Get(name);
-            ImportAllFromScope(scope);
+            Check();
+            if (asname == null)
+            {
+                asname = name;
+            }
+            var scope = Manager.TryGet(name);
+            if(scope != null)
+            {
+                Import(scope, asname);
+                return scope;
+            }
+            PyObject module = PythonEngine.ImportModule(name);
+            Import(module, asname);
+            return module;
         }
 
-        public void ImportAllFromScope(PyScope scope)
+        public void Import(PyScope scope, string asname)
+        {
+            this.SetVariable(asname, scope.obj);
+        }
+
+        /// <summary>
+        /// Import Method
+        /// </summary>
+        /// <remarks>
+        /// The import .. as .. statement in Python.
+        /// Import a module,add it to the variables dict and return the resulting module object as a PyObject.
+        /// </remarks>
+        public void Import(PyObject module, string asname = null)
+        {
+            if (asname == null)
+            {
+                asname = module.GetAttr("__name__").ToString();
+            }
+            SetVariable(asname, module);
+        }
+
+        public void ImportAll(string name)
+        {
+            var scope = Manager.TryGet(name);
+            if(scope != null)
+            {
+                ImportAll(scope);
+                return;
+            }
+            PyObject module = PythonEngine.ImportModule(name);
+            ImportAll(module);
+        }
+
+        public void ImportAll(PyScope scope)
         {
             int result = Runtime.PyDict_Update(variables, scope.variables);
             if (result < 0)
@@ -97,50 +137,27 @@ namespace Python.Runtime
             }
         }
 
-        public void ImportScope(string name, string asname = null)
+        public void ImportAll(PyObject module)
         {
-            var scope = Manager.Get(name);
-            if(asname == null)
+            if (Runtime.PyObject_Type(module.obj) != Runtime.PyModuleType)
             {
-                asname = name;
+                throw new PyScopeException("object is not a module");
             }
-            ImportScope(scope, asname);
-        }
-
-        public void ImportScope(PyScope scope, string asname)
-        {
-            this.SetVariable(asname, scope.obj);
-        }
-
-        /// <summary>
-        /// ImportModule Method
-        /// </summary>
-        /// <remarks>
-        /// The import .. as .. statement in Python.
-        /// Import a module ,add it to the variables dict and return the resulting module object as a PyObject.
-        /// </remarks>
-        public PyObject ImportModule(string name)
-        {
-            return ImportModule(name, name);
-        }
-
-        /// <summary>
-        /// ImportModule Method
-        /// </summary>
-        /// <remarks>
-        /// The import .. as .. statement in Python.
-        /// Import a module ,add it to the variables dict and return the resulting module object as a PyObject.
-        /// </remarks>
-        public PyObject ImportModule(string name, string asname)
-        {
-            Check();
-            PyObject module = PythonEngine.ImportModule(name);
-            if (asname == null)
+            var module_dict = Runtime.PyModule_GetDict(module.obj);
+            int result = Runtime.PyDict_Update(variables, module_dict);
+            if (result < 0)
             {
-                asname = name;
+                throw new PythonException();
             }
-            SetVariable(asname, module);
-            return module;
+        }
+
+        public void ImportAll(PyDict dict)
+        {
+            int result = Runtime.PyDict_Update(variables, dict.obj);
+            if (result < 0)
+            {
+                throw new PythonException();
+            }
         }
 
         /// <summary>
@@ -260,15 +277,6 @@ namespace Python.Runtime
                 {
                     throw new PythonException();
                 }
-            }
-        }
-
-        public void AddVariables(PyDict dict)
-        {
-            int result = Runtime.PyDict_Update(variables, dict.obj);
-            if (result < 0)
-            {
-                throw new PythonException();
             }
         }
 
@@ -442,13 +450,28 @@ namespace Python.Runtime
 
     public class PyScopeManager
     {
+        public readonly static PyScopeManager Global = new PyScopeManager();
+
         private Dictionary<string, PyScope> NamedScopes = new Dictionary<string, PyScope>();
+
+        internal PyScope NewScope(string name)
+        {
+            if (name == null)
+            {
+                name = "";
+            }
+            var module = Runtime.PyModule_New(name);
+            if (module == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            return new PyScope(module, this);
+        }
 
         [PyGIL]
         public PyScope Create()
         {
-            var scope = PyScope.New();
-            scope.Manager = this;
+            var scope = this.NewScope(null);
             return scope;
         }
 
@@ -457,14 +480,13 @@ namespace Python.Runtime
         {
             if (String.IsNullOrEmpty(name))
             {
-                throw new PyScopeException("Name of ScopeStorage must not be empty");
+                throw new ArgumentNullException(nameof(name));
             }
             if (name != null && NamedScopes.ContainsKey(name))
             {
-                throw new PyScopeException(String.Format("ScopeStorage '{0}' has existed", name));
+                throw new PyScopeException($"PyScope '{name}' has existed");
             }
-            var scope = PyScope.New(name);
-            scope.Manager = this;
+            var scope = this.NewScope(name);
             scope.OnDispose += Remove;
             NamedScopes[name] = scope;
             return scope;
@@ -477,11 +499,22 @@ namespace Python.Runtime
 
         public PyScope Get(string name)
         {
-            if (name != null && NamedScopes.ContainsKey(name))
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+            if (NamedScopes.ContainsKey(name))
             {
                 return NamedScopes[name];
             }
-            throw new PyScopeException(String.Format("ScopeStorage '{0}' not exist", name));
+            throw new PyScopeException($"PyScope '{name}' not exist");
+        }
+
+        public PyScope TryGet(string name)
+        {
+            PyScope value;
+            NamedScopes.TryGetValue(name, out value);
+            return value;
         }
 
         public void Remove(PyScope scope)
