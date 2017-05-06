@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -631,6 +631,35 @@ namespace Python.Runtime
                 Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
                 Runtime.CheckExceptionOccurred();
             }
+        }
+
+        public static void With(PyObject obj, Action<dynamic> Body)
+        {
+            // Behavior described here: 
+            // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
+
+            IntPtr type = Runtime.PyNone;
+            IntPtr val = Runtime.PyNone;
+            IntPtr traceBack = Runtime.PyNone;
+            PythonException ex = null;
+
+            try
+            {
+                PyObject enterResult = obj.InvokeMethod("__enter__");
+
+                Body(enterResult);
+            }
+            catch (PythonException e)
+            {
+                ex = e;
+                type = ex.PyType;
+                val = ex.PyValue;
+                traceBack = ex.PyTB;
+            }
+
+            var exitResult = obj.InvokeMethod("__exit__", new PyObject(type), new PyObject(val), new PyObject(traceBack));
+
+            if (ex != null && !exitResult.IsTrue()) throw ex;
         }
     }
 }
