@@ -22,7 +22,7 @@ namespace Python.EmbeddingTest
         /// Test that exception is raised in context manager that ignores it.
         /// </summary>
         [Test]
-        public void TestPositiveWith()
+        public void TestWithPositive()
         {
             var locals = new PyDict();
             
@@ -60,7 +60,7 @@ a = cmTest()
         /// Test that exception is not raised in context manager that handles it
         /// </summary>
         [Test]
-        public void TestNegativeWith()
+        public void TestWithNegative()
         {
             var locals = new PyDict();
 
