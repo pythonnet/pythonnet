@@ -19,7 +19,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Test named arguments support
+        /// Test named arguments support through Py.kw method
         /// </summary>
         [Test]
         public void TestKeywordArgs()
@@ -32,7 +32,7 @@ namespace Python.EmbeddingTest
 
 
         /// <summary>
-        /// Test named arguments support
+        /// Test keyword arguments with .net named arguments
         /// </summary>
         [Test]
         public void TestNamedArgs()
@@ -45,7 +45,7 @@ namespace Python.EmbeddingTest
 
 
 
-        private static dynamic CreateTestClass()
+        private static PyObject CreateTestClass()
         {
             var locals = new PyDict();
 
@@ -57,8 +57,7 @@ class cmTest3:
 a = cmTest3()
 ", null, locals.Handle);
 
-            dynamic a = locals.GetItem("a");
-            return a;
+            return locals.GetItem("a");
         }
 
     }
