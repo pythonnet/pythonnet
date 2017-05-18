@@ -27,7 +27,7 @@ namespace Python.EmbeddingTest
             var locals = new PyDict();
             
             PythonEngine.Exec(@"
-class cmTest:
+class CmTest:
     def __enter__(self):
         print('Enter')
         return self
@@ -37,7 +37,7 @@ class cmTest:
     def fail(self):
         return 5 / 0
 
-a = cmTest()
+a = CmTest()
 ", null, locals.Handle);
 
             var a = locals.GetItem("a");
@@ -51,7 +51,7 @@ a = cmTest()
             }
             catch (PythonException e)
             {
-                Assert.IsTrue(e.Message.Contains("division by zero"));
+                Assert.IsTrue(e.Message.Contains("ZeroDivisionError"));
             }
         }
 
@@ -65,7 +65,7 @@ a = cmTest()
             var locals = new PyDict();
 
             PythonEngine.Exec(@"
-class cmTest:
+class CmTest:
     def __enter__(self):
         print('Enter')
         return self
@@ -75,7 +75,7 @@ class cmTest:
     def fail(self):
         return 5 / 0
 
-a = cmTest()
+a = CmTest()
 ", null, locals.Handle);
 
             var a = locals.GetItem("a");
