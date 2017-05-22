@@ -198,7 +198,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             _config = "{0}Win".format(CONFIG)
 
         elif DEVTOOLS == "Mono":
-            _xbuild = "msbuild"
+            _xbuild = "xbuild"
             _config = "{0}Mono".format(CONFIG)
         else:
             raise NotImplementedError(
