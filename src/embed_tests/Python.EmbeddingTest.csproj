@@ -117,6 +117,6 @@
   </PropertyGroup>
   <Target Name="AfterBuild">
     <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-    <Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
+    <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
   </Target>
 </Project>
