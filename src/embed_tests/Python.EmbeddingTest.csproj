@@ -97,6 +97,8 @@
     <Compile Include="TestPythonException.cs" />
     <Compile Include="TestPythonEngineProperties.cs" />
     <Compile Include="TestPyTuple.cs" />
+    <Compile Include="TestNamedArguments.cs" />
+    <Compile Include="TestPyWith.cs" />
     <Compile Include="TestRuntime.cs" />
     <Compile Include="TestPyScope.cs" />
   </ItemGroup>
