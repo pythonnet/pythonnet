@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 -   Added clr.GetClrType (#432)(#433)
 -   Added `Foo` feature
+-   Allowed passing None for nullable args (#460)
 
 ### Changed
 

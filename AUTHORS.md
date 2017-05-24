@@ -19,6 +19,7 @@
 -   Christopher Pow ([@christopherpow](https://github.com/christopherpow))
 -   Daniel Fernandez ([@fdanny](https://github.com/fdanny))
 -   Daniel Santana ([@dgsantana](https://github.com/dgsantana))
+-   Dave Hirschfeld ([@dhirschfeld](https://github.com/dhirschfeld))
 -   David Lechner ([@dlech](https://github.com/dlech))
 -   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
 -   He-chien Tsai ([@t3476](https://github.com/t3476))
