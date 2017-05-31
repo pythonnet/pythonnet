@@ -38,14 +38,14 @@ namespace Python.Runtime
         internal readonly PyScopeManager Manager;
 
         public event Action<PyScope> OnDispose;
-        
-        public PyScope(IntPtr ptr, PyScopeManager manager)
+
+        internal PyScope(IntPtr ptr, PyScopeManager manager)
         {
             if (Runtime.PyObject_Type(ptr) != Runtime.PyModuleType)
             {
                 throw new PyScopeException("object is not a module");
             }
-            if(manager == null)
+            if (manager == null)
             {
                 manager = PyScopeManager.Global;
             }
@@ -80,19 +80,23 @@ namespace Python.Runtime
         public dynamic Import(string name, string asname = null)
         {
             Check();
-            if (asname == null)
+            if (String.IsNullOrEmpty(asname))
             {
                 asname = name;
             }
-            var scope = Manager.TryGet(name);
-            if(scope != null)
+            PyScope scope;
+            Manager.TryGet(name, out scope);
+            if (scope != null)
             {
                 Import(scope, asname);
                 return scope;
             }
-            PyObject module = PythonEngine.ImportModule(name);
-            Import(module, asname);
-            return module;
+            else
+            {
+                PyObject module = PythonEngine.ImportModule(name);
+                Import(module, asname);
+                return module;
+            }            
         }
 
         public void Import(PyScope scope, string asname)
@@ -109,7 +113,7 @@ namespace Python.Runtime
         /// </remarks>
         public void Import(PyObject module, string asname = null)
         {
-            if (asname == null)
+            if (String.IsNullOrEmpty(asname))
             {
                 asname = module.GetAttr("__name__").ToString();
             }
@@ -118,14 +122,18 @@ namespace Python.Runtime
 
         public void ImportAll(string name)
         {
-            var scope = Manager.TryGet(name);
-            if(scope != null)
+            PyScope scope;
+            Manager.TryGet(name, out scope);
+            if (scope != null)
             {
                 ImportAll(scope);
                 return;
             }
-            PyObject module = PythonEngine.ImportModule(name);
-            ImportAll(module);
+            else
+            {
+                PyObject module = PythonEngine.ImportModule(name);
+                ImportAll(module);
+            }
         }
 
         public void ImportAll(PyScope scope)
@@ -323,27 +331,13 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject GetVariable(string name)
         {
-            Check();
-            using (var pyKey = new PyString(name))
+            PyObject scope;
+            var state = TryGetVariable(name, out scope);
+            if(!state)
             {
-                if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
-                {
-                    IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
-                    if (op == IntPtr.Zero)
-                    {
-                        throw new PythonException();
-                    }
-                    if (op == Runtime.PyNone)
-                    {
-                        return null;
-                    }
-                    return new PyObject(op);
-                }
-                else
-                {
-                    throw new PyScopeException(String.Format("'ScopeStorage' object has no attribute '{0}'", name));
-                }
+                throw new PyScopeException($"The scope of name '{Name}' has no attribute '{name}'");
             }
+            return scope;
         }
 
         /// <summary>
@@ -367,6 +361,7 @@ namespace Python.Runtime
                     }
                     if (op == Runtime.PyNone)
                     {
+                        Runtime.XDecref(op);
                         value = null;
                         return true;
                     }
@@ -401,11 +396,18 @@ namespace Python.Runtime
             {
                 value = default(T);
                 return false;
-            }
+            }            
             if (pyObj == null)
             {
-                value = default(T);
-                return true;
+                if(typeof(T).IsValueType)
+                {
+                    throw new PyScopeException($"The value of the attribute '{name}' is None which cannot be convert to '{typeof(T).ToString()}'");
+                }
+                else
+                {
+                    value = default(T);
+                    return true;
+                }                
             }
             value = pyObj.As<T>();
             return true;
@@ -427,7 +429,7 @@ namespace Python.Runtime
         {
             if (isDisposed)
             {
-                throw new PyScopeException("'ScopeStorage' object has been disposed");
+                throw new PyScopeException($"The scope of name '{Name}' object has been disposed");
             }
         }
 
@@ -484,7 +486,7 @@ namespace Python.Runtime
             }
             if (name != null && NamedScopes.ContainsKey(name))
             {
-                throw new PyScopeException($"PyScope '{name}' has existed");
+                throw new PyScopeException($"A scope of name '{name}' does already exist");
             }
             var scope = this.NewScope(name);
             scope.OnDispose += Remove;
@@ -507,14 +509,12 @@ namespace Python.Runtime
             {
                 return NamedScopes[name];
             }
-            throw new PyScopeException($"PyScope '{name}' not exist");
+            throw new PyScopeException($"There is no scope named '{name}' registered in this manager");
         }
 
-        public PyScope TryGet(string name)
+        public bool TryGet(string name, out PyScope scope)
         {
-            PyScope value;
-            NamedScopes.TryGetValue(name, out value);
-            return value;
+            return NamedScopes.TryGetValue(name, out scope);
         }
 
         public void Remove(PyScope scope)

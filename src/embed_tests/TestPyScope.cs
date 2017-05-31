@@ -192,14 +192,13 @@ namespace Python.EmbeddingTest
                 ps.SetVariable("bb", 100);
                 ps.SetVariable("cc", 10);
 
-                PyScope scope = Py.CreateScope();
-                scope.Import(ps, "ps");
-
-                scope.Exec("aa = ps.bb + ps.cc + 3");
-                var result = scope.GetVariable<int>("aa");
-                Assert.AreEqual(113, result);
-                
-                scope.Dispose();
+                using (var scope = Py.CreateScope())
+                {
+                    scope.Import(ps, "ps");
+                    scope.Exec("aa = ps.bb + ps.cc + 3");
+                    var result = scope.GetVariable<int>("aa");
+                    Assert.AreEqual(113, result);
+                }
 
                 Assert.IsFalse(ps.ContainsVariable("aa"));
             }
@@ -217,13 +216,12 @@ namespace Python.EmbeddingTest
                 ps.SetVariable("bb", 100);
                 ps.SetVariable("cc", 10);
 
-                PyScope scope = ps.NewScope();
-
-                scope.Exec("aa = bb + cc + 3");
-                var result = scope.GetVariable<int>("aa");
-                Assert.AreEqual(113, result);
-
-                scope.Dispose();
+                using (var scope = ps.NewScope())
+                {
+                    scope.Exec("aa = bb + cc + 3");
+                    var result = scope.GetVariable<int>("aa");
+                    Assert.AreEqual(113, result);
+                }
 
                 Assert.IsFalse(ps.ContainsVariable("aa"));
             }
@@ -244,28 +242,27 @@ namespace Python.EmbeddingTest
                     "def func1():\n" +
                     "    return cc + bb\n");
 
-                PyScope scope = ps.NewScope();
+                using (PyScope scope = ps.NewScope())
+                {
+                    //'func1' is imported from the origion scope
+                    scope.Exec(
+                        "def func2():\n" +
+                        "    return func1() - cc - bb\n");
+                    dynamic func2 = scope.GetVariable("func2");
 
-                //'func1' is imported from the origion scope
-                scope.Exec(
-                    "def func2():\n" +
-                    "    return func1() - cc - bb\n");
-                dynamic func2 = scope.GetVariable("func2");
+                    var result1 = func2().As<int>();
+                    Assert.AreEqual(0, result1);
 
-                var result1 = func2().As<int>();
-                Assert.AreEqual(0, result1);
+                    scope.SetVariable("cc", 20);//it has no effect on the globals of 'func1'
+                    var result2 = func2().As<int>();
+                    Assert.AreEqual(-10, result2);
+                    scope.SetVariable("cc", 10); //rollback
 
-                scope.SetVariable("cc", 20);//it has no effect on the globals of 'func1'
-                var result2 = func2().As<int>();
-                Assert.AreEqual(-10, result2);
-                scope.SetVariable("cc", 10); //rollback
-
-                ps.SetVariable("cc", 20);
-                var result3 = func2().As<int>();
-                Assert.AreEqual(10, result3);
-                ps.SetVariable("cc", 10); //rollback
-
-                scope.Dispose();
+                    ps.SetVariable("cc", 20);
+                    var result3 = func2().As<int>();
+                    Assert.AreEqual(10, result3);
+                    ps.SetVariable("cc", 10); //rollback
+                }
             }
         }
 
@@ -280,11 +277,13 @@ namespace Python.EmbeddingTest
             {
                 ps.SetVariable("bb", 100);
 
-                var scope = Py.CreateScope();
-                scope.ImportAll("test");
-                //scope.ImportModule("test");
+                using (var scope = Py.CreateScope())
+                {
+                    scope.ImportAll("test");
+                    //scope.ImportModule("test");
 
-                Assert.IsTrue(scope.ContainsVariable("bb"));
+                    Assert.IsTrue(scope.ContainsVariable("bb"));
+                }                    
             }
         }
 
@@ -306,9 +305,10 @@ namespace Python.EmbeddingTest
             var a2 = ps.GetVariable<int>("ee");
             Assert.AreEqual(220, a2);
 
-            var item = ps.Variables();
-            item["ee"] = new PyInt(230);
-            item.Dispose();
+            using (var item = ps.Variables())
+            {
+                item["ee"] = new PyInt(230);
+            }
             var a3 = ps.GetVariable<int>("ee");
             Assert.AreEqual(230, a3);
         }
