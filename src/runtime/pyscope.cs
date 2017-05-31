@@ -45,11 +45,7 @@ namespace Python.Runtime
             {
                 throw new PyScopeException("object is not a module");
             }
-            if (manager == null)
-            {
-                manager = PyScopeManager.Global;
-            }
-            Manager = manager;
+            Manager = manager ?? PyScopeManager.Global;
             obj = ptr;
             //Refcount of the variables not increase
             variables = Runtime.PyModule_GetDict(obj);
