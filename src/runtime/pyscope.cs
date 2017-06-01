@@ -26,19 +26,35 @@ namespace Python.Runtime
     {
         public readonly string Name;
 
+        /// <summary>
+        /// the python Module object the scope associated with.
+        /// </summary>
         internal readonly IntPtr obj;
 
         /// <summary>
-        /// the dict for local variables
+        /// the variable dict of the scope.
         /// </summary>
         internal readonly IntPtr variables;
 
-        private bool isDisposed;
+        private bool _isDisposed;
 
+        /// <summary>
+        /// The Manager this scope associated with.
+        /// It provides scopes this scope can import.
+        /// </summary>
         internal readonly PyScopeManager Manager;
 
+        /// <summary>
+        /// event which will be triggered after the scope disposed.
+        /// </summary>
         public event Action<PyScope> OnDispose;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks>
+        /// Create a scope based on a Python Module.
+        /// </remarks>
         internal PyScope(IntPtr ptr, PyScopeManager manager)
         {
             if (Runtime.PyObject_Type(ptr) != Runtime.PyModuleType)
@@ -57,15 +73,23 @@ namespace Python.Runtime
                 variables, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
             );
-            this.Name = this.GetVariable<string>("__name__");
+            this.Name = this.Get<string>("__name__");
         }
 
+        /// <summary>
+        /// return the variable dict of the scope.
+        /// </summary>
+        /// <returns></returns>
         public PyDict Variables()
         {
             Runtime.XIncref(variables);
             return new PyDict(variables);
         }
 
+        /// <summary>
+        /// Create a scope, and import all from this scope
+        /// </summary>
+        /// <returns></returns>
         public PyScope NewScope()
         {
             var scope = Manager.Create();
@@ -73,6 +97,13 @@ namespace Python.Runtime
             return scope;
         }
 
+        /// <summary>
+        /// Import method
+        /// </summary>
+        /// <remarks>
+        /// Import a scope or a module of given name,
+        /// scope will be looked up first.
+        /// </remarks>
         public dynamic Import(string name, string asname = null)
         {
             Check();
@@ -95,27 +126,40 @@ namespace Python.Runtime
             }            
         }
 
+        /// <summary>
+        /// Import method
+        /// </summary>
+        /// <remarks>
+        /// Import a scope as a variable of given name.
+        /// </remarks>
         public void Import(PyScope scope, string asname)
         {
-            this.SetVariable(asname, scope.obj);
+            this.Set(asname, scope.obj);
         }
 
         /// <summary>
         /// Import Method
         /// </summary>
         /// <remarks>
-        /// The import .. as .. statement in Python.
-        /// Import a module,add it to the variables dict and return the resulting module object as a PyObject.
+        /// The 'import .. as ..' statement in Python.
+        /// Import a module as a variable into the scope.
         /// </remarks>
         public void Import(PyObject module, string asname = null)
         {
             if (String.IsNullOrEmpty(asname))
             {
-                asname = module.GetAttr("__name__").ToString();
+                asname = module.GetAttr("__name__").As<string>();
             }
-            SetVariable(asname, module);
+            Set(asname, module);
         }
 
+        /// <summary>
+        /// ImportAll Method
+        /// </summary>
+        /// <remarks>
+        /// The 'import * from ..' statement in Python.
+        /// Import all content of a scope/module of given name into the scope, scope will be looked up first.
+        /// </remarks>
         public void ImportAll(string name)
         {
             PyScope scope;
@@ -132,6 +176,12 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// ImportAll Method
+        /// </summary>
+        /// <remarks>
+        /// Import all variables of the scope into this scope.
+        /// </remarks>
         public void ImportAll(PyScope scope)
         {
             int result = Runtime.PyDict_Update(variables, scope.variables);
@@ -141,6 +191,12 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// ImportAll Method
+        /// </summary>
+        /// <remarks>
+        /// Import all variables of the module into this scope.
+        /// </remarks>
         public void ImportAll(PyObject module)
         {
             if (Runtime.PyObject_Type(module.obj) != Runtime.PyModuleType)
@@ -155,6 +211,12 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// ImportAll Method
+        /// </summary>
+        /// <remarks>
+        /// Import all variables in the dictionary into this scope.
+        /// </remarks>
         public void ImportAll(PyDict dict)
         {
             int result = Runtime.PyDict_Update(variables, dict.obj);
@@ -185,6 +247,14 @@ namespace Python.Runtime
             return new PyObject(ptr);
         }
 
+        /// <summary>
+        /// Execute method
+        /// </summary>
+        /// <remarks>
+        /// Execute a Python ast and return the result as a PyObject,
+        /// and convert the result to a Managed Object of given type.
+        /// The ast can be either an expression or stmts.
+        /// </remarks>
         public T Execute<T>(PyObject script, PyDict locals = null)
         {
             Check();
@@ -220,7 +290,8 @@ namespace Python.Runtime
         /// Evaluate a Python expression
         /// </summary>
         /// <remarks>
-        /// Evaluate a Python expression and convert the result to Managed Object.
+        /// Evaluate a Python expression 
+        /// and  convert the result to a Managed Object of given type.
         /// </remarks>
         public T Eval<T>(string code, PyDict locals = null)
         {
@@ -258,20 +329,20 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// SetVariable Method
+        /// Set Variable Method
         /// </summary>
         /// <remarks>
-        /// Add a new variable to the variables dict if it not exists
+        /// Add a new variable to the variables dict if it not exist
         /// or update its value if the variable exists.
         /// </remarks>
-        public void SetVariable(string name, object value)
+        public void Set(string name, object value)
         {
             IntPtr _value = Converter.ToPython(value, value?.GetType());
-            SetVariable(name, _value);
+            Set(name, _value);
             Runtime.XDecref(_value);
         }
 
-        private void SetVariable(string name, IntPtr value)
+        private void Set(string name, IntPtr value)
         {
             Check();
             using (var pyKey = new PyString(name))
@@ -285,12 +356,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// RemoveVariable Method
+        /// Remove Method
         /// </summary>
         /// <remarks>
         /// Remove a variable from the variables dict.
         /// </remarks>
-        public void RemoveVariable(string name)
+        public void Remove(string name)
         {
             Check();
             using (var pyKey = new PyString(name))
@@ -304,12 +375,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// ContainsVariable Method
+        /// Contains Method
         /// </summary>
         /// <remarks>
-        /// Returns true if the variable exists in the variables dict.
+        /// Returns true if the variable exists in the scope.
         /// </remarks>
-        public bool ContainsVariable(string name)
+        public bool Contains(string name)
         {
             Check();
             using (var pyKey = new PyString(name))
@@ -319,16 +390,16 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// GetVariable Method
+        /// Get Method
         /// </summary>
         /// <remarks>
-        /// Returns the value of the variable, local variable first.
-        /// If the variable is not exists, throw an Exception.
+        /// Returns the value of the variable of given name.
+        /// If the variable does not exist, throw an Exception.
         /// </remarks>
-        public PyObject GetVariable(string name)
+        public PyObject Get(string name)
         {
             PyObject scope;
-            var state = TryGetVariable(name, out scope);
+            var state = TryGet(name, out scope);
             if(!state)
             {
                 throw new PyScopeException($"The scope of name '{Name}' has no attribute '{name}'");
@@ -337,13 +408,13 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// TryGetVariable Method
+        /// TryGet Method
         /// </summary>
         /// <remarks>
         /// Returns the value of the variable, local variable first.
-        /// If the variable is not exists, return null.
+        /// If the variable does not exist, return null.
         /// </remarks>
-        public bool TryGetVariable(string name, out PyObject value)
+        public bool TryGet(string name, out PyObject value)
         {
             Check();
             using (var pyKey = new PyString(name))
@@ -372,10 +443,18 @@ namespace Python.Runtime
             }
         }
 
-        public T GetVariable<T>(string name)
+        /// <summary>
+        /// Get Method
+        /// </summary>
+        /// <remarks>
+        /// Obtain the value of the variable of given name, 
+        /// and convert the result to a Managed Object of given type.
+        /// If the variable does not exist, throw an Exception.
+        /// </remarks>
+        public T Get<T>(string name)
         {
             Check();
-            PyObject pyObj = GetVariable(name);
+            PyObject pyObj = Get(name);
             if (pyObj == null)
             {
                 return default(T);
@@ -383,11 +462,19 @@ namespace Python.Runtime
             return pyObj.As<T>();
         }
 
-        public bool TryGetVariable<T>(string name, out T value)
+        /// <summary>
+        /// TryGet Method
+        /// </summary>
+        /// <remarks>
+        /// Obtain the value of the variable of given name, 
+        /// and convert the result to a Managed Object of given type.
+        /// If the variable does not exist, return false.
+        /// </remarks>
+        public bool TryGet<T>(string name, out T value)
         {
             Check();
             PyObject pyObj;
-            var result = TryGetVariable(name, out pyObj);
+            var result = TryGet(name, out pyObj);
             if (!result)
             {
                 value = default(T);
@@ -411,19 +498,19 @@ namespace Python.Runtime
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = this.GetVariable(binder.Name);
+            result = this.Get(binder.Name);
             return true;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            this.SetVariable(binder.Name, value);
+            this.Set(binder.Name, value);
             return true;
         }
 
         private void Check()
         {
-            if (isDisposed)
+            if (_isDisposed)
             {
                 throw new PyScopeException($"The scope of name '{Name}' object has been disposed");
             }
@@ -431,11 +518,11 @@ namespace Python.Runtime
 
         public void Dispose()
         {
-            if (isDisposed)
+            if (_isDisposed)
             {
                 return;
             }
-            isDisposed = true;
+            _isDisposed = true;
             Runtime.XDecref(obj);
             this.OnDispose?.Invoke(this);
         }
@@ -466,6 +553,12 @@ namespace Python.Runtime
             return new PyScope(module, this);
         }
 
+        /// <summary>
+        /// Create Method
+        /// </summary>
+        /// <remarks>
+        /// Create an anonymous scope.
+        /// </remarks>
         [PyGIL]
         public PyScope Create()
         {
@@ -473,6 +566,12 @@ namespace Python.Runtime
             return scope;
         }
 
+        /// <summary>
+        /// Create Method
+        /// </summary>
+        /// <remarks>
+        /// Create an named scope of given name.
+        /// </remarks>
         [PyGIL]
         public PyScope Create(string name)
         {
@@ -480,7 +579,7 @@ namespace Python.Runtime
             {
                 throw new ArgumentNullException(nameof(name));
             }
-            if (name != null && NamedScopes.ContainsKey(name))
+            if (name != null && Contains(name))
             {
                 throw new PyScopeException($"A scope of name '{name}' does already exist");
             }
@@ -490,14 +589,27 @@ namespace Python.Runtime
             return scope;
         }
 
+        /// <summary>
+        /// Contains Method
+        /// </summary>
+        /// <remarks>
+        /// return true if the scope exists in this manager.
+        /// </remarks>
         public bool Contains(string name)
         {
             return NamedScopes.ContainsKey(name);
         }
 
+        /// <summary>
+        /// Get Method
+        /// </summary>
+        /// <remarks>
+        /// Find the scope in this manager.
+        /// If the scope not exist, an Exception will be thrown.
+        /// </remarks>
         public PyScope Get(string name)
         {
-            if (name == null)
+            if (String.IsNullOrEmpty(name))
             {
                 throw new ArgumentNullException(nameof(name));
             }
@@ -508,11 +620,23 @@ namespace Python.Runtime
             throw new PyScopeException($"There is no scope named '{name}' registered in this manager");
         }
 
+        /// <summary>
+        /// Get Method
+        /// </summary>
+        /// <remarks>
+        /// Try to find the scope in this manager.
+        /// </remarks>
         public bool TryGet(string name, out PyScope scope)
         {
             return NamedScopes.TryGetValue(name, out scope);
         }
 
+        /// <summary>
+        /// Remove Method
+        /// </summary>
+        /// <remarks>
+        /// remove the scope from this manager.
+        /// </remarks>
         public void Remove(PyScope scope)
         {
             NamedScopes.Remove(scope.Name);
