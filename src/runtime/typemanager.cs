@@ -206,6 +206,7 @@ namespace Python.Runtime
                 if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
                 {
                     var pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
+                    Runtime.XIncref(pyAssembly.Handle);
                     disposeList.Add(pyAssembly);
                     if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(string), out assembly, false))
                     {
@@ -218,6 +219,7 @@ namespace Python.Runtime
                 if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
                 {
                     var pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
+                    Runtime.XIncref(pyNamespace.Handle);
                     disposeList.Add(pyNamespace);
                     if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(string), out namespaceStr, false))
                     {
