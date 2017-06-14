@@ -85,7 +85,6 @@ def derived_event_test_class_fixture():
     return DerivedEventTest
 
 
-@pytest.mark.skip(reason="FIXME: test randomly pass/fails")
 def test_base_class():
     """Test base class managed type"""
     ob = SubClassTest()
@@ -98,7 +97,6 @@ def test_base_class():
     assert list(SubClassTest.test_list(ob)) == ["a", "b", "c"]
 
 
-@pytest.mark.skip(reason="FIXME: test randomly pass/fails")
 def test_interface():
     """Test python classes can derive from C# interfaces"""
     InterfaceTestClass = interface_test_class_fixture()
@@ -112,7 +110,6 @@ def test_interface():
     assert id(x) == id(ob)
 
 
-@pytest.mark.skip(reason="FIXME: test randomly pass/fails")
 def test_derived_class():
     """Test python class derived from managed type"""
     DerivedClass = derived_class_fixture()
