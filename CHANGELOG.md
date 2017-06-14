@@ -20,6 +20,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -   Fixed Visual Studio 2017 compat (#434) for setup.py
 -   Fixed `FooBar` bug
+-   Fixed crash on exit of python interpreter if python class derived from .NET class has `__namespace__` or `__assembly__` attribute
 
 ## [2.3.0][] - 2017-03-11
 
