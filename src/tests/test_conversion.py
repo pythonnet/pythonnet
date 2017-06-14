@@ -466,17 +466,6 @@ def test_double_conversion():
     with pytest.raises(TypeError):
         ConversionTest().DoubleField = None
 
-    with pytest.raises(OverflowError):
-        ConversionTest().DoubleField = 1.7976931348623159e308
-
-    with pytest.raises(OverflowError):
-        ConversionTest().DoubleField = -1.7976931348623159e308
-
-    with pytest.raises(OverflowError):
-        _ = System.Double(1.7976931348623159e308)
-
-    with pytest.raises(OverflowError):
-        _ = System.Double(-1.7976931348623159e308)
 
 
 def test_decimal_conversion():
