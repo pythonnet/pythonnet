@@ -294,6 +294,7 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                PyScopeManager.Global.Clear();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
                 Marshal.FreeHGlobal(_programName);
@@ -421,6 +422,13 @@ namespace Python.Runtime
             return new PyObject(m);
         }
 
+        public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
+        {
+            var flag = (IntPtr)mode;
+            IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
+            Runtime.CheckExceptionOccurred();
+            return new PyObject(ptr);
+        }
 
         /// <summary>
         /// Eval Method
@@ -539,6 +547,18 @@ namespace Python.Runtime
             return new GILState();
         }
 
+        public static PyScope CreateScope()
+        {
+            var scope = PyScopeManager.Global.Create();
+            return scope;
+        }
+
+        public static PyScope CreateScope(string name)
+        {
+            var scope = PyScopeManager.Global.Create(name);
+            return scope;
+        }
+        
         public class GILState : IDisposable
         {
             private IntPtr state;
