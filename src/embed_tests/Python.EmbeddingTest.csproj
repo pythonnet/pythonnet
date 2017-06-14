@@ -100,6 +100,7 @@
     <Compile Include="TestNamedArguments.cs" />
     <Compile Include="TestPyWith.cs" />
     <Compile Include="TestRuntime.cs" />
+    <Compile Include="TestPyScope.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">

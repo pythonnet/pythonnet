@@ -96,6 +96,27 @@ namespace Python.Runtime
             }
             return result;
         }
+        
+        /// <summary>
+        /// As Method
+        /// </summary>
+        /// <remarks>
+        /// Return a managed object of the given type, based on the
+        /// value of the Python object.
+        /// </remarks>
+        public T As<T>()
+        {
+            if (typeof(T) == typeof(PyObject) || typeof(T) == typeof(object))
+            {
+                return (T)(this as object);
+            }
+            object result;
+            if (!Converter.ToManaged(obj, typeof(T), out result, false))
+            {
+                throw new InvalidCastException("cannot convert object to target type");
+            }
+            return (T)result;
+        }
 
 
         /// <summary>
