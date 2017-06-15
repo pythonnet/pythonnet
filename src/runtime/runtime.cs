@@ -791,7 +791,7 @@ namespace Python.Runtime
                 return false;
 #endif
             IntPtr tp_iter = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iter);
-            return tp_iter != null;
+            return tp_iter != IntPtr.Zero;
         }
 
         [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1449,7 +1449,7 @@ namespace Python.Runtime
                 return false;
 #endif
             IntPtr tp_iternext = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iternext);
-            return tp_iternext != null && tp_iternext != _PyObject_NextNotImplemented;
+            return tp_iternext != IntPtr.Zero && tp_iternext != _PyObject_NextNotImplemented;
         }
 
         [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
