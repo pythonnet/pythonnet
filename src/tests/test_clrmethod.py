@@ -26,7 +26,7 @@ class ExampleClrClass(System.Object):
         return self._x * 2
 
 def test_set_and_get_property_from_py():
-    """Test usage of CLR defined reference types."""
+    """Test setting and getting clr-accessible properties from python."""
     t = ExampleClrClass()
     assert t.X == 3
     assert t.Y == 3 * 2
@@ -35,7 +35,7 @@ def test_set_and_get_property_from_py():
     assert t.Y == 4 * 2
 
 def test_set_and_get_property_from_clr():
-    """Test usage of CLR defined reference types."""
+    """Test setting and getting clr-accessible properties from the clr."""
     t = ExampleClrClass()
     assert t.GetType().GetProperty("X").GetValue(t) == 3
     assert t.GetType().GetProperty("Y").GetValue(t) == 3 * 2
@@ -45,7 +45,7 @@ def test_set_and_get_property_from_clr():
 
 
 def test_set_and_get_property_from_clr_and_py():
-    """Test usage of CLR defined reference types."""
+    """Test setting and getting clr-accessible properties alternatingly from the clr and from python."""
     t = ExampleClrClass()
     assert t.GetType().GetProperty("X").GetValue(t) == 3
     assert t.GetType().GetProperty("Y").GetValue(t) == 3 * 2
@@ -63,9 +63,11 @@ def test_set_and_get_property_from_clr_and_py():
     assert t.Y == 5 * 2
 
 def test_method_invocation_from_py():
+    """Test calling a clr-accessible method from python."""
     t = ExampleClrClass()
     assert t.test(41) == 41*2
 
 def test_method_invocation_from_clr():
+    """Test calling a clr-accessible method from the clr."""
     t = ExampleClrClass()
     assert t.GetType().GetMethod("test").Invoke(t, [37]) == 37*2
