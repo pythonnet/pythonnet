@@ -785,9 +785,8 @@ namespace Python.Runtime
         {
             var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
 #if PYTHON2
-            int Py_TPFLAGS_HAVE_ITER = 1 << 7;
             long tp_flags = Marshal.ReadInt64(ob_type, TypeOffset.tp_flags);
-            if ((tp_flags & Py_TPFLAGS_HAVE_ITER) == 0)
+            if ((tp_flags & TypeFlags.HaveIter) == 0)
                 return false;
 #endif
             IntPtr tp_iter = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iter);
@@ -1443,9 +1442,8 @@ namespace Python.Runtime
         {
             var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
 #if PYTHON2
-            int Py_TPFLAGS_HAVE_ITER = 1 << 7;
             long tp_flags = Marshal.ReadInt64(ob_type, TypeOffset.tp_flags);
-            if ((tp_flags & Py_TPFLAGS_HAVE_ITER) == 0)
+            if ((tp_flags & TypeFlags.HaveIter) == 0)
                 return false;
 #endif
             IntPtr tp_iternext = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iternext);
