@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -86,7 +86,7 @@ namespace Python.Runtime
 
             int flags = TypeFlags.Default | TypeFlags.Managed |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             Runtime.PyType_Ready(type);
 
@@ -160,7 +160,7 @@ namespace Python.Runtime
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.BaseType;
             flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
@@ -323,7 +323,7 @@ namespace Python.Runtime
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             // We need space for 3 PyMethodDef structs, each of them
             // 4 int-ptrs in size.
@@ -380,7 +380,7 @@ namespace Python.Runtime
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             CopySlot(base_, type, TypeOffset.tp_traverse);
             CopySlot(base_, type, TypeOffset.tp_clear);
