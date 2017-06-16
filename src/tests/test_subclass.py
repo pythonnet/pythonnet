@@ -192,19 +192,15 @@ def test_isinstance_check():
         assert isinstance(x, System.String)
 
 
-_derived_cons_calls = 0
-
 def test_derived_constructor_only_called_once():
-    global _derived_cons_calls
-    _derived_cons_calls = 0
+    calls = []
 
     class X(System.Object):
         __namespace__ = "PyTest"
 
-        def __init__(self):
-            global _derived_cons_calls
-            _derived_cons_calls += 1
+        def __init__(self, *args):
+            calls.append(args)
 
-    x = X()
+    x = X(1, 2)
 
-    assert _derived_cons_calls == 1
+    assert calls == [(1, 2)]
