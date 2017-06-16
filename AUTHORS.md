@@ -31,6 +31,7 @@
 -   Matthias Dittrich ([@matthid](https://github.com/matthid))
 -   Patrick Stewart ([@patstew](https://github.com/patstew))
 -   Raphael Nestler ([@rnestler](https://github.com/rnestler))
+-   Rickard Holmberg ([@rickardraysearch](https://github.com/rickardraysearch))
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))

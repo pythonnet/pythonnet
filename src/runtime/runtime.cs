@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -274,11 +274,10 @@ namespace Python.Runtime
 
             Error = new IntPtr(-1);
 
-#if PYTHON3
             IntPtr dllLocal = IntPtr.Zero;
             if (PythonDll != "__Internal")
             {
-                NativeMethods.LoadLibrary(PythonDll);
+                dllLocal = NativeMethods.LoadLibrary(PythonDll);
             }
             _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dllLocal, "_PyObject_NextNotImplemented");
 #if !(MONO_LINUX || MONO_OSX)
@@ -286,7 +285,6 @@ namespace Python.Runtime
             {
                 NativeMethods.FreeLibrary(dllLocal);
             }
-#endif
 #endif
 
             // Initialize modules that depend on the runtime class.
@@ -349,8 +347,8 @@ namespace Python.Runtime
 
 #if PYTHON3
         internal static IntPtr PyBytesType;
-        internal static IntPtr _PyObject_NextNotImplemented;
 #endif
+        internal static IntPtr _PyObject_NextNotImplemented;
 
         internal static IntPtr PyNotImplemented;
         internal const int Py_LT = 0;
@@ -778,6 +776,21 @@ namespace Python.Runtime
             IntPtr pyType = Marshal.ReadIntPtr(op, ObjectOffset.ob_type);
             IntPtr ppName = Marshal.ReadIntPtr(pyType, TypeOffset.tp_name);
             return Marshal.PtrToStringAnsi(ppName);
+        }
+
+        /// <summary>
+        /// Test whether the Python object is an iterable.
+        /// </summary>
+        internal static bool PyObject_IsIterable(IntPtr pointer)
+        {
+            var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
+#if PYTHON2
+            long tp_flags = Marshal.ReadInt64(ob_type, TypeOffset.tp_flags);
+            if ((tp_flags & TypeFlags.HaveIter) == 0)
+                return false;
+#endif
+            IntPtr tp_iter = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iter);
+            return tp_iter != IntPtr.Zero;
         }
 
         [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1425,17 +1438,17 @@ namespace Python.Runtime
         // Python iterator API
         //====================================================================
 
-#if PYTHON2
-        [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool PyIter_Check(IntPtr pointer);
-#elif PYTHON3
         internal static bool PyIter_Check(IntPtr pointer)
         {
-            var ob_type = (IntPtr)Marshal.PtrToStructure(pointer + ObjectOffset.ob_type, typeof(IntPtr));
-            IntPtr tp_iternext = ob_type + TypeOffset.tp_iternext;
-            return tp_iternext != null && tp_iternext != _PyObject_NextNotImplemented;
-        }
+            var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
+#if PYTHON2
+            long tp_flags = Marshal.ReadInt64(ob_type, TypeOffset.tp_flags);
+            if ((tp_flags & TypeFlags.HaveIter) == 0)
+                return false;
 #endif
+            IntPtr tp_iternext = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iternext);
+            return tp_iternext != IntPtr.Zero && tp_iternext != _PyObject_NextNotImplemented;
+        }
 
         [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyIter_Next(IntPtr pointer);
