@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -53,6 +53,33 @@ namespace Python.Runtime
             // return the pointer to the python object
             // (this indirectly calls ClassDerivedObject.ToPython)
             return Converter.ToPython(obj, cls.GetType());
+        }
+
+        public new static int tp_init(IntPtr obj, IntPtr args, IntPtr kw)
+        {
+            Runtime.XIncref(obj);
+            Runtime.XIncref(Runtime.PyNone);
+            using (var pyself = new PyObject(obj))
+            using (var pynone = new PyObject(Runtime.PyNone))
+            using (var init = pyself.GetAttr("__init__", pynone))
+            {
+                if (init.Handle != Runtime.PyNone)
+                {
+                    // if __init__ hasn't been overridden then it will be a managed object
+                    if (GetManagedObject(init.Handle) == null)
+                    {
+                        Runtime.XIncref(args);
+                        Runtime.XIncref(kw);
+                        using (var args_ = new PyTuple(args))
+                        using (var kw_ = new PyDict(kw))
+                        using (var res = init.Invoke(args_, kw_))
+                        {
+                        }
+                    }
+                }
+            }
+
+            return 0;
         }
 
         public new static void tp_dealloc(IntPtr ob)
@@ -801,6 +828,8 @@ namespace Python.Runtime
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
+            Console.Error.WriteLine($"{origCtorName}: {string.Join(", ", args)}");
+
             // call the base constructor
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
@@ -822,33 +851,7 @@ namespace Python.Runtime
                 FieldInfo fi = obj.GetType().GetField("__pyobj__");
                 fi.SetValue(obj, self);
 
-                Runtime.XIncref(self.pyHandle);
-                var pyself = new PyObject(self.pyHandle);
-                disposeList.Add(pyself);
 
-                Runtime.XIncref(Runtime.PyNone);
-                var pynone = new PyObject(Runtime.PyNone);
-                disposeList.Add(pynone);
-
-                // call __init__
-                PyObject init = pyself.GetAttr("__init__", pynone);
-                disposeList.Add(init);
-                if (init.Handle != Runtime.PyNone)
-                {
-                    // if __init__ hasn't been overridden then it will be a managed object
-                    ManagedType managedMethod = ManagedType.GetManagedObject(init.Handle);
-                    if (null == managedMethod)
-                    {
-                        var pyargs = new PyObject[args.Length];
-                        for (var i = 0; i < args.Length; ++i)
-                        {
-                            pyargs[i] = new PyObject(Converter.ToPython(args[i], args[i]?.GetType()));
-                            disposeList.Add(pyargs[i]);
-                        }
-
-                        disposeList.Add(init.Invoke(pyargs));
-                    }
-                }
             }
             finally
             {

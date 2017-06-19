@@ -125,6 +125,57 @@ namespace Python.Runtime
         }
 
 
+        /// <summary>
+        /// Metatype __call__ implementation. This is needed to ensure correct
+        /// initialization (__init__ support), because the tp_call we inherit
+        /// from PyType_Type won't call __init__ for metatypes it doesn't know.
+        /// </summary>
+        public static IntPtr tp_call(IntPtr tp, IntPtr args, IntPtr kw)
+        {
+            IntPtr func = Marshal.ReadIntPtr(tp, TypeOffset.tp_new);
+            if (func == IntPtr.Zero)
+            {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+
+            IntPtr obj = NativeCall.Call_3(func, tp, args, kw);
+            if (obj == IntPtr.Zero)
+            {
+                return IntPtr.Zero;
+            }
+
+            IntPtr py__init__ = Runtime.PyString_FromString("__init__");
+            IntPtr type = Runtime.PyObject_TYPE(obj);
+            IntPtr init = Runtime._PyType_Lookup(type, py__init__);
+            Runtime.XDecref(py__init__);
+            Runtime.PyErr_Clear();
+
+            if (init != IntPtr.Zero)
+            {
+                IntPtr bound = Runtime.GetBoundArgTuple(obj, args);
+                if (bound == IntPtr.Zero)
+                {
+                    Runtime.XDecref(obj);
+                    return IntPtr.Zero;
+                }
+
+                IntPtr result = Runtime.PyObject_Call(init, bound, kw);
+                Runtime.XDecref(bound);
+
+                if (result == IntPtr.Zero)
+                {
+                    Runtime.XDecref(obj);
+                    return IntPtr.Zero;
+                }
+
+                Runtime.XDecref(result);
+            }
+
+            return obj;
+        }
+
+
+
         public static IntPtr tp_alloc(IntPtr mt, int n)
         {
             IntPtr type = Runtime.PyType_GenericAlloc(mt, n);
