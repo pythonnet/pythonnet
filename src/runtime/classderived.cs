@@ -828,8 +828,6 @@ namespace Python.Runtime
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
-            Console.Error.WriteLine($"{origCtorName}: {string.Join(", ", args)}");
-
             // call the base constructor
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
