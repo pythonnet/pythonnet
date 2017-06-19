@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -125,19 +125,6 @@ namespace Python.Runtime
         }
 
 
-        public static IntPtr tp_alloc(IntPtr mt, int n)
-        {
-            IntPtr type = Runtime.PyType_GenericAlloc(mt, n);
-            return type;
-        }
-
-
-        public static void tp_free(IntPtr tp)
-        {
-            Runtime.PyObject_GC_Del(tp);
-        }
-
-
         /// <summary>
         /// Metatype __call__ implementation. This is needed to ensure correct
         /// initialization (__init__ support), because the tp_call we inherit
@@ -187,6 +174,19 @@ namespace Python.Runtime
             return obj;
         }
 
+
+
+        public static IntPtr tp_alloc(IntPtr mt, int n)
+        {
+            IntPtr type = Runtime.PyType_GenericAlloc(mt, n);
+            return type;
+        }
+
+
+        public static void tp_free(IntPtr tp)
+        {
+            Runtime.PyObject_GC_Del(tp);
+        }
 
         /// <summary>
         /// Type __setattr__ implementation for reflected types. Note that this
