@@ -55,33 +55,6 @@ namespace Python.Runtime
             return Converter.ToPython(obj, cls.GetType());
         }
 
-        public new static int tp_init(IntPtr obj, IntPtr args, IntPtr kw)
-        {
-            Runtime.XIncref(obj);
-            Runtime.XIncref(Runtime.PyNone);
-            using (var pyself = new PyObject(obj))
-            using (var pynone = new PyObject(Runtime.PyNone))
-            using (var init = pyself.GetAttr("__init__", pynone))
-            {
-                if (init.Handle != Runtime.PyNone)
-                {
-                    // if __init__ hasn't been overridden then it will be a managed object
-                    if (GetManagedObject(init.Handle) == null)
-                    {
-                        Runtime.XIncref(args);
-                        Runtime.XIncref(kw);
-                        using (var args_ = new PyTuple(args))
-                        using (var kw_ = new PyDict(kw))
-                        using (var res = init.Invoke(args_, kw_))
-                        {
-                        }
-                    }
-                }
-            }
-
-            return 0;
-        }
-
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (CLRObject)GetManagedObject(ob);
