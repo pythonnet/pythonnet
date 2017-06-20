@@ -190,3 +190,32 @@ def test_isinstance_check():
     for x in b:
         assert isinstance(x, System.Object)
         assert isinstance(x, System.String)
+
+def test_clr_subclass_with_init_args():
+    calls = []
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_with_init_args"
+        def __init__(self, *args, **kwargs):
+            calls.append((args, kwargs))
+    t = TestX(1,2,3,foo="bar")
+    assert len(calls) == 1
+    assert calls[0][0] == (1,2,3)
+    assert calls[0][1] == {"foo":"bar"}
+
+def test_clr_subclass_without_init_args():
+    calls = []
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_without_init_args"
+        def __init__(self):
+            calls.append(True)
+    t = TestX()
+    assert len(calls) == 1
+    assert calls[0] == True
+
+
+def test_clr_subclass_without_init():
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_without_init"
+        q = 1
+    t = TestX()
+    assert t.q == 1
