@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -829,26 +829,6 @@ namespace Python.Runtime
                 Runtime.XIncref(Runtime.PyNone);
                 var pynone = new PyObject(Runtime.PyNone);
                 disposeList.Add(pynone);
-
-                // call __init__
-                PyObject init = pyself.GetAttr("__init__", pynone);
-                disposeList.Add(init);
-                if (init.Handle != Runtime.PyNone)
-                {
-                    // if __init__ hasn't been overridden then it will be a managed object
-                    ManagedType managedMethod = ManagedType.GetManagedObject(init.Handle);
-                    if (null == managedMethod)
-                    {
-                        var pyargs = new PyObject[args.Length];
-                        for (var i = 0; i < args.Length; ++i)
-                        {
-                            pyargs[i] = new PyObject(Converter.ToPython(args[i], args[i]?.GetType()));
-                            disposeList.Add(pyargs[i]);
-                        }
-
-                        disposeList.Add(init.Invoke(pyargs));
-                    }
-                }
             }
             finally
             {
