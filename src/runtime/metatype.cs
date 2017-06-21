@@ -163,6 +163,7 @@ namespace Python.Runtime
             if (init != IntPtr.Zero)
             {
                 IntPtr result = Runtime.PyObject_Call(init, args, kw);
+                Runtime.XDecref(init);
 
                 if (result == IntPtr.Zero)
                 {
