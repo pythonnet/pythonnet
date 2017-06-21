@@ -808,7 +808,6 @@ namespace Python.Runtime
                 obj,
                 args);
 
-            var disposeList = new List<PyObject>();
             CLRObject self = null;
             IntPtr gs = Runtime.PyGILState_Ensure();
             try
@@ -821,22 +820,9 @@ namespace Python.Runtime
                 // object to be collected.
                 FieldInfo fi = obj.GetType().GetField("__pyobj__");
                 fi.SetValue(obj, self);
-
-                Runtime.XIncref(self.pyHandle);
-                var pyself = new PyObject(self.pyHandle);
-                disposeList.Add(pyself);
-
-                Runtime.XIncref(Runtime.PyNone);
-                var pynone = new PyObject(Runtime.PyNone);
-                disposeList.Add(pynone);
             }
             finally
             {
-                foreach (PyObject x in disposeList)
-                {
-                    x?.Dispose();
-                }
-
                 // Decrement the python object's reference count.
                 // This doesn't actually destroy the object, it just sets the reference to this object
                 // to be a weak reference and it will be destroyed when the C# object is destroyed.
