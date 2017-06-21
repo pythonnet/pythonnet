@@ -378,29 +378,6 @@ namespace Python.Runtime
             }
         }
 
-        internal static IntPtr GetBoundArgTuple(IntPtr obj, IntPtr args)
-        {
-            if (PyObject_TYPE(args) != PyTupleType)
-            {
-                Exceptions.SetError(Exceptions.TypeError, "tuple expected");
-                return IntPtr.Zero;
-            }
-            int size = PyTuple_Size(args);
-            IntPtr items = PyTuple_New(size + 1);
-            PyTuple_SetItem(items, 0, obj);
-            XIncref(obj);
-
-            for (var i = 0; i < size; i++)
-            {
-                IntPtr item = PyTuple_GetItem(args, i);
-                XIncref(item);
-                PyTuple_SetItem(items, i + 1, item);
-            }
-
-            return items;
-        }
-
-
         internal static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args)
         {
             int size = PyTuple_Size(t);
