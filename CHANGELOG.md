@@ -12,7 +12,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
 
-## Changed
+### Changed
 
 ### Fixed
 
