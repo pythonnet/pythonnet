@@ -190,3 +190,17 @@ def test_isinstance_check():
     for x in b:
         assert isinstance(x, System.Object)
         assert isinstance(x, System.String)
+
+
+def test_derived_constructor_only_called_once():
+    calls = []
+
+    class X(System.Object):
+        __namespace__ = "PyTest"
+
+        def __init__(self, *args):
+            calls.append(args)
+
+    x = X(1, 2)
+
+    assert calls == [(1, 2)]
