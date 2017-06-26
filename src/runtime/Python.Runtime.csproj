@@ -136,6 +136,7 @@
     <Compile Include="runtime.cs" />
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />

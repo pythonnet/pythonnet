@@ -105,7 +105,7 @@ namespace Python.Runtime
             flags |= TypeFlags.BaseType;
             flags |= TypeFlags.Subclass;
             flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
 
@@ -237,7 +237,7 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+            var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
                 IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());

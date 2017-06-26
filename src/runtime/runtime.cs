@@ -152,6 +152,10 @@ namespace Python.Runtime
         internal static bool IsFinalizing;
 
         internal static bool Is32Bit = IntPtr.Size == 4;
+
+        // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+
         internal static bool IsPython2 = pyversionnumber < 30;
         internal static bool IsPython3 = pyversionnumber >= 30;
 
@@ -762,7 +766,7 @@ namespace Python.Runtime
         {
             var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
 #if PYTHON2
-            long tp_flags = Marshal.ReadInt64(ob_type, TypeOffset.tp_flags);
+            long tp_flags = Util.ReadCLong(ob_type, TypeOffset.tp_flags);
             if ((tp_flags & TypeFlags.HaveIter) == 0)
                 return false;
 #endif
@@ -1419,7 +1423,7 @@ namespace Python.Runtime
         {
             var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
 #if PYTHON2
-            long tp_flags = Marshal.ReadInt64(ob_type, TypeOffset.tp_flags);
+            long tp_flags = Util.ReadCLong(ob_type, TypeOffset.tp_flags);
             if ((tp_flags & TypeFlags.HaveIter) == 0)
                 return false;
 #endif
