@@ -89,7 +89,7 @@ namespace Python.Runtime
         internal static void DumpInst(IntPtr ob)
         {
             IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var sz = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_basicsize);
+            var sz = (long)Marshal.ReadIntPtr(tp, TypeOffset.tp_basicsize);
 
             for (var i = 0; i < sz; i += IntPtr.Size)
             {
