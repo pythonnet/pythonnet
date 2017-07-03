@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -295,6 +295,7 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                PyScopeManager.Global.Clear();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
                 Marshal.FreeHGlobal(_programName);
@@ -422,6 +423,13 @@ namespace Python.Runtime
             return new PyObject(m);
         }
 
+        public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
+        {
+            var flag = (IntPtr)mode;
+            IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
+            Runtime.CheckExceptionOccurred();
+            return new PyObject(ptr);
+        }
 
         /// <summary>
         /// Eval Method
@@ -540,6 +548,18 @@ namespace Python.Runtime
             return new GILState();
         }
 
+        public static PyScope CreateScope()
+        {
+            var scope = PyScopeManager.Global.Create();
+            return scope;
+        }
+
+        public static PyScope CreateScope(string name)
+        {
+            var scope = PyScopeManager.Global.Create(name);
+            return scope;
+        }
+        
         public class GILState : IDisposable
         {
             private IntPtr state;
@@ -632,6 +652,35 @@ namespace Python.Runtime
                 Runtime.PySys_SetArgvEx(arr.Length, arr, 0);
                 Runtime.CheckExceptionOccurred();
             }
+        }
+
+        public static void With(PyObject obj, Action<dynamic> Body)
+        {
+            // Behavior described here: 
+            // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
+
+            IntPtr type = Runtime.PyNone;
+            IntPtr val = Runtime.PyNone;
+            IntPtr traceBack = Runtime.PyNone;
+            PythonException ex = null;
+
+            try
+            {
+                PyObject enterResult = obj.InvokeMethod("__enter__");
+
+                Body(enterResult);
+            }
+            catch (PythonException e)
+            {
+                ex = e;
+                type = ex.PyType;
+                val = ex.PyValue;
+                traceBack = ex.PyTB;
+            }
+
+            var exitResult = obj.InvokeMethod("__exit__", new PyObject(type), new PyObject(val), new PyObject(traceBack));
+
+            if (ex != null && !exitResult.IsTrue()) throw ex;
         }
     }
 }

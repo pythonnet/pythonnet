@@ -42,7 +42,7 @@ from System.Windows.Forms import Form
     a `using (Py.GIL()) {/* Your code here */}` block.
 -   Import python modules using `dynamic mod = Py.Import("mod")`,
     then you can call functions as normal, eg `mod.func(args)`.
--   Use `mod.func(args, Py.kw("keywordargname", keywordargvalue))`
+-   Use `mod.func(args, Py.kw("keywordargname", keywordargvalue))` or `mod.func(args, keywordargname=keywordargvalue)`
     to apply keyword arguments.
 -   All python objects should be declared as `dynamic` type.
 -   Mathematical operations involving python and literal/managed types must
@@ -67,7 +67,7 @@ static void Main(string[] args)
         dynamic a = np.array(new List<float> { 1, 2, 3 });
         Console.WriteLine(a.dtype);
 
-        dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
+        dynamic b = np.array(new List<float> { 6, 5, 4 }, dtype=np.int32);
         Console.WriteLine(b.dtype);
 
         Console.WriteLine(a * b);
