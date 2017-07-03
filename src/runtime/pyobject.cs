@@ -5,6 +5,9 @@ using System.Linq.Expressions;
 
 namespace Python.Runtime
 {
+    using System.Reflection;
+    using System.Threading;
+
     /// <summary>
     /// Represents a generic Python object. The methods of this class are
     /// generally equivalent to the Python "abstract object API". See
@@ -260,9 +263,34 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
+
             return new PyObject(op);
         }
 
+        public T GetAttr<T>(string name)
+        {
+            IntPtr op = Runtime.PyObject_GetAttrString(obj, name);
+
+            if (op == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+
+            try
+            {
+                object resultObj;
+                if (!Converter.ToManaged(op, typeof(T), out resultObj, false))
+                {
+                    throw new InvalidCastException("cannot convert object to target type");
+                }
+
+                return (T)resultObj;
+            }
+            finally
+            {
+                Runtime.XDecref(op);
+            }
+        }
 
         /// <summary>
         /// GetAttr Method
@@ -1088,6 +1116,12 @@ namespace Python.Runtime
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
+            if (typeof(PyObject).IsAssignableFrom(binder.Type))
+            {
+                result = this;
+                return true;
+            }
+
             return Converter.ToManaged(this.obj, binder.Type, out result, false);
         }
 

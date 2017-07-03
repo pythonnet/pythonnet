@@ -76,6 +76,12 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="perf_utils\EncodedStringsFifoDictionary.cs" />
+    <Compile Include="perf_utils\EncodingGetStringPolyfill.cs" />
+    <Compile Include="perf_utils\FifoDictionary.cs" />
+    <Compile Include="perf_utils\RawImmutableMemBlock.cs" />
+    <Compile Include="perf_utils\RawMemoryFifoDictionary.cs" />
+    <Compile Include="perf_utils\RawMemUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
