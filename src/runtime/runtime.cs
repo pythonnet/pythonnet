@@ -95,7 +95,7 @@ namespace Python.Runtime
         /// </summary>
         private const string PyUnicodeEntryPoint = "PyUnicodeUCS4_";
 #elif UCS2
-        public const int _UCS = 2;
+        internal const int _UCS = 2;
 
         /// <summary>
         /// EntryPoint to be used in DllImport to map to correct Unicode
@@ -110,33 +110,33 @@ namespace Python.Runtime
         // We needs to replace all public constants to static readonly fields to allow 
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
-        public const string pyversion = _pyversion;
-        public const string pyver = _pyver;
+        public readonly string pyversion = _pyversion;
+        public readonly string pyver = _pyver;
 
 #if PYTHON27
         internal const string _pyversion = "2.7";
         internal const string _pyver = "27";
 #elif PYTHON33
-        public const string _pyversion = "3.3";
-        public const string _pyver = "33";
+        internal const string _pyversion = "3.3";
+        internal const string _pyver = "33";
 #elif PYTHON34
-        public const string _pyversion = "3.4";
-        public const string _pyver = "34";
+        internal const string _pyversion = "3.4";
+        internal const string _pyver = "34";
 #elif PYTHON35
-        public const string _pyversion = "3.5";
-        public const string _pyver = "35";
+        internal const string _pyversion = "3.5";
+        internal const string _pyver = "35";
 #elif PYTHON36
-        public const string _pyversion = "3.6";
-        public const string _pyver = "36";
+        internal const string _pyversion = "3.6";
+        internal const string _pyver = "36";
 #elif PYTHON37 // TODO: Add `interop37.cs` after PY37 is released
-        public const string _pyversion = "3.7";
-        public const string _pyver = "37";
+        internal const string _pyversion = "3.7";
+        internal const string _pyver = "37";
 #else
 #error You must define one of PYTHON33 to PYTHON37 or PYTHON27
 #endif
 
 #if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
-        internal const string dllBase = "python" + pyversion;
+        internal const string dllBase = "python" + _pyversion;
 #else // Windows
         internal const string dllBase = "python" + _pyver;
 #endif
@@ -159,9 +159,9 @@ namespace Python.Runtime
         public static readonly string PythonDLL = _PythonDll;
 
 #if PYTHON_WITHOUT_ENABLE_SHARED
-        public const string _PythonDll = "__Internal";
+        internal const string _PythonDll = "__Internal";
 #else
-        public const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
+        internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
 #endif
 
         public static readonly int pyversionnumber = Convert.ToInt32(_pyver);
@@ -708,7 +708,7 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
 
-        [DllImport(PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr Py_CompileString(string code, string file, IntPtr tok);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1224,7 +1224,7 @@ namespace Python.Runtime
 
         internal static IntPtr PyUnicode_FromUnicode(string s, int size)
         {
-            return PyUnicode_FromKindAndData(UCS, s, size);
+            return PyUnicode_FromKindAndData(_UCS, s, size);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
