@@ -1,5 +1,7 @@
 # pythonnet - Python for .NET
 
+[![Join the chat at https://gitter.im/pythonnet/pythonnet](https://badges.gitter.im/pythonnet/pythonnet.svg)](https://gitter.im/pythonnet/pythonnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![appveyor shield][]](https://ci.appveyor.com/project/pythonnet/pythonnet/branch/master)
 [![travis shield][]](https://travis-ci.org/pythonnet/pythonnet)
 [![codecov shield][]](https://codecov.io/github/pythonnet/pythonnet)
