@@ -209,7 +209,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             'pythonnet.sln',
             '/p:Configuration={}'.format(_config),
             '/p:Platform={}'.format(ARCH),
-            '/p:DefineConstants="{}"'.format(','.join(defines)),
+            '/p:DefineConstants="{}"'.format('%3B'.join(defines)),
             '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
             '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
             '/verbosity:{}'.format(VERBOSITY),

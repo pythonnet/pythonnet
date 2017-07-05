@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -105,7 +105,7 @@ namespace Python.Runtime
             flags |= TypeFlags.BaseType;
             flags |= TypeFlags.Subclass;
             flags |= TypeFlags.HaveGC;
-            Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
 
@@ -157,23 +157,13 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            IntPtr py__init__ = Runtime.PyString_FromString("__init__");
-            IntPtr type = Runtime.PyObject_TYPE(obj);
-            IntPtr init = Runtime._PyType_Lookup(type, py__init__);
-            Runtime.XDecref(py__init__);
+            var init = Runtime.PyObject_GetAttrString(obj, "__init__");
             Runtime.PyErr_Clear();
 
             if (init != IntPtr.Zero)
             {
-                IntPtr bound = Runtime.GetBoundArgTuple(obj, args);
-                if (bound == IntPtr.Zero)
-                {
-                    Runtime.XDecref(obj);
-                    return IntPtr.Zero;
-                }
-
-                IntPtr result = Runtime.PyObject_Call(init, bound, kw);
-                Runtime.XDecref(bound);
+                IntPtr result = Runtime.PyObject_Call(init, args, kw);
+                Runtime.XDecref(init);
 
                 if (result == IntPtr.Zero)
                 {
@@ -247,7 +237,7 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_flags);
+            var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
                 IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());
