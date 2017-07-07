@@ -87,7 +87,7 @@ int32
 [  6.  10.  12.]
 ```
 
-Information on installation, FAQ, troubleshooting, debugging, and projects using pythonnet can be found in wiki:
+Information on installation, FAQ, troubleshooting, debugging, and projects using pythonnet can be found in the Wiki:
 
 https://github.com/pythonnet/pythonnet/wiki
 
