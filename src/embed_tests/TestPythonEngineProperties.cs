@@ -146,7 +146,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void SetPythonPath()
         {
-            if (Runtime.Runtime.pyversion == "2.7")
+            if (Runtime.Runtime._pyversion == "2.7")
             {
                 // Assert.Skip outputs as a warning (ie. pending to fix)
                 Assert.Pass();
@@ -166,7 +166,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void SetPythonPathExceptionOn27()
         {
-            if (Runtime.Runtime.pyversion != "2.7")
+            if (Runtime.Runtime._pyversion != "2.7")
             {
                 Assert.Pass();
             }
