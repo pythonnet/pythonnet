@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -95,6 +95,27 @@ namespace Python.Runtime
                 throw new InvalidCastException("cannot convert object to target type");
             }
             return result;
+        }
+        
+        /// <summary>
+        /// As Method
+        /// </summary>
+        /// <remarks>
+        /// Return a managed object of the given type, based on the
+        /// value of the Python object.
+        /// </remarks>
+        public T As<T>()
+        {
+            if (typeof(T) == typeof(PyObject) || typeof(T) == typeof(object))
+            {
+                return (T)(this as object);
+            }
+            object result;
+            if (!Converter.ToManaged(obj, typeof(T), out result, false))
+            {
+                throw new InvalidCastException("cannot convert object to target type");
+            }
+            return (T)result;
         }
 
 
@@ -781,7 +802,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool IsIterable()
         {
-            return Runtime.PyIter_Check(obj);
+            return Runtime.PyObject_IsIterable(obj);
         }
 
 
@@ -915,6 +936,34 @@ namespace Python.Runtime
             return true;
         }
 
+        private void GetArgs(object[] inargs, CallInfo callInfo, out PyTuple args, out PyDict kwargs)
+        {
+            if (callInfo == null || callInfo.ArgumentNames.Count == 0)
+            {
+                GetArgs(inargs, out args, out kwargs);
+                return;
+            }
+
+            // Support for .net named arguments
+            var namedArgumentCount = callInfo.ArgumentNames.Count;
+            var regularArgumentCount = callInfo.ArgumentCount - namedArgumentCount;
+
+            var argTuple = Runtime.PyTuple_New(regularArgumentCount);
+            for (int i = 0; i < regularArgumentCount; ++i)
+            {
+                AddArgument(argTuple, i, inargs[i]);
+            }
+            args = new PyTuple(argTuple);
+
+            var namedArgs = new object[namedArgumentCount * 2];
+            for (int i = 0; i < namedArgumentCount; ++i)
+            {
+                namedArgs[i * 2] = callInfo.ArgumentNames[i];
+                namedArgs[i * 2 + 1] = inargs[regularArgumentCount + i];
+            }
+            kwargs = Py.kw(namedArgs);
+        }
+
         private void GetArgs(object[] inargs, out PyTuple args, out PyDict kwargs)
         {
             int arg_count;
@@ -925,22 +974,10 @@ namespace Python.Runtime
             IntPtr argtuple = Runtime.PyTuple_New(arg_count);
             for (var i = 0; i < arg_count; i++)
             {
-                IntPtr ptr;
-                if (inargs[i] is PyObject)
-                {
-                    ptr = ((PyObject)inargs[i]).Handle;
-                    Runtime.XIncref(ptr);
-                }
-                else
-                {
-                    ptr = Converter.ToPython(inargs[i], inargs[i]?.GetType());
-                }
-                if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
-                {
-                    throw new PythonException();
-                }
+                AddArgument(argtuple, i, inargs[i]);
             }
             args = new PyTuple(argtuple);
+
             kwargs = null;
             for (int i = arg_count; i < inargs.Length; i++)
             {
@@ -959,6 +996,32 @@ namespace Python.Runtime
             }
         }
 
+        private static void AddArgument(IntPtr argtuple, int i, object target)
+        {
+            IntPtr ptr = GetPythonObject(target);
+
+            if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
+            {
+                throw new PythonException();
+            }
+        }
+
+        private static IntPtr GetPythonObject(object target)
+        {
+            IntPtr ptr;
+            if (target is PyObject)
+            {
+                ptr = ((PyObject)target).Handle;
+                Runtime.XIncref(ptr);
+            }
+            else
+            {
+                ptr = Converter.ToPython(target, target?.GetType());
+            }
+
+            return ptr;
+        }
+
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
@@ -967,7 +1030,7 @@ namespace Python.Runtime
                 PyDict kwargs = null;
                 try
                 {
-                    GetArgs(args, out pyargs, out kwargs);
+                    GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
                     result = CheckNone(InvokeMethod(binder.Name, pyargs, kwargs));
                 }
                 finally
@@ -997,7 +1060,7 @@ namespace Python.Runtime
                 PyDict kwargs = null;
                 try
                 {
-                    GetArgs(args, out pyargs, out kwargs);
+                    GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
                     result = CheckNone(Invoke(pyargs, kwargs));
                 }
                 finally

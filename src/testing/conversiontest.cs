@@ -32,8 +32,14 @@ namespace Python.Test
 
         public byte[] ByteArrayField;
         public sbyte[] SByteArrayField;
+
+        public T? Echo<T>(T? arg) where T: struct {
+            return arg;
+        }
+
     }
 
+    
 
     public interface ISpam
     {

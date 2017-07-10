@@ -321,6 +321,17 @@ namespace Python.Runtime
                 return true;
             }
 
+            if (obType.IsGenericType && obType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                if( value == Runtime.PyNone )
+                {
+                    result = null;
+                    return true;
+                }
+                // Set type to underlying type
+                obType = obType.GetGenericArguments()[0];
+            }
+
             if (obType.IsArray)
             {
                 return ToArray(value, obType, out result, setError);
@@ -762,10 +773,14 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     double dd = Runtime.PyFloat_AsDouble(op);
+                    Runtime.CheckExceptionOccurred();
                     Runtime.XDecref(op);
                     if (dd > Single.MaxValue || dd < Single.MinValue)
                     {
-                        goto overflow;
+                        if (!double.IsInfinity(dd))
+                        {
+                            goto overflow;
+                        }
                     }
                     result = (float)dd;
                     return true;
@@ -777,11 +792,8 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     double d = Runtime.PyFloat_AsDouble(op);
+                    Runtime.CheckExceptionOccurred();
                     Runtime.XDecref(op);
-                    if (d > Double.MaxValue || d < Double.MinValue)
-                    {
-                        goto overflow;
-                    }
                     result = d;
                     return true;
             }

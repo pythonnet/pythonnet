@@ -130,6 +130,7 @@
     <Compile Include="pylong.cs" />
     <Compile Include="pynumber.cs" />
     <Compile Include="pyobject.cs" />
+    <Compile Include="pyscope.cs" />
     <Compile Include="pysequence.cs" />
     <Compile Include="pystring.cs" />
     <Compile Include="pythonengine.cs" />
@@ -138,6 +139,7 @@
     <Compile Include="runtime.cs" />
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
@@ -167,6 +169,6 @@
   </PropertyGroup>
   <Target Name="AfterBuild">
     <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-    <Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
+    <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
   </Target>
 </Project>

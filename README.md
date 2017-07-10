@@ -1,5 +1,7 @@
 # pythonnet - Python for .NET
 
+[![Join the chat at https://gitter.im/pythonnet/pythonnet](https://badges.gitter.im/pythonnet/pythonnet.svg)](https://gitter.im/pythonnet/pythonnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![appveyor shield][]](https://ci.appveyor.com/project/pythonnet/pythonnet/branch/master)
 [![travis shield][]](https://travis-ci.org/pythonnet/pythonnet)
 [![codecov shield][]](https://codecov.io/github/pythonnet/pythonnet)
@@ -42,7 +44,7 @@ from System.Windows.Forms import Form
     a `using (Py.GIL()) {/* Your code here */}` block.
 -   Import python modules using `dynamic mod = Py.Import("mod")`,
     then you can call functions as normal, eg `mod.func(args)`.
--   Use `mod.func(args, Py.kw("keywordargname", keywordargvalue))`
+-   Use `mod.func(args, Py.kw("keywordargname", keywordargvalue))` or `mod.func(args, keywordargname=keywordargvalue)`
     to apply keyword arguments.
 -   All python objects should be declared as `dynamic` type.
 -   Mathematical operations involving python and literal/managed types must
@@ -67,7 +69,7 @@ static void Main(string[] args)
         dynamic a = np.array(new List<float> { 1, 2, 3 });
         Console.WriteLine(a.dtype);
 
-        dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
+        dynamic b = np.array(new List<float> { 6, 5, 4 }, dtype=np.int32);
         Console.WriteLine(b.dtype);
 
         Console.WriteLine(a * b);
@@ -86,6 +88,10 @@ float64
 int32
 [  6.  10.  12.]
 ```
+
+Information on installation, FAQ, troubleshooting, debugging, and projects using pythonnet can be found in the Wiki:
+
+https://github.com/pythonnet/pythonnet/wiki
 
 [appveyor shield]: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
 

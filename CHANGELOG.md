@@ -9,17 +9,22 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added VS 2017 build with net40 and NetStandard 1.5 targets
 
 ### Added
--   Added clr.GetClrType (#432)(#433)
--   Added `Foo` feature
+-   Added `clr.GetClrType` (#432, #433)
+-   Allowed passing `None` for nullable args (#460)
+-   Added keyword arguments based on C# syntax for calling CPython methods (#461)
 
 ### Changed
-
--   Changed `Bar` feature
 
 ### Fixed
 
 -   Fixed Visual Studio 2017 compat (#434) for setup.py
--   Fixed `FooBar` bug
+-   Fixed crash on exit of the Python interpreter if a python class
+    derived from a .NET class has a `__namespace__` or `__assembly__`
+    attribute (#481)
+-   Fixed conversion of 'float' and 'double' values (#486)
+-   Fixed 'clrmethod' for python 2 (#492)
+-   Fixed double calling of constructor when deriving from .NET class (#495)
+
 
 ## [2.3.0][] - 2017-03-11
 
