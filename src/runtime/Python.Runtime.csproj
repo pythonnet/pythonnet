@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -20,12 +20,14 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Platform)' == 'x86'">
+  <!--We can relax binding to platform because code references no any platform dependent assemblies-->
+  <!--This will allows to use any build of this assebly as a compile ref assebly-->
+  <!--<PropertyGroup Condition=" '$(Platform)' == 'x86'">
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x64'">
     <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
+  </PropertyGroup>-->
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
     <Optimize>true</Optimize>
@@ -127,6 +129,7 @@
     <Compile Include="pylong.cs" />
     <Compile Include="pynumber.cs" />
     <Compile Include="pyobject.cs" />
+    <Compile Include="pyscope.cs" />
     <Compile Include="pysequence.cs" />
     <Compile Include="pystring.cs" />
     <Compile Include="pythonengine.cs" />
@@ -135,6 +138,7 @@
     <Compile Include="runtime.cs" />
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
@@ -161,6 +165,6 @@
   </PropertyGroup>
   <Target Name="AfterBuild">
     <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-    <Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" />
+    <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
   </Target>
 </Project>

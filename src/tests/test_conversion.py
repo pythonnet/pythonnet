@@ -466,17 +466,6 @@ def test_double_conversion():
     with pytest.raises(TypeError):
         ConversionTest().DoubleField = None
 
-    with pytest.raises(OverflowError):
-        ConversionTest().DoubleField = 1.7976931348623159e308
-
-    with pytest.raises(OverflowError):
-        ConversionTest().DoubleField = -1.7976931348623159e308
-
-    with pytest.raises(OverflowError):
-        _ = System.Double(1.7976931348623159e308)
-
-    with pytest.raises(OverflowError):
-        _ = System.Double(-1.7976931348623159e308)
 
 
 def test_decimal_conversion():
@@ -641,6 +630,8 @@ def test_enum_conversion():
 
 def test_null_conversion():
     """Test null conversion."""
+    import System
+    
     ob = ConversionTest()
 
     ob.StringField = None
@@ -651,6 +642,10 @@ def test_null_conversion():
 
     ob.SpamField = None
     assert ob.SpamField is None
+
+    pi = 22/7
+    assert ob.Echo[System.Double](pi) == pi
+    assert ob.Echo[System.DateTime](None) is None
 
     # Primitive types and enums should not be set to null.
 
