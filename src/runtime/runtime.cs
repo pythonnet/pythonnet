@@ -84,7 +84,7 @@ namespace Python.Runtime
         // We needs to replace all public constants to static readonly fields to allow 
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
-        public static readonly int UCS = _UCS;
+        public static int UCS => _UCS;
 
 #if UCS4
         internal const int _UCS = 4;
@@ -110,8 +110,8 @@ namespace Python.Runtime
         // We needs to replace all public constants to static readonly fields to allow 
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
-        public readonly string pyversion = _pyversion;
-        public readonly string pyver = _pyver;
+        public string pyversion => _pyversion;
+        public string pyver => _pyver;
 
 #if PYTHON27
         internal const string _pyversion = "2.7";
