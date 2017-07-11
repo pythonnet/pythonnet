@@ -167,14 +167,22 @@ def preprocess_python_headers():
     include_dirs = [fake_libc_include]
 
     include_py = sysconfig.get_config_var("INCLUDEPY")
+    if (not (include_py == None)) and sys.platform.startswith('win32'):
+        include_dirs.append("-I")
     include_dirs.append(include_py)
-
-    defines = [
-        "-D", "__attribute__(x)=",
-        "-D", "__inline__=inline",
-        "-D", "__asm__=;#pragma asm",
-        "-D", "__int64=long long"
-    ]
+    
+    if sys.platform.startswith('win32'):
+        defines = [
+            "-D", "__cdecl=",
+            "-D", "__int64=long long"
+        ]
+    else:
+        defines = [
+            "-D", "__attribute__(x)=",
+            "-D", "__inline__=inline",
+            "-D", "__asm__=;#pragma asm",
+            "-D", "__int64=long long"
+        ]
 
     if hasattr(sys, "abiflags"):
         if "d" in sys.abiflags:
@@ -185,8 +193,14 @@ def preprocess_python_headers():
             defines.extend(("-D", "PYTHON_WITH_WIDE_UNICODE"))
 
     python_h = os.path.join(include_py, "Python.h")
-    cmd = ["clang", "-I"] + include_dirs + defines + ["-E", python_h]
-
+    if sys.platform.startswith('linux'):
+        compiler = "gcc"
+    elif sys.platform.startswith('win32'):
+        compiler = "cl.exe"
+    else:
+        compiler = "clang"
+    cmd = [compiler, "-I"] + include_dirs + defines + ["-E", python_h]
+    
     # normalize as the parser doesn't like windows line endings.
     lines = []
     for line in _check_output(cmd).splitlines():
