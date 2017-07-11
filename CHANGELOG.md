@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
 
 ### Changed
+-   geninterop.py uses MSVC on Windows, gcc on Linux and CLang in other cases
 
 ### Fixed
 
