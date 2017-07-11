@@ -802,7 +802,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool IsIterable()
         {
-            return Runtime.PyIter_Check(obj);
+            return Runtime.PyObject_IsIterable(obj);
         }
 
 

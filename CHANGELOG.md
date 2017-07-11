@@ -21,6 +21,10 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
     attribute (#481)
+-   Fixed conversion of 'float' and 'double' values (#486)
+-   Fixed 'clrmethod' for python 2 (#492)
+-   Fixed double calling of constructor when deriving from .NET class (#495)
+
 
 ## [2.3.0][] - 2017-03-11
 

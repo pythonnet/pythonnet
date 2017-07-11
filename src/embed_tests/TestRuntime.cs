@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -44,6 +44,47 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(2, Runtime.Runtime.Refcount(op));
             Runtime.Runtime.XDecref(op);
             Assert.AreEqual(1, Runtime.Runtime.Refcount(op));
+
+            Runtime.Runtime.Py_Finalize();
+        }
+
+        [Test]
+        public static void PyCheck_Iter_PyObject_IsIterable_Test()
+        {
+            Runtime.Runtime.Py_Initialize();
+
+            // Tests that a python list is an iterable, but not an iterator
+            var pyList = Runtime.Runtime.PyList_New(0);
+            Assert.IsFalse(Runtime.Runtime.PyIter_Check(pyList));
+            Assert.IsTrue(Runtime.Runtime.PyObject_IsIterable(pyList));
+
+            // Tests that a python list iterator is both an iterable and an iterator
+            var pyListIter = Runtime.Runtime.PyObject_GetIter(pyList);
+            Assert.IsTrue(Runtime.Runtime.PyObject_IsIterable(pyListIter));
+            Assert.IsTrue(Runtime.Runtime.PyIter_Check(pyListIter));
+
+            // Tests that a python float is neither an iterable nor an iterator
+            var pyFloat = Runtime.Runtime.PyFloat_FromDouble(2.73);
+            Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(pyFloat));
+            Assert.IsFalse(Runtime.Runtime.PyIter_Check(pyFloat));
+
+            Runtime.Runtime.Py_Finalize();
+        }
+
+        [Test]
+        public static void PyCheck_Iter_PyObject_IsIterable_ThreadingLock_Test()
+        {
+            Runtime.Runtime.Py_Initialize();
+
+            // Create an instance of threading.Lock, which is one of the very few types that does not have the
+            // TypeFlags.HaveIter set in Python 2. This tests a different code path in PyObject_IsIterable and PyIter_Check.
+            var threading = Runtime.Runtime.PyImport_ImportModule("threading");
+            var threadingDict = Runtime.Runtime.PyModule_GetDict(threading);
+            var lockType = Runtime.Runtime.PyDict_GetItemString(threadingDict, "Lock");
+            var lockInstance = Runtime.Runtime.PyObject_CallObject(lockType, Runtime.Runtime.PyTuple_New(0));
+
+            Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(lockInstance));
+            Assert.IsFalse(Runtime.Runtime.PyIter_Check(lockInstance));
 
             Runtime.Runtime.Py_Finalize();
         }

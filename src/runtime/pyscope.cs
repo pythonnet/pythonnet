@@ -57,7 +57,7 @@ namespace Python.Runtime
         /// </remarks>
         internal PyScope(IntPtr ptr, PyScopeManager manager)
         {
-            if (Runtime.PyObject_Type(ptr) != Runtime.PyModuleType)
+            if (!Runtime.PyType_IsSubtype(Runtime.PyObject_TYPE(ptr), Runtime.PyModuleType))
             {
                 throw new PyScopeException("object is not a module");
             }
@@ -65,10 +65,8 @@ namespace Python.Runtime
             obj = ptr;
             //Refcount of the variables not increase
             variables = Runtime.PyModule_GetDict(obj);
-            if (variables == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            Runtime.CheckExceptionOccurred();
+
             Runtime.PyDict_SetItemString(
                 variables, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
@@ -123,7 +121,7 @@ namespace Python.Runtime
                 PyObject module = PythonEngine.ImportModule(name);
                 Import(module, asname);
                 return module;
-            }            
+            }
         }
 
         /// <summary>
@@ -290,7 +288,7 @@ namespace Python.Runtime
         /// Evaluate a Python expression
         /// </summary>
         /// <remarks>
-        /// Evaluate a Python expression 
+        /// Evaluate a Python expression
         /// and  convert the result to a Managed Object of given type.
         /// </remarks>
         public T Eval<T>(string code, PyDict locals = null)
@@ -400,7 +398,7 @@ namespace Python.Runtime
         {
             PyObject scope;
             var state = TryGet(name, out scope);
-            if(!state)
+            if (!state)
             {
                 throw new PyScopeException($"The scope of name '{Name}' has no attribute '{name}'");
             }
@@ -447,7 +445,7 @@ namespace Python.Runtime
         /// Get Method
         /// </summary>
         /// <remarks>
-        /// Obtain the value of the variable of given name, 
+        /// Obtain the value of the variable of given name,
         /// and convert the result to a Managed Object of given type.
         /// If the variable does not exist, throw an Exception.
         /// </remarks>
@@ -466,7 +464,7 @@ namespace Python.Runtime
         /// TryGet Method
         /// </summary>
         /// <remarks>
-        /// Obtain the value of the variable of given name, 
+        /// Obtain the value of the variable of given name,
         /// and convert the result to a Managed Object of given type.
         /// If the variable does not exist, return false.
         /// </remarks>
@@ -479,10 +477,10 @@ namespace Python.Runtime
             {
                 value = default(T);
                 return false;
-            }            
+            }
             if (pyObj == null)
             {
-                if(typeof(T).IsValueType)
+                if (typeof(T).IsValueType)
                 {
                     throw new PyScopeException($"The value of the attribute '{name}' is None which cannot be convert to '{typeof(T).ToString()}'");
                 }
@@ -490,7 +488,7 @@ namespace Python.Runtime
                 {
                     value = default(T);
                     return true;
-                }                
+                }
             }
             value = pyObj.As<T>();
             return true;

@@ -91,13 +91,13 @@ namespace Python.Runtime
             var len = 0;
             while (true)
             {
-                int c = Runtime.UCS == 2
+                int c = Runtime._UCS == 2
                     ? Marshal.ReadInt16(p, len * 2)
                     : Marshal.ReadInt32(p, len * 4);
 
                 if (c == 0)
                 {
-                    return len * Runtime.UCS;
+                    return len * Runtime._UCS;
                 }
                 checked
                 {
@@ -163,7 +163,7 @@ namespace Python.Runtime
             }
 
             int totalStrLength = argv.Sum(arg => arg.Length + 1);
-            int memSize = argv.Length * IntPtr.Size + totalStrLength * Runtime.UCS;
+            int memSize = argv.Length * IntPtr.Size + totalStrLength * Runtime._UCS;
 
             IntPtr mem = Marshal.AllocHGlobal(memSize);
             try

@@ -15,12 +15,12 @@ from System.Collections.Generic import List
 from ._compat import range
 
 
-def interface_test_class_fixture():
+def interface_test_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
 
     class InterfaceTestClass(IInterfaceTest):
         """class that implements the test interface"""
-        __namespace__ = "Python.Test"
+        __namespace__ = "Python.Test." + subnamespace
 
         def foo(self):
             return "InterfaceTestClass"
@@ -31,12 +31,12 @@ def interface_test_class_fixture():
     return InterfaceTestClass
 
 
-def derived_class_fixture():
+def derived_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
 
     class DerivedClass(SubClassTest):
         """class that derives from a class deriving from IInterfaceTest"""
-        __namespace__ = "Python.Test"
+        __namespace__ = "Python.Test." + subnamespace
 
         def foo(self):
             return "DerivedClass"
@@ -60,12 +60,12 @@ def derived_class_fixture():
     return DerivedClass
 
 
-def derived_event_test_class_fixture():
+def derived_event_test_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
 
     class DerivedEventTest(IInterfaceTest):
         """class that implements IInterfaceTest.TestEvent"""
-        __namespace__ = "Python.Test"
+        __namespace__ = "Python.Test." + subnamespace
 
         def __init__(self):
             self.event_handlers = []
@@ -99,7 +99,7 @@ def test_base_class():
 
 def test_interface():
     """Test python classes can derive from C# interfaces"""
-    InterfaceTestClass = interface_test_class_fixture()
+    InterfaceTestClass = interface_test_class_fixture(test_interface.__name__)
     ob = InterfaceTestClass()
     assert ob.foo() == "InterfaceTestClass"
     assert FunctionsTest.test_foo(ob) == "InterfaceTestClass"
@@ -112,7 +112,7 @@ def test_interface():
 
 def test_derived_class():
     """Test python class derived from managed type"""
-    DerivedClass = derived_class_fixture()
+    DerivedClass = derived_class_fixture(test_derived_class.__name__)
     ob = DerivedClass()
     assert ob.foo() == "DerivedClass"
     assert ob.base_foo() == "foo"
@@ -128,10 +128,9 @@ def test_derived_class():
     assert id(x) == id(ob)
 
 
-@pytest.mark.skip(reason="FIXME: test randomly pass/fails")
 def test_create_instance():
     """Test derived instances can be created from managed code"""
-    DerivedClass = derived_class_fixture()
+    DerivedClass = derived_class_fixture(test_create_instance.__name__)
     ob = FunctionsTest.create_instance(DerivedClass)
     assert ob.foo() == "DerivedClass"
     assert FunctionsTest.test_foo(ob) == "DerivedClass"
@@ -142,7 +141,7 @@ def test_create_instance():
     x = FunctionsTest.pass_through(ob)
     assert id(x) == id(ob)
 
-    InterfaceTestClass = interface_test_class_fixture()
+    InterfaceTestClass = interface_test_class_fixture(test_create_instance.__name__)
     ob2 = FunctionsTest.create_instance(InterfaceTestClass)
     assert ob2.foo() == "InterfaceTestClass"
     assert FunctionsTest.test_foo(ob2) == "InterfaceTestClass"
@@ -153,7 +152,6 @@ def test_create_instance():
     assert id(y) == id(ob2)
 
 
-@pytest.mark.skip(reason="FIXME: test randomly pass/fails")
 def test_events():
     class EventHandler(object):
         def handler(self, x, args):
@@ -166,12 +164,12 @@ def test_events():
     assert FunctionsTest.test_event(x, 1) == 1
     assert event_handler.value == 1
 
-    InterfaceTestClass = interface_test_class_fixture()
+    InterfaceTestClass = interface_test_class_fixture(test_events.__name__)
     i = InterfaceTestClass()
     with pytest.raises(System.NotImplementedException):
         FunctionsTest.test_event(i, 2)
 
-    DerivedEventTest = derived_event_test_class_fixture()
+    DerivedEventTest = derived_event_test_class_fixture(test_events.__name__)
     d = DerivedEventTest()
     d.add_TestEvent(event_handler.handler)
     assert FunctionsTest.test_event(d, 3) == 3
@@ -190,3 +188,59 @@ def test_isinstance_check():
     for x in b:
         assert isinstance(x, System.Object)
         assert isinstance(x, System.String)
+
+def test_namespace_and_init():
+    calls = []
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_with_init_args"
+        def __init__(self, *args, **kwargs):
+            calls.append((args, kwargs))
+    t = TestX(1,2,3,foo="bar")
+    assert len(calls) == 1
+    assert calls[0][0] == (1,2,3)
+    assert calls[0][1] == {"foo":"bar"}
+
+def test_namespace_and_argless_init():
+    calls = []
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_without_init_args"
+        def __init__(self):
+            calls.append(True)
+    t = TestX()
+    assert len(calls) == 1
+    assert calls[0] == True
+
+
+def test_namespace_and_no_init():
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_without_init"
+        q = 1
+    t = TestX()
+    assert t.q == 1
+
+def test_construction_from_clr():
+    import clr
+    calls = []
+    class TestX(System.Object):
+        __namespace__ = "test_clr_subclass_init_from_clr"
+        @clr.clrmethod(None, [int, str])
+        def __init__(self, i, s):
+            calls.append((i, s))
+
+    # Construct a TestX from Python
+    t = TestX(1, "foo")
+    assert len(calls) == 1
+    assert calls[0][0] == 1
+    assert calls[0][1] == "foo"
+
+    # Reset calls and construct a TestX from CLR
+    calls = []
+    tp = t.GetType()
+    t2 = tp.GetConstructors()[0].Invoke(None)
+    assert len(calls) == 0
+
+    # The object has only been constructed, now it needs to be initialized as well
+    tp.GetMethod("__init__").Invoke(t2, [1, "foo"])
+    assert len(calls) == 1
+    assert calls[0][0] == 1
+    assert calls[0][1] == "foo"
