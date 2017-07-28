@@ -133,6 +133,16 @@ def _get_long_description():
 
 
 class BuildExtPythonnet(build_ext.build_ext):
+    user_options = build_ext.build_ext.user_options + [
+            ('xplat', None, None)
+        ]
+    def initialize_options(self):
+        build_ext.build_ext.initialize_options(self)
+        self.xplat = None
+
+    def finalize_options(self):
+        build_ext.build_ext.finalize_options(self)
+
     def build_extension(self, ext):
         """Builds the .pyd file using msbuild or xbuild"""
         if ext.name != "clr":
@@ -198,7 +208,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             _config = "{0}Win".format(CONFIG)
 
         elif DEVTOOLS == "Mono":
-            _xbuild = "xbuild"
+            _xbuild = 'dotnet msbuild' if self.xplat else 'xbuild'
             _config = "{0}Mono".format(CONFIG)
         else:
             raise NotImplementedError(
@@ -206,10 +216,10 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         cmd = [
             _xbuild,
-            'pythonnet.sln',
+            'pythonnet.15.sln' if self.xplat else 'pythonnet.sln',
             '/p:Configuration={}'.format(_config),
             '/p:Platform={}'.format(ARCH),
-            '/p:DefineConstants="{}"'.format('%3B'.join(defines)),
+            '/p:{}DefineConstants="{}"'.format('Custom' if self.xplat else '','%3B'.join(defines)),
             '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
             '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
             '/verbosity:{}'.format(VERBOSITY),
@@ -221,6 +231,7 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         self.debug_print("Building: {0}".format(" ".join(cmd)))
         use_shell = True if DEVTOOLS == "Mono" else False
+
         subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
 
@@ -266,6 +277,20 @@ class BuildExtPythonnet(build_ext.build_ext):
         if DEVTOOLS == "Mono":
             nuget = "mono {0}".format(nuget)
             use_shell = True
+
+        if self.xplat:
+            if DEVTOOLS == "MsDev":
+                _config = "{0}Win".format(CONFIG)
+            elif DEVTOOLS == "Mono":
+                _config = "{0}Mono".format(CONFIG)
+            else:
+                raise NotImplementedError(
+                     "DevTool {0} not supported (use MsDev/Mono)".format(DEVTOOLS))
+
+            cmd = "dotnet msbuild /t:Restore pythonnet.15.sln /p:Configuration={0} /p:Platform={1}".format(_config, ARCH)
+            self.debug_print("Updating packages with xplat: {0}".format(cmd))
+            subprocess.check_call(cmd, shell=use_shell)
+            return;
 
         cmd = "{0} update -self".format(nuget)
         self.debug_print("Updating NuGet: {0}".format(cmd))
