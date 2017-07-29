@@ -106,12 +106,19 @@ namespace Python.Runtime
 
             il.Emit(OpCodes.Ldarg_1);
 
+#if NETCOREAPP
+            il.EmitCalli(OpCodes.Calli,
+                CallingConventions.ExplicitThis,
+                method.ReturnType,
+                nargs, null
+            );
+#else
             il.EmitCalli(OpCodes.Calli,
                 CallingConvention.Cdecl,
                 method.ReturnType,
                 nargs
             );
-
+#endif
             il.Emit(OpCodes.Ret);
 
             tb.DefineMethodOverride(mb, method);
