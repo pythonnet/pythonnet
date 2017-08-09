@@ -11,6 +11,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `clr.GetClrType` (#432, #433)
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
+-   Catches exceptions thrown in C# iterators (yield returns) and rethrows them in python (#475)
 
 ### Changed
 
