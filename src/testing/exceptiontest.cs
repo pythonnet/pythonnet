@@ -56,11 +56,11 @@ namespace Python.Test
             throw new OverflowException("error");
         }
 
-        public static IEnumerable<int> ThrowExceptionInIterator()
+        public static IEnumerable<int> ThrowExceptionInIterator(Exception e)
         {
             yield return 1;
             yield return 2;
-            throw new OverflowException("error");
+            throw e;
         }
 
         public static void ThrowChainedExceptions()
