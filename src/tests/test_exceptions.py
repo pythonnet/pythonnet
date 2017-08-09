@@ -345,3 +345,17 @@ def test_chained_exceptions():
         assert exc.Message == msg
         assert exc.__cause__ == exc.InnerException
         exc = exc.__cause__
+
+def test_iteration_exception():
+    from Python.Test import ExceptionTest
+    from System import OverflowException
+
+    val = ExceptionTest.ThrowExceptionInIterator().__iter__()
+    assert next(val) == 1
+    assert next(val) == 2
+    with pytest.raises(OverflowException) as cm:
+        next(val)
+
+    exc = cm.value 
+
+    assert isinstance(exc, OverflowException)
