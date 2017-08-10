@@ -2,11 +2,10 @@
 pytest
 coverage
 
+# Coverage upload
+codecov
+
 # Platform specific requirements
 pip; sys_platform == 'win32'
 wheel; sys_platform == 'win32'
 pycparser; sys_platform != 'win32'
-
-# Coverage upload
-# codecov v2.0.6 isn't on PyPi
-https://github.com/codecov/codecov-python/tarball/v2.0.6
