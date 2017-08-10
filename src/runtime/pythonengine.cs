@@ -193,8 +193,16 @@ namespace Python.Runtime
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
                     Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
+#if NETSTANDARD1_5
+                    Assembly assembly = typeof(Runtime).GetTypeInfo().Assembly;
+#else
                     Assembly assembly = Assembly.GetExecutingAssembly();
+#endif
+#if XPLAT
+                    using (Stream stream = assembly.GetManifestResourceStream("Python.Runtime.resources.clr.py"))
+#else
                     using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
+#endif
                     using (var reader = new StreamReader(stream))
                     {
                         // add the contents of clr.py to the module

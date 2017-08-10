@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
@@ -123,7 +124,11 @@ namespace Python.Runtime
 
             if (null == assemblyName)
             {
+#if NETSTANDARD1_5
+                assemblyName = Assembly.GetEntryAssembly().FullName;
+#else
                 assemblyName = Assembly.GetExecutingAssembly().FullName;
+#endif
             }
 
             ModuleBuilder moduleBuilder = GetModuleBuilder(assemblyName, moduleName);
@@ -133,7 +138,7 @@ namespace Python.Runtime
 
             // if the base type is an interface then use System.Object as the base class
             // and add the base type to the list of interfaces this new class will implement.
-            if (baseType.IsInterface)
+            if (baseType.IsInterface())
             {
                 interfaces.Add(baseType);
                 baseClass = typeof(object);
@@ -181,7 +186,11 @@ namespace Python.Runtime
             }
 
             // override any virtual methods not already overridden by the properties above
+#if NETSTANDARD1_5
+            MethodInfo[] methods = baseType.GetTypeInfo().GetMethods();
+#else
             MethodInfo[] methods = baseType.GetMethods();
+#endif
             var virtualMethods = new HashSet<string>();
             foreach (MethodInfo method in methods)
             {
@@ -249,16 +258,25 @@ namespace Python.Runtime
             il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
             il.Emit(OpCodes.Ret);
 
+#if NETSTANDARD1_5
+            TypeInfo type = typeBuilder.CreateTypeInfo();
+            // scan the assembly so the newly added class can be imported
+            Assembly assembly = type.Assembly;
+#else
             Type type = typeBuilder.CreateType();
-
             // scan the assembly so the newly added class can be imported
             Assembly assembly = Assembly.GetAssembly(type);
+#endif
             AssemblyManager.ScanAssembly(assembly);
 
             // FIXME: assemblyBuilder not used
             AssemblyBuilder assemblyBuilder = assemblyBuilders[assemblyName];
 
+#if NETSTANDARD1_5
+            return type.AsType();
+#else
             return type;
+#endif
         }
 
         /// <summary>
@@ -309,7 +327,7 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldc_I4, i);
                 il.Emit(OpCodes.Ldarg, i + 1);
-                if (parameterTypes[i].IsValueType)
+                if (parameterTypes[i].IsValueType())
                 {
                     il.Emit(OpCodes.Box, parameterTypes[i]);
                 }
@@ -387,7 +405,7 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldc_I4, i);
                 il.Emit(OpCodes.Ldarg, i + 1);
-                if (parameterTypes[i].IsValueType)
+                if (parameterTypes[i].IsValueType())
                 {
                     il.Emit(OpCodes.Box, parameterTypes[i]);
                 }
@@ -474,7 +492,7 @@ namespace Python.Runtime
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Ldc_I4, i);
                     il.Emit(OpCodes.Ldarg, i + 1);
-                    if (argTypes[i].IsValueType)
+                    if (argTypes[i].IsValueType())
                     {
                         il.Emit(OpCodes.Box, argTypes[i]);
                     }
@@ -591,8 +609,13 @@ namespace Python.Runtime
                 }
                 else
                 {
+#if NETSTANDARD1_5
+                    assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName),
+                        AssemblyBuilderAccess.Run);
+#else
                     assemblyBuilder = domain.DefineDynamicAssembly(new AssemblyName(assemblyName),
                         AssemblyBuilderAccess.Run);
+#endif
                     assemblyBuilders[assemblyName] = assemblyBuilder;
                 }
 
@@ -677,12 +700,18 @@ namespace Python.Runtime
             {
                 throw new NotImplementedException("Python object does not have a '" + methodName + "' method");
             }
-
+#if NETSTANDARD1_5
+            return (T)obj.GetType()
+                .GetTypeInfo()
+                .GetMethod(origMethodName, BindingFlags.InvokeMethod)
+                .Invoke(obj, args);
+#else
             return (T)obj.GetType().InvokeMember(origMethodName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
+#endif
         }
 
         public static void InvokeMethodVoid(IPythonDerivedType obj, string methodName, string origMethodName,
@@ -740,11 +769,18 @@ namespace Python.Runtime
                 throw new NotImplementedException($"Python object does not have a '{methodName}' method");
             }
 
+#if NETSTANDARD1_5
+            obj.GetType()
+                .GetTypeInfo()
+                .GetMethod(origMethodName, BindingFlags.InvokeMethod)
+                .Invoke(obj, args);
+#else
             obj.GetType().InvokeMember(origMethodName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
+#endif
         }
 
         public static T InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)
@@ -802,11 +838,17 @@ namespace Python.Runtime
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
             // call the base constructor
+#if NETSTANDARD1_5
+            obj.GetType()
+                .GetMethod(origCtorName, BindingFlags.InvokeMethod)
+                .Invoke(obj, args);
+#else
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
+#endif
 
             CLRObject self = null;
             IntPtr gs = Runtime.PyGILState_Ensure();

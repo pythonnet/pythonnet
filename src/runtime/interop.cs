@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
@@ -342,7 +342,11 @@ namespace Python.Runtime
             // Here we build a mapping of PyTypeObject slot names to the
             // appropriate prototype (delegate) type to use for the slot.
 
+#if NETSTANDARD1_5
+            Type[] items = typeof(Interop).GetTypeInfo().GetNestedTypes();
+#else
             Type[] items = typeof(Interop).GetNestedTypes();
+#endif
             Hashtable p = new Hashtable();
 
             for (int i = 0; i < items.Length; i++)
@@ -453,14 +457,22 @@ namespace Python.Runtime
         {
             Type dt;
             if (funcType != null)
+#if NETSTANDARD1_5
+                dt = typeof(Interop).GetTypeInfo().GetNestedType(funcType) as Type;
+#else
                 dt = typeof(Interop).GetNestedType(funcType) as Type;
+#endif
             else
                 dt = GetPrototype(method.Name);
 
             if (dt != null)
             {
                 IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
+#if NETSTANDARD1_5
+                Delegate d = DelegateShim.CreateDelegate(dt, method);
+#else
                 Delegate d = Delegate.CreateDelegate(dt, method);
+#endif
                 Thunk cb = new Thunk(d);
                 Marshal.StructureToPtr(cb, tmp, false);
                 IntPtr fp = Marshal.ReadIntPtr(tmp, 0);

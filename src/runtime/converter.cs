@@ -1,17 +1,20 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
     /// <summary>
     /// Performs data conversions between managed types and Python types.
     /// </summary>
+#if !NETSTANDARD1_5
     [SuppressUnmanagedCodeSecurity]
+#endif
     internal class Converter
     {
         private Converter()
@@ -134,7 +137,7 @@ namespace Python.Runtime
                 return result;
             }
 
-            if (value is IList && value.GetType().IsGenericType)
+            if (value is IList && value.GetType().IsGenericType())
             {
                 using (var resultlist = new PyList())
                 {
@@ -312,7 +315,7 @@ namespace Python.Runtime
                 return false;
             }
 
-            if (value == Runtime.PyNone && !obType.IsValueType)
+            if (value == Runtime.PyNone && !obType.IsValueType())
             {
                 result = null;
                 return true;
@@ -334,7 +337,7 @@ namespace Python.Runtime
                 return ToArray(value, obType, out result, setError);
             }
 
-            if (obType.IsEnum)
+            if (obType.IsEnum())
             {
                 return ToEnum(value, obType, out result, setError);
             }

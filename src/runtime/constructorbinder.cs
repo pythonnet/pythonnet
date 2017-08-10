@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Reflection;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
@@ -51,8 +52,8 @@ namespace Python.Runtime
         {
             object result;
 
-            if (_containingType.IsValueType && !_containingType.IsPrimitive &&
-                !_containingType.IsEnum && _containingType != typeof(decimal) &&
+            if (_containingType.IsValueType() && !_containingType.IsPrimitive() &&
+                !_containingType.IsEnum() && _containingType != typeof(decimal) &&
                 Runtime.PyTuple_Size(args) == 0)
             {
                 // If you are trying to construct an instance of a struct by

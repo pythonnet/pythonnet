@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Reflection;
+using ReflectionBridge.Extensions;
 
 namespace Python.Runtime
 {
@@ -65,7 +66,7 @@ namespace Python.Runtime
             // Primitive types do not have constructors, but they look like
             // they do from Python. If the ClassObject represents one of the
             // convertible primitive types, just convert the arg directly.
-            if (type.IsPrimitive || type == typeof(string))
+            if (type.IsPrimitive() || type == typeof(string))
             {
                 if (Runtime.PyTuple_Size(args) != 1)
                 {
@@ -84,13 +85,13 @@ namespace Python.Runtime
                 return CLRObject.GetInstHandle(result, tp);
             }
 
-            if (type.IsAbstract)
+            if (type.IsAbstract())
             {
                 Exceptions.SetError(Exceptions.TypeError, "cannot instantiate abstract class");
                 return IntPtr.Zero;
             }
 
-            if (type.IsEnum)
+            if (type.IsEnum())
             {
                 Exceptions.SetError(Exceptions.TypeError, "cannot instantiate enumeration");
                 return IntPtr.Zero;

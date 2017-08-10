@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Reflection;
+#if !NETSTANDARD1_5
 using System.Security.Permissions;
-
+#endif
 namespace Python.Runtime
 {
     /// <summary>
@@ -12,8 +13,9 @@ namespace Python.Runtime
         private PropertyInfo info;
         private MethodInfo getter;
         private MethodInfo setter;
-
+#if !NETSTANDARD1_5
         [StrongNameIdentityPermission(SecurityAction.Assert)]
+#endif
         public PropertyObject(PropertyInfo md)
         {
             getter = md.GetGetMethod(true);

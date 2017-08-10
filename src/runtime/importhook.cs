@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -75,7 +75,10 @@ namespace Python.Runtime
             if (Runtime.Py_IsInitialized() != 0)
             {
                 Runtime.XDecref(py_clr_module);
+                // TODO: Very strange behavior under CoreCLR. System.ExecutionEngineException (Crash)
+#if !NETSTANDARD1_5
                 Runtime.XDecref(root.pyHandle);
+#endif
                 Runtime.XDecref(py_import);
             }
         }
