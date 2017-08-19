@@ -15,6 +15,7 @@ import sys
 import sysconfig
 from distutils import spawn
 from distutils.command import install, build, build_ext, install_data, install_lib
+from wheel import bdist_wheel
 
 from setuptools import Extension, setup
 
@@ -218,8 +219,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             _solution_file = 'pythonnet.sln'
             _custom_define_constants = False
         elif DEVTOOLS == "MsDev15":
-            # Improve this with self._find_msbuild_tool_15 to find good >15.3 msbuild, currently only works under VS 15.3 developer environment.
-            _xbuild = '"{0}"'.format(self._find_msbuild_tool("msbuild.exe")) 
+            _xbuild = '"{0}"'.format(self._find_msbuild_tool_15()) 
             _config = "{0}Win".format(CONFIG)
             _solution_file = 'pythonnet.15.sln'
             _custom_define_constants = True
@@ -364,6 +364,20 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         raise RuntimeError("{0} could not be found".format(tool))
 
+    def _find_msbuild_tool_15(self):
+        """Return full path to one of the Microsoft build tools"""
+        try:
+            basePathes = subprocess.check_output(
+                ["vswhere", "-latest",
+                 "-version", "[15.0, 16.0)", 
+                 "-requires", "Microsoft.Component.MSBuild",
+                 "-property", "InstallationPath"]).splitlines()
+            if len(basePathes):
+                return os.path.join(basePathes[0].decode(sys.stdout.encoding or "utf-8"), "MSBuild", "15.0", "Bin", "MSBuild.exe")
+            else:
+                raise RuntimeError("MSBuild >=15.0 could not be found.")
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError("MSBuild >=15.0 could not be found. {0}".format(e.output))
 
 class InstallLibPythonnet(install_lib.install_lib):
     def install(self):
@@ -417,7 +431,23 @@ class InstallPythonnet(install.install):
             _update_xlat_devtools()
         return install.install.run(self)
 
-###############################################################################
+class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
+    user_options = bdist_wheel.bdist_wheel.user_options + [
+            ('xplat', None, None)
+        ]
+    def initialize_options(self):
+        bdist_wheel.bdist_wheel.initialize_options(self)
+        self.xplat = None
+
+    def finalize_options(self):
+        bdist_wheel.bdist_wheel.finalize_options(self)
+
+    def run(self):
+        if self.xplat:
+            _update_xlat_devtools()
+        return bdist_wheel.bdist_wheel.run(self)
+
+        ###############################################################################
 setupdir = os.path.dirname(__file__)
 if setupdir:
     os.chdir(setupdir)
@@ -449,6 +479,7 @@ setup(
         "build_ext": BuildExtPythonnet,
         "install_lib": InstallLibPythonnet,
         "install_data": InstallDataPythonnet,
+        "bdist_wheel": BDistWheelPythonnet
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
