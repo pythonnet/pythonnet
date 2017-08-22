@@ -298,6 +298,7 @@ namespace Python.Runtime
             Error = new IntPtr(-1);
 
             IntPtr dllLocal = IntPtr.Zero;
+#if !NETCOREAPP
             if (_PythonDll != "__Internal")
             {
                 dllLocal = NativeMethods.LoadLibrary(_PythonDll);
@@ -309,7 +310,7 @@ namespace Python.Runtime
                 NativeMethods.FreeLibrary(dllLocal);
             }
 #endif
-
+#endif
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             PyCLRMetaType = MetaType.Initialize();
