@@ -196,6 +196,14 @@ namespace Python.Runtime
             Assembly assembly = null;
             try
             {
+                var importEvent = new ImplicitAssemblyLoadingEventArgs(name);
+                if (importEvent.SkipAssemblyLoad)
+                {
+                    return null;
+                }
+
+                PythonEngine.RaiseAssemblyAsModuleImportingEvent(importEvent);
+
                 assembly = Assembly.Load(name);
             }
             catch (Exception)
@@ -419,12 +427,15 @@ namespace Python.Runtime
             {
                 foreach (Assembly a in namespaces[nsname].Keys)
                 {
-                    Type[] types = a.GetTypes();
+                    Type[] types = a.IsDynamic ? a.GetTypes(): a.GetExportedTypes();
                     foreach (Type t in types)
                     {
                         if ((t.Namespace ?? "") == nsname)
                         {
-                            names.Add(t.Name);
+                            if (!t.IsNested)
+                            {
+                                names.Add(t.Name);
+                            }
                         }
                     }
                 }

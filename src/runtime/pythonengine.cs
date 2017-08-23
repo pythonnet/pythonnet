@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -129,6 +129,11 @@ namespace Python.Runtime
         {
             get { return Marshal.PtrToStringAnsi(Runtime.Py_GetCompiler()); }
         }
+
+        /// <summary>
+        /// Fires when python engines importing module and probably tries to load an assembly.
+        /// </summary>
+        public static event EventHandler<ImplicitAssemblyLoadingEventArgs> ImplicitAssemblyLoading;
 
         public static int RunSimpleString(string code)
         {
@@ -520,6 +525,29 @@ namespace Python.Runtime
                 }
             }
         }
+
+        internal static void RaiseAssemblyAsModuleImportingEvent(ImplicitAssemblyLoadingEventArgs e)
+        {
+            ImplicitAssemblyLoading?.Invoke(null, e);
+        }
+    }
+
+    public class ImplicitAssemblyLoadingEventArgs: EventArgs
+    {
+        public ImplicitAssemblyLoadingEventArgs(string moduleName)
+        {
+            ModuleName = moduleName;
+        }
+
+        /// <summary>
+        /// The name of the module to import that is probably assembly name.
+        /// </summary>
+        public string ModuleName { get; }
+
+        /// <summary>
+        /// Set it to true, if you know that <see cref="ModuleName"/> is not an assembly to import.
+        /// </summary>
+        public bool SkipAssemblyLoad { get; set; }
     }
 
     public enum RunFlagType
