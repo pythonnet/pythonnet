@@ -75,10 +75,7 @@ namespace Python.Runtime
             if (Runtime.Py_IsInitialized() != 0)
             {
                 Runtime.XDecref(py_clr_module);
-                // TODO: Very strange behavior under CoreCLR. System.ExecutionEngineException (Crash)
-#if !NETCOREAPP
                 Runtime.XDecref(root.pyHandle);
-#endif
                 Runtime.XDecref(py_import);
             }
         }
