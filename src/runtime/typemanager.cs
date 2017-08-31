@@ -21,6 +21,10 @@ namespace Python.Runtime
             cache = new Dictionary<Type, IntPtr>(128);
         }
 
+        public static void Reset()
+        {
+            cache = new Dictionary<Type, IntPtr>(128);
+        }
 
         /// <summary>
         /// Given a managed Type derived from ExtensionType, get the handle to

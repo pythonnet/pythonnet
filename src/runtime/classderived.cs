@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Resources;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -27,6 +28,12 @@ namespace Python.Runtime
         private static Dictionary<Tuple<string, string>, ModuleBuilder> moduleBuilders;
 
         static ClassDerivedObject()
+        {
+            assemblyBuilders = new Dictionary<string, AssemblyBuilder>();
+            moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();
+        }
+
+        public static void Reset()
         {
             assemblyBuilders = new Dictionary<string, AssemblyBuilder>();
             moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();
