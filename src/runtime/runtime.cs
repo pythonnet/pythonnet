@@ -221,6 +221,13 @@ namespace Python.Runtime
                 PyEval_InitThreads();
             }
 
+            CLRModule.Reset();
+            GenericUtil.Reset();
+            PyScopeManager.Reset();
+            ClassManager.Reset();
+            ClassDerivedObject.Reset();
+            TypeManager.Reset();
+
             IntPtr op;
             IntPtr dict;
             if (IsPython3)
