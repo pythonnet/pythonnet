@@ -185,9 +185,12 @@ namespace Python.Runtime
     {
         public IntPtr target;
         public Type dtype;
+        private readonly PyReferenceDecrementer _referenceDecrementer;
 
         public Dispatcher(IntPtr target, Type dtype)
         {
+            _referenceDecrementer = PythonEngine.CurrentRefDecrementer;
+
             Runtime.XIncref(target);
             this.target = target;
             this.dtype = dtype;
@@ -195,18 +198,7 @@ namespace Python.Runtime
 
         ~Dispatcher()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            // Note: the managed GC thread can run and try to free one of
-            // these *after* the Python runtime has been finalized!
-            if (Runtime.Py_IsInitialized() > 0)
-            {
-                IntPtr gs = PythonEngine.AcquireLock();
-                Runtime.XDecref(target);
-                PythonEngine.ReleaseLock(gs);
-            }
+            _referenceDecrementer?.ScheduleDecRef(target);
         }
 
         public object Dispatch(ArrayList args)

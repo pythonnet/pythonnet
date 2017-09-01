@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// </summary>
     public class PythonException : System.Exception
     {
+        private readonly PyReferenceDecrementer _referenceDecrementer;
         private IntPtr _pyType = IntPtr.Zero;
         private IntPtr _pyValue = IntPtr.Zero;
         private IntPtr _pyTB = IntPtr.Zero;
@@ -17,6 +18,7 @@ namespace Python.Runtime
 
         public PythonException()
         {
+            _referenceDecrementer = PythonEngine.CurrentRefDecrementer;
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
             Runtime.XIncref(_pyType);
@@ -57,11 +59,7 @@ namespace Python.Runtime
 
         ~PythonException()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            Dispose(false);
         }
 
         /// <summary>
@@ -144,22 +142,61 @@ namespace Python.Runtime
         /// </remarks>
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+
+        protected void Dispose(bool disposing)
+        {
             if (!disposed)
             {
-                if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                disposed = true;
+
+                if (disposing)
                 {
-                    IntPtr gs = PythonEngine.AcquireLock();
-                    Runtime.XDecref(_pyType);
-                    Runtime.XDecref(_pyValue);
-                    // XXX Do we ever get TraceBack? //
+                    if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                    {
+                        try
+                        {
+                            IntPtr gs = PythonEngine.AcquireLock();
+                            try
+                            {
+                                Runtime.XDecref(_pyType);
+                                Runtime.XDecref(_pyValue);
+                                // XXX Do we ever get TraceBack? //
+                                if (_pyTB != IntPtr.Zero)
+                                {
+                                    Runtime.XDecref(_pyTB);
+                                }
+                            }
+                            finally
+                            {
+                                PythonEngine.ReleaseLock(gs);
+                            }
+                        }
+                        catch
+                        {
+                            // Do nothing.
+                        }
+                    }
+                }
+                else
+                {
+                    if (_pyType != IntPtr.Zero)
+                    {
+                        _referenceDecrementer?.ScheduleDecRef(_pyType);
+                    }
+
+                    if (_pyValue != IntPtr.Zero)
+                    {
+                        _referenceDecrementer?.ScheduleDecRef(_pyValue);
+                    }
+
                     if (_pyTB != IntPtr.Zero)
                     {
-                        Runtime.XDecref(_pyTB);
+                        _referenceDecrementer?.ScheduleDecRef(_pyTB);
                     }
-                    PythonEngine.ReleaseLock(gs);
                 }
-                GC.SuppressFinalize(this);
-                disposed = true;
             }
         }
 

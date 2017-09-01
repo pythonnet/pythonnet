@@ -16,6 +16,7 @@ namespace Python.Runtime
     {
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
+        private readonly PyReferenceDecrementer _referenceDecrementer;
 
         /// <summary>
         /// PyObject Constructor
@@ -26,7 +27,7 @@ namespace Python.Runtime
         /// and the reference will be DECREFed when the PyObject is garbage
         /// collected or explicitly disposed.
         /// </remarks>
-        public PyObject(IntPtr ptr)
+        public PyObject(IntPtr ptr): this()
         {
             obj = ptr;
         }
@@ -36,6 +37,7 @@ namespace Python.Runtime
 
         protected PyObject()
         {
+            _referenceDecrementer = PythonEngine.CurrentRefDecrementer;
         }
 
         // Ensure that encapsulated Python object is decref'ed appropriately
@@ -43,11 +45,7 @@ namespace Python.Runtime
 
         ~PyObject()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            Dispose(false);
         }
 
 
@@ -138,21 +136,43 @@ namespace Python.Runtime
         {
             if (!disposed)
             {
-                if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
-                {
-                    IntPtr gs = PythonEngine.AcquireLock();
-                    Runtime.XDecref(obj);
-                    obj = IntPtr.Zero;
-                    PythonEngine.ReleaseLock(gs);
-                }
                 disposed = true;
+
+                if (disposing)
+                {
+                    try
+                    {
+                        if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                        {
+                            IntPtr gs = PythonEngine.AcquireLock();
+                            try
+                            {
+                                Runtime.XDecref(obj);
+                                obj = IntPtr.Zero;
+                            }
+                            finally
+                            {
+                                PythonEngine.ReleaseLock(gs);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Do nothing.
+                    }
+                }
+                else
+                {
+                    _referenceDecrementer?.ScheduleDecRef(obj);
+                    obj = IntPtr.Zero;
+                }
             }
         }
 
         public void Dispose()
         {
-            Dispose(true);
             GC.SuppressFinalize(this);
+            Dispose(true);
         }
 
 

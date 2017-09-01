@@ -106,6 +106,7 @@
     <Compile Include="TestPyWith.cs" />
     <Compile Include="TestRuntime.cs" />
     <Compile Include="TestPyScope.cs" />
+    <Compile Include="TestFinalizer.cs" />
     <Compile Include="TestsSuite.cs" />
   </ItemGroup>
   <ItemGroup>

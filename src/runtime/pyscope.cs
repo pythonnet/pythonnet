@@ -24,6 +24,8 @@ namespace Python.Runtime
     [PyGIL]
     public class PyScope : DynamicObject, IDisposable
     {
+        private readonly PyReferenceDecrementer _referenceDecrementer;
+
         public readonly string Name;
 
         /// <summary>
@@ -57,6 +59,8 @@ namespace Python.Runtime
         /// </remarks>
         internal PyScope(IntPtr ptr, PyScopeManager manager)
         {
+            _referenceDecrementer = PythonEngine.CurrentRefDecrementer;
+
             if (!Runtime.PyType_IsSubtype(Runtime.PyObject_TYPE(ptr), Runtime.PyModuleType))
             {
                 throw new PyScopeException("object is not a module");
@@ -514,24 +518,51 @@ namespace Python.Runtime
             }
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_isDisposed)
+            {
+                _isDisposed = true;
+
+                if (disposing)
+                {
+                    try
+                    {
+                        if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                        {
+                            IntPtr gs = PythonEngine.AcquireLock();
+                            try
+                            {
+                                Runtime.XDecref(obj);
+                            }
+                            finally
+                            {
+                                PythonEngine.ReleaseLock(gs);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Do nothing.
+                    }
+                    OnDispose?.Invoke(this);
+                }
+                else
+                {
+                    _referenceDecrementer?.ScheduleDecRef(obj);
+                }
+            }
+        }
+
         public void Dispose()
         {
-            if (_isDisposed)
-            {
-                return;
-            }
-            _isDisposed = true;
-            Runtime.XDecref(obj);
-            this.OnDispose?.Invoke(this);
+            GC.SuppressFinalize(this);
+            Dispose(true);
         }
 
         ~PyScope()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            Dispose(false);
         }
     }
 

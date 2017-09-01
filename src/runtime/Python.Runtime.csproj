@@ -129,6 +129,7 @@
     <Compile Include="pylong.cs" />
     <Compile Include="pynumber.cs" />
     <Compile Include="pyobject.cs" />
+    <Compile Include="pyreferencedecrementer.cs" />
     <Compile Include="pyscope.cs" />
     <Compile Include="pysequence.cs" />
     <Compile Include="pystring.cs" />

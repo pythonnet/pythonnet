@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -130,6 +130,8 @@ namespace Python.Runtime
             get { return Marshal.PtrToStringAnsi(Runtime.Py_GetCompiler()); }
         }
 
+        internal static PyReferenceDecrementer CurrentRefDecrementer { get; private set; }
+
         public static int RunSimpleString(string code)
         {
             return Runtime.PyRun_SimpleString(code);
@@ -215,6 +217,8 @@ namespace Python.Runtime
                         }
                         key.Dispose();
                     }
+
+                    CurrentRefDecrementer = new PyReferenceDecrementer();
                 }
                 finally
                 {
@@ -294,6 +298,9 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                CurrentRefDecrementer?.Dispose();
+                CurrentRefDecrementer = null;
+
                 PyScopeManager.Global.Clear();
                 // We should not release memory for variables that can be used without initialized python engine.
                 // It's assumed that Py_GetPythonHome returns valid string without engine initialize. Py_GetPythonHome will always return the
@@ -566,15 +573,24 @@ namespace Python.Runtime
                 state = PythonEngine.AcquireLock();
             }
 
+            protected virtual void Dispose(bool disposing)
+            {
+                //ReleeaseLock is thread bound and if it's called in finalizer thread it can wrongly release lock.
+                if (disposing)
+                {
+                    PythonEngine.ReleaseLock(state);
+                }
+            }
+
             public void Dispose()
             {
-                PythonEngine.ReleaseLock(state);
                 GC.SuppressFinalize(this);
+                Dispose(true);
             }
 
             ~GILState()
             {
-                Dispose();
+                Dispose(false);
             }
         }
 
