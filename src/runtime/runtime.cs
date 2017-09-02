@@ -221,6 +221,8 @@ namespace Python.Runtime
                 PyEval_InitThreads();
             }
 
+            IsFinalizing = false;
+
             CLRModule.Reset();
             GenericUtil.Reset();
             PyScopeManager.Reset();
