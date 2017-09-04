@@ -20,7 +20,7 @@ else{
 $PY = Get-Command python
 
 # Can't use ".\build\*\Python.EmbeddingTest.dll". Missing framework files.
-$CS_TESTS = ".\src\embed_tests\bin\Python.EmbeddingTest.dll"
+$CS_TESTS = ".\src\embed_tests\bin\Python.EmbeddingTest.exe"
 $RUNTIME_DIR = ".\src\runtime\bin\"
 
 # Run python tests with C# coverage

@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{4165C59D-2822-499F-A6DB-EACA4C331EB5}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AssemblyName>Python.EmbeddingTest</AssemblyName>
     <RootNamespace>Python.EmbeddingTest</RootNamespace>
     <DocumentationFile>bin\Python.EmbeddingTest.xml</DocumentationFile>
@@ -70,8 +70,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="nunit.framework, Version=3.7.8.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+    <Reference Include="nunit.framework, Version=3.8.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\..\packages\NUnit.3.8.1\lib\net40\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="nunitlite">
+      <HintPath>..\..\packages\NUnitLite.3.8.1\lib\net40\nunitlite.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
@@ -84,6 +87,7 @@
     <Compile Include="pyimport.cs" />
     <Compile Include="pyinitialize.cs" />
     <Compile Include="pyrunstring.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="TestConverter.cs" />
     <Compile Include="TestCustomMarshal.cs" />
     <Compile Include="TestExample.cs" />
