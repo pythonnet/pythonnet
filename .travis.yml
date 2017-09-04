@@ -8,7 +8,6 @@ matrix:
     - python: 2.7
       env: &xplat-env
         - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
       addons: &xplat-addons
         apt:
           sources:
@@ -45,7 +44,6 @@ matrix:
     - python: 2.7
       env: &classic-env
         - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
 
     - python: 3.3
       env: *classic-env
@@ -97,7 +95,7 @@ install:
 
 script:
   - python -m pytest
-  - mono $NUNIT_PATH src/embed_tests/bin/Python.EmbeddingTest.exe
+  - mono src/embed_tests/bin/Python.EmbeddingTest.exe
   - if [[ $BUILD_OPTS == --xplat ]]; then dotnet src/embed_tests/bin/netcoreapp2.0_publish/Python.EmbeddingTest.dll; fi
 
 after_script:
