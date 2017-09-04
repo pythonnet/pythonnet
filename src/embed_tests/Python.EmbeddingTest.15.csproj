@@ -5,7 +5,7 @@
     <TargetFrameworks>net40;netcoreapp2.0</TargetFrameworks>
     <Platforms>x64;x86</Platforms>
     <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
-    <OutputType Condition="'$(TargetFramework)' != 'net40' OR '$(PYTHONNET_VS_ENV)' == 'true'">Exe</OutputType>
+    <OutputType>Exe</OutputType>
     <GenerateProgramFile>false</GenerateProgramFile>
     <AssemblyName>Python.EmbeddingTest</AssemblyName>
     <RootNamespace>Python.EmbeddingTest</RootNamespace>
