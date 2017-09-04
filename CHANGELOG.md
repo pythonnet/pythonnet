@@ -14,7 +14,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added new build system (pythonnet.15.sln) based on dotnetcore-sdk/xplat(crossplatform msbuild).
     Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
     After a some transition time, current (mono/ msbuild 14.0) build system will be removed.
--   NUnit upgraded to 3.8.1 (eliminates travis-ci random bug)
+-   Python.EmbeddingTest (net40) now tested through built-in NUnitLite in Travis-CI. (Solves NUnit vs Mono stability problems.)
+-   NUnit upgraded to 3.8.1, Python.EmbeddingTest now executable with the NUnitLite self-tester. 
 -   Added `clr.GetClrType` (#432, #433)
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
