@@ -295,12 +295,16 @@ namespace Python.Runtime
             if (initialized)
             {
                 PyScopeManager.Global.Clear();
-                Marshal.FreeHGlobal(_pythonHome);
-                _pythonHome = IntPtr.Zero;
-                Marshal.FreeHGlobal(_programName);
-                _programName = IntPtr.Zero;
-                Marshal.FreeHGlobal(_pythonPath);
-                _pythonPath = IntPtr.Zero;
+                // We should not release memory for variables that can be used without initialized python engine.
+                // It's assumed that Py_GetPythonHome returns valid string without engine initialize. Py_GetPythonHome will always return the
+                // same pointer that was passed before to Py_SetPythonHome and stored in the _pythonHome.
+
+                ////Marshal.FreeHGlobal(_pythonHome);
+                ////_pythonHome = IntPtr.Zero;
+                ////Marshal.FreeHGlobal(_programName);
+                ////_programName = IntPtr.Zero;
+                ////Marshal.FreeHGlobal(_pythonPath);
+                ////_pythonPath = IntPtr.Zero;
 
                 Runtime.Shutdown();
                 initialized = false;
