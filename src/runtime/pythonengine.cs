@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -17,6 +18,12 @@ namespace Python.Runtime
         private static IntPtr _pythonHome = IntPtr.Zero;
         private static IntPtr _programName = IntPtr.Zero;
         private static IntPtr _pythonPath = IntPtr.Zero;
+        private static bool _isGcDebugEnabled;
+
+        static PythonEngine()
+        {
+            _isGcDebugEnabled = !String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PYTHONNET_GC_DEBUG"));
+        }
 
         public PythonEngine()
         {
@@ -298,8 +305,24 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+
+                if (_isGcDebugEnabled)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    Thread.Sleep(100);
+                }
+
                 CurrentRefDecrementer?.Dispose();
                 CurrentRefDecrementer = null;
+
+                if (_isGcDebugEnabled)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    Thread.Sleep(100);
+                }
+
 
                 PyScopeManager.Global.Clear();
                 // We should not release memory for variables that can be used without initialized python engine.
