@@ -102,6 +102,7 @@ namespace Python.EmbeddingTest
         public void TestCtorPtr()
         {
             var i = new PyLong(5);
+            Runtime.Runtime.XIncref(i.Handle);
             var a = new PyLong(i.Handle);
             Assert.AreEqual(5, a.ToInt32());
         }
