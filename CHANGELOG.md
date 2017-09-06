@@ -8,6 +8,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [unreleased][]
 
 ### Added
+-   Improved performance. String marshaling between python and clr now cached. 
+    Cache reduces GC pressure and saves from extensive memory copying.
 -   Added support for embedding python into dotnet core 2.0 (NetStandard 2.0)
 -   Added new build system (pythonnet.15.sln) based on dotnetcore-sdk/xplat(crossplatform msbuild).
     Currently there two side-by-side build systems that produces the same output (net40) from the same sources.

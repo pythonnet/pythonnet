@@ -18,7 +18,7 @@ namespace Python.Runtime
 
         public abstract IntPtr MarshalManagedToNative(object managedObj);
 
-        public void CleanUpNativeData(IntPtr pNativeData)
+        public virtual void CleanUpNativeData(IntPtr pNativeData)
         {
             Marshal.FreeHGlobal(pNativeData);
         }
@@ -44,7 +44,12 @@ namespace Python.Runtime
         private static readonly MarshalerBase Instance = new UcsMarshaler();
         private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
-        public override IntPtr MarshalManagedToNative(object managedObj)
+        private const int MaxStringLength = 100;
+        private const int MaxItemSize = 4 * (MaxStringLength + 1);
+        private static readonly EncodedStringsFifoDictionary EncodedStringsDictionary =
+            new EncodedStringsFifoDictionary(10000, MaxItemSize);
+
+        public override unsafe IntPtr MarshalManagedToNative(object managedObj)
         {
             var s = managedObj as string;
 
@@ -53,16 +58,36 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            byte[] bStr = PyEncoding.GetBytes(s + "\0");
-            IntPtr mem = Marshal.AllocHGlobal(bStr.Length);
-            try
+            IntPtr mem;
+            int stringBytesCount;
+            if (s.Length <= MaxStringLength)
             {
-                Marshal.Copy(bStr, 0, mem, bStr.Length);
+                if (EncodedStringsDictionary.TryGetValue(s, out mem))
+                {
+                    return mem;
+                }
+
+                stringBytesCount = PyEncoding.GetByteCount(s);
+                mem = EncodedStringsDictionary.AddUnsafe(s);
             }
-            catch (Exception)
+            else
             {
-                Marshal.FreeHGlobal(mem);
-                throw;
+                stringBytesCount = PyEncoding.GetByteCount(s);
+                mem = Marshal.AllocHGlobal(stringBytesCount + 4);
+            }
+
+            fixed (char* str = s)
+            {
+                try
+                {
+                    PyEncoding.GetBytes(str, s.Length, (byte*)mem, stringBytesCount);
+                }
+                catch
+                {
+                    // Do nothing with this. Very strange problem.
+                }
+
+                *(int*)(mem + stringBytesCount) = 0;
             }
 
             return mem;
@@ -106,6 +131,14 @@ namespace Python.Runtime
             }
         }
 
+        public override void CleanUpNativeData(IntPtr pNativeData)
+        {
+            if (!EncodedStringsDictionary.IsKnownPtr(pNativeData))
+            {
+                base.CleanUpNativeData(pNativeData);
+            }
+        }
+
         /// <summary>
         /// Utility function for Marshaling Unicode on PY3 and AnsiStr on PY2.
         /// Use on functions whose Input signatures changed between PY2/PY3.
@@ -118,11 +151,29 @@ namespace Python.Runtime
         /// <remarks>
         /// You MUST deallocate the IntPtr of the Return when done with it.
         /// </remarks>
-        public static IntPtr Py3UnicodePy2StringtoPtr(string s)
+        public unsafe static IntPtr Py3UnicodePy2StringtoPtr(string s)
         {
-            return Runtime.IsPython3
-                ? Instance.MarshalManagedToNative(s)
-                : Marshal.StringToHGlobalAnsi(s);
+            if (Runtime.IsPython3)
+            {
+                int stringBytesCount = PyEncoding.GetByteCount(s);
+                IntPtr mem = Marshal.AllocHGlobal(stringBytesCount + 4);
+                fixed (char* str = s)
+                {
+                    try
+                    {
+                        PyEncoding.GetBytes(str, s.Length, (byte*)mem, stringBytesCount);
+                    }
+                    catch
+                    {
+                        // Do nothing with this. Very strange problem.
+                    }
+
+                    *(int*)(mem + stringBytesCount) = 0;
+                }
+                return mem;
+            }
+
+            return Marshal.StringToHGlobalAnsi(s);
         }
 
         /// <summary>
@@ -208,7 +259,12 @@ namespace Python.Runtime
         private static readonly MarshalerBase Instance = new Utf8Marshaler();
         private static readonly Encoding PyEncoding = Encoding.UTF8;
 
-        public override IntPtr MarshalManagedToNative(object managedObj)
+        private const int MaxStringLength = 100;
+
+        private static readonly EncodedStringsFifoDictionary EncodedStringsDictionary =
+            new EncodedStringsFifoDictionary(10000, 4 * (MaxStringLength + 1));
+
+        public override unsafe IntPtr MarshalManagedToNative(object managedObj)
         {
             var s = managedObj as string;
 
@@ -217,19 +273,47 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            byte[] bStr = PyEncoding.GetBytes(s + "\0");
-            IntPtr mem = Marshal.AllocHGlobal(bStr.Length);
-            try
+            IntPtr mem;
+            int stringBytesCount;
+            if (s.Length <= MaxStringLength)
             {
-                Marshal.Copy(bStr, 0, mem, bStr.Length);
+                if (EncodedStringsDictionary.TryGetValue(s, out mem))
+                {
+                    return mem;
+                }
+
+                stringBytesCount = PyEncoding.GetByteCount(s);
+                mem = EncodedStringsDictionary.AddUnsafe(s);
             }
-            catch (Exception)
+            else
             {
-                Marshal.FreeHGlobal(mem);
-                throw;
+                stringBytesCount = PyEncoding.GetByteCount(s);
+                mem = Marshal.AllocHGlobal(stringBytesCount + 1);
+            }
+
+            fixed (char* str = s)
+            {
+                try
+                {
+                    PyEncoding.GetBytes(str, s.Length, (byte*)mem, stringBytesCount);
+                }
+                catch
+                {
+                    // Do nothing with this. Very strange problem.
+                }
+
+                ((byte*)mem)[stringBytesCount] = 0;
             }
 
             return mem;
+        }
+
+        public override void CleanUpNativeData(IntPtr pNativeData)
+        {
+            if (!EncodedStringsDictionary.IsKnownPtr(pNativeData))
+            {
+                base.CleanUpNativeData(pNativeData);
+            }
         }
 
         public static ICustomMarshaler GetInstance(string cookie)
