@@ -35,8 +35,8 @@ namespace Python.Runtime
                 if (!PlatformGetStringMethodsDelegatesCache.TryGetValue(encoding, out getStringDelegate))
                 {
                     getStringDelegate =
-                        (EncodingGetStringUnsafeDelegate)PlatformGetStringMethodInfo.CreateDelegate(
-                            typeof(EncodingGetStringUnsafeDelegate), encoding);
+                        (EncodingGetStringUnsafeDelegate)Delegate.CreateDelegate(
+                            typeof(EncodingGetStringUnsafeDelegate), encoding, PlatformGetStringMethodInfo);
                     PlatformGetStringMethodsDelegatesCache.Add(encoding, getStringDelegate);
                 }
                 return getStringDelegate(pstr, size);
