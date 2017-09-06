@@ -23,7 +23,7 @@ namespace Python.Runtime
     /// </summary>
     internal class NativeCall
     {
-#if NETCOREAPP
+#if NETSTANDARD
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void Void_1_Delegate(IntPtr a1);
 

@@ -9,7 +9,7 @@ namespace Python.Runtime
     internal static class NativeMethods
     {
 #if MONO_LINUX || MONO_OSX
-#if NETCOREAPP
+#if NETSTANDARD
         private static int RTLD_NOW = 0x2;
 #if MONO_LINUX
         private static int RTLD_GLOBAL = 0x100;
@@ -181,7 +181,7 @@ namespace Python.Runtime
 
         public static readonly string PythonDLL = _PythonDll;
 
-#if PYTHON_WITHOUT_ENABLE_SHARED && !NETCOREAPP
+#if PYTHON_WITHOUT_ENABLE_SHARED && !NETSTANDARD
         internal const string _PythonDll = "__Internal";
 #else
         internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
@@ -522,7 +522,7 @@ namespace Python.Runtime
         /// </summary>
         internal static unsafe void XIncref(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG || NETCOREAPP
+#if PYTHON_WITH_PYDEBUG || NETSTANDARD
             Py_IncRef(op);
             return;
 #else
@@ -543,7 +543,7 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG || NETCOREAPP
+#if PYTHON_WITH_PYDEBUG || NETSTANDARD
             Py_DecRef(op);
             return;
 #else

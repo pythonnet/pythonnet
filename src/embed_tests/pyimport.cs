@@ -30,7 +30,7 @@ namespace Python.EmbeddingTest
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
              * modifiers placed on most Runtime methods. */
-#if NETCOREAPP
+#if NETSTANDARD
             const string s = "../../fixtures";
 #else
             const string s = "../fixtures";
