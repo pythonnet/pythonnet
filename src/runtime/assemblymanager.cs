@@ -203,8 +203,10 @@ namespace Python.Runtime
                 }
 
                 PythonEngine.RaiseAssemblyAsModuleImportingEvent(importEvent);
-
-                assembly = Assembly.Load(name);
+                if (!importEvent.SkipAssemblyLoad)
+                {
+                    assembly = Assembly.Load(name);
+                }
             }
             catch (Exception)
             {
@@ -351,8 +353,17 @@ namespace Python.Runtime
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
+            Type[] types = new Type[0];
+            try
+            {
+                types = assembly.IsDynamic ? assembly.GetTypes():assembly.GetExportedTypes();
+            }
+            catch(TypeLoadException)
+            {
+                // Do nothing.
+                // This problem usually occurs when transitive dependencies have references to older packages than main application.
+            }
 
-            Type[] types = assembly.GetTypes();
             foreach (Type t in types)
             {
                 string ns = t.Namespace ?? "";
