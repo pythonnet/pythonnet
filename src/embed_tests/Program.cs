@@ -38,17 +38,16 @@ namespace Python.EmbeddingTest
                         dynamic os = PythonEngine.ImportModule("os");
                         os.environ["PATH"] = new PyString(pathEnv);
                     }
-                } while (true);
+                }
+                while (!Console.KeyAvailable);
 
                 return result;
             }
-            else
-            {
-                return new AutoRun(typeof(Program).Assembly).Execute(
-                    args,
-                    new ExtendedTextWrapper(Console.Out),
-                    Console.In);
-            }
+
+            return new AutoRun(typeof(Program).Assembly).Execute(
+                args,
+                new ExtendedTextWrapper(Console.Out),
+                Console.In);
         }
     }
 }
