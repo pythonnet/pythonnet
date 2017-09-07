@@ -6,10 +6,11 @@ using System.Text;
 
 namespace Python.Runtime
 {
+#if !NETSTANDARD
     /// <summary>
     /// This polyfill is thread unsafe.
     /// </summary>
-#if !NETSTANDARD
+    [CLSCompliant(false)]
     public static class EncodingGetStringPolyfill
     {
         private static readonly MethodInfo PlatformGetStringMethodInfo =
