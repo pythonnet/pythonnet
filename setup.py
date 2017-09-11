@@ -283,8 +283,9 @@ class BuildExtPythonnet(build_ext.build_ext):
             return path
         
         if tool == "msbuild.exe":
+            vswhere = os.path.join("tools", "vswhere", "vswhere.exe")
             basePathes = subprocess.check_output(
-                    ["vswhere", "-latest",
+                    [vswhere, "-latest",
                      "-version", "[15.0, 16.0)", 
                      "-requires", "Microsoft.Component.MSBuild",
                      "-property", "InstallationPath"]).splitlines()
