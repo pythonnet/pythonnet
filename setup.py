@@ -281,7 +281,19 @@ class BuildExtPythonnet(build_ext.build_ext):
         path = spawn.find_executable(tool)
         if path:
             return path
-
+        
+        if tool == "msbuild.exe":
+            vswhere = os.path.join("tools", "vswhere", "vswhere.exe")
+            basePathes = subprocess.check_output(
+                    [vswhere, "-latest",
+                     "-version", "[15.0, 16.0)", 
+                     "-requires", "Microsoft.Component.MSBuild",
+                     "-property", "InstallationPath"]).splitlines()
+            if basePathes and basePathes[0] and os.path.exists(basePathes[0]):
+                path = os.path.join(basePathes[0],
+                                    "MSBuild", "15.0", "Bin", tool)
+                return path
+        
         # Search within registry to find build tools
         try:  # PY2
             import _winreg as winreg

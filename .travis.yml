@@ -23,8 +23,8 @@ env:
 addons:
   apt:
     sources:
-      - mono
-      - mono-libtiff-compat
+      - sourceline: deb http://download.mono-project.com/repo/ubuntu precise main
+        key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
     packages:
       - mono-devel
       - ca-certificates-mono
