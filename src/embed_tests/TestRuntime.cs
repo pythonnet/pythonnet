@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -6,10 +6,21 @@ namespace Python.EmbeddingTest
 {
     public class TestRuntime
     {
+        [OneTimeSetUp]
+        public void SetUp()
+        {
+            // We needs to ensure that no any engines are running.
+            if (PythonEngine.IsInitialized)
+            {
+                PythonEngine.Shutdown();
+            }
+        }
+
         [Test]
         public static void Py_IsInitializedValue()
         {
-            Runtime.Runtime.Py_Finalize(); // In case another test left it on.
+            // We defenitely knows that all engines are shut downed.
+            // Runtime.Runtime.Py_Finalize(); 
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();
             Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());

@@ -8,6 +8,14 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [unreleased][]
 
 ### Added
+-   Added tool for debugging floating bugs. Stable tests are executed in the loop. ~100 cycles is enough to pop up any bugs.
+    Usage: Python.EmbeddingTest.exe --loop --where="cat != Unstable"
+-   Added support for embedding python into dotnet core 2.0 (NetStandard 2.0)
+-   Added new build system (pythonnet.15.sln) based on dotnetcore-sdk/xplat(crossplatform msbuild).
+    Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
+    After a some transition time, current (mono/ msbuild 14.0) build system will be removed.
+-   Python.EmbeddingTest (net40) now tested through built-in NUnitLite in Travis-CI. (Solves NUnit vs Mono stability problems.)
+-   NUnit upgraded to 3.8.1, Python.EmbeddingTest now executable with the NUnitLite self-tester. 
 -   Added `clr.GetClrType` (#432, #433)
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
@@ -16,6 +24,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
+-   Fixed secondary PythonEngine.Initialize call, all sensitive static variables now reseted.
+    This is a hidden bug. Once python cleaning up enough memory, objects from previous engine run becomes corrupted.
 -   Fixed Visual Studio 2017 compat (#434) for setup.py
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`

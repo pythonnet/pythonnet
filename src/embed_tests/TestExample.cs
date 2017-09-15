@@ -5,6 +5,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
+    [Category("Unstable")]
     public class TestExample
     {
         [OneTimeSetUp]

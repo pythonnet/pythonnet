@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -527,15 +527,24 @@ namespace Python.Runtime
 
         ~PyScope()
         {
+            // We needs to disable Finalizers until it's valid implementation.
+            // Current implementation can produce low probability floating bugs.
+            return;
+
             Dispose();
         }
     }
 
     public class PyScopeManager
     {
-        public readonly static PyScopeManager Global = new PyScopeManager();
+        public static PyScopeManager Global;
 
         private Dictionary<string, PyScope> NamedScopes = new Dictionary<string, PyScope>();
+
+        internal static void Reset()
+        {
+            Global = new PyScopeManager();
+        }
 
         internal PyScope NewScope(string name)
         {
