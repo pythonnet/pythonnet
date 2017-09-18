@@ -256,7 +256,7 @@ namespace Python.Runtime
             var pe = e as PythonException;
             if (pe != null)
             {
-                Runtime.PyErr_SetObject(pe.PyType, pe.PyValue);
+                Runtime.PyErr_Restore(pe.PyType, pe.PyValue, pe.PyTB);
                 return;
             }
 
