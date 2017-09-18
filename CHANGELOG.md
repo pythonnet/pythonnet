@@ -25,6 +25,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Changed
 
+-   Reattach python exception traceback information (#545)
+
 ### Fixed
 
 -   Fixed secondary PythonEngine.Initialize call, all sensitive static variables now reseted.
