@@ -147,7 +147,7 @@ def test_derived_traceback():
     except:
         e = sys.exc_info()
     assert "xyzname" in str(e[1])
-    location = traceback.extract_tb(e[2], -1)[0]
+    location = traceback.extract_tb(e[2])[-1]
     assert location[2] == "foo"
 
     # call through managed code
@@ -157,7 +157,7 @@ def test_derived_traceback():
     except:
         e = sys.exc_info()
     assert "xyzname" in str(e[1])
-    location = traceback.extract_tb(e[2], -1)[0]
+    location = traceback.extract_tb(e[2])[-1]
     assert location[2] == "foo"
 
 
