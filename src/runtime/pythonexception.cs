@@ -57,6 +57,10 @@ namespace Python.Runtime
 
         ~PythonException()
         {
+            // We needs to disable Finalizers until it's valid implementation.
+            // Current implementation can produce low probability floating bugs.
+            return;
+
             Dispose();
         }
 

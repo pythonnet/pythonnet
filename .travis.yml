@@ -169,6 +169,7 @@ install:
 script:
   - python -m pytest
   - mono $NUNIT_PATH src/embed_tests/bin/Python.EmbeddingTest.dll
+  - if [[ $BUILD_OPTS == --xplat ]]; then dotnet src/embed_tests/bin/netcoreapp2.0_publish/Python.EmbeddingTest.dll; fi
 
 after_script:
   # Uncomment if need to geninterop, ie. py37 final
