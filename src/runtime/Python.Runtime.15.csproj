@@ -40,6 +40,7 @@
     <PythonWinDefineConstants Condition="'$(PythonWinDefineConstants)'==''">UCS2</PythonWinDefineConstants>
     <PythonMonoDefineConstants>$(PYTHONNET_MONO_DEFINE_CONSTANTS)</PythonMonoDefineConstants>
     <PythonMonoDefineConstants Condition="'$(PythonMonoDefineConstants)'==''">UCS4;MONO_LINUX;PYTHON_WITH_PYMALLOC</PythonMonoDefineConstants>
+    <PythonInteropFile Condition="'$(PythonInteropFile)'==''">$(PYTHONNET_INTEROP_FILE)</PythonInteropFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
