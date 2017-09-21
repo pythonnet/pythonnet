@@ -35,6 +35,7 @@ before_install:
   - export LD_LIBRARY_PATH=$PY_LIBDIR:$LD_LIBRARY_PATH
 
 install:
+  - pip install --upgrade setuptools # TEMP - due to setuptools 36.2.0 bug
   - pip install --upgrade -r requirements.txt
   - coverage run setup.py install
 

@@ -47,11 +47,11 @@ test_script:
 on_finish:
   # Temporary disable multiple upload due to codecov limit of 20 per commit.
   # https://docs.codecov.io/blog/week-8-2017
-  # - coverage xml -i
+  - coverage xml -i
   # - codecov --file coverage.xml --flags setup_windows
   # - codecov --file py.coverage --flags python_tests
   # - codecov --file cs.coverage --flags embedded_tests
-  - codecov --flags setup_windows
+  - codecov --file py.coverage cs.coverage coverage.xml --flags setup_windows
 
 artifacts:
   - path: dist\*
