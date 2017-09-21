@@ -370,7 +370,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         """Return full path to one of the Microsoft build tools"""
         try:
             basePathes = subprocess.check_output(
-                ["vswhere", "-latest",
+                ["tools\\vswhere\\vswhere.exe", "-latest",
                  "-version", "[15.0, 16.0)", 
                  "-requires", "Microsoft.Component.MSBuild",
                  "-property", "InstallationPath"]).splitlines()
