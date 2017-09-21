@@ -1,6 +1,9 @@
 version: '{branch}-{build}'
 build: off
 
+image:
+  - Visual Studio 2017
+  
 platform:
   - x86
   - x64
@@ -12,6 +15,16 @@ environment:
     CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
+    - PYTHON_VERSION: 2.7 
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.3
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.4
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.5
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.6
+      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.3
     - PYTHON_VERSION: 3.4
@@ -29,6 +42,7 @@ init:
 
 install:
   - pip install --upgrade -r requirements.txt --quiet
+  - choco install vswhere -y
 
   # Install OpenCover. Can't put on `packages.config`, not Mono compatible
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages -Verbosity quiet
@@ -37,7 +51,7 @@ build_script:
   # Create clean `sdist`. Only used for releases
   - python setup.py --quiet sdist
   # Build `wheel` with coverage of `setup.py`
-  - coverage run setup.py bdist_wheel
+  - coverage run setup.py bdist_wheel %BUILD_OPTS%
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
