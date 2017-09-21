@@ -14,7 +14,8 @@ import subprocess
 import sys
 import sysconfig
 from distutils import spawn
-from distutils.command import build_ext, install_data, install_lib
+from distutils.command import install, build, build_ext, install_data, install_lib
+from wheel import bdist_wheel
 
 from setuptools import Extension, setup
 
@@ -131,9 +132,28 @@ def _get_long_description():
     except ImportError:
         return '.Net and Mono integration for Python'
 
+def _update_xlat_devtools():
+    global DEVTOOLS
+    if DEVTOOLS == "MsDev":
+        DEVTOOLS = "MsDev15"
+    elif DEVTOOLS == "Mono":
+        DEVTOOLS = "dotnet"
 
 class BuildExtPythonnet(build_ext.build_ext):
+    user_options = build_ext.build_ext.user_options + [
+            ('xplat', None, None)
+        ]
+    def initialize_options(self):
+        build_ext.build_ext.initialize_options(self)
+        self.xplat = None
+
+    def finalize_options(self):
+        build_ext.build_ext.finalize_options(self)
+
     def build_extension(self, ext):
+        if self.xplat:
+             _update_xlat_devtools()
+
         """Builds the .pyd file using msbuild or xbuild"""
         if ext.name != "clr":
             return build_ext.build_ext.build_extension(self, ext)
@@ -164,7 +184,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         if CONFIG == "Debug":
             defines.extend(["DEBUG", "TRACE"])
 
-        if sys.platform != "win32" and DEVTOOLS == "Mono":
+        if sys.platform != "win32" and (DEVTOOLS == "Mono" or DEVTOOLS == "dotnet"):
             on_darwin = sys.platform == "darwin"
             defines.append("MONO_OSX" if on_darwin else "MONO_LINUX")
 
@@ -196,20 +216,33 @@ class BuildExtPythonnet(build_ext.build_ext):
         if DEVTOOLS == "MsDev":
             _xbuild = '"{0}"'.format(self._find_msbuild_tool("msbuild.exe"))
             _config = "{0}Win".format(CONFIG)
-
+            _solution_file = 'pythonnet.sln'
+            _custom_define_constants = False
+        elif DEVTOOLS == "MsDev15":
+            _xbuild = '"{0}"'.format(self._find_msbuild_tool_15()) 
+            _config = "{0}Win".format(CONFIG)
+            _solution_file = 'pythonnet.15.sln'
+            _custom_define_constants = True
         elif DEVTOOLS == "Mono":
-            _xbuild = "xbuild"
+            _xbuild = 'xbuild'
             _config = "{0}Mono".format(CONFIG)
+            _solution_file = 'pythonnet.sln'
+            _custom_define_constants = False
+        elif DEVTOOLS == "dotnet":
+            _xbuild = 'dotnet msbuild'
+            _config = "{0}Mono".format(CONFIG)
+            _solution_file = 'pythonnet.15.sln'
+            _custom_define_constants = True
         else:
             raise NotImplementedError(
-                "DevTool {0} not supported (use MsDev/Mono)".format(DEVTOOLS))
+                "DevTool {0} not supported (use MsDev/MsDev15/Mono/dotnet)".format(DEVTOOLS))
 
         cmd = [
             _xbuild,
-            'pythonnet.sln',
+            _solution_file,
             '/p:Configuration={}'.format(_config),
             '/p:Platform={}'.format(ARCH),
-            '/p:DefineConstants="{}"'.format('%3B'.join(defines)),
+            '/p:{}DefineConstants="{}"'.format('Custom' if _custom_define_constants else '','%3B'.join(defines)),
             '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
             '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
             '/verbosity:{}'.format(VERBOSITY),
@@ -220,15 +253,18 @@ class BuildExtPythonnet(build_ext.build_ext):
             cmd.append('/p:PythonManifest="{0}"'.format(manifest))
 
         self.debug_print("Building: {0}".format(" ".join(cmd)))
-        use_shell = True if DEVTOOLS == "Mono" else False
+        use_shell = True if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet" else False
+
         subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
+        if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
+            subprocess.check_call(" ".join(cmd + ['"/t:Console_15:publish;Python_EmbeddingTest_15:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
 
-        if DEVTOOLS == "Mono":
+        if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
 
     def _get_manifest(self, build_dir):
-        if DEVTOOLS != "MsDev":
+        if DEVTOOLS != "MsDev" and DEVTOOLS != "MsDev15":
             return
         mt = self._find_msbuild_tool("mt.exe", use_windows_sdk=True)
         manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
@@ -261,19 +297,30 @@ class BuildExtPythonnet(build_ext.build_ext):
 
     def _install_packages(self):
         """install packages using nuget"""
-        nuget = os.path.join("tools", "nuget", "nuget.exe")
-        use_shell = False
-        if DEVTOOLS == "Mono":
-            nuget = "mono {0}".format(nuget)
-            use_shell = True
+        use_shell = DEVTOOLS == "Mono" or DEVTOOLS == "dotnet"
 
-        cmd = "{0} update -self".format(nuget)
-        self.debug_print("Updating NuGet: {0}".format(cmd))
-        subprocess.check_call(cmd, shell=use_shell)
+        if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
+            if DEVTOOLS == "MsDev15":
+                _config = "{0}Win".format(CONFIG)
+            elif DEVTOOLS == "dotnet":
+                _config = "{0}Mono".format(CONFIG)
 
-        cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
-        self.debug_print("Installing packages: {0}".format(cmd))
-        subprocess.check_call(cmd, shell=use_shell)
+            cmd = "dotnet msbuild /t:Restore pythonnet.15.sln /p:Configuration={0} /p:Platform={1}".format(_config, ARCH)
+            self.debug_print("Updating packages with xplat: {0}".format(cmd))
+            subprocess.check_call(cmd, shell=use_shell)
+        else:
+            nuget = os.path.join("tools", "nuget", "nuget.exe")
+
+            if DEVTOOLS == "Mono":
+                nuget = "mono {0}".format(nuget)
+
+            cmd = "{0} update -self".format(nuget)
+            self.debug_print("Updating NuGet: {0}".format(cmd))
+            subprocess.check_call(cmd, shell=use_shell)
+
+            cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
+            self.debug_print("Installing packages: {0}".format(cmd))
+            subprocess.check_call(cmd, shell=use_shell)
 
     def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
         """Return full path to one of the Microsoft build tools"""
@@ -319,6 +366,20 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         raise RuntimeError("{0} could not be found".format(tool))
 
+    def _find_msbuild_tool_15(self):
+        """Return full path to one of the Microsoft build tools"""
+        try:
+            basePathes = subprocess.check_output(
+                ["vswhere", "-latest",
+                 "-version", "[15.0, 16.0)", 
+                 "-requires", "Microsoft.Component.MSBuild",
+                 "-property", "InstallationPath"]).splitlines()
+            if len(basePathes):
+                return os.path.join(basePathes[0].decode(sys.stdout.encoding or "utf-8"), "MSBuild", "15.0", "Bin", "MSBuild.exe")
+            else:
+                raise RuntimeError("MSBuild >=15.0 could not be found.")
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError("MSBuild >=15.0 could not be found. {0}".format(e.output))
 
 class InstallLibPythonnet(install_lib.install_lib):
     def install(self):
@@ -356,8 +417,39 @@ class InstallDataPythonnet(install_data.install_data):
 
         return install_data.install_data.run(self)
 
+class InstallPythonnet(install.install):
+    user_options = install.install.user_options + [
+            ('xplat', None, None)
+        ]
+    def initialize_options(self):
+        install.install.initialize_options(self)
+        self.xplat = None
 
-###############################################################################
+    def finalize_options(self):
+        install.install.finalize_options(self)
+
+    def run(self):
+        if self.xplat:
+            _update_xlat_devtools()
+        return install.install.run(self)
+
+class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
+    user_options = bdist_wheel.bdist_wheel.user_options + [
+            ('xplat', None, None)
+        ]
+    def initialize_options(self):
+        bdist_wheel.bdist_wheel.initialize_options(self)
+        self.xplat = None
+
+    def finalize_options(self):
+        bdist_wheel.bdist_wheel.finalize_options(self)
+
+    def run(self):
+        if self.xplat:
+            _update_xlat_devtools()
+        return bdist_wheel.bdist_wheel.run(self)
+
+        ###############################################################################
 setupdir = os.path.dirname(__file__)
 if setupdir:
     os.chdir(setupdir)
@@ -385,9 +477,11 @@ setup(
         ]),
     ],
     cmdclass={
+        "install": InstallPythonnet,
         "build_ext": BuildExtPythonnet,
         "install_lib": InstallLibPythonnet,
         "install_data": InstallDataPythonnet,
+        "bdist_wheel": BDistWheelPythonnet
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
