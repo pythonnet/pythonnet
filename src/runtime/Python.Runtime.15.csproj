@@ -48,6 +48,7 @@
   <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+<<<<<<< HEAD
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
     <Optimize>true</Optimize>
@@ -87,6 +88,47 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
     <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;$(Python3Version);$(PythonWinDefineConstants);TRACE;DEBUG</DefineConstants>
+=======
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='netstandard2.0'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='netstandard2.0'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;PYTHON27;UCS4</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;PYTHON36;UCS4</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;PYTHON27;UCS4;TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;PYTHON36;UCS4;TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;PYTHON27;UCS2</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;PYTHON36;UCS2</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;PYTHON27;UCS2;TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;PYTHON36;UCS2;TRACE;DEBUG</DefineConstants>
+>>>>>>> pdb generation improved for all conditions Net 4.0/NetStandard 2.0 x Debug/Release.
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
