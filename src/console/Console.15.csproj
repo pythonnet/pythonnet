@@ -38,46 +38,33 @@
   <PropertyGroup Condition=" '$(Platform)' == 'x64'">
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);DEBUG;TRACE</DefineConstants>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='netstandard2.0'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);DEBUG;TRACE</DefineConstants>
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='netstandard2.0'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
-    <DebugSymbols>true</DebugSymbols>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
+  <PropertyGroup Condition="$(Configuration.Contains('Release'))">
     <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(PythonManifest)' != ''">
     <ApplicationManifest>$(PythonManifest)</ApplicationManifest>
   </PropertyGroup>
