@@ -408,6 +408,13 @@ namespace Python.Runtime
                                             typematch = true;
                                             clrtype = pi[n].ParameterType;
                                         }
+                                        // this takes care of implicit conversions
+                                        var opImplicit = pi[n].ParameterType.GetMethod("op_Implicit", new[] { clrtype });
+                                        if (opImplicit != null)
+                                        {
+                                            typematch = opImplicit.ReturnType == pi[n].ParameterType;
+                                            clrtype = pi[n].ParameterType;
+                                        }
                                     }
                                     Runtime.XDecref(pyoptype);
                                     if (!typematch)
