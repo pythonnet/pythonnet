@@ -31,6 +31,7 @@ namespace Python.Runtime
         private static Type flagsType;
         private static Type boolType;
         private static Type typeType;
+        private static IntPtr decimalCtor;
 
         static Converter()
         {
@@ -46,6 +47,9 @@ namespace Python.Runtime
             flagsType = typeof(FlagsAttribute);
             boolType = typeof(Boolean);
             typeType = typeof(Type);
+
+            IntPtr decimalMod = Runtime.PyImport_ImportModule("decimal");
+            if (decimalMod == null) throw new PythonException();
         }
 
 
@@ -100,6 +104,9 @@ namespace Python.Runtime
 
             if (op == boolType)
                 return Runtime.PyBoolType;
+
+            if (op == decimalType)
+                return Runtime.PyFloatType;
 
             return IntPtr.Zero;
         }
@@ -229,6 +236,14 @@ namespace Python.Runtime
 
                 case TypeCode.UInt64:
                     return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
+
+                case TypeCode.Decimal:
+                    string d2s = ((decimal)value).ToString(nfi);
+                    IntPtr d2p = Runtime.PyString_FromString(d2s);
+                    IntPtr decimalArgs = Runtime.PyTuple_New(1);
+                    Runtime.PyTuple_SetItem(decimalArgs, 0, d2p);
+                    
+                    return Runtime.PyObject_CallObject(decimalCtor, decimalArgs);
 
                 default:
                     if (value is IEnumerable)
@@ -821,6 +836,18 @@ namespace Python.Runtime
                     Runtime.CheckExceptionOccurred();
                     Runtime.XDecref(op);
                     result = d;
+                    return true;
+
+                case TypeCode.Decimal:
+                    op = Runtime.PyObject_Str(value);
+                    decimal m;
+                    string sm = Runtime.GetManagedString(op);
+                    if (!Decimal.TryParse(sm, NumberStyles.Number, nfi, out m))
+                    {
+                        goto type_error;
+                    }
+                    Runtime.XDecref(op);
+                    result = m;
                     return true;
             }
 
