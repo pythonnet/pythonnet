@@ -394,12 +394,25 @@ namespace Python.Runtime
                                     }
                                     if (!typematch)
                                     {
+                                        // this takes care of nullables
+                                        var underlyingType = Nullable.GetUnderlyingType(pi[n].ParameterType);
+                                        if (underlyingType == null)
+                                        {
+                                            underlyingType = pi[n].ParameterType;
+                                        }
                                         // this takes care of enum values
-                                        TypeCode argtypecode = Type.GetTypeCode(pi[n].ParameterType);
+                                        TypeCode argtypecode = Type.GetTypeCode(underlyingType);
                                         TypeCode paramtypecode = Type.GetTypeCode(clrtype);
                                         if (argtypecode == paramtypecode)
                                         {
                                             typematch = true;
+                                            clrtype = pi[n].ParameterType;
+                                        }
+                                        // this takes care of implicit conversions
+                                        var opImplicit = pi[n].ParameterType.GetMethod("op_Implicit", new[] { clrtype });
+                                        if (opImplicit != null)
+                                        {
+                                            typematch = opImplicit.ReturnType == pi[n].ParameterType;
                                             clrtype = pi[n].ParameterType;
                                         }
                                     }
