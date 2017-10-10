@@ -19,7 +19,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void Py_IsInitializedValue()
         {
-            // We defenitely knows that all engines are shut downed.
+            // We know for sure that all engines are shut down.
             // Runtime.Runtime.Py_Finalize(); 
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();
