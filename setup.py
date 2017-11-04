@@ -41,6 +41,12 @@ kits_suffix = os.path.join("bin", ARCH)
 
 WIN_SDK_KEYS = (
     RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
+           value_name="KitsRoot10", suffix=os.path.join("bin", "10.0.16299.0", ARCH)),
+
+    RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
+           value_name="KitsRoot10", suffix=os.path.join("bin", "10.0.15063.0", ARCH)),
+
+    RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
            value_name="KitsRoot10", suffix=kits_suffix),
 
     RegKey(sdk_name="Windows Kit 8.1", key=kits_root,
@@ -326,7 +332,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         """Return full path to one of the Microsoft build tools"""
 
         # trying to search path with help of vswhere when MSBuild 15.0 and higher installed.
-        if use_windows_sdk==False:
+        if tool=="msbuild.exe" and use_windows_sdk==False:
             try:
                 basePathes = subprocess.check_output(
                     ["tools\\vswhere\\vswhere.exe", "-latest",
