@@ -1,19 +1,21 @@
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
-    <TargetFrameworks>net40</TargetFrameworks>
+    <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
     <Platforms>x64;x86</Platforms>
     <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
     <AssemblyName>Python.Test</AssemblyName>
     <RootNamespace>Python.Test</RootNamespace>
     <PackageId>Python.Test</PackageId>
     <VersionPrefix>2.4.0</VersionPrefix>
-    <DocumentationFile>bin\Python.Test.xml</DocumentationFile>
     <OutputPath>bin\</OutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
+    <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <DocumentationFile Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591,0067</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
+    <PythonBuildDir Condition="'$(TargetFramework)'!='net40'">$(PythonBuildDir)\$(TargetFramework)\</PythonBuildDir>
     <LangVersion>6</LangVersion>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
@@ -76,7 +78,11 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\runtime\Python.Runtime.15.csproj"/>
+    <ProjectReference Include="..\runtime\Python.Runtime.15.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.CSharp" Version="4.4.0" />
   </ItemGroup>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
@@ -86,7 +92,8 @@
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
   </PropertyGroup>
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(SolutionDir)\src\tests\fixtures" />
+    <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(SolutionDir)\src\tests\fixtures" />
+    <Copy Condition="'$(TargetFramework)'!='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(SolutionDir)\src\tests\fixtures\$(TargetFramework)" />
     <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
   </Target>
 </Project>

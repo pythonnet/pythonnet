@@ -2,15 +2,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime.15", "src\runtime\Python.Runtime.15.csproj", "{2759F4FF-716B-4828-916F-50FA86613DFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime.15", "src/runtime/Python.Runtime.15.csproj", "{2759F4FF-716B-4828-916F-50FA86613DFC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.EmbeddingTest.15", "src\embed_tests\Python.EmbeddingTest.15.csproj", "{66B8D01A-9906-452A-B09E-BF75EA76468F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.EmbeddingTest.15", "src/embed_tests/Python.EmbeddingTest.15.csproj", "{66B8D01A-9906-452A-B09E-BF75EA76468F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "clrmodule.15", "src\clrmodule\clrmodule.15.csproj", "{E08678D4-9A52-4AD5-B63D-8EBC7399981B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "clrmodule.15", "src/clrmodule/clrmodule.15.csproj", "{E08678D4-9A52-4AD5-B63D-8EBC7399981B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console.15", "src\console\Console.15.csproj", "{CDAD305F-8E72-492C-A314-64CF58D472A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console.15", "src/console/Console.15.csproj", "{CDAD305F-8E72-492C-A314-64CF58D472A0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Test.15", "src\testing\Python.Test.15.csproj", "{F94B547A-E97E-4500-8D53-B4D64D076E5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Test.15", "src/testing/Python.Test.15.csproj", "{F94B547A-E97E-4500-8D53-B4D64D076E5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

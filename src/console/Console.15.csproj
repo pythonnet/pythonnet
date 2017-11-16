@@ -1,7 +1,7 @@
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
-    <TargetFrameworks>net40</TargetFrameworks>
+    <TargetFrameworks>net40;netcoreapp2.0</TargetFrameworks>
     <Platforms>x64;x86</Platforms>
     <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
     <OutputType>Exe</OutputType>
@@ -15,12 +15,14 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
-    <DocumentationFile>bin\nPython.xml</DocumentationFile>
     <OutputPath>bin\</OutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
+    <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <DocumentationFile Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
+    <PublishDir Condition="'$(TargetFramework)'!='net40'">$(PythonBuildDir)\$(TargetFramework)\</PublishDir>
     <LangVersion>6</LangVersion>
     <ApplicationIcon>python-clear.ico</ApplicationIcon>
     <ErrorReport>prompt</ErrorReport>
@@ -89,7 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="python-clear.ico" />
-    <EmbeddedResource Include="$(PythonBuildDir)\Python.Runtime.dll">
+    <EmbeddedResource Condition="'$(TargetFramework)'=='net40'" Include="$(PythonBuildDir)\Python.Runtime.dll">
       <LogicalName>Python.Runtime.dll</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
@@ -100,6 +102,6 @@
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -527,6 +527,10 @@ namespace Python.Runtime
 
         ~PyScope()
         {
+            // We needs to disable Finalizers until it's valid implementation.
+            // Current implementation can produce low probability floating bugs.
+            return;
+
             Dispose();
         }
     }

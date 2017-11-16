@@ -195,6 +195,10 @@ namespace Python.Runtime
 
         ~Dispatcher()
         {
+            // We needs to disable Finalizers until it's valid implementation.
+            // Current implementation can produce low probability floating bugs.
+            return;
+
             // Note: the managed GC thread can run and try to free one of
             // these *after* the Python runtime has been finalized!
             if (Runtime.Py_IsInitialized() > 0)
