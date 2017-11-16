@@ -110,8 +110,8 @@ namespace Python.Runtime
         // We needs to replace all public constants to static readonly fields to allow 
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
-        public string pyversion => _pyversion;
-        public string pyver => _pyver;
+        public static string pyversion => _pyversion;
+        public static string pyver => _pyver;
 
 #if PYTHON27
         internal const string _pyversion = "2.7";

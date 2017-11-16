@@ -11,7 +11,12 @@ if ($FALSE -and $env:PLATFORM -eq "x86"){
 # Executable paths for OpenCover
 # Note if OpenCover fails, it won't affect the exit codes.
 $OPENCOVER = Resolve-Path .\packages\OpenCover.*\tools\OpenCover.Console.exe
-$CS_RUNNER = Resolve-Path .\packages\NUnit.*\tools\"$CS_RUNNER".exe
+if ($env:BUILD_OPTS -eq "--xplat"){
+    $CS_RUNNER = Resolve-Path $env:USERPROFILE\.nuget\packages\nunit.consolerunner\*\tools\"$CS_RUNNER".exe
+}
+else{
+    $CS_RUNNER = Resolve-Path .\packages\NUnit.*\tools\"$CS_RUNNER".exe
+}
 $PY = Get-Command python
 
 # Can't use ".\build\*\Python.EmbeddingTest.dll". Missing framework files.

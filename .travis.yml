@@ -1,18 +1,145 @@
+dist: trusty
 sudo: false
-
 language: python
-python:
-  - 2.7
-  - 3.3
-  - 3.4
-  - 3.5
-  - 3.6
-  - 3.7-dev
-
+  
 matrix:
-  allow_failures:
-    - python: 3.7-dev
+  include:
+    - python: 2.7
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      addons:
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
+    - python: 3.3
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      addons:
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
+    - python: 3.4
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      addons:
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
+    - python: 3.5
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      addons:
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
+    - python: 3.6
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      addons:
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
+    - python: "3.7-dev"
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      addons:
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
 
+    - python: 2.7
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+    - python: 3.3
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+    - python: 3.4
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+    - python: 3.5
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+    - python: 3.6
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+    - python: "3.7-dev"
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+  allow_failures:
+    - python: "3.7-dev"
+      env: 
+        - BUILD_OPTS=
+        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+    - python: "3.7-dev"
+      env: 
+        - BUILD_OPTS=--xplat
+        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
 env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
@@ -23,8 +150,8 @@ env:
 addons:
   apt:
     sources:
-      - mono
-      - mono-libtiff-compat
+      - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+        key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
     packages:
       - mono-devel
       - ca-certificates-mono
@@ -37,11 +164,11 @@ before_install:
 install:
   - pip install --upgrade setuptools # TEMP - due to setuptools 36.2.0 bug
   - pip install --upgrade -r requirements.txt
-  - coverage run setup.py install
+  - coverage run setup.py install $BUILD_OPTS
 
 script:
   - python -m pytest
-  - mono ./packages/NUnit.*/tools/nunit3-console.exe src/embed_tests/bin/Python.EmbeddingTest.dll
+  - mono $NUNIT_PATH src/embed_tests/bin/Python.EmbeddingTest.dll
 
 after_script:
   # Uncomment if need to geninterop, ie. py37 final
