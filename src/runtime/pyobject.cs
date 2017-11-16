@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -43,10 +43,6 @@ namespace Python.Runtime
 
         ~PyObject()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
             Dispose();
         }
 

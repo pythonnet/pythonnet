@@ -16,9 +16,8 @@ namespace Python.Runtime
     /// </remarks>
     public sealed class PythonConsole
     {
-#if NET40
         private static AssemblyLoader assemblyLoader = new AssemblyLoader();
-#endif
+
         private PythonConsole()
         {
         }
@@ -26,11 +25,9 @@ namespace Python.Runtime
         [STAThread]
         public static int Main(string[] args)
         {
-            // Only net40 is capable to safely inject python.runtime.dll into resources.
-#if NET40
             // reference the static assemblyLoader to stop it being optimized away
             AssemblyLoader a = assemblyLoader;
-#endif
+
             string[] cmd = Environment.GetCommandLineArgs();
             PythonEngine.Initialize();
 
@@ -40,7 +37,6 @@ namespace Python.Runtime
             return i;
         }
 
-#if NET40
         // Register a callback function to load embedded assemblies.
         // (Python.Runtime.dll is included as a resource)
         private sealed class AssemblyLoader
@@ -77,6 +73,5 @@ namespace Python.Runtime
                 };
             }
         }
-#endif
     }
 }
