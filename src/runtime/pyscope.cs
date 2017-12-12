@@ -31,7 +31,7 @@ namespace Python.Runtime
         /// <summary>
         /// the python Module object the scope associated with.
         /// </summary>
-        internal readonly IntPtr obj;
+        internal IntPtr obj;
 
         /// <summary>
         /// the variable dict of the scope.
@@ -522,34 +522,37 @@ namespace Python.Runtime
         {
             if (!_isDisposed)
             {
-                _isDisposed = true;
-
+                IntPtr objToDispose = obj;
                 if (disposing)
                 {
                     try
                     {
-                        if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                        OnDispose?.Invoke(this);
+                    }
+                    finally
+                    {
+                        _isDisposed = true;
+                        obj = IntPtr.Zero;
+                    }
+
+                    if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                    {
+                        IntPtr gs = PythonEngine.AcquireLock();
+                        try
                         {
-                            IntPtr gs = PythonEngine.AcquireLock();
-                            try
-                            {
-                                Runtime.XDecref(obj);
-                            }
-                            finally
-                            {
-                                PythonEngine.ReleaseLock(gs);
-                            }
+                            Runtime.XDecref(objToDispose);
+                        }
+                        finally
+                        {
+                            PythonEngine.ReleaseLock(gs);
                         }
                     }
-                    catch
-                    {
-                        // Do nothing.
-                    }
-                    OnDispose?.Invoke(this);
                 }
                 else
                 {
-                    _referenceDecrementer?.ScheduleDecRef(obj);
+                    _isDisposed = true;
+                    obj = IntPtr.Zero;
+                    _referenceDecrementer?.ScheduleDecRef(objToDispose);
                 }
             }
         }

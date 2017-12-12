@@ -7,6 +7,14 @@ using System.Threading.Tasks;
 
 namespace Python.Runtime
 {
+    /// <summary>
+    /// Background python objects reference decrementer. 
+    /// !!! By some unknown reasons python references decrements have been performed in the GC thread - affects GC. !!!
+    /// This component contains background thread with the queue of IntPtr python object references. 
+    /// Finalizers should schedule reference decrement operation in this component to avoid problem with GC.
+    /// Each PythonEngine Init/Shutdown have it's own PyReferenceDecrementer, so PyObject should also have a field with the
+    /// reference to the correct PyReferenceDecrementer.
+    /// </summary>
     internal class PyReferenceDecrementer : IDisposable
     {
         private static readonly DedicatedThreadTaskScheduler DedicatedThreadTaskScheduler = new DedicatedThreadTaskScheduler();

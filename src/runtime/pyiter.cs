@@ -40,14 +40,20 @@ namespace Python.Runtime
             }
         }
 
-        protected override void Dispose(bool disposing)
+        protected internal override void Dispose(bool disposing)
         {
-            if (null != _current)
+            try
             {
-                _current.Dispose();
-                _current = null;
+                if (null != _current)
+                {
+                    _current.Dispose(disposing);
+                    _current = null;
+                }
             }
-            base.Dispose(disposing);
+            finally
+            {
+                base.Dispose(disposing);
+            }
         }
 
         public bool MoveNext()

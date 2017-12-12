@@ -132,39 +132,32 @@ namespace Python.Runtime
         /// to Python objects will not be released until a managed garbage
         /// collection occurs.
         /// </remarks>
-        protected virtual void Dispose(bool disposing)
+        protected internal virtual void Dispose(bool disposing)
         {
             if (!disposed)
             {
                 disposed = true;
+                IntPtr objToDispose = obj;
+                obj = IntPtr.Zero;
 
                 if (disposing)
                 {
-                    try
+                    if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
                     {
-                        if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
+                        IntPtr gs = PythonEngine.AcquireLock();
+                        try
                         {
-                            IntPtr gs = PythonEngine.AcquireLock();
-                            try
-                            {
-                                Runtime.XDecref(obj);
-                                obj = IntPtr.Zero;
-                            }
-                            finally
-                            {
-                                PythonEngine.ReleaseLock(gs);
-                            }
+                            Runtime.XDecref(objToDispose);
                         }
-                    }
-                    catch
-                    {
-                        // Do nothing.
+                        finally
+                        {
+                            PythonEngine.ReleaseLock(gs);
+                        }
                     }
                 }
                 else
                 {
-                    _referenceDecrementer?.ScheduleDecRef(obj);
-                    obj = IntPtr.Zero;
+                    _referenceDecrementer?.ScheduleDecRef(objToDispose);
                 }
             }
         }

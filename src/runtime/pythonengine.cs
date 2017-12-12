@@ -598,7 +598,7 @@ namespace Python.Runtime
 
             protected virtual void Dispose(bool disposing)
             {
-                //ReleeaseLock is thread bound and if it's called in finalizer thread it can wrongly release lock.
+                //ReleaseLock is thread bound and if it's called in finalizer thread it can wrongly release lock.
                 if (disposing)
                 {
                     PythonEngine.ReleaseLock(state);

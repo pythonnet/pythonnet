@@ -21,9 +21,11 @@ namespace Python.Runtime
             _referenceDecrementer = PythonEngine.CurrentRefDecrementer;
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
-            Runtime.XIncref(_pyType);
-            Runtime.XIncref(_pyValue);
-            Runtime.XIncref(_pyTB);
+
+            // Those references already owned by the caller
+            ////Runtime.XIncref(_pyType);
+            ////Runtime.XIncref(_pyValue);
+            ////Runtime.XIncref(_pyTB);
             if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;
@@ -44,7 +46,13 @@ namespace Python.Runtime
             }
             if (_pyTB != IntPtr.Zero)
             {
-                PyObject tb_module = PythonEngine.ImportModule("traceback");
+
+                if (_tbModule == null)
+                {
+                    _tbModule = PythonEngine.ImportModule("traceback");
+                }
+                PyObject tb_module = _tbModule;
+
                 Runtime.XIncref(_pyTB);
                 using (var pyTB = new PyObject(_pyTB))
                 {
@@ -54,11 +62,14 @@ namespace Python.Runtime
             PythonEngine.ReleaseLock(gs);
         }
 
+        private static PyObject _tbModule;
+
         // Ensure that encapsulated Python objects are decref'ed appropriately
         // when the managed exception wrapper is garbage-collected.
 
         ~PythonException()
         {
+
             Dispose(false);
         }
 
@@ -152,49 +163,51 @@ namespace Python.Runtime
             {
                 disposed = true;
 
+                IntPtr pyTypeToDispose = _pyType;
+                _pyType = IntPtr.Zero;
+
+                IntPtr pyValueToDispose = _pyValue;
+                _pyValue = IntPtr.Zero;
+
+                IntPtr pyTBToDispose = _pyTB;
+                _pyTB = IntPtr.Zero;
+
                 if (disposing)
                 {
                     if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
                     {
+                        IntPtr gs = PythonEngine.AcquireLock();
                         try
                         {
-                            IntPtr gs = PythonEngine.AcquireLock();
-                            try
+                            Runtime.XDecref(pyTypeToDispose);
+                            Runtime.XDecref(pyValueToDispose);
+                            // XXX Do we ever get TraceBack? //
+                            if (pyTBToDispose != IntPtr.Zero)
                             {
-                                Runtime.XDecref(_pyType);
-                                Runtime.XDecref(_pyValue);
-                                // XXX Do we ever get TraceBack? //
-                                if (_pyTB != IntPtr.Zero)
-                                {
-                                    Runtime.XDecref(_pyTB);
-                                }
-                            }
-                            finally
-                            {
-                                PythonEngine.ReleaseLock(gs);
+                                Runtime.XDecref(pyTBToDispose);
                             }
                         }
-                        catch
+                        finally
                         {
-                            // Do nothing.
+                            PythonEngine.ReleaseLock(gs);
                         }
                     }
                 }
                 else
                 {
-                    if (_pyType != IntPtr.Zero)
+                    if (pyTypeToDispose != IntPtr.Zero)
                     {
-                        _referenceDecrementer?.ScheduleDecRef(_pyType);
+                        _referenceDecrementer?.ScheduleDecRef(pyTypeToDispose);
                     }
 
-                    if (_pyValue != IntPtr.Zero)
+                    if (pyValueToDispose != IntPtr.Zero)
                     {
-                        _referenceDecrementer?.ScheduleDecRef(_pyValue);
+                        _referenceDecrementer?.ScheduleDecRef(pyValueToDispose);
                     }
 
-                    if (_pyTB != IntPtr.Zero)
+                    if (pyTBToDispose != IntPtr.Zero)
                     {
-                        _referenceDecrementer?.ScheduleDecRef(_pyTB);
+                        _referenceDecrementer?.ScheduleDecRef(pyTBToDispose);
                     }
                 }
             }

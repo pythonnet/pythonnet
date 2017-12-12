@@ -64,5 +64,67 @@ namespace Python.EmbeddingTest
 
             Assert.IsFalse(weakRef.IsAlive, "Clr object should be collected."); 
         }
+
+        [Test]
+        [Ignore("For debug only")]
+        public void TestExceptionMemoryLeak()
+        {
+            dynamic pymodule;
+            PyObject gc;
+            dynamic testmethod;
+
+            var ts = PythonEngine.BeginAllowThreads();
+            IntPtr pylock = PythonEngine.AcquireLock();
+
+#if NETCOREAPP
+            const string s = "../../fixtures";
+#else
+            const string s = "../fixtures";
+#endif
+            string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
+
+            IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
+            IntPtr path = Runtime.Runtime.PySys_GetObject("path");
+            Runtime.Runtime.PyList_Append(path, str);
+
+            {
+                PyObject sys = PythonEngine.ImportModule("sys");
+                gc = PythonEngine.ImportModule("gc");
+
+                pymodule = PythonEngine.ImportModule("MemoryLeakTest.pyraise");
+                testmethod = pymodule.test_raise_exception;
+            }
+
+            PythonEngine.ReleaseLock(pylock);
+
+            double floatarg1 = 5.1f;
+            dynamic res = null;
+            {
+                for (int i = 1; i <= 10000000; i++)
+                {
+                    using (Py.GIL())
+                    {
+                        try
+                        {
+                            res = testmethod(Py.kw("number", floatarg1), Py.kw("astring", "bbc"));
+                        }
+                        catch (Exception e)
+                        {
+                            if (i % 10000 == 0)
+                            {
+                                TestContext.Progress.WriteLine(e.Message);
+                            }
+                        }
+                    }
+
+                    if (i % 10000 == 0)
+                    {
+                        GC.Collect();
+                    }
+                }
+            }
+
+            PythonEngine.EndAllowThreads(ts);
+        }
     }
 }
