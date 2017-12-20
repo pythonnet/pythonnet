@@ -30,6 +30,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed double calling of constructor when deriving from .NET class (#495)
 -   Fixed `clr.GetClrType` when iterating over `System` members (#607) 
 -   Fixed `LockRecursionException` when loading assemblies (#627)
+-   Fixed errors breaking .NET Remoting on method invoke (#276)
 
 
 ## [2.3.0][] - 2017-03-11
