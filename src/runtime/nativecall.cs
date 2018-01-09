@@ -27,9 +27,6 @@ namespace Python.Runtime
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void Void_1_Delegate(IntPtr a1);
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int Int_3_Delegate(IntPtr a1, IntPtr a2, IntPtr a3);
-
         public static void Void_Call_1(IntPtr fp, IntPtr a1)
         {
             ((Void_1_Delegate)Marshal.GetDelegateForFunctionPointer(fp, typeof(Void_1_Delegate)))(a1);
@@ -44,7 +41,7 @@ namespace Python.Runtime
 
         public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
         {
-            return ((Int_3_Delegate)Marshal.GetDelegateForFunctionPointer(fp, typeof(Int_3_Delegate)))(a1, a2, a3);
+            return ((Interop.ObjObjArgFunc)Marshal.GetDelegateForFunctionPointer(fp, typeof(Interop.ObjObjArgFunc)))(a1, a2, a3);
         }
 #else
         private static AssemblyBuilder aBuilder;

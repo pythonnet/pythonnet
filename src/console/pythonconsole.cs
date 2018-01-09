@@ -32,6 +32,15 @@ namespace Python.Runtime
             AssemblyLoader a = assemblyLoader;
 #endif
             string[] cmd = Environment.GetCommandLineArgs();
+#if NETCOREAPP2_0
+            // Forcing Runtime.Extension assembly to load.
+            var tstType = typeof(System.Collections.Hashtable);
+            if (!tstType.Assembly.FullName.StartsWith("System.Runtime.Extensions"))
+            {
+                Console.WriteLine("Hardcoded expectations on System.Runtime.Extensions library was not satisfied.");
+                return 1;
+            }
+#endif
             PythonEngine.Initialize();
 
             int i = Runtime.Py_Main(cmd.Length, cmd);

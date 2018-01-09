@@ -85,6 +85,11 @@
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.15.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
+    <PackageReference Include="System.Drawing.Primitives">
+      <Version>4.3.0</Version>
+    </PackageReference>
+  </ItemGroup>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 

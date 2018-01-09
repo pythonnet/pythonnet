@@ -11,10 +11,14 @@ import sysconfig
 
 import pytest
 import clr
+from System.Runtime.InteropServices import RuntimeInformation
 
 # Add path for `Python.Test`
 cwd = os.path.dirname(__file__)
-fixtures_path = os.path.join(cwd, "fixtures")
+if RuntimeInformation.FrameworkDescription.startswith(".NET Core"):
+    fixtures_path = os.path.join(cwd, "fixtures/netstandard2.0")
+else:
+    fixtures_path = os.path.join(cwd, "fixtures")
 sys.path.append(fixtures_path)
 
 # Add References for tests
