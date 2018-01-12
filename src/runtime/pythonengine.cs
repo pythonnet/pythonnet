@@ -139,6 +139,11 @@ namespace Python.Runtime
 
         internal static PyReferenceDecrementer CurrentRefDecrementer { get; private set; }
 
+        /// <summary>
+        /// Fires when python engines importing module and probably tries to load an assembly.
+        /// </summary>
+        public static event EventHandler<ImplicitAssemblyLoadingEventArgs> ImplicitAssemblyLoading;
+
         public static int RunSimpleString(string code)
         {
             return Runtime.PyRun_SimpleString(code);
@@ -554,6 +559,29 @@ namespace Python.Runtime
                 }
             }
         }
+
+        internal static void RaiseAssemblyAsModuleImportingEvent(ImplicitAssemblyLoadingEventArgs e)
+        {
+            ImplicitAssemblyLoading?.Invoke(null, e);
+        }
+    }
+
+    public class ImplicitAssemblyLoadingEventArgs: EventArgs
+    {
+        public ImplicitAssemblyLoadingEventArgs(string moduleName)
+        {
+            ModuleName = moduleName;
+        }
+
+        /// <summary>
+        /// The name of the module to import that is probably assembly name.
+        /// </summary>
+        public string ModuleName { get; }
+
+        /// <summary>
+        /// Set it to true, if you know that <see cref="ModuleName"/> is not an assembly to import.
+        /// </summary>
+        public bool SkipAssemblyLoad { get; set; }
     }
 
     public enum RunFlagType

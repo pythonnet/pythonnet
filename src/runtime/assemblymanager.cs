@@ -194,7 +194,17 @@ namespace Python.Runtime
             Assembly assembly = null;
             try
             {
-                assembly = Assembly.Load(name);
+                var importEvent = new ImplicitAssemblyLoadingEventArgs(name);
+                if (importEvent.SkipAssemblyLoad)
+                {
+                    return null;
+                }
+
+                PythonEngine.RaiseAssemblyAsModuleImportingEvent(importEvent);
+                if (!importEvent.SkipAssemblyLoad)
+                {
+                    assembly = Assembly.Load(name);
+                }
             }
             catch (Exception)
             {
@@ -341,8 +351,17 @@ namespace Python.Runtime
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
+            Type[] types = new Type[0];
+            try
+            {
+                types = assembly.IsDynamic ? assembly.GetTypes():assembly.GetExportedTypes();
+            }
+            catch(TypeLoadException)
+            {
+                // Do nothing.
+                // This problem usually occurs when transitive dependencies have references to older packages than main application.
+            }
 
-            Type[] types = assembly.GetTypes();
             foreach (Type t in types)
             {
                 string ns = t.Namespace ?? "";
@@ -417,12 +436,15 @@ namespace Python.Runtime
             {
                 foreach (Assembly a in namespaces[nsname].Keys)
                 {
-                    Type[] types = a.GetTypes();
+                    Type[] types = a.IsDynamic ? a.GetTypes(): a.GetExportedTypes();
                     foreach (Type t in types)
                     {
                         if ((t.Namespace ?? "") == nsname)
                         {
-                            names.Add(t.Name);
+                            if (!t.IsNested)
+                            {
+                                names.Add(t.Name);
+                            }
                         }
                     }
                 }
