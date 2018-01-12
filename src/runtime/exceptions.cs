@@ -276,7 +276,7 @@ namespace Python.Runtime
         /// </remarks>
         public static bool ErrorOccurred()
         {
-            return Runtime.PyErr_Occurred() != 0;
+            return Runtime.PyErr_Occurred() != IntPtr.Zero;
         }
 
         /// <summary>
