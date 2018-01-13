@@ -40,5 +40,19 @@ namespace Python.EmbeddingTest
             var e = new PythonException(); // There is no PyErr to fetch
             Assert.AreEqual("", e.Message);
         }
+
+        [Test]
+        public void TestPythonErrorTypeName()
+        {
+            try
+            {
+                var module = PythonEngine.ImportModule("really____unknown___module");
+                Assert.Fail("Unknown module should not be loaded");
+            }
+            catch (PythonException ex)
+            {
+                Assert.AreEqual(ex.PythonTypeName, "ModuleNotFoundError");
+            }
+        }
     }
 }
