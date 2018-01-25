@@ -61,26 +61,28 @@ def test_non_public_class():
 
 def test_basic_subclass():
     """Test basic subclass of a managed class."""
-    from System.Collections import Hashtable
+    # Uses ArrayList instead of Hashtable
+    # As it's available from .Net Core 2.0 without an addref
+    from System.Collections import ArrayList
 
-    class MyTable(Hashtable):
+    class MyArrayList(ArrayList):
         def how_many(self):
             return self.Count
 
-    table = MyTable()
+    array_list = MyArrayList()
 
-    assert table.__class__.__name__.endswith('MyTable')
-    assert type(table).__name__.endswith('MyTable')
-    assert len(table.__class__.__bases__) == 1
-    assert table.__class__.__bases__[0] == Hashtable
+    assert array_list.__class__.__name__.endswith('MyArrayList')
+    assert type(array_list).__name__.endswith('MyArrayList')
+    assert len(array_list.__class__.__bases__) == 1
+    assert array_list.__class__.__bases__[0] == ArrayList
 
-    assert table.how_many() == 0
-    assert table.Count == 0
+    assert array_list.how_many() == 0
+    assert array_list.Count == 0
 
-    table.set_Item('one', 'one')
+    array_list.Add('one')
 
-    assert table.how_many() == 1
-    assert table.Count == 1
+    assert array_list.how_many() == 1
+    assert array_list.Count == 1
 
 
 def test_subclass_with_no_arg_constructor():
@@ -118,21 +120,23 @@ def test_subclass_with_various_constructors():
 
 def test_struct_construction():
     """Test construction of structs."""
-    from System.Drawing import Point
+    # Uses DateTime instead of Point
+    # As it's available from .Net Core 2.0 without an addref
+    from System import DateTime
 
-    p = Point()
-    assert p.X == 0
-    assert p.Y == 0
+    dt1 = DateTime(2017, 2, 27)
+    assert dt1.Day == 27
+    assert dt1.Month == 2
+    assert dt1.Year == 2017
 
-    p = Point(0, 0)
-    assert p.X == 0
-    assert p.Y == 0
+    # Static method calls default constructor
+    dt2 = DateTime.MinValue
+    assert dt2.Day == 1
+    assert dt2.Month == 1
+    assert dt2.Year == 1
 
-    p.X = 10
-    p.Y = 10
-
-    assert p.X == 10
-    assert p.Y == 10
+    # mutation tests removed
+    # structs are not typically mutable
 
     # test strange __new__ interactions
 
@@ -169,44 +173,53 @@ def test_ienumerator_iteration():
 
 def test_override_get_item():
     """Test managed subclass overriding __getitem__."""
-    from System.Collections import Hashtable
-
-    class MyTable(Hashtable):
+    from System.Collections import ArrayList
+    
+    # Uses ArrayList instead of Hashtable
+    # As it's available from .Net Core 2.0 without an addref
+    class MyArrayList(ArrayList):
         def __getitem__(self, key):
-            value = Hashtable.__getitem__(self, key)
+            value = ArrayList.__getitem__(self, key)
             return 'my ' + str(value)
 
-    table = MyTable()
-    table['one'] = 'one'
-    table['two'] = 'two'
-    table['three'] = 'three'
+    array_list = MyArrayList()
+    array_list.Add('zero')
+    array_list.Add('one')
+    array_list.Add('two')
 
-    assert table['one'] == 'my one'
-    assert table['two'] == 'my two'
-    assert table['three'] == 'my three'
+    assert array_list[0] == 'my zero'
+    assert array_list[1] == 'my one'
+    assert array_list[2] == 'my two'
 
-    assert table.Count == 3
+    assert array_list.Count == 3
 
 
 def test_override_set_item():
     """Test managed subclass overriding __setitem__."""
-    from System.Collections import Hashtable
-
-    class MyTable(Hashtable):
+    from System.Collections import ArrayList
+    
+    # Uses ArrayList instead of Hashtable
+    # As it's available from .Net Core 2.0 without an addref
+    class MyArrayList(ArrayList):
         def __setitem__(self, key, value):
-            value = 'my ' + str(value)
-            Hashtable.__setitem__(self, key, value)
+            value = 'your ' + str(value)
+            ArrayList.__setitem__(self, key, value)
 
-    table = MyTable()
-    table['one'] = 'one'
-    table['two'] = 'two'
-    table['three'] = 'three'
+    array_list = MyArrayList()
+    # need to add three items first
+    array_list.Add("a")
+    array_list.Add("b")
+    array_list.Add("c")
+    
+    array_list[0] = 'zero'
+    array_list[1] = 'one'
+    array_list[2] = 'two'
 
-    assert table['one'] == 'my one'
-    assert table['two'] == 'my two'
-    assert table['three'] == 'my three'
+    assert array_list[0] == 'your zero'
+    assert array_list[1] == 'your one'
+    assert array_list[2] == 'your two'
 
-    assert table.Count == 3
+    assert array_list.Count == 3
 
 
 def test_add_and_remove_class_attribute():

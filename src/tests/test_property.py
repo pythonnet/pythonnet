@@ -141,8 +141,9 @@ def test_interface_property():
     """Test properties of interfaces. Added after a bug report
        that an IsAbstract check was inappropriate and prevented
        use of properties when only the interface is known."""
-    from System.Collections import Hashtable, ICollection
-
-    mapping = Hashtable()
-    coll = ICollection(mapping)
-    assert coll.Count == 0
+    from System.Collections import ArrayList, IList
+    # Uses ArrayList instead of Hashtable
+    # As it's available from .Net Core 2.0 without an addref
+    mapping = ArrayList()
+    lst = IList(mapping)
+    assert lst.Count == 0

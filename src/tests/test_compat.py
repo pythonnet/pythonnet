@@ -112,13 +112,15 @@ def test_simple_import_from_with_alias():
 
 def test_dotted_name_import_from():
     """Test dotted-name 'import from'."""
-    from CLR.System import Xml
-    assert is_clr_module(Xml)
-    assert Xml.__name__ == 'System.Xml'
+    # Uses IO instead of Xml
+    # As it's available from .Net Core 2.0 without an addref
+    from CLR.System import IO
+    assert is_clr_module(IO)
+    assert IO.__name__ == 'System.IO'
 
-    from CLR.System.Xml import XmlDocument
-    assert is_clr_class(XmlDocument)
-    assert XmlDocument.__name__ == 'XmlDocument'
+    from CLR.System.IO import Path
+    assert is_clr_class(Path)
+    assert Path.__name__ == 'Path'
 
     from xml.dom import pulldom
     assert isinstance(pulldom, types.ModuleType)
@@ -131,13 +133,15 @@ def test_dotted_name_import_from():
 
 def test_dotted_name_import_from_with_alias():
     """Test dotted-name 'import from' with aliasing."""
-    from CLR.System import Xml as myXml
-    assert is_clr_module(myXml)
-    assert myXml.__name__ == 'System.Xml'
+    # Uses IO instead of Xml
+    # As it's available from .Net Core 2.0 without an addref
+    from CLR.System import IO as myIO
+    assert is_clr_module(myIO)
+    assert myIO.__name__ == 'System.IO'
 
-    from CLR.System.Xml import XmlDocument as myXmlDocument
-    assert is_clr_class(myXmlDocument)
-    assert myXmlDocument.__name__ == 'XmlDocument'
+    from CLR.System.IO import Path as myPath
+    assert is_clr_class(myPath)
+    assert myPath.__name__ == 'Path'
 
     from xml.dom import pulldom as myPulldom
     assert isinstance(myPulldom, types.ModuleType)
@@ -151,13 +155,15 @@ def test_dotted_name_import_from_with_alias():
 def test_from_module_import_star():
     """Test from module import * behavior."""
     count = len(locals().keys())
-    m = __import__('CLR.System.Management', globals(), locals(), ['*'])
-    assert m.__name__ == 'System.Management'
+    # Uses IO instead of Xml
+    # As it's available from .Net Core 2.0 without an addref
+    m = __import__('CLR.System.IO', globals(), locals(), ['*'])
+    assert m.__name__ == 'System.IO'
     assert is_clr_module(m)
     assert len(locals().keys()) > count + 1
 
-    m2 = __import__('System.Management', globals(), locals(), ['*'])
-    assert m2.__name__ == 'System.Management'
+    m2 = __import__('System.IO', globals(), locals(), ['*'])
+    assert m2.__name__ == 'System.IO'
     assert is_clr_module(m2)
     assert len(locals().keys()) > count + 1
 
@@ -168,16 +174,22 @@ def test_explicit_assembly_load():
     """Test explicit assembly loading using standard CLR tools."""
     from CLR.System.Reflection import Assembly
     from CLR import System
+    from CLR.System.IO import FileNotFoundException
     import sys
 
-    assembly = Assembly.LoadWithPartialName('System.Data')
+    assembly = Assembly.LoadWithPartialName('System.IO')
     assert assembly is not None
+    # Uses IO instead of Data
+    # As it's available from .Net Core 2.0 without an addref
+    import CLR.System.IO
+    assert 'System.IO' in sys.modules
 
-    import CLR.System.Data
-    assert 'System.Data' in sys.modules
-
-    assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
-    assert assembly is None
+    # Assembly.LoadWithPartialName is obsolete, and delegates to Assembly.Load
+    # in .Net Core (which then throws)
+    # assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
+    # assert assembly is None
+    with pytest.raises(FileNotFoundException):
+        assembly = Assembly.LoadFrom('SpamSpamSpamSpamEggsAndSpam')
 
 
 def test_implicit_load_already_valid_namespace():
@@ -224,8 +236,9 @@ def test_module_get_attr():
 
     int_type = System.Int32
     assert is_clr_class(int_type)
-
-    module = System.Xml
+    # Uses IO instead of Xml
+    # As it's available from .Net Core 2.0 without an addref
+    module = System.IO
     assert is_clr_module(module)
 
     with pytest.raises(AttributeError):

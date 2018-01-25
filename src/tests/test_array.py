@@ -1143,33 +1143,34 @@ def test_boxed_value_type_mutation_result():
     # to accidentally write code like the following which is not really
     # mutating value types in-place but changing boxed copies.
 
-    from System.Drawing import Point
+    # Uses ValueType DictionaryEntry instead of Point
+    from System.Collections import DictionaryEntry
     from System import Array
 
-    items = Array.CreateInstance(Point, 5)
+    items = Array.CreateInstance(DictionaryEntry, 5)
 
     for i in range(5):
-        items[i] = Point(i, i)
+        items[i] = DictionaryEntry(i, i)
 
     for i in range(5):
         # Boxed items, so set_attr will not change the array member.
-        assert items[i].X == i
-        assert items[i].Y == i
-        items[i].X = i + 1
-        items[i].Y = i + 1
-        assert items[i].X == i
-        assert items[i].Y == i
+        assert items[i].Key == i
+        assert items[i].Value == i
+        items[i].Key = i + 1
+        items[i].Value = i + 1
+        assert items[i].Key == i
+        assert items[i].Value == i
 
     for i in range(5):
         # Demonstrates the workaround that will change the members.
-        assert items[i].X == i
-        assert items[i].Y == i
+        assert items[i].Key == i
+        assert items[i].Value == i
         item = items[i]
-        item.X = i + 1
-        item.Y = i + 1
+        item.Key = i + 1
+        item.Value = i + 1
         items[i] = item
-        assert items[i].X == i + 1
-        assert items[i].Y == i + 1
+        assert items[i].Key == i + 1
+        assert items[i].Value == i + 1
 
 
 def test_special_array_creation():
