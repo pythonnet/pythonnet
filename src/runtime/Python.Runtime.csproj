@@ -71,6 +71,7 @@
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS2;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+    <DefineConstants>TRACE;DEBUG;PYTHON3;PYTHON35;UCS2</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
