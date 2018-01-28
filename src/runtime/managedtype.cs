@@ -34,10 +34,6 @@ namespace Python.Runtime
                     IntPtr op = tp == ob
                         ? Marshal.ReadIntPtr(tp, TypeOffset.magic())
                         : Marshal.ReadIntPtr(ob, ObjectOffset.magic(ob));
-                    if (op == IntPtr.Zero)
-                    {
-                        return null;
-                    }
                     var gc = (GCHandle)op;
                     return (ManagedType)gc.Target;
                 }
