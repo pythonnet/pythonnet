@@ -109,7 +109,8 @@ void init(PyNet_Args* pn_args)
     const char *slash = "/";
     int found = 0;
 
-    for (int ii = 0; ii < PyList_Size(syspath); ++ii)
+    int ii;
+    for (ii = 0; ii < PyList_Size(syspath); ++ii)
     {
 #if PY_MAJOR_VERSION >= 3
         Py_ssize_t wlen;
