@@ -157,18 +157,16 @@ namespace Python.Runtime
         /// </summary>
         public static string FindAssembly(string name)
         {
-            char sep = Path.DirectorySeparatorChar;
-
             foreach (string head in pypath)
             {
-                string path;
-                if (head == null || head.Length == 0)
+                //GetFullPath is required to normalize back- and forward- slashes
+                //Combine is prefered way of combining paths
+                string path = Path.GetFullPath(Path.Combine(head ?? "", name));
+
+                //The AddReference can be called with assembly path with extensions
+                if (File.Exists(path))
                 {
-                    path = name;
-                }
-                else
-                {
-                    path = head + sep + name;
+                    return path;
                 }
 
                 string temp = path + ".dll";
