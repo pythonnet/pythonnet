@@ -29,6 +29,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed 'clrmethod' for python 2 (#492)
 -   Fixed double calling of constructor when deriving from .NET class (#495)
 -   Fixed `clr.GetClrType` when iterating over `System` members (#607) 
+-   Fixed bug where private types can be looked up where public types exist
 
 
 ## [2.3.0][] - 2017-03-11
