@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -448,17 +449,32 @@ namespace Python.Runtime
         /// Returns the System.Type object for a given qualified name,
         /// looking in the currently loaded assemblies for the named
         /// type. Returns null if the named type cannot be found.
+        /// If more than one is found, returns the first public type
         /// </summary>
         public static Type LookupType(string qname)
         {
+            List<Type> foundTypes = new List<Type>();
+
             foreach (Assembly assembly in assemblies)
             {
                 Type type = assembly.GetType(qname);
                 if (type != null)
                 {
-                    return type;
+                    foundTypes.Add(type);
                 }
             }
+
+            Func<Type, bool> criteria = (t) => t.IsPublic;
+
+            if(foundTypes.Any(criteria))
+            {
+                return foundTypes.First(criteria);
+            }
+            else if (foundTypes.Any())
+            {
+                return foundTypes.First();
+            }
+
             return null;
         }
 
