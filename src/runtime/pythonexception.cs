@@ -14,6 +14,7 @@ namespace Python.Runtime
         private IntPtr _pyTB = IntPtr.Zero;
         private string _tb = "";
         private string _message = "";
+        private string _pythonTypeName = "";
         private bool disposed = false;
 
         public PythonException()
@@ -36,6 +37,8 @@ namespace Python.Runtime
                 {
                     type = pyTypeName.ToString();
                 }
+
+                _pythonTypeName = type;
 
                 Runtime.XIncref(_pyValue);
                 using (var pyValue = new PyObject(_pyValue))
@@ -141,6 +144,13 @@ namespace Python.Runtime
             get { return _tb; }
         }
 
+        /// <summary>
+        /// Python error type name.
+        /// </summary>
+        public string PythonTypeName
+        {
+            get { return _pythonTypeName; }
+        }
 
         /// <summary>
         /// Dispose Method
