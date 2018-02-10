@@ -21,6 +21,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
+-   Fixed interop methods with Py_ssize_t. NetCoreApp 2.0 is more sensitive than net40 and requires this fix. 
 -   Fixed Visual Studio 2017 compat (#434) for setup.py
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
