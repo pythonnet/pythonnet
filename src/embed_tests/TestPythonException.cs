@@ -51,7 +51,7 @@ namespace Python.EmbeddingTest
             }
             catch (PythonException ex)
             {
-                Assert.AreEqual(ex.PythonTypeName, "ModuleNotFoundError");
+                Assert.That(ex.PythonTypeName, Is.EqualTo("ModuleNotFoundError").Or.EqualTo("ImportError"));
             }
         }
     }
