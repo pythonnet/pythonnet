@@ -17,6 +17,13 @@ namespace Python.Runtime
     {
         // modified from event handlers below, potentially triggered from different .NET threads
         // therefore this should be a ConcurrentDictionary
+        //
+        // WARNING: Dangerous if cross-app domain usage is ever supported
+        //    Reusing the dictionary with assemblies accross multiple initializations is problematic. 
+        //    Loading happens from CurrentDomain (see line 53). And if the first call is from AppDomain that is later unloaded, 
+        //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain - 
+        //     unless LoaderOptimization.MultiDomain is used);
+        //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
         private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
             new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
         //private static Dictionary<string, Dictionary<string, string>> generics;
