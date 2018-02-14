@@ -134,7 +134,8 @@
     <Exec Command="cp $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.XML.dll $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.Xml.dll" />
   </Target>
   <Target Name="AfterBuild">
-    <Copy Condition="'$(TargetFramework)'=='netstandard2.0'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy Condition="'$(OS)'=='Windows_NT' AND '$(TargetFramework)'=='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy Condition="'$(OS)'!='Windows_NT' AND '$(TargetFramework)'=='netstandard2.0'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
     <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
   </Target>
 </Project>
