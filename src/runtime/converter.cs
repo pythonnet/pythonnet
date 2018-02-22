@@ -155,7 +155,11 @@ namespace Python.Runtime
             var pyderived = value as IPythonDerivedType;
             if (null != pyderived)
             {
-                return ClassDerivedObject.ToPython(pyderived);
+                // if object is remote don't do this
+                if (!System.Runtime.Remoting.RemotingServices.IsTransparentProxy(pyderived))
+                {
+                    return ClassDerivedObject.ToPython(pyderived);
+                }
             }
 
             // hmm - from Python, we almost never care what the declared
