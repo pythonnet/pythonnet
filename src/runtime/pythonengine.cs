@@ -496,12 +496,10 @@ namespace Python.Runtime
                     borrowedGlobals = false;
                 }
             }
-
-            var borrowedLocals = true;
+            
             if (locals == null)
             {
-                locals = Runtime.PyDict_New();
-                borrowedLocals = false;
+                locals = globals;
             }
 
             try
@@ -516,10 +514,6 @@ namespace Python.Runtime
             }
             finally
             {
-                if (!borrowedLocals)
-                {
-                    Runtime.XDecref(locals.Value);
-                }
                 if (!borrowedGlobals)
                 {
                     Runtime.XDecref(globals.Value);

@@ -57,5 +57,20 @@ namespace Python.EmbeddingTest
             object c = locals.GetItem("c").AsManagedObject(typeof(int));
             Assert.AreEqual(111, c);
         }
+
+        [Test]
+        public void TestExec2()
+        {
+            string code = @"
+class Test1():
+   pass
+
+class Test2():
+   def __init__(self):
+       Test1()
+
+Test2()";
+            PythonEngine.Exec(code);
+        }
     }
 }
