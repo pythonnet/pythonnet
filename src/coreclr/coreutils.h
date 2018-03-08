@@ -37,19 +37,6 @@ void AddFilesFromDirectoryToTpaList(const char* directory, char** tpaList);
 
 const char* GetEnvValueBoolean(const char* envVariable);
 
-#ifdef _WIN32
-char* strdup(const char* src)
-{
-    size_t len = strlen(src) + 1;
-    char* s = malloc(len);
-    if (s == NULL)
-    {
-        return NULL;
-    }
-    return (char *)memcpy(s, src, len);
-}
-#endif
-
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
 static const char * const coreClrDll = "libcoreclr.dylib";
