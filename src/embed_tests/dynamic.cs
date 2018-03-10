@@ -103,7 +103,7 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(sys.testattr3.ToString(), "True");
 
             // Compare in .NET
-            Assert.AreEqual(sys.testattr1, sys.testattr2);
+            Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(sys.testattr3.ToString(), "True");
 
             // Compare in .NET
-            Assert.AreEqual(sys.testattr1, sys.testattr2);
+            Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
         }
     }
 }

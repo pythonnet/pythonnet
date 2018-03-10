@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -201,7 +201,7 @@ namespace Python.Runtime
                     IntPtr fp = Marshal.ReadIntPtr(dt, TypeOffset.tp_descr_set);
                     if (fp != IntPtr.Zero)
                     {
-                        return NativeCall.Impl.Int_Call_3(fp, descr, name, value);
+                        return NativeCall.Int_Call_3(fp, descr, name, value);
                     }
                     Exceptions.SetError(Exceptions.AttributeError, "attribute is read-only");
                     return -1;

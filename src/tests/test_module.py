@@ -387,3 +387,9 @@ def test_assembly_load_thread_safety():
         from System.Collections.Generic import Dictionary
         _ = Dictionary[Guid, DateTime]()
     ModuleTest.JoinThreads()
+
+def test_assembly_load_recursion_bug():
+    """Test fix for recursion bug documented in #627"""
+    from System.Configuration import ConfigurationManager
+    content = dir(ConfigurationManager)
+    assert len(content) > 5, content

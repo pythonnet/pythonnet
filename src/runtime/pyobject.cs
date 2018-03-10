@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -12,7 +12,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    public class PyObject : DynamicObject, IDisposable
+    public class PyObject : DynamicObject, IEnumerable, IDisposable
     {
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
@@ -43,6 +43,10 @@ namespace Python.Runtime
 
         ~PyObject()
         {
+            // We needs to disable Finalizers until it's valid implementation.
+            // Current implementation can produce low probability floating bugs.
+            return;
+
             Dispose();
         }
 

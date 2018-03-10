@@ -8,6 +8,11 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [unreleased][]
 
 ### Added
+-   Added support for embedding python into dotnet core 2.0 (NetStandard 2.0)
+-   Added new build system (pythonnet.15.sln) based on dotnetcore-sdk/xplat(crossplatform msbuild).
+    Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
+    After a some transition time, current (mono/ msbuild 14.0) build system will be removed.
+-   NUnit upgraded to 3.7 (eliminates travis-ci random bug)
 -   Added `clr.GetClrType` (#432, #433)
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
@@ -23,6 +28,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed conversion of 'float' and 'double' values (#486)
 -   Fixed 'clrmethod' for python 2 (#492)
 -   Fixed double calling of constructor when deriving from .NET class (#495)
+-   Fixed `clr.GetClrType` when iterating over `System` members (#607) 
+-   Fixed `LockRecursionException` when loading assemblies (#627)
+-   Fixed errors breaking .NET Remoting on method invoke (#276)
 
 
 ## [2.3.0][] - 2017-03-11
