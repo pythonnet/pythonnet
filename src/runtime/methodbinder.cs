@@ -507,7 +507,7 @@ namespace Python.Runtime
 
             if (binding == null)
             {
-                Exceptions.SetError(Exceptions.TypeError, "No method matches given arguments");
+                Exceptions.SetError(Exceptions.TypeError, $"No method matches given arguments for {methodinfo[0].Name}");
                 return IntPtr.Zero;
             }
 

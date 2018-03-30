@@ -31,7 +31,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed `clr.GetClrType` when iterating over `System` members (#607) 
 -   Fixed `LockRecursionException` when loading assemblies (#627)
 -   Fixed errors breaking .NET Remoting on method invoke (#276)
-
+-   Fixed missing information on 'No method matches given arguments' by adding the method name
 
 ## [2.3.0][] - 2017-03-11
 
