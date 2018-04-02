@@ -420,6 +420,12 @@ namespace Python.Runtime
                                             typematch = true;
                                             clrtype = pi[n].ParameterType;
                                         }
+                                        // accepts non-decimal numbers in decimal parameters 
+                                        if (underlyingType == typeof(decimal))
+                                        {
+                                            clrtype = pi[n].ParameterType;
+                                            typematch = Converter.ToManaged(op, clrtype, out arg, false);
+                                        }
                                         // this takes care of implicit conversions
                                         var opImplicit = pi[n].ParameterType.GetMethod("op_Implicit", new[] { clrtype });
                                         if (opImplicit != null)
