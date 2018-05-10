@@ -1193,7 +1193,26 @@ namespace Python.Runtime
 
         internal static IntPtr PyString_FromString(string value)
         {
-            return PyString_FromStringAndSize(value, value.Length);
+            if (value == null)
+            {
+                return IntPtr.Zero;
+            }
+
+            byte[] bStr = Encoding.UTF8.GetBytes(value);
+            IntPtr mem = Marshal.AllocHGlobal(bStr.Length);
+            try
+            {
+                Marshal.Copy(bStr, 0, mem, bStr.Length);
+            }
+            catch (Exception)
+            {
+                Marshal.FreeHGlobal(mem);
+                throw;
+            }
+
+            IntPtr result = PyString_FromStringAndSize(mem, bStr.Length);
+            Marshal.FreeHGlobal(mem);
+            return result;
         }
 
 #if PYTHON3
@@ -1211,7 +1230,7 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyUnicode_FromStringAndSize")]
         internal static extern IntPtr PyString_FromStringAndSize(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
+            IntPtr value,
             int size
         );
 
