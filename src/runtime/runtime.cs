@@ -1211,7 +1211,7 @@ namespace Python.Runtime
         {
             return ob + BytesOffset.ob_sval;
         }
-        
+
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyUnicode_FromStringAndSize(IntPtr value, int size);
 #elif PYTHON2
