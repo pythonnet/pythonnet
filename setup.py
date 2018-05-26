@@ -41,6 +41,12 @@ kits_suffix = os.path.join("bin", ARCH)
 
 WIN_SDK_KEYS = (
     RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
+           value_name="KitsRoot10", suffix=os.path.join("bin", "10.0.16299.0", ARCH)),
+
+    RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
+           value_name="KitsRoot10", suffix=os.path.join("bin", "10.0.15063.0", ARCH)),
+
+    RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
            value_name="KitsRoot10", suffix=kits_suffix),
 
     RegKey(sdk_name="Windows Kit 8.1", key=kits_root,
@@ -259,7 +265,6 @@ class BuildExtPythonnet(build_ext.build_ext):
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
         if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
             subprocess.check_call(" ".join(cmd + ['"/t:Console_15:publish;Python_EmbeddingTest_15:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
-
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
 
@@ -275,7 +280,13 @@ class BuildExtPythonnet(build_ext.build_ext):
         return manifest
 
     def _build_monoclr(self):
-        mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
+        try:
+            mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
+        except:
+            if DEVTOOLS == "dotnet":
+                print("Skipping building monoclr module...")
+                return
+            raise
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
         glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
         glib_cflags = _check_output("pkg-config --cflags glib-2.0", shell=True)
@@ -324,6 +335,20 @@ class BuildExtPythonnet(build_ext.build_ext):
 
     def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
         """Return full path to one of the Microsoft build tools"""
+
+        # trying to search path with help of vswhere when MSBuild 15.0 and higher installed.
+        if tool=="msbuild.exe" and use_windows_sdk==False:
+            try:
+                basePathes = subprocess.check_output(
+                    ["tools\\vswhere\\vswhere.exe", "-latest",
+                     "-version", "[15.0, 16.0)", 
+                     "-requires", "Microsoft.Component.MSBuild",
+                     "-property", "InstallationPath"]).splitlines()
+                if len(basePathes):
+                    return os.path.join(basePathes[0].decode(sys.stdout.encoding or "utf-8"), "MSBuild", "15.0", "Bin", "MSBuild.exe")
+            except:
+                pass # keep trying to search by old method.
+
         # Search in PATH first
         path = spawn.find_executable(tool)
         if path:
@@ -370,7 +395,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         """Return full path to one of the Microsoft build tools"""
         try:
             basePathes = subprocess.check_output(
-                ["vswhere", "-latest",
+                ["tools\\vswhere\\vswhere.exe", "-latest",
                  "-version", "[15.0, 16.0)", 
                  "-requires", "Microsoft.Component.MSBuild",
                  "-property", "InstallationPath"]).splitlines()

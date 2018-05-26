@@ -4,11 +4,12 @@ language: python
   
 matrix:
   include:
+# --------------------- XPLAT builds ------------------------
     - python: 2.7
-      env: 
+      env: &xplat-env
         - BUILD_OPTS=--xplat
         - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons:
+      addons: &xplat-addons
         apt:
           sources:
           - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
@@ -22,124 +23,52 @@ matrix:
             - dotnet-runtime-2.0.0
             - dotnet-sdk-2.0.0
     - python: 3.3
-      env: 
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons:
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
-    - python: 3.4
-      env: 
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons:
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
-    - python: 3.5
-      env: 
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons:
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
-    - python: 3.6
-      env: 
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons:
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
-    - python: "3.7-dev"
-      env: 
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons:
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
+      env: *xplat-env
+      addons: *xplat-addons
 
-    - python: 2.7
-      env: 
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
-    - python: 3.3
-      env: 
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
     - python: 3.4
-      env: 
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+      env: *xplat-env
+      addons: *xplat-addons
+
     - python: 3.5
-      env: 
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+      env: *xplat-env
+      addons: *xplat-addons
+
     - python: 3.6
-      env: 
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+      env: *xplat-env
+      addons: *xplat-addons
     - python: "3.7-dev"
-      env: 
+      env: *xplat-env
+      addons: *xplat-addons
+
+# --------------------- Classic builds ------------------------
+    - python: 2.7
+      env: &classic-env
         - BUILD_OPTS=
         - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+
+    - python: 3.3
+      env: *classic-env
+
+    - python: 3.4
+      env: *classic-env
+
+    - python: 3.5
+      env: *classic-env
+
+    - python: 3.6
+      env: *classic-env
+
+    - python: "3.7-dev"
+      env: *classic-env
+
   allow_failures:
     - python: "3.7-dev"
-      env: 
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
+      env: *xplat-env
+
     - python: "3.7-dev"
-      env: 
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
+      env: *classic-env
+
 env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so

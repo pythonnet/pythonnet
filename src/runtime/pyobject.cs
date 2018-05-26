@@ -12,7 +12,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    public class PyObject : DynamicObject, IDisposable
+    public class PyObject : DynamicObject, IEnumerable, IDisposable
     {
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
