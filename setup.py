@@ -265,7 +265,6 @@ class BuildExtPythonnet(build_ext.build_ext):
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
         if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
             subprocess.check_call(" ".join(cmd + ['"/t:Console_15:publish;Python_EmbeddingTest_15:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
-
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
 
@@ -281,7 +280,13 @@ class BuildExtPythonnet(build_ext.build_ext):
         return manifest
 
     def _build_monoclr(self):
-        mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
+        try:
+            mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
+        except:
+            if DEVTOOLS == "dotnet":
+                print("Skipping building monoclr module...")
+                return
+            raise
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
         glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
         glib_cflags = _check_output("pkg-config --cflags glib-2.0", shell=True)

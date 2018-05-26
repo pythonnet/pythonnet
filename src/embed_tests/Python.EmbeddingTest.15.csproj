@@ -84,7 +84,6 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.15.csproj" />
   </ItemGroup>
