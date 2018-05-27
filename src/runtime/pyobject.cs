@@ -909,7 +909,7 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
-            return Runtime.PyObject_Hash(obj).ToInt32();
+            return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
         }
 
 
