@@ -14,6 +14,7 @@
 
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
+-   Callum Noble ([@callumnoble](https://github.com/callumnoble))
 -   Christian Heimes ([@tiran](https://github.com/tiran))
 -   Christoph Gohlke ([@cgohlke](https://github.com/cgohlke))
 -   Christopher Pow ([@christopherpow](https://github.com/christopherpow))
@@ -47,4 +48,5 @@
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
+-   ([@GSPP](https://github.com/GSPP))
 
