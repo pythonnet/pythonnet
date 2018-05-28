@@ -41,6 +41,7 @@ init:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 install:
+  - python -m pip install -U pip
   - pip install --upgrade -r requirements.txt --quiet
 
   # Install OpenCover. Can't put on `packages.config`, not Mono compatible
