@@ -585,6 +585,7 @@ namespace Python.Runtime
             {
                 return 0;
             }
+            p = (byte*)p + TypeOffset.ob_refcnt;
             return Is32Bit ? (*(int*)p) : (*(long*)p);
         }
 
@@ -1496,8 +1497,16 @@ namespace Python.Runtime
         internal static extern string PyModule_GetFilename(IntPtr module);
 
 #if PYTHON3
+
+#if PYTHON_WITH_PYDEBUG
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyModule_Create2TraceRefs")]
+        internal static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
+#else
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
+#endif
+
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
