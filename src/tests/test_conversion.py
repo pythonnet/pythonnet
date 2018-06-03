@@ -6,7 +6,7 @@ import System
 import pytest
 from Python.Test import ConversionTest, UnicodeString
 
-from ._compat import indexbytes, long, unichr
+from ._compat import indexbytes, long, unichr, text_type
 
 
 def test_bool_conversion():
@@ -537,9 +537,9 @@ def test_string_conversion():
         ConversionTest().StringField = 1
     
     world = UnicodeString()
-    assert "안녕" == str(world.value)
-    assert "안녕" == str(world.GetString())
-    assert "안녕" == str(world)
+    assert "안녕" == text_type(world.value)
+    assert "안녕" == text_type(world.GetString())
+    assert "안녕" == text_type(world)
 
 
 def test_interface_conversion():
