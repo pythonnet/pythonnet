@@ -4,7 +4,7 @@
 
 import System
 import pytest
-from Python.Test import ConversionTest
+from Python.Test import ConversionTest, UnicodeString
 
 from ._compat import indexbytes, long, unichr
 
@@ -535,6 +535,11 @@ def test_string_conversion():
 
     with pytest.raises(TypeError):
         ConversionTest().StringField = 1
+    
+    world = UnicodeString()
+    assert "안녕" = str(world.value)
+    assert "안녕" = str(world.GetString())
+    assert "안녕" = str(world)
 
 
 def test_interface_conversion():
