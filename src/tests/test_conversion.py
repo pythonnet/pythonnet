@@ -2,6 +2,7 @@
 
 """Test CLR <-> Python type conversions."""
 
+from __future__ import unicode_literals
 import System
 import pytest
 from Python.Test import ConversionTest, UnicodeString
