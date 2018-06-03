@@ -538,9 +538,10 @@ def test_string_conversion():
         ConversionTest().StringField = 1
     
     world = UnicodeString()
-    assert "안녕" == text_type(world.value)
-    assert "안녕" == text_type(world.GetString())
-    assert "안녕" == text_type(world)
+    test_unicode_str = u"안녕"
+    assert test_unicode_str == text_type(world.value)
+    assert test_unicode_str == text_type(world.GetString())
+    assert test_unicode_str == text_type(world)
 
 
 def test_interface_conversion():
