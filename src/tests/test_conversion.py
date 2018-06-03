@@ -537,9 +537,9 @@ def test_string_conversion():
         ConversionTest().StringField = 1
     
     world = UnicodeString()
-    assert "안녕" = str(world.value)
-    assert "안녕" = str(world.GetString())
-    assert "안녕" = str(world)
+    assert "안녕" == str(world.value)
+    assert "안녕" == str(world.GetString())
+    assert "안녕" == str(world)
 
 
 def test_interface_conversion():
