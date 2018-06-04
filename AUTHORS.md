@@ -49,4 +49,5 @@
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
 -   ([@GSPP](https://github.com/GSPP))
+-   ([@amos402](https://github.com/amos402))
 
