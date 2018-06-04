@@ -34,6 +34,15 @@ namespace Python.Runtime
             dtype = typeof(MulticastDelegate);
         }
 
+        internal static void Shutdown()
+        {
+            foreach (var item in cache.Values)
+            {
+                Runtime.Py_DecRef(item.pyHandle);
+            }
+            cache.Clear();
+        }
+
         /// <summary>
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
@@ -141,6 +150,8 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
+                // info.members are already useless
+                Runtime.Py_DecRef(item.pyHandle);
             }
 
             // If class has constructors, generate an __doc__ attribute.
@@ -175,6 +186,7 @@ namespace Python.Runtime
                         // TODO: deprecate __overloads__ soon...
                         Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
                         Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
+                        Runtime.Py_DecRef(ctors.pyHandle);
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.

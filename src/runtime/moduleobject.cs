@@ -99,6 +99,7 @@ namespace Python.Runtime
             {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
+                Runtime.Py_DecRef(m.pyHandle);
                 return m;
             }
 
@@ -128,6 +129,7 @@ namespace Python.Runtime
                 {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
+                    Runtime.Py_DecRef(m.pyHandle);
                     return m;
                 }
 
@@ -174,7 +176,10 @@ namespace Python.Runtime
         /// </summary>
         private void StoreAttribute(string name, ManagedType ob)
         {
-            Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
+            if (Runtime.PyDict_SetItemString(dict, name, ob.pyHandle) != 0)
+            {
+                throw new PythonException();
+            }
             cache[name] = ob;
         }
 
@@ -224,6 +229,7 @@ namespace Python.Runtime
                         mi[0] = method;
                         var m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
+                        Runtime.Py_DecRef(m.pyHandle);
                     }
                 }
 
@@ -236,6 +242,7 @@ namespace Python.Runtime
                         string name = property.Name;
                         var p = new ModulePropertyObject(property);
                         StoreAttribute(name, p);
+                        Runtime.Py_DecRef(p.pyHandle);
                     }
                 }
                 type = type.BaseType;

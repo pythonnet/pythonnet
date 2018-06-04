@@ -165,7 +165,7 @@ namespace Python.Runtime
 #endif
 
 #if PYTHON_WITH_PYDEBUG
-        internal const string dllWithPyDebug = "d";
+        internal const string dllWithPyDebug = "_d";
 #else
         internal const string dllWithPyDebug = "";
 #endif
@@ -356,6 +356,8 @@ namespace Python.Runtime
             AssemblyManager.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
+            TypeManager.Shutdown();
+            ClassManager.Shutdown();
             Py_Finalize();
         }
 
@@ -637,6 +639,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyThreadState_Swap(IntPtr key);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern long PyGC_Collect();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyGILState_Ensure();
@@ -1497,15 +1502,11 @@ namespace Python.Runtime
         internal static extern string PyModule_GetFilename(IntPtr module);
 
 #if PYTHON3
-
-#if PYTHON_WITH_PYDEBUG
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyModule_Create2TraceRefs")]
-        internal static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
-#else
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
-#endif
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyModule_Create2TraceRefs(IntPtr module, int apiver);
 
 #endif
 

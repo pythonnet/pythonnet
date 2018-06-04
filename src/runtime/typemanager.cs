@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -21,6 +21,14 @@ namespace Python.Runtime
             cache = new Dictionary<Type, IntPtr>(128);
         }
 
+        internal static void Shutdown()
+        {
+            foreach (var item in cache.Values)
+            {
+                Runtime.Py_DecRef(item);
+            }
+            cache.Clear();
+        }
 
         /// <summary>
         /// Given a managed Type derived from ExtensionType, get the handle to
@@ -352,6 +360,7 @@ namespace Python.Runtime
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.Py_DecRef(mod);
 
             //DebugUtil.DumpType(type);
 
@@ -394,6 +403,7 @@ namespace Python.Runtime
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(tp_dict, "__module__", mod);
+            Runtime.Py_DecRef(mod);
 
             return type;
         }
