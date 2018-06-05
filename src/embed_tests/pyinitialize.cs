@@ -24,8 +24,9 @@ namespace Python.EmbeddingTest
         public static void LoadDefaultArgs()
         {
             using (new PythonEngine())
-            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
             {
+                // PySys_GetObject get a borrowed reference, it just no need for dispose
+                var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv"));
                 Assert.AreNotEqual(0, argv.Length());
             }
         }
@@ -35,8 +36,8 @@ namespace Python.EmbeddingTest
         {
             var args = new[] { "test1", "test2" };
             using (new PythonEngine(args))
-            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
             {
+                var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv"));
                 Assert.AreEqual(args[0], argv[0].ToString());
                 Assert.AreEqual(args[1], argv[1].ToString());
             }
