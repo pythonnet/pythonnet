@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -14,20 +14,28 @@ namespace Python.Runtime
     {
         private static BindingFlags tbFlags;
         private static Dictionary<Type, IntPtr> cache;
+        private static List<IntPtr> rawtypes;
 
         static TypeManager()
         {
             tbFlags = BindingFlags.Public | BindingFlags.Static;
             cache = new Dictionary<Type, IntPtr>(128);
+            rawtypes = new List<IntPtr>();
         }
 
         internal static void Shutdown()
         {
-            foreach (var item in cache.Values)
-            {
-                Runtime.Py_DecRef(item);
-            }
+            // FIXME: Free the types those hasve been incrref
+            //foreach (var item in cache.Values)
+            //{
+            //    Runtime.Py_DecRef(item);
+            //}
             cache.Clear();
+            //foreach (IntPtr tp in rawtypes)
+            //{
+            //    Runtime.Py_DecRef(tp);
+            //}
+            rawtypes.Clear();
         }
 
         /// <summary>
@@ -547,6 +555,11 @@ namespace Python.Runtime
         {
             IntPtr fp = Marshal.ReadIntPtr(from, offset);
             Marshal.WriteIntPtr(to, offset, fp);
+        }
+
+        internal static void AddRawType(IntPtr tp)
+        {
+            rawtypes.Add(tp);
         }
     }
 }
