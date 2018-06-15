@@ -16,6 +16,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added `clr.GetClrType` (#432, #433)
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
+-   Implemented GetDynamicMemberNames() for PyObject to allow dynamic object members to be visible in the debugger (#443)
 
 ### Changed
 
