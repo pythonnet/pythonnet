@@ -51,7 +51,10 @@ namespace Python.Runtime
         public PyInt(int value)
         {
             obj = Runtime.PyInt_FromInt32(value);
-            Runtime.CheckExceptionOccurred();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
 
@@ -78,7 +81,10 @@ namespace Python.Runtime
         public PyInt(long value) : base(IntPtr.Zero)
         {
             obj = Runtime.PyInt_FromInt64(value);
-            Runtime.CheckExceptionOccurred();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
 
@@ -92,7 +98,10 @@ namespace Python.Runtime
         public PyInt(ulong value) : base(IntPtr.Zero)
         {
             obj = Runtime.PyInt_FromInt64((long)value);
-            Runtime.CheckExceptionOccurred();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
 
@@ -151,7 +160,10 @@ namespace Python.Runtime
         public PyInt(string value)
         {
             obj = Runtime.PyInt_FromString(value, IntPtr.Zero, 0);
-            Runtime.CheckExceptionOccurred();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
 

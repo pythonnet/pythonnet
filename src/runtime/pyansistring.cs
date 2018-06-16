@@ -45,7 +45,10 @@ namespace Python.Runtime
         public PyAnsiString(string s)
         {
             obj = Runtime.PyString_FromString(s);
-            Runtime.CheckExceptionOccurred();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
 

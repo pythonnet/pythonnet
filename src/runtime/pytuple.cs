@@ -51,7 +51,10 @@ namespace Python.Runtime
         public PyTuple()
         {
             obj = Runtime.PyTuple_New(0);
-            Runtime.CheckExceptionOccurred();
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
         }
 
 
@@ -68,12 +71,22 @@ namespace Python.Runtime
         {
             int count = items.Length;
             obj = Runtime.PyTuple_New(count);
-            for (var i = 0; i < count; i++)
+            if (obj == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            for (int i = 0; i < count; i++)
             {
                 IntPtr ptr = items[i].obj;
                 Runtime.XIncref(ptr);
-                Runtime.PyTuple_SetItem(obj, i, ptr);
-                Runtime.CheckExceptionOccurred();
+                if (Runtime.PyTuple_SetItem(obj, i, ptr) != 0)
+                {
+                    for (int j = i; j >= 0; j--)
+                    {
+                        Runtime.XDecref(items[j].obj);
+                    }
+                    throw new PythonException();
+                }
             }
         }
 
@@ -101,7 +114,10 @@ namespace Python.Runtime
         public static PyTuple AsTuple(PyObject value)
         {
             IntPtr op = Runtime.PySequence_Tuple(value.obj);
-            Runtime.CheckExceptionOccurred();
+            if (op == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
             return new PyTuple(op);
         }
     }
