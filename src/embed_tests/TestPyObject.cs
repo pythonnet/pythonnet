@@ -28,20 +28,34 @@ namespace Python.EmbeddingTest
                 "__class__",
                 "__delattr__",
                 "__dict__",
+#if PYTHON3
                 "__dir__",
+#endif
                 "__doc__",
+#if PYTHON3
                 "__eq__",
+#endif
                 "__format__",
+#if PYTHON3
                 "__ge__",
+#endif
                 "__getattribute__",
+#if PYTHON3
                 "__gt__",
+#endif
                 "__hash__",
                 "__init__",
+#if PYTHON36
                 "__init_subclass__",
+#endif
+#if PYTHON3
                 "__le__",
                 "__lt__",
+#endif
                 "__module__",
+#if PYTHON3
                 "__ne__",
+#endif
                 "__new__",
                 "__reduce__",
                 "__reduce_ex__",
@@ -60,7 +74,7 @@ namespace Python.EmbeddingTest
             PyDict locals = new PyDict();
 
             PythonEngine.Exec(@"
-class MemberNamesTest:
+class MemberNamesTest(object):
     def __init__(self):
         self.member1 = 123
         self.member2 = 'Test string'
