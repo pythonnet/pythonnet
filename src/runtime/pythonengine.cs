@@ -184,11 +184,20 @@ namespace Python.Runtime
                 // Load the clr.py resource into the clr module
                 IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
                 IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
+                if (clr_dict == IntPtr.Zero)
+                {
+                    throw new PythonException();
+                }
 
                 var locals = new PyDict();
+                IntPtr module = IntPtr.Zero;
                 try
                 {
-                    IntPtr module = Runtime.PyImport_AddModule("clr._extras");
+                    module = Runtime.PyImport_AddModule("clr._extras");
+                    if (module == IntPtr.Zero)
+                    {
+                        throw new PythonException();
+                    }
                     IntPtr module_globals = Runtime.PyModule_GetDict(module);
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
                     Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
@@ -205,7 +214,8 @@ namespace Python.Runtime
                     // add the imported module to the clr module, and copy the API functions
                     // and decorators into the main clr module.
                     Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
-                    foreach (PyObject key in locals.Keys())
+                    using (PyObject keys = locals.Keys())
+                    foreach (PyObject key in keys)
                     {
                         if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
                         {
@@ -219,6 +229,10 @@ namespace Python.Runtime
                 finally
                 {
                     locals.Dispose();
+                    if (clr != IntPtr.Zero)
+                    {
+                      Runtime.Py_DecRef(clr);
+                    }
                 }
             }
         }
@@ -496,7 +510,7 @@ namespace Python.Runtime
                     borrowedGlobals = false;
                 }
             }
-            
+
             if (locals == null)
             {
                 locals = globals;
@@ -552,7 +566,7 @@ namespace Python.Runtime
             var scope = PyScopeManager.Global.Create(name);
             return scope;
         }
-        
+
         public class GILState : IDisposable
         {
             private IntPtr state;
@@ -649,7 +663,7 @@ namespace Python.Runtime
 
         public static void With(PyObject obj, Action<dynamic> Body)
         {
-            // Behavior described here: 
+            // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
             IntPtr type = Runtime.PyNone;

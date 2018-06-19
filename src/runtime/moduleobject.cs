@@ -335,6 +335,15 @@ namespace Python.Runtime
             }
         }
 
+        internal static void ResetFlags()
+        {
+            hacked = false;
+            interactive_preload = true;
+            preload = false;
+            _SuppressDocs = false;
+            _SuppressOverloads = false;
+        }
+
         /// <summary>
         /// The initializing of the preload hook has to happen as late as
         /// possible since sys.ps1 is created after the CLR module is
@@ -423,7 +432,7 @@ namespace Python.Runtime
         /// clr.GetClrType(IComparable) gives you the Type for IComparable,
         /// that you can e.g. perform reflection on. Similar to typeof(IComparable) in C#
         /// or clr.GetClrType(IComparable) in IronPython.
-        /// 
+        ///
         /// </summary>
         /// <param name="type"></param>
         /// <returns>The Type object</returns>

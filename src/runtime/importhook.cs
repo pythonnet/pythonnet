@@ -39,11 +39,25 @@ namespace Python.Runtime
             IntPtr mod = Runtime.IsPython3
                 ? Runtime.PyImport_ImportModule("builtins")
                 : Runtime.PyDict_GetItemString(dict, "__builtin__");
+            if (mod == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
 
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
+            if (py_import == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
             Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
-            Runtime.XDecref(hook.ptr);
+
+            if (Runtime.IsPython3)
+            {
+                // On Python3, PyImport_ImportModule got a new reference, so we need to decrease it.
+                Runtime.Py_DecRef(mod);
+            }
 
             root = new CLRModule();
 
@@ -75,8 +89,18 @@ namespace Python.Runtime
             if (Runtime.Py_IsInitialized() != 0)
             {
                 Runtime.XDecref(py_clr_module);
+                py_clr_module = IntPtr.Zero;
+
                 Runtime.XDecref(root.pyHandle);
+                root = null;
+
+                hook.Dispose();
+                hook = null;
+
                 Runtime.XDecref(py_import);
+                py_import = IntPtr.Zero;
+
+                CLRModule.ResetFlags();
             }
         }
 
@@ -142,7 +166,7 @@ namespace Python.Runtime
                     }
                 }
             }
-            Runtime.XIncref(py_clr_module);
+            Runtime.Py_IncRef(py_clr_module);
             return py_clr_module;
         }
 
