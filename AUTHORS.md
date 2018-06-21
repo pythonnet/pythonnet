@@ -28,6 +28,7 @@
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
 -   John Burnett ([@johnburnett](https://github.com/johnburnett))
+-   John Wilkes ([@jbw3](https://github.com/jbw3))
 -   Luke Stratman ([@lstratman](https://github.com/lstratman))
 -   Konstantin Posudevskiy ([@konstantin-posudevskiy](https://github.com/konstantin-posudevskiy))
 -   Matthias Dittrich ([@matthid](https://github.com/matthid))
@@ -48,4 +49,5 @@
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
+-   ([@GSPP](https://github.com/GSPP))
 

@@ -17,6 +17,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Allowed passing `None` for nullable args (#460)
 -   Added keyword arguments based on C# syntax for calling CPython methods (#461)
 -   Catches exceptions thrown in C# iterators (yield returns) and rethrows them in python (#475)
+-   Implemented GetDynamicMemberNames() for PyObject to allow dynamic object members to be visible in the debugger (#443)
 
 ### Changed
 
@@ -32,6 +33,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed `clr.GetClrType` when iterating over `System` members (#607) 
 -   Fixed `LockRecursionException` when loading assemblies (#627)
 -   Fixed errors breaking .NET Remoting on method invoke (#276)
+-   Fixed PyObject.GetHashCode (#676)
 
 
 ## [2.3.0][] - 2017-03-11
