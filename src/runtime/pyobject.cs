@@ -17,6 +17,7 @@ namespace Python.Runtime
     {
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
+        private bool _finalized = false;
 
         /// <summary>
         /// PyObject Constructor
@@ -41,14 +42,15 @@ namespace Python.Runtime
 
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
-
         ~PyObject()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            if (_finalized || disposed)
+            {
+                return;
+            }
+            // Prevent a infinity loop by calling GC.WaitForPendingFinalizers
+            _finalized = true;
+            Finalizer.Instance.AddFinalizedObject(this);
         }
 
 
