@@ -181,10 +181,12 @@ namespace Python.Runtime
        too "special" for this to work. It would be more work, so for now
        the 80/20 rule applies :) */
 
-    public class Dispatcher
+    public class Dispatcher : IDisposable
     {
         public IntPtr target;
         public Type dtype;
+        private bool _disposed = false;
+        private bool _finalized = false;
 
         public Dispatcher(IntPtr target, Type dtype)
         {
@@ -195,18 +197,25 @@ namespace Python.Runtime
 
         ~Dispatcher()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            // Note: the managed GC thread can run and try to free one of
-            // these *after* the Python runtime has been finalized!
-            if (Runtime.Py_IsInitialized() > 0)
+            if (_finalized || _disposed)
             {
-                IntPtr gs = PythonEngine.AcquireLock();
-                Runtime.XDecref(target);
-                PythonEngine.ReleaseLock(gs);
+                return;
             }
+            _finalized = true;
+            Finalizer.Instance.AddFinalizedObject(this);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
+            Runtime.XDecref(target);
+            target = IntPtr.Zero;
+            dtype = null;
+            GC.SuppressFinalize(this);
         }
 
         public object Dispatch(ArrayList args)

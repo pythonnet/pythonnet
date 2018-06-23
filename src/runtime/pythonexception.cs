@@ -6,7 +6,7 @@ namespace Python.Runtime
     /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
-    public class PythonException : System.Exception
+    public class PythonException : System.Exception, IDisposable
     {
         private IntPtr _pyType = IntPtr.Zero;
         private IntPtr _pyValue = IntPtr.Zero;
@@ -15,6 +15,7 @@ namespace Python.Runtime
         private string _message = "";
         private string _pythonTypeName = "";
         private bool disposed = false;
+        private bool _finalized = false;
 
         public PythonException()
         {
@@ -45,11 +46,13 @@ namespace Python.Runtime
             }
             if (_pyTB != IntPtr.Zero)
             {
-                PyObject tb_module = PythonEngine.ImportModule("traceback");
-                Runtime.XIncref(_pyTB);
-                using (var pyTB = new PyObject(_pyTB))
+                using (PyObject tb_module = PythonEngine.ImportModule("traceback"))
                 {
-                    _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
+                    Runtime.XIncref(_pyTB);
+                    using (var pyTB = new PyObject(_pyTB))
+                    {
+                        _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
+                    }
                 }
             }
             PythonEngine.ReleaseLock(gs);
@@ -60,11 +63,12 @@ namespace Python.Runtime
 
         ~PythonException()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            if (_finalized || disposed)
+            {
+                return;
+            }
+            _finalized = true;
+            Finalizer.Instance.AddFinalizedObject(this);
         }
 
         /// <summary>
