@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using Python.Runtime;
 using System;
+using System.Linq;
 using System.Threading;
 
 namespace Python.EmbeddingTest
@@ -8,6 +9,7 @@ namespace Python.EmbeddingTest
     public class TestFinalizer
     {
         private string _PYTHONMALLOC = string.Empty;
+        private int _oldThreshold;
 
         [SetUp]
         public void SetUp()
@@ -21,6 +23,7 @@ namespace Python.EmbeddingTest
                 _PYTHONMALLOC = string.Empty;
             }
             Environment.SetEnvironmentVariable("PYTHONMALLOC", "malloc");
+            _oldThreshold = Finalizer.Instance.Threshold;
             PythonEngine.Initialize();
             Exceptions.Clear();
         }
@@ -28,6 +31,7 @@ namespace Python.EmbeddingTest
         [TearDown]
         public void TearDown()
         {
+            Finalizer.Instance.Threshold = _oldThreshold;
             PythonEngine.Shutdown();
             if (string.IsNullOrEmpty(_PYTHONMALLOC))
             {
@@ -56,41 +60,42 @@ namespace Python.EmbeddingTest
                 Assert.GreaterOrEqual(e.ObjectCount, 1);
                 called = true;
             };
+
+            WeakReference shortWeak;
+            WeakReference longWeak;
+            {
+                MakeAGarbage(out shortWeak, out longWeak);
+            }
+            FullGCCollect();
+            // The object has been resurrected
+            Assert.IsFalse(shortWeak.IsAlive);
+            Assert.IsTrue(longWeak.IsAlive);
+
+            {
+                var garbage = Finalizer.Instance.GetCollectedObjects();
+                Assert.NotZero(garbage.Count);
+                Assert.IsTrue(garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)));
+            }
+
+            Assert.IsFalse(called);
             Finalizer.Instance.CollectOnce += handler;
             try
             {
-                FullGCCollect();
-                PyLong obj = new PyLong(1024);
-
-                WeakReference shortWeak = new WeakReference(obj);
-                WeakReference longWeak = new WeakReference(obj, true);
-                obj = null;
-                FullGCCollect();
-                // The object has been resurrected
-                // FIXME: Sometimes the shortWeak would get alive 
-                //Assert.IsFalse(shortWeak.IsAlive);
-                Assert.IsTrue(longWeak.IsAlive);
-
-                Assert.IsFalse(called);
-                var garbage = Finalizer.Instance.GetCollectedObjects();
-                Assert.NotZero(garbage.Count);
-                // FIXME: If make some query for garbage,
-                // the above case will failed Assert.IsFalse(shortWeak.IsAlive)
-                //Assert.IsTrue(garbage.All(T => T.IsAlive));
-
                 Finalizer.Instance.CallPendingFinalizers();
-                Assert.IsTrue(called);
-
-                FullGCCollect();
-                //Assert.IsFalse(garbage.All(T => T.IsAlive));
-
-                Assert.IsNull(longWeak.Target);
             }
             finally
             {
                 Finalizer.Instance.CollectOnce -= handler;
             }
+            Assert.IsTrue(called);
+        }
 
+        private static void MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
+        {
+            PyLong obj = new PyLong(1024);
+            shortWeak = new WeakReference(obj);
+            longWeak = new WeakReference(obj, true);
+            obj = null;
         }
 
         private static long CompareWithFinalizerOn(PyObject pyCollect, bool enbale)
@@ -101,7 +106,7 @@ namespace Python.EmbeddingTest
             FullGCCollect();
             FullGCCollect();
             pyCollect.Invoke();
-            Finalizer.Instance.CallPendingFinalizers();
+            Finalizer.Instance.Collect();
             Finalizer.Instance.Enable = enbale;
 
             // Estimate unmanaged memory size
@@ -116,7 +121,7 @@ namespace Python.EmbeddingTest
             pyCollect.Invoke();
             if (enbale)
             {
-                Finalizer.Instance.CallPendingFinalizers();
+                Finalizer.Instance.Collect();
             }
 
             FullGCCollect();
