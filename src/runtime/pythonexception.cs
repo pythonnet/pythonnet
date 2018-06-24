@@ -136,7 +136,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string StackTrace
         {
-            get { return _tb; }
+            get { return _tb + base.StackTrace; }
         }
 
         /// <summary>
