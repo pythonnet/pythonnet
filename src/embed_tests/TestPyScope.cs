@@ -293,24 +293,27 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestVariables()
         {
-            (ps.Variables() as dynamic)["ee"] = new PyInt(200);
-            var a0 = ps.Get<int>("ee");
-            Assert.AreEqual(200, a0);
+            using (Py.GIL())
+            { 
+                (ps.Variables() as dynamic)["ee"] = new PyInt(200);
+                var a0 = ps.Get<int>("ee");
+                Assert.AreEqual(200, a0);
 
-            ps.Exec("locals()['ee'] = 210");
-            var a1 = ps.Get<int>("ee");
-            Assert.AreEqual(210, a1);
+                ps.Exec("locals()['ee'] = 210");
+                var a1 = ps.Get<int>("ee");
+                Assert.AreEqual(210, a1);
 
-            ps.Exec("globals()['ee'] = 220");
-            var a2 = ps.Get<int>("ee");
-            Assert.AreEqual(220, a2);
+                ps.Exec("globals()['ee'] = 220");
+                var a2 = ps.Get<int>("ee");
+                Assert.AreEqual(220, a2);
 
-            using (var item = ps.Variables())
-            {
-                item["ee"] = new PyInt(230);
+                using (var item = ps.Variables())
+                {
+                    item["ee"] = new PyInt(230);
+                }
+                var a3 = ps.Get<int>("ee");
+                Assert.AreEqual(230, a3);
             }
-            var a3 = ps.Get<int>("ee");
-            Assert.AreEqual(230, a3);
         }
 
         /// <summary>
@@ -324,49 +327,55 @@ namespace Python.EmbeddingTest
             //should be removed.
             dynamic _ps = ps;
             var ts = PythonEngine.BeginAllowThreads();
-            using (Py.GIL())
-            {
-                _ps.res = 0;
-                _ps.bb = 100;
-                _ps.th_cnt = 0;
-                //add function to the scope 
-                //can be call many times, more efficient than ast 
-                ps.Exec(
-                    "def update():\n" +
-                    "    global res, th_cnt\n" +
-                    "    res += bb + 1\n" +
-                    "    th_cnt += 1\n"
-                );
-            }
-            int th_cnt = 3;
-            for (int i =0; i< th_cnt; i++)
-            {
-                System.Threading.Thread th = new System.Threading.Thread(()=>
-                {
-                    using (Py.GIL())
-                    {
-                        //ps.GetVariable<dynamic>("update")(); //call the scope function dynamicly
-                        _ps.update();
-                    }
-                });
-                th.Start();
-            }
-            //equivalent to Thread.Join, make the main thread join the GIL competition
-            int cnt = 0;
-            while(cnt != th_cnt)
+            try
             {
                 using (Py.GIL())
                 {
-                    cnt = ps.Get<int>("th_cnt");
+                    _ps.res = 0;
+                    _ps.bb = 100;
+                    _ps.th_cnt = 0;
+                    //add function to the scope 
+                    //can be call many times, more efficient than ast 
+                    ps.Exec(
+                        "def update():\n" +
+                        "    global res, th_cnt\n" +
+                        "    res += bb + 1\n" +
+                        "    th_cnt += 1\n"
+                    );
                 }
-                System.Threading.Thread.Sleep(10);
+                int th_cnt = 3;
+                for (int i = 0; i < th_cnt; i++)
+                {
+                    System.Threading.Thread th = new System.Threading.Thread(() =>
+                    {
+                        using (Py.GIL())
+                        {
+                            //ps.GetVariable<dynamic>("update")(); //call the scope function dynamicly
+                            _ps.update();
+                        }
+                    });
+                    th.Start();
+                }
+                //equivalent to Thread.Join, make the main thread join the GIL competition
+                int cnt = 0;
+                while (cnt != th_cnt)
+                {
+                    using (Py.GIL())
+                    {
+                        cnt = ps.Get<int>("th_cnt");
+                    }
+                    System.Threading.Thread.Sleep(10);
+                }
+                using (Py.GIL())
+                {
+                    var result = ps.Get<int>("res");
+                    Assert.AreEqual(101 * th_cnt, result);
+                }
             }
-            using (Py.GIL())
+            finally
             {
-                var result = ps.Get<int>("res");
-                Assert.AreEqual(101* th_cnt, result);
+                PythonEngine.EndAllowThreads(ts);
             }
-            PythonEngine.EndAllowThreads(ts);
         }
     }
 }
