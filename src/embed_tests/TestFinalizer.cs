@@ -20,7 +20,7 @@ namespace Python.EmbeddingTest
             }
             catch (ArgumentNullException)
             {
-                _PYTHONMALLOC = string.Empty;
+                _PYTHONMALLOC = null;
             }
             Environment.SetEnvironmentVariable("PYTHONMALLOC", "malloc");
             _oldThreshold = Finalizer.Instance.Threshold;
@@ -33,16 +33,12 @@ namespace Python.EmbeddingTest
         {
             Finalizer.Instance.Threshold = _oldThreshold;
             PythonEngine.Shutdown();
-            if (string.IsNullOrEmpty(_PYTHONMALLOC))
-            {
-                Environment.SetEnvironmentVariable("PYTHONMALLOC", _PYTHONMALLOC);
-            }
+            Environment.SetEnvironmentVariable("PYTHONMALLOC", _PYTHONMALLOC);
         }
 
         private static void FullGCCollect()
         {
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
-            GC.WaitForFullGCComplete();
             GC.WaitForPendingFinalizers();
         }
 
