@@ -19,8 +19,10 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Catches exceptions thrown in C# iterators (yield returns) and rethrows them in python ([#475][i475])([#693][p693])
 -   Implemented GetDynamicMemberNames() for PyObject to allow dynamic object members to be visible in the debugger ([#443][i443])([#690][p690])
 -   Incorporated reference-style links to issues and pull requests in the CHANGELOG ([#608][i608])
+-   Added PyObject finalizer support, Python objects referred by C# can be auto collect now.
 
 ### Changed
+-   PythonException included C# call stack
 
 ### Fixed
 
