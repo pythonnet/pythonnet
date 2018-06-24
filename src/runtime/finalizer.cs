@@ -22,7 +22,8 @@ namespace Python.Runtime
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate int PedingCall(IntPtr arg);
-        private PedingCall _collectAction;
+        private readonly PedingCall _collectAction;
+
         private bool _pending = false;
         private readonly object _collectingLock = new object();
         public int Threshold { get; set; }
@@ -32,7 +33,7 @@ namespace Python.Runtime
         {
             Enable = true;
             Threshold = 200;
-            _collectAction = OnCollect;
+            _collectAction = OnPendingCollect;
         }
 
         public void CallPendingFinalizers()
@@ -42,6 +43,14 @@ namespace Python.Runtime
                 throw new Exception("PendingCall should execute in main Python thread");
             }
             Runtime.Py_MakePendingCalls();
+        }
+
+        public void Collect()
+        {
+            using (var gilState = new Py.GILState())
+            {
+                DisposeAll();
+            }
         }
 
         public List<WeakReference> GetCollectedObjects()
@@ -65,7 +74,7 @@ namespace Python.Runtime
             GC.ReRegisterForFinalize(obj);
             if (_objQueue.Count >= Threshold)
             {
-                Collect();
+                AddPendingCollect();
             }
         }
 
@@ -76,7 +85,7 @@ namespace Python.Runtime
             Runtime.PyErr_Clear();
         }
 
-        private void Collect()
+        private void AddPendingCollect()
         {
             lock (_collectingLock)
             {
@@ -94,19 +103,19 @@ namespace Python.Runtime
             }
         }
 
-        private int OnCollect(IntPtr arg)
+        private int OnPendingCollect(IntPtr arg)
         {
-            CollectOnce?.Invoke(this, new CollectArgs()
-            {
-                ObjectCount = _objQueue.Count
-            });
-            DisposeAll();
+            Collect();
             _pending = false;
             return 0;
         }
 
         private void DisposeAll()
         {
+            CollectOnce?.Invoke(this, new CollectArgs()
+            {
+                ObjectCount = _objQueue.Count
+            });
             IDisposable obj;
             while (_objQueue.TryDequeue(out obj))
             {
