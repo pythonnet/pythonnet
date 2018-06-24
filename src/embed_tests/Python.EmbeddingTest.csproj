@@ -87,6 +87,7 @@
     <Compile Include="TestConverter.cs" />
     <Compile Include="TestCustomMarshal.cs" />
     <Compile Include="TestExample.cs" />
+    <Compile Include="TestFinalizer.cs" />
     <Compile Include="TestPyAnsiString.cs" />
     <Compile Include="TestPyFloat.cs" />
     <Compile Include="TestPyInt.cs" />
