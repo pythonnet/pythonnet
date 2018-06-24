@@ -22,6 +22,7 @@ namespace Python.EmbeddingTest
             }
             Environment.SetEnvironmentVariable("PYTHONMALLOC", "malloc");
             PythonEngine.Initialize();
+            Exceptions.Clear();
         }
 
         [TearDown]
@@ -56,34 +57,40 @@ namespace Python.EmbeddingTest
                 called = true;
             };
             Finalizer.Instance.CollectOnce += handler;
-            FullGCCollect();
-            PyLong obj = new PyLong(1024);
+            try
+            {
+                FullGCCollect();
+                PyLong obj = new PyLong(1024);
 
-            WeakReference shortWeak = new WeakReference(obj);
-            WeakReference longWeak = new WeakReference(obj, true);
-            obj = null;
-            FullGCCollect();
-            // The object has been resurrected
-            // FIXME: Sometimes the shortWeak would get alive 
-            //Assert.IsFalse(shortWeak.IsAlive);
-            Assert.IsTrue(longWeak.IsAlive);
+                WeakReference shortWeak = new WeakReference(obj);
+                WeakReference longWeak = new WeakReference(obj, true);
+                obj = null;
+                FullGCCollect();
+                // The object has been resurrected
+                // FIXME: Sometimes the shortWeak would get alive 
+                //Assert.IsFalse(shortWeak.IsAlive);
+                Assert.IsTrue(longWeak.IsAlive);
 
-            Assert.IsFalse(called);
-            var garbage = Finalizer.Instance.GetCollectedObjects();
-            Assert.NotZero(garbage.Count);
-            // FIXME: If make some query for garbage,
-            // the above case will failed Assert.IsFalse(shortWeak.IsAlive)
-            //Assert.IsTrue(garbage.All(T => T.IsAlive));
+                Assert.IsFalse(called);
+                var garbage = Finalizer.Instance.GetCollectedObjects();
+                Assert.NotZero(garbage.Count);
+                // FIXME: If make some query for garbage,
+                // the above case will failed Assert.IsFalse(shortWeak.IsAlive)
+                //Assert.IsTrue(garbage.All(T => T.IsAlive));
 
-            Finalizer.Instance.CallPendingFinalizers();
-            Assert.IsTrue(called);
+                Finalizer.Instance.CallPendingFinalizers();
+                Assert.IsTrue(called);
 
-            FullGCCollect();
-            //Assert.IsFalse(garbage.All(T => T.IsAlive));
+                FullGCCollect();
+                //Assert.IsFalse(garbage.All(T => T.IsAlive));
 
-            Assert.IsNull(longWeak.Target);
+                Assert.IsNull(longWeak.Target);
+            }
+            finally
+            {
+                Finalizer.Instance.CollectOnce -= handler;
+            }
 
-            Finalizer.Instance.CollectOnce -= handler;
         }
 
         private static long CompareWithFinalizerOn(PyObject pyCollect, bool enbale)
