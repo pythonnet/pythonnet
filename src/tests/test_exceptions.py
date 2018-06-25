@@ -362,6 +362,11 @@ def test_iteration_exception():
 
     assert exc == exception
 
+    # after exception is thrown iterator is no longer valid
+    with pytest.raises(StopIteration):
+        next(val)
+
+
 def test_iteration_innerexception():
     from Python.Test import ExceptionTest
     from System import OverflowException
@@ -377,3 +382,7 @@ def test_iteration_innerexception():
     exc = cm.value
 
     assert exc == exception.InnerException
+
+    # after exception is thrown iterator is no longer valid
+    with pytest.raises(StopIteration):
+        next(val)
