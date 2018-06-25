@@ -21,9 +21,6 @@ namespace Python.Runtime
         {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
-            Runtime.XIncref(_pyType);
-            Runtime.XIncref(_pyValue);
-            Runtime.XIncref(_pyTB);
             if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;

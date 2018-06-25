@@ -105,7 +105,7 @@ namespace Python.Runtime
 
         private int OnPendingCollect(IntPtr arg)
         {
-            Collect();
+            DisposeAll();
             _pending = false;
             return 0;
         }
