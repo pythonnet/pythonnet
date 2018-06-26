@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Python.Test
 {
@@ -52,6 +54,13 @@ namespace Python.Test
         public static bool ThrowException()
         {
             throw new OverflowException("error");
+        }
+
+        public static IEnumerable<int> ThrowExceptionInIterator(Exception e)
+        {
+            yield return 1;
+            yield return 2;
+            throw e;
         }
 
         public static void ThrowChainedExceptions()
