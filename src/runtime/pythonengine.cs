@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,11 +7,18 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
+    public class ResolveStreamResouceArgs : EventArgs
+    {
+        public string Name { get; set; }
+    }
+
     /// <summary>
     /// This class provides the public interface of the Python runtime.
     /// </summary>
     public class PythonEngine : IDisposable
     {
+        public static event Func<ResolveStreamResouceArgs, Stream> StreamResouceResolve;
+
         private static DelegateManager delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
@@ -202,8 +209,7 @@ namespace Python.Runtime
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
                     Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
-                    Assembly assembly = Assembly.GetExecutingAssembly();
-                    using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
+                    using (Stream stream = LoadResource("clr.py"))
                     using (var reader = new StreamReader(stream))
                     {
                         // add the contents of clr.py to the module
@@ -533,6 +539,26 @@ namespace Python.Runtime
                     Runtime.XDecref(globals.Value);
                 }
             }
+        }
+
+        private static Stream LoadResource(string name)
+        {
+            var args = new ResolveStreamResouceArgs()
+            {
+                Name = name
+            };
+            Stream stream;
+            foreach (Func<ResolveStreamResouceArgs, Stream> resolver in StreamResouceResolve.GetInvocationList())
+            {
+                stream = resolver(args);
+                if (stream != null)
+                {
+                    return stream;
+                }
+            }
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            stream = assembly.GetManifestResourceStream("clr.py");
+            return stream;
         }
     }
 
