@@ -146,6 +146,19 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// On Domain Unload Event Handler
+        /// </summary>
+        /// <remarks>
+        /// Performs necessary tasks (shutdown) when the current app domain
+        /// gets unloaded, leaving the engine, the runtime and the Python
+        /// interpreter in consistent states
+        /// </remarks>
+        private static void OnDomainUnload(object sender, EventArgs e)
+        {
+            Shutdown();
+        }
+
+        /// <summary>
         /// Initialize Method
         /// </summary>
         /// <remarks>
@@ -158,6 +171,9 @@ namespace Python.Runtime
         {
             if (!initialized)
             {
+                // Make sure we shut down properly on app domain reload
+                System.AppDomain.CurrentDomain.DomainUnload += new EventHandler(OnDomainUnload);
+
                 // Creating the delegateManager MUST happen before Runtime.Initialize
                 // is called. If it happens afterwards, DelegateManager's CodeGenerator
                 // throws an exception in its ctor.  This exception is eaten somehow
