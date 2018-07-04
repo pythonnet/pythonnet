@@ -548,12 +548,15 @@ namespace Python.Runtime
                 Name = name
             };
             Stream stream;
-            foreach (Func<ResolveStreamResouceArgs, Stream> resolver in StreamResouceResolve.GetInvocationList())
+            if (StreamResouceResolve != null)
             {
-                stream = resolver(args);
-                if (stream != null)
+                foreach (Func<ResolveStreamResouceArgs, Stream> resolver in StreamResouceResolve.GetInvocationList())
                 {
-                    return stream;
+                    stream = resolver(args);
+                    if (stream != null)
+                    {
+                        return stream;
+                    }
                 }
             }
             Assembly assembly = Assembly.GetExecutingAssembly();
