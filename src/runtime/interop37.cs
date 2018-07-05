@@ -2,7 +2,7 @@
 // DO NOT MODIFIY BY HAND.
 
 
-#if PYTHON36
+#if PYTHON37
 using System;
 using System.Collections;
 using System.Collections.Specialized;
