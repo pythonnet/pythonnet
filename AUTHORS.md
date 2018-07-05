@@ -44,11 +44,11 @@
 -   Xavier Dupré ([@sdpython](https://github.com/sdpython))
 -   Zane Purvis ([@zanedp](https://github.com/zanedp))
 -   ([@bltribble](https://github.com/bltribble))
+-   ([@civilx64](https://github.com/civilx64))
+-   ([@GSPP](https://github.com/GSPP))
 -   ([@omnicognate](https://github.com/omnicognate))
 -   ([@rico-chet](https://github.com/rico-chet))
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
--   ([@GSPP](https://github.com/GSPP))
 -   ([@amos402](https://github.com/amos402))
-
