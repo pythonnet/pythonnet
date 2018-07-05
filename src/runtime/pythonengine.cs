@@ -310,6 +310,9 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                // Make sure we shut down properly on app domain reload
+                System.AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+
                 PyScopeManager.Global.Clear();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
