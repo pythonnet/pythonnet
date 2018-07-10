@@ -80,6 +80,11 @@ namespace Python.Runtime
 
         internal static void Shutdown()
         {
+            if (Runtime.Py_IsInitialized() == 0)
+            {
+                Instance._objQueue = new ConcurrentQueue<IDisposable>();
+                return;
+            }
             Instance.DisposeAll();
             Instance.CallPendingFinalizers();
             Runtime.PyErr_Clear();
