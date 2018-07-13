@@ -65,18 +65,18 @@ namespace Python.Runtime
             timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "timedelta");
             if (timeSpanCtor == null) throw new PythonException();
 
-            IntPtr tzInfoMod = PythonEngine.ModuleFromString("custom_tzinfo",
-                "from datetime import timedelta, tzinfo\n" +
-                "class GMT(tzinfo):\n" +
-                "    def __init__(self, hours, minutes):\n" +
-                "        self.hours = hours\n" +
-                "        self.minutes = minutes\n" +
-                "    def utcoffset(self, dt):\n" +
-                "        return timedelta(hours=self.hours, minutes=self.minutes)\n" +
-                "    def tzname(self, dt):\n" +
-                "        return \"GMT {0:00}:{1:00}\".format(self.hours, self.minutes)\n" +
-                "    def dst (self, dt):\n" +
-                "        return timedelta(0)\n").Handle;
+            IntPtr tzInfoMod = PythonEngine.ModuleFromString("custom_tzinfo", @"
+from datetime import timedelta, tzinfo
+class GMT(tzinfo):
+    def __init__(self, hours, minutes):
+        self.hours = hours
+        self.minutes = minutes
+    def utcoffset(self, dt):
+        return timedelta(hours=self.hours, minutes=self.minutes)
+    def tzname(self, dt):
+        return f'GMT {self.hours:00}:{self.minutes:00}'
+    def dst (self, dt):
+        return timedelta(0)").Handle;
 
             tzInfoCtor = Runtime.PyObject_GetAttrString(tzInfoMod, "GMT");
             if (tzInfoCtor == null) throw new PythonException();
@@ -951,7 +951,7 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     Runtime.XDecref(op);
-                    result = dt;
+                    result = sdt.EndsWith("+00:00") ? dt.ToUniversalTime() : dt;
                     return true;
             }
 
