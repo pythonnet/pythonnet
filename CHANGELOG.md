@@ -92,6 +92,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed `Python.Runtime.dll.config` on macOS ([#120][i120])
 -   Fixed crash on `PythonEngine.Version` ([#413][i413])
 -   Fixed `PythonEngine.PythonPath` issues ([#179][i179])([#414][i414])([#415][p415])
+-   Fixed missing information on 'No method matches given arguments' by adding the method name
 
 ### Removed
 
