@@ -851,7 +851,7 @@ def test_getting_generic_method_binding_does_not_leak_memory():
     import psutil, os, gc, clr
 
     process = psutil.Process(os.getpid())
-    processBytesBeforeCall = process.memory_info().private
+    processBytesBeforeCall = process.memory_info().rss
     print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
 
     iterations = 500
@@ -861,7 +861,7 @@ def test_getting_generic_method_binding_does_not_leak_memory():
     gc.collect()
     clr.System.GC.Collect()
 
-    processBytesAfterCall = process.memory_info().private
+    processBytesAfterCall = process.memory_info().rss
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
     processBytesDelta = processBytesAfterCall - processBytesBeforeCall
     print("Memory delta: " + str(processBytesDelta))
@@ -892,7 +892,7 @@ def test_getting_overloaded_method_binding_does_not_leak_memory():
     import psutil, os, gc, clr
 
     process = psutil.Process(os.getpid())
-    processBytesBeforeCall = process.memory_info().private
+    processBytesBeforeCall = process.memory_info().rss
     print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
 
     iterations = 500
@@ -902,7 +902,7 @@ def test_getting_overloaded_method_binding_does_not_leak_memory():
     gc.collect()
     clr.System.GC.Collect()
 
-    processBytesAfterCall = process.memory_info().private
+    processBytesAfterCall = process.memory_info().rss
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
     processBytesDelta = processBytesAfterCall - processBytesBeforeCall
     print("Memory delta: " + str(processBytesDelta))
@@ -933,7 +933,7 @@ def test_getting_method_overloads_binding_does_not_leak_memory():
     import psutil, os, gc, clr
 
     process = psutil.Process(os.getpid())
-    processBytesBeforeCall = process.memory_info().private
+    processBytesBeforeCall = process.memory_info().rss
     print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
 
     iterations = 500
@@ -943,7 +943,7 @@ def test_getting_method_overloads_binding_does_not_leak_memory():
     gc.collect()
     clr.System.GC.Collect()
 
-    processBytesAfterCall = process.memory_info().private
+    processBytesAfterCall = process.memory_info().rss
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
     processBytesDelta = processBytesAfterCall - processBytesBeforeCall
     print("Memory delta: " + str(processBytesDelta))
