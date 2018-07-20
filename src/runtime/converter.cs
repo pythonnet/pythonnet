@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.ComponentModel;
@@ -56,13 +54,13 @@ namespace Python.Runtime
 
             IntPtr dateTimeMod = Runtime.PyImport_ImportModule("datetime");
             if (dateTimeMod == null) throw new PythonException();
-            
+
             decimalCtor = Runtime.PyObject_GetAttrString(decimalMod, "Decimal");
             if (decimalCtor == null) throw new PythonException();
-            
+
             dateTimeCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "datetime");
             if (dateTimeCtor == null) throw new PythonException();
-            
+
             timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "timedelta");
             if (timeSpanCtor == null) throw new PythonException();
 
@@ -225,7 +223,10 @@ class GMT(tzinfo):
 
                         IntPtr timeSpanArgs = Runtime.PyTuple_New(1);
                         Runtime.PyTuple_SetItem(timeSpanArgs, 0, Runtime.PyFloat_FromDouble(timespan.TotalDays));
-                        return Runtime.PyObject_CallObject(timeSpanCtor, timeSpanArgs);
+                        var returnTimeSpan = Runtime.PyObject_CallObject(timeSpanCtor, timeSpanArgs);
+                        // clean up
+                        Runtime.XDecref(timeSpanArgs);
+                        return returnTimeSpan;
                     }
                     return CLRObject.GetInstHandle(value, type);
 
@@ -284,12 +285,14 @@ class GMT(tzinfo):
                     IntPtr d2p = Runtime.PyString_FromString(d2s);
                     IntPtr decimalArgs = Runtime.PyTuple_New(1);
                     Runtime.PyTuple_SetItem(decimalArgs, 0, d2p);
-                    
-                    return Runtime.PyObject_CallObject(decimalCtor, decimalArgs);
+                    var returnDecimal = Runtime.PyObject_CallObject(decimalCtor, decimalArgs);
+                    // clean up
+                    Runtime.XDecref(decimalArgs);
+                    return returnDecimal;
 
                 case TypeCode.DateTime:
                     var datetime = (DateTime)value;
-                    
+
                     IntPtr dateTimeArgs = Runtime.PyTuple_New(8);
                     Runtime.PyTuple_SetItem(dateTimeArgs, 0, Runtime.PyInt_FromInt32(datetime.Year));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 1, Runtime.PyInt_FromInt32(datetime.Month));
@@ -299,8 +302,10 @@ class GMT(tzinfo):
                     Runtime.PyTuple_SetItem(dateTimeArgs, 5, Runtime.PyInt_FromInt32(datetime.Second));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 6, Runtime.PyInt_FromInt32(datetime.Millisecond));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 7, TzInfo(datetime.Kind));
-
-                    return Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
+                    var returnDateTime = Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
+                    // clean up
+                    Runtime.XDecref(dateTimeArgs);
+                    return returnDateTime;
 
                 default:
                     if (value is IEnumerable)
@@ -330,7 +335,9 @@ class GMT(tzinfo):
             IntPtr tzInfoArgs = Runtime.PyTuple_New(2);
             Runtime.PyTuple_SetItem(tzInfoArgs, 0, Runtime.PyFloat_FromDouble(offset.Hours));
             Runtime.PyTuple_SetItem(tzInfoArgs, 1, Runtime.PyFloat_FromDouble(offset.Minutes));
-            return Runtime.PyObject_CallObject(tzInfoCtor, tzInfoArgs);
+            var returnValue = Runtime.PyObject_CallObject(tzInfoCtor, tzInfoArgs);
+            Runtime.XDecref(tzInfoArgs);
+            return returnValue;
         }
 
 
