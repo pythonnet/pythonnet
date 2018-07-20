@@ -104,8 +104,6 @@ namespace Python.Runtime
             }
             var boundCtor = new BoundContructor(self.type, self.pyTypeHndl, self.ctorBinder, ci);
 
-            /* Since nothing is cached, do we need the increment???
-            Runtime.XIncref(boundCtor.pyHandle);  // Decref'd by the interpreter??? */
             return boundCtor.pyHandle;
         }
 
