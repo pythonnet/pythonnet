@@ -75,7 +75,6 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("How in the world could that happen!");
                 }
             }*/
-            Runtime.XIncref(self.pyHandle); // Decref'd by the interpreter.
             return self.pyHandle;
         }
 
