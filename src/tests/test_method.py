@@ -832,3 +832,137 @@ def test_case_sensitive():
 
     with pytest.raises(AttributeError):
         MethodTest.casesensitive()
+
+def test_getting_generic_method_binding_does_not_leak_ref_count():
+    """Test that managed object is freed after calling generic method. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import sys
+
+    refCount = sys.getrefcount(PlainOldClass().GenericMethod[str])
+    assert refCount == 1
+
+def test_getting_generic_method_binding_does_not_leak_memory():
+    """Test that managed object is freed after calling generic method. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import psutil, os, gc, clr
+
+    process = psutil.Process(os.getpid())
+    processBytesBeforeCall = process.memory_info().rss
+    print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
+
+    iterations = 500
+    for i in range(iterations):
+        PlainOldClass().GenericMethod[str]
+
+    gc.collect()
+    clr.System.GC.Collect()
+
+    processBytesAfterCall = process.memory_info().rss
+    print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
+    processBytesDelta = processBytesAfterCall - processBytesBeforeCall
+    print("Memory delta: " + str(processBytesDelta))
+
+    bytesAllocatedPerIteration = pow(2, 20)  # 1MB
+    bytesLeakedPerIteration = processBytesDelta / iterations
+
+    # Allow 50% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
+    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration / 2
+
+    assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
+
+def test_getting_overloaded_method_binding_does_not_leak_ref_count():
+    """Test that managed object is freed after calling overloaded method. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import sys
+
+    refCount = sys.getrefcount(PlainOldClass().OverloadedMethod.Overloads[int])
+    assert refCount == 1
+
+def test_getting_overloaded_method_binding_does_not_leak_memory():
+    """Test that managed object is freed after calling overloaded method. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import psutil, os, gc, clr
+
+    process = psutil.Process(os.getpid())
+    processBytesBeforeCall = process.memory_info().rss
+    print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
+
+    iterations = 500
+    for i in range(iterations):
+        PlainOldClass().OverloadedMethod.Overloads[int]
+
+    gc.collect()
+    clr.System.GC.Collect()
+
+    processBytesAfterCall = process.memory_info().rss
+    print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
+    processBytesDelta = processBytesAfterCall - processBytesBeforeCall
+    print("Memory delta: " + str(processBytesDelta))
+
+    bytesAllocatedPerIteration = pow(2, 20)  # 1MB
+    bytesLeakedPerIteration = processBytesDelta / iterations
+
+    # Allow 50% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
+    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration / 2
+
+    assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
+
+def test_getting_method_overloads_binding_does_not_leak_ref_count():
+    """Test that managed object is freed after calling overloaded method. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import sys
+
+    refCount = sys.getrefcount(PlainOldClass().OverloadedMethod.Overloads)
+    assert refCount == 1
+
+def test_getting_method_overloads_binding_does_not_leak_memory():
+    """Test that managed object is freed after calling overloaded method. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import psutil, os, gc, clr
+
+    process = psutil.Process(os.getpid())
+    processBytesBeforeCall = process.memory_info().rss
+    print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
+
+    iterations = 500
+    for i in range(iterations):
+        PlainOldClass().OverloadedMethod.Overloads
+
+    gc.collect()
+    clr.System.GC.Collect()
+
+    processBytesAfterCall = process.memory_info().rss
+    print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
+    processBytesDelta = processBytesAfterCall - processBytesBeforeCall
+    print("Memory delta: " + str(processBytesDelta))
+
+    bytesAllocatedPerIteration = pow(2, 20)  # 1MB
+    bytesLeakedPerIteration = processBytesDelta / iterations
+
+    # Allow 50% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
+    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration / 2
+
+    assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
+
+def test_getting_overloaded_constructor_binding_does_not_leak_ref_count():
+    """Test that managed object is freed after calling overloaded constructor, constructorbinding.cs mp_subscript. Issue #691"""
+
+    from PlainOldNamespace import PlainOldClass
+
+    import sys
+
+    # simple test
+    refCount = sys.getrefcount(PlainOldClass.Overloads[int])
+    assert refCount == 1

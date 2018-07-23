@@ -56,7 +56,6 @@ namespace Python.Runtime
             }
 
             var mb = new MethodBinding(self.m, self.target) { info = mi };
-            Runtime.XIncref(mb.pyHandle);
             return mb.pyHandle;
         }
 
@@ -85,7 +84,6 @@ namespace Python.Runtime
                 case "__overloads__":
                 case "Overloads":
                     var om = new OverloadMapper(self.m, self.target);
-                    Runtime.XIncref(om.pyHandle);
                     return om.pyHandle;
                 default:
                     return Runtime.PyObject_GenericGetAttr(ob, key);
