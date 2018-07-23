@@ -42,6 +42,7 @@
 -   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))
 -   Wenguang Yang ([@yagweb](https://github.com/yagweb))
+-   William Sardar ([@williamsardar])(https://github.com/williamsardar)
 -   Xavier Dupré ([@sdpython](https://github.com/sdpython))
 -   Zane Purvis ([@zanedp](https://github.com/zanedp))
 -   ([@bltribble](https://github.com/bltribble))
