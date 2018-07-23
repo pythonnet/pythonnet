@@ -12,6 +12,7 @@
 
 ## Contributors
 
+-   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
 -   Callum Noble ([@callumnoble](https://github.com/callumnoble))
@@ -28,6 +29,7 @@
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
 -   John Burnett ([@johnburnett](https://github.com/johnburnett))
+-   John Wilkes ([@jbw3](https://github.com/jbw3))
 -   Luke Stratman ([@lstratman](https://github.com/lstratman))
 -   Konstantin Posudevskiy ([@konstantin-posudevskiy](https://github.com/konstantin-posudevskiy))
 -   Matthias Dittrich ([@matthid](https://github.com/matthid))
@@ -40,9 +42,12 @@
 -   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))
 -   Wenguang Yang ([@yagweb](https://github.com/yagweb))
+-   William Sardar ([@williamsardar])(https://github.com/williamsardar)
 -   Xavier Dupré ([@sdpython](https://github.com/sdpython))
 -   Zane Purvis ([@zanedp](https://github.com/zanedp))
 -   ([@bltribble](https://github.com/bltribble))
+-   ([@civilx64](https://github.com/civilx64))
+-   ([@GSPP](https://github.com/GSPP))
 -   ([@omnicognate](https://github.com/omnicognate))
 -   ([@rico-chet](https://github.com/rico-chet))
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))

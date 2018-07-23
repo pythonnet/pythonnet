@@ -17,8 +17,6 @@ environment:
   matrix:
     - PYTHON_VERSION: 2.7 
       BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.3
-      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.4
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.5
@@ -26,7 +24,6 @@ environment:
     - PYTHON_VERSION: 3.6
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 2.7
-    - PYTHON_VERSION: 3.3
     - PYTHON_VERSION: 3.4
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
@@ -41,6 +38,7 @@ init:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 install:
+  - python -m pip install -U pip
   - pip install --upgrade -r requirements.txt --quiet
 
   # Install OpenCover. Can't put on `packages.config`, not Mono compatible
