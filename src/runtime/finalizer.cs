@@ -14,15 +14,21 @@ namespace Python.Runtime
             public int ObjectCount { get; set; }
         }
 
+        public class ErrorArgs : EventArgs
+        {
+            public Exception Error { get; set; }
+        }
+
         public static readonly Finalizer Instance = new Finalizer();
 
         public event EventHandler<CollectArgs> CollectOnce;
+        public event EventHandler<ErrorArgs> ErrorHandler;
 
         private ConcurrentQueue<IDisposable> _objQueue = new ConcurrentQueue<IDisposable>();
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int PedingCall(IntPtr arg);
-        private readonly PedingCall _collectAction;
+        private delegate int PendingCall(IntPtr arg);
+        private readonly PendingCall _collectAction;
 
         private bool _pending = false;
         private readonly object _collectingLock = new object();
@@ -87,11 +93,14 @@ namespace Python.Runtime
             }
             Instance.DisposeAll();
             Instance.CallPendingFinalizers();
-            Runtime.PyErr_Clear();
         }
 
         private void AddPendingCollect()
         {
+            if (_pending)
+            {
+                return;
+            }
             lock (_collectingLock)
             {
                 if (_pending)
@@ -99,12 +108,12 @@ namespace Python.Runtime
                     return;
                 }
                 _pending = true;
-            }
-            IntPtr func = Marshal.GetFunctionPointerForDelegate(_collectAction);
-            if (Runtime.Py_AddPendingCall(func, IntPtr.Zero) != 0)
-            {
-                // Full queue, append next time
-                _pending = false;
+                IntPtr func = Marshal.GetFunctionPointerForDelegate(_collectAction);
+                if (Runtime.Py_AddPendingCall(func, IntPtr.Zero) != 0)
+                {
+                    // Full queue, append next time
+                    _pending = false;
+                }
             }
         }
 
@@ -124,7 +133,19 @@ namespace Python.Runtime
             IDisposable obj;
             while (_objQueue.TryDequeue(out obj))
             {
-                obj.Dispose();
+                try
+                {
+                    obj.Dispose();
+                    Runtime.CheckExceptionOccurred();
+                }
+                catch (Exception e)
+                {
+                    // We should not bother the main thread
+                    ErrorHandler?.Invoke(this, new ErrorArgs()
+                    {
+                        Error = e
+                    });
+                }
             }
         }
     }

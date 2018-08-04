@@ -151,5 +151,59 @@ namespace Python.EmbeddingTest
                 Finalizer.Instance.Enable = oldState;
             }
         }
+
+        class MyPyObject : PyObject
+        {
+            public MyPyObject(IntPtr op) : base(op)
+            {
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                GC.SuppressFinalize(this);
+                throw new Exception("MyPyObject");
+            }
+            internal static void CreateMyPyObject(IntPtr op)
+            {
+                Runtime.Runtime.XIncref(op);
+                new MyPyObject(op);
+            }
+        }
+
+        [Test]
+        public void ErrorHandling()
+        {
+            bool called = false;
+            EventHandler<Finalizer.ErrorArgs> handleFunc = (sender, args) =>
+            {
+                called = true;
+                Assert.AreEqual(args.Error.Message, "MyPyObject");
+            };
+            Finalizer.Instance.Threshold = 1;
+            Finalizer.Instance.ErrorHandler += handleFunc;
+            try
+            {
+                WeakReference shortWeak;
+                WeakReference longWeak;
+                {
+                    MakeAGarbage(out shortWeak, out longWeak);
+                    var obj = (PyLong)longWeak.Target;
+                    IntPtr handle = obj.Handle;
+                    shortWeak = null;
+                    longWeak = null;
+                    MyPyObject.CreateMyPyObject(handle);
+                    obj.Dispose();
+                    obj = null;
+                }
+                FullGCCollect();
+                Finalizer.Instance.Collect();
+                Assert.IsTrue(called);
+            }
+            finally
+            {
+                Finalizer.Instance.ErrorHandler -= handleFunc;
+            }
+        }
     }
 }
