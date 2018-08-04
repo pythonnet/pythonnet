@@ -37,6 +37,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed `LockRecursionException` when loading assemblies ([#627][i627])
 -   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
 -   Fixed PyObject.GetHashCode ([#676][i676])
+-   Fix memory leaks due to spurious handle incrementation ([#691][i691])
 
 
 ## [2.3.0][] - 2017-03-11

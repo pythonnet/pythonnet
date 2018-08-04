@@ -1,6 +1,7 @@
 # Requirements for both Travis and AppVeyor
 pytest==3.2.5
 coverage
+psutil
 
 # Coverage upload
 codecov
