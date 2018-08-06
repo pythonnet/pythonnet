@@ -289,7 +289,8 @@ def test_python_compat_of_managed_exceptions():
     assert e.args == (msg,)
     assert isinstance(e.args, tuple)
     if PY3:
-        assert repr(e)[:-2] == "OverflowException('Simple message'"
+        strexp = "OverflowException('Simple message"
+        assert repr(e)[:len(strexp)] == strexp
     elif PY2:
         assert repr(e) == "OverflowException(u'Simple message',)"
 
