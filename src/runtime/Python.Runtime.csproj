@@ -32,6 +32,7 @@
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <DefineConstants>PYTHON2;PYTHON27;UCS2</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS4</DefineConstants>
