@@ -40,6 +40,19 @@ matrix:
       addons: *xplat-addons
       dist: xenial
       sudo: true
+      addons: &xplat-addons-xenial
+        apt:
+          sources:
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main
+            key_url: https://packages.microsoft.com/keys/microsoft.asc
+          - sourceline: deb https://download.mono-project.com/repo/ubuntu stable-xenial main
+            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
+            - dotnet-hostfxr-2.0.0
+            - dotnet-runtime-2.0.0
+            - dotnet-sdk-2.0.0
 
 # --------------------- Classic builds ------------------------
     - python: 2.7
@@ -60,6 +73,14 @@ matrix:
       env: *classic-env
       dist: xenial
       sudo: true
+      addons:
+        apt:
+          sources:
+            - sourceline: deb http://download.mono-project.com/repo/ubuntu xenial main
+              key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
+          packages:
+            - mono-devel
+            - ca-certificates-mono
 
 env:
   global:
