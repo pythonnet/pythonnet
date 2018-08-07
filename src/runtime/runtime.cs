@@ -418,8 +418,7 @@ namespace Python.Runtime
                 dllLocal = NativeMethods.LoadLibrary(_PythonDll);
             }
             _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dllLocal, "_PyObject_NextNotImplemented");
-
-            //#if !(MONO_LINUX || MONO_OSX)
+            
             if (!(OSType.IsLinux || OSType.IsOSX))
             {
                 if (dllLocal != IntPtr.Zero)
