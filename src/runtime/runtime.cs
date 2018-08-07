@@ -13,7 +13,6 @@ namespace Python.Runtime
             get
             {
                 return Environment.OSVersion.Platform == PlatformID.Unix;
-                // return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
             }
         }
 
@@ -252,21 +251,7 @@ namespace Python.Runtime
 #else
 #error You must define one of PYTHON34 to PYTHON37 or PYTHON27
 #endif
-
         // TODO : ideally find a way to do this without having to rename the dylib on Mac/Linux
-        /* private static string _dllPostFix
-         {
-             get
-             {
-                 if (OSType.IsWindows)
-                 {
-                     return _pyver;
-                 }
-                 // Linux/macOS use dotted version string
-                 return _pyversion;
-             }
-         }
-         internal const string dllBase = "python" + _dllPostFix;*/
         internal const string dllBase = "python" + _pyver;
 
 
