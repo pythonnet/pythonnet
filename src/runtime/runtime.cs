@@ -7,12 +7,11 @@ namespace Python.Runtime
 {
     internal static class OSType
     {
-        // TODO: find how to differentiate between linux and osx
         public static bool IsLinux
         {
             get
             {
-                return Environment.OSVersion.Platform == PlatformID.Unix;
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
             }
         }
 
@@ -20,8 +19,7 @@ namespace Python.Runtime
         {
             get
             {
-                var os = Environment.OSVersion.Platform;
-                return os != PlatformID.MacOSX && os != PlatformID.Unix;
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             }
         }
 
@@ -29,7 +27,7 @@ namespace Python.Runtime
         {
             get
             {
-                return Environment.OSVersion.Platform == PlatformID.MacOSX || Environment.OSVersion.Platform == PlatformID.Unix;
+                return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
             }
         }
     }
