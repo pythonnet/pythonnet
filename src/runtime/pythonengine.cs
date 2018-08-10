@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -172,7 +172,7 @@ namespace Python.Runtime
             if (!initialized)
             {
                 // Make sure we shut down properly on app domain reload
-                System.AppDomain.CurrentDomain.DomainUnload += new EventHandler(OnDomainUnload);
+                System.AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
                 // Creating the delegateManager MUST happen before Runtime.Initialize
                 // is called. If it happens afterwards, DelegateManager's CodeGenerator
@@ -310,9 +310,6 @@ namespace Python.Runtime
         {
             if (initialized)
             {
-                // Make sure we shut down properly on app domain reload
-                System.AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
-
                 PyScopeManager.Global.Clear();
                 Marshal.FreeHGlobal(_pythonHome);
                 _pythonHome = IntPtr.Zero;
