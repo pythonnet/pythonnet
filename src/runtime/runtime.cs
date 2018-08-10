@@ -5,55 +5,121 @@ using System.Text;
 
 namespace Python.Runtime
 {
+    internal static class OSType
+    {
+        public static bool IsLinux
+        {
+            get
+            {
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+            }
+        }
+
+        public static bool IsWindows
+        {
+            get
+            {
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            }
+        }
+
+        public static bool IsOSX
+        {
+            get
+            {
+                return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+            }
+        }
+    }
+
     [SuppressUnmanagedCodeSecurity]
     internal static class NativeMethods
     {
-#if MONO_LINUX || MONO_OSX
+        private static IntPtr RTLD_DEFAULT
+        {
+            get
+            {
+                if (OSType.IsWindows)
+                {
+                    // calling this does not make sense on Windows
+                    throw new Exception();
+                }
+                if (OSType.IsOSX)
+                {
+                    return new IntPtr(-2);
+                }
+                return IntPtr.Zero;
+            }
+        }
+
+        private const string linuxNativeDll = "libdl.so";
+
 #if NETSTANDARD
-        private static int RTLD_NOW = 0x2;
-#if MONO_LINUX
-        private static int RTLD_GLOBAL = 0x100;
-        private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
-        private const string NativeDll = "libdl.so";
-        public static IntPtr LoadLibrary(string fileName)
-        {
-            return dlopen($"lib{fileName}.so", RTLD_NOW | RTLD_GLOBAL);
-        }
-#elif MONO_OSX
-        private static int RTLD_GLOBAL = 0x8;
-        private const string NativeDll = "/usr/lib/libSystem.dylib"
-        private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
-
-        public static IntPtr LoadLibrary(string fileName)
-        {
-            return dlopen($"lib{fileName}.dylib", RTLD_NOW | RTLD_GLOBAL);
-        }
-#endif
+        private const string osxNativeDLL = "/usr/lib/libSystem.dylib";
 #else
-        private static int RTLD_NOW = 0x2;
-        private static int RTLD_SHARED = 0x20;
-#if MONO_OSX
-        private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
-        private const string NativeDll = "__Internal";
-#elif MONO_LINUX
-        private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
-        private const string NativeDll = "libdl.so";
+        private const string osxNativeDll = "__Internal";
 #endif
+
+        private static int RTLD_NOW = 0x2;
+
+        private static int RTLD_GLOBAL
+        {
+            get
+            {
+                if (OSType.IsWindows)
+                {
+                    // calling this does not make sense on Windows
+                    throw new Exception();
+                }
+                if (OSType.IsOSX)
+                {
+                    return 0x8;
+                }
+                return 0x100;
+            }
+        }
+
+        private static int RTLD_SHARED = 0x20;
 
         public static IntPtr LoadLibrary(string fileName)
         {
-            return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
-        }
-#endif
+            if (OSType.IsWindows)
+            {
+                return LoadLibrary_win(fileName);
+            }
 
+#if NETSTANDARD
+            if (IsOSX)
+            {
+                string file = $"lib{fileName}.dylib";
+            }
+            else
+            {
+                string file = $"lib{fileName}.so";
+            }
+            return dlopen(file, RTLD_NOW | RTLD_GLOBAL);
+#else
+            return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
+#endif
+        }
 
         public static void FreeLibrary(IntPtr handle)
         {
+            if (OSType.IsWindows)
+            {
+                FreeLibrary_win(handle);
+                return;
+            }
             dlclose(handle);
         }
 
         public static IntPtr GetProcAddress(IntPtr dllHandle, string name)
         {
+            if (OSType.IsWindows)
+            {
+                return GetProcAddress_win(dllHandle, name);
+            }
+
             // look in the exe if dllHandle is NULL
             if (dllHandle == IntPtr.Zero)
             {
@@ -70,30 +136,88 @@ namespace Python.Runtime
             }
             return res;
         }
+        
+        public static IntPtr dlopen(String fileName, int flags)
+        {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
+            if (OSType.IsOSX) { return dlopen_mac(fileName, flags); }
+            return dlopen_linux(fileName, flags);
+        }
+        
+        private static IntPtr dlsym(IntPtr handle, String symbol)
+        {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
+            if (OSType.IsOSX) { return dlsym_mac(handle, symbol); }
+            return dlsym_linux(handle, symbol);
+        }
+        
+        private static int dlclose(IntPtr handle)
+        {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
+            if (OSType.IsOSX) { return dlclose_mac(handle); }
+            return dlclose_linux(handle);
+        }
+        
+        private static IntPtr dlerror()
+        {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
+            if (OSType.IsOSX) { return dlerror_mac(); }
+            return dlerror_linux();
+        }
 
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr dlopen(String fileName, int flags);
+        // ------------- Linux ----------------
+        [DllImport(linuxNativeDll, EntryPoint = "dlopen", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern IntPtr dlopen_linux(String fileName, int flags);
 
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr dlsym(IntPtr handle, String symbol);
+        [DllImport(linuxNativeDll, EntryPoint = "dlsym", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr dlsym_linux(IntPtr handle, String symbol);
 
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dlclose(IntPtr handle);
+        [DllImport(linuxNativeDll, EntryPoint = "dlclose", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int dlclose_linux(IntPtr handle);
 
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr dlerror();
-#else // Windows
-        private const string NativeDll = "kernel32.dll";
+        [DllImport(linuxNativeDll, EntryPoint = "dlerror", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr dlerror_linux();
 
-        [DllImport(NativeDll)]
-        public static extern IntPtr LoadLibrary(string dllToLoad);
+        // ------------- Mac -----------------
+        [DllImport(osxNativeDll, EntryPoint = "dlopen", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern IntPtr dlopen_mac(String fileName, int flags);
 
-        [DllImport(NativeDll)]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+        [DllImport(osxNativeDll, EntryPoint = "dlsym", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr dlsym_mac(IntPtr handle, String symbol);
 
-        [DllImport(NativeDll)]
-        public static extern bool FreeLibrary(IntPtr hModule);
-#endif
+        [DllImport(osxNativeDll, EntryPoint = "dlclose", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int dlclose_mac(IntPtr handle);
+
+        [DllImport(osxNativeDll, EntryPoint = "dlerror", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr dlerror_mac();
+
+        //#else // Windows
+        private const string winNativeDll = "kernel32.dll";
+
+        [DllImport(winNativeDll, EntryPoint = "LoadLibrary")]
+        public static extern IntPtr LoadLibrary_win(string dllToLoad);
+
+        [DllImport(winNativeDll, EntryPoint = "GetProcAddress")]
+        public static extern IntPtr GetProcAddress_win(IntPtr hModule, string procedureName);
+
+        [DllImport(winNativeDll, EntryPoint = "FreeLibrary")]
+        public static extern bool FreeLibrary_win(IntPtr hModule);
     }
 
     /// <summary>
@@ -154,12 +278,9 @@ namespace Python.Runtime
 #else
 #error You must define one of PYTHON34 to PYTHON37 or PYTHON27
 #endif
+        // TODO : ideally find a way to do this without having to rename the dylib on Mac/Linux
+        internal const string dllBase = "Packages/com.unity.scripting.python/Editor/bin/python" + _pyver;
 
-#if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
-        internal const string dllBase = "python" + _pyversion;
-#else // Windows
-        internal const string dllBase = "python" + _pyver;
-#endif
 
 #if PYTHON_WITH_PYDEBUG
         internal const string dllWithPyDebug = "d";
@@ -324,13 +445,14 @@ namespace Python.Runtime
                 dllLocal = NativeMethods.LoadLibrary(_PythonDll);
             }
             _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dllLocal, "_PyObject_NextNotImplemented");
-
-#if !(MONO_LINUX || MONO_OSX)
-            if (dllLocal != IntPtr.Zero)
+            
+            if (!(OSType.IsLinux || OSType.IsOSX))
             {
-                NativeMethods.FreeLibrary(dllLocal);
+                if (dllLocal != IntPtr.Zero)
+                {
+                    NativeMethods.FreeLibrary(dllLocal);
+                }
             }
-#endif
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();

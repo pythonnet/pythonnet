@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,7 +9,7 @@
     <RootNamespace>Python.Runtime</RootNamespace>
     <DocumentationFile>bin\Python.Runtime.xml</DocumentationFile>
     <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
@@ -32,45 +32,54 @@
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <DefineConstants>PYTHON2;PYTHON27;UCS2</DefineConstants>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS4</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
     <DebugSymbols>true</DebugSymbols>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
     <DebugSymbols>true</DebugSymbols>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS2</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
     <DebugSymbols>true</DebugSymbols>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
     <DebugSymbols>true</DebugSymbols>
     <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON36;UCS2;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
