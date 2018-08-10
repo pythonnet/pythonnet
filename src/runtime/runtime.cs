@@ -39,6 +39,11 @@ namespace Python.Runtime
         {
             get
             {
+                if (OSType.IsWindows)
+                {
+                    // calling this does not make sense on Windows
+                    throw new Exception();
+                }
                 if (OSType.IsOSX)
                 {
                     return new IntPtr(-2);
@@ -61,6 +66,11 @@ namespace Python.Runtime
         {
             get
             {
+                if (OSType.IsWindows)
+                {
+                    // calling this does not make sense on Windows
+                    throw new Exception();
+                }
                 if (OSType.IsOSX)
                 {
                     return 0x8;
@@ -129,24 +139,44 @@ namespace Python.Runtime
         
         public static IntPtr dlopen(String fileName, int flags)
         {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
             if (OSType.IsOSX) { return dlopen_mac(fileName, flags); }
             return dlopen_linux(fileName, flags);
         }
         
         private static IntPtr dlsym(IntPtr handle, String symbol)
         {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
             if (OSType.IsOSX) { return dlsym_mac(handle, symbol); }
             return dlsym_linux(handle, symbol);
         }
         
         private static int dlclose(IntPtr handle)
         {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
             if (OSType.IsOSX) { return dlclose_mac(handle); }
             return dlclose_linux(handle);
         }
         
         private static IntPtr dlerror()
         {
+            if (OSType.IsWindows)
+            {
+                // shouldn't be calling this function on Windows
+                throw new Exception();
+            }
             if (OSType.IsOSX) { return dlerror_mac(); }
             return dlerror_linux();
         }
@@ -188,7 +218,6 @@ namespace Python.Runtime
 
         [DllImport(winNativeDll, EntryPoint = "FreeLibrary")]
         public static extern bool FreeLibrary_win(IntPtr hModule);
-//#endif
     }
 
     /// <summary>
@@ -250,7 +279,7 @@ namespace Python.Runtime
 #error You must define one of PYTHON34 to PYTHON37 or PYTHON27
 #endif
         // TODO : ideally find a way to do this without having to rename the dylib on Mac/Linux
-        internal const string dllBase = "python" + _pyver;
+        internal const string dllBase = "Packages/com.unity.scripting.python/Editor/bin/python" + _pyver;
 
 
 #if PYTHON_WITH_PYDEBUG
