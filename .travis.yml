@@ -37,7 +37,6 @@ matrix:
       
     - python: 3.7
       env: *xplat-env
-      addons: *xplat-addons
       dist: xenial
       sudo: true
       addons: &xplat-addons-xenial
