@@ -174,7 +174,7 @@ def preprocess_python_headers():
         "-D", "__inline__=inline",
         "-D", "__asm__=;#pragma asm",
         "-D", "__int64=long long",
-        "-D", "_POSIX_THREADS",
+        "-D", "_POSIX_THREADS"
     ]
 
     if hasattr(sys, "abiflags"):
