@@ -343,9 +343,7 @@ namespace Python.Runtime
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
-
-            Type[] types = assembly.GetTypes();
-            foreach (Type t in types)
+            foreach (Type t in GetTypes(assembly))
             {
                 string ns = t.Namespace ?? "";
                 if (!namespaces.ContainsKey(ns))
@@ -419,10 +417,9 @@ namespace Python.Runtime
             {
                 foreach (Assembly a in namespaces[nsname].Keys)
                 {
-                    Type[] types = a.GetTypes();
-                    foreach (Type t in types)
+                    foreach (Type t in GetTypes(a))
                     {
-                        if ((t.Namespace ?? "") == nsname)
+                        if ((t.Namespace ?? "") == nsname && !t.IsNested)
                         {
                             names.Add(t.Name);
                         }
@@ -460,6 +457,14 @@ namespace Python.Runtime
                 }
             }
             return null;
+        }
+
+        internal static Type[] GetTypes(Assembly a)
+        {
+            if (a.IsDynamic)
+                return a.GetTypes();
+            else
+                return a.GetExportedTypes();
         }
     }
 }
