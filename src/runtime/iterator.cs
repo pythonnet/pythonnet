@@ -23,9 +23,21 @@ namespace Python.Runtime
         public static IntPtr tp_iternext(IntPtr ob)
         {
             var self = GetManagedObject(ob) as Iterator;
-            if (!self.iter.MoveNext())
+            try
             {
-                Exceptions.SetError(Exceptions.StopIteration, Runtime.PyNone);
+                if (!self.iter.MoveNext())
+                {
+                    Exceptions.SetError(Exceptions.StopIteration, Runtime.PyNone);
+                    return IntPtr.Zero;
+                }
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                }
+                Exceptions.SetError(e);
                 return IntPtr.Zero;
             }
             object item = self.iter.Current;
