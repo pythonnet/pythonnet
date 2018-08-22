@@ -22,7 +22,7 @@ from setuptools import Extension, setup
 # Allow config/verbosity to be set from cli
 # http://stackoverflow.com/a/4792601/5208670
 CONFIG = "Release"  # Release or Debug
-VERBOSITY = "detailed"  # quiet, minimal, normal, detailed, diagnostic
+VERBOSITY = "normal"  # quiet, minimal, normal, detailed, diagnostic
 
 is_64bits = sys.maxsize > 2**32
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
