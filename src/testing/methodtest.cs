@@ -666,3 +666,23 @@ namespace Python.Test
         }
     }
 }
+
+namespace PlainOldNamespace
+{
+    public class PlainOldClass
+    {
+        public PlainOldClass() { }
+
+        public PlainOldClass(int param) { }
+
+        private readonly byte[] payload = new byte[(int)Math.Pow(2, 20)]; //1 MB
+
+        public void NonGenericMethod() { }
+
+        public void GenericMethod<T>() { }
+
+        public void OverloadedMethod() { }
+
+        public void OverloadedMethod(int param) { }
+    }
+}

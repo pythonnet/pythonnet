@@ -13,95 +13,100 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
     Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
     After a some transition time, current (mono/ msbuild 14.0) build system will be removed.
 -   NUnit upgraded to 3.7 (eliminates travis-ci random bug)
--   Added `clr.GetClrType` (#432, #433)
--   Allowed passing `None` for nullable args (#460)
--   Added keyword arguments based on C# syntax for calling CPython methods (#461)
+-   Added `clr.GetClrType` ([#432][i432])([#433][p433])
+-   Allowed passing `None` for nullable args ([#460][p460])
+-   Added keyword arguments based on C# syntax for calling CPython methods ([#461][p461])
+-   Catches exceptions thrown in C# iterators (yield returns) and rethrows them in python ([#475][i475])([#693][p693])
+-   Implemented GetDynamicMemberNames() for PyObject to allow dynamic object members to be visible in the debugger ([#443][i443])([#690][p690])
+-   Incorporated reference-style links to issues and pull requests in the CHANGELOG ([#608][i608])
 
 ### Changed
 
 ### Fixed
 
--   Fixed Visual Studio 2017 compat (#434) for setup.py
+-   Fixed Visual Studio 2017 compat ([#434][i434]) for setup.py
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
-    attribute (#481)
--   Fixed conversion of 'float' and 'double' values (#486)
--   Fixed 'clrmethod' for python 2 (#492)
--   Fixed double calling of constructor when deriving from .NET class (#495)
--   Fixed `clr.GetClrType` when iterating over `System` members (#607) 
--   Fixed `LockRecursionException` when loading assemblies (#627)
--   Fixed errors breaking .NET Remoting on method invoke (#276)
--   Fixed PyObject.GetHashCode (#676)
+    attribute ([#481][i481])
+-   Fixed conversion of 'float' and 'double' values ([#486][i486])
+-   Fixed 'clrmethod' for python 2 ([#492][i492])
+-   Fixed double calling of constructor when deriving from .NET class ([#495][i495])
+-   Fixed `clr.GetClrType` when iterating over `System` members ([#607][p607]) 
+-   Fixed `LockRecursionException` when loading assemblies ([#627][i627])
+-   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
+-   Fixed PyObject.GetHashCode ([#676][i676])
+-   Fix memory leaks due to spurious handle incrementation ([#691][i691])
 
 
 ## [2.3.0][] - 2017-03-11
 
 ### Added
 
--   Added Code Coverage (#345)
--   Added `PySys_SetArgvEx` (#347)
--   Added XML Documentation (#349)
--   Added `Embedded_Tests` on AppVeyor (#224)(#353)
--   Added `Embedded_Tests` on Travis (#224)(#391)
--   Added PY3 settings to solution configuration-manager (#346)
--   Added `Slack` (#384)(#383)(#386)
+-   Added Code Coverage ([#345][p345])
+-   Added `PySys_SetArgvEx` ([#347][p347])
+-   Added XML Documentation ([#349][p349])
+-   Added `Embedded_Tests` on AppVeyor ([#224][i224])([#353][p353])
+-   Added `Embedded_Tests` on Travis ([#224][i224])([#391][p391])
+-   Added PY3 settings to solution configuration-manager ([#346][p346])
+-   Added `Slack` ([#384][p384])([#383][i383])([#386][p386])
 -   Added function of passing an arbitrary .NET object as the value
-    of an attribute of `PyObject` (#370)(#373)
--   Added `Coverity scan` (#390)
--   Added `bumpversion` for version control (#319)(#398)
--   Added `tox` for local testing (#345)
+    of an attribute of `PyObject` ([#370][i370])([#373][p373])
+-   Added `Coverity scan` ([#390][i390])
+-   Added `bumpversion` for version control ([#319][i319])([#398][p398])
+-   Added `tox` for local testing ([#345][p345])
 -   Added `requirements.txt`
--   Added to `PythonEngine` methods `Eval` and `Exec` (#389)
--   Added implementations of `ICustomMarshal` (#407)
--   Added docker images (#322)
--   Added hooks in `pyinstaller` and `cx_freeze` for `pythonnet` (#66)
+-   Added to `PythonEngine` methods `Eval` and `Exec` ([#389][p389])
+-   Added implementations of `ICustomMarshal` ([#407][p407])
+-   Added docker images ([#322][i322])
+-   Added hooks in `pyinstaller` and `cx_freeze` for `pythonnet` ([#66][i66])
 
 ### Changed
 
--   Refactored python `unittests` (#329)
--   Refactored python `setup.py` (#337)
--   Refactored remaining of Build Directives on `runtime.cs` (#339)
--   Refactored `Embedded_Tests` to make easier to write tests (#369)
--   Changed `unittests` to `pytest` (#368)
--   Upgraded NUnit framework from `2.6.3` to `3.5.0` (#341)
--   Downgraded NUnit framework from `3.5.0` to `2.6.4` (#353)
--   Upgraded NUnit framework from `2.6.4` to `3.6.0` (#371)
--   Unfroze Mono version on Travis (#345)
--   Changed `conda.recipe` build to only pull-requests (#345)
--   Combine `Py_DEBUG` and `PYTHON_WITH_PYDEBUG` flags (#362)
+-   Refactored python `unittests` ([#329][p329])
+-   Refactored python `setup.py` ([#337][p337])
+-   Refactored remaining of Build Directives on `runtime.cs` ([#339][p339])
+-   Refactored `Embedded_Tests` to make easier to write tests ([#369][p369])
+-   Changed `unittests` to `pytest` ([#368][p368])
+-   Upgraded NUnit framework from `2.6.3` to `3.5.0` ([#341][p341])
+-   Downgraded NUnit framework from `3.5.0` to `2.6.4` ([#353][p353])
+-   Upgraded NUnit framework from `2.6.4` to `3.6.0` ([#371][p371])
+-   Unfroze Mono version on Travis ([#345][p345])
+-   Changed `conda.recipe` build to only pull-requests ([#345][p345])
+-   Combine `Py_DEBUG` and `PYTHON_WITH_PYDEBUG` flags ([#362][i362])
 
 ### Deprecated
 
--   Deprecated `RunString` (#401)
+-   Deprecated `RunString` ([#401][i401])
 
 ### Fixed
 
--   Fixed crash during Initialization (#262)(#343)
--   Fixed crash during Shutdown (#365)
+-   Fixed crash during Initialization ([#262][i262])([#343][p343])
+-   Fixed crash during Shutdown ([#365][p365])
 -   Fixed multiple build warnings
--   Fixed method signature match for Object Type (#203)(#377)
--   Fixed outdated version number in AssemblyInfo (#398)
--   Fixed wrong version number in `conda.recipe` (#398)
+-   Fixed method signature match for Object Type ([#203][i203])([#377][p377])
+-   Fixed outdated version number in AssemblyInfo ([#398][p398])
+-   Fixed wrong version number in `conda.recipe` ([#398][p398])
 -   Fixed fixture location for Python tests and `Embedded_Tests`
--   Fixed `PythonException` crash during Shutdown (#400)
--   Fixed `AppDomain` unload during GC (#397)(#400)
--   Fixed `Py_Main` & `PySys_SetArgvEx` `no mem error` on `UCS4/PY3` (#399)
--   Fixed `Python.Runtime.dll.config` on macOS (#120)
--   Fixed crash on `PythonEngine.Version` (#413)
--   Fixed `PythonEngine.PythonPath` issues (#179)(#414)(#415)
+-   Fixed `PythonException` crash during Shutdown ([#400][p400])
+-   Fixed `AppDomain` unload during GC ([#397][i397])([#400][p400])
+-   Fixed `Py_Main` & `PySys_SetArgvEx` `no mem error` on `UCS4/PY3` ([#399][p399])
+-   Fixed `Python.Runtime.dll.config` on macOS ([#120][i120])
+-   Fixed crash on `PythonEngine.Version` ([#413][i413])
+-   Fixed `PythonEngine.PythonPath` issues ([#179][i179])([#414][i414])([#415][p415])
+-   Fixed missing information on 'No method matches given arguments' by adding the method name
 
 ### Removed
 
--   Removed `six` dependency for `unittests` (#329)
--   Removed `Mono.Unix` dependency for `UCS4` (#360)
+-   Removed `six` dependency for `unittests` ([#329][p329])
+-   Removed `Mono.Unix` dependency for `UCS4` ([#360][p360])
 -   Removed need for `Python.Runtime.dll.config`
--   Removed PY32 build option `PYTHON_WITH_WIDE_UNICODE` (#417)
+-   Removed PY32 build option `PYTHON_WITH_WIDE_UNICODE` ([#417][i417])
 
 ## [2.2.2][] - 2017-01-29
 
 ### Fixed
 
--   Missing files from packaging (#336)
+-   Missing files from packaging ([#336][i336])
 
 ## [2.2.1][] - 2017-01-26
 
@@ -109,65 +114,65 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
--   Python 3.6 support (#310)
--   Added `__version__` to module (#312)
--   Added `conda` recipe (#281)
--   Nuget update on build (#268)
--   Added `__cause__` attribute on exception (#287)
+-   Python 3.6 support ([#310][p310])
+-   Added `__version__` to module ([#312][p312])
+-   Added `conda` recipe ([#281][p281])
+-   Nuget update on build ([#268][p268])
+-   Added `__cause__` attribute on exception ([#287][p287])
 
 ### Changed
 
--   License to MIT (#314)
--   Project clean-up (#320)
+-   License to MIT ([#314][p314])
+-   Project clean-up ([#320][p320])
 -   Refactor `#if` directives
--   Rename Decref/Incref to XDecref/XIncre (#275)
--   Remove printing if Decref is called with NULL (#275)
+-   Rename Decref/Incref to XDecref/XIncre ([#275][p275])
+-   Remove printing if Decref is called with NULL ([#275][p275])
 
 ### Removed
 
--   Python 2.6 support (#270)
--   Python 3.2 support (#270)
+-   Python 2.6 support ([#270][i270])
+-   Python 3.2 support ([#270][i270])
 
 ### Fixed
 
--   Fixed `isinstance` refcount_leak (#273)
--   Comparison Operators (#294)
--   Improved Linux support (#300)
--   Exception pickling (#286)
+-   Fixed `isinstance` refcount_leak ([#273][p273])
+-   Comparison Operators ([#294][p294])
+-   Improved Linux support ([#300][p300])
+-   Exception pickling ([#286][p286])
 
 ## [2.2.0-dev1][] - 2016-09-19
 
 ### Changed
 
--   Switch to C# 6.0 (#219)
--   `setup.py` improvements for locating build tools (#208)
--   unmanaged exports updated (#206)
--   Mono update pinned to 4.2.4.4 (#233)
+-   Switch to C# 6.0 ([#219][p219])
+-   `setup.py` improvements for locating build tools ([#208][p208])
+-   unmanaged exports updated ([#206][p206])
+-   Mono update pinned to 4.2.4.4 ([#233][p233])
 
 ### Fixed
 
--   Fixed relative imports (#219)
--   Fixed recursive types (#250)
--   Demo fix - stream reading (#225)
+-   Fixed relative imports ([#219][p219])
+-   Fixed recursive types ([#250][p250])
+-   Demo fix - stream reading ([#225][p225])
 
 ## [2.1.0][] - 2016-04-12
 
 ### Added
 
--   Added Python 3.2 support. (#78)
--   Added Python 3.3 support. (#78)
--   Added Python 3.4 support. (#78)
--   Added Python 3.5 support. (#163)
--   Managed types can be sub-classed in Python (#78)
--   Uses dynamic objects for cleaner code when embedding Python (#78)
+-   Added Python 3.2 support. ([#78][p78])
+-   Added Python 3.3 support. ([#78][p78])
+-   Added Python 3.4 support. ([#78][p78])
+-   Added Python 3.5 support. ([#163][p163])
+-   Managed types can be sub-classed in Python ([#78][p78])
+-   Uses dynamic objects for cleaner code when embedding Python ([#78][p78])
 
 ### Changed
 
--   Better Linux support (with or without --enable-shared option) (#78)
+-   Better Linux support (with or without --enable-shared option) ([#78][p78])
 
 ### Removed
 
--   Implicit Type Casting (#131)
+-   Implicit Type Casting ([#131][i131])
 
 ## [2.0.0][] - 2015-06-26
 
@@ -587,3 +592,95 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 [2.0.0]: ../../compare/1.0...v2.0.0
 
 [1.0.0]: https://github.com/pythonnet/pythonnet/releases/tag/1.0
+
+[i608]: https://github.com/pythonnet/pythonnet/issues/608
+[i443]: https://github.com/pythonnet/pythonnet/issues/443
+[p690]: https://github.com/pythonnet/pythonnet/pull/690
+[i475]: https://github.com/pythonnet/pythonnet/issues/475
+[p693]: https://github.com/pythonnet/pythonnet/pull/693
+[i432]: https://github.com/pythonnet/pythonnet/issues/432
+[p433]: https://github.com/pythonnet/pythonnet/pull/433
+[p460]: https://github.com/pythonnet/pythonnet/pull/460
+[p461]: https://github.com/pythonnet/pythonnet/pull/461
+[p433]: https://github.com/pythonnet/pythonnet/pull/433
+[i434]: https://github.com/pythonnet/pythonnet/issues/434
+[i481]: https://github.com/pythonnet/pythonnet/issues/481
+[i486]: https://github.com/pythonnet/pythonnet/issues/486
+[i492]: https://github.com/pythonnet/pythonnet/issues/492
+[i495]: https://github.com/pythonnet/pythonnet/issues/495
+[p607]: https://github.com/pythonnet/pythonnet/pull/607
+[i627]: https://github.com/pythonnet/pythonnet/issues/627
+[i276]: https://github.com/pythonnet/pythonnet/issues/276
+[i676]: https://github.com/pythonnet/pythonnet/issues/676
+[p345]: https://github.com/pythonnet/pythonnet/pull/345
+[p347]: https://github.com/pythonnet/pythonnet/pull/347
+[p349]: https://github.com/pythonnet/pythonnet/pull/349
+[i224]: https://github.com/pythonnet/pythonnet/issues/224
+[p353]: https://github.com/pythonnet/pythonnet/pull/353
+[p391]: https://github.com/pythonnet/pythonnet/pull/391
+[p346]: https://github.com/pythonnet/pythonnet/pull/346
+[p384]: https://github.com/pythonnet/pythonnet/pull/384
+[i383]: https://github.com/pythonnet/pythonnet/issues/383
+[p386]: https://github.com/pythonnet/pythonnet/pull/386
+[i370]: https://github.com/pythonnet/pythonnet/issues/370
+[p373]: https://github.com/pythonnet/pythonnet/pull/373
+[i390]: https://github.com/pythonnet/pythonnet/issues/390
+[i319]: https://github.com/pythonnet/pythonnet/issues/319
+[p398]: https://github.com/pythonnet/pythonnet/pull/398
+[p345]: https://github.com/pythonnet/pythonnet/pull/345
+[p389]: https://github.com/pythonnet/pythonnet/pull/389
+[p407]: https://github.com/pythonnet/pythonnet/pull/407
+[i322]: https://github.com/pythonnet/pythonnet/issues/322
+[i66]: https://github.com/pythonnet/pythonnet/issues/66
+[p329]: https://github.com/pythonnet/pythonnet/pull/329
+[p337]: https://github.com/pythonnet/pythonnet/pull/337
+[p339]: https://github.com/pythonnet/pythonnet/pull/339
+[p369]: https://github.com/pythonnet/pythonnet/pull/369
+[p368]: https://github.com/pythonnet/pythonnet/pull/368
+[p341]: https://github.com/pythonnet/pythonnet/pull/341
+[p353]: https://github.com/pythonnet/pythonnet/pull/353
+[p371]: https://github.com/pythonnet/pythonnet/pull/371
+[p345]: https://github.com/pythonnet/pythonnet/pull/345
+[i362]: https://github.com/pythonnet/pythonnet/issues/362
+[i401]: https://github.com/pythonnet/pythonnet/issues/401
+[i262]: https://github.com/pythonnet/pythonnet/issues/262
+[p343]: https://github.com/pythonnet/pythonnet/pull/343
+[p365]: https://github.com/pythonnet/pythonnet/pull/365
+[i203]: https://github.com/pythonnet/pythonnet/issues/203
+[p377]: https://github.com/pythonnet/pythonnet/pull/377
+[p398]: https://github.com/pythonnet/pythonnet/pull/398
+[p400]: https://github.com/pythonnet/pythonnet/pull/400
+[i397]: https://github.com/pythonnet/pythonnet/issues/397
+[p399]: https://github.com/pythonnet/pythonnet/pull/399
+[i120]: https://github.com/pythonnet/pythonnet/issues/120
+[i413]: https://github.com/pythonnet/pythonnet/issues/413
+[i179]: https://github.com/pythonnet/pythonnet/issues/179
+[i414]: https://github.com/pythonnet/pythonnet/issues/414
+[p415]: https://github.com/pythonnet/pythonnet/pull/415
+[p329]: https://github.com/pythonnet/pythonnet/pull/329
+[p360]: https://github.com/pythonnet/pythonnet/pull/360
+[i417]: https://github.com/pythonnet/pythonnet/issues/417
+[i336]: https://github.com/pythonnet/pythonnet/issues/336
+[p310]: https://github.com/pythonnet/pythonnet/pull/310
+[p312]: https://github.com/pythonnet/pythonnet/pull/312
+[p281]: https://github.com/pythonnet/pythonnet/pull/281
+[p268]: https://github.com/pythonnet/pythonnet/pull/268
+[p287]: https://github.com/pythonnet/pythonnet/pull/287
+[p314]: https://github.com/pythonnet/pythonnet/pull/314
+[p320]: https://github.com/pythonnet/pythonnet/pull/320
+[p275]: https://github.com/pythonnet/pythonnet/pull/275
+[i270]: https://github.com/pythonnet/pythonnet/issues/270
+[p273]: https://github.com/pythonnet/pythonnet/pull/273
+[p294]: https://github.com/pythonnet/pythonnet/pull/294
+[p300]: https://github.com/pythonnet/pythonnet/pull/300
+[p286]: https://github.com/pythonnet/pythonnet/pull/286
+[p219]: https://github.com/pythonnet/pythonnet/pull/219
+[p208]: https://github.com/pythonnet/pythonnet/pull/208
+[p206]: https://github.com/pythonnet/pythonnet/pull/206
+[p233]: https://github.com/pythonnet/pythonnet/pull/233
+[p219]: https://github.com/pythonnet/pythonnet/pull/219
+[p250]: https://github.com/pythonnet/pythonnet/pull/250
+[p225]: https://github.com/pythonnet/pythonnet/pull/225
+[p78]: https://github.com/pythonnet/pythonnet/pull/78
+[p163]: https://github.com/pythonnet/pythonnet/pull/163
+[i131]: https://github.com/pythonnet/pythonnet/issues/131
