@@ -76,6 +76,13 @@ namespace Python.Runtime
             {
                 Runtime.XDecref(py_clr_module);
                 Runtime.XDecref(root.pyHandle);
+
+                // Re-install the original import function
+                IntPtr dict = Runtime.PyImport_GetModuleDict();
+                IntPtr mod = Runtime.IsPython3
+                    ? Runtime.PyImport_ImportModule("builtins")
+                    : Runtime.PyDict_GetItemString(dict, "__builtin__");
+                Runtime.PyObject_SetAttrString(mod, "__import__", py_import);
                 Runtime.XDecref(py_import);
             }
         }

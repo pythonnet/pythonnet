@@ -454,7 +454,7 @@ namespace Python.Runtime
         /// </summary>
         internal static void InitializeSlots(IntPtr type, Type impl)
         {
-            var seen = new Hashtable(8);
+            var seen = new HashSet<string>();
             Type offsetType = typeof(TypeOffset);
 
             while (impl != null)
@@ -473,7 +473,7 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    if (seen[name] != null)
+                    if (seen.Contains(name))
                     {
                         continue;
                     }
@@ -484,10 +484,39 @@ namespace Python.Runtime
                     IntPtr slot = Interop.GetThunk(method);
                     Marshal.WriteIntPtr(type, offset, slot);
 
-                    seen[name] = 1;
+                    seen.Add(name);
                 }
 
                 impl = impl.BaseType;
+            }
+
+            // Hack: for some objects (Classbase and ExtensionType) we need gc
+            // support. We need to provide three functions:
+            // - tp_traverse(object, ...) returns 0
+            // - tp_clear(object) returns 0
+            // - tp_is_gc(type) returns non-zero
+            // In addition, these functions can get called after a domain reload,
+            // so they must be implemented in native code.
+            //
+            // Py_GetVersion reliably returns non-zero and uses no arguments.
+            //
+            // PyAST_Check reads the object and returns zero unless it's a
+            // python AST node. You could violate this assumption by making a C#
+            // type that derives from ast.AST -- but it's not clear why you'd do that.
+            if (seen.Contains("tp_traverse"))
+            {
+                var lib = NativeMethods.LoadLibrary(Runtime.PythonDLL);
+                var zeroslot = NativeMethods.GetProcAddress(lib, "PyAST_Check");
+                var trueslot = NativeMethods.GetProcAddress(lib, "Py_GetVersion");
+
+                var offset = (int)offsetType.GetField("tp_traverse").GetValue(offsetType);
+                Marshal.WriteIntPtr(type, offset, zeroslot);
+
+                offset = (int)offsetType.GetField("tp_clear").GetValue(offsetType);
+                Marshal.WriteIntPtr(type, offset, zeroslot);
+
+                offset = (int)offsetType.GetField("tp_is_gc").GetValue(offsetType);
+                Marshal.WriteIntPtr(type, offset, trueslot);
             }
         }
 
