@@ -80,6 +80,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TestConsoleInterrupt.cs" />
     <Compile Include="dynamic.cs" />
     <Compile Include="pyimport.cs" />
     <Compile Include="pyinitialize.cs" />
