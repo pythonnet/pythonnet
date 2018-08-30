@@ -1195,7 +1195,11 @@ namespace Python.Runtime
 
         internal static IntPtr PyString_FromString(string value)
         {
+#if PYTHON3
+            return PyUnicode_FromKindAndData(_UCS, value, value.Length);
+#elif PYTHON2
             return PyString_FromStringAndSize(value, value.Length);
+#endif
         }
 
 #if PYTHON3
@@ -1209,13 +1213,6 @@ namespace Python.Runtime
         {
             return ob + BytesOffset.ob_sval;
         }
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_FromStringAndSize")]
-        internal static extern IntPtr PyString_FromStringAndSize(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
-            int size
-        );
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyUnicode_FromStringAndSize(IntPtr value, int size);
