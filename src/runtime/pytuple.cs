@@ -81,7 +81,7 @@ namespace Python.Runtime
                 Runtime.XIncref(ptr);
                 if (Runtime.PyTuple_SetItem(obj, i, ptr) != 0)
                 {
-                    for (int j = i; j >= 0; j--)
+                    for (int j = i - 1; j >= 0; j--)
                     {
                         Runtime.XDecref(items[j].obj);
                     }

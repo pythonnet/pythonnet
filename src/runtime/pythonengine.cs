@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
-    public class ResolveStreamResouceArgs : EventArgs
+    public class ResolveStreamResourceArgs : EventArgs
     {
         public string Name { get; set; }
     }
@@ -17,7 +17,7 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
-        public static event Func<ResolveStreamResouceArgs, Stream> StreamResouceResolve;
+        public static event Func<ResolveStreamResourceArgs, Stream> StreamResourceResolve;
 
         private static DelegateManager delegateManager;
         private static bool initialized;
@@ -543,14 +543,14 @@ namespace Python.Runtime
 
         private static Stream LoadResource(string name)
         {
-            var args = new ResolveStreamResouceArgs()
+            var args = new ResolveStreamResourceArgs()
             {
                 Name = name
             };
             Stream stream;
-            if (StreamResouceResolve != null)
+            if (StreamResourceResolve != null)
             {
-                foreach (Func<ResolveStreamResouceArgs, Stream> resolver in StreamResouceResolve.GetInvocationList())
+                foreach (Func<ResolveStreamResourceArgs, Stream> resolver in StreamResourceResolve.GetInvocationList())
                 {
                     stream = resolver(args);
                     if (stream != null)
@@ -560,7 +560,7 @@ namespace Python.Runtime
                 }
             }
             Assembly assembly = Assembly.GetExecutingAssembly();
-            stream = assembly.GetManifestResourceStream("clr.py");
+            stream = assembly.GetManifestResourceStream(name);
             return stream;
         }
     }

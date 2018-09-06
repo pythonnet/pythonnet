@@ -38,7 +38,7 @@ namespace Python.Runtime
         {
             foreach (var item in cache.Values)
             {
-                Runtime.Py_DecRef(item.pyHandle);
+                Runtime.XDecref(item.pyHandle);
             }
             cache.Clear();
         }
