@@ -117,10 +117,10 @@ namespace Python.Runtime
             }
         }
 
-        private int OnPendingCollect(IntPtr arg)
+        private static int OnPendingCollect(IntPtr arg)
         {
-            DisposeAll();
-            _pending = false;
+            Instance.DisposeAll();
+            Instance._pending = false;
             return 0;
         }
 
