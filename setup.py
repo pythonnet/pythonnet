@@ -325,7 +325,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             if DEVTOOLS == "Mono":
                 nuget = "mono {0}".format(nuget)
 
-            cmd = "{0} update -self".format(nuget)
+            cmd = "{0} update -self -Version 4.6".format(nuget)
             self.debug_print("Updating NuGet: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
 
