@@ -2,6 +2,7 @@ using System;
 using System.CodeDom.Compiler;
 using System.Reflection;
 using NUnit.Framework;
+using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
@@ -47,6 +48,9 @@ namespace Python.EmbeddingTest
 
             Assembly pythonRunner1 = BuildAssembly("test1");
             RunAssemblyAndUnload(pythonRunner1, "test1");
+
+            // Verify that python is not initialized even though we ran it.
+            Assert.That(Runtime.Runtime.Py_IsInitialized(), Is.Zero);
 
             // This caused a crash because objects allocated in pythonRunner1
             // still existed in memory, but the code to do python GC on those
