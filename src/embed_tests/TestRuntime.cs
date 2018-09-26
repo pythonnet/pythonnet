@@ -6,6 +6,25 @@ namespace Python.EmbeddingTest
 {
     public class TestRuntime
     {
+        /// <summary>
+        /// Test the cache of the information from the platform module.
+        ///
+        /// Test fails on platforms we haven't implemented yet.
+        /// </summary>
+        [Test]
+        public static void PlatformCache()
+        {
+            Runtime.Runtime.Initialize();
+
+            Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(Runtime.Runtime.MachineType.Other));
+            Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.MachineName));
+
+            Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(Runtime.Runtime.OperatingSystemType.Other));
+            Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.OperatingSystemName));
+
+            Runtime.Runtime.Shutdown();
+        }
+
         [Test]
         public static void Py_IsInitializedValue()
         {

@@ -40,7 +40,6 @@ namespace Python.EmbeddingTest
         /// a hot reload).
         /// </summary>
         [Test]
-        [Ignore("Test crashes")]
         public static void DomainReloadAndGC()
         {
             // We're set up to run in the directory that includes the bin directory.

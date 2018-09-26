@@ -104,6 +104,7 @@
     <Compile Include="TestPyWith.cs" />
     <Compile Include="TestRuntime.cs" />
     <Compile Include="TestPyScope.cs" />
+    <Compile Include="TestTypeManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">
