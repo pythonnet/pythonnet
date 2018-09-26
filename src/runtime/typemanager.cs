@@ -454,7 +454,10 @@ namespace Python.Runtime
         /// </summary>
         internal static void InitializeSlots(IntPtr type, Type impl)
         {
-            var seen = new Hashtable(8);
+            // We work from the most-derived class up; make sure to get
+            // the most-derived slot and not to override it with a base
+            // class's slot.
+            var seen = new HashSet<string>();
             Type offsetType = typeof(TypeOffset);
 
             while (impl != null)
@@ -473,7 +476,7 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    if (seen[name] != null)
+                    if (seen.Contains(name))
                     {
                         continue;
                     }
@@ -484,7 +487,7 @@ namespace Python.Runtime
                     IntPtr slot = Interop.GetThunk(method);
                     Marshal.WriteIntPtr(type, offset, slot);
 
-                    seen[name] = 1;
+                    seen.Add(name);
                 }
 
                 impl = impl.BaseType;
