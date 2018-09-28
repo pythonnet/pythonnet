@@ -487,12 +487,12 @@ namespace Python.Runtime
             public byte[] Code { get; private set; }
 
             /// <summary>
-            /// The offset for the "return 0" function. Usually zero.
+            /// Where does the "return 0" function start?
             /// </summary>
             public int Return0 { get; private set; }
 
             /// <summary>
-            /// The offset for the "return 1" function. Usually one.
+            /// Where does the "return 1" function start?
             /// </summary>
             public int Return1 { get; private set; }
 
