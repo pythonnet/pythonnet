@@ -447,7 +447,7 @@ namespace Python.Runtime
         }
 
 
-        #region Native Page
+        #region Native Code Page
         /// <summary>
         /// Initialized by InitializeNativeCodePage.
         ///
