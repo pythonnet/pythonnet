@@ -14,6 +14,7 @@
 
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
+-   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
 -   Callum Noble ([@callumnoble](https://github.com/callumnoble))
 -   Christian Heimes ([@tiran](https://github.com/tiran))
@@ -22,6 +23,7 @@
 -   Daniel Fernandez ([@fdanny](https://github.com/fdanny))
 -   Daniel Santana ([@dgsantana](https://github.com/dgsantana))
 -   Dave Hirschfeld ([@dhirschfeld](https://github.com/dhirschfeld))
+-   David Lassonde ([@lassond](https://github.com/lassond))
 -   David Lechner ([@dlech](https://github.com/dlech))
 -   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
 -   He-chien Tsai ([@t3476](https://github.com/t3476))
@@ -39,6 +41,7 @@
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
+-   Viktoria Kovescses ([@vkovec](https://github.com/vkovec))
 -   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))
 -   Wenguang Yang ([@yagweb](https://github.com/yagweb))
