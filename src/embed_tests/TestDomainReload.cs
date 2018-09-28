@@ -65,6 +65,8 @@ namespace Python.EmbeddingTest
         //
         // What matters in the python code is gc.collect and clr.AddReference.
         //
+        // Note that the language version is 2.0, so no $"foo{bar}" syntax.
+        //
         const string TestCode = @"
             using Python.Runtime;
             using System;
@@ -72,24 +74,25 @@ namespace Python.EmbeddingTest
                 public static void RunPython() {
                     AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
                     string name = AppDomain.CurrentDomain.FriendlyName;
-                    Console.WriteLine($""[{name} in .NET] In PythonRunner.RunPython"");
+                    Console.WriteLine(string.Format(""[{0} in .NET] In PythonRunner.RunPython"", name));
                     using (Py.GIL()) {
                         try {
-                            var pyScript = ""import clr\n""
-                                + $""print('[{name} in python] imported clr')\n""
+                            var pyScript = string.Format(""import clr\n""
+                                + ""print('[{0} in python] imported clr')\n""
                                 + ""clr.AddReference('System')\n""
-                                + $""print('[{name} in python] allocated a clr object')\n""
+                                + ""print('[{0} in python] allocated a clr object')\n""
                                 + ""import gc\n""
                                 + ""gc.collect()\n""
-                                + $""print('[{name} in python] collected garbage')\n"";
+                                + ""print('[{0} in python] collected garbage')\n"",
+                                name);
                             PythonEngine.Exec(pyScript);
                         } catch(Exception e) {
-                            Console.WriteLine($""[{name} in .NET] Caught exception: {e}"");
+                            Console.WriteLine(string.Format(""[{0} in .NET] Caught exception: {1}"", name, e));
                         }
                     }
                 }
                 static void OnDomainUnload(object sender, EventArgs e) {
-                    System.Console.WriteLine(string.Format($""[{AppDomain.CurrentDomain.FriendlyName} in .NET] unloading""));
+                    System.Console.WriteLine(string.Format(""[{0} in .NET] unloading"", AppDomain.CurrentDomain.FriendlyName));
                 }
             }";
 
@@ -139,7 +142,7 @@ namespace Python.EmbeddingTest
 
             public void InitAssembly(string assemblyPath)
             {
-                theAssembly = Assembly.LoadFile(assemblyPath);
+                theAssembly = Assembly.LoadFile(System.IO.Path.GetFullPath(assemblyPath));
             }
 
             public void RunPython()

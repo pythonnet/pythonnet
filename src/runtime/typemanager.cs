@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -507,7 +507,7 @@ namespace Python.Runtime
                         case Runtime.MachineType.x86_64:
                             return X86_64;
                         default:
-                            throw new NotImplementedException($"No support for ${Runtime.MachineName}");
+                            throw new NotImplementedException($"No support for {Runtime.MachineName}");
                     }
                 }
             }

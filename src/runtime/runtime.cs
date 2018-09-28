@@ -231,10 +231,17 @@ namespace Python.Runtime
             Other
         };
 
+        /// <summary>
+	/// Map lower-case version of the python machine name to the processor
+	/// type.  There are aliases, e.g. x86_64 and amd64 are two names for
+	/// the same thing.  Make sure to lower-case the search string, because
+	/// capitalization can differ.
+        /// </summary>
         static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
         {
             { "i386", MachineType.i386 },
             { "x86_64", MachineType.x86_64 },
+            { "amd64", MachineType.x86_64 },
         };
 
         /// <summary>
@@ -444,7 +451,7 @@ namespace Python.Runtime
             OperatingSystem = OSType;
 
             MachineType MType;
-            if (!MachineTypeMapping.TryGetValue(MachineName, out MType))
+            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
             {
                 MType = MachineType.Other;
             }
