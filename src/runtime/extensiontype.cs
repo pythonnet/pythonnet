@@ -82,27 +82,6 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// Required Python GC support.
-        /// </summary>
-        public static int tp_traverse(IntPtr ob, IntPtr func, IntPtr args)
-        {
-            return 0;
-        }
-
-
-        public static int tp_clear(IntPtr ob)
-        {
-            return 0;
-        }
-
-
-        public static int tp_is_gc(IntPtr type)
-        {
-            return 1;
-        }
-
-
-        /// <summary>
         /// Default dealloc implementation.
         /// </summary>
         public static void tp_dealloc(IntPtr ob)
