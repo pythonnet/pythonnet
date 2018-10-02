@@ -32,9 +32,10 @@ namespace Python.EmbeddingTest
             Assert.That(Marshal.ReadInt64(page), Is.EqualTo(17));
 
             // Mark it read-execute, now we can't write anymore.
-            // We can't actually test access protectoin under Windows,
-            // because AccessViolationException is assumed to mean we're in a
-            // corrupted state:
+            //
+            // We can't actually test access protection under Windows, because
+            // AccessViolationException is assumed to mean we're in a corrupted
+            // state:
             //   https://stackoverflow.com/questions/3469368/how-to-handle-accessviolationexception
             mapper.SetReadExec(page, len);
             Assert.That(Marshal.ReadInt64(page), Is.EqualTo(17));

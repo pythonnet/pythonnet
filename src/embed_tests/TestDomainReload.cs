@@ -14,7 +14,7 @@ namespace Python.EmbeddingTest
         /// At the time this test was written, there was a very annoying
         /// seemingly random crash bug when integrating pythonnet into Unity.
         ///
-        /// The repro steps we that David Lassonde, Viktoria Kovecses and
+        /// The repro steps that David Lassonde, Viktoria Kovecses and
         /// Benoit Hudson eventually worked out:
         /// 1. Write a HelloWorld.cs script that uses Python.Runtime to access
         ///     some C# data from python: C# calls python, which calls C#.
