@@ -592,6 +592,7 @@ namespace Python.Runtime
             const int PROT_WRITE = 0x2;
             const int PROT_EXEC = 0x4;
 
+            const int MAP_PRIVATE = 0x2;
             int MAP_ANONYMOUS
             {
                 get
@@ -616,7 +617,9 @@ namespace Python.Runtime
 
             public IntPtr MapWriteable(int numBytes)
             {
-                return mmap(IntPtr.Zero, new IntPtr(numBytes), PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, IntPtr.Zero);
+                // MAP_PRIVATE must be set on linux, even though MAP_ANON implies it.
+                // It doesn't hurt on darwin, so just do it.
+                return mmap(IntPtr.Zero, new IntPtr(numBytes), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, IntPtr.Zero);
             }
 
             public void SetReadExec(IntPtr mappedMemory, int numBytes)
