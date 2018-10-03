@@ -6,12 +6,12 @@ using Python.Runtime;
 
 //
 // This test case is disabled on .NET Standard because it doesn't have all the
-// APIs we use; .NET Core doesn't implement application domains, which is what
-// we're testing so there's no point trying.
+// APIs we use. We could work around that, but .NET Core doesn't implement
+// domain creation, so it's not worth it.
 //
 // Unfortunately this means no continuous integration testing for this case.
 //
-#if !NETSTANDARD
+#if !NETSTANDARD && !NETCOREAPP
 namespace Python.EmbeddingTest
 {
     class TestDomainReload
