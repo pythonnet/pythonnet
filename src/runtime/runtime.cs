@@ -22,7 +22,7 @@ namespace Python.Runtime
         }
 #elif MONO_OSX
         private static int RTLD_GLOBAL = 0x8;
-        private const string NativeDll = "/usr/lib/libSystem.dylib"
+        private const string NativeDll = "/usr/lib/libSystem.dylib";
         private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
 
         public static IntPtr LoadLibrary(string fileName)
