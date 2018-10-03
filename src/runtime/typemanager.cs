@@ -609,10 +609,10 @@ namespace Python.Runtime
                 }
             }
 
-            [DllImport("__Internal")]
+            [DllImport("libc")]
             static extern IntPtr mmap(IntPtr addr, IntPtr len, int prot, int flags, int fd, IntPtr offset);
 
-            [DllImport("__Internal")]
+            [DllImport("libc")]
             static extern int mprotect(IntPtr addr, IntPtr len, int prot);
 
             public IntPtr MapWriteable(int numBytes)
