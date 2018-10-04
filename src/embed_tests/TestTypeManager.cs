@@ -6,22 +6,29 @@ namespace Python.EmbeddingTest
 {
     class TestTypeManager
     {
+        [SetUp]
+        public static void Init()
+        {
+            Runtime.Runtime.Initialize();
+        }
+
+        [TearDown]
+        public static void Fini()
+        {
+            // Don't shut down the runtime: if the python engine was initialized
+            // but not shut down by another test, we'd end up in a bad state.
+        }
+
         [Test]
         public static void TestNativeCode()
         {
-            Runtime.Runtime.Initialize();
-
             Assert.That(() => { var _ = TypeManager.NativeCode.Active; }, Throws.Nothing);
             Assert.That(TypeManager.NativeCode.Active.Code.Length, Is.GreaterThan(0));
-
-            Runtime.Runtime.Shutdown();
         }
 
         [Test]
         public static void TestMemoryMapping()
         {
-            Runtime.Runtime.Initialize();
-
             Assert.That(() => { var _ = TypeManager.CreateMemoryMapper(); }, Throws.Nothing);
             var mapper = TypeManager.CreateMemoryMapper();
 
@@ -35,7 +42,7 @@ namespace Python.EmbeddingTest
             mapper.SetReadExec(page, len);
             Assert.That(Marshal.ReadInt64(page), Is.EqualTo(17));
 
-            // Test that we can't write.
+            // Test that we can't write to the protected page.
             //
             // We can't actually test access protection under Microsoft
             // versions of .NET, because AccessViolationException is assumed to
@@ -53,8 +60,6 @@ namespace Python.EmbeddingTest
                 Assert.That(() => { Marshal.WriteInt64(page, 73); }, Throws.TypeOf<System.NullReferenceException>());
                 Assert.That(Marshal.ReadInt64(page), Is.EqualTo(17));
             }
-
-            Runtime.Runtime.Shutdown();
         }
     }
 }

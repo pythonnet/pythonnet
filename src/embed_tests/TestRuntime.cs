@@ -22,7 +22,8 @@ namespace Python.EmbeddingTest
             Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(Runtime.Runtime.OperatingSystemType.Other));
             Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.OperatingSystemName));
 
-            Runtime.Runtime.Shutdown();
+            // Don't shut down the runtime: if the python engine was initialized
+            // but not shut down by another test, we'd end up in a bad state.
         }
 
         [Test]
