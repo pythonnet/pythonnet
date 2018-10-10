@@ -14,6 +14,9 @@ def test_relative_missing_import():
 
 
 def test_import_all_on_second_time():
+    """Test import all attributes after a normal.
+    Due to import * only allowed at module level, the test body splited
+    to a module file."""
     from . import importtest
     del sys.modules[importtest.__name__]
     
