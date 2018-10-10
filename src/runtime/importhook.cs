@@ -184,6 +184,7 @@ namespace Python.Runtime
                 }
             }
 
+            ModuleObject mod;
             string mod_name = Runtime.GetManagedString(py_mod_name);
             // Check these BEFORE the built-in import runs; may as well
             // do the Incref()ed return here, since we've already found
@@ -237,6 +238,11 @@ namespace Python.Runtime
                 if (res != IntPtr.Zero)
                 {
                     // There was no error.
+                    if (fromlist && IsLoadAll(fromList))
+                    {
+                        mod = ManagedType.GetManagedObject(res) as ModuleObject;
+                        mod?.LoadNames();
+                    }
                     return res;
                 }
                 // There was an error
@@ -290,6 +296,11 @@ namespace Python.Runtime
             {
                 if (fromlist)
                 {
+                    if (IsLoadAll(fromList))
+                    {
+                        mod = ManagedType.GetManagedObject(module) as ModuleObject;
+                        mod?.LoadNames();
+                    }
                     Runtime.XIncref(module);
                     return module;
                 }
@@ -345,20 +356,31 @@ namespace Python.Runtime
                 }
             }
 
-            ModuleObject mod = fromlist ? tail : head;
+            mod = fromlist ? tail : head;
 
-            if (fromlist && Runtime.PySequence_Size(fromList) == 1)
+            if (fromlist && IsLoadAll(fromList))
             {
-                IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
-                if (!CLRModule.preload && Runtime.GetManagedString(fp) == "*")
-                {
-                    mod.LoadNames();
-                }
-                Runtime.XDecref(fp);
+                mod.LoadNames();
             }
 
             Runtime.XIncref(mod.pyHandle);
             return mod.pyHandle;
+        }
+
+        private static bool IsLoadAll(IntPtr fromList)
+        {
+            if (CLRModule.preload)
+            {
+                return false;
+            }
+            if (Runtime.PySequence_Size(fromList) != 1)
+            {
+                return false;
+            }
+            IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
+            bool res = Runtime.GetManagedString(fp) == "*";
+            Runtime.XDecref(fp);
+            return res;
         }
     }
 }
