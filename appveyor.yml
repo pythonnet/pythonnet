@@ -39,10 +39,10 @@ init:
 
 install:
   - python -m pip install -U pip
-  - pip install --upgrade -r requirements.txt --quiet
+  - pip install --upgrade -r requirements.txt
 
   # Install OpenCover. Can't put on `packages.config`, not Mono compatible
-  - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages -Verbosity quiet
+  - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages
 
 build_script:
   # Create clean `sdist`. Only used for releases
