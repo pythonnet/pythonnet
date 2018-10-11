@@ -83,6 +83,8 @@ namespace Python.EmbeddingTest
                     AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
                     string name = AppDomain.CurrentDomain.FriendlyName;
                     Console.WriteLine(string.Format(""[{0} in .NET] In PythonRunner.RunPython"", name));
+                    Console.Out.Flush();
+
                     using (Py.GIL()) {
                         try {
                             var pyScript = string.Format(""import clr\n""
@@ -96,11 +98,13 @@ namespace Python.EmbeddingTest
                             PythonEngine.Exec(pyScript);
                         } catch(Exception e) {
                             Console.WriteLine(string.Format(""[{0} in .NET] Caught exception: {1}"", name, e));
+                            Console.Out.Flush();
                         }
                     }
                 }
                 static void OnDomainUnload(object sender, EventArgs e) {
-                    System.Console.WriteLine(string.Format(""[{0} in .NET] unloading"", AppDomain.CurrentDomain.FriendlyName));
+                    Console.WriteLine(string.Format(""[{0} in .NET] unloading"", AppDomain.CurrentDomain.FriendlyName));
+                    Console.Out.Flush();
                 }
             }";
 
@@ -156,6 +160,7 @@ namespace Python.EmbeddingTest
             public void RunPython()
             {
                 Console.WriteLine("[Proxy] Entering RunPython");
+                Console.Out.Flush();
 
                 // Call into the new assembly. Will execute Python code
                 var pythonrunner = theAssembly.GetType("PythonRunner");
@@ -163,6 +168,7 @@ namespace Python.EmbeddingTest
                 runPythonMethod.Invoke(null, new object[] { });
 
                 Console.WriteLine("[Proxy] Leaving RunPython");
+                Console.Out.Flush();
             }
         }
 
@@ -173,6 +179,7 @@ namespace Python.EmbeddingTest
         static void RunAssemblyAndUnload(Assembly assembly, string assemblyName)
         {
             Console.WriteLine($"[Program.Main] === creating domain for assembly {assembly.FullName}");
+            Console.Out.Flush();
 
             // Create the domain. Make sure to set PrivateBinPath to a relative
             // path from the CWD (namely, 'bin').
@@ -203,17 +210,21 @@ namespace Python.EmbeddingTest
             theProxy.RunPython();
 
             Console.WriteLine($"[Program.Main] Before Domain Unload on {assembly.FullName}");
+            Console.Out.Flush();
             AppDomain.Unload(domain);
             Console.WriteLine($"[Program.Main] After Domain Unload on {assembly.FullName}");
+            Console.Out.Flush();
 
             // Validate that the assembly does not exist anymore
             try
             {
                 Console.WriteLine($"[Program.Main] The Proxy object is valid ({theProxy}). Unexpected domain unload behavior");
+                Console.Out.Flush();
             }
             catch (Exception)
             {
                 Console.WriteLine("[Program.Main] The Proxy object is not valid anymore, domain unload complete.");
+                Console.Out.Flush();
             }
         }
 
