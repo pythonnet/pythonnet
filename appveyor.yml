@@ -28,18 +28,10 @@ environment:
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
 
-init:
-  # Update Environment Variables based on matrix/platform
-  - set PY_VER=%PYTHON_VERSION:.=%
-  - set PYTHON=C:\PYTHON%PY_VER%
-  - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
-
-  # Put desired Python version first in PATH
-  - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-
 install:
-  # Upgrade setuptools to find MSVC. Otherwise you get "error: Microsoft Visual C++ 10.0 is required (Unable to find vcvarsall.bat)."
-  - python -m pip install -U pip
+  # Set up the python environment
+  - conda create -n testenv python=%PYTHON_VERSION% pip
+  - activate testenv
   - pip install --upgrade setuptools
   - pip install --upgrade -r requirements.txt
 
