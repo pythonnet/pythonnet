@@ -66,24 +66,53 @@ namespace Python.EmbeddingTest
             RunAssemblyAndUnload(pythonRunner2, "test2");
         }
 
-        //
-        // The code we'll test. All that really matters is
-        //    using GIL { Python.Exec(pyScript); }
-        // but the rest is useful for debugging.
-        //
-        // What matters in the python code is gc.collect and clr.AddReference.
-        //
-        // Note that the language version is 2.0, so no $"foo{bar}" syntax.
-        //
+        /// <summary>
+        /// On travis, printing to stdout causes a race condition (which
+        /// becomes visible as either EPIPE or a deadlock). Set Verbose to true
+        /// to print-debug the example on your laptop, but keep it off for CI.
+        ///
+        /// Verbose is protected to quash a warning that it's never set.
+        /// </summary>
+        protected static bool Verbose = false;
+
+        /// <summary>
+        /// On travis, printing to stdout causes a race condition (which
+        /// becomes visible as either EPIPE or a deadlock). Set Verbose to true
+        /// to print-debug the example on your laptop, but keep it off for CI.
+        /// </summary>
+        static void WriteLine(string line) {
+            if (!Verbose) { return; }
+            Console.WriteLine(line);
+            Console.Out.Flush();
+        }
+
+        /// <summary>
+        /// The code we'll test. All that really matters is
+        ///    using GIL { Python.Exec(pyScript); }
+        /// but the rest is useful for debugging.
+        ///
+        /// What matters in the python code is gc.collect and clr.AddReference.
+        ///
+        /// On Windows, the language version is 2.0, so no $"foo{bar}" syntax.
+        ///
+        /// On travis, printing to stdout causes a race condition (which
+        /// becomes visible as either EPIPE or a deadlock). Set Verbose to true
+        /// to print-debug the example on your laptop, but keep it off for CI.
+        /// </summary>
         const string TestCode = @"
             using Python.Runtime;
             using System;
             class PythonRunner {
+                protected static bool Verbose = false;
+                static void WriteLine(string line) {
+                    if (!Verbose) { return; }
+                    Console.WriteLine(line);
+                    Console.Out.Flush();
+                }
                 public static void RunPython() {
                     AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
                     string name = AppDomain.CurrentDomain.FriendlyName;
-                    Console.WriteLine(string.Format(""[{0} in .NET] In PythonRunner.RunPython"", name));
-                    Console.Out.Flush();
+                    WriteLine(string.Format(""[{0} in .NET] In PythonRunner.RunPython"", name));
 
                     using (Py.GIL()) {
                         try {
@@ -97,14 +126,12 @@ namespace Python.EmbeddingTest
                                 name);
                             PythonEngine.Exec(pyScript);
                         } catch(Exception e) {
-                            Console.WriteLine(string.Format(""[{0} in .NET] Caught exception: {1}"", name, e));
-                            Console.Out.Flush();
+                            WriteLine(string.Format(""[{0} in .NET] Caught exception: {1}"", name, e));
                         }
                     }
                 }
                 static void OnDomainUnload(object sender, EventArgs e) {
-                    Console.WriteLine(string.Format(""[{0} in .NET] unloading"", AppDomain.CurrentDomain.FriendlyName));
-                    Console.Out.Flush();
+                    WriteLine(string.Format(""[{0} in .NET] unloading"", AppDomain.CurrentDomain.FriendlyName));
                 }
             }";
 
@@ -159,16 +186,14 @@ namespace Python.EmbeddingTest
 
             public void RunPython()
             {
-                Console.WriteLine("[Proxy] Entering RunPython");
-                Console.Out.Flush();
+                WriteLine("[Proxy] Entering RunPython");
 
                 // Call into the new assembly. Will execute Python code
                 var pythonrunner = theAssembly.GetType("PythonRunner");
                 var runPythonMethod = pythonrunner.GetMethod("RunPython");
                 runPythonMethod.Invoke(null, new object[] { });
 
-                Console.WriteLine("[Proxy] Leaving RunPython");
-                Console.Out.Flush();
+                WriteLine("[Proxy] Leaving RunPython");
             }
         }
 
@@ -178,8 +203,7 @@ namespace Python.EmbeddingTest
         /// </summary>
         static void RunAssemblyAndUnload(Assembly assembly, string assemblyName)
         {
-            Console.WriteLine($"[Program.Main] === creating domain for assembly {assembly.FullName}");
-            Console.Out.Flush();
+            WriteLine($"[Program.Main] === creating domain for assembly {assembly.FullName}");
 
             // Create the domain. Make sure to set PrivateBinPath to a relative
             // path from the CWD (namely, 'bin').
@@ -209,22 +233,18 @@ namespace Python.EmbeddingTest
             theProxy.InitAssembly(assemblyName);
             theProxy.RunPython();
 
-            Console.WriteLine($"[Program.Main] Before Domain Unload on {assembly.FullName}");
-            Console.Out.Flush();
+            WriteLine($"[Program.Main] Before Domain Unload on {assembly.FullName}");
             AppDomain.Unload(domain);
-            Console.WriteLine($"[Program.Main] After Domain Unload on {assembly.FullName}");
-            Console.Out.Flush();
+            WriteLine($"[Program.Main] After Domain Unload on {assembly.FullName}");
 
             // Validate that the assembly does not exist anymore
             try
             {
-                Console.WriteLine($"[Program.Main] The Proxy object is valid ({theProxy}). Unexpected domain unload behavior");
-                Console.Out.Flush();
+                WriteLine($"[Program.Main] The Proxy object is valid ({theProxy}). Unexpected domain unload behavior");
             }
             catch (Exception)
             {
-                Console.WriteLine("[Program.Main] The Proxy object is not valid anymore, domain unload complete.");
-                Console.Out.Flush();
+                WriteLine("[Program.Main] The Proxy object is not valid anymore, domain unload complete.");
             }
         }
 
