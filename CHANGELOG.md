@@ -25,6 +25,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Fixed
 
 -   Fixed Visual Studio 2017 compat ([#434][i434]) for setup.py
+-   Fixed crashes when integrating pythonnet in Unity3d ([#714][i714]),
+    related to unloading the Application Domain
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
     attribute ([#481][i481])
