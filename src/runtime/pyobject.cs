@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq.Expressions;
 
@@ -937,7 +938,7 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
-            return Runtime.PyObject_Hash(obj).ToInt32();
+            return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
         }
 
 
@@ -1271,6 +1272,21 @@ namespace Python.Runtime
             }
             result = CheckNone(new PyObject(res));
             return true;
+        }
+
+        /// <summary>
+        /// Returns the enumeration of all dynamic member names.
+        /// </summary>
+        /// <remarks>
+        /// This method exists for debugging purposes only.
+        /// </remarks>
+        /// <returns>A sequence that contains dynamic member names.</returns>
+        public override IEnumerable<string> GetDynamicMemberNames()
+        {
+            foreach (PyObject pyObj in Dir())
+            {
+                yield return pyObj.ToString();
+            }
         }
     }
 }

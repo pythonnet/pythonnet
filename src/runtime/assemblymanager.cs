@@ -17,8 +17,16 @@ namespace Python.Runtime
     {
         // modified from event handlers below, potentially triggered from different .NET threads
         // therefore this should be a ConcurrentDictionary
+        //
+        // WARNING: Dangerous if cross-app domain usage is ever supported
+        //    Reusing the dictionary with assemblies accross multiple initializations is problematic. 
+        //    Loading happens from CurrentDomain (see line 53). And if the first call is from AppDomain that is later unloaded, 
+        //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain - 
+        //     unless LoaderOptimization.MultiDomain is used);
+        //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
         private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
             new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
+
         //private static Dictionary<string, Dictionary<string, string>> generics;
         private static AssemblyLoadEventHandler lhandler;
         private static ResolveEventHandler rhandler;
@@ -27,7 +35,7 @@ namespace Python.Runtime
         private static Dictionary<string, int> probed = new Dictionary<string, int>(32);
 
         // modified from event handlers below, potentially triggered from different .NET threads
-        private static AssemblyList assemblies;
+        private static ConcurrentQueue<Assembly> assemblies;
         internal static List<string> pypath;
 
         private AssemblyManager()
@@ -58,7 +66,7 @@ namespace Python.Runtime
                 try
                 {
                     ScanAssembly(a);
-                    assemblies.Add(a);
+                    assemblies.Enqueue(a);
                 }
                 catch (Exception ex)
                 {
@@ -89,7 +97,7 @@ namespace Python.Runtime
         private static void AssemblyLoadHandler(object ob, AssemblyLoadEventArgs args)
         {
             Assembly assembly = args.LoadedAssembly;
-            assemblies.Add(assembly);
+            assemblies.Enqueue(assembly);
             ScanAssembly(assembly);
         }
 
@@ -458,104 +466,6 @@ namespace Python.Runtime
                 }
             }
             return null;
-        }
-
-        /// <summary>
-        /// Wrapper around List&lt;Assembly&gt; for thread safe access
-        /// </summary>
-        private class AssemblyList : IEnumerable<Assembly>
-        {
-            private readonly List<Assembly> _list;
-            private readonly ReaderWriterLockSlim _lock;
-
-            public AssemblyList(int capacity)
-            {
-                _list = new List<Assembly>(capacity);
-                _lock = new ReaderWriterLockSlim();
-            }
-
-            public int Count
-            {
-                get
-                {
-                    _lock.EnterReadLock();
-                    try
-                    {
-                        return _list.Count;
-                    }
-                    finally
-                    {
-                        _lock.ExitReadLock();
-                    }
-                }
-            }
-
-            public void Add(Assembly assembly)
-            {
-                _lock.EnterWriteLock();
-                try
-                {
-                    _list.Add(assembly);
-                }
-                finally
-                {
-                    _lock.ExitWriteLock();
-                }
-            }
-
-            public IEnumerator GetEnumerator()
-            {
-                return ((IEnumerable<Assembly>)this).GetEnumerator();
-            }
-
-            /// <summary>
-            /// Enumerator wrapping around <see cref="AssemblyList._list" />'s enumerator.
-            /// Acquires and releases a read lock on <see cref="AssemblyList._lock" /> during enumeration
-            /// </summary>
-            private class Enumerator : IEnumerator<Assembly>
-            {
-                private readonly AssemblyList _assemblyList;
-
-                private readonly IEnumerator<Assembly> _listEnumerator;
-
-                public Enumerator(AssemblyList assemblyList)
-                {
-                    _assemblyList = assemblyList;
-                    _assemblyList._lock.EnterReadLock();
-                    _listEnumerator = _assemblyList._list.GetEnumerator();
-                }
-
-                public void Dispose()
-                {
-                    _listEnumerator.Dispose();
-                    _assemblyList._lock.ExitReadLock();
-                }
-
-                public bool MoveNext()
-                {
-                    return _listEnumerator.MoveNext();
-                }
-
-                public void Reset()
-                {
-                    _listEnumerator.Reset();
-                }
-
-                public Assembly Current
-                {
-                    get { return _listEnumerator.Current; }
-                }
-
-                object IEnumerator.Current
-                {
-                    get { return Current; }
-                }
-            }
-
-            IEnumerator<Assembly> IEnumerable<Assembly>.GetEnumerator()
-            {
-                return new Enumerator(this);
-            }
         }
     }
 }
