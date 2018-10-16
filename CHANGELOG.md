@@ -28,7 +28,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Fixed
 
 -   Fixed secondary PythonEngine.Initialize call, all sensitive static variables now reseted.
-    This is a hidden bug. Once python cleaning up enough memory, objects from previous engine run becomes corrupted.
+    This is a hidden bug. Once python cleaning up enough memory, objects from previous engine run becomes corrupted. ([#534][p534])
 -   Fixed Visual Studio 2017 compat ([#434][i434]) for setup.py
 -   Fixed crashes when integrating pythonnet in Unity3d ([#714][i714]),
     related to unloading the Application Domain
@@ -697,3 +697,4 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 [i131]: https://github.com/pythonnet/pythonnet/issues/131
 [p531]: https://github.com/pythonnet/pythonnet/pull/531
 [i755]: https://github.com/pythonnet/pythonnet/pull/755
+[p534]: https://github.com/pythonnet/pythonnet/pull/534
