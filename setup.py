@@ -344,7 +344,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             self.debug_print("Updating NuGet: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
 
-            cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
+            cmd = "{0} restore pythonnet.sln  -MSBuildVersion 14 -o packages".format(nuget)
             self.debug_print("Installing packages: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
 

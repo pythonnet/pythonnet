@@ -60,4 +60,19 @@ namespace Python.Test
             return value;
         }
     }
+    
+    public class UnicodeString
+    {
+        public string value = "안녕";
+
+        public string GetString()
+        {
+            return value;
+        }
+
+        public override string ToString()
+        {
+            return value;
+        }
+    }
 }
