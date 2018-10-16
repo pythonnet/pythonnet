@@ -184,7 +184,6 @@ namespace Python.Runtime
                 }
             }
 
-            ModuleObject mod;
             string mod_name = Runtime.GetManagedString(py_mod_name);
             // Check these BEFORE the built-in import runs; may as well
             // do the Incref()ed return here, since we've already found
@@ -240,7 +239,7 @@ namespace Python.Runtime
                     // There was no error.
                     if (fromlist && IsLoadAll(fromList))
                     {
-                        mod = ManagedType.GetManagedObject(res) as ModuleObject;
+                        var mod = ManagedType.GetManagedObject(res) as ModuleObject;
                         mod?.LoadNames();
                     }
                     return res;
@@ -298,7 +297,7 @@ namespace Python.Runtime
                 {
                     if (IsLoadAll(fromList))
                     {
-                        mod = ManagedType.GetManagedObject(module) as ModuleObject;
+                        var mod = ManagedType.GetManagedObject(module) as ModuleObject;
                         mod?.LoadNames();
                     }
                     Runtime.XIncref(module);
@@ -356,15 +355,17 @@ namespace Python.Runtime
                 }
             }
 
-            mod = fromlist ? tail : head;
-
-            if (fromlist && IsLoadAll(fromList))
             {
-                mod.LoadNames();
-            }
+                var mod = fromlist ? tail : head;
 
-            Runtime.XIncref(mod.pyHandle);
-            return mod.pyHandle;
+                if (fromlist && IsLoadAll(fromList))
+                {
+                    mod.LoadNames();
+                }
+
+                Runtime.XIncref(mod.pyHandle);
+                return mod.pyHandle;
+            }
         }
 
         private static bool IsLoadAll(IntPtr fromList)
