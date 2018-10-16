@@ -28,6 +28,7 @@
 -   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
 -   He-chien Tsai ([@t3476](https://github.com/t3476))
 -   Ivan Cronyn ([@cronan](https://github.com/cronan))
+-   Jan Krivanek ([@jakrivan](https://github.com/jakrivan))
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
 -   John Burnett ([@johnburnett](https://github.com/johnburnett))
