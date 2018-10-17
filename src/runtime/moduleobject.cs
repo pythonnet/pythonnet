@@ -190,10 +190,17 @@ namespace Python.Runtime
             foreach (string name in AssemblyManager.GetNames(_namespace))
             {
                 cache.TryGetValue(name, out m);
-                if (m == null)
+                if (m != null)
                 {
-                    ManagedType attr = GetAttribute(name, true);
+                    continue;
                 }
+                IntPtr attr = Runtime.PyDict_GetItemString(dict, name);
+                // If __dict__ has already set a custom property, skip it.
+                if (attr != IntPtr.Zero)
+                {
+                    continue;
+                }
+                GetAttribute(name, true);
             }
         }
 
