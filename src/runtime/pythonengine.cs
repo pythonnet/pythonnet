@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -12,11 +13,16 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
+        private const int NUM_GENERATIONS = 3;
+
         private static DelegateManager delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
         private static IntPtr _programName = IntPtr.Zero;
         private static IntPtr _pythonPath = IntPtr.Zero;
+        private static IntPtr _refChain = IntPtr.Zero;
+        private static IntPtr[] _generations;
+
 
         public PythonEngine()
         {
@@ -168,6 +174,10 @@ namespace Python.Runtime
                 initialized = true;
                 Exceptions.Clear();
 
+                _generations = GetGCGenerations();
+#if PYTHON_WITH_PYDEBUG
+                _refChain = GetRefChainHead();
+#endif
                 if (setSysArgv)
                 {
                     Py.SetArgv(args);
@@ -303,6 +313,7 @@ namespace Python.Runtime
                 _pythonPath = IntPtr.Zero;
 
                 Runtime.Shutdown();
+                ResetGC();
                 initialized = false;
             }
         }
@@ -520,6 +531,62 @@ namespace Python.Runtime
                 }
             }
         }
+
+        internal static void ResetGC()
+        {
+            ClearGC();
+#if PYTHON_WITH_PYDEBUG
+            ResetRefChain();
+#endif
+        }
+
+        private static void ClearGC()
+        {
+            Debug.Assert(_generations != null);
+            foreach (IntPtr head in _generations)
+            {
+                // gc.gc_next
+                Marshal.WriteIntPtr(head, 0, head);
+                // gc.gc_prev
+                Marshal.WriteIntPtr(head, IntPtr.Size, head);
+            }
+        }
+
+        private static IntPtr[] GetGCGenerations()
+        {
+            int GCHeadOffset = IntPtr.Size == 4 ? 24 : 32;
+            IntPtr op = Runtime._PyObject_GC_New(Runtime.PyTypeType);
+            Runtime.PyObject_GC_Track(op);
+            IntPtr g = Runtime._Py_AS_GC(op);
+            // According to _PyObjct_GC_TRACK and PyGC_Head strcture, g is the g->gc.gc_next
+            // It also become the GEN_HEAD(0) now
+            IntPtr[] gens = new IntPtr[NUM_GENERATIONS];
+            for (int i = 0; i < NUM_GENERATIONS; i++)
+            {
+                gens[i] = g;
+                g += GCHeadOffset;
+            }
+            Runtime.PyObject_GC_UnTrack(op);
+            Runtime.PyObject_GC_Del(op);
+            return gens;
+        }
+
+#if PYTHON_WITH_PYDEBUG
+        private static void ResetRefChain()
+        {
+            Debug.Assert(_refChain != IntPtr.Zero);
+            Marshal.WriteIntPtr(_refChain, ObjectOffset._ob_next, _refChain);
+            Marshal.WriteIntPtr(_refChain, ObjectOffset._ob_prev, _refChain);
+        }
+
+        private static IntPtr GetRefChainHead()
+        {
+            IntPtr op = Runtime._PyObject_GC_New(Runtime.PyBaseObjectType);
+            IntPtr refchain = Marshal.ReadIntPtr(op, ObjectOffset._ob_prev);
+            Runtime.PyObject_GC_Del(op);
+            return refchain;
+        }
+#endif
     }
 
     public enum RunFlagType

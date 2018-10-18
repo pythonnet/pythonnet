@@ -1575,7 +1575,7 @@ namespace Python.Runtime
         internal static extern IntPtr _PyObject_GetDictPtr(IntPtr obj);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GC_New(IntPtr tp);
+        internal static extern IntPtr _PyObject_GC_New(IntPtr tp);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyObject_GC_Del(IntPtr tp);
@@ -1600,6 +1600,10 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyMem_Free(IntPtr ptr);
 
+        internal static IntPtr _Py_AS_GC(IntPtr op)
+        {
+            return op - IntPtr.Size;
+        }
 
         //====================================================================
         // Python exception API
