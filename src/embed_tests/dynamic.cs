@@ -12,13 +12,23 @@ namespace Python.EmbeddingTest
         [SetUp]
         public void SetUp()
         {
-            _gs = Py.GIL();
+            try {
+                _gs = Py.GIL();
+            } catch (Exception e) {
+                Console.WriteLine($"exception in SetUp: {e}");
+                throw;
+            }
         }
 
         [TearDown]
         public void Dispose()
         {
-            _gs.Dispose();
+            try {
+                _gs.Dispose();
+            } catch(Exception e) {
+                Console.WriteLine($"exception in TearDown: {e}");
+                throw;
+            }
         }
 
         /// <summary>
