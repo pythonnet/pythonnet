@@ -535,7 +535,7 @@ namespace Python.Runtime
 
         internal static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args)
         {
-            int size = PyTuple_Size(t);
+            var size = PyTuple_Size(t);
             int add = args.Length;
             IntPtr item;
 
@@ -578,7 +578,7 @@ namespace Python.Runtime
                 free = true;
             }
 
-            int n = PyTuple_Size(args);
+            var n = PyTuple_Size(args);
             var types = new Type[n];
             Type t = null;
 
@@ -1009,9 +1009,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_Not(IntPtr pointer);
 
-        internal static int PyObject_Size(IntPtr pointer)
+        internal static long PyObject_Size(IntPtr pointer)
         {
-            return (int) _PyObject_Size(pointer);
+            return (long) _PyObject_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyObject_Size")]
@@ -1245,57 +1245,57 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool PySequence_Check(IntPtr pointer);
 
-        internal static IntPtr PySequence_GetItem(IntPtr pointer, int index)
+        internal static IntPtr PySequence_GetItem(IntPtr pointer, long index)
         {
-            return PySequence_GetItem(pointer, (IntPtr) index);
+            return PySequence_GetItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PySequence_GetItem(IntPtr pointer, IntPtr index);
 
-        internal static int PySequence_SetItem(IntPtr pointer, int index, IntPtr value)
+        internal static int PySequence_SetItem(IntPtr pointer, long index, IntPtr value)
         {
-            return PySequence_SetItem(pointer, (IntPtr)index, value);
+            return PySequence_SetItem(pointer, new IntPtr(index), value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PySequence_SetItem(IntPtr pointer, IntPtr index, IntPtr value);
 
-        internal static int PySequence_DelItem(IntPtr pointer, int index)
+        internal static int PySequence_DelItem(IntPtr pointer, long index)
         {
-            return PySequence_DelItem(pointer, (IntPtr)index);
+            return PySequence_DelItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PySequence_DelItem(IntPtr pointer, IntPtr index);
 
-        internal static IntPtr PySequence_GetSlice(IntPtr pointer, int i1, int i2)
+        internal static IntPtr PySequence_GetSlice(IntPtr pointer, long i1, long i2)
         {
-            return PySequence_GetSlice(pointer, (IntPtr)i1, (IntPtr)i2);
+            return PySequence_GetSlice(pointer, new IntPtr(i1), new IntPtr(i2));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PySequence_GetSlice(IntPtr pointer, IntPtr i1, IntPtr i2);
 
-        internal static int PySequence_SetSlice(IntPtr pointer, int i1, int i2, IntPtr v)
+        internal static int PySequence_SetSlice(IntPtr pointer, long i1, long i2, IntPtr v)
         {
-            return PySequence_SetSlice(pointer, (IntPtr) i1, (IntPtr) i2, v);
+            return PySequence_SetSlice(pointer, new IntPtr(i1), new IntPtr(i2), v);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PySequence_SetSlice(IntPtr pointer, IntPtr i1, IntPtr i2, IntPtr v);
 
-        internal static int PySequence_DelSlice(IntPtr pointer, int i1, int i2)
+        internal static int PySequence_DelSlice(IntPtr pointer, long i1, long i2)
         {
-            return PySequence_DelSlice(pointer, (IntPtr) i1, (IntPtr) i2);
+            return PySequence_DelSlice(pointer, new IntPtr(i1), new IntPtr(i2));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PySequence_DelSlice(IntPtr pointer, IntPtr i1, IntPtr i2);
 
-        internal static int PySequence_Size(IntPtr pointer)
+        internal static long PySequence_Size(IntPtr pointer)
         {
-            return (int) _PySequence_Size(pointer);
+            return (long) _PySequence_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PySequence_Size")]
@@ -1307,9 +1307,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PySequence_Concat(IntPtr pointer, IntPtr other);
 
-        internal static IntPtr PySequence_Repeat(IntPtr pointer, int count)
+        internal static IntPtr PySequence_Repeat(IntPtr pointer, long count)
         {
-            return PySequence_Repeat(pointer, (IntPtr) count);
+            return PySequence_Repeat(pointer, new IntPtr(count));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1318,9 +1318,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySequence_Index(IntPtr pointer, IntPtr item);
 
-        internal static int PySequence_Count(IntPtr pointer, IntPtr value)
+        internal static long PySequence_Count(IntPtr pointer, IntPtr value)
         {
-            return (int) _PySequence_Count(pointer, value);
+            return (long) _PySequence_Count(pointer, value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PySequence_Count")]
@@ -1361,9 +1361,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyBytes_FromString(string op);
 
-        internal static int PyBytes_Size(IntPtr op)
+        internal static long PyBytes_Size(IntPtr op)
         {
-            return (int) _PyBytes_Size(op);
+            return (long) _PyBytes_Size(op);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyBytes_Size")]
@@ -1374,9 +1374,9 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
-        internal static IntPtr PyString_FromStringAndSize(string value, int size)
+        internal static IntPtr PyString_FromStringAndSize(string value, long size)
         {
-            return _PyString_FromStringAndSize(value, (IntPtr) size);
+            return _PyString_FromStringAndSize(value, new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
@@ -1386,17 +1386,17 @@ namespace Python.Runtime
             IntPtr size
         );
 
-        internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, int size)
+        internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, long size)
         {
-            return PyUnicode_FromStringAndSize(value, (IntPtr) size);
+            return PyUnicode_FromStringAndSize(value, new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyUnicode_FromStringAndSize(IntPtr value, IntPtr size);
 #elif PYTHON2
-        internal static IntPtr PyString_FromStringAndSize(string value, int size)
+        internal static IntPtr PyString_FromStringAndSize(string value, long size)
         {
-            return PyString_FromStringAndSize(value, (IntPtr) size);
+            return PyString_FromStringAndSize(value, new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1421,9 +1421,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
-        internal static IntPtr PyUnicode_FromKindAndData(int kind, string s, int size)
+        internal static IntPtr PyUnicode_FromKindAndData(int kind, string s, long size)
         {
-            return PyUnicode_FromKindAndData(kind, s, (IntPtr) size);
+            return PyUnicode_FromKindAndData(kind, s, new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1433,14 +1433,14 @@ namespace Python.Runtime
             IntPtr size
         );
 
-        internal static IntPtr PyUnicode_FromUnicode(string s, int size)
+        internal static IntPtr PyUnicode_FromUnicode(string s, long size)
         {
             return PyUnicode_FromKindAndData(_UCS, s, size);
         }
 
-        internal static int PyUnicode_GetSize(IntPtr ob)
+        internal static long PyUnicode_GetSize(IntPtr ob)
         {
-            return (int)_PyUnicode_GetSize(ob);
+            return (long)_PyUnicode_GetSize(ob);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyUnicode_GetSize")]
@@ -1460,9 +1460,9 @@ namespace Python.Runtime
             EntryPoint = PyUnicodeEntryPoint + "FromEncodedObject")]
         internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
-        internal static IntPtr PyUnicode_FromUnicode(string s, int size)
+        internal static IntPtr PyUnicode_FromUnicode(string s, long size)
         {
-            return PyUnicode_FromUnicode(s, (IntPtr) size);
+            return PyUnicode_FromUnicode(s, new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
@@ -1472,9 +1472,9 @@ namespace Python.Runtime
             IntPtr size
         );
 
-        internal static int PyUnicode_GetSize(IntPtr ob)
+        internal static long PyUnicode_GetSize(IntPtr ob)
         {
-            return (int) _PyUnicode_GetSize(ob);
+            return (long) _PyUnicode_GetSize(ob);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
@@ -1522,7 +1522,7 @@ namespace Python.Runtime
             if (type == PyUnicodeType)
             {
                 IntPtr p = PyUnicode_AsUnicode(op);
-                int length = PyUnicode_GetSize(op);
+                int length = (int)PyUnicode_GetSize(op);
 
                 int size = length * _UCS;
                 var buffer = new byte[size];
@@ -1588,9 +1588,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyDict_Clear(IntPtr pointer);
 
-        internal static int PyDict_Size(IntPtr pointer)
+        internal static long PyDict_Size(IntPtr pointer)
         {
-            return (int) _PyDict_Size(pointer);
+            return (long) _PyDict_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyDict_Size")]
@@ -1606,9 +1606,9 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyListType;
         }
 
-        internal static IntPtr PyList_New(int size)
+        internal static IntPtr PyList_New(long size)
         {
-            return PyList_New((IntPtr) size);
+            return PyList_New(new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1617,25 +1617,25 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_AsTuple(IntPtr pointer);
 
-        internal static IntPtr PyList_GetItem(IntPtr pointer, int index)
+        internal static IntPtr PyList_GetItem(IntPtr pointer, long index)
         {
-            return PyList_GetItem(pointer, (IntPtr) index);
+            return PyList_GetItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyList_GetItem(IntPtr pointer, IntPtr index);
 
-        internal static int PyList_SetItem(IntPtr pointer, int index, IntPtr value)
+        internal static int PyList_SetItem(IntPtr pointer, long index, IntPtr value)
         {
-            return PyList_SetItem(pointer, (IntPtr) index, value);
+            return PyList_SetItem(pointer, new IntPtr(index), value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PyList_SetItem(IntPtr pointer, IntPtr index, IntPtr value);
 
-        internal static int PyList_Insert(IntPtr pointer, int index, IntPtr value)
+        internal static int PyList_Insert(IntPtr pointer, long index, IntPtr value)
         {
-            return PyList_Insert(pointer, (IntPtr)index, value);
+            return PyList_Insert(pointer, new IntPtr(index), value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1650,25 +1650,25 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyList_Sort(IntPtr pointer);
 
-        internal static IntPtr PyList_GetSlice(IntPtr pointer, int start, int end)
+        internal static IntPtr PyList_GetSlice(IntPtr pointer, long start, long end)
         {
-            return PyList_GetSlice(pointer, (IntPtr) start, (IntPtr) end);
+            return PyList_GetSlice(pointer, new IntPtr(start), new IntPtr(end));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyList_GetSlice(IntPtr pointer, IntPtr start, IntPtr end);
 
-        internal static int PyList_SetSlice(IntPtr pointer, int start, int end, IntPtr value)
+        internal static int PyList_SetSlice(IntPtr pointer, long start, long end, IntPtr value)
         {
-            return PyList_SetSlice(pointer, (IntPtr) start, (IntPtr) end, value);
+            return PyList_SetSlice(pointer, new IntPtr(start), new IntPtr(end), value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PyList_SetSlice(IntPtr pointer, IntPtr start, IntPtr end, IntPtr value);
 
-        internal static int PyList_Size(IntPtr pointer)
+        internal static long PyList_Size(IntPtr pointer)
         {
-            return (int) _PyList_Size(pointer);
+            return (long) _PyList_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyList_Size")]
@@ -1683,41 +1683,41 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyTupleType;
         }
 
-        internal static IntPtr PyTuple_New(int size)
+        internal static IntPtr PyTuple_New(long size)
         {
-            return PyTuple_New((IntPtr) size);
+            return PyTuple_New(new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_New(IntPtr size);
 
-        internal static IntPtr PyTuple_GetItem(IntPtr pointer, int index)
+        internal static IntPtr PyTuple_GetItem(IntPtr pointer, long index)
         {
-            return PyTuple_GetItem(pointer, (IntPtr) index);
+            return PyTuple_GetItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_GetItem(IntPtr pointer, IntPtr index);
 
-        internal static int PyTuple_SetItem(IntPtr pointer, int index, IntPtr value)
+        internal static int PyTuple_SetItem(IntPtr pointer, long index, IntPtr value)
         {
-            return PyTuple_SetItem(pointer, (IntPtr) index, value);
+            return PyTuple_SetItem(pointer, new IntPtr(index), value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PyTuple_SetItem(IntPtr pointer, IntPtr index, IntPtr value);
 
-        internal static IntPtr PyTuple_GetSlice(IntPtr pointer, int start, int end)
+        internal static IntPtr PyTuple_GetSlice(IntPtr pointer, long start, long end)
         {
-            return PyTuple_GetSlice(pointer, (IntPtr)start, (IntPtr)end);
+            return PyTuple_GetSlice(pointer, new IntPtr(start), new IntPtr(end));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_GetSlice(IntPtr pointer, IntPtr start, IntPtr end);
 
-        internal static int PyTuple_Size(IntPtr pointer)
+        internal static long PyTuple_Size(IntPtr pointer)
         {
-            return (int) _PyTuple_Size(pointer);
+            return (long) _PyTuple_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyTuple_Size")]
@@ -1827,9 +1827,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyType_GenericNew(IntPtr type, IntPtr args, IntPtr kw);
 
-        internal static IntPtr PyType_GenericAlloc(IntPtr type, int n)
+        internal static IntPtr PyType_GenericAlloc(IntPtr type, long n)
         {
-            return PyType_GenericAlloc(type, (IntPtr) n);
+            return PyType_GenericAlloc(type, new IntPtr(n));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1867,17 +1867,17 @@ namespace Python.Runtime
         // Python memory API
         //====================================================================
 
-        internal static IntPtr PyMem_Malloc(int size)
+        internal static IntPtr PyMem_Malloc(long size)
         {
-            return PyMem_Malloc((IntPtr) size);
+            return PyMem_Malloc(new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyMem_Malloc(IntPtr size);
 
-        internal static IntPtr PyMem_Realloc(IntPtr ptr, int size)
+        internal static IntPtr PyMem_Realloc(IntPtr ptr, long size)
         {
-            return PyMem_Realloc(ptr, (IntPtr) size);
+            return PyMem_Realloc(ptr, new IntPtr(size));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
