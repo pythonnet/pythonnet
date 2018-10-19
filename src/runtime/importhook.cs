@@ -261,6 +261,11 @@ namespace Python.Runtime
                 if (res != IntPtr.Zero)
                 {
                     // There was no error.
+                    if (fromlist && IsLoadAll(fromList))
+                    {
+                        var mod = ManagedType.GetManagedObject(res) as ModuleObject;
+                        mod?.LoadNames();
+                    }
                     return res;
                 }
                 // There was an error
@@ -314,6 +319,11 @@ namespace Python.Runtime
             {
                 if (fromlist)
                 {
+                    if (IsLoadAll(fromList))
+                    {
+                        var mod = ManagedType.GetManagedObject(module) as ModuleObject;
+                        mod?.LoadNames();
+                    }
                     Runtime.XIncref(module);
                     return module;
                 }
@@ -369,20 +379,33 @@ namespace Python.Runtime
                 }
             }
 
-            ModuleObject mod = fromlist ? tail : head;
-
-            if (fromlist && Runtime.PySequence_Size(fromList) == 1)
             {
-                IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
-                if (!CLRModule.preload && Runtime.GetManagedString(fp) == "*")
+                var mod = fromlist ? tail : head;
+
+                if (fromlist && IsLoadAll(fromList))
                 {
                     mod.LoadNames();
                 }
-                Runtime.XDecref(fp);
-            }
 
-            Runtime.XIncref(mod.pyHandle);
-            return mod.pyHandle;
+                Runtime.XIncref(mod.pyHandle);
+                return mod.pyHandle;
+            }
+        }
+
+        private static bool IsLoadAll(IntPtr fromList)
+        {
+            if (CLRModule.preload)
+            {
+                return false;
+            }
+            if (Runtime.PySequence_Size(fromList) != 1)
+            {
+                return false;
+            }
+            IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
+            bool res = Runtime.GetManagedString(fp) == "*";
+            Runtime.XDecref(fp);
+            return res;
         }
     }
 }

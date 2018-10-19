@@ -240,7 +240,15 @@ namespace Python.Runtime
                       Runtime.Py_DecRef(clr);
                     }
                 }
+
+                // Make sure we clean up properly on app domain unload.
+                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             }
+        }
+
+        static void OnDomainUnload(object _, EventArgs __)
+        {
+            Shutdown();
         }
 
         /// <summary>
@@ -323,6 +331,8 @@ namespace Python.Runtime
                 _pythonPath = IntPtr.Zero;
 
                 Runtime.Shutdown();
+
+                AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
                 initialized = false;
             }
         }
