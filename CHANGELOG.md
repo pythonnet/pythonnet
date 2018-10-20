@@ -20,12 +20,15 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Implemented GetDynamicMemberNames() for PyObject to allow dynamic object members to be visible in the debugger ([#443][i443])([#690][p690])
 -   Incorporated reference-style links to issues and pull requests in the CHANGELOG ([#608][i608])
 -   Added detailed comments about aproaches and dangers to handle multi-app-domains ([#625][p625])
+-   Python 3.7 support, builds and testing added. Defaults changed from Python 3.6 to 3.7 ([#698][p698])
 
 ### Changed
 
 ### Fixed
 
 -   Fixed Visual Studio 2017 compat ([#434][i434]) for setup.py
+-   Fixed crashes when integrating pythonnet in Unity3d ([#714][i714]),
+    related to unloading the Application Domain
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
     attribute ([#481][i481])
