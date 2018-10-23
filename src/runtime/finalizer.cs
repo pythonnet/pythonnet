@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -24,16 +25,23 @@ namespace Python.Runtime
         public event EventHandler<CollectArgs> CollectOnce;
         public event EventHandler<ErrorArgs> ErrorHandler;
 
-        private ConcurrentQueue<IDisposable> _objQueue = new ConcurrentQueue<IDisposable>();
+        public int Threshold { get; set; }
+        public bool Enable { get; set; }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        struct PendingArgs
+        {
+            public bool cancelled;
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate int PendingCall(IntPtr arg);
         private readonly PendingCall _collectAction;
 
+        private ConcurrentQueue<IDisposable> _objQueue = new ConcurrentQueue<IDisposable>();
         private bool _pending = false;
         private readonly object _collectingLock = new object();
-        public int Threshold { get; set; }
-        public bool Enable { get; set; }
+        private IntPtr _pendingArgs;
 
         private Finalizer()
         {
@@ -92,6 +100,23 @@ namespace Python.Runtime
                 return;
             }
             Instance.DisposeAll();
+            if (Thread.CurrentThread.ManagedThreadId != Runtime.MainManagedThreadId)
+            {
+                if (Instance._pendingArgs == IntPtr.Zero)
+                {
+                    Instance.ResetPending();
+                    return;
+                }
+                // Not in main thread just cancel the pending operation to avoid error in different domain
+                // It will make a memory leak
+                unsafe
+                {
+                    PendingArgs* args = (PendingArgs*)Instance._pendingArgs;
+                    args->cancelled = true;
+                }
+                Instance.ResetPending();
+                return;
+            }
             Instance.CallPendingFinalizers();
         }
 
@@ -108,8 +133,12 @@ namespace Python.Runtime
                     return;
                 }
                 _pending = true;
+                var args = new PendingArgs() { cancelled = false };
+                IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PendingArgs)));
+                Marshal.StructureToPtr(args, p, false);
+                _pendingArgs = p;
                 IntPtr func = Marshal.GetFunctionPointerForDelegate(_collectAction);
-                if (Runtime.Py_AddPendingCall(func, IntPtr.Zero) != 0)
+                if (Runtime.Py_AddPendingCall(func, p) != 0)
                 {
                     // Full queue, append next time
                     _pending = false;
@@ -119,8 +148,24 @@ namespace Python.Runtime
 
         private static int OnPendingCollect(IntPtr arg)
         {
-            Instance.DisposeAll();
-            Instance._pending = false;
+            Debug.Assert(arg == Instance._pendingArgs);
+            try
+            {
+                unsafe
+                {
+                    PendingArgs* pendingArgs = (PendingArgs*)arg;
+                    if (pendingArgs->cancelled)
+                    {
+                        return 0;
+                    }
+                }
+                Instance.DisposeAll();
+            }
+            finally
+            {
+                Instance.ResetPending();
+                Marshal.FreeHGlobal(arg);
+            }
             return 0;
         }
 
@@ -146,6 +191,15 @@ namespace Python.Runtime
                         Error = e
                     });
                 }
+            }
+        }
+
+        private void ResetPending()
+        {
+            lock (_collectingLock)
+            {
+                _pending = false;
+                _pendingArgs = IntPtr.Zero;
             }
         }
     }
