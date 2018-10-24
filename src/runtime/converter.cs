@@ -842,7 +842,7 @@ namespace Python.Runtime
         private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
-            int size = Runtime.PySequence_Size(value);
+            var size = Runtime.PySequence_Size(value);
             result = null;
 
             if (size < 0)

@@ -31,6 +31,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed Visual Studio 2017 compat ([#434][i434]) for setup.py
 -   Fixed crashes when integrating pythonnet in Unity3d ([#714][i714]),
     related to unloading the Application Domain
+-   Fixed interop methods with Py_ssize_t. NetCoreApp 2.0 is more sensitive than net40 and requires this fix. ([#531][p531])
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
     attribute ([#481][i481])
@@ -691,3 +692,4 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 [p163]: https://github.com/pythonnet/pythonnet/pull/163
 [p625]: https://github.com/pythonnet/pythonnet/pull/625
 [i131]: https://github.com/pythonnet/pythonnet/issues/131
+[p531]: https://github.com/pythonnet/pythonnet/pull/531
