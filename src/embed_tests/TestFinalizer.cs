@@ -14,15 +14,6 @@ namespace Python.EmbeddingTest
         [SetUp]
         public void SetUp()
         {
-            try
-            {
-                _PYTHONMALLOC = Environment.GetEnvironmentVariable("PYTHONMALLOC");
-            }
-            catch (ArgumentNullException)
-            {
-                _PYTHONMALLOC = null;
-            }
-            Environment.SetEnvironmentVariable("PYTHONMALLOC", "malloc");
             _oldThreshold = Finalizer.Instance.Threshold;
             PythonEngine.Initialize();
             Exceptions.Clear();
@@ -33,7 +24,6 @@ namespace Python.EmbeddingTest
         {
             Finalizer.Instance.Threshold = _oldThreshold;
             PythonEngine.Shutdown();
-            Environment.SetEnvironmentVariable("PYTHONMALLOC", _PYTHONMALLOC);
         }
 
         private static void FullGCCollect()
