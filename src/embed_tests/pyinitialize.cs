@@ -74,5 +74,65 @@ namespace Python.EmbeddingTest
             }
             PythonEngine.Shutdown();
         }
+
+        [Test]
+        public void TestScopeIsShutdown()
+        {
+            PythonEngine.Initialize();
+            var scope = PyScopeManager.Global.Create("test");
+            PythonEngine.Shutdown();
+            Assert.That(PyScopeManager.Global.Contains("test"), Is.False);
+        }
+
+        /// <summary>
+        /// Helper for testing the shutdown handlers.
+        /// </summary>
+        int shutdown_count = 0;
+        void OnShutdownIncrement()
+        {
+            shutdown_count++;
+        }
+        void OnShutdownDouble()
+        {
+            shutdown_count *= 2;
+        }
+
+        /// <summary>
+        /// Test the shutdown handlers.
+        /// </summary>
+        [Test]
+        public void ShutdownHandlers()
+        {
+            // Test we can run one shutdown handler.
+            shutdown_count = 0;
+            PythonEngine.Initialize();
+            PythonEngine.AddShutdownHandler(OnShutdownIncrement);
+            PythonEngine.Shutdown();
+            Assert.That(shutdown_count, Is.EqualTo(1));
+
+            // Test we can run multiple shutdown handlers in the right order.
+            shutdown_count = 4;
+            PythonEngine.Initialize();
+            PythonEngine.AddShutdownHandler(OnShutdownIncrement);
+            PythonEngine.AddShutdownHandler(OnShutdownDouble);
+            PythonEngine.Shutdown();
+            // Correct: 4 * 2 + 1 = 9
+            // Wrong:  (4 + 1) * 2 = 10
+            Assert.That(shutdown_count, Is.EqualTo(9));
+
+            // Test we can remove shutdown handlers, handling duplicates.
+            shutdown_count = 4;
+            PythonEngine.Initialize();
+            PythonEngine.AddShutdownHandler(OnShutdownIncrement);
+            PythonEngine.AddShutdownHandler(OnShutdownIncrement);
+            PythonEngine.AddShutdownHandler(OnShutdownDouble);
+            PythonEngine.AddShutdownHandler(OnShutdownIncrement);
+            PythonEngine.AddShutdownHandler(OnShutdownDouble);
+            PythonEngine.RemoveShutdownHandler(OnShutdownDouble);
+            PythonEngine.Shutdown();
+            // Correct: (4 + 1) * 2 + 1 + 1 = 12
+            // Wrong:   (4 * 2) + 1 + 1 + 1 = 11
+            Assert.That(shutdown_count, Is.EqualTo(12));
+        }
     }
 }
