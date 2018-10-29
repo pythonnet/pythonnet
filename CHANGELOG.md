@@ -41,6 +41,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
 -   Fixed PyObject.GetHashCode ([#676][i676])
 -   Fix memory leaks due to spurious handle incrementation ([#691][i691])
+-   Fix inheritance of non-abstract base methods ([#755][i755])
 
 
 ## [2.3.0][] - 2017-03-11
@@ -691,3 +692,4 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 [p625]: https://github.com/pythonnet/pythonnet/pull/625
 [i131]: https://github.com/pythonnet/pythonnet/issues/131
 [p531]: https://github.com/pythonnet/pythonnet/pull/531
+[i755]: https://github.com/pythonnet/pythonnet/pull/755
