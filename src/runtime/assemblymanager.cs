@@ -48,7 +48,7 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-            assemblies = new AssemblyList(16);
+            assemblies = new ConcurrentQueue<Assembly>();
             pypath = new List<string>(16);
 
             AppDomain domain = AppDomain.CurrentDomain;
