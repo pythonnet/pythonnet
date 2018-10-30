@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
     Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
     After a some transition time, current (mono/ msbuild 14.0) build system will be removed.
 -   NUnit upgraded to 3.7 (eliminates travis-ci random bug)
+-   Added C# `PythonEngine.AddShutdownHandler` to help client code clean up on shutdown.
 -   Added `clr.GetClrType` ([#432][i432])([#433][p433])
 -   Allowed passing `None` for nullable args ([#460][p460])
 -   Added keyword arguments based on C# syntax for calling CPython methods ([#461][p461])
@@ -598,6 +599,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [1.0.0]: https://github.com/pythonnet/pythonnet/releases/tag/1.0
 
+[i714]: https://github.com/pythonnet/pythonnet/issues/714
 [i608]: https://github.com/pythonnet/pythonnet/issues/608
 [i443]: https://github.com/pythonnet/pythonnet/issues/443
 [p690]: https://github.com/pythonnet/pythonnet/pull/690
