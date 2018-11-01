@@ -149,7 +149,7 @@ namespace Python.Runtime
 #elif PYTHON36
         internal const string _pyversion = "3.6";
         internal const string _pyver = "36";
-#elif PYTHON37 // TODO: Add `interop37.cs` after PY37 is released
+#elif PYTHON37
         internal const string _pyversion = "3.7";
         internal const string _pyver = "37";
 #else
