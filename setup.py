@@ -329,9 +329,16 @@ class BuildExtPythonnet(build_ext.build_ext):
             self.debug_print("Updating NuGet: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
 
-            cmd = "{0} restore pythonnet.sln  -MSBuildVersion 14 -o packages".format(nuget)
-            self.debug_print("Installing packages: {0}".format(cmd))
-            subprocess.check_call(cmd, shell=use_shell)
+            try:
+                # msbuild=14 is mainly for Mono issues
+                cmd = "{0} restore pythonnet.sln  -MSBuildVersion 14 -o packages".format(nuget)
+                self.debug_print("Installing packages: {0}".format(cmd))
+                subprocess.check_call(cmd, shell=use_shell)
+            except:
+                # when only VS 2017 is installed do not specify msbuild version
+                cmd = "{0} restore pythonnet.sln  -o packages".format(nuget)
+                self.debug_print("Installing packages: {0}".format(cmd))
+                subprocess.check_call(cmd, shell=use_shell)
 
     def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
         """Return full path to one of the Microsoft build tools"""
