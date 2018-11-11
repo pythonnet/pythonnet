@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.ComponentModel;
 
 namespace Python.Runtime
 {
@@ -134,8 +135,8 @@ namespace Python.Runtime
                 return result;
             }
 
-            if (value is IList && value.GetType().IsGenericType)
-            {
+			if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
+			{
                 using (var resultlist = new PyList())
                 {
                     foreach (object o in (IEnumerable)value)
