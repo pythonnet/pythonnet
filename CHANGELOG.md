@@ -8,6 +8,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [unreleased][]
 
 ### Added
+
 -   Added support for embedding python into dotnet core 2.0 (NetStandard 2.0)
 -   Added new build system (pythonnet.15.sln) based on dotnetcore-sdk/xplat(crossplatform msbuild).
     Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
@@ -46,6 +47,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
 -   Fixed PyObject.GetHashCode ([#676][i676])
 -   Fix memory leaks due to spurious handle incrementation ([#691][i691])
+-   Fix spurious assembly loading exceptions from private types ([#703][i703])
 -   Fix inheritance of non-abstract base methods ([#755][i755])
 
 
