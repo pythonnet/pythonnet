@@ -239,9 +239,13 @@ namespace Python.Runtime
         /// </summary>
         static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
         {
-            { "i386", MachineType.i386 },
-            { "x86_64", MachineType.x86_64 },
-            { "amd64", MachineType.x86_64 },
+            ["i386"] = MachineType.i386,
+            ["i686"] = MachineType.i386,
+            ["x86"] = MachineType.i386,
+            ["x86_64"] = MachineType.x86_64,
+            ["amd64"] = MachineType.x86_64,
+            ["x64"] = MachineType.x86_64,
+            ["em64t"] = MachineType.x86_64,
         };
 
         /// <summary>
