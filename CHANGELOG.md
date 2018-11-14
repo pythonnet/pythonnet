@@ -15,6 +15,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
     Currently there two side-by-side build systems that produces the same output (net40) from the same sources.
     After a some transition time, current (mono/ msbuild 14.0) build system will be removed.
 -   NUnit upgraded to 3.7 (eliminates travis-ci random bug)
+-   Added C# `PythonEngine.AddShutdownHandler` to help client code clean up on shutdown.
 -   Added `clr.GetClrType` ([#432][i432])([#433][p433])
 -   Allowed passing `None` for nullable args ([#460][p460])
 -   Added keyword arguments based on C# syntax for calling CPython methods ([#461][p461])
@@ -22,14 +23,18 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Implemented GetDynamicMemberNames() for PyObject to allow dynamic object members to be visible in the debugger ([#443][i443])([#690][p690])
 -   Incorporated reference-style links to issues and pull requests in the CHANGELOG ([#608][i608])
 -   Added detailed comments about aproaches and dangers to handle multi-app-domains ([#625][p625])
+-   Python 3.7 support, builds and testing added. Defaults changed from Python 3.6 to 3.7 ([#698][p698])
 
 ### Changed
 
 ### Fixed
 
 -   Fixed secondary PythonEngine.Initialize call, all sensitive static variables now reseted.
-    This is a hidden bug. Once python cleaning up enough memory, objects from previous engine run becomes corrupted.
+    This is a hidden bug. Once python cleaning up enough memory, objects from previous engine run becomes corrupted. ([#534][p534])
 -   Fixed Visual Studio 2017 compat ([#434][i434]) for setup.py
+-   Fixed crashes when integrating pythonnet in Unity3d ([#714][i714]),
+    related to unloading the Application Domain
+-   Fixed interop methods with Py_ssize_t. NetCoreApp 2.0 is more sensitive than net40 and requires this fix. ([#531][p531])
 -   Fixed crash on exit of the Python interpreter if a python class
     derived from a .NET class has a `__namespace__` or `__assembly__`
     attribute ([#481][i481])
@@ -41,6 +46,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
 -   Fixed PyObject.GetHashCode ([#676][i676])
 -   Fix memory leaks due to spurious handle incrementation ([#691][i691])
+-   Fix inheritance of non-abstract base methods ([#755][i755])
 
 
 ## [2.3.0][] - 2017-03-11
@@ -598,6 +604,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 [1.0.0]: https://github.com/pythonnet/pythonnet/releases/tag/1.0
 
+[i714]: https://github.com/pythonnet/pythonnet/issues/714
 [i608]: https://github.com/pythonnet/pythonnet/issues/608
 [i443]: https://github.com/pythonnet/pythonnet/issues/443
 [p690]: https://github.com/pythonnet/pythonnet/pull/690
@@ -690,3 +697,6 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 [p163]: https://github.com/pythonnet/pythonnet/pull/163
 [p625]: https://github.com/pythonnet/pythonnet/pull/625
 [i131]: https://github.com/pythonnet/pythonnet/issues/131
+[p531]: https://github.com/pythonnet/pythonnet/pull/531
+[i755]: https://github.com/pythonnet/pythonnet/pull/755
+[p534]: https://github.com/pythonnet/pythonnet/pull/534

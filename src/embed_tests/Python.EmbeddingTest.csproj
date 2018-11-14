@@ -86,6 +86,7 @@
     <Compile Include="pyrunstring.cs" />
     <Compile Include="TestConverter.cs" />
     <Compile Include="TestCustomMarshal.cs" />
+    <Compile Include="TestDomainReload.cs" />
     <Compile Include="TestExample.cs" />
     <Compile Include="TestPyAnsiString.cs" />
     <Compile Include="TestPyFloat.cs" />
@@ -104,6 +105,8 @@
     <Compile Include="TestRuntime.cs" />
     <Compile Include="TestPyScope.cs" />
     <Compile Include="TestsSuite.cs" />
+    <Compile Include="TestTypeManager.cs" />
+    <Compile Include="GlobalTestsSetup.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">
