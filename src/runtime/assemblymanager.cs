@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -470,9 +471,28 @@ namespace Python.Runtime
         internal static Type[] GetTypes(Assembly a)
         {
             if (a.IsDynamic)
-                return a.GetTypes();
+            {
+                try
+                {
+                    return a.GetTypes();
+                }
+                catch (ReflectionTypeLoadException exc)
+                {
+                    // Return all types that were successfully loaded
+                    return exc.Types.Where(x => x != null).ToArray();
+                }
+            }
             else
-                return a.GetExportedTypes();
+            {
+                try
+                {
+                    return a.GetExportedTypes();
+                }
+                catch (FileNotFoundException)
+                {
+                    return new Type[0];
+                }
+            }
         }
     }
 }
