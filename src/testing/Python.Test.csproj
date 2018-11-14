@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -83,6 +83,7 @@
     <Compile Include="generictest.cs" />
     <Compile Include="globaltest.cs" />
     <Compile Include="indexertest.cs" />
+    <Compile Include="InheritanceTest.cs" />
     <Compile Include="interfacetest.cs" />
     <Compile Include="methodtest.cs" />
     <Compile Include="moduletest.cs" />

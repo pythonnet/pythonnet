@@ -281,3 +281,14 @@ def test_self_callback():
     testobj.DoCallback()
     assert testobj.PyCallbackWasCalled
     assert testobj.SameReference
+
+
+def test_method_inheritance():
+    """Ensure that we call the overridden method instead of the one provided in
+       the base class."""
+
+    base = Test.BaseClass()
+    derived = Test.DerivedClass()
+
+    assert base.IsBase() == True
+    assert derived.IsBase() == False

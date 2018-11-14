@@ -148,6 +148,7 @@
     <Compile Include="interop34.cs" />
     <Compile Include="interop35.cs" />
     <Compile Include="interop36.cs" />
+    <Compile Include="interop37.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
