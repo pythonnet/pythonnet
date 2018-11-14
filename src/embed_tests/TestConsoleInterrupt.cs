@@ -14,7 +14,7 @@ namespace Python.EmbeddingTest
     /// </summary>
     public class TestConsoleInterrupt
     {
-        static string program = @"
+        static readonly string program = @"
         using System;
         using Python.Runtime;
         using System.Text;
