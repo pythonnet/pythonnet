@@ -309,18 +309,13 @@ namespace Python.Runtime
         {
             if (initialized)
             {
+                PyScopeManager.Global.Clear();
+                
                 // If the shutdown handlers trigger a domain unload,
                 // don't call shutdown again.
                 AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
 
                 ExecuteShutdownHandlers();
-
-                Marshal.FreeHGlobal(_pythonHome);
-                _pythonHome = IntPtr.Zero;
-                Marshal.FreeHGlobal(_programName);
-                _programName = IntPtr.Zero;
-                Marshal.FreeHGlobal(_pythonPath);
-                _pythonPath = IntPtr.Zero;
 
                 initialized = false;
             }
