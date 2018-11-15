@@ -128,6 +128,39 @@ def test_derived_class():
     assert id(x) == id(ob)
 
 
+def test_derived_traceback():
+    """Test python exception traceback in class derived from managed base"""
+    class DerivedClass(SubClassTest):
+        __namespace__ = "Python.Test.traceback"
+
+        def foo(self):
+            print (xyzname)
+            return None
+
+    import sys,traceback
+    ob = DerivedClass()
+
+    # direct call
+    try:
+        ob.foo()
+        assert False
+    except:
+        e = sys.exc_info()
+    assert "xyzname" in str(e[1])
+    location = traceback.extract_tb(e[2])[-1]
+    assert location[2] == "foo"
+
+    # call through managed code
+    try:
+        FunctionsTest.test_foo(ob)
+        assert False
+    except:
+        e = sys.exc_info()
+    assert "xyzname" in str(e[1])
+    location = traceback.extract_tb(e[2])[-1]
+    assert location[2] == "foo"
+
+
 def test_create_instance():
     """Test derived instances can be created from managed code"""
     DerivedClass = derived_class_fixture(test_create_instance.__name__)

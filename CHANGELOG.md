@@ -27,6 +27,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Changed
 
+-   Reattach python exception traceback information (#545)
+-   PythonEngine.Intialize will now call `Py_InitializeEx` with a default value of 0, so signals will not be configured by default on embedding. This is different from the previous behaviour, where `Py_Initialize` was called instead, which sets initSigs to 1. ([#449][i449])
+
 ### Fixed
 
 -   Fixed secondary PythonEngine.Initialize call, all sensitive static variables now reseted.
@@ -46,6 +49,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
 -   Fixed PyObject.GetHashCode ([#676][i676])
 -   Fix memory leaks due to spurious handle incrementation ([#691][i691])
+-   Fix spurious assembly loading exceptions from private types ([#703][i703])
 -   Fix inheritance of non-abstract base methods ([#755][i755])
 
 
@@ -700,3 +704,4 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 [p531]: https://github.com/pythonnet/pythonnet/pull/531
 [i755]: https://github.com/pythonnet/pythonnet/pull/755
 [p534]: https://github.com/pythonnet/pythonnet/pull/534
+[i449]: https://github.com/pythonnet/pythonnet/issues/449

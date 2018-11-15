@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -349,9 +350,7 @@ namespace Python.Runtime
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
-
-            Type[] types = assembly.GetTypes();
-            foreach (Type t in types)
+            foreach (Type t in GetTypes(assembly))
             {
                 string ns = t.Namespace ?? "";
                 if (!namespaces.ContainsKey(ns))
@@ -425,10 +424,9 @@ namespace Python.Runtime
             {
                 foreach (Assembly a in namespaces[nsname].Keys)
                 {
-                    Type[] types = a.GetTypes();
-                    foreach (Type t in types)
+                    foreach (Type t in GetTypes(a))
                     {
-                        if ((t.Namespace ?? "") == nsname)
+                        if ((t.Namespace ?? "") == nsname && !t.IsNested)
                         {
                             names.Add(t.Name);
                         }
@@ -466,6 +464,33 @@ namespace Python.Runtime
                 }
             }
             return null;
+        }
+
+        internal static Type[] GetTypes(Assembly a)
+        {
+            if (a.IsDynamic)
+            {
+                try
+                {
+                    return a.GetTypes();
+                }
+                catch (ReflectionTypeLoadException exc)
+                {
+                    // Return all types that were successfully loaded
+                    return exc.Types.Where(x => x != null).ToArray();
+                }
+            }
+            else
+            {
+                try
+                {
+                    return a.GetExportedTypes();
+                }
+                catch (FileNotFoundException)
+                {
+                    return new Type[0];
+                }
+            }
         }
     }
 }

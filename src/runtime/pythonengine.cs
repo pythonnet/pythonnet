@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -140,9 +140,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs);
         }
 
         /// <summary>
@@ -153,8 +153,9 @@ namespace Python.Runtime
         /// more than once, though initialization will only happen on the
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
+        /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
         {
             if (!initialized)
             {
@@ -164,7 +165,7 @@ namespace Python.Runtime
                 // during an initial "import clr", and the world ends shortly thereafter.
                 // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
                 delegateManager = new DelegateManager();
-                Runtime.Initialize();
+                Runtime.Initialize(initSigs);
                 initialized = true;
                 Exceptions.Clear();
 
