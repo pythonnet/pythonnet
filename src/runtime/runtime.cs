@@ -269,7 +269,7 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize(bool initSigs)
+        internal static void Initialize(bool initSigs = false)
         {
             if (Py_IsInitialized() == 0)
             {
