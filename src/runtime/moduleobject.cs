@@ -451,7 +451,12 @@ namespace Python.Runtime
         public static string FindAssembly(string name)
         {
             AssemblyManager.UpdatePath();
-            return AssemblyManager.FindAssembly(name);
+            string assemblyName = AssemblyManager.FindAssembly(name);
+            if (assemblyName == null)
+            {
+                throw new FileNotFoundException($"Unable to find assembly '{name}' dll or exe.");
+            }
+            return assemblyName;
         }
 
         [ModuleFunction]
