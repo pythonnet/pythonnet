@@ -8,7 +8,6 @@ namespace Python.EmbeddingTest
 {
     public class TestFinalizer
     {
-        private string _PYTHONMALLOC = string.Empty;
         private int _oldThreshold;
 
         [SetUp]
@@ -195,5 +194,46 @@ namespace Python.EmbeddingTest
                 Finalizer.Instance.ErrorHandler -= handleFunc;
             }
         }
+
+        [Test]
+        public void ValidateRefCount()
+        {
+            if (!Finalizer.Instance.RefCountValidationEnabled)
+            {
+                Assert.Pass("Only run with FINALIZER_CHECK");
+            }
+            IntPtr ptr = IntPtr.Zero;
+            bool called = false;
+            Finalizer.IncorrectRefCntHandler handler = (s, e) =>
+            {
+                called = true;
+                Assert.AreEqual(ptr, e.Handle);
+                Assert.AreEqual(2, e.ImpactedObjects.Count);
+                // Fix for this test, don't do this on general environment
+                Runtime.Runtime.XIncref(e.Handle);
+                return false;
+            };
+            Finalizer.Instance.IncorrectRefCntResovler += handler;
+            try
+            {
+                ptr = CreateStringGarbage();
+                FullGCCollect();
+                Assert.Throws<Finalizer.IncorrectRefCountException>(() => Finalizer.Instance.Collect());
+                Assert.IsTrue(called);
+            }
+            finally
+            {
+                Finalizer.Instance.IncorrectRefCntResovler -= handler;
+            }
+        }
+
+        private static IntPtr CreateStringGarbage()
+        {
+            PyString s1 = new PyString("test_string");
+            // s2 steal a reference from s1
+            PyString s2 = new PyString(s1.Handle);
+            return s1.Handle;
+        }
+
     }
 }

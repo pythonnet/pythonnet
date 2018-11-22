@@ -1,11 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq.Expressions;
 
 namespace Python.Runtime
 {
+    public interface IPyDisposable : IDisposable
+    {
+        IntPtr[] GetTrackedHandles();
+    }
+
     /// <summary>
     /// Represents a generic Python object. The methods of this class are
     /// generally equivalent to the Python "abstract object API". See
@@ -13,8 +19,15 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    public class PyObject : DynamicObject, IEnumerable, IDisposable
+    public class PyObject : DynamicObject, IEnumerable, IPyDisposable
     {
+#if TRACE_ALLOC
+        /// <summary>
+        /// Trace stack for PyObject's construction
+        /// </summary>
+        public StackTrace Traceback { get; private set; }
+#endif
+
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
         private bool _finalized = false;
@@ -31,6 +44,9 @@ namespace Python.Runtime
         public PyObject(IntPtr ptr)
         {
             obj = ptr;
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
         }
 
         // Protected default constructor to allow subclasses to manage
@@ -38,12 +54,19 @@ namespace Python.Runtime
 
         protected PyObject()
         {
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
         }
 
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
         ~PyObject()
         {
+            if (obj == IntPtr.Zero)
+            {
+                return;
+            }
             if (_finalized || disposed)
             {
                 return;
@@ -174,6 +197,11 @@ namespace Python.Runtime
                 disposed = true;
             }
             GC.SuppressFinalize(this);
+        }
+
+        public IntPtr[] GetTrackedHandles()
+        {
+            return new IntPtr[] { obj };
         }
 
         /// <summary>

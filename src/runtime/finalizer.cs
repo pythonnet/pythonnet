@@ -38,10 +38,47 @@ namespace Python.Runtime
         private delegate int PendingCall(IntPtr arg);
         private readonly PendingCall _collectAction;
 
-        private ConcurrentQueue<IDisposable> _objQueue = new ConcurrentQueue<IDisposable>();
+        private ConcurrentQueue<IPyDisposable> _objQueue = new ConcurrentQueue<IPyDisposable>();
         private bool _pending = false;
         private readonly object _collectingLock = new object();
         private IntPtr _pendingArgs;
+
+        #region FINALIZER_CHECK
+
+#if FINALIZER_CHECK
+        private readonly object _queueLock = new object();
+        public bool RefCountValidationEnabled { get; set; } = true;
+#else
+        public readonly bool RefCountValidationEnabled = false;
+#endif
+        // Keep these declarations for compat even no FINALIZER_CHECK
+        public class IncorrectFinalizeArgs : EventArgs
+        {
+            public IntPtr Handle { get; internal set; }
+            public ICollection<IPyDisposable> ImpactedObjects { get; internal set; }
+        }
+
+        public class IncorrectRefCountException : Exception
+        {
+            public IntPtr PyPtr { get; internal set; }
+            private string _message;
+            public override string Message => _message;
+
+            public IncorrectRefCountException(IntPtr ptr)
+            {
+                PyPtr = ptr;
+                IntPtr pyname = Runtime.PyObject_Unicode(PyPtr);
+                string name = Runtime.GetManagedString(pyname);
+                Runtime.XDecref(pyname);
+                _message = $"{name} may has a incorrect ref count";
+            }
+        }
+
+        public delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
+        public event IncorrectRefCntHandler IncorrectRefCntResovler;
+        public bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
+
+        #endregion
 
         private Finalizer()
         {
@@ -72,7 +109,7 @@ namespace Python.Runtime
             return _objQueue.Select(T => new WeakReference(T)).ToList();
         }
 
-        internal void AddFinalizedObject(IDisposable obj)
+        internal void AddFinalizedObject(IPyDisposable obj)
         {
             if (!Enable)
             {
@@ -84,7 +121,12 @@ namespace Python.Runtime
                 // for avoiding that case, user should call GC.Collect manual before shutdown.
                 return;
             }
-            _objQueue.Enqueue(obj);
+#if FINALIZER_CHECK
+            lock (_queueLock)
+#endif
+            {
+                _objQueue.Enqueue(obj);
+            }
             GC.ReRegisterForFinalize(obj);
             if (_objQueue.Count >= Threshold)
             {
@@ -96,7 +138,7 @@ namespace Python.Runtime
         {
             if (Runtime.Py_IsInitialized() == 0)
             {
-                Instance._objQueue = new ConcurrentQueue<IDisposable>();
+                Instance._objQueue = new ConcurrentQueue<IPyDisposable>();
                 return;
             }
             Instance.DisposeAll();
@@ -175,21 +217,29 @@ namespace Python.Runtime
             {
                 ObjectCount = _objQueue.Count
             });
-            IDisposable obj;
-            while (_objQueue.TryDequeue(out obj))
+#if FINALIZER_CHECK
+            lock (_queueLock)
+#endif
             {
-                try
+#if FINALIZER_CHECK
+                ValidateRefCount();
+#endif
+                IPyDisposable obj;
+                while (_objQueue.TryDequeue(out obj))
                 {
-                    obj.Dispose();
-                    Runtime.CheckExceptionOccurred();
-                }
-                catch (Exception e)
-                {
-                    // We should not bother the main thread
-                    ErrorHandler?.Invoke(this, new ErrorArgs()
+                    try
                     {
-                        Error = e
-                    });
+                        obj.Dispose();
+                        Runtime.CheckExceptionOccurred();
+                    }
+                    catch (Exception e)
+                    {
+                        // We should not bother the main thread
+                        ErrorHandler?.Invoke(this, new ErrorArgs()
+                        {
+                            Error = e
+                        });
+                    }
                 }
             }
         }
@@ -202,5 +252,80 @@ namespace Python.Runtime
                 _pendingArgs = IntPtr.Zero;
             }
         }
+
+#if FINALIZER_CHECK
+        private void ValidateRefCount()
+        {
+            if (!RefCountValidationEnabled)
+            {
+                return;
+            }
+            var counter = new Dictionary<IntPtr, long>();
+            var holdRefs = new Dictionary<IntPtr, long>();
+            var indexer = new Dictionary<IntPtr, List<IPyDisposable>>();
+            foreach (var obj in _objQueue)
+            {
+                IntPtr[] handles = obj.GetTrackedHandles();
+                foreach (var handle in handles)
+                {
+                    if (handle == IntPtr.Zero)
+                    {
+                        continue;
+                    }
+                    if (!counter.ContainsKey(handle))
+                    {
+                        counter[handle] = 0;
+                    }
+                    counter[handle]++;
+                    if (!holdRefs.ContainsKey(handle))
+                    {
+                        holdRefs[handle] = Runtime.Refcount(handle);
+                    }
+                    List<IPyDisposable> objs;
+                    if (!indexer.TryGetValue(handle, out objs))
+                    {
+                        objs = new List<IPyDisposable>();
+                        indexer.Add(handle, objs);
+                    }
+                    objs.Add(obj);
+                }
+            }
+            foreach (var pair in counter)
+            {
+                IntPtr handle = pair.Key;
+                long cnt = pair.Value;
+                // Tracked handle's ref count is larger than the object's holds
+                // it may take an unspecified behaviour if it decref in Dispose
+                if (cnt > holdRefs[handle])
+                {
+                    var args = new IncorrectFinalizeArgs()
+                    {
+                        Handle = handle,
+                        ImpactedObjects = indexer[handle]
+                    };
+                    bool handled = false;
+                    if (IncorrectRefCntResovler != null)
+                    {
+                        var funcList = IncorrectRefCntResovler.GetInvocationList();
+                        foreach (IncorrectRefCntHandler func in funcList)
+                        {
+                            if (func(this, args))
+                            {
+                                handled = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!handled && ThrowIfUnhandleIncorrectRefCount)
+                    {
+                        throw new IncorrectRefCountException(handle);
+                    }
+                }
+                // Make sure no other references for PyObjects after this method
+                indexer[handle].Clear();
+            }
+            indexer.Clear();
+        }
+#endif
     }
 }
