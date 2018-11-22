@@ -22,7 +22,7 @@ namespace Python.Runtime
     }
 
     [PyGIL]
-    public class PyScope : DynamicObject, IDisposable
+    public class PyScope : DynamicObject, IPyDisposable
     {
         public readonly string Name;
 
@@ -524,6 +524,11 @@ namespace Python.Runtime
             _isDisposed = true;
             Runtime.XDecref(obj);
             this.OnDispose?.Invoke(this);
+        }
+
+        public IntPtr[] GetTrackedHandles()
+        {
+            return new IntPtr[] { obj };
         }
 
         ~PyScope()
