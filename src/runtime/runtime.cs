@@ -150,7 +150,7 @@ namespace Python.Runtime
 #elif PYTHON36
         internal const string _pyversion = "3.6";
         internal const string _pyver = "36";
-#elif PYTHON37 // TODO: Add `interop37.cs` after PY37 is released
+#elif PYTHON37
         internal const string _pyversion = "3.7";
         internal const string _pyver = "37";
 #else
@@ -240,9 +240,13 @@ namespace Python.Runtime
         /// </summary>
         static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
         {
-            { "i386", MachineType.i386 },
-            { "x86_64", MachineType.x86_64 },
-            { "amd64", MachineType.x86_64 },
+            ["i386"] = MachineType.i386,
+            ["i686"] = MachineType.i386,
+            ["x86"] = MachineType.i386,
+            ["x86_64"] = MachineType.x86_64,
+            ["amd64"] = MachineType.x86_64,
+            ["x64"] = MachineType.x86_64,
+            ["em64t"] = MachineType.x86_64,
         };
 
         /// <summary>
@@ -268,11 +272,11 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize()
+        internal static void Initialize(bool initSigs = false)
         {
             if (Py_IsInitialized() == 0)
             {
-                Py_Initialize();
+                Py_InitializeEx(initSigs ? 1 : 0);
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
@@ -280,6 +284,15 @@ namespace Python.Runtime
             {
                 PyEval_InitThreads();
             }
+
+            IsFinalizing = false;
+
+            CLRModule.Reset();
+            GenericUtil.Reset();
+            PyScopeManager.Reset();
+            ClassManager.Reset();
+            ClassDerivedObject.Reset();
+            TypeManager.Reset();
 
             IntPtr op;
             IntPtr dict;
@@ -718,6 +731,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void Py_Initialize();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void Py_InitializeEx(int initsigs);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_IsInitialized();

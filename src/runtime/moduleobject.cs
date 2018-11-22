@@ -335,6 +335,17 @@ namespace Python.Runtime
             }
         }
 
+        public static void Reset()
+        {
+            hacked = false;
+            interactive_preload = true;
+            preload = false;
+
+            // XXX Test performance of new features //
+            _SuppressDocs = false;
+            _SuppressOverloads = false;
+        }
+
         /// <summary>
         /// The initializing of the preload hook has to happen as late as
         /// possible since sys.ps1 is created after the CLR module is

@@ -109,18 +109,41 @@ namespace Python.EmbeddingTest
         [Test]
         public void SetPythonHome()
         {
+            // We needs to ensure that engine was started and shutdown at least once before setting dummy home.
+            // Otherwise engine will not run with dummy path with random problem.
+            if (!PythonEngine.IsInitialized)
+            {
+                PythonEngine.Initialize();
+            }
+
+            PythonEngine.Shutdown();
+
+            var pythonHomeBackup = PythonEngine.PythonHome;
+
             var pythonHome = "/dummypath/";
 
             PythonEngine.PythonHome = pythonHome;
             PythonEngine.Initialize();
 
-            Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
             PythonEngine.Shutdown();
+
+            // Restoring valid pythonhome.
+            PythonEngine.PythonHome = pythonHomeBackup;
         }
 
         [Test]
         public void SetPythonHomeTwice()
         {
+            // We needs to ensure that engine was started and shutdown at least once before setting dummy home.
+            // Otherwise engine will not run with dummy path with random problem.
+            if (!PythonEngine.IsInitialized)
+            {
+                PythonEngine.Initialize();
+            }
+            PythonEngine.Shutdown();
+
+            var pythonHomeBackup = PythonEngine.PythonHome;
+
             var pythonHome = "/dummypath/";
 
             PythonEngine.PythonHome = "/dummypath2/";
@@ -129,11 +152,20 @@ namespace Python.EmbeddingTest
 
             Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
             PythonEngine.Shutdown();
+
+            PythonEngine.PythonHome = pythonHomeBackup;
         }
 
         [Test]
         public void SetProgramName()
         {
+            if (PythonEngine.IsInitialized)
+            {
+                PythonEngine.Shutdown();
+            }
+
+            var programNameBackup = PythonEngine.ProgramName;
+
             var programName = "FooBar";
 
             PythonEngine.ProgramName = programName;
@@ -141,6 +173,8 @@ namespace Python.EmbeddingTest
 
             Assert.AreEqual(programName, PythonEngine.ProgramName);
             PythonEngine.Shutdown();
+
+            PythonEngine.ProgramName = programNameBackup;
         }
 
         [Test]
@@ -156,7 +190,7 @@ namespace Python.EmbeddingTest
             string path = PythonEngine.PythonPath;
             PythonEngine.Shutdown();
 
-            PythonEngine.ProgramName = path;
+            PythonEngine.PythonPath = path;
             PythonEngine.Initialize();
 
             Assert.AreEqual(path, PythonEngine.PythonPath);
@@ -171,7 +205,6 @@ namespace Python.EmbeddingTest
                 Assert.Pass();
             }
 
-            // Get previous path to avoid crashing Python
             PythonEngine.Initialize();
             string path = PythonEngine.PythonPath;
             PythonEngine.Shutdown();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -140,9 +140,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs);
         }
 
         /// <summary>
@@ -153,8 +153,9 @@ namespace Python.Runtime
         /// more than once, though initialization will only happen on the
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
+        /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
         {
             if (!initialized)
             {
@@ -164,9 +165,19 @@ namespace Python.Runtime
                 // during an initial "import clr", and the world ends shortly thereafter.
                 // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
                 delegateManager = new DelegateManager();
-                Runtime.Initialize();
+                Runtime.Initialize(initSigs);
                 initialized = true;
                 Exceptions.Clear();
+
+                // Make sure we clean up properly on app domain unload.
+                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+
+                // Remember to shut down the runtime.
+                AddShutdownHandler(Runtime.Shutdown);
+
+                // The global scope gets used implicitly quite early on, remember
+                // to clear it out when we shut down.
+                AddShutdownHandler(PyScopeManager.Global.Clear);
 
                 if (setSysArgv)
                 {
@@ -220,9 +231,6 @@ namespace Python.Runtime
                 {
                     locals.Dispose();
                 }
-
-                // Make sure we clean up properly on app domain unload.
-                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             }
         }
 
@@ -303,20 +311,80 @@ namespace Python.Runtime
             if (initialized)
             {
                 PyScopeManager.Global.Clear();
-                Marshal.FreeHGlobal(_pythonHome);
-                _pythonHome = IntPtr.Zero;
-                Marshal.FreeHGlobal(_programName);
-                _programName = IntPtr.Zero;
-                Marshal.FreeHGlobal(_pythonPath);
-                _pythonPath = IntPtr.Zero;
-
-                Runtime.Shutdown();
-
+                
+                // If the shutdown handlers trigger a domain unload,
+                // don't call shutdown again.
                 AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+
+                ExecuteShutdownHandlers();
+
                 initialized = false;
             }
         }
 
+        /// <summary>
+        /// Called when the engine is shut down.
+        ///
+        /// Shutdown handlers are run in reverse order they were added, so that
+        /// resources available when running a shutdown handler are the same as
+        /// what was available when it was added.
+        /// </summary>
+        public delegate void ShutdownHandler();
+
+        static List<ShutdownHandler> ShutdownHandlers = new List<ShutdownHandler>();
+
+        /// <summary>
+        /// Add a function to be called when the engine is shut down.
+        ///
+        /// Shutdown handlers are executed in the opposite order they were
+        /// added, so that you can be sure that everything that was initialized
+        /// when you added the handler is still initialized when you need to shut
+        /// down.
+        ///
+        /// If the same shutdown handler is added several times, it will be run
+        /// several times.
+        ///
+        /// Don't add shutdown handlers while running a shutdown handler.
+        /// </summary>
+        public static void AddShutdownHandler(ShutdownHandler handler)
+        {
+            ShutdownHandlers.Add(handler);
+        }
+
+        /// <summary>
+        /// Remove a shutdown handler.
+        ///
+        /// If the same shutdown handler is added several times, only the last
+        /// one is removed.
+        ///
+        /// Don't remove shutdown handlers while running a shutdown handler.
+        /// </summary>
+        public static void RemoveShutdownHandler(ShutdownHandler handler)
+        {
+            for (int index = ShutdownHandlers.Count - 1; index >= 0; --index)
+            {
+                if (ShutdownHandlers[index] == handler)
+                {
+                    ShutdownHandlers.RemoveAt(index);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Run all the shutdown handlers.
+        ///
+        /// They're run in opposite order they were added.
+        /// </summary>
+        static void ExecuteShutdownHandlers()
+        {
+            while(ShutdownHandlers.Count > 0)
+            {
+                var handler = ShutdownHandlers[ShutdownHandlers.Count - 1];
+                ShutdownHandlers.RemoveAt(ShutdownHandlers.Count - 1);
+                handler();
+            }
+        }
 
         /// <summary>
         /// AcquireLock Method
