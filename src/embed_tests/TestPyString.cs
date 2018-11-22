@@ -64,6 +64,7 @@ namespace Python.EmbeddingTest
             const string expected = "foo";
 
             var t = new PyString(expected);
+            Runtime.Runtime.XIncref(t.Handle);
             var actual = new PyString(t.Handle);
 
             Assert.AreEqual(expected, actual.ToString());
