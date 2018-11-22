@@ -63,6 +63,7 @@ namespace Python.EmbeddingTest
             const string expected = "foo";
 
             var t = new PyAnsiString(expected);
+            Runtime.Runtime.XIncref(t.Handle);
             var actual = new PyAnsiString(t.Handle);
 
             Assert.AreEqual(expected, actual.ToString());
