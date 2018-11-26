@@ -213,7 +213,7 @@ namespace Python.EmbeddingTest
                 Runtime.Runtime.XIncref(e.Handle);
                 return false;
             };
-            Finalizer.Instance.IncorrectRefCntResovler += handler;
+            Finalizer.Instance.IncorrectRefCntResolver += handler;
             try
             {
                 ptr = CreateStringGarbage();
@@ -223,7 +223,7 @@ namespace Python.EmbeddingTest
             }
             finally
             {
-                Finalizer.Instance.IncorrectRefCntResovler -= handler;
+                Finalizer.Instance.IncorrectRefCntResolver -= handler;
             }
         }
 

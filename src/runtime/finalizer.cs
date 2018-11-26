@@ -75,7 +75,7 @@ namespace Python.Runtime
         }
 
         public delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
-        public event IncorrectRefCntHandler IncorrectRefCntResovler;
+        public event IncorrectRefCntHandler IncorrectRefCntResolver;
         public bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
 
         #endregion
@@ -304,9 +304,9 @@ namespace Python.Runtime
                         ImpactedObjects = indexer[handle]
                     };
                     bool handled = false;
-                    if (IncorrectRefCntResovler != null)
+                    if (IncorrectRefCntResolver != null)
                     {
-                        var funcList = IncorrectRefCntResovler.GetInvocationList();
+                        var funcList = IncorrectRefCntResolver.GetInvocationList();
                         foreach (IncorrectRefCntHandler func in funcList)
                         {
                             if (func(this, args))
