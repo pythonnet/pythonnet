@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.ComponentModel;
 
 namespace Python.Runtime
 {
@@ -134,8 +135,8 @@ namespace Python.Runtime
                 return result;
             }
 
-            if (value is IList && value.GetType().IsGenericType)
-            {
+			if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
+			{
                 using (var resultlist = new PyList())
                 {
                     foreach (object o in (IEnumerable)value)
@@ -842,7 +843,7 @@ namespace Python.Runtime
         private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
-            int size = Runtime.PySequence_Size(value);
+            var size = Runtime.PySequence_Size(value);
             result = null;
 
             if (size < 0)

@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -24,14 +25,14 @@ namespace Python.Runtime
         //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain - 
         //     unless LoaderOptimization.MultiDomain is used);
         //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
-        private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces;
-
+        private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
+            new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
         //private static Dictionary<string, Dictionary<string, string>> generics;
         private static AssemblyLoadEventHandler lhandler;
         private static ResolveEventHandler rhandler;
 
         // updated only under GIL?
-        private static Dictionary<string, int> probed;
+        private static Dictionary<string, int> probed = new Dictionary<string, int>(32);
 
         // modified from event handlers below, potentially triggered from different .NET threads
         private static ConcurrentQueue<Assembly> assemblies;
@@ -48,9 +49,6 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-            namespaces = new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
-            probed = new Dictionary<string, int>(32);
-            //generics = new Dictionary<string, Dictionary<string, string>>();
             assemblies = new ConcurrentQueue<Assembly>();
             pypath = new List<string>(16);
 
@@ -140,7 +138,7 @@ namespace Python.Runtime
         internal static void UpdatePath()
         {
             IntPtr list = Runtime.PySys_GetObject("path");
-            int count = Runtime.PyList_Size(list);
+            var count = Runtime.PyList_Size(list);
             if (count != pypath.Count)
             {
                 pypath.Clear();
@@ -351,9 +349,7 @@ namespace Python.Runtime
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
-
-            Type[] types = assembly.GetTypes();
-            foreach (Type t in types)
+            foreach (Type t in GetTypes(assembly))
             {
                 string ns = t.Namespace ?? "";
                 if (!namespaces.ContainsKey(ns))
@@ -427,10 +423,9 @@ namespace Python.Runtime
             {
                 foreach (Assembly a in namespaces[nsname].Keys)
                 {
-                    Type[] types = a.GetTypes();
-                    foreach (Type t in types)
+                    foreach (Type t in GetTypes(a))
                     {
-                        if ((t.Namespace ?? "") == nsname)
+                        if ((t.Namespace ?? "") == nsname && !t.IsNested)
                         {
                             names.Add(t.Name);
                         }
@@ -468,6 +463,33 @@ namespace Python.Runtime
                 }
             }
             return null;
+        }
+
+        internal static Type[] GetTypes(Assembly a)
+        {
+            if (a.IsDynamic)
+            {
+                try
+                {
+                    return a.GetTypes();
+                }
+                catch (ReflectionTypeLoadException exc)
+                {
+                    // Return all types that were successfully loaded
+                    return exc.Types.Where(x => x != null).ToArray();
+                }
+            }
+            else
+            {
+                try
+                {
+                    return a.GetExportedTypes();
+                }
+                catch (FileNotFoundException)
+                {
+                    return new Type[0];
+                }
+            }
         }
     }
 }

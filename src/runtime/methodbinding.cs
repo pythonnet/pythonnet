@@ -104,7 +104,7 @@ namespace Python.Runtime
             {
                 if (self.info.IsGenericMethod)
                 {
-                    int len = Runtime.PyTuple_Size(args); //FIXME: Never used
+                    var len = Runtime.PyTuple_Size(args); //FIXME: Never used
                     Type[] sigTp = Runtime.PythonArgsToTypeArray(args, true);
                     if (sigTp != null)
                     {
@@ -129,7 +129,7 @@ namespace Python.Runtime
 
                 if (target == IntPtr.Zero && !self.m.IsStatic())
                 {
-                    int len = Runtime.PyTuple_Size(args);
+                    var len = Runtime.PyTuple_Size(args);
                     if (len < 1)
                     {
                         Exceptions.SetError(Exceptions.TypeError, "not enough arguments");

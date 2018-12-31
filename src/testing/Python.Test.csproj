@@ -83,6 +83,7 @@
     <Compile Include="generictest.cs" />
     <Compile Include="globaltest.cs" />
     <Compile Include="indexertest.cs" />
+    <Compile Include="InheritanceTest.cs" />
     <Compile Include="interfacetest.cs" />
     <Compile Include="methodtest.cs" />
     <Compile Include="moduletest.cs" />

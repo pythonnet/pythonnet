@@ -155,7 +155,7 @@ namespace Python.Runtime
             // hook is saved as this.py_import. This version handles CLR
             // import and defers to the normal builtin for everything else.
 
-            int num_args = Runtime.PyTuple_Size(args);
+            var num_args = Runtime.PyTuple_Size(args);
             if (num_args < 1)
             {
                 return Exceptions.RaiseTypeError("__import__() takes at least 1 argument (0 given)");

@@ -230,10 +230,10 @@ namespace Python.Runtime
             }
 
             // Get the args passed in.
-            int i = Runtime.PyTuple_Size(args);
+            var i = Runtime.PyTuple_Size(args);
             IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
-            int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
-            int temp = i + numOfDefaultArgs;
+            var numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+            var temp = i + numOfDefaultArgs;
             IntPtr real = Runtime.PyTuple_New(temp + 1);
             for (var n = 0; n < i; n++)
             {
