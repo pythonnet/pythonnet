@@ -190,10 +190,17 @@ namespace Python.Runtime
             foreach (string name in AssemblyManager.GetNames(_namespace))
             {
                 cache.TryGetValue(name, out m);
-                if (m == null)
+                if (m != null)
                 {
-                    ManagedType attr = GetAttribute(name, true);
+                    continue;
                 }
+                IntPtr attr = Runtime.PyDict_GetItemString(dict, name);
+                // If __dict__ has already set a custom property, skip it.
+                if (attr != IntPtr.Zero)
+                {
+                    continue;
+                }
+                GetAttribute(name, true);
             }
         }
 
@@ -326,6 +333,17 @@ namespace Python.Runtime
                 Runtime.XDecref(mro);
                 hacked = true;
             }
+        }
+
+        public static void Reset()
+        {
+            hacked = false;
+            interactive_preload = true;
+            preload = false;
+
+            // XXX Test performance of new features //
+            _SuppressDocs = false;
+            _SuppressOverloads = false;
         }
 
         /// <summary>

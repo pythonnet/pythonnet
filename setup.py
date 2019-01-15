@@ -22,7 +22,7 @@ from setuptools import Extension, setup
 # Allow config/verbosity to be set from cli
 # http://stackoverflow.com/a/4792601/5208670
 CONFIG = "Release"  # Release or Debug
-VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
+VERBOSITY = "normal"  # quiet, minimal, normal, detailed, diagnostic
 
 is_64bits = sys.maxsize > 2**32
 DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
@@ -329,9 +329,16 @@ class BuildExtPythonnet(build_ext.build_ext):
             self.debug_print("Updating NuGet: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
 
-            cmd = "{0} restore pythonnet.sln -o packages".format(nuget)
-            self.debug_print("Installing packages: {0}".format(cmd))
-            subprocess.check_call(cmd, shell=use_shell)
+            try:
+                # msbuild=14 is mainly for Mono issues
+                cmd = "{0} restore pythonnet.sln  -MSBuildVersion 14 -o packages".format(nuget)
+                self.debug_print("Installing packages: {0}".format(cmd))
+                subprocess.check_call(cmd, shell=use_shell)
+            except:
+                # when only VS 2017 is installed do not specify msbuild version
+                cmd = "{0} restore pythonnet.sln  -o packages".format(nuget)
+                self.debug_print("Installing packages: {0}".format(cmd))
+                subprocess.check_call(cmd, shell=use_shell)
 
     def _find_msbuild_tool(self, tool="msbuild.exe", use_windows_sdk=False):
         """Return full path to one of the Microsoft build tools"""
@@ -516,10 +523,10 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS :: MacOS X',

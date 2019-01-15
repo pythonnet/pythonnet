@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -6,10 +6,40 @@ namespace Python.EmbeddingTest
 {
     public class TestRuntime
     {
+        [OneTimeSetUp]
+        public void SetUp()
+        {
+            // We needs to ensure that no any engines are running.
+            if (PythonEngine.IsInitialized)
+            {
+                PythonEngine.Shutdown();
+            }
+        }
+
+        /// <summary>
+        /// Test the cache of the information from the platform module.
+        ///
+        /// Test fails on platforms we haven't implemented yet.
+        /// </summary>
+        [Test]
+        public static void PlatformCache()
+        {
+            Runtime.Runtime.Initialize();
+
+            Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(Runtime.Runtime.MachineType.Other));
+            Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.MachineName));
+
+            Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(Runtime.Runtime.OperatingSystemType.Other));
+            Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.OperatingSystemName));
+
+            // Don't shut down the runtime: if the python engine was initialized
+            // but not shut down by another test, we'd end up in a bad state.
+	}
+
         [Test]
         public static void Py_IsInitializedValue()
         {
-            Runtime.Runtime.Py_Finalize(); // In case another test left it on.
+            Runtime.Runtime.Py_Finalize(); 
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();
             Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());
