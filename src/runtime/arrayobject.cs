@@ -93,7 +93,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            var count = Runtime.PyTuple_Size(idx);
+            int count = Runtime.PyTuple_Size(idx);
 
             var args = new int[count];
 
@@ -186,7 +186,7 @@ namespace Python.Runtime
                 return -1;
             }
 
-            var count = Runtime.PyTuple_Size(idx);
+            int count = Runtime.PyTuple_Size(idx);
             var args = new int[count];
 
             for (var i = 0; i < count; i++)

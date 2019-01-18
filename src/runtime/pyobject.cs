@@ -519,9 +519,9 @@ namespace Python.Runtime
         /// Returns the length for objects that support the Python sequence
         /// protocol, or 0 if the object does not support the protocol.
         /// </remarks>
-        public virtual long Length()
+        public virtual int Length()
         {
-            var s = Runtime.PyObject_Size(obj);
+            int s = Runtime.PyObject_Size(obj);
             if (s < 0)
             {
                 Runtime.PyErr_Clear();

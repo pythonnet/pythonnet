@@ -29,7 +29,7 @@ namespace Python.Runtime
         /// </summary>
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
-            var len = Runtime.PyTuple_Size(args);
+            int len = Runtime.PyTuple_Size(args);
             if (len < 3)
             {
                 return Exceptions.RaiseTypeError("invalid argument list");
