@@ -36,7 +36,7 @@ namespace Python.Runtime
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             var self = (InterfaceObject)GetManagedObject(tp);
-            var nargs = Runtime.PyTuple_Size(args);
+            int nargs = Runtime.PyTuple_Size(args);
             Type type = self.type;
             object obj;
 
