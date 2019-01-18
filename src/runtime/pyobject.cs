@@ -101,7 +101,7 @@ namespace Python.Runtime
             }
             return result;
         }
-        
+
         /// <summary>
         /// As Method
         /// </summary>
@@ -156,6 +156,23 @@ namespace Python.Runtime
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Unsafe Dispose Method.
+        /// To be used when already owning the GIL lock. <see cref="Dispose()"/>
+        /// </summary>
+        public void UnsafeDispose()
+        {
+            if (!disposed)
+            {
+                if (!Runtime.IsFinalizing)
+                {
+                    Runtime.XDecref(obj);
+                    obj = IntPtr.Zero;
+                }
+                disposed = true;
+            }
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// GetPythonType Method
