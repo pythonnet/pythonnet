@@ -233,7 +233,75 @@ namespace Python.Runtime
             }
             try
             {
+                //As per python doc:
+                //The return value must be a string object.  If a class defines __repr__() but not __str__(),
+                //then __repr__() is also used when an “informal” string representation of instances of that
+                //class is required.
+                //In C#, everything provides ToString(), so the check here will be whether the type explicitly
+                //provides ToString() or if it is language provided (i.e. the fully qualified type name as a string)
+
+                //First check which type in the object hierarchy provides ToString()
+                //ToString has two "official" overloads so loop over GetMethods to get the one without parameters
+                var instType = co.inst.GetType();
+                foreach (var method in instType.GetMethods())
+                {
+
+                    //TODO this could probably be done more cleanly with Linq
+                    if (!method.IsPublic) continue; //skip private/protected methods
+                    if (method.Name != "ToString") continue; //only look for ToString
+                    if (method.DeclaringType == typeof(object)) continue; //ignore default from object
+                    if (method.GetParameters().Length != 0) continue; //ignore Formatter overload of ToString
+
+                    //match!  something other than object provides a parameter-less overload of ToString
+                    return Runtime.PyString_FromString(co.inst.ToString());
+                }
+
+                //If the object defines __repr__, call it.
+                System.Reflection.MethodInfo reprMethodInfo = instType.GetMethod("__repr__");
+                if (reprMethodInfo != null && reprMethodInfo.IsPublic)
+                {
+                    var reprString = reprMethodInfo.Invoke(co.inst, null) as string;
+                    return Runtime.PyString_FromString(reprString);
+                }
+
+                //otherwise fallback to object's ToString() implementation
                 return Runtime.PyString_FromString(co.inst.ToString());
+                
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                }
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
+        }
+
+        public static IntPtr tp_repr(IntPtr ob)
+        {
+            var co = GetManagedObject(ob) as CLRObject;
+            if (co == null)
+            {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+            try
+            {
+                //if __repr__ is defined, use it
+                var instType = co.inst.GetType();
+                System.Reflection.MethodInfo methodInfo = instType.GetMethod("__repr__");
+                if (methodInfo != null && methodInfo.IsPublic)
+                {
+                    var reprString = methodInfo.Invoke(co.inst, null) as string;
+                    return Runtime.PyString_FromString(reprString);
+                }
+
+                //otherwise use the standard object.__repr__(inst)
+                IntPtr args = Runtime.PyTuple_New(1);
+                Runtime.PyTuple_SetItem(args, 0, ob);
+                IntPtr reprFunc = Runtime.PyObject_GetAttrString(Runtime.PyBaseObjectType, "__repr__");
+                return Runtime.PyObject_Call(reprFunc, args, IntPtr.Zero);
             }
             catch (Exception e)
             {
