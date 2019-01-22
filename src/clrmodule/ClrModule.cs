@@ -53,7 +53,7 @@ public class clrModule
         {
 #if USE_PYTHON_RUNTIME_VERSION
             // Has no effect until SNK works. Keep updated anyways.
-            Version = new Version("1.0.5.14"),
+            Version = new Version("1.0.5.15"),
 #endif
             CultureInfo = CultureInfo.InvariantCulture
         };
