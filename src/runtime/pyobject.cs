@@ -101,7 +101,7 @@ namespace Python.Runtime
             }
             return result;
         }
-        
+
         /// <summary>
         /// As Method
         /// </summary>
@@ -1121,10 +1121,10 @@ namespace Python.Runtime
                     res = Runtime.PyNumber_InPlaceMultiply(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.Divide:
-                    res = Runtime.PyNumber_Divide(this.obj, ((PyObject)arg).obj);
+                    res = Runtime.PyNumber_TrueDivide(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.DivideAssign:
-                    res = Runtime.PyNumber_InPlaceDivide(this.obj, ((PyObject)arg).obj);
+                    res = Runtime.PyNumber_InPlaceTrueDivide(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.And:
                     res = Runtime.PyNumber_And(this.obj, ((PyObject)arg).obj);
