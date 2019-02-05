@@ -560,6 +560,26 @@ namespace Python.Runtime
                 {
                     value += $" for {methodinfo[0].Name}";
                 }
+
+                long argCount = Runtime.PyTuple_Size(args);
+                value += ": (";
+                for(long argIndex = 0; argIndex < argCount; argIndex++) {
+                    var arg = Runtime.PyTuple_GetItem(args, argIndex);
+                    if (arg != IntPtr.Zero) {
+                        var type = Runtime.PyObject_Type(arg);
+                        if (type != IntPtr.Zero) {
+                            var description = Runtime.PyObject_Unicode(type);
+                            if (description != IntPtr.Zero) {
+                                value += Runtime.GetManagedString(description);
+                                Runtime.XDecref(description);
+                            }
+                        }
+                    }
+
+                    if (argIndex + 1 < argCount)
+                        value += ", ";
+                }
+                value += ")";
                 Exceptions.SetError(Exceptions.TypeError, value);
                 return IntPtr.Zero;
             }
