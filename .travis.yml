@@ -1,7 +1,7 @@
 dist: trusty
 sudo: false
 language: python
-  
+
 matrix:
   include:
 # --------------------- XPLAT builds ------------------------
@@ -17,12 +17,12 @@ matrix:
           - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
             key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
           packages:
-            - mono-devel
+            - mono-devel-5.16
             - ca-certificates-mono
             - dotnet-hostfxr-2.0.0
             - dotnet-runtime-2.0.0
             - dotnet-sdk-2.0.0
-            
+
     - python: 3.4
       env: *xplat-env
       addons: *xplat-addons
@@ -34,7 +34,7 @@ matrix:
     - python: 3.6
       env: *xplat-env
       addons: *xplat-addons
-      
+
     - python: 3.7
       env: *xplat-env
       dist: xenial
