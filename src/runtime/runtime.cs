@@ -104,7 +104,7 @@ namespace Python.Runtime
     public class Runtime
     {
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static int UCS => _UCS;
@@ -130,7 +130,7 @@ namespace Python.Runtime
 #endif
 
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static string pyversion => _pyversion;
@@ -173,7 +173,7 @@ namespace Python.Runtime
 #endif
 
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static readonly string PythonDLL = _PythonDll;
@@ -1563,6 +1563,11 @@ namespace Python.Runtime
         {
             IntPtr t = PyObject_TYPE(ob);
             return (t == tp) || PyType_IsSubtype(t, tp);
+        }
+
+        internal static bool PyObjectType_TypeCheck(IntPtr type, IntPtr tp)
+        {
+            return (type == tp) || PyType_IsSubtype(type, tp);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
