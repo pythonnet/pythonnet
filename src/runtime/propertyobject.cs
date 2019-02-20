@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Permissions;
 
@@ -12,6 +13,10 @@ namespace Python.Runtime
         private PropertyInfo info;
         private MethodInfo getter;
         private MethodInfo setter;
+        private bool getterCacheFailed;
+        private bool setterCacheFailed;
+        private Func<object, object> getterCache;
+        private Action<object, object> setterCache;
 
         [StrongNameIdentityPermission(SecurityAction.Assert)]
         public PropertyObject(PropertyInfo md)
@@ -67,7 +72,21 @@ namespace Python.Runtime
 
             try
             {
-                result = self.info.GetValue(co.inst, null);
+                if (self.getterCache == null && !self.getterCacheFailed)
+                {
+                    // if the getter is not public 'GetGetMethod' will not find it
+                    // but calling 'GetValue' will work, so for backwards compatibility
+                    // we will use it instead
+                    self.getterCache = BuildGetter(self.info);
+                    if (self.getterCache == null)
+                    {
+                        self.getterCacheFailed = true;
+                    }
+                }
+
+                result = self.getterCacheFailed ?
+                    self.info.GetValue(co.inst, null)
+                    : self.getterCache(co.inst);
                 return Converter.ToPython(result, self.info.PropertyType);
             }
             catch (Exception e)
@@ -80,7 +99,6 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
         }
-
 
         /// <summary>
         /// Descriptor __set__ implementation. This method sets the value of
@@ -132,7 +150,27 @@ namespace Python.Runtime
                         Exceptions.RaiseTypeError("invalid target");
                         return -1;
                     }
-                    self.info.SetValue(co.inst, newval, null);
+
+                    if (self.setterCache == null && !self.setterCacheFailed)
+                    {
+                        // if the setter is not public 'GetSetMethod' will not find it
+                        // but calling 'SetValue' will work, so for backwards compatibility
+                        // we will use it instead
+                        self.setterCache = BuildSetter(self.info);
+                        if (self.setterCache == null)
+                        {
+                            self.setterCacheFailed = true;
+                        }
+                    }
+
+                    if (self.setterCacheFailed)
+                    {
+                        self.info.SetValue(co.inst, newval, null);
+                    }
+                    else
+                    {
+                        self.setterCache(co.inst, newval);
+                    }
                 }
                 else
                 {
@@ -159,6 +197,50 @@ namespace Python.Runtime
         {
             var self = (PropertyObject)GetManagedObject(ob);
             return Runtime.PyString_FromString($"<property '{self.info.Name}'>");
+        }
+
+        private static Func<object, object> BuildGetter(PropertyInfo propertyInfo)
+        {
+            var methodInfo = propertyInfo.GetGetMethod();
+            if (methodInfo == null)
+            {
+                // if the getter is not public 'GetGetMethod' will not find it
+                return null;
+            }
+            var obj = Expression.Parameter(typeof(object), "o");
+            // Require because we will know at runtime the declaring type
+            // so 'obj' is declared as typeof(object)
+            var instance = Expression.Convert(obj, methodInfo.DeclaringType);
+
+            var expressionCall = Expression.Call(instance, methodInfo);
+
+            return Expression.Lambda<Func<object, object>>(
+                Expression.Convert(expressionCall, typeof(object)),
+                obj).Compile();
+        }
+
+        private static Action<object, object> BuildSetter(PropertyInfo propertyInfo)
+        {
+            var methodInfo = propertyInfo.GetSetMethod();
+            if (methodInfo == null)
+            {
+                // if the setter is not public 'GetSetMethod' will not find it
+                return null;
+            }
+            var obj = Expression.Parameter(typeof(object), "o");
+            // Require because we will know at runtime the declaring type
+            // so 'obj' is declared as typeof(object)
+            var instance = Expression.Convert(obj, methodInfo.DeclaringType);
+
+            var value = Expression.Parameter(typeof(object));
+            var argument = Expression.Convert(value, methodInfo.GetParameters()[0].ParameterType);
+
+            var expressionCall = Expression.Call(instance, methodInfo, argument);
+
+            return Expression.Lambda<Action<object, object>>(
+                expressionCall,
+                obj,
+                value).Compile();
         }
     }
 }
