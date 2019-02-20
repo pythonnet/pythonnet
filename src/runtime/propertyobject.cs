@@ -232,8 +232,13 @@ namespace Python.Runtime
             // so 'obj' is declared as typeof(object)
             var instance = Expression.Convert(obj, methodInfo.DeclaringType);
 
+            var parameters = methodInfo.GetParameters();
+            if (parameters.Length != 1)
+            {
+                return null;
+            }
             var value = Expression.Parameter(typeof(object));
-            var argument = Expression.Convert(value, methodInfo.GetParameters()[0].ParameterType);
+            var argument = Expression.Convert(value, parameters[0].ParameterType);
 
             var expressionCall = Expression.Call(instance, methodInfo, argument);
 
