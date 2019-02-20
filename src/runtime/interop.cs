@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
@@ -88,8 +88,7 @@ namespace Python.Runtime
 
         public static int magic(IntPtr ob)
         {
-            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            if (IsException(ob))
             {
                 return ExceptionOffset.ob_data;
             }
@@ -98,8 +97,7 @@ namespace Python.Runtime
 
         public static int DictOffset(IntPtr ob)
         {
-            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            if (IsException(ob))
             {
                 return ExceptionOffset.ob_dict;
             }
@@ -108,8 +106,7 @@ namespace Python.Runtime
 
         public static int Size(IntPtr ob)
         {
-            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            if (IsException(ob))
             {
                 return ExceptionOffset.Size();
             }
@@ -128,6 +125,21 @@ namespace Python.Runtime
         public static int ob_type;
         private static int ob_dict;
         private static int ob_data;
+        private static readonly Dictionary<IntPtr, bool> ExceptionTypeCache = new Dictionary<IntPtr, bool>();
+
+        private static bool IsException(IntPtr pyObject)
+        {
+            bool res;
+            var type = Runtime.PyObject_TYPE(pyObject);
+            if (!ExceptionTypeCache.TryGetValue(type, out res))
+            {
+                res = Runtime.PyObjectType_TypeCheck(type, Exceptions.BaseException)
+                    || Runtime.PyObjectType_TypeCheck(type, Runtime.PyTypeType)
+                    && Runtime.PyType_IsSubtype(pyObject, Exceptions.BaseException);
+                ExceptionTypeCache.Add(type, res);
+            }
+            return res;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
