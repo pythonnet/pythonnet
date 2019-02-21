@@ -125,20 +125,13 @@ namespace Python.Runtime
         public static int ob_type;
         private static int ob_dict;
         private static int ob_data;
-        private static readonly Dictionary<IntPtr, bool> ExceptionTypeCache = new Dictionary<IntPtr, bool>();
 
         private static bool IsException(IntPtr pyObject)
         {
-            bool res;
             var type = Runtime.PyObject_TYPE(pyObject);
-            if (!ExceptionTypeCache.TryGetValue(type, out res))
-            {
-                res = Runtime.PyObjectType_TypeCheck(type, Exceptions.BaseException)
-                    || Runtime.PyObjectType_TypeCheck(type, Runtime.PyTypeType)
-                    && Runtime.PyType_IsSubtype(pyObject, Exceptions.BaseException);
-                ExceptionTypeCache.Add(type, res);
-            }
-            return res;
+            return Runtime.PyObjectType_TypeCheck(type, Exceptions.BaseException)
+                || Runtime.PyObjectType_TypeCheck(type, Runtime.PyTypeType)
+                && Runtime.PyType_IsSubtype(pyObject, Exceptions.BaseException);
         }
     }
 
