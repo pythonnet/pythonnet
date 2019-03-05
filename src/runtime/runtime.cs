@@ -839,7 +839,11 @@ namespace Python.Runtime
         internal static extern int PyRun_SimpleString(string code);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+#if PYTHON2
         internal static extern NewReference PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
+#else
+        internal static extern NewReference PyRun_String([MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string code, IntPtr st, IntPtr globals, IntPtr locals);
+#endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
