@@ -106,7 +106,7 @@ namespace Python.Runtime
     public class Runtime
     {
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static int UCS => _UCS;
@@ -132,7 +132,7 @@ namespace Python.Runtime
 #endif
 
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static string pyversion => _pyversion;
@@ -175,7 +175,7 @@ namespace Python.Runtime
 #endif
 
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static readonly string PythonDLL = _PythonDll;
@@ -1193,7 +1193,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyNumber_Multiply(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Divide(IntPtr o1, IntPtr o2);
+        internal static extern IntPtr PyNumber_TrueDivide(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyNumber_And(IntPtr o1, IntPtr o2);
@@ -1226,7 +1226,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyNumber_InPlaceMultiply(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceDivide(IntPtr o1, IntPtr o2);
+        internal static extern IntPtr PyNumber_InPlaceTrueDivide(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyNumber_InPlaceAnd(IntPtr o1, IntPtr o2);
