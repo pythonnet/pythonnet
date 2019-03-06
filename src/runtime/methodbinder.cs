@@ -279,7 +279,7 @@ namespace Python.Runtime
         {
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
-            int pynargs = Runtime.PyTuple_Size(args);
+            var pynargs = (int)Runtime.PyTuple_Size(args);
             object arg;
             var isGeneric = false;
             ArrayList defaultArgList = null;
@@ -301,9 +301,9 @@ namespace Python.Runtime
                     isGeneric = true;
                 }
                 ParameterInfo[] pi = mi.GetParameters();
-                int clrnargs = pi.Length;
+                var clrnargs = pi.Length;
                 var match = false;
-                int arrayStart = -1;
+                var arrayStart = -1;
                 var outs = 0;
 
                 if (pynargs == clrnargs)
@@ -314,7 +314,7 @@ namespace Python.Runtime
                 {
                     match = true;
                     defaultArgList = new ArrayList();
-                    for (int v = pynargs; v < clrnargs; v++)
+                    for (var v = pynargs; v < clrnargs; v++)
                     {
                         if (pi[v].DefaultValue == DBNull.Value)
                         {
@@ -338,7 +338,7 @@ namespace Python.Runtime
                 {
                     var margs = new object[clrnargs];
 
-                    for (var n = 0; n < clrnargs; n++)
+                    for (int n = 0; n < clrnargs; n++)
                     {
                         IntPtr op;
                         if (n < pynargs)
@@ -601,6 +601,19 @@ namespace Python.Runtime
     {
         int IComparer.Compare(object m1, object m2)
         {
+            var me1 = (MethodBase)m1;
+            var me2 = (MethodBase)m2;
+            if (me1.DeclaringType != me2.DeclaringType)
+            {
+                // m2's type derives from m1's type, favor m2
+                if (me1.DeclaringType.IsAssignableFrom(me2.DeclaringType))
+                    return 1;
+
+                // m1's type derives from m2's type, favor m1
+                if (me2.DeclaringType.IsAssignableFrom(me1.DeclaringType))
+                    return -1;
+            }
+
             int p1 = MethodBinder.GetPrecedence((MethodBase)m1);
             int p2 = MethodBinder.GetPrecedence((MethodBase)m2);
             if (p1 < p2)

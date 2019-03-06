@@ -12,13 +12,23 @@ namespace Python.EmbeddingTest
         [SetUp]
         public void SetUp()
         {
-            _gs = Py.GIL();
+            try {
+                _gs = Py.GIL();
+            } catch (Exception e) {
+                Console.WriteLine($"exception in SetUp: {e}");
+                throw;
+            }
         }
 
         [TearDown]
         public void Dispose()
         {
-            _gs.Dispose();
+            try {
+                _gs.Dispose();
+            } catch(Exception e) {
+                Console.WriteLine($"exception in TearDown: {e}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -118,10 +128,11 @@ namespace Python.EmbeddingTest
             sys.testattr2 = sys.testattr1;
 
             // Compare in Python
-            PyObject res = PythonEngine.RunString(
+            PythonEngine.RunSimpleString(
                 "import sys\n" +
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
+
             Assert.AreEqual(sys.testattr3.ToString(), "True");
 
             // Compare in .NET

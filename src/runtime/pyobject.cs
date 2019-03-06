@@ -101,7 +101,7 @@ namespace Python.Runtime
             }
             return result;
         }
-        
+
         /// <summary>
         /// As Method
         /// </summary>
@@ -519,9 +519,9 @@ namespace Python.Runtime
         /// Returns the length for objects that support the Python sequence
         /// protocol, or 0 if the object does not support the protocol.
         /// </remarks>
-        public virtual int Length()
+        public virtual long Length()
         {
-            int s = Runtime.PyObject_Size(obj);
+            var s = Runtime.PyObject_Size(obj);
             if (s < 0)
             {
                 Runtime.PyErr_Clear();
@@ -1121,10 +1121,10 @@ namespace Python.Runtime
                     res = Runtime.PyNumber_InPlaceMultiply(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.Divide:
-                    res = Runtime.PyNumber_Divide(this.obj, ((PyObject)arg).obj);
+                    res = Runtime.PyNumber_TrueDivide(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.DivideAssign:
-                    res = Runtime.PyNumber_InPlaceDivide(this.obj, ((PyObject)arg).obj);
+                    res = Runtime.PyNumber_InPlaceTrueDivide(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.And:
                     res = Runtime.PyNumber_And(this.obj, ((PyObject)arg).obj);
