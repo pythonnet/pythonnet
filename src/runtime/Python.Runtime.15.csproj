@@ -131,7 +131,7 @@
 
   <Target Name="BeforeBuild" Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono')) AND '$(OS)' != 'Windows_NT'">
     <!--Endless war!-->
-    <Exec Command="cp $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.XML.dll $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.Xml.dll" />
+    <Exec Command="[[ -e $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.Xml.dll ]] || cp $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.XML.dll $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.Xml.dll" />
   </Target>
   <Target Name="AfterBuild">
     <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />

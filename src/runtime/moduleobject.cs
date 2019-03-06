@@ -342,11 +342,13 @@ namespace Python.Runtime
             }
         }
 
-        internal static void ResetFlags()
+        public static void Reset()
         {
             hacked = false;
             interactive_preload = true;
             preload = false;
+
+            // XXX Test performance of new features //
             _SuppressDocs = false;
             _SuppressOverloads = false;
         }

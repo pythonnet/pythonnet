@@ -38,6 +38,11 @@ namespace Python.Runtime
             rawtypes.Clear();
         }
 
+        public static void Reset()
+        {
+            cache = new Dictionary<Type, IntPtr>(128);
+        }
+
         /// <summary>
         /// Given a managed Type derived from ExtensionType, get the handle to
         /// a Python type object that delegates its implementation to the Type

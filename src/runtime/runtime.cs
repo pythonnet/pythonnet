@@ -105,7 +105,7 @@ namespace Python.Runtime
     public class Runtime
     {
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static int UCS => _UCS;
@@ -131,7 +131,7 @@ namespace Python.Runtime
 #endif
 
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static string pyversion => _pyversion;
@@ -149,7 +149,7 @@ namespace Python.Runtime
 #elif PYTHON36
         internal const string _pyversion = "3.6";
         internal const string _pyver = "36";
-#elif PYTHON37 // TODO: Add `interop37.cs` after PY37 is released
+#elif PYTHON37
         internal const string _pyversion = "3.7";
         internal const string _pyver = "37";
 #else
@@ -174,7 +174,7 @@ namespace Python.Runtime
 #endif
 
         // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow 
+        // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static readonly string PythonDLL = _PythonDll;
@@ -239,9 +239,13 @@ namespace Python.Runtime
         /// </summary>
         static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
         {
-            { "i386", MachineType.i386 },
-            { "x86_64", MachineType.x86_64 },
-            { "amd64", MachineType.x86_64 },
+            ["i386"] = MachineType.i386,
+            ["i686"] = MachineType.i386,
+            ["x86"] = MachineType.i386,
+            ["x86_64"] = MachineType.x86_64,
+            ["amd64"] = MachineType.x86_64,
+            ["x64"] = MachineType.x86_64,
+            ["em64t"] = MachineType.x86_64,
         };
 
         /// <summary>
@@ -265,17 +269,26 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize()
+        internal static void Initialize(bool initSigs = false)
         {
             if (Py_IsInitialized() == 0)
             {
-                Py_Initialize();
+                Py_InitializeEx(initSigs ? 1 : 0);
             }
 
             if (PyEval_ThreadsInitialized() == 0)
             {
                 PyEval_InitThreads();
             }
+
+            IsFinalizing = false;
+
+            CLRModule.Reset();
+            GenericUtil.Reset();
+            PyScopeManager.Reset();
+            ClassManager.Reset();
+            ClassDerivedObject.Reset();
+            TypeManager.Reset();
 
             IntPtr op;
             IntPtr dict;
@@ -745,6 +758,9 @@ namespace Python.Runtime
         internal static extern void Py_Initialize();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void Py_InitializeEx(int initsigs);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_IsInitialized();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1205,7 +1221,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyNumber_Multiply(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Divide(IntPtr o1, IntPtr o2);
+        internal static extern IntPtr PyNumber_TrueDivide(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyNumber_And(IntPtr o1, IntPtr o2);
@@ -1238,7 +1254,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyNumber_InPlaceMultiply(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceDivide(IntPtr o1, IntPtr o2);
+        internal static extern IntPtr PyNumber_InPlaceTrueDivide(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyNumber_InPlaceAnd(IntPtr o1, IntPtr o2);

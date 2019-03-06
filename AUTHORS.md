@@ -42,6 +42,7 @@
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
+-   Simon Mourier ([@smourier](https://github.com/smourier))
 -   Viktoria Kovescses ([@vkovec](https://github.com/vkovec))
 -   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))

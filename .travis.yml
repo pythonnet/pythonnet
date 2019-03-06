@@ -23,10 +23,6 @@ matrix:
             - dotnet-runtime-2.0.0
             - dotnet-sdk-2.0.0
             
-    - python: 3.4
-      env: *xplat-env
-      addons: *xplat-addons
-
     - python: 3.5
       env: *xplat-env
       addons: *xplat-addons
@@ -58,9 +54,6 @@ matrix:
       env: &classic-env
         - BUILD_OPTS=
         - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
-
-    - python: 3.4
-      env: *classic-env
 
     - python: 3.5
       env: *classic-env

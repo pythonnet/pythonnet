@@ -43,6 +43,11 @@ namespace Python.Runtime
             cache.Clear();
         }
 
+        public static void Reset()
+        {
+            cache = new Dictionary<Type, ClassBase>(128);
+        }
+
         /// <summary>
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
