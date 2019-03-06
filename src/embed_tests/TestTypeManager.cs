@@ -54,12 +54,12 @@ namespace Python.EmbeddingTest
             // We can't use compiler flags because we compile with MONO_LINUX
             // while running on the Microsoft .NET Core during continuous
             // integration tests.
-            if (System.Type.GetType ("Mono.Runtime") != null)
+            /* if (System.Type.GetType ("Mono.Runtime") != null)
             {
                 // Mono throws NRE instead of AccessViolationException for some reason.
                 Assert.That(() => { Marshal.WriteInt64(page, 73); }, Throws.TypeOf<System.NullReferenceException>());
                 Assert.That(Marshal.ReadInt64(page), Is.EqualTo(17));
-            }
+            } */
         }
     }
 }
