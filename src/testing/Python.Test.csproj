@@ -91,7 +91,7 @@
     <Compile Include="threadtest.cs" />
     <Compile Include="doctest.cs" />
     <Compile Include="subclasstest.cs" />
-    <Compile Include="reprtest.cs" />
+    <Compile Include="ReprTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
