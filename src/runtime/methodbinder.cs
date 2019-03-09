@@ -291,7 +291,7 @@ namespace Python.Runtime
             {
                 _methods = GetMethods();
             }
-            Type clrtype;
+
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
             {
@@ -303,7 +303,7 @@ namespace Python.Runtime
                 ArrayList defaultArgList;
                 int arrayStart;
 
-                if (!MatchArgumentCount(pynargs, pi, out arrayStart, out defaultArgList)) {
+                if (!MatchesArgumentCount(pynargs, pi, out arrayStart, out defaultArgList)) {
                     continue;
                 }
                 var outs = 0;
@@ -311,7 +311,6 @@ namespace Python.Runtime
 
                 for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
                 {
-                    IntPtr op;
                     if (paramIndex >= pynargs)
                     {
                         if (defaultArgList != null)
@@ -322,85 +321,21 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    if (arrayStart == paramIndex)
-                    {
+                    IntPtr op = (arrayStart == paramIndex)
                         // map remaining Python arguments to a tuple since
                         // the managed function accepts it - hopefully :]
-                        op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
-                    }
-                    else
-                    {
-                        op = Runtime.PyTuple_GetItem(args, paramIndex);
+                        ? Runtime.PyTuple_GetSlice(args, arrayStart, pynargs)
+                        : Runtime.PyTuple_GetItem(args, paramIndex);
+
+                    var parameter = pi[paramIndex];
+
+                    var clrtype = TryComputeClrArgumentType(parameter.ParameterType, op, needsResolution: _methods.Length > 1);
+                    if (clrtype == null) {
+                        margs = null;
+                        break;
                     }
 
-                    // this logic below handles cases when multiple overloading methods
-                    // are ambiguous, hence comparison between Python and CLR types
-                    // is necessary
-                    clrtype = null;
-                    IntPtr pyoptype;
-                    if (_methods.Length > 1)
-                    {
-                        pyoptype = IntPtr.Zero;
-                        pyoptype = Runtime.PyObject_Type(op);
-                        Exceptions.Clear();
-                        if (pyoptype != IntPtr.Zero)
-                        {
-                            clrtype = Converter.GetTypeByAlias(pyoptype);
-                        }
-                        Runtime.XDecref(pyoptype);
-                    }
-
-
-                    if (clrtype != null)
-                    {
-                        var typematch = false;
-                        if ((pi[paramIndex].ParameterType != typeof(object)) && (pi[paramIndex].ParameterType != clrtype))
-                        {
-                            IntPtr pytype = Converter.GetPythonTypeByAlias(pi[paramIndex].ParameterType);
-                            pyoptype = Runtime.PyObject_Type(op);
-                            Exceptions.Clear();
-                            if (pyoptype != IntPtr.Zero)
-                            {
-                                if (pytype != pyoptype)
-                                {
-                                    typematch = false;
-                                }
-                                else
-                                {
-                                    typematch = true;
-                                    clrtype = pi[paramIndex].ParameterType;
-                                }
-                            }
-                            if (!typematch)
-                            {
-                                // this takes care of enum values
-                                TypeCode argtypecode = Type.GetTypeCode(pi[paramIndex].ParameterType);
-                                TypeCode paramtypecode = Type.GetTypeCode(clrtype);
-                                if (argtypecode == paramtypecode)
-                                {
-                                    typematch = true;
-                                    clrtype = pi[paramIndex].ParameterType;
-                                }
-                            }
-                            Runtime.XDecref(pyoptype);
-                            if (!typematch)
-                            {
-                                margs = null;
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            typematch = true;
-                            clrtype = pi[paramIndex].ParameterType;
-                        }
-                    }
-                    else
-                    {
-                        clrtype = pi[paramIndex].ParameterType;
-                    }
-
-                    if (pi[paramIndex].IsOut || clrtype.IsByRef)
+                    if (parameter.IsOut || clrtype.IsByRef)
                     {
                         outs++;
                     }
@@ -459,32 +394,104 @@ namespace Python.Runtime
             return null;
         }
 
-        static bool MatchArgumentCount(int pynargs, ParameterInfo[] pi, out int paramsArrayStart, out ArrayList defaultArgList)
+        static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
+        {
+            // this logic below handles cases when multiple overloading methods
+            // are ambiguous, hence comparison between Python and CLR types
+            // is necessary
+            Type clrtype = null;
+            IntPtr pyoptype;
+            if (needsResolution)
+            {
+                // HACK: each overload should be weighted in some way instead
+                pyoptype = Runtime.PyObject_Type(argument);
+                Exceptions.Clear();
+                if (pyoptype != IntPtr.Zero)
+                {
+                    clrtype = Converter.GetTypeByAlias(pyoptype);
+                }
+                Runtime.XDecref(pyoptype);
+            }
+
+            if (clrtype != null)
+            {
+                var typematch = false;
+                if ((parameterType != typeof(object)) && (parameterType != clrtype))
+                {
+                    IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
+                    pyoptype = Runtime.PyObject_Type(argument);
+                    Exceptions.Clear();
+                    if (pyoptype != IntPtr.Zero)
+                    {
+                        if (pytype != pyoptype)
+                        {
+                            typematch = false;
+                        }
+                        else
+                        {
+                            typematch = true;
+                            clrtype = parameterType;
+                        }
+                    }
+                    if (!typematch)
+                    {
+                        // this takes care of enum values
+                        TypeCode argtypecode = Type.GetTypeCode(parameterType);
+                        TypeCode paramtypecode = Type.GetTypeCode(clrtype);
+                        if (argtypecode == paramtypecode)
+                        {
+                            typematch = true;
+                            clrtype = parameterType;
+                        }
+                    }
+                    Runtime.XDecref(pyoptype);
+                    if (!typematch)
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    typematch = true;
+                    clrtype = parameterType;
+                }
+            }
+            else
+            {
+                clrtype = parameterType;
+            }
+
+            return clrtype;
+        }
+
+        static bool MatchesArgumentCount(int argumentCount, ParameterInfo[] parameters,
+            out int paramsArrayStart,
+            out ArrayList defaultArgList)
         {
             defaultArgList = null;
             var match = false;
             paramsArrayStart = -1;
 
-            if (pynargs == pi.Length)
+            if (argumentCount == parameters.Length)
             {
                 match = true;
-            } else if (pynargs < pi.Length)
+            } else if (argumentCount < parameters.Length)
             {
                 match = true;
                 defaultArgList = new ArrayList();
-                for (var v = pynargs; v < pi.Length; v++) {
-                    if (pi[v].DefaultValue == DBNull.Value) {
+                for (var v = argumentCount; v < parameters.Length; v++) {
+                    if (parameters[v].DefaultValue == DBNull.Value) {
                         match = false;
                     } else {
-                        defaultArgList.Add(pi[v].DefaultValue);
+                        defaultArgList.Add(parameters[v].DefaultValue);
                     }
                 }
-            } else if (pynargs > pi.Length && pi.Length > 0 &&
-                       Attribute.IsDefined(pi[pi.Length - 1], typeof(ParamArrayAttribute)))
+            } else if (argumentCount > parameters.Length && parameters.Length > 0 &&
+                       Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)))
             {
                 // This is a `foo(params object[] bar)` style method
                 match = true;
-                paramsArrayStart = pi.Length - 1;
+                paramsArrayStart = parameters.Length - 1;
             }
 
             return match;
