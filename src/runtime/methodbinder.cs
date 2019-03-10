@@ -280,7 +280,6 @@ namespace Python.Runtime
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
             var pynargs = (int)Runtime.PyTuple_Size(args);
-            object arg;
             var isGeneric = false;
             if (info != null)
             {
@@ -301,59 +300,15 @@ namespace Python.Runtime
                 }
                 ParameterInfo[] pi = mi.GetParameters();
                 ArrayList defaultArgList;
-                int arrayStart;
+                bool paramsArray;
 
-                if (!MatchesArgumentCount(pynargs, pi, out arrayStart, out defaultArgList)) {
+                if (!MatchesArgumentCount(pynargs, pi, out paramsArray, out defaultArgList)) {
                     continue;
                 }
                 var outs = 0;
-                var margs = new object[pi.Length];
-
-                for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
-                {
-                    if (paramIndex >= pynargs)
-                    {
-                        if (defaultArgList != null)
-                        {
-                            margs[paramIndex] = defaultArgList[paramIndex - pynargs];
-                        }
-
-                        continue;
-                    }
-
-                    IntPtr op = (arrayStart == paramIndex)
-                        // map remaining Python arguments to a tuple since
-                        // the managed function accepts it - hopefully :]
-                        ? Runtime.PyTuple_GetSlice(args, arrayStart, pynargs)
-                        : Runtime.PyTuple_GetItem(args, paramIndex);
-
-                    var parameter = pi[paramIndex];
-
-                    var clrtype = TryComputeClrArgumentType(parameter.ParameterType, op, needsResolution: _methods.Length > 1);
-                    if (clrtype == null) {
-                        margs = null;
-                        break;
-                    }
-
-                    if (parameter.IsOut || clrtype.IsByRef)
-                    {
-                        outs++;
-                    }
-
-                    if (!Converter.ToManaged(op, clrtype, out arg, false))
-                    {
-                        Exceptions.Clear();
-                        margs = null;
-                        break;
-                    }
-                    if (arrayStart == paramIndex)
-                    {
-                        // GetSlice() creates a new reference but GetItem()
-                        // returns only a borrow reference.
-                        Runtime.XDecref(op);
-                    }
-                    margs[paramIndex] = arg;
-                }
+                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, defaultArgList,
+                    needsResolution: _methods.Length > 1,
+                    outs: out outs);
 
                 if (margs == null)
                 {
@@ -392,6 +347,65 @@ namespace Python.Runtime
                 return Bind(inst, args, kw, mi, null);
             }
             return null;
+        }
+
+        static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
+            IntPtr args, int pyArgCount,
+            ArrayList defaultArgList,
+            bool needsResolution,
+            out int outs)
+        {
+            outs = 0;
+            var margs = new object[pi.Length];
+            int arrayStart = paramsArray ? pi.Length - 1 : -1;
+
+            for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
+            {
+                if (paramIndex >= pyArgCount)
+                {
+                    if (defaultArgList != null)
+                    {
+                        margs[paramIndex] = defaultArgList[paramIndex - pyArgCount];
+                    }
+
+                    continue;
+                }
+
+                IntPtr op = (arrayStart == paramIndex)
+                    // map remaining Python arguments to a tuple since
+                    // the managed function accepts it - hopefully :]
+                    ? Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount)
+                    : Runtime.PyTuple_GetItem(args, paramIndex);
+
+                var parameter = pi[paramIndex];
+
+                var clrtype = TryComputeClrArgumentType(parameter.ParameterType, op, needsResolution: needsResolution);
+                if (clrtype == null)
+                {
+                    return null;
+                }
+
+                if (parameter.IsOut || clrtype.IsByRef)
+                {
+                    outs++;
+                }
+
+                object arg;
+                if (!Converter.ToManaged(op, clrtype, out arg, false))
+                {
+                    Exceptions.Clear();
+                    return null;
+                }
+                if (arrayStart == paramIndex)
+                {
+                    // GetSlice() creates a new reference but GetItem()
+                    // returns only a borrow reference.
+                    Runtime.XDecref(op);
+                }
+                margs[paramIndex] = arg;
+            }
+
+            return margs;
         }
 
         static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
@@ -465,12 +479,12 @@ namespace Python.Runtime
         }
 
         static bool MatchesArgumentCount(int argumentCount, ParameterInfo[] parameters,
-            out int paramsArrayStart,
+            out bool paramsArray,
             out ArrayList defaultArgList)
         {
             defaultArgList = null;
             var match = false;
-            paramsArrayStart = -1;
+            paramsArray = false;
 
             if (argumentCount == parameters.Length)
             {
@@ -491,7 +505,7 @@ namespace Python.Runtime
             {
                 // This is a `foo(params object[] bar)` style method
                 match = true;
-                paramsArrayStart = parameters.Length - 1;
+                paramsArray = true;
             }
 
             return match;
