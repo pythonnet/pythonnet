@@ -371,41 +371,55 @@ namespace Python.Runtime
                     continue;
                 }
 
+                var parameter = pi[paramIndex];
                 IntPtr op = (arrayStart == paramIndex)
                     // map remaining Python arguments to a tuple since
                     // the managed function accepts it - hopefully :]
                     ? Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount)
                     : Runtime.PyTuple_GetItem(args, paramIndex);
 
-                var parameter = pi[paramIndex];
-
-                var clrtype = TryComputeClrArgumentType(parameter.ParameterType, op, needsResolution: needsResolution);
-                if (clrtype == null)
+                bool isOut;
+                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut))
                 {
                     return null;
                 }
 
-                if (parameter.IsOut || clrtype.IsByRef)
-                {
-                    outs++;
-                }
-
-                object arg;
-                if (!Converter.ToManaged(op, clrtype, out arg, false))
-                {
-                    Exceptions.Clear();
-                    return null;
-                }
                 if (arrayStart == paramIndex)
                 {
+                    // TODO: is this a bug? Should this happen even if the conversion fails?
                     // GetSlice() creates a new reference but GetItem()
                     // returns only a borrow reference.
                     Runtime.XDecref(op);
                 }
-                margs[paramIndex] = arg;
+
+                if (parameter.IsOut || isOut)
+                {
+                    outs++;
+                }
             }
 
             return margs;
+        }
+
+        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
+                                       out object arg, out bool isOut)
+        {
+            arg = null;
+            isOut = false;
+            var clrtype = TryComputeClrArgumentType(parameterType, op, needsResolution: needsResolution);
+            if (clrtype == null)
+            {
+                return false;
+            }
+
+            if (!Converter.ToManaged(op, clrtype, out arg, false))
+            {
+                Exceptions.Clear();
+                return false;
+            }
+
+            isOut = clrtype.IsByRef;
+            return true;
         }
 
         static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
