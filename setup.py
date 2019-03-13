@@ -74,21 +74,6 @@ WIN_SDK_KEYS = (
 VS_KEYS = (
     RegKey(sdk_name="MSBuild 15", key=vs_root.format("15.0"),
            value_name="MSBuildToolsPath", suffix=""),
-
-    RegKey(sdk_name="MSBuild 14", key=vs_root.format("14.0"),
-           value_name="MSBuildToolsPath", suffix=""),
-
-    RegKey(sdk_name="MSBuild 12", key=vs_root.format("12.0"),
-           value_name="MSBuildToolsPath", suffix=""),
-
-    RegKey(sdk_name="MSBuild 4", key=vs_root.format("4.0"),
-           value_name="MSBuildToolsPath", suffix=""),
-
-    RegKey(sdk_name="MSBuild 3.5", key=vs_root.format("3.5"),
-           value_name="MSBuildToolsPath", suffix=""),
-
-    RegKey(sdk_name="MSBuild 2.0", key=vs_root.format("2.0"),
-           value_name="MSBuildToolsPath", suffix=""),
 )
 
 
@@ -262,7 +247,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
         if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
-            subprocess.check_call(" ".join(cmd + ['"/t:Console_15:publish;Python_EmbeddingTest_15:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
+            subprocess.check_call(" ".join(cmd + ['"/t:Console:publish;Python_EmbeddingTest:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
 
@@ -314,7 +299,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             elif DEVTOOLS == "dotnet":
                 _config = "{0}Mono".format(CONFIG)
 
-            cmd = "dotnet msbuild /t:Restore pythonnet.15.sln /p:Configuration={0} /p:Platform={1}".format(_config, ARCH)
+            cmd = "dotnet msbuild /t:Restore pythonnet.sln /p:Configuration={0} /p:Platform={1}".format(_config, ARCH)
             self.debug_print("Updating packages with xplat: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
         else:
