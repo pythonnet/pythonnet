@@ -1,95 +1,95 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{86E834DE-1139-4511-96CC-69636A56E7AC}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AssemblyName>clrmodule</AssemblyName>
+    <TargetFrameworks>net40</TargetFrameworks>
+    <Platforms>x64;x86</Platforms>
+    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
     <RootNamespace>clrmodule</RootNamespace>
+    <AssemblyName>clrmodule</AssemblyName>
+    <PackageId>clrmodule</PackageId>
+    <VersionPrefix>2.4.0</VersionPrefix>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <DocumentationFile>bin\clrmodule.xml</DocumentationFile>
     <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <PythonBuildDir Condition="'$(TargetFramework)'!='net40'">$(PythonBuildDir)\$(TargetFramework)\</PythonBuildDir>
     <LangVersion>6</LangVersion>
-    <RestorePackages>true</RestorePackages>
     <ErrorReport>prompt</ErrorReport>
+    <CustomDefineConstants Condition="'$(CustomDefineConstants)' == ''">$(PYTHONNET_DEFINE_CONSTANTS)</CustomDefineConstants>
+    <BaseDefineConstants>XPLAT</BaseDefineConstants>
+    <DefineConstants>$(DefineConstants);$(CustomDefineConstants);$(BaseDefineConstants);</DefineConstants>
+    <DefineConstants Condition="'$(BuildingInsideVisualStudio)' == 'true' AND '$(CustomDefineConstants)' != '' AND $(Configuration.Contains('Debug'))">$(DefineConstants);TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Platform)' == 'x86'">
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x64'">
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;TRACE;DEBUG</DefineConstants>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;TRACE;DEBUG</DefineConstants>
-    <DebugType>full</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;TRACE;DEBUG</DefineConstants>
-    <DebugType>full</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;TRACE;DEBUG</DefineConstants>
-    <DebugType>full</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3</DefineConstants>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="RGiesecke.DllExport.Metadata">
-      <HintPath>..\..\packages\UnmanagedExports.1.2.7\lib\net\RGiesecke.DllExport.Metadata.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System" />
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\SharedAssemblyInfo.cs">
-      <Link>Properties\SharedAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="ClrModule.cs" />
+    <PackageReference Include="UnmanagedExports" Version="1.2.7" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
   <PropertyGroup>
     <TargetAssembly>$(TargetPath)</TargetAssembly>
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
   </PropertyGroup>
+
   <Target Name="AfterBuild" DependsOnTargets="RGieseckeDllExport">
     <Copy SourceFiles="$(TargetAssembly)" DestinationFiles="$(PythonBuildDir)\clr.pyd" />
     <Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFiles="$(PythonBuildDir)\clr.pdb" />
   </Target>
-  <Import Project="../../packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.targets" Condition="Exists('../../packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.targets')" />
+  <Import Project="$(NuGetPackageRoot)/unmanagedexports/1.2.7/tools/RGiesecke.DllExport.targets" Condition="Exists('$(NuGetPackageRoot)/unmanagedexports/1.2.7/tools/RGiesecke.DllExport.targets')" />
 </Project>

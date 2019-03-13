@@ -1,22 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4165C59D-2822-499F-A6DB-EACA4C331EB5}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <TargetFrameworks>net40;netcoreapp2.0</TargetFrameworks>
+    <Platforms>x64;x86</Platforms>
+    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
+    <OutputType Condition="'$(TargetFramework)' != 'net40' OR '$(PYTHONNET_VS_ENV)' == 'true'">Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
     <AssemblyName>Python.EmbeddingTest</AssemblyName>
     <RootNamespace>Python.EmbeddingTest</RootNamespace>
-    <DocumentationFile>bin\Python.EmbeddingTest.xml</DocumentationFile>
+    <PackageId>Python.EmbeddingTest</PackageId>
+    <VersionPrefix>2.4.0</VersionPrefix>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
+    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
+    <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <DocumentationFile Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
+    <PythonBuildDir Condition="'$(TargetFramework)'=='net40' AND '$(PythonBuildDir)' == ''">$(SolutionDir)\bin\</PythonBuildDir>
+    <PublishDir Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)_publish</PublishDir>
     <LangVersion>6</LangVersion>
-    <RestorePackages>true</RestorePackages>
     <ErrorReport>prompt</ErrorReport>
+    <CustomDefineConstants Condition="'$(CustomDefineConstants)' == ''">$(PYTHONNET_DEFINE_CONSTANTS)</CustomDefineConstants>
+    <BaseDefineConstants>XPLAT</BaseDefineConstants>
+    <DefineConstants>$(DefineConstants);$(CustomDefineConstants);$(BaseDefineConstants);</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp2.0'">$(DefineConstants);NETCOREAPP</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants Condition="'$(BuildingInsideVisualStudio)' == 'true' AND '$(CustomDefineConstants)' != '' AND $(Configuration.Contains('Debug'))">$(DefineConstants);TRACE;DEBUG</DefineConstants>
+    <FrameworkPathOverride Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono'))">$(NuGetPackageRoot)\microsoft.targetingpack.netframework.v4.5\1.0.1\lib\net45\</FrameworkPathOverride>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -24,105 +39,78 @@
   <PropertyGroup Condition=" '$(Platform)' == 'x64'">
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='netstandard2.0'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
+    <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='netstandard2.0'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+  <PropertyGroup Condition="$(Configuration.Contains('Release'))">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="nunit.framework, Version=3.7.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\NUnit.3.7.1\lib\net40\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-  </ItemGroup>
+
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
-    <None Include="packages.config" />
+    <None Remove="packages.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  
+  <ItemGroup>
+    <PackageReference Include="NUnit" Version="3.7.1" />
+    <PackageReference Include="NUnit.ConsoleRunner" Version="3.7.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0" />
+    <PackageReference Include="NUnitLite" Version="3.7.2" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="dynamic.cs" />
-    <Compile Include="pyimport.cs" />
-    <Compile Include="pyinitialize.cs" />
-    <Compile Include="pyrunstring.cs" />
-    <Compile Include="TestConverter.cs" />
-    <Compile Include="TestCustomMarshal.cs" />
-    <Compile Include="TestDomainReload.cs" />
-    <Compile Include="TestExample.cs" />
-    <Compile Include="TestPyAnsiString.cs" />
-    <Compile Include="TestPyFloat.cs" />
-    <Compile Include="TestPyInt.cs" />
-    <Compile Include="TestPyList.cs" />
-    <Compile Include="TestPyLong.cs" />
-    <Compile Include="TestPyNumber.cs" />
-    <Compile Include="TestPyObject.cs" />
-    <Compile Include="TestPySequence.cs" />
-    <Compile Include="TestPyString.cs" />
-    <Compile Include="TestPythonException.cs" />
-    <Compile Include="TestPythonEngineProperties.cs" />
-    <Compile Include="TestPyTuple.cs" />
-    <Compile Include="TestNamedArguments.cs" />
-    <Compile Include="TestPyWith.cs" />
-    <Compile Include="TestRuntime.cs" />
-    <Compile Include="TestPyScope.cs" />
-    <Compile Include="TestTypeManager.cs" />
-    <Compile Include="GlobalTestsSetup.cs" />
+    <ProjectReference Include="..\runtime\Python.Runtime.15.csproj" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\runtime\Python.Runtime.csproj">
-      <Project>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</Project>
-      <Name>Python.Runtime</Name>
-    </ProjectReference>
+    <Folder Include="Properties\" />
   </ItemGroup>
+
   <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
   <PropertyGroup>
     <TargetAssembly>$(TargetPath)</TargetAssembly>
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
   </PropertyGroup>
+
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
     <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
   </Target>
+
 </Project>

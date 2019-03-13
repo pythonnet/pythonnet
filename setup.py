@@ -219,25 +219,23 @@ class BuildExtPythonnet(build_ext.build_ext):
             geninterop = os.path.join("tools", "geninterop", "geninterop.py")
             subprocess.check_call([sys.executable, geninterop, interop_file])
 
+        _solution_file = 'pythonnet.sln'
+
         if DEVTOOLS == "MsDev":
             _xbuild = '"{0}"'.format(self._find_msbuild_tool("msbuild.exe"))
             _config = "{0}Win".format(CONFIG)
-            _solution_file = 'pythonnet.sln'
             _custom_define_constants = False
         elif DEVTOOLS == "MsDev15":
-            _xbuild = '"{0}"'.format(self._find_msbuild_tool_15()) 
+            _xbuild = '"{0}"'.format(self._find_msbuild_tool_15())
             _config = "{0}Win".format(CONFIG)
-            _solution_file = 'pythonnet.15.sln'
             _custom_define_constants = True
         elif DEVTOOLS == "Mono":
             _xbuild = 'xbuild'
             _config = "{0}Mono".format(CONFIG)
-            _solution_file = 'pythonnet.sln'
             _custom_define_constants = False
         elif DEVTOOLS == "dotnet":
             _xbuild = 'dotnet msbuild'
             _config = "{0}Mono".format(CONFIG)
-            _solution_file = 'pythonnet.15.sln'
             _custom_define_constants = True
         else:
             raise NotImplementedError(
@@ -348,7 +346,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             try:
                 basePathes = subprocess.check_output(
                     ["tools\\vswhere\\vswhere.exe", "-latest",
-                     "-version", "[15.0, 16.0)", 
+                     "-version", "[15.0, 16.0)",
                      "-requires", "Microsoft.Component.MSBuild",
                      "-property", "InstallationPath"]).splitlines()
                 if len(basePathes):
@@ -403,7 +401,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         try:
             basePathes = subprocess.check_output(
                 ["tools\\vswhere\\vswhere.exe", "-latest",
-                 "-version", "[15.0, 16.0)", 
+                 "-version", "[15.0, 16.0)",
                  "-requires", "Microsoft.Component.MSBuild",
                  "-property", "InstallationPath"]).splitlines()
             if len(basePathes):
