@@ -25,7 +25,7 @@ CONFIG = "Release"  # Release or Debug
 VERBOSITY = "normal"  # quiet, minimal, normal, detailed, diagnostic
 
 is_64bits = sys.maxsize > 2**32
-DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
+DEVTOOLS = "MsDev15" if sys.platform == "win32" else "Mono"
 ARCH = "x64" if is_64bits else "x86"
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
@@ -125,9 +125,7 @@ def _get_long_description():
 
 def _update_xlat_devtools():
     global DEVTOOLS
-    if DEVTOOLS == "MsDev":
-        DEVTOOLS = "MsDev15"
-    elif DEVTOOLS == "Mono":
+    if DEVTOOLS == "Mono":
         DEVTOOLS = "dotnet"
 
 class BuildExtPythonnet(build_ext.build_ext):
@@ -215,7 +213,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             _config = "{0}Win".format(CONFIG)
             _custom_define_constants = True
         elif DEVTOOLS == "Mono":
-            _xbuild = 'xbuild'
+            _xbuild = 'msbuild'
             _config = "{0}Mono".format(CONFIG)
             _custom_define_constants = False
         elif DEVTOOLS == "dotnet":
@@ -237,10 +235,6 @@ class BuildExtPythonnet(build_ext.build_ext):
             '/verbosity:{}'.format(VERBOSITY),
         ]
 
-        manifest = self._get_manifest(dest_dir)
-        if manifest:
-            cmd.append('/p:PythonManifest="{0}"'.format(manifest))
-
         self.debug_print("Building: {0}".format(" ".join(cmd)))
         use_shell = True if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet" else False
 
@@ -250,17 +244,6 @@ class BuildExtPythonnet(build_ext.build_ext):
             subprocess.check_call(" ".join(cmd + ['"/t:Console:publish;Python_EmbeddingTest:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
-
-    def _get_manifest(self, build_dir):
-        if DEVTOOLS != "MsDev" and DEVTOOLS != "MsDev15":
-            return
-        mt = self._find_msbuild_tool("mt.exe", use_windows_sdk=True)
-        manifest = os.path.abspath(os.path.join(build_dir, "app.manifest"))
-        cmd = [mt, '-inputresource:"{0}"'.format(sys.executable),
-               '-out:"{0}"'.format(manifest)]
-        self.debug_print("Extracting manifest from {}".format(sys.executable))
-        subprocess.check_call(" ".join(cmd), shell=False)
-        return manifest
 
     def _build_monoclr(self):
         try:
