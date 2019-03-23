@@ -97,9 +97,6 @@ class BuildExtPythonnet(build_ext.build_ext):
         if ext.name != "clr":
             return build_ext.build_ext.build_extension(self, ext)
 
-        # install packages using nuget
-        self._install_packages()
-
         dest_file = self.get_ext_fullpath(ext.name)
         dest_dir = os.path.dirname(dest_file)
         if not os.path.exists(dest_dir):
@@ -230,22 +227,6 @@ class BuildExtPythonnet(build_ext.build_ext):
         )
 
         build_ext.build_ext.build_extension(self, clr_ext)
-
-    def _install_packages(self):
-        """install packages using nuget"""
-        use_shell = DEVTOOLS == "Mono" or DEVTOOLS == "dotnet"
-
-        if DEVTOOLS == "MsDev":
-            _config = "{0}Win".format(CONFIG)
-        else:
-            _config = "{0}Mono".format(CONFIG)
-
-        cmd = "dotnet msbuild /t:Restore pythonnet.sln /p:Configuration={0} /p:Platform={1}".format(
-            _config, ARCH
-        )
-
-        self.debug_print("Updating packages with xplat: {0}".format(cmd))
-        subprocess.check_call(cmd, shell=use_shell)
 
     def _find_msbuild_tool(self):
         """Return full path to one of the Microsoft build tools"""

@@ -18,6 +18,7 @@ matrix:
             key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
           packages:
             - mono-devel
+            - msbuild
             - ca-certificates-mono
             - dotnet-hostfxr-2.0.0
             - dotnet-runtime-2.0.0
@@ -44,6 +45,7 @@ matrix:
             key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
           packages:
             - mono-devel
+            - msbuild
             - ca-certificates-mono
             - dotnet-hostfxr-2.0.0
             - dotnet-runtime-2.0.0
