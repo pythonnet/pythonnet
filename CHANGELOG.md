@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added function that sets Py_NoSiteFlag to 1.
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
+-   Added `IPyArgumentConverter` interface and `PyArgConverter` attribute, that control custom argument marshaling from Python to .NET (#835)
 
 ### Changed
 
