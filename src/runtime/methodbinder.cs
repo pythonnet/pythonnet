@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
@@ -7,6 +8,8 @@ using System.Linq;
 
 namespace Python.Runtime
 {
+    using System.Linq;
+
     /// <summary>
     /// A MethodBinder encapsulates information about a (possibly overloaded)
     /// managed method, and is responsible for selecting the right method given
@@ -19,16 +22,16 @@ namespace Python.Runtime
         public MethodBase[] methods;
         public bool init = false;
         public bool allow_threads = true;
-        readonly IPyArgumentConverter pyArgumentConverter = DefaultPyArgumentConverter.Instance;
+        IPyArgumentConverter pyArgumentConverter;
 
         internal MethodBinder()
         {
             list = new ArrayList();
         }
 
-        internal MethodBinder(MethodInfo mi)
+        internal MethodBinder(MethodInfo mi): this()
         {
-            list = new ArrayList { mi };
+            this.AddMethod(mi);
         }
 
         public int Count
@@ -38,6 +41,7 @@ namespace Python.Runtime
 
         internal void AddMethod(MethodBase m)
         {
+            Debug.Assert(!init);
             list.Add(m);
         }
 
@@ -165,9 +169,38 @@ namespace Python.Runtime
                 // I'm sure this could be made more efficient.
                 list.Sort(new MethodSorter());
                 methods = (MethodBase[])list.ToArray(typeof(MethodBase));
+                pyArgumentConverter = this.GetArgumentConverter();
                 init = true;
             }
             return methods;
+        }
+
+        IPyArgumentConverter GetArgumentConverter() {
+            IPyArgumentConverter converter = null;
+            Type converterType = null;
+            foreach (MethodBase method in this.methods)
+            {
+                var attribute = method.DeclaringType?
+                      .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
+                      .OfType<PyArgConverterAttribute>()
+                      .SingleOrDefault()
+                    ?? method.DeclaringType?.Assembly
+                      .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
+                      .OfType<PyArgConverterAttribute>()
+                      .SingleOrDefault();
+                if (converterType == null)
+                {
+                    if (attribute == null) continue;
+
+                    converterType = attribute.ConverterType;
+                    converter = attribute.Converter;
+                } else if (converterType != attribute?.ConverterType)
+                {
+                    throw new NotSupportedException("All methods must have the same IPyArgumentConverter");
+                }
+            }
+
+            return converter ?? DefaultPyArgumentConverter.Instance;
         }
 
         /// <summary>

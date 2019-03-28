@@ -21,8 +21,14 @@ namespace Python.Runtime {
             bool needsResolution, out object arg, out bool isOut);
     }
 
+    /// <summary>
+    /// The implementation of <see cref="IPyArgumentConverter"/> used by default
+    /// </summary>
     public class DefaultPyArgumentConverter: IPyArgumentConverter {
-        public static DefaultPyArgumentConverter Instance { get; }= new DefaultPyArgumentConverter();
+        /// <summary>
+        /// Gets the singleton instance.
+        /// </summary>
+        public static DefaultPyArgumentConverter Instance { get; } = new DefaultPyArgumentConverter();
 
         /// <summary>
         /// Attempts to convert an argument passed by Python to the specified parameter type.
@@ -42,6 +48,42 @@ namespace Python.Runtime {
             return MethodBinder.TryConvertArgument(
                 pyarg, parameterType, needsResolution,
                 out arg, out isOut);
+        }
+    }
+
+    /// <summary>
+    /// Specifies an argument converter to be used, when methods in this class/assembly are called from Python.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Struct)]
+    public class PyArgConverterAttribute : Attribute
+    {
+        static readonly Type[] EmptyArgTypeList = new Type[0];
+        static readonly object[] EmptyArgList = new object[0];
+
+        /// <summary>
+        /// Gets the instance of the converter, that will be used when calling methods
+        /// of this class/assembly from Python
+        /// </summary>
+        public IPyArgumentConverter Converter { get; }
+        /// <summary>
+        /// Gets the type of the converter, that will be used when calling methods
+        /// of this class/assembly from Python
+        /// </summary>
+        public Type ConverterType { get; }
+
+        /// <summary>
+        /// Specifies an argument converter to be used, when methods
+        /// in this class/assembly are called from Python.
+        /// </summary>
+        /// <param name="converterType">Type of the converter to use.
+        /// Must implement <see cref="IPyArgumentConverter"/>.</param>
+        public PyArgConverterAttribute(Type converterType)
+        {
+            if (converterType == null) throw new ArgumentNullException(nameof(converterType));
+            var ctor = converterType.GetConstructor(EmptyArgTypeList);
+            if (ctor == null) throw new ArgumentException("Specified converter must have public parameterless constructor");
+            this.Converter = (IPyArgumentConverter)ctor.Invoke(EmptyArgList);
+            this.ConverterType = converterType;
         }
     }
 }
