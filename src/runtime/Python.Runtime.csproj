@@ -122,6 +122,7 @@
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
     <Compile Include="pyansistring.cs" />
+    <Compile Include="pyargconverter.cs" />
     <Compile Include="pydict.cs" />
     <Compile Include="pyfloat.cs" />
     <Compile Include="pyint.cs" />
