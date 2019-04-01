@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using System.Threading;
 using System.Collections.Generic;
 
 namespace Python.Runtime
@@ -261,6 +262,8 @@ namespace Python.Runtime
         internal static bool IsPython2 = pyversionnumber < 30;
         internal static bool IsPython3 = pyversionnumber >= 30;
 
+        public static int MainManagedThreadId { get; private set; }
+
         /// <summary>
         /// Encoding to use to convert Unicode to/from Managed to Native
         /// </summary>
@@ -274,6 +277,7 @@ namespace Python.Runtime
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
+                MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
             if (PyEval_ThreadsInitialized() == 0)
@@ -476,6 +480,7 @@ namespace Python.Runtime
             AssemblyManager.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
+            Finalizer.Shutdown();
             Py_Finalize();
         }
 
@@ -1953,5 +1958,11 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyMethod_Function(IntPtr ob);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Py_AddPendingCall(IntPtr func, IntPtr arg);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Py_MakePendingCalls();
     }
 }

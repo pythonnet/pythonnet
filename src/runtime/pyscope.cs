@@ -22,7 +22,7 @@ namespace Python.Runtime
     }
 
     [PyGIL]
-    public class PyScope : DynamicObject, IDisposable
+    public class PyScope : DynamicObject, IPyDisposable
     {
         public readonly string Name;
 
@@ -37,6 +37,7 @@ namespace Python.Runtime
         internal readonly IntPtr variables;
 
         private bool _isDisposed;
+        private bool _finalized = false;
 
         /// <summary>
         /// The Manager this scope associated with.
@@ -525,13 +526,19 @@ namespace Python.Runtime
             this.OnDispose?.Invoke(this);
         }
 
+        public IntPtr[] GetTrackedHandles()
+        {
+            return new IntPtr[] { obj };
+        }
+
         ~PyScope()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            if (_finalized || _isDisposed)
+            {
+                return;
+            }
+            _finalized = true;
+            Finalizer.Instance.AddFinalizedObject(this);
         }
     }
 

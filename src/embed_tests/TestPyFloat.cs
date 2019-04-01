@@ -25,6 +25,7 @@ namespace Python.EmbeddingTest
         public void IntPtrCtor()
         {
             var i = new PyFloat(1);
+            Runtime.Runtime.XIncref(i.Handle);
             var ii = new PyFloat(i.Handle);
             Assert.AreEqual(i.Handle, ii.Handle);
         }
