@@ -7,6 +7,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ## [unreleased][]
 
+-   Look for installed Windows 10 sdk's during installation instead of relying on specific versions.
+
 ### Added
 
 -   Added support for embedding python into dotnet core 2.0 (NetStandard 2.0)
