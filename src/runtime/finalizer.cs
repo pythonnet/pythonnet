@@ -41,7 +41,7 @@ namespace Python.Runtime
         private ConcurrentQueue<IPyDisposable> _objQueue = new ConcurrentQueue<IPyDisposable>();
         private bool _pending = false;
         private readonly object _collectingLock = new object();
-        private IntPtr _pendingArgs;
+        private IntPtr _pendingArgs = IntPtr.Zero;
 
         #region FINALIZER_CHECK
 
@@ -128,7 +128,7 @@ namespace Python.Runtime
                 _objQueue.Enqueue(obj);
             }
             GC.ReRegisterForFinalize(obj);
-            if (_objQueue.Count >= Threshold)
+            if (!_pending && _objQueue.Count >= Threshold)
             {
                 AddPendingCollect();
             }
@@ -164,26 +164,28 @@ namespace Python.Runtime
 
         private void AddPendingCollect()
         {
-            if (_pending)
+            if(Monitor.TryEnter(_collectingLock))
             {
-                return;
-            }
-            lock (_collectingLock)
-            {
-                if (_pending)
+                try
                 {
-                    return;
+                    if (!_pending)
+                    {
+                        _pending = true;
+                        var args = new PendingArgs { cancelled = false };
+                        _pendingArgs = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PendingArgs)));
+                        Marshal.StructureToPtr(args, _pendingArgs, false);
+                        IntPtr func = Marshal.GetFunctionPointerForDelegate(_collectAction);
+                        if (Runtime.Py_AddPendingCall(func, _pendingArgs) != 0)
+                        {
+                            // Full queue, append next time
+                            FreePendingArgs();
+                            _pending = false;
+                        }
+                    }
                 }
-                _pending = true;
-                var args = new PendingArgs() { cancelled = false };
-                IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PendingArgs)));
-                Marshal.StructureToPtr(args, p, false);
-                _pendingArgs = p;
-                IntPtr func = Marshal.GetFunctionPointerForDelegate(_collectAction);
-                if (Runtime.Py_AddPendingCall(func, p) != 0)
+                finally
                 {
-                    // Full queue, append next time
-                    _pending = false;
+                    Monitor.Exit(_collectingLock);
                 }
             }
         }
@@ -205,8 +207,8 @@ namespace Python.Runtime
             }
             finally
             {
+                Instance.FreePendingArgs();
                 Instance.ResetPending();
-                Marshal.FreeHGlobal(arg);
             }
             return 0;
         }
@@ -244,12 +246,20 @@ namespace Python.Runtime
             }
         }
 
+        private void FreePendingArgs()
+        {
+            if (_pendingArgs != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(_pendingArgs);
+                _pendingArgs = IntPtr.Zero;
+            }
+        }
+
         private void ResetPending()
         {
             lock (_collectingLock)
             {
                 _pending = false;
-                _pendingArgs = IntPtr.Zero;
             }
         }
 
