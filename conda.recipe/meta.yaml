@@ -1,6 +1,6 @@
 package:
   name: pythonnet
-  version: "1.0.5.18"
+  version: "1.0.5.19"
 
 build:
   skip: True  # [not win]
