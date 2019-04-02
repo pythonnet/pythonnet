@@ -39,7 +39,7 @@ sdks_root = "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v{0}Win32Tools"
 kits_root = "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"
 kits_suffix = os.path.join("bin", ARCH)
 
-WIN_SDK_KEYS = (
+WIN_SDK_KEYS = [
     RegKey(sdk_name="Windows Kit 10.0", key=kits_root,
            value_name="KitsRoot10", suffix=os.path.join("bin", "10.0.16299.0", ARCH)),
 
@@ -69,7 +69,7 @@ WIN_SDK_KEYS = (
 
     RegKey(sdk_name="Windows SDK 6.0A", key=sdks_root.format("6.0A\\WinSDK"),
            value_name="InstallationFolder", suffix=""),
-)
+]
 
 VS_KEYS = (
     RegKey(sdk_name="MSBuild 15", key=vs_root.format("15.0"),
@@ -144,6 +144,29 @@ def _update_xlat_devtools():
         DEVTOOLS = "MsDev15"
     elif DEVTOOLS == "Mono":
         DEVTOOLS = "dotnet"
+
+def _collect_installed_windows_kits_v10(winreg):
+    """Adds the installed Windows 10 kits to WIN_SDK_KEYS """
+    global WIN_SDK_KEYS
+    installed_kits = []
+
+    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, kits_root, 0, winreg.KEY_READ) as key:
+        i = 0
+        while True:
+            try:
+                installed_kits.append(winreg.EnumKey(key, i))
+                i += 1
+            except WindowsError:
+                break
+
+    def make_reg_key(version):
+        return RegKey(sdk_name="Windows Kit 10.0", key=kits_root, 
+                      value_name="KitsRoot10", suffix=os.path.join("bin", version, ARCH))
+
+    WIN_SDK_KEYS += [make_reg_key(e) for e in installed_kits if e.startswith('10.')]
+
+    # Make sure this function won't be called again
+    _collect_installed_windows_kits_v10 = (lambda:None)
 
 class BuildExtPythonnet(build_ext.build_ext):
     user_options = build_ext.build_ext.user_options + [
@@ -366,6 +389,8 @@ class BuildExtPythonnet(build_ext.build_ext):
             import _winreg as winreg
         except ImportError:  # PY3
             import winreg
+
+        _collect_installed_windows_kits_v10(winreg)
 
         keys_to_check = WIN_SDK_KEYS if use_windows_sdk else VS_KEYS
         hklm = winreg.HKEY_LOCAL_MACHINE
