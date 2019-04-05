@@ -86,6 +86,7 @@ namespace Python.EmbeddingTest
         public void TestCtorPtr()
         {
             var i = new PyInt(5);
+            Runtime.Runtime.XIncref(i.Handle);
             var a = new PyInt(i.Handle);
             Assert.AreEqual(5, a.ToInt32());
         }
@@ -94,6 +95,7 @@ namespace Python.EmbeddingTest
         public void TestCtorPyObject()
         {
             var i = new PyInt(5);
+            Runtime.Runtime.XIncref(i.Handle);
             var a = new PyInt(i);
             Assert.AreEqual(5, a.ToInt32());
         }
