@@ -416,7 +416,7 @@ namespace Python.Runtime
             if (System.IO.File.Exists(name))
             {
                 var zone = System.Security.Policy.Zone.CreateFromUrl(name);
-                if (zone.SecurityZone != System.Security.SecurityZone.MyComputer)
+                if ((zone.SecurityZone != System.Security.SecurityZone.MyComputer) && (zone.SecurityZone != System.Security.SecurityZone.NoZone))
                 {
                      throw new Exception($"File is blocked (NTFS Security)");
                 }
