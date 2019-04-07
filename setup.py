@@ -132,11 +132,7 @@ def _get_source_files():
 
 def _get_long_description():
     """Helper to populate long_description for pypi releases"""
-    try:
-        import pypandoc
-        return pypandoc.convert('README.md', 'rst')
-    except ImportError:
-        return '.Net and Mono integration for Python'
+    return open("README.rst").read()
 
 def _update_xlat_devtools():
     global DEVTOOLS
