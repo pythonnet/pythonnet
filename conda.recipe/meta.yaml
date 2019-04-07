@@ -1,10 +1,10 @@
 package:
   name: pythonnet
-  version: "2.4.0.dev0"
+  version: {{ GIT_DESCRIBE_VERSION }}
 
 build:
   skip: True  # [not win]
-  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  number: {{ GIT_DESCRIBE_NUMBER }}
   {% if environ.get('GIT_DESCRIBE_NUMBER', '0') == '0' %}string: py{{ environ.get('PY_VER').replace('.', '') }}_0
   {% else %}string: py{{ environ.get('PY_VER').replace('.', '') }}_{{ environ.get('GIT_BUILD_STR', 'GIT_STUB') }}{% endif %}
 
