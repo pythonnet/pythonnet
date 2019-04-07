@@ -7,8 +7,6 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ## [unreleased][]
 
--   Look for installed Windows 10 sdk's during installation instead of relying on specific versions.
-
 ### Added
 
 -   Added support for embedding python into dotnet core 2.0 (NetStandard 2.0)
@@ -28,11 +26,12 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Python 3.7 support, builds and testing added. Defaults changed from Python 3.6 to 3.7 ([#698][p698])
 
 ### Changed
--   PythonException included C# call stack
 
+-   PythonException included C# call stack
 -   Reattach python exception traceback information (#545)
 -   PythonEngine.Intialize will now call `Py_InitializeEx` with a default value of 0, so signals will not be configured by default on embedding. This is different from the previous behaviour, where `Py_Initialize` was called instead, which sets initSigs to 1. ([#449][i449])
 -   Refactored MethodBinder.Bind in preparation to make it extensible (#829)
+-   Look for installed Windows 10 sdk's during installation instead of relying on specific versions.
 
 ### Fixed
 
