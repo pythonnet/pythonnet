@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("pythonnet")]
 [assembly: AssemblyProduct("Python for .NET")]
-[assembly: AssemblyCopyright("Copyright (c) 2006-2017 the contributors of the 'Python for .NET' project")]
+[assembly: AssemblyCopyright("Copyright (c) 2006-2019 the contributors of the 'Python for .NET' project")]
 [assembly: AssemblyTrademark("")]
 
 [assembly: AssemblyCulture("")]
