@@ -413,14 +413,6 @@ namespace Python.Runtime
             {
                 assembly = AssemblyManager.LoadAssemblyFullPath(name);
             }
-            if (System.IO.File.Exists(name))
-            {
-                var zone = System.Security.Policy.Zone.CreateFromUrl(name);
-                if (zone.SecurityZone != System.Security.SecurityZone.MyComputer)
-                {
-                     throw new Exception($"File is blocked (NTFS Security)");
-                }
-            }
             if (assembly == null)
             {
                 throw new FileNotFoundException($"Unable to find assembly '{name}'.");

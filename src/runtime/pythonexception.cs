@@ -6,7 +6,7 @@ namespace Python.Runtime
     /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
-    public class PythonException : System.Exception
+    public class PythonException : System.Exception, IPyDisposable
     {
         private IntPtr _pyType = IntPtr.Zero;
         private IntPtr _pyValue = IntPtr.Zero;
@@ -15,14 +15,12 @@ namespace Python.Runtime
         private string _message = "";
         private string _pythonTypeName = "";
         private bool disposed = false;
+        private bool _finalized = false;
 
         public PythonException()
         {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
-            Runtime.XIncref(_pyType);
-            Runtime.XIncref(_pyValue);
-            Runtime.XIncref(_pyTB);
             if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;
@@ -45,11 +43,13 @@ namespace Python.Runtime
             }
             if (_pyTB != IntPtr.Zero)
             {
-                PyObject tb_module = PythonEngine.ImportModule("traceback");
-                Runtime.XIncref(_pyTB);
-                using (var pyTB = new PyObject(_pyTB))
+                using (PyObject tb_module = PythonEngine.ImportModule("traceback"))
                 {
-                    _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
+                    Runtime.XIncref(_pyTB);
+                    using (var pyTB = new PyObject(_pyTB))
+                    {
+                        _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
+                    }
                 }
             }
             PythonEngine.ReleaseLock(gs);
@@ -60,11 +60,12 @@ namespace Python.Runtime
 
         ~PythonException()
         {
-            // We needs to disable Finalizers until it's valid implementation.
-            // Current implementation can produce low probability floating bugs.
-            return;
-
-            Dispose();
+            if (_finalized || disposed)
+            {
+                return;
+            }
+            _finalized = true;
+            Finalizer.Instance.AddFinalizedObject(this);
         }
 
         /// <summary>
@@ -132,7 +133,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string StackTrace
         {
-            get { return _tb; }
+            get { return _tb + base.StackTrace; }
         }
 
         /// <summary>
@@ -171,6 +172,11 @@ namespace Python.Runtime
                 GC.SuppressFinalize(this);
                 disposed = true;
             }
+        }
+
+        public IntPtr[] GetTrackedHandles()
+        {
+            return new IntPtr[] { _pyType, _pyValue, _pyTB };
         }
 
         /// <summary>
