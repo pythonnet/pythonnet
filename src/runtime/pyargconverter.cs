@@ -22,36 +22,6 @@ namespace Python.Runtime {
     }
 
     /// <summary>
-    /// The implementation of <see cref="IPyArgumentConverter"/> used by default
-    /// </summary>
-    public class DefaultPyArgumentConverter: IPyArgumentConverter {
-        /// <summary>
-        /// Gets the singleton instance.
-        /// </summary>
-        public static DefaultPyArgumentConverter Instance { get; } = new DefaultPyArgumentConverter();
-
-        /// <summary>
-        /// Attempts to convert an argument passed by Python to the specified parameter type.
-        /// </summary>
-        /// <param name="pyarg">Unmanaged pointer to the Python argument value</param>
-        /// <param name="parameterType">The expected type of the parameter</param>
-        /// <param name="needsResolution"><c>true</c> if the method is overloaded</param>
-        /// <param name="arg">This parameter will receive the converted value, matching the specified type</param>
-        /// <param name="isOut">This parameter will be set to <c>true</c>,
-        /// if the final type needs to be marshaled as an out argument.</param>
-        /// <returns><c>true</c>, if the object matches requested type,
-        /// and conversion was successful, otherwise <c>false</c></returns>
-        public virtual bool TryConvertArgument(
-            IntPtr pyarg, Type parameterType, bool needsResolution,
-            out object arg, out bool isOut)
-        {
-            return MethodBinder.TryConvertArgument(
-                pyarg, parameterType, needsResolution,
-                out arg, out isOut);
-        }
-    }
-
-    /// <summary>
     /// Specifies an argument converter to be used, when methods in this class/assembly are called from Python.
     /// </summary>
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Struct)]

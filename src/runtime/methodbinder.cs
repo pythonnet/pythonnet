@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
@@ -8,8 +10,6 @@ using System.Linq;
 
 namespace Python.Runtime
 {
-    using System.Linq;
-
     /// <summary>
     /// A MethodBinder encapsulates information about a (possibly overloaded)
     /// managed method, and is responsible for selecting the right method given
@@ -180,14 +180,7 @@ namespace Python.Runtime
             Type converterType = null;
             foreach (MethodBase method in this.methods)
             {
-                var attribute = method.DeclaringType?
-                      .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
-                      .OfType<PyArgConverterAttribute>()
-                      .SingleOrDefault()
-                    ?? method.DeclaringType?.Assembly
-                      .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
-                      .OfType<PyArgConverterAttribute>()
-                      .SingleOrDefault();
+                PyArgConverterAttribute attribute = TryGetArgConverter(method.DeclaringType);
                 if (converterType == null)
                 {
                     if (attribute == null) continue;
@@ -201,6 +194,23 @@ namespace Python.Runtime
             }
 
             return converter ?? DefaultPyArgumentConverter.Instance;
+        }
+
+        static readonly ConcurrentDictionary<Type, PyArgConverterAttribute> ArgConverterCache =
+            new ConcurrentDictionary<Type, PyArgConverterAttribute>();
+        static PyArgConverterAttribute TryGetArgConverter(Type type) {
+            if (type == null) return null;
+
+            return ArgConverterCache.GetOrAdd(type, declaringType =>
+                declaringType
+                    .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
+                    .OfType<PyArgConverterAttribute>()
+                    .SingleOrDefault()
+                ?? declaringType.Assembly
+                    .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
+                    .OfType<PyArgConverterAttribute>()
+                    .SingleOrDefault()
+            );
         }
 
         /// <summary>
@@ -479,97 +489,6 @@ namespace Python.Runtime
             }
 
             return margs;
-        }
-
-        internal static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
-                                       out object arg, out bool isOut)
-        {
-            arg = null;
-            isOut = false;
-            var clrtype = TryComputeClrArgumentType(parameterType, op, needsResolution: needsResolution);
-            if (clrtype == null)
-            {
-                return false;
-            }
-
-            if (!Converter.ToManaged(op, clrtype, out arg, false))
-            {
-                Exceptions.Clear();
-                return false;
-            }
-
-            isOut = clrtype.IsByRef;
-            return true;
-        }
-
-        static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
-        {
-            // this logic below handles cases when multiple overloading methods
-            // are ambiguous, hence comparison between Python and CLR types
-            // is necessary
-            Type clrtype = null;
-            IntPtr pyoptype;
-            if (needsResolution)
-            {
-                // HACK: each overload should be weighted in some way instead
-                pyoptype = Runtime.PyObject_Type(argument);
-                Exceptions.Clear();
-                if (pyoptype != IntPtr.Zero)
-                {
-                    clrtype = Converter.GetTypeByAlias(pyoptype);
-                }
-                Runtime.XDecref(pyoptype);
-            }
-
-            if (clrtype != null)
-            {
-                var typematch = false;
-                if ((parameterType != typeof(object)) && (parameterType != clrtype))
-                {
-                    IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
-                    pyoptype = Runtime.PyObject_Type(argument);
-                    Exceptions.Clear();
-                    if (pyoptype != IntPtr.Zero)
-                    {
-                        if (pytype != pyoptype)
-                        {
-                            typematch = false;
-                        }
-                        else
-                        {
-                            typematch = true;
-                            clrtype = parameterType;
-                        }
-                    }
-                    if (!typematch)
-                    {
-                        // this takes care of enum values
-                        TypeCode argtypecode = Type.GetTypeCode(parameterType);
-                        TypeCode paramtypecode = Type.GetTypeCode(clrtype);
-                        if (argtypecode == paramtypecode)
-                        {
-                            typematch = true;
-                            clrtype = parameterType;
-                        }
-                    }
-                    Runtime.XDecref(pyoptype);
-                    if (!typematch)
-                    {
-                        return null;
-                    }
-                }
-                else
-                {
-                    typematch = true;
-                    clrtype = parameterType;
-                }
-            }
-            else
-            {
-                clrtype = parameterType;
-            }
-
-            return clrtype;
         }
 
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
