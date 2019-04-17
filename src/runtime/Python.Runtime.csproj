@@ -94,6 +94,7 @@
     <Compile Include="converter.cs" />
     <Compile Include="CustomMarshaler.cs" />
     <Compile Include="debughelper.cs" />
+    <Compile Include="defaultpyargconverter.cs" />
     <Compile Include="delegatemanager.cs" />
     <Compile Include="delegateobject.cs" />
     <Compile Include="eventbinding.cs" />
