@@ -36,13 +36,12 @@ namespace Python.EmbeddingTest
         {
             Assert.IsTrue(Finalizer.Instance.Enable);
 
-            int thId = Thread.CurrentThread.ManagedThreadId;
             Finalizer.Instance.Threshold = 1;
             bool called = false;
+            var objectCount = 0;
             EventHandler<Finalizer.CollectArgs> handler = (s, e) =>
             {
-                Assert.AreEqual(thId, Thread.CurrentThread.ManagedThreadId);
-                Assert.GreaterOrEqual(e.ObjectCount, 1);
+                objectCount = e.ObjectCount;
                 called = true;
             };
 
@@ -73,6 +72,7 @@ namespace Python.EmbeddingTest
                 Finalizer.Instance.CollectOnce -= handler;
             }
             Assert.IsTrue(called);
+            Assert.GreaterOrEqual(objectCount, 1);
         }
 
         private static void MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
@@ -85,7 +85,7 @@ namespace Python.EmbeddingTest
 
         private static long CompareWithFinalizerOn(PyObject pyCollect, bool enbale)
         {
-            // Must larger than 512 bytes make sure Python use 
+            // Must larger than 512 bytes make sure Python use
             string str = new string('1', 1024);
             Finalizer.Instance.Enable = true;
             FullGCCollect();
@@ -164,10 +164,11 @@ namespace Python.EmbeddingTest
         public void ErrorHandling()
         {
             bool called = false;
+            var errorMessage = "";
             EventHandler<Finalizer.ErrorArgs> handleFunc = (sender, args) =>
             {
                 called = true;
-                Assert.AreEqual(args.Error.Message, "MyPyObject");
+                errorMessage = args.Error.Message;
             };
             Finalizer.Instance.Threshold = 1;
             Finalizer.Instance.ErrorHandler += handleFunc;
@@ -193,6 +194,7 @@ namespace Python.EmbeddingTest
             {
                 Finalizer.Instance.ErrorHandler -= handleFunc;
             }
+            Assert.AreEqual(errorMessage, "MyPyObject");
         }
 
         [Test]

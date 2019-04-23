@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Python.Runtime
 {
@@ -28,20 +27,10 @@ namespace Python.Runtime
         public int Threshold { get; set; }
         public bool Enable { get; set; }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        struct PendingArgs
-        {
-            public bool cancelled;
-        }
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int PendingCall(IntPtr arg);
-        private readonly PendingCall _collectAction;
-
         private ConcurrentQueue<IPyDisposable> _objQueue = new ConcurrentQueue<IPyDisposable>();
         private bool _pending = false;
         private readonly object _collectingLock = new object();
-        private IntPtr _pendingArgs = IntPtr.Zero;
+        private Task _finalizerTask;
 
         #region FINALIZER_CHECK
 
@@ -84,23 +73,26 @@ namespace Python.Runtime
         {
             Enable = true;
             Threshold = 200;
-            _collectAction = OnPendingCollect;
         }
 
-        public void CallPendingFinalizers()
+        public bool CallPendingFinalizers()
         {
-            if (Thread.CurrentThread.ManagedThreadId != Runtime.MainManagedThreadId)
+            if (Instance._finalizerTask != null
+                && !Instance._finalizerTask.IsCompleted)
             {
-                throw new Exception("PendingCall should execute in main Python thread");
+                var ts = PythonEngine.BeginAllowThreads();
+                Instance._finalizerTask.Wait();
+                PythonEngine.EndAllowThreads(ts);
+                return true;
             }
-            Runtime.Py_MakePendingCalls();
+            return false;
         }
 
         public void Collect()
         {
-            using (var gilState = new Py.GILState())
+            if (!Instance.CallPendingFinalizers())
             {
-                DisposeAll();
+                Instance.DisposeAll();
             }
         }
 
@@ -141,25 +133,10 @@ namespace Python.Runtime
                 Instance._objQueue = new ConcurrentQueue<IPyDisposable>();
                 return;
             }
-            Instance.DisposeAll();
-            if (Thread.CurrentThread.ManagedThreadId != Runtime.MainManagedThreadId)
+            if(!Instance.CallPendingFinalizers())
             {
-                if (Instance._pendingArgs == IntPtr.Zero)
-                {
-                    Instance.ResetPending();
-                    return;
-                }
-                // Not in main thread just cancel the pending operation to avoid error in different domain
-                // It will make a memory leak
-                unsafe
-                {
-                    PendingArgs* args = (PendingArgs*)Instance._pendingArgs;
-                    args->cancelled = true;
-                }
-                Instance.ResetPending();
-                return;
+                Instance.DisposeAll();
             }
-            Instance.CallPendingFinalizers();
         }
 
         private void AddPendingCollect()
@@ -171,16 +148,14 @@ namespace Python.Runtime
                     if (!_pending)
                     {
                         _pending = true;
-                        var args = new PendingArgs { cancelled = false };
-                        _pendingArgs = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PendingArgs)));
-                        Marshal.StructureToPtr(args, _pendingArgs, false);
-                        IntPtr func = Marshal.GetFunctionPointerForDelegate(_collectAction);
-                        if (Runtime.Py_AddPendingCall(func, _pendingArgs) != 0)
+                        // should already be complete but just in case
+                        _finalizerTask?.Wait();
+
+                        _finalizerTask = Task.Factory.StartNew(() =>
                         {
-                            // Full queue, append next time
-                            FreePendingArgs();
+                            Instance.DisposeAll();
                             _pending = false;
-                        }
+                        });
                     }
                 }
                 finally
@@ -188,29 +163,6 @@ namespace Python.Runtime
                     Monitor.Exit(_collectingLock);
                 }
             }
-        }
-
-        private static int OnPendingCollect(IntPtr arg)
-        {
-            Debug.Assert(arg == Instance._pendingArgs);
-            try
-            {
-                unsafe
-                {
-                    PendingArgs* pendingArgs = (PendingArgs*)arg;
-                    if (pendingArgs->cancelled)
-                    {
-                        return 0;
-                    }
-                }
-                Instance.DisposeAll();
-            }
-            finally
-            {
-                Instance.FreePendingArgs();
-                Instance.ResetPending();
-            }
-            return 0;
         }
 
         private void DisposeAll()
@@ -223,43 +175,29 @@ namespace Python.Runtime
             lock (_queueLock)
 #endif
             {
-#if FINALIZER_CHECK
-                ValidateRefCount();
-#endif
-                IPyDisposable obj;
-                while (_objQueue.TryDequeue(out obj))
+                using (Py.GIL())
                 {
-                    try
+#if FINALIZER_CHECK
+                    ValidateRefCount();
+#endif
+                    IPyDisposable obj;
+                    while (_objQueue.TryDequeue(out obj))
                     {
-                        obj.Dispose();
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    catch (Exception e)
-                    {
-                        // We should not bother the main thread
-                        ErrorHandler?.Invoke(this, new ErrorArgs()
+                        try
                         {
-                            Error = e
-                        });
+                            obj.Dispose();
+                            Runtime.CheckExceptionOccurred();
+                        }
+                        catch (Exception e)
+                        {
+                            // We should not bother the main thread
+                            ErrorHandler?.Invoke(this, new ErrorArgs()
+                            {
+                                Error = e
+                            });
+                        }
                     }
                 }
-            }
-        }
-
-        private void FreePendingArgs()
-        {
-            if (_pendingArgs != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(_pendingArgs);
-                _pendingArgs = IntPtr.Zero;
-            }
-        }
-
-        private void ResetPending()
-        {
-            lock (_collectingLock)
-            {
-                _pending = false;
             }
         }
 
