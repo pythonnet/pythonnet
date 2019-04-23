@@ -45,6 +45,9 @@ namespace Python.EmbeddingTest
                 called = true;
             };
 
+            Assert.IsFalse(called);
+            Finalizer.Instance.CollectOnce += handler;
+
             WeakReference shortWeak;
             WeakReference longWeak;
             {
@@ -60,12 +63,9 @@ namespace Python.EmbeddingTest
                 Assert.NotZero(garbage.Count);
                 Assert.IsTrue(garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)));
             }
-
-            Assert.IsFalse(called);
-            Finalizer.Instance.CollectOnce += handler;
             try
             {
-                Finalizer.Instance.CallPendingFinalizers();
+                Finalizer.Instance.Collect(forceDispose: false);
             }
             finally
             {

@@ -75,22 +75,19 @@ namespace Python.Runtime
             Threshold = 200;
         }
 
-        public bool CallPendingFinalizers()
+        public void Collect(bool forceDispose = true)
         {
             if (Instance._finalizerTask != null
                 && !Instance._finalizerTask.IsCompleted)
             {
-                var ts = PythonEngine.BeginAllowThreads();
-                Instance._finalizerTask.Wait();
-                PythonEngine.EndAllowThreads(ts);
-                return true;
+                using (Py.GIL())
+                {
+                    var ts = PythonEngine.BeginAllowThreads();
+                    Instance._finalizerTask.Wait();
+                    PythonEngine.EndAllowThreads(ts);
+                }
             }
-            return false;
-        }
-
-        public void Collect()
-        {
-            if (!Instance.CallPendingFinalizers())
+            else if (forceDispose)
             {
                 Instance.DisposeAll();
             }
@@ -133,10 +130,7 @@ namespace Python.Runtime
                 Instance._objQueue = new ConcurrentQueue<IPyDisposable>();
                 return;
             }
-            if(!Instance.CallPendingFinalizers())
-            {
-                Instance.DisposeAll();
-            }
+            Instance.Collect(forceDispose: true);
         }
 
         private void AddPendingCollect()
