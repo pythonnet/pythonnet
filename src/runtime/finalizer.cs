@@ -80,12 +80,9 @@ namespace Python.Runtime
             if (Instance._finalizerTask != null
                 && !Instance._finalizerTask.IsCompleted)
             {
-                using (Py.GIL())
-                {
-                    var ts = PythonEngine.BeginAllowThreads();
-                    Instance._finalizerTask.Wait();
-                    PythonEngine.EndAllowThreads(ts);
-                }
+                var ts = PythonEngine.BeginAllowThreads();
+                Instance._finalizerTask.Wait();
+                PythonEngine.EndAllowThreads(ts);
             }
             else if (forceDispose)
             {
@@ -147,8 +144,11 @@ namespace Python.Runtime
 
                         _finalizerTask = Task.Factory.StartNew(() =>
                         {
-                            Instance.DisposeAll();
-                            _pending = false;
+                            using (Py.GIL())
+                            {
+                                Instance.DisposeAll();
+                                _pending = false;
+                            }
                         });
                     }
                 }
@@ -169,27 +169,24 @@ namespace Python.Runtime
             lock (_queueLock)
 #endif
             {
-                using (Py.GIL())
-                {
 #if FINALIZER_CHECK
-                    ValidateRefCount();
+                ValidateRefCount();
 #endif
-                    IPyDisposable obj;
-                    while (_objQueue.TryDequeue(out obj))
+                IPyDisposable obj;
+                while (_objQueue.TryDequeue(out obj))
+                {
+                    try
                     {
-                        try
+                        obj.Dispose();
+                        Runtime.CheckExceptionOccurred();
+                    }
+                    catch (Exception e)
+                    {
+                        // We should not bother the main thread
+                        ErrorHandler?.Invoke(this, new ErrorArgs()
                         {
-                            obj.Dispose();
-                            Runtime.CheckExceptionOccurred();
-                        }
-                        catch (Exception e)
-                        {
-                            // We should not bother the main thread
-                            ErrorHandler?.Invoke(this, new ErrorArgs()
-                            {
-                                Error = e
-                            });
-                        }
+                            Error = e
+                        });
                     }
                 }
             }
