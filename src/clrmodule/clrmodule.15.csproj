@@ -9,7 +9,7 @@
     <RootNamespace>clrmodule</RootNamespace>
     <AssemblyName>clrmodule</AssemblyName>
     <PackageId>clrmodule</PackageId>
-    <VersionPrefix>2.4.0</VersionPrefix>
+    <VersionPrefix>2.4.1</VersionPrefix>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
