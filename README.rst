@@ -48,7 +48,7 @@ Embedding Python in .NET
 -  All python objects should be declared as ``dynamic`` type.
 -  Mathematical operations involving python and literal/managed types
    must have the python object first, eg. ``np.pi * 2`` works,
-   ``2 * np.pi`` doesn’t.
+   ``2 * np.pi`` doesn't.
 
 Example
 ~~~~~~~
