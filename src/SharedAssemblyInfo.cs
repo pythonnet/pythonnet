@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("pythonnet")]
 [assembly: AssemblyProduct("Python for .NET")]
-[assembly: AssemblyCopyright("Copyright (c) 2006-2017 the contributors of the 'Python for .NET' project")]
+[assembly: AssemblyCopyright("Copyright (c) 2006-2019 the contributors of the 'Python for .NET' project")]
 [assembly: AssemblyTrademark("")]
 
 [assembly: AssemblyCulture("")]
@@ -25,4 +25,4 @@ using System.Runtime.InteropServices;
 // Version Information. Keeping it simple. May need to revisit for Nuget
 // See: https://codingforsmarties.wordpress.com/2016/01/21/how-to-version-assemblies-destined-for-nuget/
 // AssemblyVersion can only be numeric
-[assembly: AssemblyVersion("2.4.0")]
+[assembly: AssemblyVersion("2.4.1")]

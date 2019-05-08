@@ -55,6 +55,7 @@
 -   ([@civilx64](https://github.com/civilx64))
 -   ([@GSPP](https://github.com/GSPP))
 -   ([@omnicognate](https://github.com/omnicognate))
+-   ([@OneBlue](https://github.com/OneBlue))
 -   ([@rico-chet](https://github.com/rico-chet))
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
 -   ([@stonebig](https://github.com/stonebig))
