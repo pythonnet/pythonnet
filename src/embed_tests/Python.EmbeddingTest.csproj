@@ -1,129 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4165C59D-2822-499F-A6DB-EACA4C331EB5}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AssemblyName>Python.EmbeddingTest</AssemblyName>
-    <RootNamespace>Python.EmbeddingTest</RootNamespace>
-    <DocumentationFile>bin\Python.EmbeddingTest.xml</DocumentationFile>
-    <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-    <NoWarn>1591</NoWarn>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
-    <LangVersion>6</LangVersion>
-    <RestorePackages>true</RestorePackages>
-    <ErrorReport>prompt</ErrorReport>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Platform)' == 'x86'">
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Platform)' == 'x64'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">
-    </DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="nunit.framework, Version=3.7.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\NUnit.3.7.1\lib\net40\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
+    <Compile Remove="Program.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="..\pythonnet.snk" />
-    <None Include="packages.config" />
+    <PackageReference Include="nunit" Version="3.11.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.12.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="dynamic.cs" />
-    <Compile Include="pyimport.cs" />
-    <Compile Include="pyinitialize.cs" />
-    <Compile Include="pyrunstring.cs" />
-    <Compile Include="TestConverter.cs" />
-    <Compile Include="TestCustomMarshal.cs" />
-    <Compile Include="TestDomainReload.cs" />
-    <Compile Include="TestExample.cs" />
-    <Compile Include="TestFinalizer.cs" />
-    <Compile Include="TestPyAnsiString.cs" />
-    <Compile Include="TestPyFloat.cs" />
-    <Compile Include="TestPyInt.cs" />
-    <Compile Include="TestPyList.cs" />
-    <Compile Include="TestPyLong.cs" />
-    <Compile Include="TestPyNumber.cs" />
-    <Compile Include="TestPyObject.cs" />
-    <Compile Include="TestPySequence.cs" />
-    <Compile Include="TestPyString.cs" />
-    <Compile Include="TestPythonException.cs" />
-    <Compile Include="TestPythonEngineProperties.cs" />
-    <Compile Include="TestPyTuple.cs" />
-    <Compile Include="TestNamedArguments.cs" />
-    <Compile Include="TestPyWith.cs" />
-    <Compile Include="TestRuntime.cs" />
-    <Compile Include="TestPyScope.cs" />
-    <Compile Include="TestTypeManager.cs" />
-    <Compile Include="GlobalTestsSetup.cs" />
+    <ProjectReference Include="..\runtime\Python.Runtime.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\runtime\Python.Runtime.csproj">
-      <Project>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</Project>
-      <Name>Python.Runtime</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
-  <PropertyGroup>
-    <TargetAssembly>$(TargetPath)</TargetAssembly>
-    <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
-  </PropertyGroup>
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-    <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
-  </Target>
+
 </Project>
