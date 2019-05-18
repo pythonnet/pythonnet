@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <None Remove="resources\clr.py" />
+    <Compile Remove="Properties\AssemblyInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
