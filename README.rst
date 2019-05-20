@@ -3,7 +3,7 @@ pythonnet - Python for .NET
 
 |Join the chat at https://gitter.im/pythonnet/pythonnet|
 
-|appveyor shield| |travis shield| |codecov shield|
+|appveyor shield| |travis shield|
 
 |license shield| |pypi package version| |conda-forge version| |python supported shield|
 |stackexchange shield|
@@ -101,8 +101,6 @@ https://github.com/pythonnet/pythonnet/wiki
    :target: https://ci.appveyor.com/project/pythonnet/pythonnet/branch/master
 .. |travis shield| image:: https://img.shields.io/travis/pythonnet/pythonnet/master.svg?label=Travis
    :target: https://travis-ci.org/pythonnet/pythonnet
-.. |codecov shield| image:: https://img.shields.io/codecov/c/github/pythonnet/pythonnet/master.svg?label=Codecov
-   :target: https://codecov.io/github/pythonnet/pythonnet
 .. |license shield| image:: https://img.shields.io/badge/license-MIT-blue.svg?maxAge=3600
    :target: ./LICENSE
 .. |pypi package version| image:: https://img.shields.io/pypi/v/pythonnet.svg

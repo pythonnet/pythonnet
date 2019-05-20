@@ -38,20 +38,11 @@ before_install:
   - export LD_LIBRARY_PATH=$PY_LIBDIR:$LD_LIBRARY_PATH
 
 install:
-  - pip install --upgrade setuptools # TEMP - due to setuptools 36.2.0 bug
   - pip install --upgrade -r requirements.txt
-  - coverage run setup.py install $BUILD_OPTS
 
 script:
   - python -m pytest
   - $RUN_TESTS src/embed_tests/bin/$EMBED_TESTS_PATH/Python.EmbeddingTest.dll
 
-after_script:
-  # Waiting on mono-coverage, SharpCover or xr.Baboon
-  - coverage xml -i
-  - codecov --file coverage.xml --flags setup_linux
-
 notifications:
   email: false
-  slack:
-    secure: "UiQdSK1/uNnHl8/gQgfLj/F5JGxtJuaT3QYtKNcw3Ddpr3FX8tfXJ/RjsCsSlRQzDm7AdBAeMzcBQmvH4iRIV2y7qVywLyru5MPiwY4ZjMN6fJK/zaaxetOct9fasIBYzHguNPDAtiBGFh2iK1H1MXTY8rkmU3WZvl18b8EsrP0="
