@@ -26,7 +26,12 @@ namespace Python.Included
                 var zip = Path.Combine(appdata, $"{EMBEDDED_PYTHON}.zip");
                 var resource_name = EMBEDDED_PYTHON;
                 CopyEmbeddedResourceToFile(assembly, resource_name, zip, force);
-                ZipFile.ExtractToDirectory(zip, zip.Replace(".zip", ""));
+                try {
+                    ZipFile.ExtractToDirectory(zip, zip.Replace(".zip", ""));
+                }
+                catch (Exception e) {
+                    // todo log
+                }
             });
         }
 
@@ -70,11 +75,16 @@ namespace Python.Included
             await Task.Run(() =>
             {
                 CopyEmbeddedResourceToFile(assembly, key, wheelPath, force);
-                ZipFile.ExtractToDirectory(wheelPath, lib);
+                try {
+                    ZipFile.ExtractToDirectory(wheelPath, lib);
+                }
+                catch (Exception e) {
+                    // todo
+                }
                 // modify _pth file
-                var pth = Path.Combine(EmbeddedPythonHome, PYTHON_VERSION + ".pth");
+                var pth = Path.Combine(EmbeddedPythonHome, PYTHON_VERSION + "._pth");
                 if (!File.ReadAllLines(pth).Contains("./Lib"))
-                    File.AppendAllLines(pth, new[] { "./ Lib" });
+                    File.AppendAllLines(pth, new[] { "./Lib" });
             });
         }
 
