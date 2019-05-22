@@ -10,7 +10,7 @@ namespace Python.Runtime
     /// The TypeManager class is responsible for building binary-compatible
     /// Python type objects that are implemented in managed code.
     /// </summary>
-    internal class TypeManager
+    public class TypeManager
     {
         private static BindingFlags tbFlags;
         private static Dictionary<Type, IntPtr> cache;
@@ -483,7 +483,7 @@ namespace Python.Runtime
         /// And then analyzing the resulting functions with a hex editor, e.g.:
         /// <code>objdump -disassemble foo.o</code>
         /// </summary>
-        internal class NativeCode
+        public class NativeCode
         {
             /// <summary>
             /// The code, as a string of bytes.
@@ -551,7 +551,7 @@ namespace Python.Runtime
         /// <summary>
         /// Platform-dependent mmap and mprotect.
         /// </summary>
-        internal interface IMemoryMapper
+        public interface IMemoryMapper
         {
             /// <summary>
             /// Map at least numBytes of memory. Mark the page read-write (but not exec).
@@ -632,7 +632,7 @@ namespace Python.Runtime
             }
         }
 
-        internal static IMemoryMapper CreateMemoryMapper()
+        public static IMemoryMapper CreateMemoryMapper()
         {
             switch (Runtime.OperatingSystem)
             {

@@ -5,11 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;PYTHON3</DefineConstants>
+    <DefineConstants>PYTHON3;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="UnmanagedExports" Version="1.2.7" />
-  </ItemGroup>
 
 </Project>
