@@ -979,6 +979,10 @@ namespace Python.Runtime
             return Runtime.PyObject_IsTrue(obj) != 0;
         }
 
+        /// <summary>
+        /// Return true if the object is None
+        /// </summary>
+        public bool IsNone() => CheckNone(this) == null;
 
         /// <summary>
         /// Dir Method
