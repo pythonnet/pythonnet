@@ -18,7 +18,7 @@
     <PackageLicenseUrl>https://github.com/pythonnet/pythonnet/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>https://github.com/pythonnet/pythonnet/releases/tag/v2.4.0</PackageReleaseNotes>
+    <!--<PackageReleaseNotes>https://github.com/pythonnet/pythonnet/releases/tag/v2.4.0</PackageReleaseNotes>-->
     <PackageTags>python interop dynamic dlr Mono pinvoke</PackageTags>
     <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
     <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
