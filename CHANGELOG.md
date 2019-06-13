@@ -42,6 +42,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   PythonEngine.Intialize will now call `Py_InitializeEx` with a default value of 0, so signals will not be configured by default on embedding. This is different from the previous behaviour, where `Py_Initialize` was called instead, which sets initSigs to 1. ([#449][i449])
 -   Refactored MethodBinder.Bind in preparation to make it extensible (#829)
 -   Look for installed Windows 10 sdk's during installation instead of relying on specific versions.
+-   Remove `LoadLibrary` call. ([#880][p880])
 
 ### Fixed
 
@@ -57,7 +58,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Fixed conversion of 'float' and 'double' values ([#486][i486])
 -   Fixed 'clrmethod' for python 2 ([#492][i492])
 -   Fixed double calling of constructor when deriving from .NET class ([#495][i495])
--   Fixed `clr.GetClrType` when iterating over `System` members ([#607][p607]) 
+-   Fixed `clr.GetClrType` when iterating over `System` members ([#607][p607])
 -   Fixed `LockRecursionException` when loading assemblies ([#627][i627])
 -   Fixed errors breaking .NET Remoting on method invoke ([#276][i276])
 -   Fixed PyObject.GetHashCode ([#676][i676])
