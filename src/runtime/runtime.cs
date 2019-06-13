@@ -304,6 +304,10 @@ namespace Python.Runtime
 
             IntPtr dllLocal = IntPtr.Zero;
 
+            // Since `_PyObject_NextNotImplemented` would set to a heap class
+            // for tp_iternext which doesn't implement __next__.
+            // Thus we need a heap class to get it, the ZipImportError is a
+            // heap class and it's in builtins, so we can use it as a trick.
             var zipimport = PyImport_ImportModule("zipimport");
             var ZipImportError = PyObject_GetAttrString(zipimport, "ZipImportError");
             _PyObject_NextNotImplemented = Marshal.ReadIntPtr(ZipImportError, TypeOffset.tp_iternext);
