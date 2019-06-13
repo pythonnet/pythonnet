@@ -203,11 +203,11 @@ namespace Python.Runtime
 
             return ArgConverterCache.GetOrAdd(type, declaringType =>
                 declaringType
-                    .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
+                    .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: true)
                     .OfType<PyArgConverterAttribute>()
                     .SingleOrDefault()
                 ?? declaringType.Assembly
-                    .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: false)
+                    .GetCustomAttributes(typeof(PyArgConverterAttribute), inherit: true)
                     .OfType<PyArgConverterAttribute>()
                     .SingleOrDefault()
             );
