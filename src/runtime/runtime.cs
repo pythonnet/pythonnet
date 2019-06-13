@@ -7,97 +7,6 @@ using System.Collections.Generic;
 
 namespace Python.Runtime
 {
-    [SuppressUnmanagedCodeSecurity]
-    internal static class NativeMethods
-    {
-#if MONO_LINUX || MONO_OSX
-#if NETSTANDARD
-        private static int RTLD_NOW = 0x2;
-#if MONO_LINUX
-        private static int RTLD_GLOBAL = 0x100;
-        private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
-        private const string NativeDll = "libdl.so";
-        public static IntPtr LoadLibrary(string fileName)
-        {
-            return dlopen($"lib{fileName}.so", RTLD_NOW | RTLD_GLOBAL);
-        }
-#elif MONO_OSX
-        private static int RTLD_GLOBAL = 0x8;
-        private const string NativeDll = "/usr/lib/libSystem.dylib";
-        private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
-
-        public static IntPtr LoadLibrary(string fileName)
-        {
-            return dlopen($"lib{fileName}.dylib", RTLD_NOW | RTLD_GLOBAL);
-        }
-#endif
-#else
-        private static int RTLD_NOW = 0x2;
-        private static int RTLD_SHARED = 0x20;
-#if MONO_OSX
-        private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
-        private const string NativeDll = "__Internal";
-#elif MONO_LINUX
-        private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
-        private const string NativeDll = "libdl.so";
-#endif
-
-        public static IntPtr LoadLibrary(string fileName)
-        {
-            return dlopen(fileName, RTLD_NOW | RTLD_SHARED);
-        }
-#endif
-
-
-        public static void FreeLibrary(IntPtr handle)
-        {
-            dlclose(handle);
-        }
-
-        public static IntPtr GetProcAddress(IntPtr dllHandle, string name)
-        {
-            // look in the exe if dllHandle is NULL
-            if (dllHandle == IntPtr.Zero)
-            {
-                dllHandle = RTLD_DEFAULT;
-            }
-
-            // clear previous errors if any
-            dlerror();
-            IntPtr res = dlsym(dllHandle, name);
-            IntPtr errPtr = dlerror();
-            if (errPtr != IntPtr.Zero)
-            {
-                throw new Exception("dlsym: " + Marshal.PtrToStringAnsi(errPtr));
-            }
-            return res;
-        }
-
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr dlopen(String fileName, int flags);
-
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr dlsym(IntPtr handle, String symbol);
-
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dlclose(IntPtr handle);
-
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr dlerror();
-#else // Windows
-        private const string NativeDll = "kernel32.dll";
-
-        [DllImport(NativeDll)]
-        public static extern IntPtr LoadLibrary(string dllToLoad);
-
-        [DllImport(NativeDll)]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
-
-        [DllImport(NativeDll)]
-        public static extern bool FreeLibrary(IntPtr hModule);
-#endif
-    }
-
     /// <summary>
     /// Encapsulates the low-level Python C API. Note that it is
     /// the responsibility of the caller to have acquired the GIL
@@ -395,18 +304,12 @@ namespace Python.Runtime
 
             IntPtr dllLocal = IntPtr.Zero;
 
-            if (_PythonDll != "__Internal")
-            {
-                dllLocal = NativeMethods.LoadLibrary(_PythonDll);
-            }
-            _PyObject_NextNotImplemented = NativeMethods.GetProcAddress(dllLocal, "_PyObject_NextNotImplemented");
+            var zipimport = PyImport_ImportModule("zipimport");
+            var ZipImportError = PyObject_GetAttrString(zipimport, "ZipImportError");
+            _PyObject_NextNotImplemented = Marshal.ReadIntPtr(ZipImportError, TypeOffset.tp_iternext);
+            XDecref(ZipImportError);
+            XDecref(zipimport);
 
-#if !(MONO_LINUX || MONO_OSX)
-            if (dllLocal != IntPtr.Zero)
-            {
-                NativeMethods.FreeLibrary(dllLocal);
-            }
-#endif
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
             // happen after caching the python types, above.
