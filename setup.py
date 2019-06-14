@@ -334,6 +334,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             ),
             '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
             '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
+            "/p:PackageId=pythonnet_py{0}{1}_{2}".format(PY_MAJOR, PY_MINOR, ARCH),
             "/verbosity:{}".format(VERBOSITY),
         ]
 
