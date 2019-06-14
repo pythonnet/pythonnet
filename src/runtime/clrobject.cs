@@ -14,11 +14,11 @@ namespace Python.Runtime
             long flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) != 0)
             {
-                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.DictOffset(tp));
+                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.TypeDictOffset(tp));
                 if (dict == IntPtr.Zero)
                 {
                     dict = Runtime.PyDict_New();
-                    Marshal.WriteIntPtr(py, ObjectOffset.DictOffset(tp), dict);
+                    Marshal.WriteIntPtr(py, ObjectOffset.TypeDictOffset(tp), dict);
                 }
             }
 
