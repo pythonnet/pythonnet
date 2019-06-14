@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -79,7 +79,7 @@ namespace Python.Runtime
             // Set tp_basicsize to the size of our managed instance objects.
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
 
-            var offset = (IntPtr)ObjectOffset.DictOffset(type);
+            var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             InitializeSlots(type, impl);
@@ -117,7 +117,6 @@ namespace Python.Runtime
 
             IntPtr base_ = IntPtr.Zero;
             int ob_size = ObjectOffset.Size(Runtime.PyTypeType);
-            int tp_dictoffset = ObjectOffset.DictOffset(Runtime.PyTypeType);
 
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
@@ -125,8 +124,9 @@ namespace Python.Runtime
             if (typeof(Exception).IsAssignableFrom(clrType))
             {
                 ob_size = ObjectOffset.Size(Exceptions.Exception);
-                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.Exception);
             }
+
+            int tp_dictoffset = ob_size + ManagedDataOffsets.ob_dict;
 
             if (clrType == typeof(Exception))
             {

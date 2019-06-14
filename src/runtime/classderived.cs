@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -870,7 +870,7 @@ namespace Python.Runtime
                         // the C# object is being destroyed which must mean there are no more
                         // references to the Python object as well so now we can dealloc the
                         // python object.
-                        IntPtr dict = Marshal.ReadIntPtr(self.pyHandle, ObjectOffset.DictOffset(self.pyHandle));
+                        IntPtr dict = Marshal.ReadIntPtr(self.pyHandle, ObjectOffset.TypeDictOffset(self.tpHandle));
                         if (dict != IntPtr.Zero)
                         {
                             Runtime.XDecref(dict);
