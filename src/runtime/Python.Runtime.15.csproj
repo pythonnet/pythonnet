@@ -7,14 +7,21 @@
     <AssetTargetFallback Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono'))">net45</AssetTargetFallback>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
-    <PackageId>Python.Runtime</PackageId>
-    <VersionPrefix>2.4.0</VersionPrefix>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
-    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <PackageId>pythonnet</PackageId>
+    <VersionPrefix>2.4.1</VersionPrefix>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Title>Python for .NET</Title>
+    <Copyright>Copyright (c) 2006-2019 the contributors of the 'Python for .NET' project</Copyright>
+    <Description>Python and CLR (.NET and Mono) cross-platform language interop</Description>
+    <Authors>pythonnet</Authors>
+    <PackageLicenseUrl>https://github.com/pythonnet/pythonnet/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <!--<PackageReleaseNotes>https://github.com/pythonnet/pythonnet/releases/tag/v2.4.0</PackageReleaseNotes>-->
+    <PackageTags>python interop dynamic dlr Mono pinvoke</PackageTags>
+    <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
+    <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
     <OutputPath>bin\</OutputPath>
     <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
     <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
