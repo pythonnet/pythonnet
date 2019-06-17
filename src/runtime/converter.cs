@@ -382,12 +382,9 @@ namespace Python.Runtime
                     return ToArray(value, typeof(object[]), out result, setError);
                 }
 
-                if (setError)
-                {
-                    Exceptions.SetError(Exceptions.TypeError, "value cannot be converted to Object");
-                }
-
-                return false;
+                Runtime.XIncref(value); // PyObject() assumes ownership
+                result = new PyObject(value);
+                return true;
             }
 
             // Conversion to 'Type' is done using the same mappings as above for objects.
