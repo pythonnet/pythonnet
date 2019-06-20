@@ -7,7 +7,7 @@
     <AssemblyName>Python.Test</AssemblyName>
     <RootNamespace>Python.Test</RootNamespace>
     <PackageId>Python.Test</PackageId>
-    <VersionPrefix>2.4.0</VersionPrefix>
+    <VersionPrefix>2.4.1</VersionPrefix>
     <OutputPath>bin\</OutputPath>
     <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
     <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
