@@ -46,9 +46,13 @@ namespace Python.EmbeddingTest
         public virtual void CallWithInt(int value) => this.LastArgument = value;
     }
 
-    // this should override original custom marshaling behavior
+    // this should override original custom marshaling behavior for any new methods
     [PyArgConverter(typeof(CustomArgConverter2))]
-    class DerivedMarshaling: CustomArgMarshaling { }
+    class DerivedMarshaling : CustomArgMarshaling {
+        public override void CallWithInt(int value) {
+            base.CallWithInt(value);
+        }
+    }
 
     class CustomArgConverter : DefaultPyArgumentConverter {
         public override bool TryConvertArgument(IntPtr pyarg, Type parameterType, bool needsResolution,
