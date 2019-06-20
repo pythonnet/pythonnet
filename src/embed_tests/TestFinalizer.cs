@@ -55,7 +55,7 @@ namespace Python.EmbeddingTest
             }
             FullGCCollect();
             // The object has been resurrected
-            Assert.IsFalse(
+            Warn.If(
                 shortWeak.IsAlive,
                 "The referenced object is alive although it should have been collected",
                 shortWeak
