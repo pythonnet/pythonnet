@@ -69,7 +69,7 @@ namespace Python.EmbeddingTest
             {
                 var garbage = Finalizer.Instance.GetCollectedObjects();
                 Assert.NotZero(garbage.Count, "There should still be garbage around");
-                Assert.IsTrue(
+                Warn.Unless(
                     garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)),
                     $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
                     garbage
