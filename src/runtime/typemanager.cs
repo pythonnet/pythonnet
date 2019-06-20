@@ -510,6 +510,10 @@ namespace Python.Runtime
                             return I386;
                         case Runtime.MachineType.x86_64:
                             return X86_64;
+                        case Runtime.MachineType.armv7l:
+                            return Armv7l;
+                        case Runtime.MachineType.armv8:
+                            return Armv8;
                         default:
                             throw new NotImplementedException($"No support for {Runtime.MachineName}");
                     }
@@ -546,6 +550,34 @@ namespace Python.Runtime
             /// <see cref="NativeCode.X86_64"/>
             /// </summary>
             public static readonly NativeCode I386 = X86_64;
+
+            public static readonly NativeCode Armv7l = new NativeCode()
+            {
+                Return0 = 0,
+                Return1 = 0x08,
+                Code = new byte[]
+                {
+                    0xe3, 0xa0, 0x00, 0x00, // mov r0, #0
+                    0xe1, 0x2f, 0xff, 0x1e, // bx lr
+
+                    0xe3, 0xa0, 0x00, 0x01, // mov r0, #1
+                    0xe1, 0x2f, 0xff, 0x1e, // bx lr
+                }
+            };
+
+            public static readonly NativeCode Armv8 = new NativeCode()
+            {
+                Return0 = 0,
+                Return1 = 0x08,
+                Code = new byte[]
+                {
+                    0x52, 0x80, 0x00, 0x00, // mov w0, #0x0
+                    0xd6, 0x5f, 0x03, 0xc0, // ret
+
+                    0x52, 0x80, 0x00, 0x20, // mov w0, #0x1
+                    0xd6, 0x5f, 0x03, 0xc0, // ret
+                }
+            };
         }
 
         /// <summary>
