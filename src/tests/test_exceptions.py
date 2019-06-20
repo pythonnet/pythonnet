@@ -270,12 +270,6 @@ def test_str_of_exception():
     with pytest.raises(FormatException) as cm:
         Convert.ToDateTime('this will fail')
 
-    e = cm.value
-    # fix for international installation
-    msg = text_type(e).encode("utf8")
-    fnd = text_type('System.Convert.ToDateTime').encode("utf8")
-    assert msg.find(fnd) > -1, msg
-
 
 def test_python_compat_of_managed_exceptions():
     """Test managed exceptions compatible with Python's implementation"""

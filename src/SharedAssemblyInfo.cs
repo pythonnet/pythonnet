@@ -25,4 +25,4 @@ using System.Runtime.InteropServices;
 // Version Information. Keeping it simple. May need to revisit for Nuget
 // See: https://codingforsmarties.wordpress.com/2016/01/21/how-to-version-assemblies-destined-for-nuget/
 // AssemblyVersion can only be numeric
-[assembly: AssemblyVersion("2.4.0")]
+[assembly: AssemblyVersion("2.4.1")]

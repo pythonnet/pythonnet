@@ -334,6 +334,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             ),
             '/p:PythonBuildDir="{}"'.format(os.path.abspath(dest_dir)),
             '/p:PythonInteropFile="{}"'.format(os.path.basename(interop_file)),
+            "/p:PackageId=pythonnet_py{0}{1}_{2}".format(PY_MAJOR, PY_MINOR, ARCH),
             "/verbosity:{}".format(VERBOSITY),
         ]
 
@@ -622,7 +623,7 @@ if not os.path.exists(_get_interop_filename()):
 
 setup(
     name="pythonnet",
-    version="2.4.0-rc2",
+    version="2.4.1-dev",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",
@@ -647,7 +648,6 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

@@ -5,7 +5,7 @@ pythonnet - Python for .NET
 
 |appveyor shield| |travis shield| |codecov shield|
 
-|license shield| |pypi package version| |python supported shield|
+|license shield| |pypi package version| |conda-forge version| |python supported shield|
 |stackexchange shield|
 
 Python for .NET is a package that gives Python programmers nearly
@@ -48,7 +48,7 @@ Embedding Python in .NET
 -  All python objects should be declared as ``dynamic`` type.
 -  Mathematical operations involving python and literal/managed types
    must have the python object first, eg. ``np.pi * 2`` works,
-   ``2 * np.pi`` doesn’t.
+   ``2 * np.pi`` doesn't.
 
 Example
 ~~~~~~~
@@ -111,3 +111,5 @@ https://github.com/pythonnet/pythonnet/wiki
    :target: https://pypi.python.org/pypi/pythonnet
 .. |stackexchange shield| image:: https://img.shields.io/badge/StackOverflow-python.net-blue.svg
    :target: http://stackoverflow.com/questions/tagged/python.net
+.. |conda-forge version| image:: https://img.shields.io/conda/vn/conda-forge/pythonnet.svg
+   :target: https://anaconda.org/conda-forge/pythonnet

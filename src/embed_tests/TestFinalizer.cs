@@ -36,15 +36,17 @@ namespace Python.EmbeddingTest
         {
             Assert.IsTrue(Finalizer.Instance.Enable);
 
-            int thId = Thread.CurrentThread.ManagedThreadId;
             Finalizer.Instance.Threshold = 1;
             bool called = false;
+            var objectCount = 0;
             EventHandler<Finalizer.CollectArgs> handler = (s, e) =>
             {
-                Assert.AreEqual(thId, Thread.CurrentThread.ManagedThreadId);
-                Assert.GreaterOrEqual(e.ObjectCount, 1);
+                objectCount = e.ObjectCount;
                 called = true;
             };
+
+            Assert.IsFalse(called, "The event handler was called before it was installed");
+            Finalizer.Instance.CollectOnce += handler;
 
             WeakReference shortWeak;
             WeakReference longWeak;
@@ -53,26 +55,36 @@ namespace Python.EmbeddingTest
             }
             FullGCCollect();
             // The object has been resurrected
-            Assert.IsFalse(shortWeak.IsAlive);
-            Assert.IsTrue(longWeak.IsAlive);
+            Warn.If(
+                shortWeak.IsAlive,
+                "The referenced object is alive although it should have been collected",
+                shortWeak
+            );
+            Assert.IsTrue(
+                longWeak.IsAlive,
+                "The reference object is not alive although it should still be",
+                longWeak
+            );
 
             {
                 var garbage = Finalizer.Instance.GetCollectedObjects();
-                Assert.NotZero(garbage.Count);
-                Assert.IsTrue(garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)));
+                Assert.NotZero(garbage.Count, "There should still be garbage around");
+                Warn.Unless(
+                    garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)),
+                    $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
+                    garbage
+                );
             }
-
-            Assert.IsFalse(called);
-            Finalizer.Instance.CollectOnce += handler;
             try
             {
-                Finalizer.Instance.CallPendingFinalizers();
+                Finalizer.Instance.Collect(forceDispose: false);
             }
             finally
             {
                 Finalizer.Instance.CollectOnce -= handler;
             }
-            Assert.IsTrue(called);
+            Assert.IsTrue(called, "The event handler was not called during finalization");
+            Assert.GreaterOrEqual(objectCount, 1);
         }
 
         private static void MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
@@ -85,7 +97,7 @@ namespace Python.EmbeddingTest
 
         private static long CompareWithFinalizerOn(PyObject pyCollect, bool enbale)
         {
-            // Must larger than 512 bytes make sure Python use 
+            // Must larger than 512 bytes make sure Python use
             string str = new string('1', 1024);
             Finalizer.Instance.Enable = true;
             FullGCCollect();
@@ -164,10 +176,11 @@ namespace Python.EmbeddingTest
         public void ErrorHandling()
         {
             bool called = false;
+            var errorMessage = "";
             EventHandler<Finalizer.ErrorArgs> handleFunc = (sender, args) =>
             {
                 called = true;
-                Assert.AreEqual(args.Error.Message, "MyPyObject");
+                errorMessage = args.Error.Message;
             };
             Finalizer.Instance.Threshold = 1;
             Finalizer.Instance.ErrorHandler += handleFunc;
@@ -193,6 +206,7 @@ namespace Python.EmbeddingTest
             {
                 Finalizer.Instance.ErrorHandler -= handleFunc;
             }
+            Assert.AreEqual(errorMessage, "MyPyObject");
         }
 
         [Test]
