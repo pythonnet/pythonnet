@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
@@ -67,11 +68,47 @@ namespace Python.Runtime
         }
     }
 
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal class ObjectOffset
+    internal static class ManagedDataOffsets
     {
-        static ObjectOffset()
+        static ManagedDataOffsets()
+        {
+            FieldInfo[] fi = typeof(ManagedDataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
+            for (int i = 0; i < fi.Length; i++)
+            {
+                fi[i].SetValue(null, -(i * IntPtr.Size) - IntPtr.Size);
+            }
+
+            size = fi.Length * IntPtr.Size;
+        }
+
+        public static readonly int ob_data;
+        public static readonly int ob_dict;
+
+        private static int BaseOffset(IntPtr type)
+        {
+            Debug.Assert(type != IntPtr.Zero);
+            int typeSize = Marshal.ReadInt32(type, TypeOffset.tp_basicsize);
+            Debug.Assert(typeSize > 0 && typeSize <= ExceptionOffset.Size());
+            return typeSize;
+        }
+        public static int DataOffset(IntPtr type)
+        {
+            return BaseOffset(type) + ob_data;
+        }
+
+        public static int DictOffset(IntPtr type)
+        {
+            return BaseOffset(type) + ob_dict;
+        }
+
+        public static int Size { get { return size; } }
+
+        private static readonly int size;
+    }
+
+    internal static class OriginalObjectOffsets
+    {
+        static OriginalObjectOffsets()
         {
             int size = IntPtr.Size;
             var n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
@@ -82,39 +119,58 @@ namespace Python.Runtime
 #endif
             ob_refcnt = (n + 0) * size;
             ob_type = (n + 1) * size;
-            ob_dict = (n + 2) * size;
-            ob_data = (n + 3) * size;
         }
 
-        public static int magic(IntPtr ob)
+        public static int Size { get { return size; } }
+
+        private static readonly int size =
+#if PYTHON_WITH_PYDEBUG
+            4 * IntPtr.Size;
+#else
+            2 * IntPtr.Size;
+#endif
+
+#if PYTHON_WITH_PYDEBUG
+        public static int _ob_next;
+        public static int _ob_prev;
+#endif
+        public static int ob_refcnt;
+        public static int ob_type;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class ObjectOffset
+    {
+        static ObjectOffset()
         {
-            if (IsException(ob))
-            {
-                return ExceptionOffset.ob_data;
-            }
-            return ob_data;
+#if PYTHON_WITH_PYDEBUG
+            _ob_next = OriginalObjectOffsets._ob_next;
+            _ob_prev = OriginalObjectOffsets._ob_prev;
+#endif
+            ob_refcnt = OriginalObjectOffsets.ob_refcnt;
+            ob_type = OriginalObjectOffsets.ob_type;
+
+            size = OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
         }
 
-        public static int DictOffset(IntPtr ob)
+        public static int magic(IntPtr type)
         {
-            if (IsException(ob))
-            {
-                return ExceptionOffset.ob_dict;
-            }
-            return ob_dict;
+            return ManagedDataOffsets.DataOffset(type);
         }
 
-        public static int Size(IntPtr ob)
+        public static int TypeDictOffset(IntPtr type)
         {
-            if (IsException(ob))
+            return ManagedDataOffsets.DictOffset(type);
+        }
+
+        public static int Size(IntPtr pyType)
+        {
+            if (IsException(pyType))
             {
                 return ExceptionOffset.Size();
             }
-#if PYTHON_WITH_PYDEBUG
-            return 6 * IntPtr.Size;
-#else
-            return 4 * IntPtr.Size;
-#endif
+
+            return size;
         }
 
 #if PYTHON_WITH_PYDEBUG
@@ -123,8 +179,7 @@ namespace Python.Runtime
 #endif
         public static int ob_refcnt;
         public static int ob_type;
-        private static int ob_dict;
-        private static int ob_data;
+        private static readonly int size;
 
         private static bool IsException(IntPtr pyObject)
         {
@@ -141,18 +196,16 @@ namespace Python.Runtime
         static ExceptionOffset()
         {
             Type type = typeof(ExceptionOffset);
-            FieldInfo[] fi = type.GetFields();
-            int size = IntPtr.Size;
+            FieldInfo[] fi = type.GetFields(BindingFlags.Static | BindingFlags.Public);
             for (int i = 0; i < fi.Length; i++)
             {
-                fi[i].SetValue(null, (i * size) + ObjectOffset.ob_type + size);
+                fi[i].SetValue(null, (i * IntPtr.Size) + OriginalObjectOffsets.Size);
             }
+
+            size = fi.Length * IntPtr.Size + OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
         }
 
-        public static int Size()
-        {
-            return ob_data + IntPtr.Size;
-        }
+        public static int Size() { return size; }
 
         // PyException_HEAD
         // (start after PyObject_HEAD)
@@ -167,9 +220,7 @@ namespace Python.Runtime
         public static int suppress_context = 0;
 #endif
 
-        // extra c# data
-        public static int ob_dict;
-        public static int ob_data;
+        private static readonly int size;
     }
 
 

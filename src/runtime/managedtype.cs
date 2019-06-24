@@ -33,7 +33,7 @@ namespace Python.Runtime
                 {
                     IntPtr op = tp == ob
                         ? Marshal.ReadIntPtr(tp, TypeOffset.magic())
-                        : Marshal.ReadIntPtr(ob, ObjectOffset.magic(ob));
+                        : Marshal.ReadIntPtr(ob, ObjectOffset.magic(tp));
                     if (op == IntPtr.Zero)
                     {
                         return null;
