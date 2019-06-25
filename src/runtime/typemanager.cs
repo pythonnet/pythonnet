@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
+    using Python.Runtime.Platform;
+
     /// <summary>
     /// The TypeManager class is responsible for building binary-compatible
     /// Python type objects that are implemented in managed code.
@@ -504,15 +506,15 @@ namespace Python.Runtime
             {
                 get
                 {
-                    switch(Runtime.Machine)
+                    switch (Runtime.Machine)
                     {
-                        case Runtime.MachineType.i386:
+                        case MachineType.i386:
                             return I386;
-                        case Runtime.MachineType.x86_64:
+                        case MachineType.x86_64:
                             return X86_64;
-                        case Runtime.MachineType.armv7l:
+                        case MachineType.armv7l:
                             return Armv7l;
-                        case Runtime.MachineType.armv8:
+                        case MachineType.armv8:
                             return Armv8;
                         default:
                             throw new NotImplementedException($"No support for {Runtime.MachineName}");
@@ -635,9 +637,9 @@ namespace Python.Runtime
                 {
                     switch (Runtime.OperatingSystem)
                     {
-                        case Runtime.OperatingSystemType.Darwin:
+                        case OperatingSystemType.Darwin:
                             return 0x1000;
-                        case Runtime.OperatingSystemType.Linux:
+                        case OperatingSystemType.Linux:
                             return 0x20;
                         default:
                             throw new NotImplementedException($"mmap is not supported on {Runtime.OperatingSystemName}");
@@ -668,10 +670,10 @@ namespace Python.Runtime
         {
             switch (Runtime.OperatingSystem)
             {
-                case Runtime.OperatingSystemType.Darwin:
-                case Runtime.OperatingSystemType.Linux:
+                case OperatingSystemType.Darwin:
+                case OperatingSystemType.Linux:
                     return new UnixMemoryMapper();
-                case Runtime.OperatingSystemType.Windows:
+                case OperatingSystemType.Windows:
                     return new WindowsMemoryMapper();
                 default:
                     throw new NotImplementedException($"No support for {Runtime.OperatingSystemName}");

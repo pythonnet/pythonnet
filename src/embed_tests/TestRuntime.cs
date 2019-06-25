@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using Python.Runtime;
+using Python.Runtime.Platform;
 
 namespace Python.EmbeddingTest
 {
@@ -26,10 +27,10 @@ namespace Python.EmbeddingTest
         {
             Runtime.Runtime.Initialize();
 
-            Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(Runtime.Runtime.MachineType.Other));
+            Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(MachineType.Other));
             Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.MachineName));
 
-            Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(Runtime.Runtime.OperatingSystemType.Other));
+            Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(OperatingSystemType.Other));
             Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.OperatingSystemName));
 
             // Don't shut down the runtime: if the python engine was initialized
@@ -39,7 +40,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void Py_IsInitializedValue()
         {
-            Runtime.Runtime.Py_Finalize(); 
+            Runtime.Runtime.Py_Finalize();
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();
             Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());
