@@ -30,5 +30,30 @@ namespace Python.EmbeddingTest
             var pyProp = (PropertyObject)ManagedType.GetManagedObject(property.Reference);
             Assert.AreEqual(nameof(Uri.AbsoluteUri), pyProp.info.Value.Name);
         }
+
+        [Test]
+        public void BoundMethodsAreInspectable()
+        {
+            using var scope = Py.CreateScope();
+            try
+            {
+                scope.Import("inspect");
+            }
+            catch (PythonException)
+            {
+                Assert.Inconclusive("Python build does not include inspect module");
+                return;
+            }
+
+            var obj = new Class();
+            scope.Set(nameof(obj), obj);
+            using var spec = scope.Eval($"inspect.getfullargspec({nameof(obj)}.{nameof(Class.Method)})");
+        }
+
+        class Class
+        {
+            public void Method(int a, int b = 10) { }
+            public void Method(int a, object b) { }
+        }
     }
 }
