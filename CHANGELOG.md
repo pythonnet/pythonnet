@@ -9,6 +9,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+-   Added automatic NuGet package generation in appveyor and local builds
+
 ### Changed
 
 ### Fixed

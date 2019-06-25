@@ -229,6 +229,8 @@ namespace Python.Runtime
         {
             i386,
             x86_64,
+            armv7l,
+            armv8,
             Other
         };
 
@@ -247,6 +249,8 @@ namespace Python.Runtime
             ["amd64"] = MachineType.x86_64,
             ["x64"] = MachineType.x86_64,
             ["em64t"] = MachineType.x86_64,
+            ["armv7l"] = MachineType.armv7l,
+            ["armv8"] = MachineType.armv8,
         };
 
         /// <summary>
