@@ -420,6 +420,7 @@ namespace Python.Runtime
         public static IntPtr IOError;
         public static IntPtr OSError;
         public static IntPtr ImportError;
+        public static IntPtr ModuleNotFoundError;
         public static IntPtr IndexError;
         public static IntPtr KeyError;
         public static IntPtr KeyboardInterrupt;

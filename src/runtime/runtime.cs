@@ -178,6 +178,7 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
 
             clrInterop = GetModuleLazy("clr.interop");
+            inspect = GetModuleLazy("inspect");
         }
 
         private static void InitPyMembers()
@@ -573,6 +574,8 @@ namespace Python.Runtime
         internal static IntPtr PyNone;
         internal static IntPtr Error;
 
+        private static Lazy<PyObject> inspect;
+        internal static PyObject InspectModule => inspect.Value;
         private static Lazy<PyObject> clrInterop;
         internal static PyObject InteropModule => clrInterop.Value;
 

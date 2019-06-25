@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -65,6 +66,67 @@ namespace Python.Runtime
             return mb.pyHandle;
         }
 
+        PyObject Signature
+        {
+            get
+            {
+                var infos = this.info.Valid ? new[] { this.info.Value } : this.m.info;
+                Type type = infos.Select(i => i.DeclaringType)
+                    .OrderByDescending(t => t, new TypeSpecificityComparer())
+                    .First();
+                infos = infos.Where(info => info.DeclaringType == type).ToArray();
+                // this is a primitive version
+                // the overload with the maximum number of parameters should be used
+                MethodInfo primary = infos.OrderByDescending(i => i.GetParameters().Length).First();
+                var primaryParameters = primary.GetParameters();
+                PyObject signatureClass = Runtime.InspectModule.GetAttr("Signature");
+                var primaryReturn = primary.ReturnParameter;
+
+                using var parameters = new PyList();
+                using var parameterClass = primaryParameters.Length > 0 ? Runtime.InspectModule.GetAttr("Parameter") : null;
+                using var positionalOrKeyword = parameterClass?.GetAttr("POSITIONAL_OR_KEYWORD");
+                for (int i = 0; i < primaryParameters.Length; i++)
+                {
+                    var parameter = primaryParameters[i];
+                    var alternatives = infos.Select(info =>
+                    {
+                        ParameterInfo[] altParamters = info.GetParameters();
+                        return i < altParamters.Length ? altParamters[i] : null;
+                    }).Where(p => p != null);
+                    using var defaultValue = alternatives
+                        .Select(alternative => alternative.DefaultValue != DBNull.Value ? alternative.DefaultValue.ToPython() : null)
+                        .FirstOrDefault(v => v != null) ?? parameterClass.GetAttr("empty");
+
+                    if (alternatives.Any(alternative => alternative.Name != parameter.Name))
+                    {
+                        return signatureClass.Invoke();
+                    }
+
+                    using var args = new PyTuple(new[] { parameter.Name.ToPython(), positionalOrKeyword });
+                    using var kw = new PyDict();
+                    if (defaultValue is not null)
+                    {
+                        kw["default"] = defaultValue;
+                    }
+                    using var parameterInfo = parameterClass.Invoke(args: args, kw: kw);
+                    parameters.Append(parameterInfo);
+                }
+
+                // TODO: add return annotation
+                return signatureClass.Invoke(parameters);
+            }
+        }
+
+        struct TypeSpecificityComparer : IComparer<Type>
+        {
+            public int Compare(Type a, Type b)
+            {
+                if (a == b) return 0;
+                if (a.IsSubclassOf(b)) return 1;
+                if (b.IsSubclassOf(a)) return -1;
+                throw new NotSupportedException();
+            }
+        }
 
         /// <summary>
         /// MethodBinding __getattribute__ implementation.
@@ -91,6 +153,15 @@ namespace Python.Runtime
                 case "Overloads":
                     var om = new OverloadMapper(self.m, self.target);
                     return om.pyHandle;
+                case "__signature__" when Runtime.InspectModule is not null:
+                    var sig = self.Signature;
+                    if (sig is null)
+                    {
+                        return Runtime.PyObject_GenericGetAttr(ob, key);
+                    }
+                    return sig.NewReferenceOrNull().DangerousMoveToPointerOrNull();
+                case "__name__":
+                    return self.m.GetName().DangerousMoveToPointerOrNull();
                 default:
                     return Runtime.PyObject_GenericGetAttr(ob, key);
             }

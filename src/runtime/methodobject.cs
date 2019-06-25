@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -99,6 +99,16 @@ namespace Python.Runtime
             }
             doc = Runtime.PyString_FromString(str);
             return doc;
+        }
+
+        internal NewReference GetName()
+        {
+            var names = new HashSet<string>(binder.GetMethods().Select(m => m.Name));
+            if (names.Count != 1) {
+                Exceptions.SetError(Exceptions.AttributeError, "a method has no name");
+                return default;
+            }
+            return NewReference.DangerousFromPointer(Runtime.PyString_FromString(names.First()));
         }
 
 
