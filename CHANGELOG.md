@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Added automatic NuGet package generation in appveyor and local builds
+-   Added IGetAttr and ISetAttr, so that .NET classes could override __getattr__ and __setattr__
 
 ### Changed
 

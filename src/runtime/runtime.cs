@@ -562,6 +562,14 @@ namespace Python.Runtime
 #endif
         }
 
+        /// <summary>
+        /// Increase Python's ref counter for the given object, and return the object back.
+        /// </summary>
+        internal static IntPtr SelfIncRef(IntPtr op) {
+            XIncref(op);
+            return op;
+        }
+
         internal static unsafe void XDecref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG || NETSTANDARD
