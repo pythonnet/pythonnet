@@ -140,6 +140,8 @@
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
     <Compile Include="Util.cs" />
+    <Compile Include="platform\Types.cs" />
+    <Compile Include="platform\LibraryLoader.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
