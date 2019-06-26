@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime.Platform
@@ -9,7 +10,7 @@ namespace Python.Runtime.Platform
 
         IntPtr GetFunction(IntPtr hModule, string procedureName);
 
-        bool Free(IntPtr hModule);
+        void Free(IntPtr hModule);
     }
 
     static class LibraryLoader
@@ -25,7 +26,7 @@ namespace Python.Runtime.Platform
                 case OperatingSystemType.Linux:
                     return new LinuxLoader();
                 default:
-                    throw new Exception($"This operating system ({os}) is not supported");
+                    throw new PlatformNotSupportedException($"This operating system ({os}) is not supported");
             }
         }
     }
@@ -37,15 +38,23 @@ namespace Python.Runtime.Platform
         private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
         private const string NativeDll = "libdl.so";
 
-        public IntPtr Load(string fileName)
+        public IntPtr Load(string dllToLoad)
         {
-            return dlopen($"lib{fileName}.so", RTLD_NOW | RTLD_GLOBAL);
+            var filename = $"lib{dllToLoad}.so";
+            ClearError();
+            var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+            if (res == IntPtr.Zero)
+            {
+                var err = GetError();
+                throw new DllNotFoundException($"Could not load {filename} with flags RTLD_NOW | RTLD_GLOBAL: {err}");
+            }
+
+            return res;
         }
 
-        public bool Free(IntPtr handle)
+        public void Free(IntPtr handle)
         {
             dlclose(handle);
-            return true;
         }
 
         public IntPtr GetFunction(IntPtr dllHandle, string name)
@@ -56,22 +65,35 @@ namespace Python.Runtime.Platform
                 dllHandle = RTLD_DEFAULT;
             }
 
-            // clear previous errors if any
-            dlerror();
+            ClearError();
             IntPtr res = dlsym(dllHandle, name);
-            IntPtr errPtr = dlerror();
-            if (errPtr != IntPtr.Zero)
+            if (res == IntPtr.Zero)
             {
-                throw new Exception("dlsym: " + Marshal.PtrToStringAnsi(errPtr));
+                var err = GetError();
+                throw new MissingMethodException($"Failed to load symbol {name}: {err}");
             }
             return res;
         }
 
-        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr dlopen(String fileName, int flags);
+        void ClearError()
+        {
+            dlerror();
+        }
+
+        string GetError()
+        {
+            var res = dlerror();
+            if (res != IntPtr.Zero)
+                return Marshal.PtrToStringAnsi(res);
+            else
+                return null;
+        }
 
         [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr dlsym(IntPtr handle, String symbol);
+        public static extern IntPtr dlopen(string fileName, int flags);
+
+        [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr dlsym(IntPtr handle, string symbol);
 
         [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dlclose(IntPtr handle);
@@ -87,15 +109,23 @@ namespace Python.Runtime.Platform
         private const string NativeDll = "/usr/lib/libSystem.dylib";
         private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
 
-        public IntPtr Load(string fileName)
+        public IntPtr Load(string dllToLoad)
         {
-            return dlopen($"lib{fileName}.dylib", RTLD_NOW | RTLD_GLOBAL);
+            var filename = $"lib{dllToLoad}.dylib";
+            ClearError();
+            var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+            if (res == IntPtr.Zero)
+            {
+                var err = GetError();
+                throw new DllNotFoundException($"Could not load {filename} with flags RTLD_NOW | RTLD_GLOBAL: {err}");
+            }
+
+            return res;
         }
 
-        public bool Free(IntPtr handle)
+        public void Free(IntPtr handle)
         {
             dlclose(handle);
-            return true;
         }
 
         public IntPtr GetFunction(IntPtr dllHandle, string name)
@@ -106,15 +136,28 @@ namespace Python.Runtime.Platform
                 dllHandle = RTLD_DEFAULT;
             }
 
-            // clear previous errors if any
-            dlerror();
+            ClearError();
             IntPtr res = dlsym(dllHandle, name);
-            IntPtr errPtr = dlerror();
-            if (errPtr != IntPtr.Zero)
+            if (res == IntPtr.Zero)
             {
-                throw new Exception("dlsym: " + Marshal.PtrToStringAnsi(errPtr));
+                var err = GetError();
+                throw new MissingMethodException($"Failed to load symbol {name}: {err}");
             }
             return res;
+        }
+
+        void ClearError()
+        {
+            dlerror();
+        }
+
+        string GetError()
+        {
+            var res = dlerror();
+            if (res != IntPtr.Zero)
+                return Marshal.PtrToStringAnsi(res);
+            else
+                return null;
         }
 
         [DllImport(NativeDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -134,20 +177,32 @@ namespace Python.Runtime.Platform
     {
         private const string NativeDll = "kernel32.dll";
 
-        [DllImport(NativeDll)]
+
+        public IntPtr Load(string dllToLoad)
+        {
+            var res = WindowsLoader.LoadLibrary(dllToLoad);
+            if (res == IntPtr.Zero)
+                throw new DllNotFoundException($"Could not load {dllToLoad}", new Win32Exception());
+            return res;
+        }
+
+        public IntPtr GetFunction(IntPtr hModule, string procedureName)
+        {
+            var res = WindowsLoader.GetProcAddress(hModule, procedureName);
+            if (res == IntPtr.Zero)
+                throw new MissingMethodException($"Failed to load symbol {procedureName}", new Win32Exception());
+            return res;
+        }
+
+        public void Free(IntPtr hModule) => WindowsLoader.FreeLibrary(hModule);
+
+        [DllImport(NativeDll, SetLastError = true)]
         static extern IntPtr LoadLibrary(string dllToLoad);
 
-        public IntPtr Load(string dllToLoad) => WindowsLoader.LoadLibrary(dllToLoad);
-
-        [DllImport(NativeDll)]
+        [DllImport(NativeDll, SetLastError = true)]
         static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
-
-        public IntPtr GetFunction(IntPtr hModule, string procedureName) => WindowsLoader.GetProcAddress(hModule, procedureName);
-
 
         [DllImport(NativeDll)]
         static extern bool FreeLibrary(IntPtr hModule);
-
-        public bool Free(IntPtr hModule) => WindowsLoader.FreeLibrary(hModule);
     }
 }

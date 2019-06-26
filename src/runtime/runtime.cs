@@ -4,10 +4,10 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using Python.Runtime.Platform;
 
 namespace Python.Runtime
 {
-    using Python.Runtime.Platform;
 
     /// <summary>
     /// Encapsulates the low-level Python C API. Note that it is

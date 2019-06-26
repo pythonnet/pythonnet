@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Python.Runtime.Platform;
 
 namespace Python.Runtime
 {
-    using Python.Runtime.Platform;
 
     /// <summary>
     /// The TypeManager class is responsible for building binary-compatible
