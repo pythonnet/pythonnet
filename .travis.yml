@@ -19,9 +19,9 @@ matrix:
           packages:
             - mono-devel
             - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
+            - dotnet-hostfxr-2.2
+            - dotnet-runtime-2.2
+            - dotnet-sdk-2.2
             
     - python: 3.5
       env: *xplat-env
@@ -45,9 +45,9 @@ matrix:
           packages:
             - mono-devel
             - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
+            - dotnet-hostfxr-2.2
+            - dotnet-runtime-2.2
+            - dotnet-sdk-2.2
 
 # --------------------- Classic builds ------------------------
     - python: 2.7
