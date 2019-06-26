@@ -504,7 +504,7 @@ namespace Python.Runtime
             {
                 get
                 {
-                    switch(Runtime.Machine)
+                    switch (Runtime.Machine)
                     {
                         case Runtime.MachineType.i386:
                             return I386;
@@ -696,8 +696,21 @@ namespace Python.Runtime
             // to be executable.
             IMemoryMapper mapper = CreateMemoryMapper();
             int codeLength = NativeCode.Active.Code.Length;
-            NativeCodePage = mapper.MapWriteable(codeLength);
-            Marshal.Copy(NativeCode.Active.Code, 0, NativeCodePage, codeLength);
+
+            // Request 7 bytes more than required such that we can align to an 8 byte boundary on ARM
+            NativeCodePage = mapper.MapWriteable(codeLength + 7);
+
+            // Round to 8 byte boundary
+            var start = new IntPtr(((NativeCodePage.ToInt64() + 7) >> 3) << 3);
+            var diff = start.ToInt64()- NativeCodePage.ToInt64();
+
+            Marshal.Copy(NativeCode.Active.Code, 0, start, codeLength);
+            // Fill the remainder up with 0
+            for (int i = 0; i < diff; ++i)
+                Marshal.WriteByte(NativeCodePage, i, 0);
+            for (int i = 0; i < 7 - diff; ++i)
+                Marshal.WriteByte(NativeCodePage + codeLength, i, 0);
+
             mapper.SetReadExec(NativeCodePage, codeLength);
         }
 #endregion
