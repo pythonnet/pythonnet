@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: false
 language: python
   
@@ -12,16 +12,16 @@ matrix:
       addons: &xplat-addons
         apt:
           sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
+          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main
             key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+          - sourceline: deb http://download.mono-project.com/repo/ubuntu xenial main
             key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
           packages:
             - mono-devel
             - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
+            - dotnet-hostfxr-2.2
+            - dotnet-runtime-2.2
+            - dotnet-sdk-2.2
             
     - python: 3.5
       env: *xplat-env
@@ -45,9 +45,9 @@ matrix:
           packages:
             - mono-devel
             - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
+            - dotnet-hostfxr-2.2
+            - dotnet-runtime-2.2
+            - dotnet-sdk-2.2
 
 # --------------------- Classic builds ------------------------
     - python: 2.7
@@ -84,7 +84,7 @@ env:
 addons:
   apt:
     sources:
-      - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+      - sourceline: deb http://download.mono-project.com/repo/ubuntu xenial main
         key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
     packages:
       - mono-devel
