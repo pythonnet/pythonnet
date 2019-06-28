@@ -13,6 +13,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Changed
 
+-   Added argument types information to "No method matches given arguments" message
+
 ### Fixed
 
 ## [2.4.0][]
