@@ -15,7 +15,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <LangVersion>6</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
@@ -140,6 +140,8 @@
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
     <Compile Include="Util.cs" />
+    <Compile Include="platform\Types.cs" />
+    <Compile Include="platform\LibraryLoader.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
