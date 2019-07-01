@@ -4,9 +4,11 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using Python.Runtime.Platform;
 
 namespace Python.Runtime
 {
+
     /// <summary>
     /// Encapsulates the low-level Python C API. Note that it is
     /// the responsibility of the caller to have acquired the GIL
@@ -106,17 +108,6 @@ namespace Python.Runtime
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
-        /// <summary>
-        /// Operating system type as reported by Python.
-        /// </summary>
-        public enum OperatingSystemType
-        {
-            Windows,
-            Darwin,
-            Linux,
-            Other
-        }
-
         static readonly Dictionary<string, OperatingSystemType> OperatingSystemTypeMapping = new Dictionary<string, OperatingSystemType>()
         {
             { "Windows", OperatingSystemType.Windows },
@@ -134,12 +125,6 @@ namespace Python.Runtime
         /// </summary>
         public static string OperatingSystemName { get; private set; }
 
-        public enum MachineType
-        {
-            i386,
-            x86_64,
-            Other
-        };
 
         /// <summary>
         /// Map lower-case version of the python machine name to the processor
@@ -156,6 +141,8 @@ namespace Python.Runtime
             ["amd64"] = MachineType.x86_64,
             ["x64"] = MachineType.x86_64,
             ["em64t"] = MachineType.x86_64,
+            ["armv7l"] = MachineType.armv7l,
+            ["armv8"] = MachineType.armv8,
         };
 
         /// <summary>
@@ -302,7 +289,13 @@ namespace Python.Runtime
 
             Error = new IntPtr(-1);
 
+            // Initialize data about the platform we're running on. We need
+            // this for the type manager and potentially other details. Must
+            // happen after caching the python types, above.
+            InitializePlatformData();
+
             IntPtr dllLocal = IntPtr.Zero;
+            var loader = LibraryLoader.Get(OperatingSystem);
 
             // Since `_PyObject_NextNotImplemented` would set to a heap class
             // for tp_iternext which doesn't implement __next__.

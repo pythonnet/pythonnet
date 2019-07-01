@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Text;
 
 namespace Python.Runtime
 {
@@ -555,12 +556,36 @@ namespace Python.Runtime
 
             if (binding == null)
             {
-                var value = "No method matches given arguments";
+                var value = new StringBuilder("No method matches given arguments");
                 if (methodinfo != null && methodinfo.Length > 0)
                 {
-                    value += $" for {methodinfo[0].Name}";
+                    value.Append($" for {methodinfo[0].Name}");
                 }
-                Exceptions.SetError(Exceptions.TypeError, value);
+
+                long argCount = Runtime.PyTuple_Size(args);
+                value.Append(": (");
+                for(long argIndex = 0; argIndex < argCount; argIndex++) {
+                    var arg = Runtime.PyTuple_GetItem(args, argIndex);
+                    if (arg != IntPtr.Zero) {
+                        var type = Runtime.PyObject_Type(arg);
+                        if (type != IntPtr.Zero) {
+                            try {
+                                var description = Runtime.PyObject_Unicode(type);
+                                if (description != IntPtr.Zero) {
+                                    value.Append(Runtime.GetManagedString(description));
+                                    Runtime.XDecref(description);
+                                }
+                            } finally {
+                                Runtime.XDecref(type);
+                            }
+                        }
+                    }
+
+                    if (argIndex + 1 < argCount)
+                        value.Append(", ");
+                }
+                value.Append(')');
+                Exceptions.SetError(Exceptions.TypeError, value.ToString());
                 return IntPtr.Zero;
             }
 
