@@ -15,7 +15,6 @@ import sys
 import sysconfig
 from distutils import spawn
 from distutils.command import install, build, build_ext, install_data, install_lib
-from wheel import bdist_wheel
 
 from setuptools import Extension, setup
 
@@ -594,21 +593,25 @@ class InstallPythonnet(install.install):
             _update_xlat_devtools()
         return install.install.run(self)
 
+try:
+    from wheel import bdist_wheel
+    class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
+        user_options = bdist_wheel.bdist_wheel.user_options + [("xplat", None, None)]
 
-class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
-    user_options = bdist_wheel.bdist_wheel.user_options + [("xplat", None, None)]
+        def initialize_options(self):
+            bdist_wheel.bdist_wheel.initialize_options(self)
+            self.xplat = None
 
-    def initialize_options(self):
-        bdist_wheel.bdist_wheel.initialize_options(self)
-        self.xplat = None
+        def finalize_options(self):
+            bdist_wheel.bdist_wheel.finalize_options(self)
 
-    def finalize_options(self):
-        bdist_wheel.bdist_wheel.finalize_options(self)
-
-    def run(self):
-        if self.xplat:
-            _update_xlat_devtools()
-        return bdist_wheel.bdist_wheel.run(self)
+        def run(self):
+            if self.xplat:
+                _update_xlat_devtools()
+            return bdist_wheel.bdist_wheel.run(self)
+except ImportError:
+    import warnings
+    warnings.warn("Wheel not installed, bdist_wheel command is disabled", stacklevel=2)
 
         ###############################################################################
 
@@ -621,9 +624,20 @@ setup_requires = []
 if not os.path.exists(_get_interop_filename()):
     setup_requires.append("pycparser")
 
+cmdclass={
+    "install": InstallPythonnet,
+    "build_ext": BuildExtPythonnet,
+    "install_lib": InstallLibPythonnet,
+    "install_data": InstallDataPythonnet,
+}
+try:
+    cmdclass["bdist_wheel"] = BDistWheelPythonnet
+except NameError:
+    pass
+
 setup(
     name="pythonnet",
-    version="2.4.1-dev",
+    version="2.4.0",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",
@@ -633,13 +647,7 @@ setup(
     long_description=_get_long_description(),
     ext_modules=[Extension("clr", sources=list(_get_source_files()))],
     data_files=[("{install_platlib}", ["{build_lib}/Python.Runtime.dll"])],
-    cmdclass={
-        "install": InstallPythonnet,
-        "build_ext": BuildExtPythonnet,
-        "install_lib": InstallLibPythonnet,
-        "install_data": InstallDataPythonnet,
-        "bdist_wheel": BDistWheelPythonnet,
-    },
+    cmdclass=cmdclass,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
