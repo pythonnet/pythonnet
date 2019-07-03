@@ -18,6 +18,11 @@ from distutils.command import install, build, build_ext, install_data, install_l
 
 from setuptools import Extension, setup
 
+try:
+    from wheel import bdist_wheel
+except ImportError:
+    bdist_wheel = None
+
 # Allow config/verbosity to be set from cli
 # http://stackoverflow.com/a/4792601/5208670
 CONFIG = "Release"  # Release or Debug
@@ -593,8 +598,7 @@ class InstallPythonnet(install.install):
             _update_xlat_devtools()
         return install.install.run(self)
 
-try:
-    from wheel import bdist_wheel
+if bdist_wheel:
     class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
         user_options = bdist_wheel.bdist_wheel.user_options + [("xplat", None, None)]
 
@@ -609,9 +613,6 @@ try:
             if self.xplat:
                 _update_xlat_devtools()
             return bdist_wheel.bdist_wheel.run(self)
-except ImportError:
-    import warnings
-    warnings.warn("Wheel not installed, bdist_wheel command is disabled", stacklevel=2)
 
         ###############################################################################
 
@@ -630,10 +631,8 @@ cmdclass={
     "install_lib": InstallLibPythonnet,
     "install_data": InstallDataPythonnet,
 }
-try:
+if bdist_wheel:
     cmdclass["bdist_wheel"] = BDistWheelPythonnet
-except NameError:
-    pass
 
 setup(
     name="pythonnet",
