@@ -1125,7 +1125,7 @@ def test_md_array_conversion():
 
     for i in range(5):
         for n in range(5):
-            items.SetValue(Spam(str((i, n))), (i, n))
+            items.SetValue(Spam(str((i, n))), i, n)
 
     result = ArrayConversionTest.EchoRangeMD(items)
 
