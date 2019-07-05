@@ -19,6 +19,7 @@
 -   Callum Noble ([@callumnoble](https://github.com/callumnoble))
 -   Christian Heimes ([@tiran](https://github.com/tiran))
 -   Christoph Gohlke ([@cgohlke](https://github.com/cgohlke))
+-   Christopher Bremner ([@chrisjbremner](https://github.com/chrisjbremner))
 -   Christopher Pow ([@christopherpow](https://github.com/christopherpow))
 -   Daniel Fernandez ([@fdanny](https://github.com/fdanny))
 -   Daniel Santana ([@dgsantana](https://github.com/dgsantana))

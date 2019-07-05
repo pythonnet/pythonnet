@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Changed
 
 -   Added argument types information to "No method matches given arguments" message
+-   Moved wheel import in setup.py inside of a try/except to prevent pip collection failures
 
 ### Fixed
 

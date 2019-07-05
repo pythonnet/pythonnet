@@ -15,9 +15,13 @@ import sys
 import sysconfig
 from distutils import spawn
 from distutils.command import install, build, build_ext, install_data, install_lib
-from wheel import bdist_wheel
 
 from setuptools import Extension, setup
+
+try:
+    from wheel import bdist_wheel
+except ImportError:
+    bdist_wheel = None
 
 # Allow config/verbosity to be set from cli
 # http://stackoverflow.com/a/4792601/5208670
@@ -594,21 +598,21 @@ class InstallPythonnet(install.install):
             _update_xlat_devtools()
         return install.install.run(self)
 
+if bdist_wheel:
+    class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
+        user_options = bdist_wheel.bdist_wheel.user_options + [("xplat", None, None)]
 
-class BDistWheelPythonnet(bdist_wheel.bdist_wheel):
-    user_options = bdist_wheel.bdist_wheel.user_options + [("xplat", None, None)]
+        def initialize_options(self):
+            bdist_wheel.bdist_wheel.initialize_options(self)
+            self.xplat = None
 
-    def initialize_options(self):
-        bdist_wheel.bdist_wheel.initialize_options(self)
-        self.xplat = None
+        def finalize_options(self):
+            bdist_wheel.bdist_wheel.finalize_options(self)
 
-    def finalize_options(self):
-        bdist_wheel.bdist_wheel.finalize_options(self)
-
-    def run(self):
-        if self.xplat:
-            _update_xlat_devtools()
-        return bdist_wheel.bdist_wheel.run(self)
+        def run(self):
+            if self.xplat:
+                _update_xlat_devtools()
+            return bdist_wheel.bdist_wheel.run(self)
 
         ###############################################################################
 
@@ -620,6 +624,15 @@ if setupdir:
 setup_requires = []
 if not os.path.exists(_get_interop_filename()):
     setup_requires.append("pycparser")
+
+cmdclass={
+    "install": InstallPythonnet,
+    "build_ext": BuildExtPythonnet,
+    "install_lib": InstallLibPythonnet,
+    "install_data": InstallDataPythonnet,
+}
+if bdist_wheel:
+    cmdclass["bdist_wheel"] = BDistWheelPythonnet
 
 setup(
     name="pythonnet",
@@ -633,13 +646,7 @@ setup(
     long_description=_get_long_description(),
     ext_modules=[Extension("clr", sources=list(_get_source_files()))],
     data_files=[("{install_platlib}", ["{build_lib}/Python.Runtime.dll"])],
-    cmdclass={
-        "install": InstallPythonnet,
-        "build_ext": BuildExtPythonnet,
-        "install_lib": InstallLibPythonnet,
-        "install_data": InstallDataPythonnet,
-        "bdist_wheel": BDistWheelPythonnet,
-    },
+    cmdclass=cmdclass,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
