@@ -119,6 +119,7 @@
     <Compile Include="moduleobject.cs" />
     <Compile Include="modulepropertyobject.cs" />
     <Compile Include="nativecall.cs" />
+    <Compile Include="operator.cs" />
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
     <Compile Include="pyansistring.cs" />

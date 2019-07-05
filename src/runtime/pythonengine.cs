@@ -586,7 +586,10 @@ namespace Python.Runtime
                     code, (IntPtr)flag, globals.Value, locals.Value
                 );
 
-                Runtime.CheckExceptionOccurred();
+                if (result == IntPtr.Zero)
+                {
+                    throw new PythonException();
+                }
 
                 return new PyObject(result);
             }

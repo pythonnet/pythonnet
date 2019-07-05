@@ -94,6 +94,7 @@
     <Compile Include="TestPyInt.cs" />
     <Compile Include="TestPyList.cs" />
     <Compile Include="TestPyLong.cs" />
+    <Compile Include="TestPyMethod.cs" />
     <Compile Include="TestPyNumber.cs" />
     <Compile Include="TestPyObject.cs" />
     <Compile Include="TestPySequence.cs" />

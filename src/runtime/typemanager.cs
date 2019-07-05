@@ -172,7 +172,11 @@ namespace Python.Runtime
             // that the type of the new type must PyType_Type at the time we
             // call this, else PyType_Ready will skip some slot initialization.
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) < 0)
+            {
+                throw new PythonException();
+            }
+            OperatorMethod.FixupSlots(type, clrType);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             string mn = clrType.Namespace ?? "";

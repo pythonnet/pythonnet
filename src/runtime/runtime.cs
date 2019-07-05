@@ -310,6 +310,7 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
+            OperatorMethod.Initialize();
             PyCLRMetaType = MetaType.Initialize();
             Exceptions.Initialize();
             ImportHook.Initialize();
@@ -374,6 +375,7 @@ namespace Python.Runtime
         internal static void Shutdown()
         {
             AssemblyManager.Shutdown();
+            OperatorMethod.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
             Finalizer.Shutdown();
