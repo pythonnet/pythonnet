@@ -26,7 +26,7 @@ namespace Python.Runtime
         /// Trace stack for PyObject's construction
         /// </summary>
         public StackTrace Traceback { get; private set; }
-#endif  
+#endif
 
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
@@ -954,20 +954,19 @@ namespace Python.Runtime
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = CheckNone(this.GetAttr(binder.Name));
-            return true;
+            result = this.GetAttr(binder.Name, null);
+            return result != null;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             IntPtr ptr = Converter.ToPython(value, value?.GetType());
             int r = Runtime.PyObject_SetAttrString(obj, binder.Name, ptr);
-            if (r < 0)
-            {
-                throw new PythonException();
-            }
+            bool success = r == 0;
+            if (!success)
+                Runtime.PyErr_Clear();
             Runtime.XDecref(ptr);
-            return true;
+            return success;
         }
 
         private void GetArgs(object[] inargs, CallInfo callInfo, out PyTuple args, out PyDict kwargs)
