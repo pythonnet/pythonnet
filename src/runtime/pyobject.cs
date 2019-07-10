@@ -954,8 +954,18 @@ namespace Python.Runtime
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = this.GetAttr(binder.Name, null);
-            return result != null;
+            var op = Runtime.PyObject_GetAttrString(obj, binder.Name);
+            if (op == IntPtr.Zero)
+            {
+                Runtime.PyErr_Clear();
+                result = null;
+                return false;
+            }
+            else
+            {
+                result = new PyObject(op);
+                return true;
+            }
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
