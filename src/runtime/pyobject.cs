@@ -966,7 +966,7 @@ namespace Python.Runtime
                 // TODO: Decide whether we want to keep this behaviour here and in
                 //       TrySetMember ("converts" None to null)
                 if (op != Runtime.PyNone)
-                    return new PyObject(op);
+                    result = new PyObject(op);
                 return true;
             }
         }
