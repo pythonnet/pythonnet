@@ -955,15 +955,18 @@ namespace Python.Runtime
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             var op = Runtime.PyObject_GetAttrString(obj, binder.Name);
+            result = null;
             if (op == IntPtr.Zero)
             {
                 Runtime.PyErr_Clear();
-                result = null;
                 return false;
             }
             else
             {
-                result = new PyObject(op);
+                // TODO: Decide whether we want to keep this behaviour here and in
+                //       TrySetMember ("converts" None to null)
+                if (op != Runtime.PyNone)
+                    return new PyObject(op);
                 return true;
             }
         }
