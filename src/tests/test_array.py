@@ -1337,3 +1337,34 @@ def test_array_abuse():
     with pytest.raises(TypeError):
         desc = Test.PublicArrayTest.__dict__['__setitem__']
         desc(0, 0, 0)
+
+
+@pytest.mark.skipif(PY2, reason="Only applies in Python 3")
+def test_iterator_to_array():
+    from System import Array, String
+
+    d = {"a": 1, "b": 2, "c": 3}
+    keys_iterator = iter(d.keys())
+    arr = Array[String](keys_iterator)
+
+    Array.Sort(arr)
+
+    assert arr[0] == "a"
+    assert arr[1] == "b"
+    assert arr[2] == "c"
+
+
+@pytest.mark.skipif(PY2, reason="Only applies in Python 3")
+def test_dict_keys_to_array():
+    from System import Array, String
+
+    d = {"a": 1, "b": 2, "c": 3}
+    d_keys = d.keys()
+    arr = Array[String](d_keys)
+
+    Array.Sort(arr)
+
+    assert arr[0] == "a"
+    assert arr[1] == "b"
+    assert arr[2] == "c"
+
