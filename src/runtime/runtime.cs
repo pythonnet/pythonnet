@@ -205,7 +205,6 @@ namespace Python.Runtime
             PyNotImplemented = PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = PyObject_GetAttrString(op, "object");
 
-            PyModuleType = PyObject_Type(op);
             PyNone = PyObject_GetAttrString(op, "None");
             PyTrue = PyObject_GetAttrString(op, "True");
             PyFalse = PyObject_GetAttrString(op, "False");
@@ -302,6 +301,7 @@ namespace Python.Runtime
                 dllLocal = loader.Load(_PythonDll);
             }
             _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
+            PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
 
             if (dllLocal != IntPtr.Zero)
             {
