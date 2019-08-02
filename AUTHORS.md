@@ -27,6 +27,7 @@
 -   David Lassonde ([@lassond](https://github.com/lassond))
 -   David Lechner ([@dlech](https://github.com/dlech))
 -   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
+-   Florian Treurniet ([@ftreurni](https://github.com/ftreurni))
 -   He-chien Tsai ([@t3476](https://github.com/t3476))
 -   Inna Wiesel ([@inna-w](https://github.com/inna-w))
 -   Ivan Cronyn ([@cronan](https://github.com/cronan))
