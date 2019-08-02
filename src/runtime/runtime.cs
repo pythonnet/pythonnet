@@ -205,7 +205,6 @@ namespace Python.Runtime
             PyNotImplemented = PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = PyObject_GetAttrString(op, "object");
 
-            PyModuleType = PyObject_Type(op);
             PyNone = PyObject_GetAttrString(op, "None");
             PyTrue = PyObject_GetAttrString(op, "True");
             PyFalse = PyObject_GetAttrString(op, "False");
@@ -302,6 +301,7 @@ namespace Python.Runtime
                 dllLocal = loader.Load(_PythonDll);
             }
             _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
+            PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
 
             if (dllLocal != IntPtr.Zero)
             {
@@ -769,8 +769,10 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyCFunction_Call(IntPtr func, IntPtr args, IntPtr kw);
 
+#if PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyClass_New(IntPtr bases, IntPtr dict, IntPtr name);
+#endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyInstance_New(IntPtr cls, IntPtr args, IntPtr kw);
@@ -1012,10 +1014,6 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyLong_FromString")]
         internal static extern IntPtr PyInt_FromString(string value, IntPtr end, int radix);
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyLong_GetMax")]
-        internal static extern int PyInt_GetMax();
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyInt_FromLong(IntPtr value);
