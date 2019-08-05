@@ -34,6 +34,7 @@
 -   Jan Krivanek ([@jakrivan](https://github.com/jakrivan))
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
+-   Joe Lidbetter ([@jmlidbetter](https://github.com/jmlidbetter))
 -   John Burnett ([@johnburnett](https://github.com/johnburnett))
 -   John Wilkes ([@jbw3](https://github.com/jbw3))
 -   Luke Stratman ([@lstratman](https://github.com/lstratman))

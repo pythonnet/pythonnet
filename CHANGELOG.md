@@ -16,6 +16,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added argument types information to "No method matches given arguments" message
 -   Moved wheel import in setup.py inside of a try/except to prevent pip collection failures
 -   Removes PyLong_GetMax and PyClass_New when targetting Python3
+-   Added support for converting python iterators to C# arrays
 
 ### Fixed
 
