@@ -776,3 +776,16 @@ def test_nested_generic_class():
     """Check nested generic classes."""
     # TODO NotImplemented
     pass
+
+def test_generic_array_method():
+    from Python.Test import GenericArrayArgumentTest
+
+    l = [1, 2, 3]
+    value = GenericArrayArgumentTest.GenericArrayArgumentMethod[int](l)
+    assert value == 1
+
+    with pytest.raises(TypeError):
+        _ = GenericArrayArgumentTest.GenericArrayArgumentMethod(l)
+    
+    with pytest.raises(TypeError):
+        _ = GenericArrayArgumentTest.GenericArrayArgumentMethod[str](l)

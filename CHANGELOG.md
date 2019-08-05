@@ -22,6 +22,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 - Fixed runtime that fails loading when using pythonnet in an environment
   together with Nuitka
+- Handle any exceptions thrown by TryConvertArgument (#933)
 
 ## [2.4.0][]
 

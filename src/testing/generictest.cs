@@ -125,4 +125,16 @@ namespace Python.Test
             return arg3;
         }
     }
+
+    public class GenericArrayArgumentTest
+    {
+        public GenericArrayArgumentTest()
+        {
+        }
+
+        public static int GenericArrayArgumentMethod<T>(T[] genericArray)
+        {
+            return 1;
+        }
+    }
 }

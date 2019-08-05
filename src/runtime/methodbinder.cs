@@ -417,22 +417,33 @@ namespace Python.Runtime
         static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
                                        out object arg, out bool isOut)
         {
-            arg = null;
-            isOut = false;
-            var clrtype = TryComputeClrArgumentType(parameterType, op, needsResolution: needsResolution);
-            if (clrtype == null)
+            try
             {
+                arg = null;
+                isOut = false;
+                var clrtype = TryComputeClrArgumentType(parameterType, op, needsResolution: needsResolution);
+                if (clrtype == null)
+                {
+                    return false;
+                }
+
+                if (!Converter.ToManaged(op, clrtype, out arg, false))
+                {
+                    Exceptions.Clear();
+                    return false;
+                }
+
+                isOut = clrtype.IsByRef;
+                return true;
+            }
+            catch
+            {
+                // Something blew up, but let's not crash the python
+                // interpreter!
+                arg = null;
+                isOut = false;
                 return false;
             }
-
-            if (!Converter.ToManaged(op, clrtype, out arg, false))
-            {
-                Exceptions.Clear();
-                return false;
-            }
-
-            isOut = clrtype.IsByRef;
-            return true;
         }
 
         static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
