@@ -17,11 +17,13 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Moved wheel import in setup.py inside of a try/except to prevent pip collection failures
 -   Removes PyLong_GetMax and PyClass_New when targetting Python3
 -   Added support for converting python iterators to C# arrays
+-   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
 
 ### Fixed
 
 - Fixed runtime that fails loading when using pythonnet in an environment
   together with Nuitka
+- Fixes bug where delegates get casts (dotnetcore)
 
 ## [2.4.0][]
 
