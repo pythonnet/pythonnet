@@ -4,16 +4,6 @@ using Python.Runtime.Slots;
 
 namespace Python.EmbeddingTest {
     public class TestInstanceWrapping {
-        [OneTimeSetUp]
-        public void SetUp() {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose() {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void GetAttrCanBeOverriden() {
             var overloaded = new Overloaded();
