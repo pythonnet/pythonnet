@@ -213,15 +213,18 @@ namespace Python.Runtime
         {
             if (Py_IsInitialized() == 0)
             {
+                Console.WriteLine("Runtime.Initialize(): Py_Initialize...");
                 Py_Initialize();
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
             if (PyEval_ThreadsInitialized() == 0)
             {
+                Console.WriteLine("Runtime.Initialize(): PyEval_InitThreads...");
                 PyEval_InitThreads();
             }
 
+            Console.WriteLine("Runtime.Initialize(): Initialize types...");
             IntPtr op;
             IntPtr dict;
             if (IsPython3)
@@ -326,6 +329,7 @@ namespace Python.Runtime
             XDecref(c);
             XDecref(d);
 #endif
+            Console.WriteLine("Runtime.Initialize(): Initialize types end.");
 
             Error = new IntPtr(-1);
 
@@ -343,7 +347,7 @@ namespace Python.Runtime
                 NativeMethods.FreeLibrary(dllLocal);
             }
 #endif
-
+            Console.WriteLine("Runtime.Initialize(): AssemblyManager.Initialize()...");
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             PyCLRMetaType = MetaType.Initialize();
@@ -357,6 +361,7 @@ namespace Python.Runtime
             IntPtr item = PyString_FromString(rtdir);
             PyList_Append(path, item);
             XDecref(item);
+            Console.WriteLine("Runtime.Initialize(): AssemblyManager.UpdatePath()...");
             AssemblyManager.UpdatePath();
         }
 
