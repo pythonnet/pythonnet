@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -164,6 +164,7 @@ namespace Python.Runtime
                 // during an initial "import clr", and the world ends shortly thereafter.
                 // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
                 delegateManager = new DelegateManager();
+                Console.WriteLine("PythonEngine.Initialize(): Runtime.Initialize()...");
                 Runtime.Initialize();
                 initialized = true;
                 Exceptions.Clear();
@@ -179,9 +180,11 @@ namespace Python.Runtime
                 string code =
                     "import atexit, clr\n" +
                     "atexit.register(clr._AtExit)\n";
+                Console.WriteLine("PythonEngine.Initialize(): register atexit callback...");
                 PythonEngine.Exec(code);
 
                 // Load the clr.py resource into the clr module
+                Console.WriteLine("PythonEngine.Initialize(): GetCLRModule()...");
                 IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
                 IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
 
@@ -193,6 +196,7 @@ namespace Python.Runtime
                     IntPtr builtins = Runtime.PyEval_GetBuiltins();
                     Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
+                    Console.WriteLine("PythonEngine.Initialize(): clr GetManifestResourceStream...");
                     Assembly assembly = Assembly.GetExecutingAssembly();
                     using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
                     using (var reader = new StreamReader(stream))
