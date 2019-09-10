@@ -776,6 +776,9 @@ def test_no_object_in_param():
 
     res = MethodTest.TestOverloadedNoObject(5)
     assert res == "Got int"
+    
+    res = MethodTest.TestOverloadedNoObject(i=7)
+    assert res == "Got int"
 
     with pytest.raises(TypeError):
         MethodTest.TestOverloadedNoObject("test")
@@ -787,8 +790,14 @@ def test_object_in_param():
 
     res = MethodTest.TestOverloadedObject(5)
     assert res == "Got int"
+    
+    res = MethodTest.TestOverloadedObject(i=7)
+    assert res == "Got int"
 
     res = MethodTest.TestOverloadedObject("test")
+    assert res == "Got object"
+    
+    res = MethodTest.TestOverloadedObject(o="test")
     assert res == "Got object"
 
 
@@ -811,6 +820,42 @@ def test_object_in_multiparam():
     assert res == "Got string-int"
 
     res = MethodTest.TestOverloadedObjectTwo(7.24, 7.24)
+    assert res == "Got object-object"
+
+    res = MethodTest.TestOverloadedObjectTwo(a=5, b=5)
+    assert res == "Got int-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(5, b=5)
+    assert res == "Got int-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(a=5, b="foo")
+    assert res == "Got int-string"
+
+    res = MethodTest.TestOverloadedObjectTwo(5, b="foo")
+    assert res == "Got int-string"
+
+    res = MethodTest.TestOverloadedObjectTwo(a="foo", b=7.24)
+    assert res == "Got string-object"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", b=7.24)
+    assert res == "Got string-object"
+
+    res = MethodTest.TestOverloadedObjectTwo(a="foo", b="bar")
+    assert res == "Got string-string"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", b="bar")
+    assert res == "Got string-string"
+
+    res = MethodTest.TestOverloadedObjectTwo(a="foo", b=5)
+    assert res == "Got string-int"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", b=5)
+    assert res == "Got string-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(a=7.24, b=7.24)
+    assert res == "Got object-object"
+
+    res = MethodTest.TestOverloadedObjectTwo(7.24, b=7.24)
     assert res == "Got object-object"
 
 
