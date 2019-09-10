@@ -344,6 +344,12 @@ namespace Python.Runtime
             // gather a list of all of the namespaces contributed to by
             // the assembly.
 
+            // skip this assembly, it causes 'GetTypes' call to hang
+            if (assembly.FullName.StartsWith("System.Windows.Forms"))
+            {
+                return;
+            }
+
             Type[] types = assembly.GetTypes();
             foreach (Type t in types)
             {
