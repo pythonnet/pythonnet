@@ -545,13 +545,6 @@ namespace Python.Runtime
             var match = false;
             paramsArray = false;
 
-            // check to make sure that all kwarg names match real parameter names
-            var paramNames = parameters.Select(p => p.Name).ToArray();
-            if (kwargDict.Keys.Any(key => !paramNames.Contains(key)))
-            {
-                return false;
-            }
-
             if (positionalArgumentCount == parameters.Length)
             {
                 match = true;
