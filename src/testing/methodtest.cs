@@ -651,6 +651,11 @@ namespace Python.Test
         {
             return "Casesensitive";
         }
+
+        public static string DefaultParams(int a=0, int b=0, int c=0, int d=0)
+        {
+            return string.Format("{0}{1}{2}{3}", a, b, c, d);
+        }
     }
 
 

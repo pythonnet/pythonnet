@@ -1011,3 +1011,37 @@ def test_getting_overloaded_constructor_binding_does_not_leak_ref_count():
     # simple test
     refCount = sys.getrefcount(PlainOldClass.Overloads[int])
     assert refCount == 1
+
+
+def test_default_params():
+    # all positional parameters
+    res = MethodTest.DefaultParams(1,2,3,4)
+    assert res == "1234"
+
+    res = MethodTest.DefaultParams(1, 2, 3)
+    assert res == "1230"
+
+    res = MethodTest.DefaultParams(1, 2)
+    assert res == "1200"
+
+    res = MethodTest.DefaultParams(1)
+    assert res == "1000"
+
+    res = MethodTest.DefaultParams(a=2)
+    assert res == "2000"
+
+    res = MethodTest.DefaultParams(b=3)
+    assert res == "0300"
+
+    res = MethodTest.DefaultParams(c=4)
+    assert res == "0040"
+
+    res = MethodTest.DefaultParams(d=7)
+    assert res == "0007"
+
+    res = MethodTest.DefaultParams(a=2, c=5)
+    assert res == "2050"
+
+    res = MethodTest.DefaultParams(1, d=7, c=3)
+    assert res == "1037"
+
