@@ -512,12 +512,8 @@ namespace Python.Runtime
                             return I386;
                         case MachineType.x86_64:
                             return X86_64;
-                        case MachineType.armv7l:
-                            return Armv7l;
-                        case MachineType.armv8:
-                            return Armv8;
                         default:
-                            throw new NotImplementedException($"No support for {Runtime.MachineName}");
+                            return null;
                     }
                 }
             }
@@ -552,34 +548,6 @@ namespace Python.Runtime
             /// <see cref="NativeCode.X86_64"/>
             /// </summary>
             public static readonly NativeCode I386 = X86_64;
-
-            public static readonly NativeCode Armv7l = new NativeCode()
-            {
-                Return0 = 0,
-                Return1 = 0x08,
-                Code = new byte[]
-                {
-                    0xe3, 0xa0, 0x00, 0x00, // mov r0, #0
-                    0xe1, 0x2f, 0xff, 0x1e, // bx lr
-
-                    0xe3, 0xa0, 0x00, 0x01, // mov r0, #1
-                    0xe1, 0x2f, 0xff, 0x1e, // bx lr
-                }
-            };
-
-            public static readonly NativeCode Armv8 = new NativeCode()
-            {
-                Return0 = 0,
-                Return1 = 0x08,
-                Code = new byte[]
-                {
-                    0x52, 0x80, 0x00, 0x00, // mov w0, #0x0
-                    0xd6, 0x5f, 0x03, 0xc0, // ret
-
-                    0x52, 0x80, 0x00, 0x20, // mov w0, #0x1
-                    0xd6, 0x5f, 0x03, 0xc0, // ret
-                }
-            };
         }
 
         /// <summary>
@@ -702,7 +670,7 @@ namespace Python.Runtime
             Marshal.Copy(NativeCode.Active.Code, 0, NativeCodePage, codeLength);
             mapper.SetReadExec(NativeCodePage, codeLength);
         }
-#endregion
+        #endregion
 
         /// <summary>
         /// Given a newly allocated Python type object and a managed Type that
@@ -745,20 +713,39 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
-            // See the TestDomainReload test: there was a crash related to
-            // the gc-related slots. They always return 0 or 1 because we don't
-            // really support gc:
+            var native = NativeCode.Active;
+
+            // The garbage collection related slots always have to return 1 or 0
+            // since .NET objects don't take part in Python's gc:
             //   tp_traverse (returns 0)
             //   tp_clear    (returns 0)
             //   tp_is_gc    (returns 1)
-            // We can't do without: python really wants those slots to exist.
-            // We can't implement those in C# because the application domain
-            // can be shut down and the memory released.
-            InitializeNativeCodePage();
-            InitializeSlot(type, NativeCodePage + NativeCode.Active.Return0, "tp_traverse");
-            InitializeSlot(type, NativeCodePage + NativeCode.Active.Return0, "tp_clear");
-            InitializeSlot(type, NativeCodePage + NativeCode.Active.Return1, "tp_is_gc");
+            // These have to be defined, though, so by default we fill these with
+            // static C# functions from this class.
+
+            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
+            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method);
+
+            if (native != null)
+            {
+                // If we want to support domain reload, the C# implementation
+                // cannot be used as the assembly may get released before
+                // CPython calls these functions. Instead, for amd64 and x86 we
+                // load them into a separate code page that is leaked
+                // intentionally.
+                InitializeNativeCodePage();
+                ret1 = NativeCodePage + native.Return1;
+                ret0 = NativeCodePage + native.Return0;
+            }
+
+            InitializeSlot(type, ret0, "tp_traverse");
+            InitializeSlot(type, ret0, "tp_clear");
+            InitializeSlot(type, ret1, "tp_is_gc");
         }
+
+        static int Return1(IntPtr _) => 1;
+
+        static int Return0(IntPtr _) => 0;
 
         /// <summary>
         /// Helper for InitializeSlots.
