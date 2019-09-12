@@ -32,19 +32,21 @@ namespace Python.Runtime
 
         public static void Void_Call_1(IntPtr fp, IntPtr a1)
         {
-            ((Void_1_Delegate)Marshal.GetDelegateForFunctionPointer(fp, typeof(Void_1_Delegate)))(a1);
+            var d = Marshal.GetDelegateForFunctionPointer<Interop.DestructorFunc>(fp);
+            d(a1);
         }
 
         public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
         {
-            var d = (Interop.TernaryFunc)Marshal.GetDelegateForFunctionPointer(fp, typeof(Interop.TernaryFunc));
+            var d = Marshal.GetDelegateForFunctionPointer<Interop.TernaryFunc>(fp);
             return d(a1, a2, a3);
         }
 
 
         public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
         {
-            return ((Int_3_Delegate)Marshal.GetDelegateForFunctionPointer(fp, typeof(Int_3_Delegate)))(a1, a2, a3);
+            var d = Marshal.GetDelegateForFunctionPointer<Interop.ObjObjArgFunc>(fp);
+            return d(a1, a2, a3);
         }
 #else
         private static AssemblyBuilder aBuilder;
