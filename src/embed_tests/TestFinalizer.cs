@@ -45,7 +45,7 @@ namespace Python.EmbeddingTest
                 called = true;
             };
 
-            Assert.IsFalse(called);
+            Assert.IsFalse(called, "The event handler was called before it was installed");
             Finalizer.Instance.CollectOnce += handler;
 
             WeakReference shortWeak;
@@ -55,13 +55,25 @@ namespace Python.EmbeddingTest
             }
             FullGCCollect();
             // The object has been resurrected
-            Assert.IsFalse(shortWeak.IsAlive);
-            Assert.IsTrue(longWeak.IsAlive);
+            Warn.If(
+                shortWeak.IsAlive,
+                "The referenced object is alive although it should have been collected",
+                shortWeak
+            );
+            Assert.IsTrue(
+                longWeak.IsAlive,
+                "The reference object is not alive although it should still be",
+                longWeak
+            );
 
             {
                 var garbage = Finalizer.Instance.GetCollectedObjects();
-                Assert.NotZero(garbage.Count);
-                Assert.IsTrue(garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)));
+                Assert.NotZero(garbage.Count, "There should still be garbage around");
+                Warn.Unless(
+                    garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)),
+                    $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
+                    garbage
+                );
             }
             try
             {
@@ -71,7 +83,7 @@ namespace Python.EmbeddingTest
             {
                 Finalizer.Instance.CollectOnce -= handler;
             }
-            Assert.IsTrue(called);
+            Assert.IsTrue(called, "The event handler was not called during finalization");
             Assert.GreaterOrEqual(objectCount, 1);
         }
 

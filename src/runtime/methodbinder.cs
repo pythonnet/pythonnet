@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -279,6 +282,22 @@ namespace Python.Runtime
         {
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
+
+            var kwargDict = new Dictionary<string, IntPtr>();
+            if (kw != IntPtr.Zero)
+            {
+                var pynkwargs = (int)Runtime.PyDict_Size(kw);
+                IntPtr keylist = Runtime.PyDict_Keys(kw);
+                IntPtr valueList = Runtime.PyDict_Values(kw);
+                for (int i = 0; i < pynkwargs; ++i)
+                {
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist, i));
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i);
+                }
+                Runtime.XDecref(keylist);
+                Runtime.XDecref(valueList);
+            }
+
             var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
             if (info != null)
@@ -302,11 +321,12 @@ namespace Python.Runtime
                 ArrayList defaultArgList;
                 bool paramsArray;
 
-                if (!MatchesArgumentCount(pynargs, pi, out paramsArray, out defaultArgList)) {
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList))
+                {
                     continue;
                 }
                 var outs = 0;
-                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, defaultArgList,
+                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,
                     outs: out outs);
 
@@ -350,19 +370,21 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Attempts to convert Python argument tuple into an array of managed objects,
-        /// that can be passed to a method.
+        /// Attempts to convert Python positional argument tuple and keyword argument table
+        /// into an array of managed objects, that can be passed to a method.
         /// </summary>
         /// <param name="pi">Information about expected parameters</param>
         /// <param name="paramsArray"><c>true</c>, if the last parameter is a params array.</param>
         /// <param name="args">A pointer to the Python argument tuple</param>
         /// <param name="pyArgCount">Number of arguments, passed by Python</param>
+        /// <param name="kwargDict">Dictionary of keyword argument name to python object pointer</param>
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>An array of .NET arguments, that can be passed to a method.</returns>
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
             IntPtr args, int pyArgCount,
+            Dictionary<string, IntPtr> kwargDict,
             ArrayList defaultArgList,
             bool needsResolution,
             out int outs)
@@ -373,7 +395,10 @@ namespace Python.Runtime
 
             for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
             {
-                if (paramIndex >= pyArgCount)
+                var parameter = pi[paramIndex];
+                bool hasNamedParam = kwargDict.ContainsKey(parameter.Name);
+
+                if (paramIndex >= pyArgCount && !hasNamedParam)
                 {
                     if (defaultArgList != null)
                     {
@@ -383,12 +408,19 @@ namespace Python.Runtime
                     continue;
                 }
 
-                var parameter = pi[paramIndex];
-                IntPtr op = (arrayStart == paramIndex)
-                    // map remaining Python arguments to a tuple since
-                    // the managed function accepts it - hopefully :]
-                    ? Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount)
-                    : Runtime.PyTuple_GetItem(args, paramIndex);
+                IntPtr op;
+                if (hasNamedParam)
+                {
+                    op = kwargDict[parameter.Name];
+                }
+                else
+                {
+                    op = (arrayStart == paramIndex)
+                        // map remaining Python arguments to a tuple since
+                        // the managed function accepts it - hopefully :]
+                        ? Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount)
+                        : Runtime.PyTuple_GetItem(args, paramIndex);
+                }
 
                 bool isOut;
                 if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut))
@@ -504,7 +536,8 @@ namespace Python.Runtime
             return clrtype;
         }
 
-        static bool MatchesArgumentCount(int argumentCount, ParameterInfo[] parameters,
+        static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
+            Dictionary<string, IntPtr> kwargDict,
             out bool paramsArray,
             out ArrayList defaultArgList)
         {
@@ -512,21 +545,40 @@ namespace Python.Runtime
             var match = false;
             paramsArray = false;
 
-            if (argumentCount == parameters.Length)
+            if (positionalArgumentCount == parameters.Length)
             {
                 match = true;
-            } else if (argumentCount < parameters.Length)
+            }
+            else if (positionalArgumentCount < parameters.Length)
             {
+                // every parameter past 'positionalArgumentCount' must have either
+                // a corresponding keyword argument or a default parameter
                 match = true;
                 defaultArgList = new ArrayList();
-                for (var v = argumentCount; v < parameters.Length; v++) {
-                    if (parameters[v].DefaultValue == DBNull.Value) {
+                for (var v = positionalArgumentCount; v < parameters.Length; v++)
+                {
+                    if (kwargDict.ContainsKey(parameters[v].Name))
+                    {
+                        // we have a keyword argument for this parameter,
+                        // no need to check for a default parameter, but put a null
+                        // placeholder in defaultArgList
+                        defaultArgList.Add(null);
+                    }
+                    else if (parameters[v].IsOptional)
+                    {
+                        // IsOptional will be true if the parameter has a default value,
+                        // or if the parameter has the [Optional] attribute specified.
+                        // The GetDefaultValue() extension method will return the value
+                        // to be passed in as the parameter value
+                        defaultArgList.Add(parameters[v].GetDefaultValue());
+                    }
+                    else
+                    {
                         match = false;
-                    } else {
-                        defaultArgList.Add(parameters[v].DefaultValue);
                     }
                 }
-            } else if (argumentCount > parameters.Length && parameters.Length > 0 &&
+            }
+            else if (positionalArgumentCount > parameters.Length && parameters.Length > 0 &&
                        Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)))
             {
                 // This is a `foo(params object[] bar)` style method
@@ -555,12 +607,36 @@ namespace Python.Runtime
 
             if (binding == null)
             {
-                var value = "No method matches given arguments";
+                var value = new StringBuilder("No method matches given arguments");
                 if (methodinfo != null && methodinfo.Length > 0)
                 {
-                    value += $" for {methodinfo[0].Name}";
+                    value.Append($" for {methodinfo[0].Name}");
                 }
-                Exceptions.SetError(Exceptions.TypeError, value);
+
+                long argCount = Runtime.PyTuple_Size(args);
+                value.Append(": (");
+                for(long argIndex = 0; argIndex < argCount; argIndex++) {
+                    var arg = Runtime.PyTuple_GetItem(args, argIndex);
+                    if (arg != IntPtr.Zero) {
+                        var type = Runtime.PyObject_Type(arg);
+                        if (type != IntPtr.Zero) {
+                            try {
+                                var description = Runtime.PyObject_Unicode(type);
+                                if (description != IntPtr.Zero) {
+                                    value.Append(Runtime.GetManagedString(description));
+                                    Runtime.XDecref(description);
+                                }
+                            } finally {
+                                Runtime.XDecref(type);
+                            }
+                        }
+                    }
+
+                    if (argIndex + 1 < argCount)
+                        value.Append(", ");
+                }
+                value.Append(')');
+                Exceptions.SetError(Exceptions.TypeError, value.ToString());
                 return IntPtr.Zero;
             }
 
@@ -695,6 +771,35 @@ namespace Python.Runtime
             this.inst = inst;
             this.args = args;
             this.outs = outs;
+        }
+    }
+
+
+    static internal class ParameterInfoExtensions
+    {
+        public static object GetDefaultValue(this ParameterInfo parameterInfo)
+        {
+            // parameterInfo.HasDefaultValue is preferable but doesn't exist in .NET 4.0
+            bool hasDefaultValue = (parameterInfo.Attributes & ParameterAttributes.HasDefault) ==
+                ParameterAttributes.HasDefault;
+
+            if (hasDefaultValue)
+            {
+                return parameterInfo.DefaultValue;
+            }
+            else
+            {
+                // [OptionalAttribute] was specified for the parameter.
+                // See https://stackoverflow.com/questions/3416216/optionalattribute-parameters-default-value
+                // for rules on determining the value to pass to the parameter
+                var type = parameterInfo.ParameterType;
+                if (type == typeof(object))
+                    return Type.Missing;
+                else if (type.IsValueType)
+                    return Activator.CreateInstance(type);
+                else
+                    return null;
+            }
         }
     }
 }

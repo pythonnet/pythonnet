@@ -3,9 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Python.Runtime.Platform;
 
 namespace Python.Runtime
 {
+
     /// <summary>
     /// The TypeManager class is responsible for building binary-compatible
     /// Python type objects that are implemented in managed code.
@@ -504,14 +506,14 @@ namespace Python.Runtime
             {
                 get
                 {
-                    switch(Runtime.Machine)
+                    switch (Runtime.Machine)
                     {
-                        case Runtime.MachineType.i386:
+                        case MachineType.i386:
                             return I386;
-                        case Runtime.MachineType.x86_64:
+                        case MachineType.x86_64:
                             return X86_64;
                         default:
-                            throw new NotImplementedException($"No support for {Runtime.MachineName}");
+                            return null;
                     }
                 }
             }
@@ -603,9 +605,9 @@ namespace Python.Runtime
                 {
                     switch (Runtime.OperatingSystem)
                     {
-                        case Runtime.OperatingSystemType.Darwin:
+                        case OperatingSystemType.Darwin:
                             return 0x1000;
-                        case Runtime.OperatingSystemType.Linux:
+                        case OperatingSystemType.Linux:
                             return 0x20;
                         default:
                             throw new NotImplementedException($"mmap is not supported on {Runtime.OperatingSystemName}");
@@ -636,10 +638,10 @@ namespace Python.Runtime
         {
             switch (Runtime.OperatingSystem)
             {
-                case Runtime.OperatingSystemType.Darwin:
-                case Runtime.OperatingSystemType.Linux:
+                case OperatingSystemType.Darwin:
+                case OperatingSystemType.Linux:
                     return new UnixMemoryMapper();
-                case Runtime.OperatingSystemType.Windows:
+                case OperatingSystemType.Windows:
                     return new WindowsMemoryMapper();
                 default:
                     throw new NotImplementedException($"No support for {Runtime.OperatingSystemName}");
@@ -668,7 +670,7 @@ namespace Python.Runtime
             Marshal.Copy(NativeCode.Active.Code, 0, NativeCodePage, codeLength);
             mapper.SetReadExec(NativeCodePage, codeLength);
         }
-#endregion
+        #endregion
 
         /// <summary>
         /// Given a newly allocated Python type object and a managed Type that
@@ -711,20 +713,39 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
-            // See the TestDomainReload test: there was a crash related to
-            // the gc-related slots. They always return 0 or 1 because we don't
-            // really support gc:
+            var native = NativeCode.Active;
+
+            // The garbage collection related slots always have to return 1 or 0
+            // since .NET objects don't take part in Python's gc:
             //   tp_traverse (returns 0)
             //   tp_clear    (returns 0)
             //   tp_is_gc    (returns 1)
-            // We can't do without: python really wants those slots to exist.
-            // We can't implement those in C# because the application domain
-            // can be shut down and the memory released.
-            InitializeNativeCodePage();
-            InitializeSlot(type, NativeCodePage + NativeCode.Active.Return0, "tp_traverse");
-            InitializeSlot(type, NativeCodePage + NativeCode.Active.Return0, "tp_clear");
-            InitializeSlot(type, NativeCodePage + NativeCode.Active.Return1, "tp_is_gc");
+            // These have to be defined, though, so by default we fill these with
+            // static C# functions from this class.
+
+            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
+            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method);
+
+            if (native != null)
+            {
+                // If we want to support domain reload, the C# implementation
+                // cannot be used as the assembly may get released before
+                // CPython calls these functions. Instead, for amd64 and x86 we
+                // load them into a separate code page that is leaked
+                // intentionally.
+                InitializeNativeCodePage();
+                ret1 = NativeCodePage + native.Return1;
+                ret0 = NativeCodePage + native.Return0;
+            }
+
+            InitializeSlot(type, ret0, "tp_traverse");
+            InitializeSlot(type, ret0, "tp_clear");
+            InitializeSlot(type, ret1, "tp_is_gc");
         }
+
+        static int Return1(IntPtr _) => 1;
+
+        static int Return0(IntPtr _) => 0;
 
         /// <summary>
         /// Helper for InitializeSlots.

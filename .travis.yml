@@ -1,80 +1,17 @@
-dist: trusty
+dist: xenial
 sudo: false
 language: python
-  
-matrix:
-  include:
-# --------------------- XPLAT builds ------------------------
-    - python: 2.7
-      env: &xplat-env
-        - BUILD_OPTS=--xplat
-        - NUNIT_PATH=~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe
-      addons: &xplat-addons
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
-            
-    - python: 3.5
-      env: *xplat-env
-      addons: *xplat-addons
-
-    - python: 3.6
-      env: *xplat-env
-      addons: *xplat-addons
-      
-    - python: 3.7
-      env: *xplat-env
-      dist: xenial
-      sudo: true
-      addons: &xplat-addons-xenial
-        apt:
-          sources:
-          - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main
-            key_url: https://packages.microsoft.com/keys/microsoft.asc
-          - sourceline: deb https://download.mono-project.com/repo/ubuntu stable-xenial main
-            key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
-            - dotnet-hostfxr-2.0.0
-            - dotnet-runtime-2.0.0
-            - dotnet-sdk-2.0.0
-
-# --------------------- Classic builds ------------------------
-    - python: 2.7
-      env: &classic-env
-        - BUILD_OPTS=
-        - NUNIT_PATH=./packages/NUnit.*/tools/nunit3-console.exe
-
-    - python: 3.5
-      env: *classic-env
-
-    - python: 3.6
-      env: *classic-env
-
-    - python: 3.7
-      env: *classic-env
-      dist: xenial
-      sudo: true
-      addons:
-        apt:
-          sources:
-            - sourceline: deb http://download.mono-project.com/repo/ubuntu xenial main
-              key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
-          packages:
-            - mono-devel
-            - ca-certificates-mono
+python:
+    - 2.7
+    - 3.5
+    - 3.6
+    - 3.7
 
 env:
+  matrix:
+    - BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp2.0_publish/
+    - BUILD_OPTS="" NUNIT_PATH="./packages/NUnit.*/tools/nunit3-console.exe" RUN_TESTS="mono $NUNIT_PATH" EMBED_TESTS_PATH=""
+
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
     - SEGFAULT_SIGNALS=all
@@ -84,11 +21,16 @@ env:
 addons:
   apt:
     sources:
-      - sourceline: deb http://download.mono-project.com/repo/ubuntu trusty main
+      - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main
+        key_url: https://packages.microsoft.com/keys/microsoft.asc
+      - sourceline: deb http://download.mono-project.com/repo/ubuntu stable-xenial/snapshots/5.20 main
         key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
     packages:
       - mono-devel
       - ca-certificates-mono
+      - dotnet-hostfxr-2.2
+      - dotnet-runtime-2.2
+      - dotnet-sdk-2.2
 
 before_install:
   # Set-up dll path for embedded tests
@@ -102,13 +44,9 @@ install:
 
 script:
   - python -m pytest
-  - mono $NUNIT_PATH src/embed_tests/bin/Python.EmbeddingTest.dll
-  - if [[ $BUILD_OPTS == --xplat ]]; then dotnet src/embed_tests/bin/netcoreapp2.0_publish/Python.EmbeddingTest.dll; fi
+  - $RUN_TESTS src/embed_tests/bin/$EMBED_TESTS_PATH/Python.EmbeddingTest.dll
 
 after_script:
-  # Uncomment if need to geninterop, ie. py37 final
-  # - python tools/geninterop/geninterop.py
-
   # Waiting on mono-coverage, SharpCover or xr.Baboon
   - coverage xml -i
   - codecov --file coverage.xml --flags setup_linux
