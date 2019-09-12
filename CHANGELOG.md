@@ -18,6 +18,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Removes PyLong_GetMax and PyClass_New when targetting Python3
 -   Added support for converting python iterators to C# arrays
 -   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
+-   Added support for kwarg parameters when calling .NET methods from Python
 
 ### Fixed
 
