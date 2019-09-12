@@ -564,17 +564,17 @@ namespace Python.Runtime
                         // placeholder in defaultArgList
                         defaultArgList.Add(null);
                     }
+                    else if (parameters[v].IsOptional)
+                    {
+                        // IsOptional will be true if the parameter has a default value,
+                        // or if the parameter has the [Optional] attribute specified.
+                        // The GetDefaultValue() extension method will return the value
+                        // to be passed in as the parameter value
+                        defaultArgList.Add(parameters[v].GetDefaultValue());
+                    }
                     else
                     {
-                        // find default parameter
-                        if (parameters[v].DefaultValue == DBNull.Value)
-                        {
-                            match = false;
-                        }
-                        else
-                        {
-                            defaultArgList.Add(parameters[v].DefaultValue);
-                        }
+                        match = false;
                     }
                 }
             }
@@ -771,6 +771,35 @@ namespace Python.Runtime
             this.inst = inst;
             this.args = args;
             this.outs = outs;
+        }
+    }
+
+
+    static internal class ParameterInfoExtensions
+    {
+        public static object GetDefaultValue(this ParameterInfo parameterInfo)
+        {
+            // parameterInfo.HasDefaultValue is preferable but doesn't exist in .NET 4.0
+            bool hasDefaultValue = (parameterInfo.Attributes & ParameterAttributes.HasDefault) ==
+                ParameterAttributes.HasDefault;
+
+            if (hasDefaultValue)
+            {
+                return parameterInfo.DefaultValue;
+            }
+            else
+            {
+                // [OptionalAttribute] was specified for the parameter.
+                // See https://stackoverflow.com/questions/3416216/optionalattribute-parameters-default-value
+                // for rules on determining the value to pass to the parameter
+                var type = parameterInfo.ParameterType;
+                if (type == typeof(object))
+                    return Type.Missing;
+                else if (type.IsValueType)
+                    return Activator.CreateInstance(type);
+                else
+                    return null;
+            }
         }
     }
 }

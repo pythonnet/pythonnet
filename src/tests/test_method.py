@@ -1045,3 +1045,86 @@ def test_default_params():
     res = MethodTest.DefaultParams(1, d=7, c=3)
     assert res == "1037"
 
+    with pytest.raises(TypeError):
+        MethodTest.DefaultParams(1,2,3,4,5)
+
+def test_optional_params():
+    res = MethodTest.OptionalParams(1, 2, 3, 4)
+    assert res == "1234"
+
+    res = MethodTest.OptionalParams(1, 2, 3)
+    assert res == "1230"
+
+    res = MethodTest.OptionalParams(1, 2)
+    assert res == "1200"
+
+    res = MethodTest.OptionalParams(1)
+    assert res == "1000"
+
+    res = MethodTest.OptionalParams(a=2)
+    assert res == "2000"
+
+    res = MethodTest.OptionalParams(b=3)
+    assert res == "0300"
+
+    res = MethodTest.OptionalParams(c=4)
+    assert res == "0040"
+
+    res = MethodTest.OptionalParams(d=7)
+    assert res == "0007"
+
+    res = MethodTest.OptionalParams(a=2, c=5)
+    assert res == "2050"
+
+    res = MethodTest.OptionalParams(1, d=7, c=3)
+    assert res == "1037"
+
+    res = MethodTest.OptionalParams_TestMissing()
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestMissing(None)
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestMissing(a = None)
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestMissing(a='hi')
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestReferenceType()
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestReferenceType(None)
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestReferenceType(a=None)
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestReferenceType('hi')
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestReferenceType(a='hi')
+    assert res == False
+
+def test_optional_and_default_params():
+
+    res = MethodTest.OptionalAndDefaultParams()
+    assert res == "0000"
+
+    res = MethodTest.OptionalAndDefaultParams(1)
+    assert res == "1000"
+
+    res = MethodTest.OptionalAndDefaultParams(1, c=4)
+    assert res == "1040"
+
+    res = MethodTest.OptionalAndDefaultParams(b=4, c=7)
+    assert res == "0470"
+
+    res = MethodTest.OptionalAndDefaultParams2()
+    assert res == "0012"
+
+    res = MethodTest.OptionalAndDefaultParams2(a=1,b=2,c=3,d=4)
+    assert res == "1234"
+
+    res = MethodTest.OptionalAndDefaultParams2(b=2, c=3)
+    assert res == "0232"
