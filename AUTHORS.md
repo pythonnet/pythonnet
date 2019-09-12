@@ -35,6 +35,7 @@
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
 -   Joe Lidbetter ([@jmlidbetter](https://github.com/jmlidbetter))
+-   Joe Savage ([@s4v4g3](https://github.com/s4v4g3))
 -   John Burnett ([@johnburnett](https://github.com/johnburnett))
 -   John Wilkes ([@jbw3](https://github.com/jbw3))
 -   Luke Stratman ([@lstratman](https://github.com/lstratman))
