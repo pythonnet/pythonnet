@@ -14,7 +14,7 @@
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
-    <LangVersion>6</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <RestorePackages>true</RestorePackages>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
@@ -80,6 +80,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Codecs.cs" />
     <Compile Include="dynamic.cs" />
     <Compile Include="pyimport.cs" />
     <Compile Include="pyinitialize.cs" />
