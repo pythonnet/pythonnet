@@ -242,12 +242,12 @@ namespace Python.Runtime
 
                 //First check which type in the object hierarchy provides ToString()
                 //ToString has two "official" overloads so loop over GetMethods to get the one without parameters
-		var method = type.GetMethod("ToString", new Type[]{});
-		if (method.DeclaringTyppe != typeof(object))
-		{
+		            var method = type.GetMethod("ToString", new Type[]{});
+          		  if (method.DeclaringTyppe != typeof(object))
+		            {
                     //match!  something other than object provides a parameter-less overload of ToString
-		    return Runtime.Pystring_FromString(co.inst.ToString());
-		}
+		                return Runtime.Pystring_FromString(co.inst.ToString());
+		            }
 
                 //If the object defines __repr__, call it.
                 System.Reflection.MethodInfo reprMethodInfo = instType.GetMethod("__repr__");
