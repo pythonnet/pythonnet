@@ -242,25 +242,18 @@ namespace Python.Runtime
 
                 //First check which type in the object hierarchy provides ToString()
                 //ToString has two "official" overloads so loop over GetMethods to get the one without parameters
-                var instType = co.inst.GetType();
-                foreach (var method in instType.GetMethods())
-                {
-
-                    //TODO this could probably be done more cleanly with Linq
-                    if (!method.IsPublic) continue; //skip private/protected methods
-                    if (method.Name != "ToString") continue; //only look for ToString
-                    if (method.DeclaringType == typeof(object)) continue; //ignore default from object
-                    if (method.GetParameters().Length != 0) continue; //ignore Formatter overload of ToString
-
+		var method = type.GetMethod("ToString", new Type[]{});
+		if (method.DeclaringTyppe != typeof(object))
+		{
                     //match!  something other than object provides a parameter-less overload of ToString
-                    return Runtime.PyString_FromString(co.inst.ToString());
-                }
+		    return Runtime.Pystring_FromString(co.inst.ToString());
+		}
 
                 //If the object defines __repr__, call it.
                 System.Reflection.MethodInfo reprMethodInfo = instType.GetMethod("__repr__");
                 if (reprMethodInfo != null && reprMethodInfo.IsPublic)
                 {
-                    var reprString = reprMethodInfo.Invoke(co.inst, null) as string;
+                    var reprString = (string)reprMethodInfo.Invoke(co.inst, null);
                     return Runtime.PyString_FromString(reprString);
                 }
 
