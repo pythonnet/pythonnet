@@ -55,6 +55,11 @@ namespace Python.Runtime
             try
             {
                 var co = (CLRObject)GetManagedObject(ob);
+                if (co == null)
+                {
+                    Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
+                    return IntPtr.Zero;
+                }
                 result = info.GetValue(co.inst);
                 return Converter.ToPython(result, info.FieldType);
             }
@@ -115,6 +120,11 @@ namespace Python.Runtime
                 if (!is_static)
                 {
                     var co = (CLRObject)GetManagedObject(ob);
+                    if (co == null)
+                    {
+                        Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
+                        return -1;
+                    }
                     info.SetValue(co.inst, newval);
                 }
                 else

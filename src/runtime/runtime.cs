@@ -165,20 +165,25 @@ namespace Python.Runtime
         /// </summary>
         internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
+        private static PyReferenceCollection _typeRefs;
+
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize(bool initSigs = false)
+        internal static void Initialize(bool initSigs = false, bool softShutdown = false)
         {
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
+                if (PyEval_ThreadsInitialized() == 0)
+                {
+                    PyEval_InitThreads();
+                }
+                if (softShutdown)
+                {
+                    RuntimeState.Save();
+                }
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
-            }
-
-            if (PyEval_ThreadsInitialized() == 0)
-            {
-                PyEval_InitThreads();
             }
 
             IsFinalizing = false;
@@ -202,19 +207,22 @@ namespace Python.Runtime
                 dict = PyImport_GetModuleDict();
                 op = PyDict_GetItemString(dict, "__builtin__");
             }
-            PyNotImplemented = PyObject_GetAttrString(op, "NotImplemented");
-            PyBaseObjectType = PyObject_GetAttrString(op, "object");
 
-            PyNone = PyObject_GetAttrString(op, "None");
-            PyTrue = PyObject_GetAttrString(op, "True");
-            PyFalse = PyObject_GetAttrString(op, "False");
+            _typeRefs = new PyReferenceCollection();
+            SetPyMember(ref PyNotImplemented, PyObject_GetAttrString(op, "NotImplemented"));
 
-            PyBoolType = PyObject_Type(PyTrue);
-            PyNoneType = PyObject_Type(PyNone);
-            PyTypeType = PyObject_Type(PyNoneType);
+            SetPyMember(ref PyBaseObjectType, PyObject_GetAttrString(op, "object"));
+
+            SetPyMember(ref PyNone, PyObject_GetAttrString(op, "None"));
+            SetPyMember(ref PyTrue, PyObject_GetAttrString(op, "True"));
+            SetPyMember(ref PyFalse, PyObject_GetAttrString(op, "False"));
+
+            SetPyMember(ref PyBoolType, PyObject_Type(PyTrue));
+            SetPyMember(ref PyNoneType, PyObject_Type(PyNone));
+            SetPyMember(ref PyTypeType, PyObject_Type(PyNoneType));
 
             op = PyObject_GetAttrString(dict, "keys");
-            PyMethodType = PyObject_Type(op);
+            SetPyMember(ref PyMethodType, PyObject_Type(op));
             XDecref(op);
 
             // For some arcane reason, builtins.__dict__.__setitem__ is *not*
@@ -222,49 +230,53 @@ namespace Python.Runtime
             //
             // object.__init__ seems safe, though.
             op = PyObject_GetAttrString(PyBaseObjectType, "__init__");
-            PyWrapperDescriptorType = PyObject_Type(op);
+            SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op));
             XDecref(op);
+
+            op = PyDict_GetItemString(dict, "KeyError");
+            XIncref(op);
+            SetPyMember(ref PyExc_KeyError, op);
 
 #if PYTHON3
             XDecref(dict);
 #endif
 
             op = PyString_FromString("string");
-            PyStringType = PyObject_Type(op);
+            SetPyMember(ref PyStringType, PyObject_Type(op));
             XDecref(op);
 
             op = PyUnicode_FromString("unicode");
-            PyUnicodeType = PyObject_Type(op);
+            SetPyMember(ref PyUnicodeType, PyObject_Type(op));
             XDecref(op);
 
 #if PYTHON3
             op = PyBytes_FromString("bytes");
-            PyBytesType = PyObject_Type(op);
+            SetPyMember(ref PyBytesType, PyObject_Type(op));
             XDecref(op);
 #endif
 
             op = PyTuple_New(0);
-            PyTupleType = PyObject_Type(op);
+            SetPyMember(ref PyTupleType, PyObject_Type(op));
             XDecref(op);
 
             op = PyList_New(0);
-            PyListType = PyObject_Type(op);
+            SetPyMember(ref PyListType, PyObject_Type(op));
             XDecref(op);
 
             op = PyDict_New();
-            PyDictType = PyObject_Type(op);
+            SetPyMember(ref PyDictType, PyObject_Type(op));
             XDecref(op);
 
             op = PyInt_FromInt32(0);
-            PyIntType = PyObject_Type(op);
+            SetPyMember(ref PyIntType, PyObject_Type(op));
             XDecref(op);
 
             op = PyLong_FromLong(0);
-            PyLongType = PyObject_Type(op);
+            SetPyMember(ref PyLongType, PyObject_Type(op));
             XDecref(op);
 
             op = PyFloat_FromDouble(0);
-            PyFloatType = PyObject_Type(op);
+            SetPyMember(ref PyFloatType, PyObject_Type(op));
             XDecref(op);
 
 #if PYTHON3
@@ -275,10 +287,10 @@ namespace Python.Runtime
             IntPtr d = PyDict_New();
 
             IntPtr c = PyClass_New(IntPtr.Zero, d, s);
-            PyClassType = PyObject_Type(c);
+            SetPyObject(ref PyClassType, PyObject_Type(c));
 
             IntPtr i = PyInstance_New(c, IntPtr.Zero, IntPtr.Zero);
-            PyInstanceType = PyObject_Type(i);
+            SetPyObject(ref PyInstanceType, PyObject_Type(i));
 
             XDecref(s);
             XDecref(i);
@@ -310,7 +322,7 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-            PyCLRMetaType = MetaType.Initialize();
+            SetPyMember(ref PyCLRMetaType, MetaType.Initialize());
             Exceptions.Initialize();
             ImportHook.Initialize();
 
@@ -371,12 +383,65 @@ namespace Python.Runtime
             Machine = MType;
         }
 
-        internal static void Shutdown()
+        internal static void Shutdown(bool soft)
         {
+            if (Py_IsInitialized() == 0)
+            {
+                return;
+            }
             AssemblyManager.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
             Finalizer.Shutdown();
+
+            ClearClrModules();
+            ClassManager.RemoveClasses();
+            TypeManager.RemoveTypes();
+            RemoveClrRootModule();
+
+            {
+                //var intialModules = PySys_GetObject("initial_modules");
+                //var modules = PyImport_GetModuleDict();
+                //foreach (var name in RuntimeState.GetModuleNames())
+                //{
+                //    if (PySet_Contains(intialModules, name) == 1)
+                //    {
+                //        continue;
+                //    }
+                //    var module = PyDict_GetItem(modules, name);
+                //    IntPtr clr_dict = Runtime._PyObject_GetDictPtr(module); // PyObject**
+                //    clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
+                //    PyDict_Clear(clr_dict);
+                //    PyDict_DelItem(modules, name);
+                //}
+            }
+            if (soft)
+            {
+                PyGC_Collect();
+                RemoveClrObjects();
+                RuntimeState.Restore();
+                //var objs = ManagedType.GetManagedObjects();
+                //var subIterp = PyThreadState_Swap(_originIterp);
+                //var iterp = PyThreadState_Get();
+                //Py_EndInterpreter(iterp);
+                //PyGILState_Ensure();
+                ResetPyMembers();
+//                Runtime.PyRun_SimpleString(@"
+//import gc, pprint, objgraph
+//print()
+//with open('R:/objsx.log', 'w', encoding='utf8') as f:
+//    pprint.pprint(objgraph.show_growth(), f)
+//    #pprint.pprint(objgraph.typestats(), f)
+
+//#lst = gc.get_objects()
+//#with open('R:/objs.log', 'w', encoding='utf8') as f:
+// #   for obj in lst:
+//  #      pprint.pprint(obj, f)
+//#del lst
+//");
+                return;
+            }
+            ResetPyMembers();
             Py_Finalize();
         }
 
@@ -388,6 +453,69 @@ namespace Python.Runtime
                 IsFinalizing = true;
             }
             return 0;
+        }
+
+        private static void SetPyMember(ref IntPtr obj, IntPtr value)
+        {
+            PythonException.ThrowIfIsNull(value);
+            obj = value;
+            // XXX: Is it safe for all platforms?
+            unsafe
+            {
+                fixed (void* p = &obj)
+                {
+                    _typeRefs.Add((IntPtr)p);
+                }
+            }
+        }
+
+        private static void ResetPyMembers()
+        {
+            _typeRefs.Release();
+            _typeRefs = null;
+        }
+
+        private static void ClearClrModules()
+        {
+            var modules = PyImport_GetModuleDict();
+            var items = PyDict_Items(modules);
+            long length = PyList_Size(items);
+            for (long i = 0; i < length; i++)
+            {
+                var item = PyList_GetItem(items, i);
+                var name = PyTuple_GetItem(item, 0);
+                var module = PyTuple_GetItem(item, 1);
+                var clrModule = ManagedType.GetManagedObject(module);
+                if (clrModule != null)
+                {
+                    PyDict_DelItem(modules, name);
+                }
+            }
+            XDecref(items);
+        }
+
+        private static void RemoveClrRootModule()
+        {
+            var modules = PyImport_GetModuleDict();
+            PyDictTryDelItem(modules, "CLR");
+            PyDictTryDelItem(modules, "clr");
+            PyDictTryDelItem(modules, "clr._extra");
+        }
+
+        private static void PyDictTryDelItem(IntPtr dict, string key)
+        {
+            if (PyDict_DelItemString(dict, key) == 0)
+            {
+                return;
+            }
+            if (!PythonException.Matches(PyExc_KeyError))
+            {
+                throw new PythonException();
+            }
+        }
+
+        private static void RemoveClrObjects()
+        {
         }
 
         internal static IntPtr Py_single_input = (IntPtr)256;
@@ -431,6 +559,8 @@ namespace Python.Runtime
         internal static IntPtr PyFalse;
         internal static IntPtr PyNone;
         internal static IntPtr Error;
+
+        internal static IntPtr PyExc_KeyError;
 
         /// <summary>
         /// Check if any Python Exceptions occurred.
@@ -1068,6 +1198,19 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyFloatType;
         }
 
+        /// <summary>
+        /// Return value: New reference.
+        /// Create a Python integer from the pointer p. The pointer value can be retrieved from the resulting value using PyLong_AsVoidPtr().
+        /// </summary>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyLong_FromVoidPtr(IntPtr p);
+
+        /// <summary>
+        /// Convert a Python integer pylong to a C void pointer. If pylong cannot be converted, an OverflowError will be raised. This is only assured to produce a usable void pointer for values created with PyLong_FromVoidPtr().
+        /// </summary>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyLong_AsVoidPtr(IntPtr ob);
+
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyFloat_FromDouble(double value);
 
@@ -1464,9 +1607,16 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDictProxy_New(IntPtr dict);
 
+        /// <summary>
+        /// Return value: Borrowed reference.
+        /// Return NULL if the key key is not present, but without setting an exception.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_GetItem(IntPtr pointer, IntPtr key);
 
+        /// <summary>
+        /// Return value: Borrowed reference.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_GetItemString(IntPtr pointer, string key);
 
@@ -1512,6 +1662,21 @@ namespace Python.Runtime
         internal static extern IntPtr _PyDict_Size(IntPtr pointer);
 
 
+        /// <summary>
+        /// Return value: New reference.
+        /// </summary>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PySet_New(IntPtr iterable);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PySet_Add(IntPtr set, IntPtr key);
+
+        /// <summary>
+        /// Return 1 if found, 0 if not found, and -1 if an error is encountered. 
+        /// </summary>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PySet_Contains(IntPtr anyset, IntPtr key);
+
         //====================================================================
         // Python list API
         //====================================================================
@@ -1532,6 +1697,10 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_AsTuple(IntPtr pointer);
 
+        /// <summary>
+        /// Return value: Borrowed reference.
+        /// If index is out of bounds, return NULL and set an IndexError exception.
+        /// </summary>
         internal static IntPtr PyList_GetItem(IntPtr pointer, long index)
         {
             return PyList_GetItem(pointer, new IntPtr(index));
@@ -1711,6 +1880,10 @@ namespace Python.Runtime
         );
 #endif
 
+        /// <summary>
+        /// Return value: Borrowed reference.
+        /// Return the object name from the sys module or NULL if it does not exist, without setting an exception.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PySys_GetObject(string name);
 
@@ -1750,6 +1923,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
+        /// <summary>
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type’s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);
 
@@ -1777,6 +1953,8 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyObject_GC_UnTrack(IntPtr tp);
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void _PyObject_Dump(IntPtr ob);
 
         //====================================================================
         // Python memory API
@@ -1842,6 +2020,54 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
 
+        //====================================================================
+        // Python GC API
+        //====================================================================
+
+        internal const int _PyGC_REFS_SHIFT = 1;
+        internal const long _PyGC_REFS_UNTRACKED = -2;
+        internal const long _PyGC_REFS_REACHABLE = -3;
+        internal const long _PyGC_REFS_TENTATIVELY_UNREACHABLE = -4;
+
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyGC_Collect();
+
+        internal static IntPtr _Py_AS_GC(IntPtr ob)
+        {
+            // XXX: PyGC_Head has a force alignment depend on platform.
+            // See PyGC_Head in objimpl.h for more details.
+            return Is32Bit ? ob - 16 : ob - 24;
+        }
+
+        internal static IntPtr _Py_FROM_GC(IntPtr gc)
+        {
+            return Is32Bit ? gc + 16 : gc + 24;
+        }
+
+        internal static IntPtr _PyGCHead_REFS(IntPtr gc)
+        {
+            unsafe
+            {
+                var pGC = (PyGC_Head*)gc;
+                var refs = pGC->gc.gc_refs;
+                if (Is32Bit)
+                {
+                    return new IntPtr(refs.ToInt32() >> _PyGC_REFS_SHIFT);
+                }
+                return new IntPtr(refs.ToInt64() >> _PyGC_REFS_SHIFT);
+            }
+        }
+
+        internal static IntPtr _PyGC_REFS(IntPtr ob)
+        {
+            return _PyGCHead_REFS(_Py_AS_GC(ob));
+        }
+
+        internal static bool _PyObject_GC_IS_TRACKED(IntPtr ob)
+        {
+            return (long)_PyGC_REFS(ob) != _PyGC_REFS_UNTRACKED;
+        }
 
         //====================================================================
         // Miscellaneous
@@ -1858,5 +2084,35 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_MakePendingCalls();
+    }
+
+
+    class PyReferenceCollection
+    {
+        public List<IntPtr> Objects { get; private set; }
+
+        public PyReferenceCollection()
+        {
+            Objects = new List<IntPtr>();
+        }
+
+        public void Add(IntPtr obj)
+        {
+            Objects.Add(obj);
+        }
+
+        public void Release()
+        {
+            foreach (var objRef in Objects)
+            {
+                unsafe
+                {
+                    var p = (void**)objRef;
+                    Runtime.XDecref((IntPtr)(*p));
+                    *p = null;
+                }
+            }
+            Objects.Clear();
+        }
     }
 }

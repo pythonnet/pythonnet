@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Python.Runtime.Platform;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -20,7 +21,6 @@ namespace Python.Runtime
         static TypeManager()
         {
             tbFlags = BindingFlags.Public | BindingFlags.Static;
-            cache = new Dictionary<Type, IntPtr>(128);
         }
 
         public static void Reset()
@@ -28,7 +28,22 @@ namespace Python.Runtime
             cache = new Dictionary<Type, IntPtr>(128);
         }
 
+        public static IList<IntPtr> GetManagedTypes()
+        {
+            return cache.Values.ToArray();
+        }
+
+        internal static void RemoveTypes()
+        {
+            foreach (var tpHandle in cache.Values)
+            {
+                Runtime.XDecref(tpHandle);
+            }
+            cache.Clear();
+        }
+
         /// <summary>
+        /// Return value: Borrowed reference.
         /// Given a managed Type derived from ExtensionType, get the handle to
         /// a Python type object that delegates its implementation to the Type
         /// object. These Python type instances are used to implement internal
@@ -94,11 +109,15 @@ namespace Python.Runtime
                         TypeFlags.HeapType | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.XDecref(mod);
 
             InitMethods(type, impl);
 
@@ -172,20 +191,23 @@ namespace Python.Runtime
             // that the type of the new type must PyType_Type at the time we
             // call this, else PyType_Ready will skip some slot initialization.
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             string mn = clrType.Namespace ?? "";
             IntPtr mod = Runtime.PyString_FromString(mn);
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.XDecref(mod);
 
             // Hide the gchandle of the implementation in a magic type slot.
-            GCHandle gc = GCHandle.Alloc(impl);
+            GCHandle gc = impl.AllocGCHandle();
             Marshal.WriteIntPtr(type, TypeOffset.magic(), (IntPtr)gc);
 
             // Set the handle attributes on the implementing instance.
-            impl.tpHandle = Runtime.PyCLRMetaType;
-            impl.gcHandle = gc;
+            impl.tpHandle = type;
             impl.pyHandle = type;
 
             //DebugUtil.DumpType(type);
@@ -309,17 +331,17 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
 
+            // Slots will inherit from TypeType, it's not neccesary for setting them.
             // Copy gc and other type slots from the base Python metatype.
+            //CopySlot(py_type, type, TypeOffset.tp_basicsize);
+            //CopySlot(py_type, type, TypeOffset.tp_itemsize);
 
-            CopySlot(py_type, type, TypeOffset.tp_basicsize);
-            CopySlot(py_type, type, TypeOffset.tp_itemsize);
+            //CopySlot(py_type, type, TypeOffset.tp_dictoffset);
+            //CopySlot(py_type, type, TypeOffset.tp_weaklistoffset);
 
-            CopySlot(py_type, type, TypeOffset.tp_dictoffset);
-            CopySlot(py_type, type, TypeOffset.tp_weaklistoffset);
-
-            CopySlot(py_type, type, TypeOffset.tp_traverse);
-            CopySlot(py_type, type, TypeOffset.tp_clear);
-            CopySlot(py_type, type, TypeOffset.tp_is_gc);
+            //CopySlot(py_type, type, TypeOffset.tp_traverse);
+            //CopySlot(py_type, type, TypeOffset.tp_clear);
+            //CopySlot(py_type, type, TypeOffset.tp_is_gc);
 
             // Override type slots with those of the managed implementation.
 
@@ -352,7 +374,10 @@ namespace Python.Runtime
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
@@ -394,7 +419,10 @@ namespace Python.Runtime
 
             InitializeSlots(type, impl);
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
@@ -738,9 +766,10 @@ namespace Python.Runtime
                 ret0 = NativeCodePage + native.Return0;
             }
 
-            InitializeSlot(type, ret0, "tp_traverse");
-            InitializeSlot(type, ret0, "tp_clear");
-            InitializeSlot(type, ret1, "tp_is_gc");
+            bool canOverride = !PythonEngine.SoftShutdown;
+            InitializeSlot(type, ret0, "tp_traverse", canOverride);
+            InitializeSlot(type, ret0, "tp_clear", canOverride);
+            // InitializeSlot(type, ret1, "tp_is_gc");
         }
 
         static int Return1(IntPtr _) => 1;
@@ -757,12 +786,17 @@ namespace Python.Runtime
         /// <param name="type">Type being initialized.</param>
         /// <param name="slot">Function pointer.</param>
         /// <param name="name">Name of the method.</param>
-        static void InitializeSlot(IntPtr type, IntPtr slot, string name)
+        /// <param name="canOverride">Can override the slot when it existed</param>
+        static void InitializeSlot(IntPtr type, IntPtr slot, string name, bool canOverride = true)
         {
             Type typeOffset = typeof(TypeOffset);
             FieldInfo fi = typeOffset.GetField(name);
             var offset = (int)fi.GetValue(typeOffset);
 
+            if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
+            {
+                return;
+            }
             Marshal.WriteIntPtr(type, offset, slot);
         }
 

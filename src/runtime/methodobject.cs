@@ -109,6 +109,17 @@ namespace Python.Runtime
             return is_static;
         }
 
+        private void ClearMembers()
+        {
+            Runtime.XDecref(doc);
+            doc = IntPtr.Zero;
+            if (unbound != null)
+            {
+                Runtime.XDecref(unbound.pyHandle);
+                unbound = null;
+            }
+        }
+
         /// <summary>
         /// Descriptor __getattribute__ implementation.
         /// </summary>
@@ -196,12 +207,15 @@ namespace Python.Runtime
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (MethodObject)GetManagedObject(ob);
-            Runtime.XDecref(self.doc);
-            if (self.unbound != null)
-            {
-                Runtime.XDecref(self.unbound.pyHandle);
-            }
+            self.ClearMembers();
             ExtensionType.FinalizeObject(self);
+        }
+
+        public new static int tp_clear(IntPtr ob)
+        {
+            var self = (MethodObject)GetManagedObject(ob);
+            self.ClearMembers();
+            return ExtensionType.tp_clear(ob);
         }
     }
 }

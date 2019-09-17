@@ -72,12 +72,29 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() != 0)
+            if (Runtime.Py_IsInitialized() == 0)
             {
-                Runtime.XDecref(py_clr_module);
-                Runtime.XDecref(root.pyHandle);
-                Runtime.XDecref(py_import);
+                return;
             }
+            IntPtr dict = Runtime.PyImport_GetModuleDict();
+            IntPtr mod = Runtime.IsPython3 ?
+                Runtime.PyImport_ImportModule("builtins")
+                : Runtime.PyDict_GetItemString(dict, "__builtin__");
+            Runtime.PyObject_SetAttrString(mod, "__import__", py_import);
+
+            Runtime.XDecref(py_clr_module);
+            py_clr_module = IntPtr.Zero;
+
+            Runtime.XDecref(root.pyHandle);
+            root = null;
+
+            hook.Dispose();
+            hook = null;
+
+            Runtime.XDecref(py_import);
+            py_import = IntPtr.Zero;
+
+            CLRModule.Reset();
         }
 
         /// <summary>

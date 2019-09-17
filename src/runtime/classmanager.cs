@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -26,7 +27,6 @@ namespace Python.Runtime
 
         static ClassManager()
         {
-            cache = new Dictionary<Type, ClassBase>(128);
             // SEE: https://msdn.microsoft.com/en-us/library/96b1ayy4(v=vs.100).aspx
             // ""All delegates inherit from MulticastDelegate, which inherits from Delegate.""
             // Was Delegate, which caused a null MethodInfo returned from GetMethode("Invoke")
@@ -37,6 +37,49 @@ namespace Python.Runtime
         public static void Reset()
         {
             cache = new Dictionary<Type, ClassBase>(128);
+        }
+
+        public static IList<ClassBase> GetManagedTypes()
+        {
+            return cache.Values.ToArray(); // Make a copy.
+        }
+
+        internal static void RemoveClasses()
+        {
+            var visited = new HashSet<IntPtr>();
+            var visitedHandle = GCHandle.Alloc(visited);
+            var visitedPtr = (IntPtr)visitedHandle;
+            try
+            {
+                foreach (var cls in cache.Values)
+                {
+                    cls.TypeTraverse(OnVisit, visitedPtr);
+                    // XXX: Force release some resouces.
+                    cls.TypeClear();
+                    //Runtime.XDecref(cls.pyHandle);
+                }
+            }
+            finally
+            {
+                visitedHandle.Free();
+            }
+        }
+
+        private static int OnVisit(IntPtr ob, IntPtr arg)
+        {
+            var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
+            if (visited.Contains(ob))
+            {
+                return 0;
+            }
+            visited.Add(ob);
+            var clrObj = ManagedType.GetManagedObject(ob);
+            if (clrObj != null)
+            {
+                clrObj.TypeTraverse(OnVisit, arg);
+                clrObj.TypeClear();
+            }
+            return 0;
         }
 
         /// <summary>
@@ -134,7 +177,6 @@ namespace Python.Runtime
 
 
             IntPtr tp = TypeManager.GetTypeHandle(impl, type);
-            impl.tpHandle = tp;
 
             // Finally, initialize the class __dict__ and return the object.
             IntPtr dict = Marshal.ReadIntPtr(tp, TypeOffset.tp_dict);
@@ -146,6 +188,9 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
+                // info.members are already useless
+                Runtime.XDecref(item.pyHandle);
+                item.pyHandle = IntPtr.Zero;
             }
 
             // If class has constructors, generate an __doc__ attribute.

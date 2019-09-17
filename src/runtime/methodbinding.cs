@@ -36,6 +36,14 @@ namespace Python.Runtime
         {
         }
 
+        private void ClearMembers()
+        {
+            Runtime.XDecref(target);
+            target = IntPtr.Zero;
+            Runtime.XDecref(targetType);
+            targetType = IntPtr.Zero;
+        }
+
         /// <summary>
         /// Implement binding of generic methods using the subscript syntax [].
         /// </summary>
@@ -237,9 +245,15 @@ namespace Python.Runtime
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (MethodBinding)GetManagedObject(ob);
-            Runtime.XDecref(self.target);
-            Runtime.XDecref(self.targetType);
+            self.ClearMembers();
             FinalizeObject(self);
+        }
+
+        public new static int tp_clear(IntPtr ob)
+        {
+            var self = (MethodBinding)GetManagedObject(ob);
+            self.ClearMembers();
+            return ExtensionType.tp_clear(ob);
         }
     }
 }

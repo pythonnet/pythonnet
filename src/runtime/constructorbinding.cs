@@ -147,6 +147,17 @@ namespace Python.Runtime
             Runtime.XDecref(self.pyTypeHndl);
             ExtensionType.FinalizeObject(self);
         }
+
+        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
+        {
+            var self = (ConstructorBinding)GetManagedObject(ob);
+            int res = PyVisit(self.pyTypeHndl, visit, arg);
+            if (res != 0) return res;
+
+            res = PyVisit(self.repr, visit, arg);
+            if (res != 0) return res;
+            return 0;
+        }
     }
 
     /// <summary>
@@ -232,6 +243,17 @@ namespace Python.Runtime
             Runtime.XDecref(self.repr);
             Runtime.XDecref(self.pyTypeHndl);
             FinalizeObject(self);
+        }
+
+        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
+        {
+            var self = (BoundContructor)GetManagedObject(ob);
+            int res = PyVisit(self.pyTypeHndl, visit, arg);
+            if (res != 0) return res;
+
+            res = PyVisit(self.repr, visit, arg);
+            if (res != 0) return res;
+            return 0;
         }
     }
 }

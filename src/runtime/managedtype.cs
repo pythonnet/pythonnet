@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -14,6 +16,48 @@ namespace Python.Runtime
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
+#if NPY_TRACK_OBJECT
+        private static readonly HashSet<ManagedType> _managedObjs = new HashSet<ManagedType>();
+#endif
+
+        internal void DecrRefCount()
+        {
+            Runtime.XDecref(pyHandle);
+        }
+
+        internal long RefCount
+        {
+            get
+            {
+                var gs = Runtime.PyGILState_Ensure();
+                try
+                {
+                    return Runtime.Refcount(pyHandle);
+                }
+                finally
+                {
+                    Runtime.PyGILState_Release(gs);
+                }
+            }
+        }
+
+        internal GCHandle AllocGCHandle()
+        {
+            gcHandle = GCHandle.Alloc(this);
+#if NPY_TRACK_OBJECT
+            _managedObjs.Add(this);
+#endif
+            return gcHandle;
+        }
+
+        internal void FreeGCHandle()
+        {
+            gcHandle.Free();
+#if NPY_TRACK_OBJECT
+            _managedObjs.Remove(this);
+#endif
+            gcHandle = new GCHandle();
+        }
 
         /// <summary>
         /// Given a Python object, return the associated managed object or null.
@@ -74,6 +118,67 @@ namespace Python.Runtime
                 }
             }
             return false;
+        }
+
+#if NPY_TRACK_OBJECT
+        internal static void Reset()
+        {
+            _managedObjs.Clear();
+        }
+
+        internal static ICollection<ManagedType> GetManagedObjects()
+        {
+            return _managedObjs;
+        }
+#endif
+
+        internal static int PyVisit(IntPtr ob, IntPtr visit, IntPtr arg)
+        {
+            if (ob == IntPtr.Zero)
+            {
+                return 0;
+            }
+            var visitFunc = (Interop.ObjObjFunc)Marshal.GetDelegateForFunctionPointer(visit, typeof(Interop.ObjObjFunc));
+            return visitFunc(ob, arg);
+        }
+
+        /// <summary>
+        /// Wrapper for calling tp_clear
+        /// </summary>
+        internal void TypeClear()
+        {
+            if (tpHandle == IntPtr.Zero || pyHandle == IntPtr.Zero)
+            {
+                return;
+            }
+            var clearPtr = Marshal.ReadIntPtr(tpHandle, TypeOffset.tp_clear);
+            if (clearPtr == IntPtr.Zero)
+            {
+                return;
+            }
+            var clearFunc = (Interop.InquiryFunc)Marshal.GetDelegateForFunctionPointer(clearPtr, typeof(Interop.InquiryFunc));
+            // TODO: Handle errors base on return value
+            clearFunc(pyHandle);
+        }
+
+        /// <summary>
+        /// Wrapper for calling tp_traverse
+        /// </summary>
+        internal void TypeTraverse(Interop.ObjObjFunc visitproc, IntPtr arg)
+        {
+            if (tpHandle == IntPtr.Zero || pyHandle == IntPtr.Zero)
+            {
+                return;
+            }
+            var traversePtr = Marshal.ReadIntPtr(tpHandle, TypeOffset.tp_traverse);
+            if (traversePtr == IntPtr.Zero)
+            {
+                return;
+            }
+            var traverseFunc = (Interop.ObjObjArgFunc)Marshal.GetDelegateForFunctionPointer(traversePtr, typeof(Interop.ObjObjArgFunc));
+            var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
+            // TODO: Handle errors base on return value
+            traverseFunc(pyHandle, visiPtr, arg);
         }
     }
 }

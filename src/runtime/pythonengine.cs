@@ -12,6 +12,8 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
+        public static bool SoftShutdown { get; private set; }
+
         private static DelegateManager delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
@@ -140,9 +142,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false, bool softShutdown = false)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, softShutdown);
         }
 
         /// <summary>
@@ -155,35 +157,40 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, bool softShutdown = false)
         {
-            if (!initialized)
+            if (initialized)
             {
-                // Creating the delegateManager MUST happen before Runtime.Initialize
-                // is called. If it happens afterwards, DelegateManager's CodeGenerator
-                // throws an exception in its ctor.  This exception is eaten somehow
-                // during an initial "import clr", and the world ends shortly thereafter.
-                // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
-                delegateManager = new DelegateManager();
-                Runtime.Initialize(initSigs);
-                initialized = true;
-                Exceptions.Clear();
+                return;
+            }
+            // Creating the delegateManager MUST happen before Runtime.Initialize
+            // is called. If it happens afterwards, DelegateManager's CodeGenerator
+            // throws an exception in its ctor.  This exception is eaten somehow
+            // during an initial "import clr", and the world ends shortly thereafter.
+            // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
+            delegateManager = new DelegateManager();
+            Runtime.Initialize(initSigs, softShutdown);
+            initialized = true;
+            SoftShutdown = softShutdown;
+            Exceptions.Clear();
 
-                // Make sure we clean up properly on app domain unload.
-                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+            // Make sure we clean up properly on app domain unload.
+            AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
-                // Remember to shut down the runtime.
-                AddShutdownHandler(Runtime.Shutdown);
+            // Remember to shut down the runtime.
+            AddShutdownHandler(() => Runtime.Shutdown(softShutdown));
 
-                // The global scope gets used implicitly quite early on, remember
-                // to clear it out when we shut down.
-                AddShutdownHandler(PyScopeManager.Global.Clear);
+            // The global scope gets used implicitly quite early on, remember
+            // to clear it out when we shut down.
+            AddShutdownHandler(PyScopeManager.Global.Clear);
 
-                if (setSysArgv)
-                {
-                    Py.SetArgv(args);
-                }
+            if (setSysArgv)
+            {
+                Py.SetArgv(args);
+            }
 
+            if (!softShutdown)
+            {
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
                 // are called while the python engine is still running).
@@ -191,46 +198,51 @@ namespace Python.Runtime
                     "import atexit, clr\n" +
                     "atexit.register(clr._AtExit)\n";
                 PythonEngine.Exec(code);
+            }
 
-                // Load the clr.py resource into the clr module
-                IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
-                IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
+            // Load the clr.py resource into the clr module
+            IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
+            IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
 
-                var locals = new PyDict();
-                try
+            var locals = new PyDict();
+            try
+            {
+                IntPtr module = Runtime.PyImport_AddModule("clr._extras");
+                IntPtr module_globals = Runtime.PyModule_GetDict(module);
+                IntPtr builtins = Runtime.PyEval_GetBuiltins();
+                Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
+
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                Stream stream = assembly.GetManifestResourceStream("clr.py");
+                if (stream == null)
                 {
-                    IntPtr module = Runtime.PyImport_AddModule("clr._extras");
-                    IntPtr module_globals = Runtime.PyModule_GetDict(module);
-                    IntPtr builtins = Runtime.PyEval_GetBuiltins();
-                    Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
-
-                    Assembly assembly = Assembly.GetExecutingAssembly();
-                    using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
-                    using (var reader = new StreamReader(stream))
-                    {
-                        // add the contents of clr.py to the module
-                        string clr_py = reader.ReadToEnd();
-                        Exec(clr_py, module_globals, locals.Handle);
-                    }
-
-                    // add the imported module to the clr module, and copy the API functions
-                    // and decorators into the main clr module.
-                    Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
-                    foreach (PyObject key in locals.Keys())
-                    {
-                        if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
-                        {
-                            PyObject value = locals[key];
-                            Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
-                            value.Dispose();
-                        }
-                        key.Dispose();
-                    }
+                    stream = File.OpenRead(@"I:\repos\pythonnet\src\runtime\resources\clr.py");
                 }
-                finally
+                using (stream)
+                using (var reader = new StreamReader(stream))
                 {
-                    locals.Dispose();
+                    // add the contents of clr.py to the module
+                    string clr_py = reader.ReadToEnd();
+                    Exec(clr_py, module_globals, locals.Handle);
                 }
+
+                // add the imported module to the clr module, and copy the API functions
+                // and decorators into the main clr module.
+                Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
+                foreach (PyObject key in locals.Keys())
+                {
+                    if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
+                    {
+                        PyObject value = locals[key];
+                        Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
+                        value.Dispose();
+                    }
+                    key.Dispose();
+                }
+            }
+            finally
+            {
+                locals.Dispose();
             }
         }
 

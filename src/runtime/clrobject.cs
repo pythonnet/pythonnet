@@ -22,11 +22,10 @@ namespace Python.Runtime
                 }
             }
 
-            GCHandle gc = GCHandle.Alloc(this);
+            GCHandle gc = AllocGCHandle();
             Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
             tpHandle = tp;
             pyHandle = py;
-            gcHandle = gc;
             inst = ob;
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
