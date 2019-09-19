@@ -56,7 +56,6 @@ namespace Python.Runtime
                     cls.TypeTraverse(OnVisit, visitedPtr);
                     // XXX: Force release some resouces.
                     cls.TypeClear();
-                    //Runtime.XDecref(cls.pyHandle);
                 }
             }
             finally
@@ -189,8 +188,7 @@ namespace Python.Runtime
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
                 // info.members are already useless
-                Runtime.XDecref(item.pyHandle);
-                item.pyHandle = IntPtr.Zero;
+                item.DecrRefCount();
             }
 
             // If class has constructors, generate an __doc__ attribute.
@@ -225,6 +223,7 @@ namespace Python.Runtime
                         // TODO: deprecate __overloads__ soon...
                         Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
                         Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
+                        ctors.DecrRefCount();
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.

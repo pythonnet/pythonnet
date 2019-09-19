@@ -103,7 +103,8 @@ namespace Python.Runtime
             var offset = (IntPtr)ObjectOffset.DictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
-            InitializeSlots(type, impl);
+            SlotsHolder slotsHolder = new SlotsHolder();
+            InitializeSlots(type, impl, slotsHolder);
 
             int flags = TypeFlags.Default | TypeFlags.Managed |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
@@ -119,8 +120,11 @@ namespace Python.Runtime
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
             Runtime.XDecref(mod);
 
-            InitMethods(type, impl);
+            IntPtr capsule = slotsHolder.ToCapsule();
+            Runtime.PyDict_SetItemString(dict, "_slotsHodler", capsule);
+            Runtime.XDecref(capsule);
 
+            InitMethods(type, impl);
             return type;
         }
 
@@ -172,7 +176,8 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
-            InitializeSlots(type, impl.GetType());
+            SlotsHolder slotsHolder = new SlotsHolder();
+            InitializeSlots(type, impl.GetType(), slotsHolder);
 
             if (base_ != IntPtr.Zero)
             {
@@ -201,6 +206,10 @@ namespace Python.Runtime
             IntPtr mod = Runtime.PyString_FromString(mn);
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
             Runtime.XDecref(mod);
+
+            IntPtr capsule = slotsHolder.ToCapsule();
+            Runtime.PyDict_SetItemString(dict, "_slotsHodler", capsule);
+            Runtime.XDecref(capsule);
 
             // Hide the gchandle of the implementation in a magic type slot.
             GCHandle gc = impl.AllocGCHandle();
@@ -343,9 +352,9 @@ namespace Python.Runtime
             //CopySlot(py_type, type, TypeOffset.tp_clear);
             //CopySlot(py_type, type, TypeOffset.tp_is_gc);
 
+            SlotsHolder slotsHolder = new SlotsHolder();
             // Override type slots with those of the managed implementation.
-
-            InitializeSlots(type, impl);
+            InitializeSlots(type, impl, slotsHolder);
 
             int flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
@@ -357,16 +366,20 @@ namespace Python.Runtime
             // 4 int-ptrs in size.
             IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
             IntPtr mdefStart = mdef;
+            ThunkInfo thunk = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
+            slotsHolder.Add(mdef, thunk.Target);
             mdef = WriteMethodDef(
                 mdef,
                 "__instancecheck__",
-                Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc")
+                thunk.Address
             );
 
+            thunk = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
+            slotsHolder.Add(mdef, thunk.Target);
             mdef = WriteMethodDef(
                 mdef,
                 "__subclasscheck__",
-                Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
+                thunk.Address
             );
 
             // FIXME: mdef is not used
@@ -382,6 +395,10 @@ namespace Python.Runtime
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
+
+            IntPtr capsule = slotsHolder.ToCapsule();
+            Runtime.PyDict_SetItemString(dict, "_slotsHodler", capsule);
+            Runtime.XDecref(capsule);
 
             //DebugUtil.DumpType(type);
 
@@ -417,7 +434,8 @@ namespace Python.Runtime
             CopySlot(base_, type, TypeOffset.tp_clear);
             CopySlot(base_, type, TypeOffset.tp_is_gc);
 
-            InitializeSlots(type, impl);
+            SlotsHolder slotsHolder = new SlotsHolder();
+            InitializeSlots(type, impl, slotsHolder);
 
             if (Runtime.PyType_Ready(type) != 0)
             {
@@ -428,6 +446,9 @@ namespace Python.Runtime
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(tp_dict, "__module__", mod);
 
+            IntPtr capsule = slotsHolder.ToCapsule();
+            Runtime.PyDict_SetItemString(tp_dict, "_slotsHodler", capsule);
+            Runtime.XDecref(capsule);
             return type;
         }
 
@@ -705,7 +726,7 @@ namespace Python.Runtime
         /// provides the implementation for the type, connect the type slots of
         /// the Python object to the managed methods of the implementing Type.
         /// </summary>
-        internal static void InitializeSlots(IntPtr type, Type impl)
+        internal static void InitializeSlots(IntPtr type, Type impl, SlotsHolder slotsHolder = null)
         {
             // We work from the most-derived class up; make sure to get
             // the most-derived slot and not to override it with a base
@@ -733,7 +754,7 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    InitializeSlot(type, Interop.GetThunk(method), name);
+                    InitializeSlot(type, Interop.GetThunk(method), name, slotsHolder);
 
                     seen.Add(name);
                 }
@@ -741,6 +762,7 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
+            bool canOverride = !PythonEngine.SoftShutdown;
             var native = NativeCode.Active;
 
             // The garbage collection related slots always have to return 1 or 0
@@ -750,10 +772,6 @@ namespace Python.Runtime
             //   tp_is_gc    (returns 1)
             // These have to be defined, though, so by default we fill these with
             // static C# functions from this class.
-
-            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
-            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method);
-
             if (native != null)
             {
                 // If we want to support domain reload, the C# implementation
@@ -762,14 +780,35 @@ namespace Python.Runtime
                 // load them into a separate code page that is leaked
                 // intentionally.
                 InitializeNativeCodePage();
-                ret1 = NativeCodePage + native.Return1;
-                ret0 = NativeCodePage + native.Return0;
-            }
+                IntPtr ret1 = NativeCodePage + native.Return1;
+                IntPtr ret0 = NativeCodePage + native.Return0;
 
-            bool canOverride = !PythonEngine.SoftShutdown;
-            InitializeSlot(type, ret0, "tp_traverse", canOverride);
-            InitializeSlot(type, ret0, "tp_clear", canOverride);
-            // InitializeSlot(type, ret1, "tp_is_gc");
+                InitializeSlot(type, ret0, "tp_traverse", canOverride);
+                InitializeSlot(type, ret0, "tp_clear", canOverride);
+            }
+            else
+            {
+                if (!IsSlotSet(type, "tp_traverse"))
+                {
+                    var thunkRet0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
+                    var offset = GetSlotOffset("tp_traverse");
+                    Marshal.WriteIntPtr(type, offset, thunkRet0.Address);
+                    if (slotsHolder != null)
+                    {
+                        slotsHolder.Add(type + offset, thunkRet0.Target);
+                    }
+                }
+                if (!IsSlotSet(type, "tp_clear"))
+                {
+                    var thunkRet0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
+                    var offset = GetSlotOffset("tp_clear");
+                    Marshal.WriteIntPtr(type, offset, thunkRet0.Address);
+                    if (slotsHolder != null)
+                    {
+                        slotsHolder.Add(type + offset, thunkRet0.Target);
+                    }
+                }
+            }
         }
 
         static int Return1(IntPtr _) => 1;
@@ -789,6 +828,16 @@ namespace Python.Runtime
         /// <param name="canOverride">Can override the slot when it existed</param>
         static void InitializeSlot(IntPtr type, IntPtr slot, string name, bool canOverride = true)
         {
+            var offset = GetSlotOffset(name);
+            if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
+            {
+                return;
+            }
+            Marshal.WriteIntPtr(type, offset, slot);
+        }
+
+        static void InitializeSlot(IntPtr type, ThunkInfo thunk, string name, SlotsHolder slotsHolder = null, bool canOverride = true)
+        {
             Type typeOffset = typeof(TypeOffset);
             FieldInfo fi = typeOffset.GetField(name);
             var offset = (int)fi.GetValue(typeOffset);
@@ -797,7 +846,22 @@ namespace Python.Runtime
             {
                 return;
             }
-            Marshal.WriteIntPtr(type, offset, slot);
+            Marshal.WriteIntPtr(type, offset, thunk.Address);
+            slotsHolder.Add(type + offset, thunk.Target);
+        }
+
+        static int GetSlotOffset(string name)
+        {
+            Type typeOffset = typeof(TypeOffset);
+            FieldInfo fi = typeOffset.GetField(name);
+            var offset = (int)fi.GetValue(typeOffset);
+            return offset;
+        }
+
+        static bool IsSlotSet(IntPtr type, string name)
+        {
+            int offset = GetSlotOffset(name);
+            return Marshal.ReadIntPtr(type, offset) != IntPtr.Zero;
         }
 
         /// <summary>
@@ -844,6 +908,47 @@ namespace Python.Runtime
         {
             IntPtr fp = Marshal.ReadIntPtr(from, offset);
             Marshal.WriteIntPtr(to, offset, fp);
+        }
+    }
+
+
+    class SlotsHolder
+    {
+        private List<KeyValuePair<IntPtr, Delegate>> _slots = new List<KeyValuePair<IntPtr, Delegate>>();
+        private GCHandle _handle;
+        private Interop.DestructorFunc _destructor;
+        private IntPtr _capsule;
+
+        public void Add(IntPtr slotPtr, Delegate d)
+        {
+            _slots.Add(new KeyValuePair<IntPtr, Delegate>(slotPtr, d));
+        }
+
+        public IntPtr ToCapsule()
+        {
+            if (_capsule != IntPtr.Zero)
+            {
+                Runtime.XIncref(_capsule);
+                return _capsule;
+            }
+            _handle = GCHandle.Alloc(this);
+            _destructor = OnDestruct;
+            var fp = Marshal.GetFunctionPointerForDelegate(_destructor);
+            _capsule = Runtime.PyCapsule_New((IntPtr)_handle, null, fp);
+            return _capsule;
+        }
+
+        private static void OnDestruct(IntPtr ob)
+        {
+            var ptr = Runtime.PyCapsule_GetPointer(ob, null);
+            PythonException.ThrowIfIsNull(ptr);
+            var handle = GCHandle.FromIntPtr(ptr);
+            var self = (SlotsHolder)handle.Target;
+            handle.Free();
+            foreach (var item in self._slots)
+            {
+                Marshal.WriteIntPtr(item.Key, IntPtr.Zero);
+            }
         }
     }
 }

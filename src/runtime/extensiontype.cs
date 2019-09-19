@@ -38,6 +38,7 @@ namespace Python.Runtime
 
             Runtime.PyObject_GC_UnTrack(py);
 
+            // Steals a ref to tpHandle.
             tpHandle = tp;
             pyHandle = py;
         }
@@ -49,7 +50,8 @@ namespace Python.Runtime
         public static void FinalizeObject(ManagedType self)
         {
             Runtime.PyObject_GC_Del(self.pyHandle);
-            Runtime.XDecref(self.tpHandle);
+            // Not necessary decref for `tpHandle`.
+            // Runtime.XDecref(self.tpHandle);
             self.FreeGCHandle();
         }
 

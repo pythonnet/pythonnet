@@ -335,7 +335,6 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        private static Dictionary<KeyValuePair<MethodInfo,string>, Tuple<Delegate, IntPtr>> keepAlive;
         private static Hashtable pmap;
 
         static Interop()
@@ -352,8 +351,6 @@ namespace Python.Runtime
                 p[item.Name] = item;
             }
 
-            keepAlive = new Dictionary<KeyValuePair<MethodInfo, string>, Tuple<Delegate, IntPtr>>();
-            //Marshal.AllocHGlobal(IntPtr.Size);
             pmap = new Hashtable();
 
             pmap["tp_dealloc"] = p["DestructorFunc"];
@@ -450,24 +447,12 @@ namespace Python.Runtime
             return pmap[name] as Type;
         }
 
-        internal static IntPtr GetThunk(MethodInfo method, string funcType = null)
+        internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
         {
-            var key = new KeyValuePair<MethodInfo, string>(method, funcType);
-            Tuple<Delegate, IntPtr> thunkPair;
-            if (keepAlive.TryGetValue(key, out thunkPair))
-            {
-                return thunkPair.Item2;
-            }
-            thunkPair = GetThunkImpl(method, funcType);
-            if (thunkPair == null)
-            {
-                return IntPtr.Zero;
-            }
-            keepAlive[key] = thunkPair;
-            return thunkPair.Item2;
+            return GetThunkImpl(method, funcType);
         }
 
-        private static Tuple<Delegate, IntPtr> GetThunkImpl(MethodInfo method, string funcType)
+        private static ThunkInfo GetThunkImpl(MethodInfo method, string funcType)
         {
             Type dt;
             if (funcType != null)
@@ -477,7 +462,7 @@ namespace Python.Runtime
 
             if (dt == null)
             {
-                return null;
+                return ThunkInfo.Empty;
             }
             IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
             Delegate d = Delegate.CreateDelegate(dt, method);
@@ -485,7 +470,7 @@ namespace Python.Runtime
             Marshal.StructureToPtr(cb, tmp, false);
             IntPtr fp = Marshal.ReadIntPtr(tmp, 0);
             Marshal.FreeHGlobal(tmp);
-            return new Tuple<Delegate, IntPtr>(d, fp);
+            return new ThunkInfo(d, fp);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -540,6 +525,19 @@ namespace Python.Runtime
         }
     }
 
+    internal struct ThunkInfo
+    {
+        public Delegate Target;
+        public IntPtr Address;
+
+        public static readonly ThunkInfo Empty = new ThunkInfo(null, IntPtr.Zero);
+
+        public ThunkInfo(Delegate target, IntPtr addr)
+        {
+            Target = target;
+            Address = addr;
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     struct PyGC_Node

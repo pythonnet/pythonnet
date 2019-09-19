@@ -196,50 +196,39 @@ namespace Python.Runtime
             TypeManager.Reset();
 
             IntPtr op;
-            IntPtr dict;
-            if (IsPython3)
-            {
-                op = PyImport_ImportModule("builtins");
-                dict = PyObject_GetAttrString(op, "__dict__");
-            }
-            else // Python2
-            {
-                dict = PyImport_GetModuleDict();
-                op = PyDict_GetItemString(dict, "__builtin__");
-            }
-
             _typeRefs = new PyReferenceCollection();
-            SetPyMember(ref PyNotImplemented, PyObject_GetAttrString(op, "NotImplemented"));
+            {
+                var builtins = IsPython3 ? PyImport_ImportModule("builtins")
+                    : PyImport_ImportModule("__builtin__");
+                SetPyMember(ref PyNotImplemented, PyObject_GetAttrString(builtins, "NotImplemented"));
 
-            SetPyMember(ref PyBaseObjectType, PyObject_GetAttrString(op, "object"));
+                SetPyMember(ref PyBaseObjectType, PyObject_GetAttrString(builtins, "object"));
 
-            SetPyMember(ref PyNone, PyObject_GetAttrString(op, "None"));
-            SetPyMember(ref PyTrue, PyObject_GetAttrString(op, "True"));
-            SetPyMember(ref PyFalse, PyObject_GetAttrString(op, "False"));
+                SetPyMember(ref PyNone, PyObject_GetAttrString(builtins, "None"));
+                SetPyMember(ref PyTrue, PyObject_GetAttrString(builtins, "True"));
+                SetPyMember(ref PyFalse, PyObject_GetAttrString(builtins, "False"));
 
-            SetPyMember(ref PyBoolType, PyObject_Type(PyTrue));
-            SetPyMember(ref PyNoneType, PyObject_Type(PyNone));
-            SetPyMember(ref PyTypeType, PyObject_Type(PyNoneType));
+                SetPyMember(ref PyBoolType, PyObject_Type(PyTrue));
+                SetPyMember(ref PyNoneType, PyObject_Type(PyNone));
+                SetPyMember(ref PyTypeType, PyObject_Type(PyNoneType));
 
-            op = PyObject_GetAttrString(dict, "keys");
-            SetPyMember(ref PyMethodType, PyObject_Type(op));
-            XDecref(op);
+                op = PyObject_GetAttrString(builtins, "len");
+                SetPyMember(ref PyMethodType, PyObject_Type(op));
+                XDecref(op);
 
-            // For some arcane reason, builtins.__dict__.__setitem__ is *not*
-            // a wrapper_descriptor, even though dict.__setitem__ is.
-            //
-            // object.__init__ seems safe, though.
-            op = PyObject_GetAttrString(PyBaseObjectType, "__init__");
-            SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op));
-            XDecref(op);
+                // For some arcane reason, builtins.__dict__.__setitem__ is *not*
+                // a wrapper_descriptor, even though dict.__setitem__ is.
+                //
+                // object.__init__ seems safe, though.
+                op = PyObject_GetAttrString(PyBaseObjectType, "__init__");
+                SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op));
+                XDecref(op);
 
-            op = PyDict_GetItemString(dict, "KeyError");
-            XIncref(op);
-            SetPyMember(ref PyExc_KeyError, op);
+                op = PyObject_GetAttrString(builtins, "KeyError");
+                SetPyMember(ref PyExc_KeyError, op);
 
-#if PYTHON3
-            XDecref(dict);
-#endif
+                XDecref(builtins);
+            }
 
             op = PyString_FromString("string");
             SetPyMember(ref PyStringType, PyObject_Type(op));
@@ -287,10 +276,10 @@ namespace Python.Runtime
             IntPtr d = PyDict_New();
 
             IntPtr c = PyClass_New(IntPtr.Zero, d, s);
-            SetPyObject(ref PyClassType, PyObject_Type(c));
+            SetPyMember(ref PyClassType, PyObject_Type(c));
 
             IntPtr i = PyInstance_New(c, IntPtr.Zero, IntPtr.Zero);
-            SetPyObject(ref PyInstanceType, PyObject_Type(i));
+            SetPyMember(ref PyInstanceType, PyObject_Type(i));
 
             XDecref(s);
             XDecref(i);
@@ -322,7 +311,9 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-            SetPyMember(ref PyCLRMetaType, MetaType.Initialize());
+            var metaType = MetaType.Initialize();
+            XIncref(metaType);
+            SetPyMember(ref PyCLRMetaType, metaType);
             Exceptions.Initialize();
             ImportHook.Initialize();
 
@@ -398,47 +389,12 @@ namespace Python.Runtime
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
             RemoveClrRootModule();
-
-            {
-                //var intialModules = PySys_GetObject("initial_modules");
-                //var modules = PyImport_GetModuleDict();
-                //foreach (var name in RuntimeState.GetModuleNames())
-                //{
-                //    if (PySet_Contains(intialModules, name) == 1)
-                //    {
-                //        continue;
-                //    }
-                //    var module = PyDict_GetItem(modules, name);
-                //    IntPtr clr_dict = Runtime._PyObject_GetDictPtr(module); // PyObject**
-                //    clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
-                //    PyDict_Clear(clr_dict);
-                //    PyDict_DelItem(modules, name);
-                //}
-            }
             if (soft)
             {
                 PyGC_Collect();
                 RemoveClrObjects();
                 RuntimeState.Restore();
-                //var objs = ManagedType.GetManagedObjects();
-                //var subIterp = PyThreadState_Swap(_originIterp);
-                //var iterp = PyThreadState_Get();
-                //Py_EndInterpreter(iterp);
-                //PyGILState_Ensure();
                 ResetPyMembers();
-//                Runtime.PyRun_SimpleString(@"
-//import gc, pprint, objgraph
-//print()
-//with open('R:/objsx.log', 'w', encoding='utf8') as f:
-//    pprint.pprint(objgraph.show_growth(), f)
-//    #pprint.pprint(objgraph.typestats(), f)
-
-//#lst = gc.get_objects()
-//#with open('R:/objs.log', 'w', encoding='utf8') as f:
-// #   for obj in lst:
-//  #      pprint.pprint(obj, f)
-//#del lst
-//");
                 return;
             }
             ResetPyMembers();
@@ -512,6 +468,7 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
+            PyErr_Clear();
         }
 
         private static void RemoveClrObjects()
@@ -1620,9 +1577,15 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_GetItemString(IntPtr pointer, string key);
 
+        /// <summary>
+        /// Return 0 on success or -1 on failure.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyDict_SetItem(IntPtr pointer, IntPtr key, IntPtr value);
 
+        /// <summary>
+        ///  Return 0 on success or -1 on failure.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyDict_SetItemString(IntPtr pointer, string key, IntPtr value);
 
@@ -2068,6 +2031,17 @@ namespace Python.Runtime
         {
             return (long)_PyGC_REFS(ob) != _PyGC_REFS_UNTRACKED;
         }
+
+        //====================================================================
+        // Python Capsules API
+        //====================================================================
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyCapsule_GetPointer(IntPtr capsule, string name);
+
 
         //====================================================================
         // Miscellaneous

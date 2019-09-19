@@ -76,34 +76,8 @@ namespace Python.Runtime
                 throw new Exception("Runtime state have not set");
             }
             var dummyGC = PyLong_AsVoidPtr(dummyGCAddr);
-            //foreach (var abandomedNode in IterGCNodes(dummyGC))
-            //{
-            //    if (abandomedNode == IntPtr.Zero)
-            //    {
-            //        continue;
-            //    }
-            //    //PyObject_GC_Del(_Py_FROM_GC(abandomedNode));
-            //}
-
-            //unsafe
-            //{
-            //    var head = (PyGC_Head*)dummyGC;
-            //    head->gc.gc_next = dummyGC;
-            //    head->gc.gc_prev = dummyGC;
-            //    head->gc.gc_refs = IntPtr.Zero;
-            //}
-
             ResotreModules(dummyGC);
             RestoreObjects(dummyGC);
-            foreach (var obj in IterObjects(dummyGC))
-            {
-                //if (ManagedType.IsManagedType(obj))
-                {
-                    //var clrobj = ManagedType.GetManagedObject(obj);
-                    //Console.WriteLine(clrobj);
-                }
-            }
-            //Console.WriteLine($"abndom {IterGCNodes(dummyGC).Count()}");
         }
 
         private static void ResotreModules(IntPtr dummyGC)

@@ -43,7 +43,6 @@ namespace Python.Runtime
             py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
             Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
-            Runtime.XDecref(hook.ptr);
 
             root = new CLRModule();
 
@@ -88,7 +87,7 @@ namespace Python.Runtime
             Runtime.XDecref(root.pyHandle);
             root = null;
 
-            hook.Dispose();
+            hook.Release();
             hook = null;
 
             Runtime.XDecref(py_import);
