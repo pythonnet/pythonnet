@@ -1408,6 +1408,10 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyUnicode_FromStringAndSize(IntPtr value, IntPtr size);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyUnicode_AsUTF8(IntPtr unicode);
+
 #elif PYTHON2
         internal static IntPtr PyString_FromStringAndSize(string value, long size)
         {
