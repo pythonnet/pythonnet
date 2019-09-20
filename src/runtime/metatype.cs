@@ -28,7 +28,8 @@ namespace Python.Runtime
             {
                 SlotsHolder.ReleaseTypeSlots(PyCLRMetaType);
             }
-            Runtime.XDecref(PyCLRMetaType);
+            // FIXME: Crash on .netcore if decref PyCLRMetaType
+            // Runtime.XDecref(PyCLRMetaType);
             PyCLRMetaType = IntPtr.Zero;
         }
 
@@ -275,6 +276,7 @@ namespace Python.Runtime
                 return Runtime.PyFalse;
             }
 
+            Runtime.XIncref(args);
             using (var argsObj = new PyList(args))
             {
                 if (argsObj.Length() != 1)

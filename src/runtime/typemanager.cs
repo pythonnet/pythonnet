@@ -826,8 +826,8 @@ namespace Python.Runtime
                 IntPtr ret1 = NativeCodePage + native.Return1;
                 IntPtr ret0 = NativeCodePage + native.Return0;
 
-                InitializeSlot(type, ret0, "tp_traverse", canOverride);
-                InitializeSlot(type, ret0, "tp_clear", canOverride);
+                InitializeSlot(type, ret0, "tp_traverse", false);
+                InitializeSlot(type, ret0, "tp_clear", false);
             }
             else
             {
@@ -968,6 +968,7 @@ namespace Python.Runtime
         private List<Delegate> _keepalive = new List<Delegate>();
         private Dictionary<int, Resetor> _customRestors = new Dictionary<int, Resetor>();
         private List<Action> _deallocators = new List<Action>();
+        private bool _alredyReset = false;
 
         /// <summary>
         /// Create slots holder for holding the delegate of slots and be able  to reset them.
@@ -1021,10 +1022,22 @@ namespace Python.Runtime
             }
             var self = RecoverFromCapsule(capsule);
             self.ResetSlots();
+            Runtime.XDecref(capsule);
+
+            IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
+            if (Runtime.PyDict_DelItemString(tp_dict, HolderKeyName) != 0)
+            {
+                throw new PythonException();
+            }
         }
 
         private void ResetSlots()
         {
+            if (_alredyReset)
+            {
+                return;
+            }
+            _alredyReset = true;
             IntPtr tp_name = Marshal.ReadIntPtr(_type, TypeOffset.tp_name);
             string typeName = Marshal.PtrToStringAnsi(tp_name);
             foreach (var offset in _slots.Keys)
@@ -1055,6 +1068,10 @@ namespace Python.Runtime
             IntPtr tp_base = Marshal.ReadIntPtr(_type, TypeOffset.tp_base);
             Runtime.XDecref(tp_base);
             Marshal.WriteIntPtr(_type, TypeOffset.tp_base, IntPtr.Zero);
+
+            IntPtr tp_bases = Marshal.ReadIntPtr(_type, TypeOffset.tp_bases);
+            Runtime.XDecref(tp_bases);
+            Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, IntPtr.Zero);
         }
 
         private static void OnDestruct(IntPtr ob)
@@ -1087,6 +1104,11 @@ namespace Python.Runtime
             else if (offset == TypeOffset.tp_call)
             {
                 return IntPtr.Zero;
+            }
+            else if (offset == TypeOffset.tp_new)
+            {
+                // PyType_GenericNew
+                return Marshal.ReadIntPtr(Runtime.PySuper_Type, TypeOffset.tp_new);
             }
 
             return Marshal.ReadIntPtr(Runtime.PyTypeType, offset);

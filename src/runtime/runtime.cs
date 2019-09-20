@@ -225,6 +225,8 @@ namespace Python.Runtime
                 SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op));
                 XDecref(op);
 
+                SetPyMember(ref PySuper_Type, PyObject_GetAttrString(builtins, "super"));
+
                 op = PyObject_GetAttrString(builtins, "KeyError");
                 SetPyMember(ref PyExc_KeyError, op);
 
@@ -481,11 +483,13 @@ namespace Python.Runtime
             var objs = ManagedType.GetManagedObjects();
             foreach (var obj in copyObjs)
             {
-                if (objs.Contains(obj))
+                if (!objs.Contains(obj))
                 {
                     continue;
                 }
                 obj.TypeClear();
+                // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
+                // thus just be safe to give it back to GC chain.
                 PyObject_GC_Track(obj.pyHandle);
                 obj.gcHandle.Free();
                 obj.gcHandle = new GCHandle();
@@ -502,6 +506,7 @@ namespace Python.Runtime
         internal static IntPtr PyModuleType;
         internal static IntPtr PyClassType;
         internal static IntPtr PyInstanceType;
+        internal static IntPtr PySuper_Type;
         internal static IntPtr PyCLRMetaType;
         internal static IntPtr PyMethodType;
         internal static IntPtr PyWrapperDescriptorType;
@@ -895,6 +900,7 @@ namespace Python.Runtime
         //====================================================================
 
         /// <summary>
+        /// Return value: Borrowed reference.
         /// A macro-like method to get the type of a Python object. This is
         /// designed to be lean and mean in IL &amp; avoid managed &lt;-&gt; unmanaged
         /// transitions. Note that this does not incref the type object.
