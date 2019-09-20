@@ -92,21 +92,5 @@ namespace Python.Runtime
             ManagedType self = GetManagedObject(ob);
             FinalizeObject(self);
         }
-
-        public static int tp_clear(IntPtr ob)
-        {
-            ManagedType self = GetManagedObject(ob);
-            Runtime.XDecref(self.tpHandle);
-            self.FreeGCHandle();
-            return 0;
-        }
-
-        //public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
-        //{
-        //    ManagedType self = GetManagedObject(ob);
-        //    int res = PyVisit(self.tpHandle, visit, arg);
-        //    if (res != 0) return res;
-        //    return 0;
-        //}
     }
 }

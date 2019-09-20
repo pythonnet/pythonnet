@@ -211,11 +211,11 @@ namespace Python.Runtime
             ExtensionType.FinalizeObject(self);
         }
 
-        public new static int tp_clear(IntPtr ob)
+        public static int tp_clear(IntPtr ob)
         {
             var self = (MethodObject)GetManagedObject(ob);
             self.ClearMembers();
-            return ExtensionType.tp_clear(ob);
+            return 0;
         }
     }
 }

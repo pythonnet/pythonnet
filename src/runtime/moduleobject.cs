@@ -304,13 +304,7 @@ namespace Python.Runtime
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (ModuleObject)GetManagedObject(ob);
-            Runtime.XDecref(self.dict);
-            self.dict = IntPtr.Zero;
-            foreach (var attr in self.cache.Values)
-            {
-                Runtime.XDecref(attr.pyHandle);
-            }
-            self.cache.Clear();
+            tp_clear(ob);
             ExtensionType.tp_dealloc(ob);
         }
 
@@ -327,7 +321,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        public new static int tp_clear(IntPtr ob)
+        public static int tp_clear(IntPtr ob)
         {
             var self = (ModuleObject)GetManagedObject(ob);
             Runtime.XDecref(self.dict);
@@ -337,7 +331,7 @@ namespace Python.Runtime
                 Runtime.XDecref(attr.pyHandle);
             }
             self.cache.Clear();
-            return ExtensionType.tp_clear(ob);
+            return 0;
         }
     }
 

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -262,6 +263,14 @@ namespace Python.Runtime
     }
 #endif // PYTHON3
 
+    static class TypeOffsetHelper
+    {
+        public static string GetSlotNameByOffset(int offset)
+        {
+            return typeof(TypeOffset).GetFields().First(fi => (int)fi.GetValue(null) == offset).Name;
+        }
+    }
+
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
     /// in a class.
@@ -449,11 +458,6 @@ namespace Python.Runtime
 
         internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
         {
-            return GetThunkImpl(method, funcType);
-        }
-
-        private static ThunkInfo GetThunkImpl(MethodInfo method, string funcType)
-        {
             Type dt;
             if (funcType != null)
                 dt = typeof(Interop).GetNestedType(funcType) as Type;
@@ -472,6 +476,7 @@ namespace Python.Runtime
             Marshal.FreeHGlobal(tmp);
             return new ThunkInfo(d, fp);
         }
+
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr UnaryFunc(IntPtr ob);
@@ -551,5 +556,15 @@ namespace Python.Runtime
     struct PyGC_Head
     {
         public PyGC_Node gc;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    struct PyMethodDef
+    {
+        public IntPtr ml_name;
+        public IntPtr ml_meth;
+        public int ml_flags;
+        public IntPtr ml_doc;
     }
 }

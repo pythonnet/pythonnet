@@ -29,13 +29,6 @@ namespace Python.Runtime
             return !type.IsEnum;
         }
 
-        /// <summary>
-        /// Implements __init__ for reflected classes and value types.
-        /// </summary>
-        public static int tp_init(IntPtr ob, IntPtr args, IntPtr kw)
-        {
-            return 0;
-        }
 
         /// <summary>
         /// Default implementation of [] semantics for reflected types.
@@ -254,13 +247,9 @@ namespace Python.Runtime
         public static void tp_dealloc(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            if (self.pyHandle != self.tpHandle)
-            {
-                ClearObjectDict(ob);
-            }
+            tp_clear(ob);
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
             Runtime.PyObject_GC_Del(self.pyHandle);
-            Runtime.XDecref(self.tpHandle);
             self.FreeGCHandle();
         }
 
@@ -271,9 +260,7 @@ namespace Python.Runtime
             {
                 ClearObjectDict(ob);
             }
-            Runtime.XDecref(self.tpHandle);
-            self.tpHandle = IntPtr.Zero;
-            self.FreeGCHandle();
+            Runtime.Py_CLEAR(ref self.tpHandle);
             return 0;
         }
 

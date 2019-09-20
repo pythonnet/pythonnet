@@ -311,9 +311,7 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-            var metaType = MetaType.Initialize();
-            XIncref(metaType);
-            SetPyMember(ref PyCLRMetaType, metaType);
+            PyCLRMetaType = MetaType.Initialize(); // Steal a reference
             Exceptions.Initialize();
             ImportHook.Initialize();
 
@@ -388,11 +386,14 @@ namespace Python.Runtime
             ClearClrModules();
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
+
+            MetaType.Release();
+            PyCLRMetaType = IntPtr.Zero;
+
             RemoveClrRootModule();
             if (soft)
             {
                 PyGC_Collect();
-                RemoveClrObjects();
                 RuntimeState.Restore();
                 ResetPyMembers();
                 return;
@@ -471,9 +472,6 @@ namespace Python.Runtime
             PyErr_Clear();
         }
 
-        private static void RemoveClrObjects()
-        {
-        }
 
         internal static IntPtr Py_single_input = (IntPtr)256;
         internal static IntPtr Py_file_input = (IntPtr)257;
@@ -2034,6 +2032,12 @@ namespace Python.Runtime
         internal static bool _PyObject_GC_IS_TRACKED(IntPtr ob)
         {
             return (long)_PyGC_REFS(ob) != _PyGC_REFS_UNTRACKED;
+        }
+
+        internal static void Py_CLEAR(ref IntPtr ob)
+        {
+            XDecref(ob);
+            ob = IntPtr.Zero;
         }
 
         //====================================================================

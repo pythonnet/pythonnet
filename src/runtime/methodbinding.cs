@@ -38,10 +38,8 @@ namespace Python.Runtime
 
         private void ClearMembers()
         {
-            Runtime.XDecref(target);
-            target = IntPtr.Zero;
-            Runtime.XDecref(targetType);
-            targetType = IntPtr.Zero;
+            Runtime.Py_CLEAR(ref target);
+            Runtime.Py_CLEAR(ref targetType);
         }
 
         /// <summary>
@@ -249,11 +247,11 @@ namespace Python.Runtime
             FinalizeObject(self);
         }
 
-        public new static int tp_clear(IntPtr ob)
+        public static int tp_clear(IntPtr ob)
         {
             var self = (MethodBinding)GetManagedObject(ob);
             self.ClearMembers();
-            return ExtensionType.tp_clear(ob);
+            return 0;
         }
     }
 }

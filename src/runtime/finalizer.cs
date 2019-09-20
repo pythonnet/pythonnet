@@ -59,7 +59,7 @@ namespace Python.Runtime
                 IntPtr pyname = Runtime.PyObject_Unicode(PyPtr);
                 string name = Runtime.GetManagedString(pyname);
                 Runtime.XDecref(pyname);
-                _message = $"{name} may has a incorrect ref count";
+                _message = $"<{name}> may has a incorrect ref count";
             }
         }
 

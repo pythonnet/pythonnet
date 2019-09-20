@@ -54,7 +54,7 @@ namespace Python.Runtime
                 foreach (var cls in cache.Values)
                 {
                     cls.TypeTraverse(OnVisit, visitedPtr);
-                    // XXX: Force release some resouces.
+                    // XXX: Force release instance resources but not dealloc itself.
                     cls.TypeClear();
                 }
             }
