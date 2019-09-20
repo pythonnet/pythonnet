@@ -28,7 +28,7 @@ namespace Python.Runtime
 
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            GCHandle gc = AllocGCHandle();
+            GCHandle gc = AllocGCHandle(true);
             Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
 
             // We have to support gc because the type machinery makes it very

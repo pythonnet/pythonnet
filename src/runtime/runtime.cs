@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Collections.Generic;
 using Python.Runtime.Platform;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -384,13 +385,15 @@ namespace Python.Runtime
             Finalizer.Shutdown();
 
             ClearClrModules();
+            RemoveClrRootModule();
+
+            MoveClrInstancesOnwershipToPython();
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
 
             MetaType.Release();
             PyCLRMetaType = IntPtr.Zero;
 
-            RemoveClrRootModule();
             if (soft)
             {
                 PyGC_Collect();
@@ -470,6 +473,24 @@ namespace Python.Runtime
                 throw new PythonException();
             }
             PyErr_Clear();
+        }
+
+        private static void MoveClrInstancesOnwershipToPython()
+        {
+            var copyObjs = ManagedType.GetManagedObjects().ToArray();
+            var objs = ManagedType.GetManagedObjects();
+            foreach (var obj in copyObjs)
+            {
+                if (objs.Contains(obj))
+                {
+                    continue;
+                }
+                obj.TypeClear();
+                PyObject_GC_Track(obj.pyHandle);
+                obj.gcHandle.Free();
+                obj.gcHandle = new GCHandle();
+            }
+            ManagedType.ClearTrackedObjects();
         }
 
 

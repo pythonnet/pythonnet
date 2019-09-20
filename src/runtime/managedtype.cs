@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -16,9 +17,7 @@ namespace Python.Runtime
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
-#if NPY_TRACK_OBJECT
         private static readonly HashSet<ManagedType> _managedObjs = new HashSet<ManagedType>();
-#endif
 
         internal void DecrRefCount()
         {
@@ -41,22 +40,24 @@ namespace Python.Runtime
             }
         }
 
-        internal GCHandle AllocGCHandle()
+        internal GCHandle AllocGCHandle(bool track = false)
         {
             gcHandle = GCHandle.Alloc(this);
-#if NPY_TRACK_OBJECT
-            _managedObjs.Add(this);
-#endif
+            if (track)
+            {
+                _managedObjs.Add(this);
+            }
             return gcHandle;
         }
 
         internal void FreeGCHandle()
         {
-            gcHandle.Free();
-#if NPY_TRACK_OBJECT
             _managedObjs.Remove(this);
-#endif
-            gcHandle = new GCHandle();
+            if (gcHandle.IsAllocated)
+            {
+                gcHandle.Free();
+                gcHandle = new GCHandle();
+            }
         }
 
         /// <summary>
@@ -120,17 +121,15 @@ namespace Python.Runtime
             return false;
         }
 
-#if NPY_TRACK_OBJECT
-        internal static void Reset()
-        {
-            _managedObjs.Clear();
-        }
-
         internal static ICollection<ManagedType> GetManagedObjects()
         {
             return _managedObjs;
         }
-#endif
+
+        internal static void ClearTrackedObjects()
+        {
+            _managedObjs.Clear();
+        }
 
         internal static int PyVisit(IntPtr ob, IntPtr visit, IntPtr arg)
         {
