@@ -399,6 +399,12 @@ namespace Python.Runtime
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>
                 {
+                    IntPtr t = type;
+                    IntPtr tp_dict = Marshal.ReadIntPtr(t, TypeOffset.tp_dict);
+                    if (Runtime.PyDict_DelItemString(tp_dict, "__instancecheck__") != 0)
+                    {
+                        Runtime.PyErr_Print();
+                    }
                     FreeMethodDef(mdefAddr);
                 });
             }
@@ -414,6 +420,12 @@ namespace Python.Runtime
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>
                 {
+                    IntPtr t = type;
+                    IntPtr tp_dict = Marshal.ReadIntPtr(t, TypeOffset.tp_dict);
+                    if (Runtime.PyDict_DelItemString(tp_dict, "__subclasscheck__") != 0)
+                    {
+                        Runtime.PyErr_Print();
+                    }
                     FreeMethodDef(mdefAddr);
                 });
             }
@@ -521,6 +533,7 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
 
 #if PYTHON3
+            Runtime.XIncref(temp);
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
 #endif
 
@@ -1101,6 +1114,11 @@ namespace Python.Runtime
                 // tp_free of PyTypeType is point to PyObejct_GC_Del.
                 return Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_free);
             }
+            else if (offset == TypeOffset.tp_free)
+            {
+                // PyObject_GC_Del
+                return Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_free);
+            }
             else if (offset == TypeOffset.tp_call)
             {
                 return IntPtr.Zero;
@@ -1109,6 +1127,16 @@ namespace Python.Runtime
             {
                 // PyType_GenericNew
                 return Marshal.ReadIntPtr(Runtime.PySuper_Type, TypeOffset.tp_new);
+            }
+            else if (offset == TypeOffset.tp_getattro)
+            {
+                // PyObject_GenericGetAttr
+                return Marshal.ReadIntPtr(Runtime.PyBaseObjectType, TypeOffset.tp_getattro);
+            }
+            else if (offset == TypeOffset.tp_setattro)
+            {
+                // PyObject_GenericSetAttr
+                return Marshal.ReadIntPtr(Runtime.PyBaseObjectType, TypeOffset.tp_setattro);
             }
 
             return Marshal.ReadIntPtr(Runtime.PyTypeType, offset);
