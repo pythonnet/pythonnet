@@ -227,9 +227,6 @@ namespace Python.Runtime
 
                 SetPyMember(ref PySuper_Type, PyObject_GetAttrString(builtins, "super"));
 
-                op = PyObject_GetAttrString(builtins, "KeyError");
-                SetPyMember(ref PyExc_KeyError, op);
-
                 XDecref(builtins);
             }
 
@@ -345,6 +342,7 @@ namespace Python.Runtime
 
             fn = PyObject_GetAttrString(platformModule, "system");
             op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
+            PythonException.ThrowIfIsNull(op);
             OperatingSystemName = GetManagedString(op);
             XDecref(op);
             XDecref(fn);
@@ -470,7 +468,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            if (!PythonException.Matches(PyExc_KeyError))
+            if (!PythonException.Matches(Exceptions.KeyError))
             {
                 throw new PythonException();
             }
@@ -540,8 +538,6 @@ namespace Python.Runtime
         internal static IntPtr PyFalse;
         internal static IntPtr PyNone;
         internal static IntPtr Error;
-
-        internal static IntPtr PyExc_KeyError;
 
         /// <summary>
         /// Check if any Python Exceptions occurred.

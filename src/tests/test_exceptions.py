@@ -286,7 +286,7 @@ def test_python_compat_of_managed_exceptions():
         strexp = "OverflowException('Simple message"
         assert repr(e)[:len(strexp)] == strexp
     elif PY2:
-        assert repr(e) == "OverflowException(u'Simple message',)"
+        assert repr(e) == "OverflowException('Simple message',)"
 
 
 def test_exception_is_instance_of_system_object():
