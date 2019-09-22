@@ -818,7 +818,6 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
-            bool canOverride = !PythonEngine.SoftShutdown;
             var native = NativeCode.Active;
 
             // The garbage collection related slots always have to return 1 or 0

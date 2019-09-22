@@ -9,11 +9,24 @@ namespace Python.Runtime
 {
     class RuntimeState
     {
+        public static bool ShouldRestoreObjects { get; set; } = false;
+        public static bool UseDummyGC { get; set; } = false;
+
         public static void Save()
         {
             if (PySys_GetObject("dummy_gc") != IntPtr.Zero)
             {
                 throw new Exception("Runtime State set already");
+            }
+
+            IntPtr objs = IntPtr.Zero;
+            if (ShouldRestoreObjects)
+            {
+                objs = PySet_New(IntPtr.Zero);
+                foreach (var obj in PyGCGetObjects())
+                {
+                    AddObjPtrToSet(objs, obj);
+                }
             }
 
             var modules = PySet_New(IntPtr.Zero);
@@ -23,11 +36,6 @@ namespace Python.Runtime
                 PythonException.ThrowIfIsNotZero(res);
             }
 
-            var objs = PySet_New(IntPtr.Zero);
-            foreach (var obj in PyGCGetObjects())
-            {
-                AddObjPtrToSet(objs, obj);
-            }
 
             var dummyGCHead = PyMem_Malloc(Marshal.SizeOf(typeof(PyGC_Head)));
             unsafe
@@ -43,7 +51,6 @@ namespace Python.Runtime
                 PythonException.ThrowIfIsNotZero(res);
                 XDecref(pyDummyGC);
 
-                AddObjPtrToSet(objs, modules);
                 try
                 {
                     res = PySys_SetObject("initial_modules", modules);
@@ -54,17 +61,19 @@ namespace Python.Runtime
                     XDecref(modules);
                 }
 
-                AddObjPtrToSet(objs, objs);
-                try
+                if (ShouldRestoreObjects)
                 {
-                    res = PySys_SetObject("initial_objs", objs);
-                    PythonException.ThrowIfIsNotZero(res);
+                    AddObjPtrToSet(objs, modules);
+                    try
+                    {
+                        res = PySys_SetObject("initial_objs", objs);
+                        PythonException.ThrowIfIsNotZero(res);
+                    }
+                    finally
+                    {
+                        XDecref(objs);
+                    }
                 }
-                finally
-                {
-                    XDecref(objs);
-                }
-
             }
         }
 
@@ -77,7 +86,10 @@ namespace Python.Runtime
             }
             var dummyGC = PyLong_AsVoidPtr(dummyGCAddr);
             ResotreModules(dummyGC);
-            RestoreObjects(dummyGC);
+            if (ShouldRestoreObjects)
+            {
+                RestoreObjects(dummyGC);
+            }
         }
 
         private static void ResotreModules(IntPtr dummyGC)
@@ -92,16 +104,24 @@ namespace Python.Runtime
                     continue;
                 }
                 var module = PyDict_GetItem(modules, name);
-                if (_PyObject_GC_IS_TRACKED(module))
+
+                if (UseDummyGC && _PyObject_GC_IS_TRACKED(module))
                 {
                     ExchangeGCChain(module, dummyGC);
                 }
-                PyDict_DelItem(modules, name);
+                if (PyDict_DelItem(modules, name) != 0)
+                {
+                    PyErr_Print();
+                }
             }
         }
 
         private static void RestoreObjects(IntPtr dummyGC)
         {
+            if (!UseDummyGC)
+            {
+                throw new Exception("To prevent crash by _PyObject_GC_UNTRACK in Python internal, UseDummyGC should be enabled when using ResotreObjects");
+            }
             var intialObjs = PySys_GetObject("initial_objs");
             Debug.Assert(intialObjs != null);
             foreach (var obj in PyGCGetObjects())

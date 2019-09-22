@@ -166,6 +166,7 @@ namespace Python.Runtime
         /// </summary>
         internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
+        public static bool SoftShutdown { get; private set; }
         private static PyReferenceCollection _typeRefs;
 
         /// <summary>
@@ -173,6 +174,12 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize(bool initSigs = false, bool softShutdown = false)
         {
+            if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+            {
+                softShutdown = true;
+            }
+
+            SoftShutdown = softShutdown;
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);

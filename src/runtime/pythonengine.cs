@@ -12,7 +12,7 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
-        public static bool SoftShutdown { get; private set; }
+        public static bool SoftShutdown => Runtime.SoftShutdown;
 
         private static DelegateManager delegateManager;
         private static bool initialized;
@@ -171,7 +171,6 @@ namespace Python.Runtime
             delegateManager = new DelegateManager();
             Runtime.Initialize(initSigs, softShutdown);
             initialized = true;
-            SoftShutdown = softShutdown;
             Exceptions.Clear();
 
             // Make sure we clean up properly on app domain unload.

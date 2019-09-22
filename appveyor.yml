@@ -3,7 +3,7 @@ build: off
 
 image:
   - Visual Studio 2017
-  
+
 platform:
   - x86
   - x64
@@ -15,7 +15,7 @@ environment:
     CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
-    - PYTHON_VERSION: 2.7 
+    - PYTHON_VERSION: 2.7
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.5
       BUILD_OPTS: --xplat
@@ -27,6 +27,9 @@ environment:
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7
+
+    - PYTHON_VERSION: 3.7
+      PYTHONNET_SOFT_SHUTDOWN: 1
 
 matrix:
     allow_failures:
