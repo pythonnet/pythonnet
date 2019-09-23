@@ -397,6 +397,17 @@ class GMT(tzinfo):
                         result = tmp;
                         return true;
                     }
+                    else
+                    {
+                        var type = tmp.GetType();
+                        // check implicit conversions that receive tmp type and return obType
+                        var conversionMethod = type.GetMethod("op_Implicit", new[] { type });
+                        if (conversionMethod != null && conversionMethod.ReturnType == obType)
+                        {
+                            result = conversionMethod.Invoke(null, new[] { tmp });
+                            return true;
+                        }
+                    }
                     Exceptions.SetError(Exceptions.TypeError, $"value cannot be converted to {obType}");
                     return false;
                 }

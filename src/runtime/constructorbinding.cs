@@ -119,10 +119,10 @@ namespace Python.Runtime
                 Runtime.XIncref(self.repr);
                 return self.repr;
             }
-            MethodBase[] methods = self.ctorBinder.GetMethods();
+            var methods = self.ctorBinder.GetMethods();
             string name = self.type.FullName;
             var doc = "";
-            foreach (MethodBase t in methods)
+            foreach (var t in methods)
             {
                 if (doc.Length > 0)
                 {

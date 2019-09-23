@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -12,19 +13,18 @@ namespace Python.Runtime
     /// </summary>
     internal class MethodBinder
     {
-        public ArrayList list;
-        public MethodBase[] methods;
+        private List<MethodInformation> list;
         public bool init = false;
         public bool allow_threads = true;
 
         internal MethodBinder()
         {
-            list = new ArrayList();
+            list = new List<MethodInformation>();
         }
 
         internal MethodBinder(MethodInfo mi)
         {
-            list = new ArrayList { mi };
+            list = new List<MethodInformation> { new MethodInformation(mi, mi.GetParameters()) };
         }
 
         public int Count
@@ -34,7 +34,9 @@ namespace Python.Runtime
 
         internal void AddMethod(MethodBase m)
         {
-            list.Add(m);
+            // we added a new method so we have to re sort the method list
+            init = false;
+            list.Add(new MethodInformation(m, m.GetParameters()));
         }
 
         /// <summary>
@@ -154,16 +156,15 @@ namespace Python.Runtime
         /// is arranged in order of precedence (done lazily to avoid doing it
         /// at all for methods that are never called).
         /// </summary>
-        internal MethodBase[] GetMethods()
+        internal List<MethodInformation> GetMethods()
         {
             if (!init)
             {
                 // I'm sure this could be made more efficient.
                 list.Sort(new MethodSorter());
-                methods = (MethodBase[])list.ToArray(typeof(MethodBase));
                 init = true;
             }
-            return methods;
+            return list;
         }
 
         /// <summary>
@@ -174,9 +175,10 @@ namespace Python.Runtime
         /// Based from Jython `org.python.core.ReflectedArgs.precedence`
         /// See: https://github.com/jythontools/jython/blob/master/src/org/python/core/ReflectedArgs.java#L192
         /// </remarks>
-        internal static int GetPrecedence(MethodBase mi)
+        private static int GetPrecedence(MethodInformation methodInformation)
         {
-            ParameterInfo[] pi = mi.GetParameters();
+            ParameterInfo[] pi = methodInformation.ParameterInfo;
+            var mi = methodInformation.MethodBase;
             int val = mi.IsStatic ? 3000 : 0;
             int num = pi.Length;
 
@@ -290,65 +292,38 @@ namespace Python.Runtime
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // loop to find match, return invoker w/ or /wo error
-            MethodBase[] _methods = null;
             int pynargs = Runtime.PyTuple_Size(args);
             object arg;
             var isGeneric = false;
-            ArrayList defaultArgList = null;
-            if (info != null)
-            {
-                _methods = new MethodBase[1];
-                _methods.SetValue(info, 0);
-            }
-            else
-            {
-                _methods = GetMethods();
-            }
+            ArrayList defaultArgList;
             Type clrtype;
+            Binding bindingUsingImplicitConversion = null;
+
+            var methods = info == null ? GetMethods()
+                : new List<MethodInformation>(1) { new MethodInformation(info, info.GetParameters()) };
+
             // TODO: Clean up
-            foreach (MethodBase mi in _methods)
+            foreach (var methodInformation in methods)
             {
+                var mi = methodInformation.MethodBase;
+                var pi = methodInformation.ParameterInfo;
+
                 if (mi.IsGenericMethod)
                 {
                     isGeneric = true;
                 }
-                ParameterInfo[] pi = mi.GetParameters();
                 int clrnargs = pi.Length;
-                var match = false;
-                int arrayStart = -1;
-                var outs = 0;
+                int arrayStart;
 
-                if (pynargs == clrnargs)
+                if (CheckMethodArgumentsMatch(clrnargs,
+                    pynargs,
+                    pi,
+                    out arrayStart,
+                    out defaultArgList))
                 {
-                    match = true;
-                }
-                else if (pynargs < clrnargs)
-                {
-                    match = true;
-                    defaultArgList = new ArrayList();
-                    for (int v = pynargs; v < clrnargs; v++)
-                    {
-                        if (pi[v].DefaultValue == DBNull.Value)
-                        {
-                            match = false;
-                        }
-                        else
-                        {
-                            defaultArgList.Add(pi[v].DefaultValue);
-                        }
-                    }
-                }
-                else if (pynargs > clrnargs && clrnargs > 0 &&
-                         Attribute.IsDefined(pi[clrnargs - 1], typeof(ParamArrayAttribute)))
-                {
-                    // This is a `foo(params object[] bar)` style method
-                    match = true;
-                    arrayStart = clrnargs - 1;
-                }
-
-                if (match)
-                {
+                    var outs = 0;
                     var margs = new object[clrnargs];
+                    var usedImplicitConversion = false;
 
                     for (var n = 0; n < clrnargs; n++)
                     {
@@ -371,7 +346,7 @@ namespace Python.Runtime
                             // is necessary
                             clrtype = null;
                             IntPtr pyoptype;
-                            if (_methods.Length > 1)
+                            if (methods.Count > 1)
                             {
                                 pyoptype = IntPtr.Zero;
                                 pyoptype = Runtime.PyObject_Type(op);
@@ -430,7 +405,7 @@ namespace Python.Runtime
                                         var opImplicit = pi[n].ParameterType.GetMethod("op_Implicit", new[] { clrtype });
                                         if (opImplicit != null)
                                         {
-                                            typematch = opImplicit.ReturnType == pi[n].ParameterType;
+                                            usedImplicitConversion = typematch = opImplicit.ReturnType == pi[n].ParameterType;
                                             clrtype = pi[n].ParameterType;
                                         }
                                     }
@@ -504,9 +479,31 @@ namespace Python.Runtime
                         target = co.inst;
                     }
 
-                    return new Binding(mi, target, margs, outs);
+                    var binding = new Binding(mi, target, margs, outs);
+                    if (usedImplicitConversion)
+                    {
+                        // lets just keep the first binding using implicit conversion
+                        // this is to respect method order/precedence
+                        if (bindingUsingImplicitConversion == null)
+                        {
+                            // in this case we will not return the binding yet in case there is a match
+                            // which does not use implicit conversions, which will return directly
+                            bindingUsingImplicitConversion = binding;
+                        }
+                    }
+                    else
+                    {
+                        return binding;
+                    }
                 }
             }
+
+            // if we generated a binding using implicit conversion return it
+            if (bindingUsingImplicitConversion != null)
+            {
+                return bindingUsingImplicitConversion;
+            }
+
             // We weren't able to find a matching method but at least one
             // is a generic method and info is null. That happens when a generic
             // method was not called using the [] syntax. Let's introspect the
@@ -518,6 +515,47 @@ namespace Python.Runtime
                 return Bind(inst, args, kw, mi, null);
             }
             return null;
+        }
+
+        private bool CheckMethodArgumentsMatch(int clrnargs,
+            int pynargs,
+            ParameterInfo[] parameterInfo,
+            out int arrayStart,
+            out ArrayList defaultArgList)
+        {
+            arrayStart = -1;
+            defaultArgList = null;
+
+            var match = false;
+            if (pynargs == clrnargs)
+            {
+                match = true;
+            }
+            else if (pynargs < clrnargs)
+            {
+                match = true;
+                defaultArgList = new ArrayList();
+                for (var v = pynargs; v < clrnargs && match; v++)
+                {
+                    if (parameterInfo[v].DefaultValue == DBNull.Value)
+                    {
+                        match = false;
+                    }
+                    else
+                    {
+                        defaultArgList.Add(parameterInfo[v].DefaultValue);
+                    }
+                }
+            }
+            else if (pynargs > clrnargs && clrnargs > 0 &&
+                     Attribute.IsDefined(parameterInfo[clrnargs - 1], typeof(ParamArrayAttribute)))
+            {
+                // This is a `foo(params object[] bar)` style method
+                match = true;
+                arrayStart = clrnargs - 1;
+            }
+
+            return match;
         }
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
@@ -622,27 +660,47 @@ namespace Python.Runtime
 
             return Converter.ToPython(result, mi.ReturnType);
         }
-    }
 
-
-    /// <summary>
-    /// Utility class to sort method info by parameter type precedence.
-    /// </summary>
-    internal class MethodSorter : IComparer
-    {
-        int IComparer.Compare(object m1, object m2)
+        /// <summary>
+        /// Utility class to store the information about a <see cref="MethodBase"/>
+        /// </summary>
+        internal class MethodInformation
         {
-            int p1 = MethodBinder.GetPrecedence((MethodBase)m1);
-            int p2 = MethodBinder.GetPrecedence((MethodBase)m2);
-            if (p1 < p2)
+            public MethodBase MethodBase { get; }
+
+            public ParameterInfo[] ParameterInfo { get; }
+
+            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
             {
-                return -1;
+                MethodBase = methodBase;
+                ParameterInfo = parameterInfo;
             }
-            if (p1 > p2)
+
+            public override string ToString()
             {
-                return 1;
+                return MethodBase.ToString();
             }
-            return 0;
+        }
+
+        /// <summary>
+        /// Utility class to sort method info by parameter type precedence.
+        /// </summary>
+        private class MethodSorter : IComparer<MethodInformation>
+        {
+            public int Compare(MethodInformation x, MethodInformation y)
+            {
+                int p1 = GetPrecedence(x);
+                int p2 = GetPrecedence(y);
+                if (p1 < p2)
+                {
+                    return -1;
+                }
+                if (p1 > p2)
+                {
+                    return 1;
+                }
+                return 0;
+            }
         }
     }
 
