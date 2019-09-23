@@ -517,6 +517,10 @@ namespace Python.Runtime
             return null;
         }
 
+        /// <summary>
+        /// This helper method will perform an initial check to determine if we found a matching
+        /// method based on its parameters count and type <see cref="Bind(IntPtr,IntPtr,IntPtr,MethodBase,MethodInfo[])"/>
+        /// </summary>
         private bool CheckMethodArgumentsMatch(int clrnargs,
             int pynargs,
             ParameterInfo[] parameterInfo,
