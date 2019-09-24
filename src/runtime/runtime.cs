@@ -1115,8 +1115,25 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyLong_AsLong(IntPtr value);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint PyLong_AsUnsignedLong(IntPtr value);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyLong_AsUnsignedLong")]
+        internal static extern uint PyLong_AsUnsignedLong32(IntPtr value);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyLong_AsUnsignedLong")]
+        internal static extern ulong PyLong_AsUnsignedLong64(IntPtr value);
+
+        internal static object PyLong_AsUnsignedLong(IntPtr value)
+        {
+            if (PythonArchitecture == MachineType.i386)
+                return PyLong_AsUnsignedLong32(value);
+            else if (PythonArchitecture == MachineType.x86_64)
+                return PyLong_AsUnsignedLong64(value);
+            else  
+                return PyLong_AsUnsignedLong64(value);
+        }
+
+
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern long PyLong_AsLongLong(IntPtr value);
