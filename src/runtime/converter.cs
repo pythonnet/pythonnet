@@ -135,22 +135,6 @@ namespace Python.Runtime
                 return result;
             }
 
-			if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
-			{
-                using (var resultlist = new PyList())
-                {
-                    foreach (object o in (IEnumerable)value)
-                    {
-                        using (var p = new PyObject(ToPython(o, o?.GetType())))
-                        {
-                            resultlist.Append(p);
-                        }
-                    }
-                    Runtime.XIncref(resultlist.Handle);
-                    return resultlist.Handle;
-                }
-            }
-
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
             var pyderived = value as IPythonDerivedType;
@@ -231,21 +215,6 @@ namespace Python.Runtime
                     return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
 
                 default:
-                    if (value is IEnumerable)
-                    {
-                        using (var resultlist = new PyList())
-                        {
-                            foreach (object o in (IEnumerable)value)
-                            {
-                                using (var p = new PyObject(ToPython(o, o?.GetType())))
-                                {
-                                    resultlist.Append(p);
-                                }
-                            }
-                            Runtime.XIncref(resultlist.Handle);
-                            return resultlist.Handle;
-                        }
-                    }
                     result = CLRObject.GetInstHandle(value, type);
                     return result;
             }
@@ -862,7 +831,7 @@ namespace Python.Runtime
 
             var listType = typeof(List<>);
             var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) : 
+            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) :
                                         (IList) Activator.CreateInstance(constructedListType);
             IntPtr item;
 
@@ -883,7 +852,7 @@ namespace Python.Runtime
 
             items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
-            
+
             result = items;
             return true;
         }
