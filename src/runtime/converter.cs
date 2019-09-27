@@ -155,7 +155,7 @@ namespace Python.Runtime
             // type is. we'd rather have the object bound to the actual
             // implementing class.
 
-            type = value.GetType();
+            type = type ?? value.GetType();
 
             TypeCode tc = Type.GetTypeCode(type);
 

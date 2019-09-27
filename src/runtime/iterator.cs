@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections;
 
@@ -10,10 +11,18 @@ namespace Python.Runtime
     internal class Iterator : ExtensionType
     {
         private IEnumerator iter;
+        private Type type;
 
         public Iterator(IEnumerator e)
         {
             iter = e;
+
+            var genericType = e.GetType().GetInterfaces().FirstOrDefault(
+                x => x.IsGenericType &&
+                x.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IEnumerator<>)
+            );
+
+            type = genericType?.GetGenericArguments().FirstOrDefault();
         }
 
 
@@ -41,7 +50,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
             object item = self.iter.Current;
-            return Converter.ToPythonImplicit(item);
+            return Converter.ToPython(item, self.type);
         }
 
         public static IntPtr tp_iter(IntPtr ob)
