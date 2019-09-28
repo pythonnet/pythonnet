@@ -1,12 +1,14 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace Python.Runtime
 {
-#if NETSTANDARD
+    [Obsolete("This API is for internal use only")]
     public static class ReflectionPolifills
     {
+#if NETSTANDARD
         public static AssemblyBuilder DefineDynamicAssembly(this AppDomain appDomain, AssemblyName assemblyName, AssemblyBuilderAccess assemblyBuilderAccess)
         {
             return AssemblyBuilder.DefineDynamicAssembly(assemblyName, assemblyBuilderAccess);
@@ -16,6 +18,21 @@ namespace Python.Runtime
         {
             return typeBuilder.GetTypeInfo().GetType();
         }
-    }
 #endif
+#if NET40
+        public static T GetCustomAttribute<T>(this Type type) where T: Attribute
+        {
+            return type.GetCustomAttributes(typeof(T), inherit: false)
+                .Cast<T>()
+                .SingleOrDefault();
+        }
+
+        public static T GetCustomAttribute<T>(this Assembly assembly) where T: Attribute
+        {
+            return assembly.GetCustomAttributes(typeof(T), inherit: false)
+                .Cast<T>()
+                .SingleOrDefault();
+        }
+#endif
+    }
 }
