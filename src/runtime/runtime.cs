@@ -155,11 +155,6 @@ namespace Python.Runtime
         /// </summary>
         public static string MachineName { get; private set; }
 
-        /// <summary>
-        /// Gets the architecture the python interpreter is using as reported by python's struct.calcsize("P")
-        /// </summary>
-        public static MachineType PythonArchitecture { get; private set; }
-
         internal static bool IsPython2 = pyversionnumber < 30;
         internal static bool IsPython3 = pyversionnumber >= 30;
 
@@ -197,9 +192,6 @@ namespace Python.Runtime
 
             IntPtr op;
             IntPtr dict;
-
-            InitializePythonArch();
-
             if (IsPython3)
             {
                 op = PyImport_ImportModule("builtins");
@@ -377,43 +369,6 @@ namespace Python.Runtime
                 MType = MachineType.Other;
             }
             Machine = MType;
-        }
-
-        /// <summary>
-        /// Initializes the architecture used within the python interpreter
-        ///
-        /// For various reasons the python interpreter often has a different
-        /// architecture to that of the machine. For example on a 64 bit Windows
-        /// platform the CPython interpreter is compiled with 32 bit longs.
-        /// This method will allow pythonnet to determine at runtime how big
-        /// python's longs are.
-        /// </summary>
-        private static void InitializePythonArch()
-        {
-            IntPtr structModule = PyImport_ImportModule("struct");
-            IntPtr calcsizeMethod = PyObject_GetAttrString(structModule, "calcsize");
-            IntPtr methodArgs = PyTuple_New(1);
-            IntPtr pString = PyString_FromString("P");
-
-            if(PyTuple_SetItem(methodArgs, 0, pString) != 0) 
-            {
-                PythonArchitecture = MachineType.Other;
-                return;
-            }
-
-            var result = PyLong_AsLong(PyObject_Call(calcsizeMethod, methodArgs, IntPtr.Zero));
-
-            switch(result){
-                case 4:
-                    PythonArchitecture = MachineType.i386;
-                    break;
-                case 8:
-                    PythonArchitecture = MachineType.x86_64;
-                    break;
-                default:
-                    PythonArchitecture = MachineType.Other;
-                    break;
-            }
         }
 
         internal static void Shutdown()
@@ -1091,12 +1046,9 @@ namespace Python.Runtime
 
         internal static IntPtr PyLong_FromUnsignedLong(object value)
         {
-            if(PythonArchitecture == MachineType.i386)
+            if(Is32Bit || IsWindows)
                 return PyLong_FromUnsignedLong32(Convert.ToUInt32(value));
-            else if(PythonArchitecture == MachineType.x86_64)
-                return PyLong_FromUnsignedLong64(Convert.ToUInt64(value));
             else
-                // Couldn't determine interpreter arch, try 64 bit
                 return PyLong_FromUnsignedLong64(Convert.ToUInt64(value));
         }
 
@@ -1125,15 +1077,11 @@ namespace Python.Runtime
 
         internal static object PyLong_AsUnsignedLong(IntPtr value)
         {
-            if (PythonArchitecture == MachineType.i386)
+            if (Is32Bit || IsWindows)
                 return PyLong_AsUnsignedLong32(value);
-            else if (PythonArchitecture == MachineType.x86_64)
-                return PyLong_AsUnsignedLong64(value);
-            else  
+            else
                 return PyLong_AsUnsignedLong64(value);
         }
-
-
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern long PyLong_AsLongLong(IntPtr value);
