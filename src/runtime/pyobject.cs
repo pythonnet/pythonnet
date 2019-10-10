@@ -958,6 +958,12 @@ namespace Python.Runtime
             result = null;
             if (op == IntPtr.Zero)
             {
+                // If the attribute exists and we still got an exception, throw
+                if (Runtime.PyObject_HasAttrString(obj, binder.Name) != 0)
+                    throw new PythonException();
+
+                // Otherwise the error is due to the missing attribute and we
+                // report this back
                 Runtime.PyErr_Clear();
                 return false;
             }
@@ -975,6 +981,10 @@ namespace Python.Runtime
         {
             IntPtr ptr = Converter.ToPython(value, value?.GetType());
             int r = Runtime.PyObject_SetAttrString(obj, binder.Name, ptr);
+
+            // Checking HasAttr as we do in TryGetMember doesn't really make
+            // sense here as the attribute may indeed not exist and it should
+            // suffice to report a generic failure back
             bool success = r == 0;
             if (!success)
                 Runtime.PyErr_Clear();
