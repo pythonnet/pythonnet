@@ -113,3 +113,8 @@ https://github.com/pythonnet/pythonnet/wiki
    :target: http://stackoverflow.com/questions/tagged/python.net
 .. |conda-forge version| image:: https://img.shields.io/conda/vn/conda-forge/pythonnet.svg
    :target: https://anaconda.org/conda-forge/pythonnet
+
+Resources
+---------
+Mailing list: https://mail.python.org/mailman/listinfo/pythondotnet
+Chat: https://gitter.im/pythonnet/pythonnet
