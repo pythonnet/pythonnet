@@ -193,6 +193,11 @@ namespace Python.Runtime
                 }
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
+            else
+            {
+                PyGILState_Ensure();
+                MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
+            }
 
             IsFinalizing = false;
 
@@ -406,6 +411,16 @@ namespace Python.Runtime
                 PyGC_Collect();
                 RuntimeState.Restore();
                 ResetPyMembers();
+                GC.Collect();
+                try
+                {
+                    GC.WaitForFullGCComplete();
+                }
+                catch (NotImplementedException)
+                {
+                    // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
+                }
+                PyEval_SaveThread();
                 return;
             }
             ResetPyMembers();

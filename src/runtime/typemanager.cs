@@ -1050,8 +1050,10 @@ namespace Python.Runtime
                 return;
             }
             _alredyReset = true;
+#if DEBUG
             IntPtr tp_name = Marshal.ReadIntPtr(_type, TypeOffset.tp_name);
             string typeName = Marshal.PtrToStringAnsi(tp_name);
+#endif
             foreach (var offset in _slots.Keys)
             {
                 IntPtr ptr = GetDefaultSlot(offset);
