@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using NUnit.Framework;
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
@@ -15,6 +17,30 @@ namespace Python.EmbeddingTest
         public void Dispose()
         {
             PythonEngine.Shutdown();
+        }
+
+        [Test]
+        public void ConvertListRoundTrip()
+        {
+            var list = new List<Type> { typeof(decimal), typeof(int) };
+            var py = list.ToPython();
+            object result;
+            var converted = Converter.ToManaged(py.Handle, typeof(List<Type>), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, list);
+        }
+
+        [Test]
+        public void ConvertPyListToArray()
+        {
+            var array = new List<Type> { typeof(decimal), typeof(int) };
+            var py = array.ToPython();
+            object result;
+            var converted = Converter.ToManaged(py.Handle, typeof(Type[]), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, array);
         }
 
         [Test]

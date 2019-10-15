@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -166,19 +167,20 @@ class GMT(tzinfo):
                 return result;
             }
 
-            if (value is IList && value.GetType().IsGenericType)
+            var list = value as IList;
+            if (list != null && value.GetType().IsGenericType)
             {
-                using (var resultlist = new PyList())
+                using (var resultList = new PyList())
                 {
-                    foreach (object o in (IEnumerable)value)
+                    for (var i = 0; i < list.Count; i++)
                     {
-                        using (var p = new PyObject(ToPython(o, o?.GetType())))
+                        using (var p = list[i].ToPython())
                         {
-                            resultlist.Append(p);
+                            resultList.Append(p);
                         }
                     }
-                    Runtime.XIncref(resultlist.Handle);
-                    return resultlist.Handle;
+                    Runtime.XIncref(resultList.Handle);
+                    return resultList.Handle;
                 }
             }
 
@@ -380,6 +382,15 @@ class GMT(tzinfo):
                 Runtime.XIncref(value); // PyObject() assumes ownership
                 result = new PyObject(value);
                 return true;
+            }
+
+            if(obType.IsGenericType && Runtime.PyObject_TYPE(value) == Runtime.PyListType)
+            {
+                var typeDefinition = obType.GetGenericTypeDefinition();
+                if (typeDefinition == typeof(List<>))
+                {
+                    return ToList(value, obType, out result, setError);
+                }
             }
 
             // Common case: if the Python value is a wrapped managed object
@@ -1003,7 +1014,6 @@ class GMT(tzinfo):
             Exceptions.SetError(Exceptions.TypeError, $"Cannot convert {src} to {target}");
         }
 
-
         /// <summary>
         /// Convert a Python value to a correctly typed managed array instance.
         /// The Python value must support the Python sequence protocol and the
@@ -1015,7 +1025,7 @@ class GMT(tzinfo):
             int size = Runtime.PySequence_Size(value);
             result = null;
 
-            if (size < 0 || elementType.IsGenericType)
+            if (elementType.IsGenericType)
             {
                 if (setError)
                 {
@@ -1026,7 +1036,49 @@ class GMT(tzinfo):
 
             Array items = Array.CreateInstance(elementType, size);
 
-            // XXX - is there a better way to unwrap this if it is a real array?
+            var index = 0;
+            result = items;
+            return ApplyActionToPySequence(value, obType, setError, size, elementType, o =>
+            {
+                items.SetValue(o, index++);
+            });
+        }
+
+        /// <summary>
+        /// Convert a Python value to a correctly typed managed list instance.
+        /// The Python value must support the Python sequence protocol and the
+        /// items in the sequence must be convertible to the target list type.
+        /// </summary>
+        private static bool ToList(IntPtr value, Type obType, out object result, bool setError)
+        {
+            var elementType = obType.GetGenericArguments()[0];
+            var size = Runtime.PySequence_Size(value);
+
+            result = Activator.CreateInstance(obType, args: size);
+            var resultList = (IList)result;
+            return ApplyActionToPySequence(value, obType, setError, size, elementType, o => resultList.Add(o));
+        }
+
+        /// <summary>
+        /// Helper method that will enumerate a Python sequence convert its values to the given
+        /// type and send them to the provided action
+        /// </summary>
+        private static bool ApplyActionToPySequence(IntPtr value,
+            Type obType,
+            bool setError,
+            int size,
+            Type elementType,
+            Action<object> action)
+        {
+            if (size < 0)
+            {
+                if (setError)
+                {
+                    SetConversionError(value, obType);
+                }
+                return false;
+            }
+
             for (var i = 0; i < size; i++)
             {
                 object obj = null;
@@ -1046,14 +1098,12 @@ class GMT(tzinfo):
                     return false;
                 }
 
-                items.SetValue(obj, i);
+                action(obj);
                 Runtime.XDecref(item);
             }
 
-            result = items;
             return true;
         }
-
 
         /// <summary>
         /// Convert a Python value to a correctly typed managed enum instance.
