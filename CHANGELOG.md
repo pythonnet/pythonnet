@@ -25,6 +25,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 - Fixed runtime that fails loading when using pythonnet in an environment
   together with Nuitka
 - Fixes bug where delegates get casts (dotnetcore)
+- Determine size of interpreter longs at runtime
 
 ## [2.4.0][]
 
