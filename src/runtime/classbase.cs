@@ -233,34 +233,7 @@ namespace Python.Runtime
             }
             try
             {
-                //As per python doc:
-                //The return value must be a string object.  If a class defines __repr__() but not __str__(),
-                //then __repr__() is also used when an “informal” string representation of instances of that
-                //class is required.
-                //In C#, everything provides ToString(), so the check here will be whether the type explicitly
-                //provides ToString() or if it is language provided (i.e. the fully qualified type name as a string)
-
-                //First check which type in the object hierarchy provides ToString()
-                //ToString has two "official" overloads so loop over GetMethods to get the one without parameters
-                var instType = co.inst.GetType();
-                var method = instType.GetMethod("ToString", new Type[]{});
-                if (method.DeclaringType != typeof(object))
-                {
-                    //match!  something other than object provides a parameter-less overload of ToString
-                    return Runtime.PyString_FromString(co.inst.ToString());
-                }
-
-                //If the object defines __repr__, call it.
-                System.Reflection.MethodInfo reprMethodInfo = instType.GetMethod("__repr__");
-                if (reprMethodInfo != null && reprMethodInfo.IsPublic)
-                {
-                    var reprString = (string)reprMethodInfo.Invoke(co.inst, null);
-                    return Runtime.PyString_FromString(reprString);
-                }
-
-                //otherwise fallback to object's ToString() implementation
                 return Runtime.PyString_FromString(co.inst.ToString());
-                
             }
             catch (Exception e)
             {

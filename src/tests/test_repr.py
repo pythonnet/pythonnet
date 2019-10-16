@@ -19,12 +19,6 @@ def test_system_string():
     assert str(ob) == "hello"
     assert "<System.String object at " in ob.__repr__()
 
-def test_repr_only():
-    """Test class implementing __repr__() but not ToString()"""
-    ob = ReprTest.Foo()
-    assert str(ob) == "I implement __repr__() but not ToString()!"
-    assert ob.__repr__() == "I implement __repr__() but not ToString()!"
-    
 def test_str_only():
     """Test class implementing ToString() but not __repr__()"""
     ob = ReprTest.Bar()
