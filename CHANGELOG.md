@@ -46,6 +46,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added PyObject finalizer support, Python objects referred by C# can be auto collect now ([#692][p692]).
 -   Added detailed comments about aproaches and dangers to handle multi-app-domains ([#625][p625])
 -   Python 3.7 support, builds and testing added. Defaults changed from Python 3.6 to 3.7 ([#698][p698])
+-   Added support for C# types to provide `__repr__` ([#680][p680])
 
 ### Changed
 
