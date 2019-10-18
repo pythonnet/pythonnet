@@ -37,6 +37,29 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// Exception __repr__ implementation
+        /// </summary>
+        public new static IntPtr tp_repr(IntPtr ob)
+        {
+            Exception e = ToException(ob);
+            if (e == null)
+            {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+            string name = e.GetType().Name;
+            string message;
+            if (e.Message != String.Empty)
+            {
+                message = String.Format("{0}('{1}')", name, e.Message);
+            }
+            else
+            {
+                message = String.Format("{0}()", name);
+            }
+            return Runtime.PyUnicode_FromString(message);
+        }
+
+        /// <summary>
         /// Exception __str__ implementation
         /// </summary>
         public new static IntPtr tp_str(IntPtr ob)
