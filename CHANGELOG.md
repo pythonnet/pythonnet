@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Added automatic NuGet package generation in appveyor and local builds
+-   Added Dictionary to PyDict conversion to the function ToPython()
 
 ### Changed
 
