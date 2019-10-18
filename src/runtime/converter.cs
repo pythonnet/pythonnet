@@ -150,6 +150,24 @@ namespace Python.Runtime
                     return resultlist.Handle;
                 }
             }
+            else if (value is IDictionary && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
+            {
+                using (var resultdict = new PyDict())
+                {
+                    foreach (DictionaryEntry o in (IDictionary)value)
+                    {
+                        using (var k = new PyObject(ToPython(o.Key, o.Key?.GetType())))
+                        {
+                            using (var v = new PyObject(ToPython(o.Value, o.Value?.GetType())))
+                            {
+                                resultdict.SetItem(k, v);
+                            }
+                        }
+                    }
+                    Runtime.XIncref(resultdict.Handle);
+                    return resultdict.Handle;
+                }
+            }
 
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
