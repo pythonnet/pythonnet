@@ -728,7 +728,20 @@ namespace Python.Runtime
                         }
                         goto type_error;
                     }
-                    uint ui = (uint)Runtime.PyLong_AsUnsignedLong(op);
+                    
+                    uint ui;
+                    try 
+                    {
+                        ui = Convert.ToUInt32(Runtime.PyLong_AsUnsignedLong(op));
+                    } catch (OverflowException)
+                    {
+                        // Probably wasn't an overflow in python but was in C# (e.g. if cpython
+                        // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in 
+                        // PyLong_AsUnsignedLong)
+                        Runtime.XDecref(op);
+                        goto overflow;
+                    }
+                    
 
                     if (Exceptions.ErrorOccurred())
                     {
