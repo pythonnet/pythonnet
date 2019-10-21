@@ -26,5 +26,19 @@ namespace Python.PerformanceTests
                 .WithEnvironmentVariable(EnvironmentVariableName,
                     Path.Combine(deploymentRoot, "new", "Python.Runtime.dll")));
         }
+
+        static BaselineComparisonConfig() {
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+        }
+
+        static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args) {
+            Console.WriteLine(args.Name);
+            if (!args.Name.StartsWith("Python.Runtime"))
+                return null;
+            string pythonRuntimeDll = Environment.GetEnvironmentVariable(EnvironmentVariableName);
+            if (string.IsNullOrEmpty(pythonRuntimeDll))
+                pythonRuntimeDll = Path.Combine(BenchmarkTests.DeploymentRoot, "baseline", "Python.Runtime.dll");
+            return Assembly.LoadFrom(pythonRuntimeDll);
+        }
     }
 }

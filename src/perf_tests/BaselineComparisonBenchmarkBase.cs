@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Reflection;
 
 using Python.Runtime;
@@ -44,6 +44,23 @@ namespace Python.PerformanceTests
                         Console.WriteLine($"{assembly} -> {dependency}");
                     }
             }
+
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+        }
+
+        static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args) {
+            if (!args.Name.StartsWith("Python.Runtime"))
+                return null;
+
+            var preloaded = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name == "Python.Runtime");
+            if (preloaded != null) return preloaded;
+
+            string pythonRuntimeDll = Environment.GetEnvironmentVariable(BaselineComparisonConfig.EnvironmentVariableName);
+            if (string.IsNullOrEmpty(pythonRuntimeDll))
+                return null;
+
+            return Assembly.LoadFrom(pythonRuntimeDll);
         }
     }
 }
