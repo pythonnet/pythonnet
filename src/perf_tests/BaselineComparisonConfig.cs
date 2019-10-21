@@ -18,11 +18,12 @@ namespace Python.PerformanceTests
 
             string deploymentRoot = BenchmarkTests.DeploymentRoot;
 
-            this.Add(Job.Default
+            var baseJob = Job.Default;
+            this.Add(baseJob
                 .WithEnvironmentVariable(EnvironmentVariableName,
                     Path.Combine(deploymentRoot, "baseline", "Python.Runtime.dll"))
                 .AsBaseline());
-            this.Add(Job.Default
+            this.Add(baseJob
                 .WithEnvironmentVariable(EnvironmentVariableName,
                     Path.Combine(deploymentRoot, "new", "Python.Runtime.dll")));
         }

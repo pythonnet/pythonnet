@@ -21,7 +21,7 @@ namespace Python.PerformanceTests
 s = 0
 for i in range(1000000):
   s += a.IntProperty
-");
+", locals: locals.Handle);
             }
         }
     }
