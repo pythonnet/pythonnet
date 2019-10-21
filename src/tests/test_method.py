@@ -204,6 +204,11 @@ def test_null_array_conversion():
     r = ob.TestNullArrayConversion(None)
     assert r is None
 
+def test_ienumerable_args():
+    """Test conversion of python lists and tuples to IEnumerable<object>"""
+    ob = MethodTest()
+    x = ob.TestIEnumerable([1,2,3])
+    y = ob.TestIEnumerable((1,2,3))
 
 def test_string_params_args():
     """Test use of string params."""

@@ -117,6 +117,11 @@ namespace Python.Test
             return args;
         }
 
+        public static int TestIEnumerable(System.Collections.Generic.IEnumerable<object> arg)
+        {
+            return 1;
+        }
+
         public static string TestOverloadedNoObject(int i)
         {
             return "Got int";
