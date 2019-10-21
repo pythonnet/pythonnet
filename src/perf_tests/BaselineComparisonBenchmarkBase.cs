@@ -13,15 +13,18 @@ namespace Python.PerformanceTests
         {
             Console.WriteLine($"CWD: {Environment.CurrentDirectory}");
             Console.WriteLine($"Using Python.Runtime from {typeof(PythonEngine).Assembly.Location} {typeof(PythonEngine).Assembly.GetName()}");
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-                if (assembly.FullName.StartsWith("Python.Runtime"))
-                    Console.WriteLine(assembly.Location);
-                foreach (var dependency in assembly.GetReferencedAssemblies())
-                    if (dependency.FullName.Contains("Python.Runtime")) {
-                        Console.WriteLine($"{assembly} -> {dependency}");
-                    }
+
+            try {
+                PythonEngine.Initialize();
+                Console.WriteLine("Python Initialized");
+                if (PythonEngine.BeginAllowThreads() == IntPtr.Zero)
+                    throw new PythonException();
+                Console.WriteLine("Threading enabled");
             }
-            PythonEngine.Initialize();
+            catch (Exception e) {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         static BaselineComparisonBenchmarkBase()
