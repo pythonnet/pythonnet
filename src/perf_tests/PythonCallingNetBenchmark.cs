@@ -11,16 +11,29 @@ namespace Python.PerformanceTests
     public class PythonCallingNetBenchmark: BaselineComparisonBenchmarkBase
     {
         [Benchmark]
-        public void ReadIntProperty()
+        public void ReadInt64Property()
         {
             using (Py.GIL())
             {
                 var locals = new PyDict();
                 locals.SetItem("a", new NetObject().ToPython());
-                PythonEngine.Exec(@"
+                PythonEngine.Exec($@"
 s = 0
-for i in range(1000000):
-  s += a.IntProperty
+for i in range(300000):
+  s += a.{nameof(NetObject.LongProperty)}
+", locals: locals.Handle);
+            }
+        }
+
+        [Benchmark]
+        public void WriteInt64Property() {
+            using (Py.GIL()) {
+                var locals = new PyDict();
+                locals.SetItem("a", new NetObject().ToPython());
+                PythonEngine.Exec($@"
+s = 0
+for i in range(300000):
+  a.{nameof(NetObject.LongProperty)} += i
 ", locals: locals.Handle);
             }
         }
@@ -28,6 +41,6 @@ for i in range(1000000):
 
     class NetObject
     {
-        public int IntProperty { get; set; } = 42;
+        public long LongProperty { get; set; } = 42;
     }
 }
