@@ -1900,11 +1900,7 @@ namespace Python.Runtime
             try
             {
                 Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
-
-                if (Is32Bit)
-                    Marshal.WriteInt32(Py_NoSiteFlag, 1);
-                else
-                    Marshal.WriteInt64(Py_NoSiteFlag, 1);
+                Marshal.WriteInt32(Py_NoSiteFlag, 1);
             }
             finally
             {
