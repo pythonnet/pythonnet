@@ -20,10 +20,12 @@ namespace Python.PerformanceTests
 
             var baseJob = Job.Default;
             this.Add(baseJob
+                .WithId("baseline")
                 .WithEnvironmentVariable(EnvironmentVariableName,
                     Path.Combine(deploymentRoot, "baseline", "Python.Runtime.dll"))
-                .AsBaseline());
+                .WithBaseline(true));
             this.Add(baseJob
+                .WithId("new")
                 .WithEnvironmentVariable(EnvironmentVariableName,
                     Path.Combine(deploymentRoot, "new", "Python.Runtime.dll")));
         }
