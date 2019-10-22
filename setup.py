@@ -356,7 +356,7 @@ class BuildExtPythonnet(build_ext.build_ext):
                 " ".join(
                     cmd
                     + [
-                        '"/t:Console_15:publish;Python_EmbeddingTest_15:publish"',
+                        '"/t:Console_15:publish;Python_EmbeddingTest_15:publish;Python_PerformanceTests:publish"',
                         "/p:TargetFramework=netcoreapp2.0",
                     ]
                 ),

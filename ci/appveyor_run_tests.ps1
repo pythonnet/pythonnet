@@ -42,6 +42,15 @@ Write-Host ("Starting embedded tests") -ForegroundColor "Green"
 $CS_STATUS = $LastExitCode
 if ($CS_STATUS -ne 0) {
     Write-Host "Embedded tests failed" -ForegroundColor "Red"
+} else {
+    # Run C# Performance tests
+    Write-Host ("Starting performance tests") -ForegroundColor "Green"
+    $CS_PERF_TESTS = ".\src\perf_tests\bin\Python.PerformanceTests.dll"
+    &"$CS_RUNNER" "$CS_PERF_TESTS"
+    $CS_PERF_STATUS = $LastExitCode
+    if ($CS_PERF_STATUS -ne 0) {
+        Write-Host "Performance tests (C#) failed" -ForegroundColor "Red"
+    }
 }
 
 if ($env:BUILD_OPTS -eq "--xplat"){
@@ -62,7 +71,7 @@ if ($env:BUILD_OPTS -eq "--xplat"){
 }
 
 # Set exit code to fail if either Python or Embedded tests failed
-if ($PYTHON_STATUS -ne 0 -or $CS_STATUS -ne 0) {
+if ($PYTHON_STATUS -ne 0 -or $CS_STATUS -ne 0 -or $CS_PERF_STATUS -ne 0) {
     Write-Host "Tests failed" -ForegroundColor "Red"
     $host.SetShouldExit(1)
 }
