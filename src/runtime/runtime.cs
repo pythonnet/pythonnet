@@ -414,6 +414,8 @@ namespace Python.Runtime
         internal static IntPtr PyNoneType;
         internal static IntPtr PyTypeType;
 
+        internal static IntPtr Py_NoSiteFlag;
+
 #if PYTHON3
         internal static IntPtr PyBytesType;
 #endif
@@ -1884,5 +1886,29 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_MakePendingCalls();
+
+        internal static void SetNoSiteFlag()
+        {
+            var loader = LibraryLoader.Get(OperatingSystem);
+
+            IntPtr dllLocal;
+            if (_PythonDll != "__Internal")
+            {
+                dllLocal = loader.Load(_PythonDll);
+            }
+
+            try
+            {
+                Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
+                Marshal.WriteInt32(Py_NoSiteFlag, 1);
+            }
+            finally
+            {
+                if (dllLocal != IntPtr.Zero)
+                {
+                    loader.Free(dllLocal);
+                }
+            }
+        }
     }
 }
