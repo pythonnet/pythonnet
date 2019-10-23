@@ -12,6 +12,7 @@
 
 ## Contributors
 
+-   Alex Helms ([@alexhelms](https://github.com/alexhelms))
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
 -   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
