@@ -71,6 +71,7 @@
 -   ([@OneBlue](https://github.com/OneBlue))
 -   ([@rico-chet](https://github.com/rico-chet))
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
+-   ([@SnGmng](https://github.com/SnGmng))
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
 -   ([@DanBarzilian](https://github.com/DanBarzilian))
