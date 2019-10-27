@@ -18,6 +18,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added Runtime.None to be able to pass None as parameter into Python from .NET
 -   Added PyObject.IsNone() to check if a Python object is None in .NET.
 -   Support for Python 3.8
+-   Added Python 3 buffer api support and PyBuffer interface for fast byte and numpy array read/write ([#980][p980])
 
 ### Changed
 
