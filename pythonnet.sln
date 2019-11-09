@@ -10,8 +10,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.EmbeddingTest", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "src\console\Console.csproj", "{E29DCF0A-5114-4A98-B1DD-71264B6EA349}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "clrmodule", "src\clrmodule\clrmodule.csproj", "{86E834DE-1139-4511-96CC-69636A56E7AC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebugMono|x64 = DebugMono|x64

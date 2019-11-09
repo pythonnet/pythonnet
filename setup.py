@@ -167,23 +167,6 @@ def _get_interop_filename():
     return os.path.join("src", "runtime", interop_filename)
 
 
-def _get_source_files():
-    """Walk project and collect the files needed for ext_module"""
-    for ext in (".sln",):
-        for path in glob.glob("*" + ext):
-            yield path
-
-    for root, dirnames, filenames in os.walk("src"):
-        for ext in (".cs", ".csproj", ".snk", ".config", ".py", ".c", ".h", ".ico"):
-            for filename in fnmatch.filter(filenames, "*" + ext):
-                yield os.path.join(root, filename)
-
-    for root, dirnames, filenames in os.walk("tools"):
-        for ext in (".exe", ".py", ".c", ".h"):
-            for filename in fnmatch.filter(filenames, "*" + ext):
-                yield os.path.join(root, filename)
-
-
 def _get_long_description():
     """Helper to populate long_description for pypi releases"""
     return open("README.rst").read()
@@ -362,8 +345,6 @@ class BuildExtPythonnet(build_ext.build_ext):
                 ),
                 shell=use_shell,
             )
-        if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
-            self._build_monoclr()
 
     def _get_manifest(self, build_dir):
         if DEVTOOLS != "MsDev" and DEVTOOLS != "MsDev15":
@@ -378,30 +359,6 @@ class BuildExtPythonnet(build_ext.build_ext):
         self.debug_print("Extracting manifest from {}".format(sys.executable))
         subprocess.check_call(" ".join(cmd), shell=False)
         return manifest
-
-    def _build_monoclr(self):
-        try:
-            mono_libs = _check_output("pkg-config --libs mono-2", shell=True)
-        except:
-            if DEVTOOLS == "dotnet":
-                print("Skipping building monoclr module...")
-                return
-            raise
-        mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
-        glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
-        glib_cflags = _check_output("pkg-config --cflags glib-2.0", shell=True)
-        cflags = mono_cflags.strip() + " " + glib_cflags.strip()
-        libs = mono_libs.strip() + " " + glib_libs.strip()
-
-        # build the clr python module
-        clr_ext = Extension(
-            "clr",
-            sources=["src/monoclr/pynetinit.c", "src/monoclr/clrmod.c"],
-            extra_compile_args=cflags.split(" "),
-            extra_link_args=libs.split(" "),
-        )
-
-        build_ext.build_ext.build_extension(self, clr_ext)
 
     def _install_packages(self):
         """install packages using nuget"""
@@ -643,6 +600,7 @@ setup(
     author="The Python for .Net developers",
     author_email="pythondotnet@python.org",
     setup_requires=setup_requires,
+    install_requires=["clr_loader"],
     long_description=_get_long_description(),
     ext_modules=[Extension("clr", sources=list(_get_source_files()))],
     data_files=[("{install_platlib}", ["{build_lib}/Python.Runtime.dll"])],
