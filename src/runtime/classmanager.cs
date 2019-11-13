@@ -40,9 +40,8 @@ namespace Python.Runtime
         /// </summary>
         internal static ClassBase GetClass(Type type)
         {
-            ClassBase cb = null;
-            cache.TryGetValue(type, out cb);
-            if (cb != null)
+            ClassBase cb;
+            if (cache.TryGetValue(type, out cb))
             {
                 return cb;
             }

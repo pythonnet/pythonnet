@@ -2,7 +2,7 @@
 Code in this module gets loaded into the main clr module.
 """
 
-__version__ = "1.0.5.26"
+__version__ = "1.0.5.28"
 
 
 class clrproperty(object):
