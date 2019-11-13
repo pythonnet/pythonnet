@@ -143,6 +143,7 @@ namespace Python.Runtime
             ["em64t"] = MachineType.x86_64,
             ["armv7l"] = MachineType.armv7l,
             ["armv8"] = MachineType.armv8,
+            ["aarch64"] = MachineType.aarch64,
         };
 
         /// <summary>
