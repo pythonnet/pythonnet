@@ -42,7 +42,7 @@
     <Python2Version>$(PYTHONNET_PY2_VERSION)</Python2Version>
     <Python2Version Condition="'$(Python2Version)'==''">PYTHON27</Python2Version>
     <Python3Version>$(PYTHONNET_PY3_VERSION)</Python3Version>
-    <Python3Version Condition="'$(Python3Version)'==''">PYTHON37</Python3Version>
+    <Python3Version Condition="'$(Python3Version)'==''">PYTHON38</Python3Version>
     <PythonWinDefineConstants>$(PYTHONNET_WIN_DEFINE_CONSTANTS)</PythonWinDefineConstants>
     <PythonWinDefineConstants Condition="'$(PythonWinDefineConstants)'==''">UCS2</PythonWinDefineConstants>
     <PythonMonoDefineConstants>$(PYTHONNET_MONO_DEFINE_CONSTANTS)</PythonMonoDefineConstants>

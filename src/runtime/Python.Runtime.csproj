@@ -34,7 +34,7 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON37;UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS4</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
@@ -46,7 +46,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON37;UCS4;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
@@ -56,7 +56,7 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON37;UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS2</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
@@ -68,7 +68,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON37;UCS2;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS2;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
@@ -152,6 +152,7 @@
     <Compile Include="interop35.cs" />
     <Compile Include="interop36.cs" />
     <Compile Include="interop37.cs" />
+    <Compile Include="interop38.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
