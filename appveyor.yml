@@ -36,6 +36,9 @@ matrix:
       - PYTHON_VERSION: 3.4
         BUILD_OPTS: --xplat
       - PYTHON_VERSION: 3.4
+      - PYTHON_VERSION: 3.8
+        BUILD_OPTS: --xplat
+      - PYTHON_VERSION: 3.8
 
 init:
   # Update Environment Variables based on matrix/platform
