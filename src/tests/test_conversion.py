@@ -701,3 +701,21 @@ def test_sbyte_array_conversion():
     array = ob.SByteArrayField
     for i, _ in enumerate(value):
         assert array[i] == indexbytes(value, i)
+
+def test_list___len__():
+    """Test __len__ for ICollection implementers"""
+    import System
+    import System.Collections.Generic
+    l = System.Collections.Generic.List[int]()
+    assert len(l) == 0
+    l.Add(5)
+    l.Add(6)
+    assert len(l) == 2
+
+    d = System.Collections.Generic.Dictionary[int, int]()
+    assert len(d) == 0
+    d.Add(4, 5)
+    assert len(d) == 1
+
+    a = System.Array[int]([0,1,2,3])
+    assert len(a) == 4
