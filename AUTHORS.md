@@ -12,6 +12,7 @@
 
 ## Contributors
 
+-   Alex Earl ([@slide](https://github.com/slide))
 -   Alex Helms ([@alexhelms](https://github.com/alexhelms))
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
