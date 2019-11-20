@@ -284,7 +284,6 @@ namespace Python.Runtime
             }
         }
 
-
         /// <summary>
         /// Standard dealloc implementation for instances of reflected types.
         /// </summary>

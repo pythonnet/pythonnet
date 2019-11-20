@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Python.Runtime.Platform;
+using Python.Runtime.Slots;
 
 namespace Python.Runtime
 {
@@ -153,6 +155,13 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
+            // add a __len__ slot for inheritors of ICollection and ICollection<>
+            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                InitializeSlot(type, TypeOffset.mp_length, typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length)));
+            }
+
+            // we want to do this after the slot stuff above in case the class itself implements a slot method
             InitializeSlots(type, impl.GetType());
 
             if (base_ != IntPtr.Zero)
@@ -191,6 +200,12 @@ namespace Python.Runtime
             //DebugUtil.DumpType(type);
 
             return type;
+        }
+
+        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
+        {
+            IntPtr thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk);
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
