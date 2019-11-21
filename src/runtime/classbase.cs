@@ -285,27 +285,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Implements __len__ for classes that implement ICollection
-        /// (this includes any IList implementer or Array subclass)
-        /// </summary>
-        public static int mp_length(IntPtr ob)
-        {
-            var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
-            {
-                Exceptions.RaiseTypeError("invalid object");
-            }
-
-            if (co.inst is ICollection c)
-            {
-                return c.Count;
-            }
-
-            Exceptions.SetError(Exceptions.TypeError, $"object of type '{co.inst.GetType().Name}' has no len()");
-            return -1;
-        }
-
-        /// <summary>
         /// Standard dealloc implementation for instances of reflected types.
         /// </summary>
         public static void tp_dealloc(IntPtr ob)
