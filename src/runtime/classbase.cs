@@ -246,6 +246,44 @@ namespace Python.Runtime
             }
         }
 
+        public static IntPtr tp_repr(IntPtr ob)
+        {
+            var co = GetManagedObject(ob) as CLRObject;
+            if (co == null)
+            {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+            try
+            {
+                //if __repr__ is defined, use it
+                var instType = co.inst.GetType();
+                System.Reflection.MethodInfo methodInfo = instType.GetMethod("__repr__");
+                if (methodInfo != null && methodInfo.IsPublic)
+                {
+                    var reprString = methodInfo.Invoke(co.inst, null) as string;
+                    return Runtime.PyString_FromString(reprString);
+                }
+
+                //otherwise use the standard object.__repr__(inst)
+                IntPtr args = Runtime.PyTuple_New(1);
+                Runtime.PyTuple_SetItem(args, 0, ob);
+                IntPtr reprFunc = Runtime.PyObject_GetAttrString(Runtime.PyBaseObjectType, "__repr__");
+                var output =  Runtime.PyObject_Call(reprFunc, args, IntPtr.Zero);
+                Runtime.XDecref(args);
+                Runtime.XDecref(reprFunc);
+                return output;
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                }
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
+        }
+
 
         /// <summary>
         /// Standard dealloc implementation for instances of reflected types.

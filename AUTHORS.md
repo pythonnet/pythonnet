@@ -12,6 +12,7 @@
 
 ## Contributors
 
+-   Alex Helms ([@alexhelms](https://github.com/alexhelms))
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
 -   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
@@ -41,6 +42,7 @@
 -   Luke Stratman ([@lstratman](https://github.com/lstratman))
 -   Konstantin Posudevskiy ([@konstantin-posudevskiy](https://github.com/konstantin-posudevskiy))
 -   Matthias Dittrich ([@matthid](https://github.com/matthid))
+-   Mohamed Koubaa ([@koubaa](https://github.com/koubaa))
 -   Patrick Stewart ([@patstew](https://github.com/patstew))
 -   Raphael Nestler ([@rnestler](https://github.com/rnestler))
 -   Rickard Holmberg ([@rickardraysearch](https://github.com/rickardraysearch))

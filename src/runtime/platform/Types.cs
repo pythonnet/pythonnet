@@ -6,6 +6,7 @@ namespace Python.Runtime.Platform
         x86_64,
         armv7l,
         armv8,
+        aarch64,
         Other
     };
 

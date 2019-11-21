@@ -23,16 +23,22 @@ environment:
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.7
       BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.8
+      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7
+    - PYTHON_VERSION: 3.8
 
 matrix:
     allow_failures:
       - PYTHON_VERSION: 3.4
         BUILD_OPTS: --xplat
       - PYTHON_VERSION: 3.4
+      - PYTHON_VERSION: 3.8
+        BUILD_OPTS: --xplat
+      - PYTHON_VERSION: 3.8
 
 init:
   # Update Environment Variables based on matrix/platform

@@ -130,6 +130,16 @@ namespace Python.Runtime
             get { return Marshal.PtrToStringAnsi(Runtime.Py_GetCompiler()); }
         }
 
+        /// <summary>
+        /// Set the NoSiteFlag to disable loading the site module.
+        /// Must be called before Initialize.
+        /// https://docs.python.org/3/c-api/init.html#c.Py_NoSiteFlag
+        /// </summary>
+        public static void SetNoSiteFlag()
+        {
+            Runtime.SetNoSiteFlag();
+        }
+
         public static int RunSimpleString(string code)
         {
             return Runtime.PyRun_SimpleString(code);

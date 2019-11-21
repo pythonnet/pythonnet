@@ -64,8 +64,11 @@ namespace Python.Runtime
 #elif PYTHON37
         internal const string _pyversion = "3.7";
         internal const string _pyver = "37";
+#elif PYTHON38
+        internal const string _pyversion = "3.8";
+        internal const string _pyver = "38";
 #else
-#error You must define one of PYTHON34 to PYTHON37 or PYTHON27
+#error You must define one of PYTHON34 to PYTHON38 or PYTHON27
 #endif
 
 #if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
@@ -143,6 +146,7 @@ namespace Python.Runtime
             ["em64t"] = MachineType.x86_64,
             ["armv7l"] = MachineType.armv7l,
             ["armv8"] = MachineType.armv8,
+            ["aarch64"] = MachineType.aarch64,
         };
 
         /// <summary>
@@ -413,6 +417,8 @@ namespace Python.Runtime
         internal static IntPtr PyBoolType;
         internal static IntPtr PyNoneType;
         internal static IntPtr PyTypeType;
+
+        internal static IntPtr Py_NoSiteFlag;
 
 #if PYTHON3
         internal static IntPtr PyBytesType;
@@ -1884,5 +1890,29 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_MakePendingCalls();
+
+        internal static void SetNoSiteFlag()
+        {
+            var loader = LibraryLoader.Get(OperatingSystem);
+
+            IntPtr dllLocal;
+            if (_PythonDll != "__Internal")
+            {
+                dllLocal = loader.Load(_PythonDll);
+            }
+
+            try
+            {
+                Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
+                Marshal.WriteInt32(Py_NoSiteFlag, 1);
+            }
+            finally
+            {
+                if (dllLocal != IntPtr.Zero)
+                {
+                    loader.Free(dllLocal);
+                }
+            }
+        }
     }
 }

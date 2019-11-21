@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
+    <PackageReference Include="nunit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="pythonnet" Version="2.3.0" GeneratePathProperty="true">
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="GetRuntimeLibBuildOutput" BeforeTargets="Build">
+    <MSBuild Projects="..\runtime\Python.Runtime.15.csproj" Properties="PYTHONNET_PY3_VERSION=PYTHON35;Configuration=$(Configuration);TargetFramework=net40;Python3Version=PYTHON35;OutputPath=bin\for_perf\">
+      <Output TaskParameter="TargetOutputs" ItemName="NewPythonRuntime" />
+    </MSBuild>
+  </Target>
+
+  <Target Name="CopyBaseline" AfterTargets="Build">
+    <Copy SourceFiles="$(Pkgpythonnet)\lib\net40\Python.Runtime.dll" DestinationFolder="$(OutDir)\baseline" />
+  </Target>
+
+  <Target Name="CopyNewBuild" AfterTargets="Build">
+    <Copy SourceFiles="@(NewPythonRuntime)" DestinationFolder="$(OutDir)\new" />
+  </Target>
+
+</Project>
