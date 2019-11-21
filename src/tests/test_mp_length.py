@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-"""Test CLR <-> Python type conversions."""
+"""Test __len__ for .NET classes implementing ICollection/ICollection<T>."""
 
-from __future__ import unicode_literals
 import System
 import pytest
 from Python.Test import MpLengthCollectionTest, MpLengthExplicitCollectionTest, MpLengthGenericCollectionTest, MpLengthExplicitGenericCollectionTest
-
-from ._compat import indexbytes, long, unichr, text_type, PY2, PY3
 
 def test_simple___len__():
     """Test __len__ for simple ICollection implementers"""
