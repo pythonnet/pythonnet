@@ -45,7 +45,12 @@ if ($CS_STATUS -ne 0) {
 } else {
     # Run C# Performance tests
     Write-Host ("Starting performance tests") -ForegroundColor "Green"
-    $CS_PERF_TESTS = ".\src\perf_tests\bin\net461\Python.PerformanceTests.dll"
+    if ($env:BUILD_OPTS -eq "--xplat") {
+        $CS_PERF_TESTS = ".\src\perf_tests\bin\net461\Python.PerformanceTests.dll"
+    }
+    else {
+        $CS_PERF_TESTS = ".\src\perf_tests\bin\Python.PerformanceTests.dll"
+    }
     &"$CS_RUNNER" "$CS_PERF_TESTS"
     $CS_PERF_STATUS = $LastExitCode
     if ($CS_PERF_STATUS -ne 0) {
