@@ -1771,6 +1771,11 @@ namespace Python.Runtime
             return (t == tp) || PyType_IsSubtype(t, tp);
         }
 
+        internal static bool PyType_IsSameAsOrSubtype(IntPtr type, IntPtr ofType)
+        {
+            return (type == ofType) || PyType_IsSubtype(type, ofType);
+        }
+
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyType_GenericNew(IntPtr type, IntPtr args, IntPtr kw);
 

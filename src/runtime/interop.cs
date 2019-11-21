@@ -184,8 +184,8 @@ namespace Python.Runtime
         private static bool IsException(IntPtr pyObject)
         {
             var type = Runtime.PyObject_TYPE(pyObject);
-            return Runtime.PyObjectType_TypeCheck(type, Exceptions.BaseException)
-                || Runtime.PyObjectType_TypeCheck(type, Runtime.PyTypeType)
+            return Runtime.PyType_IsSameAsOrSubtype(type, ofType: Exceptions.BaseException)
+                || Runtime.PyType_IsSameAsOrSubtype(type, ofType: Runtime.PyTypeType)
                 && Runtime.PyType_IsSubtype(pyObject, Exceptions.BaseException);
         }
     }
