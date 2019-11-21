@@ -9,23 +9,6 @@ namespace Python.Runtime.Slots
     internal static class mp_length_slot
     {
         /// <summary>
-        /// Finds a get_Count (Count property) that is private and
-        /// is either ICollection or ICollection&lt;T&gt; explicit
-        /// implementation
-        /// </summary>
-        static MethodInfo GetCountGetter(Type t)
-        {
-            foreach (var info in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            {
-                if (info.IsFinal && info.IsPrivate && (info.Name.Contains("System.Collections.Generic.ICollection") || info.Name.Contains("System.Collections.ICollection")) && info.Name.Contains("get_Count"))
-                {
-                    return info;
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
         /// Implements __len__ for classes that implement ICollection
         /// (this includes any IList implementer or Array subclass)
         /// </summary>
@@ -52,11 +35,19 @@ namespace Python.Runtime.Slots
                 return (int)p.GetValue(co.inst, null);
             }
 
-            // finally look for things that explicitly implement ICollection or ICollection<T>
-            MethodInfo m = GetCountGetter(clrType);
-            if (m != null)
+            // finally look for things that implement the interfaces explicitly
+            var iface = clrType.GetInterface(nameof(ICollection));
+            if(iface != null)
             {
-                return (int)m.Invoke(co.inst, null);
+                p = iface.GetProperty(nameof(ICollection.Count));
+                return (int)p.GetValue(co.inst, null);
+            }
+            
+            iface = clrType.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>));
+            if (iface != null)
+            {
+                p = iface.GetProperty(nameof(ICollection<int>.Count));
+                return (int)p.GetValue(co.inst, null);
             }
 
             Exceptions.SetError(Exceptions.TypeError, $"object of type '{clrType.Name}' has no len()");
