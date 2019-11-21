@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 sudo: false
 language: python
 python:
