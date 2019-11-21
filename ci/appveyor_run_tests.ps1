@@ -47,7 +47,7 @@ if ($CS_STATUS -ne 0) {
 } else {
     # NuGet for pythonnet-2.3 only has 64-bit binary for Python 3.5
     # the test is only built using modern stack
-    if (($env:PLATFORM -eq "x64") -and ($XPLAT) -and ($PYTHON_VERSION -eq "3.5")) {
+    if (($env:PLATFORM -eq "x64") -and ($XPLAT) -and ($env:PYTHON_VERSION -eq "3.5")) {
         # Run C# Performance tests
         Write-Host ("Starting performance tests") -ForegroundColor "Green"
         if ($XPLAT) {
@@ -62,6 +62,8 @@ if ($CS_STATUS -ne 0) {
             Write-Host "Performance tests (C#) failed" -ForegroundColor "Red"
         }
     } else {
+        Write-Host ("Skipping performance tests for ", $env:PYTHON_VERSION) -ForegroundColor "Yellow"
+        Write-Host ("on platform ", $env:PLATFORM, " xplat: ", $XPLAT) -ForegroundColor "Yellow"
         $CS_PERF_STATUS = 0
     }
 }
