@@ -21,9 +21,9 @@ env:
 addons:
   apt:
     sources:
-      - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main
+      - sourceline: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-bionic-prod bionic main
         key_url: https://packages.microsoft.com/keys/microsoft.asc
-      - sourceline: deb http://download.mono-project.com/repo/ubuntu stable-xenial/snapshots/5.20 main
+      - sourceline: deb http://download.mono-project.com/repo/ubuntu stable-bionic/snapshots/5.20 main
         key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA6A19B38D3D831EF
     packages:
       - mono-devel
