@@ -45,7 +45,7 @@ install:
 script:
   - python -m pytest
   - $RUN_TESTS src/embed_tests/bin/$EMBED_TESTS_PATH/Python.EmbeddingTest.dll
-  - $RUN_TESTS src/perf_tests/bin/$PERF_TESTS_PATH/Python.PerformanceTests.dll
+  - "if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then $RUN_TESTS src/perf_tests/bin/$PERF_TESTS_PATH/Python.PerformanceTests.dll; fi"
 
 after_script:
   # Waiting on mono-coverage, SharpCover or xr.Baboon
