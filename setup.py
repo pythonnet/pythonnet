@@ -356,8 +356,18 @@ class BuildExtPythonnet(build_ext.build_ext):
                 " ".join(
                     cmd
                     + [
-                        '"/t:Console_15:publish;Python_EmbeddingTest_15:publish;Python_PerformanceTests:publish"',
+                        '"/t:Console_15:publish;Python_EmbeddingTest_15:publish"',
                         "/p:TargetFramework=netcoreapp2.0",
+                    ]
+                ),
+                shell=use_shell,
+            )
+            subprocess.check_call(
+                " ".join(
+                    cmd
+                    + [
+                        '"/t:Python_PerformanceTests:publish"',
+                        "/p:TargetFramework=net461",
                     ]
                 ),
                 shell=use_shell,
