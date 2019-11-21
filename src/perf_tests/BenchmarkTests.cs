@@ -35,7 +35,7 @@ namespace Python.PerformanceTests
         public void WriteInt64Property()
         {
             double optimisticPerfRatio = GetOptimisticPerfRatio(this.summary.Reports);
-            Assert.LessOrEqual(optimisticPerfRatio, 0.66);
+            Assert.LessOrEqual(optimisticPerfRatio, 0.67);
         }
 
         static double GetOptimisticPerfRatio(
