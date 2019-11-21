@@ -21,7 +21,9 @@ namespace Python.PerformanceTests
             Environment.CurrentDirectory = Path.Combine(DeploymentRoot, "new");
             this.summary = BenchmarkRunner.Run<PythonCallingNetBenchmark>();
             Assert.IsNotEmpty(this.summary.Reports);
-            Assert.IsTrue(this.summary.Reports.All(r => r.Success));
+            Assert.IsTrue(
+                condition: this.summary.Reports.All(r => r.Success),
+                message: "BenchmarkDotNet failed to execute or collect results of performance tests. See logs above.");
         }
 
         [Test]
