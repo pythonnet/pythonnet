@@ -45,7 +45,7 @@ if ($CS_STATUS -ne 0) {
 } else {
     # Run C# Performance tests
     Write-Host ("Starting performance tests") -ForegroundColor "Green"
-    $CS_PERF_TESTS = ".\src\perf_tests\bin\Python.PerformanceTests.dll"
+    $CS_PERF_TESTS = ".\src\perf_tests\bin\net461\Python.PerformanceTests.dll"
     &"$CS_RUNNER" "$CS_PERF_TESTS"
     $CS_PERF_STATUS = $LastExitCode
     if ($CS_PERF_STATUS -ne 0) {
@@ -63,7 +63,7 @@ if ($env:BUILD_OPTS -eq "--xplat"){
 
     # Run Embedded tests for netcoreapp2.0 (OpenCover currently does not supports dotnet core)
     Write-Host ("Starting embedded tests for netcoreapp2.0") -ForegroundColor "Green"
-    &$DOTNET_CMD .\src\embed_tests\bin\netcoreapp2.0_publish\Python.EmbeddingTest.dll
+    &$DOTNET_CMD ".\src\embed_tests\bin\netcoreapp2.0_publish\Python.EmbeddingTest.dll"
     $CS_STATUS = $LastExitCode
     if ($CS_STATUS -ne 0) {
         Write-Host "Embedded tests for netcoreapp2.0 failed" -ForegroundColor "Red"
