@@ -35,15 +35,8 @@ namespace Python.Runtime.Slots
                 return (int)p.GetValue(co.inst, null);
             }
 
-            // finally look for things that implement the interfaces explicitly
-            var iface = clrType.GetInterface(nameof(ICollection));
-            if(iface != null)
-            {
-                p = iface.GetProperty(nameof(ICollection.Count));
-                return (int)p.GetValue(co.inst, null);
-            }
-            
-            iface = clrType.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>));
+            // finally look for things that implement the interface explicitly
+            var iface = clrType.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>));
             if (iface != null)
             {
                 p = iface.GetProperty(nameof(ICollection<int>.Count));
