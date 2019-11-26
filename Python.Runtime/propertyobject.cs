@@ -13,7 +13,6 @@ namespace Python.Runtime
         private MethodInfo getter;
         private MethodInfo setter;
 
-        [StrongNameIdentityPermission(SecurityAction.Assert)]
         public PropertyObject(PropertyInfo md)
         {
             getter = md.GetGetMethod(true);
