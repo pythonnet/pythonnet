@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Runtime", "Python.Runtime\Python.Runtime.csproj", "{C9E02762-3DD2-4669-81DA-6A64C80D07E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Test.Embed", "Python.Test.Embed\Python.Test.Embed.csproj", "{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,17 @@ Global
 		{C9E02762-3DD2-4669-81DA-6A64C80D07E0}.Release|x64.Build.0 = Release|Any CPU
 		{C9E02762-3DD2-4669-81DA-6A64C80D07E0}.Release|x86.ActiveCfg = Release|Any CPU
 		{C9E02762-3DD2-4669-81DA-6A64C80D07E0}.Release|x86.Build.0 = Release|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Debug|x64.Build.0 = Debug|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Debug|x86.Build.0 = Debug|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Release|x64.ActiveCfg = Release|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Release|x64.Build.0 = Release|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Release|x86.ActiveCfg = Release|Any CPU
+		{298D6A0A-C41B-4B6D-ABF6-1E24A1BF223C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
