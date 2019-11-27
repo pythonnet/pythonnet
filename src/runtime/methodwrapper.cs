@@ -12,6 +12,7 @@ namespace Python.Runtime
     {
         public IntPtr mdef;
         public IntPtr ptr;
+        private bool _disposed = false;
 
         public MethodWrapper(Type type, string name, string funcType = null)
         {
@@ -30,6 +31,22 @@ namespace Python.Runtime
         public IntPtr Call(IntPtr args, IntPtr kw)
         {
             return Runtime.PyCFunction_Call(ptr, args, kw);
+        }
+
+        public void Release()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
+            bool freeDef = Runtime.Refcount(ptr) == 1;
+            Runtime.XDecref(ptr);
+            if (freeDef && mdef != IntPtr.Zero)
+            {
+                Runtime.PyMem_Free(mdef);
+                mdef = IntPtr.Zero;
+            }
         }
     }
 }
