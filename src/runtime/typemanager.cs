@@ -335,16 +335,18 @@ namespace Python.Runtime
             // 4 int-ptrs in size.
             IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
             IntPtr mdefStart = mdef;
+            ThunkInfo thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
             mdef = WriteMethodDef(
                 mdef,
                 "__instancecheck__",
-                Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc")
+                thunkInfo.Address
             );
 
+            thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
             mdef = WriteMethodDef(
                 mdef,
                 "__subclasscheck__",
-                Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
+                thunkInfo.Address
             );
 
             // FIXME: mdef is not used
@@ -705,7 +707,8 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    InitializeSlot(type, Interop.GetThunk(method), name);
+                    var thunkInfo = Interop.GetThunk(method);
+                    InitializeSlot(type, thunkInfo.Address, name);
 
                     seen.Add(name);
                 }
@@ -723,8 +726,8 @@ namespace Python.Runtime
             // These have to be defined, though, so by default we fill these with
             // static C# functions from this class.
 
-            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
-            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method);
+            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
+            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
 
             if (native != null)
             {
