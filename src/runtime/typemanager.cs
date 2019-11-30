@@ -309,17 +309,11 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
 
-            // Copy gc and other type slots from the base Python metatype.
-
-            CopySlot(py_type, type, TypeOffset.tp_basicsize);
-            CopySlot(py_type, type, TypeOffset.tp_itemsize);
-
-            CopySlot(py_type, type, TypeOffset.tp_dictoffset);
-            CopySlot(py_type, type, TypeOffset.tp_weaklistoffset);
-
-            CopySlot(py_type, type, TypeOffset.tp_traverse);
-            CopySlot(py_type, type, TypeOffset.tp_clear);
-            CopySlot(py_type, type, TypeOffset.tp_is_gc);
+            // Slots will inherit from TypeType, it's not neccesary for setting them.
+            // Inheried slots:
+            // tp_basicsize, tp_itemsize,
+            // tp_dictoffset, tp_weaklistoffset,
+            // tp_traverse, tp_clear, tp_is_gc, etc.
 
             // Override type slots with those of the managed implementation.
 
