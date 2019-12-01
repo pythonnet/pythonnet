@@ -776,6 +776,9 @@ def test_no_object_in_param():
 
     res = MethodTest.TestOverloadedNoObject(5)
     assert res == "Got int"
+    
+    res = MethodTest.TestOverloadedNoObject(i=7)
+    assert res == "Got int"
 
     with pytest.raises(TypeError):
         MethodTest.TestOverloadedNoObject("test")
@@ -787,8 +790,14 @@ def test_object_in_param():
 
     res = MethodTest.TestOverloadedObject(5)
     assert res == "Got int"
+    
+    res = MethodTest.TestOverloadedObject(i=7)
+    assert res == "Got int"
 
     res = MethodTest.TestOverloadedObject("test")
+    assert res == "Got object"
+    
+    res = MethodTest.TestOverloadedObject(o="test")
     assert res == "Got object"
 
 
@@ -811,6 +820,42 @@ def test_object_in_multiparam():
     assert res == "Got string-int"
 
     res = MethodTest.TestOverloadedObjectTwo(7.24, 7.24)
+    assert res == "Got object-object"
+
+    res = MethodTest.TestOverloadedObjectTwo(a=5, b=5)
+    assert res == "Got int-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(5, b=5)
+    assert res == "Got int-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(a=5, b="foo")
+    assert res == "Got int-string"
+
+    res = MethodTest.TestOverloadedObjectTwo(5, b="foo")
+    assert res == "Got int-string"
+
+    res = MethodTest.TestOverloadedObjectTwo(a="foo", b=7.24)
+    assert res == "Got string-object"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", b=7.24)
+    assert res == "Got string-object"
+
+    res = MethodTest.TestOverloadedObjectTwo(a="foo", b="bar")
+    assert res == "Got string-string"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", b="bar")
+    assert res == "Got string-string"
+
+    res = MethodTest.TestOverloadedObjectTwo(a="foo", b=5)
+    assert res == "Got string-int"
+
+    res = MethodTest.TestOverloadedObjectTwo("foo", b=5)
+    assert res == "Got string-int"
+
+    res = MethodTest.TestOverloadedObjectTwo(a=7.24, b=7.24)
+    assert res == "Got object-object"
+
+    res = MethodTest.TestOverloadedObjectTwo(7.24, b=7.24)
     assert res == "Got object-object"
 
 
@@ -966,3 +1011,120 @@ def test_getting_overloaded_constructor_binding_does_not_leak_ref_count():
     # simple test
     refCount = sys.getrefcount(PlainOldClass.Overloads[int])
     assert refCount == 1
+
+
+def test_default_params():
+    # all positional parameters
+    res = MethodTest.DefaultParams(1,2,3,4)
+    assert res == "1234"
+
+    res = MethodTest.DefaultParams(1, 2, 3)
+    assert res == "1230"
+
+    res = MethodTest.DefaultParams(1, 2)
+    assert res == "1200"
+
+    res = MethodTest.DefaultParams(1)
+    assert res == "1000"
+
+    res = MethodTest.DefaultParams(a=2)
+    assert res == "2000"
+
+    res = MethodTest.DefaultParams(b=3)
+    assert res == "0300"
+
+    res = MethodTest.DefaultParams(c=4)
+    assert res == "0040"
+
+    res = MethodTest.DefaultParams(d=7)
+    assert res == "0007"
+
+    res = MethodTest.DefaultParams(a=2, c=5)
+    assert res == "2050"
+
+    res = MethodTest.DefaultParams(1, d=7, c=3)
+    assert res == "1037"
+
+    with pytest.raises(TypeError):
+        MethodTest.DefaultParams(1,2,3,4,5)
+
+def test_optional_params():
+    res = MethodTest.OptionalParams(1, 2, 3, 4)
+    assert res == "1234"
+
+    res = MethodTest.OptionalParams(1, 2, 3)
+    assert res == "1230"
+
+    res = MethodTest.OptionalParams(1, 2)
+    assert res == "1200"
+
+    res = MethodTest.OptionalParams(1)
+    assert res == "1000"
+
+    res = MethodTest.OptionalParams(a=2)
+    assert res == "2000"
+
+    res = MethodTest.OptionalParams(b=3)
+    assert res == "0300"
+
+    res = MethodTest.OptionalParams(c=4)
+    assert res == "0040"
+
+    res = MethodTest.OptionalParams(d=7)
+    assert res == "0007"
+
+    res = MethodTest.OptionalParams(a=2, c=5)
+    assert res == "2050"
+
+    res = MethodTest.OptionalParams(1, d=7, c=3)
+    assert res == "1037"
+
+    res = MethodTest.OptionalParams_TestMissing()
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestMissing(None)
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestMissing(a = None)
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestMissing(a='hi')
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestReferenceType()
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestReferenceType(None)
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestReferenceType(a=None)
+    assert res == True
+
+    res = MethodTest.OptionalParams_TestReferenceType('hi')
+    assert res == False
+
+    res = MethodTest.OptionalParams_TestReferenceType(a='hi')
+    assert res == False
+
+def test_optional_and_default_params():
+
+    res = MethodTest.OptionalAndDefaultParams()
+    assert res == "0000"
+
+    res = MethodTest.OptionalAndDefaultParams(1)
+    assert res == "1000"
+
+    res = MethodTest.OptionalAndDefaultParams(1, c=4)
+    assert res == "1040"
+
+    res = MethodTest.OptionalAndDefaultParams(b=4, c=7)
+    assert res == "0470"
+
+    res = MethodTest.OptionalAndDefaultParams2()
+    assert res == "0012"
+
+    res = MethodTest.OptionalAndDefaultParams2(a=1,b=2,c=3,d=4)
+    assert res == "1234"
+
+    res = MethodTest.OptionalAndDefaultParams2(b=2, c=3)
+    assert res == "0232"

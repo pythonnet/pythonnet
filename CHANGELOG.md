@@ -10,13 +10,24 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Added automatic NuGet package generation in appveyor and local builds
+-   Added function that sets Py_NoSiteFlag to 1.
+-   Added support for Jetson Nano.
 
 ### Changed
 
 -   Added argument types information to "No method matches given arguments" message
 -   Moved wheel import in setup.py inside of a try/except to prevent pip collection failures
+-   Removes PyLong_GetMax and PyClass_New when targetting Python3
+-   Added support for converting python iterators to C# arrays
+-   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
+-   Added support for kwarg parameters when calling .NET methods from Python
 
 ### Fixed
+
+- Fixed runtime that fails loading when using pythonnet in an environment
+  together with Nuitka
+- Fixes bug where delegates get casts (dotnetcore)
+- Determine size of interpreter longs at runtime
 
 ## [2.4.0][]
 
@@ -37,6 +48,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added PyObject finalizer support, Python objects referred by C# can be auto collect now ([#692][p692]).
 -   Added detailed comments about aproaches and dangers to handle multi-app-domains ([#625][p625])
 -   Python 3.7 support, builds and testing added. Defaults changed from Python 3.6 to 3.7 ([#698][p698])
+-   Added support for C# types to provide `__repr__` ([#680][p680])
 
 ### Changed
 

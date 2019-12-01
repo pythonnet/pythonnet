@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Python.Test
 {
@@ -651,6 +652,38 @@ namespace Python.Test
         {
             return "Casesensitive";
         }
+
+        public static string DefaultParams(int a=0, int b=0, int c=0, int d=0)
+        {
+            return string.Format("{0}{1}{2}{3}", a, b, c, d);
+        }
+
+        public static string OptionalParams([Optional]int a, [Optional]int b, [Optional]int c, [Optional] int d)
+        {
+            return string.Format("{0}{1}{2}{3}", a, b, c, d);
+        }
+
+        public static bool OptionalParams_TestMissing([Optional]object a)
+        {
+            return a == Type.Missing;
+        }
+
+        public static bool OptionalParams_TestReferenceType([Optional]string a)
+        {
+            return a == null;
+        }
+
+        public static string OptionalAndDefaultParams([Optional]int a, [Optional]int b, int c=0, int d=0)
+        {
+            return string.Format("{0}{1}{2}{3}", a, b, c, d);
+        }
+
+        public static string OptionalAndDefaultParams2([Optional]int a, [Optional]int b, [Optional, DefaultParameterValue(1)]int c, int d = 2)
+        {
+            return string.Format("{0}{1}{2}{3}", a, b, c, d);
+        }
+
+        
     }
 
 

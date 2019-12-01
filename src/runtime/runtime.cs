@@ -64,8 +64,11 @@ namespace Python.Runtime
 #elif PYTHON37
         internal const string _pyversion = "3.7";
         internal const string _pyver = "37";
+#elif PYTHON38
+        internal const string _pyversion = "3.8";
+        internal const string _pyver = "38";
 #else
-#error You must define one of PYTHON34 to PYTHON37 or PYTHON27
+#error You must define one of PYTHON34 to PYTHON38 or PYTHON27
 #endif
 
 #if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
@@ -143,6 +146,7 @@ namespace Python.Runtime
             ["em64t"] = MachineType.x86_64,
             ["armv7l"] = MachineType.armv7l,
             ["armv8"] = MachineType.armv8,
+            ["aarch64"] = MachineType.aarch64,
         };
 
         /// <summary>
@@ -205,7 +209,6 @@ namespace Python.Runtime
             PyNotImplemented = PyObject_GetAttrString(op, "NotImplemented");
             PyBaseObjectType = PyObject_GetAttrString(op, "object");
 
-            PyModuleType = PyObject_Type(op);
             PyNone = PyObject_GetAttrString(op, "None");
             PyTrue = PyObject_GetAttrString(op, "True");
             PyFalse = PyObject_GetAttrString(op, "False");
@@ -306,11 +309,8 @@ namespace Python.Runtime
             _PyObject_NextNotImplemented = Marshal.ReadIntPtr(ZipImportError, TypeOffset.tp_iternext);
             XDecref(ZipImportError);
             XDecref(zipimport);
+            PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
 
-            // Initialize data about the platform we're running on. We need
-            // this for the type manager and potentially other details. Must
-            // happen after caching the python types, above.
-            InitializePlatformData();
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
@@ -417,6 +417,8 @@ namespace Python.Runtime
         internal static IntPtr PyBoolType;
         internal static IntPtr PyNoneType;
         internal static IntPtr PyTypeType;
+
+        internal static IntPtr Py_NoSiteFlag;
 
 #if PYTHON3
         internal static IntPtr PyBytesType;
@@ -773,8 +775,10 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyCFunction_Call(IntPtr func, IntPtr args, IntPtr kw);
 
+#if PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyClass_New(IntPtr bases, IntPtr dict, IntPtr name);
+#endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyInstance_New(IntPtr cls, IntPtr args, IntPtr kw);
@@ -1016,10 +1020,6 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyLong_FromString")]
         internal static extern IntPtr PyInt_FromString(string value, IntPtr end, int radix);
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyLong_GetMax")]
-        internal static extern int PyInt_GetMax();
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyInt_FromLong(IntPtr value);
@@ -1042,8 +1042,21 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyLong_FromLong(long value);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromUnsignedLong(uint value);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyLong_FromUnsignedLong")]
+        internal static extern IntPtr PyLong_FromUnsignedLong32(uint value);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyLong_FromUnsignedLong")]
+        internal static extern IntPtr PyLong_FromUnsignedLong64(ulong value);
+
+        internal static IntPtr PyLong_FromUnsignedLong(object value)
+        {
+            if(Is32Bit || IsWindows)
+                return PyLong_FromUnsignedLong32(Convert.ToUInt32(value));
+            else
+                return PyLong_FromUnsignedLong64(Convert.ToUInt64(value));
+        }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyLong_FromDouble(double value);
@@ -1060,8 +1073,21 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyLong_AsLong(IntPtr value);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint PyLong_AsUnsignedLong(IntPtr value);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyLong_AsUnsignedLong")]
+        internal static extern uint PyLong_AsUnsignedLong32(IntPtr value);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyLong_AsUnsignedLong")]
+        internal static extern ulong PyLong_AsUnsignedLong64(IntPtr value);
+
+        internal static object PyLong_AsUnsignedLong(IntPtr value)
+        {
+            if (Is32Bit || IsWindows)
+                return PyLong_AsUnsignedLong32(value);
+            else
+                return PyLong_AsUnsignedLong64(value);
+        }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern long PyLong_AsLongLong(IntPtr value);
@@ -1864,5 +1890,29 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_MakePendingCalls();
+
+        internal static void SetNoSiteFlag()
+        {
+            var loader = LibraryLoader.Get(OperatingSystem);
+
+            IntPtr dllLocal;
+            if (_PythonDll != "__Internal")
+            {
+                dllLocal = loader.Load(_PythonDll);
+            }
+
+            try
+            {
+                Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
+                Marshal.WriteInt32(Py_NoSiteFlag, 1);
+            }
+            finally
+            {
+                if (dllLocal != IntPtr.Zero)
+                {
+                    loader.Free(dllLocal);
+                }
+            }
+        }
     }
 }

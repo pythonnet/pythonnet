@@ -95,6 +95,14 @@ projects using pythonnet can be found in the Wiki:
 
 https://github.com/pythonnet/pythonnet/wiki
 
+Python 3.8.0 support
+--------------------
+
+Some features are disabled in Python 3.8.0 because of
+`this bug in Python <https://bugs.python.org/issue37633>`_. The error is
+``System.EntryPointNotFoundException : Unable to find an entry point named
+'Py_CompileString' in DLL 'python38'``. This will be fixed in Python 3.8.1.
+
 .. |Join the chat at https://gitter.im/pythonnet/pythonnet| image:: https://badges.gitter.im/pythonnet/pythonnet.svg
    :target: https://gitter.im/pythonnet/pythonnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 .. |appveyor shield| image:: https://img.shields.io/appveyor/ci/pythonnet/pythonnet/master.svg?label=AppVeyor
@@ -113,3 +121,8 @@ https://github.com/pythonnet/pythonnet/wiki
    :target: http://stackoverflow.com/questions/tagged/python.net
 .. |conda-forge version| image:: https://img.shields.io/conda/vn/conda-forge/pythonnet.svg
    :target: https://anaconda.org/conda-forge/pythonnet
+
+Resources
+---------
+Mailing list: https://mail.python.org/mailman/listinfo/pythondotnet
+Chat: https://gitter.im/pythonnet/pythonnet
