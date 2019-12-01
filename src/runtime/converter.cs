@@ -354,6 +354,12 @@ namespace Python.Runtime
                     return ToList(value, obType, out result, setError);
                 }
             }
+
+            if (obType.FullName == "System.Action")
+            {
+                return ToAction(value, obType, out result, setError);
+            }
+
             if (obType.IsEnum)
             {
                 return ToEnum(value, obType, out result, setError);
@@ -913,6 +919,43 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// Convert a Python function to a System.Action.
+        /// The Python value must support the Python "BLAH" protocol.
+        /// </summary>
+        private static bool ToAction(IntPtr value, Type obType, out object result, bool setError) {
+
+            result = null;
+
+            PyObject obj = new PyObject(value);
+
+            var args = obType.GetGenericArguments();
+
+            //Temporarily only deal with non-generic actions!
+            if (!obj.IsCallable() || args.Length != 0) {
+                if (setError) {
+                    SetConversionError(value, obType);
+                }
+                obj.Dispose();
+                return false;
+            }
+
+            Action action = () => {
+                PyObject py_action = new PyObject(value);
+                var py_args = new PyObject[0];
+                var py_result = py_action.Invoke(py_args);
+
+                //Discard the result since this is being converted to an Action
+                py_result.Dispose();
+                py_action.Dispose();
+            };
+
+            result = action;
+            obj.Dispose();
+            return true;
+        }
+
+
+        /// <summary>
         /// Convert a Python value to a correctly typed managed list instance.
         /// The Python value must support the Python iterator protocol or and the
         /// items in the sequence must be convertible to the target array type.
@@ -954,6 +997,7 @@ namespace Python.Runtime
             result = list;
             return true;
         }
+
 
         /// <summary>
         /// Convert a Python value to a correctly typed managed enum instance.
