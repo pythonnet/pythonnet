@@ -12,6 +12,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added automatic NuGet package generation in appveyor and local builds
 -   Added function that sets Py_NoSiteFlag to 1.
 -   Added support for Jetson Nano.
+-   Added support for methodbinding to IEnumerable, ICollection, IList, Task, Action, Func
 
 ### Changed
 
