@@ -343,6 +343,17 @@ namespace Python.Runtime
                 return ToArray(value, obType, out result, setError);
             }
 
+            if (obType.IsGenericType)
+            {
+                if (obType.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
+                    obType.GetGenericTypeDefinition() == typeof(ICollection<>) ||
+                    obType.GetGenericTypeDefinition() == typeof(IList<>))
+                {
+                    //We could probably convert to a thin IEnumerable/IList/ICollection implementation around a python array
+                    //but for simplicity right now convert to a List<T> which is a copy of the python iterable.
+                    return ToList(value, obType, out result, setError);
+                }
+            }
             if (obType.IsEnum)
             {
                 return ToEnum(value, obType, out result, setError);
@@ -901,6 +912,48 @@ namespace Python.Runtime
             return true;
         }
 
+        /// <summary>
+        /// Convert a Python value to a correctly typed managed list instance.
+        /// The Python value must support the Python iterator protocol or and the
+        /// items in the sequence must be convertible to the target array type.
+        /// </summary>
+        private static bool ToList(IntPtr value, Type obType, out object result, bool setError) {
+            Type elementType = obType.GetGenericArguments()[0];
+            result = null;
+
+            bool IsSeqObj = Runtime.PySequence_Check(value);
+            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
+
+            IntPtr IterObject = Runtime.PyObject_GetIter(value);
+
+            if (IterObject == IntPtr.Zero) {
+                if (setError) {
+                    SetConversionError(value, obType);
+                }
+                return false;
+            }
+
+            var listType = typeof(List<>);
+            var constructedListType = listType.MakeGenericType(elementType);
+            IList list = IsSeqObj ? (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len }) :
+                                        (IList)Activator.CreateInstance(constructedListType);
+            IntPtr item;
+
+            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero) {
+                object obj = null;
+
+                if (!Converter.ToManaged(item, elementType, out obj, true)) {
+                    Runtime.XDecref(item);
+                    return false;
+                }
+
+                list.Add(obj);
+                Runtime.XDecref(item);
+            }
+            Runtime.XDecref(IterObject);
+            result = list;
+            return true;
+        }
 
         /// <summary>
         /// Convert a Python value to a correctly typed managed enum instance.
