@@ -959,6 +959,7 @@ namespace Python.Runtime
         /// Convert a Python value to a correctly typed managed list instance.
         /// The Python value must support the Python iterator protocol or and the
         /// items in the sequence must be convertible to the target array type.
+        /// TODO - remove duplication with ToArray!
         /// </summary>
         private static bool ToList(IntPtr value, Type obType, out object result, bool setError) {
             Type elementType = obType.GetGenericArguments()[0];
