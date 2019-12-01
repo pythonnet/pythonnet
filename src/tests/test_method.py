@@ -204,11 +204,32 @@ def test_null_array_conversion():
     r = ob.TestNullArrayConversion(None)
     assert r is None
 
+def test_action():
+    """Test python lambda as an action"""
+    ob = MethodTest()
+    def func():
+        return
+    r = ob.TestAction(func)
+    assert r == 1
+
+def test_task():
+    """Test python lambda as an action"""
+    ob = MethodTest()
+    def func():
+        return 1
+    r = ob.TestTask(func)
+    assert r == 1
+
 def test_ienumerable_args():
     """Test conversion of python lists and tuples to IEnumerable<object>"""
     ob = MethodTest()
     x = ob.TestIEnumerable([1,2,3])
     y = ob.TestIEnumerable((1,2,3))
+
+def test_icollection_args():
+    """Test conversion of python lists and tuples to ICollection<object>"""
+    ob = MethodTest()
+    x = ob.TestICollection([1,2,3])
 
 def test_string_params_args():
     """Test use of string params."""

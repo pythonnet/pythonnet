@@ -117,7 +117,29 @@ namespace Python.Test
             return args;
         }
 
-        public static int TestIEnumerable(System.Collections.Generic.IEnumerable<object> arg)
+        public static int TestIList(System.Collections.Generic.IList<object> arg)
+        {
+            return 1;
+        }
+
+        public static int TestICollection(System.Collections.Generic.ICollection<object> arg)
+        {
+            return 1;
+        }
+
+        public int TestAction(System.Action action)
+        {
+            action();
+            return 1;
+        }
+
+        public int TestTask(System.Threading.Tasks.Task<int> task)
+        {
+            task.RunSynchronously();
+            return task.Result;
+        }
+
+        public int TestIEnumerable(System.Collections.Generic.IEnumerable<object> arg)
         {
             return 1;
         }
