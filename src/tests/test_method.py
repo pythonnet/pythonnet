@@ -205,15 +205,23 @@ def test_null_array_conversion():
     assert r is None
 
 def test_action():
-    """Test python lambda as an action"""
+    """Test python lambda as an Action"""
     ob = MethodTest()
     def func():
         return
     r = ob.TestAction(func)
     assert r == 1
 
+def test_func_object():
+    """Test python lambda as a Func"""
+    ob = MethodTest()
+    def func(arg):
+        return arg + 1
+    r = ob.TestFunc(func, 0)
+    assert r == 1
+
 def test_task():
-    """Test python lambda as an action"""
+    """Test python lambda as a Task"""
     ob = MethodTest()
     def func():
         return 1

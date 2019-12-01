@@ -133,6 +133,12 @@ namespace Python.Test
             return 1;
         }
 
+        public int TestFuncObj(System.Func<object, int> func, object arg)
+        {
+            return func.Invoke(arg);
+
+        }
+
         public int TestTask(System.Threading.Tasks.Task<int> task)
         {
             task.RunSynchronously();
