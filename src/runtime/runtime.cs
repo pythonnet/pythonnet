@@ -292,25 +292,17 @@ namespace Python.Runtime
 
             Error = new IntPtr(-1);
 
+            _PyObject_NextNotImplemented = Get_PyObject_NextNotImplemented();
+            {
+                IntPtr sys = PyImport_ImportModule("sys");
+                PyModuleType = PyObject_Type(sys);
+                XDecref(sys);
+            }
+
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
             // happen after caching the python types, above.
             InitializePlatformData();
-
-            IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(OperatingSystem);
-
-            // Since `_PyObject_NextNotImplemented` would set to a heap class
-            // for tp_iternext which doesn't implement __next__.
-            // Thus we need a heap class to get it, the ZipImportError is a
-            // heap class and it's in builtins, so we can use it as a trick.
-            var zipimport = PyImport_ImportModule("zipimport");
-            var ZipImportError = PyObject_GetAttrString(zipimport, "ZipImportError");
-            _PyObject_NextNotImplemented = Marshal.ReadIntPtr(ZipImportError, TypeOffset.tp_iternext);
-            XDecref(ZipImportError);
-            XDecref(zipimport);
-            PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
-
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
@@ -326,6 +318,29 @@ namespace Python.Runtime
             PyList_Append(path, item);
             XDecref(item);
             AssemblyManager.UpdatePath();
+        }
+
+        private static IntPtr Get_PyObject_NextNotImplemented()
+        {
+            IntPtr globals = PyDict_New();
+            if (PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins()) != 0)
+            {
+                XDecref(globals);
+                throw new PythonException();
+            }
+            const string code = "class A(object): pass";
+            IntPtr res = PyRun_String(code, (IntPtr)RunFlagType.File, globals, globals);
+            if (res == IntPtr.Zero)
+            {
+                XDecref(globals);
+                throw new PythonException();
+            }
+            XDecref(res);
+            IntPtr A = PyDict_GetItemString(globals, "A");
+            IntPtr iternext = Marshal.ReadIntPtr(A, TypeOffset.tp_iternext);
+            XDecref(globals);
+            XDecref(A);
+            return iternext;
         }
 
         /// <summary>
@@ -1893,14 +1908,16 @@ namespace Python.Runtime
 
         internal static void SetNoSiteFlag()
         {
-            var loader = LibraryLoader.Get(OperatingSystem);
-
-            IntPtr dllLocal;
-            if (_PythonDll != "__Internal")
+            if (_PythonDll == "__Internal")
             {
-                dllLocal = loader.Load(_PythonDll);
+                throw new NotSupportedException("SetNoSiteFlag didn't support on static compile");
             }
-
+            var loader = LibraryLoader.Get(OperatingSystem);
+            IntPtr dllLocal = loader.Load(_PythonDll);
+            if (dllLocal == IntPtr.Zero)
+            {
+                throw new Exception($"Cannot load {_PythonDll}");
+            }
             try
             {
                 Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
@@ -1908,10 +1925,7 @@ namespace Python.Runtime
             }
             finally
             {
-                if (dllLocal != IntPtr.Zero)
-                {
-                    loader.Free(dllLocal);
-                }
+                loader.Free(dllLocal);
             }
         }
     }
