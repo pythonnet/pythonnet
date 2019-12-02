@@ -409,12 +409,8 @@ namespace Python.Runtime
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
 #if PYTHON3
-            // For python3 we leak two objects. One for the ASCII representation
-            // required for tp_name, and another for the Unicode representation
-            // for ht_name.
-            IntPtr temp = Runtime.PyBytes_FromString(name);
-            IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
-            temp = Runtime.PyUnicode_FromString(name);
+            IntPtr temp = Runtime.PyUnicode_FromString(name);
+            IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
 #elif PYTHON2
             IntPtr temp = Runtime.PyString_FromString(name);
             IntPtr raw = Runtime.PyString_AsString(temp);

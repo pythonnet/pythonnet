@@ -266,6 +266,7 @@ namespace Python.Runtime
                 return Runtime.PyFalse;
             }
 
+            Runtime.XIncref(args);
             using (var argsObj = new PyList(args))
             {
                 if (argsObj.Length() != 1)
