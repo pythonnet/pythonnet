@@ -503,7 +503,7 @@ namespace Python.Runtime
         /// </remarks>
         public static PyObject ModuleFromString(string name, string code)
         {
-            IntPtr c = Runtime.Py_CompileString(code, "none", (IntPtr)257);
+            IntPtr c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
             Runtime.CheckExceptionOccurred();
             IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
             Runtime.CheckExceptionOccurred();
@@ -512,7 +512,7 @@ namespace Python.Runtime
 
         public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
         {
-            var flag = (IntPtr)mode;
+            var flag = (int)mode;
             IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
             Runtime.CheckExceptionOccurred();
             return new PyObject(ptr);
@@ -610,7 +610,7 @@ namespace Python.Runtime
         }
     }
 
-    public enum RunFlagType
+    public enum RunFlagType : int
     {
         Single = 256,
         File = 257, /* Py_file_input */
