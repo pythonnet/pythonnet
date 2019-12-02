@@ -864,6 +864,39 @@ namespace Python.Runtime
             Exceptions.SetError(Exceptions.TypeError, $"Cannot convert {src} to {target}");
         }
 
+        private static bool ToListOfT(IntPtr value, Type elementType, out object result)
+        {
+            result = null;
+
+            bool IsSeqObj = Runtime.PySequence_Check(value);
+            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
+
+            IntPtr IterObject = Runtime.PyObject_GetIter(value);
+
+            if (IterObject == IntPtr.Zero) 
+                return false;
+
+            var listType = typeof(List<>);
+            var constructedListType = listType.MakeGenericType(elementType);
+            IList list = IsSeqObj ? (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len }) :
+                                        (IList)Activator.CreateInstance(constructedListType);
+            IntPtr item;
+
+            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero) {
+                object obj = null;
+
+                if (!Converter.ToManaged(item, elementType, out obj, true)) {
+                    Runtime.XDecref(item);
+                    return false;
+                }
+
+                list.Add(obj);
+                Runtime.XDecref(item);
+            }
+            Runtime.XDecref(IterObject);
+            result = list;
+            return true;
+        }
 
         /// <summary>
         /// Convert a Python value to a correctly typed managed array instance.
@@ -874,48 +907,21 @@ namespace Python.Runtime
         {
             Type elementType = obType.GetElementType();
             result = null;
-
-            bool IsSeqObj = Runtime.PySequence_Check(value);
-            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-
-            if(IterObject==IntPtr.Zero) {
+            bool success = ToListOfT(value, elementType, out result);
+            if (!success)
+            {
                 if (setError)
-                {
                     SetConversionError(value, obType);
-                }
                 return false;
             }
 
-            Array items;
-
-            var listType = typeof(List<>);
-            var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) : 
-                                        (IList) Activator.CreateInstance(constructedListType);
-            IntPtr item;
-
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
-            {
-                object obj = null;
-
-                if (!Converter.ToManaged(item, elementType, out obj, true))
-                {
-                    Runtime.XDecref(item);
-                    return false;
-                }
-
-                list.Add(obj);
-                Runtime.XDecref(item);
-            }
-            Runtime.XDecref(IterObject);
-
-            items = Array.CreateInstance(elementType, list.Count);
+            IList list = (IList)result;
+            Array items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
-            
+
             result = items;
             return true;
+            
         }
 
         /// <summary>
@@ -963,39 +969,13 @@ namespace Python.Runtime
         /// </summary>
         private static bool ToList(IntPtr value, Type obType, out object result, bool setError) {
             Type elementType = obType.GetGenericArguments()[0];
-            result = null;
-
-            bool IsSeqObj = Runtime.PySequence_Check(value);
-            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-
-            if (IterObject == IntPtr.Zero) {
-                if (setError) {
+            var success = ToListOfT(value, elementType, out result);
+            if (!success)
+            {
+                if (setError)
                     SetConversionError(value, obType);
-                }
                 return false;
             }
-
-            var listType = typeof(List<>);
-            var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len }) :
-                                        (IList)Activator.CreateInstance(constructedListType);
-            IntPtr item;
-
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero) {
-                object obj = null;
-
-                if (!Converter.ToManaged(item, elementType, out obj, true)) {
-                    Runtime.XDecref(item);
-                    return false;
-                }
-
-                list.Add(obj);
-                Runtime.XDecref(item);
-            }
-            Runtime.XDecref(IterObject);
-            result = list;
             return true;
         }
 
