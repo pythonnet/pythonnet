@@ -941,7 +941,6 @@ namespace Python.Runtime
                 if (setError) {
                     SetConversionError(value, obType);
                 }
-                obj.Dispose();
                 return false;
             }
 
@@ -949,14 +948,11 @@ namespace Python.Runtime
                 PyObject py_action = new PyObject(value);
                 var py_args = new PyObject[0];
                 var py_result = py_action.Invoke(py_args);
-
-                //Discard the result since this is being converted to an Action
-                py_result.Dispose();
-                py_action.Dispose();
+                Runtime.XDecref(value);
             };
 
+            Runtime.XIncref(value);
             result = action;
-            obj.Dispose();
             return true;
         }
 
