@@ -878,14 +878,16 @@ namespace Python.Runtime
 
             var listType = typeof(List<>);
             var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len }) :
-                                        (IList)Activator.CreateInstance(constructedListType);
+            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] { (int)len }) :
+                                        (IList) Activator.CreateInstance(constructedListType);
             IntPtr item;
 
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero) {
+            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
+            {
                 object obj = null;
 
-                if (!Converter.ToManaged(item, elementType, out obj, true)) {
+                if (!Converter.ToManaged(item, elementType, out obj, true))
+                {
                     Runtime.XDecref(item);
                     return false;
                 }
