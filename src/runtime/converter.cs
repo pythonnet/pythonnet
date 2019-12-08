@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.ComponentModel;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -267,7 +268,6 @@ namespace Python.Runtime
 
             return ToPython(value, objectType);
         }
-
 
         /// <summary>
         /// Return a managed object for the given Python object, taking funny
@@ -868,35 +868,34 @@ namespace Python.Runtime
         {
             result = null;
 
-            bool IsSeqObj = Runtime.PySequence_Check(value);
-            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-
-            if (IterObject == IntPtr.Zero) 
+            IntPtr iterObject = Runtime.PyObject_GetIter(value);
+            if (iterObject == IntPtr.Zero)
                 return false;
 
-            var listType = typeof(List<>);
-            var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] { (int)len }) :
-                                        (IList) Activator.CreateInstance(constructedListType);
-            IntPtr item;
+            bool IsSeqObj = Runtime.PySequence_Check(value);
 
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
-            {
-                object obj = null;
-
-                if (!Converter.ToManaged(item, elementType, out obj, true))
-                {
-                    Runtime.XDecref(item);
-                    return false;
+            try {
+                Type[] typeArgs = { elementType };
+                if (IsSeqObj) {
+                    var listType = typeof(ListWrapper<>);
+                    object listObj = Activator.CreateInstance(listType.MakeGenericType(typeArgs), new Object[] { value });
+                    //IList list = (IList)Activator.CreateInstance(fullListType, new Object[] { value });
+                    
+                    result = listObj;
                 }
-
-                list.Add(obj);
-                Runtime.XDecref(item);
+                else {
+                    var listType = typeof(IterableWrapper<>);
+                    IEnumerable list = (IEnumerable)Activator.CreateInstance(listType.MakeGenericType(typeArgs), new Object[] { value });
+                    result = list;
+                }
             }
-            Runtime.XDecref(IterObject);
-            result = list;
+            catch (Exception) {
+                return false;
+
+            }
+            finally {
+                Runtime.XDecref(iterObject);
+            }
             return true;
         }
 
@@ -917,10 +916,18 @@ namespace Python.Runtime
                 return false;
             }
 
-            IList list = (IList)result;
+            IList list = result as IList;
+            if (list == null) {
+                IEnumerable enumerable = (IEnumerable)result;
+                var listType = typeof(List<>);
+                var constructedListType = listType.MakeGenericType(elementType);
+                list = (IList)Activator.CreateInstance(constructedListType);
+                foreach (var item in enumerable) {
+                    list.Add(item);
+                }
+            }
             Array items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
-
             result = items;
             return true;
             
@@ -947,14 +954,16 @@ namespace Python.Runtime
             }
 
             Action action = () => {
+                var y = Runtime.Refcount(value);
                 PyObject py_action = new PyObject(value);
                 var py_args = new PyObject[0];
                 var py_result = py_action.Invoke(py_args);
                 Runtime.XDecref(value);
             };
-
+            var x = Runtime.Refcount(value);
             Runtime.XIncref(value);
             result = action;
+
             return true;
         }
 
