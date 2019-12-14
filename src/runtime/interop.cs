@@ -156,7 +156,7 @@ namespace Python.Runtime
         public static int args = 0;
 #if PYTHON2
         public static int message = 0;
-#elif PYTHON3
+#else
         public static int traceback = 0;
         public static int context = 0;
         public static int cause = 0;
@@ -169,7 +169,6 @@ namespace Python.Runtime
     }
 
 
-#if PYTHON3
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class BytesOffset
     {
@@ -260,7 +259,6 @@ namespace Python.Runtime
 
         public static int name = 0;
     }
-#endif // PYTHON3
 
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
@@ -270,17 +268,6 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeFlags
     {
-#if PYTHON2 // these flags were removed in Python 3
-        public static int HaveGetCharBuffer = (1 << 0);
-        public static int HaveSequenceIn = (1 << 1);
-        public static int GC = 0;
-        public static int HaveInPlaceOps = (1 << 3);
-        public static int CheckTypes = (1 << 4);
-        public static int HaveRichCompare = (1 << 5);
-        public static int HaveWeakRefs = (1 << 6);
-        public static int HaveIter = (1 << 7);
-        public static int HaveClass = (1 << 8);
-#endif
         public static int HeapType = (1 << 9);
         public static int BaseType = (1 << 10);
         public static int Ready = (1 << 12);
@@ -309,6 +296,15 @@ namespace Python.Runtime
         public static int TypeSubclass = (1 << 31);
 
 #if PYTHON2 // Default flags for Python 2
+        public static int HaveGetCharBuffer = (1 << 0);
+        public static int HaveSequenceIn = (1 << 1);
+        public static int GC = 0;
+        public static int HaveInPlaceOps = (1 << 3);
+        public static int CheckTypes = (1 << 4);
+        public static int HaveRichCompare = (1 << 5);
+        public static int HaveWeakRefs = (1 << 6);
+        public static int HaveIter = (1 << 7);
+        public static int HaveClass = (1 << 8);
         public static int Default = (
             HaveGetCharBuffer |
             HaveSequenceIn |
@@ -320,7 +316,7 @@ namespace Python.Runtime
             HaveStacklessExtension |
             HaveIndex |
             0);
-#elif PYTHON3 // Default flags for Python 3
+#else // Default flags for Python 3
         public static int Default = (
             HaveStacklessExtension |
             HaveVersionTag);

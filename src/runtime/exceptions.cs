@@ -180,7 +180,7 @@ namespace Python.Runtime
 
             Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
 
-#if PYTHON3
+#if !PYTHON2
             if (e.InnerException != null)
             {
                 IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
