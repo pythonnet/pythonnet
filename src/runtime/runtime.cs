@@ -332,8 +332,14 @@ namespace Python.Runtime
             IntPtr res = PyRun_String(code, (IntPtr)RunFlagType.File, globals, globals);
             if (res == IntPtr.Zero)
             {
-                XDecref(globals);
-                throw new PythonException();
+                try
+                {
+                    throw new PythonException();
+                }
+                finally
+                {
+                    XDecref(globals);
+                }
             }
             XDecref(res);
             IntPtr A = PyDict_GetItemString(globals, "A");
