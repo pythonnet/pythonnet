@@ -519,7 +519,7 @@ namespace Python.Runtime
                     return true;
 
                 case TypeCode.Byte:
-#if PYTHON3
+#if !PYTHON2
                     if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                     {
                         if (Runtime.PyBytes_Size(value) == 1)
@@ -530,7 +530,7 @@ namespace Python.Runtime
                         }
                         goto type_error;
                     }
-#elif PYTHON2
+#else
                     if (Runtime.PyObject_TypeCheck(value, Runtime.PyStringType))
                     {
                         if (Runtime.PyString_Size(value) == 1)
@@ -564,7 +564,7 @@ namespace Python.Runtime
                     return true;
 
                 case TypeCode.SByte:
-#if PYTHON3
+#if !PYTHON2
                     if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                     {
                         if (Runtime.PyBytes_Size(value) == 1)
@@ -575,7 +575,7 @@ namespace Python.Runtime
                         }
                         goto type_error;
                     }
-#elif PYTHON2
+#else
                     if (Runtime.PyObject_TypeCheck(value, Runtime.PyStringType))
                     {
                         if (Runtime.PyString_Size(value) == 1)
@@ -609,7 +609,7 @@ namespace Python.Runtime
                     return true;
 
                 case TypeCode.Char:
-#if PYTHON3
+#if !PYTHON2
                     if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                     {
                         if (Runtime.PyBytes_Size(value) == 1)
@@ -620,7 +620,7 @@ namespace Python.Runtime
                         }
                         goto type_error;
                     }
-#elif PYTHON2
+#else
                     if (Runtime.PyObject_TypeCheck(value, Runtime.PyStringType))
                     {
                         if (Runtime.PyString_Size(value) == 1)
@@ -728,20 +728,20 @@ namespace Python.Runtime
                         }
                         goto type_error;
                     }
-                    
+
                     uint ui;
-                    try 
+                    try
                     {
                         ui = Convert.ToUInt32(Runtime.PyLong_AsUnsignedLong(op));
                     } catch (OverflowException)
                     {
                         // Probably wasn't an overflow in python but was in C# (e.g. if cpython
-                        // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in 
+                        // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in
                         // PyLong_AsUnsignedLong)
                         Runtime.XDecref(op);
                         goto overflow;
                     }
-                    
+
 
                     if (Exceptions.ErrorOccurred())
                     {
@@ -875,7 +875,7 @@ namespace Python.Runtime
 
             var listType = typeof(List<>);
             var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) : 
+            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) :
                                         (IList) Activator.CreateInstance(constructedListType);
             IntPtr item;
 
@@ -896,7 +896,7 @@ namespace Python.Runtime
 
             items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
-            
+
             result = items;
             return true;
         }

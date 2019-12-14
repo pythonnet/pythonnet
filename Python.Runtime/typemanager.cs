@@ -414,23 +414,20 @@ namespace Python.Runtime
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-#if PYTHON3
+#if !PYTHON2
             // For python3 we leak two objects. One for the ASCII representation
             // required for tp_name, and another for the Unicode representation
             // for ht_name.
             IntPtr temp = Runtime.PyBytes_FromString(name);
             IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
             temp = Runtime.PyUnicode_FromString(name);
-#elif PYTHON2
+            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
+#else
             IntPtr temp = Runtime.PyString_FromString(name);
             IntPtr raw = Runtime.PyString_AsString(temp);
 #endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
-
-#if PYTHON3
-            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
-#endif
 
             long ptr = type.ToInt64(); // 64-bit safe
 
@@ -443,9 +440,9 @@ namespace Python.Runtime
             temp = new IntPtr(ptr + TypeOffset.mp_length);
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
-#if PYTHON3
+#if !PYTHON2
             temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
-#elif PYTHON2
+#else
             temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
 #endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);

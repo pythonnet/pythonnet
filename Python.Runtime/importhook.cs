@@ -13,7 +13,6 @@ namespace Python.Runtime
         private static MethodWrapper hook;
         private static IntPtr py_clr_module;
 
-#if PYTHON3
         private static IntPtr module_def = IntPtr.Zero;
 
         internal static void InitializeModuleDef()
@@ -23,7 +22,6 @@ namespace Python.Runtime
                 module_def = ModuleDefOffset.AllocModuleDef("clr");
             }
         }
-#endif
 
         /// <summary>
         /// Get a <i>New reference</i> to the builtins module.
@@ -86,7 +84,7 @@ namespace Python.Runtime
             // Initialize the clr module and tell Python about it.
             root = new CLRModule();
 
-#if PYTHON3
+#if !PYTHON2
             // create a python module with the same methods as the clr module-like object
             InitializeModuleDef();
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
@@ -97,7 +95,7 @@ namespace Python.Runtime
             clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
 
             Runtime.PyDict_Update(mod_dict, clr_dict);
-#elif PYTHON2
+#else
             Runtime.XIncref(root.pyHandle); // we are using the module two times
             py_clr_module = root.pyHandle; // Alias handle for PY2/PY3
 #endif
