@@ -32,7 +32,6 @@ namespace Python.Runtime
             ModuleDefOffset.FreeModuleDef(module_def);
             module_def = IntPtr.Zero;
         }
-#endif
 
         /// <summary>
         /// Initialize just the __import__ hook itself.
@@ -136,11 +135,10 @@ namespace Python.Runtime
         {
             root.InitializePreload();
 
-            if (Runtime.IsPython2)
-            {
-                Runtime.XIncref(py_clr_module);
-                return py_clr_module;
-            }
+#if PYTHON2
+            Runtime.XIncref(py_clr_module);
+            return py_clr_module;
+#endif
 
             // Python 3
             // update the module dictionary with the contents of the root dictionary
