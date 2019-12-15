@@ -11,7 +11,7 @@ using Python.Runtime;
 //
 // Unfortunately this means no continuous integration testing for this case.
 //
-#if !NETSTANDARD && !NETCOREAPP
+#if NETFX
 namespace Python.EmbeddingTest
 {
     class TestDomainReload

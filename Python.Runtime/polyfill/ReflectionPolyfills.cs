@@ -4,8 +4,7 @@ using System.Reflection.Emit;
 
 namespace Python.Runtime
 {
-#if NETSTANDARD
-    public static class ReflectionPolifills
+    public static class ReflectionPolyfills
     {
         public static AssemblyBuilder DefineDynamicAssembly(this AppDomain appDomain, AssemblyName assemblyName, AssemblyBuilderAccess assemblyBuilderAccess)
         {
@@ -17,5 +16,4 @@ namespace Python.Runtime
             return typeBuilder.GetTypeInfo().GetType();
         }
     }
-#endif
 }

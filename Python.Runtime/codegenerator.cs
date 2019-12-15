@@ -13,16 +13,40 @@ namespace Python.Runtime
     /// </summary>
     internal class CodeGenerator
     {
-        private AssemblyBuilder aBuilder;
-        private ModuleBuilder mBuilder;
+        private AssemblyBuilder _aBuilder = null;
+
+        private AssemblyBuilder aBuilder
+        {
+            get
+            {
+                if (_aBuilder == null)
+                {
+                    var aname = new AssemblyName { Name = "__CodeGenerator_Assembly" };
+                    var aa = AssemblyBuilderAccess.Run;
+
+                    _aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
+                }
+
+                return _aBuilder;
+            }
+        }
+
+        private ModuleBuilder _mBuilder = null;
+        private ModuleBuilder mBuilder
+        {
+            get
+            {
+                if (_mBuilder == null)
+                {
+                    _mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
+                }
+
+                return _mBuilder;
+            }
+        }
 
         internal CodeGenerator()
         {
-            var aname = new AssemblyName { Name = "__CodeGenerator_Assembly" };
-            var aa = AssemblyBuilderAccess.Run;
-
-            aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
-            mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
         }
 
         /// <summary>
