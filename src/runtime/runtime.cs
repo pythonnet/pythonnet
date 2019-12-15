@@ -1946,15 +1946,15 @@ namespace Python.Runtime
 
         internal static void SetNoSiteFlag()
         {
-            if (_PythonDll == "__Internal")
-            {
-                throw new NotSupportedException("SetNoSiteFlag didn't support on static compile");
-            }
             var loader = LibraryLoader.Get(OperatingSystem);
-            IntPtr dllLocal = loader.Load(_PythonDll);
-            if (dllLocal == IntPtr.Zero)
+            IntPtr dllLocal;
+            if (_PythonDll != "__Internal")
             {
-                throw new Exception($"Cannot load {_PythonDll}");
+                dllLocal = loader.Load(_PythonDll);
+                if (dllLocal == IntPtr.Zero)
+                {
+                    throw new Exception($"Cannot load {_PythonDll}");
+                }
             }
             try
             {
@@ -1963,7 +1963,10 @@ namespace Python.Runtime
             }
             finally
             {
-                loader.Free(dllLocal);
+                if (dllLocal != IntPtr.Zero)
+                {
+                    loader.Free(dllLocal);
+                }
             }
         }
     }
