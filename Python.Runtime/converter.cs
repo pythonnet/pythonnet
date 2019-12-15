@@ -86,8 +86,10 @@ namespace Python.Runtime
             if (op == int32Type)
                 return Runtime.PyIntType;
 
-            if (op == int64Type && Runtime.IsPython2)
+#if PYTHON2
+            if (op == int64Type)
                 return Runtime.PyLongType;
+#endif
 
             if (op == int64Type)
                 return Runtime.PyIntType;
@@ -455,8 +457,9 @@ namespace Python.Runtime
                     return true;
 
                 case TypeCode.Int32:
+#if PYTHON2
                     // Trickery to support 64-bit platforms.
-                    if (Runtime.IsPython2 && Runtime.Is32Bit)
+                    if (Runtime.Is32Bit)
                     {
                         op = Runtime.PyNumber_Int(value);
 
@@ -480,7 +483,8 @@ namespace Python.Runtime
                         result = ival;
                         return true;
                     }
-                    else // Python3 always use PyLong API
+#else
+                    // Python3 always use PyLong API
                     {
                         op = Runtime.PyNumber_Long(value);
                         if (op == IntPtr.Zero)
@@ -505,6 +509,7 @@ namespace Python.Runtime
                         result = (int)ll;
                         return true;
                     }
+#endif
 
                 case TypeCode.Boolean:
                     result = Runtime.PyObject_IsTrue(value) != 0;

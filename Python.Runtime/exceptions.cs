@@ -103,7 +103,12 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-            string exceptionsModuleName = Runtime.IsPython3 ? "builtins" : "exceptions";
+            string exceptionsModuleName =
+#if PYTHON2
+            "exceptions";
+#else
+            "builtins";
+#endif
             exceptions_module = Runtime.PyImport_ImportModule(exceptionsModuleName);
 
             Exceptions.ErrorCheck(exceptions_module);

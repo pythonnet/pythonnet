@@ -28,20 +28,17 @@ namespace Python.Runtime
         /// </summary>
         static IntPtr GetNewRefToBuiltins()
         {
-            if (Runtime.IsPython3)
-            {
-                return Runtime.PyImport_ImportModule("builtins");
-            }
-            else
-            {
-                // dict is a borrowed ref, no need to decref
-                IntPtr dict = Runtime.PyImport_GetModuleDict();
+#if !PYTHON2
+            return Runtime.PyImport_ImportModule("builtins");
+#else
+            // dict is a borrowed ref, no need to decref
+            IntPtr dict = Runtime.PyImport_GetModuleDict();
 
-                // GetItemString is a borrowed ref; incref to get a new ref
-                IntPtr builtins = Runtime.PyDict_GetItemString(dict, "__builtin__");
-                Runtime.XIncref(builtins);
-                return builtins;
-            }
+            // GetItemString is a borrowed ref; incref to get a new ref
+            IntPtr builtins = Runtime.PyDict_GetItemString(dict, "__builtin__");
+            Runtime.XIncref(builtins);
+            return builtins;
+#endif
         }
 
         /// <summary>
@@ -126,11 +123,10 @@ namespace Python.Runtime
         {
             root.InitializePreload();
 
-            if (Runtime.IsPython2)
-            {
-                Runtime.XIncref(py_clr_module);
-                return py_clr_module;
-            }
+#if PYTHON2
+            Runtime.XIncref(py_clr_module);
+            return py_clr_module;
+#endif
 
             // Python 3
             // update the module dictionary with the contents of the root dictionary
