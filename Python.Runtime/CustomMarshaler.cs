@@ -91,9 +91,11 @@ namespace Python.Runtime
             var len = 0;
             while (true)
             {
-                int c = Runtime._UCS == 2
-                    ? Marshal.ReadInt16(p, len * 2)
-                    : Marshal.ReadInt32(p, len * 4);
+#if UCS2
+                int c = Marshal.ReadInt16(p, len * 2);
+#else
+                int c = Marshal.ReadInt32(p, len * 4);
+#endif
 
                 if (c == 0)
                 {
