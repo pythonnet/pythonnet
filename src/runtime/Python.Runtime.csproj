@@ -142,6 +142,7 @@
     <Compile Include="Util.cs" />
     <Compile Include="platform\Types.cs" />
     <Compile Include="platform\LibraryLoader.cs" />
+    <Compile Include="slots\mp_length.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
