@@ -20,9 +20,9 @@ namespace Python.Runtime {
         return type.ToString();
     }
 
-    var path = $"{Directory.GetCurrentDirectory()}/Python.Runtime.Native/bin/Debug/netstandard2.0/Python.Runtime.Native.dll";
+    var path = $"{Directory.GetCurrentDirectory()}/Python.Runtime.Interfaces/bin/Debug/netstandard2.0/Python.Runtime.Interfaces.dll";
     var assembly = Assembly.LoadFile(path);
-    var type = assembly.GetType("Python.Runtime.Native.ILibPython");
+    var type = assembly.GetType("Python.Runtime.Interfaces.ILibPython");
     const BindingFlags flags = BindingFlags.Public | BindingFlags.FlattenHierarchy | BindingFlags.Instance;
     var methods = type.GetMethods(flags);
 

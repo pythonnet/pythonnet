@@ -9,4 +9,8 @@
     <PackageReference Include="AdvancedDLSupport" Version="3.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Python.Runtime.Interfaces\Python.Runtime.Interfaces.csproj" />
+  </ItemGroup>
+
 </Project>

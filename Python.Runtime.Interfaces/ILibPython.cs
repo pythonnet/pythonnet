@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace Python.Runtime.Native
+namespace Python.Runtime.Interfaces
 {
     public interface ILibPython
     {
@@ -347,6 +347,7 @@ namespace Python.Runtime.Native
         int Py_AddPendingCall(IntPtr func, IntPtr arg);
         int Py_MakePendingCalls();
 
-        int Py_NoSiteFlag { get; set; }
+        int GetPyNoSiteFlag();
+        void SetPyNoSiteFlag(int val);
     }
 }

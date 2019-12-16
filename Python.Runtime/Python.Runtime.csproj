@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Python.Runtime.Native\Python.Runtime.Native.csproj" />
+    <ProjectReference Include="..\Python.Runtime.Interfaces\Python.Runtime.Interfaces.csproj" />
   </ItemGroup>
 
 </Project>

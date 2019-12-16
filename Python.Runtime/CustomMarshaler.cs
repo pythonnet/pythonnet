@@ -218,7 +218,7 @@ namespace Python.Runtime.Native
     internal class Utf8Marshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new Utf8Marshaler();
-        private static readonly Encoding PyEncoding = Encoding.UTF8;
+        private static new readonly Encoding PyEncoding = Encoding.UTF8;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {

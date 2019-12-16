@@ -979,9 +979,9 @@ namespace Python.Runtime
 
         internal static void SetNoSiteFlag()
         {
-            Py_NoSiteFlag = 1;
+            SetPyNoSiteFlag(1);
         }
 
-        static Native.ILibPython LibPython;
+        static Interfaces.ILibPython LibPython;
     }
 }

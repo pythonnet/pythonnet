@@ -213,9 +213,7 @@ namespace Python.Runtime {
         internal static System.IntPtr PyMethod_Function(System.IntPtr ob) => LibPython.PyMethod_Function(ob);
         internal static System.Int32 Py_AddPendingCall(System.IntPtr func, System.IntPtr arg) => LibPython.Py_AddPendingCall(func, arg);
         internal static System.Int32 Py_MakePendingCalls() => LibPython.Py_MakePendingCalls();
-        internal static System.Int32 Py_NoSiteFlag {
-            get => LibPython.Py_NoSiteFlag;
-            set { LibPython.Py_NoSiteFlag = value; }
-        }
+        internal static System.Int32 GetPyNoSiteFlag() => LibPython.GetPyNoSiteFlag();
+        internal static void SetPyNoSiteFlag(System.Int32 val) => LibPython.SetPyNoSiteFlag(val);
     }
 }
