@@ -205,7 +205,7 @@ namespace Python.Runtime {
         internal static System.Int32 PyErr_GivenExceptionMatches(System.IntPtr ob, System.IntPtr val) => LibPython.PyErr_GivenExceptionMatches(ob, val);
         internal static void PyErr_NormalizeException(System.IntPtr ob, System.IntPtr val, System.IntPtr tb) => LibPython.PyErr_NormalizeException(ob, val, tb);
         internal static System.IntPtr PyErr_Occurred() => LibPython.PyErr_Occurred();
-        internal static void PyErr_Fetch(ref System.IntPtr ob, ref System.IntPtr val, ref System.IntPtr tb) => LibPython.PyErr_Fetch(ob, val, tb);
+        internal static void PyErr_Fetch(ref System.IntPtr ob, ref System.IntPtr val, ref System.IntPtr tb) => LibPython.PyErr_Fetch(ref ob, ref val, ref tb);
         internal static void PyErr_Restore(System.IntPtr ob, System.IntPtr val, System.IntPtr tb) => LibPython.PyErr_Restore(ob, val, tb);
         internal static void PyErr_Clear() => LibPython.PyErr_Clear();
         internal static void PyErr_Print() => LibPython.PyErr_Print();
@@ -213,7 +213,9 @@ namespace Python.Runtime {
         internal static System.IntPtr PyMethod_Function(System.IntPtr ob) => LibPython.PyMethod_Function(ob);
         internal static System.Int32 Py_AddPendingCall(System.IntPtr func, System.IntPtr arg) => LibPython.Py_AddPendingCall(func, arg);
         internal static System.Int32 Py_MakePendingCalls() => LibPython.Py_MakePendingCalls();
-        internal static System.Int32 get_Py_NoSiteFlag() => LibPython.get_Py_NoSiteFlag();
-        internal static void set_Py_NoSiteFlag(System.Int32 value) => LibPython.set_Py_NoSiteFlag(value);
+        internal static System.Int32 Py_NoSiteFlag {
+            get => LibPython.Py_NoSiteFlag;
+            set { LibPython.Py_NoSiteFlag = value; }
+        }
     }
 }

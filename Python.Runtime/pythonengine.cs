@@ -1,9 +1,12 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -254,10 +257,17 @@ namespace Python.Runtime
         /// CPython interpreter process - this bootstraps the managed runtime
         /// when it is imported by the CLR extension module.
         /// </summary>
-        public static int InternalInitialize(int size, IntPtr data)
+        public static int InternalInitialize(IntPtr data, int size)
         {
+
+
             try
             {
+                // Console.WriteLine("Before Initialize");
+                // Console.Out.Flush();
+
+                // Python.Runtime.Platform.InternalLoadContext.Instance.EnterContextualReflection();
+
                 Initialize(setSysArgv: false);
 
                 // Trickery - when the import hook is installed into an already
@@ -277,6 +287,9 @@ namespace Python.Runtime
                 // still doesn't work if you use the interactive interpreter,
                 // since there is no line info to get the import line ;(
 
+                // Console.WriteLine("Initialized");
+                // Console.Out.Flush();
+
                 string code =
                     "import traceback\n" +
                     "for item in traceback.extract_stack():\n" +
@@ -290,12 +303,22 @@ namespace Python.Runtime
                     "            break\n";
 
                 PythonEngine.Exec(code);
+
+                // Console.WriteLine("Exec'd traceback hack");
+                // Console.Out.Flush();
+
                 return 0;
             }
             catch (PythonException e)
             {
                 e.Restore();
                 return -1;
+            }
+            catch (Exception e)
+            {
+                // Console.Error.WriteLine(e.ToString());
+                // Console.Error.Write(e.StackTrace);
+                return -2;
             }
         }
 

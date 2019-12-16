@@ -40,7 +40,15 @@ namespace Python.Runtime.Platform
 
         public IntPtr Load(string dllToLoad)
         {
-            var filename = $"lib{dllToLoad}.so";
+            string filename;
+            if (dllToLoad != null)
+            {
+                filename = $"lib{dllToLoad}.so";
+            }
+            else
+            {
+                filename = null;
+            }
             ClearError();
             var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
             if (res == IntPtr.Zero)
@@ -111,7 +119,15 @@ namespace Python.Runtime.Platform
 
         public IntPtr Load(string dllToLoad)
         {
-            var filename = $"lib{dllToLoad}.dylib";
+            string filename;
+            if (dllToLoad != null)
+            {
+                filename = $"lib{dllToLoad}.dylib";
+            }
+            else
+            {
+                filename = null;
+            }
             ClearError();
             var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
             if (res == IntPtr.Zero)

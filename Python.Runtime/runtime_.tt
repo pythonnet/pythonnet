@@ -31,7 +31,7 @@ namespace Python.Runtime {
         internal static <#= FormatType(method.ReturnParameter.ParameterType) #> <#= method.Name #>(<#=
             string.Join(", ", method.GetParameters().Select(x => $"{FormatType(x.ParameterType)} {x.Name}"))
         #>) => LibPython.<#= method.Name #>(<#=
-            string.Join(", ", method.GetParameters().Select(x => x.Name))
+            string.Join(", ", method.GetParameters().Select(x => (x.ParameterType.IsByRef ? "ref " : "") + x.Name))
         #>);
 <#
     }
