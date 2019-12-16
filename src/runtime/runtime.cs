@@ -762,8 +762,36 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
 
+#if PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_CompileString(string code, string file, IntPtr tok);
+        internal static extern IntPtr Py_CompileString(string code, string file, int start);
+#else
+        /// <summary>
+        /// Return value: New reference.
+        /// This is a simplified interface to Py_CompileStringFlags() below, leaving flags set to NULL.
+        /// </summary>
+        internal static IntPtr Py_CompileString(string str, string file, int start)
+        {
+            return Py_CompileStringFlags(str, file, start, IntPtr.Zero);
+        }
+
+        /// <summary>
+        /// Return value: New reference.
+        /// This is a simplified interface to Py_CompileStringExFlags() below, with optimize set to -1.
+        /// </summary>
+        internal static IntPtr Py_CompileStringFlags(string str, string file, int start, IntPtr flags)
+        {
+            return Py_CompileStringExFlags(str, file, start, flags, -1);
+        }
+
+        /// <summary>
+        /// Return value: New reference.
+        /// Like Py_CompileStringObject(), but filename is a byte string decoded from the filesystem encoding(os.fsdecode()).
+        /// </summary>
+        /// <returns></returns>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr Py_CompileStringExFlags(string str, string file, int start, IntPtr flags, int optimize);
+#endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyImport_ExecCodeModule(string name, IntPtr code);
@@ -1339,6 +1367,10 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyUnicode_FromStringAndSize(IntPtr value, IntPtr size);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyUnicode_AsUTF8(IntPtr unicode);
+
 #elif PYTHON2
         internal static IntPtr PyString_FromStringAndSize(string value, long size)
         {

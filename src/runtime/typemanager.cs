@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Python.Runtime.Platform;
+using Python.Runtime.Slots;
 
 namespace Python.Runtime
 {
@@ -153,6 +155,13 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
+            // add a __len__ slot for inheritors of ICollection and ICollection<>
+            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                InitializeSlot(type, TypeOffset.mp_length, typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length)));
+            }
+
+            // we want to do this after the slot stuff above in case the class itself implements a slot method
             InitializeSlots(type, impl.GetType());
 
             if (base_ != IntPtr.Zero)
@@ -191,6 +200,12 @@ namespace Python.Runtime
             //DebugUtil.DumpType(type);
 
             return type;
+        }
+
+        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
+        {
+            IntPtr thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk);
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
@@ -309,17 +324,11 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
 
-            // Copy gc and other type slots from the base Python metatype.
-
-            CopySlot(py_type, type, TypeOffset.tp_basicsize);
-            CopySlot(py_type, type, TypeOffset.tp_itemsize);
-
-            CopySlot(py_type, type, TypeOffset.tp_dictoffset);
-            CopySlot(py_type, type, TypeOffset.tp_weaklistoffset);
-
-            CopySlot(py_type, type, TypeOffset.tp_traverse);
-            CopySlot(py_type, type, TypeOffset.tp_clear);
-            CopySlot(py_type, type, TypeOffset.tp_is_gc);
+            // Slots will inherit from TypeType, it's not neccesary for setting them.
+            // Inheried slots:
+            // tp_basicsize, tp_itemsize,
+            // tp_dictoffset, tp_weaklistoffset,
+            // tp_traverse, tp_clear, tp_is_gc, etc.
 
             // Override type slots with those of the managed implementation.
 
@@ -415,12 +424,8 @@ namespace Python.Runtime
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
 #if PYTHON3
-            // For python3 we leak two objects. One for the ASCII representation
-            // required for tp_name, and another for the Unicode representation
-            // for ht_name.
-            IntPtr temp = Runtime.PyBytes_FromString(name);
-            IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
-            temp = Runtime.PyUnicode_FromString(name);
+            IntPtr temp = Runtime.PyUnicode_FromString(name);
+            IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
 #elif PYTHON2
             IntPtr temp = Runtime.PyString_FromString(name);
             IntPtr raw = Runtime.PyString_AsString(temp);
