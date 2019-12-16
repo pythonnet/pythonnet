@@ -7,6 +7,11 @@
 
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
+    <PackageReference Include="system.runtime.loader" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Python.Runtime.Native\Python.Runtime.Native.csproj" />
   </ItemGroup>
 
 </Project>

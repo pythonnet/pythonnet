@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Python.Runtime
+namespace Python.Runtime.Native
 {
     /// <summary>
     /// Abstract class defining boiler plate methods that
@@ -11,6 +11,14 @@ namespace Python.Runtime
     /// </summary>
     internal abstract class MarshalerBase : ICustomMarshaler
     {
+        #if UCS2 && PYTHON2
+        internal static Encoding PyEncoding = Encoding.Unicode;
+        internal static int UCS = 2;
+        #else
+        internal static Encoding PyEncoding = Encoding.UTF32;
+        internal static int UCS = 4;
+        #endif
+
         public object MarshalNativeToManaged(IntPtr pNativeData)
         {
             throw new NotImplementedException();
@@ -42,7 +50,6 @@ namespace Python.Runtime
     internal class UcsMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new UcsMarshaler();
-        private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
@@ -91,7 +98,7 @@ namespace Python.Runtime
             var len = 0;
             while (true)
             {
-#if UCS2
+#if UCS2 && PYTHON2
                 int c = Marshal.ReadInt16(p, len * 2);
 #else
                 int c = Marshal.ReadInt32(p, len * 4);
@@ -99,7 +106,7 @@ namespace Python.Runtime
 
                 if (c == 0)
                 {
-                    return len * Runtime._UCS;
+                    return len * UCS;
                 }
                 checked
                 {
@@ -157,7 +164,6 @@ namespace Python.Runtime
     internal class StrArrayMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrArrayMarshaler();
-        private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
@@ -169,7 +175,7 @@ namespace Python.Runtime
             }
 
             int totalStrLength = argv.Sum(arg => arg.Length + 1);
-            int memSize = argv.Length * IntPtr.Size + totalStrLength * Runtime._UCS;
+            int memSize = argv.Length * IntPtr.Size + totalStrLength * UCS;
 
             IntPtr mem = Marshal.AllocHGlobal(memSize);
             try
