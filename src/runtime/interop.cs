@@ -534,17 +534,7 @@ namespace Python.Runtime
                 return;
             }
             Target = target;
-            Thunk cb = new Thunk(target);
-            IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
-            try
-            {
-                Marshal.StructureToPtr(cb, tmp, false);
-                Address = Marshal.ReadIntPtr(tmp, 0);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(tmp);
-            }
+            Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }
 }
