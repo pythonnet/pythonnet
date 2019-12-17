@@ -204,8 +204,8 @@ namespace Python.Runtime
 
         static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
         {
-            IntPtr thunk = Interop.GetThunk(method);
-            Marshal.WriteIntPtr(type, slotOffset, thunk);
+            var thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
