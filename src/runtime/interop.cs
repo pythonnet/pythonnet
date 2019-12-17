@@ -449,7 +449,7 @@ namespace Python.Runtime
             return pmap[name] as Type;
         }
 
-        internal static IntPtr GetThunk(MethodInfo method, string funcType = null)
+        internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
         {
             Type dt;
             if (funcType != null)
@@ -457,18 +457,13 @@ namespace Python.Runtime
             else
                 dt = GetPrototype(method.Name);
 
-            if (dt != null)
+            if (dt == null)
             {
-                IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
-                Delegate d = Delegate.CreateDelegate(dt, method);
-                Thunk cb = new Thunk(d);
-                Marshal.StructureToPtr(cb, tmp, false);
-                IntPtr fp = Marshal.ReadIntPtr(tmp, 0);
-                Marshal.FreeHGlobal(tmp);
-                keepAlive.Add(d);
-                return fp;
+                return ThunkInfo.Empty;
             }
-            return IntPtr.Zero;
+            Delegate d = Delegate.CreateDelegate(dt, method);
+            IntPtr fp = Marshal.GetFunctionPointerForDelegate(d);
+            return new ThunkInfo(d, fp);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -521,5 +516,28 @@ namespace Python.Runtime
         {
             fn = d;
         }
+    }
+
+    internal struct ThunkInfo
+    {
+        public Delegate Target;
+        public IntPtr Address;
+
+        public static readonly ThunkInfo Empty = new ThunkInfo(null, IntPtr.Zero);
+
+        public ThunkInfo(Delegate target, IntPtr addr)
+        {
+            Target = target;
+            Address = addr;
+        }
+    }
+    
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    struct PyMethodDef
+    {
+        public IntPtr ml_name;
+        public IntPtr ml_meth;
+        public int ml_flags;
+        public IntPtr ml_doc;
     }
 }

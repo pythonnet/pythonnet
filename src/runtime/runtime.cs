@@ -212,6 +212,7 @@ namespace Python.Runtime
             PyNone = PyObject_GetAttrString(op, "None");
             PyTrue = PyObject_GetAttrString(op, "True");
             PyFalse = PyObject_GetAttrString(op, "False");
+            PySuper_Type = PyObject_GetAttrString(op, "super");
 
             PyBoolType = PyObject_Type(PyTrue);
             PyNoneType = PyObject_Type(PyNone);
@@ -381,6 +382,11 @@ namespace Python.Runtime
             Exceptions.Shutdown();
             ImportHook.Shutdown();
             Finalizer.Shutdown();
+
+            TypeManager.RemoveTypes();
+            MetaType.Release();
+            PyCLRMetaType = IntPtr.Zero;
+
             Py_Finalize();
         }
 
@@ -402,6 +408,7 @@ namespace Python.Runtime
         internal static IntPtr PyModuleType;
         internal static IntPtr PyClassType;
         internal static IntPtr PyInstanceType;
+        internal static IntPtr PySuper_Type;
         internal static IntPtr PyCLRMetaType;
         internal static IntPtr PyMethodType;
         internal static IntPtr PyWrapperDescriptorType;
@@ -1905,6 +1912,16 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
+
+        //====================================================================
+        // Python Capsules API
+        //====================================================================
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyCapsule_GetPointer(IntPtr capsule, string name);
 
 
         //====================================================================

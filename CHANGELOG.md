@@ -22,6 +22,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added support for converting python iterators to C# arrays
 -   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
 -   Added support for kwarg parameters when calling .NET methods from Python
+-   Added cleanup logic for the managed types on shutdown.
 
 ### Fixed
 
