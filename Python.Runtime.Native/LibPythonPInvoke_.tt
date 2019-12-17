@@ -1,0 +1,41 @@
+<#@ template hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Linq" #>
+<#@ import namespace="System.Reflection" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.IO" #>
+using Python.Runtime.Interfaces;
+
+namespace Python.Runtime.Native {
+
+    public partial class LibPythonPInvoke {
+<#
+    string FormatType(Type type) {
+        if (type == typeof(void))
+            return "void";
+
+        if (type.IsByRef)
+            return $"ref {type.GetElementType().ToString()}";
+
+        return type.ToString();
+    }
+
+    var path = $"{Directory.GetCurrentDirectory()}/Python.Runtime.Interfaces/bin/Debug/netstandard2.0/Python.Runtime.Interfaces.dll";
+    var assembly = Assembly.LoadFile(path);
+    var type = assembly.GetType("Python.Runtime.Interfaces.ILibPython");
+    const BindingFlags flags = BindingFlags.Public | BindingFlags.FlattenHierarchy | BindingFlags.Instance;
+    var methods = type.GetMethods(flags);
+
+    foreach (var method in methods) {
+#>
+        <#= FormatType(method.ReturnParameter.ParameterType) #> ILibPython.<#= method.Name #>(<#=
+            string.Join(", ", method.GetParameters().Select(x => $"{FormatType(x.ParameterType)} {x.Name}"))
+        #>) => LibPythonPInvoke.<#= method.Name #>(<#=
+            string.Join(", ", method.GetParameters().Select(x => (x.ParameterType.IsByRef ? "ref " : "") + x.Name))
+        #>);
+<#
+    }
+#>
+    }
+}
