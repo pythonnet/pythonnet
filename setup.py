@@ -88,5 +88,10 @@ setup(
             "Python.Runtime/",
             output="pythonnet/dlls",
         ),
+        DotnetLib(
+            "python-runtime-native",
+            "Python.Runtime.Native/",
+            output="pythonnet/dlls",
+        ),
     },
 )

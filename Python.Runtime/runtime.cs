@@ -87,6 +87,12 @@ namespace Python.Runtime
 
         public static int MainManagedThreadId { get; private set; }
 
+        #if UCS2 && PYTHON2
+        static int _UCS = 2;
+        #else
+        static int _UCS = 4;
+        #endif
+
         /// <summary>
         /// Encoding to use to convert Unicode to/from Managed to Native
         /// </summary>
@@ -223,17 +229,8 @@ namespace Python.Runtime
             IntPtr dllLocal = IntPtr.Zero;
             var loader = LibraryLoader.Get(OperatingSystem);
 
-            if (_PythonDll != "__Internal")
-            {
-                dllLocal = loader.Load(_PythonDll);
-            }
             _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
             PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
-
-            if (dllLocal != IntPtr.Zero)
-            {
-                loader.Free(dllLocal);
-            }
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
