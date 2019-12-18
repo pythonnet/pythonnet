@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Python.Runtime.Native;
+using Python.Runtime.Interfaces;
 
 namespace Python.Runtime
 {
@@ -116,11 +117,6 @@ namespace Python.Runtime
         public static string BuildInfo
         {
             get { return Marshal.PtrToStringAnsi(Runtime.Py_GetBuildInfo()); }
-        }
-
-        public static string Platform
-        {
-            get { return Marshal.PtrToStringAnsi(Runtime.Py_GetPlatform()); }
         }
 
         public static string Copyright
@@ -263,10 +259,12 @@ namespace Python.Runtime
 
             try
             {
-                // Console.WriteLine("Before Initialize");
-                // Console.Out.Flush();
+                Console.WriteLine("Running on {0}", RuntimeInformation.FrameworkDescription);
 
-                // Python.Runtime.Platform.InternalLoadContext.Instance.EnterContextualReflection();
+                var ass = Platform.InternalLoadContext.Instance.LoadFromAssemblyName(new AssemblyName("Python.Runtime.Native"));
+
+                var typ = ass.GetType("Python.Runtime.Native.LibPythonPInvoke");
+                Runtime.LibPython = (ILibPython)Activator.CreateInstance(typ);
 
                 Initialize(setSysArgv: false);
 
@@ -316,8 +314,8 @@ namespace Python.Runtime
             }
             catch (Exception e)
             {
-                // Console.Error.WriteLine(e.ToString());
-                // Console.Error.Write(e.StackTrace);
+                Console.Error.WriteLine(e.ToString());
+                Console.Error.Write(e.StackTrace);
                 return -2;
             }
         }

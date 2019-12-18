@@ -856,6 +856,6 @@ namespace Python.Runtime
             SetPyNoSiteFlag(1);
         }
 
-        static Interfaces.ILibPython LibPython;
+        internal static Interfaces.ILibPython LibPython;
     }
 }
