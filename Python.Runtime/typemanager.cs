@@ -503,11 +503,11 @@ namespace Python.Runtime
             {
                 get
                 {
-                    switch (Runtime.Machine)
+                    switch (RuntimeInformation.ProcessArchitecture)
                     {
-                        case MachineType.i386:
+                        case Architecture.X86:
                             return I386;
-                        case MachineType.x86_64:
+                        case Architecture.X64:
                             return X86_64;
                         default:
                             return null;
@@ -600,15 +600,12 @@ namespace Python.Runtime
             {
                 get
                 {
-                    switch (Runtime.OperatingSystem)
-                    {
-                        case OperatingSystemType.Darwin:
-                            return 0x1000;
-                        case OperatingSystemType.Linux:
-                            return 0x20;
-                        default:
-                            throw new NotImplementedException($"mmap is not supported on {Runtime.OperatingSystemName}");
-                    }
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                        return 0x1000;
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                        return 0x20;
+                    else
+                        throw new NotImplementedException($"mmap is not supported on this operating system");
                 }
             }
 
@@ -633,16 +630,10 @@ namespace Python.Runtime
 
         internal static IMemoryMapper CreateMemoryMapper()
         {
-            switch (Runtime.OperatingSystem)
-            {
-                case OperatingSystemType.Darwin:
-                case OperatingSystemType.Linux:
-                    return new UnixMemoryMapper();
-                case OperatingSystemType.Windows:
-                    return new WindowsMemoryMapper();
-                default:
-                    throw new NotImplementedException($"No support for {Runtime.OperatingSystemName}");
-            }
+            if (Runtime.IsWindows)
+                return new WindowsMemoryMapper();
+            else
+                return new UnixMemoryMapper();
         }
 
         /// <summary>

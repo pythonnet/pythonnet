@@ -10,13 +10,8 @@ namespace Python.Runtime.Platform
 
         protected override IntPtr LoadUnmanagedDll(string name)
         {
-            if (name == "__Internal")
-            {
-                var loader = LibraryLoader.Get(OperatingSystemType.Linux);
-                return loader.Load(null);
-            }
-
-            return IntPtr.Zero;
+            var filtered = name == "__Internal" ? null : name;
+            return LibraryLoader.Instance.Load(filtered);
         }
 
         public static AssemblyLoadContext Instance { get; } = new InternalLoadContext();

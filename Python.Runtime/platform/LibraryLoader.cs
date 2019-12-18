@@ -15,18 +15,27 @@ namespace Python.Runtime.Platform
 
     static class LibraryLoader
     {
-        public static ILibraryLoader Get(OperatingSystemType os)
+        static ILibraryLoader _instance = null;
+
+        public static ILibraryLoader Instance
         {
-            switch (os)
+            get
             {
-                case OperatingSystemType.Windows:
-                    return new WindowsLoader();
-                case OperatingSystemType.Darwin:
-                    return new DarwinLoader();
-                case OperatingSystemType.Linux:
-                    return new LinuxLoader();
-                default:
-                    throw new PlatformNotSupportedException($"This operating system ({os}) is not supported");
+                if (_instance == null)
+                {
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        _instance = new WindowsLoader();
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                        _instance = new DarwinLoader();
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                        _instance = new LinuxLoader();
+                    else
+                        throw new PlatformNotSupportedException(
+                            $"This operating system is not supported"
+                        );
+                }
+
+                return _instance;
             }
         }
     }

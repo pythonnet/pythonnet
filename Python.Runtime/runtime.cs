@@ -26,56 +26,7 @@ namespace Python.Runtime
 
         internal static bool Is32Bit = IntPtr.Size == 4;
 
-        // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-
-        static readonly Dictionary<string, OperatingSystemType> OperatingSystemTypeMapping = new Dictionary<string, OperatingSystemType>()
-        {
-            { "Windows", OperatingSystemType.Windows },
-            { "Darwin", OperatingSystemType.Darwin },
-            { "Linux", OperatingSystemType.Linux },
-        };
-
-        /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static OperatingSystemType OperatingSystem { get; private set; }
-
-        /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static string OperatingSystemName { get; private set; }
-
-
-        /// <summary>
-        /// Map lower-case version of the python machine name to the processor
-        /// type. There are aliases, e.g. x86_64 and amd64 are two names for
-        /// the same thing. Make sure to lower-case the search string, because
-        /// capitalization can differ.
-        /// </summary>
-        static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
-        {
-            ["i386"] = MachineType.i386,
-            ["i686"] = MachineType.i386,
-            ["x86"] = MachineType.i386,
-            ["x86_64"] = MachineType.x86_64,
-            ["amd64"] = MachineType.x86_64,
-            ["x64"] = MachineType.x86_64,
-            ["em64t"] = MachineType.x86_64,
-            ["armv7l"] = MachineType.armv7l,
-            ["armv8"] = MachineType.armv8,
-            ["aarch64"] = MachineType.aarch64,
-        };
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static MachineType Machine { get; private set; }/* set in Initialize using python's platform.machine */
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static string MachineName { get; private set; }
+        internal static bool IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
 #if PYTHON2
         internal static bool IsPython2 = true;
@@ -221,13 +172,8 @@ namespace Python.Runtime
 
             Error = new IntPtr(-1);
 
-            // Initialize data about the platform we're running on. We need
-            // this for the type manager and potentially other details. Must
-            // happen after caching the python types, above.
-            InitializePlatformData();
-
             IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(OperatingSystem);
+            var loader = LibraryLoader.Instance;
 
             _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
             PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
@@ -246,53 +192,6 @@ namespace Python.Runtime
             PyList_Append(path, item);
             XDecref(item);
             AssemblyManager.UpdatePath();
-        }
-
-        /// <summary>
-        /// Initializes the data about platforms.
-        ///
-        /// This must be the last step when initializing the runtime:
-        /// GetManagedString needs to have the cached values for types.
-        /// But it must run before initializing anything outside the runtime
-        /// because those rely on the platform data.
-        /// </summary>
-        private static void InitializePlatformData()
-        {
-            IntPtr op;
-            IntPtr fn;
-            IntPtr platformModule = PyImport_ImportModule("platform");
-            IntPtr emptyTuple = PyTuple_New(0);
-
-            fn = PyObject_GetAttrString(platformModule, "system");
-            op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            OperatingSystemName = GetManagedString(op);
-            XDecref(op);
-            XDecref(fn);
-
-            fn = PyObject_GetAttrString(platformModule, "machine");
-            op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            MachineName = GetManagedString(op);
-            XDecref(op);
-            XDecref(fn);
-
-            XDecref(emptyTuple);
-            XDecref(platformModule);
-
-            // Now convert the strings into enum values so we can do switch
-            // statements rather than constant parsing.
-            OperatingSystemType OSType;
-            if (!OperatingSystemTypeMapping.TryGetValue(OperatingSystemName, out OSType))
-            {
-                OSType = OperatingSystemType.Other;
-            }
-            OperatingSystem = OSType;
-
-            MachineType MType;
-            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
-            {
-                MType = MachineType.Other;
-            }
-            Machine = MType;
         }
 
         internal static void Shutdown()
