@@ -227,7 +227,7 @@ namespace Python.Runtime
             byte[] ascii = Encoding.ASCII.GetBytes(modulename);
             int size = name + ascii.Length + 1;
             IntPtr ptr = Marshal.AllocHGlobal(size);
-            for (int i = 0; i < m_free; i += IntPtr.Size)
+            for (int i = 0; i <= m_free; i += IntPtr.Size)
                 Marshal.WriteIntPtr(ptr, i, IntPtr.Zero);
             Marshal.Copy(ascii, 0, (IntPtr)(ptr + name), ascii.Length);
             Marshal.WriteIntPtr(ptr, m_name, (IntPtr)(ptr + name));
