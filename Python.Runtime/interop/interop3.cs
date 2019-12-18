@@ -4,6 +4,7 @@
 
 
 #if !PYTHON2
+// TODO: Need new dynamic version of this from Python 3.8 onwards
 using System;
 using System.Collections;
 using System.Collections.Specialized;
