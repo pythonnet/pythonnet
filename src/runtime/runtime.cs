@@ -187,7 +187,6 @@ namespace Python.Runtime
 
             IsFinalizing = false;
 
-            CLRModule.Reset();
             GenericUtil.Reset();
             PyScopeManager.Reset();
             ClassManager.Reset();
