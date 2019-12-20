@@ -305,7 +305,7 @@ namespace Python.Runtime
         {
             var self = (ModuleObject)GetManagedObject(ob);
             tp_clear(ob);
-            ExtensionType.tp_dealloc(ob);
+            self.Dealloc();
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)

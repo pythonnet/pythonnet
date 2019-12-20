@@ -202,7 +202,7 @@ namespace Python.Runtime
             {
                 Runtime.XDecref(self.unbound.pyHandle);
             }
-            FinalizeObject(self);
+            self.Dealloc();
         }
     }
 

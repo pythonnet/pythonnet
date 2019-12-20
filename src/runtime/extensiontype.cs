@@ -54,6 +54,11 @@ namespace Python.Runtime
             self.gcHandle.Free();
         }
 
+        protected void Dealloc()
+        {
+            FinalizeObject(this);
+            FreeGCHandle();
+        }
 
         /// <summary>
         /// Type __setattr__ implementation.
@@ -88,8 +93,8 @@ namespace Python.Runtime
         {
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
-            ManagedType self = GetManagedObject(ob);
-            FinalizeObject(self);
+            var self = (ExtensionType)GetManagedObject(ob);
+            self.Dealloc();
         }
     }
 }

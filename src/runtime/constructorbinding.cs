@@ -145,7 +145,7 @@ namespace Python.Runtime
             var self = (ConstructorBinding)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
             Runtime.XDecref(self.pyTypeHndl);
-            ExtensionType.FinalizeObject(self);
+            self.Dealloc();
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
@@ -242,7 +242,7 @@ namespace Python.Runtime
             var self = (BoundContructor)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
             Runtime.XDecref(self.pyTypeHndl);
-            FinalizeObject(self);
+            self.Dealloc();
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)

@@ -208,7 +208,7 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ob);
             self.ClearMembers();
-            ExtensionType.FinalizeObject(self);
+            self.Dealloc();
         }
 
         public static int tp_clear(IntPtr ob)

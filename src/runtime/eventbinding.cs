@@ -118,7 +118,7 @@ namespace Python.Runtime
         {
             var self = (EventBinding)GetManagedObject(ob);
             Runtime.XDecref(self.target);
-            ExtensionType.FinalizeObject(self);
+            self.Dealloc();
         }
     }
 }

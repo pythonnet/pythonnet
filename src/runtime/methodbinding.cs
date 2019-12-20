@@ -244,7 +244,7 @@ namespace Python.Runtime
         {
             var self = (MethodBinding)GetManagedObject(ob);
             self.ClearMembers();
-            FinalizeObject(self);
+            self.Dealloc();
         }
 
         public static int tp_clear(IntPtr ob)
