@@ -229,7 +229,7 @@ namespace Python.Runtime
             byte[] ascii = Encoding.ASCII.GetBytes(modulename);
             int size = name + ascii.Length + 1;
             IntPtr ptr = Marshal.AllocHGlobal(size);
-            for (int i = 0; i < m_free; i += IntPtr.Size)
+            for (int i = 0; i <= m_free; i += IntPtr.Size)
                 Marshal.WriteIntPtr(ptr, i, IntPtr.Zero);
             Marshal.Copy(ascii, 0, (IntPtr)(ptr + name), ascii.Length);
             Marshal.WriteIntPtr(ptr, m_name, (IntPtr)(ptr + name));
@@ -468,13 +468,9 @@ namespace Python.Runtime
             {
                 return ThunkInfo.Empty;
             }
-            IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
             Delegate d = Delegate.CreateDelegate(dt, method);
-            Thunk cb = new Thunk(d);
-            Marshal.StructureToPtr(cb, tmp, false);
-            IntPtr fp = Marshal.ReadIntPtr(tmp, 0);
-            Marshal.FreeHGlobal(tmp);
-            return new ThunkInfo(d, fp);
+            var info = new ThunkInfo(d);
+            return info;
         }
 
 
@@ -530,17 +526,21 @@ namespace Python.Runtime
         }
     }
 
-    internal struct ThunkInfo
+    internal class ThunkInfo
     {
-        public Delegate Target;
-        public IntPtr Address;
+        public readonly Delegate Target;
+        public readonly IntPtr Address;
 
-        public static readonly ThunkInfo Empty = new ThunkInfo(null, IntPtr.Zero);
+        public static readonly ThunkInfo Empty = new ThunkInfo(null);
 
-        public ThunkInfo(Delegate target, IntPtr addr)
+        public ThunkInfo(Delegate target)
         {
+            if (target == null)
+            {
+                return;
+            }
             Target = target;
-            Address = addr;
+            Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }
 

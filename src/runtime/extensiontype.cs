@@ -50,9 +50,8 @@ namespace Python.Runtime
         public static void FinalizeObject(ManagedType self)
         {
             Runtime.PyObject_GC_Del(self.pyHandle);
-            // Not necessary decref for `tpHandle`.
-            // Runtime.XDecref(self.tpHandle);
-            self.FreeGCHandle();
+            // Not necessary for decref of `tpHandle`.
+            self.gcHandle.Free();
         }
 
 

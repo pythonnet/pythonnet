@@ -12,8 +12,10 @@ namespace Python.Runtime
     {
         public IntPtr mdef;
         public IntPtr ptr;
-        public ThunkInfo _thunk;
+        private ThunkInfo _thunk;
+
         private bool _disposed = false;
+
 
         public MethodWrapper(Type type, string name, string funcType = null)
         {

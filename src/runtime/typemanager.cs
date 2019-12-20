@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Python.Runtime.Platform;
-using System.Linq;
 using System.Diagnostics;
+using Python.Runtime.Slots;
 
 namespace Python.Runtime
 {
@@ -183,6 +184,13 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
+            // add a __len__ slot for inheritors of ICollection and ICollection<>
+            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                InitializeSlot(type, TypeOffset.mp_length, typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length)));
+            }
+
+            // we want to do this after the slot stuff above in case the class itself implements a slot method
             SlotsHolder slotsHolder = new SlotsHolder(type);
             InitializeSlots(type, impl.GetType(), slotsHolder);
 
@@ -229,6 +237,12 @@ namespace Python.Runtime
             //DebugUtil.DumpType(type);
 
             return type;
+        }
+
+        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
+        {
+            var thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
@@ -366,16 +380,12 @@ namespace Python.Runtime
             Runtime.XIncref(py_type);
 
             // Slots will inherit from TypeType, it's not neccesary for setting them.
-            // Copy gc and other type slots from the base Python metatype.
+            // Inheried slots:
+            // tp_basicsize, tp_itemsize,
+            // tp_dictoffset, tp_weaklistoffset,
+            // tp_traverse, tp_clear, tp_is_gc, etc.
             //CopySlot(py_type, type, TypeOffset.tp_basicsize);
             //CopySlot(py_type, type, TypeOffset.tp_itemsize);
-
-            //CopySlot(py_type, type, TypeOffset.tp_dictoffset);
-            //CopySlot(py_type, type, TypeOffset.tp_weaklistoffset);
-
-            //CopySlot(py_type, type, TypeOffset.tp_traverse);
-            //CopySlot(py_type, type, TypeOffset.tp_clear);
-            //CopySlot(py_type, type, TypeOffset.tp_is_gc);
 
             SlotsHolder slotsHolder = new SlotsHolder(type);
             // Override type slots with those of the managed implementation.
@@ -392,8 +402,8 @@ namespace Python.Runtime
             IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
             Debug.Assert(4 * IntPtr.Size == Marshal.SizeOf(typeof(PyMethodDef)));
             IntPtr mdefStart = mdef;
-            ThunkInfo thunk = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
-            slotsHolder.KeeapAlive(thunk.Target);
+            ThunkInfo thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
+            slotsHolder.KeeapAlive(thunkInfo.Target);
 
             {
                 IntPtr mdefAddr = mdef;
@@ -411,11 +421,11 @@ namespace Python.Runtime
             mdef = WriteMethodDef(
                 mdef,
                 "__instancecheck__",
-                thunk.Address
+                thunkInfo.Address
             );
 
-            thunk = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
-            slotsHolder.KeeapAlive(thunk.Target);
+            thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
+            slotsHolder.KeeapAlive(thunkInfo.Target);
             {
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>
@@ -432,7 +442,7 @@ namespace Python.Runtime
             mdef = WriteMethodDef(
                 mdef,
                 "__subclasscheck__",
-                thunk.Address
+                thunkInfo.Address
             );
 
             // FIXME: mdef is not used

@@ -10,6 +10,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Added automatic NuGet package generation in appveyor and local builds
+-   Added function that sets Py_NoSiteFlag to 1.
+-   Added support for Jetson Nano.
+-   Added support for __len__ for .NET classes that implement ICollection
 
 ### Changed
 
@@ -25,6 +28,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 - Fixed runtime that fails loading when using pythonnet in an environment
   together with Nuitka
 - Fixes bug where delegates get casts (dotnetcore)
+- Determine size of interpreter longs at runtime
 
 ## [2.4.0][]
 
@@ -45,6 +49,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added PyObject finalizer support, Python objects referred by C# can be auto collect now ([#692][p692]).
 -   Added detailed comments about aproaches and dangers to handle multi-app-domains ([#625][p625])
 -   Python 3.7 support, builds and testing added. Defaults changed from Python 3.6 to 3.7 ([#698][p698])
+-   Added support for C# types to provide `__repr__` ([#680][p680])
 
 ### Changed
 
