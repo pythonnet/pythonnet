@@ -212,7 +212,7 @@ namespace Python.EmbeddingTest
             {
                 Console.WriteLine($"[Program.Main] The Proxy object is valid ({theProxy}). Unexpected domain unload behavior");
             }
-            catch (Exception)
+            catch (AppDomainUnloadedException)
             {
                 Console.WriteLine("[Program.Main] The Proxy object is not valid anymore, domain unload complete.");
             }

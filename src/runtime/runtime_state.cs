@@ -82,7 +82,7 @@ namespace Python.Runtime
             var dummyGCAddr = PySys_GetObject("dummy_gc");
             if (dummyGCAddr == IntPtr.Zero)
             {
-                throw new Exception("Runtime state have not set");
+                throw new InvalidOperationException("Runtime state have not set");
             }
             var dummyGC = PyLong_AsVoidPtr(dummyGCAddr);
             ResotreModules(dummyGC);
@@ -122,8 +122,8 @@ namespace Python.Runtime
             {
                 throw new Exception("To prevent crash by _PyObject_GC_UNTRACK in Python internal, UseDummyGC should be enabled when using ResotreObjects");
             }
-            var intialObjs = PySys_GetObject("initial_objs");
-            Debug.Assert(intialObjs != null);
+            IntPtr intialObjs = PySys_GetObject("initial_objs");
+            Debug.Assert(intialObjs != IntPtr.Zero);
             foreach (var obj in PyGCGetObjects())
             {
                 var p = PyLong_FromVoidPtr(obj);
@@ -192,7 +192,7 @@ namespace Python.Runtime
             var head = _Py_AS_GC(obj);
             if ((long)_PyGCHead_REFS(head) == _PyGC_REFS_UNTRACKED)
             {
-                throw new Exception("GC object untracked");
+                throw new ArgumentException("GC object untracked");
             }
             unsafe
             {
