@@ -324,18 +324,19 @@ namespace Python.Runtime
         /// </remarks>
         public static void Shutdown()
         {
-            if (initialized)
+            if (!initialized)
             {
-                PyScopeManager.Global.Clear();
-                
-                // If the shutdown handlers trigger a domain unload,
-                // don't call shutdown again.
-                AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
-
-                ExecuteShutdownHandlers();
-
-                initialized = false;
+                return;
             }
+            // If the shutdown handlers trigger a domain unload,
+            // don't call shutdown again.
+            AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+
+            PyScopeManager.Global.Clear();
+            ExecuteShutdownHandlers();
+
+            initialized = false;
+            
         }
 
         /// <summary>

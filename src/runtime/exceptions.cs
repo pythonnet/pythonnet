@@ -132,21 +132,21 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() != 0)
+            if (Runtime.Py_IsInitialized() == 0)
             {
-                Type type = typeof(Exceptions);
-                foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
-                {
-                    var op = (IntPtr)fi.GetValue(type);
-                    if (op != IntPtr.Zero)
-                    {
-                        Runtime.XDecref(op);
-                    }
-                }
-                Runtime.XDecref(exceptions_module);
-                Runtime.PyObject_HasAttrString(warnings_module, "xx");
-                Runtime.XDecref(warnings_module);
+                return;
             }
+            Type type = typeof(Exceptions);
+            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var op = (IntPtr)fi.GetValue(type);
+                if (op != IntPtr.Zero)
+                {
+                    Runtime.XDecref(op);
+                }
+            }
+            Runtime.Py_CLEAR(ref exceptions_module);
+            Runtime.Py_CLEAR(ref warnings_module);
         }
 
         /// <summary>

@@ -394,6 +394,8 @@ namespace Python.Runtime
             {
                 return;
             }
+            PyGILState_Ensure();
+
             AssemblyManager.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
