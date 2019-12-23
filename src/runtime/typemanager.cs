@@ -179,15 +179,16 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
-            // add a __len__ slot for inheritors of ICollection and ICollection<>
-            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
-            {
-                InitializeSlot(type, TypeOffset.mp_length, typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length)));
-            }
-
             // we want to do this after the slot stuff above in case the class itself implements a slot method
             SlotsHolder slotsHolder = new SlotsHolder(type);
             InitializeSlots(type, impl.GetType(), slotsHolder);
+
+            // add a __len__ slot for inheritors of ICollection and ICollection<>
+            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                var method = typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length));
+                InitializeSlot(type, TypeOffset.mp_length, method, slotsHolder);
+            }
 
             if (base_ != IntPtr.Zero)
             {
@@ -233,12 +234,6 @@ namespace Python.Runtime
             //DebugUtil.DumpType(type);
 
             return type;
-        }
-
-        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
-        {
-            var thunk = Interop.GetThunk(method);
-            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
@@ -912,7 +907,20 @@ namespace Python.Runtime
                 return;
             }
             Marshal.WriteIntPtr(type, offset, thunk.Address);
-            slotsHolder.Add(offset, thunk);
+            if (slotsHolder != null)
+            {
+                slotsHolder.Add(offset, thunk);
+            }
+        }
+
+        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method, SlotsHolder slotsHolder = null)
+        {
+            var thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
+            if (slotsHolder != null)
+            {
+                slotsHolder.Add(slotOffset, thunk);
+            }
         }
 
         static int GetSlotOffset(string name)
