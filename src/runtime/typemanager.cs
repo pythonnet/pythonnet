@@ -1092,11 +1092,8 @@ namespace Python.Runtime
 
             IntPtr tp_bases = Marshal.ReadIntPtr(_type, TypeOffset.tp_bases);
             Runtime.XDecref(tp_bases);
-            Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, IntPtr.Zero);
-
-            // Because __len__ may have a "default" implementation, not registered to us
-            // always explicitly clobber it. See mp_lenth_slot class
-            Marshal.WriteIntPtr(_type, TypeOffset.mp_length, IntPtr.Zero);
+            tp_bases = Runtime.PyTuple_New(0);
+            Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, tp_bases);
         }
 
         private static void OnDestruct(IntPtr ob)
