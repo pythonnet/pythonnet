@@ -1103,7 +1103,8 @@ namespace Python.Runtime
 
             IntPtr tp_bases = Marshal.ReadIntPtr(_type, TypeOffset.tp_bases);
             Runtime.XDecref(tp_bases);
-            Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, IntPtr.Zero);
+            tp_bases = Runtime.PyTuple_New(0);
+            Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, tp_bases);
         }
 
         private static void OnDestruct(IntPtr ob)
