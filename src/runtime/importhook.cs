@@ -23,6 +23,16 @@ namespace Python.Runtime
                 module_def = ModuleDefOffset.AllocModuleDef("clr");
             }
         }
+
+        internal static void ReleaseModuleDef()
+        {
+            if (module_def == IntPtr.Zero)
+            {
+                return;
+            }
+            ModuleDefOffset.FreeModuleDef(module_def);
+            module_def = IntPtr.Zero;
+        }
 #endif
 
         /// <summary>
@@ -56,9 +66,12 @@ namespace Python.Runtime
             // Python __import__.
             IntPtr builtins = GetNewRefToBuiltins();
             py_import = Runtime.PyObject_GetAttrString(builtins, "__import__");
+            PythonException.ThrowIfIsNull(py_import);
+
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
-            Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
-            Runtime.XDecref(hook.ptr);
+            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
+            PythonException.ThrowIfIsNotZero(res);
+
             Runtime.XDecref(builtins);
         }
 
@@ -69,9 +82,13 @@ namespace Python.Runtime
         {
             IntPtr builtins = GetNewRefToBuiltins();
 
-            Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            PythonException.ThrowIfIsNotZero(res);
             Runtime.XDecref(py_import);
             py_import = IntPtr.Zero;
+
+            hook.Release();
+            hook = null;
 
             Runtime.XDecref(builtins);
         }
@@ -112,13 +129,26 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() != 0)
+            if (Runtime.Py_IsInitialized() == 0)
             {
-                RestoreImport();
-
-                Runtime.XDecref(py_clr_module);
-                Runtime.XDecref(root.pyHandle);
+                return;
             }
+
+            RestoreImport();
+
+            bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
+            Runtime.XDecref(py_clr_module);
+            py_clr_module = IntPtr.Zero;
+#if PYTHON3
+            if (shouldFreeDef)
+            {
+                ReleaseModuleDef();
+            }
+#endif
+
+            Runtime.XDecref(root.pyHandle);
+            root = null;
+            CLRModule.Reset();
         }
 
         /// <summary>

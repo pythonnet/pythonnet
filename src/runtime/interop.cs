@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Python.Runtime
 {
@@ -227,7 +228,7 @@ namespace Python.Runtime
             byte[] ascii = Encoding.ASCII.GetBytes(modulename);
             int size = name + ascii.Length + 1;
             IntPtr ptr = Marshal.AllocHGlobal(size);
-            for (int i = 0; i < m_free; i += IntPtr.Size)
+            for (int i = 0; i <= m_free; i += IntPtr.Size)
                 Marshal.WriteIntPtr(ptr, i, IntPtr.Zero);
             Marshal.Copy(ascii, 0, (IntPtr)(ptr + name), ascii.Length);
             Marshal.WriteIntPtr(ptr, m_name, (IntPtr)(ptr + name));
@@ -334,7 +335,7 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        private static ArrayList keepAlive;
+        private static List<ThunkInfo> keepAlive;
         private static Hashtable pmap;
 
         static Interop()
@@ -351,8 +352,7 @@ namespace Python.Runtime
                 p[item.Name] = item;
             }
 
-            keepAlive = new ArrayList();
-            Marshal.AllocHGlobal(IntPtr.Size);
+            keepAlive = new List<ThunkInfo>();
             pmap = new Hashtable();
 
             pmap["tp_dealloc"] = p["DestructorFunc"];
@@ -462,8 +462,10 @@ namespace Python.Runtime
                 return ThunkInfo.Empty;
             }
             Delegate d = Delegate.CreateDelegate(dt, method);
-            IntPtr fp = Marshal.GetFunctionPointerForDelegate(d);
-            return new ThunkInfo(d, fp);
+            var info = new ThunkInfo(d);
+            // TODO: remove keepAlive when #958 merged, let the lifecycle of ThunkInfo transfer to caller.
+            keepAlive.Add(info);
+            return info;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -518,26 +520,21 @@ namespace Python.Runtime
         }
     }
 
-    internal struct ThunkInfo
+    internal class ThunkInfo
     {
-        public Delegate Target;
-        public IntPtr Address;
+        public readonly Delegate Target;
+        public readonly IntPtr Address;
 
-        public static readonly ThunkInfo Empty = new ThunkInfo(null, IntPtr.Zero);
+        public static readonly ThunkInfo Empty = new ThunkInfo(null);
 
-        public ThunkInfo(Delegate target, IntPtr addr)
+        public ThunkInfo(Delegate target)
         {
+            if (target == null)
+            {
+                return;
+            }
             Target = target;
-            Address = addr;
+            Address = Marshal.GetFunctionPointerForDelegate(target);
         }
-    }
-    
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    struct PyMethodDef
-    {
-        public IntPtr ml_name;
-        public IntPtr ml_meth;
-        public int ml_flags;
-        public IntPtr ml_doc;
     }
 }

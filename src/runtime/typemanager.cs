@@ -230,7 +230,7 @@ namespace Python.Runtime
 
         static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
         {
-            ThunkInfo thunk = Interop.GetThunk(method);
+            var thunk = Interop.GetThunk(method);
             Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
         }
 
@@ -809,7 +809,8 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    InitializeSlot(type, Interop.GetThunk(method), name, slotsHolder);
+                    var thunkInfo = Interop.GetThunk(method);
+                    InitializeSlot(type, thunkInfo.Address, name);
 
                     seen.Add(name);
                 }
@@ -826,6 +827,9 @@ namespace Python.Runtime
             //   tp_is_gc    (returns 1)
             // These have to be defined, though, so by default we fill these with
             // static C# functions from this class.
+
+            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
+            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
 
             if (native != null)
             {
