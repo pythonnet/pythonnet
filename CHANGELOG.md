@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added function that sets Py_NoSiteFlag to 1.
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
+-   Added PythonException.Format method to format exceptions the same as traceback.format_exception
 
 ### Changed
 
