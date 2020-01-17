@@ -26,7 +26,7 @@ def test_str_only():
     assert "<Python.Test.Bar object at " in ob.__repr__()
 
 def test_hierarchy1():
-    """Test inheritance heirarchy with base & middle class implementing ToString"""
+    """Test inheritance hierarchy with base & middle class implementing ToString"""
     ob1 = ReprTest.BazBase()
     assert str(ob1) == "Base class implementing ToString()!"
     assert "<Python.Test.BazBase object at " in ob1.__repr__()
