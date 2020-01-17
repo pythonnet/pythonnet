@@ -19,6 +19,11 @@ namespace Python.Runtime
 
         private static readonly HashSet<ManagedType> _managedObjs = new HashSet<ManagedType>();
 
+        internal void IncrRefCount()
+        {
+            Runtime.XIncref(pyHandle);
+        }
+
         internal void DecrRefCount()
         {
             Runtime.XDecref(pyHandle);

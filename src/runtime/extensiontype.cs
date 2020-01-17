@@ -51,13 +51,12 @@ namespace Python.Runtime
         {
             Runtime.PyObject_GC_Del(self.pyHandle);
             // Not necessary for decref of `tpHandle`.
-            self.gcHandle.Free();
+            self.FreeGCHandle();
         }
 
         protected void Dealloc()
         {
             FinalizeObject(this);
-            FreeGCHandle();
         }
 
         /// <summary>

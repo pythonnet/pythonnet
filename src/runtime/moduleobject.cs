@@ -174,7 +174,11 @@ namespace Python.Runtime
         /// </summary>
         private void StoreAttribute(string name, ManagedType ob)
         {
-            Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
+            if (Runtime.PyDict_SetItemString(dict, name, ob.pyHandle) != 0)
+            {
+                throw new PythonException();
+            }
+            ob.IncrRefCount();
             cache[name] = ob;
         }
 

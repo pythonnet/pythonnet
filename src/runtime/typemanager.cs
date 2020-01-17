@@ -17,13 +17,8 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeManager
     {
-        private static BindingFlags tbFlags;
+        private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
         private static Dictionary<Type, IntPtr> cache;
-
-        static TypeManager()
-        {
-            tbFlags = BindingFlags.Public | BindingFlags.Static;
-        }
 
         public static void Reset()
         {
@@ -74,6 +69,7 @@ namespace Python.Runtime
 
 
         /// <summary>
+        /// Return value: Borrowed reference.
         /// Get the handle of a Python type that reflects the given CLR type.
         /// The given ManagedType instance is a managed object that implements
         /// the appropriate semantics in Python for the reflected managed type.
@@ -311,7 +307,7 @@ namespace Python.Runtime
                 // derived class we want the python overrides in there instead if they exist.
                 IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
                 Runtime.PyDict_Update(cls_dict, py_dict);
-
+                Runtime.XIncref(py_type);
                 return py_type;
             }
             catch (Exception e)
@@ -1075,7 +1071,9 @@ namespace Python.Runtime
             foreach (var offset in _slots.Keys)
             {
                 IntPtr ptr = GetDefaultSlot(offset);
+#if DEBUG
                 //DebugUtil.Print($"Set slot<{TypeOffsetHelper.GetSlotNameByOffset(offset)}> to 0x{ptr.ToString("X")} at {typeName}<0x{_type}>");
+#endif
                 Marshal.WriteIntPtr(_type, offset, ptr);
             }
 
