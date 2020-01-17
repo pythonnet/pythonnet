@@ -209,7 +209,7 @@ namespace Python.Runtime
             PyScopeManager.Reset();
             ClassManager.Reset();
             ClassDerivedObject.Reset();
-            TypeManager.Reset();
+            TypeManager.Initialize();
 
             IntPtr op;
             {
@@ -527,7 +527,7 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                obj.TypeClear();
+                obj.CallTypeClear();
                 // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
                 // thus just be safe to give it back to GC chain.
                 PyObject_GC_Track(obj.pyHandle);
@@ -536,11 +536,6 @@ namespace Python.Runtime
             }
             ManagedType.ClearTrackedObjects();
         }
-
-
-        internal static IntPtr Py_single_input = (IntPtr)256;
-        internal static IntPtr Py_file_input = (IntPtr)257;
-        internal static IntPtr Py_eval_input = (IntPtr)258;
 
         internal static IntPtr PyBaseObjectType;
         internal static IntPtr PyModuleType;
@@ -903,7 +898,7 @@ namespace Python.Runtime
         internal static extern int PyRun_SimpleString(string code);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
+        internal static extern IntPtr PyRun_String(string code, RunFlagType st, IntPtr globals, IntPtr locals);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
@@ -2013,7 +2008,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);

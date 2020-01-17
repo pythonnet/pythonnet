@@ -208,6 +208,7 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ob);
             self.ClearMembers();
+            ClearObjectDict(ob);
             self.Dealloc();
         }
 
@@ -215,6 +216,7 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ob);
             self.ClearMembers();
+            ClearObjectDict(ob);
             return 0;
         }
     }

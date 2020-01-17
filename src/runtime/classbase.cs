@@ -299,29 +299,9 @@ namespace Python.Runtime
             {
                 ClearObjectDict(ob);
             }
+            self.tpHandle = IntPtr.Zero;
             Runtime.Py_CLEAR(ref self.tpHandle);
             return 0;
-        }
-
-        private static IntPtr GetObjectDict(IntPtr ob)
-        {
-            return Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
-        }
-
-        private static void SetObjectDict(IntPtr ob, IntPtr value)
-        {
-            Marshal.WriteIntPtr(ob, ObjectOffset.DictOffset(ob), value);
-        }
-
-        private static void ClearObjectDict(IntPtr ob)
-        {
-            IntPtr dict = GetObjectDict(ob);
-            if (dict == IntPtr.Zero)
-            {
-                return;
-            }
-            SetObjectDict(ob, IntPtr.Zero);
-            Runtime.XDecref(dict);
         }
     }
 }

@@ -49,6 +49,7 @@ namespace Python.Runtime
         /// </summary>
         public static void FinalizeObject(ManagedType self)
         {
+            ClearObjectDict(self.pyHandle);
             Runtime.PyObject_GC_Del(self.pyHandle);
             // Not necessary for decref of `tpHandle`.
             self.FreeGCHandle();

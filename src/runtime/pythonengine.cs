@@ -600,7 +600,7 @@ namespace Python.Runtime
             try
             {
                 IntPtr result = Runtime.PyRun_String(
-                    code, (IntPtr)flag, globals.Value, locals.Value
+                    code, flag, globals.Value, locals.Value
                 );
 
                 Runtime.CheckExceptionOccurred();

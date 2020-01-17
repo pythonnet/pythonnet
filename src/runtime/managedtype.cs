@@ -149,7 +149,7 @@ namespace Python.Runtime
         /// <summary>
         /// Wrapper for calling tp_clear
         /// </summary>
-        internal void TypeClear()
+        internal void CallTypeClear()
         {
             if (tpHandle == IntPtr.Zero || pyHandle == IntPtr.Zero)
             {
@@ -168,7 +168,7 @@ namespace Python.Runtime
         /// <summary>
         /// Wrapper for calling tp_traverse
         /// </summary>
-        internal void TypeTraverse(Interop.ObjObjFunc visitproc, IntPtr arg)
+        internal void CallTypeTraverse(Interop.ObjObjFunc visitproc, IntPtr arg)
         {
             if (tpHandle == IntPtr.Zero || pyHandle == IntPtr.Zero)
             {
@@ -183,6 +183,32 @@ namespace Python.Runtime
             var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
             // TODO: Handle errors base on return value
             traverseFunc(pyHandle, visiPtr, arg);
+        }
+
+        protected void TypeClear()
+        {
+            ClearObjectDict(pyHandle);
+        }
+
+        protected static void ClearObjectDict(IntPtr ob)
+        {
+            IntPtr dict = GetObjectDict(ob);
+            if (dict == IntPtr.Zero)
+            {
+                return;
+            }
+            SetObjectDict(ob, IntPtr.Zero);
+            Runtime.XDecref(dict);
+        }
+
+        private static IntPtr GetObjectDict(IntPtr ob)
+        {
+            return Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
+        }
+
+        private static void SetObjectDict(IntPtr ob, IntPtr value)
+        {
+            Marshal.WriteIntPtr(ob, ObjectOffset.DictOffset(ob), value);
         }
     }
 }

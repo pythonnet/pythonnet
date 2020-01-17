@@ -17,12 +17,20 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeManager
     {
+        internal static IntPtr subtype_traverse;
+        internal static IntPtr subtype_clear;
+
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
         private static Dictionary<Type, IntPtr> cache;
 
-        public static void Reset()
+        public static void Initialize()
         {
             cache = new Dictionary<Type, IntPtr>(128);
+
+            IntPtr type = SlotHelper.CreateObjectType();
+            subtype_traverse = Marshal.ReadIntPtr(type, TypeOffset.tp_traverse);
+            subtype_clear = Marshal.ReadIntPtr(type, TypeOffset.tp_clear);
+            Runtime.XDecref(type);
         }
 
         public static IList<IntPtr> GetManagedTypes()
@@ -440,7 +448,7 @@ namespace Python.Runtime
             mdef = WriteMethodDefSentinel(mdef);
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
-            slotsHolder.Add(TypeOffset.tp_methods, (t, offset) =>
+            slotsHolder.Set(TypeOffset.tp_methods, (t, offset) =>
             {
                 var p = Marshal.ReadIntPtr(t, offset);
                 Runtime.PyMem_Free(p);
@@ -851,7 +859,7 @@ namespace Python.Runtime
                     Marshal.WriteIntPtr(type, offset, thunkRet0.Address);
                     if (slotsHolder != null)
                     {
-                        slotsHolder.Add(offset, thunkRet0);
+                        slotsHolder.Set(offset, thunkRet0);
                     }
                 }
                 if (!IsSlotSet(type, "tp_clear"))
@@ -861,7 +869,7 @@ namespace Python.Runtime
                     Marshal.WriteIntPtr(type, offset, thunkRet0.Address);
                     if (slotsHolder != null)
                     {
-                        slotsHolder.Add(offset, thunkRet0);
+                        slotsHolder.Set(offset, thunkRet0);
                     }
                 }
             }
@@ -905,7 +913,7 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, offset, thunk.Address);
             if (slotsHolder != null)
             {
-                slotsHolder.Add(offset, thunk);
+                slotsHolder.Set(offset, thunk);
             }
         }
 
@@ -915,7 +923,7 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
             if (slotsHolder != null)
             {
-                slotsHolder.Add(slotOffset, thunk);
+                slotsHolder.Set(slotOffset, thunk);
             }
         }
 
@@ -992,9 +1000,9 @@ namespace Python.Runtime
         private IntPtr _type;
         private Dictionary<int, ThunkInfo> _slots = new Dictionary<int, ThunkInfo>();
         private List<Delegate> _keepalive = new List<Delegate>();
-        private Dictionary<int, Resetor> _customRestors = new Dictionary<int, Resetor>();
+        private Dictionary<int, Resetor> _customResetors = new Dictionary<int, Resetor>();
         private List<Action> _deallocators = new List<Action>();
-        private bool _alredyReset = false;
+        private bool _alreadyReset = false;
 
         /// <summary>
         /// Create slots holder for holding the delegate of slots and be able  to reset them.
@@ -1005,14 +1013,14 @@ namespace Python.Runtime
             _type = type;
         }
 
-        public void Add(int offset, ThunkInfo thunk)
+        public void Set(int offset, ThunkInfo thunk)
         {
-            _slots.Add(offset, thunk);
+            _slots[offset] = thunk;
         }
 
-        public void Add(int offset, Resetor resetor)
+        public void Set(int offset, Resetor resetor)
         {
-            _customRestors[offset] = resetor;
+            _customResetors[offset] = resetor;
         }
 
         public void AddDealloctor(Action deallocate)
@@ -1059,11 +1067,11 @@ namespace Python.Runtime
 
         private void ResetSlots()
         {
-            if (_alredyReset)
+            if (_alreadyReset)
             {
                 return;
             }
-            _alredyReset = true;
+            _alreadyReset = true;
 #if DEBUG
             IntPtr tp_name = Marshal.ReadIntPtr(_type, TypeOffset.tp_name);
             string typeName = Marshal.PtrToStringAnsi(tp_name);
@@ -1082,14 +1090,14 @@ namespace Python.Runtime
                 action();
             }
 
-            foreach (var pair in _customRestors)
+            foreach (var pair in _customResetors)
             {
                 int offset = pair.Key;
                 var resetor = pair.Value;
                 resetor?.Invoke(_type, offset);
             }
 
-            _customRestors.Clear();
+            _customResetors.Clear();
             _slots.Clear();
             _keepalive.Clear();
             _deallocators.Clear();
@@ -1097,12 +1105,16 @@ namespace Python.Runtime
             // Custom reset
             IntPtr tp_base = Marshal.ReadIntPtr(_type, TypeOffset.tp_base);
             Runtime.XDecref(tp_base);
-            Marshal.WriteIntPtr(_type, TypeOffset.tp_base, IntPtr.Zero);
+            Runtime.XIncref(Runtime.PyBaseObjectType);
+            Marshal.WriteIntPtr(_type, TypeOffset.tp_base, Runtime.PyBaseObjectType);
 
             IntPtr tp_bases = Marshal.ReadIntPtr(_type, TypeOffset.tp_bases);
             Runtime.XDecref(tp_bases);
             tp_bases = Runtime.PyTuple_New(0);
             Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, tp_bases);
+
+            // FIXME: release dict;
+            Marshal.WriteIntPtr(_type, TypeOffset.tp_dictoffset, IntPtr.Zero);
         }
 
         private static void OnDestruct(IntPtr ob)
@@ -1122,10 +1134,13 @@ namespace Python.Runtime
 
         private static IntPtr GetDefaultSlot(int offset)
         {
-            if (offset == TypeOffset.tp_clear
-                || offset == TypeOffset.tp_traverse)
+            if (offset == TypeOffset.tp_clear)
             {
-                return TypeManager.NativeCodePage + TypeManager.NativeCode.Active.Return0;
+                return TypeManager.subtype_clear;
+            }
+            else if (offset == TypeOffset.tp_traverse)
+            {
+                return TypeManager.subtype_traverse;
             }
             else if (offset == TypeOffset.tp_dealloc)
             {
@@ -1158,6 +1173,40 @@ namespace Python.Runtime
             }
 
             return Marshal.ReadIntPtr(Runtime.PyTypeType, offset);
+        }
+    }
+
+
+    static class SlotHelper
+    {
+        public static IntPtr CreateObjectType()
+        {
+            // TODO: extract the prepare actions as a common method
+            IntPtr globals = Runtime.PyDict_New();
+            if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
+            {
+                Runtime.XDecref(globals);
+                throw new PythonException();
+            }
+            const string code = "class A(object): pass";
+            IntPtr res = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
+            if (res == IntPtr.Zero)
+            {
+                try
+                {
+                    throw new PythonException();
+                }
+                finally
+                {
+                    Runtime.XDecref(globals);
+                }
+            }
+            Runtime.XDecref(res);
+            IntPtr A = Runtime.PyDict_GetItemString(globals, "A");
+            Debug.Assert(A != IntPtr.Zero);
+            Runtime.XIncref(A);
+            Runtime.XDecref(globals);
+            return A;
         }
     }
 }

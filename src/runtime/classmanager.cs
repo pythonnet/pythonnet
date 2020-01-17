@@ -53,9 +53,9 @@ namespace Python.Runtime
             {
                 foreach (var cls in cache.Values)
                 {
-                    cls.TypeTraverse(OnVisit, visitedPtr);
+                    cls.CallTypeTraverse(OnVisit, visitedPtr);
                     // XXX: Force release instance resources but not dealloc itself.
-                    cls.TypeClear();
+                    cls.CallTypeClear();
                 }
             }
             finally
@@ -75,8 +75,8 @@ namespace Python.Runtime
             var clrObj = ManagedType.GetManagedObject(ob);
             if (clrObj != null)
             {
-                clrObj.TypeTraverse(OnVisit, arg);
-                clrObj.TypeClear();
+                clrObj.CallTypeTraverse(OnVisit, arg);
+                clrObj.CallTypeClear();
             }
             return 0;
         }
