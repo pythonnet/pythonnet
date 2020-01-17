@@ -95,6 +95,7 @@ namespace Python.Runtime
         /// behavior needed and the desire to have the existing Python runtime
         /// do as much of the allocation and initialization work as possible.
         /// </summary>
+        /// Return value: Borrowed reference.
         internal static IntPtr CreateType(Type impl)
         {
             IntPtr type = AllocateTypeObject(impl.Name);
@@ -113,14 +114,20 @@ namespace Python.Runtime
                         TypeFlags.HeapType | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
-            Runtime.PyType_Ready(type);
-
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.XDecref(mod);
+
+            IntPtr capsule = slotsHolder.ToCapsule();
+            Runtime.PyDict_SetItemString(dict, SlotsHolder.HolderKeyName, capsule);
+            Runtime.XDecref(capsule);
 
             InitMethods(type, impl);
-
             return type;
         }
 
@@ -828,8 +835,8 @@ namespace Python.Runtime
             // These have to be defined, though, so by default we fill these with
             // static C# functions from this class.
 
-            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
-            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
+            // var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
+            // var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
 
             if (native != null)
             {
@@ -841,8 +848,9 @@ namespace Python.Runtime
                 InitializeNativeCodePage();
                 IntPtr ret1 = NativeCodePage + native.Return1;
                 IntPtr ret0 = NativeCodePage + native.Return0;
-                InitializeSlot(type, ret0, "tp_traverse", false);
-                InitializeSlot(type, ret0, "tp_clear", false);
+                InitializeSlot(type, ret0, "tp_traverse", canOverride: false);
+                InitializeSlot(type, ret0, "tp_clear", canOverride: false);
+                InitializeSlot(type, ret1, "tp_is_gc", canOverride: false);
             }
             else
             {

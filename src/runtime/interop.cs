@@ -509,7 +509,7 @@ namespace Python.Runtime
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    [StructLayout(LayoutKind.Sequential)]
     internal struct Thunk
     {
         public Delegate fn;
@@ -536,5 +536,14 @@ namespace Python.Runtime
             Target = target;
             Address = Marshal.GetFunctionPointerForDelegate(target);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct PyMethodDef
+    {
+        public IntPtr ml_name;
+        public IntPtr ml_meth;
+        public int ml_flags;
+        public IntPtr ml_doc;
     }
 }
