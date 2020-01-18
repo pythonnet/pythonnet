@@ -29,8 +29,7 @@ namespace Python.Runtime
         public ConstructorBinding(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder)
         {
             this.type = type;
-            Runtime.XIncref(pyTypeHndl);
-            this.pyTypeHndl = pyTypeHndl;
+            this.pyTypeHndl = pyTypeHndl; // steal a type reference
             this.ctorBinder = ctorBinder;
             repr = IntPtr.Zero;
         }
@@ -144,7 +143,6 @@ namespace Python.Runtime
         {
             var self = (ConstructorBinding)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
-            Runtime.XDecref(self.pyTypeHndl);
             self.Dealloc();
         }
 
@@ -179,8 +177,7 @@ namespace Python.Runtime
         public BoundContructor(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder, ConstructorInfo ci)
         {
             this.type = type;
-            Runtime.XIncref(pyTypeHndl);
-            this.pyTypeHndl = pyTypeHndl;
+            this.pyTypeHndl = pyTypeHndl; // steal a type reference
             this.ctorBinder = ctorBinder;
             ctorInfo = ci;
             repr = IntPtr.Zero;
@@ -241,7 +238,6 @@ namespace Python.Runtime
         {
             var self = (BoundContructor)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
-            Runtime.XDecref(self.pyTypeHndl);
             self.Dealloc();
         }
 

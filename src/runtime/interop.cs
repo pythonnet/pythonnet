@@ -515,17 +515,6 @@ namespace Python.Runtime
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct Thunk
-    {
-        public Delegate fn;
-
-        public Thunk(Delegate d)
-        {
-            fn = d;
-        }
-    }
-
     internal class ThunkInfo
     {
         public readonly Delegate Target;

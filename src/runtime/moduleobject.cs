@@ -53,6 +53,7 @@ namespace Python.Runtime
             Runtime.XDecref(pyfilename);
             Runtime.XDecref(pydocstring);
 
+            Runtime.XIncref(dict);
             Marshal.WriteIntPtr(pyHandle, ObjectOffset.DictOffset(pyHandle), dict);
 
             InitializeModuleMembers();
@@ -328,8 +329,8 @@ namespace Python.Runtime
         public static int tp_clear(IntPtr ob)
         {
             var self = (ModuleObject)GetManagedObject(ob);
-            Runtime.XDecref(self.dict);
-            self.dict = IntPtr.Zero;
+            Runtime.Py_CLEAR(ref self.dict);
+            ClearObjectDict(ob);
             foreach (var attr in self.cache.Values)
             {
                 Runtime.XDecref(attr.pyHandle);

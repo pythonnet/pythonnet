@@ -300,7 +300,6 @@ namespace Python.Runtime
                 ClearObjectDict(ob);
             }
             self.tpHandle = IntPtr.Zero;
-            Runtime.Py_CLEAR(ref self.tpHandle);
             return 0;
         }
     }

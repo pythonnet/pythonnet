@@ -1112,9 +1112,6 @@ namespace Python.Runtime
             Runtime.XDecref(tp_bases);
             tp_bases = Runtime.PyTuple_New(0);
             Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, tp_bases);
-
-            // FIXME: release dict;
-            Marshal.WriteIntPtr(_type, TypeOffset.tp_dictoffset, IntPtr.Zero);
         }
 
         private static void OnDestruct(IntPtr ob)
