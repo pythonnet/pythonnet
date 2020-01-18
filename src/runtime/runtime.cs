@@ -1912,6 +1912,12 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
 
+        internal static void Py_CLEAR(ref IntPtr ob)
+        {
+            XDecref(ob);
+            ob = IntPtr.Zero;
+        }
+
         //====================================================================
         // Python Capsules API
         //====================================================================

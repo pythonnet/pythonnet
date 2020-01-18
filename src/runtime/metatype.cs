@@ -11,14 +11,14 @@ namespace Python.Runtime
     internal class MetaType : ManagedType
     {
         private static IntPtr PyCLRMetaType;
-
+        private static SlotsHolder _metaSlotsHodler;
 
         /// <summary>
         /// Metatype initialization. This bootstraps the CLR metatype to life.
         /// </summary>
         public static IntPtr Initialize()
         {
-            PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType));
+            PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType), out _metaSlotsHodler);
             return PyCLRMetaType;
         }
 
@@ -26,10 +26,10 @@ namespace Python.Runtime
         {
             if (Runtime.Refcount(PyCLRMetaType) > 1)
             {
-                SlotsHolder.ReleaseTypeSlots(PyCLRMetaType);
+                _metaSlotsHodler.ResetSlots();
             }
-            Runtime.XDecref(PyCLRMetaType);
-            PyCLRMetaType = IntPtr.Zero;
+            Runtime.Py_CLEAR(ref PyCLRMetaType);
+            _metaSlotsHodler = null;
         }
 
         /// <summary>
