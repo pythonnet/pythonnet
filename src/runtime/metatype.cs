@@ -24,6 +24,10 @@ namespace Python.Runtime
 
         public static void Release()
         {
+            if (PyCLRMetaType == IntPtr.Zero)
+            {
+                throw new ObjectDisposedException("PyCLRMetaType");
+            }
             if (Runtime.Refcount(PyCLRMetaType) > 1)
             {
                 _metaSlotsHodler.ResetSlots();
