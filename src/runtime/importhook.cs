@@ -36,27 +36,6 @@ namespace Python.Runtime
 #endif
 
         /// <summary>
-        /// Get a <i>New reference</i> to the builtins module.
-        /// </summary>
-        static IntPtr GetNewRefToBuiltins()
-        {
-            if (Runtime.IsPython3)
-            {
-                return Runtime.PyImport_ImportModule("builtins");
-            }
-            else
-            {
-                // dict is a borrowed ref, no need to decref
-                IntPtr dict = Runtime.PyImport_GetModuleDict();
-
-                // GetItemString is a borrowed ref; incref to get a new ref
-                IntPtr builtins = Runtime.PyDict_GetItemString(dict, "__builtin__");
-                Runtime.XIncref(builtins);
-                return builtins;
-            }
-        }
-
-        /// <summary>
         /// Initialize just the __import__ hook itself.
         /// </summary>
         static void InitImport()
@@ -64,7 +43,7 @@ namespace Python.Runtime
             // We replace the built-in Python __import__ with our own: first
             // look in CLR modules, then if we don't find any call the default
             // Python __import__.
-            IntPtr builtins = GetNewRefToBuiltins();
+            IntPtr builtins = Runtime.GetBuiltins();
             py_import = Runtime.PyObject_GetAttrString(builtins, "__import__");
             PythonException.ThrowIfIsNull(py_import);
 
@@ -80,7 +59,7 @@ namespace Python.Runtime
         /// </summary>
         static void RestoreImport()
         {
-            IntPtr builtins = GetNewRefToBuiltins();
+            IntPtr builtins = Runtime.GetBuiltins();
 
             int res = Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
             PythonException.ThrowIfIsNotZero(res);
