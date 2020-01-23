@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -8,11 +9,41 @@ namespace Python.Runtime.Slots
 {
     internal static class mp_length_slot
     {
+        private static MethodInfo _lengthMethod;
+        public static MethodInfo Method
+        {
+            get
+            {
+                if (_lengthMethod != null)
+                {
+                    return _lengthMethod;
+                }
+                _lengthMethod = typeof(mp_length_slot).GetMethod(
+                    nameof(mp_length_slot.mp_length),
+                    BindingFlags.Static | BindingFlags.NonPublic);
+                Debug.Assert(_lengthMethod != null);
+                return _lengthMethod;
+            }
+        }
+
+        public static bool CanAssgin(Type clrType)
+        {
+            if (typeof(ICollection).IsAssignableFrom(clrType))
+            {
+                return true;
+            }
+            if (clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Implements __len__ for classes that implement ICollection
         /// (this includes any IList implementer or Array subclass)
         /// </summary>
-        public static int mp_length(IntPtr ob)
+        private static int mp_length(IntPtr ob)
         {
             var co = ManagedType.GetManagedObject(ob) as CLRObject;
             if (co == null)

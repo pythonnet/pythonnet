@@ -69,6 +69,37 @@ namespace Python.Runtime
         }
     }
 
+    internal static partial class TypeOffset
+    {
+        static class Helper
+        {
+            public static int magic;
+            public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
+        }
+
+        static TypeOffset()
+        {
+            Type type = typeof(TypeOffset);
+            FieldInfo[] fields = type.GetFields();
+            int size = IntPtr.Size;
+            for (int i = 0; i < fields.Length; i++)
+            {
+                int offset = i * size;
+                FieldInfo fi = fields[i];
+                fi.SetValue(null, offset);
+                Helper.NameMapping[fi.Name] = offset;
+            }
+            // XXX: Use the members after PyHeapTypeObject as magic slot
+            Helper.magic = members;
+        }
+
+        public static int magic() => Helper.magic;
+
+        public static int GetSlotOffset(string name)
+        {
+            return Helper.NameMapping[name];
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class ObjectOffset
@@ -556,4 +587,5 @@ namespace Python.Runtime
         public int ml_flags;
         public IntPtr ml_doc;
     }
+
 }

@@ -21,6 +21,11 @@ import sys
 import sysconfig
 import subprocess
 
+if sys.version_info.major > 2:
+    from io import StringIO
+else:
+    from StringIO import StringIO
+
 from pycparser import c_ast, c_parser
 
 _log = logging.getLogger()
@@ -55,15 +60,18 @@ class AstParser(object):
         self.__struct_members_stack = []
         self.__ptr_decl_depth = 0
         self.__struct_members = {}
+        self.__decl_names = {}
 
     def get_struct_members(self, name):
         """return a list of (name, type) of struct members"""
-        if name in self.__typedefs:
-            node = self.__get_leaf_node(self.__typedefs[name])
-            name = node.name
-        if name not in self.__struct_members:
-            raise Exception("Unknown struct '%s'" % name)
-        return self.__struct_members[name]
+        defs = self.__typedefs.get(name)
+        if defs is None:
+            return None
+        node = self.__get_leaf_node(defs)
+        name = node.name
+        if name is None:
+            name = defs.declname
+        return self.__struct_members.get(name)
 
     def visit(self, node):
         if isinstance(node, c_ast.FileAST):
@@ -92,6 +100,7 @@ class AstParser(object):
         self.visit(typedef.type)
 
     def visit_typedecl(self, typedecl):
+        self.__decl_names[typedecl.type] = typedecl.declname
         self.visit(typedecl.type)
 
     def visit_struct(self, struct):
@@ -160,7 +169,22 @@ class AstParser(object):
         return node
 
     def __get_struct_name(self, node):
-        return node.name or "_struct_%d" % id(node)
+        return node.name or self.__decl_names.get(node) or "_struct_%d" % id(node)
+
+
+class Writer(object):
+
+    def __init__(self):
+        self._stream = StringIO()
+
+    def append(self, indent=0, code=""):
+        self._stream.write("%s%s\n" % (indent * "    ", code))
+
+    def extend(self, s):
+        self._stream.write(s)
+
+    def to_string(self):
+        return self._stream.getvalue()
 
 
 def preprocess_python_headers():
@@ -186,6 +210,7 @@ def preprocess_python_headers():
         defines.extend([
             "-D", "__inline=inline",
             "-D", "__ptr32=",
+            "-D", "__ptr64=",
             "-D", "__declspec(x)=",
         ])
 
@@ -209,9 +234,8 @@ def preprocess_python_headers():
     return "\n".join(lines)
 
 
-def gen_interop_code(members):
-    """Generate the TypeOffset C# class"""
 
+def gen_interop_head(writer):
     defines = [
         "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR)
     ]
@@ -241,27 +265,26 @@ using System.Text;
 
 namespace Python.Runtime
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal class TypeOffset
-    {
-        static TypeOffset()
-        {
-            Type type = typeof(TypeOffset);
-            FieldInfo[] fi = type.GetFields();
-            int size = IntPtr.Size;
-            for (int i = 0; i < fi.Length; i++)
-            {
-                fi[i].SetValue(null, i * size);
-            }
-        }
-
-        public static int magic()
-        {
-            return ob_size;
-        }
-
-        // Auto-generated from PyHeapTypeObject in Python.h
 """ % (filename, defines_str)
+    writer.extend(class_definition)
+
+
+def gen_interop_tail(writer):
+    tail = """}
+#endif
+"""
+    writer.extend(tail)
+
+
+def gen_heap_type_members(parser, writer):
+    """Generate the TypeOffset C# class"""
+    members = parser.get_struct_members("PyHeapTypeObject")
+    class_definition = """
+    [StructLayout(LayoutKind.Sequential)]
+    internal static partial class TypeOffset
+    {
+        // Auto-generated from PyHeapTypeObject in Python.h
+"""
 
     # All the members are sizeof(void*) so we don't need to do any
     # extra work to determine the size based on the type.
@@ -273,11 +296,36 @@ namespace Python.Runtime
         /* here are optional user slots, followed by the members. */
         public static int members = 0;
     }
-}
 
-#endif
 """
-    return class_definition
+    writer.extend(class_definition)
+
+
+def gen_structure_code(parser, writer, type_name, indent):
+    members = parser.get_struct_members(type_name)
+    if members is None:
+        return False
+    out = writer.append
+    out(indent, "[StructLayout(LayoutKind.Sequential)]")
+    out(indent, "internal struct %s" % type_name)
+    out(indent, "{")
+    for name, tpy in members:
+        out(indent + 1, "public IntPtr %s;" % name)
+    out(indent, "}")
+    out()
+    return True
+
+
+def gen_supported_slot_record(writer, types, indent):
+    out = writer.append
+    out(indent, "internal static partial class SlotTypes")
+    out(indent, "{")
+    out(indent + 1, "public static readonly Type[] Types = {")
+    for name in types:
+        out(indent + 2, "typeof(%s)," % name)
+    out(indent + 1, "};")
+    out(indent, "}")
+    out()
 
 
 def main():
@@ -290,10 +338,29 @@ def main():
     ast_parser = AstParser()
     ast_parser.visit(ast)
 
+    writer = Writer()
     # generate the C# code
-    members = ast_parser.get_struct_members("PyHeapTypeObject")
-    interop_cs = gen_interop_code(members)
+    gen_interop_head(writer)
 
+    gen_heap_type_members(ast_parser, writer)
+    slots_types = [
+        "PyNumberMethods",
+        "PySequenceMethods",
+        "PyMappingMethods",
+        "PyAsyncMethods",
+        "PyBufferProcs",
+    ]
+    supported_types = []
+    indent = 1
+    for type_name in slots_types:
+        if not gen_structure_code(ast_parser, writer, type_name, indent):
+            continue
+        supported_types.append(type_name)
+    gen_supported_slot_record(writer, supported_types, indent)
+
+    gen_interop_tail(writer)
+
+    interop_cs = writer.to_string()
     if len(sys.argv) > 1:
         with open(sys.argv[1], "w") as fh:
             fh.write(interop_cs)

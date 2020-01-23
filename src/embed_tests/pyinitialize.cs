@@ -26,6 +26,7 @@ namespace Python.EmbeddingTest
             using (new PythonEngine())
             using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
             {
+                Runtime.Runtime.XIncref(argv.Handle);
                 Assert.AreNotEqual(0, argv.Length());
             }
         }
@@ -37,6 +38,7 @@ namespace Python.EmbeddingTest
             using (new PythonEngine(args))
             using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
             {
+                Runtime.Runtime.XIncref(argv.Handle);
                 Assert.AreEqual(args[0], argv[0].ToString());
                 Assert.AreEqual(args[1], argv[1].ToString());
             }

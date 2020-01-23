@@ -107,58 +107,12 @@ namespace Python.Runtime
         internal static object IsFinalizingLock = new object();
         internal static bool IsFinalizing;
 
+        private static bool _isInitialized = false;
+
         internal static bool Is32Bit = IntPtr.Size == 4;
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-
-        static readonly Dictionary<string, OperatingSystemType> OperatingSystemTypeMapping = new Dictionary<string, OperatingSystemType>()
-        {
-            { "Windows", OperatingSystemType.Windows },
-            { "Darwin", OperatingSystemType.Darwin },
-            { "Linux", OperatingSystemType.Linux },
-        };
-
-        /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static OperatingSystemType OperatingSystem { get; private set; }
-
-        /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static string OperatingSystemName { get; private set; }
-
-
-        /// <summary>
-        /// Map lower-case version of the python machine name to the processor
-        /// type. There are aliases, e.g. x86_64 and amd64 are two names for
-        /// the same thing. Make sure to lower-case the search string, because
-        /// capitalization can differ.
-        /// </summary>
-        static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
-        {
-            ["i386"] = MachineType.i386,
-            ["i686"] = MachineType.i386,
-            ["x86"] = MachineType.i386,
-            ["x86_64"] = MachineType.x86_64,
-            ["amd64"] = MachineType.x86_64,
-            ["x64"] = MachineType.x86_64,
-            ["em64t"] = MachineType.x86_64,
-            ["armv7l"] = MachineType.armv7l,
-            ["armv8"] = MachineType.armv8,
-            ["aarch64"] = MachineType.aarch64,
-        };
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static MachineType Machine { get; private set; }/* set in Initialize using python's platform.machine */
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static string MachineName { get; private set; }
 
         internal static bool IsPython2 = pyversionnumber < 30;
         internal static bool IsPython3 = pyversionnumber >= 30;
@@ -178,6 +132,12 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize(bool initSigs = false, bool softShutdown = false)
         {
+            if (_isInitialized)
+            {
+                return;
+            }
+            _isInitialized = true;
+
             if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
             {
                 softShutdown = true;
@@ -329,10 +289,10 @@ namespace Python.Runtime
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
             // happen after caching the python types, above.
-            InitializePlatformData();
+            NativeCodePageHelper.InitializePlatformData();
 
             IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(OperatingSystem);
+            var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
 
             if (_PythonDll != "__Internal")
             {
@@ -362,60 +322,15 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
         }
 
-        /// <summary>
-        /// Initializes the data about platforms.
-        ///
-        /// This must be the last step when initializing the runtime:
-        /// GetManagedString needs to have the cached values for types.
-        /// But it must run before initializing anything outside the runtime
-        /// because those rely on the platform data.
-        /// </summary>
-        private static void InitializePlatformData()
+
+        internal static void Shutdown(bool soft = false)
         {
-            IntPtr op;
-            IntPtr fn;
-            IntPtr platformModule = PyImport_ImportModule("platform");
-            IntPtr emptyTuple = PyTuple_New(0);
-
-            fn = PyObject_GetAttrString(platformModule, "system");
-            op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            PythonException.ThrowIfIsNull(op);
-            OperatingSystemName = GetManagedString(op);
-            XDecref(op);
-            XDecref(fn);
-
-            fn = PyObject_GetAttrString(platformModule, "machine");
-            op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            MachineName = GetManagedString(op);
-            XDecref(op);
-            XDecref(fn);
-
-            XDecref(emptyTuple);
-            XDecref(platformModule);
-
-            // Now convert the strings into enum values so we can do switch
-            // statements rather than constant parsing.
-            OperatingSystemType OSType;
-            if (!OperatingSystemTypeMapping.TryGetValue(OperatingSystemName, out OSType))
-            {
-                OSType = OperatingSystemType.Other;
-            }
-            OperatingSystem = OSType;
-
-            MachineType MType;
-            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
-            {
-                MType = MachineType.Other;
-            }
-            Machine = MType;
-        }
-
-        internal static void Shutdown(bool soft)
-        {
-            if (Py_IsInitialized() == 0)
+            if (Py_IsInitialized() == 0 || !_isInitialized)
             {
                 return;
             }
+            _isInitialized = false;
+
             PyGILState_Ensure();
 
             AssemblyManager.Shutdown();
@@ -531,7 +446,10 @@ namespace Python.Runtime
                 // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
                 // thus just be safe to give it back to GC chain.
                 PyObject_GC_Track(obj.pyHandle);
-                obj.gcHandle.Free();
+                if (obj.gcHandle.IsAllocated)
+                {
+                    obj.gcHandle.Free();
+                }
                 obj.gcHandle = new GCHandle();
             }
             ManagedType.ClearTrackedObjects();
@@ -747,7 +665,11 @@ namespace Python.Runtime
 
         internal static unsafe long Refcount(IntPtr op)
         {
+#if PYTHON_WITH_PYDEBUG
+            var p = (void*)(op + TypeOffset.ob_refcnt);
+#else
             var p = (void*)op;
+#endif
             if ((void*)0 == p)
             {
                 return 0;
@@ -1132,6 +1054,10 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_Dir(IntPtr pointer);
 
+#if PYTHON_WITH_PYDEBUG
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void _Py_NewReference(IntPtr ob);
+#endif
 
         //====================================================================
         // Python number API
@@ -1926,7 +1852,11 @@ namespace Python.Runtime
         internal static extern string PyModule_GetFilename(IntPtr module);
 
 #if PYTHON3
+#if PYTHON_WITH_PYDEBUG
+        [DllImport(_PythonDll, EntryPoint = "PyModule_Create2TraceRefs", CallingConvention = CallingConvention.Cdecl)]
+#else
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+#endif
         internal static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
 #endif
 
@@ -2188,7 +2118,7 @@ namespace Python.Runtime
 
         internal static void SetNoSiteFlag()
         {
-            var loader = LibraryLoader.Get(OperatingSystem);
+            var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
 
             IntPtr dllLocal;
             if (_PythonDll != "__Internal")

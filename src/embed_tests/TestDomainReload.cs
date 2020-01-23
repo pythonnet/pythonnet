@@ -64,6 +64,8 @@ namespace Python.EmbeddingTest
             // objects is gone.
             Assembly pythonRunner2 = BuildAssembly("test2");
             RunAssemblyAndUnload(pythonRunner2, "test2");
+
+            PythonEngine.Shutdown();
         }
 
         //
