@@ -810,8 +810,7 @@ namespace Python.Runtime
             Runtime.XDecref(tp_bases);
             tp_bases = Runtime.PyTuple_New(0);
             Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, tp_bases);
-            try
-            {
+
             IntPtr handlePtr = Marshal.ReadIntPtr(_type, TypeOffset.magic());
             if (handlePtr != IntPtr.Zero)
             {
@@ -822,14 +821,6 @@ namespace Python.Runtime
                 }
                 Marshal.WriteIntPtr(_type, TypeOffset.magic(), IntPtr.Zero);
             }
-
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-
         }
 
         public static IntPtr GetDefaultSlot(int offset)
