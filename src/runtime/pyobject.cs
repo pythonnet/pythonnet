@@ -274,7 +274,6 @@ namespace Python.Runtime
         /// Returns the named attribute of the Python object, or the given
         /// default object if the attribute access fails.
         /// </remarks>
-        [Obsolete("This method ignores any Python exceptions, and should not be used. Use GetAttrOrElse.")]
         public PyObject GetAttr(string name, PyObject _default)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
@@ -282,27 +281,6 @@ namespace Python.Runtime
             IntPtr op = Runtime.PyObject_GetAttrString(obj, name);
             if (op == IntPtr.Zero)
             {
-                Runtime.PyErr_Clear();
-                return _default;
-            }
-            return new PyObject(op);
-        }
-
-        /// <summary>
-        /// Gets the specified attribute. If attribute is not found, returns the fallback value.
-        /// </summary>
-        public PyObject GetAttrOrElse(string name, PyObject _default)
-        {
-            if (name == null) throw new ArgumentNullException(nameof(name));
-
-            IntPtr op = Runtime.PyObject_GetAttrString(obj, name);
-            if (op == IntPtr.Zero)
-            {
-                if (!Exceptions.ExceptionMatches(Exceptions.AttributeError))
-                {
-                    throw new PythonException();
-                }
-
                 Runtime.PyErr_Clear();
                 return _default;
             }
