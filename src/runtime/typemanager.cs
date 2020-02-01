@@ -903,7 +903,6 @@ namespace Python.Runtime
 
     static partial class SlotTypes
     {
-        private static Dictionary<string, Type> _typeMap = new Dictionary<string, Type>();
         private static Dictionary<string, Type> _nameMap = new Dictionary<string, Type>();
 
         static SlotTypes()

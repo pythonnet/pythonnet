@@ -146,6 +146,13 @@ namespace Python.Runtime
             self.Dealloc();
         }
 
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (ConstructorBinding)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.repr);
+            return 0;
+        }
+
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
         {
             var self = (ConstructorBinding)GetManagedObject(ob);
@@ -239,6 +246,13 @@ namespace Python.Runtime
             var self = (BoundContructor)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
             self.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (BoundContructor)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.repr);
+            return 0;
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
