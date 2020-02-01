@@ -5,6 +5,9 @@ namespace Python.Runtime
 {
     internal class Util
     {
+        internal const string UnstableApiMessage =
+            "This API is unstable, and might be changed or removed in the next minor release";
+
         internal static Int64 ReadCLong(IntPtr tp, int offset)
         {
             // On Windows, a C long is always 32 bits.

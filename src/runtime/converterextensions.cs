@@ -9,6 +9,7 @@ namespace Python.Runtime
     /// <summary>
     /// Defines <see cref="PyObject"/> conversion to CLR types (unmarshalling)
     /// </summary>
+    [Obsolete(Util.UnstableApiMessage)]
     public interface IPyObjectDecoder
     {
         /// <summary>
@@ -28,6 +29,7 @@ namespace Python.Runtime
     /// <summary>
     /// Defines conversion from CLR objects into Python objects (e.g. <see cref="PyObject"/>) (marshalling)
     /// </summary>
+    [Obsolete(Util.UnstableApiMessage)]
     public interface IPyObjectEncoder
     {
         /// <summary>
@@ -44,6 +46,7 @@ namespace Python.Runtime
     /// This class allows to register additional marshalling codecs.
     /// <para>Python.NET will pick suitable encoder/decoder registered first</para>
     /// </summary>
+    [Obsolete(Util.UnstableApiMessage)]
     public static class PyObjectConversions
     {
         static readonly List<IPyObjectDecoder> decoders = new List<IPyObjectDecoder>();
