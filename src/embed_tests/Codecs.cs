@@ -101,19 +101,40 @@ namespace Python.EmbeddingTest {
         [Test]
         public void Function()
         {
+            
             FunctionCodec.Register();
+            var codec = FunctionCodec.Instance;
             var locals = new PyDict();
+
+            //non-callables can't be decoded into Action
+            Assert.IsFalse(codec.CanDecode(locals, typeof(Action)));
 
             PythonEngine.Exec(@"
 def foo():
     return 1
+def bar(a):
+    return 2
 ", null, locals.Handle);
 
-            var func = locals.GetItem("foo");
+            //foo
+            var fooFunc = locals.GetItem("foo");
+            Assert.IsFalse(codec.CanDecode(fooFunc, typeof(bool)));
+            Assert.IsFalse(codec.CanDecode(fooFunc, typeof(Action<object[]>)));
+            Assert.IsTrue(codec.CanDecode(fooFunc, typeof(Action)));
 
-            Action action;
-            Assert.IsTrue(FunctionCodec.Instance.TryDecode(func, out action));
-            Assert.DoesNotThrow(() => action());
+            Action fooAction;
+            Assert.IsTrue(codec.TryDecode(fooFunc, out fooAction));
+            Assert.DoesNotThrow(() => fooAction());
+
+            //bar
+            var barFunc = locals.GetItem("bar");
+            Assert.IsFalse(codec.CanDecode(barFunc, typeof(bool)));
+            Assert.IsFalse(codec.CanDecode(barFunc, typeof(Action)));
+            Assert.IsTrue(codec.CanDecode(barFunc, typeof(Action<object[]>)));
+
+            Action<object[]> barAction;
+            Assert.IsTrue(codec.TryDecode(barFunc, out barAction));
+            Assert.DoesNotThrow(() => barAction(new[]{ (object)true}));
         }
     }
 }
