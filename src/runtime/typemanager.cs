@@ -30,7 +30,7 @@ namespace Python.Runtime
             "tp_clear",
         };
 
-        public static void Initialize()
+        internal static void Initialize()
         {
             Debug.Assert(cache.Count == 0, "Cache should be empty",
                 "Some errors may occurred on last shutdown");

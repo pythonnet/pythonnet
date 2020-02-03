@@ -120,5 +120,12 @@ namespace Python.Runtime
             Runtime.XDecref(self.target);
             self.Dealloc();
         }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (EventBinding)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.target);
+            return 0;
+        }
     }
 }
