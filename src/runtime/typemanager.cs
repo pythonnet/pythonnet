@@ -391,9 +391,6 @@ namespace Python.Runtime
             slotsHolder = new SlotsHolder(type);
             InitializeSlots(type, impl, slotsHolder);
 
-            Marshal.WriteIntPtr(type, TypeOffset.tp_traverse, Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_traverse));
-            Marshal.WriteIntPtr(type, TypeOffset.tp_clear, Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_clear));
-
             int flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
@@ -801,16 +798,6 @@ namespace Python.Runtime
             _deallocators.Clear();
 
             // Custom reset
-            IntPtr tp_base = Marshal.ReadIntPtr(_type, TypeOffset.tp_base);
-            Runtime.XDecref(tp_base);
-            Runtime.XIncref(Runtime.PyBaseObjectType);
-            Marshal.WriteIntPtr(_type, TypeOffset.tp_base, Runtime.PyBaseObjectType);
-
-            IntPtr tp_bases = Marshal.ReadIntPtr(_type, TypeOffset.tp_bases);
-            Runtime.XDecref(tp_bases);
-            tp_bases = Runtime.PyTuple_New(0);
-            Marshal.WriteIntPtr(_type, TypeOffset.tp_bases, tp_bases);
-
             IntPtr handlePtr = Marshal.ReadIntPtr(_type, TypeOffset.magic());
             if (handlePtr != IntPtr.Zero)
             {
