@@ -9,6 +9,7 @@ namespace Python.Runtime
 
         internal CLRObject(object ob, IntPtr tp)
         {
+            System.Diagnostics.Debug.Assert(tp != IntPtr.Zero);
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
             long flags = Util.ReadCLong(tp, TypeOffset.tp_flags);

@@ -9,6 +9,7 @@ namespace Python.Runtime
     /// standard Python method bindings, but the same type is used to bind
     /// both static and instance methods.
     /// </summary>
+    [Serializable]
     internal class MethodBinding : ExtensionType
     {
         internal MethodInfo info;

@@ -10,9 +10,12 @@ namespace Python.Runtime
     /// Implements a Python type that provides access to CLR namespaces. The
     /// type behaves like a Python module, and can contain other sub-modules.
     /// </summary>
+    [Serializable]
     internal class ModuleObject : ExtensionType
     {
+        [NonSerialized]
         private Dictionary<string, ManagedType> cache;
+
         internal string moduleName;
         internal IntPtr dict;
         protected string _namespace;
@@ -338,6 +341,21 @@ namespace Python.Runtime
             self.cache.Clear();
             return 0;
         }
+
+        protected override void OnSave()
+        {
+            base.OnSave();
+            Runtime.XIncref(dict);
+            Runtime.XIncref(GetObjectDict(pyHandle));
+        }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+            cache = new Dictionary<string, ManagedType>();
+            Runtime.XIncref(dict);
+            SetObjectDict(pyHandle, dict);
+        }
     }
 
     /// <summary>
@@ -345,6 +363,7 @@ namespace Python.Runtime
     /// to import assemblies. It has a fixed module name "clr" and doesn't
     /// provide a namespace.
     /// </summary>
+    [Serializable]
     internal class CLRModule : ModuleObject
     {
         protected static bool hacked = false;

@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// Each of those type objects is associated an instance of this class,
     /// which provides its implementation.
     /// </summary>
+    [Serializable]
     internal class DelegateObject : ClassBase
     {
         private MethodBinder binder;

@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// type object, such as the types that represent CLR methods, fields,
     /// etc. Instances implemented by this class do not support sub-typing.
     /// </summary>
+    [Serializable]
     internal abstract class ExtensionType : ManagedType
     {
         public ExtensionType()
@@ -95,6 +96,20 @@ namespace Python.Runtime
             // frees the allocated Python object and decrefs the type.
             var self = (ExtensionType)GetManagedObject(ob);
             self.Dealloc();
+        }
+
+        protected override void OnSave()
+        {
+            base.OnSave();
+            Runtime.XIncref(pyHandle);
+        }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+            GCHandle gc = AllocGCHandle(true);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
+            Runtime.PyObject_GC_UnTrack(pyHandle);
         }
     }
 }

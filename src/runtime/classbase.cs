@@ -13,6 +13,7 @@ namespace Python.Runtime
     /// concrete subclasses provide slot implementations appropriate for
     /// each variety of reflected type.
     /// </summary>
+    [Serializable]
     internal class ClassBase : ManagedType
     {
         internal Indexer indexer;

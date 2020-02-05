@@ -11,9 +11,12 @@ namespace Python.Runtime
     /// code. It defines the common fields that associate CLR and Python
     /// objects and common utilities to convert between those identities.
     /// </summary>
+    [Serializable]
     internal abstract class ManagedType
     {
+        [NonSerialized]
         internal GCHandle gcHandle; // Native handle
+
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
@@ -190,6 +193,19 @@ namespace Python.Runtime
             ClearObjectDict(pyHandle);
         }
 
+        internal void Save()
+        {
+            OnSave();
+        }
+
+        internal void Load()
+        {
+            OnLoad();
+        }
+
+        protected virtual void OnSave() { }
+        protected virtual void OnLoad() { }
+
         protected static void ClearObjectDict(IntPtr ob)
         {
             IntPtr dict = GetObjectDict(ob);
@@ -201,12 +217,12 @@ namespace Python.Runtime
             Runtime.XDecref(dict);
         }
 
-        private static IntPtr GetObjectDict(IntPtr ob)
+        protected static IntPtr GetObjectDict(IntPtr ob)
         {
             return Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
         }
 
-        private static void SetObjectDict(IntPtr ob, IntPtr value)
+        protected static void SetObjectDict(IntPtr ob, IntPtr value)
         {
             Marshal.WriteIntPtr(ob, ObjectOffset.DictOffset(ob), value);
         }

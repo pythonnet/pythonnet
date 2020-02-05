@@ -311,45 +311,45 @@ namespace Python.Runtime
     internal class TypeFlags
     {
 #if PYTHON2 // these flags were removed in Python 3
-        public static int HaveGetCharBuffer = (1 << 0);
-        public static int HaveSequenceIn = (1 << 1);
-        public static int GC = 0;
-        public static int HaveInPlaceOps = (1 << 3);
-        public static int CheckTypes = (1 << 4);
-        public static int HaveRichCompare = (1 << 5);
-        public static int HaveWeakRefs = (1 << 6);
-        public static int HaveIter = (1 << 7);
-        public static int HaveClass = (1 << 8);
+        public const int HaveGetCharBuffer = (1 << 0);
+        public const int HaveSequenceIn = (1 << 1);
+        public const int GC = 0;
+        public const int HaveInPlaceOps = (1 << 3);
+        public const int CheckTypes = (1 << 4);
+        public const int HaveRichCompare = (1 << 5);
+        public const int HaveWeakRefs = (1 << 6);
+        public const int HaveIter = (1 << 7);
+        public const int HaveClass = (1 << 8);
 #endif
-        public static int HeapType = (1 << 9);
-        public static int BaseType = (1 << 10);
-        public static int Ready = (1 << 12);
-        public static int Readying = (1 << 13);
-        public static int HaveGC = (1 << 14);
+        public const int HeapType = (1 << 9);
+        public const int BaseType = (1 << 10);
+        public const int Ready = (1 << 12);
+        public const int Readying = (1 << 13);
+        public const int HaveGC = (1 << 14);
         // 15 and 16 are reserved for stackless
-        public static int HaveStacklessExtension = 0;
+        public const int HaveStacklessExtension = 0;
         /* XXX Reusing reserved constants */
-        public static int Managed = (1 << 15); // PythonNet specific
-        public static int Subclass = (1 << 16); // PythonNet specific
-        public static int HaveIndex = (1 << 17);
+        public const int Managed = (1 << 15); // PythonNet specific
+        public const int Subclass = (1 << 16); // PythonNet specific
+        public const int HaveIndex = (1 << 17);
         /* Objects support nb_index in PyNumberMethods */
-        public static int HaveVersionTag = (1 << 18);
-        public static int ValidVersionTag = (1 << 19);
-        public static int IsAbstract = (1 << 20);
-        public static int HaveNewBuffer = (1 << 21);
+        public const int HaveVersionTag = (1 << 18);
+        public const int ValidVersionTag = (1 << 19);
+        public const int IsAbstract = (1 << 20);
+        public const int HaveNewBuffer = (1 << 21);
         // TODO: Implement FastSubclass functions
-        public static int IntSubclass = (1 << 23);
-        public static int LongSubclass = (1 << 24);
-        public static int ListSubclass = (1 << 25);
-        public static int TupleSubclass = (1 << 26);
-        public static int StringSubclass = (1 << 27);
-        public static int UnicodeSubclass = (1 << 28);
-        public static int DictSubclass = (1 << 29);
-        public static int BaseExceptionSubclass = (1 << 30);
-        public static int TypeSubclass = (1 << 31);
+        public const int IntSubclass = (1 << 23);
+        public const int LongSubclass = (1 << 24);
+        public const int ListSubclass = (1 << 25);
+        public const int TupleSubclass = (1 << 26);
+        public const int StringSubclass = (1 << 27);
+        public const int UnicodeSubclass = (1 << 28);
+        public const int DictSubclass = (1 << 29);
+        public const int BaseExceptionSubclass = (1 << 30);
+        public const int TypeSubclass = (1 << 31);
 
 #if PYTHON2 // Default flags for Python 2
-        public static int Default = (
+        public const int Default = (
             HaveGetCharBuffer |
             HaveSequenceIn |
             HaveInPlaceOps |
@@ -361,7 +361,7 @@ namespace Python.Runtime
             HaveIndex |
             0);
 #elif PYTHON3 // Default flags for Python 3
-        public static int Default = (
+        public const int Default = (
             HaveStacklessExtension |
             HaveVersionTag);
 #endif
@@ -499,9 +499,16 @@ namespace Python.Runtime
             {
                 return ThunkInfo.Empty;
             }
-            Delegate d = Delegate.CreateDelegate(dt, method);
-            var info = new ThunkInfo(d);
-            return info;
+            try
+            {
+                Delegate d = Delegate.CreateDelegate(dt, method);
+                var info = new ThunkInfo(d);
+                return info;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
 
@@ -579,7 +586,7 @@ namespace Python.Runtime
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    [StructLayout(LayoutKind.Sequential)]
     struct PyMethodDef
     {
         public IntPtr ml_name;

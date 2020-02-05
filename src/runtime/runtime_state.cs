@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
-using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+
 using static Python.Runtime.Runtime;
 
 namespace Python.Runtime
@@ -232,5 +235,79 @@ namespace Python.Runtime
         {
             return ((PyGC_Head*)node)->gc.gc_next;
         }
+    }
+
+
+    class RuntimeData
+    {
+        internal static void Stash()
+        {
+            var formatter = new BinaryFormatter();
+            var ms = new MemoryStream();
+            var stack = new Stack();
+            MetaType.StashPush(stack);
+            TypeManager.StashPush(stack);
+            ClassManager.StashPush(stack);
+            var objs = ManagedType.GetManagedObjects();
+            foreach (var obj in objs)
+            {
+                obj.Save();
+            }
+            stack.Push(objs);
+            formatter.Serialize(ms, stack);
+
+            byte[] data = ms.GetBuffer();
+            // TODO: use buffer api instead
+            System.Diagnostics.Debug.Assert(data.Length <= int.MaxValue);
+            IntPtr mem = PyMem_Malloc(data.LongLength + IntPtr.Size);
+            Marshal.WriteIntPtr(mem, (IntPtr)data.LongLength);
+            Marshal.Copy(data, 0, mem + IntPtr.Size, data.Length);
+
+            IntPtr capsule = PySys_GetObject("clr_data");
+            if (capsule != IntPtr.Zero)
+            {
+                IntPtr oldData = PyCapsule_GetPointer(capsule, null);
+                PyMem_Free(oldData);
+                PyCapsule_SetPointer(capsule, IntPtr.Zero);
+            }
+            capsule = PyCapsule_New(mem, null, IntPtr.Zero);
+            PySys_SetObject("clr_data", capsule);
+            XDecref(capsule);
+        }
+
+        internal static void StashPop()
+        {
+            IntPtr capsule = PySys_GetObject("clr_data");
+            if (capsule == IntPtr.Zero)
+            {
+                return;
+            }
+            IntPtr mem = PyCapsule_GetPointer(capsule, null);
+            int length = (int)Marshal.ReadIntPtr(mem);
+            byte[] data = new byte[length];
+            Marshal.Copy(mem + IntPtr.Size, data, 0, length);
+            var ms = new MemoryStream(data);
+            var formatter = new BinaryFormatter();
+
+            var stack = (Stack)formatter.Deserialize(ms);
+
+            var loadObjs = (ICollection<ManagedType>)stack.Pop();
+            var objs = ManagedType.GetManagedObjects();
+            foreach (var obj in loadObjs)
+            {
+                obj.Load();
+                objs.Add(obj);
+            }
+
+            ClassManager.StashPop(stack);
+            TypeManager.StashPop(stack);
+            PyCLRMetaType = MetaType.StashPop(stack);
+        }
+
+        public static bool HasStashData()
+        {
+            return PySys_GetObject("clr_data") != IntPtr.Zero;
+        }
+
     }
 }

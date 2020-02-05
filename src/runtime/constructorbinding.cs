@@ -19,11 +19,14 @@ namespace Python.Runtime
     /// and creating the BoundContructor object which contains ContructorInfo object.
     /// 3) In tp_call, if ctorInfo is not null, ctorBinder.InvokeRaw() is called.
     /// </remarks>
+    [Serializable]
     internal class ConstructorBinding : ExtensionType
     {
         private Type type; // The managed Type being wrapped in a ClassObject
         private IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
         private ConstructorBinder ctorBinder;
+
+        [NonSerialized]
         private IntPtr repr;
 
         public ConstructorBinding(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder)
@@ -173,6 +176,7 @@ namespace Python.Runtime
     /// An earlier implementation hung the __call__ on the ContructorBinding class and
     /// returned an Incref()ed self.pyHandle from the __get__ function.
     /// </remarks>
+    [Serializable]
     internal class BoundContructor : ExtensionType
     {
         private Type type; // The managed Type being wrapped in a ClassObject

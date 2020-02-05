@@ -10,6 +10,7 @@ namespace Python.Runtime
     /// <remarks>
     /// TODO: ForbidPythonThreadsAttribute per method info
     /// </remarks>
+    [Serializable]
     internal class MethodObject : ExtensionType
     {
         internal MethodInfo[] info;
@@ -17,6 +18,7 @@ namespace Python.Runtime
         internal MethodBinding unbound;
         internal MethodBinder binder;
         internal bool is_static = false;
+        [NonSerialized]
         internal IntPtr doc;
         internal Type type;
 

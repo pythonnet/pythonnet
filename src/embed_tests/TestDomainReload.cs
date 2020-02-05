@@ -85,7 +85,7 @@ namespace Python.EmbeddingTest
                     AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
                     string name = AppDomain.CurrentDomain.FriendlyName;
                     Console.WriteLine(string.Format(""[{0} in .NET] In PythonRunner.RunPython"", name));
-                    PythonEngine.Initialize(softShutdown: true);
+                    PythonEngine.Initialize(mode: ShutdownMode.Reload);
                     using (Py.GIL()) {
                         try {
                             var pyScript = string.Format(""import clr\n""

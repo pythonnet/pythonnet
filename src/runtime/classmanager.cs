@@ -19,7 +19,7 @@ namespace Python.Runtime
     internal class ClassManager
     {
         private static Dictionary<Type, ClassBase> cache;
-        private static Type dtype;
+        private static readonly Type dtype;
 
         private ClassManager()
         {
@@ -79,6 +79,17 @@ namespace Python.Runtime
                 clrObj.CallTypeClear();
             }
             return 0;
+        }
+
+
+        internal static void StashPush(Stack stack)
+        {
+            stack.Push(cache);
+        }
+
+        internal static void StashPop(Stack stack)
+        {
+            cache = (Dictionary<Type, ClassBase>)stack.Pop();
         }
 
         /// <summary>
@@ -239,7 +250,7 @@ namespace Python.Runtime
 
         private static ClassInfo GetClassInfo(Type type)
         {
-            var ci = new ClassInfo(type);
+            var ci = new ClassInfo();
             var methods = new Hashtable();
             ArrayList list;
             MethodInfo meth;
@@ -443,7 +454,7 @@ namespace Python.Runtime
         public Indexer indexer;
         public Hashtable members;
 
-        internal ClassInfo(Type t)
+        internal ClassInfo()
         {
             members = new Hashtable();
             indexer = null;

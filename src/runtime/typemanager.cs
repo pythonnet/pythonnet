@@ -20,7 +20,7 @@ namespace Python.Runtime
         internal static IntPtr subtype_clear;
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        private static readonly Dictionary<Type, IntPtr> cache = new Dictionary<Type, IntPtr>();
+        private static Dictionary<Type, IntPtr> cache = new Dictionary<Type, IntPtr>();
         private static readonly Dictionary<IntPtr, SlotsHolder> _slotsHolders = new Dictionary<IntPtr, SlotsHolder>();
 
         // Slots which must be set
@@ -63,6 +63,30 @@ namespace Python.Runtime
             }
             cache.Clear();
             _slotsHolders.Clear();
+        }
+
+        internal static void StashPush(Stack stack)
+        {
+            foreach (var tpHandle in cache.Values)
+            {
+                Runtime.XIncref(tpHandle);
+            }
+            //formatter.Serialize(stream, cache);
+            stack.Push(cache);
+        }
+
+        internal static void StashPop(Stack stack)
+        {
+            Debug.Assert(cache == null || cache.Count == 0);
+            cache = (Dictionary<Type, IntPtr>)stack.Pop();
+            foreach (var entry in cache)
+            {
+                Type type = entry.Key;
+                IntPtr handle = entry.Value;
+                SlotsHolder holder = CreateSolotsHolder(handle);
+                InitializeSlots(handle, type, holder);
+                // FIXME: mp_length_slot.CanAssgin(clrType)
+            }
         }
 
         /// <summary>
@@ -381,80 +405,18 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
 
+            const int flags = TypeFlags.Default
+                            | TypeFlags.Managed
+                            | TypeFlags.HeapType
+                            | TypeFlags.HaveGC;
+            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+
             // Slots will inherit from TypeType, it's not neccesary for setting them.
             // Inheried slots:
             // tp_basicsize, tp_itemsize,
             // tp_dictoffset, tp_weaklistoffset,
             // tp_traverse, tp_clear, tp_is_gc, etc.
-
-            // Override type slots with those of the managed implementation.
-            slotsHolder = new SlotsHolder(type);
-            InitializeSlots(type, impl, slotsHolder);
-
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
-
-            // We need space for 3 PyMethodDef structs, each of them
-            // 4 int-ptrs in size.
-            IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
-            Debug.Assert(4 * IntPtr.Size == Marshal.SizeOf(typeof(PyMethodDef)));
-            IntPtr mdefStart = mdef;
-            ThunkInfo thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
-            slotsHolder.KeeapAlive(thunkInfo);
-
-            {
-                IntPtr mdefAddr = mdef;
-                slotsHolder.AddDealloctor(() =>
-                {
-                    IntPtr t = type;
-                    IntPtr tp_dict = Marshal.ReadIntPtr(t, TypeOffset.tp_dict);
-                    if (Runtime.PyDict_DelItemString(tp_dict, "__instancecheck__") != 0)
-                    {
-                        Runtime.PyErr_Print();
-                    }
-                    FreeMethodDef(mdefAddr);
-                });
-            }
-            mdef = WriteMethodDef(
-                mdef,
-                "__instancecheck__",
-                thunkInfo.Address
-            );
-
-            thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
-            slotsHolder.KeeapAlive(thunkInfo);
-            {
-                IntPtr mdefAddr = mdef;
-                slotsHolder.AddDealloctor(() =>
-                {
-                    IntPtr t = type;
-                    IntPtr tp_dict = Marshal.ReadIntPtr(t, TypeOffset.tp_dict);
-                    if (Runtime.PyDict_DelItemString(tp_dict, "__subclasscheck__") != 0)
-                    {
-                        Runtime.PyErr_Print();
-                    }
-                    FreeMethodDef(mdefAddr);
-                });
-            }
-            mdef = WriteMethodDef(
-                mdef,
-                "__subclasscheck__",
-                thunkInfo.Address
-            );
-
-            // FIXME: mdef is not used
-            mdef = WriteMethodDefSentinel(mdef);
-
-            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
-            slotsHolder.Set(TypeOffset.tp_methods, (t, offset) =>
-            {
-                var p = Marshal.ReadIntPtr(t, offset);
-                Runtime.PyMem_Free(p);
-                Marshal.WriteIntPtr(t, offset, IntPtr.Zero);
-            });
+            slotsHolder = SetupMetaSlots(impl, type);
 
             if (Runtime.PyType_Ready(type) != 0)
             {
@@ -470,6 +432,61 @@ namespace Python.Runtime
             return type;
         }
 
+        internal static SlotsHolder SetupMetaSlots(Type impl, IntPtr type)
+        {
+            // Override type slots with those of the managed implementation.
+            SlotsHolder slotsHolder = new SlotsHolder(type);
+            InitializeSlots(type, impl, slotsHolder);
+
+            // We need space for 3 PyMethodDef structs.
+            int mdefSize = (MetaType.CustomMethods.Length + 1) * Marshal.SizeOf(typeof(PyMethodDef));
+            IntPtr mdef = Runtime.PyMem_Malloc(mdefSize);
+            IntPtr mdefStart = mdef;
+            foreach (var methodName in MetaType.CustomMethods)
+            {
+                mdef = AddCustomMetaMethod(methodName, type, mdef, slotsHolder);
+            }
+            mdef = WriteMethodDefSentinel(mdef);
+            Debug.Assert((long)(mdefStart + mdefSize) <= (long)mdef);
+
+            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
+            // XXX: Hard code with mode check.
+            if (Runtime.ShutdownMode != ShutdownMode.Reload)
+            {
+                slotsHolder.Set(TypeOffset.tp_methods, (t, offset) =>
+                {
+                    var p = Marshal.ReadIntPtr(t, offset);
+                    Runtime.PyMem_Free(p);
+                    Marshal.WriteIntPtr(t, offset, IntPtr.Zero);
+                });
+            }
+            return slotsHolder;
+        }
+
+        private static IntPtr AddCustomMetaMethod(string name, IntPtr type, IntPtr mdef, SlotsHolder slotsHolder)
+        {
+            MethodInfo mi = typeof(MetaType).GetMethod(name);
+            ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+            slotsHolder.KeeapAlive(thunkInfo);
+
+            // XXX: Hard code with mode check.
+            if (Runtime.ShutdownMode != ShutdownMode.Reload)
+            {
+                IntPtr mdefAddr = mdef;
+                slotsHolder.AddDealloctor(() =>
+                {
+                    IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
+                    if (Runtime.PyDict_DelItemString(tp_dict, name) != 0)
+                    {
+                        Runtime.PyErr_Print();
+                        Debug.Fail($"Cannot remove {name} from metatype");
+                    }
+                    FreeMethodDef(mdefAddr);
+                });
+            }
+            mdef = WriteMethodDef(mdef, name, thunkInfo.Address);
+            return mdef;
+        }
 
         internal static IntPtr BasicSubType(string name, IntPtr base_, Type impl)
         {
@@ -543,22 +560,19 @@ namespace Python.Runtime
             Runtime.XIncref(temp);
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
 #endif
-
-            long ptr = type.ToInt64(); // 64-bit safe
-
-            temp = new IntPtr(ptr + TypeOffset.nb_add);
+            temp = type + TypeOffset.nb_add;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_number, temp);
 
-            temp = new IntPtr(ptr + TypeOffset.sq_length);
+            temp = type + TypeOffset.sq_length;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_sequence, temp);
 
-            temp = new IntPtr(ptr + TypeOffset.mp_length);
+            temp = type + TypeOffset.mp_length;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
 #if PYTHON3
-            temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
+            temp = type + TypeOffset.bf_getbuffer;
 #elif PYTHON2
-            temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
+            temp = type + TypeOffset.bf_getreadbuffer;
 #endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
             return type;
@@ -602,7 +616,7 @@ namespace Python.Runtime
 
             foreach (string slot in _requiredSlots)
             {
-                if (IsSlotSet(type, slot))
+                if (seen.Contains(slot))
                 {
                     continue;
                 }

@@ -12,7 +12,7 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
-        public static bool SoftShutdown => Runtime.SoftShutdown;
+        public static ShutdownMode ShutdownMode => Runtime.ShutdownMode;
 
         private static DelegateManager delegateManager;
         private static bool initialized;
@@ -152,9 +152,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false, bool softShutdown = false)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Normal)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, softShutdown);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode);
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, bool softShutdown = false)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Normal)
         {
             if (initialized)
             {
@@ -179,7 +179,7 @@ namespace Python.Runtime
             // during an initial "import clr", and the world ends shortly thereafter.
             // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
             delegateManager = new DelegateManager();
-            Runtime.Initialize(initSigs, softShutdown);
+            Runtime.Initialize(initSigs, mode);
             initialized = true;
             Exceptions.Clear();
 
@@ -187,7 +187,7 @@ namespace Python.Runtime
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
             // Remember to shut down the runtime.
-            AddShutdownHandler(() => Runtime.Shutdown(softShutdown));
+            AddShutdownHandler(() => Runtime.Shutdown(mode));
 
             // The global scope gets used implicitly quite early on, remember
             // to clear it out when we shut down.
@@ -198,8 +198,9 @@ namespace Python.Runtime
                 Py.SetArgv(args);
             }
 
-            if (!softShutdown)
+            if (mode == ShutdownMode.Normal)
             {
+                // TOOD: Check if this can be remove completely or not.
                 // register the atexit callback (this doesn't use Py_AtExit as the C atexit
                 // callbacks are called after python is fully finalized but the python ones
                 // are called while the python engine is still running).
