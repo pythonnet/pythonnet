@@ -144,10 +144,13 @@ namespace Python.Runtime
             {
                 mode = ShutdownMode.Soft;
             }
+#if !NETSTANDARD
             else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
             {
                 mode = ShutdownMode.Reload;
             }
+#endif
+            //mode = ShutdownMode.Reload;
 
             ShutdownMode = mode;
             if (Py_IsInitialized() == 0)
@@ -314,16 +317,16 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-
+#if !NETSTANDARD
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
                 RuntimeData.StashPop();
             }
             else
+#endif
             {
                 PyCLRMetaType = MetaType.Initialize(); // Steal a reference
             }
-
             Exceptions.Initialize();
             ImportHook.Initialize();
 
@@ -348,17 +351,23 @@ namespace Python.Runtime
 
             PyGILState_Ensure();
 
-            RuntimeData.Stash();
-
+#if !NETSTANDARD
+            if (mode == ShutdownMode.Reload)
+            {
+                RuntimeData.Stash();
+            }
+#endif
             AssemblyManager.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
             Finalizer.Shutdown();
 
+#if !NETSTANDARD
             if (mode != ShutdownMode.Reload)
             {
                 ClearClrModules();
             }
+#endif
             RemoveClrRootModule();
 
             MoveClrInstancesOnwershipToPython();
@@ -969,6 +978,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, string name);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value);
@@ -2180,7 +2192,9 @@ namespace Python.Runtime
     {
         Normal,
         Soft,
+#if !NETSTANDARD
         Reload,
+#endif
     }
 
 
