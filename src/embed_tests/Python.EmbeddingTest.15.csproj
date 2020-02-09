@@ -65,9 +65,13 @@
   <PropertyGroup Condition="$(Configuration.Contains('Release'))">
     <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="DomainCode.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
+    <None Include="DomainCode.cs" />
     <None Remove="packages.config" />
   </ItemGroup>
 

@@ -1,5 +1,9 @@
 using System;
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using Python.Runtime;
@@ -68,46 +72,40 @@ namespace Python.EmbeddingTest
             PythonEngine.Shutdown();
         }
 
-        //
-        // The code we'll test. All that really matters is
-        //    using GIL { Python.Exec(pyScript); }
-        // but the rest is useful for debugging.
-        //
-        // What matters in the python code is gc.collect and clr.AddReference.
-        //
-        // Note that the language version is 2.0, so no $"foo{bar}" syntax.
-        //
-        const string TestCode = @"
-            using Python.Runtime;
-            using System;
-            class PythonRunner {
-                public static void RunPython() {
-                    AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
-                    string name = AppDomain.CurrentDomain.FriendlyName;
-                    Console.WriteLine(string.Format(""[{0} in .NET] In PythonRunner.RunPython"", name));
-                    PythonEngine.Initialize(mode: ShutdownMode.Reload);
-                    using (Py.GIL()) {
-                        try {
-                            var pyScript = string.Format(""import clr\n""
-                                + ""print('[{0} in python] imported clr')\n""
-                                + ""clr.AddReference('System')\n""
-                                + ""print('[{0} in python] allocated a clr object')\n""
-                                + ""import gc\n""
-                                + ""gc.collect()\n""
-                                + ""print('[{0} in python] collected garbage')\n"",
-                                name);
-                            PythonEngine.Exec(pyScript);
-                        } catch(Exception e) {
-                            Console.WriteLine(string.Format(""[{0} in .NET] Caught exception: {1}"", name, e));
-                        }
-                    }
-                    PythonEngine.BeginAllowThreads();
-                }
-                static void OnDomainUnload(object sender, EventArgs e) {
-                    System.Console.WriteLine(string.Format(""[{0} in .NET] unloading"", AppDomain.CurrentDomain.FriendlyName));
-                }
-            }";
+        [Test]
+        public static void CrossDomainObject()
+        {
+            IntPtr handle;
+            Type type = typeof(Proxy);
+            Assembly assembly = BuildAssembly("test_domain_reload");
+            {
+                AppDomain domain = CreateDomain("test_domain_reload");
+                var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
+                        type.Assembly.FullName,
+                        type.FullName);
+                theProxy.InitAssembly(assembly.Location);
+                theProxy.Call("InitPython", ShutdownMode.Reload);
+                handle = (IntPtr)theProxy.Call("GetTestObject");
+                theProxy.Call("ShutdownPython");
+                AppDomain.Unload(domain);
+            }
 
+            {
+                AppDomain domain = CreateDomain("test_domain_reload");
+                var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
+                        type.Assembly.FullName,
+                        type.FullName);
+                theProxy.InitAssembly(assembly.Location);
+                theProxy.Call("InitPython", ShutdownMode.Reload);
+
+                // handle refering a clr object created in previous domain,
+                // it should had been deserialized and became callable agian.
+                theProxy.Call("RunTestObject", handle);
+                theProxy.Call("ShutdownPythonCompletely");
+                AppDomain.Unload(domain);
+            }
+            Assert.IsTrue(Runtime.Runtime.Py_IsInitialized() == 0);
+        }
 
         /// <summary>
         /// Build an assembly out of the source code above.
@@ -119,15 +117,19 @@ namespace Python.EmbeddingTest
         static Assembly BuildAssembly(string assemblyName)
         {
             var provider = CodeDomProvider.CreateProvider("CSharp");
-
             var compilerparams = new CompilerParameters();
-            compilerparams.ReferencedAssemblies.Add("Python.Runtime.dll");
+            var assemblies = from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                             where !assembly.IsDynamic
+                             select assembly.Location;
+            compilerparams.ReferencedAssemblies.AddRange(assemblies.ToArray());
+
             compilerparams.GenerateExecutable = false;
             compilerparams.GenerateInMemory = false;
-            compilerparams.IncludeDebugInformation = false;
+            compilerparams.IncludeDebugInformation = true;
             compilerparams.OutputAssembly = assemblyName;
 
-            var results = provider.CompileAssemblyFromSource(compilerparams, TestCode);
+            var dir = Path.GetDirectoryName(new StackTrace(true).GetFrame(0).GetFileName());
+            var results = provider.CompileAssemblyFromFile(compilerparams, Path.Combine(dir, "DomainCode.cs"));
             if (results.Errors.HasErrors)
             {
                 var errors = new System.Text.StringBuilder("Compiler Errors:\n");
@@ -168,6 +170,13 @@ namespace Python.EmbeddingTest
 
                 Console.WriteLine("[Proxy] Leaving RunPython");
             }
+
+            public object Call(string methodName, params object[] args)
+            {
+                var pythonrunner = theAssembly.GetType("PythonRunner");
+                var method = pythonrunner.GetMethod(methodName);
+                return method.Invoke(null, args);
+            }
         }
 
         /// <summary>
@@ -178,26 +187,11 @@ namespace Python.EmbeddingTest
         {
             Console.WriteLine($"[Program.Main] === creating domain for assembly {assembly.FullName}");
 
-            // Create the domain. Make sure to set PrivateBinPath to a relative
-            // path from the CWD (namely, 'bin').
-            // See https://stackoverflow.com/questions/24760543/createinstanceandunwrap-in-another-domain
-            var currentDomain = AppDomain.CurrentDomain;
-            var domainsetup = new AppDomainSetup()
-            {
-                ApplicationBase = currentDomain.SetupInformation.ApplicationBase,
-                ConfigurationFile = currentDomain.SetupInformation.ConfigurationFile,
-                LoaderOptimization = LoaderOptimization.SingleDomain,
-                PrivateBinPath = "."
-            };
-            var domain = AppDomain.CreateDomain(
-                    $"My Domain {assemblyName}",
-                    currentDomain.Evidence,
-                domainsetup);
-
+            AppDomain domain = CreateDomain(assemblyName);
             // Create a Proxy object in the new domain, where we want the
             // assembly (and Python .NET) to reside
-            Type type = typeof(Proxy);
             System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+            Type type = typeof(Proxy);
             var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
                     type.Assembly.FullName,
                     type.FullName);
@@ -214,11 +208,32 @@ namespace Python.EmbeddingTest
             try
             {
                 Console.WriteLine($"[Program.Main] The Proxy object is valid ({theProxy}). Unexpected domain unload behavior");
+                Assert.Fail($"{theProxy} should be invlaid now");
             }
             catch (AppDomainUnloadedException)
             {
                 Console.WriteLine("[Program.Main] The Proxy object is not valid anymore, domain unload complete.");
             }
+        }
+
+        private static AppDomain CreateDomain(string name)
+        {
+            // Create the domain. Make sure to set PrivateBinPath to a relative
+            // path from the CWD (namely, 'bin').
+            // See https://stackoverflow.com/questions/24760543/createinstanceandunwrap-in-another-domain
+            var currentDomain = AppDomain.CurrentDomain;
+            var domainsetup = new AppDomainSetup()
+            {
+                ApplicationBase = currentDomain.SetupInformation.ApplicationBase,
+                ConfigurationFile = currentDomain.SetupInformation.ConfigurationFile,
+                LoaderOptimization = LoaderOptimization.SingleDomain,
+                PrivateBinPath = "."
+            };
+            var domain = AppDomain.CreateDomain(
+                    $"My Domain {name}",
+                    currentDomain.Evidence,
+                domainsetup);
+            return domain;
         }
 
         /// <summary>

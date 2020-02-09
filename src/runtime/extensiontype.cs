@@ -29,7 +29,7 @@ namespace Python.Runtime
 
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            GCHandle gc = AllocGCHandle(true);
+            GCHandle gc = AllocGCHandle(TrackTypes.Extension);
             Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
 
             // We have to support gc because the type machinery makes it very
@@ -107,7 +107,7 @@ namespace Python.Runtime
         protected override void OnLoad()
         {
             base.OnLoad();
-            GCHandle gc = AllocGCHandle(true);
+            GCHandle gc = AllocGCHandle(TrackTypes.Extension);
             Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
             Runtime.PyObject_GC_UnTrack(pyHandle);
         }

@@ -12,7 +12,12 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
-        public static ShutdownMode ShutdownMode => Runtime.ShutdownMode;
+        public static ShutdownMode ShutdownMode
+        {
+            get => Runtime.ShutdownMode;
+            set => Runtime.ShutdownMode = value;
+        }
+        
 
         private static DelegateManager delegateManager;
         private static bool initialized;
@@ -187,7 +192,7 @@ namespace Python.Runtime
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
             // Remember to shut down the runtime.
-            AddShutdownHandler(() => Runtime.Shutdown(mode));
+            AddShutdownHandler(Runtime.Shutdown);
 
             // The global scope gets used implicitly quite early on, remember
             // to clear it out when we shut down.

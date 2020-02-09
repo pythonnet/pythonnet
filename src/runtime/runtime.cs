@@ -126,7 +126,7 @@ namespace Python.Runtime
         /// </summary>
         internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
-        public static ShutdownMode ShutdownMode { get; private set; }
+        public static ShutdownMode ShutdownMode { get; internal set; }
         private static PyReferenceCollection _pyRefs = new PyReferenceCollection();
 
         /// <summary>
@@ -321,6 +321,7 @@ namespace Python.Runtime
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
                 RuntimeData.StashPop();
+                RuntimeData.ClearStash();
             }
             else
 #endif
@@ -341,7 +342,7 @@ namespace Python.Runtime
         }
 
 
-        internal static void Shutdown(ShutdownMode mode = ShutdownMode.Normal)
+        internal static void Shutdown()
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
@@ -351,6 +352,7 @@ namespace Python.Runtime
 
             PyGILState_Ensure();
 
+            var mode = ShutdownMode;
 #if !NETSTANDARD
             if (mode == ShutdownMode.Reload)
             {
@@ -468,16 +470,20 @@ namespace Python.Runtime
         {
             var copyObjs = ManagedType.GetManagedObjects().ToArray();
             var objs = ManagedType.GetManagedObjects();
-            foreach (var obj in copyObjs)
+            foreach (var entry in copyObjs)
             {
-                if (!objs.Contains(obj))
+                ManagedType obj = entry.Key;
+                if (!objs.ContainsKey(obj))
                 {
                     continue;
                 }
-                obj.CallTypeClear();
-                // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
-                // thus just be safe to give it back to GC chain.
-                PyObject_GC_Track(obj.pyHandle);
+                if (entry.Value == ManagedType.TrackTypes.Extension)
+                {
+                    obj.CallTypeClear();
+                    // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
+                    // thus just be safe to give it back to GC chain.
+                    PyObject_GC_Track(obj.pyHandle);
+                }
                 if (obj.gcHandle.IsAllocated)
                 {
                     obj.gcHandle.Free();

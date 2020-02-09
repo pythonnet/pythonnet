@@ -249,7 +249,7 @@ namespace Python.Runtime
             TypeManager.StashPush(stack);
             ClassManager.StashPush(stack);
             var objs = ManagedType.GetManagedObjects();
-            foreach (var obj in objs)
+            foreach (var obj in objs.Keys)
             {
                 obj.Save();
             }
@@ -291,14 +291,13 @@ namespace Python.Runtime
 
             var stack = (Stack)formatter.Deserialize(ms);
 
-            var loadObjs = (ICollection<ManagedType>)stack.Pop();
-            var objs = ManagedType.GetManagedObjects();
-            foreach (var obj in loadObjs)
+            var loadObjs = (IDictionary<ManagedType, ManagedType.TrackTypes>)stack.Pop();
+            foreach (var entry in loadObjs)
             {
+                ManagedType obj = entry.Key;
                 obj.Load();
-                objs.Add(obj);
             }
-
+            Debug.Assert(ManagedType.GetManagedObjects().Count == loadObjs.Count);
             ClassManager.StashPop(stack);
             TypeManager.StashPop(stack);
             PyCLRMetaType = MetaType.StashPop(stack);
@@ -309,5 +308,9 @@ namespace Python.Runtime
             return PySys_GetObject("clr_data") != IntPtr.Zero;
         }
 
+        public static void ClearStash()
+        {
+            PySys_SetObject("clr_data", IntPtr.Zero);
+        }
     }
 }

@@ -14,13 +14,20 @@ namespace Python.Runtime
     [Serializable]
     internal abstract class ManagedType
     {
+        internal enum TrackTypes
+        {
+            Untrack,
+            Extension,
+            Wrapper,
+        }
+
         [NonSerialized]
         internal GCHandle gcHandle; // Native handle
 
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
-        private static readonly HashSet<ManagedType> _managedObjs = new HashSet<ManagedType>();
+        private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
         internal void IncrRefCount()
         {
@@ -48,12 +55,12 @@ namespace Python.Runtime
             }
         }
 
-        internal GCHandle AllocGCHandle(bool track = false)
+        internal GCHandle AllocGCHandle(TrackTypes track = TrackTypes.Untrack)
         {
             gcHandle = GCHandle.Alloc(this);
-            if (track)
+            if (track != TrackTypes.Untrack)
             {
-                _managedObjs.Add(this);
+                _managedObjs.Add(this, track);
             }
             return gcHandle;
         }
@@ -64,7 +71,7 @@ namespace Python.Runtime
             if (gcHandle.IsAllocated)
             {
                 gcHandle.Free();
-                gcHandle = new GCHandle();
+                gcHandle = default;
             }
         }
 
@@ -129,7 +136,7 @@ namespace Python.Runtime
             return false;
         }
 
-        internal static ICollection<ManagedType> GetManagedObjects()
+        internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
         {
             return _managedObjs;
         }

@@ -345,15 +345,16 @@ namespace Python.Runtime
         protected override void OnSave()
         {
             base.OnSave();
+            System.Diagnostics.Debug.Assert(dict == GetObjectDict(pyHandle));
+            // Decref twice in tp_clear, equilibrate them.
             Runtime.XIncref(dict);
-            Runtime.XIncref(GetObjectDict(pyHandle));
+            Runtime.XIncref(dict);
         }
 
         protected override void OnLoad()
         {
             base.OnLoad();
             cache = new Dictionary<string, ManagedType>();
-            Runtime.XIncref(dict);
             SetObjectDict(pyHandle, dict);
         }
     }
