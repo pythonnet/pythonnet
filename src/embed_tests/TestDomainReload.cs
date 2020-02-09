@@ -119,13 +119,13 @@ namespace Python.EmbeddingTest
             var provider = CodeDomProvider.CreateProvider("CSharp");
             var compilerparams = new CompilerParameters();
             var assemblies = from assembly in AppDomain.CurrentDomain.GetAssemblies()
-                             where !assembly.IsDynamic
+                             where !assembly.IsDynamic && !string.IsNullOrEmpty(assembly.Location)
                              select assembly.Location;
             compilerparams.ReferencedAssemblies.AddRange(assemblies.ToArray());
 
             compilerparams.GenerateExecutable = false;
             compilerparams.GenerateInMemory = false;
-            compilerparams.IncludeDebugInformation = true;
+            compilerparams.IncludeDebugInformation = false;
             compilerparams.OutputAssembly = assemblyName;
 
             var dir = Path.GetDirectoryName(new StackTrace(true).GetFrame(0).GetFileName());
