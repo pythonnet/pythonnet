@@ -132,7 +132,7 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Normal)
+        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
             if (_isInitialized)
             {
@@ -140,17 +140,23 @@ namespace Python.Runtime
             }
             _isInitialized = true;
 
-            if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+            if (mode == ShutdownMode.Default)
             {
-                mode = ShutdownMode.Soft;
-            }
-#if !NETSTANDARD
-            else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
-            {
-                mode = ShutdownMode.Reload;
-            }
+                if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+                {
+                    mode = ShutdownMode.Soft;
+                }
+    #if !NETSTANDARD
+                else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
+                {
+                    mode = ShutdownMode.Reload;
+                }
 #endif
-            //mode = ShutdownMode.Reload;
+                else
+                {
+                    mode = ShutdownMode.Normal;
+                }
+            }
 
             ShutdownMode = mode;
             if (Py_IsInitialized() == 0)
@@ -2196,6 +2202,7 @@ namespace Python.Runtime
 
     public enum ShutdownMode
     {
+        Default,
         Normal,
         Soft,
 #if !NETSTANDARD

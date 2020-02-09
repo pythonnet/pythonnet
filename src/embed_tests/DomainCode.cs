@@ -114,14 +114,22 @@ obj.StaticMethod()
 
     public static void RunTestObject(IntPtr handle)
     {
-        using (Py.GIL())
+        try
         {
-            
-            using (PyObject obj = new PyObject(handle))
+            using (Py.GIL())
             {
-                obj.InvokeMethod("Method");
-                obj.InvokeMethod("StaticMethod");
+            
+                using (PyObject obj = new PyObject(handle))
+                {
+                    obj.InvokeMethod("Method");
+                    obj.InvokeMethod("StaticMethod");
+                }
             }
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e);
+            throw;
         }
     }
 
