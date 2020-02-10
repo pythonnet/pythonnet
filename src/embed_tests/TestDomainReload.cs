@@ -54,22 +54,12 @@ namespace Python.EmbeddingTest
         [Test]
         public static void DomainReloadAndGC()
         {
-            // We're set up to run in the directory that includes the bin directory.
-            System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-
-            Assembly pythonRunner1 = BuildAssembly("test1");
-            RunAssemblyAndUnload(pythonRunner1, "test1");
+            RunAssemblyAndUnload("test1");
 
             Assert.That(Runtime.Runtime.Py_IsInitialized() != 0,
                 "On soft-shutdown mode, Python runtime should still running");
 
-            // This caused a crash because objects allocated in pythonRunner1
-            // still existed in memory, but the code to do python GC on those
-            // objects is gone.
-            Assembly pythonRunner2 = BuildAssembly("test2");
-            RunAssemblyAndUnload(pythonRunner2, "test2");
-
-            PythonEngine.Shutdown();
+            RunAssemblyAndUnload("test2");
         }
 
         [Test]
@@ -77,13 +67,11 @@ namespace Python.EmbeddingTest
         {
             IntPtr handle;
             Type type = typeof(Proxy);
-            Assembly assembly = BuildAssembly("test_domain_reload");
             {
                 AppDomain domain = CreateDomain("test_domain_reload");
                 var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
                         type.Assembly.FullName,
                         type.FullName);
-                theProxy.InitAssembly(assembly.Location);
                 theProxy.Call("InitPython", ShutdownMode.Reload);
                 handle = (IntPtr)theProxy.Call("GetTestObject");
                 theProxy.Call("ShutdownPython");
@@ -95,7 +83,6 @@ namespace Python.EmbeddingTest
                 var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
                         type.Assembly.FullName,
                         type.FullName);
-                theProxy.InitAssembly(assembly.Location);
                 theProxy.Call("InitPython", ShutdownMode.Reload);
 
                 // handle refering a clr object created in previous domain,
@@ -129,7 +116,8 @@ namespace Python.EmbeddingTest
             compilerparams.OutputAssembly = assemblyName;
 
             var dir = Path.GetDirectoryName(new StackTrace(true).GetFrame(0).GetFileName());
-            var results = provider.CompileAssemblyFromFile(compilerparams, Path.Combine(dir, "DomainCode.cs"));
+            string DomainCodePath = Path.Combine(dir, "DomainCode.cs");
+            var results = provider.CompileAssemblyFromFile(compilerparams, DomainCodePath);
             if (results.Errors.HasErrors)
             {
                 var errors = new System.Text.StringBuilder("Compiler Errors:\n");
@@ -152,28 +140,16 @@ namespace Python.EmbeddingTest
         /// </summary>
         class Proxy : MarshalByRefObject
         {
-            Assembly theAssembly = null;
-
-            public void InitAssembly(string assemblyPath)
-            {
-                theAssembly = Assembly.LoadFile(System.IO.Path.GetFullPath(assemblyPath));
-            }
-
             public void RunPython()
             {
                 Console.WriteLine("[Proxy] Entering RunPython");
-
-                // Call into the new assembly. Will execute Python code
-                var pythonrunner = theAssembly.GetType("PythonRunner");
-                var runPythonMethod = pythonrunner.GetMethod("RunPython");
-                runPythonMethod.Invoke(null, new object[] { });
-
+                PythonRunner.RunPython();
                 Console.WriteLine("[Proxy] Leaving RunPython");
             }
 
             public object Call(string methodName, params object[] args)
             {
-                var pythonrunner = theAssembly.GetType("PythonRunner");
+                var pythonrunner = typeof(PythonRunner);
                 var method = pythonrunner.GetMethod(methodName);
                 return method.Invoke(null, args);
             }
@@ -183,26 +159,24 @@ namespace Python.EmbeddingTest
         /// Create a domain, run the assembly in it (the RunPython function),
         /// and unload the domain.
         /// </summary>
-        static void RunAssemblyAndUnload(Assembly assembly, string assemblyName)
+        static void RunAssemblyAndUnload(string domainName)
         {
-            Console.WriteLine($"[Program.Main] === creating domain for assembly {assembly.FullName}");
+            Console.WriteLine($"[Program.Main] === creating domain {domainName}");
 
-            AppDomain domain = CreateDomain(assemblyName);
+            AppDomain domain = CreateDomain(domainName);
             // Create a Proxy object in the new domain, where we want the
             // assembly (and Python .NET) to reside
-            System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             Type type = typeof(Proxy);
             var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
                     type.Assembly.FullName,
                     type.FullName);
 
             // From now on use the Proxy to call into the new assembly
-            theProxy.InitAssembly(assemblyName);
             theProxy.RunPython();
 
-            Console.WriteLine($"[Program.Main] Before Domain Unload on {assembly.FullName}");
+            Console.WriteLine($"[Program.Main] Before Domain Unload on {domainName}");
             AppDomain.Unload(domain);
-            Console.WriteLine($"[Program.Main] After Domain Unload on {assembly.FullName}");
+            Console.WriteLine($"[Program.Main] After Domain Unload on {domainName}");
 
             // Validate that the assembly does not exist anymore
             try
@@ -254,5 +228,151 @@ namespace Python.EmbeddingTest
             return null;
         }
     }
+
+
+    //
+    // The code we'll test. All that really matters is
+    //    using GIL { Python.Exec(pyScript); }
+    // but the rest is useful for debugging.
+    //
+    // What matters in the python code is gc.collect and clr.AddReference.
+    //
+    // Note that the language version is 2.0, so no $"foo{bar}" syntax.
+    //
+    static class PythonRunner
+    {
+        public static void RunPython()
+        {
+            AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+            string name = AppDomain.CurrentDomain.FriendlyName;
+            Console.WriteLine(string.Format("[{0} in .NET] In PythonRunner.RunPython", name));
+            PythonEngine.Initialize(mode: ShutdownMode.Reload);
+            using (Py.GIL())
+            {
+                try
+                {
+                    var pyScript = string.Format("import clr\n"
+                        + "print('[{0} in python] imported clr')\n"
+                        + "clr.AddReference('System')\n"
+                        + "print('[{0} in python] allocated a clr object')\n"
+                        + "import gc\n"
+                        + "gc.collect()\n"
+                        + "print('[{0} in python] collected garbage')\n",
+                        name);
+                    PythonEngine.Exec(pyScript);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
+                }
+            }
+            PythonEngine.BeginAllowThreads();
+        }
+
+
+        private static IntPtr _state;
+
+        public static void InitPython(ShutdownMode mode)
+        {
+            PythonEngine.Initialize(mode: mode);
+            _state = PythonEngine.BeginAllowThreads();
+        }
+
+        public static void ShutdownPython()
+        {
+            PythonEngine.EndAllowThreads(_state);
+            PythonEngine.Shutdown();
+        }
+
+        public static void ShutdownPythonCompletely()
+        {
+            PythonEngine.EndAllowThreads(_state);
+            PythonEngine.ShutdownMode = ShutdownMode.Normal;
+            PythonEngine.Shutdown();
+        }
+
+        public static IntPtr GetTestObject()
+        {
+            try
+            {
+                Type type = typeof(Python.EmbeddingTest.Domain.MyClass);
+                string code = string.Format(@"
+import clr
+clr.AddReference('{0}')
+
+from Python.EmbeddingTest.Domain import MyClass
+obj = MyClass()
+obj.Method()
+obj.StaticMethod()
+", Assembly.GetExecutingAssembly().FullName);
+
+                using (Py.GIL())
+                using (var scope = Py.CreateScope())
+                {
+                    scope.Exec(code);
+                    using (PyObject obj = scope.Get("obj"))
+                    {
+                        Debug.Assert(obj.AsManagedObject(type).GetType() == type);
+                        // We only needs its Python handle
+                        Runtime.Runtime.XIncref(obj.Handle);
+                        return obj.Handle;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                throw;
+            }
+        }
+
+        public static void RunTestObject(IntPtr handle)
+        {
+            try
+            {
+                using (Py.GIL())
+                {
+
+                    using (PyObject obj = new PyObject(handle))
+                    {
+                        obj.InvokeMethod("Method");
+                        obj.InvokeMethod("StaticMethod");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                throw;
+            }
+        }
+
+        public static void ReleaseTestObject(IntPtr handle)
+        {
+            using (Py.GIL())
+            {
+                Runtime.Runtime.XDecref(handle);
+            }
+        }
+
+        static void OnDomainUnload(object sender, EventArgs e)
+        {
+            Console.WriteLine(string.Format("[{0} in .NET] unloading", AppDomain.CurrentDomain.FriendlyName));
+        }
+    }
+
 }
+
+
+namespace Python.EmbeddingTest.Domain
+{
+    [Serializable]
+    public class MyClass
+    {
+        public void Method() { }
+        public static void StaticMethod() { }
+    }
+}
+
+
 #endif
