@@ -340,30 +340,9 @@ namespace Python.Runtime
 
         private static IntPtr Get_PyObject_NextNotImplemented()
         {
-            IntPtr globals = PyDict_New();
-            if (PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins()) != 0)
-            {
-                XDecref(globals);
-                throw new PythonException();
-            }
-            const string code = "class A(object): pass";
-            IntPtr res = PyRun_String(code, (IntPtr)RunFlagType.File, globals, globals);
-            if (res == IntPtr.Zero)
-            {
-                try
-                {
-                    throw new PythonException();
-                }
-                finally
-                {
-                    XDecref(globals);
-                }
-            }
-            XDecref(res);
-            IntPtr A = PyDict_GetItemString(globals, "A");
-            IntPtr iternext = Marshal.ReadIntPtr(A, TypeOffset.tp_iternext);
-            XDecref(globals);
-            XDecref(A);
+            IntPtr pyType = SlotHelper.CreateObjectType();
+            IntPtr iternext = Marshal.ReadIntPtr(pyType, TypeOffset.tp_iternext);
+            Runtime.XDecref(pyType);
             return iternext;
         }
 

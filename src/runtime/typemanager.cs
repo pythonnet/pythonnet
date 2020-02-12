@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -818,6 +819,39 @@ namespace Python.Runtime
         {
             IntPtr fp = Marshal.ReadIntPtr(from, offset);
             Marshal.WriteIntPtr(to, offset, fp);
+        }
+    }
+
+
+    static class SlotHelper
+    {
+        public static IntPtr CreateObjectType()
+        {
+            IntPtr globals = Runtime.PyDict_New();
+            if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
+            {
+                Runtime.XDecref(globals);
+                throw new PythonException();
+            }
+            const string code = "class A(object): pass";
+            IntPtr res = Runtime.PyRun_String(code, (IntPtr)RunFlagType.File, globals, globals);
+            if (res == IntPtr.Zero)
+            {
+                try
+                {
+                    throw new PythonException();
+                }
+                finally
+                {
+                    Runtime.XDecref(globals);
+                }
+            }
+            Runtime.XDecref(res);
+            IntPtr A = Runtime.PyDict_GetItemString(globals, "A");
+            Debug.Assert(A != IntPtr.Zero);
+            Runtime.XIncref(A);
+            Runtime.XDecref(globals);
+            return A;
         }
     }
 }
