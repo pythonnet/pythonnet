@@ -244,26 +244,39 @@ namespace Python.Runtime.Platform
         /// </summary>
         public static void InitializePlatformData()
         {
-            IntPtr op;
-            IntPtr fn;
-            IntPtr platformModule = Runtime.PyImport_ImportModule("platform");
-            IntPtr emptyTuple = Runtime.PyTuple_New(0);
+            IntPtr op = IntPtr.Zero;
+            IntPtr fn = IntPtr.Zero;
+            IntPtr platformModule = IntPtr.Zero;
+            IntPtr emptyTuple = IntPtr.Zero;
+            try
+            {
+                platformModule = Runtime.PyImport_ImportModule("platform");
+                PythonException.ThrowIfIsNull(platformModule);
 
-            fn = Runtime.PyObject_GetAttrString(platformModule, "system");
-            op = Runtime.PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            PythonException.ThrowIfIsNull(op);
-            OperatingSystemName = Runtime.GetManagedString(op);
-            Runtime.XDecref(op);
-            Runtime.XDecref(fn);
+                fn = Runtime.PyObject_GetAttrString(platformModule, "system");
+                PythonException.ThrowIfIsNull(fn);
 
-            fn = Runtime.PyObject_GetAttrString(platformModule, "machine");
-            op = Runtime.PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            MachineName = Runtime.GetManagedString(op);
-            Runtime.XDecref(op);
-            Runtime.XDecref(fn);
+                emptyTuple = Runtime.PyTuple_New(0);
+                op = Runtime.PyObject_Call(fn, emptyTuple, IntPtr.Zero);
+                PythonException.ThrowIfIsNull(op);
 
-            Runtime.XDecref(emptyTuple);
-            Runtime.XDecref(platformModule);
+                OperatingSystemName = Runtime.GetManagedString(op);
+
+                fn = Runtime.PyObject_GetAttrString(platformModule, "machine");
+                PythonException.ThrowIfIsNull(fn);
+
+                op = Runtime.PyObject_Call(fn, emptyTuple, IntPtr.Zero);
+                PythonException.ThrowIfIsNull(op);
+                MachineName = Runtime.GetManagedString(op);
+            }
+            finally
+            {
+                Runtime.XDecref(op);
+                Runtime.XDecref(fn);
+
+                Runtime.XDecref(emptyTuple);
+                Runtime.XDecref(platformModule);
+            }
 
             // Now convert the strings into enum values so we can do switch
             // statements rather than constant parsing.
