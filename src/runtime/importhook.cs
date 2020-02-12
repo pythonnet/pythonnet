@@ -23,28 +23,17 @@ namespace Python.Runtime
                 module_def = ModuleDefOffset.AllocModuleDef("clr");
             }
         }
-#endif
 
-        /// <summary>
-        /// Get a <i>New reference</i> to the builtins module.
-        /// </summary>
-        static IntPtr GetNewRefToBuiltins()
+        internal static void ReleaseModuleDef()
         {
-            if (Runtime.IsPython3)
+            if (module_def == IntPtr.Zero)
             {
-                return Runtime.PyImport_ImportModule("builtins");
+                return;
             }
-            else
-            {
-                // dict is a borrowed ref, no need to decref
-                IntPtr dict = Runtime.PyImport_GetModuleDict();
-
-                // GetItemString is a borrowed ref; incref to get a new ref
-                IntPtr builtins = Runtime.PyDict_GetItemString(dict, "__builtin__");
-                Runtime.XIncref(builtins);
-                return builtins;
-            }
+            ModuleDefOffset.FreeModuleDef(module_def);
+            module_def = IntPtr.Zero;
         }
+#endif
 
         /// <summary>
         /// Initialize just the __import__ hook itself.
@@ -54,11 +43,14 @@ namespace Python.Runtime
             // We replace the built-in Python __import__ with our own: first
             // look in CLR modules, then if we don't find any call the default
             // Python __import__.
-            IntPtr builtins = GetNewRefToBuiltins();
+            IntPtr builtins = Runtime.GetBuiltins();
             py_import = Runtime.PyObject_GetAttrString(builtins, "__import__");
+            PythonException.ThrowIfIsNull(py_import);
+
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
-            Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
-            Runtime.XDecref(hook.ptr);
+            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
+            PythonException.ThrowIfIsNotZero(res);
+
             Runtime.XDecref(builtins);
         }
 
@@ -67,11 +59,15 @@ namespace Python.Runtime
         /// </summary>
         static void RestoreImport()
         {
-            IntPtr builtins = GetNewRefToBuiltins();
+            IntPtr builtins = Runtime.GetBuiltins();
 
-            Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            PythonException.ThrowIfIsNotZero(res);
             Runtime.XDecref(py_import);
             py_import = IntPtr.Zero;
+
+            hook.Release();
+            hook = null;
 
             Runtime.XDecref(builtins);
         }
@@ -112,13 +108,26 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() != 0)
+            if (Runtime.Py_IsInitialized() == 0)
             {
-                RestoreImport();
-
-                Runtime.XDecref(py_clr_module);
-                Runtime.XDecref(root.pyHandle);
+                return;
             }
+
+            RestoreImport();
+
+            bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
+            Runtime.XDecref(py_clr_module);
+            py_clr_module = IntPtr.Zero;
+#if PYTHON3
+            if (shouldFreeDef)
+            {
+                ReleaseModuleDef();
+            }
+#endif
+
+            Runtime.XDecref(root.pyHandle);
+            root = null;
+            CLRModule.Reset();
         }
 
         /// <summary>
