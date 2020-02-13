@@ -9,8 +9,8 @@ python:
 
 env:
   matrix:
-    - BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp2.0_publish/
-    - BUILD_OPTS="" NUNIT_PATH="./packages/NUnit.*/tools/nunit3-console.exe" RUN_TESTS="mono $NUNIT_PATH" EMBED_TESTS_PATH=""
+    - BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp2.0_publish/ PERF_TESTS_PATH=net461/
+    - BUILD_OPTS="" NUNIT_PATH="./packages/NUnit.*/tools/nunit3-console.exe" RUN_TESTS="mono $NUNIT_PATH" EMBED_TESTS_PATH="" PERF_TESTS_PATH=""
 
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
@@ -45,6 +45,8 @@ install:
 script:
   - python -m pytest
   - $RUN_TESTS src/embed_tests/bin/$EMBED_TESTS_PATH/Python.EmbeddingTest.dll
+  # does not work on Linux, because NuGet package for 2.3 is Windows only
+  # - "if [[ $TRAVIS_PYTHON_VERSION == '3.5' && $PERF_TESTS_PATH != '' ]]; then mono $NUNIT_PATH src/perf_tests/bin/$PERF_TESTS_PATH/Python.PerformanceTests.dll; fi"
 
 after_script:
   # Waiting on mono-coverage, SharpCover or xr.Baboon
