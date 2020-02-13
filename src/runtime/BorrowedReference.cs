@@ -1,9 +1,9 @@
 namespace Python.Runtime
 {
     using System;
-    ref struct BorrowedReference
+    readonly ref struct BorrowedReference
     {
-        public IntPtr Pointer;
+        public readonly IntPtr Pointer;
         public bool IsNull => this.Pointer == IntPtr.Zero;
 
         public PyObject ToPyObject()
@@ -13,13 +13,14 @@ namespace Python.Runtime
             Runtime.XIncref(this.Pointer);
             return new PyObject(this.Pointer);
         }
-    }
 
-    static class BorrowedReferenceExtensions {
         [Obsolete("Use overloads, that take BorrowedReference or NewReference")]
-        public static IntPtr DangerousGetAddress(this in BorrowedReference reference)
-            => reference.IsNull() ? throw new NullReferenceException() : reference.Pointer;
-        public static bool IsNull(this in BorrowedReference reference)
-            => reference.Pointer == IntPtr.Zero;
+        public IntPtr DangerousGetAddress()
+            => this.IsNull ? throw new NullReferenceException() : this.Pointer;
+
+        BorrowedReference(IntPtr pointer)
+        {
+            this.Pointer = pointer;
+        }
     }
 }
