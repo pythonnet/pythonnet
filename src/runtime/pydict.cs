@@ -139,13 +139,20 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Items()
         {
-            using var items = Runtime.PyDict_Items(this.obj);
-            if (items.IsNull)
+            var items = Runtime.PyDict_Items(this.obj);
+            try
             {
-                throw new PythonException();
-            }
+                if (items.IsNull)
+                {
+                    throw new PythonException();
+                }
 
-            return items.ToPyObject();
+                return items.ToPyObject();
+            }
+            finally
+            {
+                items.Dispose();
+            }
         }
 
 
