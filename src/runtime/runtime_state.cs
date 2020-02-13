@@ -249,16 +249,27 @@ namespace Python.Runtime
             TypeManager.StashPush(stack);
             ClassManager.StashPush(stack);
             var objs = ManagedType.GetManagedObjects();
-            foreach (var obj in objs.Keys)
+            var saveObjs = new Dictionary<ManagedType, ManagedType.TrackTypes>();
+            foreach (var entry in objs)
             {
+                var obj = entry.Key;
+                if (entry.Value == ManagedType.TrackTypes.Wrapper
+                    && !obj.GetType().IsSerializable)
+                {
+                    // XXX: Skip non-serializable objects,
+                    // use them after next initialization will raise exceptions.
+                    continue;
+                }
+                Debug.Assert(obj.GetType().IsSerializable);
                 obj.Save();
+                saveObjs.Add(entry.Key, entry.Value);
             }
-            stack.Push(objs);
+            stack.Push(saveObjs);
             formatter.Serialize(ms, stack);
 
             byte[] data = ms.GetBuffer();
             // TODO: use buffer api instead
-            System.Diagnostics.Debug.Assert(data.Length <= int.MaxValue);
+            Debug.Assert(data.Length <= int.MaxValue);
             IntPtr mem = PyMem_Malloc(data.LongLength + IntPtr.Size);
             Marshal.WriteIntPtr(mem, (IntPtr)data.LongLength);
             Marshal.Copy(data, 0, mem + IntPtr.Size, data.Length);
