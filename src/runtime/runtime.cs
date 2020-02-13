@@ -6,8 +6,6 @@ using System.Threading;
 using System.Collections.Generic;
 using Python.Runtime.Platform;
 using System.Linq;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Python.Runtime
 {
@@ -157,6 +155,14 @@ namespace Python.Runtime
                 {
                     RuntimeState.Save();
                 }
+#if !NETSTANDARD
+                // XXX: Reload mode may reduct to Soft mode,
+                // so even on Reload mode it still needs to save the RuntimeState
+                else if (mode == ShutdownMode.Reload)
+                {
+                    RuntimeState.Save();
+                }
+#endif
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
             else

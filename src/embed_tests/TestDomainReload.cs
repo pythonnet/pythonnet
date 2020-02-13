@@ -52,11 +52,20 @@ namespace Python.EmbeddingTest
         {
             Assert.IsFalse(PythonEngine.IsInitialized);
             RunAssemblyAndUnload("test1");
-
             Assert.That(Runtime.Runtime.Py_IsInitialized() != 0,
                 "On soft-shutdown mode, Python runtime should still running");
 
             RunAssemblyAndUnload("test2");
+            Assert.That(Runtime.Runtime.Py_IsInitialized() != 0,
+                "On soft-shutdown mode, Python runtime should still running");
+
+            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
+            {
+                // The default mode is a normal mode,
+                // it should shutdown the Python VM avoiding influence other tests.
+                Runtime.Runtime.PyGILState_Ensure();
+                Runtime.Runtime.Py_Finalize();
+            }
         }
 
         [Test]
@@ -268,17 +277,12 @@ namespace Python.EmbeddingTest
             // if it used a another mode(the default mode) in other tests,
             // when other tests trying to access these reserved objects, it may cause Domain exception,
             // thus it needs to reduct to Soft mode to make sure all clr objects remove from Python.
-            if (PythonEngine.DefaultShutdownMode != ShutdownMode.Reload)
+            var defaultMode = PythonEngine.DefaultShutdownMode;
+            if (defaultMode != ShutdownMode.Reload)
             {
-                PythonEngine.ShutdownMode = ShutdownMode.Soft;
+                PythonEngine.ShutdownMode = defaultMode;
             }
             PythonEngine.Shutdown();
-            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
-            {
-                // Normal mode will shutdown the VM, so it needs to be shutdown
-                // for avoiding influence with other tests.
-                Runtime.Runtime.Shutdown();
-            }
         }
 
         public static IntPtr GetTestObject()

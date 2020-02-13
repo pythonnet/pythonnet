@@ -98,7 +98,7 @@ namespace Python.Runtime
         private static void ResotreModules(IntPtr dummyGC)
         {
             var intialModules = PySys_GetObject("initial_modules");
-            Debug.Assert(intialModules != null);
+            Debug.Assert(intialModules != IntPtr.Zero);
             var modules = PyImport_GetModuleDict();
             foreach (var name in GetModuleNames())
             {
