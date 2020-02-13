@@ -645,7 +645,8 @@ namespace Python.Runtime
         
         public class GILState : IDisposable
         {
-            private IntPtr state;
+            private readonly IntPtr state;
+            private bool isDisposed;
 
             internal GILState()
             {
@@ -654,8 +655,11 @@ namespace Python.Runtime
 
             public void Dispose()
             {
+                if (this.isDisposed) return;
+
                 PythonEngine.ReleaseLock(state);
                 GC.SuppressFinalize(this);
+                this.isDisposed = true;
             }
 
             ~GILState()
