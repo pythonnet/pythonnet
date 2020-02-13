@@ -3,12 +3,19 @@
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
     <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
+    <OutputPath>bin\</OutputPath>
 
     <IsPackable>false</IsPackable>
+
+    <Platforms>x64;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
