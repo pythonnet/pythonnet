@@ -1591,7 +1591,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyDict_Values(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Items(IntPtr pointer);
+        internal static extern NewReference PyDict_Items(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_Copy(IntPtr pointer);
