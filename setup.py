@@ -362,6 +362,16 @@ class BuildExtPythonnet(build_ext.build_ext):
                 ),
                 shell=use_shell,
             )
+            subprocess.check_call(
+                " ".join(
+                    cmd
+                    + [
+                        '"/t:Python_PerformanceTests:publish"',
+                        "/p:TargetFramework=net461",
+                    ]
+                ),
+                shell=use_shell,
+            )
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
 
