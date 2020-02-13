@@ -124,13 +124,13 @@ namespace Python.Runtime
         /// </summary>
         internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
-        public static bool SoftShutdown { get; private set; }
+        public static ShutdownMode ShutdownMode { get; internal set; }
         private static PyReferenceCollection _pyRefs = new PyReferenceCollection();
 
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize(bool initSigs = false, bool softShutdown = false)
+        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
             if (_isInitialized)
             {
@@ -138,12 +138,12 @@ namespace Python.Runtime
             }
             _isInitialized = true;
 
-            if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+            if (mode == ShutdownMode.Default)
             {
-                softShutdown = true;
+                mode = GetDefaultShutdownMode();
             }
+            ShutdownMode = mode;
 
-            SoftShutdown = softShutdown;
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
@@ -151,10 +151,18 @@ namespace Python.Runtime
                 {
                     PyEval_InitThreads();
                 }
-                if (softShutdown)
+                if (mode == ShutdownMode.Soft)
                 {
                     RuntimeState.Save();
                 }
+#if !NETSTANDARD
+                // XXX: Reload mode may reduct to Soft mode,
+                // so even on Reload mode it still needs to save the RuntimeState
+                else if (mode == ShutdownMode.Reload)
+                {
+                    RuntimeState.Save();
+                }
+#endif
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
             else
@@ -286,29 +294,31 @@ namespace Python.Runtime
 
             Error = new IntPtr(-1);
 
+            _PyObject_NextNotImplemented = Get_PyObject_NextNotImplemented();
+            {
+                IntPtr sys = PyImport_ImportModule("sys");
+                PyModuleType = PyObject_Type(sys);
+                XDecref(sys);
+            }
+
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
             // happen after caching the python types, above.
             NativeCodePageHelper.InitializePlatformData();
 
-            IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
-
-            if (_PythonDll != "__Internal")
-            {
-                dllLocal = loader.Load(_PythonDll);
-            }
-            _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
-            PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
-
-            if (dllLocal != IntPtr.Zero)
-            {
-                loader.Free(dllLocal);
-            }
-
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-            PyCLRMetaType = MetaType.Initialize(); // Steal a reference
+#if !NETSTANDARD
+            if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
+            {
+                RuntimeData.StashPop();
+                RuntimeData.ClearStash();
+            }
+            else
+#endif
+            {
+                PyCLRMetaType = MetaType.Initialize(); // Steal a reference
+            }
             Exceptions.Initialize();
             ImportHook.Initialize();
 
@@ -322,8 +332,15 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
         }
 
+        private static IntPtr Get_PyObject_NextNotImplemented()
+        {
+            IntPtr pyType = SlotHelper.CreateObjectType();
+            IntPtr iternext = Marshal.ReadIntPtr(pyType, TypeOffset.tp_iternext);
+            Runtime.XDecref(pyType);
+            return iternext;
+        }
 
-        internal static void Shutdown(bool soft = false)
+        internal static void Shutdown()
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
@@ -333,12 +350,24 @@ namespace Python.Runtime
 
             PyGILState_Ensure();
 
+            var mode = ShutdownMode;
+#if !NETSTANDARD
+            if (mode == ShutdownMode.Reload)
+            {
+                RuntimeData.Stash();
+            }
+#endif
             AssemblyManager.Shutdown();
             Exceptions.Shutdown();
             ImportHook.Shutdown();
             Finalizer.Shutdown();
 
-            ClearClrModules();
+#if !NETSTANDARD
+            if (mode != ShutdownMode.Reload)
+            {
+                ClearClrModules();
+            }
+#endif
             RemoveClrRootModule();
 
             MoveClrInstancesOnwershipToPython();
@@ -348,10 +377,13 @@ namespace Python.Runtime
             MetaType.Release();
             PyCLRMetaType = IntPtr.Zero;
 
-            if (soft)
+            if (mode != ShutdownMode.Normal)
             {
                 PyGC_Collect();
-                RuntimeState.Restore();
+                if (mode == ShutdownMode.Soft)
+                {
+                    RuntimeState.Restore();
+                }
                 ResetPyMembers();
                 GC.Collect();
                 try
@@ -367,6 +399,21 @@ namespace Python.Runtime
             }
             ResetPyMembers();
             Py_Finalize();
+        }
+
+        internal static ShutdownMode GetDefaultShutdownMode()
+        {
+            if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+            {
+                return ShutdownMode.Soft;
+            }
+#if !NETSTANDARD
+            else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
+            {
+                return ShutdownMode.Reload;
+            }
+#endif
+            return ShutdownMode.Normal;
         }
 
         // called *without* the GIL acquired by clr._AtExit
@@ -436,16 +483,20 @@ namespace Python.Runtime
         {
             var copyObjs = ManagedType.GetManagedObjects().ToArray();
             var objs = ManagedType.GetManagedObjects();
-            foreach (var obj in copyObjs)
+            foreach (var entry in copyObjs)
             {
-                if (!objs.Contains(obj))
+                ManagedType obj = entry.Key;
+                if (!objs.ContainsKey(obj))
                 {
                     continue;
                 }
-                obj.CallTypeClear();
-                // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
-                // thus just be safe to give it back to GC chain.
-                PyObject_GC_Track(obj.pyHandle);
+                if (entry.Value == ManagedType.TrackTypes.Extension)
+                {
+                    obj.CallTypeClear();
+                    // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
+                    // thus just be safe to give it back to GC chain.
+                    PyObject_GC_Track(obj.pyHandle);
+                }
                 if (obj.gcHandle.IsAllocated)
                 {
                     obj.gcHandle.Free();
@@ -657,7 +708,7 @@ namespace Python.Runtime
                     {
                         return;
                     }
-                    NativeCall.Impl.Void_Call_1(new IntPtr(f), op);
+                    NativeCall.Void_Call_1(new IntPtr(f), op);
                 }
             }
 #endif
@@ -946,6 +997,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, string name);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value);
@@ -2099,6 +2153,8 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyCapsule_GetPointer(IntPtr capsule, string name);
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyCapsule_SetPointer(IntPtr capsule, IntPtr pointer);
 
         //====================================================================
         // Miscellaneous
@@ -2119,13 +2175,15 @@ namespace Python.Runtime
         internal static void SetNoSiteFlag()
         {
             var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
-
             IntPtr dllLocal;
             if (_PythonDll != "__Internal")
             {
                 dllLocal = loader.Load(_PythonDll);
+                if (dllLocal == IntPtr.Zero)
+                {
+                    throw new Exception($"Cannot load {_PythonDll}");
+                }
             }
-
             try
             {
                 Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
@@ -2148,6 +2206,17 @@ namespace Python.Runtime
             return IsPython3 ? PyImport_ImportModule("builtins")
                     : PyImport_ImportModule("__builtin__");
         }
+    }
+
+
+    public enum ShutdownMode
+    {
+        Default,
+        Normal,
+        Soft,
+#if !NETSTANDARD
+        Reload,
+#endif
     }
 
 

@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -12,6 +14,12 @@ namespace Python.Runtime
     {
         private static IntPtr PyCLRMetaType;
         private static SlotsHolder _metaSlotsHodler;
+
+        internal static readonly string[] CustomMethods = new string[]
+        {
+            "__instancecheck__",
+            "__subclasscheck__",
+        };
 
         /// <summary>
         /// Metatype initialization. This bootstraps the CLR metatype to life.
@@ -30,6 +38,29 @@ namespace Python.Runtime
             }
             Runtime.Py_CLEAR(ref PyCLRMetaType);
             _metaSlotsHodler = null;
+        }
+
+        internal static void StashPush(Stack stack)
+        {
+            Runtime.XIncref(PyCLRMetaType);
+            stack.Push(PyCLRMetaType);
+        }
+
+        internal static IntPtr StashPop(Stack stack)
+        {
+            PyCLRMetaType = (IntPtr)stack.Pop();
+            _metaSlotsHodler = new SlotsHolder(PyCLRMetaType);
+            TypeManager.InitializeSlots(PyCLRMetaType, typeof(MetaType), _metaSlotsHodler);
+
+            IntPtr mdef = Marshal.ReadIntPtr(PyCLRMetaType, TypeOffset.tp_methods);
+            foreach (var methodName in CustomMethods)
+            {
+                var mi = typeof(MetaType).GetMethod(methodName);
+                ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+                _metaSlotsHodler.KeeapAlive(thunkInfo);
+                mdef = TypeManager.WriteMethodDef(mdef, methodName, thunkInfo.Address);
+            }
+            return PyCLRMetaType;
         }
 
         /// <summary>

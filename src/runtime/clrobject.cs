@@ -3,12 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
+    [Serializable]
     internal class CLRObject : ManagedType
     {
         internal object inst;
 
         internal CLRObject(object ob, IntPtr tp)
         {
+            System.Diagnostics.Debug.Assert(tp != IntPtr.Zero);
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
             long flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
@@ -22,7 +24,7 @@ namespace Python.Runtime
                 }
             }
 
-            GCHandle gc = AllocGCHandle();
+            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
             Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
             tpHandle = tp;
             pyHandle = py;
@@ -66,6 +68,20 @@ namespace Python.Runtime
         {
             CLRObject co = GetInstance(ob);
             return co.pyHandle;
+        }
+
+        protected override void OnSave()
+        {
+            base.OnSave();
+            Runtime.XIncref(pyHandle);
+        }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
+            Runtime.XDecref(pyHandle);
         }
     }
 }

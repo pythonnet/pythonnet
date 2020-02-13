@@ -7,6 +7,7 @@ namespace Python.Runtime
     /// <summary>
     /// Module level functions
     /// </summary>
+    [Serializable]
     internal class ModuleFunctionObject : MethodObject
     {
         public ModuleFunctionObject(Type type, string name, MethodInfo[] info, bool allow_threads)

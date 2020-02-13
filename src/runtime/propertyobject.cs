@@ -7,6 +7,7 @@ namespace Python.Runtime
     /// <summary>
     /// Implements a Python descriptor type that manages CLR properties.
     /// </summary>
+    [Serializable]
     internal class PropertyObject : ExtensionType
     {
         private PropertyInfo info;

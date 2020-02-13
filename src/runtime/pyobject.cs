@@ -20,6 +20,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
+    //[Serializable]
     public class PyObject : DynamicObject, IEnumerable, IPyDisposable
     {
 #if TRACE_ALLOC
@@ -30,7 +31,10 @@ namespace Python.Runtime
 #endif  
 
         protected internal IntPtr obj = IntPtr.Zero;
+
+        [NonSerialized]
         private bool disposed = false;
+        [NonSerialized]
         private bool _finalized = false;
 
         /// <summary>

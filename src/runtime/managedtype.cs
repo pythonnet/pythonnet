@@ -11,13 +11,23 @@ namespace Python.Runtime
     /// code. It defines the common fields that associate CLR and Python
     /// objects and common utilities to convert between those identities.
     /// </summary>
+    [Serializable]
     internal abstract class ManagedType
     {
+        internal enum TrackTypes
+        {
+            Untrack,
+            Extension,
+            Wrapper,
+        }
+
+        [NonSerialized]
         internal GCHandle gcHandle; // Native handle
+
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
-        private static readonly HashSet<ManagedType> _managedObjs = new HashSet<ManagedType>();
+        private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
         internal void IncrRefCount()
         {
@@ -45,12 +55,12 @@ namespace Python.Runtime
             }
         }
 
-        internal GCHandle AllocGCHandle(bool track = false)
+        internal GCHandle AllocGCHandle(TrackTypes track = TrackTypes.Untrack)
         {
             gcHandle = GCHandle.Alloc(this);
-            if (track)
+            if (track != TrackTypes.Untrack)
             {
-                _managedObjs.Add(this);
+                _managedObjs.Add(this, track);
             }
             return gcHandle;
         }
@@ -61,7 +71,7 @@ namespace Python.Runtime
             if (gcHandle.IsAllocated)
             {
                 gcHandle.Free();
-                gcHandle = new GCHandle();
+                gcHandle = default;
             }
         }
 
@@ -126,7 +136,7 @@ namespace Python.Runtime
             return false;
         }
 
-        internal static ICollection<ManagedType> GetManagedObjects()
+        internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
         {
             return _managedObjs;
         }
@@ -190,6 +200,19 @@ namespace Python.Runtime
             ClearObjectDict(pyHandle);
         }
 
+        internal void Save()
+        {
+            OnSave();
+        }
+
+        internal void Load()
+        {
+            OnLoad();
+        }
+
+        protected virtual void OnSave() { }
+        protected virtual void OnLoad() { }
+
         protected static void ClearObjectDict(IntPtr ob)
         {
             IntPtr dict = GetObjectDict(ob);
@@ -201,12 +224,12 @@ namespace Python.Runtime
             Runtime.XDecref(dict);
         }
 
-        private static IntPtr GetObjectDict(IntPtr ob)
+        protected static IntPtr GetObjectDict(IntPtr ob)
         {
             return Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
         }
 
-        private static void SetObjectDict(IntPtr ob, IntPtr value)
+        protected static void SetObjectDict(IntPtr ob, IntPtr value)
         {
             Marshal.WriteIntPtr(ob, ObjectOffset.DictOffset(ob), value);
         }
