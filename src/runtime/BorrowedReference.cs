@@ -1,7 +1,6 @@
 namespace Python.Runtime
 {
     using System;
-    [NonCopyable]
     ref struct BorrowedReference
     {
         public IntPtr Pointer;
