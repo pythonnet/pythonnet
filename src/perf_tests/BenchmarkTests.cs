@@ -21,21 +21,23 @@ namespace Python.PerformanceTests
             Environment.CurrentDirectory = Path.Combine(DeploymentRoot, "new");
             this.summary = BenchmarkRunner.Run<PythonCallingNetBenchmark>();
             Assert.IsNotEmpty(this.summary.Reports);
-            Assert.IsTrue(this.summary.Reports.All(r => r.Success));
+            Assert.IsTrue(
+                condition: this.summary.Reports.All(r => r.Success),
+                message: "BenchmarkDotNet failed to execute or collect results of performance tests. See logs above.");
         }
 
         [Test]
         public void ReadInt64Property()
         {
             double optimisticPerfRatio = GetOptimisticPerfRatio(this.summary.Reports);
-            Assert.LessOrEqual(optimisticPerfRatio, 0.68);
+            AssertPerformanceIsBetterOrSame(optimisticPerfRatio, target: 0.66);
         }
 
         [Test]
         public void WriteInt64Property()
         {
             double optimisticPerfRatio = GetOptimisticPerfRatio(this.summary.Reports);
-            Assert.LessOrEqual(optimisticPerfRatio, 0.66);
+            AssertPerformanceIsBetterOrSame(optimisticPerfRatio, target: 0.64);
         }
 
         static double GetOptimisticPerfRatio(
@@ -59,5 +61,14 @@ namespace Python.PerformanceTests
         }
 
         public static string DeploymentRoot => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+        public static void AssertPerformanceIsBetterOrSame(
+            double actual, double target,
+            double wiggleRoom = 1.1, [CallerMemberName] string testName = null) {
+            double threshold = target * wiggleRoom;
+            Assert.LessOrEqual(actual, threshold,
+                $"{testName}: {actual:F3} > {threshold:F3} (target: {target:F3})"
+                + ": perf result is higher than the failure threshold.");
+        }
     }
 }
