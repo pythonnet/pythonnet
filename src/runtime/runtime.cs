@@ -301,25 +301,17 @@ namespace Python.Runtime
 
             Error = new IntPtr(-1);
 
+            _PyObject_NextNotImplemented = Get_PyObject_NextNotImplemented();
+            {
+                IntPtr sys = PyImport_ImportModule("sys");
+                PyModuleType = PyObject_Type(sys);
+                XDecref(sys);
+            }
+
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
             // happen after caching the python types, above.
             NativeCodePageHelper.InitializePlatformData();
-
-            IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
-
-            if (_PythonDll != "__Internal")
-            {
-                dllLocal = loader.Load(_PythonDll);
-            }
-            _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
-            PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
-
-            if (dllLocal != IntPtr.Zero)
-            {
-                loader.Free(dllLocal);
-            }
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
@@ -347,6 +339,13 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
         }
 
+        private static IntPtr Get_PyObject_NextNotImplemented()
+        {
+            IntPtr pyType = SlotHelper.CreateObjectType();
+            IntPtr iternext = Marshal.ReadIntPtr(pyType, TypeOffset.tp_iternext);
+            Runtime.XDecref(pyType);
+            return iternext;
+        }
 
         internal static void Shutdown()
         {
@@ -1985,7 +1984,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);
@@ -2168,13 +2167,15 @@ namespace Python.Runtime
         internal static void SetNoSiteFlag()
         {
             var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
-
             IntPtr dllLocal;
             if (_PythonDll != "__Internal")
             {
                 dllLocal = loader.Load(_PythonDll);
+                if (dllLocal == IntPtr.Zero)
+                {
+                    throw new Exception($"Cannot load {_PythonDll}");
+                }
             }
-
             try
             {
                 Py_NoSiteFlag = loader.GetFunction(dllLocal, "Py_NoSiteFlag");
