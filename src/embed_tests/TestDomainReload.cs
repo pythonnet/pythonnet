@@ -218,7 +218,12 @@ namespace Python.EmbeddingTest
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             string name = AppDomain.CurrentDomain.FriendlyName;
             Console.WriteLine(string.Format("[{0} in .NET] In PythonRunner.RunPython", name));
-            PythonEngine.Initialize();
+            var mode = PythonEngine.DefaultShutdownMode;
+            if (mode == ShutdownMode.Normal)
+            {
+                mode = ShutdownMode.Soft;
+            }
+            PythonEngine.Initialize(mode: mode);
             using (Py.GIL())
             {
                 try
