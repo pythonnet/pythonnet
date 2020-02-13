@@ -142,23 +142,10 @@ namespace Python.Runtime
 
             if (mode == ShutdownMode.Default)
             {
-                if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
-                {
-                    mode = ShutdownMode.Soft;
-                }
-    #if !NETSTANDARD
-                else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
-                {
-                    mode = ShutdownMode.Reload;
-                }
-#endif
-                else
-                {
-                    mode = ShutdownMode.Normal;
-                }
+                mode = GetDefaultShutdownMode();
             }
-
             ShutdownMode = mode;
+
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
@@ -406,6 +393,21 @@ namespace Python.Runtime
             }
             ResetPyMembers();
             Py_Finalize();
+        }
+
+        internal static ShutdownMode GetDefaultShutdownMode()
+        {
+            if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+            {
+                return ShutdownMode.Soft;
+            }
+#if !NETSTANDARD
+            else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
+            {
+                return ShutdownMode.Reload;
+            }
+#endif
+            return ShutdownMode.Normal;
         }
 
         // called *without* the GIL acquired by clr._AtExit
@@ -1984,7 +1986,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);

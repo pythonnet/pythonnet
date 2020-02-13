@@ -17,7 +17,8 @@ namespace Python.Runtime
             get => Runtime.ShutdownMode;
             set => Runtime.ShutdownMode = value;
         }
-        
+
+        public static ShutdownMode DefaultShutdownMode => Runtime.GetDefaultShutdownMode();
 
         private static DelegateManager delegateManager;
         private static bool initialized;
@@ -157,7 +158,7 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Normal)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
             Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode);
         }

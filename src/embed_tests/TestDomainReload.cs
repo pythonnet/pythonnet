@@ -1,9 +1,5 @@
 using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using Python.Runtime;
@@ -54,6 +50,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void DomainReloadAndGC()
         {
+            Assert.IsFalse(PythonEngine.IsInitialized);
             RunAssemblyAndUnload("test1");
 
             Assert.That(Runtime.Runtime.Py_IsInitialized() != 0,
@@ -65,72 +62,47 @@ namespace Python.EmbeddingTest
         [Test]
         public static void CrossDomainObject()
         {
-            IntPtr handle;
+            IntPtr handle = IntPtr.Zero;
             Type type = typeof(Proxy);
             {
                 AppDomain domain = CreateDomain("test_domain_reload");
-                var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                        type.Assembly.FullName,
-                        type.FullName);
-                theProxy.Call("InitPython", ShutdownMode.Reload);
-                handle = (IntPtr)theProxy.Call("GetTestObject");
-                theProxy.Call("ShutdownPython");
-                AppDomain.Unload(domain);
+                try
+                {
+                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
+                            type.Assembly.FullName,
+                            type.FullName);
+                    theProxy.Call("InitPython", ShutdownMode.Reload);
+                    handle = (IntPtr)theProxy.Call("GetTestObject");
+                    theProxy.Call("ShutdownPython");
+                }
+                finally
+                {
+                    AppDomain.Unload(domain);
+                }
             }
 
             {
                 AppDomain domain = CreateDomain("test_domain_reload");
-                var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                        type.Assembly.FullName,
-                        type.FullName);
-                theProxy.Call("InitPython", ShutdownMode.Reload);
-
-                // handle refering a clr object created in previous domain,
-                // it should had been deserialized and became callable agian.
-                theProxy.Call("RunTestObject", handle);
-                theProxy.Call("ShutdownPythonCompletely");
-                AppDomain.Unload(domain);
-            }
-            Assert.IsTrue(Runtime.Runtime.Py_IsInitialized() == 0);
-        }
-
-        /// <summary>
-        /// Build an assembly out of the source code above.
-        ///
-        /// This creates a file <paramref name="assemblyName"/>.dll in order
-        /// to support the statement "proxy.theAssembly = assembly" below.
-        /// That statement needs a file, can't run via memory.
-        /// </summary>
-        static Assembly BuildAssembly(string assemblyName)
-        {
-            var provider = CodeDomProvider.CreateProvider("CSharp");
-            var compilerparams = new CompilerParameters();
-            var assemblies = from assembly in AppDomain.CurrentDomain.GetAssemblies()
-                             where !assembly.IsDynamic && !string.IsNullOrEmpty(assembly.Location)
-                             select assembly.Location;
-            compilerparams.ReferencedAssemblies.AddRange(assemblies.ToArray());
-
-            compilerparams.GenerateExecutable = false;
-            compilerparams.GenerateInMemory = false;
-            compilerparams.IncludeDebugInformation = false;
-            compilerparams.OutputAssembly = assemblyName;
-
-            var dir = Path.GetDirectoryName(new StackTrace(true).GetFrame(0).GetFileName());
-            string DomainCodePath = Path.Combine(dir, "DomainCode.cs");
-            var results = provider.CompileAssemblyFromFile(compilerparams, DomainCodePath);
-            if (results.Errors.HasErrors)
-            {
-                var errors = new System.Text.StringBuilder("Compiler Errors:\n");
-                foreach (CompilerError error in results.Errors)
+                try
                 {
-                    errors.AppendFormat("Line {0},{1}\t: {2}\n",
-                            error.Line, error.Column, error.ErrorText);
+                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
+                            type.Assembly.FullName,
+                            type.FullName);
+                    theProxy.Call("InitPython", ShutdownMode.Reload);
+
+                    // handle refering a clr object created in previous domain,
+                    // it should had been deserialized and became callable agian.
+                    theProxy.Call("RunTestObject", handle);
+                    theProxy.Call("ShutdownPythonCompletely");
                 }
-                throw new Exception(errors.ToString());
+                finally
+                {
+                    AppDomain.Unload(domain);
+                }
             }
-            else
+            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
             {
-                return results.CompiledAssembly;
+                Assert.IsTrue(Runtime.Runtime.Py_IsInitialized() == 0);
             }
         }
 
@@ -246,7 +218,7 @@ namespace Python.EmbeddingTest
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             string name = AppDomain.CurrentDomain.FriendlyName;
             Console.WriteLine(string.Format("[{0} in .NET] In PythonRunner.RunPython", name));
-            PythonEngine.Initialize(mode: ShutdownMode.Reload);
+            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 try
@@ -287,8 +259,21 @@ namespace Python.EmbeddingTest
         public static void ShutdownPythonCompletely()
         {
             PythonEngine.EndAllowThreads(_state);
-            PythonEngine.ShutdownMode = ShutdownMode.Normal;
+            // XXX: Reload mode will reserve clr objects after `Runtime.Shutdown`,
+            // if it used a another mode(the default mode) in other tests,
+            // when other tests trying to access these reserved objects, it may cause Domain exception,
+            // thus it needs to reduct to Soft mode to make sure all clr objects remove from Python.
+            if (PythonEngine.DefaultShutdownMode != ShutdownMode.Reload)
+            {
+                PythonEngine.ShutdownMode = ShutdownMode.Soft;
+            }
             PythonEngine.Shutdown();
+            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
+            {
+                // Normal mode will shutdown the VM, so it needs to be shutdown
+                // for avoiding influence with other tests.
+                Runtime.Runtime.Shutdown();
+            }
         }
 
         public static IntPtr GetTestObject()
