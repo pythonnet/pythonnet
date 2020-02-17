@@ -140,10 +140,12 @@ namespace Python.Runtime
             foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
                 var op = (IntPtr)fi.GetValue(type);
-                if (op != IntPtr.Zero)
+                if (op == IntPtr.Zero)
                 {
-                    Runtime.XDecref(op);
+                    continue;
                 }
+                Runtime.XDecref(op);
+                fi.SetValue(null, IntPtr.Zero);
             }
             Runtime.Py_CLEAR(ref exceptions_module);
             Runtime.Py_CLEAR(ref warnings_module);

@@ -499,16 +499,9 @@ namespace Python.Runtime
             {
                 return ThunkInfo.Empty;
             }
-            try
-            {
-                Delegate d = Delegate.CreateDelegate(dt, method);
-                var info = new ThunkInfo(d);
-                return info;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            Delegate d = Delegate.CreateDelegate(dt, method);
+            var info = new ThunkInfo(d);
+            return info;
         }
 
 

@@ -358,9 +358,7 @@ namespace Python.Runtime
             }
 #endif
             AssemblyManager.Shutdown();
-            Exceptions.Shutdown();
             ImportHook.Shutdown();
-            Finalizer.Shutdown();
 
 #if !NETSTANDARD
             if (mode != ShutdownMode.Reload)
@@ -376,6 +374,9 @@ namespace Python.Runtime
 
             MetaType.Release();
             PyCLRMetaType = IntPtr.Zero;
+
+            Exceptions.Shutdown();
+            Finalizer.Shutdown();
 
             if (mode != ShutdownMode.Normal)
             {
