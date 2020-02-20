@@ -29,6 +29,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
   together with Nuitka
 - Fixes bug where delegates get casts (dotnetcore)
 - Determine size of interpreter longs at runtime
+- Handling exceptions ocurred in ModuleObject's getattribute 
 
 ## [2.4.0][]
 
