@@ -111,7 +111,7 @@ if ($XPLAT){
     }
 }
 
-Write-Host ($timings | Format-Table | Out-String)
+Write-Host "Timings:" ($timings | Format-Table | Out-String) -ForegroundColor "Green"
 
 # Set exit code to fail if either Python or Embedded tests failed
 if ($PYTHON_STATUS -ne 0 -or $CS_STATUS -ne 0 -or $CS_PERF_STATUS -ne 0) {
