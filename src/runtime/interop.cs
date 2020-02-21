@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Python.Runtime
 {
@@ -283,7 +284,7 @@ namespace Python.Runtime
             byte[] ascii = Encoding.ASCII.GetBytes(modulename);
             int size = name + ascii.Length + 1;
             IntPtr ptr = Marshal.AllocHGlobal(size);
-            for (int i = 0; i < m_free; i += IntPtr.Size)
+            for (int i = 0; i <= m_free; i += IntPtr.Size)
                 Marshal.WriteIntPtr(ptr, i, IntPtr.Zero);
             Marshal.Copy(ascii, 0, (IntPtr)(ptr + name), ascii.Length);
             Marshal.WriteIntPtr(ptr, m_name, (IntPtr)(ptr + name));
@@ -390,7 +391,7 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        private static ArrayList keepAlive;
+        private static List<ThunkInfo> keepAlive;
         private static Hashtable pmap;
 
         static Interop()
@@ -407,8 +408,7 @@ namespace Python.Runtime
                 p[item.Name] = item;
             }
 
-            keepAlive = new ArrayList();
-            Marshal.AllocHGlobal(IntPtr.Size);
+            keepAlive = new List<ThunkInfo>();
             pmap = new Hashtable();
 
             pmap["tp_dealloc"] = p["DestructorFunc"];
@@ -505,7 +505,7 @@ namespace Python.Runtime
             return pmap[name] as Type;
         }
 
-        internal static IntPtr GetThunk(MethodInfo method, string funcType = null)
+        internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
         {
             Type dt;
             if (funcType != null)
@@ -513,18 +513,15 @@ namespace Python.Runtime
             else
                 dt = GetPrototype(method.Name);
 
-            if (dt != null)
+            if (dt == null)
             {
-                IntPtr tmp = Marshal.AllocHGlobal(IntPtr.Size);
-                Delegate d = Delegate.CreateDelegate(dt, method);
-                Thunk cb = new Thunk(d);
-                Marshal.StructureToPtr(cb, tmp, false);
-                IntPtr fp = Marshal.ReadIntPtr(tmp, 0);
-                Marshal.FreeHGlobal(tmp);
-                keepAlive.Add(d);
-                return fp;
+                return ThunkInfo.Empty;
             }
-            return IntPtr.Zero;
+            Delegate d = Delegate.CreateDelegate(dt, method);
+            var info = new ThunkInfo(d);
+            // TODO: remove keepAlive when #958 merged, let the lifecycle of ThunkInfo transfer to caller.
+            keepAlive.Add(info);
+            return info;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -576,6 +573,24 @@ namespace Python.Runtime
         public Thunk(Delegate d)
         {
             fn = d;
+        }
+    }
+
+    internal class ThunkInfo
+    {
+        public readonly Delegate Target;
+        public readonly IntPtr Address;
+
+        public static readonly ThunkInfo Empty = new ThunkInfo(null);
+
+        public ThunkInfo(Delegate target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+            Target = target;
+            Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }
 }

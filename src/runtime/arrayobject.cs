@@ -244,16 +244,5 @@ namespace Python.Runtime
 
             return 0;
         }
-
-
-        /// <summary>
-        /// Implements __len__ for array types.
-        /// </summary>
-        public static int mp_length(IntPtr ob)
-        {
-            var self = (CLRObject)GetManagedObject(ob);
-            var items = self.inst as Array;
-            return items.Length;
-        }
     }
 }

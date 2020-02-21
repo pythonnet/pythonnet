@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Python.Runtime.Platform;
+using Python.Runtime.Slots;
 
 namespace Python.Runtime
 {
@@ -153,6 +155,13 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
+            // add a __len__ slot for inheritors of ICollection and ICollection<>
+            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                InitializeSlot(type, TypeOffset.mp_length, typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length)));
+            }
+
+            // we want to do this after the slot stuff above in case the class itself implements a slot method
             InitializeSlots(type, impl.GetType());
 
             if (base_ != IntPtr.Zero)
@@ -191,6 +200,12 @@ namespace Python.Runtime
             //DebugUtil.DumpType(type);
 
             return type;
+        }
+
+        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
+        {
+            var thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
@@ -309,17 +324,11 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
 
-            // Copy gc and other type slots from the base Python metatype.
-
-            CopySlot(py_type, type, TypeOffset.tp_basicsize);
-            CopySlot(py_type, type, TypeOffset.tp_itemsize);
-
-            CopySlot(py_type, type, TypeOffset.tp_dictoffset);
-            CopySlot(py_type, type, TypeOffset.tp_weaklistoffset);
-
-            CopySlot(py_type, type, TypeOffset.tp_traverse);
-            CopySlot(py_type, type, TypeOffset.tp_clear);
-            CopySlot(py_type, type, TypeOffset.tp_is_gc);
+            // Slots will inherit from TypeType, it's not neccesary for setting them.
+            // Inheried slots:
+            // tp_basicsize, tp_itemsize,
+            // tp_dictoffset, tp_weaklistoffset,
+            // tp_traverse, tp_clear, tp_is_gc, etc.
 
             // Override type slots with those of the managed implementation.
 
@@ -335,16 +344,18 @@ namespace Python.Runtime
             // 4 int-ptrs in size.
             IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
             IntPtr mdefStart = mdef;
+            ThunkInfo thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
             mdef = WriteMethodDef(
                 mdef,
                 "__instancecheck__",
-                Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc")
+                thunkInfo.Address
             );
 
+            thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
             mdef = WriteMethodDef(
                 mdef,
                 "__subclasscheck__",
-                Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc")
+                thunkInfo.Address
             );
 
             // FIXME: mdef is not used
@@ -415,12 +426,8 @@ namespace Python.Runtime
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
 #if PYTHON3
-            // For python3 we leak two objects. One for the ASCII representation
-            // required for tp_name, and another for the Unicode representation
-            // for ht_name.
-            IntPtr temp = Runtime.PyBytes_FromString(name);
-            IntPtr raw = Runtime.PyBytes_AS_STRING(temp);
-            temp = Runtime.PyUnicode_FromString(name);
+            IntPtr temp = Runtime.PyUnicode_FromString(name);
+            IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
 #elif PYTHON2
             IntPtr temp = Runtime.PyString_FromString(name);
             IntPtr raw = Runtime.PyString_AsString(temp);
@@ -705,7 +712,8 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    InitializeSlot(type, Interop.GetThunk(method), name);
+                    var thunkInfo = Interop.GetThunk(method);
+                    InitializeSlot(type, thunkInfo.Address, name);
 
                     seen.Add(name);
                 }
@@ -723,8 +731,8 @@ namespace Python.Runtime
             // These have to be defined, though, so by default we fill these with
             // static C# functions from this class.
 
-            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method);
-            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method);
+            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
+            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
 
             if (native != null)
             {

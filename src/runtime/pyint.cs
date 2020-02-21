@@ -62,7 +62,7 @@ namespace Python.Runtime
         /// Creates a new Python int from a uint32 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyInt(uint value) : base(IntPtr.Zero)
+        public PyInt(uint value)
         {
             obj = Runtime.PyInt_FromInt64(value);
             Runtime.CheckExceptionOccurred();
@@ -75,7 +75,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an int64 value.
         /// </remarks>
-        public PyInt(long value) : base(IntPtr.Zero)
+        public PyInt(long value)
         {
             obj = Runtime.PyInt_FromInt64(value);
             Runtime.CheckExceptionOccurred();
@@ -89,7 +89,7 @@ namespace Python.Runtime
         /// Creates a new Python int from a uint64 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyInt(ulong value) : base(IntPtr.Zero)
+        public PyInt(ulong value)
         {
             obj = Runtime.PyInt_FromInt64((long)value);
             Runtime.CheckExceptionOccurred();

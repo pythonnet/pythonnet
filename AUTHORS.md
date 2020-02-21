@@ -12,6 +12,7 @@
 
 ## Contributors
 
+-   Alex Earl ([@slide](https://github.com/slide))
 -   Alex Helms ([@alexhelms](https://github.com/alexhelms))
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
@@ -34,6 +35,7 @@
 -   Ivan Cronyn ([@cronan](https://github.com/cronan))
 -   Jan Krivanek ([@jakrivan](https://github.com/jakrivan))
 -   Jeff Reback ([@jreback](https://github.com/jreback))
+-   Jeff Robbins ([@jeff17robbins](https://github.com/jeff17robbins))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
 -   Joe Lidbetter ([@jmlidbetter](https://github.com/jmlidbetter))
 -   Joe Savage ([@s4v4g3](https://github.com/s4v4g3))

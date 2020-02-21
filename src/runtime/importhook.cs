@@ -23,28 +23,63 @@ namespace Python.Runtime
                 module_def = ModuleDefOffset.AllocModuleDef("clr");
             }
         }
+
+        internal static void ReleaseModuleDef()
+        {
+            if (module_def == IntPtr.Zero)
+            {
+                return;
+            }
+            ModuleDefOffset.FreeModuleDef(module_def);
+            module_def = IntPtr.Zero;
+        }
 #endif
+
+        /// <summary>
+        /// Initialize just the __import__ hook itself.
+        /// </summary>
+        static void InitImport()
+        {
+            // We replace the built-in Python __import__ with our own: first
+            // look in CLR modules, then if we don't find any call the default
+            // Python __import__.
+            IntPtr builtins = Runtime.GetBuiltins();
+            py_import = Runtime.PyObject_GetAttrString(builtins, "__import__");
+            PythonException.ThrowIfIsNull(py_import);
+
+            hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
+            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
+            PythonException.ThrowIfIsNotZero(res);
+
+            Runtime.XDecref(builtins);
+        }
+
+        /// <summary>
+        /// Restore the __import__ hook.
+        /// </summary>
+        static void RestoreImport()
+        {
+            IntPtr builtins = Runtime.GetBuiltins();
+
+            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            PythonException.ThrowIfIsNotZero(res);
+            Runtime.XDecref(py_import);
+            py_import = IntPtr.Zero;
+
+            hook.Release();
+            hook = null;
+
+            Runtime.XDecref(builtins);
+        }
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
         /// </summary>
         internal static void Initialize()
         {
-            // Initialize the Python <--> CLR module hook. We replace the
-            // built-in Python __import__ with our own. This isn't ideal,
-            // but it provides the most "Pythonic" way of dealing with CLR
-            // modules (Python doesn't provide a way to emulate packages).
-            IntPtr dict = Runtime.PyImport_GetModuleDict();
+            InitImport();
 
-            IntPtr mod = Runtime.IsPython3
-                ? Runtime.PyImport_ImportModule("builtins")
-                : Runtime.PyDict_GetItemString(dict, "__builtin__");
-
-            py_import = Runtime.PyObject_GetAttrString(mod, "__import__");
-            hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
-            Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
-            Runtime.XDecref(hook.ptr);
-
+            // Initialize the clr module and tell Python about it.
             root = new CLRModule();
 
 #if PYTHON3
@@ -62,6 +97,7 @@ namespace Python.Runtime
             Runtime.XIncref(root.pyHandle); // we are using the module two times
             py_clr_module = root.pyHandle; // Alias handle for PY2/PY3
 #endif
+            IntPtr dict = Runtime.PyImport_GetModuleDict();
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
         }
@@ -72,12 +108,26 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() != 0)
+            if (Runtime.Py_IsInitialized() == 0)
             {
-                Runtime.XDecref(py_clr_module);
-                Runtime.XDecref(root.pyHandle);
-                Runtime.XDecref(py_import);
+                return;
             }
+
+            RestoreImport();
+
+            bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
+            Runtime.XDecref(py_clr_module);
+            py_clr_module = IntPtr.Zero;
+#if PYTHON3
+            if (shouldFreeDef)
+            {
+                ReleaseModuleDef();
+            }
+#endif
+
+            Runtime.XDecref(root.pyHandle);
+            root = null;
+            CLRModule.Reset();
         }
 
         /// <summary>

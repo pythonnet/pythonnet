@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Python.Runtime
 {
@@ -189,6 +190,22 @@ namespace Python.Runtime
         public static bool Matches(IntPtr ob)
         {
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
+        }
+
+        public static void ThrowIfIsNull(IntPtr ob)
+        {
+            if (ob == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+        }
+
+        public static void ThrowIfIsNotZero(int value)
+        {
+            if (value != 0)
+            {
+                throw new PythonException();
+            }
         }
     }
 }
