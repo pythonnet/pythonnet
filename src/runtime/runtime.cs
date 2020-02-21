@@ -179,6 +179,40 @@ namespace Python.Runtime
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
 
+            InitPyMembers();
+
+            // Initialize data about the platform we're running on. We need
+            // this for the type manager and potentially other details. Must
+            // happen after caching the python types, above.
+            NativeCodePageHelper.InitializePlatformData();
+
+            // Initialize modules that depend on the runtime class.
+            AssemblyManager.Initialize();
+#if !NETSTANDARD
+            if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
+            {
+                RuntimeData.StashPop();
+            }
+            else
+#endif
+            {
+                PyCLRMetaType = MetaType.Initialize(); // Steal a reference
+            }
+            Exceptions.Initialize();
+            ImportHook.Initialize();
+
+            // Need to add the runtime directory to sys.path so that we
+            // can find built-in assemblies like System.Data, et. al.
+            string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
+            IntPtr path = PySys_GetObject("path");
+            IntPtr item = PyString_FromString(rtdir);
+            PyList_Append(path, item);
+            XDecref(item);
+            AssemblyManager.UpdatePath();
+        }
+
+        private static void InitPyMembers()
+        {
             IntPtr op;
             {
                 var builtins = GetBuiltins();
@@ -300,36 +334,6 @@ namespace Python.Runtime
                 PyModuleType = PyObject_Type(sys);
                 XDecref(sys);
             }
-
-            // Initialize data about the platform we're running on. We need
-            // this for the type manager and potentially other details. Must
-            // happen after caching the python types, above.
-            NativeCodePageHelper.InitializePlatformData();
-
-            // Initialize modules that depend on the runtime class.
-            AssemblyManager.Initialize();
-#if !NETSTANDARD
-            if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
-            {
-                RuntimeData.StashPop();
-                RuntimeData.ClearStash();
-            }
-            else
-#endif
-            {
-                PyCLRMetaType = MetaType.Initialize(); // Steal a reference
-            }
-            Exceptions.Initialize();
-            ImportHook.Initialize();
-
-            // Need to add the runtime directory to sys.path so that we
-            // can find built-in assemblies like System.Data, et. al.
-            string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
-            IntPtr path = PySys_GetObject("path");
-            IntPtr item = PyString_FromString(rtdir);
-            PyList_Append(path, item);
-            XDecref(item);
-            AssemblyManager.UpdatePath();
         }
 
         private static IntPtr Get_PyObject_NextNotImplemented()
