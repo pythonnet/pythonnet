@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -60,7 +61,24 @@ namespace Python.EmbeddingTest
                     throw new Win32Exception();
             }
 
-            Process.Start("appveyor", arguments: $"PushArtifact -Path \"{dumpPath}\"").WaitForExit();
+            const string archivePath = "memory.zip";
+            string filesToPack = '"' + dumpPath + '"';
+            filesToPack += ' ' + GetFilesToPackFor(Assembly.GetExecutingAssembly());
+            filesToPack += ' ' + GetFilesToPackFor(typeof(PyObject).Assembly);
+
+            Process.Start("7z", $"a {archivePath} {filesToPack}").WaitForExit();
+            Process.Start("appveyor", arguments: $"PushArtifact -Path \"{archivePath}\"").WaitForExit();
+        }
+
+        static string GetFilesToPackFor(Assembly assembly)
+        {
+            string result = '"' + assembly.Location + '"';
+            string pdb = Path.ChangeExtension(assembly.Location, ".pdb");
+            if (File.Exists(pdb))
+            {
+                result += $" \"{pdb}\"";
+            }
+            return result;
         }
 
         [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
