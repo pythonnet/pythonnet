@@ -140,7 +140,6 @@ namespace Python.Runtime
                 if (encoded != null) {
                     result = encoded.Handle;
                     Runtime.XIncref(result);
-                    encoded.Dispose();
                     return result;
                 }
             }
