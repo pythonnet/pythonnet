@@ -12,8 +12,12 @@ namespace Python.Runtime.Codecs
         public static TupleCodec<TTuple> Instance { get; } = new TupleCodec<TTuple>();
 
         public bool CanEncode(Type type)
-            => type.Namespace == typeof(TTuple).Namespace && type.Name.StartsWith(typeof(TTuple).Name + '`')
-            || type == typeof(object) || type == typeof(TTuple);
+        {
+            if (type == typeof(object) || type == typeof(TTuple)) return true;
+            return type.Namespace == typeof(TTuple).Namespace
+                   // generic versions of tuples are named Tuple`TYPE_ARG_COUNT
+                   && type.Name.StartsWith(typeof(TTuple).Name + '`');
+        }
 
         public PyObject TryEncode(object value)
         {
@@ -36,7 +40,7 @@ namespace Python.Runtime.Codecs
                 Runtime.PyTuple_SetItem(tuple, fieldIndex, pyItem);
                 fieldIndex++;
             }
-            return new PyTuple(Runtime.SelfIncRef(tuple));
+            return new PyTuple(tuple);
         }
 
         public bool CanDecode(PyObject objectType, Type targetType)
