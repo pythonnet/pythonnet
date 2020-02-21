@@ -1,5 +1,7 @@
 # Build `conda.recipe` only if this is a Pull_Request. Saves time for CI.
 
+$stopwatch = [Diagnostics.Stopwatch]::StartNew()
+
 $env:CONDA_PY = "$env:PY_VER"
 # Use pre-installed miniconda. Note that location differs if 64bit
 $env:CONDA_BLD = "C:\miniconda36"
@@ -30,7 +32,9 @@ if ($env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_REPO_TAG_NAME -or $env:F
 
     $CONDA_PKG=(conda build conda.recipe --output)
     Copy-Item $CONDA_PKG .\dist\
-    Write-Host "Completed conda build recipe" -ForegroundColor "Green"
+
+    $timeSpent = $stopwatch.Elapsed
+    Write-Host "Completed conda build recipe in " $timeSpent -ForegroundColor "Green"
 
     # Restore PATH back to original
     $env:path = $old_path
