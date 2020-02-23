@@ -5,6 +5,7 @@ using System.Reflection;
 
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Horology;
 
 namespace Python.PerformanceTests
 {
@@ -18,7 +19,11 @@ namespace Python.PerformanceTests
 
             string deploymentRoot = BenchmarkTests.DeploymentRoot;
 
-            var baseJob = Job.Default;
+            var baseJob = Job.Default
+                .WithLaunchCount(1)
+                .WithWarmupCount(3)
+                .WithMaxIterationCount(100)
+                .WithIterationTime(TimeInterval.FromMilliseconds(100));
             this.Add(baseJob
                 .WithId("baseline")
                 .WithEnvironmentVariable(EnvironmentVariableName,

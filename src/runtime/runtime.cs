@@ -1942,7 +1942,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyErr_Occurred();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Fetch(ref IntPtr ob, ref IntPtr val, ref IntPtr tb);
+        internal static extern void PyErr_Fetch(out IntPtr ob, out IntPtr val, out IntPtr tb);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Restore(IntPtr ob, IntPtr val, IntPtr tb);
