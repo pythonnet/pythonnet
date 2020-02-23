@@ -137,13 +137,16 @@ namespace Python.Runtime
 
             bool TryDecode(IntPtr pyHandle, out object result)
             {
-                using (var pyObj = new PyObject(Runtime.SelfIncRef(pyHandle)))
+                var pyObj = new PyObject(Runtime.SelfIncRef(pyHandle));
+                var @params = new object[] { pyObj, null };
+                bool success = (bool)decode.Invoke(decoder, @params);
+                if (!success)
                 {
-                    var @params = new object[] { pyObj, null };
-                    bool success = (bool)decode.Invoke(decoder, @params);
-                    result = @params[1];
-                    return success;
+                    pyObj.Dispose();
                 }
+
+                result = @params[1];
+                return success;
             }
 
             return TryDecode;
