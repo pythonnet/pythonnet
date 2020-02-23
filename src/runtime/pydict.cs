@@ -147,7 +147,7 @@ namespace Python.Runtime
                     throw new PythonException();
                 }
 
-                return items.ToPyObject();
+                return items.MoveToPyObject();
             }
             finally
             {
