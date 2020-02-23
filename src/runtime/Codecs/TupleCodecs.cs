@@ -36,7 +36,6 @@ namespace Python.Runtime.Codecs
             {
                 var item = field.GetValue(value);
                 IntPtr pyItem = Converter.ToPython(item);
-                Runtime.XIncref(pyItem);
                 Runtime.PyTuple_SetItem(tuple, fieldIndex, pyItem);
                 fieldIndex++;
             }
