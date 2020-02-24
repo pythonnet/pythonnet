@@ -206,7 +206,10 @@ namespace Python.Runtime
             string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
             IntPtr path = PySys_GetObject("path");
             IntPtr item = PyString_FromString(rtdir);
-            PyList_Append(path, item);
+            if (PySequence_Contains(path, item) == 0)
+            {
+                PyList_Append(path, item);
+            }
             XDecref(item);
             AssemblyManager.UpdatePath();
         }
@@ -364,12 +367,7 @@ namespace Python.Runtime
             AssemblyManager.Shutdown();
             ImportHook.Shutdown();
 
-#if !NETSTANDARD
-            if (mode != ShutdownMode.Reload)
-            {
-                ClearClrModules();
-            }
-#endif
+            ClearClrModules();
             RemoveClrRootModule();
 
             MoveClrInstancesOnwershipToPython();
@@ -454,8 +452,7 @@ namespace Python.Runtime
                 var item = PyList_GetItem(items, i);
                 var name = PyTuple_GetItem(item, 0);
                 var module = PyTuple_GetItem(item, 1);
-                var clrModule = ManagedType.GetManagedObject(module);
-                if (clrModule != null)
+                if (ManagedType.IsManagedType(module))
                 {
                     PyDict_DelItem(modules, name);
                 }
@@ -486,8 +483,8 @@ namespace Python.Runtime
 
         private static void MoveClrInstancesOnwershipToPython()
         {
-            var copyObjs = ManagedType.GetManagedObjects().ToArray();
             var objs = ManagedType.GetManagedObjects();
+            var copyObjs = objs.ToArray();
             foreach (var entry in copyObjs)
             {
                 ManagedType obj = entry.Key;

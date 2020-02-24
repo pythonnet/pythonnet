@@ -65,19 +65,19 @@ namespace Python.Runtime
             _slotsHolders.Clear();
         }
 
-        internal static void StashPush(Stack stack)
+        internal static void StashPush(RuntimeDataStorage storage)
         {
             foreach (var tpHandle in cache.Values)
             {
                 Runtime.XIncref(tpHandle);
             }
-            stack.Push(cache);
+            storage.PushValue(cache);
         }
 
-        internal static void StashPop(Stack stack)
+        internal static void StashPop(RuntimeDataStorage storage)
         {
             Debug.Assert(cache == null || cache.Count == 0);
-            cache = (Dictionary<Type, IntPtr>)stack.Pop();
+            cache = storage.PopValue<Dictionary<Type, IntPtr>>();
             foreach (var entry in cache)
             {
                 Type type = entry.Key;
@@ -235,11 +235,11 @@ namespace Python.Runtime
                 Runtime.XIncref(base_);
             }
 
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.BaseType;
-            flags |= TypeFlags.HaveGC;
+            const int flags = TypeFlags.Default
+                            | TypeFlags.Managed
+                            | TypeFlags.HeapType
+                            | TypeFlags.BaseType
+                            | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
             // Leverage followup initialization from the Python runtime. Note

@@ -82,14 +82,14 @@ namespace Python.Runtime
         }
 
 
-        internal static void StashPush(Stack stack)
+        internal static void StashPush(RuntimeDataStorage storage)
         {
-            stack.Push(cache);
+            storage.PushValue(cache);
         }
 
-        internal static void StashPop(Stack stack)
+        internal static void StashPop(RuntimeDataStorage storage)
         {
-            cache = (Dictionary<Type, ClassBase>)stack.Pop();
+            cache = storage.PopValue<Dictionary<Type, ClassBase>>();
         }
 
         /// <summary>

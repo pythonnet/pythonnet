@@ -564,7 +564,7 @@ namespace Python.Runtime
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    [StructLayout(LayoutKind.Sequential)]
     struct PyGC_Node
     {
         public IntPtr gc_next;
@@ -572,7 +572,7 @@ namespace Python.Runtime
         public IntPtr gc_refs;
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    [StructLayout(LayoutKind.Sequential)]
     struct PyGC_Head
     {
         public PyGC_Node gc;

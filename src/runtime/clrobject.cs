@@ -35,6 +35,10 @@ namespace Python.Runtime
             Exceptions.SetArgsAndCause(py);
         }
 
+        protected CLRObject()
+        {
+        }
+
 
         internal static CLRObject GetInstance(object ob, IntPtr pyType)
         {
@@ -68,6 +72,18 @@ namespace Python.Runtime
         {
             CLRObject co = GetInstance(ob);
             return co.pyHandle;
+        }
+
+        internal static CLRObject Restore(object ob, IntPtr pyHandle)
+        {
+            CLRObject co = new CLRObject()
+            {
+                inst = ob,
+                pyHandle = pyHandle,
+                tpHandle = Runtime.PyObject_TYPE(pyHandle)
+            };
+            co.Load();
+            return co;
         }
 
         protected override void OnSave()
