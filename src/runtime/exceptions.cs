@@ -283,7 +283,7 @@ namespace Python.Runtime
                 return;
             }
 
-            IntPtr op = CLRObject.GetInstHandle(e);
+            IntPtr op = Converter.ToPython(e);
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
             Runtime.PyErr_SetObject(etype, op);
             Runtime.XDecref(etype);
