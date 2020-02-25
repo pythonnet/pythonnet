@@ -55,7 +55,7 @@ if ($PYTHON_STATUS -ne 0) {
 # Run Embedded tests with C# coverage
 Write-Host ("Starting embedded tests") -ForegroundColor "Green"
 .$OPENCOVER -register:user -searchdirs:"$RUNTIME_DIR" -output:cs.coverage `
-            -target:"$CS_RUNNER" -targetargs:"$CS_TESTS" `
+            -target:"$CS_RUNNER" -targetargs:"$CS_TESTS --labels=All" `
             -filter:"+[*]Python.Runtime*" `
             -returntargetcode
 $CS_STATUS = $LastExitCode
