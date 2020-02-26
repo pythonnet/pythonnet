@@ -760,11 +760,14 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 ex = e;
-                type = ex.PyType;
-                val = ex.PyValue;
-                traceBack = ex.PyTB;
+                type = ex.PyType.Coalesce(type);
+                val = ex.PyValue.Coalesce(val);
+                traceBack = ex.PyTB.Coalesce(traceBack);
             }
 
+            Runtime.XIncref(type);
+            Runtime.XIncref(val);
+            Runtime.XIncref(traceBack);
             var exitResult = obj.InvokeMethod("__exit__", new PyObject(type), new PyObject(val), new PyObject(traceBack));
 
             if (ex != null && !exitResult.IsTrue()) throw ex;

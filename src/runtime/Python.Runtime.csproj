@@ -85,6 +85,7 @@
     </Compile>
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblymanager.cs" />
+    <Compile Include="BorrowedReference.cs" />
     <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />
@@ -121,6 +122,8 @@
     <Compile Include="moduleobject.cs" />
     <Compile Include="modulepropertyobject.cs" />
     <Compile Include="nativecall.cs" />
+    <Compile Include="NewReference.cs" />
+    <Compile Include="NonCopyableAttribute.cs" />
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
     <Compile Include="pyansistring.cs" />

@@ -1518,6 +1518,8 @@ namespace Python.Runtime
             return PyUnicode_FromUnicode(s, s.Length);
         }
 
+        internal static string GetManagedString(in BorrowedReference borrowedReference)
+            => GetManagedString(borrowedReference.DangerousGetAddress());
         /// <summary>
         /// Function to access the internal PyUnicode/PyString object and
         /// convert it to a managed string with the correct encoding.
@@ -1600,7 +1602,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyDict_Values(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Items(IntPtr pointer);
+        internal static extern NewReference PyDict_Items(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_Copy(IntPtr pointer);
@@ -1640,13 +1642,13 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_AsTuple(IntPtr pointer);
 
-        internal static IntPtr PyList_GetItem(IntPtr pointer, long index)
+        internal static BorrowedReference PyList_GetItem(IntPtr pointer, long index)
         {
             return PyList_GetItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr PyList_GetItem(IntPtr pointer, IntPtr index);
+        private static extern BorrowedReference PyList_GetItem(IntPtr pointer, IntPtr index);
 
         internal static int PyList_SetItem(IntPtr pointer, long index, IntPtr value)
         {

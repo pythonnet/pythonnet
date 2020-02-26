@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
-    internal class Util
+    internal static class Util
     {
         internal const string UnstableApiMessage =
             "This API is unstable, and might be changed or removed in the next minor release";
@@ -32,5 +32,12 @@ namespace Python.Runtime
                 Marshal.WriteInt64(type, offset, flags);
             }
         }
+
+        /// <summary>
+        /// Null-coalesce: if <paramref name="primary"/> parameter is not
+        /// <see cref="IntPtr.Zero"/>, return it. Otherwise return <paramref name="fallback"/>.
+        /// </summary>
+        internal static IntPtr Coalesce(this IntPtr primary, IntPtr fallback)
+            => primary == IntPtr.Zero ? fallback : primary;
     }
 }
