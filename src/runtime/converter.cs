@@ -135,8 +135,17 @@ namespace Python.Runtime
                 return result;
             }
 
-			if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
-			{
+            if (Type.GetTypeCode(type) == TypeCode.Object && value.GetType() != typeof(object)) {
+                var encoded = PyObjectConversions.TryEncode(value, type);
+                if (encoded != null) {
+                    result = encoded.Handle;
+                    Runtime.XIncref(result);
+                    return result;
+                }
+            }
+
+            if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
+            {
                 using (var resultlist = new PyList())
                 {
                     foreach (object o in (IEnumerable)value)
@@ -377,6 +386,13 @@ namespace Python.Runtime
                     return ToPrimitive(value, doubleType, out result, setError);
                 }
 
+                // give custom codecs a chance to take over conversion of sequences
+                IntPtr pyType = Runtime.PyObject_TYPE(value);
+                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
+                {
+                    return true;
+                }
+
                 if (Runtime.PySequence_Check(value))
                 {
                     return ToArray(value, typeof(object[]), out result, setError);
@@ -437,8 +453,20 @@ namespace Python.Runtime
                 return false;
             }
 
+            TypeCode typeCode = Type.GetTypeCode(obType);
+            if (typeCode == TypeCode.Object)
+            {
+                IntPtr pyType = Runtime.PyObject_TYPE(value);
+                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
+                {
+                    return true;
+                }
+            }
+
             return ToPrimitive(value, obType, out result, setError);
         }
+
+        internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
 
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.

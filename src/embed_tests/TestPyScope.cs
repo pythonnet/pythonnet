@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -337,9 +338,12 @@ namespace Python.EmbeddingTest
                     //add function to the scope 
                     //can be call many times, more efficient than ast 
                     ps.Exec(
+                        "import clr\n" +
+                        "from System.Threading import Thread\n" +
                         "def update():\n" +
                         "    global res, th_cnt\n" +
                         "    res += bb + 1\n" +
+                        "    Thread.MemoryBarrier()\n" +
                         "    th_cnt += 1\n"
                     );
                 }
@@ -364,8 +368,9 @@ namespace Python.EmbeddingTest
                     {
                         cnt = ps.Get<int>("th_cnt");
                     }
-                    System.Threading.Thread.Sleep(10);
+                    Thread.Sleep(10);
                 }
+                Thread.MemoryBarrier();
                 using (Py.GIL())
                 {
                     var result = ps.Get<int>("res");
