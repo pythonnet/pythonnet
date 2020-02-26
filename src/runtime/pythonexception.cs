@@ -21,7 +21,7 @@ namespace Python.Runtime
         public PythonException()
         {
             IntPtr gs = PythonEngine.AcquireLock();
-            Runtime.PyErr_Fetch(ref _pyType, ref _pyValue, ref _pyTB);
+            Runtime.PyErr_Fetch(out _pyType, out _pyValue, out _pyTB);
             if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;
@@ -161,12 +161,23 @@ namespace Python.Runtime
                 if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
                 {
                     IntPtr gs = PythonEngine.AcquireLock();
-                    Runtime.XDecref(_pyType);
-                    Runtime.XDecref(_pyValue);
+                    if (_pyType != IntPtr.Zero)
+                    {
+                        Runtime.XDecref(_pyType);
+                        _pyType= IntPtr.Zero;
+                    }
+
+                    if (_pyValue != IntPtr.Zero)
+                    {
+                        Runtime.XDecref(_pyValue);
+                        _pyValue = IntPtr.Zero;
+                    }
+
                     // XXX Do we ever get TraceBack? //
                     if (_pyTB != IntPtr.Zero)
                     {
                         Runtime.XDecref(_pyTB);
+                        _pyTB = IntPtr.Zero;
                     }
                     PythonEngine.ReleaseLock(gs);
                 }

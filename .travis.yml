@@ -44,7 +44,7 @@ install:
 
 script:
   - python -m pytest
-  - $RUN_TESTS src/embed_tests/bin/$EMBED_TESTS_PATH/Python.EmbeddingTest.dll
+  - $RUN_TESTS src/embed_tests/bin/$EMBED_TESTS_PATH/Python.EmbeddingTest.dll --labels=All
   # does not work on Linux, because NuGet package for 2.3 is Windows only
   # - "if [[ $TRAVIS_PYTHON_VERSION == '3.5' && $PERF_TESTS_PATH != '' ]]; then mono $NUNIT_PATH src/perf_tests/bin/$PERF_TESTS_PATH/Python.PerformanceTests.dll; fi"
 

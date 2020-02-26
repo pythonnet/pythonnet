@@ -280,7 +280,18 @@ namespace Python.Runtime
                 return self.dict;
             }
 
-            ManagedType attr = self.GetAttribute(name, true);
+            ManagedType attr = null;
+
+            try
+            {
+                attr = self.GetAttribute(name, true);
+            }
+            catch (Exception e)
+            {
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
+            
 
             if (attr == null)
             {
