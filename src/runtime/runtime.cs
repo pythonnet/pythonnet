@@ -446,18 +446,18 @@ namespace Python.Runtime
         {
             var modules = PyImport_GetModuleDict();
             var items = PyDict_Items(modules);
-            long length = PyList_Size(items);
+            long length = PyList_Size(items.DangerousGetAddress());
             for (long i = 0; i < length; i++)
             {
-                var item = PyList_GetItem(items, i);
-                var name = PyTuple_GetItem(item, 0);
-                var module = PyTuple_GetItem(item, 1);
+                var item = PyList_GetItem(items.DangerousGetAddress(), i);
+                var name = PyTuple_GetItem(item.DangerousGetAddress(), 0);
+                var module = PyTuple_GetItem(item.DangerousGetAddress(), 1);
                 if (ManagedType.IsManagedType(module))
                 {
                     PyDict_DelItem(modules, name);
                 }
             }
-            XDecref(items);
+            items.Dispose();
         }
 
         private static void RemoveClrRootModule()

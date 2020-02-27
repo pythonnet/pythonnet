@@ -224,14 +224,15 @@ namespace Python.Runtime
         private static void StashPushModules(RuntimeDataStorage storage)
         {
             var pyModules = PyImport_GetModuleDict();
-            var items = PyDict_Items(pyModules);
+            var itemsRef = PyDict_Items(pyModules);
+            var items = itemsRef.DangerousGetAddress();
             long length = PyList_Size(items);
             var modules = new Dictionary<IntPtr, IntPtr>(); ;
             for (long i = 0; i < length; i++)
             {
                 var item = PyList_GetItem(items, i);
-                var name = PyTuple_GetItem(item, 0);
-                var module = PyTuple_GetItem(item, 1);
+                var name = PyTuple_GetItem(item.DangerousGetAddress(), 0);
+                var module = PyTuple_GetItem(item.DangerousGetAddress(), 1);
                 if (ManagedType.IsManagedType(module))
                 {
                     XIncref(name);
@@ -239,7 +240,7 @@ namespace Python.Runtime
                     modules.Add(name, module);
                 }
             }
-            XDecref(items);
+            itemsRef.Dispose();
             storage.AddValue("modules", modules);
         }
 

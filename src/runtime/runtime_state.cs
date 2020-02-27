@@ -152,7 +152,7 @@ namespace Python.Runtime
             for (long i = 0; i < length; i++)
             {
                 var obj = PyList_GetItem(objs, i);
-                yield return obj;
+                yield return obj.DangerousGetAddress();
             }
             XDecref(objs);
             XDecref(gc);
@@ -166,7 +166,7 @@ namespace Python.Runtime
             for (int i = 0; i < length; i++)
             {
                 var name = PyList_GetItem(names, i);
-                yield return name;
+                yield return name.DangerousGetAddress();
             }
         }
 
