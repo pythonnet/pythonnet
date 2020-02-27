@@ -129,6 +129,13 @@
     <PackageReference Include="Microsoft.TargetingPack.NETFramework.v4.5" Version="1.0.1" ExcludeAssets="All" PrivateAssets="All" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NonCopyableAnalyzer" Version="0.5.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>

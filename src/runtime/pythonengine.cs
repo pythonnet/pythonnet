@@ -341,9 +341,9 @@ namespace Python.Runtime
 
             PyScopeManager.Global.Clear();
             ExecuteShutdownHandlers();
+            PyObjectConversions.Reset();
 
             initialized = false;
-            
         }
 
         /// <summary>
@@ -772,9 +772,9 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 ex = e;
-                type = ex.PyType;
-                val = ex.PyValue;
-                traceBack = ex.PyTB;
+                type = ex.PyType.Coalesce(type);
+                val = ex.PyValue.Coalesce(val);
+                traceBack = ex.PyTB.Coalesce(traceBack);
             }
 
             Runtime.XIncref(type);

@@ -293,7 +293,7 @@ namespace Python.Runtime
                 for (int i = 0; i < pynkwargs; ++i)
                 {
                     var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist, i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i);
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i).DangerousGetAddress();
                 }
                 Runtime.XDecref(keylist);
                 Runtime.XDecref(valueList);

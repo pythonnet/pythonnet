@@ -682,6 +682,15 @@ namespace Python.Runtime
 #endif
         }
 
+        /// <summary>
+        /// Increase Python's ref counter for the given object, and get the object back.
+        /// </summary>
+        internal static IntPtr SelfIncRef(IntPtr op)
+        {
+            XIncref(op);
+            return op;
+        }
+
         internal static unsafe void XDecref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG || NETSTANDARD
@@ -1613,6 +1622,8 @@ namespace Python.Runtime
             return PyUnicode_FromUnicode(s, s.Length);
         }
 
+        internal static string GetManagedString(in BorrowedReference borrowedReference)
+            => GetManagedString(borrowedReference.DangerousGetAddress());
         /// <summary>
         /// Function to access the internal PyUnicode/PyString object and
         /// convert it to a managed string with the correct encoding.
@@ -1708,7 +1719,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyDict_Values(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Items(IntPtr pointer);
+        internal static extern NewReference PyDict_Items(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_Copy(IntPtr pointer);
@@ -1763,17 +1774,13 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_AsTuple(IntPtr pointer);
 
-        /// <summary>
-        /// Return value: Borrowed reference.
-        /// If index is out of bounds, return NULL and set an IndexError exception.
-        /// </summary>
-        internal static IntPtr PyList_GetItem(IntPtr pointer, long index)
+        internal static BorrowedReference PyList_GetItem(IntPtr pointer, long index)
         {
             return PyList_GetItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr PyList_GetItem(IntPtr pointer, IntPtr index);
+        private static extern BorrowedReference PyList_GetItem(IntPtr pointer, IntPtr index);
 
         internal static int PyList_SetItem(IntPtr pointer, long index, IntPtr value)
         {
@@ -1997,7 +2004,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);
@@ -2082,7 +2089,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyErr_Occurred();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Fetch(ref IntPtr ob, ref IntPtr val, ref IntPtr tb);
+        internal static extern void PyErr_Fetch(out IntPtr ob, out IntPtr val, out IntPtr tb);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Restore(IntPtr ob, IntPtr val, IntPtr tb);

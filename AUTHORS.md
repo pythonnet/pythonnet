@@ -15,6 +15,7 @@
 -   Alex Earl ([@slide](https://github.com/slide))
 -   Alex Helms ([@alexhelms](https://github.com/alexhelms))
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
+-   Andrey Sant'Anna ([@andreydani](https://github.com/andreydani))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
 -   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
