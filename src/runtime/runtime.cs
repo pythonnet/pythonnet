@@ -341,7 +341,7 @@ namespace Python.Runtime
             string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
             IntPtr path = PySys_GetObject("path");
             IntPtr item = PyString_FromString(rtdir);
-            PyList_Append(path, item);
+            PyList_Append(new BorrowedReference(path), item);
             XDecref(item);
             AssemblyManager.UpdatePath();
         }
@@ -1658,22 +1658,22 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PyList_SetItem(IntPtr pointer, IntPtr index, IntPtr value);
 
-        internal static int PyList_Insert(IntPtr pointer, long index, IntPtr value)
+        internal static int PyList_Insert(BorrowedReference pointer, long index, IntPtr value)
         {
             return PyList_Insert(pointer, new IntPtr(index), value);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int PyList_Insert(IntPtr pointer, IntPtr index, IntPtr value);
+        private static extern int PyList_Insert(BorrowedReference pointer, IntPtr index, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyList_Append(IntPtr pointer, IntPtr value);
+        internal static extern int PyList_Append(BorrowedReference pointer, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyList_Reverse(IntPtr pointer);
+        internal static extern int PyList_Reverse(BorrowedReference pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyList_Sort(IntPtr pointer);
+        internal static extern int PyList_Sort(BorrowedReference pointer);
 
         internal static IntPtr PyList_GetSlice(IntPtr pointer, long start, long end)
         {

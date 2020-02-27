@@ -39,7 +39,7 @@ namespace Python.EmbeddingTest
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
             IntPtr path = Runtime.Runtime.PySys_GetObject("path");
-            Runtime.Runtime.PyList_Append(path, str);
+            Runtime.Runtime.PyList_Append(new BorrowedReference(path), str);
         }
 
         [TearDown]
