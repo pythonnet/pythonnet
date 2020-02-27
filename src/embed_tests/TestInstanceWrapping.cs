@@ -28,7 +28,7 @@ namespace Python.EmbeddingTest
             {
                 var o = overloaded.ToPython();
 
-                dynamic callWithSelf = PythonEngine.Eval("lambda o: o.ObjOrClass(KeyError())");
+                dynamic callWithSelf = PythonEngine.Eval("lambda o: o.ObjOrClass(object())");
                 callWithSelf(o);
                 Assert.AreEqual(Overloaded.Object, overloaded.Value);
             }
