@@ -197,9 +197,9 @@ namespace Python.Runtime
 #endif
             {
                 PyCLRMetaType = MetaType.Initialize(); // Steal a reference
+                ImportHook.Initialize();
             }
             Exceptions.Initialize();
-            ImportHook.Initialize();
 
             // Need to add the runtime directory to sys.path so that we
             // can find built-in assemblies like System.Data, et. al.
@@ -497,13 +497,16 @@ namespace Python.Runtime
                     obj.CallTypeClear();
                     // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
                     // thus just be safe to give it back to GC chain.
-                    PyObject_GC_Track(obj.pyHandle);
+                    if (!_PyObject_GC_IS_TRACKED(obj.pyHandle))
+                    {
+                        PyObject_GC_Track(obj.pyHandle);
+                    }
                 }
                 if (obj.gcHandle.IsAllocated)
                 {
                     obj.gcHandle.Free();
                 }
-                obj.gcHandle = new GCHandle();
+                obj.gcHandle = default;
             }
             ManagedType.ClearTrackedObjects();
         }

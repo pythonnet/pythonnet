@@ -36,6 +36,9 @@ namespace Python.Runtime
             var metaStorage = new RuntimeDataStorage();
             MetaType.StashPush(metaStorage);
 
+            var importStorage = new RuntimeDataStorage();
+            ImportHook.StashPush(importStorage);
+
             var typeStorage = new RuntimeDataStorage();
             TypeManager.StashPush(typeStorage);
 
@@ -50,6 +53,7 @@ namespace Python.Runtime
 
             var runtimeStorage = new RuntimeDataStorage();
             runtimeStorage.AddValue("meta", metaStorage);
+            runtimeStorage.AddValue("import", importStorage);
             runtimeStorage.AddValue("types", typeStorage);
             runtimeStorage.AddValue("classes", clsStorage);
             runtimeStorage.AddValue("modules", moduleStorage);
@@ -106,10 +110,11 @@ namespace Python.Runtime
             var formatter = CreateFormatter();
             var storage = (RuntimeDataStorage)formatter.Deserialize(ms);
 
-            StashPopModules(storage.GetStorage("modules"));
             StashPopObjects(storage.GetStorage("objs"));
+            StashPopModules(storage.GetStorage("modules"));
             ClassManager.StashPop(storage.GetStorage("classes"));
             TypeManager.StashPop(storage.GetStorage("types"));
+            ImportHook.StashPop(storage.GetStorage("import"));
             PyCLRMetaType = MetaType.StashPop(storage.GetStorage("meta"));
         }
 
@@ -287,6 +292,12 @@ namespace Python.Runtime
             return (T)GetValue(name);
         }
 
+        public T GetValue<T>(string name, out T value)
+        {
+            value = GetValue<T>(name);
+            return value;
+        }
+
         public RuntimeDataStorage GetStorage(string name)
         {
             return GetValue<RuntimeDataStorage>(name);
@@ -310,6 +321,11 @@ namespace Python.Runtime
         public T PopValue<T>()
         {
             return (T)PopValue();
+        }
+
+        public T PopValue<T>(out T value)
+        {
+            return value = (T)PopValue();
         }
     }
 

@@ -233,26 +233,33 @@ namespace Python.EmbeddingTest
                 mode = ShutdownMode.Soft;
             }
             PythonEngine.Initialize(mode: mode);
-            using (Py.GIL())
+            try
             {
-                try
+                using (Py.GIL())
                 {
-                    var pyScript = string.Format("import clr\n"
-                        + "print('[{0} in python] imported clr')\n"
-                        + "clr.AddReference('System')\n"
-                        + "print('[{0} in python] allocated a clr object')\n"
-                        + "import gc\n"
-                        + "gc.collect()\n"
-                        + "print('[{0} in python] collected garbage')\n",
-                        name);
-                    PythonEngine.Exec(pyScript);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
+                    try
+                    {
+                        var pyScript = string.Format("import clr\n"
+                            + "print('[{0} in python] imported clr')\n"
+                            + "clr.AddReference('System')\n"
+                            + "print('[{0} in python] allocated a clr object')\n"
+                            + "import gc\n"
+                            + "gc.collect()\n"
+                            + "print('[{0} in python] collected garbage')\n",
+                            name);
+                        PythonEngine.Exec(pyScript);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
+                        throw;
+                    }
                 }
             }
-            PythonEngine.BeginAllowThreads();
+            finally
+            {
+                PythonEngine.BeginAllowThreads();
+            }
         }
 
 

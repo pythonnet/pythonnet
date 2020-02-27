@@ -98,12 +98,6 @@ namespace Python.Runtime
             self.Dealloc();
         }
 
-        protected override void OnSave()
-        {
-            base.OnSave();
-            Runtime.XIncref(pyHandle);
-        }
-
         protected override void OnLoad()
         {
             base.OnLoad();

@@ -22,6 +22,7 @@ namespace Python.Runtime
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
         private static Dictionary<Type, IntPtr> cache = new Dictionary<Type, IntPtr>();
         private static readonly Dictionary<IntPtr, SlotsHolder> _slotsHolders = new Dictionary<IntPtr, SlotsHolder>();
+        private static Dictionary<Type, Type> _slotsImpls = new Dictionary<Type, Type>();
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -62,6 +63,7 @@ namespace Python.Runtime
                 Runtime.XDecref(tpHandle);
             }
             cache.Clear();
+            _slotsImpls.Clear();
             _slotsHolders.Clear();
         }
 
@@ -71,19 +73,21 @@ namespace Python.Runtime
             {
                 Runtime.XIncref(tpHandle);
             }
-            storage.PushValue(cache);
+            storage.AddValue("cache", cache);
+            storage.AddValue("slots", _slotsImpls);
         }
 
         internal static void StashPop(RuntimeDataStorage storage)
         {
             Debug.Assert(cache == null || cache.Count == 0);
-            cache = storage.PopValue<Dictionary<Type, IntPtr>>();
+            storage.GetValue("slots", out _slotsImpls);
+            storage.GetValue("cache", out cache);
             foreach (var entry in cache)
             {
                 Type type = entry.Key;
                 IntPtr handle = entry.Value;
                 SlotsHolder holder = CreateSolotsHolder(handle);
-                InitializeSlots(handle, type, holder);
+                InitializeSlots(handle, _slotsImpls[type], holder);
                 // FIXME: mp_length_slot.CanAssgin(clrType)
             }
         }
@@ -107,6 +111,7 @@ namespace Python.Runtime
             }
             handle = CreateType(type);
             cache[type] = handle;
+            _slotsImpls.Add(type, type);
             return handle;
         }
 
@@ -127,6 +132,7 @@ namespace Python.Runtime
             }
             handle = CreateType(obj, type);
             cache[type] = handle;
+            _slotsImpls.Add(type, obj.GetType());
             return handle;
         }
 
@@ -711,6 +717,7 @@ namespace Python.Runtime
                             mi[0] = method;
                             MethodObject m = new TypeMethod(type, method_name, mi);
                             Runtime.PyDict_SetItemString(dict, method_name, m.pyHandle);
+                            //m.DecrRefCount();
                             addedMethods.Add(method_name);
                         }
                     }

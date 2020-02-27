@@ -89,14 +89,10 @@ namespace Python.Runtime
     /// <remarks>
     /// Readability of the Exceptions class improvements as we look toward version 2.7 ...
     /// </remarks>
-    public class Exceptions
+    public static class Exceptions
     {
         internal static IntPtr warnings_module;
         internal static IntPtr exceptions_module;
-
-        private Exceptions()
-        {
-        }
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.

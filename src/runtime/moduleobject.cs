@@ -103,6 +103,7 @@ namespace Python.Runtime
             {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
+                m.DecrRefCount();
                 return m;
             }
 
@@ -118,6 +119,7 @@ namespace Python.Runtime
                 }
                 c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
+                c.DecrRefCount();
                 return c;
             }
 
@@ -132,6 +134,7 @@ namespace Python.Runtime
                 {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
+                    m.DecrRefCount();
                     return m;
                 }
 
@@ -144,6 +147,7 @@ namespace Python.Runtime
                     }
                     c = ClassManager.GetClass(type);
                     StoreAttribute(name, c);
+                    c.DecrRefCount();
                     return c;
                 }
             }
@@ -239,6 +243,7 @@ namespace Python.Runtime
                         mi[0] = method;
                         var m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
+                        m.DecrRefCount();
                     }
                 }
 
@@ -251,6 +256,7 @@ namespace Python.Runtime
                         string name = property.Name;
                         var p = new ModulePropertyObject(property);
                         StoreAttribute(name, p);
+                        p.DecrRefCount();
                     }
                 }
                 type = type.BaseType;

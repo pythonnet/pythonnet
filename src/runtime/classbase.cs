@@ -303,5 +303,12 @@ namespace Python.Runtime
             self.tpHandle = IntPtr.Zero;
             return 0;
         }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+            gcHandle = AllocGCHandle();
+            Marshal.WriteIntPtr(pyHandle, TypeOffset.magic(), (IntPtr)gcHandle);
+        }
     }
 }

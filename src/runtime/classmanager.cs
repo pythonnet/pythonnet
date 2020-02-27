@@ -56,12 +56,14 @@ namespace Python.Runtime
                     cls.CallTypeTraverse(OnVisit, visitedPtr);
                     // XXX: Force release instance resources but not dealloc itself.
                     cls.CallTypeClear();
+                    cls.DecrRefCount();
                 }
             }
             finally
             {
                 visitedHandle.Free();
             }
+            cache.Clear();
         }
 
         private static int OnVisit(IntPtr ob, IntPtr arg)
@@ -81,15 +83,25 @@ namespace Python.Runtime
             return 0;
         }
 
-
         internal static void StashPush(RuntimeDataStorage storage)
         {
             storage.PushValue(cache);
+            foreach (var cls in cache.Values)
+            {
+                // This incref is for cache to hold the cls,
+                // thus no need for decreasing it at StashPop.
+                Runtime.XIncref(cls.pyHandle);
+                cls.Save();
+            }
         }
 
         internal static void StashPop(RuntimeDataStorage storage)
         {
             cache = storage.PopValue<Dictionary<Type, ClassBase>>();
+            foreach (var cls in cache.Values)
+            {
+                cls.Load();
+            }
         }
 
         /// <summary>

@@ -128,11 +128,5 @@ namespace Python.Runtime
             Runtime.Py_CLEAR(ref self.target);
             return 0;
         }
-
-        protected override void OnSave()
-        {
-            base.OnSave();
-            Runtime.XIncref(target);
-        }
     }
 }
