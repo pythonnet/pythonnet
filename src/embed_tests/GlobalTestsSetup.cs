@@ -20,15 +20,19 @@ namespace Python.EmbeddingTest
         [OneTimeSetUp]
         public void GlobalSetup()
         {
-            new Thread(() =>
+            if (!Debugger.IsAttached)
             {
-                Thread.Sleep(TimeSpan.FromSeconds(30));
-                UploadDump();
-                Console.Error.WriteLine("Test has been running for too long. Created memory dump");
-                Environment.Exit(1);
-            }) {
-                IsBackground = true,
-            }.Start();
+                new Thread(() =>
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(30));
+                    UploadDump();
+                    Console.Error.WriteLine("Test has been running for too long. Created memory dump");
+                    Environment.Exit(1);
+                })
+                {
+                    IsBackground = true,
+                }.Start();
+            }
         }
 
         [OneTimeTearDown]
