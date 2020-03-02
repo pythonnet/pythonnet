@@ -110,12 +110,17 @@ namespace Python.Runtime
             var formatter = CreateFormatter();
             var storage = (RuntimeDataStorage)formatter.Deserialize(ms);
 
-            StashPopObjects(storage.GetStorage("objs"));
+            var objs = StashPopObjects(storage.GetStorage("objs"));
             StashPopModules(storage.GetStorage("modules"));
             ClassManager.StashPop(storage.GetStorage("classes"));
             TypeManager.StashPop(storage.GetStorage("types"));
             ImportHook.StashPop(storage.GetStorage("import"));
             PyCLRMetaType = MetaType.StashPop(storage.GetStorage("meta"));
+
+            foreach (var item in objs)
+            {
+                XDecref(item.pyHandle);
+            }
         }
 
         public static bool HasStashData()
@@ -137,6 +142,7 @@ namespace Python.Runtime
             foreach (var entry in objs)
             {
                 var obj = entry.Key;
+                XIncref(obj.pyHandle);
                 switch (entry.Value)
                 {
                     case ManagedType.TrackTypes.Extension:
@@ -190,6 +196,7 @@ namespace Python.Runtime
                 }
                 foreach (var clrObj in wrappers[item.Instance])
                 {
+                    XIncref(clrObj.pyHandle);
                     clrObj.Save();
                 }
             }
@@ -198,13 +205,15 @@ namespace Python.Runtime
             storage.AddValue("wrappers", wrapperStorage);
         }
 
-        private static void StashPopObjects(RuntimeDataStorage storage)
+        private static IEnumerable<ManagedType> StashPopObjects(RuntimeDataStorage storage)
         {
             var extensions = storage.GetValue<List<ManagedType>>("extensions");
             var internalStores = storage.GetValue<List<CLRObject>>("internalStores");
+            var storedObjs = new List<ManagedType>();
             foreach (var obj in Enumerable.Union(extensions, internalStores))
             {
                 obj.Load();
+                storedObjs.Add(obj);
             }
             if (WrappersStorer != null)
             {
@@ -215,10 +224,12 @@ namespace Python.Runtime
                     object obj = item.Instance;
                     foreach (var handle in item.Handles)
                     {
-                        CLRObject.Restore(obj, handle);
+                        var co = CLRObject.Restore(obj, handle);
+                        storedObjs.Add(co);
                     }
                 }
             }
+            return storedObjs;
         }
 
         private static void StashPushModules(RuntimeDataStorage storage)

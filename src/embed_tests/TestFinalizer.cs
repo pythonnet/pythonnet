@@ -214,7 +214,7 @@ namespace Python.EmbeddingTest
         {
             if (!Finalizer.Instance.RefCountValidationEnabled)
             {
-                Assert.Pass("Only run with FINALIZER_CHECK");
+                Assert.Ignore("Only run with FINALIZER_CHECK");
             }
             IntPtr ptr = IntPtr.Zero;
             bool called = false;

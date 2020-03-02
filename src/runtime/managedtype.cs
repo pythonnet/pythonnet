@@ -202,14 +202,12 @@ namespace Python.Runtime
 
         internal void Save()
         {
-            Runtime.XIncref(pyHandle);
             OnSave();
         }
 
         internal void Load()
         {
             OnLoad();
-            Runtime.XDecref(pyHandle);
         }
 
         protected virtual void OnSave() { }

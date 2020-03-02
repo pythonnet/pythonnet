@@ -20,8 +20,8 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    //[Serializable]
-    public class PyObject : DynamicObject, IEnumerable, IPyDisposable
+    [Serializable]
+    public partial class PyObject : DynamicObject, IEnumerable, IPyDisposable
     {
 #if TRACE_ALLOC
         /// <summary>

@@ -22,6 +22,7 @@ namespace Python.Runtime
     {
     }
 
+    [Serializable]
     internal class ClassDerivedObject : ClassObject
     {
         private static Dictionary<string, AssemblyBuilder> assemblyBuilders;

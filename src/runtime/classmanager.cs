@@ -69,11 +69,10 @@ namespace Python.Runtime
         private static int OnVisit(IntPtr ob, IntPtr arg)
         {
             var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
-            if (visited.Contains(ob))
+            if (!visited.Add(ob))
             {
                 return 0;
             }
-            visited.Add(ob);
             var clrObj = ManagedType.GetManagedObject(ob);
             if (clrObj != null)
             {

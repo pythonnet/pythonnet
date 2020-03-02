@@ -15,6 +15,7 @@ namespace Python.Runtime
     /// it subclasses System.Object. Instead TypeManager.CreateType() uses
     /// Python's exception.Exception class as base class for System.Exception.
     /// </remarks>
+    [Serializable]
     internal class ExceptionClassObject : ClassObject
     {
         internal ExceptionClassObject(Type tp) : base(tp)

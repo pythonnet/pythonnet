@@ -10,6 +10,7 @@ namespace Python.Runtime
     /// Each of those type objects is associated with an instance of this
     /// class, which provides the implementation for the Python type.
     /// </summary>
+    [Serializable]
     internal class InterfaceObject : ClassBase
     {
         internal ConstructorInfo ctor;
