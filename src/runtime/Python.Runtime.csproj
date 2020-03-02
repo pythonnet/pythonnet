@@ -141,6 +141,7 @@
     <Compile Include="pythonengine.cs" />
     <Compile Include="pythonexception.cs" />
     <Compile Include="pytuple.cs" />
+    <Compile Include="ReferenceExtensions.cs" />
     <Compile Include="runtime.cs" />
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />

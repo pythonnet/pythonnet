@@ -543,12 +543,13 @@ namespace Python.Runtime
         /// </remarks>
         public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            PyObject result = RunString(code, globals, locals, RunFlagType.File);
-            if (result.obj != Runtime.PyNone)
+            using (PyObject result = RunString(code, globals, locals, RunFlagType.File))
             {
-                throw new PythonException();
+                if (result.obj != Runtime.PyNone)
+                {
+                    throw new PythonException();
+                }
             }
-            result.Dispose();
         }
 
 
@@ -594,13 +595,20 @@ namespace Python.Runtime
 
             try
             {
-                IntPtr result = Runtime.PyRun_String(
+                NewReference result = Runtime.PyRun_String(
                     code, (IntPtr)flag, globals.Value, locals.Value
                 );
 
-                Runtime.CheckExceptionOccurred();
+                try
+                {
+                    Runtime.CheckExceptionOccurred();
 
-                return new PyObject(result);
+                    return result.MoveToPyObject();
+                }
+                finally
+                {
+                    result.Dispose();
+                }
             }
             finally
             {
