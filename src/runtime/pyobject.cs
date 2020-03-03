@@ -27,6 +27,7 @@ namespace Python.Runtime
 #endif  
 
         protected internal IntPtr obj = IntPtr.Zero;
+        readonly int run = Runtime.GetRun();
 
         public static PyObject None => new PyObject(new BorrowedReference(Runtime.PyNone));
         internal BorrowedReference Reference => new BorrowedReference(this.obj);
@@ -95,11 +96,15 @@ namespace Python.Runtime
         // when the managed wrapper is garbage-collected.
         ~PyObject()
         {
-            if (obj == IntPtr.Zero)
-            {
-                return;
-            }
+            Debug.Assert(obj != IntPtr.Zero);
+
+#if TRACE_ALLOC
+            CheckRun();
+#endif
+
             Finalizer.Instance.AddFinalizedObject(ref obj);
+
+            Dispose(false);
         }
 
 
@@ -167,17 +172,6 @@ namespace Python.Runtime
 
         internal bool IsDisposed => obj == IntPtr.Zero;
 
-        /// <summary>
-        /// Dispose Method
-        /// </summary>
-        /// <remarks>
-        /// The Dispose method provides a way to explicitly release the
-        /// Python object represented by a PyObject instance. It is a good
-        /// idea to call Dispose on PyObjects that wrap resources that are
-        /// limited or need strict lifetime control. Otherwise, references
-        /// to Python objects will not be released until a managed garbage
-        /// collection occurs.
-        /// </remarks>
         protected virtual void Dispose(bool disposing)
         {
             if (this.obj == IntPtr.Zero)
@@ -187,6 +181,8 @@ namespace Python.Runtime
 
             if (Runtime.Py_IsInitialized() == 0)
                 throw new InvalidOperationException("Python runtime must be initialized");
+
+            CheckRun();
 
             if (!Runtime.IsFinalizing)
             {
@@ -221,10 +217,26 @@ namespace Python.Runtime
             this.obj = IntPtr.Zero;
         }
 
+        /// <summary>
+        /// The Dispose method provides a way to explicitly release the
+        /// Python object represented by a PyObject instance. It is a good
+        /// idea to call Dispose on PyObjects that wrap resources that are
+        /// limited or need strict lifetime control. Otherwise, references
+        /// to Python objects will not be released until a managed garbage
+        /// collection occurs.
+        /// </summary>
         public void Dispose()
         {
-            Dispose(true);
             GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+
+        internal void CheckRun()
+        {
+            if (run != Runtime.GetRun())
+                throw new InvalidOperationException(
+                    "PythonEngine was shut down after this object was created." +
+                    " It is an error to attempt to dispose or to continue using it.");
         }
 
         internal BorrowedReference GetPythonTypeReference()

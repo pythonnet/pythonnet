@@ -236,10 +236,10 @@ namespace Python.Runtime
 
         ~PyBuffer()
         {
-            if (disposedValue)
-            {
-                return;
-            }
+            Debug.Assert(!disposedValue);
+
+            _exporter.CheckRun();
+            
             Finalizer.Instance.AddFinalizedObject(ref _view.obj);
         }
 

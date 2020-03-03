@@ -85,7 +85,15 @@ namespace Python.Runtime
             }
         }
 
-        /// <summary>
+        static int run = 0;
+
+        internal static int GetRun()
+        {
+            int runNumber = run;
+            Debug.Assert(runNumber > 0, "This must only be called after Runtime is initialized at least once");
+            return runNumber;
+        }
+
         /// Initialize the runtime...
         /// </summary>
         /// <remarks>Always call this method from the Main thread.  After the
@@ -110,6 +118,9 @@ namespace Python.Runtime
             if (!interpreterAlreadyInitialized)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
+
+                NewRun();
+
                 if (PyEval_ThreadsInitialized() == 0)
                 {
                     PyEval_InitThreads();
@@ -129,6 +140,16 @@ namespace Python.Runtime
                 if (mode != ShutdownMode.Extension)
                 {
                     PyGILState_Ensure();
+                }
+
+                BorrowedReference pyRun = PySys_GetObject("__pynet_run__");
+                if (pyRun != null)
+                {
+                    run = checked((int)PyLong_AsSignedSize_t(pyRun));
+                }
+                else
+                {
+                    NewRun();
                 }
             }
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
@@ -173,6 +194,13 @@ namespace Python.Runtime
 
             clrInterop = GetModuleLazy("clr.interop");
             inspect = GetModuleLazy("inspect");
+        }
+
+        static void NewRun()
+        {
+            run++;
+            using var pyRun = PyLong_FromLongLong(run);
+            PySys_SetObject("__pynet_run__", pyRun);
         }
 
         private static void InitPyMembers()
