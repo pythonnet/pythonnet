@@ -94,6 +94,7 @@
     <Compile Include="TestDomainReload.cs" />
     <Compile Include="TestExample.cs" />
     <Compile Include="TestFinalizer.cs" />
+    <Compile Include="TestInstanceWrapping.cs" />
     <Compile Include="TestPyAnsiString.cs" />
     <Compile Include="TestPyFloat.cs" />
     <Compile Include="TestPyInt.cs" />
