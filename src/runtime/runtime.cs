@@ -8,7 +8,6 @@ using Python.Runtime.Platform;
 
 namespace Python.Runtime
 {
-
     /// <summary>
     /// Encapsulates the low-level Python C API. Note that it is
     /// the responsibility of the caller to have acquired the GIL
@@ -684,8 +683,23 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_IsInitialized();
 
+        internal static void Py_Finalize()
+        {
+            if (pyversionnumber >= 36)
+            {
+                int result = Py_FinalizeEx();
+                PythonException.ThrowIfIsNotZero(result);
+            }
+            else
+            {
+                _Py_Finalize();
+            }
+        }
+
+        [DllImport(_PythonDll, EntryPoint = "Py_Finalize", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void _Py_Finalize();
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_Finalize();
+        internal static extern int Py_FinalizeEx();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr Py_NewInterpreter();
