@@ -438,13 +438,13 @@ def test_object_indexer():
     ob[long(1)] = "long"
     assert ob[long(1)] == "long"
 
-    with pytest.raises(TypeError):
-        class Eggs(object):
-            pass
+    class Eggs(object):
+        pass
 
-        key = Eggs()
-        ob = Test.ObjectIndexerTest()
-        ob[key] = "wrong"
+    key = Eggs()
+    ob = Test.ObjectIndexerTest()
+    ob[key] = "eggs_key"
+    assert ob[key] == "eggs_key"
 
 
 def test_interface_indexer():

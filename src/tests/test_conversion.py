@@ -595,11 +595,10 @@ def test_object_conversion():
 
     # need to test subclass here
 
-    with pytest.raises(TypeError):
-        class Foo(object):
-            pass
-        ob = ConversionTest()
-        ob.ObjectField = Foo
+    class Foo(object):
+        pass
+    ob.ObjectField = Foo
+    assert ob.ObjectField == Foo
 
 
 def test_enum_conversion():
