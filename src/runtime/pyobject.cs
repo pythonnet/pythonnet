@@ -33,6 +33,8 @@ namespace Python.Runtime
         private bool disposed = false;
         private bool _finalized = false;
 
+        internal BorrowedReference Reference => new BorrowedReference(obj);
+
         /// <summary>
         /// PyObject Constructor
         /// </summary>
@@ -52,9 +54,24 @@ namespace Python.Runtime
 #endif
         }
 
+        /// <summary>
+        /// Creates new <see cref="PyObject"/> pointing to the same object as
+        /// the <paramref name="reference"/>. Increments refcount, allowing <see cref="PyObject"/>
+        /// to have ownership over its own reference.
+        /// </summary>
+        internal PyObject(BorrowedReference reference)
+        {
+            if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
+
+            obj = Runtime.SelfIncRef(reference.DangerousGetAddress());
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
+        }
+
         // Protected default constructor to allow subclasses to manage
         // initialization in different ways as appropriate.
-        [Obsolete("Please, always use PyObject(IntPtr)")]
+        [Obsolete("Please, always use PyObject(*Reference)")]
         protected PyObject()
         {
 #if TRACE_ALLOC

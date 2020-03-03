@@ -14,7 +14,10 @@ namespace Python.Runtime
         public IntPtr DangerousGetAddress()
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
 
-        BorrowedReference(IntPtr pointer)
+        /// <summary>
+        /// Creates new instance of <see cref="BorrowedReference"/> from raw pointer. Unsafe.
+        /// </summary>
+        public BorrowedReference(IntPtr pointer)
         {
             this.pointer = pointer;
         }
