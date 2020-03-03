@@ -146,6 +146,17 @@ namespace Python.Runtime
             return Runtime.PyRun_SimpleString(code);
         }
 
+        static bool libraryLoaded = false;
+        public static void InitializeLibrary()
+        {
+            if (!libraryLoaded)
+            {
+                var _loader = Python.Runtime.Platform.LibraryLoader.Get(Python.Runtime.Platform.OperatingSystemType.Linux);
+                _loader.Load(Runtime.pythonlib, Runtime.dllDirectory);
+                libraryLoaded = true;
+            }
+        }
+
         public static void Initialize()
         {
             Initialize(setSysArgv: true);
@@ -154,6 +165,15 @@ namespace Python.Runtime
         public static void Initialize(bool setSysArgv = true, bool initSigs = false)
         {
             Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs);
+        }
+
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
+        {
+            if (!initialized)
+            {
+                InitializeLibrary();
+                Initialize2(args,setSysArgv, initSigs);
+            }
         }
 
         /// <summary>
@@ -166,7 +186,7 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
+        static internal void Initialize2(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
         {
             if (!initialized)
             {

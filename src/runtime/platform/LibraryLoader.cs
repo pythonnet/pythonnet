@@ -6,7 +6,7 @@ namespace Python.Runtime.Platform
 {
     interface ILibraryLoader
     {
-        IntPtr Load(string dllToLoad);
+        IntPtr Load(string dllToLoad, string directory = "");
 
         IntPtr GetFunction(IntPtr hModule, string procedureName);
 
@@ -38,9 +38,9 @@ namespace Python.Runtime.Platform
         private static IntPtr RTLD_DEFAULT = IntPtr.Zero;
         private const string NativeDll = "libdl.so";
 
-        public IntPtr Load(string dllToLoad)
+        public IntPtr Load(string dllToLoad, string directory = "")
         {
-            var filename = $"lib{dllToLoad}.so";
+            var filename = $"{directory}lib{dllToLoad}.so";
             ClearError();
             var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
             if (res == IntPtr.Zero)
@@ -109,9 +109,9 @@ namespace Python.Runtime.Platform
         private const string NativeDll = "/usr/lib/libSystem.dylib";
         private static IntPtr RTLD_DEFAULT = new IntPtr(-2);
 
-        public IntPtr Load(string dllToLoad)
+        public IntPtr Load(string dllToLoad, string directory = "")
         {
-            var filename = $"lib{dllToLoad}.dylib";
+            var filename = $"{directory}lib{dllToLoad}.dylib";
             ClearError();
             var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
             if (res == IntPtr.Zero)
@@ -178,7 +178,7 @@ namespace Python.Runtime.Platform
         private const string NativeDll = "kernel32.dll";
 
 
-        public IntPtr Load(string dllToLoad)
+        public IntPtr Load(string dllToLoad, string directory = "")
         {
             var res = WindowsLoader.LoadLibrary(dllToLoad);
             if (res == IntPtr.Zero)

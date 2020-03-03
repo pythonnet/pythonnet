@@ -100,7 +100,13 @@ namespace Python.Runtime
 #else
         internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
 #endif
-
+#if MONO_LINUX
+        internal const string dllDirectory = "Library/conda/lib/";
+        internal const string pythonlib = "python3.7m";
+#elif MONO_MAC
+        internal const string dllDirectory = "/Library/Frameworks.Python.framework/Versions/3.7/lib/";
+        internal const string pythonlib = "python3.7m";
+#endif
         public static readonly int pyversionnumber = Convert.ToInt32(_pyver);
 
         // set to true when python is finalizing
@@ -316,7 +322,7 @@ namespace Python.Runtime
 
             if (_PythonDll != "__Internal")
             {
-                dllLocal = loader.Load(_PythonDll);
+                dllLocal = loader.Load(_PythonDll, dllDirectory);
             }
             _PyObject_NextNotImplemented = loader.GetFunction(dllLocal, "_PyObject_NextNotImplemented");
             PyModuleType = loader.GetFunction(dllLocal, "PyModule_Type");
