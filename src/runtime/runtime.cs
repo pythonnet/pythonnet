@@ -95,6 +95,9 @@ namespace Python.Runtime
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
+        internal static Version InteropVersion { get; }
+            = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+
         static readonly Dictionary<string, OperatingSystemType> OperatingSystemTypeMapping = new Dictionary<string, OperatingSystemType>()
         {
             { "Windows", OperatingSystemType.Windows },
@@ -306,9 +309,9 @@ namespace Python.Runtime
             // Need to add the runtime directory to sys.path so that we
             // can find built-in assemblies like System.Data, et. al.
             string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
-            IntPtr path = PySys_GetObject("path");
+            BorrowedReference path = PySys_GetObject("path");
             IntPtr item = PyString_FromString(rtdir);
-            PyList_Append(new BorrowedReference(path), item);
+            PyList_Append(path, item);
             XDecref(item);
             AssemblyManager.UpdatePath();
         }
@@ -1565,13 +1568,13 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_AsTuple(IntPtr pointer);
 
-        internal static BorrowedReference PyList_GetItem(IntPtr pointer, long index)
+        internal static BorrowedReference PyList_GetItem(BorrowedReference pointer, long index)
         {
             return PyList_GetItem(pointer, new IntPtr(index));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        private static extern BorrowedReference PyList_GetItem(IntPtr pointer, IntPtr index);
+        private static extern BorrowedReference PyList_GetItem(BorrowedReference pointer, IntPtr index);
 
         internal static int PyList_SetItem(IntPtr pointer, long index, IntPtr value)
         {
@@ -1614,13 +1617,13 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern int PyList_SetSlice(IntPtr pointer, IntPtr start, IntPtr end, IntPtr value);
 
-        internal static long PyList_Size(IntPtr pointer)
+        internal static long PyList_Size(BorrowedReference pointer)
         {
             return (long)_PyList_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyList_Size")]
-        private static extern IntPtr _PyList_Size(IntPtr pointer);
+        private static extern IntPtr _PyList_Size(BorrowedReference pointer);
 
         //====================================================================
         // Python tuple API
@@ -1732,7 +1735,7 @@ namespace Python.Runtime
         );
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PySys_GetObject(string name);
+        internal static extern BorrowedReference PySys_GetObject(string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySys_SetObject(string name, IntPtr ob);
@@ -1835,7 +1838,7 @@ namespace Python.Runtime
         internal static extern void PyErr_SetString(IntPtr ob, string message);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_SetObject(IntPtr ob, IntPtr message);
+        internal static extern void PyErr_SetObject(BorrowedReference type, BorrowedReference exceptionObject);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyErr_SetFromErrno(IntPtr ob);

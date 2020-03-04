@@ -254,9 +254,9 @@ namespace Python.Runtime
         /// Sets the current Python exception given a Python object.
         /// This is a wrapper for the Python PyErr_SetObject call.
         /// </remarks>
-        public static void SetError(IntPtr ob, IntPtr value)
+        public static void SetError(IntPtr type, IntPtr exceptionObject)
         {
-            Runtime.PyErr_SetObject(ob, value);
+            Runtime.PyErr_SetObject(new BorrowedReference(type), new BorrowedReference(exceptionObject));
         }
 
         /// <summary>
@@ -286,7 +286,7 @@ namespace Python.Runtime
 
             IntPtr op = CLRObject.GetInstHandle(e);
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
-            Runtime.PyErr_SetObject(etype, op);
+            Runtime.PyErr_SetObject(new BorrowedReference(etype), new BorrowedReference(op));
             Runtime.XDecref(etype);
             Runtime.XDecref(op);
         }

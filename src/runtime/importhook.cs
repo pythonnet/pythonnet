@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -222,8 +223,12 @@ namespace Python.Runtime
             // Check these BEFORE the built-in import runs; may as well
             // do the Incref()ed return here, since we've already found
             // the module.
-            if (mod_name == "clr")
+            if (mod_name == "clr" || mod_name == "CLR")
             {
+                if (mod_name == "CLR")
+                {
+                    Exceptions.deprecation("The CLR module is deprecated. Please use 'clr'.");
+                }
                 IntPtr clr_module = GetCLRModule(fromList);
                 if (clr_module != IntPtr.Zero)
                 {
@@ -235,22 +240,10 @@ namespace Python.Runtime
                 }
                 return clr_module;
             }
-            if (mod_name == "CLR")
-            {
-                Exceptions.deprecation("The CLR module is deprecated. Please use 'clr'.");
-                IntPtr clr_module = GetCLRModule(fromList);
-                if (clr_module != IntPtr.Zero)
-                {
-                    IntPtr sys_modules = Runtime.PyImport_GetModuleDict();
-                    if (sys_modules != IntPtr.Zero)
-                    {
-                        Runtime.PyDict_SetItemString(sys_modules, "clr", clr_module);
-                    }
-                }
-                return clr_module;
-            }
+
             string realname = mod_name;
             string clr_prefix = null;
+
             if (mod_name.StartsWith("CLR."))
             {
                 clr_prefix = "CLR."; // prepend when adding the module to sys.modules
@@ -312,11 +305,22 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
             if (!AssemblyManager.IsValidNamespace(realname))
             {
-                if (!AssemblyManager.LoadImplicit(realname))
+                var loadExceptions = new List<Exception>();
+                if (!AssemblyManager.LoadImplicit(realname, assemblyLoadErrorHandler: loadExceptions.Add))
                 {
                     // May be called when a module being imported imports a module.
                     // In particular, I've seen decimal import copy import org.python.core
-                    return Runtime.PyObject_Call(py_import, args, kw);
+                    IntPtr importResult = Runtime.PyObject_Call(py_import, args, kw);
+                    // TODO: use ModuleNotFoundError in Python 3.6+
+                    if (importResult == IntPtr.Zero && loadExceptions.Count > 0
+                        && Exceptions.ExceptionMatches(Exceptions.ImportError))
+                    {
+                        loadExceptions.Add(new PythonException());
+                        var importError = new PyObject(new BorrowedReference(Exceptions.ImportError));
+                        importError.SetAttr("__cause__", new AggregateException(loadExceptions).ToPython());
+                        Runtime.PyErr_SetObject(new BorrowedReference(Exceptions.ImportError), importError.Reference);
+                    }
+                    return importResult;
                 }
             }
 

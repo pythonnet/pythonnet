@@ -38,8 +38,8 @@ namespace Python.EmbeddingTest
             string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
-            IntPtr path = Runtime.Runtime.PySys_GetObject("path");
-            Runtime.Runtime.PyList_Append(new BorrowedReference(path), str);
+            BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
+            Runtime.Runtime.PyList_Append(path, str);
         }
 
         [TearDown]
@@ -82,6 +82,29 @@ namespace Python.EmbeddingTest
             foo.FOO = 2;
             Assert.AreEqual("2", foo.FOO.ToString());
             Assert.AreEqual("2", foo.test_foo().ToString());
+        }
+
+        [Test]
+        public void BadAssembly()
+        {
+            string path;
+            if (Python.Runtime.Runtime.IsWindows)
+            {
+                path = @"C:\Windows\System32\kernel32.dll";
+            }
+            else
+            {
+                Assert.Pass("TODO: add bad assembly location for other platforms");
+                return;
+            }
+
+            string code = $@"
+import clr
+clr.AddReference('{path}')
+";
+
+            var error = Assert.Throws<PythonException>(() => PythonEngine.Exec(code));
+            Assert.AreEqual(nameof(FileLoadException), error.PythonTypeName);
         }
     }
 }
