@@ -22,6 +22,15 @@ namespace Python.Runtime
         {
         }
 
+        /// <summary>
+        /// PyTuple Constructor
+        /// </summary>
+        /// <remarks>
+        /// Creates a new PyTuple from an existing object reference.
+        /// The object reference is not checked for type-correctness.
+        /// </remarks>
+        internal PyTuple(BorrowedReference reference) : base(reference) { }
+
 
         /// <summary>
         /// PyTuple Constructor
