@@ -123,7 +123,9 @@ def bar(a):
                 //foo, the function with no arguments
                 var fooFunc = locals.GetItem("foo");
                 Assert.IsFalse(codec.CanDecode(fooFunc, typeof(bool)));
-                Assert.IsFalse(codec.CanDecode(fooFunc, typeof(Action<object[]>)));
+
+                //CanDecode does not work for variadic actions
+                //Assert.IsFalse(codec.CanDecode(fooFunc, typeof(Action<object[]>)));
                 Assert.IsTrue(codec.CanDecode(fooFunc, typeof(Action)));
 
                 Action fooAction;
@@ -133,7 +135,7 @@ def bar(a):
                 //bar, the function with an argument
                 var barFunc = locals.GetItem("bar");
                 Assert.IsFalse(codec.CanDecode(barFunc, typeof(bool)));
-                Assert.IsFalse(codec.CanDecode(barFunc, typeof(Action)));
+                //Assert.IsFalse(codec.CanDecode(barFunc, typeof(Action)));
                 Assert.IsTrue(codec.CanDecode(barFunc, typeof(Action<object[]>)));
 
                 Action<object[]> barAction;
@@ -155,6 +157,96 @@ def bar(a):
                 Action<object[]> bar = (object[] args) => { var z = args.Length; };
                 Assert.IsTrue(codec.CanEncode(bar.GetType()));
                 Assert.DoesNotThrow(() => { codec.TryEncode(bar); });
+            }
+        }
+
+        [Test]
+        public void FunctionFunc()
+        {
+            FunctionCodec.Register();
+            var codec = FunctionCodec.Instance;
+
+            //decoding - python functions to C# funcs
+            {
+                PyInt x = new PyInt(1);
+                PyDict y = new PyDict();
+                //non-callables can't be decoded into Func
+                Assert.IsFalse(codec.CanDecode(x, typeof(Func<object>)));
+                Assert.IsFalse(codec.CanDecode(y, typeof(Func<object>)));
+
+                var locals = new PyDict();
+                PythonEngine.Exec(@"
+def foo():
+    return 1
+def bar(a):
+    return 2
+", null, locals.Handle);
+
+                //foo, the function with no arguments
+                var fooFunc = locals.GetItem("foo");
+                Assert.IsFalse(codec.CanDecode(fooFunc, typeof(bool)));
+
+                //CanDecode does not work for variadic actions
+                //Assert.IsFalse(codec.CanDecode(fooFunc, typeof(Func<object[], object>)));
+                Assert.IsTrue(codec.CanDecode(fooFunc, typeof(Func<object>)));
+
+                Func<object> foo;
+                Assert.IsTrue(codec.TryDecode(fooFunc, out foo));
+                object res1 = null;
+                Assert.DoesNotThrow(() => res1 = foo());
+                Assert.AreEqual(res1, 1);
+
+                //bar, the function with an argument
+                var barFunc = locals.GetItem("bar");
+                Assert.IsFalse(codec.CanDecode(barFunc, typeof(bool)));
+                //Assert.IsFalse(codec.CanDecode(barFunc, typeof(Func<object>)));
+                Assert.IsTrue(codec.CanDecode(barFunc, typeof(Func<object[], object>)));
+
+                Func<object[], object> bar;
+                Assert.IsTrue(codec.TryDecode(barFunc, out bar));
+                object res2 = null;
+                Assert.DoesNotThrow(() => res2 = bar(new[] { (object)true }));
+                Assert.AreEqual(res2, 2);
+            }
+
+            //encoding, C# funcs to python functions
+            {
+                Func<object> foo = () => { return 1; };
+                Assert.IsTrue(codec.CanEncode(foo.GetType()));
+
+                PyObject ret1 = null;
+                Assert.DoesNotThrow(() => { ret1 = codec.TryEncode(foo); });
+                //call ret1
+                Assert.IsTrue(ret1.IsCallable());
+
+                var pyArgs1 = new PyObject[0];
+                using (Py.GIL())
+                {
+                    var pyResult = ret1.Invoke(pyArgs1);
+                    Runtime.XIncref(pyResult.Handle);
+                    object result;
+                    Converter.ToManaged(pyResult.Handle, typeof(object), out result, true);
+                    Assert.AreEqual(result, 1);
+                }
+
+                Func<object[], object> bar = (object[] args) => {
+                    return args.Length;
+                };
+                Assert.IsTrue(codec.CanEncode(bar.GetType()));
+                PyObject ret2 = null;
+                Assert.DoesNotThrow(() => { ret2 = codec.TryEncode(bar); });
+                //call ret2
+                Assert.IsTrue(ret2.IsCallable());
+
+                var pyArgs2 = new PyObject[2] { new PyInt(1), new PyFloat(2.2) };
+                using (Py.GIL())
+                {
+                    var pyResult = ret2.Invoke(pyArgs2);
+                    Runtime.XIncref(pyResult.Handle);
+                    object result;
+                    Converter.ToManaged(pyResult.Handle, typeof(object), out result, true);
+                    Assert.AreEqual(result, 2);
+                }
             }
         }
     }

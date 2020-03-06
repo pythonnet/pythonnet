@@ -66,8 +66,36 @@ namespace Python.Runtime.Codecs
         }
     }
 
+    internal class CallableHelper
+    {
+        public static object[] ConvertArgs(IntPtr args)
+        {
+            var numArgs = Runtime.PyTuple_Size(args);
+            object[] managedArgs = null;
+            if (numArgs > 0)
+            {
+                managedArgs = new object[numArgs];
+                for (int idx = 0; idx < numArgs; ++idx)
+                {
+                    IntPtr item = Runtime.PyTuple_GetItem(args, idx);
+                    object result;
+                    if (!Converter.ToManaged(item, typeof(object), out result, false))
+                        throw new Exception();
+
+                    managedArgs[idx] = result;
+                }
+            }
+            return managedArgs;
+        }
+    }
+
+    interface ICallable
+    {
+        IntPtr RunAction(IntPtr self, IntPtr args);
+    }
+
     //class which wraps a thing
-    internal class ActionWrapper
+    internal class ActionWrapper : ICallable
     {
         Action<object[]> _action = null;
         internal ActionWrapper(Action action)
@@ -82,41 +110,48 @@ namespace Python.Runtime.Codecs
 
         public virtual IntPtr RunAction(IntPtr self, IntPtr args)
         {
-            var numArgs = Runtime.PyTuple_Size(args);
+            try
             {
-                object[] managedArgs = null;
-                if (numArgs > 0)
-                {
-                    managedArgs = new object[numArgs];
-                    for (int idx = 0; idx < numArgs; ++idx)
-                    {
-                        IntPtr item = Runtime.PyTuple_GetItem(args, idx);
-                        object result;
-                        //this will cause an exception to be raised if there is a failure,
-                        // so we can safely return IntPtr.Zero
-                        bool setError = true;
-                        if (!Converter.ToManaged(item, typeof(object), out result, setError))
-                            return IntPtr.Zero;
-
-                        managedArgs[idx] = result;
-                    }
-                }
-
-                //get the args out, convert them each to C# one by one.
-
-                //call the action with the C# args
-                try
-                {
-                    _action(managedArgs);
-                }
-                catch
-                {
-                    Exceptions.SetError(Exceptions.TypeError, "Action threw an exception");
-                    return IntPtr.Zero;
-                }
+                object[] managedArgs = CallableHelper.ConvertArgs(args);
+                _action(managedArgs);
+            }
+            catch
+            {
+                Exceptions.SetError(Exceptions.TypeError, "Error in RunAction");
+                return IntPtr.Zero;
             }
 
             return Runtime.PyNone;
+        }
+    }
+
+    internal class FunctionWrapper : ICallable
+    {
+        Func<object[], object> _func = null;
+
+        internal FunctionWrapper(Func<object> func)
+        {
+            _func = (object[] args) => { return func(); };
+        }
+
+        internal FunctionWrapper(Func<object[], object> func)
+        {
+            _func = func;
+        }
+
+        public virtual IntPtr RunAction(IntPtr self, IntPtr args)
+        {
+            try
+            {
+                object[] managedArgs = CallableHelper.ConvertArgs(args);
+                var retVal = _func(managedArgs);
+                return Converter.ToPython(retVal);
+            }
+            catch
+            {
+                Exceptions.SetError(Exceptions.TypeError, "Error in RunAction");
+                return IntPtr.Zero;
+            }
         }
     }
 
@@ -137,12 +172,6 @@ x = len(signature(f).parameters)
             return new PyInt(x).ToInt32();
         }
 
-        private static int GetNumArgs(Type targetType)
-        {
-            var args = targetType.GetGenericArguments();
-            return args.Length;
-        }
-
         private static bool IsUnaryAction(Type targetType)
         {
             return targetType == typeof(Action);
@@ -153,15 +182,30 @@ x = len(signature(f).parameters)
             return targetType == typeof(Action<object[]>);
         }
 
+        private static bool IsUnaryFunc(Type targetType)
+        {
+            return targetType == typeof(Func<object>);
+        }
+
+        private static bool IsVariadicObjectFunc(Type targetType)
+        {
+            return targetType == typeof(Func<object[], object>);
+        }
+
         private static bool IsAction(Type targetType)
         {
             return IsUnaryAction(targetType) || IsVariadicObjectAction(targetType);
         }
 
+        private static bool IsFunc(Type targetType)
+        {
+            return IsUnaryFunc(targetType) || IsVariadicObjectFunc(targetType);
+        }
+
         private static bool IsCallable(Type targetType)
         {
-            //TODO - Func, delegate, etc
-            return IsAction(targetType);
+            //TODO - delegate, event, ...
+            return IsAction(targetType) || IsFunc(targetType);
         }
 
         public static FunctionCodec Instance { get; } = new FunctionCodec();
@@ -174,7 +218,69 @@ x = len(signature(f).parameters)
             if (!IsCallable(targetType))
                 return false;
 
-            return GetNumArgs(objectType) == GetNumArgs(targetType);
+            //We don't know if it will work without the instance
+            //The number of arguments of a unary or variadic object callable
+            //is always going to be 0 or 1
+            return true;
+        }
+
+        private static object ConvertUnaryAction(PyObject pyObj)
+        {
+            Func<object> func = (Func<object>)ConvertUnaryFunc(pyObj);
+            Action action = () => { func(); };
+            return (object)action;
+        }
+
+        private static object ConvertVariadicObjectAction(PyObject pyObj, int numArgs)
+        {
+            Func<object[], object> func = (Func<object[], object>)ConvertVariadicObjectFunc(pyObj, numArgs);
+            Action<object[]> action = (object[] args) => { func(args); };
+            return (object)action;
+        }
+
+        //TODO share code between ConvertUnaryFunc and ConvertVariadicObjectFunc
+        private static object ConvertUnaryFunc(PyObject pyObj)
+        {
+            Func<object> func = () =>
+            {
+                Runtime.XIncref(pyObj.Handle);
+                PyObject pyAction = new PyObject(pyObj.Handle);
+                var pyArgs = new PyObject[0];
+                using (Py.GIL())
+                {
+                    var pyResult = pyAction.Invoke(pyArgs);
+                    Runtime.XIncref(pyResult.Handle);
+                    object result;
+                    Converter.ToManaged(pyResult.Handle, typeof(object), out result, true);
+                    return result;
+                }
+            };
+            return (object)func;
+        }
+
+        private static object ConvertVariadicObjectFunc(PyObject pyObj, int numArgs)
+        {
+            Func<object[], object> func = (object[] o) =>
+            {
+                Runtime.XIncref(pyObj.Handle);
+                PyObject pyAction = new PyObject(pyObj.Handle);
+                var pyArgs = new PyObject[numArgs];
+                int i = 0;
+                foreach (object obj in o)
+                {
+                    pyArgs[i++] = new PyObject(Converter.ToPython(obj));
+                }
+
+                using (Py.GIL())
+                {
+                    var pyResult = pyAction.Invoke(pyArgs);
+                    Runtime.XIncref(pyResult.Handle);
+                    object result;
+                    Converter.ToManaged(pyResult.Handle, typeof(object), out result, true);
+                    return result;
+                }
+            };
+            return (object)func;
         }
 
         public bool TryDecode<T>(PyObject pyObj, out T value)
@@ -184,49 +290,37 @@ x = len(signature(f).parameters)
             if (!IsCallable(tT))
                 return false;
 
-            var numArgs = GetNumArgs(tT);
+            var numArgs = GetNumArgs(pyObj);
 
             if (IsAction(tT))
             {
                 object actionObj = null;
                 if (numArgs == 0)
                 {
-                    Action action = () =>
-                    {
-                        Runtime.XIncref(pyObj.Handle);
-                        PyObject pyAction = new PyObject(pyObj.Handle);
-                        var pyArgs = new PyObject[0];
-                        using (Py.GIL())
-                        {
-                            var pyResult = pyAction.Invoke(pyArgs);
-                            Runtime.XIncref(pyResult.Handle);
-                        }
-                    };
-                    actionObj = (object)action;
+                    actionObj = ConvertUnaryAction(pyObj);
                 }
                 else
                 {
-                    Action<object[]> action = (object[] o) =>
-                    {
-                        Runtime.XIncref(pyObj.Handle);
-                        PyObject pyAction = new PyObject(pyObj.Handle);
-                        var pyArgs = new PyObject[numArgs];
-                        int i = 0;
-                        foreach (object obj in o)
-                        {
-                            pyArgs[i++] = new PyObject(Converter.ToPython(obj));
-                        }
-
-                        using (Py.GIL())
-                        {
-                            var pyResult = pyAction.Invoke(pyArgs);
-                            Runtime.XIncref(pyResult.Handle);
-                        }
-                    };
-                    actionObj = (object)action;
+                    actionObj = ConvertVariadicObjectAction(pyObj, numArgs);
                 }
 
                 value = (T)actionObj;
+                return true;
+            }
+            else if (IsFunc(tT))
+            {
+
+                object funcObj = null;
+                if (numArgs == 0)
+                {
+                    funcObj = ConvertUnaryFunc(pyObj);
+                }
+                else
+                {
+                    funcObj = ConvertVariadicObjectFunc(pyObj, numArgs);
+                }
+
+                value = (T)funcObj;
                 return true;
             }
             else
@@ -251,13 +345,30 @@ x = len(signature(f).parameters)
             if (value == null) return null;
 
             var targetType = value.GetType();
-            ActionWrapper wrapper = null;
+            ICallable callable = null;
             if (IsUnaryAction(targetType))
-                wrapper = new ActionWrapper(value as Action);
-            else if (IsVariadicObjectAction(targetType))
-                wrapper = new ActionWrapper(value as Action<object[]>);
+            {
+                callable = new ActionWrapper(value as Action);
 
-            var methodWrapper = new MethodWrapper2(wrapper, "RunAction", "BinaryFunc");
+            }
+            else if (IsVariadicObjectAction(targetType))
+            {
+                callable = new ActionWrapper(value as Action<object[]>);
+            }
+            else if (IsUnaryFunc(targetType))
+            {
+                callable = new FunctionWrapper(value as Func<object>);
+            }
+            else if (IsVariadicObjectFunc(targetType))
+            {
+                callable = new FunctionWrapper(value as Func<object[], object>);
+            }
+            else
+            {
+                throw new Exception("object cannot be encoded!");
+            }
+
+            var methodWrapper = new MethodWrapper2(callable, "RunAction", "BinaryFunc");
 
             //TODO - lifetime??
             return new PyObject(methodWrapper.ptr);
