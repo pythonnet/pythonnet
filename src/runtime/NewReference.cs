@@ -33,6 +33,12 @@ namespace Python.Runtime
             this.pointer = IntPtr.Zero;
         }
 
+        /// <summary>
+        /// Creates <see cref="NewReference"/> from a raw pointer
+        /// </summary>
+        public static NewReference DangerousFromPointer(IntPtr pointer)
+            => new NewReference {pointer = pointer};
+
         [Pure]
         internal static IntPtr DangerousGetAddress(in NewReference reference)
             => IsNull(reference) ? throw new NullReferenceException() : reference.pointer;
