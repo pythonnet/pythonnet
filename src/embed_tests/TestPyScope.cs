@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -337,13 +338,16 @@ namespace Python.EmbeddingTest
                     //add function to the scope 
                     //can be call many times, more efficient than ast 
                     ps.Exec(
+                        "import threading\n" +
+                        "lock = threading.Lock()\n" +
                         "def update():\n" +
-                        "    global res, th_cnt\n" +
+                        "  global res, th_cnt\n" +
+                        "  with lock:\n" +
                         "    res += bb + 1\n" +
                         "    th_cnt += 1\n"
                     );
                 }
-                int th_cnt = 3;
+                int th_cnt = 100;
                 for (int i = 0; i < th_cnt; i++)
                 {
                     System.Threading.Thread th = new System.Threading.Thread(() =>
@@ -364,7 +368,7 @@ namespace Python.EmbeddingTest
                     {
                         cnt = ps.Get<int>("th_cnt");
                     }
-                    System.Threading.Thread.Sleep(10);
+                    Thread.Yield();
                 }
                 using (Py.GIL())
                 {

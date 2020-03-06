@@ -278,11 +278,19 @@ namespace Python.Runtime
             Check();
             IntPtr _locals = locals == null ? variables : locals.obj;
             var flag = (IntPtr)Runtime.Py_eval_input;
-            IntPtr ptr = Runtime.PyRun_String(
+
+            NewReference reference = Runtime.PyRun_String(
                 code, flag, variables, _locals
             );
-            Runtime.CheckExceptionOccurred();
-            return new PyObject(ptr);
+            try
+            {
+                Runtime.CheckExceptionOccurred();
+                return reference.MoveToPyObject();
+            }
+            finally
+            {
+                reference.Dispose();
+            }
         }
 
         /// <summary>
@@ -316,15 +324,22 @@ namespace Python.Runtime
         private void Exec(string code, IntPtr _globals, IntPtr _locals)
         {
             var flag = (IntPtr)Runtime.Py_file_input;
-            IntPtr ptr = Runtime.PyRun_String(
+            NewReference reference = Runtime.PyRun_String(
                 code, flag, _globals, _locals
             );
-            Runtime.CheckExceptionOccurred();
-            if (ptr != Runtime.PyNone)
+
+            try
             {
-                throw new PythonException();
+                Runtime.CheckExceptionOccurred();
+                if (!reference.IsNone())
+                {
+                    throw new PythonException();
+                }
             }
-            Runtime.XDecref(ptr);
+            finally
+            {
+                reference.Dispose();
+            }
         }
 
         /// <summary>

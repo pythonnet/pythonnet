@@ -135,8 +135,17 @@ namespace Python.Runtime
                 return result;
             }
 
-			if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
-			{
+            if (Type.GetTypeCode(type) == TypeCode.Object && value.GetType() != typeof(object)) {
+                var encoded = PyObjectConversions.TryEncode(value, type);
+                if (encoded != null) {
+                    result = encoded.Handle;
+                    Runtime.XIncref(result);
+                    return result;
+                }
+            }
+
+            if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
+            {
                 using (var resultlist = new PyList())
                 {
                     foreach (object o in (IEnumerable)value)
@@ -377,17 +386,21 @@ namespace Python.Runtime
                     return ToPrimitive(value, doubleType, out result, setError);
                 }
 
+                // give custom codecs a chance to take over conversion of sequences
+                IntPtr pyType = Runtime.PyObject_TYPE(value);
+                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
+                {
+                    return true;
+                }
+
                 if (Runtime.PySequence_Check(value))
                 {
                     return ToArray(value, typeof(object[]), out result, setError);
                 }
 
-                if (setError)
-                {
-                    Exceptions.SetError(Exceptions.TypeError, "value cannot be converted to Object");
-                }
-
-                return false;
+                Runtime.XIncref(value); // PyObject() assumes ownership
+                result = new PyObject(value);
+                return true;
             }
 
             // Conversion to 'Type' is done using the same mappings as above for objects.
@@ -437,8 +450,20 @@ namespace Python.Runtime
                 return false;
             }
 
+            TypeCode typeCode = Type.GetTypeCode(obType);
+            if (typeCode == TypeCode.Object)
+            {
+                IntPtr pyType = Runtime.PyObject_TYPE(value);
+                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
+                {
+                    return true;
+                }
+            }
+
             return ToPrimitive(value, obType, out result, setError);
         }
+
+        internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
 
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
@@ -941,6 +966,17 @@ namespace Python.Runtime
         public static PyObject ToPython(this object o)
         {
             return new PyObject(Converter.ToPython(o, o?.GetType()));
+        }
+
+        /// <summary>
+        /// Gets raw Python proxy for this object (bypasses all conversions,
+        /// except <c>null</c> &lt;==&gt; <c>None</c>)
+        /// </summary>
+        public static PyObject GetRawPythonProxy(this object o)
+        {
+            if (o is null) return new PyObject(new BorrowedReference(Runtime.PyNone));
+
+            return CLRObject.MakeNewReference(o).MoveToPyObject();
         }
     }
 }

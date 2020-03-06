@@ -142,7 +142,7 @@ namespace Python.Runtime
             var items = Runtime.PyDict_Items(this.obj);
             try
             {
-                if (items.IsNull)
+                if (items.IsNull())
                 {
                     throw new PythonException();
                 }

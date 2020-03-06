@@ -452,6 +452,7 @@ namespace Python.Runtime
         /// looking in the currently loaded assemblies for the named
         /// type. Returns null if the named type cannot be found.
         /// </summary>
+        [Obsolete("Use LookupTypes and handle name conflicts")]
         public static Type LookupType(string qname)
         {
             foreach (Assembly assembly in assemblies)
@@ -464,6 +465,14 @@ namespace Python.Runtime
             }
             return null;
         }
+
+        /// <summary>
+        /// Returns the <see cref="Type"/> objects for the given qualified name,
+        /// looking in the currently loaded assemblies for the named
+        /// type.
+        /// </summary>
+        public static IEnumerable<Type> LookupTypes(string qualifiedName)
+            => assemblies.Select(assembly => assembly.GetType(qualifiedName)).Where(type => type != null);
 
         internal static Type[] GetTypes(Assembly a)
         {
