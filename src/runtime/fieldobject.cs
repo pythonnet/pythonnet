@@ -6,6 +6,7 @@ namespace Python.Runtime
     /// <summary>
     /// Implements a Python descriptor type that provides access to CLR fields.
     /// </summary>
+    [Serializable]
     internal class FieldObject : ExtensionType
     {
         private FieldInfo info;

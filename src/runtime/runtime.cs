@@ -490,6 +490,7 @@ namespace Python.Runtime
                 ManagedType obj = entry.Key;
                 if (!objs.ContainsKey(obj))
                 {
+                    System.Diagnostics.Debug.Assert(obj.gcHandle == default);
                     continue;
                 }
                 if (entry.Value == ManagedType.TrackTypes.Extension)
@@ -1676,6 +1677,9 @@ namespace Python.Runtime
         internal static extern IntPtr PyDict_New();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyDict_Next(IntPtr p, out IntPtr ppos, out IntPtr pkey, out IntPtr pvalue);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDictProxy_New(IntPtr dict);
 
         /// <summary>
@@ -2004,7 +2008,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);

@@ -17,6 +17,10 @@ namespace Python.Runtime
         [NonSerialized]
         private Dictionary<string, ManagedType> cache;
 
+        [NonSerialized]
+        // FIXME: Used by reload mode, remove it after implement a delay load handler.
+        private bool _cacheInited; 
+
         internal string moduleName;
         internal IntPtr dict;
         protected string _namespace;
@@ -29,6 +33,7 @@ namespace Python.Runtime
             }
             moduleName = name;
             cache = new Dictionary<string, ManagedType>();
+            _cacheInited = true;
             _namespace = name;
 
             // Use the filename from any of the assemblies just so there's something for
@@ -72,6 +77,11 @@ namespace Python.Runtime
         /// </summary>
         public ManagedType GetAttribute(string name, bool guess)
         {
+            if (!_cacheInited)
+            {
+                // XXX: Used by reload mode.
+                SetupCacheByDict();
+            }
             ManagedType cached = null;
             cache.TryGetValue(name, out cached);
             if (cached != null)
@@ -116,7 +126,6 @@ namespace Python.Runtime
             {
                 c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
-                c.DecrRefCount();
                 return c;
             }
 
@@ -140,7 +149,6 @@ namespace Python.Runtime
                 {
                     c = ClassManager.GetClass(type);
                     StoreAttribute(name, c);
-                    c.DecrRefCount();
                     return c;
                 }
             }
@@ -364,8 +372,33 @@ namespace Python.Runtime
         protected override void OnLoad()
         {
             base.OnLoad();
+            // XXX: Set the cache after all objects loaded.
             cache = new Dictionary<string, ManagedType>();
+            _cacheInited = false;
             SetObjectDict(pyHandle, dict);
+        }
+
+        private void SetupCacheByDict()
+        {
+            System.Diagnostics.Debug.Assert(!_cacheInited);
+            _cacheInited = true;
+            IntPtr key, value;
+            IntPtr pos;
+            while (Runtime.PyDict_Next(dict, out pos, out key, out value) != 0)
+            {
+                ManagedType obj = GetManagedObject(value);
+                if (obj == null)
+                {
+                    continue;
+                }
+                string name = Runtime.GetManagedString(key);
+                if (cache.ContainsKey(name))
+                {
+                    continue;
+                }
+                Runtime.XIncref(value);
+                cache.Add(name, obj);
+            }
         }
     }
 
