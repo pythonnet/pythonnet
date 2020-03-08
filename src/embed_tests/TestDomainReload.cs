@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -114,6 +115,71 @@ namespace Python.EmbeddingTest
                 Assert.IsTrue(Runtime.Runtime.Py_IsInitialized() == 0);
             }
         }
+
+
+        #region Tempary tests
+        // https://github.com/pythonnet/pythonnet/pull/1074#issuecomment-596139665
+        [Test]
+        public void CrossReleaseBuiltinType()
+        {
+            try
+            {
+                var numRef = CreateNumReference();
+                GC.Collect();
+                GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
+                Finalizer.Instance.Collect(forceDispose: true);
+                // ^- this will call PyObject.Dispose, which will call XDecref on `num.Handle`,
+                // but Python interpreter from "run" 1 is long gone, so it will corrupt memory instead.
+                Assert.False(numRef.IsAlive);
+            }
+            finally
+            {
+                PythonEngine.Shutdown();
+            }
+        }
+
+        [Test]
+        public void CrossReleaseCustomType()
+        {
+            try
+            {
+                var objRef = CreateConcreateObject();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Finalizer.Instance.Collect(forceDispose: true);
+                Assert.False(objRef.IsAlive);
+            }
+            finally
+            {
+                PythonEngine.Shutdown();
+            }
+        }
+
+        private static WeakReference CreateNumReference()
+        {
+            PythonEngine.Initialize();
+            var num = 3216757418.ToPython();
+            Assert.AreEqual(num.Refcount, 1);
+            WeakReference numRef = new WeakReference(num, false);
+            PythonEngine.Shutdown(); // <- "run" 1 ends
+            PythonEngine.Initialize(); // <- "run" 2 starts
+            num = null;
+            return numRef;
+        }
+
+        private static WeakReference CreateConcreateObject()
+        {
+            PythonEngine.Initialize();
+            var obj = new Domain.MyClass().ToPython();
+            Assert.AreEqual(obj.Refcount, 1);
+            WeakReference numRef = new WeakReference(obj, false);
+            PythonEngine.Shutdown();
+            PythonEngine.Initialize();
+            obj = null;
+            return numRef;
+        }
+
+        #endregion Tempary tests
 
         /// <summary>
         /// This is a magic incantation required to run code in an application
@@ -305,6 +371,8 @@ from Python.EmbeddingTest.Domain import MyClass
 obj = MyClass()
 obj.Method()
 obj.StaticMethod()
+obj.Property = 1
+obj.Field = 10
 ", Assembly.GetExecutingAssembly().FullName);
 
                 using (Py.GIL())
@@ -333,11 +401,27 @@ obj.StaticMethod()
             {
                 using (Py.GIL())
                 {
+                    IntPtr tp = Runtime.Runtime.PyObject_TYPE(handle);
+                    IntPtr tp_clear = Marshal.ReadIntPtr(tp, TypeOffset.tp_clear);
 
                     using (PyObject obj = new PyObject(handle))
                     {
                         obj.InvokeMethod("Method");
                         obj.InvokeMethod("StaticMethod");
+
+                        using (var scope = Py.CreateScope())
+                        {
+                            scope.Set("obj", obj);
+                            scope.Exec(@"
+obj.Method()
+obj.StaticMethod()
+obj.Property += 1
+obj.Field += 10
+");
+                        }
+                        var clrObj = obj.As<Domain.MyClass>();
+                        Assert.AreEqual(clrObj.Property, 2);
+                        Assert.AreEqual(clrObj.Field, 20);
                     }
                 }
             }
@@ -370,6 +454,8 @@ namespace Python.EmbeddingTest.Domain
     [Serializable]
     public class MyClass
     {
+        public int Property { get; set; }
+        public int Field;
         public void Method() { }
         public static void StaticMethod() { }
     }
