@@ -142,22 +142,6 @@ def bar(a):
                 Assert.IsTrue(codec.TryDecode(barFunc, out barAction));
                 Assert.DoesNotThrow(() => barAction(new[] { (object)true }));
             }
-
-            //encoding, C# actions to python functions
-            {
-                //can't decode non-actions
-                Assert.IsFalse(codec.CanEncode(typeof(int)));
-                Assert.IsFalse(codec.CanEncode(typeof(Dictionary<string, int>)));
-
-                Action foo = () => { };
-                Assert.IsTrue(codec.CanEncode(foo.GetType()));
-
-                Assert.DoesNotThrow(() => { codec.TryEncode(foo); });
-
-                Action<object[]> bar = (object[] args) => { var z = args.Length; };
-                Assert.IsTrue(codec.CanEncode(bar.GetType()));
-                Assert.DoesNotThrow(() => { codec.TryEncode(bar); });
-            }
         }
 
         [Test]
@@ -207,46 +191,6 @@ def bar(a):
                 object res2 = null;
                 Assert.DoesNotThrow(() => res2 = bar(new[] { (object)true }));
                 Assert.AreEqual(res2, 2);
-            }
-
-            //encoding, C# funcs to python functions
-            {
-                Func<object> foo = () => { return 1; };
-                Assert.IsTrue(codec.CanEncode(foo.GetType()));
-
-                PyObject ret1 = null;
-                Assert.DoesNotThrow(() => { ret1 = codec.TryEncode(foo); });
-                //call ret1
-                Assert.IsTrue(ret1.IsCallable());
-
-                var pyArgs1 = new PyObject[0];
-                using (Py.GIL())
-                {
-                    var pyResult = ret1.Invoke(pyArgs1);
-                    Runtime.XIncref(pyResult.Handle);
-                    object result;
-                    Converter.ToManaged(pyResult.Handle, typeof(object), out result, true);
-                    Assert.AreEqual(result, 1);
-                }
-
-                Func<object[], object> bar = (object[] args) => {
-                    return args.Length;
-                };
-                Assert.IsTrue(codec.CanEncode(bar.GetType()));
-                PyObject ret2 = null;
-                Assert.DoesNotThrow(() => { ret2 = codec.TryEncode(bar); });
-                //call ret2
-                Assert.IsTrue(ret2.IsCallable());
-
-                var pyArgs2 = new PyObject[2] { new PyInt(1), new PyFloat(2.2) };
-                using (Py.GIL())
-                {
-                    var pyResult = ret2.Invoke(pyArgs2);
-                    Runtime.XIncref(pyResult.Handle);
-                    object result;
-                    Converter.ToManaged(pyResult.Handle, typeof(object), out result, true);
-                    Assert.AreEqual(result, 2);
-                }
             }
         }
     }
