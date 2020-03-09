@@ -18,7 +18,7 @@ namespace Python.Runtime
         internal MethodBinding unbound;
         internal MethodBinder binder;
         internal bool is_static = false;
-        [NonSerialized]
+
         internal IntPtr doc;
         internal Type type;
 
@@ -220,6 +220,16 @@ namespace Python.Runtime
             self.ClearMembers();
             ClearObjectDict(ob);
             return 0;
+        }
+
+        protected override void OnSave(PyObjectSerializeContext context)
+        {
+            base.OnSave(context);
+            if (unbound != null)
+            {
+                Runtime.XIncref(unbound.pyHandle);
+            }
+            Runtime.XIncref(doc);
         }
     }
 }

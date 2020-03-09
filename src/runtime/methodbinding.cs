@@ -254,5 +254,12 @@ namespace Python.Runtime
             self.ClearMembers();
             return 0;
         }
+
+        protected override void OnSave(PyObjectSerializeContext context)
+        {
+            base.OnSave(context);
+            Runtime.XIncref(target);
+            Runtime.XIncref(targetType);
+        }
     }
 }

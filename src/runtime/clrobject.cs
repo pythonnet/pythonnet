@@ -74,7 +74,7 @@ namespace Python.Runtime
             return co.pyHandle;
         }
 
-        internal static CLRObject Restore(object ob, IntPtr pyHandle)
+        internal static CLRObject Restore(object ob, IntPtr pyHandle, PyObjectSerializeContext context)
         {
             CLRObject co = new CLRObject()
             {
@@ -82,22 +82,21 @@ namespace Python.Runtime
                 pyHandle = pyHandle,
                 tpHandle = Runtime.PyObject_TYPE(pyHandle)
             };
-            co.Load();
+            co.Load(context);
             return co;
         }
 
-        protected override void OnSave()
+        protected override void OnSave(PyObjectSerializeContext context)
         {
-            base.OnSave();
+            base.OnSave(context);
             Runtime.XIncref(pyHandle);
         }
 
-        protected override void OnLoad()
+        protected override void OnLoad(PyObjectSerializeContext context)
         {
-            base.OnLoad();
+            base.OnLoad(context);
             GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
             Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
-            Runtime.XDecref(pyHandle);
         }
     }
 }

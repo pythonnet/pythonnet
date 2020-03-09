@@ -14,12 +14,7 @@ namespace Python.Runtime
     [Serializable]
     internal class ModuleObject : ExtensionType
     {
-        [NonSerialized]
         private Dictionary<string, ManagedType> cache;
-
-        [NonSerialized]
-        // FIXME: Used by reload mode, remove it after implement a delay load handler.
-        private bool _cacheInited; 
 
         internal string moduleName;
         internal IntPtr dict;
@@ -33,7 +28,6 @@ namespace Python.Runtime
             }
             moduleName = name;
             cache = new Dictionary<string, ManagedType>();
-            _cacheInited = true;
             _namespace = name;
 
             // Use the filename from any of the assemblies just so there's something for
@@ -63,7 +57,7 @@ namespace Python.Runtime
             Runtime.XDecref(pydocstring);
 
             Runtime.XIncref(dict);
-            Marshal.WriteIntPtr(pyHandle, ObjectOffset.DictOffset(pyHandle), dict);
+            SetObjectDict(pyHandle, dict);
 
             InitializeModuleMembers();
         }
@@ -77,11 +71,6 @@ namespace Python.Runtime
         /// </summary>
         public ManagedType GetAttribute(string name, bool guess)
         {
-            if (!_cacheInited)
-            {
-                // XXX: Used by reload mode.
-                SetupCacheByDict();
-            }
             ManagedType cached = null;
             cache.TryGetValue(name, out cached);
             if (cached != null)
@@ -360,45 +349,23 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void OnSave()
+        protected override void OnSave(PyObjectSerializeContext context)
         {
-            base.OnSave();
+            base.OnSave(context);
             System.Diagnostics.Debug.Assert(dict == GetObjectDict(pyHandle));
+            foreach (var attr in cache.Values)
+            {
+                Runtime.XIncref(attr.pyHandle);
+            }
             // Decref twice in tp_clear, equilibrate them.
             Runtime.XIncref(dict);
             Runtime.XIncref(dict);
         }
 
-        protected override void OnLoad()
+        protected override void OnLoad(PyObjectSerializeContext context)
         {
-            base.OnLoad();
-            // XXX: Set the cache after all objects loaded.
-            cache = new Dictionary<string, ManagedType>();
-            _cacheInited = false;
+            base.OnLoad(context);
             SetObjectDict(pyHandle, dict);
-        }
-
-        private void SetupCacheByDict()
-        {
-            System.Diagnostics.Debug.Assert(!_cacheInited);
-            _cacheInited = true;
-            IntPtr key, value;
-            IntPtr pos;
-            while (Runtime.PyDict_Next(dict, out pos, out key, out value) != 0)
-            {
-                ManagedType obj = GetManagedObject(value);
-                if (obj == null)
-                {
-                    continue;
-                }
-                string name = Runtime.GetManagedString(key);
-                if (cache.ContainsKey(name))
-                {
-                    continue;
-                }
-                Runtime.XIncref(value);
-                cache.Add(name, obj);
-            }
         }
     }
 

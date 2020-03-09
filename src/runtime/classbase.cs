@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -304,9 +305,25 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void OnLoad()
+        protected override void OnSave(PyObjectSerializeContext context)
         {
-            base.OnLoad();
+            base.OnSave(context);
+            if (pyHandle != tpHandle)
+            {
+                IntPtr dict = GetObjectDict(pyHandle);
+                Runtime.XIncref(dict);
+                context.Storage.AddValue("dict", dict);
+            }
+        }
+
+        protected override void OnLoad(PyObjectSerializeContext context)
+        {
+            base.OnLoad(context);
+            if (pyHandle != tpHandle)
+            {
+                IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
+                SetObjectDict(pyHandle, dict);
+            }
             gcHandle = AllocGCHandle();
             Marshal.WriteIntPtr(pyHandle, TypeOffset.magic(), (IntPtr)gcHandle);
         }

@@ -82,7 +82,6 @@ namespace Python.Runtime
             XDecref(capsule);
         }
 
-
         internal static void StashPop()
         {
             try
@@ -112,14 +111,19 @@ namespace Python.Runtime
 
             var objs = StashPopObjects(storage.GetStorage("objs"));
             StashPopModules(storage.GetStorage("modules"));
-            ClassManager.StashPop(storage.GetStorage("classes"));
+            var clsObjs = ClassManager.StashPop(storage.GetStorage("classes"));
             TypeManager.StashPop(storage.GetStorage("types"));
             ImportHook.StashPop(storage.GetStorage("import"));
             PyCLRMetaType = MetaType.StashPop(storage.GetStorage("meta"));
 
             foreach (var item in objs)
             {
-                XDecref(item.pyHandle);
+                item.Value.ExecutePostActions();
+                XDecref(item.Key.pyHandle);
+            }
+            foreach (var item in clsObjs)
+            {
+                item.Value.ExecutePostActions();
             }
         }
 
@@ -139,6 +143,7 @@ namespace Python.Runtime
             var extensionObjs = new List<ManagedType>();
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var serializeObjs = new CLRWrapperCollection();
+            var contexts = new Dictionary<IntPtr, PyObjectSerializeContext>();
             foreach (var entry in objs)
             {
                 var obj = entry.Key;
@@ -147,7 +152,9 @@ namespace Python.Runtime
                 {
                     case ManagedType.TrackTypes.Extension:
                         Debug.Assert(obj.GetType().IsSerializable);
-                        obj.Save();
+                        var context = new PyObjectSerializeContext();
+                        contexts[obj.pyHandle] = context;
+                        obj.Save(context);
                         extensionObjs.Add(obj);
                         break;
                     case ManagedType.TrackTypes.Wrapper:
@@ -197,23 +204,28 @@ namespace Python.Runtime
                 foreach (var clrObj in wrappers[item.Instance])
                 {
                     XIncref(clrObj.pyHandle);
-                    clrObj.Save();
+                    var context = new PyObjectSerializeContext();
+                    contexts[clrObj.pyHandle] = context;
+                    clrObj.Save(context);
                 }
             }
             storage.AddValue("internalStores", internalStores);
             storage.AddValue("extensions", extensionObjs);
             storage.AddValue("wrappers", wrapperStorage);
+            storage.AddValue("contexts", contexts);
         }
 
-        private static IEnumerable<ManagedType> StashPopObjects(RuntimeDataStorage storage)
+        private static Dictionary<ManagedType, PyObjectSerializeContext> StashPopObjects(RuntimeDataStorage storage)
         {
             var extensions = storage.GetValue<List<ManagedType>>("extensions");
             var internalStores = storage.GetValue<List<CLRObject>>("internalStores");
-            var storedObjs = new List<ManagedType>();
+            var contexts = storage.GetValue <Dictionary<IntPtr, PyObjectSerializeContext>>("contexts");
+            var storedObjs = new Dictionary<ManagedType, PyObjectSerializeContext>();
             foreach (var obj in Enumerable.Union(extensions, internalStores))
             {
-                obj.Load();
-                storedObjs.Add(obj);
+                var context = contexts[obj.pyHandle];
+                obj.Load(context);
+                storedObjs.Add(obj, context);
             }
             if (WrappersStorer != null)
             {
@@ -224,8 +236,9 @@ namespace Python.Runtime
                     object obj = item.Instance;
                     foreach (var handle in item.Handles)
                     {
-                        var co = CLRObject.Restore(obj, handle);
-                        storedObjs.Add(co);
+                        var context = contexts[handle];
+                        var co = CLRObject.Restore(obj, handle, context);
+                        storedObjs.Add(co, context);
                     }
                 }
             }
@@ -341,6 +354,37 @@ namespace Python.Runtime
         }
     }
 
+
+    [Serializable]
+    class PyObjectSerializeContext
+    {
+        private RuntimeDataStorage _storage;
+        public RuntimeDataStorage Storage => _storage ?? (_storage = new RuntimeDataStorage());
+
+        /// <summary>
+        /// Actions after loaded.
+        /// </summary>
+        [NonSerialized]
+        private List<Action> _postActions;
+        public List<Action> PostActions => _postActions ?? (_postActions = new List<Action>());
+
+        public void AddPostAction(Action action)
+        {
+            PostActions.Add(action);
+        }
+
+        public void ExecutePostActions()
+        {
+            if (_postActions == null)
+            {
+                return;
+            }
+            foreach (var action in _postActions)
+            {
+                action();
+            }
+        }
+    }
 
     public class CLRMappedItem
     {

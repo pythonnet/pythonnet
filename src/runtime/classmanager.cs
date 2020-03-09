@@ -84,23 +84,31 @@ namespace Python.Runtime
 
         internal static void StashPush(RuntimeDataStorage storage)
         {
-            storage.PushValue(cache);
+            var contexts = storage.AddValue("contexts",
+                new Dictionary<IntPtr, PyObjectSerializeContext>());
+            storage.AddValue("cache", cache);
             foreach (var cls in cache.Values)
             {
                 // This incref is for cache to hold the cls,
                 // thus no need for decreasing it at StashPop.
                 Runtime.XIncref(cls.pyHandle);
-                cls.Save();
+                var context = contexts[cls.pyHandle] = new PyObjectSerializeContext();
+                cls.Save(context);
             }
         }
 
-        internal static void StashPop(RuntimeDataStorage storage)
+        internal static Dictionary<ManagedType, PyObjectSerializeContext> StashPop(RuntimeDataStorage storage)
         {
-            cache = storage.PopValue<Dictionary<Type, ClassBase>>();
+            cache = storage.GetValue<Dictionary<Type, ClassBase>>("cache");
+            var contexts = storage.GetValue <Dictionary<IntPtr, PyObjectSerializeContext>>("contexts");
+            var loadedObjs = new Dictionary<ManagedType, PyObjectSerializeContext>();
             foreach (var cls in cache.Values)
             {
-                cls.Load();
+                var context = contexts[cls.pyHandle];
+                cls.Load(context);
+                loadedObjs.Add(cls, context);
             }
+            return loadedObjs;
         }
 
         /// <summary>

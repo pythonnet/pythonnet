@@ -98,9 +98,9 @@ namespace Python.Runtime
             self.Dealloc();
         }
 
-        protected override void OnLoad()
+        protected override void OnLoad(PyObjectSerializeContext context)
         {
-            base.OnLoad();
+            base.OnLoad(context);
             GCHandle gc = AllocGCHandle(TrackTypes.Extension);
             Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
             Runtime.PyObject_GC_UnTrack(pyHandle);
