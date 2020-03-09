@@ -39,6 +39,11 @@ namespace Python.Runtime
             cache = new Dictionary<Type, ClassBase>(128);
         }
 
+        public static bool IsDelegate(Type type)
+        {
+            return type.IsSubclassOf(dtype);
+        }
+
         /// <summary>
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
@@ -83,7 +88,7 @@ namespace Python.Runtime
                 impl = new GenericType(type);
             }
 
-            else if (type.IsSubclassOf(dtype))
+            else if (IsDelegate(type))
             {
                 impl = new DelegateObject(type);
             }

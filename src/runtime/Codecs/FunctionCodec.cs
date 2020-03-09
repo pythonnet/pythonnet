@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 
 namespace Python.Runtime.Codecs
 {
@@ -20,6 +21,12 @@ except:
 
             var x = locals.GetItem("x");
             return new PyInt(x).ToInt32();
+        }
+
+        private static int GetNumArgs(Type targetType)
+        {
+            MethodInfo invokeMethod = targetType.GetMethod("Invoke");
+            return invokeMethod.GetParameters().Length;
         }
 
         private static bool IsUnaryAction(Type targetType)
@@ -54,8 +61,7 @@ except:
 
         private static bool IsCallable(Type targetType)
         {
-            //TODO - delegate, event, ...
-            return IsAction(targetType) || IsFunc(targetType);
+            return ClassManager.IsDelegate(targetType);
         }
 
         public static FunctionCodec Instance { get; } = new FunctionCodec();
@@ -68,9 +74,6 @@ except:
             if (!IsCallable(targetType))
                 return false;
 
-            //We don't know if it will work without the instance
-            //The number of arguments of a unary or variadic object callable
-            //is always going to be 0 or 1
             return true;
         }
 
@@ -140,6 +143,8 @@ except:
                 return false;
 
             var numArgs = GetNumArgs(pyObj);
+            if (numArgs != GetNumArgs(tT))
+                return false;
 
             if (IsAction(tT))
             {
@@ -180,7 +185,6 @@ except:
 
         public static void Register()
         {
-            PyObjectConversions.RegisterDecoder(Instance);
             PyObjectConversions.RegisterDecoder(Instance);
         }
     }
