@@ -74,6 +74,18 @@ namespace Python.Runtime
             return co.pyHandle;
         }
 
+        /// <summary>
+        /// Creates <see cref="CLRObject"/> proxy for the given object,
+        /// and returns a <see cref="NewReference"/> to it.
+        /// </summary>
+        internal static NewReference MakeNewReference(object obj)
+        {
+            if (obj is null) throw new ArgumentNullException(nameof(obj));
+
+            // TODO: CLRObject currently does not have Dispose or finalizer which might change in the future
+            return NewReference.DangerousFromPointer(GetInstHandle(obj));
+        }
+
         internal static CLRObject Restore(object ob, IntPtr pyHandle, PyObjectSerializeContext context)
         {
             CLRObject co = new CLRObject()

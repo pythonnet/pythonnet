@@ -398,12 +398,9 @@ namespace Python.Runtime
                     return ToArray(value, typeof(object[]), out result, setError);
                 }
 
-                if (setError)
-                {
-                    Exceptions.SetError(Exceptions.TypeError, "value cannot be converted to Object");
-                }
-
-                return false;
+                Runtime.XIncref(value); // PyObject() assumes ownership
+                result = new PyObject(value);
+                return true;
             }
 
             // Conversion to 'Type' is done using the same mappings as above for objects.
@@ -969,6 +966,17 @@ namespace Python.Runtime
         public static PyObject ToPython(this object o)
         {
             return new PyObject(Converter.ToPython(o, o?.GetType()));
+        }
+
+        /// <summary>
+        /// Gets raw Python proxy for this object (bypasses all conversions,
+        /// except <c>null</c> &lt;==&gt; <c>None</c>)
+        /// </summary>
+        public static PyObject GetRawPythonProxy(this object o)
+        {
+            if (o is null) return new PyObject(new BorrowedReference(Runtime.PyNone));
+
+            return CLRObject.MakeNewReference(o).MoveToPyObject();
         }
     }
 }

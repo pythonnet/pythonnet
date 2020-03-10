@@ -88,11 +88,13 @@
     <Compile Include="pyimport.cs" />
     <Compile Include="pyinitialize.cs" />
     <Compile Include="pyrunstring.cs" />
+    <Compile Include="References.cs" />
     <Compile Include="TestConverter.cs" />
     <Compile Include="TestCustomMarshal.cs" />
     <Compile Include="TestDomainReload.cs" />
     <Compile Include="TestExample.cs" />
     <Compile Include="TestFinalizer.cs" />
+    <Compile Include="TestInstanceWrapping.cs" />
     <Compile Include="TestPyAnsiString.cs" />
     <Compile Include="TestPyFloat.cs" />
     <Compile Include="TestPyInt.cs" />
