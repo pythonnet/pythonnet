@@ -97,15 +97,42 @@ namespace Python.EmbeddingTest {
             Assert.IsTrue(codec.CanDecode(x, typeof(ICollection<float>)));
             Assert.IsFalse(codec.CanDecode(x, typeof(bool)));
 
-            System.Collections.IEnumerable plainEnumerable = null;
-            Assert.DoesNotThrow(() => { codec.TryDecode<System.Collections.IEnumerable>(x, out plainEnumerable); });
-            Assert.IsNotNull(plainEnumerable);
-            IList<object> list = null;
-            list = plainEnumerable.Cast<object>().ToList();
-            Assert.AreEqual(list.Count, 3);
-            Assert.AreEqual(list[0], 1);
-            Assert.AreEqual(list[1], 2);
-            Assert.AreEqual(list[2], 3);
+            Action<System.Collections.IEnumerable> checkPlainEnumerable = (System.Collections.IEnumerable enumerable) =>
+            {
+                Assert.IsNotNull(enumerable);
+                IList<object> list = null;
+                list = enumerable.Cast<object>().ToList();
+                Assert.AreEqual(list.Count, 3);
+                Assert.AreEqual(list[0], 1);
+                Assert.AreEqual(list[1], 2);
+                Assert.AreEqual(list[2], 3);
+            };
+
+            //ensure a PyList can be converted to a plain IEnumerable
+            System.Collections.IEnumerable plainEnumerable1 = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<System.Collections.IEnumerable>(x, out plainEnumerable1); });
+            checkPlainEnumerable(plainEnumerable1);
+
+            //ensure a python class which implements the iterator protocol can be converter to a plain IEnumerable
+            var locals = new PyDict();
+            PythonEngine.Exec(@"
+class foo():
+    def __init__(self):
+        self.counter = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        if self.counter == 3:
+            raise StopIteration
+        self.counter = self.counter + 1
+        return self.counter
+foo_instance = foo()
+", null, locals.Handle);
+
+            var foo = locals.GetItem("foo_instance");
+            System.Collections.IEnumerable plainEnumerable2 = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<System.Collections.IEnumerable>(x, out plainEnumerable2); });
+            checkPlainEnumerable(plainEnumerable2);
         }
     }
 
