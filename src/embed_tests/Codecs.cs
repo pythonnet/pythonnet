@@ -1,7 +1,7 @@
 namespace Python.EmbeddingTest {
     using System;
     using System.Collections.Generic;
-    using System.Text;
+    using System.Linq;
     using NUnit.Framework;
     using Python.Runtime;
     using Python.Runtime.Codecs;
@@ -81,6 +81,31 @@ namespace Python.EmbeddingTest {
                 Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
                 Assert.AreEqual(expected: tuple, actual: restored);
             }
+        }
+
+        [Test]
+        public void ListCodecTest()
+        {
+            var codec = ListCodec.Instance;
+            var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
+
+            var x = new PyList(items.ToArray());
+            Assert.IsTrue(codec.CanDecode(x, typeof(List<int>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(IList<bool>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(System.Collections.IEnumerable)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(IEnumerable<int>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(ICollection<float>)));
+            Assert.IsFalse(codec.CanDecode(x, typeof(bool)));
+
+            System.Collections.IEnumerable plainEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<System.Collections.IEnumerable>(x, out plainEnumerable); });
+            Assert.IsNotNull(plainEnumerable);
+            IList<object> list = null;
+            list = plainEnumerable.Cast<object>().ToList();
+            Assert.AreEqual(list.Count, 3);
+            Assert.AreEqual(list[0], 1);
+            Assert.AreEqual(list[1], 2);
+            Assert.AreEqual(list[2], 3);
         }
     }
 
