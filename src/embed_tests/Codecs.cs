@@ -83,4 +83,33 @@ namespace Python.EmbeddingTest {
             }
         }
     }
+
+    class FakeEncoder<T> : IPyObjectEncoder
+    {
+        public bool CanEncode(Type type) => type == typeof(T);
+        public PyObject TryEncode(object value) => this.GetRawPythonProxy();
+    }
+
+    class FakeDecoder<TTarget> : IPyObjectDecoder
+    {
+        public PyObject TheOnlySupportedSourceType { get; }
+        public TTarget DecodeResult { get; }
+
+        public FakeDecoder(PyObject objectType, TTarget decodeResult)
+        {
+            this.TheOnlySupportedSourceType = objectType;
+            this.DecodeResult = decodeResult;
+        }
+
+        public bool CanDecode(PyObject objectType, Type targetType)
+            => objectType.Handle == TheOnlySupportedSourceType.Handle
+               && targetType == typeof(TTarget);
+        public bool TryDecode<T>(PyObject pyObj, out T value)
+        {
+            if (typeof(T) != typeof(TTarget))
+                throw new ArgumentException(nameof(T));
+            value = (T)(object)DecodeResult;
+            return true;
+        }
+    }
 }

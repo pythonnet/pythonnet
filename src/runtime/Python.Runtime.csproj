@@ -76,6 +76,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Codecs\EncoderGroup.cs" />
+    <Compile Include="Codecs\DecoderGroup.cs" />
     <Compile Include="Codecs\TupleCodecs.cs" />
     <Compile Include="converterextensions.cs" />
     <Compile Include="finalizer.cs" />
