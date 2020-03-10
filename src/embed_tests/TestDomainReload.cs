@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Python.Runtime;
 
+using PyRuntime = Python.Runtime.Runtime;
 //
 // This test case is disabled on .NET Standard because it doesn't have all the
 // APIs we use. We could work around that, but .NET Core doesn't implement
@@ -17,6 +18,12 @@ namespace Python.EmbeddingTest
 {
     class TestDomainReload
     {
+        abstract class CrossCaller : MarshalByRefObject
+        {
+            public abstract ValueType Execte(ValueType arg);
+        }
+
+
         /// <summary>
         /// Test that the python runtime can survive a C# domain reload without crashing.
         ///
@@ -53,71 +60,198 @@ namespace Python.EmbeddingTest
         {
             Assert.IsFalse(PythonEngine.IsInitialized);
             RunAssemblyAndUnload("test1");
-            Assert.That(Runtime.Runtime.Py_IsInitialized() != 0,
+            Assert.That(PyRuntime.Py_IsInitialized() != 0,
                 "On soft-shutdown mode, Python runtime should still running");
 
             RunAssemblyAndUnload("test2");
-            Assert.That(Runtime.Runtime.Py_IsInitialized() != 0,
+            Assert.That(PyRuntime.Py_IsInitialized() != 0,
                 "On soft-shutdown mode, Python runtime should still running");
 
             if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
             {
                 // The default mode is a normal mode,
                 // it should shutdown the Python VM avoiding influence other tests.
-                Runtime.Runtime.PyGILState_Ensure();
-                Runtime.Runtime.Py_Finalize();
+                PyRuntime.PyGILState_Ensure();
+                PyRuntime.Py_Finalize();
+            }
+        }
+
+        #region CrossDomainObject
+
+        class CrossDomianObjectStep1 : CrossCaller
+        {
+            public override ValueType Execte(ValueType arg)
+            {
+                try
+                {
+                    Type type = typeof(Python.EmbeddingTest.Domain.MyClass);
+                    string code = string.Format(@"
+import clr
+clr.AddReference('{0}')
+
+from Python.EmbeddingTest.Domain import MyClass
+obj = MyClass()
+obj.Method()
+obj.StaticMethod()
+obj.Property = 1
+obj.Field = 10
+", Assembly.GetExecutingAssembly().FullName);
+
+                    using (Py.GIL())
+                    using (var scope = Py.CreateScope())
+                    {
+                        scope.Exec(code);
+                        using (PyObject obj = scope.Get("obj"))
+                        {
+                            Debug.Assert(obj.AsManagedObject(type).GetType() == type);
+                            // We only needs its Python handle
+                            PyRuntime.XIncref(obj.Handle);
+                            return obj.Handle;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                    throw;
+                }
+            }
+        }
+
+
+        class CrossDomianObjectStep2 : CrossCaller
+        {
+            public override ValueType Execte(ValueType arg)
+            {
+                // handle refering a clr object created in previous domain,
+                // it should had been deserialized and became callable agian.
+                IntPtr handle = (IntPtr)arg;
+                try
+                {
+                    using (Py.GIL())
+                    {
+                        IntPtr tp = Runtime.Runtime.PyObject_TYPE(handle);
+                        IntPtr tp_clear = Marshal.ReadIntPtr(tp, TypeOffset.tp_clear);
+
+                        using (PyObject obj = new PyObject(handle))
+                        {
+                            obj.InvokeMethod("Method");
+                            obj.InvokeMethod("StaticMethod");
+
+                            using (var scope = Py.CreateScope())
+                            {
+                                scope.Set("obj", obj);
+                                scope.Exec(@"
+obj.Method()
+obj.StaticMethod()
+obj.Property += 1
+obj.Field += 10
+");
+                            }
+                            var clrObj = obj.As<Domain.MyClass>();
+                            Assert.AreEqual(clrObj.Property, 2);
+                            Assert.AreEqual(clrObj.Field, 20);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                    throw;
+                }
+                return 0;
             }
         }
 
         [Test]
         public static void CrossDomainObject()
         {
-            IntPtr handle = IntPtr.Zero;
-            Type type = typeof(Proxy);
+            RunDomainReloadSteps<CrossDomianObjectStep1, CrossDomianObjectStep2>();
+        }
+
+        #endregion
+
+        #region TestClassReference
+
+        class ReloadClassRefStep1 : CrossCaller
+        {
+            public override ValueType Execte(ValueType arg)
             {
-                AppDomain domain = CreateDomain("test_domain_reload");
-                try
+                const string code = @"
+from Python.EmbeddingTest.Domain import MyClass
+
+def test_obj_call():
+    obj = MyClass()
+    obj.Method()
+    obj.StaticMethod()
+    obj.Property = 1
+    obj.Field = 10
+
+test_obj_call()
+";
+                const string name = "test_domain_reload_mod";
+                using (Py.GIL())
                 {
-                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                            type.Assembly.FullName,
-                            type.FullName);
-                    theProxy.Call("InitPython", ShutdownMode.Reload);
-                    handle = (IntPtr)theProxy.Call("GetTestObject");
-                    theProxy.Call("ShutdownPython");
-                }
-                finally
-                {
-                    AppDomain.Unload(domain);
+                    IntPtr module = PyRuntime.PyModule_New(name);
+                    Assert.That(module != IntPtr.Zero);
+                    IntPtr globals = PyRuntime.PyObject_GetAttrString(module, "__dict__");
+                    Assert.That(globals != IntPtr.Zero);
+                    try
+                    {
+                        int res = PyRuntime.PyDict_SetItemString(globals, "__builtins__",
+                            PyRuntime.PyEval_GetBuiltins());
+                        PythonException.ThrowIfIsNotZero(res);
+
+                        PythonEngine.Exec(code, globals);
+                        IntPtr modules = PyRuntime.PyImport_GetModuleDict();
+                        res = PyRuntime.PyDict_SetItemString(modules, name, modules);
+                        PythonException.ThrowIfIsNotZero(res);
+                    }
+                    catch
+                    {
+                        PyRuntime.XDecref(module);
+                        throw;
+                    }
+                    finally
+                    {
+                        PyRuntime.XDecref(globals);
+                    }
+                    return module;
                 }
             }
+        }
 
+        class ReloadClassRefStep2 : CrossCaller
+        {
+            public override ValueType Execte(ValueType arg)
             {
-                AppDomain domain = CreateDomain("test_domain_reload");
-                try
+                var module = (IntPtr)arg;
+                using (Py.GIL())
                 {
-                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                            type.Assembly.FullName,
-                            type.FullName);
-                    theProxy.Call("InitPython", ShutdownMode.Reload);
+                    var test_obj_call = PyRuntime.PyObject_GetAttrString(module, "test_obj_call");
+                    PythonException.ThrowIfIsNull(test_obj_call);
+                    var args = PyRuntime.PyTuple_New(0);
+                    var res = PyRuntime.PyObject_CallObject(test_obj_call, args);
+                    PythonException.ThrowIfIsNull(res);
 
-                    // handle refering a clr object created in previous domain,
-                    // it should had been deserialized and became callable agian.
-                    theProxy.Call("RunTestObject", handle);
-                    theProxy.Call("ShutdownPythonCompletely");
+                    PyRuntime.XDecref(args);
+                    PyRuntime.XDecref(res);
                 }
-                finally
-                {
-                    AppDomain.Unload(domain);
-                }
-            }
-            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
-            {
-                Assert.IsTrue(Runtime.Runtime.Py_IsInitialized() == 0);
+                return 0;
             }
         }
 
 
+        [Test]
+        public void TestClassReference()
+        {
+            RunDomainReloadSteps<ReloadClassRefStep1, ReloadClassRefStep2>();
+        }
+
+        #endregion
+
         #region Tempary tests
+
         // https://github.com/pythonnet/pythonnet/pull/1074#issuecomment-596139665
         [Test]
         public void CrossReleaseBuiltinType()
@@ -274,6 +408,58 @@ namespace Python.EmbeddingTest
 
             return null;
         }
+
+        static void RunDomainReloadSteps<T1, T2>() where T1 : CrossCaller where T2 : CrossCaller
+        {
+            ValueType arg = null;
+            Type type = typeof(Proxy);
+            {
+                AppDomain domain = CreateDomain("test_domain_reload");
+                try
+                {
+                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
+                            type.Assembly.FullName,
+                            type.FullName);
+                    theProxy.Call("InitPython", ShutdownMode.Reload);
+
+                    var caller = (T1)domain.CreateInstanceAndUnwrap(
+                            typeof(T1).Assembly.FullName,
+                            typeof(T1).FullName);
+                    arg = caller.Execte(arg);
+
+                    theProxy.Call("ShutdownPython");
+                }
+                finally
+                {
+                    AppDomain.Unload(domain);
+                }
+            }
+
+            {
+                AppDomain domain = CreateDomain("test_domain_reload");
+                try
+                {
+                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
+                            type.Assembly.FullName,
+                            type.FullName);
+                    theProxy.Call("InitPython", ShutdownMode.Reload);
+
+                    var caller = (T2)domain.CreateInstanceAndUnwrap(
+                            typeof(T2).Assembly.FullName,
+                            typeof(T2).FullName);
+                    caller.Execte(arg);
+                    theProxy.Call("ShutdownPythonCompletely");
+                }
+                finally
+                {
+                    AppDomain.Unload(domain);
+                }
+            }
+            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
+            {
+                Assert.IsTrue(PyRuntime.Py_IsInitialized() == 0);
+            }
+        }
     }
 
 
@@ -356,88 +542,6 @@ namespace Python.EmbeddingTest
                 PythonEngine.ShutdownMode = defaultMode;
             }
             PythonEngine.Shutdown();
-        }
-
-        public static IntPtr GetTestObject()
-        {
-            try
-            {
-                Type type = typeof(Python.EmbeddingTest.Domain.MyClass);
-                string code = string.Format(@"
-import clr
-clr.AddReference('{0}')
-
-from Python.EmbeddingTest.Domain import MyClass
-obj = MyClass()
-obj.Method()
-obj.StaticMethod()
-obj.Property = 1
-obj.Field = 10
-", Assembly.GetExecutingAssembly().FullName);
-
-                using (Py.GIL())
-                using (var scope = Py.CreateScope())
-                {
-                    scope.Exec(code);
-                    using (PyObject obj = scope.Get("obj"))
-                    {
-                        Debug.Assert(obj.AsManagedObject(type).GetType() == type);
-                        // We only needs its Python handle
-                        Runtime.Runtime.XIncref(obj.Handle);
-                        return obj.Handle;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                throw;
-            }
-        }
-
-        public static void RunTestObject(IntPtr handle)
-        {
-            try
-            {
-                using (Py.GIL())
-                {
-                    IntPtr tp = Runtime.Runtime.PyObject_TYPE(handle);
-                    IntPtr tp_clear = Marshal.ReadIntPtr(tp, TypeOffset.tp_clear);
-
-                    using (PyObject obj = new PyObject(handle))
-                    {
-                        obj.InvokeMethod("Method");
-                        obj.InvokeMethod("StaticMethod");
-
-                        using (var scope = Py.CreateScope())
-                        {
-                            scope.Set("obj", obj);
-                            scope.Exec(@"
-obj.Method()
-obj.StaticMethod()
-obj.Property += 1
-obj.Field += 10
-");
-                        }
-                        var clrObj = obj.As<Domain.MyClass>();
-                        Assert.AreEqual(clrObj.Property, 2);
-                        Assert.AreEqual(clrObj.Field, 20);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                throw;
-            }
-        }
-
-        public static void ReleaseTestObject(IntPtr handle)
-        {
-            using (Py.GIL())
-            {
-                Runtime.Runtime.XDecref(handle);
-            }
         }
 
         static void OnDomainUnload(object sender, EventArgs e)
