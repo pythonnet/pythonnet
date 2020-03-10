@@ -81,6 +81,7 @@ namespace Python.Runtime.Codecs
                 IntPtr pyItem = Runtime.PyTuple_GetItem(pyObj.Handle, itemIndex);
                 if (!Converter.ToManaged(pyItem, itemTypes[itemIndex], out elements[itemIndex], setError: false))
                 {
+                    Exceptions.Clear();
                     return false;
                 }
             }
@@ -105,6 +106,7 @@ namespace Python.Runtime.Codecs
                 var pyItem = Runtime.PyTuple_GetItem(tuple.Handle, itemIndex);
                 if (!Converter.ToManaged(pyItem, typeof(object), out elements[itemIndex], setError: false))
                 {
+                    Exceptions.Clear();
                     return false;
                 }
 
