@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -256,37 +257,81 @@ test_obj_call()
         [Test]
         public void CrossReleaseBuiltinType()
         {
+            void ExecTest()
+            {
+                try
+                {
+                    var numRef = CreateNumReference();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
+                    Finalizer.Instance.Collect(forceDispose: true);
+                    // ^- this will call PyObject.Dispose, which will call XDecref on `num.Handle`,
+                    // but Python interpreter from "run" 1 is long gone, so it will corrupt memory instead.
+                    Assert.False(numRef.IsAlive);
+                }
+                finally
+                {
+                    PythonEngine.Shutdown();
+                }
+            }
+
+            var errorArgs = new List<Finalizer.ErrorArgs>();
+            void ErrorHandler(object sender, Finalizer.ErrorArgs e)
+            {
+                errorArgs.Add(e);
+            }
+            Finalizer.Instance.ErrorHandler += ErrorHandler;
             try
             {
-                var numRef = CreateNumReference();
-                GC.Collect();
-                GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
-                Finalizer.Instance.Collect(forceDispose: true);
-                // ^- this will call PyObject.Dispose, which will call XDecref on `num.Handle`,
-                // but Python interpreter from "run" 1 is long gone, so it will corrupt memory instead.
-                Assert.False(numRef.IsAlive);
+                for (int i = 0; i < 10; i++)
+                {
+                    ExecTest();
+                }
             }
             finally
             {
-                PythonEngine.Shutdown();
+                Finalizer.Instance.ErrorHandler -= ErrorHandler;
             }
+            Assert.AreEqual(errorArgs.Count, 0);
         }
 
         [Test]
         public void CrossReleaseCustomType()
         {
+            void ExecTest()
+            {
+                try
+                {
+                    var objRef = CreateConcreateObject();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    Finalizer.Instance.Collect(forceDispose: true);
+                    Assert.False(objRef.IsAlive);
+                }
+                finally
+                {
+                    PythonEngine.Shutdown();
+                }
+            }
+
+            var errorArgs = new List<Finalizer.ErrorArgs>();
+            void ErrorHandler(object sender, Finalizer.ErrorArgs e)
+            {
+                errorArgs.Add(e);
+            }
+            Finalizer.Instance.ErrorHandler += ErrorHandler;
             try
             {
-                var objRef = CreateConcreateObject();
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                Finalizer.Instance.Collect(forceDispose: true);
-                Assert.False(objRef.IsAlive);
+                for (int i = 0; i < 10; i++)
+                {
+                    ExecTest();
+                }
             }
             finally
             {
-                PythonEngine.Shutdown();
+                Finalizer.Instance.ErrorHandler -= ErrorHandler;
             }
+            Assert.AreEqual(errorArgs.Count, 0);
         }
 
         private static WeakReference CreateNumReference()
