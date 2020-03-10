@@ -891,7 +891,8 @@ namespace Python.Runtime
                 throw new PythonException();
             }
             const string code = "class A(object): pass";
-            IntPtr res = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
+            var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
+            IntPtr res = resRef.DangerousGetAddress();
             if (res == IntPtr.Zero)
             {
                 try
@@ -903,7 +904,7 @@ namespace Python.Runtime
                     Runtime.XDecref(globals);
                 }
             }
-            Runtime.XDecref(res);
+            resRef.Dispose();
             IntPtr A = Runtime.PyDict_GetItemString(globals, "A");
             Debug.Assert(A != IntPtr.Zero);
             Runtime.XIncref(A);
