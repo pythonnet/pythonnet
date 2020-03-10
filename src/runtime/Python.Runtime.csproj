@@ -129,6 +129,7 @@
     <Compile Include="pyansistring.cs" />
     <Compile Include="pydict.cs" />
     <Compile Include="pyfloat.cs" />
+    <Compile Include="pyhandle.cs" />
     <Compile Include="pyint.cs" />
     <Compile Include="pyiter.cs" />
     <Compile Include="pylist.cs" />

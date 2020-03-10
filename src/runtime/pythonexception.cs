@@ -9,9 +9,9 @@ namespace Python.Runtime
     /// </summary>
     public class PythonException : System.Exception, IPyDisposable
     {
-        private IntPtr _pyType = IntPtr.Zero;
-        private IntPtr _pyValue = IntPtr.Zero;
-        private IntPtr _pyTB = IntPtr.Zero;
+        private PyHandle _pyType;
+        private PyHandle _pyValue;
+        private PyHandle _pyTB;
         private string _tb = "";
         private string _message = "";
         private string _pythonTypeName = "";
