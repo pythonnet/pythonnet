@@ -8,43 +8,95 @@ namespace Python.Runtime.Codecs
 {
     class ListCodec : IPyObjectDecoder
     {
+        private enum CollectionRank
+        {
+            //order matters, this is in increasing order of specialization
+            None,
+            Iterable,
+            Sequence,
+            List
+        }
+
+        private CollectionRank GetRank(PyObject objectType)
+        {
+            var handle = objectType.Handle;
+            //first check if the PyObject is iterable.
+            IntPtr IterObject = Runtime.PyObject_GetIter(handle);
+            if (IterObject == IntPtr.Zero)
+                return CollectionRank.None;
+
+            //now check if its a sequence
+            if (Runtime.PySequence_Check(handle))
+            {
+                //last check if its a list
+                if (Runtime.PyList_Check(handle))
+                    return CollectionRank.List;
+                return CollectionRank.Sequence;
+            }
+
+            return CollectionRank.Iterable;
+        }
+
+        private CollectionRank GetRank(Type targetType)
+        {
+            //if it is a plain IEnumerable, we can decode it using sequence protocol.
+            if (targetType == typeof(System.Collections.IEnumerable))
+                return CollectionRank.Iterable;
+
+            Func<Type, CollectionRank> getRankOfType = (Type type) => {
+                if (type.GetGenericTypeDefinition() == typeof(IList<>))
+                    return CollectionRank.List;
+                if (type.GetGenericTypeDefinition() == typeof(ICollection<>))
+                    return CollectionRank.Sequence;
+                if (type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                    return CollectionRank.Iterable;
+                return CollectionRank.None;
+            };
+
+            if (targetType.IsGenericType)
+            {
+                var thisRank = getRankOfType(targetType);
+                if (thisRank != CollectionRank.None)
+                    return thisRank;
+            }
+
+            var maxRank = CollectionRank.None;
+            //if it implements any of the standard C# collection interfaces, we can decode it.
+            foreach (Type itf in targetType.GetInterfaces())
+            {
+                if (!itf.IsGenericType) continue;
+
+                var thisRank = getRankOfType(itf);
+
+                //this is the most specialized type.  return early
+                if (thisRank == CollectionRank.List) return thisRank;
+
+                //if it is more specialized, assign to max rank
+                if ((int)thisRank > (int)maxRank)
+                    maxRank = thisRank;
+            }
+
+            return maxRank;
+        }
+
+
         public bool CanDecode(PyObject objectType, Type targetType)
         {
-            //first check if the PyObject is iterable.
-            IntPtr IterObject = Runtime.PyObject_GetIter(objectType.Handle);
-            if (IterObject == IntPtr.Zero)
+            //get the python object rank
+            var pyRank = GetRank(objectType);
+            if (pyRank == CollectionRank.None)
+                return false;
+
+            //get the clr object rank
+            var clrRank = GetRank(targetType);
+            if (clrRank == CollectionRank.None)
                 return false;
 
             //if it is a plain IEnumerable, we can decode it using sequence protocol.
             if (targetType == typeof(System.Collections.IEnumerable))
                 return true;
 
-            //if its not a plain IEnumerable it must be a generic type
-            if (!targetType.IsGenericType) return false;
-
-            Predicate<Type> IsCLRSequence = (Type type) => {
-                return (type.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
-                        type.GetGenericTypeDefinition() == typeof(ICollection<>) ||
-                        type.GetGenericTypeDefinition() == typeof(IList<>));
-            };
-
-            if (IsCLRSequence(targetType))
-                return true;
-
-            //if it implements any of the standard C# collection interfaces, we can decode it.
-            foreach (Type itf in targetType.GetInterfaces())
-            {
-                if (IsCLRSequence(itf))
-                    return true;
-            }
-
-            //TODO objectType should implement the Sequence protocol to be convertible to ICollection
-            //     and the list protocol to be convertible to IList.  We should check for list first,
-            //     then collection, then enumerable
-
-
-            //if we get here we cannot decode it.
-            return false;
+            return (int)pyRank >= (int)clrRank;
         }
 
         private class PyEnumerable : System.Collections.IEnumerable
