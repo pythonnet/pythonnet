@@ -100,7 +100,7 @@ namespace Python.EmbeddingTest {
             //maybe there can be a flag on listcodec to allow it.
             Assert.IsFalse(codec.CanDecode(x, typeof(List<int>)));
 
-            Action<System.Collections.IEnumerable> checkPlainEnumerable = (System.Collections.IEnumerable enumerable) =>
+            Action<System.Collections.IEnumerable> checkUsingEnumerable = (System.Collections.IEnumerable enumerable) =>
             {
                 Assert.IsNotNull(enumerable);
                 IList<object> list = null;
@@ -111,14 +111,69 @@ namespace Python.EmbeddingTest {
                 Assert.AreEqual(list[2], 3);
             };
 
+            Action<System.Collections.IEnumerable> checkEmptyUsingEnumerable = (System.Collections.IEnumerable enumerable) =>
+            {
+                Assert.IsNotNull(enumerable);
+                IList<object> list = null;
+                list = enumerable.Cast<object>().ToList();
+                Assert.AreEqual(list.Count, 0);
+            };
+
             //ensure a PyList can be converted to a plain IEnumerable
             System.Collections.IEnumerable plainEnumerable1 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode<System.Collections.IEnumerable>(x, out plainEnumerable1); });
-            checkPlainEnumerable(plainEnumerable1);
+            checkUsingEnumerable(plainEnumerable1);
+
+            //can convert to any generic ienumerable.  If the type is not assignable from the python element
+            //it will be an exception during TryDecode
+            Assert.IsTrue(codec.CanDecode(x, typeof(IEnumerable<int>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(IEnumerable<double>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(IEnumerable<string>)));
+
+            //cannot convert to ICollection or IList of any type since the python type is only iterable
+            Assert.IsTrue(codec.CanDecode(x, typeof(ICollection<string>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(ICollection<int>)));
+            Assert.IsTrue(codec.CanDecode(x, typeof(IList<int>)));
+
+            IEnumerable<int> intEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<IEnumerable<int>>(x, out intEnumerable); });
+            checkUsingEnumerable(intEnumerable);
+
+            Runtime.CheckExceptionOccurred();
+
+            IEnumerable<double> doubleEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<IEnumerable<double>>(x, out doubleEnumerable); });
+            checkUsingEnumerable(doubleEnumerable);
+
+            Runtime.CheckExceptionOccurred();
+
+            IEnumerable<string> stringEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<IEnumerable<string>>(x, out stringEnumerable); });
+            checkEmptyUsingEnumerable(stringEnumerable);
+
+            Runtime.CheckExceptionOccurred();
+
+            ICollection<string> stringCollection = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<ICollection<string>>(x, out stringCollection); });
+            checkEmptyUsingEnumerable(stringCollection);
+
+            Runtime.CheckExceptionOccurred();
+
+            ICollection<int> intCollection = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<ICollection<int>>(x, out intCollection); });
+            checkUsingEnumerable(intCollection);
+
+            Runtime.CheckExceptionOccurred();
+
+            IList<int> intList = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<IList<int>>(x, out intList); });
+            checkUsingEnumerable(intList);
 
             //ensure a python class which implements the iterator protocol can be converter to a plain IEnumerable
             var locals = new PyDict();
-            PythonEngine.Exec(@"
+            using (Py.GIL())
+            {
+                PythonEngine.Exec(@"
 class foo():
     def __init__(self):
         self.counter = 0
@@ -131,11 +186,12 @@ class foo():
         return self.counter
 foo_instance = foo()
 ", null, locals.Handle);
+            }
 
             var foo = locals.GetItem("foo_instance");
             System.Collections.IEnumerable plainEnumerable2 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode<System.Collections.IEnumerable>(x, out plainEnumerable2); });
-            checkPlainEnumerable(plainEnumerable2);
+            checkUsingEnumerable(plainEnumerable2);
 
             //can convert to any generic ienumerable.  If the type is not assignable from the python element
             //it will be an exception during TryDecode
@@ -148,9 +204,8 @@ foo_instance = foo()
             Assert.IsFalse(codec.CanDecode(foo, typeof(ICollection<int>)));
             Assert.IsFalse(codec.CanDecode(foo, typeof(IList<int>)));
 
-            IEnumerable<int> intEnumerable = null;
             Assert.DoesNotThrow(() => { codec.TryDecode<IEnumerable<int>>(x, out intEnumerable); });
-            checkPlainEnumerable(intEnumerable);
+            checkUsingEnumerable(intEnumerable);
         }
     }
 
