@@ -90,12 +90,15 @@ namespace Python.EmbeddingTest {
             var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
 
             var x = new PyList(items.ToArray());
-            Assert.IsTrue(codec.CanDecode(x, typeof(List<int>)));
             Assert.IsTrue(codec.CanDecode(x, typeof(IList<bool>)));
             Assert.IsTrue(codec.CanDecode(x, typeof(System.Collections.IEnumerable)));
             Assert.IsTrue(codec.CanDecode(x, typeof(IEnumerable<int>)));
             Assert.IsTrue(codec.CanDecode(x, typeof(ICollection<float>)));
             Assert.IsFalse(codec.CanDecode(x, typeof(bool)));
+
+            //we'd have to copy into a list to do this.  not the best idea to support it.
+            //maybe there can be a flag on listcodec to allow it.
+            Assert.IsFalse(codec.CanDecode(x, typeof(List<int>)));
 
             Action<System.Collections.IEnumerable> checkPlainEnumerable = (System.Collections.IEnumerable enumerable) =>
             {
@@ -145,7 +148,9 @@ foo_instance = foo()
             Assert.IsFalse(codec.CanDecode(foo, typeof(ICollection<int>)));
             Assert.IsFalse(codec.CanDecode(foo, typeof(IList<int>)));
 
-
+            IEnumerable<int> intEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode<IEnumerable<int>>(x, out intEnumerable); });
+            checkPlainEnumerable(intEnumerable);
         }
     }
 

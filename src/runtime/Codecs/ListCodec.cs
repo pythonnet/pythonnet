@@ -37,11 +37,11 @@ namespace Python.Runtime.Codecs
             return CollectionRank.Iterable;
         }
 
-        private CollectionRank GetRank(Type targetType)
+        private Tuple<CollectionRank, Type> GetRankAndType(Type collectionType)
         {
             //if it is a plain IEnumerable, we can decode it using sequence protocol.
-            if (targetType == typeof(System.Collections.IEnumerable))
-                return CollectionRank.Iterable;
+            if (collectionType == typeof(System.Collections.IEnumerable))
+                return new Tuple<CollectionRank, Type>(CollectionRank.Iterable, typeof(object));
 
             Func<Type, CollectionRank> getRankOfType = (Type type) => {
                 if (type.GetGenericTypeDefinition() == typeof(IList<>))
@@ -53,32 +53,25 @@ namespace Python.Runtime.Codecs
                 return CollectionRank.None;
             };
 
-            if (targetType.IsGenericType)
+            if (collectionType.IsGenericType)
             {
-                var thisRank = getRankOfType(targetType);
+                //for compatibility we *could* do this and copy the value but probably not the best option.
+                /*if (collectionType.GetGenericTypeDefinition() == typeof(List<>))
+                    return new Tuple<CollectionRank, Type>(CollectionRank.List, elementType);*/
+
+                var elementType = collectionType.GetGenericArguments()[0];
+                var thisRank = getRankOfType(collectionType);
                 if (thisRank != CollectionRank.None)
-                    return thisRank;
+                    return new Tuple<CollectionRank, Type>(thisRank, elementType);
             }
 
-            var maxRank = CollectionRank.None;
-            //if it implements any of the standard C# collection interfaces, we can decode it.
-            foreach (Type itf in targetType.GetInterfaces())
-            {
-                if (!itf.IsGenericType) continue;
-
-                var thisRank = getRankOfType(itf);
-
-                //this is the most specialized type.  return early
-                if (thisRank == CollectionRank.List) return thisRank;
-
-                //if it is more specialized, assign to max rank
-                if ((int)thisRank > (int)maxRank)
-                    maxRank = thisRank;
-            }
-
-            return maxRank;
+            return null;
         }
 
+        private CollectionRank? GetRank(Type targetType)
+        {
+            return GetRankAndType(targetType)?.Item1;
+        }
 
         public bool CanDecode(PyObject objectType, Type targetType)
         {
@@ -89,7 +82,7 @@ namespace Python.Runtime.Codecs
 
             //get the clr object rank
             var clrRank = GetRank(targetType);
-            if (clrRank == CollectionRank.None)
+            if (clrRank == null || clrRank == CollectionRank.None)
                 return false;
 
             //if it is a plain IEnumerable, we can decode it using sequence protocol.
@@ -99,15 +92,16 @@ namespace Python.Runtime.Codecs
             return (int)pyRank >= (int)clrRank;
         }
 
-        private class PyEnumerable : System.Collections.IEnumerable
+        private class GenericPyEnumerable<T> : IEnumerable<T>
         {
-            PyObject iterObject;
-            internal PyEnumerable(PyObject pyObj)
+            protected PyObject iterObject;
+
+            internal GenericPyEnumerable(PyObject pyObj)
             {
                 iterObject = new PyObject(Runtime.PyObject_GetIter(pyObj.Handle));
             }
 
-            public IEnumerator GetEnumerator()
+            IEnumerator IEnumerable.GetEnumerator()
             {
                 IntPtr item;
                 while ((item = Runtime.PyIter_Next(iterObject.Handle)) != IntPtr.Zero)
@@ -123,11 +117,32 @@ namespace Python.Runtime.Codecs
                     yield return obj;
                 }
             }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                IntPtr item;
+                while ((item = Runtime.PyIter_Next(iterObject.Handle)) != IntPtr.Zero)
+                {
+                    object obj = null;
+                    if (!Converter.ToManaged(item, typeof(T), out obj, true))
+                    {
+                        Runtime.XDecref(item);
+                        break;
+                    }
+
+                    Runtime.XDecref(item);
+                    yield return (T)obj;
+                }
+            }
         }
 
         private object ToPlainEnumerable(PyObject pyObj)
         {
-            return new PyEnumerable(pyObj);
+            return new GenericPyEnumerable<object>(pyObj);
+        }
+        private object ToEnumerable<T>(PyObject pyObj)
+        {
+            return new GenericPyEnumerable<T>(pyObj);
         }
 
         public bool TryDecode<T>(PyObject pyObj, out T value)
@@ -136,7 +151,16 @@ namespace Python.Runtime.Codecs
             //first see if T is a plan IEnumerable
             if (typeof(T) == typeof(System.Collections.IEnumerable))
             {
-                var = ToPlainEnumerable(pyObj);
+                var = new GenericPyEnumerable<object>(pyObj);
+            }
+
+            //next use the rank to return the appropriate type
+            var clrRank = GetRank(typeof(T));
+            if (clrRank == CollectionRank.Iterable)
+                var = new GenericPyEnumerable<int>(pyObj);
+            else
+            {
+                //var = null;
             }
             
             value = (T)var;
