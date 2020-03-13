@@ -145,6 +145,11 @@ namespace Python.Runtime
             return Runtime.PyRun_SimpleString(code);
         }
 
+        public static int RunSimpleString(byte[] code)
+        {
+            return Runtime.PyRun_SimpleString(code);
+        }
+
         public static void Initialize()
         {
             Initialize(setSysArgv: true);

@@ -138,5 +138,21 @@ namespace Python.EmbeddingTest
             // Compare in .NET
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
         }
+
+        /// <summary>
+        /// Test the encoding of UTF-8 
+        /// </summary>
+        [Test]
+        public void TestEncodingUTF8()
+        {
+            dynamic sys = Py.Import("sys");
+            PythonEngine.RunSimpleString(Encoding.UTF32.GetBytes(
+                "import sys\n" +
+                "printf('안녕하세요')\n" +
+                "sys.val = '안녕하세요'\n"
+            ));
+
+            Assert.AreEqual(sys.val.ToString(), "안녕하세요");
+        }
     }
 }
