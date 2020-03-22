@@ -1,0 +1,98 @@
+using System;
+using System.Collections.Generic;
+
+namespace Python.Runtime.CollectionWrappers
+{
+    internal class SequenceWrapper<T> : IterableWrapper<T>, ICollection<T>
+    {
+        public SequenceWrapper(PyObject pyObj) : base(pyObj)
+        {
+
+        }
+
+        public int Count
+        {
+            get
+            {
+                return (int)Runtime.PySequence_Size(pyObject.Handle);
+            }
+        }
+
+        public virtual bool IsReadOnly => false;
+
+        public virtual void Add(T item)
+        {
+            //not implemented for Python sequence.
+            //ICollection is the closest analogue but it doesn't map perfectly.
+            //SequenceWrapper is not final and can be subclassed if necessary
+            throw new NotImplementedException();
+        }
+
+        public void Clear()
+        {
+            if (IsReadOnly)
+                throw new NotImplementedException();
+            var result = Runtime.PySequence_DelSlice(pyObject.Handle, 0, Count);
+            if (result == -1)
+                throw new Exception("failed to clear sequence");
+        }
+
+        public bool Contains(T item)
+        {
+            //not sure if IEquatable is implemented and this will work!
+            foreach (var element in this)
+                if (element.Equals(item)) return true;
+
+            return false;
+        }
+
+        protected T getItem(int index)
+        {
+            IntPtr item = Runtime.PySequence_GetItem(pyObject.Handle, index);
+            object obj;
+
+            if (!Converter.ToManaged(item, typeof(T), out obj, true))
+            {
+                Runtime.XDecref(item);
+                Runtime.CheckExceptionOccurred();
+            }
+
+            return (T)obj;
+        }
+
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            for (int index = 0; index < Count; index++)
+            {
+                array[index + arrayIndex] = getItem(index);
+            }
+        }
+
+        protected bool removeAt(int index)
+        {
+            if (IsReadOnly)
+                throw new NotImplementedException();
+            if (index >= Count || index < 0)
+                throw new IndexOutOfRangeException();
+
+            return Runtime.PySequence_DelItem(pyObject.Handle, index) != 0;
+        }
+
+        protected int indexOf(T item)
+        {
+            var index = 0;
+            foreach (var element in this)
+            {
+                if (element.Equals(item)) return index;
+                index++;
+            }
+
+            return -1;
+        }
+
+        public bool Remove(T item)
+        {
+            return removeAt(indexOf(item));
+        }
+    }
+}
