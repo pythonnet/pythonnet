@@ -52,7 +52,7 @@ namespace Python.Runtime.CollectionWrappers
             if (pyItem == IntPtr.Zero)
                 throw new Exception("failed to insert item");
 
-            var result = Runtime.PyList_Insert(pyObject.Handle, index, pyItem);
+            var result = Runtime.PyList_Insert(pyObject.Reference, index, pyItem);
             Runtime.XDecref(pyItem);
             if (result == -1)
                 throw new Exception("failed to insert item");
