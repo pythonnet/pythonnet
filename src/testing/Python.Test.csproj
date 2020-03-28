@@ -70,6 +70,7 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="dictionarytest.cs" />
     <Compile Include="arraytest.cs" />
     <Compile Include="callbacktest.cs" />
     <Compile Include="classtest.cs" />
