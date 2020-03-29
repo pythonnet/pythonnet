@@ -14,7 +14,14 @@ namespace Python.Runtime.CollectionWrappers
         {
             get
             {
-                return (int)Runtime.PySequence_Size(pyObject.Handle);
+                var size = Runtime.PySequence_Size(pyObject.Handle);
+                if (size == -1)
+                {
+                    Runtime.CheckExceptionOccurred();
+                    throw new Exception("Unable to get sequence size!");
+                }
+
+                return (int)size;
             }
         }
 
@@ -34,7 +41,10 @@ namespace Python.Runtime.CollectionWrappers
                 throw new NotImplementedException();
             var result = Runtime.PySequence_DelSlice(pyObject.Handle, 0, Count);
             if (result == -1)
+            {
+                Runtime.CheckExceptionOccurred();
                 throw new Exception("failed to clear sequence");
+            }
         }
 
         public bool Contains(T item)
@@ -46,7 +56,7 @@ namespace Python.Runtime.CollectionWrappers
             return false;
         }
 
-        protected T getItem(int index)
+        private T getItem(int index)
         {
             IntPtr item = Runtime.PySequence_GetItem(pyObject.Handle, index);
             object obj;

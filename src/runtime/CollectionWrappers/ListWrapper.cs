@@ -14,14 +14,11 @@ namespace Python.Runtime.CollectionWrappers
         {
             get
             {
-                IntPtr item = Runtime.PySequence_GetItem(pyObject.Handle, index);
-                object obj;
+                var item = Runtime.PyList_GetItem(pyObject.Handle, index);
+                var pyItem = new PyObject(item);
 
-                if (!Converter.ToManaged(item, typeof(T), out obj, true))
-                {
-                    Runtime.XDecref(item);
+                if (!Converter.ToManaged(pyItem.Handle, typeof(T), out object obj, true))
                     Runtime.CheckExceptionOccurred();
-                }
 
                 return (T)obj;
             }
@@ -31,10 +28,10 @@ namespace Python.Runtime.CollectionWrappers
                 if (pyItem == IntPtr.Zero)
                     throw new Exception("failed to set item");
 
-                var result = Runtime.PySequence_SetItem(pyObject.Handle, index, pyItem);
+                var result = Runtime.PyList_SetItem(pyObject.Handle, index, pyItem);
                 Runtime.XDecref(pyItem);
                 if (result == -1)
-                    throw new Exception("failed to set item");
+                    Runtime.CheckExceptionOccurred();
             }
         }
 
@@ -46,7 +43,7 @@ namespace Python.Runtime.CollectionWrappers
         public void Insert(int index, T item)
         {
             if (IsReadOnly)
-                throw new NotImplementedException();
+                throw new InvalidOperationException("Collection is read-only");
 
             IntPtr pyItem = Converter.ToPython(item, typeof(T));
             if (pyItem == IntPtr.Zero)
@@ -55,7 +52,7 @@ namespace Python.Runtime.CollectionWrappers
             var result = Runtime.PyList_Insert(pyObject.Reference, index, pyItem);
             Runtime.XDecref(pyItem);
             if (result == -1)
-                throw new Exception("failed to insert item");
+                Runtime.CheckExceptionOccurred();
         }
 
         public void RemoveAt(int index)

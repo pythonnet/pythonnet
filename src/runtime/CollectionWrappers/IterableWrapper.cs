@@ -6,18 +6,28 @@ namespace Python.Runtime.CollectionWrappers
 {
     internal class IterableWrapper<T> : IEnumerable<T>
     {
-        protected PyObject iterObject;
         protected PyObject pyObject;
 
         public IterableWrapper(PyObject pyObj)
         {
             pyObject = pyObj;
-            iterObject = new PyObject(Runtime.PyObject_GetIter(pyObj.Handle));
+        }
+
+        private void propagateIterationException()
+        {
+            var err = Runtime.PyErr_Occurred();
+            if (err != null && err != Exceptions.StopIteration)
+            {
+                Runtime.CheckExceptionOccurred();
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
+            if (pyObject == null) yield break;
+            PyObject iterObject = new PyObject(Runtime.PyObject_GetIter(pyObject.Handle));
             IntPtr item;
+
             while ((item = Runtime.PyIter_Next(iterObject.Handle)) != IntPtr.Zero)
             {
                 object obj = null;
@@ -30,10 +40,14 @@ namespace Python.Runtime.CollectionWrappers
                 Runtime.XDecref(item);
                 yield return obj;
             }
+
+            propagateIterationException();
         }
 
         public IEnumerator<T> GetEnumerator()
         {
+            if (pyObject == null) yield break;
+            PyObject iterObject = new PyObject(Runtime.PyObject_GetIter(pyObject.Handle));
             IntPtr item;
             while ((item = Runtime.PyIter_Next(iterObject.Handle)) != IntPtr.Zero)
             {
@@ -47,6 +61,8 @@ namespace Python.Runtime.CollectionWrappers
                 Runtime.XDecref(item);
                 yield return (T)obj;
             }
+
+            propagateIterationException();
         }
     }
 }
