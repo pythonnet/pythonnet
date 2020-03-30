@@ -5,11 +5,12 @@ using System.Reflection;
 namespace Python.Runtime
 {
     /// <summary>
-    /// Implements a Python type for managed dictionaries. This type is essentially
-    /// the same as a ClassObject, except that it provides sequence semantics
-    /// to support natural dictionary usage (__contains__ and __len__) from Python.
+    /// Implements a Python type for managed KeyValuePairEnumerable (dictionaries).
+    /// This type is essentially the same as a ClassObject, except that it provides
+    /// sequence semantics to support natural dictionary usage (__contains__ and __len__)
+    /// from Python.
     /// </summary>
-    internal class DictionaryObject : ClassObject
+    internal class KeyValuePairEnumerableObject : ClassObject
     {
         private static Dictionary<Tuple<Type, string>, MethodInfo> methodsByType = new Dictionary<Tuple<Type, string>, MethodInfo>();
         private static Dictionary<string, string> methodMap = new Dictionary<string, string>
@@ -20,11 +21,11 @@ namespace Python.Runtime
 
         public List<string> MappedMethods { get; } = new List<string>();
 
-        internal DictionaryObject(Type tp) : base(tp)
+        internal KeyValuePairEnumerableObject(Type tp) : base(tp)
         {
-            if (!tp.IsDictionary())
+            if (!tp.IsKeyValuePairEnumerable())
             {
-                throw new ArgumentException("object is not a dict");
+                throw new ArgumentException("object is not a KeyValuePair Enumerable");
             }
 
             foreach (var name in methodMap)
@@ -59,11 +60,8 @@ namespace Python.Runtime
             var obj = (CLRObject)GetManagedObject(ob);
             var self = obj.inst;
 
-            MethodInfo methodInfo;
-            if (!TryGetMethodInfo(self.GetType(), "Count", out methodInfo))
-            {
-                return 0;
-            }
+            var key = Tuple.Create(self.GetType(), "Count");
+            var methodInfo = methodsByType[key];
 
             return (int)methodInfo.Invoke(self, null);
         }
@@ -76,11 +74,8 @@ namespace Python.Runtime
             var obj = (CLRObject)GetManagedObject(ob);
             var self = obj.inst;
 
-            MethodInfo methodInfo;
-            if (!TryGetMethodInfo(self.GetType(), "ContainsKey", out methodInfo))
-            {
-                return 0;
-            }
+            var key = Tuple.Create(self.GetType(), "ContainsKey");
+            var methodInfo = methodsByType[key];
 
             var parameters = methodInfo.GetParameters();
             object arg;
@@ -92,29 +87,15 @@ namespace Python.Runtime
 
             return (bool)methodInfo.Invoke(self, new[] { arg }) ? 1 : 0;
         }
-
-        private static bool TryGetMethodInfo(Type type, string alias, out MethodInfo methodInfo)
-        {
-            var key = Tuple.Create(type, alias);
-
-            if (!methodsByType.TryGetValue(key, out methodInfo))
-            {
-                Exceptions.SetError(Exceptions.TypeError,
-                    $"{nameof(type)} does not define {alias} method");
-
-                return false;
-            }
-
-            return true;
-        }
     }
 
-    public static class DictionaryObjectExtension
+    public static class KeyValuePairEnumerableObjectExtension
     {
-        public static bool IsDictionary(this Type type)
+        public static bool IsKeyValuePairEnumerable(this Type type)
         {
             var iEnumerableType = typeof(IEnumerable<>);
             var keyValuePairType = typeof(KeyValuePair<,>);
+            var requiredMethods = new[] { "ContainsKey", "Count" };
 
             var interfaces = type.GetInterfaces();
             foreach (var i in interfaces)
@@ -130,6 +111,19 @@ namespace Python.Runtime
                         a.GetGenericTypeDefinition() == keyValuePairType &&
                         a.GetGenericArguments().Length == 2)
                     {
+                        foreach (var requiredMethod in requiredMethods)
+                        {
+                            var method = type.GetMethod(requiredMethod);
+                            if (method == null)
+                            {
+                                method = type.GetMethod($"get_{requiredMethod}");
+                                if (method == null)
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+
                         return true;
                     }
                 }
