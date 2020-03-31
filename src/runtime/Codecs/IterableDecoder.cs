@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Python.Runtime.Codecs
 {
-    class IterableDecoder : IPyObjectDecoder
+    public class IterableDecoder : IPyObjectDecoder
     {
         internal static bool IsIterable(Type targetType)
         {

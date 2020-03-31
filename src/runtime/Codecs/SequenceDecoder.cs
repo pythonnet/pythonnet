@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Python.Runtime.Codecs
 {
-    class SequenceDecoder : IPyObjectDecoder
+    public class SequenceDecoder : IPyObjectDecoder
     {
         internal static bool IsSequence(Type targetType)
         {
