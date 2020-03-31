@@ -13,41 +13,32 @@ namespace Python.Runtime
     internal class KeyValuePairEnumerableObject : ClassObject
     {
         private static Dictionary<Tuple<Type, string>, MethodInfo> methodsByType = new Dictionary<Tuple<Type, string>, MethodInfo>();
-        private static Dictionary<string, string> methodMap = new Dictionary<string, string>
-        {
-            { "mp_length", "Count" },
-            { "sq_contains", "ContainsKey" }
-        };
+        private static List<string> requiredMethods = new List<string> { "Count", "ContainsKey" };
 
-        public List<string> MappedMethods { get; } = new List<string>();
+        internal static bool VerifyMethodRequirements(Type type)
+        {
+            foreach (var requiredMethod in requiredMethods)
+            {
+                var method = type.GetMethod(requiredMethod);
+                if (method == null)
+                {
+                    method = type.GetMethod($"get_{requiredMethod}");
+                    if (method == null)
+                    {
+                        return false;
+                    }
+                }
+
+                var key = Tuple.Create(type, requiredMethod);
+                methodsByType.Add(key, method);
+            }
+
+            return true;
+        }
 
         internal KeyValuePairEnumerableObject(Type tp) : base(tp)
         {
-            if (!tp.IsKeyValuePairEnumerable())
-            {
-                throw new ArgumentException("object is not a KeyValuePair Enumerable");
-            }
 
-            foreach (var name in methodMap)
-            {
-                var key = Tuple.Create(type, name.Value);
-                MethodInfo method;
-                if (!methodsByType.TryGetValue(key, out method))
-                {
-                    method = tp.GetMethod(name.Value);
-                    if (method == null)
-                    {
-                        method = tp.GetMethod($"get_{name.Value}");
-                    }
-                    if (method == null)
-                    {
-                        continue;
-                    }
-                    methodsByType.Add(key, method);
-                }
-
-                MappedMethods.Add(name.Key);
-            }
         }
 
         internal override bool CanSubclass() => false;
@@ -95,7 +86,6 @@ namespace Python.Runtime
         {
             var iEnumerableType = typeof(IEnumerable<>);
             var keyValuePairType = typeof(KeyValuePair<,>);
-            var requiredMethods = new[] { "ContainsKey", "Count" };
 
             var interfaces = type.GetInterfaces();
             foreach (var i in interfaces)
@@ -111,20 +101,7 @@ namespace Python.Runtime
                         a.GetGenericTypeDefinition() == keyValuePairType &&
                         a.GetGenericArguments().Length == 2)
                     {
-                        foreach (var requiredMethod in requiredMethods)
-                        {
-                            var method = type.GetMethod(requiredMethod);
-                            if (method == null)
-                            {
-                                method = type.GetMethod($"get_{requiredMethod}");
-                                if (method == null)
-                                {
-                                    return false;
-                                }
-                            }
-                        }
-
-                        return true;
+                        return KeyValuePairEnumerableObject.VerifyMethodRequirements(type);
                     }
                 }
             }
