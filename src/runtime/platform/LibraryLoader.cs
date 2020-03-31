@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime.Platform
@@ -180,6 +181,7 @@ namespace Python.Runtime.Platform
 
         public IntPtr Load(string dllToLoad, string directory = "")
         {
+            dllToLoad = Path.GetFullPath($"{directory}{dllToLoad}.dll");
             var res = WindowsLoader.LoadLibrary(dllToLoad);
             if (res == IntPtr.Zero)
                 throw new DllNotFoundException($"Could not load {dllToLoad}", new Win32Exception());
