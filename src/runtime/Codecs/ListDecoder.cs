@@ -18,8 +18,8 @@ namespace Python.Runtime.Codecs
             //must implement sequence protocol to fully implement list protocol
             if (!SequenceDecoder.IsSequence(objectType)) return false;
 
-            //returns wheter it implements the list protocol
-            return Runtime.PyList_Check(objectType.Handle);
+            //returns wheter the type is a list.
+            return objectType.Handle == Runtime.PyListType;
         }
 
         public bool CanDecode(PyObject objectType, Type targetType)

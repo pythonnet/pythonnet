@@ -19,9 +19,7 @@ namespace Python.Runtime.Codecs
 
         internal static bool IsIterable(PyObject objectType)
         {
-            //TODO - do I need to decref iterObject?
-            IntPtr iterObject = Runtime.PyObject_GetIter(objectType.Handle);
-            return iterObject != IntPtr.Zero;
+            return objectType.HasAttr("__iter__");
         }
 
         public bool CanDecode(PyObject objectType, Type targetType)

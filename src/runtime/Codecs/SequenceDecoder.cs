@@ -19,7 +19,10 @@ namespace Python.Runtime.Codecs
             if (!IterableDecoder.IsIterable(objectType)) return false;
 
             //returns wheter it implements the sequence protocol
-            return Runtime.PySequence_Check(objectType.Handle);
+            //according to python doc this needs to exclude dict subclasses
+            //but I don't know how to look for that given the objectType
+            //rather than the instance.
+            return objectType.HasAttr("__getitem__");
         }
 
         public bool CanDecode(PyObject objectType, Type targetType)

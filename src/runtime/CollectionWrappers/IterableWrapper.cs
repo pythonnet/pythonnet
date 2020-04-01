@@ -47,10 +47,21 @@ namespace Python.Runtime.CollectionWrappers
         public IEnumerator<T> GetEnumerator()
         {
             if (pyObject == null) yield break;
-            PyObject iterObject = new PyObject(Runtime.PyObject_GetIter(pyObject.Handle));
-            IntPtr item;
-            while ((item = Runtime.PyIter_Next(iterObject.Handle)) != IntPtr.Zero)
+            PyObject iterObject = null;
+            using (Py.GIL())
             {
+                iterObject = new PyObject(Runtime.PyObject_GetIter(pyObject.Handle));
+            }
+
+            while (true)
+            {
+                IntPtr item = IntPtr.Zero;
+                using (Py.GIL())
+                {
+                    item = Runtime.PyIter_Next(iterObject.Handle);
+                }
+                if (item == IntPtr.Zero) break;
+
                 object obj = null;
                 if (!Converter.ToManaged(item, typeof(T), out obj, true))
                 {
