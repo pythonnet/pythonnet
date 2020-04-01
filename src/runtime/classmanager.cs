@@ -87,6 +87,11 @@ namespace Python.Runtime
                 impl = new ArrayObject(type);
             }
 
+            else if (type.IsKeyValuePairEnumerable())
+            {
+                impl = new KeyValuePairEnumerableObject(type);
+            }
+
             else if (type.IsInterface)
             {
                 impl = new InterfaceObject(type);
