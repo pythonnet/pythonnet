@@ -26,10 +26,13 @@ namespace Python.Runtime.CollectionWrappers
             {
                 IntPtr pyItem = Converter.ToPython(value, typeof(T));
                 if (pyItem == IntPtr.Zero)
-                    throw new Exception("failed to set item");
+                {
+                    throw new InvalidCastException(
+                        "cannot cast " + value.ToString() + "to type: " + typeof(T).ToString(),
+                        new PythonException());
+                }
 
                 var result = Runtime.PyList_SetItem(pyObject.Handle, index, pyItem);
-                Runtime.XDecref(pyItem);
                 if (result == -1)
                     Runtime.CheckExceptionOccurred();
             }
@@ -47,7 +50,7 @@ namespace Python.Runtime.CollectionWrappers
 
             IntPtr pyItem = Converter.ToPython(item, typeof(T));
             if (pyItem == IntPtr.Zero)
-                throw new Exception("failed to insert item");
+                throw new PythonException();
 
             var result = Runtime.PyList_Insert(pyObject.Reference, index, pyItem);
             Runtime.XDecref(pyItem);
@@ -57,7 +60,12 @@ namespace Python.Runtime.CollectionWrappers
 
         public void RemoveAt(int index)
         {
-            removeAt(index);
+            var result = removeAt(index);
+
+            //PySequence_DelItem will set an error if it fails.  throw it here
+            //since RemoveAt does not have a bool return value.
+            if (result == false)
+                Runtime.CheckExceptionOccurred();
         }
     }
 }

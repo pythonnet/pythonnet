@@ -72,9 +72,11 @@ namespace Python.Runtime.CollectionWrappers
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            for (int index = 0; index < Count; index++)
+            var index = 0;
+            foreach (var item in this)
             {
-                array[index + arrayIndex] = getItem(index);
+                array[index + arrayIndex] = item;
+                index++;
             }
         }
 
@@ -102,7 +104,14 @@ namespace Python.Runtime.CollectionWrappers
 
         public bool Remove(T item)
         {
-            return removeAt(indexOf(item));
+            var result = removeAt(indexOf(item));
+
+            //clear the python exception from PySequence_DelItem
+            //it is idiomatic in C# to return a bool rather than
+            //throw for a failed Remove in ICollection
+            if (result == false)
+                Runtime.PyErr_Clear();
+            return result;
         }
     }
 }
