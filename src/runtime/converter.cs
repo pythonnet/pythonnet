@@ -135,6 +135,12 @@ namespace Python.Runtime
                 return result;
             }
 
+            // try customConverter
+            if (CustomConverter.TryGetPythonConverter(type, out var pythonConverter))
+            {
+                return pythonConverter.Invoke(value).Handle;
+            }
+
             if (Type.GetTypeCode(type) == TypeCode.Object && value.GetType() != typeof(object)) {
                 var encoded = PyObjectConversions.TryEncode(value, type);
                 if (encoded != null) {
@@ -300,6 +306,13 @@ namespace Python.Runtime
             {
                 Runtime.XIncref(value); // PyObject() assumes ownership
                 result = new PyObject(value);
+                return true;
+            }
+
+            // try CustomConverter
+            if (CustomConverter.TryGetNetConverter(obType, out var netConverter))
+            {
+                result = netConverter.Invoke(new PyObject(value));
                 return true;
             }
 
