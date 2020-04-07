@@ -398,7 +398,7 @@ namespace Python.Runtime
                 var parameter = pi[paramIndex];
                 bool hasNamedParam = kwargDict.ContainsKey(parameter.Name);
 
-                if (paramIndex >= pyArgCount && !hasNamedParam)
+                if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
                 {
                     if (defaultArgList != null)
                     {
@@ -571,6 +571,10 @@ namespace Python.Runtime
                         // The GetDefaultValue() extension method will return the value
                         // to be passed in as the parameter value
                         defaultArgList.Add(parameters[v].GetDefaultValue());
+                    }
+                    else if(v == parameters.Length - 1 && parameters[v].IsDefined(typeof(ParamArrayAttribute), false))
+                    {
+                        paramsArray = true;
                     }
                     else
                     {
