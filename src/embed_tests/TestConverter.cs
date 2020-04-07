@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -43,6 +45,27 @@ namespace Python.EmbeddingTest
 
             Assert.IsTrue(converted);
             Assert.IsTrue(((double) convertedValue).Equals(testValue));
+        }
+
+        [Test]
+        public void RawListProxy()
+        {
+            var list = new List<string> {"hello", "world"};
+            var listProxy = list.GetRawPythonProxy();
+            var clrObject = (CLRObject)ManagedType.GetManagedObject(listProxy.Handle);
+            Assert.AreSame(list, clrObject.inst);
+        }
+
+        [Test]
+        public void RawPyObjectProxy()
+        {
+            var pyObject = "hello world!".ToPython();
+            var pyObjectProxy = pyObject.GetRawPythonProxy();
+            var clrObject = (CLRObject)ManagedType.GetManagedObject(pyObjectProxy.Handle);
+            Assert.AreSame(pyObject, clrObject.inst);
+
+            var proxiedHandle = pyObjectProxy.GetAttr("Handle").As<IntPtr>();
+            Assert.AreEqual(pyObject.Handle, proxiedHandle);
         }
     }
 }

@@ -328,6 +328,8 @@ namespace Python.Runtime
 
                 ExecuteShutdownHandlers();
 
+                PyObjectConversions.Reset();
+
                 initialized = false;
             }
         }
@@ -541,12 +543,13 @@ namespace Python.Runtime
         /// </remarks>
         public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            PyObject result = RunString(code, globals, locals, RunFlagType.File);
-            if (result.obj != Runtime.PyNone)
+            using (PyObject result = RunString(code, globals, locals, RunFlagType.File))
             {
-                throw new PythonException();
+                if (result.obj != Runtime.PyNone)
+                {
+                    throw new PythonException();
+                }
             }
-            result.Dispose();
         }
 
 
@@ -592,13 +595,20 @@ namespace Python.Runtime
 
             try
             {
-                IntPtr result = Runtime.PyRun_String(
+                NewReference result = Runtime.PyRun_String(
                     code, (IntPtr)flag, globals.Value, locals.Value
                 );
 
-                Runtime.CheckExceptionOccurred();
+                try
+                {
+                    Runtime.CheckExceptionOccurred();
 
-                return new PyObject(result);
+                    return result.MoveToPyObject();
+                }
+                finally
+                {
+                    result.Dispose();
+                }
             }
             finally
             {
@@ -643,7 +653,8 @@ namespace Python.Runtime
         
         public class GILState : IDisposable
         {
-            private IntPtr state;
+            private readonly IntPtr state;
+            private bool isDisposed;
 
             internal GILState()
             {
@@ -652,8 +663,11 @@ namespace Python.Runtime
 
             public void Dispose()
             {
+                if (this.isDisposed) return;
+
                 PythonEngine.ReleaseLock(state);
                 GC.SuppressFinalize(this);
+                this.isDisposed = true;
             }
 
             ~GILState()
@@ -754,11 +768,14 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 ex = e;
-                type = ex.PyType;
-                val = ex.PyValue;
-                traceBack = ex.PyTB;
+                type = ex.PyType.Coalesce(type);
+                val = ex.PyValue.Coalesce(val);
+                traceBack = ex.PyTB.Coalesce(traceBack);
             }
 
+            Runtime.XIncref(type);
+            Runtime.XIncref(val);
+            Runtime.XIncref(traceBack);
             var exitResult = obj.InvokeMethod("__exit__", new PyObject(type), new PyObject(val), new PyObject(traceBack));
 
             if (ex != null && !exitResult.IsTrue()) throw ex;

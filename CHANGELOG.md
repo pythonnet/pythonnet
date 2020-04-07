@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added function that sets Py_NoSiteFlag to 1.
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
+-   Added `object.GetRawPythonProxy() -> PyObject` extension method, that bypasses any conversions
 -   Added PythonException.Format method to format exceptions the same as traceback.format_exception
 
 ### Changed
@@ -22,6 +23,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Removes PyLong_GetMax and PyClass_New when targetting Python3
 -   Added support for converting python iterators to C# arrays
 -   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
+-   When calling C# from Python, enable passing argument of any type to a parameter of C# type `object` by wrapping it into `PyObject` instance. ([#881][i881])
 -   Added support for kwarg parameters when calling .NET methods from Python
 
 ### Fixed
@@ -30,6 +32,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
   together with Nuitka
 - Fixes bug where delegates get casts (dotnetcore)
 - Determine size of interpreter longs at runtime
+- Handling exceptions ocurred in ModuleObject's getattribute 
 
 ## [2.4.0][]
 
