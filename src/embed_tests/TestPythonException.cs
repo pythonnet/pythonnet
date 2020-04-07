@@ -72,8 +72,8 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestPythonExceptionFormatNoError()
         {
-            var e = new PythonException();
-            Assert.AreEqual("Missing exception/traceback information", e.Format());
+            var ex = new PythonException();
+            Assert.AreEqual(ex.StackTrace, ex.Format());
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace Python.EmbeddingTest
             catch (PythonException ex)
             {
                 // ImportError/ModuleNotFoundError do not have a traceback when not running in a script 
-                Assert.AreEqual("Missing exception/traceback information", ex.Format());
+                Assert.AreEqual(ex.StackTrace, ex.Format());
             }
         }
     }

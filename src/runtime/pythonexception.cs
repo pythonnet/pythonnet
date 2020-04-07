@@ -154,31 +154,36 @@ namespace Python.Runtime
         {
             string res;
             IntPtr gs = PythonEngine.AcquireLock();
-            if (_pyTB != IntPtr.Zero && _pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
+            try
             {
-                Runtime.XIncref(_pyType);
-                Runtime.XIncref(_pyValue);
-                Runtime.XIncref(_pyTB);
-                using (PyObject pyType = new PyObject(_pyType))
-                using (PyObject pyValue = new PyObject(_pyValue))
-                using (PyObject pyTB = new PyObject(_pyTB))
-                using (PyObject tb_mod = PythonEngine.ImportModule("traceback"))
+                if (_pyTB != IntPtr.Zero && _pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
                 {
-                    var buffer = new StringBuilder();
-                    var values = tb_mod.InvokeMethod("format_exception", pyType, pyValue, pyTB);
-                    Runtime.PyErr_Clear();
-                    foreach (PyObject val in values)
+                    Runtime.XIncref(_pyType);
+                    Runtime.XIncref(_pyValue);
+                    Runtime.XIncref(_pyTB);
+                    using (PyObject pyType = new PyObject(_pyType))
+                    using (PyObject pyValue = new PyObject(_pyValue))
+                    using (PyObject pyTB = new PyObject(_pyTB))
+                    using (PyObject tb_mod = PythonEngine.ImportModule("traceback"))
                     {
-                        buffer.Append(val.ToString());
+                        var buffer = new StringBuilder();
+                        var values = tb_mod.InvokeMethod("format_exception", pyType, pyValue, pyTB);
+                        foreach (PyObject val in values)
+                        {
+                            buffer.Append(val.ToString());
+                        }
+                        res = buffer.ToString();
                     }
-                    res = buffer.ToString();
+                }
+                else
+                {
+                    res = StackTrace;
                 }
             }
-            else
+            finally
             {
-                res = "Missing exception/traceback information";
+                PythonEngine.ReleaseLock(gs);
             }
-            PythonEngine.ReleaseLock(gs);
             return res;
         }
 
