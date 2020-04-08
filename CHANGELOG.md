@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
 -   Added `object.GetRawPythonProxy() -> PyObject` extension method, that bypasses any conversions
+-   Added PythonException.Format method to format exceptions the same as traceback.format_exception
 
 ### Changed
 
