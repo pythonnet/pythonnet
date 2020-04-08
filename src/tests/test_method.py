@@ -269,6 +269,21 @@ def test_params_methods_with_no_params():
     result = MethodTest.TestTwoArgWithParams('Some String', 'Some Other String')
     assert len(result) == 0
 
+def test_params_methods_with_non_lists():
+    """Tests that passing single parameters to a params
+    method will convert into an array on the .NET side"""
+    result = MethodTest.TestOneArgWithParams('Some String', [1, 2, 3, 4])
+    assert len(result) == 4
+
+    result = MethodTest.TestOneArgWithParams('Some String', 1, 2, 3, 4)
+    assert len(result) == 4
+
+    result = MethodTest.TestOneArgWithParams('Some String', [5])
+    assert len(result) == 1
+
+    result = MethodTest.TestOneArgWithParams('Some String', 5)
+    assert len(result) == 1
+
 def test_string_out_params():
     """Test use of string out-parameters."""
     result = MethodTest.TestStringOutParams("hi", "there")
