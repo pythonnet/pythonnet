@@ -572,7 +572,7 @@ namespace Python.Runtime
                         // to be passed in as the parameter value
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                     }
-                    else if(v == parameters.Length - 1 && parameters[v].IsDefined(typeof(ParamArrayAttribute), false))
+                    else if((v == (parameters.Length - 1)) && Attribute.IsDefined(parameters[v], typeof(ParamArrayAttribute)))
                     {
                         paramsArray = true;
                     }
