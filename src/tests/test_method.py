@@ -284,6 +284,11 @@ def test_params_methods_with_non_lists():
     result = MethodTest.TestOneArgWithParams('Some String', 5)
     assert len(result) == 1
 
+def test_params_method_with_lists():
+    """Tests passing multiple lists to a params object[] method"""
+    result = MethodTest.TestObjectParamsArg([],[])
+    assert len(result) == 2
+
 def test_string_out_params():
     """Test use of string out-parameters."""
     result = MethodTest.TestStringOutParams("hi", "there")

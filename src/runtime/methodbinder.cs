@@ -421,25 +421,35 @@ namespace Python.Runtime
                         // for a params method, we may have a sequence or single/multiple items
                         // here we look to see if the item at the paramIndex is there or not
                         // and then if it is a sequence itself.
-                        IntPtr item = Runtime.PyTuple_GetItem(args, paramIndex);
-                        Runtime.PyErr_Clear();
-                        if(item != IntPtr.Zero && !Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
+                        if((pyArgCount - paramIndex) == 1)
                         {
-                            op = item;
+                            // we only have one argument left, so we need to check it
+                            // to see if it is a sequence or a single item
+                            IntPtr item = Runtime.PyTuple_GetItem(args, paramIndex);
+                            if(!Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
+                            {
+                                // it's a sequence (and not a string), so we use it as the op
+                                op = item;
+                            }
+                            else
+                            {
+                                doDecref = true;
+                                op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                                if (item != IntPtr.Zero)
+                                {
+                                    Runtime.XDecref(item);
+                                }
+                            }
                         }
                         else
                         {
-                            // we only need to decref in the case where we get a slice
                             doDecref = true;
                             op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
-                            if (item != IntPtr.Zero)
-                            {
-                                Runtime.XDecref(item);
-                            }
-                        }
+                        }                                         
                     }
                     else
                     {
+                        // not at a params argument
                         op = Runtime.PyTuple_GetItem(args, paramIndex);
                     }
                 }
