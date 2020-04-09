@@ -457,26 +457,20 @@ class BuildExtPythonnet(build_ext.build_ext):
         # trying to search path with help of vswhere when MSBuild 15.0 and higher installed.
         if tool == "msbuild.exe" and use_windows_sdk == False:
             try:
-                basePathes = subprocess.check_output(
+                basePaths = subprocess.check_output(
                     [
                         "tools\\vswhere\\vswhere.exe",
                         "-latest",
                         "-version",
-                        "[15.0, 16.0)",
+                        "[15.0,)",
                         "-requires",
                         "Microsoft.Component.MSBuild",
-                        "-property",
-                        "InstallationPath",
+                        "-find",
+                        "MSBuild\**\Bin\MSBuild.exe",
                     ]
                 ).splitlines()
-                if len(basePathes):
-                    return os.path.join(
-                        basePathes[0].decode(sys.stdout.encoding or "utf-8"),
-                        "MSBuild",
-                        "15.0",
-                        "Bin",
-                        "MSBuild.exe",
-                    )
+                if len(basePaths):
+                    return basePaths[0].decode(sys.stdout.encoding or "utf-8")
             except:
                 pass  # keep trying to search by old method.
 
@@ -528,26 +522,20 @@ class BuildExtPythonnet(build_ext.build_ext):
     def _find_msbuild_tool_15(self):
         """Return full path to one of the Microsoft build tools"""
         try:
-            basePathes = subprocess.check_output(
+            basePaths = subprocess.check_output(
                 [
                     "tools\\vswhere\\vswhere.exe",
                     "-latest",
                     "-version",
-                    "[15.0, 16.0)",
+                    "[15.0,)",
                     "-requires",
                     "Microsoft.Component.MSBuild",
-                    "-property",
-                    "InstallationPath",
+                    "-find",
+                    "MSBuild\**\Bin\MSBuild.exe",
                 ]
             ).splitlines()
-            if len(basePathes):
-                return os.path.join(
-                    basePathes[0].decode(sys.stdout.encoding or "utf-8"),
-                    "MSBuild",
-                    "15.0",
-                    "Bin",
-                    "MSBuild.exe",
-                )
+            if len(basePaths):
+                return basePaths[0].decode(sys.stdout.encoding or "utf-8")
             else:
                 raise RuntimeError("MSBuild >=15.0 could not be found.")
         except subprocess.CalledProcessError as e:

@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
 -   Added `object.GetRawPythonProxy() -> PyObject` extension method, that bypasses any conversions
+-   Added PythonException.Format method to format exceptions the same as traceback.format_exception
 
 ### Changed
 
@@ -24,6 +25,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
 -   When calling C# from Python, enable passing argument of any type to a parameter of C# type `object` by wrapping it into `PyObject` instance. ([#881][i881])
 -   Added support for kwarg parameters when calling .NET methods from Python
+-   Changed method for finding MSBuild using vswhere
 
 ### Fixed
 
