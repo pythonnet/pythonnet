@@ -369,10 +369,10 @@ namespace Python.Runtime
             return null;
         }
 
-        static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool doDecref)
+        static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool isNewReference)
         {
-            IntPtr op = IntPtr.Zero;
-            doDecref = false;
+            isNewReference = false;
+            IntPtr op;
             // for a params method, we may have a sequence or single/multiple items
             // here we look to see if the item at the paramIndex is there or not
             // and then if it is a sequence itself.
@@ -388,7 +388,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    doDecref = true;
+                    isNewReference = true;
                     op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
                     if (item != IntPtr.Zero)
                     {
@@ -398,7 +398,7 @@ namespace Python.Runtime
             }
             else
             {
-                doDecref = true;
+                isNewReference = true;
                 op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
             }
             return op;
@@ -432,7 +432,7 @@ namespace Python.Runtime
             {
                 var parameter = pi[paramIndex];
                 bool hasNamedParam = kwargDict.ContainsKey(parameter.Name);
-                bool doDecref = false;
+                bool isNewReference = false;
 
                 if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
                 {
@@ -453,7 +453,7 @@ namespace Python.Runtime
                 {
                     if(arrayStart == paramIndex)
                     {
-                        op = HandleParamsArray(args, arrayStart, pyArgCount, out doDecref);                                                                 
+                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);                                                                 
                     }
                     else
                     {
@@ -467,7 +467,7 @@ namespace Python.Runtime
                     return null;
                 }
 
-                if (doDecref)
+                if (isNewReference)
                 {
                     // TODO: is this a bug? Should this happen even if the conversion fails?
                     // GetSlice() creates a new reference but GetItem()
