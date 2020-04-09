@@ -369,6 +369,41 @@ namespace Python.Runtime
             return null;
         }
 
+        static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool doDecref)
+        {
+            IntPtr op = IntPtr.Zero;
+            doDecref = false;
+            // for a params method, we may have a sequence or single/multiple items
+            // here we look to see if the item at the paramIndex is there or not
+            // and then if it is a sequence itself.
+            if ((pyArgCount - arrayStart) == 1)
+            {
+                // we only have one argument left, so we need to check it
+                // to see if it is a sequence or a single item
+                IntPtr item = Runtime.PyTuple_GetItem(args, arrayStart);
+                if (!Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
+                {
+                    // it's a sequence (and not a string), so we use it as the op
+                    op = item;
+                }
+                else
+                {
+                    doDecref = true;
+                    op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                    if (item != IntPtr.Zero)
+                    {
+                        Runtime.XDecref(item);
+                    }
+                }
+            }
+            else
+            {
+                doDecref = true;
+                op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+            }
+            return op;
+        }
+
         /// <summary>
         /// Attempts to convert Python positional argument tuple and keyword argument table
         /// into an array of managed objects, that can be passed to a method.
@@ -418,38 +453,10 @@ namespace Python.Runtime
                 {
                     if(arrayStart == paramIndex)
                     {
-                        // for a params method, we may have a sequence or single/multiple items
-                        // here we look to see if the item at the paramIndex is there or not
-                        // and then if it is a sequence itself.
-                        if((pyArgCount - paramIndex) == 1)
-                        {
-                            // we only have one argument left, so we need to check it
-                            // to see if it is a sequence or a single item
-                            IntPtr item = Runtime.PyTuple_GetItem(args, paramIndex);
-                            if(!Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
-                            {
-                                // it's a sequence (and not a string), so we use it as the op
-                                op = item;
-                            }
-                            else
-                            {
-                                doDecref = true;
-                                op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
-                                if (item != IntPtr.Zero)
-                                {
-                                    Runtime.XDecref(item);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            doDecref = true;
-                            op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
-                        }                                         
+                        op = HandleParamsArray(args, arrayStart, pyArgCount, out doDecref);                                                                 
                     }
                     else
                     {
-                        // not at a params argument
                         op = Runtime.PyTuple_GetItem(args, paramIndex);
                     }
                 }
