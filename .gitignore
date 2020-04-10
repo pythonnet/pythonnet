@@ -2,6 +2,7 @@
 *.dll
 *.exe
 *.pdb
+pythonnet/dlls/
 
 ### JetBrains ###
 .idea/
