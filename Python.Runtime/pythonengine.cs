@@ -254,7 +254,7 @@ namespace Python.Runtime
         /// CPython interpreter process - this bootstraps the managed runtime
         /// when it is imported by the CLR extension module.
         /// </summary>
-        public static int InternalInitialize(int size, IntPtr data)
+        public static int InternalInitialize(IntPtr data, int size)
         {
             try
             {
@@ -295,6 +295,11 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 e.Restore();
+                return -1;
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"{exc}\n{exc.StackTrace}");
                 return -1;
             }
         }

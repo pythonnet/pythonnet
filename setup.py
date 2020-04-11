@@ -39,7 +39,7 @@ class BuildDotnet(Command):
             opts.append("--configuration")
             opts.append(self.dotnet_config)
 
-            self.spawn(["dotnet", "build", lib.path] + opts)
+            self.spawn(["dotnet", "publish", lib.path] + opts)
 
 
 class bdist_wheel_patched(bdist_wheel):
@@ -86,6 +86,11 @@ setup(
         DotnetLib(
             "python-runtime",
             "Python.Runtime/",
+            output="pythonnet/dlls",
+        ),
+        DotnetLib(
+            "python-loader",
+            "Python.Loader/",
             output="pythonnet/dlls",
         ),
     },
