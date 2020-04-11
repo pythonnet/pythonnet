@@ -20,8 +20,6 @@ namespace Python
         {
             assembly = AssemblyDefinition.ReadAssembly(stream, new ReaderParameters
             {
-                ReadWrite = true,
-                ReadingMode = ReadingMode.Immediate,
                 InMemory = true,
             });
         }
