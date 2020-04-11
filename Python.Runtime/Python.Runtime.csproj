@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="resources\clr.py">
+      <LogicalName>clr.py</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
   </ItemGroup>
 

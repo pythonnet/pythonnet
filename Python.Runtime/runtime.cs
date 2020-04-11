@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -22,7 +23,7 @@ namespace Python.Runtime
 
         public static int UCS => _UCS;
 
-#if UCS2
+#if !UCS2
         internal const int _UCS = 4;
 
         /// <summary>
@@ -215,15 +216,21 @@ namespace Python.Runtime
                 () => PyDictType = IntPtr.Zero);
             XDecref(op);
 
-            op = PyInt_FromInt32(0);
-            SetPyMember(ref PyIntType, PyObject_Type(op),
-                () => PyIntType = IntPtr.Zero);
-            XDecref(op);
+            // Choose a number >1000 st. we get a real PyObject
+            op = PyLong_FromLong(1000);
 
-            op = PyLong_FromLong(0);
             SetPyMember(ref PyLongType, PyObject_Type(op),
                 () => PyLongType = IntPtr.Zero);
             XDecref(op);
+
+#if !PYTHON2
+            PyIntType = PyLongType;
+#else
+            op = PyInt_FromInt32(1000);
+            SetPyMember(ref PyIntType, PyObject_Type(op),
+                () => PyIntType = IntPtr.Zero);
+            XDecref(op);
+#endif
 
             op = PyFloat_FromDouble(0);
             SetPyMember(ref PyFloatType, PyObject_Type(op),
@@ -351,16 +358,15 @@ namespace Python.Runtime
         }
 
         // called *without* the GIL acquired by clr._AtExit
-        internal static int AtExit()
+        internal static void AtExit()
         {
             lock (IsFinalizingLock)
             {
                 IsFinalizing = true;
             }
-            return 0;
         }
 
-        private static void SetPyMember(ref IntPtr obj, IntPtr value, Action onRelease)
+        private static void SetPyMember(ref IntPtr obj, IntPtr value, Action onRelease, [CallerLineNumber]int lineNumber = 0)
         {
             // XXX: For current usages, value should not be null.
             PythonException.ThrowIfIsNull(value);
@@ -1444,6 +1450,7 @@ namespace Python.Runtime
                 int size = length * _UCS;
                 var buffer = new byte[size];
                 Marshal.Copy(p, buffer, 0, size);
+
                 return PyEncoding.GetString(buffer, 0, size);
             }
 
@@ -1877,8 +1884,13 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr GetBuiltins()
         {
-            return IsPython3 ? PyImport_ImportModule("builtins")
-                    : PyImport_ImportModule("__builtin__");
+#if !PYTHON2
+            const string modName = "builtins";
+#else
+            const string modName = "__builtin__";
+#endif
+            Console.WriteLine($"Loading {modName}");
+            return PyImport_ImportModule(modName);
         }
     }
 

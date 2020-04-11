@@ -284,7 +284,7 @@ namespace Python.Runtime
                 Exceptions.SetError(e);
                 return IntPtr.Zero;
             }
-            
+
 
             if (attr == null)
             {
@@ -435,7 +435,7 @@ namespace Python.Runtime
         /// clr.GetClrType(IComparable) gives you the Type for IComparable,
         /// that you can e.g. perform reflection on. Similar to typeof(IComparable) in C#
         /// or clr.GetClrType(IComparable) in IronPython.
-        /// 
+        ///
         /// </summary>
         /// <param name="type"></param>
         /// <returns>The Type object</returns>
@@ -475,9 +475,9 @@ namespace Python.Runtime
         }
 
         [ModuleFunction]
-        public static int _AtExit()
+        public static void _AtExit()
         {
-            return Runtime.AtExit();
+            Runtime.AtExit();
         }
     }
 }

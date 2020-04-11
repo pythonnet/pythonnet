@@ -256,8 +256,10 @@ namespace Python.Runtime
         /// </summary>
         public static int InternalInitialize(IntPtr data, int size)
         {
+            IntPtr gilState = IntPtr.Zero;
             try
             {
+                gilState = Runtime.PyGILState_Ensure();
                 Initialize(setSysArgv: false);
 
                 // Trickery - when the import hook is installed into an already
@@ -292,15 +294,21 @@ namespace Python.Runtime
                 PythonEngine.Exec(code);
                 return 0;
             }
-            catch (PythonException e)
+            catch (PythonException exc)
             {
-                e.Restore();
+                exc.Restore();
+                Console.WriteLine($"{exc.Message}\n{exc.Format()}");
                 return -1;
             }
             catch (Exception exc)
             {
                 Console.WriteLine($"{exc}\n{exc.StackTrace}");
                 return -1;
+            }
+            finally
+            {
+                if (gilState != IntPtr.Zero)
+                    Runtime.PyGILState_Release(gilState);
             }
         }
 
