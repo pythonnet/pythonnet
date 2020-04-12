@@ -1889,7 +1889,6 @@ namespace Python.Runtime
 #else
             const string modName = "__builtin__";
 #endif
-            Console.WriteLine($"Loading {modName}");
             return PyImport_ImportModule(modName);
         }
     }
