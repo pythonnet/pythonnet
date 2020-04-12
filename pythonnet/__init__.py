@@ -1,5 +1,6 @@
 import os
 import sys
+import ctypes
 
 _RUNTIME = None
 
@@ -20,6 +21,10 @@ def load():
     dll_path = os.path.join(os.path.dirname(__file__), "dlls", "Python.Loader.dll")
     runtime_dll_path = os.path.join(os.path.dirname(dll_path), "Python.Runtime.dll")
 
+    # Load and leak libpython handle s.t. the .NET runtime doesn't dlcloses it
+    libpython = _find_libpython()
+    _ = ctypes.CDLL(libpython)
+
     assembly = _RUNTIME.get_assembly(dll_path)
 
     print("Got assembly", assembly)
@@ -27,5 +32,5 @@ def load():
 
     print("Got func:", func)
 
-    if func(f"{runtime_dll_path};{_find_libpython()}".encode("utf8")) != 0:
+    if func(f"{runtime_dll_path};{libpython}".encode("utf8")) != 0:
         raise RuntimeError("Failed to initialize Python.Runtime.dll")
