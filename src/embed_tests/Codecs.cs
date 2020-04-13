@@ -84,18 +84,26 @@ namespace Python.EmbeddingTest {
         }
     }
 
-    class FakeEncoder<T> : IPyObjectEncoder
+    /// <summary>
+    /// "Decodes" only objects of exact type <typeparamref name="T"/>.
+    /// Result is just a raw Python object proxy.
+    /// </summary>
+    class ObjectToRawProxyEncoder<T> : IPyObjectEncoder
     {
         public bool CanEncode(Type type) => type == typeof(T);
         public PyObject TryEncode(object value) => this.GetRawPythonProxy();
     }
 
-    class FakeDecoder<TTarget> : IPyObjectDecoder
+    /// <summary>
+    /// Decodes object of specified Python type to the predefined value <see cref="DecodeResult"/>
+    /// </summary>
+    /// <typeparam name="TTarget">Type of the <see cref="DecodeResult"/></typeparam>
+    class DecoderReturningPredefinedValue<TTarget> : IPyObjectDecoder
     {
         public PyObject TheOnlySupportedSourceType { get; }
         public TTarget DecodeResult { get; }
 
-        public FakeDecoder(PyObject objectType, TTarget decodeResult)
+        public DecoderReturningPredefinedValue(PyObject objectType, TTarget decodeResult)
         {
             this.TheOnlySupportedSourceType = objectType;
             this.DecodeResult = decodeResult;

@@ -11,10 +11,10 @@ namespace Python.EmbeddingTest
         [Test]
         public void GetEncodersByType()
         {
-            var encoder1 = new FakeEncoder<Uri>();
-            var encoder2 = new FakeEncoder<Uri>();
+            var encoder1 = new ObjectToRawProxyEncoder<Uri>();
+            var encoder2 = new ObjectToRawProxyEncoder<Uri>();
             var group = new EncoderGroup {
-                new FakeEncoder<Tuple<int>>(),
+                new ObjectToRawProxyEncoder<Tuple<int>>(),
                 encoder1,
                 encoder2,
             };
@@ -27,8 +27,8 @@ namespace Python.EmbeddingTest
         public void CanEncode()
         {
             var group = new EncoderGroup {
-                new FakeEncoder<Tuple<int>>(),
-                new FakeEncoder<Uri>(),
+                new ObjectToRawProxyEncoder<Tuple<int>>(),
+                new ObjectToRawProxyEncoder<Uri>(),
             };
 
             Assert.IsTrue(group.CanEncode(typeof(Tuple<int>)));
@@ -39,9 +39,9 @@ namespace Python.EmbeddingTest
         [Test]
         public void Encodes()
         {
-            var encoder0 = new FakeEncoder<Tuple<int>>();
-            var encoder1 = new FakeEncoder<Uri>();
-            var encoder2 = new FakeEncoder<Uri>();
+            var encoder0 = new ObjectToRawProxyEncoder<Tuple<int>>();
+            var encoder1 = new ObjectToRawProxyEncoder<Uri>();
+            var encoder2 = new ObjectToRawProxyEncoder<Uri>();
             var group = new EncoderGroup {
                 encoder0,
                 encoder1,
@@ -64,8 +64,8 @@ namespace Python.EmbeddingTest
             var pyint = new PyInt(10).GetPythonType();
             var pyfloat = new PyFloat(10).GetPythonType();
             var pystr = new PyString("world").GetPythonType();
-            var decoder1 = new FakeDecoder<long>(pyint, 42);
-            var decoder2 = new FakeDecoder<string>(pyfloat, "atad:");
+            var decoder1 = new DecoderReturningPredefinedValue<long>(pyint, decodeResult: 42);
+            var decoder2 = new DecoderReturningPredefinedValue<string>(pyfloat, decodeResult: "atad:");
             var group = new DecoderGroup {
                 decoder1,
                 decoder2,
@@ -84,8 +84,8 @@ namespace Python.EmbeddingTest
             var pyint = new PyInt(10).GetPythonType();
             var pyfloat = new PyFloat(10).GetPythonType();
             var pystr = new PyString("world").GetPythonType();
-            var decoder1 = new FakeDecoder<long>(pyint, 42);
-            var decoder2 = new FakeDecoder<string>(pyfloat, "atad:");
+            var decoder1 = new DecoderReturningPredefinedValue<long>(pyint, decodeResult: 42);
+            var decoder2 = new DecoderReturningPredefinedValue<string>(pyfloat, decodeResult: "atad:");
             var group = new DecoderGroup {
                 decoder1,
                 decoder2,
@@ -102,8 +102,8 @@ namespace Python.EmbeddingTest
         {
             var pyint = new PyInt(10).GetPythonType();
             var pyfloat = new PyFloat(10).GetPythonType();
-            var decoder1 = new FakeDecoder<long>(pyint, 42);
-            var decoder2 = new FakeDecoder<string>(pyfloat, "atad:");
+            var decoder1 = new DecoderReturningPredefinedValue<long>(pyint, decodeResult: 42);
+            var decoder2 = new DecoderReturningPredefinedValue<string>(pyfloat, decodeResult: "atad:");
             var group = new DecoderGroup {
                 decoder1,
                 decoder2,
