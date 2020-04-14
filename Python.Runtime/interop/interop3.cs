@@ -40,7 +40,7 @@ namespace Python.Runtime
         public static int tp_basicsize = 0;
         public static int tp_itemsize = 0;
         public static int tp_dealloc = 0;
-        public static int tp_vectorcall_offset = 0;
+        public static int tp_print = 0;
         public static int tp_getattr = 0;
         public static int tp_setattr = 0;
         public static int tp_as_async = 0;
@@ -83,8 +83,6 @@ namespace Python.Runtime
         public static int tp_del = 0;
         public static int tp_version_tag = 0;
         public static int tp_finalize = 0;
-        public static int tp_vectorcall = 0;
-        public static int tp_print = 0;
         public static int am_await = 0;
         public static int am_aiter = 0;
         public static int am_anext = 0;
