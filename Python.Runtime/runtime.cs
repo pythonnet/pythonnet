@@ -354,16 +354,16 @@ namespace Python.Runtime
             // TOOD: PyCLRMetaType's release operation still in #958
             PyCLRMetaType = IntPtr.Zero;
             ResetPyMembers();
-            Py_Finalize();
         }
 
         // called *without* the GIL acquired by clr._AtExit
-        internal static void AtExit()
+        internal static int AtExit()
         {
             lock (IsFinalizingLock)
             {
                 IsFinalizing = true;
             }
+            return 0;
         }
 
         private static void SetPyMember(ref IntPtr obj, IntPtr value, Action onRelease, [CallerLineNumber]int lineNumber = 0)

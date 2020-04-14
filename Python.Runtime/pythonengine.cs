@@ -312,6 +312,34 @@ namespace Python.Runtime
             }
         }
 
+        public static int InternalShutdown(IntPtr data, int size)
+        {
+            IntPtr gilState = IntPtr.Zero;
+            try
+            {
+                gilState = Runtime.PyGILState_Ensure();
+                Shutdown();
+
+                return 0;
+            }
+            catch (PythonException exc)
+            {
+                exc.Restore();
+                Console.WriteLine($"{exc.Message}\n{exc.Format()}");
+                return -1;
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"{exc}\n{exc.StackTrace}");
+                return -1;
+            }
+            finally
+            {
+                if (gilState != IntPtr.Zero)
+                    Runtime.PyGILState_Release(gilState);
+            }
+        }
+
         /// <summary>
         /// Shutdown Method
         /// </summary>

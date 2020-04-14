@@ -475,9 +475,9 @@ namespace Python.Runtime
         }
 
         [ModuleFunction]
-        public static void _AtExit()
+        public static int _AtExit()
         {
-            Runtime.AtExit();
+            return Runtime.AtExit();
         }
     }
 }

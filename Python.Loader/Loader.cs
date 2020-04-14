@@ -59,6 +59,8 @@ namespace Python
 
     static class Internal
     {
+        static Type PythonEngine = null;
+
         public static int Initialize(IntPtr data, int size)
         {
             try
@@ -76,10 +78,26 @@ namespace Python
                 loader.Remap(pythonDll);
                 var assembly = loader.LoadAssembly();
 
-                var eng = assembly.GetType("Python.Runtime.PythonEngine");
-                var method = eng.GetMethod("InternalInitialize");
-                var res = method.Invoke(null, new object[] { data, size });
-                return (int)res;
+                PythonEngine = assembly.GetType("Python.Runtime.PythonEngine");
+                var method = PythonEngine.GetMethod("InternalInitialize");
+                return (int)method.Invoke(null, new object[] { data, size });
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"{exc}\n{exc.StackTrace}");
+                return -1;
+            }
+        }
+
+        public static int Shutdown(IntPtr data, int size)
+        {
+            if (PythonEngine == null)
+                return -2;
+
+            try
+            {
+                var method = PythonEngine.GetMethod("InternalShutdown");
+                return (int)method.Invoke(null, new object[] { data, size });
             }
             catch (Exception exc)
             {
