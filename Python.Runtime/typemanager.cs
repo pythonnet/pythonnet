@@ -111,7 +111,7 @@ namespace Python.Runtime
         internal static IntPtr CreateType(ManagedType impl, Type clrType)
         {
             // Cleanup the type name to get rid of funny nested type names.
-            string name = "CLR." + clrType.FullName;
+            string name = "clr.types." + clrType.FullName;
             int i = name.LastIndexOf('+');
             if (i > -1)
             {
@@ -434,6 +434,8 @@ namespace Python.Runtime
 #endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
+            Runtime.Py_IncRef(temp);
+            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
 
             long ptr = type.ToInt64(); // 64-bit safe
 
