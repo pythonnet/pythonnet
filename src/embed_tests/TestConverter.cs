@@ -67,5 +67,15 @@ namespace Python.EmbeddingTest
             var proxiedHandle = pyObjectProxy.GetAttr("Handle").As<IntPtr>();
             Assert.AreEqual(pyObject.Handle, proxiedHandle);
         }
+
+        [Test]
+        public void ConvertToObject()
+        {
+            object pyInt = new PyInt(12).As<object>();
+            Assert.AreSame(pyInt.GetType(), typeof(int));
+
+            object pyString = new PyString("hello").As<object>();
+            Assert.AreSame(pyString.GetType(), typeof(string));
+        }
     }
 }
