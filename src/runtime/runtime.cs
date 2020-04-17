@@ -22,7 +22,7 @@ namespace Python.Runtime
 
         public static int UCS => _UCS;
 
-#if UCS2
+#if !UCS2
         internal const int _UCS = 4;
 
         /// <summary>
