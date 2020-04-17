@@ -156,7 +156,7 @@ namespace Python.Runtime
         /// </remarks>
         public T As<T>()
         {
-            if (typeof(T) == typeof(PyObject) || typeof(T) == typeof(object))
+            if (typeof(T) == typeof(PyObject))
             {
                 return (T)(this as object);
             }
