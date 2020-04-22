@@ -71,10 +71,10 @@ namespace Python.EmbeddingTest
         [Test]
         public void ConvertToObject()
         {
-            object pyInt = new PyInt(12).As<object>();
+            object pyInt = new PyInt(12).As2<object>();
             Assert.AreSame(pyInt.GetType(), typeof(int));
 
-            object pyString = new PyString("hello").As<object>();
+            object pyString = new PyString("hello").As2<object>();
             Assert.AreSame(pyString.GetType(), typeof(string));
         }
     }
