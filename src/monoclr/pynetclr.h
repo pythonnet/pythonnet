@@ -7,7 +7,6 @@
 #include <mono/metadata/mono-config.h>
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/assembly.h>
-#include <glib.h>
 
 #define MONO_VERSION "v4.0.30319.1"
 #define MONO_DOMAIN "Python.Runtime"
@@ -27,7 +26,7 @@ typedef struct
 
 PyNet_Args *PyNet_Init(int);
 void PyNet_Finalize(PyNet_Args *);
-void main_thread_handler(gpointer user_data);
+void main_thread_handler(PyNet_Args *user_data);
 char *PyNet_ExceptionToString(MonoObject *);
 
 #endif // PYNET_CLR_H
