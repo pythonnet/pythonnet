@@ -7,7 +7,7 @@ namespace Python.Runtime.Codecs
     /// <para>You must inherit from this class and override <see cref="CanEncode"/>.</para>
     /// </summary>
     [Obsolete(Util.UnstableApiMessage)]
-    public abstract class RawProxyEncoder: IPyObjectEncoder
+    public class RawProxyEncoder: IPyObjectEncoder
     {
         public PyObject TryEncode(object value)
         {
@@ -15,6 +15,7 @@ namespace Python.Runtime.Codecs
 
             return value.GetRawPythonProxy();
         }
-        public abstract bool CanEncode(Type type);
+
+        public virtual bool CanEncode(Type type) => false;
     }
 }
