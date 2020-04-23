@@ -706,6 +706,7 @@ def test_sbyte_array_conversion():
 def test_codecs():
     """Test codec registration from Python"""
     class ListAsRawEncoder(RawProxyEncoder):
+        __namespace__ = "Python.Test"
         def CanEncode(self, clr_type):
             return clr_type.Name == "List`1" and clr_type.Namespace == "System.Collections.Generic"
 
