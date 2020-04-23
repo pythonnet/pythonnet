@@ -11,10 +11,10 @@ namespace Python.EmbeddingTest
         [Test]
         public void GetEncodersByType()
         {
-            var encoder1 = new ObjectToRawProxyEncoder<Uri>();
-            var encoder2 = new ObjectToRawProxyEncoder<Uri>();
+            var encoder1 = new ObjectToEncoderInstanceEncoder<Uri>();
+            var encoder2 = new ObjectToEncoderInstanceEncoder<Uri>();
             var group = new EncoderGroup {
-                new ObjectToRawProxyEncoder<Tuple<int>>(),
+                new ObjectToEncoderInstanceEncoder<Tuple<int>>(),
                 encoder1,
                 encoder2,
             };
@@ -27,8 +27,8 @@ namespace Python.EmbeddingTest
         public void CanEncode()
         {
             var group = new EncoderGroup {
-                new ObjectToRawProxyEncoder<Tuple<int>>(),
-                new ObjectToRawProxyEncoder<Uri>(),
+                new ObjectToEncoderInstanceEncoder<Tuple<int>>(),
+                new ObjectToEncoderInstanceEncoder<Uri>(),
             };
 
             Assert.IsTrue(group.CanEncode(typeof(Tuple<int>)));
@@ -39,9 +39,9 @@ namespace Python.EmbeddingTest
         [Test]
         public void Encodes()
         {
-            var encoder0 = new ObjectToRawProxyEncoder<Tuple<int>>();
-            var encoder1 = new ObjectToRawProxyEncoder<Uri>();
-            var encoder2 = new ObjectToRawProxyEncoder<Uri>();
+            var encoder0 = new ObjectToEncoderInstanceEncoder<Tuple<int>>();
+            var encoder1 = new ObjectToEncoderInstanceEncoder<Uri>();
+            var encoder2 = new ObjectToEncoderInstanceEncoder<Uri>();
             var group = new EncoderGroup {
                 encoder0,
                 encoder1,
