@@ -91,9 +91,9 @@ MonoMethod *getMethodFromClass(MonoClass *cls, char *name)
     return method;
 }
 
-void main_thread_handler(gpointer user_data)
+void main_thread_handler(PyNet_Args *user_data)
 {
-    PyNet_Args *pn_args = (PyNet_Args *)user_data;
+    PyNet_Args *pn_args = user_data;
     MonoMethod *init;
     MonoImage *pr_image;
     MonoClass *pythonengine;
@@ -241,7 +241,7 @@ void main_thread_handler(gpointer user_data)
 // Get string from a Mono exception
 char *PyNet_ExceptionToString(MonoObject *e)
 {
-    MonoMethodDesc *mdesc = mono_method_desc_new(":ToString()", FALSE);
+    MonoMethodDesc *mdesc = mono_method_desc_new(":ToString()", 0 /*FALSE*/);
     MonoMethod *mmethod = mono_method_desc_search_in_class(mdesc, mono_get_object_class());
     mono_method_desc_free(mdesc);
 

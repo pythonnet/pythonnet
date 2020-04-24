@@ -1976,11 +1976,9 @@ namespace Python.Runtime
         {
             var loader = LibraryLoader.Get(OperatingSystem);
 
-            IntPtr dllLocal;
-            if (_PythonDll != "__Internal")
-            {
-                dllLocal = loader.Load(_PythonDll);
-            }
+            IntPtr dllLocal = _PythonDll != "__Internal"
+                ? loader.Load(_PythonDll)
+                : IntPtr.Zero;
 
             try
             {
