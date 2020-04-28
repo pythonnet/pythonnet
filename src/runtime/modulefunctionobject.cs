@@ -25,7 +25,7 @@ namespace Python.Runtime
         public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
         {
             var self = (ModuleFunctionObject)GetManagedObject(ob);
-            return self.Invoke(ob, args, kw);
+            return self.Invoke(ob, args, new BorrowedReference(kw));
         }
 
         /// <summary>

@@ -90,7 +90,7 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
-            return self.binder.Invoke(ob, args, kw);
+            return self.binder.Invoke(ob, args, new BorrowedReference(kw));
         }
 
 

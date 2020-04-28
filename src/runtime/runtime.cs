@@ -1685,10 +1685,10 @@ namespace Python.Runtime
         internal static extern int PyMapping_HasKey(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Keys(IntPtr pointer);
+        internal static extern NewReference PyDict_Keys(BorrowedReference pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Values(IntPtr pointer);
+        internal static extern NewReference PyDict_Values(BorrowedReference pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern NewReference PyDict_Items(IntPtr pointer);
@@ -1702,13 +1702,13 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyDict_Clear(IntPtr pointer);
 
-        internal static long PyDict_Size(IntPtr pointer)
+        internal static long PyDict_Size(BorrowedReference pointer)
         {
             return (long)_PyDict_Size(pointer);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyDict_Size")]
-        internal static extern IntPtr _PyDict_Size(IntPtr pointer);
+        internal static extern IntPtr _PyDict_Size(BorrowedReference pointer);
 
 
         /// <summary>

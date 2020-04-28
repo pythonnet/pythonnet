@@ -22,5 +22,7 @@ namespace Python.Runtime
         {
             this.pointer = pointer;
         }
+
+        public static BorrowedReference Null => new BorrowedReference();
     }
 }

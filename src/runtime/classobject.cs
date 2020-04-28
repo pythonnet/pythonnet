@@ -97,7 +97,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
+            object obj = self.binder.InvokeRaw(IntPtr.Zero, args, new BorrowedReference(kw));
             if (obj == null)
             {
                 return IntPtr.Zero;

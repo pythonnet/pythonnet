@@ -162,11 +162,11 @@ namespace Python.Runtime
         public static IEnumerable<IntPtr> GetModuleNames()
         {
             var modules = PyImport_GetModuleDict();
-            var names = PyDict_Keys(modules);
+            var names = PyDict_Keys(new BorrowedReference(modules)).DangerousGetAddress();
             var length = PyList_Size(new BorrowedReference(names));
             for (int i = 0; i < length; i++)
             {
-                var name = PyList_GetItem(new BorrowedReference(names), i);
+                BorrowedReference name = PyList_GetItem(new BorrowedReference(names), i);
                 yield return name.DangerousGetAddress();
             }
             XDecref(names);

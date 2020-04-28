@@ -49,12 +49,12 @@ namespace Python.Runtime
             }
         }
 
-        public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
+        public virtual IntPtr Invoke(IntPtr inst, IntPtr args, BorrowedReference kw)
         {
             return Invoke(inst, args, kw, null);
         }
 
-        public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw, MethodBase info)
+        public virtual IntPtr Invoke(IntPtr target, IntPtr args, BorrowedReference kw, MethodBase info)
         {
             return binder.Invoke(target, args, kw, info, this.info);
         }

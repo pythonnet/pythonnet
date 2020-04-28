@@ -103,12 +103,12 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Keys()
         {
-            IntPtr items = Runtime.PyDict_Keys(obj);
-            if (items == IntPtr.Zero)
+            var items = Runtime.PyDict_Keys(this.Reference);
+            if (items.IsNull())
             {
                 throw new PythonException();
             }
-            return new PyObject(items);
+            return items.MoveToPyObject();
         }
 
 
@@ -120,12 +120,12 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Values()
         {
-            IntPtr items = Runtime.PyDict_Values(obj);
-            if (items == IntPtr.Zero)
+            var items = Runtime.PyDict_Values(this.Reference);
+            if (!items.IsNull())
             {
                 throw new PythonException();
             }
-            return new PyObject(items);
+            return items.MoveToPyObject();
         }
 
 

@@ -18,13 +18,13 @@ namespace Python.Runtime
         {
         }
 
-        public override IntPtr Invoke(IntPtr ob, IntPtr args, IntPtr kw)
+        public override IntPtr Invoke(IntPtr ob, IntPtr args, BorrowedReference kw)
         {
             MethodInfo mi = info[0];
             var arglist = new object[3];
             arglist[0] = ob;
             arglist[1] = args;
-            arglist[2] = kw;
+            arglist[2] = kw.DangerousGetAddress();
 
             try
             {

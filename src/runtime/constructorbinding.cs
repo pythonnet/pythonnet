@@ -211,7 +211,7 @@ namespace Python.Runtime
             }*/
             // Bind using ConstructorBinder.Bind and invoke the ctor providing a null instancePtr
             // which will fire self.ctorInfo using ConstructorInfo.Invoke().
-            object obj = self.ctorBinder.InvokeRaw(IntPtr.Zero, args, kw, self.ctorInfo);
+            object obj = self.ctorBinder.InvokeRaw(IntPtr.Zero, args, new BorrowedReference(kw), self.ctorInfo);
             if (obj == null)
             {
                 // XXX set an error

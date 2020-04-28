@@ -1,9 +1,12 @@
 using System;
 using System.Collections;
-using System.Reflection;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+using Microsoft.CSharp.RuntimeBinder;
+using CSharpBinder = Microsoft.CSharp.RuntimeBinder.Binder;
 
 namespace Python.Runtime
 {
@@ -269,34 +272,34 @@ namespace Python.Runtime
         /// overload and return a structure that contains the converted Python
         /// instance, converted arguments and the correct method to call.
         /// </summary>
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw)
+        internal Binding Bind(IntPtr inst, IntPtr args, BorrowedReference kw)
         {
             return Bind(inst, args, kw, null, null);
         }
 
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal Binding Bind(IntPtr inst, IntPtr args, BorrowedReference kw, MethodBase info)
         {
             return Bind(inst, args, kw, info, null);
         }
 
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        internal Binding Bind(IntPtr inst, IntPtr args, BorrowedReference kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
 
             var kwargDict = new Dictionary<string, IntPtr>();
-            if (kw != IntPtr.Zero)
+            if (!kw.IsNull)
             {
                 var pynkwargs = (int)Runtime.PyDict_Size(kw);
-                IntPtr keylist = Runtime.PyDict_Keys(kw);
-                IntPtr valueList = Runtime.PyDict_Values(kw);
+                var keylist = Runtime.PyDict_Keys(kw);
+                var valueList = Runtime.PyDict_Values(kw);
                 for (int i = 0; i < pynkwargs; ++i)
                 {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist, i));
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i).DangerousGetAddress();
                 }
-                Runtime.XDecref(keylist);
-                Runtime.XDecref(valueList);
+                keylist.Dispose();
+                valueList.Dispose();
             }
 
             var pynargs = (int)Runtime.PyTuple_Size(args);
@@ -625,12 +628,12 @@ namespace Python.Runtime
             return match;
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, BorrowedReference kw)
         {
             return Invoke(inst, args, kw, null, null);
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, BorrowedReference kw, MethodBase info)
         {
             return Invoke(inst, args, kw, info, null);
         }
@@ -669,34 +672,57 @@ namespace Python.Runtime
             to.Append(')');
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, BorrowedReference kw, MethodBase info, MethodInfo[] methodinfo)
         {
-            Binding binding = Bind(inst, args, kw, info, methodinfo);
-            object result;
-            IntPtr ts = IntPtr.Zero;
+            var method = methodinfo?.First() ?? info ??  this.GetMethods()[0];
+            int argLen = (int)Runtime.PyTuple_Size(args);
 
-            if (binding == null)
-            {
-                var value = new StringBuilder("No method matches given arguments");
-                if (methodinfo != null && methodinfo.Length > 0)
-                {
-                    value.Append($" for {methodinfo[0].Name}");
-                }
-
-                value.Append(": ");
-                AppendArgumentTypes(to: value, args);
-                Exceptions.SetError(Exceptions.TypeError, value.ToString());
-                return IntPtr.Zero;
+            var values = new List<object>(capacity: argLen);
+            for (int argN = 0; argN < argLen; argN++) {
+                if (!Converter.ToManaged(Runtime.PyTuple_GetItem(args, argN), typeof(object), out var managed, setError: true))
+                    return IntPtr.Zero;
+                values.Add(managed);
             }
 
+            string[] names;
+            if (!kw.IsNull) {
+                int kwLen = (int)Runtime.PyDict_Size(kw);
+                names = new string[kwLen];
+                var keys = Runtime.PyDict_Keys(kw);
+                var items = Runtime.PyDict_Values(kw);
+                for (int kwN = 0; kwN < kwLen; kwN++) {
+                    string argName = Runtime.GetManagedString(Runtime.PyList_GetItem(keys, kwN));
+                    var item = Runtime.PyList_GetItem(items, kwN);
+                    if (!Converter.ToManaged(item.DangerousGetAddress(), typeof(object), out var managed, setError: true))
+                        return IntPtr.Zero;
+                    values.Add(managed);
+                    names[kwN] = argName;
+                }
+            } else {
+                names = new string[0];
+            }
+
+            var co = ManagedType.GetManagedObject(inst) as CLRObject;
+
+            IntPtr ts = IntPtr.Zero;
             if (allow_threads)
             {
                 ts = PythonEngine.BeginAllowThreads();
             }
 
+            var argArray = values.ToArray();
+            object result;
             try
             {
-                result = binding.info.Invoke(binding.inst, BindingFlags.Default, null, binding.args, null);
+                method = info ?? Type.DefaultBinder.BindToMethod(
+                    BindingFlags.InvokeMethod | BindingFlags.OptionalParamBinding,
+                    methodinfo ?? this.GetMethods(),
+                    args: ref argArray,
+                    modifiers: null, culture: null,
+                    names: names,
+                    out object binderState
+                );
+                result = method.Invoke(co?.inst, parameters: argArray);
             }
             catch (Exception e)
             {
@@ -717,41 +743,36 @@ namespace Python.Runtime
                 PythonEngine.EndAllowThreads(ts);
             }
 
-            // If there are out parameters, we return a tuple containing
-            // the result followed by the out parameters. If there is only
-            // one out parameter and the return type of the method is void,
-            // we return the out parameter as the result to Python (for
-            // code compatibility with ironpython).
+            //// If there are out parameters, we return a tuple containing
+            //// the result followed by the out parameters. If there is only
+            //// one out parameter and the return type of the method is void,
+            //// we return the out parameter as the result to Python (for
+            //// code compatibility with ironpython).
 
-            var mi = (MethodInfo)binding.info;
-
-            if (binding.outs == 1 && mi.ReturnType == typeof(void))
+            ParameterInfo[] pi = method.GetParameters();
+            int outCount = pi.Count(p => p.IsOut || p.ParameterType.IsByRef);
+            var returnType = (method as MethodInfo)?.ReturnType ?? typeof(void);
+            if (outCount > 0)
             {
-            }
+                int returnIndex = 0;
 
-            if (binding.outs > 0)
-            {
-                ParameterInfo[] pi = mi.GetParameters();
-                int c = pi.Length;
-                var n = 0;
+                IntPtr t = Runtime.PyTuple_New(outCount + 1);
+                IntPtr v = Converter.ToPython(result, returnType);
+                Runtime.PyTuple_SetItem(t, returnIndex, v);
+                returnIndex++;
 
-                IntPtr t = Runtime.PyTuple_New(binding.outs + 1);
-                IntPtr v = Converter.ToPython(result, mi.ReturnType);
-                Runtime.PyTuple_SetItem(t, n, v);
-                n++;
-
-                for (var i = 0; i < c; i++)
+                for (var i = 0; i < Math.Min(pi.Length, argArray.Length); i++)
                 {
                     Type pt = pi[i].ParameterType;
                     if (pi[i].IsOut || pt.IsByRef)
                     {
-                        v = Converter.ToPython(binding.args[i], pt.GetElementType());
-                        Runtime.PyTuple_SetItem(t, n, v);
-                        n++;
+                        v = Converter.ToPython(argArray[i], pt.GetElementType());
+                        Runtime.PyTuple_SetItem(t, returnIndex, v);
+                        returnIndex++;
                     }
                 }
 
-                if (binding.outs == 1 && mi.ReturnType == typeof(void))
+                if (outCount == 1 && returnType == typeof(void))
                 {
                     v = Runtime.PyTuple_GetItem(t, 1);
                     Runtime.XIncref(v);
@@ -762,7 +783,7 @@ namespace Python.Runtime
                 return t;
             }
 
-            return Converter.ToPython(result, mi.ReturnType);
+            return Converter.ToPython(result, returnType);
         }
     }
 
