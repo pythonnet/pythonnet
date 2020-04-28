@@ -310,6 +310,11 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
+            // List of tuples containing methods that have matched based on arguments.
+            // Format of tuple is: Number of kwargs matched, defaults needed, margs, outs, method base for matched method
+            List<Tuple<int, int, object[], int, MethodBase>> argMatchedMethods = 
+                new List<Tuple<int, int, object[], int, MethodBase>>(_methods.Length);
+
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
             {
@@ -320,8 +325,10 @@ namespace Python.Runtime
                 ParameterInfo[] pi = mi.GetParameters();
                 ArrayList defaultArgList;
                 bool paramsArray;
+                int kwargsMatched;
+                int defaultsNeeded;
 
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList))
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
                 {
                     continue;
                 }
@@ -334,6 +341,57 @@ namespace Python.Runtime
                 {
                     continue;
                 }
+
+                var matchedMethodTuple = Tuple.Create(kwargsMatched, defaultsNeeded, margs, outs, mi);
+                argMatchedMethods.Add(matchedMethodTuple);
+            }
+            if (argMatchedMethods.Count() > 0)
+            {
+                // Order matched methods by number of kwargs matched and get the max possible number
+                // of kwargs matched
+                var bestKwargMatchCount = argMatchedMethods.OrderBy((x) => x.Item1).Reverse().ToArray()[0].Item1;
+
+                List<Tuple<int, int, object[], int, MethodBase>> bestKwargMatches =
+                    new List<Tuple<int, int, object[], int, MethodBase>>(argMatchedMethods.Count());
+                foreach (Tuple<int, int, object[], int, MethodBase> argMatchedTuple in argMatchedMethods)
+                {
+                    if (argMatchedTuple.Item1 == bestKwargMatchCount)
+                    {
+                        bestKwargMatches.Add(argMatchedTuple);
+                    }
+                }
+
+                // Order by the number of defaults required and find the smallest
+                var fewestDefaultsRequired  = bestKwargMatches.OrderBy((x) => x.Item2).ToArray()[0].Item2;
+
+                List<Tuple<int, int, object[], int, MethodBase>> bestDefaultsMatches =
+                    new List<Tuple<int, int, object[], int, MethodBase>>(bestKwargMatches.Count());
+                foreach (Tuple<int, int, object[], int, MethodBase> testTuple in bestKwargMatches)
+                {
+                    if (testTuple.Item2 == fewestDefaultsRequired)
+                    {
+                        bestDefaultsMatches.Add(testTuple);
+                    }
+                }
+
+                if (bestDefaultsMatches.Count() > 1 && fewestDefaultsRequired > 0)
+                {
+                    // Best effort for determining method to match on gives multiple possible
+                    // matches and we need at least one default argument - bail from this point
+                    return null;
+                }
+
+                // If we're here either:
+                //      (a) There is only one best match
+                //      (b) There are multiple best matches but none of them require
+                //          default arguments
+                // in the case of (a) we're done by default. For (b) regardless of which
+                // method we choose, all arguments are specified _and_ can be converted
+                // from python to C# so picking any will suffice
+                Tuple<int, int, object[], int, MethodBase> bestMatch = bestDefaultsMatches.ToArray()[0];
+                var margs = bestMatch.Item3;
+                var outs = bestMatch.Item4;
+                var mi = bestMatch.Item5;
 
                 object target = null;
                 if (!mi.IsStatic && inst != IntPtr.Zero)
@@ -574,11 +632,16 @@ namespace Python.Runtime
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             out bool paramsArray,
-            out ArrayList defaultArgList)
+            out ArrayList defaultArgList,
+            out int kwargsMatched,
+            out int defaultsNeeded)
         {
             defaultArgList = null;
             var match = false;
             paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
+            var kwargCount = kwargDict.Count();
+            kwargsMatched = 0;
+            defaultsNeeded = 0;
 
             if (positionalArgumentCount == parameters.Length)
             {
@@ -598,6 +661,7 @@ namespace Python.Runtime
                         // no need to check for a default parameter, but put a null
                         // placeholder in defaultArgList
                         defaultArgList.Add(null);
+                        kwargsMatched++;
                     }
                     else if (parameters[v].IsOptional)
                     {
@@ -606,6 +670,7 @@ namespace Python.Runtime
                         // The GetDefaultValue() extension method will return the value
                         // to be passed in as the parameter value
                         defaultArgList.Add(parameters[v].GetDefaultValue());
+                        defaultsNeeded++;
                     }
                     else if(!paramsArray)
                     {
