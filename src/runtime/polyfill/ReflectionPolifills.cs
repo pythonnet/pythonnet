@@ -19,7 +19,6 @@ namespace Python.Runtime
             return typeBuilder.GetTypeInfo().GetType();
         }
 #endif
-#if NET40
         public static T GetCustomAttribute<T>(this Type type) where T: Attribute
         {
             return type.GetCustomAttributes(typeof(T), inherit: false)
@@ -33,6 +32,5 @@ namespace Python.Runtime
                 .Cast<T>()
                 .SingleOrDefault();
         }
-#endif
     }
 }

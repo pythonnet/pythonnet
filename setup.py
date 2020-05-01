@@ -306,7 +306,6 @@ class BuildExtPythonnet(build_ext.build_ext):
             _config = "{0}Win".format(CONFIG)
             _solution_file = "pythonnet.sln"
             _custom_define_constants = False
-            defines.append("NET40")
         elif DEVTOOLS == "MsDev15":
             _xbuild = '"{0}"'.format(self._find_msbuild_tool_15())
             _config = "{0}Win".format(CONFIG)
@@ -317,7 +316,6 @@ class BuildExtPythonnet(build_ext.build_ext):
             _config = "{0}Mono".format(CONFIG)
             _solution_file = "pythonnet.sln"
             _custom_define_constants = False
-            defines.append("NET40")
         elif DEVTOOLS == "dotnet":
             _xbuild = "dotnet msbuild"
             _config = "{0}Mono".format(CONFIG)

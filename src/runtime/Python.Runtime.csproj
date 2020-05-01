@@ -29,46 +29,46 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>-->
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON2;PYTHON27;UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON3;PYTHON38;UCS4</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS4</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON2;PYTHON27;UCS4;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON3;PYTHON38;UCS4;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS4;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON2;PYTHON27;UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON3;PYTHON38;UCS2</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS2</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON2;PYTHON27;UCS2;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">NET40;PYTHON3;PYTHON38;UCS2;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS2;TRACE;DEBUG</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
