@@ -91,7 +91,7 @@ namespace Python.EmbeddingTest {
     class ObjectToEncoderInstanceEncoder<T> : IPyObjectEncoder
     {
         public bool CanEncode(Type type) => type == typeof(T);
-        public PyObject TryEncode(object value) => this.GetRawPythonProxy();
+        public PyObject TryEncode(object value) => PyObject.FromManagedObject(this);
     }
 
     /// <summary>

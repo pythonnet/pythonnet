@@ -111,7 +111,8 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// FromManagedObject Method
+        /// Gets raw Python proxy for this object (bypasses all conversions,
+        /// except <c>null</c> &lt;==&gt; <c>None</c>)
         /// </summary>
         /// <remarks>
         /// Given an arbitrary managed object, return a Python instance that

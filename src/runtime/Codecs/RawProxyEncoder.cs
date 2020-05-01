@@ -13,7 +13,7 @@ namespace Python.Runtime.Codecs
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
-            return value.GetRawPythonProxy();
+            return PyObject.FromManagedObject(value);
         }
 
         public virtual bool CanEncode(Type type) => false;
