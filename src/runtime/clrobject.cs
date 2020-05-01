@@ -35,13 +35,13 @@ namespace Python.Runtime
         }
 
 
-        internal static CLRObject GetInstance(object ob, IntPtr pyType)
+        static CLRObject GetInstance(object ob, IntPtr pyType)
         {
             return new CLRObject(ob, pyType);
         }
 
 
-        internal static CLRObject GetInstance(object ob)
+        static CLRObject GetInstance(object ob)
         {
             ClassBase cc = ClassManager.GetClass(ob.GetType());
             return GetInstance(ob, cc.tpHandle);

@@ -188,7 +188,29 @@ namespace Python.Runtime
 
             if (!Runtime.IsFinalizing)
             {
-                Runtime.XDecref(this.obj);
+                long refcount = Runtime.Refcount(this.obj);
+                Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+
+                if (refcount == 1)
+                {
+                    Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+
+                    try
+                    {
+                        Runtime.XDecref(this.obj);
+                        Runtime.CheckExceptionOccurred();
+                    }
+                    finally
+                    {
+                        // Python requires finalizers to preserve exception:
+                        // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                        Runtime.PyErr_Restore(errType, errVal, traceback);
+                    }
+                }
+                else
+                {
+                    Runtime.XDecref(this.obj);
+                }
             }
             this.obj = IntPtr.Zero;
         }
