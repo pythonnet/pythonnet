@@ -56,45 +56,6 @@ namespace Python.Runtime
             _traceback = tracebackText ?? _traceback;
         }
 
-        internal static Exception FromPyErr()
-        {
-            Runtime.PyErr_Fetch(out var type, out var value, out var traceback);
-            try
-            {
-                return FromPyErr(
-                    typeHandle: type,
-                    valueHandle: value,
-                    tracebackHandle: traceback);
-            }
-            finally
-            {
-                type.Dispose();
-                value.Dispose();
-                traceback.Dispose();
-            }
-        }
-
-        internal static Exception FromPyErrOrNull()
-        {
-            Runtime.PyErr_Fetch(out var type, out var value, out var traceback);
-            try
-            {
-                if (value.IsNull() && type.IsNull() && traceback.IsNull())
-                {
-                    return null;
-                }
-
-                var result = FromPyErr(type, value, traceback);
-                return result;
-            }
-            finally
-            {
-                type.Dispose();
-                value.Dispose();
-                traceback.Dispose();
-            }
-        }
-
         /// <summary>
         /// Rethrows the last Python exception as corresponding CLR exception.
         /// It is recommended to call this as <code>throw ThrowLastAsClrException()</code>
