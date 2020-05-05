@@ -33,8 +33,9 @@ namespace Python.Runtime
 
         public static PyObject None => new PyObject(new BorrowedReference(Runtime.PyNone));
         internal BorrowedReference Reference => new BorrowedReference(this.obj);
-        internal NewReference MakeNewReference()
-            => NewReference.DangerousFromPointer(Runtime.SelfIncRef(this.obj));
+        internal NewReference MakeNewReferenceOrNull()
+            => NewReference.DangerousFromPointer(
+                this.obj == IntPtr.Zero ? IntPtr.Zero : Runtime.SelfIncRef(this.obj));
 
         /// <summary>
         /// PyObject Constructor

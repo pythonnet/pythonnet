@@ -223,7 +223,10 @@ namespace Python.Runtime
             if (this.disposed) throw new ObjectDisposedException(nameof(PythonException));
 
             IntPtr gs = PythonEngine.AcquireLock();
-            Runtime.PyErr_Restore(_type.MakeNewReference(), _value.MakeNewReference(), _pyTB.MakeNewReference());
+            Runtime.PyErr_Restore(
+                _type.MakeNewReferenceOrNull(),
+                _value.MakeNewReferenceOrNull(),
+                _pyTB.MakeNewReferenceOrNull());
             PythonEngine.ReleaseLock(gs);
         }
 
