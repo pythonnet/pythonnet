@@ -18,6 +18,12 @@ namespace Python.Runtime
         /// <summary>
         /// Given a Python object, return the associated managed object or null.
         /// </summary>
+        internal static ManagedType GetManagedObject(BorrowedReference ob)
+            => GetManagedObject(ob.DangerousGetAddress());
+
+        /// <summary>
+        /// Given a Python object, return the associated managed object or null.
+        /// </summary>
         internal static ManagedType GetManagedObject(IntPtr ob)
         {
             if (ob != IntPtr.Zero)

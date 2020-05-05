@@ -755,9 +755,9 @@ namespace Python.Runtime
             // Behavior described here: 
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
-            IntPtr type = Runtime.PyNone;
-            IntPtr val = Runtime.PyNone;
-            IntPtr traceBack = Runtime.PyNone;
+            PyObject type = PyObject.None;
+            PyObject val = PyObject.None;
+            PyObject traceBack = PyObject.None;
             PythonException ex = null;
 
             try
@@ -769,15 +769,12 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 ex = e;
-                type = ex.PyType.Coalesce(type);
-                val = ex.PyValue.Coalesce(val);
-                traceBack = ex.PyTB.Coalesce(traceBack);
+                type = ex.PyType ?? type;
+                val = ex.PyValue ?? val;
+                traceBack = ex.PyTB ?? traceBack;
             }
 
-            Runtime.XIncref(type);
-            Runtime.XIncref(val);
-            Runtime.XIncref(traceBack);
-            var exitResult = obj.InvokeMethod("__exit__", new PyObject(type), new PyObject(val), new PyObject(traceBack));
+            var exitResult = obj.InvokeMethod("__exit__", type, val, traceBack);
 
             if (ex != null && !exitResult.IsTrue()) throw ex;
         }

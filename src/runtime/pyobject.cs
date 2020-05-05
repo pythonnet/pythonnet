@@ -31,7 +31,10 @@ namespace Python.Runtime
 
         protected internal IntPtr obj = IntPtr.Zero;
 
-        internal BorrowedReference Reference => new BorrowedReference(obj);
+        public static PyObject None => new PyObject(new BorrowedReference(Runtime.PyNone));
+        internal BorrowedReference Reference => new BorrowedReference(this.obj);
+        internal NewReference MakeNewReference()
+            => NewReference.DangerousFromPointer(Runtime.SelfIncRef(this.obj));
 
         /// <summary>
         /// PyObject Constructor
@@ -124,6 +127,13 @@ namespace Python.Runtime
             IntPtr op = CLRObject.GetInstHandle(ob);
             return new PyObject(op);
         }
+
+        /// <summary>
+        /// Creates new <see cref="PyObject"/> from a nullable reference.
+        /// When <paramref name="reference"/> is <c>null</c>, <c>null</c> is returned.
+        /// </summary>
+        internal static PyObject FromNullableReference(BorrowedReference reference)
+            => reference.IsNull ? null : new PyObject(reference);
 
 
         /// <summary>
@@ -225,6 +235,9 @@ namespace Python.Runtime
         {
             return new IntPtr[] { obj };
         }
+
+        internal BorrowedReference GetPythonTypeReference()
+            => new BorrowedReference(Runtime.PyObject_TYPE(obj));
 
         /// <summary>
         /// GetPythonType Method

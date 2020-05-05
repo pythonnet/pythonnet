@@ -28,6 +28,11 @@ namespace Python.Runtime
             return result;
         }
         /// <summary>
+        /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
+        /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
+        /// </summary>
+        public PyObject MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
+        /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.
         /// </summary>
         public void Dispose()
