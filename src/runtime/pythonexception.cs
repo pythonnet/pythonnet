@@ -69,14 +69,19 @@ namespace Python.Runtime
                 Runtime.PyErr_Fetch(out var type, out var value, out var traceback);
                 try
                 {
-                    var clrObject = ManagedType.GetManagedObject(value) as CLRObject;
 #if NETSTANDARD
-                    if (clrObject?.inst is ExceptionDispatchInfo storedException)
+                    if (!value.IsNull())
                     {
-                        storedException.Throw();
-                        throw storedException.SourceException; // unreachable
+                        var exceptionInfo = TryGetDispatchInfo(value);
+                        if (exceptionInfo != null)
+                        {
+                            exceptionInfo.Throw();
+                            throw exceptionInfo.SourceException; // unreachable
+                        }
                     }
 #endif
+
+                    var clrObject = ManagedType.GetManagedObject(value) as CLRObject;
                     if (clrObject?.inst is Exception e)
                     {
                         throw e;
@@ -98,6 +103,37 @@ namespace Python.Runtime
             }
         }
 
+#if NETSTANDARD
+        static ExceptionDispatchInfo TryGetDispatchInfo(BorrowedReference exception)
+        {
+            if (exception.IsNull) return null;
+
+            var pyInfo = Runtime.PyObject_GetAttrString(exception, Exceptions.DispatchInfoAttribute);
+            if (pyInfo.IsNull())
+            {
+                if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
+                {
+                    Exceptions.Clear();
+                }
+                return null;
+            }
+
+            try
+            {
+                if (Converter.ToManagedValue(pyInfo, typeof(ExceptionDispatchInfo), out object result, setError: false))
+                {
+                    return (ExceptionDispatchInfo)result;
+                }
+
+                return null;
+            }
+            finally
+            {
+                pyInfo.Dispose();
+            }
+        }
+#endif
+
         /// <summary>
         /// Requires lock to be acquired elsewhere
         /// </summary>
@@ -106,18 +142,19 @@ namespace Python.Runtime
             Exception inner = null;
             string pythonTypeName = null, msg = "", tracebackText = null;
 
+#if NETSTANDARD
+            var exceptionDispatchInfo = TryGetDispatchInfo(valueHandle);
+            if (exceptionDispatchInfo != null)
+            {
+                return exceptionDispatchInfo.SourceException;
+            }
+#endif
+
             var clrObject = ManagedType.GetManagedObject(valueHandle) as CLRObject;
             if (clrObject?.inst is Exception e)
             {
                 return e;
             }
-
-#if NETSTANDARD
-            if (clrObject?.inst is ExceptionDispatchInfo exceptionDispatchInfo)
-            {
-                return exceptionDispatchInfo.SourceException;
-            }
-#endif
 
             var type = PyObject.FromNullableReference(typeHandle);
             var value = PyObject.FromNullableReference(valueHandle);

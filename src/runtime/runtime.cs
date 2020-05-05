@@ -937,7 +937,10 @@ namespace Python.Runtime
         internal static extern int PyObject_HasAttrString(IntPtr pointer, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        [Obsolete("Use overload accepting BorrowedReference")]
         internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, string name);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyObject_GetAttrString(BorrowedReference pointer, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value);

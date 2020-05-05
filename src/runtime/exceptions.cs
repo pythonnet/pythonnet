@@ -262,6 +262,7 @@ namespace Python.Runtime
             Runtime.PyErr_SetObject(ob, value);
         }
 
+        internal const string DispatchInfoAttribute = "__dispatch_info__";
         /// <summary>
         /// SetError Method
         /// </summary>
@@ -288,8 +289,9 @@ namespace Python.Runtime
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
 #if NETSTANDARD
             var exceptionInfo = ExceptionDispatchInfo.Capture(e);
-            Runtime.XDecref(op);
-            op = Converter.ToPython(exceptionInfo);
+            IntPtr pyInfo = Converter.ToPython(exceptionInfo);
+            Runtime.PyObject_SetAttrString(op, DispatchInfoAttribute, pyInfo);
+            Runtime.XDecref(pyInfo);
 #endif
 
             Runtime.PyErr_SetObject(etype, op);
