@@ -66,26 +66,30 @@ namespace Python.Runtime
             IntPtr gs = PythonEngine.AcquireLock();
             try
             {
-                Runtime.PyErr_Fetch(out var pyTypeHandle, out var pyValueHandle, out var pyTracebackHandle);
+                Runtime.PyErr_Fetch(out var type, out var value, out var traceback);
                 try
                 {
-                    var clrObject = ManagedType.GetManagedObject(pyValueHandle) as CLRObject;
+                    var clrObject = ManagedType.GetManagedObject(value) as CLRObject;
+#if NETSTANDARD
+                    if (clrObject?.inst is ExceptionDispatchInfo storedException)
+                    {
+                        storedException.Throw();
+                        throw storedException.SourceException; // unreachable
+                    }
+#endif
                     if (clrObject?.inst is Exception e)
                     {
-#if NETSTANDARD
-                        ExceptionDispatchInfo.Capture(e).Throw();
-#endif
                         throw e;
                     }
 
-                    var result = FromPyErr(pyTypeHandle, pyValueHandle, pyTracebackHandle);
+                    var result = FromPyErr(type, value, traceback);
                     throw result;
                 }
                 finally
                 {
-                    pyTypeHandle.Dispose();
-                    pyValueHandle.Dispose();
-                    pyTracebackHandle.Dispose();
+                    type.Dispose();
+                    value.Dispose();
+                    traceback.Dispose();
                 }
             }
             finally
@@ -107,6 +111,13 @@ namespace Python.Runtime
             {
                 return e;
             }
+
+#if NETSTANDARD
+            if (clrObject?.inst is ExceptionDispatchInfo exceptionDispatchInfo)
+            {
+                return exceptionDispatchInfo.SourceException;
+            }
+#endif
 
             var type = PyObject.FromNullableReference(typeHandle);
             var value = PyObject.FromNullableReference(valueHandle);

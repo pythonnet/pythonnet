@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -285,6 +286,12 @@ namespace Python.Runtime
 
             IntPtr op = Converter.ToPython(e);
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
+#if NETSTANDARD
+            var exceptionInfo = ExceptionDispatchInfo.Capture(e);
+            Runtime.XDecref(op);
+            op = Converter.ToPython(exceptionInfo);
+#endif
+
             Runtime.PyErr_SetObject(etype, op);
             Runtime.XDecref(etype);
             Runtime.XDecref(op);
