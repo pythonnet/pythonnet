@@ -29,14 +29,12 @@ namespace Python.Runtime
             _pyTB = traceback.MoveToPyObjectOrNull();
             if (_type != null && _value != null)
             {
-                string message;
                 using (PyObject pyTypeName = _type.GetAttr("__name__"))
                 {
                     _pythonTypeName = pyTypeName.ToString();
                 }
 
-                message = _value.ToString();
-                _message = _pythonTypeName + " : " + message;
+                _message = _pythonTypeName + " : " + _value;
             }
             if (_pyTB != null)
             {
@@ -45,19 +43,17 @@ namespace Python.Runtime
             PythonEngine.ReleaseLock(gs);
         }
 
-        private PythonException(BorrowedReference pyTypeHandle,
-                                BorrowedReference pyValueHandle,
-                                BorrowedReference pyTracebackHandle,
-                                string message, string pythonTypeName, string traceback,
+        private PythonException(PyObject type, PyObject value, PyObject traceback,
+                                string message, string pythonTypeName, string tracebackText,
                                 Exception innerException)
             : base(message, innerException)
         {
-            _type = PyObject.FromNullableReference(pyTypeHandle);
-            _value = PyObject.FromNullableReference(pyValueHandle);
-            _pyTB = PyObject.FromNullableReference(pyTracebackHandle);
+            _type = type;
+            _value = value;
+            _pyTB = traceback;
             _message = message;
             _pythonTypeName = pythonTypeName ?? _pythonTypeName;
-            _traceback = traceback ?? _traceback;
+            _traceback = tracebackText ?? _traceback;
         }
 
         internal static Exception FromPyErr()
@@ -143,7 +139,7 @@ namespace Python.Runtime
         static Exception FromPyErr(BorrowedReference typeHandle, BorrowedReference valueHandle, BorrowedReference tracebackHandle)
         {
             Exception inner = null;
-            string pythonTypeName = null, msg = "", traceback = null;
+            string pythonTypeName = null, msg = "", tracebackText = null;
 
             var clrObject = ManagedType.GetManagedObject(valueHandle) as CLRObject;
             if (clrObject?.inst is Exception e)
@@ -151,7 +147,11 @@ namespace Python.Runtime
                 return e;
             }
 
-            if (!typeHandle.IsNull && !valueHandle.IsNull)
+            var type = PyObject.FromNullableReference(typeHandle);
+            var value = PyObject.FromNullableReference(valueHandle);
+            var traceback = PyObject.FromNullableReference(tracebackHandle);
+
+            if (type != null && value != null)
             {
                 if (PyObjectConversions.TryDecode(valueHandle, typeHandle, typeof(Exception), out object decoded)
                     && decoded is Exception decodedException)
@@ -159,42 +159,33 @@ namespace Python.Runtime
                     return decodedException;
                 }
 
-                string type;
-                string message;
-                using (var pyType = new PyObject(typeHandle))
-                using (PyObject pyTypeName = pyType.GetAttr("__name__"))
+                using (PyObject pyTypeName = type.GetAttr("__name__"))
                 {
-                    type = pyTypeName.ToString();
+                    pythonTypeName = pyTypeName.ToString();
                 }
 
-                pythonTypeName = type;
-
-                using (var pyValue = new PyObject(valueHandle))
+                var cause = value.GetAttr("__cause__", null);
+                if (cause != null && cause.Handle != Runtime.PyNone)
                 {
-                    message = pyValue.ToString();
-                    var cause = pyValue.GetAttr("__cause__", null);
-                    if (cause != null && cause.Handle != Runtime.PyNone)
+                    using (var innerTraceback = cause.GetAttr("__traceback__", null))
                     {
-                        using (var innerTraceback = cause.GetAttr("__traceback__", null))
-                        {
-                            inner = FromPyErr(
-                                typeHandle: cause.GetPythonTypeReference(),
-                                valueHandle: cause.Reference,
-                                tracebackHandle: innerTraceback is null
-                                    ? BorrowedReference.Null
-                                    : innerTraceback.Reference);
-                        }
+                        inner = FromPyErr(
+                            typeHandle: cause.GetPythonTypeReference(),
+                            valueHandle: cause.Reference,
+                            tracebackHandle: innerTraceback is null
+                                ? BorrowedReference.Null
+                                : innerTraceback.Reference);
                     }
                 }
-                msg = type + " : " + message;
+                msg = pythonTypeName + " : " + value;
             }
-            if (!tracebackHandle.IsNull)
+            if (traceback != null)
             {
-                traceback = TracebackToString(new PyObject(tracebackHandle));
+                tracebackText = TracebackToString(traceback);
             }
 
-            return new PythonException(typeHandle, valueHandle, tracebackHandle,
-                msg, pythonTypeName, traceback, inner);
+            return new PythonException(type, value, traceback,
+                msg, pythonTypeName, tracebackText, inner);
         }
 
         static string TracebackToString(PyObject traceback)
