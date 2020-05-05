@@ -548,7 +548,7 @@ namespace Python.Runtime
             {
                 if (result.obj != Runtime.PyNone)
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
             }
         }

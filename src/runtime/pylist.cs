@@ -53,7 +53,7 @@ namespace Python.Runtime
             obj = Runtime.PyList_New(0);
             if (obj == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -75,7 +75,7 @@ namespace Python.Runtime
                 int r = Runtime.PyList_SetItem(obj, i, ptr);
                 if (r < 0)
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
             }
         }
@@ -106,7 +106,7 @@ namespace Python.Runtime
             IntPtr op = Runtime.PySequence_List(value.obj);
             if (op == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyList(op);
         }
@@ -123,7 +123,7 @@ namespace Python.Runtime
             int r = Runtime.PyList_Append(this.Reference, item.obj);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -138,7 +138,7 @@ namespace Python.Runtime
             int r = Runtime.PyList_Insert(this.Reference, index, item.obj);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -154,7 +154,7 @@ namespace Python.Runtime
             int r = Runtime.PyList_Reverse(this.Reference);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -170,7 +170,7 @@ namespace Python.Runtime
             int r = Runtime.PyList_Sort(this.Reference);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
     }

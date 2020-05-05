@@ -36,7 +36,7 @@ namespace Python.Runtime
             obj = Runtime.PyObject_GetIter(iterable.obj);
             if (obj == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 

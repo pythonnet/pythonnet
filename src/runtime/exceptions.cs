@@ -197,7 +197,7 @@ namespace Python.Runtime
         {
             if (pointer == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -208,7 +208,7 @@ namespace Python.Runtime
         {
             if (pointer == IntPtr.Zero || ErrorOccurred())
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 

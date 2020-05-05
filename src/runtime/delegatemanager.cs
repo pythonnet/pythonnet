@@ -257,8 +257,7 @@ namespace Python.Runtime
 
             if (op == IntPtr.Zero)
             {
-                var e = new PythonException();
-                throw e;
+                throw PythonException.ThrowLastAsClrException();
             }
 
             if (rtype == typeof(void))

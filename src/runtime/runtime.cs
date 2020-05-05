@@ -494,7 +494,7 @@ namespace Python.Runtime
         {
             if (PyErr_Occurred() != IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 

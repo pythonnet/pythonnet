@@ -44,7 +44,7 @@ namespace Python.Runtime
             IntPtr op = Runtime.PySequence_GetSlice(obj, i1, i2);
             if (op == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyObject(op);
         }
@@ -61,7 +61,7 @@ namespace Python.Runtime
             int r = Runtime.PySequence_SetSlice(obj, i1, i2, v.obj);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -77,7 +77,7 @@ namespace Python.Runtime
             int r = Runtime.PySequence_DelSlice(obj, i1, i2);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -113,7 +113,7 @@ namespace Python.Runtime
             int r = Runtime.PySequence_Contains(obj, item.obj);
             if (r < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return r != 0;
         }
@@ -131,7 +131,7 @@ namespace Python.Runtime
             IntPtr op = Runtime.PySequence_Concat(obj, other.obj);
             if (op == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyObject(op);
         }
@@ -149,7 +149,7 @@ namespace Python.Runtime
             IntPtr op = Runtime.PySequence_Repeat(obj, count);
             if (op == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyObject(op);
         }
