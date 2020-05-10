@@ -12,6 +12,10 @@
 #define MONO_DOMAIN "Python.Runtime"
 #define PR_ASSEMBLY "Python.Runtime.dll"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
     MonoDomain *domain;
@@ -28,5 +32,9 @@ PyNet_Args *PyNet_Init(int);
 void PyNet_Finalize(PyNet_Args *);
 void main_thread_handler(PyNet_Args *user_data);
 char *PyNet_ExceptionToString(MonoObject *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PYNET_CLR_H
