@@ -473,6 +473,19 @@ namespace Python.Runtime
         internal static IntPtr PyNone;
         internal static IntPtr Error;
 
+        public static PyObject _none;
+        public static PyObject GetPyNone()
+        {
+            if (_none == null)
+            {
+                var result = Runtime.PyNone;
+                Runtime.XIncref(result);
+                _none= new PyObject(result);
+            }
+
+            return _none;
+        }
+
         /// <summary>
         /// Check if any Python Exceptions occurred.
         /// If any exist throw new PythonException.
