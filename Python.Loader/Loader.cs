@@ -5,18 +5,18 @@ using System.IO;
 using System.Reflection;
 using Mono.Cecil;
 
-namespace Python
+namespace Python.Loader
 {
-    public class Loader
+    public class RuntimeLoader
     {
         AssemblyDefinition assembly;
 
-        static public Loader FromFile(string filename)
+        static public RuntimeLoader FromFile(string filename)
         {
-            return new Loader(File.OpenRead(filename));
+            return new RuntimeLoader(File.OpenRead(filename));
         }
 
-        public Loader(Stream stream)
+        public RuntimeLoader(Stream stream)
         {
             assembly = AssemblyDefinition.ReadAssembly(stream, new ReaderParameters
             {
@@ -74,7 +74,7 @@ namespace Python
                 var dllPath = splitted[0];
                 var pythonDll = splitted[1];
 
-                var loader = Loader.FromFile(dllPath);
+                var loader = RuntimeLoader.FromFile(dllPath);
                 loader.Remap(pythonDll);
                 var assembly = loader.LoadAssembly();
 
