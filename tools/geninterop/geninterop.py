@@ -174,6 +174,8 @@ def preprocess_python_headers():
     include_py = sysconfig.get_config_var("INCLUDEPY")
     include_dirs.append(include_py)
 
+    include_args = [c for p in include_dirs for c in ["-I", p]]
+
     defines = [
         "-D", "__attribute__(x)=",
         "-D", "__inline__=inline",
@@ -198,7 +200,7 @@ def preprocess_python_headers():
             defines.extend(("-D", "PYTHON_WITH_WIDE_UNICODE"))
 
     python_h = os.path.join(include_py, "Python.h")
-    cmd = ["clang", "-pthread", "-I"] + include_dirs + defines + ["-E", python_h]
+    cmd = ["clang", "-pthread"] + include_args + defines + ["-E", python_h]
 
     # normalize as the parser doesn't like windows line endings.
     lines = []
