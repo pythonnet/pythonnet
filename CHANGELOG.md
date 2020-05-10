@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
 -   Added PythonException.Format method to format exceptions the same as traceback.format_exception
+-   Added GetPyNone() to Runtime and IsNone() to PyObject
 
 ### Changed
 
