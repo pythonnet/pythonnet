@@ -20,7 +20,11 @@ PyNet_Args *PyNet_Init(int ext)
     pn_args->module = NULL;
 
 #ifdef __linux__
-    // Force preload libmono-2.0 as global
+    // Force preload libmono-2.0 as global. Without this, on some systems 
+    // symbols from libmono are not found by libmononative (which implements
+    // some of the System.* namespaces). Since the only happened on Linux so
+    // far, we hardcode the library name, load the symbols into the global
+    // namespace and leak the handle.
     dlopen("libmono-2.0.so", RTLD_LAZY | RTLD_GLOBAL);
 #endif
 
