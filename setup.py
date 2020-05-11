@@ -404,6 +404,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         # build the clr python module
         clr_ext = Extension(
             "clr",
+            language="c++",
             sources=["src/monoclr/pynetinit.c", "src/monoclr/clrmod.c"],
             extra_compile_args=cflags.split(" "),
             extra_link_args=libs.split(" "),
