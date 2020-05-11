@@ -278,6 +278,23 @@ namespace Python.Runtime
             return Bind(inst, args, kw, info, null);
         }
 
+        private readonly struct MatchedMethod {
+            public MatchedMethod(int kwargsMatched, int defaultsNeeded, object[] margs, int outs, MethodBase mb)
+            {
+                KwargsMatched = kwargsMatched;
+                DefaultsNeeded = defaultsNeeded;
+                ManagedArgs = margs;
+                Outs = outs;
+                Method = mb;
+            }
+
+            public int KwargsMatched { get; }
+            public int DefaultsNeeded { get; }
+            public object[] ManagedArgs { get; }
+            public int Outs { get; }
+            public MethodBase Method { get; }
+        }
+
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // loop to find match, return invoker w/ or /wo error
@@ -310,10 +327,7 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
-            // List of tuples containing methods that have matched based on arguments.
-            // Format of tuple is: Number of kwargs matched, defaults needed, margs, outs, method base for matched method
-            List<Tuple<int, int, object[], int, MethodBase>> argMatchedMethods = 
-                new List<Tuple<int, int, object[], int, MethodBase>>(_methods.Length);
+            List<MatchedMethod> argMatchedMethods = new List<MatchedMethod>(_methods.Length);
 
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
@@ -342,35 +356,33 @@ namespace Python.Runtime
                     continue;
                 }
 
-                var matchedMethodTuple = Tuple.Create(kwargsMatched, defaultsNeeded, margs, outs, mi);
-                argMatchedMethods.Add(matchedMethodTuple);
+                var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi);
+                argMatchedMethods.Add(matchedMethod);
             }
             if (argMatchedMethods.Count() > 0)
             {
                 // Order matched methods by number of kwargs matched and get the max possible number
                 // of kwargs matched
-                var bestKwargMatchCount = argMatchedMethods.OrderBy((x) => x.Item1).Reverse().ToArray()[0].Item1;
+                var bestKwargMatchCount = argMatchedMethods.OrderBy((x) => x.KwargsMatched).Reverse().ToArray()[0].KwargsMatched;
 
-                List<Tuple<int, int, object[], int, MethodBase>> bestKwargMatches =
-                    new List<Tuple<int, int, object[], int, MethodBase>>(argMatchedMethods.Count());
-                foreach (Tuple<int, int, object[], int, MethodBase> argMatchedTuple in argMatchedMethods)
+                List<MatchedMethod> bestKwargMatches = new List<MatchedMethod>(argMatchedMethods.Count());
+                foreach (MatchedMethod testMatch in argMatchedMethods)
                 {
-                    if (argMatchedTuple.Item1 == bestKwargMatchCount)
+                    if (testMatch.KwargsMatched == bestKwargMatchCount)
                     {
-                        bestKwargMatches.Add(argMatchedTuple);
+                        bestKwargMatches.Add(testMatch);
                     }
                 }
 
                 // Order by the number of defaults required and find the smallest
-                var fewestDefaultsRequired  = bestKwargMatches.OrderBy((x) => x.Item2).ToArray()[0].Item2;
+                var fewestDefaultsRequired  = bestKwargMatches.OrderBy((x) => x.DefaultsNeeded).ToArray()[0].DefaultsNeeded;
 
-                List<Tuple<int, int, object[], int, MethodBase>> bestDefaultsMatches =
-                    new List<Tuple<int, int, object[], int, MethodBase>>(bestKwargMatches.Count());
-                foreach (Tuple<int, int, object[], int, MethodBase> testTuple in bestKwargMatches)
+                List<MatchedMethod> bestDefaultsMatches = new List<MatchedMethod>(bestKwargMatches.Count());
+                foreach (MatchedMethod testMatch in bestKwargMatches)
                 {
-                    if (testTuple.Item2 == fewestDefaultsRequired)
+                    if (testMatch.DefaultsNeeded == fewestDefaultsRequired)
                     {
-                        bestDefaultsMatches.Add(testTuple);
+                        bestDefaultsMatches.Add(testMatch);
                     }
                 }
 
@@ -388,10 +400,10 @@ namespace Python.Runtime
                 // in the case of (a) we're done by default. For (b) regardless of which
                 // method we choose, all arguments are specified _and_ can be converted
                 // from python to C# so picking any will suffice
-                Tuple<int, int, object[], int, MethodBase> bestMatch = bestDefaultsMatches.ToArray()[0];
-                var margs = bestMatch.Item3;
-                var outs = bestMatch.Item4;
-                var mi = bestMatch.Item5;
+                MatchedMethod bestMatch = bestDefaultsMatches.ToArray()[0];
+                var margs = bestMatch.ManagedArgs;
+                var outs = bestMatch.Outs;
+                var mi = bestMatch.Method;
 
                 object target = null;
                 if (!mi.IsStatic && inst != IntPtr.Zero)
