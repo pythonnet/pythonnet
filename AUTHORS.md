@@ -45,6 +45,7 @@
 -   Luke Stratman ([@lstratman](https://github.com/lstratman))
 -   Konstantin Posudevskiy ([@konstantin-posudevskiy](https://github.com/konstantin-posudevskiy))
 -   Matthias Dittrich ([@matthid](https://github.com/matthid))
+-   Meinrad Recheis ([@henon](https://github.com/henon))
 -   Mohamed Koubaa ([@koubaa](https://github.com/koubaa))
 -   Patrick Stewart ([@patstew](https://github.com/patstew))
 -   Raphael Nestler ([@rnestler](https://github.com/rnestler))
