@@ -363,7 +363,7 @@ namespace Python.Runtime
             {
                 // Order matched methods by number of kwargs matched and get the max possible number
                 // of kwargs matched
-                var bestKwargMatchCount = argMatchedMethods.OrderBy((x) => x.KwargsMatched).Reverse().ToArray()[0].KwargsMatched;
+                var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
 
                 List<MatchedMethod> bestKwargMatches = new List<MatchedMethod>(argMatchedMethods.Count());
                 foreach (MatchedMethod testMatch in argMatchedMethods)
@@ -375,18 +375,21 @@ namespace Python.Runtime
                 }
 
                 // Order by the number of defaults required and find the smallest
-                var fewestDefaultsRequired  = bestKwargMatches.OrderBy((x) => x.DefaultsNeeded).ToArray()[0].DefaultsNeeded;
+                var fewestDefaultsRequired  = bestKwargMatches.Min(x => x.DefaultsNeeded);
+                int bestCount = 0;
+                int bestMatchIndex = -1;
 
-                List<MatchedMethod> bestDefaultsMatches = new List<MatchedMethod>(bestKwargMatches.Count());
                 foreach (MatchedMethod testMatch in bestKwargMatches)
                 {
                     if (testMatch.DefaultsNeeded == fewestDefaultsRequired)
                     {
-                        bestDefaultsMatches.Add(testMatch);
+                        bestCount++;
+                        if (bestMatchIndex == -1)
+                            bestMatchIndex = bestKwargMatches.IndexOf(testMatch);
                     }
                 }
 
-                if (bestDefaultsMatches.Count() > 1 && fewestDefaultsRequired > 0)
+                if (bestCount > 1 && fewestDefaultsRequired > 0)
                 {
                     // Best effort for determining method to match on gives multiple possible
                     // matches and we need at least one default argument - bail from this point
@@ -400,7 +403,7 @@ namespace Python.Runtime
                 // in the case of (a) we're done by default. For (b) regardless of which
                 // method we choose, all arguments are specified _and_ can be converted
                 // from python to C# so picking any will suffice
-                MatchedMethod bestMatch = bestDefaultsMatches.ToArray()[0];
+                MatchedMethod bestMatch = bestKwargMatches.ElementAt(bestMatchIndex);
                 var margs = bestMatch.ManagedArgs;
                 var outs = bestMatch.Outs;
                 var mi = bestMatch.Method;
