@@ -327,7 +327,7 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
-            List<MatchedMethod> argMatchedMethods = new List<MatchedMethod>(_methods.Length);
+            var argMatchedMethods = new List<MatchedMethod>(_methods.Length);
 
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
@@ -359,33 +359,22 @@ namespace Python.Runtime
                 var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi);
                 argMatchedMethods.Add(matchedMethod);
             }
-            if (argMatchedMethods.Count() > 0)
+            if (argMatchedMethods.Count > 0)
             {
-                // Order matched methods by number of kwargs matched and get the max possible number
-                // of kwargs matched
                 var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
+                var fewestDefaultsRequired = argMatchedMethods.Where(x => x.KwargsMatched == bestKwargMatchCount).Min(x => x.DefaultsNeeded);
 
-                List<MatchedMethod> bestKwargMatches = new List<MatchedMethod>(argMatchedMethods.Count());
-                foreach (MatchedMethod testMatch in argMatchedMethods)
-                {
-                    if (testMatch.KwargsMatched == bestKwargMatchCount)
-                    {
-                        bestKwargMatches.Add(testMatch);
-                    }
-                }
-
-                // Order by the number of defaults required and find the smallest
-                var fewestDefaultsRequired  = bestKwargMatches.Min(x => x.DefaultsNeeded);
                 int bestCount = 0;
                 int bestMatchIndex = -1;
 
-                foreach (MatchedMethod testMatch in bestKwargMatches)
+                for (int index = 0; index < argMatchedMethods.Count; index++)
                 {
-                    if (testMatch.DefaultsNeeded == fewestDefaultsRequired)
+                    var testMatch = argMatchedMethods[index];
+                    if (testMatch.DefaultsNeeded == fewestDefaultsRequired && testMatch.KwargsMatched == bestKwargMatchCount)
                     {
                         bestCount++;
                         if (bestMatchIndex == -1)
-                            bestMatchIndex = bestKwargMatches.IndexOf(testMatch);
+                            bestMatchIndex = index;
                     }
                 }
 
@@ -403,7 +392,7 @@ namespace Python.Runtime
                 // in the case of (a) we're done by default. For (b) regardless of which
                 // method we choose, all arguments are specified _and_ can be converted
                 // from python to C# so picking any will suffice
-                MatchedMethod bestMatch = bestKwargMatches.ElementAt(bestMatchIndex);
+                MatchedMethod bestMatch = argMatchedMethods[bestMatchIndex];
                 var margs = bestMatch.ManagedArgs;
                 var outs = bestMatch.Outs;
                 var mi = bestMatch.Method;
@@ -654,7 +643,7 @@ namespace Python.Runtime
             defaultArgList = null;
             var match = false;
             paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
-            var kwargCount = kwargDict.Count();
+            var kwargCount = kwargDict.Count;
             kwargsMatched = 0;
             defaultsNeeded = 0;
 
