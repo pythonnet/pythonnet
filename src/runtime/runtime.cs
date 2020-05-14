@@ -1961,7 +1961,7 @@ namespace Python.Runtime
         internal static extern void PyErr_Fetch(out NewReference type, out NewReference value, out NewReference traceback);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Restore(NewReference type, NewReference value, NewReference traceback);
+        internal static extern void PyErr_Restore(StolenReference type, StolenReference value, StolenReference traceback);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Clear();

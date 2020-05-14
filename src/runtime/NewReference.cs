@@ -33,6 +33,16 @@ namespace Python.Runtime
         /// </summary>
         public PyObject MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
         /// <summary>
+        /// Call this method to move ownership of this reference to a Python C API function,
+        /// that steals reference passed to it.
+        /// </summary>
+        public StolenReference Steal()
+        {
+            IntPtr rawPointer = this.pointer;
+            this.pointer = IntPtr.Zero;
+            return new StolenReference(rawPointer);
+        }
+        /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.
         /// </summary>
         public void Dispose()
