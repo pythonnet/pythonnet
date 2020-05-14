@@ -967,16 +967,5 @@ namespace Python.Runtime
         {
             return new PyObject(Converter.ToPython(o, o?.GetType()));
         }
-
-        /// <summary>
-        /// Gets raw Python proxy for this object (bypasses all conversions,
-        /// except <c>null</c> &lt;==&gt; <c>None</c>)
-        /// </summary>
-        public static PyObject GetRawPythonProxy(this object o)
-        {
-            if (o is null) return new PyObject(new BorrowedReference(Runtime.PyNone));
-
-            return CLRObject.MakeNewReference(o).MoveToPyObject();
-        }
     }
 }

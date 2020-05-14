@@ -36,5 +36,20 @@ namespace Python.EmbeddingTest
                 reference.Dispose();
             }
         }
+
+        [Test]
+        public void CanBorrowFromNewReference()
+        {
+            var dict = new PyDict();
+            NewReference reference = Runtime.PyDict_Items(dict.Handle);
+            try
+            {
+                PythonException.ThrowIfIsNotZero(Runtime.PyList_Reverse(reference));
+            }
+            finally
+            {
+                reference.Dispose();
+            }
+        }
     }
 }

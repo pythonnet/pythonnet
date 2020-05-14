@@ -11,6 +11,10 @@ namespace Python.Runtime
     {
         IntPtr pointer;
 
+        [Pure]
+        public static implicit operator BorrowedReference(in NewReference reference)
+            => new BorrowedReference(reference.pointer);
+
         /// <summary>
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
@@ -36,6 +40,7 @@ namespace Python.Runtime
         /// <summary>
         /// Creates <see cref="NewReference"/> from a raw pointer
         /// </summary>
+        [Pure]
         public static NewReference DangerousFromPointer(IntPtr pointer)
             => new NewReference {pointer = pointer};
 
