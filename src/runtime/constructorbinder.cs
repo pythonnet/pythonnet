@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Text;
 
 namespace Python.Runtime
 {
@@ -93,7 +94,15 @@ namespace Python.Runtime
 
                 if (binding == null)
                 {
-                    Exceptions.SetError(Exceptions.TypeError, "no constructor matches given arguments");
+                    var errorMessage = new StringBuilder("No constructor matches given arguments");
+                    if (info != null && info.IsConstructor && info.DeclaringType != null)
+                    {
+                        errorMessage.Append(" for ").Append(info.DeclaringType.Name);
+                    }
+
+                    errorMessage.Append(": ");
+                    AppendArgumentTypes(to: errorMessage, args);
+                    Exceptions.SetError(Exceptions.TypeError, errorMessage.ToString());
                     return null;
                 }
             }

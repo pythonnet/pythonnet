@@ -638,6 +638,40 @@ namespace Python.Runtime
             return Invoke(inst, args, kw, info, null);
         }
 
+        protected static void AppendArgumentTypes(StringBuilder to, IntPtr args)
+        {
+            long argCount = Runtime.PyTuple_Size(args);
+            to.Append("(");
+            for (long argIndex = 0; argIndex < argCount; argIndex++)
+            {
+                var arg = Runtime.PyTuple_GetItem(args, argIndex);
+                if (arg != IntPtr.Zero)
+                {
+                    var type = Runtime.PyObject_Type(arg);
+                    if (type != IntPtr.Zero)
+                    {
+                        try
+                        {
+                            var description = Runtime.PyObject_Unicode(type);
+                            if (description != IntPtr.Zero)
+                            {
+                                to.Append(Runtime.GetManagedString(description));
+                                Runtime.XDecref(description);
+                            }
+                        }
+                        finally
+                        {
+                            Runtime.XDecref(type);
+                        }
+                    }
+                }
+
+                if (argIndex + 1 < argCount)
+                    to.Append(", ");
+            }
+            to.Append(')');
+        }
+
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             Binding binding = Bind(inst, args, kw, info, methodinfo);
@@ -652,29 +686,8 @@ namespace Python.Runtime
                     value.Append($" for {methodinfo[0].Name}");
                 }
 
-                long argCount = Runtime.PyTuple_Size(args);
-                value.Append(": (");
-                for(long argIndex = 0; argIndex < argCount; argIndex++) {
-                    var arg = Runtime.PyTuple_GetItem(args, argIndex);
-                    if (arg != IntPtr.Zero) {
-                        var type = Runtime.PyObject_Type(arg);
-                        if (type != IntPtr.Zero) {
-                            try {
-                                var description = Runtime.PyObject_Unicode(type);
-                                if (description != IntPtr.Zero) {
-                                    value.Append(Runtime.GetManagedString(description));
-                                    Runtime.XDecref(description);
-                                }
-                            } finally {
-                                Runtime.XDecref(type);
-                            }
-                        }
-                    }
-
-                    if (argIndex + 1 < argCount)
-                        value.Append(", ");
-                }
-                value.Append(')');
+                value.Append(": ");
+                AppendArgumentTypes(to: value, args);
                 Exceptions.SetError(Exceptions.TypeError, value.ToString());
                 return IntPtr.Zero;
             }
