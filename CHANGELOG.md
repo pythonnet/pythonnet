@@ -13,8 +13,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added function that sets Py_NoSiteFlag to 1.
 -   Added support for Jetson Nano.
 -   Added support for __len__ for .NET classes that implement ICollection
--   Added `object.GetRawPythonProxy() -> PyObject` extension method, that bypasses any conversions
 -   Added PythonException.Format method to format exceptions the same as traceback.format_exception
+-   Added Runtime.None to be able to pass None as parameter into Python from .NET
+-   Added PyObject.IsNone() to check if a Python object is None in .NET.
 
 ### Changed
 
@@ -26,6 +27,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   When calling C# from Python, enable passing argument of any type to a parameter of C# type `object` by wrapping it into `PyObject` instance. ([#881][i881])
 -   Added support for kwarg parameters when calling .NET methods from Python
 -   Changed method for finding MSBuild using vswhere
+-   Reworked `Finalizer`. Now objects drop into its queue upon finalization, which is periodically drained when new objects are created.
 
 ### Fixed
 

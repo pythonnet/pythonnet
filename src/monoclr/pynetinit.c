@@ -19,6 +19,15 @@ PyNet_Args *PyNet_Init(int ext)
     pn_args->shutdown = NULL;
     pn_args->module = NULL;
 
+#ifdef __linux__
+    // Force preload libmono-2.0 as global. Without this, on some systems 
+    // symbols from libmono are not found by libmononative (which implements
+    // some of the System.* namespaces). Since the only happened on Linux so
+    // far, we hardcode the library name, load the symbols into the global
+    // namespace and leak the handle.
+    dlopen("libmono-2.0.so", RTLD_LAZY | RTLD_GLOBAL);
+#endif
+
     if (ext == 0)
     {
         pn_args->init_name = "Python.Runtime:Initialize()";
@@ -122,7 +131,7 @@ void main_thread_handler(PyNet_Args *user_data)
             strcpy(new_ld_library_path, py_libdir);
             strcat(new_ld_library_path, ":");
             strcat(new_ld_library_path, ld_library_path);
-            setenv("LD_LIBRARY_PATH", py_libdir, 1);
+            setenv("LD_LIBRARY_PATH", new_ld_library_path, 1);
         }
     }
 

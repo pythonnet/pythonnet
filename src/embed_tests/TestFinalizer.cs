@@ -77,7 +77,7 @@ namespace Python.EmbeddingTest
             }
             try
             {
-                Finalizer.Instance.Collect(forceDispose: false);
+                Finalizer.Instance.Collect();
             }
             finally
             {

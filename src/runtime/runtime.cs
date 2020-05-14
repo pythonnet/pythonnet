@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -8,7 +9,6 @@ using Python.Runtime.Platform;
 
 namespace Python.Runtime
 {
-
     /// <summary>
     /// Encapsulates the low-level Python C API. Note that it is
     /// the responsibility of the caller to have acquired the GIL
@@ -106,7 +106,7 @@ namespace Python.Runtime
         internal static object IsFinalizingLock = new object();
         internal static bool IsFinalizing;
 
-        internal static bool Is32Bit = IntPtr.Size == 4;
+        internal static bool Is32Bit => IntPtr.Size == 4;
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
@@ -473,6 +473,16 @@ namespace Python.Runtime
         internal static IntPtr PyNone;
         internal static IntPtr Error;
 
+        public static PyObject None
+        {
+            get
+            {
+                var none = Runtime.PyNone;
+                Runtime.XIncref(none);
+                return new PyObject(none);
+            }
+        }
+
         /// <summary>
         /// Check if any Python Exceptions occurred.
         /// If any exist throw new PythonException.
@@ -649,6 +659,7 @@ namespace Python.Runtime
 #endif
         }
 
+        [Pure]
         internal static unsafe long Refcount(IntPtr op)
         {
             var p = (void*)op;

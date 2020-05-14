@@ -86,12 +86,12 @@ namespace Python.EmbeddingTest {
 
     /// <summary>
     /// "Decodes" only objects of exact type <typeparamref name="T"/>.
-    /// Result is just a raw Python object proxy.
+    /// Result is just the raw proxy to the encoder instance itself.
     /// </summary>
-    class ObjectToRawProxyEncoder<T> : IPyObjectEncoder
+    class ObjectToEncoderInstanceEncoder<T> : IPyObjectEncoder
     {
         public bool CanEncode(Type type) => type == typeof(T);
-        public PyObject TryEncode(object value) => this.GetRawPythonProxy();
+        public PyObject TryEncode(object value) => PyObject.FromManagedObject(this);
     }
 
     /// <summary>
