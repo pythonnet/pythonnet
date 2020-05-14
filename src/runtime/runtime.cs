@@ -1966,6 +1966,15 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
 
+        //====================================================================
+        // Cell API
+        //====================================================================
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyCell_Get(IntPtr cell);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyCell_Set(IntPtr cell, IntPtr value);
 
         //====================================================================
         // Miscellaneous

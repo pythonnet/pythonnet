@@ -280,6 +280,14 @@ namespace Python.Runtime
                 IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
                 Runtime.PyDict_Update(cls_dict, py_dict);
 
+                // Update the __classcell__ if it exists
+                IntPtr cell = Runtime.PyDict_GetItemString(cls_dict, "__classcell__");
+                if (cell != IntPtr.Zero)
+                {
+                    Runtime.PyCell_Set(cell, py_type);
+                    Runtime.PyDict_DelItemString(cls_dict, "__classcell__");
+                }
+
                 return py_type;
             }
             catch (Exception e)
