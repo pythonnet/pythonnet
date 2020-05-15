@@ -356,6 +356,7 @@ namespace Python.Runtime
         /// </summary>
         private static void InitializePlatformData()
         {
+#if !NETSTANDARD
             IntPtr op;
             IntPtr fn;
             IntPtr platformModule = PyImport_ImportModule("platform");
@@ -391,6 +392,34 @@ namespace Python.Runtime
                 MType = MachineType.Other;
             }
             Machine = MType;
+#else
+            OperatingSystem = OperatingSystemType.Other;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                OperatingSystem = OperatingSystemType.Linux;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                OperatingSystem = OperatingSystemType.Darwin;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                OperatingSystem = OperatingSystemType.Windows;
+            
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.X86:
+                    Machine = MachineType.i386;
+                    break;
+                case Architecture.X64:
+                    Machine = MachineType.x86_64;
+                    break;
+                case Architecture.Arm:
+                    Machine = MachineType.armv7l;
+                    break;
+                case Architecture.Arm64:
+                    Machine = MachineType.aarch64;
+                    break;
+                default:
+                    Machine = MachineType.Other;
+                    break;
+            }
+#endif
         }
 
         internal static void Shutdown()
