@@ -625,7 +625,7 @@ namespace Python.Runtime
                         case OperatingSystemType.Linux:
                             return 0x20;
                         default:
-                            throw new NotImplementedException($"mmap is not supported on {Runtime.OperatingSystemName}");
+                            throw new NotImplementedException($"mmap is not supported on this operating system");
                     }
                 }
             }
@@ -659,7 +659,7 @@ namespace Python.Runtime
                 case OperatingSystemType.Windows:
                     return new WindowsMemoryMapper();
                 default:
-                    throw new NotImplementedException($"No support for {Runtime.OperatingSystemName}");
+                    throw new NotImplementedException($"No support for this operating system");
             }
         }
 

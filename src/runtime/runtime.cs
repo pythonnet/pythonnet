@@ -124,12 +124,6 @@ namespace Python.Runtime
         public static OperatingSystemType OperatingSystem { get; private set; }
 
         /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static string OperatingSystemName { get; private set; }
-
-
-        /// <summary>
         /// Map lower-case version of the python machine name to the processor
         /// type. There are aliases, e.g. x86_64 and amd64 are two names for
         /// the same thing. Make sure to lower-case the search string, because
@@ -359,7 +353,7 @@ namespace Python.Runtime
 
             fn = PyObject_GetAttrString(platformModule, "system");
             op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            OperatingSystemName = GetManagedString(op);
+            string operatingSystemName = GetManagedString(op);
             XDecref(op);
             XDecref(fn);
 
@@ -375,7 +369,7 @@ namespace Python.Runtime
             // Now convert the strings into enum values so we can do switch
             // statements rather than constant parsing.
             OperatingSystemType OSType;
-            if (!OperatingSystemTypeMapping.TryGetValue(OperatingSystemName, out OSType))
+            if (!OperatingSystemTypeMapping.TryGetValue(operatingSystemName, out OSType))
             {
                 OSType = OperatingSystemType.Other;
             }
@@ -388,14 +382,15 @@ namespace Python.Runtime
             }
             Machine = MType;
 #else
-            OperatingSystem = OperatingSystemType.Other;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 OperatingSystem = OperatingSystemType.Linux;
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 OperatingSystem = OperatingSystemType.Darwin;
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 OperatingSystem = OperatingSystemType.Windows;
-            
+            else
+                OperatingSystem = OperatingSystemType.Other;
+
             switch (RuntimeInformation.ProcessArchitecture)
             {
                 case Architecture.X86:
