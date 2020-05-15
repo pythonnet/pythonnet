@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
@@ -117,6 +118,12 @@ namespace Python.Runtime
             { "Darwin", OperatingSystemType.Darwin },
             { "Linux", OperatingSystemType.Linux },
         };
+
+        [Obsolete]
+        public static string OperatingSystemName => OperatingSystem.ToString();
+
+        [Obsolete]
+        public static string MachineName => Machine.ToString();
 
         /// <summary>
         /// Gets the operating system as reported by python's platform.system().
@@ -1990,10 +1997,10 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern NewReference PyCell_Get(IntPtr cell);
+        internal static extern NewReference PyCell_Get(BorrowedReference cell);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyCell_Set(IntPtr cell, IntPtr value);
+        internal static extern int PyCell_Set(BorrowedReference cell, IntPtr value);
 
         //====================================================================
         // Miscellaneous
