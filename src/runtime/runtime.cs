@@ -154,11 +154,6 @@ namespace Python.Runtime
         /// </summary>
         public static MachineType Machine { get; private set; }/* set in Initialize using python's platform.machine */
 
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static string MachineName { get; private set; }
-
         internal static bool IsPython2 = pyversionnumber < 30;
         internal static bool IsPython3 = pyversionnumber >= 30;
 
@@ -370,7 +365,7 @@ namespace Python.Runtime
 
             fn = PyObject_GetAttrString(platformModule, "machine");
             op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            MachineName = GetManagedString(op);
+            string machineName = GetManagedString(op);
             XDecref(op);
             XDecref(fn);
 
@@ -387,7 +382,7 @@ namespace Python.Runtime
             OperatingSystem = OSType;
 
             MachineType MType;
-            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
+            if (!MachineTypeMapping.TryGetValue(machineName.ToLower(), out MType))
             {
                 MType = MachineType.Other;
             }

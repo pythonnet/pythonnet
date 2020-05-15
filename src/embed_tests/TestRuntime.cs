@@ -29,8 +29,6 @@ namespace Python.EmbeddingTest
             Runtime.Runtime.Initialize();
 
             Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(MachineType.Other));
-            Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.MachineName));
-
             Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(OperatingSystemType.Other));
             Assert.That(!string.IsNullOrEmpty(Runtime.Runtime.OperatingSystemName));
 
