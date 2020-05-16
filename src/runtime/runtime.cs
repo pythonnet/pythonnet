@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
@@ -118,16 +119,16 @@ namespace Python.Runtime
             { "Linux", OperatingSystemType.Linux },
         };
 
+        [Obsolete]
+        public static string OperatingSystemName => OperatingSystem.ToString();
+
+        [Obsolete]
+        public static string MachineName => Machine.ToString();
+
         /// <summary>
         /// Gets the operating system as reported by python's platform.system().
         /// </summary>
         public static OperatingSystemType OperatingSystem { get; private set; }
-
-        /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static string OperatingSystemName { get; private set; }
-
 
         /// <summary>
         /// Map lower-case version of the python machine name to the processor
@@ -153,11 +154,6 @@ namespace Python.Runtime
         /// Gets the machine architecture as reported by python's platform.machine().
         /// </summary>
         public static MachineType Machine { get; private set; }/* set in Initialize using python's platform.machine */
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static string MachineName { get; private set; }
 
         internal static bool IsPython2 = pyversionnumber < 30;
         internal static bool IsPython3 = pyversionnumber >= 30;
@@ -356,6 +352,7 @@ namespace Python.Runtime
         /// </summary>
         private static void InitializePlatformData()
         {
+#if !NETSTANDARD
             IntPtr op;
             IntPtr fn;
             IntPtr platformModule = PyImport_ImportModule("platform");
@@ -363,13 +360,13 @@ namespace Python.Runtime
 
             fn = PyObject_GetAttrString(platformModule, "system");
             op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            OperatingSystemName = GetManagedString(op);
+            string operatingSystemName = GetManagedString(op);
             XDecref(op);
             XDecref(fn);
 
             fn = PyObject_GetAttrString(platformModule, "machine");
             op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-            MachineName = GetManagedString(op);
+            string machineName = GetManagedString(op);
             XDecref(op);
             XDecref(fn);
 
@@ -379,18 +376,47 @@ namespace Python.Runtime
             // Now convert the strings into enum values so we can do switch
             // statements rather than constant parsing.
             OperatingSystemType OSType;
-            if (!OperatingSystemTypeMapping.TryGetValue(OperatingSystemName, out OSType))
+            if (!OperatingSystemTypeMapping.TryGetValue(operatingSystemName, out OSType))
             {
                 OSType = OperatingSystemType.Other;
             }
             OperatingSystem = OSType;
 
             MachineType MType;
-            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
+            if (!MachineTypeMapping.TryGetValue(machineName.ToLower(), out MType))
             {
                 MType = MachineType.Other;
             }
             Machine = MType;
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                OperatingSystem = OperatingSystemType.Linux;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                OperatingSystem = OperatingSystemType.Darwin;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                OperatingSystem = OperatingSystemType.Windows;
+            else
+                OperatingSystem = OperatingSystemType.Other;
+
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.X86:
+                    Machine = MachineType.i386;
+                    break;
+                case Architecture.X64:
+                    Machine = MachineType.x86_64;
+                    break;
+                case Architecture.Arm:
+                    Machine = MachineType.armv7l;
+                    break;
+                case Architecture.Arm64:
+                    Machine = MachineType.aarch64;
+                    break;
+                default:
+                    Machine = MachineType.Other;
+                    break;
+            }
+#endif
         }
 
         internal static void Shutdown()
@@ -1966,6 +1992,15 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
 
+        //====================================================================
+        // Cell API
+        //====================================================================
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyCell_Get(BorrowedReference cell);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyCell_Set(BorrowedReference cell, IntPtr value);
 
         //====================================================================
         // Miscellaneous
