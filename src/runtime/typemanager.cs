@@ -280,6 +280,14 @@ namespace Python.Runtime
                 IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
                 Runtime.PyDict_Update(cls_dict, py_dict);
 
+                // Update the __classcell__ if it exists
+                var cell = new BorrowedReference(Runtime.PyDict_GetItemString(cls_dict, "__classcell__"));
+                if (!cell.IsNull)
+                {
+                    Runtime.PyCell_Set(cell, py_type);
+                    Runtime.PyDict_DelItemString(cls_dict, "__classcell__");
+                }
+
                 return py_type;
             }
             catch (Exception e)
@@ -617,7 +625,9 @@ namespace Python.Runtime
                         case OperatingSystemType.Linux:
                             return 0x20;
                         default:
-                            throw new NotImplementedException($"mmap is not supported on {Runtime.OperatingSystemName}");
+                            throw new NotImplementedException(
+                                $"mmap is not supported on {Runtime.OperatingSystem}"
+                            );
                     }
                 }
             }
@@ -651,7 +661,9 @@ namespace Python.Runtime
                 case OperatingSystemType.Windows:
                     return new WindowsMemoryMapper();
                 default:
-                    throw new NotImplementedException($"No support for {Runtime.OperatingSystemName}");
+                    throw new NotImplementedException(
+                        $"No support for {Runtime.OperatingSystem}"
+                    );
             }
         }
 
