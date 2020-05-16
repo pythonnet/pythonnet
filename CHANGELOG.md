@@ -39,8 +39,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
   together with Nuitka
 - Fixes bug where delegates get casts (dotnetcore)
 - Determine size of interpreter longs at runtime
-- Handling exceptions ocurred in ModuleObject's getattribute 
+- Handling exceptions ocurred in ModuleObject's getattribute
 - Fill `__classcell__` correctly for Python subclasses of .NET types
+- Fixed issue with params methods that are not passed an array.
 
 ## [2.4.0][]
 

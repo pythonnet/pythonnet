@@ -369,6 +369,41 @@ namespace Python.Runtime
             return null;
         }
 
+        static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool isNewReference)
+        {
+            isNewReference = false;
+            IntPtr op;
+            // for a params method, we may have a sequence or single/multiple items
+            // here we look to see if the item at the paramIndex is there or not
+            // and then if it is a sequence itself.
+            if ((pyArgCount - arrayStart) == 1)
+            {
+                // we only have one argument left, so we need to check it
+                // to see if it is a sequence or a single item
+                IntPtr item = Runtime.PyTuple_GetItem(args, arrayStart);
+                if (!Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
+                {
+                    // it's a sequence (and not a string), so we use it as the op
+                    op = item;
+                }
+                else
+                {
+                    isNewReference = true;
+                    op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                    if (item != IntPtr.Zero)
+                    {
+                        Runtime.XDecref(item);
+                    }
+                }
+            }
+            else
+            {
+                isNewReference = true;
+                op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+            }
+            return op;
+        }
+
         /// <summary>
         /// Attempts to convert Python positional argument tuple and keyword argument table
         /// into an array of managed objects, that can be passed to a method.
@@ -397,8 +432,9 @@ namespace Python.Runtime
             {
                 var parameter = pi[paramIndex];
                 bool hasNamedParam = kwargDict.ContainsKey(parameter.Name);
+                bool isNewReference = false;
 
-                if (paramIndex >= pyArgCount && !hasNamedParam)
+                if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
                 {
                     if (defaultArgList != null)
                     {
@@ -415,11 +451,14 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    op = (arrayStart == paramIndex)
-                        // map remaining Python arguments to a tuple since
-                        // the managed function accepts it - hopefully :]
-                        ? Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount)
-                        : Runtime.PyTuple_GetItem(args, paramIndex);
+                    if(arrayStart == paramIndex)
+                    {
+                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);                                                                 
+                    }
+                    else
+                    {
+                        op = Runtime.PyTuple_GetItem(args, paramIndex);
+                    }
                 }
 
                 bool isOut;
@@ -428,7 +467,7 @@ namespace Python.Runtime
                     return null;
                 }
 
-                if (arrayStart == paramIndex)
+                if (isNewReference)
                 {
                     // TODO: is this a bug? Should this happen even if the conversion fails?
                     // GetSlice() creates a new reference but GetItem()
@@ -543,7 +582,7 @@ namespace Python.Runtime
         {
             defaultArgList = null;
             var match = false;
-            paramsArray = false;
+            paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
 
             if (positionalArgumentCount == parameters.Length)
             {
@@ -572,7 +611,7 @@ namespace Python.Runtime
                         // to be passed in as the parameter value
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                     }
-                    else
+                    else if(!paramsArray)
                     {
                         match = false;
                     }

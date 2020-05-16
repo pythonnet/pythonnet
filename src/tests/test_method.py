@@ -257,6 +257,37 @@ def test_non_params_array_in_last_place():
     result = MethodTest.TestNonParamsArrayInLastPlace(1, 2, 3)
     assert result
 
+def test_params_methods_with_no_params():
+    """Tests that passing no arguments to a params method
+    passes an empty array"""
+    result = MethodTest.TestValueParamsArg()
+    assert len(result) == 0
+
+    result = MethodTest.TestOneArgWithParams('Some String')
+    assert len(result) == 0
+
+    result = MethodTest.TestTwoArgWithParams('Some String', 'Some Other String')
+    assert len(result) == 0
+
+def test_params_methods_with_non_lists():
+    """Tests that passing single parameters to a params
+    method will convert into an array on the .NET side"""
+    result = MethodTest.TestOneArgWithParams('Some String', [1, 2, 3, 4])
+    assert len(result) == 4
+
+    result = MethodTest.TestOneArgWithParams('Some String', 1, 2, 3, 4)
+    assert len(result) == 4
+
+    result = MethodTest.TestOneArgWithParams('Some String', [5])
+    assert len(result) == 1
+
+    result = MethodTest.TestOneArgWithParams('Some String', 5)
+    assert len(result) == 1
+
+def test_params_method_with_lists():
+    """Tests passing multiple lists to a params object[] method"""
+    result = MethodTest.TestObjectParamsArg([],[])
+    assert len(result) == 2
 
 def test_string_out_params():
     """Test use of string out-parameters."""
