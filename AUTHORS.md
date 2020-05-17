@@ -2,8 +2,11 @@
 
 ## Development Lead
 
--   Barton Cline ([@BartonCline](https://github.com/BartonCline))
 -   Benedikt Reinartz ([@filmor](https://github.com/filmor))
+-   Victor Milovanov ([@lostmsu](https://github.com/lostmsu))
+
+## Former Development Leads
+-   Barton Cline ([@BartonCline](https://github.com/BartonCline))
 -   Brian Lloyd ([@brianlloyd](https://github.com/brianlloyd))
 -   David Anthoff ([@davidanthoff](https://github.com/davidanthoff))
 -   Denis Akhiyarov ([@denfromufa](https://github.com/denfromufa))
@@ -54,7 +57,6 @@
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
 -   Simon Mourier ([@smourier](https://github.com/smourier))
--   Victor Milovanov ([@lostmsu](https://github.com/lostmsu))
 -   Viktoria Kovescses ([@vkovec](https://github.com/vkovec))
 -   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))
