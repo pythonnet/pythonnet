@@ -8,8 +8,8 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("pythonnet")]
-[assembly: AssemblyProduct("Python for .NET")]
-[assembly: AssemblyCopyright("Copyright (c) 2006-2019 the contributors of the 'Python for .NET' project")]
+[assembly: AssemblyProduct("Python.NET")]
+[assembly: AssemblyCopyright("Copyright (c) 2006-2020 the contributors of the Python.NET project")]
 [assembly: AssemblyTrademark("")]
 
 [assembly: AssemblyCulture("")]

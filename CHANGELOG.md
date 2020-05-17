@@ -1,7 +1,7 @@
 # Changelog
 
-All notable changes to Python for .NET will be documented in this file.
-This project adheres to [Semantic Versioning][].
+All notable changes to Python.NET will be documented in this file. This
+project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 

@@ -1,4 +1,4 @@
-pythonnet - Python for .NET
+pythonnet - Python.NET
 ===========================
 
 |Join the chat at https://gitter.im/pythonnet/pythonnet|
@@ -8,7 +8,7 @@ pythonnet - Python for .NET
 |license shield| |pypi package version| |conda-forge version| |python supported shield|
 |stackexchange shield|
 
-Python for .NET is a package that gives Python programmers nearly
+Python.NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
 provides a powerful application scripting tool for .NET developers. It
 allows Python code to interact with the CLR, and may also be used to
@@ -17,8 +17,7 @@ embed Python into a .NET application.
 Calling .NET code from Python
 -----------------------------
 
-Python for .NET allows CLR namespaces to be treated essentially as
-Python packages.
+Python.NET allows CLR namespaces to be treated essentially as Python packages.
 
 .. code-block::
 
