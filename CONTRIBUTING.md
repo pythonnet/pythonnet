@@ -1,10 +1,14 @@
 # How to contribute
 
-PythonNet is developed and maintained by unpaid community members so well
+Python.NET is developed and maintained by unpaid community members so well
 written, documented and tested pull requests are encouraged.
 
 By submitting a pull request for this project, you agree to license your
 contribution under the MIT license to this project.
+
+This project has adopted the code of conduct defined by the Contributor
+Covenant to clarify expected behavior in our community. For more information
+see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct).
 
 ## Getting Started
 
@@ -41,3 +45,4 @@ contribution under the MIT license to this project.
 
 -   [General GitHub documentation](https://help.github.com/)
 -   [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
+-   [.NET Foundation Code of Conduct](https://dotnetfoundation.org/about/code-of-conduct)
