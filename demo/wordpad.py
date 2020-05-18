@@ -382,7 +382,7 @@ class AboutForm(WinForms.Form):
         self.label1.Size = System.Drawing.Size(296, 140)
         self.label1.TabIndex = 2
         self.label1.Text = "Python Wordpad - an example winforms " \
-                           "application using Python for .NET"
+                           "application using Python.NET"
 
         self.AutoScaleBaseSize = System.Drawing.Size(5, 13)
         self.ClientSize = System.Drawing.Size(300, 150)
