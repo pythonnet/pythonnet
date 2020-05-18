@@ -400,7 +400,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
         cflags = mono_cflags.strip()
         libs = mono_libs.strip()
-        
+
         # build the clr python module
         clr_ext = Extension(
             "clr",
@@ -633,7 +633,7 @@ if bdist_wheel:
 
 setup(
     name="pythonnet",
-    version="2.4.1-dev",
+    version="2.5.0rc2",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",

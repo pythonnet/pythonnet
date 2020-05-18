@@ -5,45 +5,66 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## [unreleased][]
+## [Unreleased][]
 
 ### Added
 
--   Added automatic NuGet package generation in appveyor and local builds
--   Added function that sets Py_NoSiteFlag to 1.
--   Added support for Jetson Nano.
--   Added support for __len__ for .NET classes that implement ICollection
--   Added `PyExport` attribute to hide .NET types from Python
--   Added PythonException.Format method to format exceptions the same as traceback.format_exception
--   Added Runtime.None to be able to pass None as parameter into Python from .NET
--   Added PyObject.IsNone() to check if a Python object is None in .NET.
+### Changed
+
+### Fixed
+
+## [2.5.0-rc2][] - 2020-06-07
+
+This version improves performance on benchmarks significantly compared to 2.3.
+
+### Added
+
+-   Automatic NuGet package generation in appveyor and local builds
+-   Function that sets `Py_NoSiteFlag` to 1.
+-   Support for Jetson Nano.
+-   Support for `__len__` for .NET classes that implement ICollection
+-   `PyExport` attribute to hide .NET types from Python
+-   `PythonException.Format` method to format exceptions the same as
+    `traceback.format_exception`
+-   `Runtime.None` to be able to pass `None` as parameter into Python from .NET
+-   `PyObject.IsNone()` to check if a Python object is None in .NET.
 -   Support for Python 3.8
+-   Codecs as the designated way to handle automatic conversions between
+    .NET and Python types
 
 ### Changed
 
 -   Added argument types information to "No method matches given arguments" message
 -   Moved wheel import in setup.py inside of a try/except to prevent pip collection failures
--   Removes PyLong_GetMax and PyClass_New when targetting Python3
+-   Removes `PyLong_GetMax` and `PyClass_New` when targetting Python3
 -   Improved performance of calls from Python to C#
 -   Added support for converting python iterators to C# arrays
--   Changed usage of obselete function GetDelegateForFunctionPointer(IntPtr, Type) to GetDelegateForFunctionPointer<TDelegate>(IntPtr)
--   When calling C# from Python, enable passing argument of any type to a parameter of C# type `object` by wrapping it into `PyObject` instance. ([#881][i881])
+-   Changed usage of the obsolete function
+    `GetDelegateForFunctionPointer(IntPtr, Type)` to
+    `GetDelegateForFunctionPointer<TDelegate>(IntPtr)`
+-   When calling C# from Python, enable passing argument of any type to a
+    parameter of C# type `object` by wrapping it into `PyObject` instance.
+    ([#881][i881])
 -   Added support for kwarg parameters when calling .NET methods from Python
 -   Changed method for finding MSBuild using vswhere
--   Reworked `Finalizer`. Now objects drop into its queue upon finalization, which is periodically drained when new objects are created.
--   Marked `Runtime.OperatingSystemName` and `Runtime.MachineName` as `Obsolete`, should never have been `public` in the first place. They also don't necessarily return a result that matches the `platform` module's.
+-   Reworked `Finalizer`. Now objects drop into its queue upon finalization,
+    which is periodically drained when new objects are created.
+-   Marked `Runtime.OperatingSystemName` and `Runtime.MachineName` as
+    `Obsolete`, should never have been `public` in the first place. They also
+    don't necessarily return a result that matches the `platform` module's.
 
 ### Fixed
 
-- Fixed runtime that fails loading when using pythonnet in an environment
-  together with Nuitka
-- Fixes bug where delegates get casts (dotnetcore)
-- Determine size of interpreter longs at runtime
-- Handling exceptions ocurred in ModuleObject's getattribute
-- Fill `__classcell__` correctly for Python subclasses of .NET types
-- Fixed issue with params methods that are not passed an array.
+-   Fixed runtime that fails loading when using pythonnet in an environment
+    together with Nuitka
+-   Fixes bug where delegates get casts (dotnetcore)
+-   Determine size of interpreter longs at runtime
+-   Handling exceptions ocurred in ModuleObject's getattribute
+-   Fill `__classcell__` correctly for Python subclasses of .NET types
+-   Fixed issue with params methods that are not passed an array.
+-   Use UTF8 to encode strings passed to `PyRun_String` on Python 3
 
-## [2.4.0][]
+## [2.4.0][] - 2019-05-15
 
 ### Added
 
