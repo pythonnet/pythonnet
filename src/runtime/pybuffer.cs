@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -214,8 +215,45 @@ namespace Python.Runtime
 
         private void Dispose(bool disposing)
         {
-            if (!disposedValue) {
-                Runtime.PyBuffer_Release(ref _view);
+            if (!disposedValue)
+            {
+                Debug.Assert(_view.obj != IntPtr.Zero, "Buffer object is invalid (no exporter object ref)");
+                //if (_view.obj == IntPtr.Zero)
+                //{
+                //    return;
+                //}
+
+                if (Runtime.Py_IsInitialized() == 0)
+                    throw new InvalidOperationException("Python runtime must be initialized");
+
+                if (!Runtime.IsFinalizing)
+                {
+                    long refcount = Runtime.Refcount(_view.obj);
+                    Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+
+                    if (refcount == 1)
+                    {
+                        Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+
+                        try
+                        {
+                            // this also decrements ref count for _view->obj
+                            Runtime.PyBuffer_Release(ref _view);
+                            Runtime.CheckExceptionOccurred();
+                        }
+                        finally
+                        {
+                            // Python requires finalizers to preserve exception:
+                            // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                            Runtime.PyErr_Restore(errType, errVal, traceback);
+                        }
+                    }
+                    else
+                    {
+                        // this also decrements ref count for _view->obj
+                        Runtime.PyBuffer_Release(ref _view);
+                    }
+                }
 
                 _exporter = null;
                 Shape = null;
