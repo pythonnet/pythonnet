@@ -1679,6 +1679,7 @@ namespace Python.Runtime
         /// <summary>
         /// Return 0 on success or -1 on failure.
         /// </summary>
+        [Obsolete]
         internal static int PyDict_SetItem(BorrowedReference dict, IntPtr key, BorrowedReference value) => Delegates.PyDict_SetItem(dict, new BorrowedReference(key), value);
         /// <summary>
         /// Return 0 on success or -1 on failure.
@@ -2038,7 +2039,7 @@ namespace Python.Runtime
         internal static NewReference PyType_FromSpecWithBases(in NativeTypeSpec spec, BorrowedReference bases) => Delegates.PyType_FromSpecWithBases(in spec, bases);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type’s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type�s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
 
         internal static int PyType_Ready(IntPtr type) => Delegates.PyType_Ready(type);

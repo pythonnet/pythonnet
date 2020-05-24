@@ -223,10 +223,8 @@ namespace Python.Runtime
             var locals = new PyDict();
             try
             {
-                BorrowedReference module = Runtime.PyImport_AddModule("clr._extras");
+                BorrowedReference module = DefineModule("clr._extras");
                 BorrowedReference module_globals = Runtime.PyModule_GetDict(module);
-                BorrowedReference builtins = Runtime.PyEval_GetBuiltins();
-                Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
@@ -236,6 +234,8 @@ namespace Python.Runtime
                     string clr_py = reader.ReadToEnd();
                     Exec(clr_py, module_globals, locals.Reference);
                 }
+
+                LoadExtraModules(module_globals);
 
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
@@ -255,6 +255,34 @@ namespace Python.Runtime
             finally
             {
                 locals.Dispose();
+            }
+        }
+
+        static BorrowedReference DefineModule(string name)
+        {
+            var module = Runtime.PyImport_AddModule(name);
+            var module_globals = Runtime.PyModule_GetDict(module);
+            var builtins = Runtime.PyEval_GetBuiltins();
+            Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
+            return module;
+        }
+
+        static void LoadExtraModules(BorrowedReference targetModuleDict)
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            foreach (string nested in new[] { "collections" })
+            {
+                var module = DefineModule("clr._extras." + nested);
+                var module_globals = Runtime.PyModule_GetDict(module);
+                string resourceName = typeof(PythonEngine).Namespace + ".Mixins." + nested + ".py";
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
+                using (var reader = new StreamReader(stream))
+                {
+                    string pyCode = reader.ReadToEnd();
+                    Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+                }
+
+                Runtime.PyDict_SetItemString(targetModuleDict, nested, module);
             }
         }
 
@@ -618,7 +646,7 @@ namespace Python.Runtime
                 {
                     globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
                     Runtime.PyDict_SetItem(
-                        globals, PyIdentifier.__builtins__,
+                        globals, new BorrowedReference(PyIdentifier.__builtins__),
                         Runtime.PyEval_GetBuiltins()
                     );
                 }

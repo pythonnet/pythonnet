@@ -10,6 +10,9 @@ namespace Python.Runtime
         internal const string MinimalPythonVersionRequired =
             "Only Python 3.5 or newer is supported";
 
+        internal const string UseOverloadWithReferenceTypes =
+            "This API is unsafe, and will be removed in the future. Use overloads working with *Reference types";
+
         internal static Int64 ReadCLong(IntPtr tp, int offset)
         {
             // On Windows, a C long is always 32 bits.
