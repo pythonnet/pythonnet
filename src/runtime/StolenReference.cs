@@ -35,6 +35,13 @@ namespace Python.Runtime
 
         [Pure]
         public override int GetHashCode() => Pointer.GetHashCode();
+
+        [Pure]
+        public static StolenReference DangerousFromPointer(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
+            return new StolenReference(ptr);
+        }
     }
 
     static class StolenReferenceExtensions

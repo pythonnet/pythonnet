@@ -252,6 +252,14 @@ namespace Python.Runtime
 
         private static void InitClassBase(Type type, ClassBase impl)
         {
+            // Ensure, that matching Python type exists first.
+            // It is required for self-referential classes
+            // (e.g. with members, that refer to the same class)
+            var pyType = TypeManager.GetOrCreateClass(type);
+
+            // Set the handle attributes on the implementing instance.
+            impl.tpHandle = impl.pyHandle = pyType.Handle;
+
             // First, we introspect the managed type and build some class
             // information, including generating the member descriptors
             // that we'll be putting in the Python class __dict__.
@@ -261,12 +269,12 @@ namespace Python.Runtime
             impl.indexer = info.indexer;
             impl.richcompare = new Dictionary<int, MethodObject>();
 
-            // Now we allocate the Python type object to reflect the given
+            // Now we force initialize the Python type object to reflect the given
             // managed type, filling the Python type slots with thunks that
             // point to the managed methods providing the implementation.
 
 
-            var pyType = TypeManager.GetType(impl, type);
+            TypeManager.GetOrInitializeClass(impl, type);
 
             // Finally, initialize the class __dict__ and return the object.
             using var dict = Runtime.PyObject_GenericGetDict(pyType.Reference);
