@@ -26,6 +26,7 @@ namespace Python.Runtime
         private static IntPtr _pythonHome = IntPtr.Zero;
         private static IntPtr _programName = IntPtr.Zero;
         private static IntPtr _pythonPath = IntPtr.Zero;
+        private static InteropConfiguration interopConfiguration = InteropConfiguration.MakeDefault();
 
         public PythonEngine()
         {
@@ -65,6 +66,18 @@ namespace Python.Runtime
                         "DelegateManager has not yet been initialized using Python.Runtime.PythonEngine.Initialize().");
                 }
                 return delegateManager;
+            }
+        }
+
+        public static InteropConfiguration InteropConfiguration
+        {
+            get => interopConfiguration;
+            set
+            {
+                if (IsInitialized)
+                    throw new NotSupportedException("Changing interop configuration when engine is running is not supported");
+
+                interopConfiguration = value ?? throw new ArgumentNullException(nameof(InteropConfiguration));
             }
         }
 
@@ -334,6 +347,8 @@ namespace Python.Runtime
             PyObjectConversions.Reset();
 
             initialized = false;
+
+            InteropConfiguration = InteropConfiguration.MakeDefault();
         }
 
         /// <summary>
@@ -563,7 +578,7 @@ namespace Python.Runtime
         /// Interrupts the execution of a thread.
         /// </summary>
         /// <param name="pythonThreadID">The Python thread ID.</param>
-        /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id isn’t found.</returns>
+        /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id is not found.</returns>
         public static int Interrupt(ulong pythonThreadID)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
