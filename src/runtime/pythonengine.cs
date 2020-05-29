@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -229,13 +230,11 @@ namespace Python.Runtime
                 Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
                 Assembly assembly = Assembly.GetExecutingAssembly();
-                using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
-                using (var reader = new StreamReader(stream))
-                {
-                    // add the contents of clr.py to the module
-                    string clr_py = reader.ReadToEnd();
-                    Exec(clr_py, module_globals, locals.Reference);
-                }
+                // add the contents of clr.py to the module
+                string clr_py = assembly.ReadStringResource("clr.py");
+                Exec(clr_py, module_globals, locals.Reference);
+
+                LoadSubmodule(module_globals, "clr.interop", "interop.py");
 
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
@@ -256,6 +255,30 @@ namespace Python.Runtime
             {
                 locals.Dispose();
             }
+        }
+
+        static BorrowedReference DefineModule(string name)
+        {
+            var module = Runtime.PyImport_AddModule(name);
+            var module_globals = Runtime.PyModule_GetDict(module);
+            var builtins = Runtime.PyEval_GetBuiltins();
+            Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
+            return module;
+        }
+
+        static void LoadSubmodule(BorrowedReference targetModuleDict, string fullName, string resourceName)
+        {
+            string memberName = fullName.AfterLast('.');
+            Debug.Assert(memberName != null);
+
+            var module = DefineModule(fullName);
+            var module_globals = Runtime.PyModule_GetDict(module);
+
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string pyCode = assembly.ReadStringResource(resourceName);
+            Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+
+            Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
         }
 
         static void OnDomainUnload(object _, EventArgs __)

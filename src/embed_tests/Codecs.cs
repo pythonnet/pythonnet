@@ -31,7 +31,6 @@ namespace Python.EmbeddingTest {
             TupleCodec<TTuple>.Register();
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
             T restored = default;
-            using (Py.GIL())
             using (var scope = Py.CreateScope())
             {
                 void Accept(T value) => restored = value;
@@ -53,7 +52,6 @@ namespace Python.EmbeddingTest {
             TupleCodec<TTuple>.Register();
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
             T restored = default;
-            using (Py.GIL())
             using (var scope = Py.CreateScope())
             {
                 void Accept(object value) => restored = (T)value;
@@ -73,12 +71,9 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripObject<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            using (Py.GIL())
-            {
-                var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
-                Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
-                Assert.AreEqual(expected: tuple, actual: restored);
-            }
+            var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
+            Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
+            Assert.AreEqual(expected: tuple, actual: restored);
         }
 
         [Test]
@@ -90,21 +85,12 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripGeneric<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            using (Py.GIL())
-            {
-                var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
-                Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
-                Assert.AreEqual(expected: tuple, actual: restored);
-            }
+            var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
+            Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
+            Assert.AreEqual(expected: tuple, actual: restored);
         }
 
-        static PyObject GetPythonIterable()
-        {
-            using (Py.GIL())
-            {
-                return PythonEngine.Eval("map(lambda x: x, [1,2,3])");
-            }
-        }
+        static PyObject GetPythonIterable() => PythonEngine.Eval("map(lambda x: x, [1,2,3])");
 
         [Test]
         public void ListDecoderTest()
@@ -330,7 +316,6 @@ system_type = list_encoder.GetType()";
             PyObjectConversions.RegisterEncoder(new ValueErrorCodec());
             void CallMe() => throw new ValueErrorWrapper(TestExceptionMessage);
             var callMeAction = new Action(CallMe);
-            using var _ = Py.GIL();
             using var scope = Py.CreateScope();
             scope.Exec(@"
 def call(func):
@@ -348,7 +333,6 @@ def call(func):
         public void ExceptionDecoded()
         {
             PyObjectConversions.RegisterDecoder(new ValueErrorCodec());
-            using var _ = Py.GIL();
             using var scope = Py.CreateScope();
             var error = Assert.Throws<ValueErrorWrapper>(()
                 => PythonEngine.Exec($"raise ValueError('{TestExceptionMessage}')"));
@@ -369,6 +353,16 @@ from Python.EmbeddingTest import Codecs, DateTimeDecoder
 DateTimeDecoder.Setup()
 ");
             scope.Exec("Codecs.AcceptsDateTime(datetime(2021, 1, 22))");
+        }
+
+        [Test]
+        public void ExceptionDecodedNoInstance()
+        {
+            PyObjectConversions.RegisterDecoder(new InstancelessExceptionDecoder());
+            using var scope = Py.CreateScope();
+            var error = Assert.Throws<ValueErrorWrapper>(() => PythonEngine.Exec(
+                $"[].__iter__().__next__()"));
+            Assert.AreEqual(TestExceptionMessage, error.Message);
         }
 
         public static void AcceptsDateTime(DateTime v) {}
@@ -406,7 +400,8 @@ DateTimeDecoder.Setup()
         class ValueErrorCodec : IPyObjectEncoder, IPyObjectDecoder
         {
             public bool CanDecode(PyObject objectType, Type targetType)
-                => this.CanEncode(targetType) && objectType.Equals(PythonEngine.Eval("ValueError"));
+                => this.CanEncode(targetType)
+                   && PythonReferenceComparer.Instance.Equals(objectType, PythonEngine.Eval("ValueError"));
 
             public bool CanEncode(Type type) => type == typeof(ValueErrorWrapper)
                                                 || typeof(ValueErrorWrapper).IsSubclassOf(type);
@@ -422,6 +417,26 @@ DateTimeDecoder.Setup()
             {
                 var error = (ValueErrorWrapper)value;
                 return PythonEngine.Eval("ValueError").Invoke(error.Message.ToPython());
+            }
+        }
+
+        class InstancelessExceptionDecoder : IPyObjectDecoder
+        {
+            readonly PyObject PyErr = Py.Import("clr.interop").GetAttr("PyErr");
+
+            public bool CanDecode(PyObject objectType, Type targetType)
+                => PythonReferenceComparer.Instance.Equals(PyErr, objectType);
+
+            public bool TryDecode<T>(PyObject pyObj, out T value)
+            {
+                if (pyObj.HasAttr("value"))
+                {
+                    value = default;
+                    return false;
+                }
+
+                value = (T)(object)new ValueErrorWrapper(TestExceptionMessage);
+                return true;
             }
         }
     }

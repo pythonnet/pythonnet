@@ -178,6 +178,8 @@ namespace Python.Runtime
             }
             XDecref(item);
             AssemblyManager.UpdatePath();
+
+            clrInterop = GetModuleLazy("clr.interop");
         }
 
         private static void InitPyMembers()
@@ -406,6 +408,11 @@ namespace Python.Runtime
             Shutdown(mode);
         }
 
+        private static Lazy<PyObject> GetModuleLazy(string moduleName)
+            => moduleName is null
+                ? throw new ArgumentNullException(nameof(moduleName))
+                : new Lazy<PyObject>(() => PyModule.Import(moduleName), isThreadSafe: false);
+
         internal static ShutdownMode GetDefaultShutdownMode()
         {
             string modeEvn = Environment.GetEnvironmentVariable("PYTHONNET_SHUTDOWN_MODE");
@@ -573,6 +580,9 @@ namespace Python.Runtime
         internal static IntPtr PyFalse;
         internal static IntPtr PyNone;
         internal static IntPtr Error;
+
+        private static Lazy<PyObject> clrInterop;
+        internal static PyObject InteropModule => clrInterop.Value;
 
         internal static BorrowedReference CLRMetaType => new BorrowedReference(PyCLRMetaType);
 

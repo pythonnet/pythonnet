@@ -43,6 +43,9 @@
     <EmbeddedResource Include="resources\clr.py">
       <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="resources\interop.py">
+      <LogicalName>interop.py</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

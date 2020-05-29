@@ -1,4 +1,6 @@
+#nullable enable
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -41,5 +43,27 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr Coalesce(this IntPtr primary, IntPtr fallback)
             => primary == IntPtr.Zero ? fallback : primary;
+
+        /// <summary>
+        /// Gets substring after last occurrence of <paramref name="symbol"/>
+        /// </summary>
+        internal static string? AfterLast(this string str, char symbol)
+        {
+            if (str is null)
+                throw new ArgumentNullException(nameof(str));
+
+            int last = str.LastIndexOf(symbol);
+            return last >= 0 ? str.Substring(last + 1) : null;
+        }
+
+        internal static string ReadStringResource(this System.Reflection.Assembly assembly, string resourceName)
+        {
+            if (assembly is null) throw new ArgumentNullException(nameof(assembly));
+            if (string.IsNullOrEmpty(resourceName)) throw new ArgumentNullException(nameof(resourceName));
+
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
     }
 }
