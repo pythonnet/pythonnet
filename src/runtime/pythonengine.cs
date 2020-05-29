@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -235,7 +236,7 @@ namespace Python.Runtime
                     Exec(clr_py, module_globals, locals.Reference);
                 }
 
-                LoadExtraModules(module_globals);
+                    LoadMixins(module_globals);
 
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
@@ -267,23 +268,31 @@ namespace Python.Runtime
             return module;
         }
 
-        static void LoadExtraModules(BorrowedReference targetModuleDict)
+        static void LoadMixins(BorrowedReference targetModuleDict)
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            foreach (string nested in new[] { "collections" })
+            foreach (string nested in new[] {"collections"})
             {
-                var module = DefineModule("clr._extras." + nested);
-                var module_globals = Runtime.PyModule_GetDict(module);
-                string resourceName = typeof(PythonEngine).Namespace + ".Mixins." + nested + ".py";
-                using (var stream = assembly.GetManifestResourceStream(resourceName))
-                using (var reader = new StreamReader(stream))
-                {
-                    string pyCode = reader.ReadToEnd();
-                    Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
-                }
-
-                Runtime.PyDict_SetItemString(targetModuleDict, nested, module);
+                LoadSubmodule(targetModuleDict,
+                    fullName: "clr._extras." + nested,
+                    resourceName: typeof(PythonEngine).Namespace + ".Mixins." + nested + ".py");
             }
+        }
+
+        static void LoadSubmodule(BorrowedReference targetModuleDict, string fullName, string resourceName)
+        {
+            string memberName = fullName.AfterLast('.');
+            Debug.Assert(memberName != null);
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            var module = DefineModule(fullName);
+            var module_globals = Runtime.PyModule_GetDict(module);
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                string pyCode = reader.ReadToEnd();
+                Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+            }
+
+            Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
         }
 
         static void OnDomainUnload(object _, EventArgs __)

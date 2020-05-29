@@ -44,5 +44,17 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr Coalesce(this IntPtr primary, IntPtr fallback)
             => primary == IntPtr.Zero ? fallback : primary;
+
+        /// <summary>
+        /// Gets substring after last occurrence of <paramref name="symbol"/>
+        /// </summary>
+        internal static string AfterLast(this string str, char symbol)
+        {
+            if (str is null)
+                throw new ArgumentNullException(nameof(str));
+
+            int last = str.LastIndexOf(symbol);
+            return last >= 0 ? str.Substring(last + 1) : null;
+        }
     }
 }
