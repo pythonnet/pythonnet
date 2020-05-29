@@ -63,6 +63,10 @@ namespace Python.Runtime
         /// </summary>
         internal static Exception ThrowLastAsClrException()
         {
+            // prevent potential interop errors in this method
+            // from crashing process with undebuggable StackOverflowException
+            RuntimeHelpers.EnsureSufficientExecutionStack();
+
             IntPtr gs = PythonEngine.AcquireLock();
             try
             {
