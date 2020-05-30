@@ -373,6 +373,31 @@ DateTimeDecoder.Setup()
 
         public static void AcceptsDateTime(DateTime v) {}
 
+        [Test]
+        public void As_Object_AffectedByDecoders()
+        {
+            var everythingElseToSelf = new EverythingElseToSelfDecoder();
+            PyObjectConversions.RegisterDecoder(everythingElseToSelf);
+
+            var pyObj = PythonEngine.Eval("iter");
+            var decoded = pyObj.As<object>();
+            Assert.AreSame(everythingElseToSelf, decoded);
+        }
+
+        public class EverythingElseToSelfDecoder : IPyObjectDecoder
+        {
+            public bool CanDecode(PyObject objectType, Type targetType)
+            {
+                return targetType.IsAssignableFrom(typeof(EverythingElseToSelfDecoder));
+            }
+
+            public bool TryDecode<T>(PyObject pyObj, out T value)
+            {
+                value = (T)(object)this;
+                return true;
+            }
+        }
+
         class ValueErrorWrapper : Exception
         {
             public ValueErrorWrapper(string message) : base(message) { }

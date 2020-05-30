@@ -163,20 +163,10 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// As Method
-        /// </summary>
-        /// <remarks>
         /// Return a managed object of the given type, based on the
         /// value of the Python object.
-        /// </remarks>
-        public T As<T>()
-        {
-            if (typeof(T) == typeof(PyObject) || typeof(T) == typeof(object))
-            {
-                return (T)(this as object);
-            }
-            return (T)AsManagedObject(typeof(T));
-        }
+        /// </summary>
+        public T As<T>() => (T)this.AsManagedObject(typeof(T));
 
         internal bool IsDisposed => obj == IntPtr.Zero;
 
