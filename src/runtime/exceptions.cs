@@ -413,6 +413,7 @@ namespace Python.Runtime
 
         public static IntPtr AssertionError;
         public static IntPtr AttributeError;
+        public static IntPtr BufferError;
         public static IntPtr EOFError;
         public static IntPtr FloatingPointError;
         public static IntPtr EnvironmentError;
