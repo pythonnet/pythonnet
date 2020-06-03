@@ -34,10 +34,11 @@ class MutableSequenceMixin(SequenceMixin, col.MutableSequence):
     pass
 
 class MappingMixin(CollectionMixin, col.Mapping):
+    def __contains__(self, item): return self.ContainsKey(item)
     def keys(self): return self.Keys
-    def items(self): return self
+    def items(self): return [(k,self[k]) for k in self.Keys]
     def values(self): return self.Values
-    def __iter__(self): raise NotImplementedError
+    def __iter__(self): return self.Keys.__iter__()
     def get(self, key):
         _, item = self.TryGetValue(key)
         return item
