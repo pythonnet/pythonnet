@@ -71,5 +71,13 @@ a = MemberNamesTest()
             var list = PythonEngine.Eval("list");
             Assert.Throws<InvalidCastException>(() => list.AsManagedObject(typeof(int)));
         }
+
+        [Test]
+        public void UnaryMinus_ThrowsOnBadType()
+        {
+            dynamic list = new PyList();
+            var error = Assert.Throws<PythonException>(() => list = -list);
+            Assert.AreEqual("TypeError", error.Type.Name);
+        }
     }
 }
