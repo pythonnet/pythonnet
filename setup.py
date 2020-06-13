@@ -618,11 +618,7 @@ setupdir = os.path.dirname(__file__)
 if setupdir:
     os.chdir(setupdir)
 
-setup_requires = []
-if not os.path.exists(_get_interop_filename()):
-    setup_requires.append("pycparser")
-
-cmdclass={
+Macmdclass={
     "install": InstallPythonnet,
     "build_ext": BuildExtPythonnet,
     "install_lib": InstallLibPythonnet,
@@ -639,7 +635,7 @@ setup(
     license="MIT",
     author="The Python for .Net developers",
     author_email="pythonnet@python.org",
-    setup_requires=setup_requires,
+    setup_requires=["pycparser"],
     long_description=_get_long_description(),
     ext_modules=[Extension("clr", sources=list(_get_source_files()))],
     data_files=[("{install_platlib}", ["{build_lib}/Python.Runtime.dll"])],
