@@ -618,7 +618,7 @@ setupdir = os.path.dirname(__file__)
 if setupdir:
     os.chdir(setupdir)
 
-Macmdclass={
+cmdclass={
     "install": InstallPythonnet,
     "build_ext": BuildExtPythonnet,
     "install_lib": InstallLibPythonnet,
