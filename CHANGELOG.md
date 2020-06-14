@@ -13,7 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
-## [2.5.0-rc2][] - 2020-06-07
+## [2.5.0][] - 2020-06-14
 
 This version improves performance on benchmarks significantly compared to 2.3.
 
@@ -52,6 +52,7 @@ This version improves performance on benchmarks significantly compared to 2.3.
 -   Marked `Runtime.OperatingSystemName` and `Runtime.MachineName` as
     `Obsolete`, should never have been `public` in the first place. They also
     don't necessarily return a result that matches the `platform` module's.
+-   Unconditionally depend on `pycparser` for the interop module generation
 
 ### Fixed
 
