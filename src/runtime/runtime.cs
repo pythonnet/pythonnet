@@ -43,36 +43,24 @@ namespace Python.Runtime
 #error You must define either UCS2 or UCS4!
 #endif
 
-        // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow
-        // binary substitution of different Python.Runtime.dll builds in a target application.
-
-        public static string pyversion => _pyversion;
-        public static string pyver => _pyver;
-
 #if PYTHON34
-        internal const string _pyversion = "3.4";
-        internal const string _pyver = "34";
+        const string _minor = "4";
 #elif PYTHON35
-        internal const string _pyversion = "3.5";
-        internal const string _pyver = "35";
+        const string _minor = "5";
 #elif PYTHON36
-        internal const string _pyversion = "3.6";
-        internal const string _pyver = "36";
+        const string _minor = "6";
 #elif PYTHON37
-        internal const string _pyversion = "3.7";
-        internal const string _pyver = "37";
+        const string _minor = "7";
 #elif PYTHON38
-        internal const string _pyversion = "3.8";
-        internal const string _pyver = "38";
+        const string _minor = "8";
 #else
 #error You must define one of PYTHON34 to PYTHON38
 #endif
 
-#if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
-        internal const string dllBase = "python" + _pyversion;
+#if !WINDOWS
+        internal const string dllBase = "python3" + _minor;
 #else // Windows
-        internal const string dllBase = "python" + _pyver;
+        internal const string dllBase = "python3." + _minor;
 #endif
 
 #if PYTHON_WITH_PYDEBUG
@@ -97,8 +85,6 @@ namespace Python.Runtime
 #else
         internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
 #endif
-
-        public static readonly int pyversionnumber = Convert.ToInt32(_pyver);
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();
