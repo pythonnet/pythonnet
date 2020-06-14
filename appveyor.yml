@@ -54,7 +54,7 @@ build_script:
   - coverage run setup.py bdist_wheel %BUILD_OPTS%
 
 test_script:
-  - pip install --no-index --find-links=.\dist\ pythonnet
+  - pip install --find-links=.\dist\ pythonnet
   - ps: .\ci\appveyor_run_tests.ps1
 
 on_finish:
