@@ -57,9 +57,9 @@ namespace Python.Runtime
 #error You must define one of PYTHON34 to PYTHON38
 #endif
 
-#if !WINDOWS
+#if WINDOWS
         internal const string dllBase = "python3" + _minor;
-#else // Windows
+#else
         internal const string dllBase = "python3." + _minor;
 #endif
 

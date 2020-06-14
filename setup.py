@@ -281,7 +281,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             if not enable_shared:
                 defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
 
-        else:
+        if sys.platform == "win32":
             defines.append("WINDOWS")
 
         if hasattr(sys, "abiflags"):
