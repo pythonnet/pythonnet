@@ -10,7 +10,6 @@ from fnmatch import fnmatch
 
 import pytest
 
-from ._compat import ClassType, PY2, PY3, range
 from .utils import is_clr_class, is_clr_module, is_clr_root_module
 
 
@@ -79,14 +78,9 @@ def test_simple_import():
     assert isinstance(sys, types.ModuleType)
     assert sys.__name__ == 'sys'
 
-    if PY3:
-        import http.client as httplib
-        assert isinstance(httplib, types.ModuleType)
-        assert httplib.__name__ == 'http.client'
-    elif PY2:
-        import httplib
-        assert isinstance(httplib, types.ModuleType)
-        assert httplib.__name__ == 'httplib'
+    import http.client as httplib
+    assert isinstance(httplib, types.ModuleType)
+    assert httplib.__name__ == 'http.client'
 
 
 def test_simple_import_with_alias():
@@ -99,14 +93,9 @@ def test_simple_import_with_alias():
     assert isinstance(mySys, types.ModuleType)
     assert mySys.__name__ == 'sys'
 
-    if PY3:
-        import http.client as myHttplib
-        assert isinstance(myHttplib, types.ModuleType)
-        assert myHttplib.__name__ == 'http.client'
-    elif PY2:
-        import httplib as myHttplib
-        assert isinstance(myHttplib, types.ModuleType)
-        assert myHttplib.__name__ == 'httplib'
+    import http.client as myHttplib
+    assert isinstance(myHttplib, types.ModuleType)
+    assert myHttplib.__name__ == 'http.client'
 
 
 def test_dotted_name_import():
@@ -178,7 +167,7 @@ def test_dotted_name_import_from():
     assert pulldom.__name__ == 'xml.dom.pulldom'
 
     from xml.dom.pulldom import PullDOM
-    assert isinstance(PullDOM, ClassType)
+    assert isinstance(PullDOM, type)
     assert PullDOM.__name__ == 'PullDOM'
 
 
@@ -197,7 +186,7 @@ def test_dotted_name_import_from_with_alias():
     assert myPulldom.__name__ == 'xml.dom.pulldom'
 
     from xml.dom.pulldom import PullDOM as myPullDOM
-    assert isinstance(myPullDOM, ClassType)
+    assert isinstance(myPullDOM, type)
     assert myPullDOM.__name__ == 'PullDOM'
 
 

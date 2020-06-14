@@ -5,7 +5,7 @@
 import threading
 import time
 
-from ._compat import range, thread
+from ._compat import thread
 from .utils import dprint
 
 
