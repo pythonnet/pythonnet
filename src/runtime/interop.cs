@@ -212,20 +212,15 @@ namespace Python.Runtime
         // (start after PyObject_HEAD)
         public static int dict = 0;
         public static int args = 0;
-#if PYTHON2
-        public static int message = 0;
-#elif PYTHON3
         public static int traceback = 0;
         public static int context = 0;
         public static int cause = 0;
         public static int suppress_context = 0;
-#endif
 
         private static readonly int size;
     }
 
 
-#if PYTHON3
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class BytesOffset
     {
@@ -316,7 +311,6 @@ namespace Python.Runtime
 
         public static int name = 0;
     }
-#endif // PYTHON3
 
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
@@ -326,17 +320,6 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeFlags
     {
-#if PYTHON2 // these flags were removed in Python 3
-        public static int HaveGetCharBuffer = (1 << 0);
-        public static int HaveSequenceIn = (1 << 1);
-        public static int GC = 0;
-        public static int HaveInPlaceOps = (1 << 3);
-        public static int CheckTypes = (1 << 4);
-        public static int HaveRichCompare = (1 << 5);
-        public static int HaveWeakRefs = (1 << 6);
-        public static int HaveIter = (1 << 7);
-        public static int HaveClass = (1 << 8);
-#endif
         public static int HeapType = (1 << 9);
         public static int BaseType = (1 << 10);
         public static int Ready = (1 << 12);
@@ -364,23 +347,9 @@ namespace Python.Runtime
         public static int BaseExceptionSubclass = (1 << 30);
         public static int TypeSubclass = (1 << 31);
 
-#if PYTHON2 // Default flags for Python 2
-        public static int Default = (
-            HaveGetCharBuffer |
-            HaveSequenceIn |
-            HaveInPlaceOps |
-            HaveRichCompare |
-            HaveWeakRefs |
-            HaveIter |
-            HaveClass |
-            HaveStacklessExtension |
-            HaveIndex |
-            0);
-#elif PYTHON3 // Default flags for Python 3
         public static int Default = (
             HaveStacklessExtension |
             HaveVersionTag);
-#endif
     }
 
 
@@ -438,9 +407,6 @@ namespace Python.Runtime
             pmap["nb_add"] = p["BinaryFunc"];
             pmap["nb_subtract"] = p["BinaryFunc"];
             pmap["nb_multiply"] = p["BinaryFunc"];
-#if PYTHON2
-            pmap["nb_divide"] = p["BinaryFunc"];
-#endif
             pmap["nb_remainder"] = p["BinaryFunc"];
             pmap["nb_divmod"] = p["BinaryFunc"];
             pmap["nb_power"] = p["TernaryFunc"];
@@ -463,9 +429,6 @@ namespace Python.Runtime
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
-#if PYTHON2
-            pmap["nb_inplace_divide"] = p["BinaryFunc"];
-#endif
             pmap["nb_inplace_remainder"] = p["BinaryFunc"];
             pmap["nb_inplace_power"] = p["TernaryFunc"];
             pmap["nb_inplace_lshift"] = p["BinaryFunc"];

@@ -159,7 +159,6 @@
     <Compile Include="$(PythonInteropFile)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' == '' ">
-    <Compile Include="interop27.cs" />
     <Compile Include="interop34.cs" />
     <Compile Include="interop35.cs" />
     <Compile Include="interop36.cs" />

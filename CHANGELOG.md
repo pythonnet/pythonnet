@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 ### Changed
+-   Drop support for Python 2
 
 ### Fixed
 
