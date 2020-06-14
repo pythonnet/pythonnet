@@ -629,7 +629,7 @@ if bdist_wheel:
 
 setup(
     name="pythonnet",
-    version="2.5.0",
+    version="3.0.0dev1",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",
