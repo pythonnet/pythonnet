@@ -899,9 +899,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
 #if PYTHON2
-        internal static extern NewReference PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
+        internal static extern NewReference PyRun_String(string code, RunFlagType st, IntPtr globals, IntPtr locals);
 #else
-        internal static extern NewReference PyRun_String([MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string code, IntPtr st, IntPtr globals, IntPtr locals);
+        internal static extern NewReference PyRun_String([MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string code, RunFlagType st, IntPtr globals, IntPtr locals);
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
