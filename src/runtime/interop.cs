@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Python.Runtime
@@ -70,15 +69,20 @@ namespace Python.Runtime
         }
     }
 
-    internal static partial class ManagedDataOffsets
+    internal static partial class TypeOffset
     {
-        static class Helper
-        {
-            public static int magic;
-            public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
-        }
+        public static int magic() => ManagedDataOffsets.Magic;
+    }
 
-        static TypeOffset()
+    internal static class ManagedDataOffsets
+    {
+        public static int Magic { get; private set; }
+        public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
+
+        public static readonly int ob_data;
+        public static readonly int ob_dict;
+
+        static ManagedDataOffsets()
         {
             Type type = typeof(TypeOffset);
             FieldInfo[] fields = type.GetFields();
@@ -88,18 +92,30 @@ namespace Python.Runtime
                 int offset = i * size;
                 FieldInfo fi = fields[i];
                 fi.SetValue(null, offset);
-                Helper.NameMapping[fi.Name] = offset;
+                NameMapping[fi.Name] = offset;
             }
             // XXX: Use the members after PyHeapTypeObject as magic slot
-            Helper.magic = members;
+            Magic = TypeOffset.members;
         }
-
-        public static int magic() => Helper.magic;
 
         public static int GetSlotOffset(string name)
         {
-            return Helper.NameMapping[name];
+            return NameMapping[name];
         }
+
+        private static int BaseOffset(IntPtr type)
+        {
+            Debug.Assert(type != IntPtr.Zero);
+            int typeSize = Marshal.ReadInt32(type, TypeOffset.tp_basicsize);
+            Debug.Assert(typeSize > 0 && typeSize <= ExceptionOffset.Size());
+            return typeSize;
+        }
+
+        public static int DataOffset(IntPtr type)
+        {
+            return BaseOffset(type) + ob_data;
+        }
+
         public static int DictOffset(IntPtr type)
         {
             return BaseOffset(type) + ob_dict;

@@ -226,12 +226,12 @@ namespace Python.Runtime
 
         protected static IntPtr GetObjectDict(IntPtr ob)
         {
-            return Marshal.ReadIntPtr(ob, ObjectOffset.DictOffset(ob));
+            return Marshal.ReadIntPtr(ob, ObjectOffset.TypeDictOffset(ob));
         }
 
         protected static void SetObjectDict(IntPtr ob, IntPtr value)
         {
-            Marshal.WriteIntPtr(ob, ObjectOffset.DictOffset(ob), value);
+            Marshal.WriteIntPtr(ob, ObjectOffset.TypeDictOffset(ob), value);
         }
     }
 }

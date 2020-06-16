@@ -638,7 +638,7 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                var offset = TypeOffset.GetSlotOffset(slot);
+                var offset = ManagedDataOffsets.GetSlotOffset(slot);
                 Marshal.WriteIntPtr(type, offset, SlotsHolder.GetDefaultSlot(offset));
             }
         }
@@ -656,7 +656,7 @@ namespace Python.Runtime
         /// <param name="canOverride">Can override the slot when it existed</param>
         static void InitializeSlot(IntPtr type, IntPtr slot, string name, bool canOverride = true)
         {
-            var offset = TypeOffset.GetSlotOffset(name);
+            var offset = ManagedDataOffsets.GetSlotOffset(name);
             if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
             {
                 return;
@@ -693,7 +693,7 @@ namespace Python.Runtime
 
         static bool IsSlotSet(IntPtr type, string name)
         {
-            int offset = TypeOffset.GetSlotOffset(name);
+            int offset = ManagedDataOffsets.GetSlotOffset(name);
             return Marshal.ReadIntPtr(type, offset) != IntPtr.Zero;
         }
 
