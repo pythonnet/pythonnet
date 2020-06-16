@@ -418,35 +418,6 @@ namespace Python.Runtime
             }
 #endif
             return ShutdownMode.Normal;
-#else
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                OperatingSystem = OperatingSystemType.Linux;
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                OperatingSystem = OperatingSystemType.Darwin;
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                OperatingSystem = OperatingSystemType.Windows;
-            else
-                OperatingSystem = OperatingSystemType.Other;
-
-            switch (RuntimeInformation.ProcessArchitecture)
-            {
-                case Architecture.X86:
-                    Machine = MachineType.i386;
-                    break;
-                case Architecture.X64:
-                    Machine = MachineType.x86_64;
-                    break;
-                case Architecture.Arm:
-                    Machine = MachineType.armv7l;
-                    break;
-                case Architecture.Arm64:
-                    Machine = MachineType.aarch64;
-                    break;
-                default:
-                    Machine = MachineType.Other;
-                    break;
-            }
-#endif
         }
 
         // called *without* the GIL acquired by clr._AtExit
@@ -2058,7 +2029,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);
