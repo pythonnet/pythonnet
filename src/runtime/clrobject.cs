@@ -16,11 +16,11 @@ namespace Python.Runtime
             long flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) != 0)
             {
-                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.DictOffset(tp));
+                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.TypeDictOffset(tp));
                 if (dict == IntPtr.Zero)
                 {
                     dict = Runtime.PyDict_New();
-                    Marshal.WriteIntPtr(py, ObjectOffset.DictOffset(tp), dict);
+                    Marshal.WriteIntPtr(py, ObjectOffset.TypeDictOffset(tp), dict);
                 }
             }
 
@@ -39,14 +39,13 @@ namespace Python.Runtime
         {
         }
 
-
-        internal static CLRObject GetInstance(object ob, IntPtr pyType)
+        static CLRObject GetInstance(object ob, IntPtr pyType)
         {
             return new CLRObject(ob, pyType);
         }
 
 
-        internal static CLRObject GetInstance(object ob)
+        static CLRObject GetInstance(object ob)
         {
             ClassBase cc = ClassManager.GetClass(ob.GetType());
             return GetInstance(ob, cc.tpHandle);
@@ -72,18 +71,6 @@ namespace Python.Runtime
         {
             CLRObject co = GetInstance(ob);
             return co.pyHandle;
-        }
-
-        /// <summary>
-        /// Creates <see cref="CLRObject"/> proxy for the given object,
-        /// and returns a <see cref="NewReference"/> to it.
-        /// </summary>
-        internal static NewReference MakeNewReference(object obj)
-        {
-            if (obj is null) throw new ArgumentNullException(nameof(obj));
-
-            // TODO: CLRObject currently does not have Dispose or finalizer which might change in the future
-            return NewReference.DangerousFromPointer(GetInstHandle(obj));
         }
 
         internal static CLRObject Restore(object ob, IntPtr pyHandle, PyObjectSerializeContext context)

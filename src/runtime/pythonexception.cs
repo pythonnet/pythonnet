@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Python.Runtime
 {
@@ -143,6 +144,47 @@ namespace Python.Runtime
         public string PythonTypeName
         {
             get { return _pythonTypeName; }
+        }
+
+        /// <summary>
+        /// Formats this PythonException object into a message as would be printed
+        /// out via the Python console. See traceback.format_exception
+        /// </summary>
+        public string Format()
+        {
+            string res;
+            IntPtr gs = PythonEngine.AcquireLock();
+            try
+            {
+                if (_pyTB != IntPtr.Zero && _pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
+                {
+                    Runtime.XIncref(_pyType);
+                    Runtime.XIncref(_pyValue);
+                    Runtime.XIncref(_pyTB);
+                    using (PyObject pyType = new PyObject(_pyType))
+                    using (PyObject pyValue = new PyObject(_pyValue))
+                    using (PyObject pyTB = new PyObject(_pyTB))
+                    using (PyObject tb_mod = PythonEngine.ImportModule("traceback"))
+                    {
+                        var buffer = new StringBuilder();
+                        var values = tb_mod.InvokeMethod("format_exception", pyType, pyValue, pyTB);
+                        foreach (PyObject val in values)
+                        {
+                            buffer.Append(val.ToString());
+                        }
+                        res = buffer.ToString();
+                    }
+                }
+                else
+                {
+                    res = StackTrace;
+                }
+            }
+            finally
+            {
+                PythonEngine.ReleaseLock(gs);
+            }
+            return res;
         }
 
         /// <summary>

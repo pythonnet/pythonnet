@@ -6,6 +6,8 @@ from __future__ import unicode_literals
 import System
 import pytest
 from Python.Test import ConversionTest, UnicodeString
+from Python.Runtime import PyObjectConversions
+from Python.Runtime.Codecs import RawProxyEncoder
 
 from ._compat import indexbytes, long, unichr, text_type, PY2, PY3
 
@@ -700,3 +702,19 @@ def test_sbyte_array_conversion():
     array = ob.SByteArrayField
     for i, _ in enumerate(value):
         assert array[i] == indexbytes(value, i)
+
+def test_codecs():
+    """Test codec registration from Python"""
+    class ListAsRawEncoder(RawProxyEncoder):
+        __namespace__ = "Python.Test"
+        def CanEncode(self, clr_type):
+            return clr_type.Name == "List`1" and clr_type.Namespace == "System.Collections.Generic"
+
+    list_raw_encoder = ListAsRawEncoder()
+    PyObjectConversions.RegisterEncoder(list_raw_encoder)
+
+    ob = ConversionTest()
+
+    l = ob.ListField
+    l.Add(42)
+    assert ob.ListField.Count == 1

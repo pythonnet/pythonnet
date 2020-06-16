@@ -1,4 +1,6 @@
+using System.Reflection.Emit;
 using System;
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -9,7 +11,6 @@ using System.Linq;
 
 namespace Python.Runtime
 {
-
     /// <summary>
     /// Encapsulates the low-level Python C API. Note that it is
     /// the responsibility of the caller to have acquired the GIL
@@ -109,7 +110,7 @@ namespace Python.Runtime
 
         private static bool _isInitialized = false;
 
-        internal static bool Is32Bit = IntPtr.Size == 4;
+        internal static readonly bool Is32Bit = IntPtr.Size == 4;
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
@@ -417,6 +418,35 @@ namespace Python.Runtime
             }
 #endif
             return ShutdownMode.Normal;
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                OperatingSystem = OperatingSystemType.Linux;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                OperatingSystem = OperatingSystemType.Darwin;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                OperatingSystem = OperatingSystemType.Windows;
+            else
+                OperatingSystem = OperatingSystemType.Other;
+
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.X86:
+                    Machine = MachineType.i386;
+                    break;
+                case Architecture.X64:
+                    Machine = MachineType.x86_64;
+                    break;
+                case Architecture.Arm:
+                    Machine = MachineType.armv7l;
+                    break;
+                case Architecture.Arm64:
+                    Machine = MachineType.aarch64;
+                    break;
+                default:
+                    Machine = MachineType.Other;
+                    break;
+            }
+#endif
         }
 
         // called *without* the GIL acquired by clr._AtExit
@@ -552,6 +582,16 @@ namespace Python.Runtime
         internal static IntPtr PyFalse;
         internal static IntPtr PyNone;
         internal static IntPtr Error;
+
+        public static PyObject None
+        {
+            get
+            {
+                var none = Runtime.PyNone;
+                Runtime.XIncref(none);
+                return new PyObject(none);
+            }
+        }
 
         /// <summary>
         /// Check if any Python Exceptions occurred.
@@ -729,6 +769,7 @@ namespace Python.Runtime
 #endif
         }
 
+        [Pure]
         internal static unsafe long Refcount(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG
@@ -886,7 +927,11 @@ namespace Python.Runtime
         internal static extern int PyRun_SimpleString(string code);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern NewReference PyRun_String(string code, RunFlagType st, IntPtr globals, IntPtr locals);
+#if PYTHON2
+        internal static extern NewReference PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
+#else
+        internal static extern NewReference PyRun_String([MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string code, IntPtr st, IntPtr globals, IntPtr locals);
+#endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
@@ -1996,6 +2041,11 @@ namespace Python.Runtime
             return (t == tp) || PyType_IsSubtype(t, tp);
         }
 
+        internal static bool PyType_IsSameAsOrSubtype(IntPtr type, IntPtr ofType)
+        {
+            return (type == ofType) || PyType_IsSubtype(type, ofType);
+        }
+
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyType_GenericNew(IntPtr type, IntPtr args, IntPtr kw);
 
@@ -2008,7 +2058,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);
@@ -2103,6 +2153,16 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
+
+        //====================================================================
+        // Cell API
+        //====================================================================
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyCell_Get(BorrowedReference cell);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyCell_Set(BorrowedReference cell, IntPtr value);
 
         //====================================================================
         // Python GC API

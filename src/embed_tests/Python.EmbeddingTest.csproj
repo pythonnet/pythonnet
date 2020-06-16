@@ -83,6 +83,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodecGroups.cs" />
     <Compile Include="Codecs.cs" />
     <Compile Include="dynamic.cs" />
     <Compile Include="pyimport.cs" />

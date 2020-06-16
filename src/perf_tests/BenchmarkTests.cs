@@ -30,14 +30,14 @@ namespace Python.PerformanceTests
         public void ReadInt64Property()
         {
             double optimisticPerfRatio = GetOptimisticPerfRatio(this.summary.Reports);
-            AssertPerformanceIsBetterOrSame(optimisticPerfRatio, target: 0.66);
+            AssertPerformanceIsBetterOrSame(optimisticPerfRatio, target: 0.57);
         }
 
         [Test]
         public void WriteInt64Property()
         {
             double optimisticPerfRatio = GetOptimisticPerfRatio(this.summary.Reports);
-            AssertPerformanceIsBetterOrSame(optimisticPerfRatio, target: 0.64);
+            AssertPerformanceIsBetterOrSame(optimisticPerfRatio, target: 0.57);
         }
 
         static double GetOptimisticPerfRatio(

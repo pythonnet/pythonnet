@@ -398,14 +398,13 @@ class BuildExtPythonnet(build_ext.build_ext):
                 return
             raise
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
-        glib_libs = _check_output("pkg-config --libs glib-2.0", shell=True)
-        glib_cflags = _check_output("pkg-config --cflags glib-2.0", shell=True)
-        cflags = mono_cflags.strip() + " " + glib_cflags.strip()
-        libs = mono_libs.strip() + " " + glib_libs.strip()
+        cflags = mono_cflags.strip()
+        libs = mono_libs.strip()
 
         # build the clr python module
         clr_ext = Extension(
             "clr",
+            language="c++",
             sources=["src/monoclr/pynetinit.c", "src/monoclr/clrmod.c"],
             extra_compile_args=cflags.split(" "),
             extra_link_args=libs.split(" "),
@@ -457,26 +456,20 @@ class BuildExtPythonnet(build_ext.build_ext):
         # trying to search path with help of vswhere when MSBuild 15.0 and higher installed.
         if tool == "msbuild.exe" and use_windows_sdk == False:
             try:
-                basePathes = subprocess.check_output(
+                basePaths = subprocess.check_output(
                     [
                         "tools\\vswhere\\vswhere.exe",
                         "-latest",
                         "-version",
-                        "[15.0, 16.0)",
+                        "[15.0,)",
                         "-requires",
                         "Microsoft.Component.MSBuild",
-                        "-property",
-                        "InstallationPath",
+                        "-find",
+                        "MSBuild\**\Bin\MSBuild.exe",
                     ]
                 ).splitlines()
-                if len(basePathes):
-                    return os.path.join(
-                        basePathes[0].decode(sys.stdout.encoding or "utf-8"),
-                        "MSBuild",
-                        "15.0",
-                        "Bin",
-                        "MSBuild.exe",
-                    )
+                if len(basePaths):
+                    return basePaths[0].decode(sys.stdout.encoding or "utf-8")
             except:
                 pass  # keep trying to search by old method.
 
@@ -528,26 +521,20 @@ class BuildExtPythonnet(build_ext.build_ext):
     def _find_msbuild_tool_15(self):
         """Return full path to one of the Microsoft build tools"""
         try:
-            basePathes = subprocess.check_output(
+            basePaths = subprocess.check_output(
                 [
                     "tools\\vswhere\\vswhere.exe",
                     "-latest",
                     "-version",
-                    "[15.0, 16.0)",
+                    "[15.0,)",
                     "-requires",
                     "Microsoft.Component.MSBuild",
-                    "-property",
-                    "InstallationPath",
+                    "-find",
+                    "MSBuild\**\Bin\MSBuild.exe",
                 ]
             ).splitlines()
-            if len(basePathes):
-                return os.path.join(
-                    basePathes[0].decode(sys.stdout.encoding or "utf-8"),
-                    "MSBuild",
-                    "15.0",
-                    "Bin",
-                    "MSBuild.exe",
-                )
+            if len(basePaths):
+                return basePaths[0].decode(sys.stdout.encoding or "utf-8")
             else:
                 raise RuntimeError("MSBuild >=15.0 could not be found.")
         except subprocess.CalledProcessError as e:
@@ -631,10 +618,6 @@ setupdir = os.path.dirname(__file__)
 if setupdir:
     os.chdir(setupdir)
 
-setup_requires = []
-if not os.path.exists(_get_interop_filename()):
-    setup_requires.append("pycparser")
-
 cmdclass={
     "install": InstallPythonnet,
     "build_ext": BuildExtPythonnet,
@@ -646,13 +629,13 @@ if bdist_wheel:
 
 setup(
     name="pythonnet",
-    version="2.4.1-dev",
+    version="3.0.0dev1",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",
-    author="The Python for .Net developers",
-    author_email="pythondotnet@python.org",
-    setup_requires=setup_requires,
+    author="The Contributors of the Python.NET Project",
+    author_email="pythonnet@python.org",
+    install_requires=["pycparser"],
     long_description=_get_long_description(),
     ext_modules=[Extension("clr", sources=list(_get_source_files()))],
     data_files=[("{install_platlib}", ["{build_lib}/Python.Runtime.dll"])],
@@ -668,6 +651,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",

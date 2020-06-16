@@ -51,7 +51,7 @@ namespace Python.EmbeddingTest
         public void RawListProxy()
         {
             var list = new List<string> {"hello", "world"};
-            var listProxy = list.GetRawPythonProxy();
+            var listProxy = PyObject.FromManagedObject(list);
             var clrObject = (CLRObject)ManagedType.GetManagedObject(listProxy.Handle);
             Assert.AreSame(list, clrObject.inst);
         }
@@ -60,7 +60,7 @@ namespace Python.EmbeddingTest
         public void RawPyObjectProxy()
         {
             var pyObject = "hello world!".ToPython();
-            var pyObjectProxy = pyObject.GetRawPythonProxy();
+            var pyObjectProxy = PyObject.FromManagedObject(pyObject);
             var clrObject = (CLRObject)ManagedType.GetManagedObject(pyObjectProxy.Handle);
             Assert.AreSame(pyObject, clrObject.inst);
 

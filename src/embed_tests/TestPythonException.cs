@@ -54,5 +54,41 @@ namespace Python.EmbeddingTest
                 Assert.That(ex.PythonTypeName, Is.EqualTo("ModuleNotFoundError").Or.EqualTo("ImportError"));
             }
         }
+
+        [Test]
+        public void TestPythonExceptionFormat()
+        {
+            try
+            {
+                PythonEngine.Exec("raise ValueError('Error!')");
+                Assert.Fail("Exception should have been raised");
+            }
+            catch (PythonException ex)
+            {
+                Assert.That(ex.Format(), Does.Contain("Traceback").And.Contains("(most recent call last):").And.Contains("ValueError: Error!"));
+            }
+        }
+
+        [Test]
+        public void TestPythonExceptionFormatNoError()
+        {
+            var ex = new PythonException();
+            Assert.AreEqual(ex.StackTrace, ex.Format());
+        }
+
+        [Test]
+        public void TestPythonExceptionFormatNoTraceback()
+        {
+            try
+            {
+                var module = PythonEngine.ImportModule("really____unknown___module");
+                Assert.Fail("Unknown module should not be loaded");
+            }
+            catch (PythonException ex)
+            {
+                // ImportError/ModuleNotFoundError do not have a traceback when not running in a script 
+                Assert.AreEqual(ex.StackTrace, ex.Format());
+            }
+        }
     }
 }

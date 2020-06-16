@@ -14,7 +14,6 @@ def test_basic_reference_type():
     """Test usage of CLR defined reference types."""
     assert System.String.Empty == ""
 
-
 def test_basic_value_type():
     """Test usage of CLR defined value types."""
     assert System.Int32.MaxValue == 2147483647
@@ -28,7 +27,6 @@ def test_class_standard_attrs():
     assert ClassTest.__module__ == 'Python.Test'
     assert isinstance(ClassTest.__dict__, DictProxyType)
     assert len(ClassTest.__doc__) > 0
-
 
 def test_class_docstrings():
     """Test standard class docstring generation"""
@@ -57,6 +55,14 @@ def test_non_public_class():
 
     with pytest.raises(AttributeError):
         _ = Test.InternalClass
+
+def test_non_exported():
+    """Test [PyExport(false)]"""
+    with pytest.raises(ImportError):
+        from Python.Test import NonExportable
+
+    with pytest.raises(AttributeError):
+        _ = Test.NonExportable
 
 
 def test_basic_subclass():

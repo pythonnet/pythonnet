@@ -28,9 +28,7 @@ namespace Python.Runtime
         public bool Enable { get; set; }
 
         private ConcurrentQueue<IPyDisposable> _objQueue = new ConcurrentQueue<IPyDisposable>();
-        private bool _pending = false;
-        private readonly object _collectingLock = new object();
-        private Task _finalizerTask;
+        private int _throttled;
 
         #region FINALIZER_CHECK
 
@@ -75,19 +73,16 @@ namespace Python.Runtime
             Threshold = 200;
         }
 
-        public void Collect(bool forceDispose = true)
+        [Obsolete("forceDispose parameter is unused. All objects are disposed regardless.")]
+        public void Collect(bool forceDispose) => this.DisposeAll();
+        public void Collect() => this.DisposeAll();
+
+        internal void ThrottledCollect()
         {
-            if (Instance._finalizerTask != null
-                && !Instance._finalizerTask.IsCompleted)
-            {
-                var ts = PythonEngine.BeginAllowThreads();
-                Instance._finalizerTask.Wait();
-                PythonEngine.EndAllowThreads(ts);
-            }
-            else if (forceDispose)
-            {
-                Instance.DisposeAll();
-            }
+            _throttled = unchecked(this._throttled + 1);
+            if (!Enable || _throttled < Threshold) return;
+            _throttled = 0;
+            this.Collect();
         }
 
         public List<WeakReference> GetCollectedObjects()
@@ -101,62 +96,18 @@ namespace Python.Runtime
             {
                 return;
             }
-            if (Runtime.Py_IsInitialized() == 0)
-            {
-                // XXX: Memory will leak if a PyObject finalized after Python shutdown,
-                // for avoiding that case, user should call GC.Collect manual before shutdown.
-                return;
-            }
+
 #if FINALIZER_CHECK
             lock (_queueLock)
 #endif
             {
-                _objQueue.Enqueue(obj);
-            }
-            GC.ReRegisterForFinalize(obj);
-            if (!_pending && _objQueue.Count >= Threshold)
-            {
-                AddPendingCollect();
+                this._objQueue.Enqueue(obj);
             }
         }
 
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() == 0)
-            {
-                Instance._objQueue = new ConcurrentQueue<IPyDisposable>();
-                return;
-            }
-            Instance.Collect(forceDispose: true);
-        }
-
-        private void AddPendingCollect()
-        {
-            if(Monitor.TryEnter(_collectingLock))
-            {
-                try
-                {
-                    if (!_pending)
-                    {
-                        _pending = true;
-                        // should already be complete but just in case
-                        _finalizerTask?.Wait();
-
-                        _finalizerTask = Task.Factory.StartNew(() =>
-                        {
-                            using (Py.GIL())
-                            {
-                                Instance.DisposeAll();
-                                _pending = false;
-                            }
-                        });
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(_collectingLock);
-                }
-            }
+            Instance.DisposeAll();
         }
 
         private void DisposeAll()
@@ -178,12 +129,18 @@ namespace Python.Runtime
                     try
                     {
                         obj.Dispose();
-                        Runtime.CheckExceptionOccurred();
                     }
                     catch (Exception e)
                     {
-                        // We should not bother the main thread
-                        ErrorHandler?.Invoke(this, new ErrorArgs()
+                        var handler = ErrorHandler;
+                        if (handler is null)
+                        {
+                            throw new FinalizationException(
+                                "Python object finalization failed",
+                                disposable: obj, innerException: e);
+                        }
+
+                        handler.Invoke(this, new ErrorArgs()
                         {
                             Error = e
                         });
@@ -266,5 +223,16 @@ namespace Python.Runtime
             indexer.Clear();
         }
 #endif
+    }
+
+    public class FinalizationException : Exception
+    {
+        public IPyDisposable Disposable { get; }
+
+        public FinalizationException(string message, IPyDisposable disposable, Exception innerException)
+            : base(message, innerException)
+        {
+            this.Disposable = disposable ?? throw new ArgumentNullException(nameof(disposable));
+        }
     }
 }

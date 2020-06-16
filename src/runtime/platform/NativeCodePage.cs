@@ -14,6 +14,7 @@ namespace Python.Runtime.Platform
         /// <summary>
         /// Gets the operating system as reported by python's platform.system().
         /// </summary>
+        [Obsolete]
         public static string OperatingSystemName { get; private set; }
 
         /// <summary>
@@ -24,6 +25,7 @@ namespace Python.Runtime.Platform
         /// <summary>
         /// Gets the machine architecture as reported by python's platform.machine().
         /// </summary>
+        [Obsolete]
         public static string MachineName { get; private set; }
 
         /// <summary>
