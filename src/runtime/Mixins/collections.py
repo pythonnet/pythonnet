@@ -36,11 +36,11 @@ class MutableSequenceMixin(SequenceMixin, col.MutableSequence):
 class MappingMixin(CollectionMixin, col.Mapping):
     def __contains__(self, item): return self.ContainsKey(item)
     def keys(self): return self.Keys
-    def items(self): return [(k,self[k]) for k in self.Keys]
+    def items(self): return [(k,self.get(k)) for k in self.Keys]
     def values(self): return self.Values
     def __iter__(self): return self.Keys.__iter__()
     def get(self, key, default=None):
-        existed, item = self.TryGetValue(key)
+        existed, item = self.TryGetValue(key, None)
         return item if existed else default
 
 class MutableMappingMixin(MappingMixin, col.MutableMapping):
@@ -53,7 +53,7 @@ class MutableMappingMixin(MappingMixin, col.MutableMapping):
         self.Clear()
 
     def pop(self, key, default=_UNSET_):
-        existed, item = self.TryGetValue(key)
+        existed, item = self.TryGetValue(key, None)
         if existed:
             self.Remove(key)
             return item
@@ -63,7 +63,7 @@ class MutableMappingMixin(MappingMixin, col.MutableMapping):
             return default
 
     def setdefault(self, key, value=None):
-        existed, item = self.TryGetValue(key)
+        existed, item = self.TryGetValue(key, None)
         if existed:
             return item
         else:
