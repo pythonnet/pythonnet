@@ -39,24 +39,44 @@ class MappingMixin(CollectionMixin, col.Mapping):
     def items(self): return [(k,self[k]) for k in self.Keys]
     def values(self): return self.Values
     def __iter__(self): return self.Keys.__iter__()
-    def get(self, key):
-        _, item = self.TryGetValue(key)
-        return item
+    def get(self, key, default=None):
+        existed, item = self.TryGetValue(key)
+        return item if existed else default
 
 class MutableMappingMixin(MappingMixin, col.MutableMapping):
+    _UNSET_ = object()
+
     def __delitem__(self, key):
-        return self.Remove(key)
+        self.Remove(key)
+
     def clear(self):
         self.Clear()
-    def pop(self, key):
-        return self.Remove(key)
-    def setdefault(self, key, value):
+
+    def pop(self, key, default=_UNSET_):
+        existed, item = self.TryGetValue(key)
+        if existed:
+            self.Remove(key)
+            return item
+        elif default == self._UNSET_:
+            raise KeyError(key)
+        else:
+            return default
+
+    def setdefault(self, key, value=None):
         existed, item = self.TryGetValue(key)
         if existed:
             return item
         else:
             self[key] = value
             return value
-    def update(self, items):
-        for key, value in items:
+
+    def update(self, items, **kwargs):
+        if isinstance(items, col.Mapping):
+            for key, value in items.items():
+                self[key] = value
+        else:
+            for key, value in items:
+                self[key] = value
+
+        for key, value in kwargs.items():
             self[key] = value
