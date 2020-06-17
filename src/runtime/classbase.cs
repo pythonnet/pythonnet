@@ -266,6 +266,7 @@ namespace Python.Runtime
 
                 //otherwise use the standard object.__repr__(inst)
                 IntPtr args = Runtime.PyTuple_New(1);
+                Runtime.XIncref(ob);
                 Runtime.PyTuple_SetItem(args, 0, ob);
                 IntPtr reprFunc = Runtime.PyObject_GetAttrString(Runtime.PyBaseObjectType, "__repr__");
                 var output =  Runtime.PyObject_Call(reprFunc, args, IntPtr.Zero);
