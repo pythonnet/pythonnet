@@ -390,10 +390,6 @@ namespace Python.Runtime
                 {
                     isNewReference = true;
                     op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
-                    if (item != IntPtr.Zero)
-                    {
-                        Runtime.XDecref(item);
-                    }
                 }
             }
             else
