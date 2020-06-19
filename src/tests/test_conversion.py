@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Test CLR <-> Python type conversions."""
 
-from __future__ import unicode_literals
-import System
+import operator
 import pytest
+
+import System
 from Python.Test import ConversionTest, UnicodeString
 from Python.Runtime import PyObjectConversions
 from Python.Runtime.Codecs import RawProxyEncoder
@@ -541,7 +540,7 @@ def test_string_conversion():
     test_unicode_str = u"안녕"
     assert test_unicode_str == str(world.value)
     assert test_unicode_str == str(world.GetString())
-    assert test_unicode_str == (world)
+    assert test_unicode_str == str(world)
 
 
 def test_interface_conversion():

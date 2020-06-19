@@ -135,7 +135,7 @@ def test_python_type_aliasing():
     dict_.Add(1, 1)
     assert dict_[1] == 1
 
-    dict_ = Dictionary[long, long]()
+    dict_ = Dictionary[int, int]()
     assert dict_.Count == 0
     dict_.Add(1, 1)
     assert dict_[1] == 1
