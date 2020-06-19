@@ -150,8 +150,6 @@ VS_KEYS = (
 def _check_output(*args, **kwargs):
     """Check output wrapper for py2/py3 compatibility"""
     output = subprocess.check_output(*args, **kwargs)
-    if PY_MAJOR == 2:
-        return output
     return output.decode("ascii")
 
 
@@ -475,10 +473,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             return path
 
         # Search within registry to find build tools
-        try:  # PY2
-            import _winreg as winreg
-        except ImportError:  # PY3
-            import winreg
+        import winreg
 
         _collect_installed_windows_kits_v10(winreg)
 
