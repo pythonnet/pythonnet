@@ -5,7 +5,7 @@
 import pytest
 import Python.Test as Test
 
-from ._compat import DictProxyType
+from .utils import DictProxyType
 
 
 def test_enum_standard_attrs():

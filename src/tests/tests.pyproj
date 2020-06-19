@@ -28,7 +28,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="__init__.py" />
-    <Compile Include="_compat.py" />
     <Compile Include="_missing_import.py" />
     <Compile Include="leaktest.py" />
     <Compile Include="profile.py" />

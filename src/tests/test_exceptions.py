@@ -277,7 +277,6 @@ def test_python_compat_of_managed_exceptions():
 
     e = OverflowException(msg)
     assert str(e) == msg
-    assert str(e) == msg
 
     assert e.args == (msg,)
     assert isinstance(e.args, tuple)

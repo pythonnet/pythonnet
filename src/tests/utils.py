@@ -5,7 +5,8 @@
 Refactor utility functions and classes
 """
 
-from __future__ import print_function
+DictProxyType = type(object.__dict__)
+
 
 def dprint(msg):
     # Debugging helper to trace thread-related tests.
