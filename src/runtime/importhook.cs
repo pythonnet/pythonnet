@@ -13,7 +13,6 @@ namespace Python.Runtime
         private static MethodWrapper hook;
         private static IntPtr py_clr_module;
 
-#if PYTHON3
         private static IntPtr module_def = IntPtr.Zero;
 
         internal static void InitializeModuleDef()
@@ -33,7 +32,6 @@ namespace Python.Runtime
             ModuleDefOffset.FreeModuleDef(module_def);
             module_def = IntPtr.Zero;
         }
-#endif
 
         /// <summary>
         /// Initialize just the __import__ hook itself.
@@ -82,7 +80,6 @@ namespace Python.Runtime
             // Initialize the clr module and tell Python about it.
             root = new CLRModule();
 
-#if PYTHON3
             // create a python module with the same methods as the clr module-like object
             InitializeModuleDef();
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
@@ -93,10 +90,6 @@ namespace Python.Runtime
             clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
 
             Runtime.PyDict_Update(mod_dict, clr_dict);
-#elif PYTHON2
-            Runtime.XIncref(root.pyHandle); // we are using the module two times
-            py_clr_module = root.pyHandle; // Alias handle for PY2/PY3
-#endif
             IntPtr dict = Runtime.PyImport_GetModuleDict();
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
@@ -118,12 +111,10 @@ namespace Python.Runtime
             bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
             Runtime.XDecref(py_clr_module);
             py_clr_module = IntPtr.Zero;
-#if PYTHON3
             if (shouldFreeDef)
             {
                 ReleaseModuleDef();
             }
-#endif
 
             Runtime.XDecref(root.pyHandle);
             root = null;
@@ -137,13 +128,6 @@ namespace Python.Runtime
         {
             root.InitializePreload();
 
-            if (Runtime.IsPython2)
-            {
-                Runtime.XIncref(py_clr_module);
-                return py_clr_module;
-            }
-
-            // Python 3
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);

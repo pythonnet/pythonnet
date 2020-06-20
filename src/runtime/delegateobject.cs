@@ -96,7 +96,6 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __cmp__ for reflected delegate types.
         /// </summary>
-#if PYTHON3 // TODO: Doesn't PY2 implement tp_richcompare too?
         public new static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
         {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
@@ -126,13 +125,5 @@ namespace Python.Runtime
             Runtime.XIncref(pyfalse);
             return pyfalse;
         }
-#elif PYTHON2
-        public static int tp_compare(IntPtr ob, IntPtr other)
-        {
-            Delegate d1 = GetTrueDelegate(ob);
-            Delegate d2 = GetTrueDelegate(other);
-            return d1 == d2 ? 0 : -1;
-        }
-#endif
     }
 }

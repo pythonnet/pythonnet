@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Test CLR <-> Python type conversions."""
 
-from __future__ import unicode_literals
-import System
+import operator
 import pytest
+
+import System
 from Python.Test import ConversionTest, UnicodeString
 from Python.Runtime import PyObjectConversions
 from Python.Runtime.Codecs import RawProxyEncoder
-
-from ._compat import indexbytes, long, unichr, text_type, PY2, PY3
 
 
 def test_bool_conversion():
@@ -145,8 +142,8 @@ def test_byte_conversion():
 
 def test_char_conversion():
     """Test char conversion."""
-    assert System.Char.MaxValue == unichr(65535)
-    assert System.Char.MinValue == unichr(0)
+    assert System.Char.MaxValue == chr(65535)
+    assert System.Char.MinValue == chr(0)
 
     ob = ConversionTest()
     assert ob.CharField == u'A'
@@ -250,23 +247,23 @@ def test_int32_conversion():
 
 def test_int64_conversion():
     """Test int64 conversion."""
-    assert System.Int64.MaxValue == long(9223372036854775807)
-    assert System.Int64.MinValue == long(-9223372036854775808)
+    assert System.Int64.MaxValue == 9223372036854775807
+    assert System.Int64.MinValue == -9223372036854775808
 
     ob = ConversionTest()
     assert ob.Int64Field == 0
 
-    ob.Int64Field = long(9223372036854775807)
-    assert ob.Int64Field == long(9223372036854775807)
+    ob.Int64Field = 9223372036854775807
+    assert ob.Int64Field == 9223372036854775807
 
-    ob.Int64Field = long(-9223372036854775808)
-    assert ob.Int64Field == long(-9223372036854775808)
+    ob.Int64Field = -9223372036854775808
+    assert ob.Int64Field == -9223372036854775808
 
-    ob.Int64Field = System.Int64(long(9223372036854775807))
-    assert ob.Int64Field == long(9223372036854775807)
+    ob.Int64Field = System.Int64(9223372036854775807)
+    assert ob.Int64Field == 9223372036854775807
 
-    ob.Int64Field = System.Int64(long(-9223372036854775808))
-    assert ob.Int64Field == long(-9223372036854775808)
+    ob.Int64Field = System.Int64(-9223372036854775808)
+    assert ob.Int64Field == -9223372036854775808
 
     with pytest.raises(TypeError):
         ConversionTest().Int64Field = "spam"
@@ -275,16 +272,16 @@ def test_int64_conversion():
         ConversionTest().Int64Field = None
 
     with pytest.raises(OverflowError):
-        ConversionTest().Int64Field = long(9223372036854775808)
+        ConversionTest().Int64Field = 9223372036854775808
 
     with pytest.raises(OverflowError):
-        ConversionTest().Int64Field = long(-9223372036854775809)
+        ConversionTest().Int64Field = -9223372036854775809
 
     with pytest.raises(OverflowError):
-        _ = System.Int64(long(9223372036854775808))
+        _ = System.Int64(9223372036854775808)
 
     with pytest.raises(OverflowError):
-        _ = System.Int64(long(-9223372036854775809))
+        _ = System.Int64(-9223372036854775809)
 
 
 def test_uint16_conversion():
@@ -328,20 +325,20 @@ def test_uint16_conversion():
 
 def test_uint32_conversion():
     """Test uint32 conversion."""
-    assert System.UInt32.MaxValue == long(4294967295)
+    assert System.UInt32.MaxValue == 4294967295
     assert System.UInt32.MinValue == 0
 
     ob = ConversionTest()
     assert ob.UInt32Field == 0
 
-    ob.UInt32Field = long(4294967295)
-    assert ob.UInt32Field == long(4294967295)
+    ob.UInt32Field = 4294967295
+    assert ob.UInt32Field == 4294967295
 
     ob.UInt32Field = -0
     assert ob.UInt32Field == 0
 
-    ob.UInt32Field = System.UInt32(long(4294967295))
-    assert ob.UInt32Field == long(4294967295)
+    ob.UInt32Field = System.UInt32(4294967295)
+    assert ob.UInt32Field == 4294967295
 
     ob.UInt32Field = System.UInt32(0)
     assert ob.UInt32Field == 0
@@ -353,13 +350,13 @@ def test_uint32_conversion():
         ConversionTest().UInt32Field = None
 
     with pytest.raises(OverflowError):
-        ConversionTest().UInt32Field = long(4294967296)
+        ConversionTest().UInt32Field = 4294967296
 
     with pytest.raises(OverflowError):
         ConversionTest().UInt32Field = -1
 
     with pytest.raises(OverflowError):
-        _ = System.UInt32(long(4294967296))
+        _ = System.UInt32(4294967296)
 
     with pytest.raises(OverflowError):
         _ = System.UInt32(-1)
@@ -367,20 +364,20 @@ def test_uint32_conversion():
 
 def test_uint64_conversion():
     """Test uint64 conversion."""
-    assert System.UInt64.MaxValue == long(18446744073709551615)
+    assert System.UInt64.MaxValue == 18446744073709551615
     assert System.UInt64.MinValue == 0
 
     ob = ConversionTest()
     assert ob.UInt64Field == 0
 
-    ob.UInt64Field = long(18446744073709551615)
-    assert ob.UInt64Field == long(18446744073709551615)
+    ob.UInt64Field = 18446744073709551615
+    assert ob.UInt64Field == 18446744073709551615
 
     ob.UInt64Field = -0
     assert ob.UInt64Field == 0
 
-    ob.UInt64Field = System.UInt64(long(18446744073709551615))
-    assert ob.UInt64Field == long(18446744073709551615)
+    ob.UInt64Field = System.UInt64(18446744073709551615)
+    assert ob.UInt64Field == 18446744073709551615
 
     ob.UInt64Field = System.UInt64(0)
     assert ob.UInt64Field == 0
@@ -392,13 +389,13 @@ def test_uint64_conversion():
         ConversionTest().UInt64Field = None
 
     with pytest.raises(OverflowError):
-        ConversionTest().UInt64Field = long(18446744073709551616)
+        ConversionTest().UInt64Field = 18446744073709551616
 
     with pytest.raises(OverflowError):
         ConversionTest().UInt64Field = -1
 
     with pytest.raises(OverflowError):
-        _ = System.UInt64(long(18446744073709551616))
+        _ = System.UInt64((18446744073709551616))
 
     with pytest.raises(OverflowError):
         _ = System.UInt64(-1)
@@ -478,7 +475,7 @@ def test_decimal_conversion():
     max_d = Decimal.Parse("79228162514264337593543950335")
     min_d = Decimal.Parse("-79228162514264337593543950335")
 
-    assert Decimal.ToInt64(Decimal(10)) == long(10)
+    assert Decimal.ToInt64(Decimal(10)) == 10
 
     ob = ConversionTest()
     assert ob.DecimalField == Decimal(0)
@@ -538,14 +535,12 @@ def test_string_conversion():
 
     with pytest.raises(TypeError):
         ConversionTest().StringField = 1
-    
+
     world = UnicodeString()
     test_unicode_str = u"안녕"
-    assert test_unicode_str == text_type(world.value)
-    assert test_unicode_str == text_type(world.GetString())
-    # TODO: not sure what to do for Python 2 here (GH PR #670)
-    if PY3:
-        assert test_unicode_str == text_type(world)
+    assert test_unicode_str == str(world.value)
+    assert test_unicode_str == str(world.GetString())
+    assert test_unicode_str == str(world)
 
 
 def test_interface_conversion():
@@ -641,7 +636,7 @@ def test_enum_conversion():
 def test_null_conversion():
     """Test null conversion."""
     import System
-    
+
     ob = ConversionTest()
 
     ob.StringField = None
@@ -682,7 +677,7 @@ def test_byte_array_conversion():
     ob.ByteArrayField = value
     array = ob.ByteArrayField
     for i, _ in enumerate(value):
-        assert array[i] == indexbytes(value, i)
+        assert array[i] == operator.getitem(value, i)
 
 
 def test_sbyte_array_conversion():
@@ -701,7 +696,7 @@ def test_sbyte_array_conversion():
     ob.SByteArrayField = value
     array = ob.SByteArrayField
     for i, _ in enumerate(value):
-        assert array[i] == indexbytes(value, i)
+        assert array[i] == operator.getitem(value, i)
 
 def test_codecs():
     """Test codec registration from Python"""

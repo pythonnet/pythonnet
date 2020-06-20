@@ -150,8 +150,6 @@ VS_KEYS = (
 def _check_output(*args, **kwargs):
     """Check output wrapper for py2/py3 compatibility"""
     output = subprocess.check_output(*args, **kwargs)
-    if PY_MAJOR == 2:
-        return output
     return output.decode("ascii")
 
 
@@ -255,17 +253,11 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         # Up to Python 3.2 sys.maxunicode is used to determine the size of
         # Py_UNICODE, but from 3.3 onwards Py_UNICODE is a typedef of wchar_t.
-        # TODO: Is this doing the right check for Py27?
-        if sys.version_info[:2] <= (3, 2):
-            unicode_width = 2 if sys.maxunicode < 0x10FFFF else 4
-        else:
-            import ctypes
-
-            unicode_width = ctypes.sizeof(ctypes.c_wchar)
+        import ctypes
+        unicode_width = ctypes.sizeof(ctypes.c_wchar)
 
         defines = [
             "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR),
-            "PYTHON{0}".format(PY_MAJOR),  # Python Major Version
             "UCS{0}".format(unicode_width),
         ]
 
@@ -274,7 +266,6 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         if sys.platform != "win32" and (DEVTOOLS == "Mono" or DEVTOOLS == "dotnet"):
             on_darwin = sys.platform == "darwin"
-            defines.append("MONO_OSX" if on_darwin else "MONO_LINUX")
 
             # Check if --enable-shared was set when Python was built
             enable_shared = sysconfig.get_config_var("Py_ENABLE_SHARED")
@@ -287,6 +278,9 @@ class BuildExtPythonnet(build_ext.build_ext):
 
             if not enable_shared:
                 defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
+
+        if sys.platform == "win32":
+            defines.append("WINDOWS")
 
         if hasattr(sys, "abiflags"):
             if "d" in sys.abiflags:
@@ -479,10 +473,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             return path
 
         # Search within registry to find build tools
-        try:  # PY2
-            import _winreg as winreg
-        except ImportError:  # PY3
-            import winreg
+        import winreg
 
         _collect_installed_windows_kits_v10(winreg)
 
@@ -645,8 +636,6 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: C#",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",

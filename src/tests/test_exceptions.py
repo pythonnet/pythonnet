@@ -6,8 +6,7 @@ import sys
 
 import System
 import pytest
-
-from ._compat import PY2, PY3, pickle, text_type
+import pickle
 
 
 def test_unified_exception_semantics():
@@ -278,7 +277,6 @@ def test_python_compat_of_managed_exceptions():
 
     e = OverflowException(msg)
     assert str(e) == msg
-    assert text_type(e) == msg
 
     assert e.args == (msg,)
     assert isinstance(e.args, tuple)
@@ -321,7 +319,6 @@ def test_pickling_exceptions():
     assert exc.args == loaded.args
 
 
-@pytest.mark.skipif(PY2, reason="__cause__ isn't implemented in PY2")
 def test_chained_exceptions():
     from Python.Test import ExceptionTest
 

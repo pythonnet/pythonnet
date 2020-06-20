@@ -25,9 +25,7 @@ namespace Python.EmbeddingTest {
                 dynamic callWith42 = PythonEngine.Eval("lambda f: f([42])");
                 var error =  Assert.Throws<PythonException>(() => callWith42(aFunctionThatCallsIntoPython.ToPython()));
                 Assert.AreEqual("TypeError", error.PythonTypeName);
-                string expectedArgTypes = Runtime.IsPython2
-                    ? "(<type 'list'>)"
-                    : "(<class 'list'>)";
+                string expectedArgTypes = "(<class 'list'>)";
                 StringAssert.EndsWith(expectedArgTypes, error.Message);
             }
         }

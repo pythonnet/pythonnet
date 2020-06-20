@@ -5,7 +5,7 @@
 import pytest
 import Python.Test as Test
 
-from ._compat import DictProxyType, long
+from .utils import DictProxyType
 
 
 def test_enum_standard_attrs():
@@ -68,23 +68,23 @@ def test_int_enum():
 
 def test_uint_enum():
     """Test uint enum."""
-    assert Test.UIntEnum.Zero == long(0)
-    assert Test.UIntEnum.One == long(1)
-    assert Test.UIntEnum.Two == long(2)
+    assert Test.UIntEnum.Zero == 0
+    assert Test.UIntEnum.One == 1
+    assert Test.UIntEnum.Two == 2
 
 
 def test_long_enum():
     """Test long enum."""
-    assert Test.LongEnum.Zero == long(0)
-    assert Test.LongEnum.One == long(1)
-    assert Test.LongEnum.Two == long(2)
+    assert Test.LongEnum.Zero == 0
+    assert Test.LongEnum.One == 1
+    assert Test.LongEnum.Two == 2
 
 
 def test_ulong_enum():
     """Test ulong enum."""
-    assert Test.ULongEnum.Zero == long(0)
-    assert Test.ULongEnum.One == long(1)
-    assert Test.ULongEnum.Two == long(2)
+    assert Test.ULongEnum.Zero == 0
+    assert Test.ULongEnum.One == 1
+    assert Test.ULongEnum.Two == 2
 
 
 def test_instantiate_enum_fails():

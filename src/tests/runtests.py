@@ -8,8 +8,6 @@ from __future__ import print_function
 import sys
 import pytest
 
-from ._compat import input
-
 try:
     import System
 except ImportError:

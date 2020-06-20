@@ -96,10 +96,6 @@ namespace Python.Runtime
             }
             set
             {
-                if (Runtime.IsPython2)
-                {
-                    throw new NotSupportedException("Set PythonPath not supported on Python 2");
-                }
                 Marshal.FreeHGlobal(_pythonPath);
                 _pythonPath = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
                 Runtime.Py_SetPath(_pythonPath);
@@ -255,11 +251,7 @@ namespace Python.Runtime
         /// CPython interpreter process - this bootstraps the managed runtime
         /// when it is imported by the CLR extension module.
         /// </summary>
-#if PYTHON3
         public static IntPtr InitExt()
-#elif PYTHON2
-        public static void InitExt()
-#endif
         {
             try
             {
@@ -299,14 +291,10 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 e.Restore();
-#if PYTHON3
                 return IntPtr.Zero;
-#endif
             }
 
-#if PYTHON3
             return Python.Runtime.ImportHook.GetCLRModule();
-#endif
         }
 
         /// <summary>
@@ -322,7 +310,7 @@ namespace Python.Runtime
             if (initialized)
             {
                 PyScopeManager.Global.Clear();
-                
+
                 // If the shutdown handlers trigger a domain unload,
                 // don't call shutdown again.
                 AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
@@ -588,7 +576,7 @@ namespace Python.Runtime
                     borrowedGlobals = false;
                 }
             }
-            
+
             if (locals == null)
             {
                 locals = globals;
@@ -651,7 +639,7 @@ namespace Python.Runtime
             var scope = PyScopeManager.Global.Create(name);
             return scope;
         }
-        
+
         public class GILState : IDisposable
         {
             private readonly IntPtr state;
@@ -752,7 +740,7 @@ namespace Python.Runtime
 
         public static void With(PyObject obj, Action<dynamic> Body)
         {
-            // Behavior described here: 
+            // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
             IntPtr type = Runtime.PyNone;

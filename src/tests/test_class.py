@@ -7,7 +7,7 @@ import Python.Test as Test
 import System
 import pytest
 
-from ._compat import DictProxyType, range
+from .utils import DictProxyType
 
 
 def test_basic_reference_type():
