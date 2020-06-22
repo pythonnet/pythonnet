@@ -15,24 +15,21 @@ environment:
     CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
+    - PYTHON_VERSION: 3.8
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.7
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.6
+      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.5
+      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 2.7 
       BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.5
-      BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.6
-      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.8
     - PYTHON_VERSION: 3.7
-      BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.6
+    - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 2.7
-    - PYTHON_VERSION: 3.5
-    - PYTHON_VERSION: 3.6
-    - PYTHON_VERSION: 3.7
-
-matrix:
-    allow_failures:
-      - PYTHON_VERSION: 3.4
-        BUILD_OPTS: --xplat
-      - PYTHON_VERSION: 3.4
 
 init:
   # Update Environment Variables based on matrix/platform
@@ -57,9 +54,8 @@ build_script:
   - coverage run setup.py bdist_wheel %BUILD_OPTS%
 
 test_script:
-  - pip install --no-index --find-links=.\dist\ pythonnet
+  - pip install --find-links=.\dist\ pythonnet
   - ps: .\ci\appveyor_run_tests.ps1
-  - ps: .\ci\appveyor_build_recipe.ps1
 
 on_finish:
   # Temporary disable multiple upload due to codecov limit of 20 per commit.
