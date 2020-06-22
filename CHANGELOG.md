@@ -16,6 +16,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
 -    Fix incorrect dereference in params array handling
+-   Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
 
 ## [2.5.0][] - 2020-06-14
 
@@ -68,12 +69,6 @@ This version improves performance on benchmarks significantly compared to 2.3.
 -   Fill `__classcell__` correctly for Python subclasses of .NET types
 -   Fixed issue with params methods that are not passed an array.
 -   Use UTF8 to encode strings passed to `PyRun_String` on Python 3
--   Fixed runtime that fails loading when using pythonnet in an environment
-    together with Nuitka
--   Fixes bug where delegates get casts (dotnetcore)
--   Determine size of interpreter longs at runtime
--   Handling exceptions ocurred in ModuleObject's getattribute
--   Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
 
 ## [2.4.0][] - 2019-05-15
 
