@@ -39,7 +39,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conda.recipe", "conda.recip
 	ProjectSection(SolutionItems) = preProject
 		conda.recipe\bld.bat = conda.recipe\bld.bat
 		conda.recipe\meta.yaml = conda.recipe\meta.yaml
-		conda.recipe\README.md = conda.recipe\README.md
 	EndProjectSection
 EndProject
 Global

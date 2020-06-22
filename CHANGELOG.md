@@ -9,6 +9,11 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+-    Improved exception handling:
+  -  exceptions can now be converted with codecs
+  -  `InnerException` and `__cause__` are propagated properly
+  - .NET and Python exceptions are preserved when crossing Python/.NET boundary
+
 ### Changed
 
 ### Fixed
