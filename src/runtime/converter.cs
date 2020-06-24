@@ -113,6 +113,23 @@ namespace Python.Runtime
             return ToPython(value, typeof(T));
         }
 
+        private static readonly Func<object, bool> IsTransparentProxy = GetIsTransparentProxy();
+
+        private static bool Never(object _) => false;
+
+        private static Func<object, bool> GetIsTransparentProxy()
+        {
+            var remoting = typeof(int).Assembly.GetType("System.Runtime.Remoting.RemotingServices");
+            if (remoting is null) return Never;
+
+            var isProxy = remoting.GetMethod("IsTransparentProxy", new[] { typeof(object) });
+            if (isProxy is null) return Never;
+
+            return (Func<object, bool>)Delegate.CreateDelegate(
+              typeof(Func<object, bool>), isProxy,
+              throwOnBindFailure: true);
+        }
+
         internal static IntPtr ToPython(object value, Type type)
         {
             if (value is PyObject)
@@ -162,7 +179,8 @@ namespace Python.Runtime
             var pyderived = value as IPythonDerivedType;
             if (null != pyderived)
             {
-                return ClassDerivedObject.ToPython(pyderived);
+                if (!IsTransparentProxy(pyderived))
+                    return ClassDerivedObject.ToPython(pyderived);
             }
 
             // hmm - from Python, we almost never care what the declared
