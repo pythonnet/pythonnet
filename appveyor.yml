@@ -28,9 +28,9 @@ environment:
     - PYTHON_VERSION: 3.7
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.5
-
-matrix:
     - PYTHON_VERSION: 3.7
+      PYTHONNET_SOFT_SHUTDOWN: 1
+    - PYTHON_VERSION: 3.8
       PYTHONNET_SOFT_SHUTDOWN: 1
 init:
   # Update Environment Variables based on matrix/platform
