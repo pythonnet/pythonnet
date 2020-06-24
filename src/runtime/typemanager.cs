@@ -564,20 +564,13 @@ namespace Python.Runtime
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-#if PYTHON3
             IntPtr temp = Runtime.PyUnicode_FromString(name);
             IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
-#elif PYTHON2
-            IntPtr temp = Runtime.PyString_FromString(name);
-            IntPtr raw = Runtime.PyString_AsString(temp);
-#endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
 
-#if PYTHON3
             Runtime.XIncref(temp);
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
-#endif
             temp = type + TypeOffset.nb_add;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_number, temp);
 
@@ -587,11 +580,7 @@ namespace Python.Runtime
             temp = type + TypeOffset.mp_length;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
-#if PYTHON3
             temp = type + TypeOffset.bf_getbuffer;
-#elif PYTHON2
-            temp = type + TypeOffset.bf_getreadbuffer;
-#endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
             return type;
         }

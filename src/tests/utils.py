@@ -5,9 +5,7 @@
 Refactor utility functions and classes
 """
 
-from __future__ import print_function
-
-from ._compat import PY2, PY3
+DictProxyType = type(object.__dict__)
 
 
 def dprint(msg):
@@ -21,11 +19,8 @@ def is_clr_module(ob):
 
 
 def is_clr_root_module(ob):
-    if PY3:
-        # in Python 3 the clr module is a normal python module
-        return ob.__name__ == "clr"
-    elif PY2:
-        return type(ob).__name__ == 'CLRModule'
+    # in Python 3 the clr module is a normal python module
+    return ob.__name__ == "clr"
 
 
 def is_clr_class(ob):

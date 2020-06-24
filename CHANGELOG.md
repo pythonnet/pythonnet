@@ -10,8 +10,12 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 ### Changed
+-   Drop support for Python 2
 
 ### Fixed
+
+-    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
+-    Fix incorrect dereference in params array handling
 
 ## [2.5.0][] - 2020-06-14
 

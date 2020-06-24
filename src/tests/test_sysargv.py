@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Test sys.argv state."""
 
 import sys
-
-from ._compat import check_output
+from subprocess import check_output
 
 
 def test_sys_argv_state(filepath):
@@ -14,5 +11,5 @@ def test_sys_argv_state(filepath):
 
     script = filepath("argv-fixture.py")
     out = check_output([sys.executable, script, "foo", "bar"])
-    assert "foo" in out
-    assert "bar" in out
+    assert b"foo" in out
+    assert b"bar" in out

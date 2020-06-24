@@ -12,8 +12,6 @@ from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
                          FunctionsTest)
 from System.Collections.Generic import List
 
-from ._compat import range
-
 
 def interface_test_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
