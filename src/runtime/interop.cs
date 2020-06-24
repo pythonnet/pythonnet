@@ -71,18 +71,7 @@ namespace Python.Runtime
 
     internal static partial class TypeOffset
     {
-        public static int magic() => ManagedDataOffsets.Magic;
-    }
-
-    internal static class ManagedDataOffsets
-    {
-        public static int Magic { get; private set; }
-        public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
-
-        public static readonly int ob_data;
-        public static readonly int ob_dict;
-
-        static ManagedDataOffsets()
+        static TypeOffset()
         {
             Type type = typeof(TypeOffset);
             FieldInfo[] fields = type.GetFields();
@@ -92,10 +81,44 @@ namespace Python.Runtime
                 int offset = i * size;
                 FieldInfo fi = fields[i];
                 fi.SetValue(null, offset);
-                NameMapping[fi.Name] = offset;
+            }
+        }
+
+        public static int magic() => ManagedDataOffsets.Magic;
+    }
+
+    internal static class ManagedDataOffsets
+    {
+        public static int Magic { get; private set; }
+        public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
+
+        static class DataOffsets
+        {
+            public static readonly int ob_data;
+            public static readonly int ob_dict;
+
+            static DataOffsets()
+            {
+                FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
+                for (int i = 0; i < fields.Length; i++)
+                {
+                    fields[i].SetValue(null, -(i * IntPtr.Size) - IntPtr.Size);
+                }
+            }
+        }
+
+        static ManagedDataOffsets()
+        {
+            Type type = typeof(TypeOffset);
+            foreach (FieldInfo fi in type.GetFields())
+            {
+                NameMapping[fi.Name] = (int)fi.GetValue(null);
             }
             // XXX: Use the members after PyHeapTypeObject as magic slot
             Magic = TypeOffset.members;
+
+            FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
+            size = fields.Length * IntPtr.Size;
         }
 
         public static int GetSlotOffset(string name)
@@ -107,20 +130,22 @@ namespace Python.Runtime
         {
             Debug.Assert(type != IntPtr.Zero);
             int typeSize = Marshal.ReadInt32(type, TypeOffset.tp_basicsize);
-            Debug.Assert(typeSize > 0 && typeSize <= ExceptionOffset.Size());
+            Debug.Assert(typeSize > 0);
             return typeSize;
         }
 
         public static int DataOffset(IntPtr type)
         {
-            return BaseOffset(type) + ob_data;
+            return BaseOffset(type) + DataOffsets.ob_data;
         }
 
         public static int DictOffset(IntPtr type)
         {
-            return BaseOffset(type) + ob_dict;
+            return BaseOffset(type) + DataOffsets.ob_dict;
         }
 
+        public static int ob_data => DataOffsets.ob_data;
+        public static int ob_dict => DataOffsets.ob_dict;
         public static int Size { get { return size; } }
 
         private static readonly int size;
