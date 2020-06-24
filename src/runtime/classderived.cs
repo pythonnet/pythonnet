@@ -135,7 +135,7 @@ namespace Python.Runtime
 
             if (null == assemblyName)
             {
-                assemblyName = Assembly.GetExecutingAssembly().FullName;
+                assemblyName = "Python.Runtime.Dynamic";
             }
 
             ModuleBuilder moduleBuilder = GetModuleBuilder(assemblyName, moduleName);
