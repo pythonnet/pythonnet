@@ -465,7 +465,7 @@ namespace Python.Runtime
         public static PyObject ImportModule(string name)
         {
             IntPtr op = Runtime.PyImport_ImportModule(name);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(op);
             return new PyObject(op);
         }
 
@@ -480,7 +480,7 @@ namespace Python.Runtime
         public static PyObject ReloadModule(PyObject module)
         {
             IntPtr op = Runtime.PyImport_ReloadModule(module.Handle);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(op);
             return new PyObject(op);
         }
 
@@ -495,9 +495,9 @@ namespace Python.Runtime
         public static PyObject ModuleFromString(string name, string code)
         {
             IntPtr c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(c);
             IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(m);
             return new PyObject(m);
         }
 
@@ -505,7 +505,7 @@ namespace Python.Runtime
         {
             var flag = (int)mode;
             IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(ptr);
             return new PyObject(ptr);
         }
 
@@ -587,17 +587,8 @@ namespace Python.Runtime
                 NewReference result = Runtime.PyRun_String(
                     code, (IntPtr)flag, globals.Value, locals.Value
                 );
-
-                try
-                {
-                    Runtime.CheckExceptionOccurred();
-
-                    return result.MoveToPyObject();
-                }
-                finally
-                {
-                    result.Dispose();
-                }
+                PythonException.ThrowIfIsNull(result);
+                return result.MoveToPyObject();
             }
             finally
             {

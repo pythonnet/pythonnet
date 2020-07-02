@@ -758,7 +758,10 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     double dd = Runtime.PyFloat_AsDouble(op);
-                    Runtime.CheckExceptionOccurred();
+                    if (dd == -1.0)
+                    {
+                        Runtime.CheckExceptionOccurred();
+                    }
                     Runtime.XDecref(op);
                     if (dd > Single.MaxValue || dd < Single.MinValue)
                     {
@@ -777,7 +780,10 @@ namespace Python.Runtime
                         goto type_error;
                     }
                     double d = Runtime.PyFloat_AsDouble(op);
-                    Runtime.CheckExceptionOccurred();
+                    if (d == -1.0)
+                    {
+                        Runtime.CheckExceptionOccurred();
+                    }
                     Runtime.XDecref(op);
                     result = d;
                     return true;
