@@ -16,8 +16,6 @@ environment:
 
   matrix:
     - PYTHON_VERSION: 3.8
-    - PYTHON_VERSION: 2.7
-      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.7
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.6
