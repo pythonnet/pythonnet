@@ -8,7 +8,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [Unreleased][]
 
 ### Added
-
+- CustomConverters (Codecs) which allow to convert Python <=> .Net
 ### Changed
 -   Drop support for Python 2
 
