@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using Python.Runtime;
-using System;
 using System.Runtime.InteropServices;
 
 namespace Python.EmbeddingTest

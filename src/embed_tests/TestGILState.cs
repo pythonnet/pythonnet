@@ -1,6 +1,5 @@
 namespace Python.EmbeddingTest
 {
-    using System;
     using NUnit.Framework;
     using Python.Runtime;
 

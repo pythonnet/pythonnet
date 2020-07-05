@@ -21,7 +21,6 @@ namespace Python.EmbeddingTest
     {
         private IntPtr _gs;
 
-
         [SetUp]
         public void SetUp()
         {

@@ -11,7 +11,7 @@ namespace Python.EmbeddingTest
         [SetUp]
         public void SetUp()
         {
-             _gs = Py.GIL();
+            _gs = Py.GIL();
         }
 
         [TearDown]
