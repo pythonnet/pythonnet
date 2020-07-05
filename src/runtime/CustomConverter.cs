@@ -46,7 +46,7 @@ namespace Python.Runtime
             RegisterToNet(typeof(T), t => converter(t));
         }
 
-        public static void RegisterToNet(Type type, Func<PyObject, object> converter)
+        private static void RegisterToNet(Type type, Func<PyObject, object> converter)
         {
             if (!_converterToNet.ContainsKey(type))
                 _converterToNet.Add(type, converter);

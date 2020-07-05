@@ -1,5 +1,6 @@
 namespace Python.EmbeddingTest
 {
+    using System;
     using NUnit.Framework;
     using Python.Runtime;
 
@@ -10,6 +11,10 @@ namespace Python.EmbeddingTest
         [SetUp]
         public void SetUp()
         {
+            string path = @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38;";
+            Environment.SetEnvironmentVariable("PATH", path, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("PYTHONHOME", @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38", EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("PYTHONPATH ", @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38\DLLs", EnvironmentVariableTarget.Process);
             _gs = Py.GIL();
         }
 
