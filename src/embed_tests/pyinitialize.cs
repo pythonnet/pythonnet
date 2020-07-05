@@ -6,14 +6,6 @@ namespace Python.EmbeddingTest
 {
     public class PyInitializeTest
     {
-        [SetUp]
-        public void SetUp()
-        {
-            string path = @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38;";
-            Environment.SetEnvironmentVariable("PATH", path, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("PYTHONHOME", @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38", EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("PYTHONPATH ", @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38\DLLs", EnvironmentVariableTarget.Process);
-        }
         /// <summary>
         /// Tests issue with multiple simple Initialize/Shutdowns.
         /// Fixed by #343

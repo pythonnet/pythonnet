@@ -10,10 +10,6 @@ namespace Python.EmbeddingTest
         [SetUp]
         public static void Init()
         {
-            string path = @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38;";
-            Environment.SetEnvironmentVariable("PATH", path, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("PYTHONHOME", @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38", EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("PYTHONPATH ", @"C:\Users\Sofiane\AppData\Local\Programs\Python\Python38\DLLs", EnvironmentVariableTarget.Process);
             Runtime.Runtime.Initialize();
         }
 
