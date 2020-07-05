@@ -70,4 +70,5 @@
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
+-	Sofiane BOURAGBA ZRIF ([@ZrifBSofiane](https://github.com/ZrifBSofiane))
 
