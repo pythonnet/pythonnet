@@ -346,6 +346,10 @@ namespace Python.Runtime
         /// </summary>
         internal static void ScanAssembly(Assembly assembly)
         {
+            if (assembly.GetCustomAttribute<PyExportAttribute>()?.Export == false)
+            {
+                return;
+            }
             // A couple of things we want to do here: first, we want to
             // gather a list of all of the namespaces contributed to by
             // the assembly.
@@ -458,7 +462,7 @@ namespace Python.Runtime
             foreach (Assembly assembly in assemblies)
             {
                 Type type = assembly.GetType(qname);
-                if (type != null)
+                if (type != null && IsExported(type))
                 {
                     return type;
                 }
@@ -472,7 +476,7 @@ namespace Python.Runtime
         /// type.
         /// </summary>
         public static IEnumerable<Type> LookupTypes(string qualifiedName)
-            => assemblies.Select(assembly => assembly.GetType(qualifiedName)).Where(type => type != null);
+            => assemblies.Select(assembly => assembly.GetType(qualifiedName)).Where(type => type != null && IsExported(type));
 
         internal static Type[] GetTypes(Assembly a)
         {
@@ -480,19 +484,19 @@ namespace Python.Runtime
             {
                 try
                 {
-                    return a.GetTypes();
+                    return a.GetTypes().Where(IsExported).ToArray();
                 }
                 catch (ReflectionTypeLoadException exc)
                 {
                     // Return all types that were successfully loaded
-                    return exc.Types.Where(x => x != null).ToArray();
+                    return exc.Types.Where(x => x != null && IsExported(x)).ToArray();
                 }
             }
             else
             {
                 try
                 {
-                    return a.GetExportedTypes();
+                    return a.GetExportedTypes().Where(IsExported).ToArray();
                 }
                 catch (FileNotFoundException)
                 {
@@ -500,5 +504,7 @@ namespace Python.Runtime
                 }
             }
         }
+
+        static bool IsExported(Type type) => type.GetCustomAttribute<PyExportAttribute>()?.Export != false;
     }
 }

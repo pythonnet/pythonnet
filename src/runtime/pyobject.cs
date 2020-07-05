@@ -30,8 +30,6 @@ namespace Python.Runtime
 #endif  
 
         protected internal IntPtr obj = IntPtr.Zero;
-        private bool disposed = false;
-        private bool _finalized = false;
 
         internal BorrowedReference Reference => new BorrowedReference(obj);
 
@@ -49,6 +47,7 @@ namespace Python.Runtime
             if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
 
             obj = ptr;
+            Finalizer.Instance.ThrottledCollect();
 #if TRACE_ALLOC
             Traceback = new StackTrace(1);
 #endif
@@ -64,6 +63,7 @@ namespace Python.Runtime
             if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
 
             obj = Runtime.SelfIncRef(reference.DangerousGetAddress());
+            Finalizer.Instance.ThrottledCollect();
 #if TRACE_ALLOC
             Traceback = new StackTrace(1);
 #endif
@@ -74,6 +74,7 @@ namespace Python.Runtime
         [Obsolete("Please, always use PyObject(*Reference)")]
         protected PyObject()
         {
+            Finalizer.Instance.ThrottledCollect();
 #if TRACE_ALLOC
             Traceback = new StackTrace(1);
 #endif
@@ -87,12 +88,6 @@ namespace Python.Runtime
             {
                 return;
             }
-            if (_finalized || disposed)
-            {
-                return;
-            }
-            // Prevent a infinity loop by calling GC.WaitForPendingFinalizers
-            _finalized = true;
             Finalizer.Instance.AddFinalizedObject(this);
         }
 
@@ -111,7 +106,8 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// FromManagedObject Method
+        /// Gets raw Python proxy for this object (bypasses all conversions,
+        /// except <c>null</c> &lt;==&gt; <c>None</c>)
         /// </summary>
         /// <remarks>
         /// Given an arbitrary managed object, return a Python instance that
@@ -182,17 +178,41 @@ namespace Python.Runtime
         /// </remarks>
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (this.obj == IntPtr.Zero)
             {
-                if (Runtime.Py_IsInitialized() > 0 && !Runtime.IsFinalizing)
-                {
-                    IntPtr gs = PythonEngine.AcquireLock();
-                    Runtime.XDecref(obj);
-                    obj = IntPtr.Zero;
-                    PythonEngine.ReleaseLock(gs);
-                }
-                disposed = true;
+                return;
             }
+
+            if (Runtime.Py_IsInitialized() == 0)
+                throw new InvalidOperationException("Python runtime must be initialized");
+
+            if (!Runtime.IsFinalizing)
+            {
+                long refcount = Runtime.Refcount(this.obj);
+                Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+
+                if (refcount == 1)
+                {
+                    Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+
+                    try
+                    {
+                        Runtime.XDecref(this.obj);
+                        Runtime.CheckExceptionOccurred();
+                    }
+                    finally
+                    {
+                        // Python requires finalizers to preserve exception:
+                        // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                        Runtime.PyErr_Restore(errType, errVal, traceback);
+                    }
+                }
+                else
+                {
+                    Runtime.XDecref(this.obj);
+                }
+            }
+            this.obj = IntPtr.Zero;
         }
 
         public void Dispose()
@@ -978,6 +998,10 @@ namespace Python.Runtime
             return Runtime.PyObject_IsTrue(obj) != 0;
         }
 
+        /// <summary>
+        /// Return true if the object is None
+        /// </summary>
+        public bool IsNone() => CheckNone(this) == null;
 
         /// <summary>
         /// Dir Method

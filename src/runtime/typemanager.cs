@@ -87,7 +87,7 @@ namespace Python.Runtime
             // Set tp_basicsize to the size of our managed instance objects.
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
 
-            var offset = (IntPtr)ObjectOffset.DictOffset(type);
+            var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             InitializeSlots(type, impl);
@@ -125,7 +125,6 @@ namespace Python.Runtime
 
             IntPtr base_ = IntPtr.Zero;
             int ob_size = ObjectOffset.Size(Runtime.PyTypeType);
-            int tp_dictoffset = ObjectOffset.DictOffset(Runtime.PyTypeType);
 
             // XXX Hack, use a different base class for System.Exception
             // Python 2.5+ allows new style class exceptions but they *must*
@@ -133,8 +132,9 @@ namespace Python.Runtime
             if (typeof(Exception).IsAssignableFrom(clrType))
             {
                 ob_size = ObjectOffset.Size(Exceptions.Exception);
-                tp_dictoffset = ObjectOffset.DictOffset(Exceptions.Exception);
             }
+
+            int tp_dictoffset = ob_size + ManagedDataOffsets.ob_dict;
 
             if (clrType == typeof(Exception))
             {
@@ -279,6 +279,14 @@ namespace Python.Runtime
                 // derived class we want the python overrides in there instead if they exist.
                 IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
                 Runtime.PyDict_Update(cls_dict, py_dict);
+
+                // Update the __classcell__ if it exists
+                var cell = new BorrowedReference(Runtime.PyDict_GetItemString(cls_dict, "__classcell__"));
+                if (!cell.IsNull)
+                {
+                    Runtime.PyCell_Set(cell, py_type);
+                    Runtime.PyDict_DelItemString(cls_dict, "__classcell__");
+                }
 
                 return py_type;
             }
@@ -425,19 +433,12 @@ namespace Python.Runtime
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-#if PYTHON3
             IntPtr temp = Runtime.PyUnicode_FromString(name);
             IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
-#elif PYTHON2
-            IntPtr temp = Runtime.PyString_FromString(name);
-            IntPtr raw = Runtime.PyString_AsString(temp);
-#endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
 
-#if PYTHON3
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
-#endif
 
             long ptr = type.ToInt64(); // 64-bit safe
 
@@ -450,11 +451,7 @@ namespace Python.Runtime
             temp = new IntPtr(ptr + TypeOffset.mp_length);
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
-#if PYTHON3
             temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
-#elif PYTHON2
-            temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
-#endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
             return type;
         }
@@ -617,7 +614,9 @@ namespace Python.Runtime
                         case OperatingSystemType.Linux:
                             return 0x20;
                         default:
-                            throw new NotImplementedException($"mmap is not supported on {Runtime.OperatingSystemName}");
+                            throw new NotImplementedException(
+                                $"mmap is not supported on {Runtime.OperatingSystem}"
+                            );
                     }
                 }
             }
@@ -651,7 +650,9 @@ namespace Python.Runtime
                 case OperatingSystemType.Windows:
                     return new WindowsMemoryMapper();
                 default:
-                    throw new NotImplementedException($"No support for {Runtime.OperatingSystemName}");
+                    throw new NotImplementedException(
+                        $"No support for {Runtime.OperatingSystem}"
+                    );
             }
         }
 

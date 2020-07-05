@@ -5,7 +5,7 @@
 import Python.Test as Test
 import pytest
 
-from ._compat import DictProxyType
+from .utils import DictProxyType
 
 
 def test_interface_standard_attrs():

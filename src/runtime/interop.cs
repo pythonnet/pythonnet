@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
-using System.Collections.Specialized;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
@@ -68,11 +69,47 @@ namespace Python.Runtime
         }
     }
 
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal class ObjectOffset
+    internal static class ManagedDataOffsets
     {
-        static ObjectOffset()
+        static ManagedDataOffsets()
+        {
+            FieldInfo[] fi = typeof(ManagedDataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
+            for (int i = 0; i < fi.Length; i++)
+            {
+                fi[i].SetValue(null, -(i * IntPtr.Size) - IntPtr.Size);
+            }
+
+            size = fi.Length * IntPtr.Size;
+        }
+
+        public static readonly int ob_data;
+        public static readonly int ob_dict;
+
+        private static int BaseOffset(IntPtr type)
+        {
+            Debug.Assert(type != IntPtr.Zero);
+            int typeSize = Marshal.ReadInt32(type, TypeOffset.tp_basicsize);
+            Debug.Assert(typeSize > 0 && typeSize <= ExceptionOffset.Size());
+            return typeSize;
+        }
+        public static int DataOffset(IntPtr type)
+        {
+            return BaseOffset(type) + ob_data;
+        }
+
+        public static int DictOffset(IntPtr type)
+        {
+            return BaseOffset(type) + ob_dict;
+        }
+
+        public static int Size { get { return size; } }
+
+        private static readonly int size;
+    }
+
+    internal static class OriginalObjectOffsets
+    {
+        static OriginalObjectOffsets()
         {
             int size = IntPtr.Size;
             var n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD
@@ -83,42 +120,58 @@ namespace Python.Runtime
 #endif
             ob_refcnt = (n + 0) * size;
             ob_type = (n + 1) * size;
-            ob_dict = (n + 2) * size;
-            ob_data = (n + 3) * size;
         }
 
-        public static int magic(IntPtr ob)
+        public static int Size { get { return size; } }
+
+        private static readonly int size =
+#if PYTHON_WITH_PYDEBUG
+            4 * IntPtr.Size;
+#else
+            2 * IntPtr.Size;
+#endif
+
+#if PYTHON_WITH_PYDEBUG
+        public static int _ob_next;
+        public static int _ob_prev;
+#endif
+        public static int ob_refcnt;
+        public static int ob_type;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal class ObjectOffset
+    {
+        static ObjectOffset()
         {
-            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
-            {
-                return ExceptionOffset.ob_data;
-            }
-            return ob_data;
+#if PYTHON_WITH_PYDEBUG
+            _ob_next = OriginalObjectOffsets._ob_next;
+            _ob_prev = OriginalObjectOffsets._ob_prev;
+#endif
+            ob_refcnt = OriginalObjectOffsets.ob_refcnt;
+            ob_type = OriginalObjectOffsets.ob_type;
+
+            size = OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
         }
 
-        public static int DictOffset(IntPtr ob)
+        public static int magic(IntPtr type)
         {
-            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
-            {
-                return ExceptionOffset.ob_dict;
-            }
-            return ob_dict;
+            return ManagedDataOffsets.DataOffset(type);
         }
 
-        public static int Size(IntPtr ob)
+        public static int TypeDictOffset(IntPtr type)
         {
-            if ((Runtime.PyObject_TypeCheck(ob, Exceptions.BaseException) ||
-                 (Runtime.PyType_Check(ob) && Runtime.PyType_IsSubtype(ob, Exceptions.BaseException))))
+            return ManagedDataOffsets.DictOffset(type);
+        }
+
+        public static int Size(IntPtr pyType)
+        {
+            if (IsException(pyType))
             {
                 return ExceptionOffset.Size();
             }
-#if PYTHON_WITH_PYDEBUG
-            return 6 * IntPtr.Size;
-#else
-            return 4 * IntPtr.Size;
-#endif
+
+            return size;
         }
 
 #if PYTHON_WITH_PYDEBUG
@@ -127,8 +180,15 @@ namespace Python.Runtime
 #endif
         public static int ob_refcnt;
         public static int ob_type;
-        private static int ob_dict;
-        private static int ob_data;
+        private static readonly int size;
+
+        private static bool IsException(IntPtr pyObject)
+        {
+            var type = Runtime.PyObject_TYPE(pyObject);
+            return Runtime.PyType_IsSameAsOrSubtype(type, ofType: Exceptions.BaseException)
+                || Runtime.PyType_IsSameAsOrSubtype(type, ofType: Runtime.PyTypeType)
+                && Runtime.PyType_IsSubtype(pyObject, Exceptions.BaseException);
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -137,39 +197,30 @@ namespace Python.Runtime
         static ExceptionOffset()
         {
             Type type = typeof(ExceptionOffset);
-            FieldInfo[] fi = type.GetFields();
-            int size = IntPtr.Size;
+            FieldInfo[] fi = type.GetFields(BindingFlags.Static | BindingFlags.Public);
             for (int i = 0; i < fi.Length; i++)
             {
-                fi[i].SetValue(null, (i * size) + ObjectOffset.ob_type + size);
+                fi[i].SetValue(null, (i * IntPtr.Size) + OriginalObjectOffsets.Size);
             }
+
+            size = fi.Length * IntPtr.Size + OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
         }
 
-        public static int Size()
-        {
-            return ob_data + IntPtr.Size;
-        }
+        public static int Size() { return size; }
 
         // PyException_HEAD
         // (start after PyObject_HEAD)
         public static int dict = 0;
         public static int args = 0;
-#if PYTHON2
-        public static int message = 0;
-#elif PYTHON3
         public static int traceback = 0;
         public static int context = 0;
         public static int cause = 0;
         public static int suppress_context = 0;
-#endif
 
-        // extra c# data
-        public static int ob_dict;
-        public static int ob_data;
+        private static readonly int size;
     }
 
 
-#if PYTHON3
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class BytesOffset
     {
@@ -260,7 +311,6 @@ namespace Python.Runtime
 
         public static int name = 0;
     }
-#endif // PYTHON3
 
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
@@ -270,17 +320,6 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeFlags
     {
-#if PYTHON2 // these flags were removed in Python 3
-        public static int HaveGetCharBuffer = (1 << 0);
-        public static int HaveSequenceIn = (1 << 1);
-        public static int GC = 0;
-        public static int HaveInPlaceOps = (1 << 3);
-        public static int CheckTypes = (1 << 4);
-        public static int HaveRichCompare = (1 << 5);
-        public static int HaveWeakRefs = (1 << 6);
-        public static int HaveIter = (1 << 7);
-        public static int HaveClass = (1 << 8);
-#endif
         public static int HeapType = (1 << 9);
         public static int BaseType = (1 << 10);
         public static int Ready = (1 << 12);
@@ -308,23 +347,9 @@ namespace Python.Runtime
         public static int BaseExceptionSubclass = (1 << 30);
         public static int TypeSubclass = (1 << 31);
 
-#if PYTHON2 // Default flags for Python 2
-        public static int Default = (
-            HaveGetCharBuffer |
-            HaveSequenceIn |
-            HaveInPlaceOps |
-            HaveRichCompare |
-            HaveWeakRefs |
-            HaveIter |
-            HaveClass |
-            HaveStacklessExtension |
-            HaveIndex |
-            0);
-#elif PYTHON3 // Default flags for Python 3
         public static int Default = (
             HaveStacklessExtension |
             HaveVersionTag);
-#endif
     }
 
 
@@ -382,9 +407,6 @@ namespace Python.Runtime
             pmap["nb_add"] = p["BinaryFunc"];
             pmap["nb_subtract"] = p["BinaryFunc"];
             pmap["nb_multiply"] = p["BinaryFunc"];
-#if PYTHON2
-            pmap["nb_divide"] = p["BinaryFunc"];
-#endif
             pmap["nb_remainder"] = p["BinaryFunc"];
             pmap["nb_divmod"] = p["BinaryFunc"];
             pmap["nb_power"] = p["TernaryFunc"];
@@ -407,9 +429,6 @@ namespace Python.Runtime
             pmap["nb_inplace_add"] = p["BinaryFunc"];
             pmap["nb_inplace_subtract"] = p["BinaryFunc"];
             pmap["nb_inplace_multiply"] = p["BinaryFunc"];
-#if PYTHON2
-            pmap["nb_inplace_divide"] = p["BinaryFunc"];
-#endif
             pmap["nb_inplace_remainder"] = p["BinaryFunc"];
             pmap["nb_inplace_power"] = p["TernaryFunc"];
             pmap["nb_inplace_lshift"] = p["BinaryFunc"];

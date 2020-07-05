@@ -6,8 +6,6 @@ import System
 import pytest
 from Python.Test import MethodTest
 
-from ._compat import PY2, long, unichr
-
 
 def test_instance_method_descriptor():
     """Test instance method descriptor behavior."""
@@ -257,6 +255,37 @@ def test_non_params_array_in_last_place():
     result = MethodTest.TestNonParamsArrayInLastPlace(1, 2, 3)
     assert result
 
+def test_params_methods_with_no_params():
+    """Tests that passing no arguments to a params method
+    passes an empty array"""
+    result = MethodTest.TestValueParamsArg()
+    assert len(result) == 0
+
+    result = MethodTest.TestOneArgWithParams('Some String')
+    assert len(result) == 0
+
+    result = MethodTest.TestTwoArgWithParams('Some String', 'Some Other String')
+    assert len(result) == 0
+
+def test_params_methods_with_non_lists():
+    """Tests that passing single parameters to a params
+    method will convert into an array on the .NET side"""
+    result = MethodTest.TestOneArgWithParams('Some String', [1, 2, 3, 4])
+    assert len(result) == 4
+
+    result = MethodTest.TestOneArgWithParams('Some String', 1, 2, 3, 4)
+    assert len(result) == 4
+
+    result = MethodTest.TestOneArgWithParams('Some String', [5])
+    assert len(result) == 1
+
+    result = MethodTest.TestOneArgWithParams('Some String', 5)
+    assert len(result) == 1
+
+def test_params_method_with_lists():
+    """Tests passing multiple lists to a params object[] method"""
+    result = MethodTest.TestObjectParamsArg([],[])
+    assert len(result) == 2
 
 def test_string_out_params():
     """Test use of string out-parameters."""
@@ -473,7 +502,7 @@ def test_explicit_overload_selection():
     assert value == u'A'
 
     value = MethodTest.Overloaded.__overloads__[System.Char](65535)
-    assert value == unichr(65535)
+    assert value == chr(65535)
 
     value = MethodTest.Overloaded.__overloads__[System.Int16](32767)
     assert value == 32767
@@ -485,25 +514,22 @@ def test_explicit_overload_selection():
     assert value == 2147483647
 
     value = MethodTest.Overloaded.__overloads__[System.Int64](
-        long(9223372036854775807))
-    assert value == long(9223372036854775807)
-
-    # Python 3 has no explicit long type, use System.Int64 instead
-    if PY2:
-        value = MethodTest.Overloaded.__overloads__[long](
-            long(9223372036854775807))
-        assert value == long(9223372036854775807)
+        9223372036854775807
+    )
+    assert value == 9223372036854775807
 
     value = MethodTest.Overloaded.__overloads__[System.UInt16](65000)
     assert value == 65000
 
     value = MethodTest.Overloaded.__overloads__[System.UInt32](
-        long(4294967295))
-    assert value == long(4294967295)
+        4294967295
+    )
+    assert value == 4294967295
 
     value = MethodTest.Overloaded.__overloads__[System.UInt64](
-        long(18446744073709551615))
-    assert value == long(18446744073709551615)
+        18446744073709551615
+    )
+    assert value == 18446744073709551615
 
     value = MethodTest.Overloaded.__overloads__[System.Single](3.402823e38)
     assert value == 3.402823e38
@@ -590,8 +616,8 @@ def test_overload_selection_with_array_types():
     vtype = Array[System.Char]
     input_ = vtype([0, 65535])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0] == unichr(0)
-    assert value[1] == unichr(65535)
+    assert value[0] == chr(0)
+    assert value[1] == chr(65535)
 
     vtype = Array[System.Int16]
     input_ = vtype([0, 32767])
@@ -612,18 +638,10 @@ def test_overload_selection_with_array_types():
     assert value[1] == 2147483647
 
     vtype = Array[System.Int64]
-    input_ = vtype([0, long(9223372036854775807)])
+    input_ = vtype([0, 9223372036854775807])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0] == 0
-    assert value[1] == long(9223372036854775807)
-
-    # Python 3 has no explicit long type, use System.Int64 instead
-    if PY2:
-        vtype = Array[long]
-        input_ = vtype([0, long(9223372036854775807)])
-        value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        assert value[0] == 0
-        assert value[1] == long(9223372036854775807)
+    assert value[1] == 9223372036854775807
 
     vtype = Array[System.UInt16]
     input_ = vtype([0, 65000])
@@ -632,16 +650,16 @@ def test_overload_selection_with_array_types():
     assert value[1] == 65000
 
     vtype = Array[System.UInt32]
-    input_ = vtype([0, long(4294967295)])
+    input_ = vtype([0, 4294967295])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0] == 0
-    assert value[1] == long(4294967295)
+    assert value[1] == 4294967295
 
     vtype = Array[System.UInt64]
-    input_ = vtype([0, long(18446744073709551615)])
+    input_ = vtype([0, 18446744073709551615])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0] == 0
-    assert value[1] == long(18446744073709551615)
+    assert value[1] == 18446744073709551615
 
     vtype = Array[System.Single]
     input_ = vtype([0.0, 3.402823e38])
@@ -717,7 +735,7 @@ def test_explicit_overload_selection_failure():
         _ = MethodTest.Overloaded.__overloads__[str, int, int]("", 1, 1)
 
     with pytest.raises(TypeError):
-        _ = MethodTest.Overloaded.__overloads__[int, long](1)
+        _ = MethodTest.Overloaded.__overloads__[int, int](1)
 
 
 def test_we_can_bind_to_encoding_get_string():
@@ -776,7 +794,7 @@ def test_no_object_in_param():
 
     res = MethodTest.TestOverloadedNoObject(5)
     assert res == "Got int"
-    
+
     res = MethodTest.TestOverloadedNoObject(i=7)
     assert res == "Got int"
 
@@ -790,13 +808,13 @@ def test_object_in_param():
 
     res = MethodTest.TestOverloadedObject(5)
     assert res == "Got int"
-    
+
     res = MethodTest.TestOverloadedObject(i=7)
     assert res == "Got int"
 
     res = MethodTest.TestOverloadedObject("test")
     assert res == "Got object"
-    
+
     res = MethodTest.TestOverloadedObject(o="test")
     assert res == "Got object"
 

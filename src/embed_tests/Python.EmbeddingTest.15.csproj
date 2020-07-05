@@ -10,7 +10,7 @@
     <AssemblyName>Python.EmbeddingTest</AssemblyName>
     <RootNamespace>Python.EmbeddingTest</RootNamespace>
     <PackageId>Python.EmbeddingTest</PackageId>
-    <VersionPrefix>2.4.1</VersionPrefix>
+    <VersionPrefix>2.5.0</VersionPrefix>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -77,6 +77,7 @@
 
   
   <ItemGroup>
+    <PackageReference Include="NonCopyableAnalyzer" Version="0.6.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit.ConsoleRunner" Version="3.11.1" />

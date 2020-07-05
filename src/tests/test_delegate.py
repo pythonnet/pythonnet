@@ -8,8 +8,7 @@ import System
 import pytest
 from Python.Test import DelegateTest, StringDelegate
 
-from ._compat import DictProxyType
-from .utils import HelloClass, hello_func, MultipleHandler
+from .utils import HelloClass, hello_func, MultipleHandler, DictProxyType
 
 
 def test_delegate_standard_attrs():

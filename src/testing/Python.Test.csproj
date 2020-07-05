@@ -92,6 +92,7 @@
     <Compile Include="doctest.cs" />
     <Compile Include="subclasstest.cs" />
     <Compile Include="ReprTest.cs" />
+    <Compile Include="nonexportable.cs" />
     <Compile Include="mp_lengthtest.cs" />
   </ItemGroup>
   <ItemGroup>

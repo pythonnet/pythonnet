@@ -180,12 +180,6 @@ namespace Python.EmbeddingTest
         [Test]
         public void SetPythonPath()
         {
-            if (Runtime.Runtime.pyversion == "2.7")
-            {
-                // Assert.Skip outputs as a warning (ie. pending to fix)
-                Assert.Pass();
-            }
-
             PythonEngine.Initialize();
             string path = PythonEngine.PythonPath;
             PythonEngine.Shutdown();
@@ -193,26 +187,6 @@ namespace Python.EmbeddingTest
             PythonEngine.PythonPath = path;
             PythonEngine.Initialize();
 
-            Assert.AreEqual(path, PythonEngine.PythonPath);
-            PythonEngine.Shutdown();
-        }
-
-        [Test]
-        public void SetPythonPathExceptionOn27()
-        {
-            if (Runtime.Runtime.pyversion != "2.7")
-            {
-                Assert.Pass();
-            }
-
-            PythonEngine.Initialize();
-            string path = PythonEngine.PythonPath;
-            PythonEngine.Shutdown();
-
-            var ex = Assert.Throws<NotSupportedException>(() => PythonEngine.PythonPath = "foo");
-            Assert.AreEqual("Set PythonPath not supported on Python 2", ex.Message);
-
-            PythonEngine.Initialize();
             Assert.AreEqual(path, PythonEngine.PythonPath);
             PythonEngine.Shutdown();
         }

@@ -1,7 +1,9 @@
 namespace Python.Test
 {
+    using System.Collections.Generic;
+
     /// <summary>
-    /// Supports units tests for field access.
+    /// Supports unit tests for field access.
     /// </summary>
     public class ConversionTest
     {
@@ -32,6 +34,7 @@ namespace Python.Test
 
         public byte[] ByteArrayField;
         public sbyte[] SByteArrayField;
+        public readonly List<int> ListField = new List<int>();
 
         public T? Echo<T>(T? arg) where T: struct {
             return arg;

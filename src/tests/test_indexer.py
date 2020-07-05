@@ -5,8 +5,6 @@
 import Python.Test as Test
 import pytest
 
-from ._compat import long, unichr
-
 
 def test_public_indexer():
     """Test public indexers."""
@@ -131,8 +129,8 @@ def test_sbyte_indexer():
 def test_char_indexer():
     """Test char indexers."""
     ob = Test.CharIndexerTest()
-    max_ = unichr(65535)
-    min_ = unichr(0)
+    max_ = chr(65535)
+    min_ = chr(0)
 
     assert ob[max_] is None
 
@@ -200,8 +198,8 @@ def test_int32_indexer():
 def test_int64_indexer():
     """Test Int64 indexers."""
     ob = Test.Int64IndexerTest()
-    max_ = long(9223372036854775807)
-    min_ = long(-9223372036854775808)
+    max_ = 9223372036854775807
+    min_ = -9223372036854775808
 
     assert ob[max_] is None
 
@@ -246,7 +244,7 @@ def test_uint16_indexer():
 def test_uint32_indexer():
     """Test UInt32 indexers."""
     ob = Test.UInt32IndexerTest()
-    max_ = long(4294967295)
+    max_ = 4294967295
     min_ = 0
 
     assert ob[max_] is None
@@ -269,7 +267,7 @@ def test_uint32_indexer():
 def test_uint64_indexer():
     """Test UInt64 indexers."""
     ob = Test.UInt64IndexerTest()
-    max_ = long(18446744073709551615)
+    max_ = 18446744073709551615
     min_ = 0
 
     assert ob[max_] is None
@@ -435,8 +433,8 @@ def test_object_indexer():
     ob[1] = "one"
     assert ob[1] == "one"
 
-    ob[long(1)] = "long"
-    assert ob[long(1)] == "long"
+    ob[1] = "long"
+    assert ob[1] == "long"
 
     class Eggs(object):
         pass

@@ -120,9 +120,7 @@ namespace Python.Runtime
         /// </remarks>
         public static IntPtr Py3UnicodePy2StringtoPtr(string s)
         {
-            return Runtime.IsPython3
-                ? Instance.MarshalManagedToNative(s)
-                : Marshal.StringToHGlobalAnsi(s);
+            return Instance.MarshalManagedToNative(s);
         }
 
         /// <summary>
@@ -137,9 +135,7 @@ namespace Python.Runtime
         /// </returns>
         public static string PtrToPy3UnicodePy2String(IntPtr p)
         {
-            return Runtime.IsPython3
-                ? PtrToStringUni(p)
-                : Marshal.PtrToStringAnsi(p);
+            return PtrToStringUni(p);
         }
     }
 
