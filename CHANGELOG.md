@@ -11,6 +11,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Changed
 -   Drop support for Python 2
+-   Added support for conversion from numerical types to enum in argument passing
 
 ### Fixed
 
