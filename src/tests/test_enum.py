@@ -122,9 +122,8 @@ def test_enum_with_flags_attr_conversion():
     # This works because the FlagsField enum has FlagsAttribute.
     Test.FieldTest().FlagsField = 99
 
-    # This should fail because our test enum doesn't have it.
-    with pytest.raises(ValueError):
-        Test.FieldTest().EnumField = 99
+    # This works because .NET allows assigning the underlying type
+    Test.FieldTest().EnumField = 99
 
 
 def test_enum_conversion():
@@ -135,8 +134,8 @@ def test_enum_conversion():
     ob.EnumField = Test.ShortEnum.One
     assert ob.EnumField == 1
 
-    with pytest.raises(ValueError):
-        Test.FieldTest().EnumField = 20
+    ob.EnumField = 20
+    assert ob.EnumField == 20
 
     with pytest.raises(OverflowError):
         Test.FieldTest().EnumField = 100000

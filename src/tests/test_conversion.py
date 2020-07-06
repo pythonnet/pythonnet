@@ -616,13 +616,13 @@ def test_enum_conversion():
     assert ob.EnumField == ShortEnum.One
     assert ob.EnumField == 1
 
-    with pytest.raises(ValueError):
-        ob = ConversionTest()
-        ob.EnumField = 10
+    ob = ConversionTest()
+    ob.EnumField = 10
+    assert ob.EnumField == 10
 
-    with pytest.raises(ValueError):
-        ob = ConversionTest()
-        ob.EnumField = 255
+    ob = ConversionTest()
+    ob.EnumField = 255
+    assert ob.EnumField == 255
 
     with pytest.raises(OverflowError):
         ob = ConversionTest()

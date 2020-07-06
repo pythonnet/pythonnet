@@ -62,6 +62,18 @@ namespace Python.Test
             return v;
         }
 
+        public enum TestEnum : int
+        {
+            One = 1,
+            Three = 3,
+            Four = 4,
+        }
+
+        public TestEnum TestEnumValueTypeConversion(TestEnum v)
+        {
+            return v;
+        }
+
         public FileAccess TestFlagsConversion(FileAccess v)
         {
             return v;
@@ -683,7 +695,7 @@ namespace Python.Test
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        
+
     }
 
 

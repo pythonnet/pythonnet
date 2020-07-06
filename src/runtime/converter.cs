@@ -893,6 +893,16 @@ namespace Python.Runtime
                 return true;
             }
 
+            // .NET allows you to assign a value to an enum
+            // even if that value is not defined in the enum
+            // as long as it is assignable to the underlying
+            // type.
+            if(etype.IsAssignableFrom(result.GetType()))
+            {
+                result = Enum.ToObject(obType, result);
+                return true;
+            }
+
             if (setError)
             {
                 Exceptions.SetError(Exceptions.ValueError, "invalid enumeration value");

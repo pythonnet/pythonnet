@@ -162,6 +162,21 @@ def test_method_call_enum_conversion():
     r = ob.TestEnumConversion(TypeCode.Int32)
     assert r == TypeCode.Int32
 
+def test_method_call_enum_valuetype_conversion():
+    """Test enum which inherits from a value type
+    gets converted to enum in method call"""
+    ob = MethodTest()
+    r = ob.TestEnumValueTypeConversion(1)
+    assert r == MethodTest.TestEnum.One
+
+    r = ob.TestEnumValueTypeConversion(3)
+    assert r == MethodTest.TestEnum.Three
+
+    r = ob.TestEnumValueTypeConversion(2)
+    assert r == 2
+
+    with pytest.raises(TypeError):
+        r = ob.TestEnumValueTypeConversion('Hi')
 
 def test_method_call_flags_conversion():
     """Test flags conversion in method call."""
