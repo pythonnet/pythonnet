@@ -246,55 +246,9 @@ namespace Python.Runtime.Platform
         /// </summary>
         public static void InitializePlatformData()
         {
-            IntPtr op = IntPtr.Zero;
-            IntPtr fn = IntPtr.Zero;
-            IntPtr platformModule = IntPtr.Zero;
-            IntPtr emptyTuple = IntPtr.Zero;
-            try
-            {
-                platformModule = Runtime.PyImport_ImportModule("platform");
-                PythonException.ThrowIfIsNull(platformModule);
-
-                fn = Runtime.PyObject_GetAttrString(platformModule, "system");
-                PythonException.ThrowIfIsNull(fn);
-
-                emptyTuple = Runtime.PyTuple_New(0);
-                op = Runtime.PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-                PythonException.ThrowIfIsNull(op);
-
-                OperatingSystemName = Runtime.GetManagedString(op);
-
-                fn = Runtime.PyObject_GetAttrString(platformModule, "machine");
-                PythonException.ThrowIfIsNull(fn);
-
-                op = Runtime.PyObject_Call(fn, emptyTuple, IntPtr.Zero);
-                PythonException.ThrowIfIsNull(op);
-                MachineName = Runtime.GetManagedString(op);
-            }
-            finally
-            {
-                Runtime.XDecref(op);
-                Runtime.XDecref(fn);
-
-                Runtime.XDecref(emptyTuple);
-                Runtime.XDecref(platformModule);
-            }
-
-            // Now convert the strings into enum values so we can do switch
-            // statements rather than constant parsing.
-            OperatingSystemType OSType;
-            if (!OperatingSystemTypeMapping.TryGetValue(OperatingSystemName, out OSType))
-            {
-                OSType = OperatingSystemType.Other;
-            }
-            OperatingSystem = OSType;
-
-            MachineType MType;
-            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
-            {
-                MType = MachineType.Other;
-            }
-            Machine = MType;
+            // FIXME: arch, non-windows
+            Machine = Runtime.Is32Bit ? MachineType.i386 : MachineType.x86_64;
+            OperatingSystem = Runtime.IsWindows ? OperatingSystemType.Windows : OperatingSystemType.Linux;
         }
 
         internal static IMemoryMapper CreateMemoryMapper()
