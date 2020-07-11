@@ -146,6 +146,7 @@ namespace Python.Runtime
         public static IEnumerable<IntPtr> PyGCGetObjects()
         {
             var gc = PyImport_ImportModule("gc");
+            PythonException.ThrowIfIsNull(gc);
             var get_objects = PyObject_GetAttrString(gc, "get_objects");
             var objs = PyObject_CallObject(get_objects, IntPtr.Zero);
             var length = PyList_Size(objs);
@@ -168,6 +169,7 @@ namespace Python.Runtime
                 var name = PyList_GetItem(names, i);
                 yield return name.DangerousGetAddress();
             }
+            XDecref(names);
         }
 
         private static void AddObjPtrToSet(IntPtr set, IntPtr obj)
