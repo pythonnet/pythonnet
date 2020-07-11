@@ -369,16 +369,16 @@ namespace Python.Runtime
 
         internal static ShutdownMode GetDefaultShutdownMode()
         {
-            if (Environment.GetEnvironmentVariable("PYTHONNET_SOFT_SHUTDOWN") == "1")
+            string modeEvn = Environment.GetEnvironmentVariable("PYTHONNET_SHUTDOWN_MODE");
+            if (modeEvn == null)
             {
-                return ShutdownMode.Soft;
+                return ShutdownMode.Normal;
             }
-#if !NETSTANDARD
-            else if (Environment.GetEnvironmentVariable("PYTHONNET_RELOAD_SHUTDOWN") == "1")
+            ShutdownMode mode;
+            if (Enum.TryParse(modeEvn, true, out mode))
             {
-                return ShutdownMode.Reload;
+                return mode;
             }
-#endif
             return ShutdownMode.Normal;
         }
 
