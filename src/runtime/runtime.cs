@@ -317,6 +317,10 @@ namespace Python.Runtime
             PyGILState_Ensure();
 
             var mode = ShutdownMode;
+            if (mode != ShutdownMode.Normal)
+            {
+                RunExitFuncs();
+            }
 #if !NETSTANDARD
             if (mode == ShutdownMode.Reload)
             {
@@ -386,6 +390,34 @@ namespace Python.Runtime
                 IsFinalizing = true;
             }
             return 0;
+        }
+
+        private static void RunExitFuncs()
+        {
+            PyObject atexit;
+            try
+            {
+                atexit = Py.Import("atexit");
+            }
+            catch (PythonException e)
+            {
+                if (!e.IsMatches(Exceptions.ImportError))
+                {
+                    throw;
+                }
+                e.Dispose();
+                // The runtime may not provided `atexit` module.
+                return;
+            }
+            try
+            {
+                atexit.InvokeMethod("_run_exitfuncs").Dispose();
+            }
+            catch (PythonException e)
+            {
+                Console.Error.WriteLine(e);
+                e.Dispose();
+            }
         }
 
         private static void SetPyMember(ref IntPtr obj, IntPtr value, Action onRelease)
@@ -1849,7 +1881,7 @@ namespace Python.Runtime
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
 
         /// <summary>
-        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type¡¯s base class. Return 0 on success, or return -1 and sets an exception on error.
+        /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a typeâ€™s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyType_Ready(IntPtr type);

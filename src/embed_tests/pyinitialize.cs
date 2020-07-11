@@ -136,5 +136,46 @@ namespace Python.EmbeddingTest
             // Wrong:   (4 * 2) + 1 + 1 + 1 = 11
             Assert.That(shutdown_count, Is.EqualTo(12));
         }
+
+        [Test]
+        public static void TestRunExitFuncs()
+        {
+            if (Runtime.Runtime.GetDefaultShutdownMode() == ShutdownMode.Normal)
+            {
+                // If the runtime using the normal mode,
+                // callback registered by atexit will be called after we release the clr information,
+                // thus there's no chance we can check it here.
+                Assert.Ignore("Skip on normal mode");
+            }
+            Runtime.Runtime.Initialize();
+            PyObject atexit;
+            try
+            {
+                atexit = Py.Import("atexit");
+            }
+            catch (PythonException e)
+            {
+                string msg = e.ToString();
+                Runtime.Runtime.Shutdown();
+
+                if (e.IsMatches(Exceptions.ImportError))
+                {
+                    Assert.Ignore("no atexit module");
+                }
+                else
+                {
+                    Assert.Fail(msg);
+                }
+                return;
+            }
+            bool called = false;
+            Action callback = () =>
+            {
+                called = true;
+            };
+            atexit.InvokeMethod("register", callback.ToPython());
+            Runtime.Runtime.Shutdown();
+            Assert.True(called);
+        }
     }
 }
