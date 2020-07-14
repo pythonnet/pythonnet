@@ -84,7 +84,7 @@
     <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;$(Python2Version);$(PythonWinDefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;$(Python3Version);$(PythonWinDefineConstants)</DefineConstants>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">TRACE;XPLAT;;PYTHON3;PYTHON37;UCS2</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
     <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;$(Python2Version);$(PythonWinDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>

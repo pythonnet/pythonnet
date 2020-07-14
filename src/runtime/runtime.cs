@@ -95,11 +95,8 @@ namespace Python.Runtime
 
         public static readonly string PythonDLL = _PythonDll;
 
-#if PYTHON_WITHOUT_ENABLE_SHARED && !NETSTANDARD
+        // In Unity, the library is always loaded in-memory
         internal const string _PythonDll = "__Internal";
-#else
-        internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
-#endif
 #if MONO_LINUX
         internal const string dllDirectory = "Library/conda/lib/";
         internal const string pythonlib = "python3.7m";
@@ -1045,7 +1042,10 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyCallable_Check(IntPtr pointer);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        // [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyObject_IsTrue")]
+        // internal static extern int _PyObject_IsTrue(IntPtr pointer);
+        // internal static int PyObject_IsTrue(IntPtr ptr) => _PyObject_IsTrue(ptr);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyObject_IsTrue")]
         internal static extern int PyObject_IsTrue(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -1058,7 +1058,6 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyObject_Size")]
         private static extern IntPtr _PyObject_Size(IntPtr pointer);
-
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_Hash(IntPtr op);
 
