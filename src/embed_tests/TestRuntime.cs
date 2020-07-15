@@ -23,7 +23,6 @@ namespace Python.EmbeddingTest
         ///
         /// Test fails on platforms we haven't implemented yet.
         /// </summary>
-        [Ignore("Temparary test")]
         [Test]
         public static void PlatformCache()
         {

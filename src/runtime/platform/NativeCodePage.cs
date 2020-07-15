@@ -15,7 +15,7 @@ namespace Python.Runtime.Platform
         /// Gets the operating system as reported by python's platform.system().
         /// </summary>
         [Obsolete]
-        public static string OperatingSystemName { get; private set; }
+        public static string OperatingSystemName => PythonEngine.Platform;
 
         /// <summary>
         /// Gets the machine architecture as reported by python's platform.machine().
@@ -246,9 +246,9 @@ namespace Python.Runtime.Platform
         /// </summary>
         public static void InitializePlatformData()
         {
-            // FIXME: arch, non-windows
-            Machine = Runtime.Is32Bit ? MachineType.i386 : MachineType.x86_64;
-            OperatingSystem = Runtime.IsWindows ? OperatingSystemType.Windows : OperatingSystemType.Linux;
+            MachineName = SystemInfo.GetArchitecture();
+            Machine = SystemInfo.GetMachineType();
+            OperatingSystem = SystemInfo.GetSystemType();
         }
 
         internal static IMemoryMapper CreateMemoryMapper()
