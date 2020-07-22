@@ -151,7 +151,14 @@ namespace Python.Runtime
         {
             if (!libraryLoaded)
             {
-                var _loader = Python.Runtime.Platform.LibraryLoader.Get(Runtime.OperatingSystem);
+#if MONO_OSX
+                var os = Python.Runtime.Platform.OperatingSystemType.Darwin;
+#elif MONO_LINUX
+                var os = Python.Runtime.Platform.OperatingSystemType.Linux;
+#else
+                var os = Python.Runtime.Platform.OperatingSystemType.Windows;
+#endif
+                var _loader = Python.Runtime.Platform.LibraryLoader.Get(os);
                 _loader.Load(Runtime.pythonlib, Runtime.dllDirectory);
                 libraryLoaded = true;
             }

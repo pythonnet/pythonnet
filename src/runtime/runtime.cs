@@ -318,9 +318,16 @@ namespace Python.Runtime
             InitializePlatformData();
 
             IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(OperatingSystem);
 
-            if (!(OperatingSystem == OperatingSystemType.Windows))
+#if MONO_OSX
+                var os = Python.Runtime.Platform.OperatingSystemType.Darwin;
+#elif MONO_LINUX
+                var os = Python.Runtime.Platform.OperatingSystemType.Linux;
+#else
+                var os = Python.Runtime.Platform.OperatingSystemType.Windows;
+#endif
+            var loader = LibraryLoader.Get(os);
+            if (!(os == OperatingSystemType.Windows))
             {
             if (_PythonDll != "__Internal")
             {
