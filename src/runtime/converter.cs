@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.ComponentModel;
+using System.Linq.Expressions;
 
 namespace Python.Runtime
 {
@@ -477,11 +478,9 @@ namespace Python.Runtime
         /// </summary>
         private static bool ToPrimitive(IntPtr value, Type obType, out object result, bool setError)
         {
-            IntPtr overflow = Exceptions.OverflowError;
             TypeCode tc = Type.GetTypeCode(obType);
             result = null;
-            IntPtr op;
-            int ival;
+            IntPtr op = IntPtr.Zero;
 
             switch (tc)
             {
@@ -495,318 +494,274 @@ namespace Python.Runtime
                     return true;
 
                 case TypeCode.Int32:
-                    // Python3 always use PyLong API
-                    op = Runtime.PyNumber_Long(value);
-                    if (op == IntPtr.Zero)
                     {
-                        Exceptions.Clear();
-                        if (Exceptions.ExceptionMatches(overflow))
+                        // Python3 always use PyLong API
+                        long num = Runtime.PyLong_AsLongLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        if (num > Int32.MaxValue || num < Int32.MinValue)
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        result = (int)num;
+                        return true;
                     }
-                    long ll = (long)Runtime.PyLong_AsLongLong(op);
-                    Runtime.XDecref(op);
-                    if (ll == -1 && Exceptions.ErrorOccurred())
-                    {
-                        goto overflow;
-                    }
-                    if (ll > Int32.MaxValue || ll < Int32.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    result = (int)ll;
-                    return true;
 
                 case TypeCode.Boolean:
                     result = Runtime.PyObject_IsTrue(value) != 0;
                     return true;
 
                 case TypeCode.Byte:
-                    if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                     {
-                        if (Runtime.PyBytes_Size(value) == 1)
+                        if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                         {
-                            op = Runtime.PyBytes_AS_STRING(value);
-                            result = (byte)Marshal.ReadByte(op);
-                            return true;
+                            if (Runtime.PyBytes_Size(value) == 1)
+                            {
+                                op = Runtime.PyBytes_AS_STRING(value);
+                                result = (byte)Marshal.ReadByte(op);
+                                return true;
+                            }
+                            goto type_error;
                         }
-                        goto type_error;
-                    }
 
-                    op = Runtime.PyNumber_Int(value);
-                    if (op == IntPtr.Zero)
-                    {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        int num = Runtime.PyLong_AsLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        if (num > Byte.MaxValue || num < Byte.MinValue)
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        result = (byte)num;
+                        return true;
                     }
-                    ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.XDecref(op);
-
-                    if (ival > Byte.MaxValue || ival < Byte.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    byte b = (byte)ival;
-                    result = b;
-                    return true;
 
                 case TypeCode.SByte:
-                    if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                     {
-                        if (Runtime.PyBytes_Size(value) == 1)
+                        if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                         {
-                            op = Runtime.PyBytes_AS_STRING(value);
-                            result = (byte)Marshal.ReadByte(op);
-                            return true;
+                            if (Runtime.PyBytes_Size(value) == 1)
+                            {
+                                op = Runtime.PyBytes_AS_STRING(value);
+                                result = (byte)Marshal.ReadByte(op);
+                                return true;
+                            }
+                            goto type_error;
                         }
-                        goto type_error;
-                    }
 
-                    op = Runtime.PyNumber_Int(value);
-                    if (op == IntPtr.Zero)
-                    {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        int num = Runtime.PyLong_AsLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        if (num > SByte.MaxValue || num < SByte.MinValue)
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        result = (sbyte)num;
+                        return true;
                     }
-                    ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.XDecref(op);
-
-                    if (ival > SByte.MaxValue || ival < SByte.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    sbyte sb = (sbyte)ival;
-                    result = sb;
-                    return true;
 
                 case TypeCode.Char:
-                    if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                     {
-                        if (Runtime.PyBytes_Size(value) == 1)
+                        if (Runtime.PyObject_TypeCheck(value, Runtime.PyBytesType))
                         {
-                            op = Runtime.PyBytes_AS_STRING(value);
-                            result = (byte)Marshal.ReadByte(op);
-                            return true;
+                            if (Runtime.PyBytes_Size(value) == 1)
+                            {
+                                op = Runtime.PyBytes_AS_STRING(value);
+                                result = (byte)Marshal.ReadByte(op);
+                                return true;
+                            }
+                            goto type_error;
                         }
-                        goto type_error;
-                    }
-                    else if (Runtime.PyObject_TypeCheck(value, Runtime.PyUnicodeType))
-                    {
-                        if (Runtime.PyUnicode_GetSize(value) == 1)
+                        else if (Runtime.PyObject_TypeCheck(value, Runtime.PyUnicodeType))
                         {
-                            op = Runtime.PyUnicode_AsUnicode(value);
-                            Char[] buff = new Char[1];
-                            Marshal.Copy(op, buff, 0, 1);
-                            result = buff[0];
-                            return true;
+                            if (Runtime.PyUnicode_GetSize(value) == 1)
+                            {
+                                op = Runtime.PyUnicode_AsUnicode(value);
+                                Char[] buff = new Char[1];
+                                Marshal.Copy(op, buff, 0, 1);
+                                result = buff[0];
+                                return true;
+                            }
+                            goto type_error;
                         }
-                        goto type_error;
+                        int num = Runtime.PyLong_AsLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        if (num > Char.MaxValue || num < Char.MinValue)
+                        {
+                            goto overflow;
+                        }
+                        result = (char)num;
+                        return true;
                     }
-
-                    op = Runtime.PyNumber_Int(value);
-                    if (op == IntPtr.Zero)
-                    {
-                        goto type_error;
-                    }
-                    ival = Runtime.PyInt_AsLong(op);
-                    Runtime.XDecref(op);
-                    if (ival > Char.MaxValue || ival < Char.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    result = (char)ival;
-                    return true;
 
                 case TypeCode.Int16:
-                    op = Runtime.PyNumber_Int(value);
-                    if (op == IntPtr.Zero)
                     {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        int num = Runtime.PyLong_AsLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        if (num > Int16.MaxValue || num < Int16.MinValue)
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        result = (short)num;
+                        return true;
                     }
-                    ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.XDecref(op);
-                    if (ival > Int16.MaxValue || ival < Int16.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    short s = (short)ival;
-                    result = s;
-                    return true;
 
                 case TypeCode.Int64:
-                    op = Runtime.PyNumber_Long(value);
-                    if (op == IntPtr.Zero)
                     {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        long num = (long)Runtime.PyLong_AsLongLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
                         {
-                            goto overflow;
+                            goto convert_error;
                         }
-                        goto type_error;
+                        result = num;
+                        return true;
                     }
-                    long l = (long)Runtime.PyLong_AsLongLong(op);
-                    Runtime.XDecref(op);
-                    if ((l == -1) && Exceptions.ErrorOccurred())
-                    {
-                        goto overflow;
-                    }
-                    result = l;
-                    return true;
 
                 case TypeCode.UInt16:
-                    op = Runtime.PyNumber_Int(value);
-                    if (op == IntPtr.Zero)
                     {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        long num = Runtime.PyLong_AsLong(value);
+                        if (num == -1 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        if (num > UInt16.MaxValue || num < UInt16.MinValue)
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        result = (ushort)num;
+                        return true;
                     }
-                    ival = (int)Runtime.PyInt_AsLong(op);
-                    Runtime.XDecref(op);
-                    if (ival > UInt16.MaxValue || ival < UInt16.MinValue)
-                    {
-                        goto overflow;
-                    }
-                    ushort us = (ushort)ival;
-                    result = us;
-                    return true;
 
                 case TypeCode.UInt32:
-                    op = Runtime.PyNumber_Long(value);
-                    if (op == IntPtr.Zero)
                     {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        op = value;
+                        if (Runtime.PyObject_TYPE(value) != Runtime.PyLongType)
                         {
-                            goto overflow;
+                            op = Runtime.PyNumber_Long(value);
+                            if (op == IntPtr.Zero)
+                            {
+                                goto convert_error;
+                            }
                         }
-                        goto type_error;
+                        if (Runtime.Is32Bit || Runtime.IsWindows)
+                        {
+                            uint num = Runtime.PyLong_AsUnsignedLong32(op);
+                            if (num == uint.MaxValue && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
+                            result = num;
+                        }
+                        else
+                        {
+                            ulong num = Runtime.PyLong_AsUnsignedLong64(op);
+                            try
+                            {
+                                result = Convert.ToUInt32(num);
+                            }
+                            catch (OverflowException)
+                            {
+                                // Probably wasn't an overflow in python but was in C# (e.g. if cpython
+                                // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in
+                                // PyLong_AsUnsignedLong)
+                                goto overflow;
+                            }
+                        }
+                        return true;
                     }
-
-                    uint ui;
-                    try
-                    {
-                        ui = Convert.ToUInt32(Runtime.PyLong_AsUnsignedLong(op));
-                    } catch (OverflowException)
-                    {
-                        // Probably wasn't an overflow in python but was in C# (e.g. if cpython
-                        // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in
-                        // PyLong_AsUnsignedLong)
-                        Runtime.XDecref(op);
-                        goto overflow;
-                    }
-
-
-                    if (Exceptions.ErrorOccurred())
-                    {
-                        Runtime.XDecref(op);
-                        goto overflow;
-                    }
-
-                    IntPtr check = Runtime.PyLong_FromUnsignedLong(ui);
-                    int err = Runtime.PyObject_Compare(check, op);
-                    Runtime.XDecref(check);
-                    Runtime.XDecref(op);
-                    if (0 != err || Exceptions.ErrorOccurred())
-                    {
-                        goto overflow;
-                    }
-
-                    result = ui;
-                    return true;
 
                 case TypeCode.UInt64:
-                    op = Runtime.PyNumber_Long(value);
-                    if (op == IntPtr.Zero)
                     {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        op = value;
+                        if (Runtime.PyObject_TYPE(value) != Runtime.PyLongType)
+                        {
+                            op = Runtime.PyNumber_Long(value);
+                            if (op == IntPtr.Zero)
+                            {
+                                goto convert_error;
+                            }
+                        }
+                        ulong num = Runtime.PyLong_AsUnsignedLongLong(value);
+                        if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
                         {
                             goto overflow;
                         }
-                        goto type_error;
+                        result = num;
+                        return true;
                     }
-                    ulong ul = (ulong)Runtime.PyLong_AsUnsignedLongLong(op);
-                    Runtime.XDecref(op);
-                    if (Exceptions.ErrorOccurred())
-                    {
-                        goto overflow;
-                    }
-                    result = ul;
-                    return true;
-
 
                 case TypeCode.Single:
-                    op = Runtime.PyNumber_Float(value);
-                    if (op == IntPtr.Zero)
                     {
-                        if (Exceptions.ExceptionMatches(overflow))
+                        double num = Runtime.PyFloat_AsDouble(value);
+                        if (num == -1.0 && Exceptions.ErrorOccurred())
                         {
-                            goto overflow;
+                            goto convert_error;
                         }
-                        goto type_error;
-                    }
-                    double dd = Runtime.PyFloat_AsDouble(op);
-                    if (dd == -1.0)
-                    {
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    Runtime.XDecref(op);
-                    if (dd > Single.MaxValue || dd < Single.MinValue)
-                    {
-                        if (!double.IsInfinity(dd))
+                        if (num > Single.MaxValue || num < Single.MinValue)
                         {
-                            goto overflow;
+                            if (!double.IsInfinity(num))
+                            {
+                                goto overflow;
+                            }
                         }
+                        result = (float)num;
+                        return true;
                     }
-                    result = (float)dd;
-                    return true;
 
                 case TypeCode.Double:
-                    op = Runtime.PyNumber_Float(value);
-                    if (op == IntPtr.Zero)
                     {
-                        goto type_error;
+                        double num = Runtime.PyFloat_AsDouble(value);
+                        if (num == -1.0 && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        result = num;
+                        return true;
                     }
-                    double d = Runtime.PyFloat_AsDouble(op);
-                    if (d == -1.0)
-                    {
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    Runtime.XDecref(op);
-                    result = d;
-                    return true;
+                default:
+                    goto type_error;
             }
 
+        convert_error:
+            if (op != value)
+            {
+                Runtime.XDecref(op);
+            }
+            if (!setError)
+            {
+                Exceptions.Clear();
+            }
+            return false;
 
-            type_error:
-
+        type_error:
             if (setError)
             {
                 string tpName = Runtime.PyObject_GetTypeName(value);
                 Exceptions.SetError(Exceptions.TypeError, $"'{tpName}' value cannot be converted to {obType}");
             }
-
             return false;
 
-            overflow:
-
+        overflow:
+            // C# level overflow error
+            if (op != value)
+            {
+                Runtime.XDecref(op);
+            }
             if (setError)
             {
                 Exceptions.SetError(Exceptions.OverflowError, "value too large to convert");
             }
-
             return false;
         }
 
