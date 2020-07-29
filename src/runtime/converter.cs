@@ -1,12 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.ComponentModel;
-using System.Linq.Expressions;
 
 namespace Python.Runtime
 {
@@ -666,6 +664,10 @@ namespace Python.Runtime
                         else
                         {
                             ulong num = Runtime.PyLong_AsUnsignedLong64(op);
+                            if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
                             try
                             {
                                 result = Convert.ToUInt32(num);
@@ -692,7 +694,7 @@ namespace Python.Runtime
                                 goto convert_error;
                             }
                         }
-                        ulong num = Runtime.PyLong_AsUnsignedLongLong(value);
+                        ulong num = Runtime.PyLong_AsUnsignedLongLong(op);
                         if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
                         {
                             goto overflow;
