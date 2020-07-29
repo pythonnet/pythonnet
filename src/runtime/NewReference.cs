@@ -37,7 +37,8 @@ namespace Python.Runtime
             {
                 return;
             }
-            Runtime.XDecref(this.pointer);
+            Runtime.XDecref(pointer);
+            pointer = IntPtr.Zero;
         }
 
         /// <summary>
