@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+
 using NUnit.Framework;
 
 using Python.Runtime;
@@ -63,9 +65,14 @@ namespace Python.EmbeddingTest
         [Test]
         public void CovertTypeError()
         {
+            Type[] floatTypes = new Type[]
+            {
+                typeof(float),
+                typeof(double)
+            };
             using (var s = new PyString("abc"))
             {
-                foreach (var type in _numTypes)
+                foreach (var type in _numTypes.Union(floatTypes))
                 {
                     object value;
                     try
