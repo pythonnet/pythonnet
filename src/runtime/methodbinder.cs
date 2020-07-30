@@ -523,7 +523,7 @@ namespace Python.Runtime
             if (clrtype != null)
             {
                 var typematch = false;
-                if ((parameterType != typeof(object)) && (parameterType != clrtype))
+                if (parameterType != typeof(object) && parameterType != clrtype && Nullable.GetUnderlyingType(parameterType) != clrtype)
                 {
                     IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
                     pyoptype = Runtime.PyObject_Type(argument);
