@@ -253,9 +253,9 @@ namespace Python.Runtime
             }
         }
 
-        internal static void ThrowIfIsNull(in NewReference reference)
+        internal static void ThrowIfIsNull(BorrowedReference reference)
         {
-            if (reference.IsNull())
+            if (reference.IsNull)
             {
                 throw new PythonException();
             }
