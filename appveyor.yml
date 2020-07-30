@@ -40,6 +40,7 @@ init:
 install:
   - python -m pip install -U pip
   - pip install --upgrade -r requirements.txt --quiet
+  - pip install install pycparser --quiet
 
   # Install OpenCover. Can't put on `packages.config`, not Mono compatible
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages -Verbosity quiet
@@ -51,7 +52,7 @@ build_script:
   - coverage run setup.py bdist_wheel %BUILD_OPTS%
 
 test_script:
-  - pip install --find-links=.\dist\ pythonnet
+  - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: .\ci\appveyor_run_tests.ps1
 
 on_finish:
