@@ -20,8 +20,6 @@ namespace Python.EmbeddingTest {
         [Test]
         public void TestBufferWrite()
         {
-            if (Runtime.Runtime.pyversionnumber < 35) return;
-
             string bufferTestString = "hello world! !$%&/()=?";
 
             using (Py.GIL())
@@ -46,8 +44,6 @@ namespace Python.EmbeddingTest {
         [Test]
         public void TestBufferRead()
         {
-            if (Runtime.Runtime.pyversionnumber < 35) return;
-
             string bufferTestString = "hello world! !$%&/()=?";
 
             using (Py.GIL())

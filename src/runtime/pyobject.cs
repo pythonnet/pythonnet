@@ -1102,7 +1102,6 @@ namespace Python.Runtime
         /// </remarks>
         public PyBuffer GetBuffer(PyBUF flags = PyBUF.SIMPLE)
         {
-            if (Runtime.pyversionnumber < 35) throw new NotSupportedException("GetBuffer requires at least Python 3.5");
             return new PyBuffer(this, flags);
         }
 
