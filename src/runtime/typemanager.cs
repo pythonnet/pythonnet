@@ -202,6 +202,17 @@ namespace Python.Runtime
             return type;
         }
 
+        static PY_TYPE_SLOT InitializeSlot(int slotNumber, MethodInfo method)
+        {
+            var thunk = Interop.GetThunk(method);
+            return new PY_TYPE_SLOT { slot = slotNumber, func = thunk.Address};
+        }
+
+        static PY_TYPE_SLOT InitializeSlot(int slotNumber, IntPtr thunk)
+        {
+            return new PY_TYPE_SLOT { slot = slotNumber, func = thunk.Address };
+        }
+
         static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
         {
             var thunk = Interop.GetThunk(method);
@@ -422,6 +433,227 @@ namespace Python.Runtime
             return type;
         }
 
+        internal class TypeSlots
+        {
+            internal static int getSlotNumber(string methodName)
+            {
+                Type typeSlotsType = typeof(TypeSlots);
+                FieldInfo[] fi = typeSlotsType.GetFields();
+                var field = typeSlotsType.GetField(methodName);
+                return (int)field.GetValue(null);
+            }
+
+            internal static int bf_getbuffer = 1;
+            internal static int bf_releasebuffer = 2;
+            internal static int mp_ass_subscript = 3;
+            internal static int mp_length = 4;
+            internal static int mp_subscript = 5;
+            internal static int nb_absolute = 6;
+            internal static int nb_add = 7;
+            internal static int nb_and = 8;
+            internal static int nb_bool = 9;
+            internal static int nb_divmod = 10;
+            internal static int nb_float = 11;
+            internal static int nb_floor_divide = 12;
+            internal static int nb_index = 13;
+            internal static int nb_inplace_add = 14;
+            internal static int nb_inplace_and = 15;
+            internal static int nb_inplace_floor_divide = 16;
+            internal static int nb_inplace_lshift = 17;
+            internal static int nb_inplace_multiply = 18;
+            internal static int nb_inplace_or = 19;
+            internal static int nb_inplace_power = 20;
+            internal static int nb_inplace_remainder = 21;
+            internal static int nb_inplace_rshift = 22;
+            internal static int nb_inplace_subtract = 23;
+            internal static int nb_inplace_true_divide = 24;
+            internal static int nb_inplace_xor = 25;
+            internal static int nb_int = 26;
+            internal static int nb_invert = 27;
+            internal static int nb_lshift = 28;
+            internal static int nb_multiply = 29;
+            internal static int nb_negative = 30;
+            internal static int nb_or = 31;
+            internal static int nb_positive = 32;
+            internal static int nb_power = 33;
+            internal static int nb_remainder = 34;
+            internal static int nb_rshift = 35;
+            internal static int nb_subtract = 36;
+            internal static int nb_true_divide = 37;
+            internal static int nb_xor = 38;
+            internal static int sq_ass_item = 39;
+            internal static int sq_concat = 40;
+            internal static int sq_contains = 41;
+            internal static int sq_inplace_concat = 42;
+            internal static int sq_inplace_repeat = 43;
+            internal static int sq_item = 44;
+            internal static int sq_length = 45;
+            internal static int sq_repeat = 46;
+            internal static int tp_alloc = 47;
+            internal static int tp_base = 48;
+            internal static int tp_bases = 49;
+            internal static int tp_call = 50;
+            internal static int tp_clear = 51;
+            internal static int tp_dealloc = 52;
+            internal static int tp_del = 53;
+            internal static int tp_descr_get = 54;
+            internal static int tp_descr_set = 55;
+            internal static int tp_doc = 56;
+            internal static int tp_getattr = 57;
+            internal static int tp_getattro = 58;
+            internal static int tp_hash = 59;
+            internal static int tp_init = 60;
+            internal static int tp_is_gc = 61;
+            internal static int tp_iter = 62;
+            internal static int tp_iternext = 63;
+            internal static int tp_methods = 64;
+            internal static int tp_new = 65;
+            internal static int tp_repr = 66;
+            internal static int tp_richcompare = 67;
+            internal static int tp_setattr = 68;
+            internal static int tp_setattro = 69;
+            internal static int tp_str = 70;
+            internal static int tp_traverse = 71;
+            internal static int tp_members = 72;
+            internal static int tp_getset = 73;
+            internal static int tp_free = 74;
+            internal static int nb_matrix_multiply = 75;
+            internal static int nb_inplace_matrix_multiply = 76;
+            internal static int am_await = 77;
+            internal static int am_aiter = 78;
+            internal static int am_anext = 79;
+            internal static int tp_finalize = 80;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PY_TYPE_SLOT
+        {
+            public long slot; //slot id, from typeslots.h
+            public IntPtr func; //function pointer of the function implementing the slot
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        internal class PyTypeSpecOffset
+        {
+            static PyTypeSpecOffset()
+            {
+                Type type = typeof(PyTypeSpecOffset);
+                FieldInfo[] fi = type.GetFields();
+                int size = IntPtr.Size;
+                for (int i = 0; i < fi.Length; i++)
+                {
+                    fi[i].SetValue(null, i * size + TypeOffset.ob_size);
+                }
+            }
+
+            static IntPtr ToSlotArray(PY_TYPE_SLOT[] type_slots)
+            {
+                //type_slots *must* be terminated by a {0,0} entry.  Should I check/throw?
+
+                //convert type slot array into intptr
+                int structSize = Marshal.SizeOf(typeof(PY_TYPE_SLOT));
+                GCHandle pinnedArray = GCHandle.Alloc(type_slots, GCHandleType.Pinned);
+
+                IntPtr ptr = pinnedArray.AddrOfPinnedObject();
+                return ptr; //Well, this leaks.  Lets' come back to this
+            }
+
+            static void foo(IntPtr doc, IntPtr dealloc, IntPtr call, IntPtr traverse, IntPtr clear, IntPtr members, IntPtr new_)
+            {
+                var x = new PY_TYPE_SLOT[]
+                {
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_doc, func = doc },
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_dealloc, func = dealloc },
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_call, func = call },
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_traverse, func = traverse },
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_clear, func = clear },
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_members, func = members },
+                    new PY_TYPE_SLOT {slot = TypeSlots.tp_new, func = new_ },
+                    new PY_TYPE_SLOT {slot = 0, func = IntPtr.Zero }
+                };
+
+                var arr = ToSlotArray(x);
+
+            }
+
+            public static IntPtr AllocPyTypeSpec(string typename, int obSize, int obFlags, IntPtr slotsPtr)
+            {
+                byte[] ascii = System.Text.Encoding.ASCII.GetBytes(typename);
+
+                //This approach is the same as the one in interop.cs for AllocModuleDef
+                //allocate the size of the struct (which is given by the value of the last
+                //static member and enough space to hold to typename as a char buffer.  The
+                //amount of space needed is the length of the string and the null terminator
+                //char* name member will simply point to the position of the buffer.
+                int size = name_value + ascii.Length + 1;
+                IntPtr ptr = Marshal.AllocHGlobal(size);
+
+                Marshal.Copy(ascii, 0, ptr + name_value, ascii.Length);
+                Marshal.WriteIntPtr(ptr, name, ptr + name_value);
+                Marshal.WriteByte(ptr, name + ascii.Length, 0);
+
+                Util.WriteCLong(ptr, basicsize, obSize);
+                Util.WriteCLong(ptr, itemsize, 0);
+                Util.WriteCLong(ptr, flags, obFlags);
+
+                Marshal.WriteIntPtr(ptr, slots, slotsPtr);
+                return ptr;
+            }
+
+            public static int name = 0;
+            public static int basicsize = 0;
+            public static int itemsize = 0;
+            public static int flags = 0;
+            public static int slots = 0;
+
+            private static int name_value = 0;
+        }
+
+
+        internal static IntPtr AllocateTypeObject(string name, PY_TYPE_SLOT[] type_slots)
+        {
+            //type_slots *must* be terminated by a {0,0} entry.  TODO - Should I check/throw?
+
+            //convert type slot array into intptr
+            int structSize = Marshal.SizeOf(typeof(PY_TYPE_SLOT));
+            GCHandle pinnedArray = GCHandle.Alloc(type_slots, GCHandleType.Pinned);
+
+            //Well, this will leak.  Maybe pinnedArray should be added as a member to managedtype.
+            IntPtr slotsPtr = pinnedArray.AddrOfPinnedObject();
+            //pinnedArray.Free(); //at some point
+
+            //create a type from the spec and return it.
+            IntPtr specPtr = PyTypeSpecOffset.AllocPyTypeSpec(name, 0, 0, slotsPtr);
+            IntPtr typePtr = Runtime.PyType_FromSpec(specPtr);
+            return typePtr;
+
+            /*
+            // Cheat a little: we'll set tp_name to the internal char * of
+            // the Python version of the type name - otherwise we'd have to
+            // allocate the tp_name and would have no way to free it.
+            IntPtr temp = Runtime.PyUnicode_FromString(name);
+            IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
+            Marshal.WriteIntPtr(type, TypeOffset.name, temp);
+
+            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
+
+            long ptr = type.ToInt64(); // 64-bit safe
+
+            temp = new IntPtr(ptr + TypeOffset.nb_add);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_number, temp);
+
+            temp = new IntPtr(ptr + TypeOffset.sq_length);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_sequence, temp);
+
+            temp = new IntPtr(ptr + TypeOffset.mp_length);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
+
+            temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
+            return type;
+             */
+        }
 
         /// <summary>
         /// Utility method to allocate a type object &amp; do basic initialization.
@@ -679,6 +911,79 @@ namespace Python.Runtime
             mapper.SetReadExec(NativeCodePage, codeLength);
         }
         #endregion
+
+        /// <summary>
+        /// Given a newly allocated Python type object and a managed Type that
+        /// provides the implementation for the type, connect the type slots of
+        /// the Python object to the managed methods of the implementing Type.
+        /// </summary>
+        internal PY_TYPE_SLOT[] InitializeSlots(Type impl)
+        {
+            // We work from the most-derived class up; make sure to get
+            // the most-derived slot and not to override it with a base
+            // class's slot.
+            var seen = new HashSet<string>();
+            var typeslots = new List<PY_TYPE_SLOT>();
+
+            while (impl != null)
+            {
+                MethodInfo[] methods = impl.GetMethods(tbFlags);
+                foreach (MethodInfo method in methods)
+                {
+                    string name = method.Name;
+                    if (!(name.StartsWith("tp_") ||
+                          name.StartsWith("nb_") ||
+                          name.StartsWith("sq_") ||
+                          name.StartsWith("mp_") ||
+                          name.StartsWith("bf_")
+                    ))
+                    {
+                        continue;
+                    }
+
+                    if (seen.Contains(name))
+                    {
+                        continue;
+                    }
+
+                    typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber(name), method));
+                    seen.Add(name);
+                }
+
+                impl = impl.BaseType;
+            }
+
+            var native = NativeCode.Active;
+
+            // The garbage collection related slots always have to return 1 or 0
+            // since .NET objects don't take part in Python's gc:
+            //   tp_traverse (returns 0)
+            //   tp_clear    (returns 0)
+            //   tp_is_gc    (returns 1)
+            // These have to be defined, though, so by default we fill these with
+            // static C# functions from this class.
+
+            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
+            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
+
+            if (native != null)
+            {
+                // If we want to support domain reload, the C# implementation
+                // cannot be used as the assembly may get released before
+                // CPython calls these functions. Instead, for amd64 and x86 we
+                // load them into a separate code page that is leaked
+                // intentionally.
+                InitializeNativeCodePage();
+                ret1 = NativeCodePage + native.Return1;
+                ret0 = NativeCodePage + native.Return0;
+            }
+
+            typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_traverse"), ret0));
+            typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_clear"), ret0));
+            typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_is_gc"), ret1));
+
+            return typeslots.ToArray();
+        }
 
         /// <summary>
         /// Given a newly allocated Python type object and a managed Type that
