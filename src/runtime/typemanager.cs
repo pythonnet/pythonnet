@@ -81,7 +81,8 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr CreateType(Type impl)
         {
-            IntPtr type = AllocateTypeObject(impl.Name);
+            var slotArray = CreateSlotArray(impl);
+            IntPtr type = AllocateTypeObject(impl.Name, slotArray);
             int ob_size = ObjectOffset.Size(type);
 
             // Set tp_basicsize to the size of our managed instance objects.
@@ -90,13 +91,13 @@ namespace Python.Runtime
             var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
-            InitializeSlots(type, impl);
+            //InitializeSlots(type, impl);
 
             int flags = TypeFlags.Default | TypeFlags.Managed |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
-            Runtime.PyType_Ready(type);
+            //Runtime.PyType_Ready(type);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
@@ -883,11 +884,10 @@ namespace Python.Runtime
         #endregion
 
         /// <summary>
-        /// Given a newly allocated Python type object and a managed Type that
-        /// provides the implementation for the type, connect the type slots of
-        /// the Python object to the managed methods of the implementing Type.
+        /// Given a managed Type that provides the implementation for the type,
+        /// create a PY_TYPE_SLOT array to be used for PyType_FromSpec.
         /// </summary>
-        internal PY_TYPE_SLOT[] InitializeSlots(Type impl)
+        internal static PY_TYPE_SLOT[] CreateSlotArray(Type impl)
         {
             // We work from the most-derived class up; make sure to get
             // the most-derived slot and not to override it with a base
