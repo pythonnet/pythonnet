@@ -546,36 +546,6 @@ namespace Python.Runtime
                 }
             }
 
-            static IntPtr ToSlotArray(PY_TYPE_SLOT[] type_slots)
-            {
-                //type_slots *must* be terminated by a {0,0} entry.  Should I check/throw?
-
-                //convert type slot array into intptr
-                int structSize = Marshal.SizeOf(typeof(PY_TYPE_SLOT));
-                GCHandle pinnedArray = GCHandle.Alloc(type_slots, GCHandleType.Pinned);
-
-                IntPtr ptr = pinnedArray.AddrOfPinnedObject();
-                return ptr; //Well, this leaks.  Lets' come back to this
-            }
-
-            static void foo(IntPtr doc, IntPtr dealloc, IntPtr call, IntPtr traverse, IntPtr clear, IntPtr members, IntPtr new_)
-            {
-                var x = new PY_TYPE_SLOT[]
-                {
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_doc, func = doc },
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_dealloc, func = dealloc },
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_call, func = call },
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_traverse, func = traverse },
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_clear, func = clear },
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_members, func = members },
-                    new PY_TYPE_SLOT {slot = TypeSlots.tp_new, func = new_ },
-                    new PY_TYPE_SLOT {slot = 0, func = IntPtr.Zero }
-                };
-
-                var arr = ToSlotArray(x);
-
-            }
-
             public static IntPtr AllocPyTypeSpec(string typename, int obSize, int obFlags, IntPtr slotsPtr)
             {
                 byte[] ascii = System.Text.Encoding.ASCII.GetBytes(typename);
