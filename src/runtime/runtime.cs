@@ -147,6 +147,19 @@ namespace Python.Runtime
 
         private static PyReferenceCollection _pyRefs = new PyReferenceCollection();
 
+        internal static int pyversionnumber
+        {
+            get
+            {
+                var versionString = PythonEngine.Version;
+                //"3.0a5+ (py3k:63103M, May 12 2008, 00:53:55) \n[GCC 4.2.3]"
+
+                //we only support python 3 so we just need to check the third character
+                return 30 + Convert.ToInt32(versionString[2]);
+            }
+        }
+
+
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
