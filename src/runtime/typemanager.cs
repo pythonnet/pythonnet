@@ -210,7 +210,7 @@ namespace Python.Runtime
 
         static PY_TYPE_SLOT InitializeSlot(int slotNumber, IntPtr thunk)
         {
-            return new PY_TYPE_SLOT { slot = slotNumber, func = thunk.Address };
+            return new PY_TYPE_SLOT { slot = slotNumber, func = thunk };
         }
 
         static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
@@ -952,6 +952,7 @@ namespace Python.Runtime
             typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_clear"), ret0));
             typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_is_gc"), ret1));
 
+            typeslots.Add(new PY_TYPE_SLOT { slot = 0, func = IntPtr.Zero });
             return typeslots.ToArray();
         }
 
