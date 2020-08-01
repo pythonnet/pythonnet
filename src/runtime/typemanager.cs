@@ -598,7 +598,8 @@ namespace Python.Runtime
             IntPtr typePtr = Runtime.PyType_FromSpec(specPtr);
             return typePtr;
 
-            /*
+            //TODO - taken from the other overload.  I have no idea what this is meant to do.
+            /* 
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
