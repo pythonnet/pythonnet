@@ -151,11 +151,10 @@ namespace Python.Runtime
         {
             get
             {
-                var versionString = PythonEngine.Version;
-                //"3.0a5+ (py3k:63103M, May 12 2008, 00:53:55) \n[GCC 4.2.3]"
-
-                //we only support python 3 so we just need to check the third character
-                return 30 + Convert.ToInt32(versionString[2]);
+                var versionTuple = new PyTuple(PySys_GetObject("version_info"));
+                var major = versionTuple[0].As<int>();
+                var minor = versionTuple[1].As<int>();
+                return major * 10 + minor;
             }
         }
 
