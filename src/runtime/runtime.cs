@@ -147,14 +147,15 @@ namespace Python.Runtime
 
         private static PyReferenceCollection _pyRefs = new PyReferenceCollection();
 
-        internal static int pyversionnumber
+        internal static Version PyVersion
         {
             get
             {
                 var versionTuple = new PyTuple(PySys_GetObject("version_info"));
                 var major = versionTuple[0].As<int>();
                 var minor = versionTuple[1].As<int>();
-                return major * 10 + minor;
+                var micro = versionTuple[2].As<int>();
+                return new Version(major, minor, micro);
             }
         }
 
