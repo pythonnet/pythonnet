@@ -82,22 +82,22 @@ namespace Python.Runtime
         internal static IntPtr CreateType(Type impl)
         {
             var slotArray = CreateSlotArray(impl);
-            IntPtr type = AllocateTypeObject(impl.Name, slotArray);
-            int ob_size = ObjectOffset.Size(type);
+            int flags = TypeFlags.Default | TypeFlags.Managed |
+                        TypeFlags.HeapType | TypeFlags.HaveGC;
 
-            // Set tp_basicsize to the size of our managed instance objects.
-            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
+            IntPtr type = CreateTypeObject(impl.Name, ObjectOffset.Size(), flags, slotArray);
+
+            if (ObjectOffset.Size() != ObjectOffset.Size(type))
+            {
+                //should we reset the size and call PyType_Ready again??
+                //how do we deal with the fact that size is based on whether
+                //the type is an exception type.  Should CreateSlotArray
+                //return a tuple with both the slot array and a flag on
+                //whether the type array describes an exception or not?
+            }
 
             var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
-
-            //InitializeSlots(type, impl);
-
-            int flags = TypeFlags.Default | TypeFlags.Managed |
-                        TypeFlags.HeapType | TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
-
-            //Runtime.PyType_Ready(type);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
@@ -434,96 +434,93 @@ namespace Python.Runtime
             return type;
         }
 
-        internal class TypeSlots
+        enum TypeSlots
         {
-            internal static int getSlotNumber(string methodName)
-            {
-                Type typeSlotsType = typeof(TypeSlots);
-                FieldInfo[] fi = typeSlotsType.GetFields();
-                var field = typeSlotsType.GetField(methodName);
-                return (int)field.GetValue(null);
-            }
+            bf_getbuffer = 1,
+            bf_releasebuffer = 2,
+            mp_ass_subscript = 3,
+            mp_length = 4,
+            mp_subscript = 5,
+            nb_absolute = 6,
+            nb_add = 7,
+            nb_and = 8,
+            nb_bool = 9,
+            nb_divmod = 10,
+            nb_float = 11,
+            nb_floor_divide = 12,
+            nb_index = 13,
+            nb_inplace_add = 14,
+            nb_inplace_and = 15,
+            nb_inplace_floor_divide = 16,
+            nb_inplace_lshift = 17,
+            nb_inplace_multiply = 18,
+            nb_inplace_or = 19,
+            nb_inplace_power = 20,
+            nb_inplace_remainder = 21,
+            nb_inplace_rshift = 22,
+            nb_inplace_subtract = 23,
+            nb_inplace_true_divide = 24,
+            nb_inplace_xor = 25,
+            nb_int = 26,
+            nb_invert = 27,
+            nb_lshift = 28,
+            nb_multiply = 29,
+            nb_negative = 30,
+            nb_or = 31,
+            nb_positive = 32,
+            nb_power = 33,
+            nb_remainder = 34,
+            nb_rshift = 35,
+            nb_subtract = 36,
+            nb_true_divide = 37,
+            nb_xor = 38,
+            sq_ass_item = 39,
+            sq_concat = 40,
+            sq_contains = 41,
+            sq_inplace_concat = 42,
+            sq_inplace_repeat = 43,
+            sq_item = 44,
+            sq_length = 45,
+            sq_repeat = 46,
+            tp_alloc = 47,
+            tp_base = 48,
+            tp_bases = 49,
+            tp_call = 50,
+            tp_clear = 51,
+            tp_dealloc = 52,
+            tp_del = 53,
+            tp_descr_get = 54,
+            tp_descr_set = 55,
+            tp_doc = 56,
+            tp_getattr = 57,
+            tp_getattro = 58,
+            tp_hash = 59,
+            tp_init = 60,
+            tp_is_gc = 61,
+            tp_iter = 62,
+            tp_iternext = 63,
+            tp_methods = 64,
+            tp_new = 65,
+            tp_repr = 66,
+            tp_richcompare = 67,
+            tp_setattr = 68,
+            tp_setattro = 69,
+            tp_str = 70,
+            tp_traverse = 71,
+            tp_members = 72,
+            tp_getset = 73,
+            tp_free = 74,
+            nb_matrix_multiply = 75,
+            nb_inplace_matrix_multiply = 76,
+            am_await = 77,
+            am_aiter = 78,
+            am_anext = 79,
+            tp_finalize = 80,
+        }
 
-            internal static int bf_getbuffer = 1;
-            internal static int bf_releasebuffer = 2;
-            internal static int mp_ass_subscript = 3;
-            internal static int mp_length = 4;
-            internal static int mp_subscript = 5;
-            internal static int nb_absolute = 6;
-            internal static int nb_add = 7;
-            internal static int nb_and = 8;
-            internal static int nb_bool = 9;
-            internal static int nb_divmod = 10;
-            internal static int nb_float = 11;
-            internal static int nb_floor_divide = 12;
-            internal static int nb_index = 13;
-            internal static int nb_inplace_add = 14;
-            internal static int nb_inplace_and = 15;
-            internal static int nb_inplace_floor_divide = 16;
-            internal static int nb_inplace_lshift = 17;
-            internal static int nb_inplace_multiply = 18;
-            internal static int nb_inplace_or = 19;
-            internal static int nb_inplace_power = 20;
-            internal static int nb_inplace_remainder = 21;
-            internal static int nb_inplace_rshift = 22;
-            internal static int nb_inplace_subtract = 23;
-            internal static int nb_inplace_true_divide = 24;
-            internal static int nb_inplace_xor = 25;
-            internal static int nb_int = 26;
-            internal static int nb_invert = 27;
-            internal static int nb_lshift = 28;
-            internal static int nb_multiply = 29;
-            internal static int nb_negative = 30;
-            internal static int nb_or = 31;
-            internal static int nb_positive = 32;
-            internal static int nb_power = 33;
-            internal static int nb_remainder = 34;
-            internal static int nb_rshift = 35;
-            internal static int nb_subtract = 36;
-            internal static int nb_true_divide = 37;
-            internal static int nb_xor = 38;
-            internal static int sq_ass_item = 39;
-            internal static int sq_concat = 40;
-            internal static int sq_contains = 41;
-            internal static int sq_inplace_concat = 42;
-            internal static int sq_inplace_repeat = 43;
-            internal static int sq_item = 44;
-            internal static int sq_length = 45;
-            internal static int sq_repeat = 46;
-            internal static int tp_alloc = 47;
-            internal static int tp_base = 48;
-            internal static int tp_bases = 49;
-            internal static int tp_call = 50;
-            internal static int tp_clear = 51;
-            internal static int tp_dealloc = 52;
-            internal static int tp_del = 53;
-            internal static int tp_descr_get = 54;
-            internal static int tp_descr_set = 55;
-            internal static int tp_doc = 56;
-            internal static int tp_getattr = 57;
-            internal static int tp_getattro = 58;
-            internal static int tp_hash = 59;
-            internal static int tp_init = 60;
-            internal static int tp_is_gc = 61;
-            internal static int tp_iter = 62;
-            internal static int tp_iternext = 63;
-            internal static int tp_methods = 64;
-            internal static int tp_new = 65;
-            internal static int tp_repr = 66;
-            internal static int tp_richcompare = 67;
-            internal static int tp_setattr = 68;
-            internal static int tp_setattro = 69;
-            internal static int tp_str = 70;
-            internal static int tp_traverse = 71;
-            internal static int tp_members = 72;
-            internal static int tp_getset = 73;
-            internal static int tp_free = 74;
-            internal static int nb_matrix_multiply = 75;
-            internal static int nb_inplace_matrix_multiply = 76;
-            internal static int am_await = 77;
-            internal static int am_aiter = 78;
-            internal static int am_anext = 79;
-            internal static int tp_finalize = 80;
+        private static int getSlotNumber(string methodName)
+        {
+            return (int)Enum.Parse(typeof(TypeSlots), methodName);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -581,7 +578,7 @@ namespace Python.Runtime
         }
 
 
-        internal static IntPtr AllocateTypeObject(string name, PY_TYPE_SLOT[] type_slots)
+        internal static IntPtr CreateTypeObject(string name, int obSize, int obFlags, PY_TYPE_SLOT[] type_slots)
         {
             //type_slots *must* be terminated by a {0,0} entry.  TODO - Should I check/throw?
 
@@ -594,11 +591,11 @@ namespace Python.Runtime
             //pinnedArray.Free(); //at some point
 
             //create a type from the spec and return it.
-            IntPtr specPtr = PyTypeSpecOffset.AllocPyTypeSpec(name, 0, 0, slotsPtr);
+            IntPtr specPtr = PyTypeSpecOffset.AllocPyTypeSpec(name, obSize, obFlags, slotsPtr);
             IntPtr typePtr = Runtime.PyType_FromSpec(specPtr);
             return typePtr;
 
-            //TODO - taken from the other overload.  I have no idea what this is meant to do.
+            //TODO - taken from AllocateTypeObject.  I have no idea what this is meant to do.
             /* 
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
@@ -917,7 +914,7 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber(name), method));
+                    typeslots.Add(InitializeSlot(getSlotNumber(name), method));
                     seen.Add(name);
                 }
 
@@ -949,9 +946,9 @@ namespace Python.Runtime
                 ret0 = NativeCodePage + native.Return0;
             }
 
-            typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_traverse"), ret0));
-            typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_clear"), ret0));
-            typeslots.Add(InitializeSlot(TypeSlots.getSlotNumber("tp_is_gc"), ret1));
+            typeslots.Add(InitializeSlot(getSlotNumber("tp_traverse"), ret0));
+            typeslots.Add(InitializeSlot(getSlotNumber("tp_clear"), ret0));
+            typeslots.Add(InitializeSlot(getSlotNumber("tp_is_gc"), ret1));
 
             typeslots.Add(new PY_TYPE_SLOT { slot = 0, func = IntPtr.Zero });
             return typeslots.ToArray();

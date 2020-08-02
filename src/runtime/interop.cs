@@ -164,6 +164,11 @@ namespace Python.Runtime
             return ManagedDataOffsets.DictOffset(type);
         }
 
+        public static int Size()
+        {
+            return size;
+        }
+
         public static int Size(IntPtr pyType)
         {
             if (IsException(pyType))
