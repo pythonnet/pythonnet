@@ -434,7 +434,7 @@ namespace Python.Runtime
             return type;
         }
 
-        enum TypeSlots
+        internal enum TypeSlots : long
         {
             bf_getbuffer = 1,
             bf_releasebuffer = 2,
@@ -526,8 +526,8 @@ namespace Python.Runtime
         [StructLayout(LayoutKind.Sequential)]
         internal struct PY_TYPE_SLOT
         {
-            public long slot; //slot id, from typeslots.h
-            public IntPtr func; //function pointer of the function implementing the slot
+            internal TypeSlots slot; //slot id, from typeslots.h
+            internal IntPtr func; //function pointer of the function implementing the slot
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -554,27 +554,30 @@ namespace Python.Runtime
                 //amount of space needed is the length of the string and the null terminator
                 //char* name member will simply point to the position of the buffer.
                 int size = name_value + ascii.Length + 1;
-                IntPtr ptr = Marshal.AllocHGlobal(size);
+                IntPtr specPtr = Marshal.AllocHGlobal(size);
 
-                Marshal.Copy(ascii, 0, ptr + name_value, ascii.Length);
-                Marshal.WriteIntPtr(ptr, name, ptr + name_value);
-                Marshal.WriteByte(ptr, name + ascii.Length, 0);
+                Marshal.Copy(ascii, 0, specPtr + name_value, ascii.Length);
+                Marshal.WriteIntPtr(specPtr, name, specPtr + name_value);
+                Marshal.WriteByte(specPtr, name + ascii.Length, 0);
 
-                Util.WriteCLong(ptr, basicsize, obSize);
-                Util.WriteCLong(ptr, itemsize, 0);
-                Util.WriteCLong(ptr, flags, obFlags);
+                Marshal.WriteInt32(specPtr, basicsize, obSize);
+                Marshal.WriteInt32(specPtr, itemsize, 0);
+                Marshal.WriteInt32(specPtr, flags, obSize);
+                //Util.WriteCLong(specPtr, basicsize, obFlags);
+                //Util.WriteCLong(specPtr, itemsize, 0);
+                //Util.WriteCLong(specPtr, flags, obFlags);
 
-                Marshal.WriteIntPtr(ptr, slots, slotsPtr);
-                return ptr;
+                Marshal.WriteIntPtr(specPtr, slots, slotsPtr);
+                return specPtr;
             }
 
-            public static int name = 0;
-            public static int basicsize = 0;
-            public static int itemsize = 0;
-            public static int flags = 0;
-            public static int slots = 0;
+            public static int name = 16;
+            public static int basicsize = 24;
+            public static int itemsize = 28;
+            public static int flags = 32;
+            public static int slots = 36;
 
-            private static int name_value = 0;
+            public static int name_value = 44;
         }
 
 
