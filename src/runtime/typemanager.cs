@@ -203,13 +203,13 @@ namespace Python.Runtime
             return type;
         }
 
-        static PY_TYPE_SLOT InitializeSlot(int slotNumber, MethodInfo method)
+        static PY_TYPE_SLOT InitializeSlot(TypeSlots slotNumber, MethodInfo method)
         {
             var thunk = Interop.GetThunk(method);
             return new PY_TYPE_SLOT { slot = slotNumber, func = thunk.Address};
         }
 
-        static PY_TYPE_SLOT InitializeSlot(int slotNumber, IntPtr thunk)
+        static PY_TYPE_SLOT InitializeSlot(TypeSlots slotNumber, IntPtr thunk)
         {
             return new PY_TYPE_SLOT { slot = slotNumber, func = thunk };
         }
@@ -434,7 +434,7 @@ namespace Python.Runtime
             return type;
         }
 
-        internal enum TypeSlots : long
+        internal enum TypeSlots : int
         {
             bf_getbuffer = 1,
             bf_releasebuffer = 2,
@@ -518,9 +518,9 @@ namespace Python.Runtime
             tp_finalize = 80,
         }
 
-        private static int getSlotNumber(string methodName)
+        private static TypeSlots getSlotNumber(string methodName)
         {
-            return (int)Enum.Parse(typeof(TypeSlots), methodName);
+            return (TypeSlots)Enum.Parse(typeof(TypeSlots), methodName);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -558,11 +558,11 @@ namespace Python.Runtime
 
                 Marshal.Copy(ascii, 0, specPtr + name_value, ascii.Length);
                 Marshal.WriteIntPtr(specPtr, name, specPtr + name_value);
-                Marshal.WriteByte(specPtr, name + ascii.Length, 0);
+                Marshal.WriteByte(specPtr, name_value + ascii.Length, 0);
 
                 Marshal.WriteInt32(specPtr, basicsize, obSize);
                 Marshal.WriteInt32(specPtr, itemsize, 0);
-                Marshal.WriteInt32(specPtr, flags, obSize);
+                Marshal.WriteInt32(specPtr, flags, obFlags);
                 //Util.WriteCLong(specPtr, basicsize, obFlags);
                 //Util.WriteCLong(specPtr, itemsize, 0);
                 //Util.WriteCLong(specPtr, flags, obFlags);
@@ -571,13 +571,13 @@ namespace Python.Runtime
                 return specPtr;
             }
 
-            public static int name = 16;
-            public static int basicsize = 24;
-            public static int itemsize = 28;
-            public static int flags = 32;
-            public static int slots = 36;
+            public static int name = 0;
+            public static int basicsize = name + IntPtr.Size;
+            public static int itemsize = basicsize + 4;
+            public static int flags = itemsize + 4;
+            public static int slots = flags + 4;
 
-            public static int name_value = 44;
+            public static int name_value = slots + IntPtr.Size;
         }
 
 
