@@ -533,17 +533,6 @@ namespace Python.Runtime
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         internal class PyTypeSpecOffset
         {
-            static PyTypeSpecOffset()
-            {
-                Type type = typeof(PyTypeSpecOffset);
-                FieldInfo[] fi = type.GetFields();
-                int size = IntPtr.Size;
-                for (int i = 0; i < fi.Length; i++)
-                {
-                    fi[i].SetValue(null, i * size + TypeOffset.ob_size);
-                }
-            }
-
             public static IntPtr AllocPyTypeSpec(string typename, int obSize, int obFlags, IntPtr slotsPtr)
             {
                 byte[] ascii = System.Text.Encoding.ASCII.GetBytes(typename);
