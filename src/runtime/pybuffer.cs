@@ -88,7 +88,7 @@ namespace Python.Runtime
         /// </summary>
         public static long SizeFromFormat(string format)
         {
-            if (Runtime.PyVersion.Minor < 9)
+            if (Runtime.PyVersion < new Version(3,9))
                 throw new NotSupportedException("SizeFromFormat requires at least Python 3.9");
             return (long)Runtime.PyBuffer_SizeFromFormat(format);
         }
@@ -111,7 +111,7 @@ namespace Python.Runtime
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
-            if (Runtime.PyVersion.Minor < 7)
+            if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("GetPointer requires at least Python 3.7");
             return Runtime.PyBuffer_GetPointer(ref _view, indices.Select(x => (IntPtr)x).ToArray());
         }
@@ -123,7 +123,7 @@ namespace Python.Runtime
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
-            if (Runtime.PyVersion.Minor < 7)
+            if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("FromContiguous requires at least Python 3.7");
 
             if (Runtime.PyBuffer_FromContiguous(ref _view, buf, (IntPtr)len, OrderStyleToChar(fort, false)) < 0)
@@ -139,7 +139,7 @@ namespace Python.Runtime
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
-            if (Runtime.PyVersion.Minor < 6)
+            if (Runtime.PyVersion < new Version(3, 6))
                 throw new NotSupportedException("ToContiguous requires at least Python 3.6");
 
             if (Runtime.PyBuffer_ToContiguous(buf, ref _view, _view.len, OrderStyleToChar(order, true)) < 0)
