@@ -131,9 +131,9 @@ namespace Python.Runtime
         public static int sq_inplace_repeat = 0;
         public static int bf_getbuffer = 0;
         public static int bf_releasebuffer = 0;
-        public static int name = 0;
+        public static int ht_name = 0;
         public static int ht_slots = 0;
-        public static int qualname = 0;
+        public static int ht_qualname = 0;
         public static int ht_cached_keys = 0;
 
         /* here are optional user slots, followed by the members. */

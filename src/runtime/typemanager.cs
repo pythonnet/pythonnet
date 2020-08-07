@@ -542,12 +542,12 @@ namespace Python.Runtime
 
         internal static IntPtr CreateTypeObject(string name, int obSize, int obFlags, PY_TYPE_SLOT[] type_slots)
         {
-            //convert type slot array into intptr
+            //convert type slot array to PyType_Slot*
             int structSize = Marshal.SizeOf(typeof(PY_TYPE_SLOT));
             GCHandle pinnedArray = GCHandle.Alloc(type_slots, GCHandleType.Pinned);
             IntPtr slotsPtr = pinnedArray.AddrOfPinnedObject();
 
-            //create a type from the spec and return it.
+            //convert name to char*
             byte[] ascii = System.Text.Encoding.ASCII.GetBytes(name);
             GCHandle pinnedName = GCHandle.Alloc(ascii, GCHandleType.Pinned);
             IntPtr namePtr = pinnedName.AddrOfPinnedObject();
