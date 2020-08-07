@@ -97,12 +97,12 @@ namespace Python.Runtime
 
         // In Unity, the library is always loaded in-memory
         internal const string _PythonDll = "__Internal";
-#if MONO_LINUX
-        internal const string dllDirectory = "Library/conda/lib/";
-        internal const string pythonlib = "python3.7m";
-#elif MONO_MAC
+#if MONO_LINUX || MONO_MAC
         internal const string dllDirectory = "Library/PythonInstall/lib/";
         internal const string pythonlib = "python3.7m";
+// #elif MONO_MAC
+//         internal const string dllDirectory = "Library/PythonInstall/lib/";
+//         internal const string pythonlib = "python3.7m";
 #else //windows
         internal const string dllDirectory = "Library/PythonInstall/";
         internal const string pythonlib = "python37";
@@ -345,6 +345,24 @@ namespace Python.Runtime
             {
                 loader.Free(dllLocal);
             }
+
+#if MONO_LINUX
+            string[] dyLibPaths = IO.Directory.GetFiles(dllDirectory, "*.so");
+            foreach (string dyLibPath in dyLibPaths)
+            {
+                string dyLibName = IO.Path.GetFileNameWithoutExtension(dyLibPath);
+                if (! dyLibName.Contains("python"))
+                {
+                    // remove the first three characters, "lib"
+                    dyLibName = dyLibName.Remove(0, 3);
+                    dllLocal = loader.Load(dyLibName, dllDirectory);
+                    if (dllLocal == IntPtr.Zero)
+                    {
+                        Console.WriteLine($"Could not load {dyLibName}");
+                    }        
+                }
+            }
+#endif
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
