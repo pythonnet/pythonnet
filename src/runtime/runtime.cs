@@ -1727,7 +1727,7 @@ namespace Python.Runtime
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyType_FromSpec(IntPtr spec);
+        internal static extern NewReference PyType_FromSpec(ref TypeManager.PyTypeSpec spec);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n);
