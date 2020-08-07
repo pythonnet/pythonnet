@@ -530,61 +530,42 @@ namespace Python.Runtime
             internal IntPtr func; //function pointer of the function implementing the slot
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        internal class PyTypeSpecOffset
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PyTypeSpec
         {
-            public static IntPtr AllocPyTypeSpec(string typename, int obSize, int obFlags, IntPtr slotsPtr)
-            {
-                byte[] ascii = System.Text.Encoding.ASCII.GetBytes(typename);
-
-                //This approach is the same as the one in interop.cs for AllocModuleDef
-                //allocate the size of the struct (which is given by the value of the last
-                //static member and enough space to hold to typename as a char buffer.  The
-                //amount of space needed is the length of the string and the null terminator
-                //char* name member will simply point to the position of the buffer.
-                int size = name_value + ascii.Length + 1;
-                IntPtr specPtr = Marshal.AllocHGlobal(size);
-
-                Marshal.Copy(ascii, 0, specPtr + name_value, ascii.Length);
-                Marshal.WriteIntPtr(specPtr, name, specPtr + name_value);
-                Marshal.WriteByte(specPtr, name_value + ascii.Length, 0);
-
-                Marshal.WriteInt32(specPtr, basicsize, obSize);
-                Marshal.WriteInt32(specPtr, itemsize, 0);
-                Marshal.WriteInt32(specPtr, flags, obFlags);
-                //Util.WriteCLong(specPtr, basicsize, obFlags);
-                //Util.WriteCLong(specPtr, itemsize, 0);
-                //Util.WriteCLong(specPtr, flags, obFlags);
-
-                Marshal.WriteIntPtr(specPtr, slots, slotsPtr);
-                return specPtr;
-            }
-
-            public static int name = 0;
-            public static int basicsize = name + IntPtr.Size;
-            public static int itemsize = basicsize + 4;
-            public static int flags = itemsize + 4;
-            public static int slots = flags + 4;
-
-            public static int name_value = slots + IntPtr.Size;
+            public IntPtr Name;
+            public int BasicSize;
+            public int ItemSize;
+            public int Flags;
+            public IntPtr Slots;
         }
-
 
         internal static IntPtr CreateTypeObject(string name, int obSize, int obFlags, PY_TYPE_SLOT[] type_slots)
         {
-            //type_slots *must* be terminated by a {0,0} entry.  TODO - Should I check/throw?
-
             //convert type slot array into intptr
             int structSize = Marshal.SizeOf(typeof(PY_TYPE_SLOT));
             GCHandle pinnedArray = GCHandle.Alloc(type_slots, GCHandleType.Pinned);
-
-            //Well, this will leak.  Maybe pinnedArray should be added as a member to managedtype.
             IntPtr slotsPtr = pinnedArray.AddrOfPinnedObject();
-            //pinnedArray.Free(); //at some point
 
             //create a type from the spec and return it.
-            IntPtr specPtr = PyTypeSpecOffset.AllocPyTypeSpec(name, obSize, obFlags, slotsPtr);
-            IntPtr typePtr = Runtime.PyType_FromSpec(specPtr);
+            byte[] ascii = System.Text.Encoding.ASCII.GetBytes(name);
+            GCHandle pinnedName = GCHandle.Alloc(ascii, GCHandleType.Pinned);
+            IntPtr namePtr = pinnedName.AddrOfPinnedObject();
+
+            var typeSpec = new PyTypeSpec
+            {
+                Name = namePtr,
+                BasicSize = obSize,
+                ItemSize = 0,
+                Flags = obFlags,
+                Slots = slotsPtr
+            };
+
+            var x = TypeOffset.ht_name;
+
+            var typePtr = Runtime.PyType_FromSpec(ref typeSpec).DangerousGetAddress();
+            pinnedArray.Free();
+            pinnedName.Free();
             return typePtr;
 
             //TODO - taken from AllocateTypeObject.  I have no idea what this is meant to do.
@@ -595,9 +576,9 @@ namespace Python.Runtime
             IntPtr temp = Runtime.PyUnicode_FromString(name);
             IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
-            Marshal.WriteIntPtr(type, TypeOffset.name, temp);
+            Marshal.WriteIntPtr(type, TypeOffset.ht_name, temp);
 
-            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
+            Marshal.WriteIntPtr(type, TypeOffset.ht_qualname, temp);
 
             long ptr = type.ToInt64(); // 64-bit safe
 
@@ -629,9 +610,9 @@ namespace Python.Runtime
             IntPtr temp = Runtime.PyUnicode_FromString(name);
             IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
-            Marshal.WriteIntPtr(type, TypeOffset.name, temp);
+            Marshal.WriteIntPtr(type, TypeOffset.ht_name, temp);
 
-            Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
+            Marshal.WriteIntPtr(type, TypeOffset.ht_qualname, temp);
 
             long ptr = type.ToInt64(); // 64-bit safe
 
