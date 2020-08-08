@@ -561,15 +561,10 @@ namespace Python.Runtime
                 Slots = slotsPtr
             };
 
-            var x = TypeOffset.ht_name;
-
-            var typePtr = Runtime.PyType_FromSpec(ref typeSpec).DangerousGetAddress();
+            var type = Runtime.PyType_FromSpec(ref typeSpec).DangerousGetAddress();
             pinnedArray.Free();
             pinnedName.Free();
-            return typePtr;
 
-            //TODO - taken from AllocateTypeObject.  I have no idea what this is meant to do.
-            /* 
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
@@ -593,8 +588,8 @@ namespace Python.Runtime
 
             temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
+
             return type;
-             */
         }
 
         /// <summary>
