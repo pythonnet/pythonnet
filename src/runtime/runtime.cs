@@ -347,10 +347,10 @@ namespace Python.Runtime
             }
 
 #if MONO_LINUX
-            string[] dyLibPaths = IO.Directory.GetFiles(dllDirectory, "*.so");
+            string[] dyLibPaths = System.IO.Directory.GetFiles(dllDirectory, "*.so");
             foreach (string dyLibPath in dyLibPaths)
             {
-                string dyLibName = IO.Path.GetFileNameWithoutExtension(dyLibPath);
+                string dyLibName = System.IO.Path.GetFileNameWithoutExtension(dyLibPath);
                 if (! dyLibName.Contains("python"))
                 {
                     // remove the first three characters, "lib"
