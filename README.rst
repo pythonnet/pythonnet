@@ -14,6 +14,11 @@ provides a powerful application scripting tool for .NET developers. It
 allows Python code to interact with the CLR, and may also be used to
 embed Python into a .NET application.
 
+.. note::
+   The master branch of this repository tracks the ongoing development of version 3.0.
+   Backports of patches to 2.5 are tracked in the
+   `backports-2.5 branch <https://github.com/pythonnet/pythonnet/tree/backports-2.5>`_.
+
 Calling .NET code from Python
 -----------------------------
 
