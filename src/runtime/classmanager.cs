@@ -39,11 +39,6 @@ namespace Python.Runtime
             cache = new Dictionary<Type, ClassBase>(128);
         }
 
-        public static IList<ClassBase> GetManagedTypes()
-        {
-            return cache.Values.ToArray(); // Make a copy.
-        }
-
         internal static void RemoveClasses()
         {
             var visited = new HashSet<IntPtr>();

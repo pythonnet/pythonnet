@@ -41,11 +41,6 @@ namespace Python.Runtime
             Runtime.XDecref(type);
         }
 
-        public static IList<IntPtr> GetManagedTypes()
-        {
-            return cache.Values.ToArray();
-        }
-
         internal static void RemoveTypes()
         {
             foreach (var tpHandle in cache.Values)
