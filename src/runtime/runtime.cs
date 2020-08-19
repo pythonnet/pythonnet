@@ -317,7 +317,7 @@ namespace Python.Runtime
             PyGILState_Ensure();
 
             var mode = ShutdownMode;
-            if (mode == ShutdownMode.Normal)
+            if (mode == ShutdownMode.Soft)
             {
                 RunExitFuncs();
             }
