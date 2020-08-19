@@ -847,12 +847,6 @@ namespace Python.Runtime
         internal static extern IntPtr PyCFunction_Call(IntPtr func, IntPtr args, IntPtr kw);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyInstance_New(IntPtr cls, IntPtr args, IntPtr kw);
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyInstance_NewRaw(IntPtr cls, IntPtr dict);
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyMethod_New(IntPtr func, IntPtr self, IntPtr cls);
 
 
@@ -1017,9 +1011,6 @@ namespace Python.Runtime
         //====================================================================
         // Python buffer API
         //====================================================================
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_CheckBuffer(IntPtr obj);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_GetBuffer(IntPtr exporter, ref Py_buffer view, int flags);
@@ -1793,7 +1784,7 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr _PyObject_GetDictPtr(IntPtr obj);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "_PyObject_GC_New")]
         internal static extern IntPtr PyObject_GC_New(IntPtr tp);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
