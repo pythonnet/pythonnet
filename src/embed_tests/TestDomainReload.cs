@@ -85,6 +85,7 @@ namespace Python.EmbeddingTest
             {
                 try
                 {
+                    // Create a C# user-defined object in Python. Asssing some values.
                     Type type = typeof(Python.EmbeddingTest.Domain.MyClass);
                     string code = string.Format(@"
 import clr
@@ -165,6 +166,11 @@ obj.Field += 10
             }
         }
 
+        /// <summary>
+        /// Create a C# custom object in a domain, in python code.
+        /// Unload the domain, create a new domain.
+        /// Make sure the C# custom object created in the previous domain has been re-created
+        /// </summary>
         [Test]
         public static void CrossDomainObject()
         {
