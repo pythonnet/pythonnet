@@ -280,7 +280,12 @@ test_obj_call()
             {
                 try
                 {
+                    PythonEngine.Initialize();
                     var numRef = CreateNumReference();
+                    PythonEngine.Shutdown(); // <- "run" 1 ends
+                    PythonEngine.Initialize(); // <- "run" 2 starts
+                    Assert.True(numRef.IsAlive);
+
                     GC.Collect();
                     GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
                     Finalizer.Instance.Collect(forceDispose: true);
@@ -321,7 +326,11 @@ test_obj_call()
             {
                 try
                 {
+                    PythonEngine.Initialize();
                     var objRef = CreateConcreateObject();
+                    PythonEngine.Shutdown(); // <- "run" 1 ends
+                    PythonEngine.Initialize(); // <- "run" 2 starts
+                    Assert.True(objRef.IsAlive);
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     Finalizer.Instance.Collect(forceDispose: true);
@@ -355,25 +364,17 @@ test_obj_call()
 
         private static WeakReference CreateNumReference()
         {
-            PythonEngine.Initialize();
             var num = 3216757418.ToPython();
             Assert.AreEqual(num.Refcount, 1);
             WeakReference numRef = new WeakReference(num, false);
-            PythonEngine.Shutdown(); // <- "run" 1 ends
-            PythonEngine.Initialize(); // <- "run" 2 starts
-            num = null;
             return numRef;
         }
 
         private static WeakReference CreateConcreateObject()
         {
-            PythonEngine.Initialize();
             var obj = new Domain.MyClass().ToPython();
             Assert.AreEqual(obj.Refcount, 1);
             WeakReference numRef = new WeakReference(obj, false);
-            PythonEngine.Shutdown();
-            PythonEngine.Initialize();
-            obj = null;
             return numRef;
         }
 
