@@ -21,7 +21,7 @@ namespace Python.EmbeddingTest
     {
         abstract class CrossCaller : MarshalByRefObject
         {
-            public abstract ValueType Execte(ValueType arg);
+            public abstract ValueType Execute(ValueType arg);
         }
 
 
@@ -79,9 +79,9 @@ namespace Python.EmbeddingTest
 
         #region CrossDomainObject
 
-        class CrossDomianObjectStep1 : CrossCaller
+        class CrossDomainObjectStep1 : CrossCaller
         {
-            public override ValueType Execte(ValueType arg)
+            public override ValueType Execute(ValueType arg)
             {
                 try
                 {
@@ -120,9 +120,9 @@ obj.Field = 10
         }
 
 
-        class CrossDomianObjectStep2 : CrossCaller
+        class CrossDomainObjectStep2 : CrossCaller
         {
-            public override ValueType Execte(ValueType arg)
+            public override ValueType Execute(ValueType arg)
             {
                 // handle refering a clr object created in previous domain,
                 // it should had been deserialized and became callable agian.
@@ -167,7 +167,7 @@ obj.Field += 10
         [Test]
         public static void CrossDomainObject()
         {
-            RunDomainReloadSteps<CrossDomianObjectStep1, CrossDomianObjectStep2>();
+            RunDomainReloadSteps<CrossDomainObjectStep1, CrossDomainObjectStep2>();
         }
 
         #endregion
@@ -176,7 +176,7 @@ obj.Field += 10
 
         class ReloadClassRefStep1 : CrossCaller
         {
-            public override ValueType Execte(ValueType arg)
+            public override ValueType Execute(ValueType arg)
             {
                 const string code = @"
 from Python.EmbeddingTest.Domain import MyClass
@@ -224,7 +224,7 @@ test_obj_call()
 
         class ReloadClassRefStep2 : CrossCaller
         {
-            public override ValueType Execte(ValueType arg)
+            public override ValueType Execute(ValueType arg)
             {
                 var module = (IntPtr)arg;
                 using (Py.GIL())
@@ -470,7 +470,7 @@ test_obj_call()
                     var caller = (T1)domain.CreateInstanceAndUnwrap(
                             typeof(T1).Assembly.FullName,
                             typeof(T1).FullName);
-                    arg = caller.Execte(arg);
+                    arg = caller.Execute(arg);
 
                     theProxy.Call("ShutdownPython");
                 }
@@ -492,7 +492,7 @@ test_obj_call()
                     var caller = (T2)domain.CreateInstanceAndUnwrap(
                             typeof(T2).Assembly.FullName,
                             typeof(T2).FullName);
-                    caller.Execte(arg);
+                    caller.Execute(arg);
                     theProxy.Call("ShutdownPythonCompletely");
                 }
                 finally
