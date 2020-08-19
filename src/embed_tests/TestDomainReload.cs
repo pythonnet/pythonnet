@@ -200,19 +200,26 @@ test_obj_call()
                 const string name = "test_domain_reload_mod";
                 using (Py.GIL())
                 {
+                    // Create a new module
                     IntPtr module = PyRuntime.PyModule_New(name);
                     Assert.That(module != IntPtr.Zero);
                     IntPtr globals = PyRuntime.PyObject_GetAttrString(module, "__dict__");
                     Assert.That(globals != IntPtr.Zero);
                     try
                     {
+                        // import builtins
+                        // module.__dict__[__builtins__] = builtins
                         int res = PyRuntime.PyDict_SetItemString(globals, "__builtins__",
                             PyRuntime.PyEval_GetBuiltins());
                         PythonException.ThrowIfIsNotZero(res);
 
+                        // Execute the code in the module's scope
                         PythonEngine.Exec(code, globals);
+                        // import sys
+                        // modules = sys.modules
                         IntPtr modules = PyRuntime.PyImport_GetModuleDict();
-                        res = PyRuntime.PyDict_SetItemString(modules, name, modules);
+                        // modules[name] = module
+                        res = PyRuntime.PyDict_SetItemString(modules, name, module);
                         PythonException.ThrowIfIsNotZero(res);
                     }
                     catch
@@ -251,6 +258,11 @@ test_obj_call()
 
 
         [Test]
+        /// <summary>
+        /// Create a new Python module, define a function in it.
+        /// Unload the domain, load a new one.
+        /// Make sure the function (and module) still exists.
+        /// </summary>
         public void TestClassReference()
         {
             RunDomainReloadSteps<ReloadClassRefStep1, ReloadClassRefStep2>();
