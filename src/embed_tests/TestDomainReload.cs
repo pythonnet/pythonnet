@@ -542,7 +542,7 @@ test_obj_call()
         {
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             string name = AppDomain.CurrentDomain.FriendlyName;
-            Console.WriteLine(string.Format("[{0} in .NET] In PythonRunner.RunPython", name));
+            Console.WriteLine("[{0} in .NET] In PythonRunner.RunPython", name);
             var mode = PythonEngine.DefaultShutdownMode;
             if (mode == ShutdownMode.Normal)
             {
