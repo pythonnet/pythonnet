@@ -478,7 +478,7 @@ test_obj_call()
             ValueType arg = null;
             Type type = typeof(Proxy);
             {
-                AppDomain domain = CreateDomain("test_domain_reload");
+                AppDomain domain = CreateDomain("test_domain_reload_1");
                 try
                 {
                     var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
@@ -500,7 +500,7 @@ test_obj_call()
             }
 
             {
-                AppDomain domain = CreateDomain("test_domain_reload");
+                AppDomain domain = CreateDomain("test_domain_reload_2");
                 try
                 {
                     var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
