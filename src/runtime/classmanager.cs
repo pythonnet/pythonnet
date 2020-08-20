@@ -48,7 +48,7 @@ namespace Python.Runtime
             {
                 foreach (var cls in cache.Values)
                 {
-                    cls.CallTypeTraverse(OnVisit, visitedPtr);
+                    cls.CallTypeTraverse(TraverseTypeClear, visitedPtr);
                     // XXX: Force release instance resources but not dealloc itself.
                     cls.CallTypeClear();
                     cls.DecrRefCount();
@@ -61,7 +61,7 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        private static int OnVisit(IntPtr ob, IntPtr arg)
+        private static int TraverseTypeClear(IntPtr ob, IntPtr arg)
         {
             var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
             if (!visited.Add(ob))
@@ -71,7 +71,7 @@ namespace Python.Runtime
             var clrObj = ManagedType.GetManagedObject(ob);
             if (clrObj != null)
             {
-                clrObj.CallTypeTraverse(OnVisit, arg);
+                clrObj.CallTypeTraverse(TraverseTypeClear, arg);
                 clrObj.CallTypeClear();
             }
             return 0;
