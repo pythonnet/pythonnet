@@ -317,7 +317,7 @@ namespace Python.Runtime
             PyGILState_Ensure();
 
             var mode = ShutdownMode;
-            if (mode != ShutdownMode.Normal)
+            if (mode == ShutdownMode.Soft)
             {
                 RunExitFuncs();
             }
@@ -361,10 +361,12 @@ namespace Python.Runtime
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
                 PyEval_SaveThread();
-                return;
             }
-            ResetPyMembers();
-            Py_Finalize();
+            else
+            {
+                ResetPyMembers();
+                Py_Finalize();
+            }
         }
 
         internal static ShutdownMode GetDefaultShutdownMode()
