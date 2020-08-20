@@ -39,7 +39,7 @@ namespace Python.Runtime
             cache = new Dictionary<Type, ClassBase>(128);
         }
 
-        internal static void RemoveClasses()
+        internal static void DisposePythonWrappersForClrTypes()
         {
             var visited = new HashSet<IntPtr>();
             var visitedHandle = GCHandle.Alloc(visited);

@@ -334,7 +334,7 @@ namespace Python.Runtime
             RemoveClrRootModule();
 
             MoveClrInstancesOnwershipToPython();
-            ClassManager.RemoveClasses();
+            ClassManager.DisposePythonWrappersForClrTypes();
             TypeManager.RemoveTypes();
 
             MetaType.Release();
