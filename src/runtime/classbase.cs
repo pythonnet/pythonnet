@@ -297,7 +297,7 @@ namespace Python.Runtime
         public static int tp_clear(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            if (self.pyHandle != self.tpHandle)
+            if (!self.IsTypeObject())
             {
                 ClearObjectDict(ob);
             }

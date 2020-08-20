@@ -136,6 +136,11 @@ namespace Python.Runtime
             return false;
         }
 
+        public bool IsTypeObject()
+        {
+            return pyHandle == tpHandle;
+        }
+
         internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
         {
             return _managedObjs;
