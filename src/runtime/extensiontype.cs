@@ -98,7 +98,7 @@ namespace Python.Runtime
             self.Dealloc();
         }
 
-        protected override void OnLoad(PyObjectSerializeContext context)
+        protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
             GCHandle gc = AllocGCHandle(TrackTypes.Extension);

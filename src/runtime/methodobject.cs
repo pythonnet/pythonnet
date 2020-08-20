@@ -222,7 +222,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void OnSave(PyObjectSerializeContext context)
+        protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
             if (unbound != null)

@@ -143,7 +143,7 @@ namespace Python.Runtime
             var extensionObjs = new List<ManagedType>();
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var serializeObjs = new CLRWrapperCollection();
-            var contexts = new Dictionary<IntPtr, PyObjectSerializeContext>();
+            var contexts = new Dictionary<IntPtr, InterDomainContext>();
             foreach (var entry in objs)
             {
                 var obj = entry.Key;
@@ -152,7 +152,7 @@ namespace Python.Runtime
                 {
                     case ManagedType.TrackTypes.Extension:
                         Debug.Assert(obj.GetType().IsSerializable);
-                        var context = new PyObjectSerializeContext();
+                        var context = new InterDomainContext();
                         contexts[obj.pyHandle] = context;
                         obj.Save(context);
                         extensionObjs.Add(obj);
@@ -204,7 +204,7 @@ namespace Python.Runtime
                 foreach (var clrObj in wrappers[item.Instance])
                 {
                     XIncref(clrObj.pyHandle);
-                    var context = new PyObjectSerializeContext();
+                    var context = new InterDomainContext();
                     contexts[clrObj.pyHandle] = context;
                     clrObj.Save(context);
                 }
@@ -215,12 +215,12 @@ namespace Python.Runtime
             storage.AddValue("contexts", contexts);
         }
 
-        private static Dictionary<ManagedType, PyObjectSerializeContext> StashPopObjects(RuntimeDataStorage storage)
+        private static Dictionary<ManagedType, InterDomainContext> StashPopObjects(RuntimeDataStorage storage)
         {
             var extensions = storage.GetValue<List<ManagedType>>("extensions");
             var internalStores = storage.GetValue<List<CLRObject>>("internalStores");
-            var contexts = storage.GetValue <Dictionary<IntPtr, PyObjectSerializeContext>>("contexts");
-            var storedObjs = new Dictionary<ManagedType, PyObjectSerializeContext>();
+            var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
+            var storedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var obj in Enumerable.Union(extensions, internalStores))
             {
                 var context = contexts[obj.pyHandle];
@@ -356,7 +356,7 @@ namespace Python.Runtime
 
 
     [Serializable]
-    class PyObjectSerializeContext
+    class InterDomainContext
     {
         private RuntimeDataStorage _storage;
         public RuntimeDataStorage Storage => _storage ?? (_storage = new RuntimeDataStorage());

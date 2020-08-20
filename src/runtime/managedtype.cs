@@ -205,18 +205,18 @@ namespace Python.Runtime
             ClearObjectDict(pyHandle);
         }
 
-        internal void Save(PyObjectSerializeContext context)
+        internal void Save(InterDomainContext context)
         {
             OnSave(context);
         }
 
-        internal void Load(PyObjectSerializeContext context)
+        internal void Load(InterDomainContext context)
         {
             OnLoad(context);
         }
 
-        protected virtual void OnSave(PyObjectSerializeContext context) { }
-        protected virtual void OnLoad(PyObjectSerializeContext context) { }
+        protected virtual void OnSave(InterDomainContext context) { }
+        protected virtual void OnLoad(InterDomainContext context) { }
 
         protected static void ClearObjectDict(IntPtr ob)
         {
