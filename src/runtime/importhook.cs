@@ -121,7 +121,7 @@ namespace Python.Runtime
             CLRModule.Reset();
         }
 
-        internal static void StashPush(RuntimeDataStorage storage)
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
             Runtime.XIncref(py_clr_module);
             Runtime.XIncref(root.pyHandle);
@@ -129,7 +129,7 @@ namespace Python.Runtime
             storage.AddValue("root", root.pyHandle);
         }
 
-        internal static void StashPop(RuntimeDataStorage storage)
+        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
         {
             InitImport();
             storage.GetValue("py_clr_module", out py_clr_module);

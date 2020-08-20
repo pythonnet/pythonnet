@@ -34,22 +34,22 @@ namespace Python.Runtime
         internal static void Stash()
         {
             var metaStorage = new RuntimeDataStorage();
-            MetaType.StashPush(metaStorage);
+            MetaType.SaveRuntimeData(metaStorage);
 
             var importStorage = new RuntimeDataStorage();
-            ImportHook.StashPush(importStorage);
+            ImportHook.SaveRuntimeData(importStorage);
 
             var typeStorage = new RuntimeDataStorage();
-            TypeManager.StashPush(typeStorage);
+            TypeManager.SaveRuntimeData(typeStorage);
 
             var clsStorage = new RuntimeDataStorage();
-            ClassManager.StashPush(clsStorage);
+            ClassManager.SaveRuntimeData(clsStorage);
 
             var moduleStorage = new RuntimeDataStorage();
-            StashPushModules(moduleStorage);
+            SaveRuntimeDataModules(moduleStorage);
 
             var objStorage = new RuntimeDataStorage();
-            StashPushObjects(objStorage);
+            SaveRuntimeDataObjects(objStorage);
 
             var runtimeStorage = new RuntimeDataStorage();
             runtimeStorage.AddValue("meta", metaStorage);
@@ -82,11 +82,11 @@ namespace Python.Runtime
             XDecref(capsule);
         }
 
-        internal static void StashPop()
+        internal static void RestoreRuntimeData()
         {
             try
             {
-                StashPopImpl();
+                RestoreRuntimeDataImpl();
             }
             finally
             {
@@ -94,7 +94,7 @@ namespace Python.Runtime
             }
         }
 
-        private static void StashPopImpl()
+        private static void RestoreRuntimeDataImpl()
         {
             IntPtr capsule = PySys_GetObject("clr_data");
             if (capsule == IntPtr.Zero)
@@ -109,12 +109,12 @@ namespace Python.Runtime
             var formatter = CreateFormatter();
             var storage = (RuntimeDataStorage)formatter.Deserialize(ms);
 
-            var objs = StashPopObjects(storage.GetStorage("objs"));
-            StashPopModules(storage.GetStorage("modules"));
-            var clsObjs = ClassManager.StashPop(storage.GetStorage("classes"));
-            TypeManager.StashPop(storage.GetStorage("types"));
-            ImportHook.StashPop(storage.GetStorage("import"));
-            PyCLRMetaType = MetaType.StashPop(storage.GetStorage("meta"));
+            var objs = RestoreRuntimeDataObjects(storage.GetStorage("objs"));
+            RestoreRuntimeDataModules(storage.GetStorage("modules"));
+            var clsObjs = ClassManager.RestoreRuntimeData(storage.GetStorage("classes"));
+            TypeManager.RestoreRuntimeData(storage.GetStorage("types"));
+            ImportHook.RestoreRuntimeData(storage.GetStorage("import"));
+            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
 
             foreach (var item in objs)
             {
@@ -137,7 +137,7 @@ namespace Python.Runtime
             PySys_SetObject("clr_data", IntPtr.Zero);
         }
 
-        private static void StashPushObjects(RuntimeDataStorage storage)
+        private static void SaveRuntimeDataObjects(RuntimeDataStorage storage)
         {
             var objs = ManagedType.GetManagedObjects();
             var extensionObjs = new List<ManagedType>();
@@ -215,7 +215,7 @@ namespace Python.Runtime
             storage.AddValue("contexts", contexts);
         }
 
-        private static Dictionary<ManagedType, InterDomainContext> StashPopObjects(RuntimeDataStorage storage)
+        private static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeDataObjects(RuntimeDataStorage storage)
         {
             var extensions = storage.GetValue<List<ManagedType>>("extensions");
             var internalStores = storage.GetValue<List<CLRObject>>("internalStores");
@@ -245,7 +245,7 @@ namespace Python.Runtime
             return storedObjs;
         }
 
-        private static void StashPushModules(RuntimeDataStorage storage)
+        private static void SaveRuntimeDataModules(RuntimeDataStorage storage)
         {
             var pyModules = PyImport_GetModuleDict();
             var itemsRef = PyDict_Items(pyModules);
@@ -268,7 +268,7 @@ namespace Python.Runtime
             storage.AddValue("modules", modules);
         }
 
-        private static void StashPopModules(RuntimeDataStorage storage)
+        private static void RestoreRuntimeDataModules(RuntimeDataStorage storage)
         {
             var modules = storage.GetValue<Dictionary<IntPtr, IntPtr>>("modules");
             var pyMoudles = PyImport_GetModuleDict();

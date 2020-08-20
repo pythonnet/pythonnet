@@ -77,7 +77,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        internal static void StashPush(RuntimeDataStorage storage)
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
             var contexts = storage.AddValue("contexts",
                 new Dictionary<IntPtr, InterDomainContext>());
@@ -85,14 +85,14 @@ namespace Python.Runtime
             foreach (var cls in cache.Values)
             {
                 // This incref is for cache to hold the cls,
-                // thus no need for decreasing it at StashPop.
+                // thus no need for decreasing it at RestoreRuntimeData.
                 Runtime.XIncref(cls.pyHandle);
                 var context = contexts[cls.pyHandle] = new InterDomainContext();
                 cls.Save(context);
             }
         }
 
-        internal static Dictionary<ManagedType, InterDomainContext> StashPop(RuntimeDataStorage storage)
+        internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(RuntimeDataStorage storage)
         {
             cache = storage.GetValue<Dictionary<Type, ClassBase>>("cache");
             var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");

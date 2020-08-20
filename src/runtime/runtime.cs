@@ -172,7 +172,7 @@ namespace Python.Runtime
 #if !NETSTANDARD
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
-                RuntimeData.StashPop();
+                RuntimeData.RestoreRuntimeData();
             }
             else
 #endif
