@@ -417,9 +417,11 @@ test_obj_call()
                     type.Assembly.FullName,
                     type.FullName);
 
+            theProxy.Call("InitPython", ShutdownMode.Soft);
             // From now on use the Proxy to call into the new assembly
             theProxy.RunPython();
 
+            theProxy.Call("ShutdownPython");
             Console.WriteLine($"[Program.Main] Before Domain Unload on {domainName}");
             AppDomain.Unload(domain);
             Console.WriteLine($"[Program.Main] After Domain Unload on {domainName}");
@@ -544,38 +546,25 @@ test_obj_call()
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             string name = AppDomain.CurrentDomain.FriendlyName;
             Console.WriteLine("[{0} in .NET] In PythonRunner.RunPython", name);
-            var mode = PythonEngine.DefaultShutdownMode;
-            if (mode == ShutdownMode.Normal)
+            using (Py.GIL())
             {
-                mode = ShutdownMode.Soft;
-            }
-            PythonEngine.Initialize(mode: mode);
-            try
-            {
-                using (Py.GIL())
+                try
                 {
-                    try
-                    {
-                        var pyScript = string.Format("import clr\n"
-                            + "print('[{0} in python] imported clr')\n"
-                            + "clr.AddReference('System')\n"
-                            + "print('[{0} in python] allocated a clr object')\n"
-                            + "import gc\n"
-                            + "gc.collect()\n"
-                            + "print('[{0} in python] collected garbage')\n",
-                            name);
-                        PythonEngine.Exec(pyScript);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
-                        throw;
-                    }
+                    var pyScript = string.Format("import clr\n"
+                        + "print('[{0} in python] imported clr')\n"
+                        + "clr.AddReference('System')\n"
+                        + "print('[{0} in python] allocated a clr object')\n"
+                        + "import gc\n"
+                        + "gc.collect()\n"
+                        + "print('[{0} in python] collected garbage')\n",
+                        name);
+                    PythonEngine.Exec(pyScript);
                 }
-            }
-            finally
-            {
-                PythonEngine.BeginAllowThreads();
+                catch (Exception e)
+                {
+                    Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
+                    throw;
+                }
             }
         }
 
