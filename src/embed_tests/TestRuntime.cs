@@ -40,16 +40,27 @@ namespace Python.EmbeddingTest
         [Test]
         public static void Py_IsInitializedValue()
         {
-            if (Runtime.Runtime.Py_IsInitialized() == 1)
+            IntPtr state = IntPtr.Zero;
+            try
             {
-                Runtime.Runtime.PyGILState_Ensure();
+                if (Runtime.Runtime.Py_IsInitialized() == 1)
+                {
+                    state = Runtime.Runtime.PyGILState_Ensure();
+                }
+                Runtime.Runtime.Py_Finalize();
+                Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
+                Runtime.Runtime.Py_Initialize();
+                Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());
+                Runtime.Runtime.Py_Finalize();
+                Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             }
-            Runtime.Runtime.Py_Finalize();
-            Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
-            Runtime.Runtime.Py_Initialize();
-            Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());
-            Runtime.Runtime.Py_Finalize();
-            Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
+            finally
+            {
+                if(state != IntPtr.Zero)
+                {
+                    Runtime.Runtime.PyGILState_Release(state);
+                }
+            }
         }
 
         [Test]
