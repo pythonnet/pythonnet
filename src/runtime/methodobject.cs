@@ -113,8 +113,7 @@ namespace Python.Runtime
 
         private void ClearMembers()
         {
-            Runtime.XDecref(doc);
-            doc = IntPtr.Zero;
+            Runtime.Py_CLEAR(ref doc);
             if (unbound != null)
             {
                 Runtime.XDecref(unbound.pyHandle);
