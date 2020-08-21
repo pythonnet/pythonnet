@@ -22,11 +22,11 @@ namespace Python.Runtime
             Runtime.XIncref(target);
             this.target = target;
 
-            Runtime.XIncref(targetType);
             if (targetType == IntPtr.Zero)
             {
                 targetType = Runtime.PyObject_Type(target);
             }
+            Runtime.XIncref(targetType);
             this.targetType = targetType;
 
             this.info = null;
