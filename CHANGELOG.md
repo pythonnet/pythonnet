@@ -8,7 +8,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [Unreleased][]
 
 ### Added
--   Add syntax highlighting for Python code in [README.rst](https://github.com/pythonnet/pythonnet/blob/master/README.rst)
+-   Add Python syntax highlighting for Python code examples in [README.rst](https://github.com/pythonnet/pythonnet/blob/master/README.rst)
 
 ### Changed
 -   Drop support for Python 2
