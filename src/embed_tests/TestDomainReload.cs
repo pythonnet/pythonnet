@@ -282,9 +282,9 @@ test_obj_call()
                 {
                     PythonEngine.Initialize();
                     var numRef = CreateNumReference();
+                    Assert.True(numRef.IsAlive);
                     PythonEngine.Shutdown(); // <- "run" 1 ends
                     PythonEngine.Initialize(); // <- "run" 2 starts
-                    Assert.True(numRef.IsAlive);
 
                     GC.Collect();
                     GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
@@ -328,9 +328,9 @@ test_obj_call()
                 {
                     PythonEngine.Initialize();
                     var objRef = CreateConcreateObject();
+                    Assert.True(objRef.IsAlive);
                     PythonEngine.Shutdown(); // <- "run" 1 ends
                     PythonEngine.Initialize(); // <- "run" 2 starts
-                    Assert.True(objRef.IsAlive);
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     Finalizer.Instance.Collect(forceDispose: true);
