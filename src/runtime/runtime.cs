@@ -125,6 +125,7 @@ namespace Python.Runtime
             }
             ShutdownMode = mode;
 
+            IntPtr state = IntPtr.Zero;
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
@@ -148,7 +149,8 @@ namespace Python.Runtime
             }
             else
             {
-                PyGILState_Ensure();
+                PyEval_InitThreads();
+                state = PyGILState_Ensure();
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
@@ -193,6 +195,10 @@ namespace Python.Runtime
             }
             XDecref(item);
             AssemblyManager.UpdatePath();
+            if (state != IntPtr.Zero)
+            {
+                PyGILState_Release(state);
+            }
         }
 
         private static void InitPyMembers()
@@ -314,7 +320,7 @@ namespace Python.Runtime
             }
             _isInitialized = false;
 
-            PyGILState_Ensure();
+            var state = PyGILState_Ensure();
 
             var mode = ShutdownMode;
             if (mode == ShutdownMode.Soft)
@@ -360,7 +366,7 @@ namespace Python.Runtime
                 {
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
-                PyEval_SaveThread();
+                PyGILState_Release(state);
             }
             else
             {
