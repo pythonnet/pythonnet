@@ -176,7 +176,6 @@ namespace Python.Runtime
                 return;
             }
             var clearFunc = (Interop.InquiryFunc)Marshal.GetDelegateForFunctionPointer(clearPtr, typeof(Interop.InquiryFunc));
-            // TODO: Handle errors base on return value
             clearFunc(pyHandle);
         }
 
@@ -196,7 +195,6 @@ namespace Python.Runtime
             }
             var traverseFunc = (Interop.ObjObjArgFunc)Marshal.GetDelegateForFunctionPointer(traversePtr, typeof(Interop.ObjObjArgFunc));
             var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
-            // TODO: Handle errors base on return value
             traverseFunc(pyHandle, visiPtr, arg);
         }
 
