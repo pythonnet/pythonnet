@@ -24,7 +24,7 @@ Calling .NET code from Python
 
 Python.NET allows CLR namespaces to be treated essentially as Python packages.
 
-.. code-block::
+.. code-block:: python
 
    import clr
    from System import String
@@ -33,7 +33,7 @@ Python.NET allows CLR namespaces to be treated essentially as Python packages.
 To load an assembly, use the ``AddReference`` function in the ``clr``
 module:
 
-.. code-block::
+.. code-block:: python
 
    import clr
    clr.AddReference("System.Windows.Forms")
@@ -85,7 +85,7 @@ Example
 
 Output:
 
-.. code::
+.. code:: csharp
 
    1.0
    -0.958924274663
