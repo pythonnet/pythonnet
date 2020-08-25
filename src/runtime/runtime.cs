@@ -1784,9 +1784,6 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr _PyObject_GetDictPtr(IntPtr obj);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "_PyObject_GC_New")]
-        internal static extern IntPtr PyObject_GC_New(IntPtr tp);
-
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyObject_GC_Del(IntPtr tp);
 
