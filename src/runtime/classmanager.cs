@@ -212,8 +212,6 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
-                // info.members are already useless
-                item.DecrRefCount();
             }
 
             // If class has constructors, generate an __doc__ attribute.
@@ -463,7 +461,7 @@ namespace Python.Runtime
     }
 
 
-    internal class ClassInfo
+    internal class ClassInfo : IDisposable
     {
         public Indexer indexer;
         public Hashtable members;
@@ -472,6 +470,29 @@ namespace Python.Runtime
         {
             members = new Hashtable();
             indexer = null;
+        }
+
+        ~ClassInfo()
+        {
+            Dispose();
+        }
+
+        private bool disposed = false;
+
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                disposed = true;
+                foreach(var member in members)
+                {
+                    var item = (ManagedType)member;
+                    if (item != null)
+                    {
+                        item.DecrRefCount();
+                    }
+                }
+            }
         }
     }
 }
