@@ -400,6 +400,15 @@ test_obj_call()
                 return method.Invoke(null, args);
             }
         }
+        
+        static T CreateInstanceInstanceAndUnwrap<T>(AppDomain domain)
+        {
+            Type type = typeof(T);
+            var theProxy = (T)domain.CreateInstanceAndUnwrap(
+                    type.Assembly.FullName,
+                    type.FullName);
+            return theProxy;
+        }
 
         /// <summary>
         /// Create a domain, run the assembly in it (the RunPython function),
@@ -412,10 +421,7 @@ test_obj_call()
             AppDomain domain = CreateDomain(domainName);
             // Create a Proxy object in the new domain, where we want the
             // assembly (and Python .NET) to reside
-            Type type = typeof(Proxy);
-            var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                    type.Assembly.FullName,
-                    type.FullName);
+            var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
 
             theProxy.Call("InitPython", ShutdownMode.Soft);
             // From now on use the Proxy to call into the new assembly
@@ -484,14 +490,10 @@ test_obj_call()
                 AppDomain domain = CreateDomain("test_domain_reload_1");
                 try
                 {
-                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                            type.Assembly.FullName,
-                            type.FullName);
+                    var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
                     theProxy.Call("InitPython", ShutdownMode.Reload);
 
-                    var caller = (T1)domain.CreateInstanceAndUnwrap(
-                            typeof(T1).Assembly.FullName,
-                            typeof(T1).FullName);
+                    var caller = CreateInstanceInstanceAndUnwrap<T1>(domain);
                     arg = caller.Execute(arg);
 
                     theProxy.Call("ShutdownPython");
@@ -506,14 +508,10 @@ test_obj_call()
                 AppDomain domain = CreateDomain("test_domain_reload_2");
                 try
                 {
-                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                            type.Assembly.FullName,
-                            type.FullName);
+                    var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
                     theProxy.Call("InitPython", ShutdownMode.Reload);
 
-                    var caller = (T2)domain.CreateInstanceAndUnwrap(
-                            typeof(T2).Assembly.FullName,
-                            typeof(T2).FullName);
+                    var caller = CreateInstanceInstanceAndUnwrap<T2>(domain);
                     caller.Execute(arg);
                     theProxy.Call("ShutdownPythonCompletely");
                 }
