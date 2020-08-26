@@ -312,7 +312,7 @@ namespace Python.Runtime
             return iternext;
         }
 
-        internal static void Shutdown()
+        internal static void Shutdown(ShutdownMode mode)
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
@@ -322,7 +322,6 @@ namespace Python.Runtime
 
             var state = PyGILState_Ensure();
 
-            var mode = ShutdownMode;
             if (mode == ShutdownMode.Soft)
             {
                 RunExitFuncs();
@@ -373,6 +372,12 @@ namespace Python.Runtime
                 ResetPyMembers();
                 Py_Finalize();
             }
+        }
+
+        internal static void Shutdown()
+        {
+            var mode = ShutdownMode;
+            Shutdown(mode);
         }
 
         internal static ShutdownMode GetDefaultShutdownMode()

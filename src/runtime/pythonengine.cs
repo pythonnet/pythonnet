@@ -189,9 +189,6 @@ namespace Python.Runtime
             // Make sure we clean up properly on app domain unload.
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
-            // Remember to shut down the runtime.
-            AddShutdownHandler(Runtime.Shutdown);
-
             // The global scope gets used implicitly quite early on, remember
             // to clear it out when we shut down.
             AddShutdownHandler(PyScopeManager.Global.Clear);
@@ -318,7 +315,8 @@ namespace Python.Runtime
         /// Python runtime can no longer be used in the current process
         /// after calling the Shutdown method.
         /// </remarks>
-        public static void Shutdown()
+        /// <param name="mode">The ShutdownMode to use when shutting down the Runtime</param>
+        public static void Shutdown(ShutdownMode mode)
         {
             if (!initialized)
             {
@@ -330,9 +328,24 @@ namespace Python.Runtime
 
             PyScopeManager.Global.Clear();
             ExecuteShutdownHandlers();
+            // Remember to shut down the runtime.
+            Runtime.Shutdown(mode);
             PyObjectConversions.Reset();
 
             initialized = false;
+        }
+
+        /// <summary>
+        /// Shutdown Method
+        /// </summary>
+        /// <remarks>
+        /// Shutdown and release resources held by the Python runtime. The
+        /// Python runtime can no longer be used in the current process
+        /// after calling the Shutdown method.
+        /// </remarks>
+        public static void Shutdown()
+        {
+            Shutdown(Runtime.ShutdownMode);
         }
 
         /// <summary>
