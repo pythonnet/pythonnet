@@ -80,6 +80,25 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Constructor to make a PyList from a BorrowedReference.
+        /// The list assumes ownership of the reference.
+        /// </summary>
+        /// <param name="r">The borrowed reference</param>
+        internal PyList(BorrowedReference r)
+        {
+            IntPtr addr = r.DangerousGetAddress();
+            if(!Runtime.PyList_Check(addr))
+            {
+                throw new ArgumentException("object is not a list");
+            }
+            
+            obj = addr;
+            // Take ownership.
+            Runtime.XIncref(addr);
+
+        }
+
 
         /// <summary>
         /// IsListType Method

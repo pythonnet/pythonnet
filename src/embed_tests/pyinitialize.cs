@@ -25,8 +25,7 @@ namespace Python.EmbeddingTest
         {
             using (new PythonEngine())
             {
-                var argvref = new BorrowedReference(Runtime.Runtime.PySys_GetObject("argv"));
-                using(var argv = new PyList(argvref.DangerousGetAddress()))
+                using(var argv = new PyList(new BorrowedReference(Runtime.Runtime.PySys_GetObject("argv"))))
                 {
                     Assert.AreNotEqual(0, argv.Length());
                 }
@@ -39,8 +38,7 @@ namespace Python.EmbeddingTest
             var args = new[] { "test1", "test2" };
             using (new PythonEngine(args))
             {
-                var argvref = new BorrowedReference(Runtime.Runtime.PySys_GetObject("argv"));
-                using(var argv = new PyList(argvref.DangerousGetAddress()))
+                using(var argv = new PyList(new BorrowedReference(Runtime.Runtime.PySys_GetObject("argv"))))
                 {
                     Assert.AreEqual(args[0], argv[0].ToString());
                     Assert.AreEqual(args[1], argv[1].ToString());
