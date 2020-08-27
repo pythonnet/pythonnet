@@ -487,9 +487,9 @@ namespace Python.Runtime
             if (!disposed)
             {
                 disposed = true;
-                foreach(var member in members)
+                foreach(DictionaryEntry member in members)
                 {
-                    var item = (ManagedType)member;
+                    var item = (ManagedType)member.Value;
                     if (item != null)
                     {
                         item.DecrRefCount();
