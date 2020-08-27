@@ -215,6 +215,8 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
+                // Decref the item now that it's been used.
+                item.DecrRefCount();
             }
 
             // If class has constructors, generate an __doc__ attribute.
@@ -461,41 +463,22 @@ namespace Python.Runtime
 
             return ci;
         }
-    }
-
-
-    internal class ClassInfo : IDisposable
-    {
-        public Indexer indexer;
-        public Hashtable members;
-
-        internal ClassInfo()
+        
+        /// <summary>
+        /// This class owns references to PyObjects in the `members` member.
+        /// The caller has responsibility to DECREF them.
+        /// </summary>
+        private class ClassInfo
         {
-            members = new Hashtable();
-            indexer = null;
-        }
+            public Indexer indexer;
+            public Hashtable members;
 
-        ~ClassInfo()
-        {
-            Dispose();
-        }
-
-        private bool disposed = false;
-
-        public void Dispose()
-        {
-            if (!disposed)
+            internal ClassInfo()
             {
-                disposed = true;
-                foreach(DictionaryEntry member in members)
-                {
-                    var item = (ManagedType)member.Value;
-                    if (item != null)
-                    {
-                        item.DecrRefCount();
-                    }
-                }
+                members = new Hashtable();
+                indexer = null;
             }
         }
     }
+
 }
