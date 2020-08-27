@@ -111,6 +111,8 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
+        /// <remarks>When calling this method after a soft shutdown or a domain reload,
+        ///  this method acquires and releases the GIL. </remarks>
         internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
             if (_isInitialized)
@@ -149,7 +151,8 @@ namespace Python.Runtime
             }
             else
             {
-                PyEval_InitThreads();
+                // When initializing more than once (like on soft shutdown and domain
+                // reload), the GIL might not be acquired by the current thread.
                 state = PyGILState_Ensure();
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
@@ -366,6 +369,8 @@ namespace Python.Runtime
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
                 PyGILState_Release(state);
+                // Then release the GIL for good.
+                PyEval_SaveThread();
             }
             else
             {
