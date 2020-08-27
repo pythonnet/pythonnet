@@ -29,19 +29,24 @@ namespace Python.Runtime
 
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
+            // Steals a ref to tpHandle.
+            tpHandle = tp;
+            pyHandle = py;
+
+            SetupGc();
+        }
+
+        void SetupGc ()
+        {
             GCHandle gc = AllocGCHandle(TrackTypes.Extension);
-            Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
 
             // We have to support gc because the type machinery makes it very
             // hard not to - but we really don't have a need for it in most
             // concrete extension types, so untrack the object to save calls
             // from Python into the managed runtime that are pure overhead.
 
-            Runtime.PyObject_GC_UnTrack(py);
-
-            // Steals a ref to tpHandle.
-            tpHandle = tp;
-            pyHandle = py;
+            Runtime.PyObject_GC_UnTrack(pyHandle);
         }
 
 
@@ -101,9 +106,7 @@ namespace Python.Runtime
         protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
-            GCHandle gc = AllocGCHandle(TrackTypes.Extension);
-            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
-            Runtime.PyObject_GC_UnTrack(pyHandle);
+            SetupGc();
         }
     }
 }
