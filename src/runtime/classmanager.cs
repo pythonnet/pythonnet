@@ -48,8 +48,11 @@ namespace Python.Runtime
             {
                 foreach (var cls in cache.Values)
                 {
+                    // XXX: Force to release instance's managed resources
+                    // but not dealloc itself immediately.
+                    // These managed resources should preserve vacant shells
+                    // since others may still referencing it.
                     cls.CallTypeTraverse(TraverseTypeClear, visitedPtr);
-                    // XXX: Force release instance resources but not dealloc itself.
                     cls.CallTypeClear();
                     cls.DecrRefCount();
                 }
