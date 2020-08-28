@@ -26,7 +26,11 @@ namespace Python.Runtime
             {
                 targetType = Runtime.PyObject_Type(target);
             }
-            Runtime.XIncref(targetType);
+            else
+            {
+                Runtime.XIncref(targetType);
+            }
+            
             this.targetType = targetType;
 
             this.info = null;
