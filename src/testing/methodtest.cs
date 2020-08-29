@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Python.Test
@@ -84,7 +85,7 @@ namespace Python.Test
 
         public static string[] TestStringParamsArg(params string[] args)
         {
-            return args;
+            return args.Concat(new []{"tail"}).ToArray();
         }
 
         public static object[] TestObjectParamsArg(params object[] args)
