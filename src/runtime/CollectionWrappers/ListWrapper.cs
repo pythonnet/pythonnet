@@ -14,7 +14,7 @@ namespace Python.Runtime.CollectionWrappers
         {
             get
             {
-                var item = Runtime.PyList_GetItem(pyObject.Handle, index);
+                var item = Runtime.PyList_GetItem(pyObject.Reference, index);
                 var pyItem = new PyObject(item);
 
                 if (!Converter.ToManaged(pyItem.Handle, typeof(T), out object obj, true))
