@@ -323,7 +323,6 @@ class foo():
             CollectionAssert.AreEqual(intEnumerable, new List<object> { 1, 2, 3 });
         }
     }
-    }
 
     /// <summary>
     /// "Decodes" only objects of exact type <typeparamref name="T"/>.
