@@ -89,6 +89,7 @@
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblymanager.cs" />
     <Compile Include="BorrowedReference.cs" />
+    <Compile Include="bufferinterface.cs" />
     <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />
@@ -130,6 +131,7 @@
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
     <Compile Include="pyansistring.cs" />
+    <Compile Include="pybuffer.cs" />
     <Compile Include="pydict.cs" />
     <Compile Include="PyExportAttribute.cs" />
     <Compile Include="pyfloat.cs" />

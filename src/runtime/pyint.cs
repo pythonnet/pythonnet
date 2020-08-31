@@ -51,7 +51,7 @@ namespace Python.Runtime
         public PyInt(int value)
         {
             obj = Runtime.PyInt_FromInt32(value);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -65,7 +65,7 @@ namespace Python.Runtime
         public PyInt(uint value)
         {
             obj = Runtime.PyInt_FromInt64(value);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -78,7 +78,7 @@ namespace Python.Runtime
         public PyInt(long value)
         {
             obj = Runtime.PyInt_FromInt64(value);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -92,7 +92,7 @@ namespace Python.Runtime
         public PyInt(ulong value)
         {
             obj = Runtime.PyInt_FromInt64((long)value);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -151,7 +151,7 @@ namespace Python.Runtime
         public PyInt(string value)
         {
             obj = Runtime.PyInt_FromString(value, IntPtr.Zero, 0);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -178,7 +178,7 @@ namespace Python.Runtime
         public static PyInt AsInt(PyObject value)
         {
             IntPtr op = Runtime.PyNumber_Int(value.obj);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(op);
             return new PyInt(op);
         }
 

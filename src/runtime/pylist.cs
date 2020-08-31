@@ -22,6 +22,11 @@ namespace Python.Runtime
         {
         }
 
+        /// <summary>
+        /// Creates new <see cref="PyList"/> pointing to the same object, as the given reference.
+        /// </summary>
+        internal PyList(BorrowedReference reference) : base(reference) { }
+
 
         /// <summary>
         /// PyList Constructor

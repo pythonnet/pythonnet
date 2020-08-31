@@ -11,6 +11,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Changed
 -   Drop support for Python 2
+-   `clr.AddReference` may now throw errors besides `FileNotFoundException`, that provide more
+details about the cause of the failure
+-   `clr.AddReference` no longer adds ".dll" implicitly
 
 ### Fixed
 
@@ -35,6 +38,7 @@ This version improves performance on benchmarks significantly compared to 2.3.
 -   Support for Python 3.8
 -   Codecs as the designated way to handle automatic conversions between
     .NET and Python types
+-   Added Python 3 buffer api support and PyBuffer interface for fast byte and numpy array read/write ([#980][p980])
 
 ### Changed
 

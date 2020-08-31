@@ -14,7 +14,7 @@ namespace Python.Runtime
 
         public static void Save()
         {
-            if (PySys_GetObject("dummy_gc") != IntPtr.Zero)
+            if (!PySys_GetObject("dummy_gc").IsNull)
             {
                 throw new Exception("Runtime State set already");
             }
@@ -79,7 +79,7 @@ namespace Python.Runtime
 
         public static void Restore()
         {
-            var dummyGCAddr = PySys_GetObject("dummy_gc");
+            var dummyGCAddr = PySys_GetObject("dummy_gc").DangerousGetAddress();
             if (dummyGCAddr == IntPtr.Zero)
             {
                 throw new InvalidOperationException("Runtime state have not set");
@@ -95,11 +95,11 @@ namespace Python.Runtime
         private static void ResotreModules(IntPtr dummyGC)
         {
             var intialModules = PySys_GetObject("initial_modules");
-            Debug.Assert(intialModules != IntPtr.Zero);
+            Debug.Assert(!intialModules.IsNull);
             var modules = PyImport_GetModuleDict();
             foreach (var name in GetModuleNames())
             {
-                if (PySet_Contains(intialModules, name) == 1)
+                if (PySet_Contains(intialModules.DangerousGetAddress(), name) == 1)
                 {
                     continue;
                 }
@@ -122,7 +122,7 @@ namespace Python.Runtime
             {
                 throw new Exception("To prevent crash by _PyObject_GC_UNTRACK in Python internal, UseDummyGC should be enabled when using ResotreObjects");
             }
-            IntPtr intialObjs = PySys_GetObject("initial_objs");
+            IntPtr intialObjs = PySys_GetObject("initial_objs").DangerousGetAddress();
             Debug.Assert(intialObjs != IntPtr.Zero);
             foreach (var obj in PyGCGetObjects())
             {
@@ -149,10 +149,10 @@ namespace Python.Runtime
             PythonException.ThrowIfIsNull(gc);
             var get_objects = PyObject_GetAttrString(gc, "get_objects");
             var objs = PyObject_CallObject(get_objects, IntPtr.Zero);
-            var length = PyList_Size(objs);
+            var length = PyList_Size(new BorrowedReference(objs));
             for (long i = 0; i < length; i++)
             {
-                var obj = PyList_GetItem(objs, i);
+                var obj = PyList_GetItem(new BorrowedReference(objs), i);
                 yield return obj.DangerousGetAddress();
             }
             XDecref(objs);
@@ -163,10 +163,10 @@ namespace Python.Runtime
         {
             var modules = PyImport_GetModuleDict();
             var names = PyDict_Keys(modules);
-            var length = PyList_Size(names);
+            var length = PyList_Size(new BorrowedReference(names));
             for (int i = 0; i < length; i++)
             {
-                var name = PyList_GetItem(names, i);
+                var name = PyList_GetItem(new BorrowedReference(names), i);
                 yield return name.DangerousGetAddress();
             }
             XDecref(names);

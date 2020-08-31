@@ -123,7 +123,7 @@ namespace Python.Runtime
             // cost. Ask the AssemblyManager to do implicit loading for each
             // of the steps in the qualified name, then try it again.
             bool ignore = name.StartsWith("__");
-            if (AssemblyManager.LoadImplicit(qname, !ignore))
+            if (AssemblyManager.LoadImplicit(qname, assemblyLoadErrorHandler: ImportWarning, !ignore))
             {
                 if (AssemblyManager.IsValidNamespace(qname))
                 {
@@ -164,6 +164,11 @@ namespace Python.Runtime
             }
 
             return null;
+        }
+
+        static void ImportWarning(Exception exception)
+        {
+            Exceptions.warn(exception.ToString(), Exceptions.ImportWarning);
         }
 
 
@@ -429,7 +434,7 @@ namespace Python.Runtime
             if (interactive_preload)
             {
                 interactive_preload = false;
-                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero)
+                if (!Runtime.PySys_GetObject("ps1").IsNull)
                 {
                     preload = true;
                 }
