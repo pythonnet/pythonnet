@@ -108,25 +108,24 @@ namespace Python.Runtime
             }
 
             RestoreImport();
+
             bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
-#if !NETSTANDARD
-            if(Runtime.ShutdownMode != ShutdownMode.Reload)
-#endif
+            Runtime.XDecref(py_clr_module);
+            py_clr_module = IntPtr.Zero;
+            if (shouldFreeDef)
             {
-                Runtime.XDecref(py_clr_module);
-                py_clr_module = IntPtr.Zero;
-                if (shouldFreeDef)
-                {
-                    ReleaseModuleDef();
-                }
-                Runtime.XDecref(root.pyHandle);
+                ReleaseModuleDef();
             }
+
+            Runtime.XDecref(root.pyHandle);
             root = null;
             CLRModule.Reset();
         }
 
         internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
+            Runtime.XIncref(py_clr_module);
+            Runtime.XIncref(root.pyHandle);
             storage.AddValue("py_clr_module", py_clr_module);
             storage.AddValue("root", root.pyHandle);
         }
