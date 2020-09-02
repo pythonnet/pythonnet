@@ -70,7 +70,7 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(mem, (IntPtr)ms.Length);
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
-            IntPtr capsule = PySys_GetObject("clr_data");
+            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddress();
             if (capsule != IntPtr.Zero)
             {
                 IntPtr oldData = PyCapsule_GetPointer(capsule, null);
@@ -96,7 +96,7 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
-            IntPtr capsule = PySys_GetObject("clr_data");
+            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddress();
             if (capsule == IntPtr.Zero)
             {
                 return;
@@ -129,7 +129,7 @@ namespace Python.Runtime
 
         public static bool HasStashData()
         {
-            return PySys_GetObject("clr_data") != IntPtr.Zero;
+            return !PySys_GetObject("clr_data").IsNull;
         }
 
         public static void ClearStash()
@@ -248,8 +248,7 @@ namespace Python.Runtime
         private static void SaveRuntimeDataModules(RuntimeDataStorage storage)
         {
             var pyModules = PyImport_GetModuleDict();
-            var itemsRef = PyDict_Items(pyModules);
-            var items = itemsRef.DangerousGetAddress();
+            var items = PyDict_Items(pyModules);
             long length = PyList_Size(items);
             var modules = new Dictionary<IntPtr, IntPtr>(); ;
             for (long i = 0; i < length; i++)
@@ -264,7 +263,7 @@ namespace Python.Runtime
                     modules.Add(name, module);
                 }
             }
-            itemsRef.Dispose();
+            items.Dispose();
             storage.AddValue("modules", modules);
         }
 

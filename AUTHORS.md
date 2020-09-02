@@ -20,6 +20,7 @@
 -   Alexandre Catarino([@AlexCatarino](https://github.com/AlexCatarino))
 -   Andrey Sant'Anna ([@andreydani](https://github.com/andreydani))
 -   Arvid JB ([@ArvidJB](https://github.com/ArvidJB))
+-   Avinash Maddikonda ([@SFM61319](https://github.com/SFM61319))
 -   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
 -   Callum Noble ([@callumnoble](https://github.com/callumnoble))
@@ -73,7 +74,7 @@
 -   ([@OneBlue](https://github.com/OneBlue))
 -   ([@rico-chet](https://github.com/rico-chet))
 -   ([@rmadsen-ks](https://github.com/rmadsen-ks))
+-   ([@SnGmng](https://github.com/SnGmng))
 -   ([@stonebig](https://github.com/stonebig))
 -   ([@testrunner123](https://github.com/testrunner123))
 -   ([@DanBarzilian](https://github.com/DanBarzilian))
-

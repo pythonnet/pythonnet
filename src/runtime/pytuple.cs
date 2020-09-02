@@ -22,6 +22,15 @@ namespace Python.Runtime
         {
         }
 
+        /// <summary>
+        /// PyTuple Constructor
+        /// </summary>
+        /// <remarks>
+        /// Creates a new PyTuple from an existing object reference.
+        /// The object reference is not checked for type-correctness.
+        /// </remarks>
+        internal PyTuple(BorrowedReference reference) : base(reference) { }
+
 
         /// <summary>
         /// PyTuple Constructor
@@ -51,7 +60,7 @@ namespace Python.Runtime
         public PyTuple()
         {
             obj = Runtime.PyTuple_New(0);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -72,8 +81,8 @@ namespace Python.Runtime
             {
                 IntPtr ptr = items[i].obj;
                 Runtime.XIncref(ptr);
-                Runtime.PyTuple_SetItem(obj, i, ptr);
-                Runtime.CheckExceptionOccurred();
+                int res = Runtime.PyTuple_SetItem(obj, i, ptr);
+                PythonException.ThrowIfIsNotZero(res);
             }
         }
 
@@ -101,7 +110,7 @@ namespace Python.Runtime
         public static PyTuple AsTuple(PyObject value)
         {
             IntPtr op = Runtime.PySequence_Tuple(value.obj);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(op);
             return new PyTuple(op);
         }
     }

@@ -54,7 +54,7 @@ namespace Python.Runtime
         public PyString(string s)
         {
             obj = Runtime.PyUnicode_FromUnicode(s, s.Length);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(obj);
         }
 
 
