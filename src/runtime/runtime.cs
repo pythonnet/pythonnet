@@ -151,9 +151,10 @@ namespace Python.Runtime
             }
             else
             {
-                // When initializing more than once (like on soft shutdown and domain
-                // reload), the GIL might not be acquired by the current thread.
-                state = PyGILState_Ensure();
+                // If we're coming back from a domain reload or a soft shutdown,
+                // we have previously released the thread state. Restore the main
+                // thread state here.
+                PyEval_RestoreThread(PyGILState_GetThisThreadState());
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
@@ -198,10 +199,6 @@ namespace Python.Runtime
             }
             XDecref(item);
             AssemblyManager.UpdatePath();
-            if (state != IntPtr.Zero)
-            {
-                PyGILState_Release(state);
-            }
         }
 
         private static void InitPyMembers()
