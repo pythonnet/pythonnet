@@ -124,6 +124,8 @@ namespace Python.Runtime
 
         internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
+            // Increment the reference counts here so that the objects don't 
+            // get freed in Shutdown.
             Runtime.XIncref(py_clr_module);
             Runtime.XIncref(root.pyHandle);
             storage.AddValue("py_clr_module", py_clr_module);
