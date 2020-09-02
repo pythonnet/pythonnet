@@ -312,6 +312,34 @@ namespace Python.Runtime
             return iternext;
         }
 
+        /// <summary>
+        /// Tries to downgrade the shutdown mode, if possible.
+        /// The only possibles downgrades are:
+        /// Soft -> Normal
+        /// Reload -> Soft
+        /// Reload -> Normal
+        /// </summary>
+        /// <param name="mode">The desired shutdown mode</param>
+        /// <returns>The `mode` parameter if the downgrade is supported, the ShutdownMode
+        ///  set at initialization otherwise.</returns>
+        static ShutdownMode TryDowngradeShutdown(ShutdownMode mode)
+        {
+            if (
+                mode == Runtime.ShutdownMode
+                || mode == ShutdownMode.Normal
+#if !NETSTANDARD
+                || (mode == ShutdownMode.Soft && Runtime.ShutdownMode == ShutdownMode.Reload)
+#endif
+                )
+            {
+                return mode;
+            }
+            else // we can't downgrade
+            {
+                return Runtime.ShutdownMode;
+            }
+        }
+
         internal static void Shutdown(ShutdownMode mode)
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
@@ -319,6 +347,11 @@ namespace Python.Runtime
                 return;
             }
             _isInitialized = false;
+
+            // If the shutdown mode specified is not the the same as the one specified
+            // during Initialization, we need to validate it; we can only downgrade,
+            // not upgrade the shutdown mode.
+            mode = TryDowngradeShutdown(mode);
 
             var state = PyGILState_Ensure();
 
