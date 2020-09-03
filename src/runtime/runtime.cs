@@ -129,7 +129,7 @@ namespace Python.Runtime
         /// </summary>
         /// <remarks>When calling this method after a soft shutdown or a domain reload,
         ///  this method acquires and releases the GIL. </remarks>
-        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default, bool fromPython = false)
         {
             if (_isInitialized)
             {
@@ -163,16 +163,15 @@ namespace Python.Runtime
                     RuntimeState.Save();
                 }
 #endif
-                MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
-            else
+            else if (!fromPython)
             {
                 // If we're coming back from a domain reload or a soft shutdown,
                 // we have previously released the thread state. Restore the main
                 // thread state here.
                 PyEval_RestoreThread(PyGILState_GetThisThreadState());
-                MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
+            MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             IsFinalizing = false;
 
