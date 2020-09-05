@@ -144,5 +144,13 @@ namespace Python.Runtime
             long refcount = Runtime.Refcount(obj);
             Debug.Assert(refcount > 0, "Object refcount is 0 or less");
         }
+
+        [Conditional("DEBUG")]
+        public static void EnsureGIL()
+        {
+            Debug.Assert(HaveInterpreterLock(), "GIL must be acquired");
+        }
+
+        public static bool HaveInterpreterLock() => Runtime.PyGILState_Check() == 1;
     }
 }
