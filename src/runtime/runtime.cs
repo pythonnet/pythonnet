@@ -832,7 +832,7 @@ namespace Python.Runtime
 
         internal static IntPtr PyThreadState_Swap(IntPtr key) => Delegates.PyThreadState_Swap(key);
 
-
+        internal static int PyGILState_Check() => Delegates.PyGILState_Check();
         internal static IntPtr PyGILState_Ensure() => Delegates.PyGILState_Ensure();
 
 
@@ -2302,6 +2302,14 @@ namespace Python.Runtime
                 PyThread_get_thread_ident = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyThread_get_thread_ident), GetUnmanagedDll(_PythonDll));
                 PyThread_set_key_value = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyThread_set_key_value), GetUnmanagedDll(_PythonDll));
                 PyThreadState_Swap = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyThreadState_Swap), GetUnmanagedDll(_PythonDll));
+                try
+                {
+                    PyGILState_Check = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyGILState_Check), GetUnmanagedDll(_PythonDll));
+                }
+                catch (MissingMethodException e)
+                {
+                    throw new NotSupportedException(Util.MinimalPythonVersionRequired, innerException: e);
+                }
                 PyGILState_Ensure = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyGILState_Ensure), GetUnmanagedDll(_PythonDll));
                 PyGILState_Release = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyGILState_Release), GetUnmanagedDll(_PythonDll));
                 PyGILState_GetThisThreadState = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyGILState_GetThisThreadState), GetUnmanagedDll(_PythonDll));
@@ -2605,6 +2613,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<int> PyThread_get_thread_ident { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PyThread_set_key_value { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyThreadState_Swap { get; }
+            internal static delegate* unmanaged[Cdecl]<int> PyGILState_Check { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr> PyGILState_Ensure { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyGILState_Release { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr> PyGILState_GetThisThreadState { get; }

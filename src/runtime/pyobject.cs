@@ -16,6 +16,7 @@ namespace Python.Runtime
     /// for details.
     /// </summary>
     [Serializable]
+    [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public partial class PyObject : DynamicObject, IEnumerable<PyObject>, IDisposable
     {
 #if TRACE_ALLOC
@@ -1068,6 +1069,10 @@ namespace Python.Runtime
             Runtime.XDecref(strval);
             return result;
         }
+
+        string DebuggerDisplay => DebugUtil.HaveInterpreterLock()
+            ? this.ToString()
+            : $"pyobj at 0x{this.obj:X} (get Py.GIL to see more info)";
 
 
         /// <summary>
