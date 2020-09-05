@@ -127,7 +127,9 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        /// <remarks>When calling this method after a soft shutdown or a domain reload,
+        ///  this method acquires and releases the GIL. </remarks>
+        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default, bool fromPython = false)
         {
             if (_isInitialized)
             {
@@ -141,6 +143,7 @@ namespace Python.Runtime
             }
             ShutdownMode = mode;
 
+            IntPtr state = IntPtr.Zero;
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
@@ -160,13 +163,15 @@ namespace Python.Runtime
                     RuntimeState.Save();
                 }
 #endif
-                MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
-            else
+            else if (!fromPython)
             {
-                PyGILState_Ensure();
-                MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
+                // If we're coming back from a domain reload or a soft shutdown,
+                // we have previously released the thread state. Restore the main
+                // thread state here.
+                PyEval_RestoreThread(PyGILState_GetThisThreadState());
             }
+            MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             IsFinalizing = false;
 
@@ -188,7 +193,7 @@ namespace Python.Runtime
 #if !NETSTANDARD
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
-                RuntimeData.StashPop();
+                RuntimeData.RestoreRuntimeData();
             }
             else
 #endif
@@ -322,7 +327,35 @@ namespace Python.Runtime
             return iternext;
         }
 
-        internal static void Shutdown()
+        /// <summary>
+        /// Tries to downgrade the shutdown mode, if possible.
+        /// The only possibles downgrades are:
+        /// Soft -> Normal
+        /// Reload -> Soft
+        /// Reload -> Normal
+        /// </summary>
+        /// <param name="mode">The desired shutdown mode</param>
+        /// <returns>The `mode` parameter if the downgrade is supported, the ShutdownMode
+        ///  set at initialization otherwise.</returns>
+        static ShutdownMode TryDowngradeShutdown(ShutdownMode mode)
+        {
+            if (
+                mode == Runtime.ShutdownMode
+                || mode == ShutdownMode.Normal
+#if !NETSTANDARD
+                || (mode == ShutdownMode.Soft && Runtime.ShutdownMode == ShutdownMode.Reload)
+#endif
+                )
+            {
+                return mode;
+            }
+            else // we can't downgrade
+            {
+                return Runtime.ShutdownMode;
+            }
+        }
+
+        internal static void Shutdown(ShutdownMode mode)
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
@@ -330,9 +363,13 @@ namespace Python.Runtime
             }
             _isInitialized = false;
 
-            PyGILState_Ensure();
+            // If the shutdown mode specified is not the the same as the one specified
+            // during Initialization, we need to validate it; we can only downgrade,
+            // not upgrade the shutdown mode.
+            mode = TryDowngradeShutdown(mode);
 
-            var mode = ShutdownMode;
+            var state = PyGILState_Ensure();
+
             if (mode == ShutdownMode.Soft)
             {
                 RunExitFuncs();
@@ -350,7 +387,7 @@ namespace Python.Runtime
             RemoveClrRootModule();
 
             MoveClrInstancesOnwershipToPython();
-            ClassManager.RemoveClasses();
+            ClassManager.DisposePythonWrappersForClrTypes();
             TypeManager.RemoveTypes();
 
             MetaType.Release();
@@ -376,6 +413,8 @@ namespace Python.Runtime
                 {
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
+                PyGILState_Release(state);
+                // Then release the GIL for good.
                 PyEval_SaveThread();
             }
             else
@@ -383,6 +422,12 @@ namespace Python.Runtime
                 ResetPyMembers();
                 Py_Finalize();
             }
+        }
+
+        internal static void Shutdown()
+        {
+            var mode = ShutdownMode;
+            Shutdown(mode);
         }
 
         internal static ShutdownMode GetDefaultShutdownMode()

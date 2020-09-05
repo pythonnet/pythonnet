@@ -155,9 +155,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default, bool fromPython = false)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode, fromPython: fromPython);
         }
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default, bool fromPython = false)
         {
             if (initialized)
             {
@@ -182,15 +182,12 @@ namespace Python.Runtime
             // during an initial "import clr", and the world ends shortly thereafter.
             // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
             delegateManager = new DelegateManager();
-            Runtime.Initialize(initSigs, mode);
+            Runtime.Initialize(initSigs, mode, fromPython);
             initialized = true;
             Exceptions.Clear();
 
             // Make sure we clean up properly on app domain unload.
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
-
-            // Remember to shut down the runtime.
-            AddShutdownHandler(Runtime.Shutdown);
 
             // The global scope gets used implicitly quite early on, remember
             // to clear it out when we shut down.
@@ -268,7 +265,7 @@ namespace Python.Runtime
         {
             try
             {
-                Initialize(setSysArgv: false);
+                Initialize(setSysArgv: false, fromPython: true);
 
                 // Trickery - when the import hook is installed into an already
                 // running Python, the standard import machinery is still in
@@ -318,7 +315,8 @@ namespace Python.Runtime
         /// Python runtime can no longer be used in the current process
         /// after calling the Shutdown method.
         /// </remarks>
-        public static void Shutdown()
+        /// <param name="mode">The ShutdownMode to use when shutting down the Runtime</param>
+        public static void Shutdown(ShutdownMode mode)
         {
             if (!initialized)
             {
@@ -330,9 +328,24 @@ namespace Python.Runtime
 
             PyScopeManager.Global.Clear();
             ExecuteShutdownHandlers();
+            // Remember to shut down the runtime.
+            Runtime.Shutdown(mode);
             PyObjectConversions.Reset();
 
             initialized = false;
+        }
+
+        /// <summary>
+        /// Shutdown Method
+        /// </summary>
+        /// <remarks>
+        /// Shutdown and release resources held by the Python runtime. The
+        /// Python runtime can no longer be used in the current process
+        /// after calling the Shutdown method.
+        /// </remarks>
+        public static void Shutdown()
+        {
+            Shutdown(Runtime.ShutdownMode);
         }
 
         /// <summary>

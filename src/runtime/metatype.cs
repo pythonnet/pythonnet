@@ -40,13 +40,13 @@ namespace Python.Runtime
             _metaSlotsHodler = null;
         }
 
-        internal static void StashPush(RuntimeDataStorage storage)
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
             Runtime.XIncref(PyCLRMetaType);
             storage.PushValue(PyCLRMetaType);
         }
 
-        internal static IntPtr StashPop(RuntimeDataStorage storage)
+        internal static IntPtr RestoreRuntimeData(RuntimeDataStorage storage)
         {
             PyCLRMetaType = storage.PopValue<IntPtr>();
             _metaSlotsHodler = new SlotsHolder(PyCLRMetaType);

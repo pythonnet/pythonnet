@@ -136,6 +136,11 @@ namespace Python.Runtime
             return false;
         }
 
+        public bool IsTypeObject()
+        {
+            return pyHandle == tpHandle;
+        }
+
         internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
         {
             return _managedObjs;
@@ -171,7 +176,6 @@ namespace Python.Runtime
                 return;
             }
             var clearFunc = (Interop.InquiryFunc)Marshal.GetDelegateForFunctionPointer(clearPtr, typeof(Interop.InquiryFunc));
-            // TODO: Handle errors base on return value
             clearFunc(pyHandle);
         }
 
@@ -191,7 +195,6 @@ namespace Python.Runtime
             }
             var traverseFunc = (Interop.ObjObjArgFunc)Marshal.GetDelegateForFunctionPointer(traversePtr, typeof(Interop.ObjObjArgFunc));
             var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
-            // TODO: Handle errors base on return value
             traverseFunc(pyHandle, visiPtr, arg);
         }
 
@@ -200,18 +203,18 @@ namespace Python.Runtime
             ClearObjectDict(pyHandle);
         }
 
-        internal void Save(PyObjectSerializeContext context)
+        internal void Save(InterDomainContext context)
         {
             OnSave(context);
         }
 
-        internal void Load(PyObjectSerializeContext context)
+        internal void Load(InterDomainContext context)
         {
             OnLoad(context);
         }
 
-        protected virtual void OnSave(PyObjectSerializeContext context) { }
-        protected virtual void OnLoad(PyObjectSerializeContext context) { }
+        protected virtual void OnSave(InterDomainContext context) { }
+        protected virtual void OnLoad(InterDomainContext context) { }
 
         protected static void ClearObjectDict(IntPtr ob)
         {

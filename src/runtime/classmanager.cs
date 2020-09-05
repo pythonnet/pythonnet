@@ -39,12 +39,7 @@ namespace Python.Runtime
             cache = new Dictionary<Type, ClassBase>(128);
         }
 
-        public static IList<ClassBase> GetManagedTypes()
-        {
-            return cache.Values.ToArray(); // Make a copy.
-        }
-
-        internal static void RemoveClasses()
+        internal static void DisposePythonWrappersForClrTypes()
         {
             var visited = new HashSet<IntPtr>();
             var visitedHandle = GCHandle.Alloc(visited);
@@ -57,7 +52,7 @@ namespace Python.Runtime
                     // but not dealloc itself immediately.
                     // These managed resources should preserve vacant shells
                     // since others may still referencing it.
-                    cls.CallTypeTraverse(OnVisit, visitedPtr);
+                    cls.CallTypeTraverse(TraverseTypeClear, visitedPtr);
                     cls.CallTypeClear();
                     cls.DecrRefCount();
                 }
@@ -69,7 +64,7 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        private static int OnVisit(IntPtr ob, IntPtr arg)
+        private static int TraverseTypeClear(IntPtr ob, IntPtr arg)
         {
             var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
             if (!visited.Add(ob))
@@ -79,32 +74,32 @@ namespace Python.Runtime
             var clrObj = ManagedType.GetManagedObject(ob);
             if (clrObj != null)
             {
-                clrObj.CallTypeTraverse(OnVisit, arg);
+                clrObj.CallTypeTraverse(TraverseTypeClear, arg);
                 clrObj.CallTypeClear();
             }
             return 0;
         }
 
-        internal static void StashPush(RuntimeDataStorage storage)
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
             var contexts = storage.AddValue("contexts",
-                new Dictionary<IntPtr, PyObjectSerializeContext>());
+                new Dictionary<IntPtr, InterDomainContext>());
             storage.AddValue("cache", cache);
             foreach (var cls in cache.Values)
             {
                 // This incref is for cache to hold the cls,
-                // thus no need for decreasing it at StashPop.
+                // thus no need for decreasing it at RestoreRuntimeData.
                 Runtime.XIncref(cls.pyHandle);
-                var context = contexts[cls.pyHandle] = new PyObjectSerializeContext();
+                var context = contexts[cls.pyHandle] = new InterDomainContext();
                 cls.Save(context);
             }
         }
 
-        internal static Dictionary<ManagedType, PyObjectSerializeContext> StashPop(RuntimeDataStorage storage)
+        internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(RuntimeDataStorage storage)
         {
             cache = storage.GetValue<Dictionary<Type, ClassBase>>("cache");
-            var contexts = storage.GetValue <Dictionary<IntPtr, PyObjectSerializeContext>>("contexts");
-            var loadedObjs = new Dictionary<ManagedType, PyObjectSerializeContext>();
+            var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
+            var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var cls in cache.Values)
             {
                 var context = contexts[cls.pyHandle];
@@ -220,7 +215,7 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
-                // info.members are already useless
+                // Decref the item now that it's been used.
                 item.DecrRefCount();
             }
 
@@ -468,18 +463,22 @@ namespace Python.Runtime
 
             return ci;
         }
-    }
-
-
-    internal class ClassInfo
-    {
-        public Indexer indexer;
-        public Hashtable members;
-
-        internal ClassInfo()
+        
+        /// <summary>
+        /// This class owns references to PyObjects in the `members` member.
+        /// The caller has responsibility to DECREF them.
+        /// </summary>
+        private class ClassInfo
         {
-            members = new Hashtable();
-            indexer = null;
+            public Indexer indexer;
+            public Hashtable members;
+
+            internal ClassInfo()
+            {
+                members = new Hashtable();
+                indexer = null;
+            }
         }
     }
+
 }

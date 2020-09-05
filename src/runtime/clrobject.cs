@@ -73,7 +73,7 @@ namespace Python.Runtime
             return co.pyHandle;
         }
 
-        internal static CLRObject Restore(object ob, IntPtr pyHandle, PyObjectSerializeContext context)
+        internal static CLRObject Restore(object ob, IntPtr pyHandle, InterDomainContext context)
         {
             CLRObject co = new CLRObject()
             {
@@ -85,13 +85,13 @@ namespace Python.Runtime
             return co;
         }
 
-        protected override void OnSave(PyObjectSerializeContext context)
+        protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
             Runtime.XIncref(pyHandle);
         }
 
-        protected override void OnLoad(PyObjectSerializeContext context)
+        protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
             GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);

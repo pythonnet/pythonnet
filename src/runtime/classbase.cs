@@ -297,7 +297,7 @@ namespace Python.Runtime
         public static int tp_clear(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            if (self.pyHandle != self.tpHandle)
+            if (!self.IsTypeObject())
             {
                 ClearObjectDict(ob);
             }
@@ -305,7 +305,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void OnSave(PyObjectSerializeContext context)
+        protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
             if (pyHandle != tpHandle)
@@ -316,7 +316,7 @@ namespace Python.Runtime
             }
         }
 
-        protected override void OnLoad(PyObjectSerializeContext context)
+        protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
             if (pyHandle != tpHandle)

@@ -122,15 +122,17 @@ namespace Python.Runtime
             CLRModule.Reset();
         }
 
-        internal static void StashPush(RuntimeDataStorage storage)
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
+            // Increment the reference counts here so that the objects don't 
+            // get freed in Shutdown.
             Runtime.XIncref(py_clr_module);
             Runtime.XIncref(root.pyHandle);
             storage.AddValue("py_clr_module", py_clr_module);
             storage.AddValue("root", root.pyHandle);
         }
 
-        internal static void StashPop(RuntimeDataStorage storage)
+        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
         {
             InitImport();
             storage.GetValue("py_clr_module", out py_clr_module);

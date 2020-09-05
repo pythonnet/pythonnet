@@ -22,11 +22,15 @@ namespace Python.Runtime
             Runtime.XIncref(target);
             this.target = target;
 
-            Runtime.XIncref(targetType);
             if (targetType == IntPtr.Zero)
             {
                 targetType = Runtime.PyObject_Type(target);
             }
+            else
+            {
+                Runtime.XIncref(targetType);
+            }
+            
             this.targetType = targetType;
 
             this.info = null;
@@ -255,7 +259,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void OnSave(PyObjectSerializeContext context)
+        protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
             Runtime.XIncref(target);

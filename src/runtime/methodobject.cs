@@ -113,8 +113,7 @@ namespace Python.Runtime
 
         private void ClearMembers()
         {
-            Runtime.XDecref(doc);
-            doc = IntPtr.Zero;
+            Runtime.Py_CLEAR(ref doc);
             if (unbound != null)
             {
                 Runtime.XDecref(unbound.pyHandle);
@@ -222,7 +221,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void OnSave(PyObjectSerializeContext context)
+        protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
             if (unbound != null)

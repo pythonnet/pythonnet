@@ -41,11 +41,6 @@ namespace Python.Runtime
             Runtime.XDecref(type);
         }
 
-        public static IList<IntPtr> GetManagedTypes()
-        {
-            return cache.Values.ToArray();
-        }
-
         internal static void RemoveTypes()
         {
             foreach (var tpHandle in cache.Values)
@@ -67,7 +62,7 @@ namespace Python.Runtime
             _slotsHolders.Clear();
         }
 
-        internal static void StashPush(RuntimeDataStorage storage)
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
             foreach (var tpHandle in cache.Values)
             {
@@ -77,7 +72,7 @@ namespace Python.Runtime
             storage.AddValue("slots", _slotsImpls);
         }
 
-        internal static void StashPop(RuntimeDataStorage storage)
+        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
         {
             Debug.Assert(cache == null || cache.Count == 0);
             storage.GetValue("slots", out _slotsImpls);

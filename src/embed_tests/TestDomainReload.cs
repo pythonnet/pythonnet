@@ -79,12 +79,13 @@ namespace Python.EmbeddingTest
 
         #region CrossDomainObject
 
-        class CrossDomianObjectStep1 : CrossCaller
+        class CrossDomainObjectStep1 : CrossCaller
         {
             public override ValueType Execute(ValueType arg)
             {
                 try
                 {
+                    // Create a C# user-defined object in Python. Asssing some values.
                     Type type = typeof(Python.EmbeddingTest.Domain.MyClass);
                     string code = string.Format(@"
 import clr
@@ -133,6 +134,7 @@ obj.Field = 10
                     {
                         IntPtr tp = Runtime.Runtime.PyObject_TYPE(handle);
                         IntPtr tp_clear = Marshal.ReadIntPtr(tp, TypeOffset.tp_clear);
+                        Assert.That(tp_clear, Is.Not.Null);
 
                         using (PyObject obj = new PyObject(handle))
                         {
@@ -164,10 +166,15 @@ obj.Field += 10
             }
         }
 
+        /// <summary>
+        /// Create a C# custom object in a domain, in python code.
+        /// Unload the domain, create a new domain.
+        /// Make sure the C# custom object created in the previous domain has been re-created
+        /// </summary>
         [Test]
         public static void CrossDomainObject()
         {
-            RunDomainReloadSteps<CrossDomianObjectStep1, CrossDomainObjectStep2>();
+            RunDomainReloadSteps<CrossDomainObjectStep1, CrossDomainObjectStep2>();
         }
 
         #endregion
@@ -193,19 +200,26 @@ test_obj_call()
                 const string name = "test_domain_reload_mod";
                 using (Py.GIL())
                 {
+                    // Create a new module
                     IntPtr module = PyRuntime.PyModule_New(name);
                     Assert.That(module != IntPtr.Zero);
                     IntPtr globals = PyRuntime.PyObject_GetAttrString(module, "__dict__");
                     Assert.That(globals != IntPtr.Zero);
                     try
                     {
+                        // import builtins
+                        // module.__dict__[__builtins__] = builtins
                         int res = PyRuntime.PyDict_SetItemString(globals, "__builtins__",
                             PyRuntime.PyEval_GetBuiltins());
                         PythonException.ThrowIfIsNotZero(res);
 
+                        // Execute the code in the module's scope
                         PythonEngine.Exec(code, globals);
+                        // import sys
+                        // modules = sys.modules
                         IntPtr modules = PyRuntime.PyImport_GetModuleDict();
-                        res = PyRuntime.PyDict_SetItemString(modules, name, modules);
+                        // modules[name] = module
+                        res = PyRuntime.PyDict_SetItemString(modules, name, module);
                         PythonException.ThrowIfIsNotZero(res);
                     }
                     catch
@@ -244,6 +258,11 @@ test_obj_call()
 
 
         [Test]
+        /// <summary>
+        /// Create a new Python module, define a function in it.
+        /// Unload the domain, load a new one.
+        /// Make sure the function (and module) still exists.
+        /// </summary>
         public void TestClassReference()
         {
             RunDomainReloadSteps<ReloadClassRefStep1, ReloadClassRefStep2>();
@@ -261,7 +280,12 @@ test_obj_call()
             {
                 try
                 {
+                    PythonEngine.Initialize();
                     var numRef = CreateNumReference();
+                    Assert.True(numRef.IsAlive);
+                    PythonEngine.Shutdown(); // <- "run" 1 ends
+                    PythonEngine.Initialize(); // <- "run" 2 starts
+
                     GC.Collect();
                     GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
                     Finalizer.Instance.Collect(forceDispose: true);
@@ -302,7 +326,11 @@ test_obj_call()
             {
                 try
                 {
+                    PythonEngine.Initialize();
                     var objRef = CreateConcreateObject();
+                    Assert.True(objRef.IsAlive);
+                    PythonEngine.Shutdown(); // <- "run" 1 ends
+                    PythonEngine.Initialize(); // <- "run" 2 starts
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     Finalizer.Instance.Collect(forceDispose: true);
@@ -336,25 +364,17 @@ test_obj_call()
 
         private static WeakReference CreateNumReference()
         {
-            PythonEngine.Initialize();
             var num = 3216757418.ToPython();
             Assert.AreEqual(num.Refcount, 1);
             WeakReference numRef = new WeakReference(num, false);
-            PythonEngine.Shutdown(); // <- "run" 1 ends
-            PythonEngine.Initialize(); // <- "run" 2 starts
-            num = null;
             return numRef;
         }
 
         private static WeakReference CreateConcreateObject()
         {
-            PythonEngine.Initialize();
             var obj = new Domain.MyClass().ToPython();
             Assert.AreEqual(obj.Refcount, 1);
             WeakReference numRef = new WeakReference(obj, false);
-            PythonEngine.Shutdown();
-            PythonEngine.Initialize();
-            obj = null;
             return numRef;
         }
 
@@ -380,6 +400,15 @@ test_obj_call()
                 return method.Invoke(null, args);
             }
         }
+        
+        static T CreateInstanceInstanceAndUnwrap<T>(AppDomain domain)
+        {
+            Type type = typeof(T);
+            var theProxy = (T)domain.CreateInstanceAndUnwrap(
+                    type.Assembly.FullName,
+                    type.FullName);
+            return theProxy;
+        }
 
         /// <summary>
         /// Create a domain, run the assembly in it (the RunPython function),
@@ -392,14 +421,13 @@ test_obj_call()
             AppDomain domain = CreateDomain(domainName);
             // Create a Proxy object in the new domain, where we want the
             // assembly (and Python .NET) to reside
-            Type type = typeof(Proxy);
-            var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                    type.Assembly.FullName,
-                    type.FullName);
+            var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
 
+            theProxy.Call("InitPython", ShutdownMode.Soft);
             // From now on use the Proxy to call into the new assembly
             theProxy.RunPython();
 
+            theProxy.Call("ShutdownPython");
             Console.WriteLine($"[Program.Main] Before Domain Unload on {domainName}");
             AppDomain.Unload(domain);
             Console.WriteLine($"[Program.Main] After Domain Unload on {domainName}");
@@ -459,17 +487,13 @@ test_obj_call()
             ValueType arg = null;
             Type type = typeof(Proxy);
             {
-                AppDomain domain = CreateDomain("test_domain_reload");
+                AppDomain domain = CreateDomain("test_domain_reload_1");
                 try
                 {
-                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                            type.Assembly.FullName,
-                            type.FullName);
+                    var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
                     theProxy.Call("InitPython", ShutdownMode.Reload);
 
-                    var caller = (T1)domain.CreateInstanceAndUnwrap(
-                            typeof(T1).Assembly.FullName,
-                            typeof(T1).FullName);
+                    var caller = CreateInstanceInstanceAndUnwrap<T1>(domain);
                     arg = caller.Execute(arg);
 
                     theProxy.Call("ShutdownPython");
@@ -481,17 +505,13 @@ test_obj_call()
             }
 
             {
-                AppDomain domain = CreateDomain("test_domain_reload");
+                AppDomain domain = CreateDomain("test_domain_reload_2");
                 try
                 {
-                    var theProxy = (Proxy)domain.CreateInstanceAndUnwrap(
-                            type.Assembly.FullName,
-                            type.FullName);
+                    var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
                     theProxy.Call("InitPython", ShutdownMode.Reload);
 
-                    var caller = (T2)domain.CreateInstanceAndUnwrap(
-                            typeof(T2).Assembly.FullName,
-                            typeof(T2).FullName);
+                    var caller = CreateInstanceInstanceAndUnwrap<T2>(domain);
                     caller.Execute(arg);
                     theProxy.Call("ShutdownPythonCompletely");
                 }
@@ -523,39 +543,26 @@ test_obj_call()
         {
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             string name = AppDomain.CurrentDomain.FriendlyName;
-            Console.WriteLine(string.Format("[{0} in .NET] In PythonRunner.RunPython", name));
-            var mode = PythonEngine.DefaultShutdownMode;
-            if (mode == ShutdownMode.Normal)
+            Console.WriteLine("[{0} in .NET] In PythonRunner.RunPython", name);
+            using (Py.GIL())
             {
-                mode = ShutdownMode.Soft;
-            }
-            PythonEngine.Initialize(mode: mode);
-            try
-            {
-                using (Py.GIL())
+                try
                 {
-                    try
-                    {
-                        var pyScript = string.Format("import clr\n"
-                            + "print('[{0} in python] imported clr')\n"
-                            + "clr.AddReference('System')\n"
-                            + "print('[{0} in python] allocated a clr object')\n"
-                            + "import gc\n"
-                            + "gc.collect()\n"
-                            + "print('[{0} in python] collected garbage')\n",
-                            name);
-                        PythonEngine.Exec(pyScript);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
-                        throw;
-                    }
+                    var pyScript = string.Format("import clr\n"
+                        + "print('[{0} in python] imported clr')\n"
+                        + "clr.AddReference('System')\n"
+                        + "print('[{0} in python] allocated a clr object')\n"
+                        + "import gc\n"
+                        + "gc.collect()\n"
+                        + "print('[{0} in python] collected garbage')\n",
+                        name);
+                    PythonEngine.Exec(pyScript);
                 }
-            }
-            finally
-            {
-                PythonEngine.BeginAllowThreads();
+                catch (Exception e)
+                {
+                    Console.WriteLine(string.Format("[{0} in .NET] Caught exception: {1}", name, e));
+                    throw;
+                }
             }
         }
 
