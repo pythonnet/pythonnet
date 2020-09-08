@@ -407,7 +407,7 @@ namespace Python.Runtime
                 GC.Collect();
                 try
                 {
-                    GC.WaitForFullGCComplete();
+                    GC.WaitForPendingFinalizers();
                 }
                 catch (NotImplementedException)
                 {
