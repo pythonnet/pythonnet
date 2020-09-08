@@ -127,8 +127,8 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        /// <remarks>When calling this method after a soft shutdown or a domain reload,
-        ///  this method acquires and releases the GIL. </remarks>
+        /// <remarks>Always call this method from the Main thread.  After the 
+        /// first call to this method, the main thread has acquired the GIL.</remarks>
         internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default, bool fromPython = false)
         {
             if (_isInitialized)
@@ -414,8 +414,14 @@ namespace Python.Runtime
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
                 PyGILState_Release(state);
-                // Then release the GIL for good.
-                PyEval_SaveThread();
+                // Then release the GIL for good, if there is somehting to release
+                // Use the unchecked version as the checked version calls `abort()`
+                // if the current state is NULL.
+                if (_PyThreadState_UncheckedGet() != IntPtr.Zero)
+                {
+                    PyEval_SaveThread();
+                }
+                
             }
             else
             {
@@ -845,6 +851,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyThreadState_Get();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr _PyThreadState_UncheckedGet();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyThread_get_key_value(IntPtr key);
