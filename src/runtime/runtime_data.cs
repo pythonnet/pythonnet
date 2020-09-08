@@ -137,6 +137,19 @@ namespace Python.Runtime
             PySys_SetObject("clr_data", IntPtr.Zero);
         }
 
+        static bool CheckSerializable (object o)
+        {
+            Type type = o.GetType();
+            do
+            {
+                if (!type.IsSerializable)
+                {
+                    return false;
+                }
+            } while ((type = type.BaseType) != null);
+            return true;
+        }
+
         private static void SaveRuntimeDataObjects(RuntimeDataStorage storage)
         {
             var objs = ManagedType.GetManagedObjects();
@@ -151,7 +164,7 @@ namespace Python.Runtime
                 switch (entry.Value)
                 {
                     case ManagedType.TrackTypes.Extension:
-                        Debug.Assert(obj.GetType().IsSerializable);
+                        Debug.Assert(CheckSerializable(obj));
                         var context = new InterDomainContext();
                         contexts[obj.pyHandle] = context;
                         obj.Save(context);
@@ -195,7 +208,7 @@ namespace Python.Runtime
             {
                 if (!item.Stored)
                 {
-                    if (!item.Instance.GetType().IsSerializable)
+                    if (!CheckSerializable(item.Instance))
                     {
                         continue;
                     }
