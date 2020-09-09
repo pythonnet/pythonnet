@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
-using System.Linq;
 
 namespace Python.Runtime
 {
@@ -356,13 +355,6 @@ namespace Python.Runtime
         public static int name = 0;
     }
 
-    static class TypeOffsetHelper
-    {
-        public static string GetSlotNameByOffset(int offset)
-        {
-            return typeof(TypeOffset).GetFields().First(fi => (int)fi.GetValue(null) == offset).Name;
-        }
-    }
 
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
