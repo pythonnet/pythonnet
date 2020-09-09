@@ -709,7 +709,7 @@ namespace Python.Runtime
                             mi[0] = method;
                             MethodObject m = new TypeMethod(type, method_name, mi);
                             Runtime.PyDict_SetItemString(dict, method_name, m.pyHandle);
-                            //m.DecrRefCount();
+                            m.DecrRefCount();
                             addedMethods.Add(method_name);
                         }
                     }
