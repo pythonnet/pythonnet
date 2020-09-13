@@ -43,7 +43,6 @@ namespace Python.Runtime.CollectionWrappers
             if (result == -1)
             {
                 Runtime.CheckExceptionOccurred();
-                throw new Exception("failed to clear sequence");
             }
         }
 
