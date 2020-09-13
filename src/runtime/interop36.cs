@@ -12,25 +12,9 @@ using System.Text;
 
 namespace Python.Runtime
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    [StructLayout(LayoutKind.Sequential)]
     internal class TypeOffset
     {
-        static TypeOffset()
-        {
-            Type type = typeof(TypeOffset);
-            FieldInfo[] fi = type.GetFields();
-            int size = IntPtr.Size;
-            for (int i = 0; i < fi.Length; i++)
-            {
-                fi[i].SetValue(null, i * size);
-            }
-        }
-
-        public static int magic()
-        {
-            return ob_size;
-        }
-
         // Auto-generated from PyHeapTypeObject in Python.h
         public static int ob_refcnt = 0;
         public static int ob_type = 0;
