@@ -13,7 +13,7 @@ using System.Text;
 namespace Python.Runtime
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal class TypeOffset
+    internal static partial class TypeOffset
     {
         // Auto-generated from PyHeapTypeObject in Python.h
         public static int ob_refcnt = 0;
