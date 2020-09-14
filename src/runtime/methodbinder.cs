@@ -203,6 +203,16 @@ namespace Python.Runtime
                 return 3000;
             }
 
+            if (t.IsArray)
+            {
+                Type e = t.GetElementType();
+                if (e == objectType)
+                {
+                    return 2500;
+                }
+                return 100 + ArgPrecedence(e);
+            }
+
             TypeCode tc = Type.GetTypeCode(t);
             // TODO: Clean up
             switch (tc)
@@ -248,16 +258,6 @@ namespace Python.Runtime
 
                 case TypeCode.Boolean:
                     return 40;
-            }
-
-            if (t.IsArray)
-            {
-                Type e = t.GetElementType();
-                if (e == objectType)
-                {
-                    return 2500;
-                }
-                return 100 + ArgPrecedence(e);
             }
 
             return 2000;
