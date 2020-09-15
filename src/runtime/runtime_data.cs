@@ -70,7 +70,7 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(mem, (IntPtr)ms.Length);
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
-            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddress();
+            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddressUnchecked();
             if (capsule != IntPtr.Zero)
             {
                 IntPtr oldData = PyCapsule_GetPointer(capsule, null);
@@ -96,7 +96,7 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
-            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddress();
+            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddressUnchecked();
             if (capsule == IntPtr.Zero)
             {
                 return;

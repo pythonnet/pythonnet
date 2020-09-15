@@ -21,10 +21,7 @@ import sys
 import sysconfig
 import subprocess
 
-if sys.version_info.major > 2:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from StringIO import StringIO
 
 from pycparser import c_ast, c_parser
 
