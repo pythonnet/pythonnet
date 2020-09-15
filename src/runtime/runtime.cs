@@ -2194,9 +2194,7 @@ namespace Python.Runtime
         Default,
         Normal,
         Soft,
-#if !NETSTANDARD
         Reload,
-#endif
     }
 
 
