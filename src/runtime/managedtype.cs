@@ -67,11 +67,8 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & (int)TypeFlags.Managed) != 0)
-                {
-                    return true;
-                }
+                var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
+                return flags.HasFlag(TypeFlags.Managed);
             }
             return false;
         }

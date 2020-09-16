@@ -11,8 +11,8 @@ namespace Python.Runtime
         {
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            long flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
-            if ((flags & (int)TypeFlags.Subclass) != 0)
+            var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
+            if (flags.HasFlag(TypeFlags.Subclass))
             {
                 IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.TypeDictOffset(tp));
                 if (dict == IntPtr.Zero)
