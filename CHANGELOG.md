@@ -10,7 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 ### Changed
--   Drop support for Python 2
+-   Drop support for Python 2, 3.4, and 3.5
 -   `clr.AddReference` may now throw errors besides `FileNotFoundException`, that provide more
 details about the cause of the failure
 -   `clr.AddReference` no longer adds ".dll" implicitly
