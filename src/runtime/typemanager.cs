@@ -92,9 +92,9 @@ namespace Python.Runtime
 
             InitializeSlots(type, impl);
 
-            int flags = TypeFlags.Default | TypeFlags.Managed |
+            TypeFlags flags = TypeFlags.Default | TypeFlags.Managed |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             Runtime.PyType_Ready(type);
 
@@ -170,12 +170,12 @@ namespace Python.Runtime
                 Runtime.XIncref(base_);
             }
 
-            int flags = TypeFlags.Default;
+            TypeFlags flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.BaseType;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
@@ -342,11 +342,11 @@ namespace Python.Runtime
 
             InitializeSlots(type, impl);
 
-            int flags = TypeFlags.Default;
+            TypeFlags flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             // We need space for 3 PyMethodDef structs, each of them
             // 4 int-ptrs in size.
@@ -401,11 +401,11 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
             Runtime.XIncref(base_);
 
-            int flags = TypeFlags.Default;
+            TypeFlags flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             CopySlot(base_, type, TypeOffset.tp_traverse);
             CopySlot(base_, type, TypeOffset.tp_clear);

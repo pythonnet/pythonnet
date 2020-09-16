@@ -29,7 +29,7 @@ namespace Python.Runtime
                 }
 
                 var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
+                if ((flags & (int)TypeFlags.Managed) != 0)
                 {
                     IntPtr op = tp == ob
                         ? Marshal.ReadIntPtr(tp, TypeOffset.magic())
@@ -68,7 +68,7 @@ namespace Python.Runtime
                 }
 
                 var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
+                if ((flags & (int)TypeFlags.Managed) != 0)
                 {
                     return true;
                 }
