@@ -25,19 +25,24 @@ namespace Python.Runtime
         {
         }
 
+        private static IntPtr FromObject(PyObject iterable)
+        {
+            IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
+            if (val == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            return val;
+        }
+
         /// <summary>
         /// PyIter Constructor
         /// </summary>
         /// <remarks>
         /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
         /// </remarks>
-        public PyIter(PyObject iterable)
+        public PyIter(PyObject iterable) : base(FromObject(iterable))
         {
-            obj = Runtime.PyObject_GetIter(iterable.obj);
-            if (obj == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
         }
 
         protected override void Dispose(bool disposing)

@@ -69,17 +69,6 @@ namespace Python.Runtime
 #endif
         }
 
-        // Protected default constructor to allow subclasses to manage
-        // initialization in different ways as appropriate.
-        [Obsolete("Please, always use PyObject(*Reference)")]
-        protected PyObject()
-        {
-            Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
-        }
-
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
         ~PyObject()
