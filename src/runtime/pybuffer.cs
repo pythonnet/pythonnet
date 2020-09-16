@@ -139,8 +139,6 @@ namespace Python.Runtime
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
-            if (Runtime.PyVersion < new Version(3, 6))
-                throw new NotSupportedException("ToContiguous requires at least Python 3.6");
 
             if (Runtime.PyBuffer_ToContiguous(buf, ref _view, _view.len, OrderStyleToChar(order, true)) < 0)
                 throw new PythonException();
