@@ -31,6 +31,20 @@ namespace Python.Runtime
 
         public static ICLRObjectStorer WrappersStorer { get; set; }
 
+        /// <summary>
+        /// Clears the old "clr_data" entry if a previous one is present.
+        /// </summary>
+        static void ClearCLRData ()
+        {
+            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddressUnchecked();
+            if (capsule != IntPtr.Zero)
+            {
+                IntPtr oldData = PyCapsule_GetPointer(capsule, null);
+                PyMem_Free(oldData);
+                PyCapsule_SetPointer(capsule, IntPtr.Zero);
+            }
+        }
+
         internal static void Stash()
         {
             var metaStorage = new RuntimeDataStorage();
@@ -70,15 +84,10 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(mem, (IntPtr)ms.Length);
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
-            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddressUnchecked();
-            if (capsule != IntPtr.Zero)
-            {
-                IntPtr oldData = PyCapsule_GetPointer(capsule, null);
-                PyMem_Free(oldData);
-                PyCapsule_SetPointer(capsule, IntPtr.Zero);
-            }
-            capsule = PyCapsule_New(mem, null, IntPtr.Zero);
+            ClearCLRData();
+            IntPtr capsule = PyCapsule_New(mem, null, IntPtr.Zero);
             PySys_SetObject("clr_data", capsule);
+            // Let the dictionary own the reference
             XDecref(capsule);
         }
 
