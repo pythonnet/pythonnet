@@ -18,7 +18,6 @@ namespace Python.Runtime.CollectionWrappers
                 if (size == -1)
                 {
                     Runtime.CheckExceptionOccurred();
-                    throw new Exception("Unable to get sequence size!");
                 }
 
                 return (int)size;

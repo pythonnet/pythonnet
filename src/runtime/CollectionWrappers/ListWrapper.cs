@@ -16,23 +16,12 @@ namespace Python.Runtime.CollectionWrappers
             {
                 var item = Runtime.PyList_GetItem(pyObject.Reference, index);
                 var pyItem = new PyObject(item);
-
-                if (!Converter.ToManaged(pyItem.Handle, typeof(T), out object obj, true))
-                    Runtime.CheckExceptionOccurred();
-
-                return (T)obj;
+                return pyItem.As<T>();
             }
             set
             {
-                IntPtr pyItem = Converter.ToPython(value, typeof(T));
-                if (pyItem == IntPtr.Zero)
-                {
-                    throw new InvalidCastException(
-                        "cannot cast " + value.ToString() + "to type: " + typeof(T).ToString(),
-                        new PythonException());
-                }
-
-                var result = Runtime.PyList_SetItem(pyObject.Handle, index, pyItem);
+                var pyItem = value.ToPython();
+                var result = Runtime.PyList_SetItem(pyObject.Handle, index, pyItem.Handle);
                 if (result == -1)
                     Runtime.CheckExceptionOccurred();
             }
@@ -48,12 +37,9 @@ namespace Python.Runtime.CollectionWrappers
             if (IsReadOnly)
                 throw new InvalidOperationException("Collection is read-only");
 
-            IntPtr pyItem = Converter.ToPython(item, typeof(T));
-            if (pyItem == IntPtr.Zero)
-                throw new PythonException();
+            var pyItem = item.ToPython();
 
-            var result = Runtime.PyList_Insert(pyObject.Reference, index, pyItem);
-            Runtime.XDecref(pyItem);
+            var result = Runtime.PyList_Insert(pyObject.Reference, index, pyItem.Handle);
             if (result == -1)
                 Runtime.CheckExceptionOccurred();
         }
