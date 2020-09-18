@@ -54,20 +54,6 @@ namespace Python.Runtime.CollectionWrappers
             return false;
         }
 
-        private T getItem(int index)
-        {
-            IntPtr item = Runtime.PySequence_GetItem(pyObject.Handle, index);
-            object obj;
-
-            if (!Converter.ToManaged(item, typeof(T), out obj, true))
-            {
-                Runtime.XDecref(item);
-                Runtime.CheckExceptionOccurred();
-            }
-
-            return (T)obj;
-        }
-
         public void CopyTo(T[] array, int arrayIndex)
         {
             var index = 0;
