@@ -154,7 +154,7 @@ namespace Python.Runtime
 
         #endregion
 
-        public static void Reset()
+        internal static void Reset()
         {
             lock (encoders)
                 lock (decoders)
