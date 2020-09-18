@@ -89,7 +89,6 @@ namespace Python.Runtime
     internal static class ManagedDataOffsets
     {
         public static int Magic { get; private set; }
-        public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
 
         static class DataOffsets
         {
@@ -108,11 +107,6 @@ namespace Python.Runtime
 
         static ManagedDataOffsets()
         {
-            Type type = typeof(TypeOffset);
-            foreach (FieldInfo fi in type.GetFields())
-            {
-                NameMapping[fi.Name] = (int)fi.GetValue(null);
-            }
             Magic = TypeOffset.members;
             FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
             size = fields.Length * IntPtr.Size;
