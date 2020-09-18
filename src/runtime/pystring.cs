@@ -28,7 +28,7 @@ namespace Python.Runtime
 
         private static IntPtr FromObject(PyObject o)
         {
-            if (!IsStringType(o))
+            if (o == null || !IsStringType(o))
             {
                 throw new ArgumentException("object is not a string");
             }

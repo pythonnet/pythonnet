@@ -47,7 +47,7 @@ namespace Python.Runtime
 
         private static IntPtr FromObject(PyObject o)
         {
-            if (!IsFloatType(o))
+            if (o == null || !IsFloatType(o))
             {
                 throw new ArgumentException("object is not a float");
             }

@@ -27,6 +27,10 @@ namespace Python.Runtime
 
         private static IntPtr FromObject(PyObject iterable)
         {
+            if (iterable == null)
+            {
+                throw new NullReferenceException();
+            }
             IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
             if (val == IntPtr.Zero)
             {
@@ -35,14 +39,27 @@ namespace Python.Runtime
             return val;
         }
 
+
         /// <summary>
-        /// PyIter Constructor
+        /// PyIter factory function.
         /// </summary>
         /// <remarks>
-        /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
+        /// Create a new PyIter from a given iterable.  Like doing "iter(iterable)" in python.
         /// </remarks>
-        public PyIter(PyObject iterable) : base(FromObject(iterable))
+        /// <param name="iterable"></param>
+        /// <returns></returns>
+        public static PyIter GetIter(PyObject iterable)
         {
+            if (iterable == null)
+            {
+                throw new NullReferenceException();
+            }
+            IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
+            if (val == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+            return new PyIter(val);
         }
 
         protected override void Dispose(bool disposing)

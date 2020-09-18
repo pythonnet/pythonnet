@@ -48,11 +48,11 @@ namespace Python.Runtime
         /// </remarks>
         public PyDict(PyObject o) : base(o.obj)
         {
+            Runtime.XIncref(o.obj);
             if (!IsDictType(o))
             {
                 throw new ArgumentException("object is not a dict");
             }
-            Runtime.XIncref(o.obj);
         }
 
 

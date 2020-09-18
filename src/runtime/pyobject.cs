@@ -699,7 +699,7 @@ namespace Python.Runtime
         /// </remarks>
         public IEnumerator GetEnumerator()
         {
-            return new PyIter(this);
+            return PyIter.GetIter(this);
         }
 
 

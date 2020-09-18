@@ -30,7 +30,7 @@ namespace Python.Runtime
 
         private static IntPtr FromObject(PyObject o)
         {
-            if (!IsListType(o))
+            if (o == null || !IsListType(o))
             {
                 throw new ArgumentException("object is not a list");
             }
@@ -76,6 +76,7 @@ namespace Python.Runtime
                 int r = Runtime.PyList_SetItem(val, i, ptr);
                 if (r < 0)
                 {
+                    Runtime.Py_DecRef(val);
                     throw new PythonException();
                 }
             }

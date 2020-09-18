@@ -33,7 +33,7 @@ namespace Python.Runtime
 
         private static IntPtr FromObject(PyObject o)
         {
-            if (!IsTupleType(o))
+            if (o == null || !IsTupleType(o))
             {
                 throw new ArgumentException("object is not a tuple");
             }

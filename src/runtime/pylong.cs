@@ -37,7 +37,7 @@ namespace Python.Runtime
 
         private static IntPtr FromObject(PyObject o)
         {
-            if (!IsLongType(o))
+            if (o == null || !IsLongType(o))
             {
                 throw new ArgumentException("object is not a long");
             }
