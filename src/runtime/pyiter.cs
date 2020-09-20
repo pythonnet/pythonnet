@@ -25,21 +25,6 @@ namespace Python.Runtime
         {
         }
 
-        private static IntPtr FromObject(PyObject iterable)
-        {
-            if (iterable == null)
-            {
-                throw new NullReferenceException();
-            }
-            IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
-            if (val == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
-            return val;
-        }
-
-
         /// <summary>
         /// PyIter factory function.
         /// </summary>
@@ -52,13 +37,10 @@ namespace Python.Runtime
         {
             if (iterable == null)
             {
-                throw new NullReferenceException();
+                throw new ArgumentNullException();
             }
             IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
-            if (val == IntPtr.Zero)
-            {
-                throw new PythonException();
-            }
+            PythonException.ThrowIfIsNull(val);
             return new PyIter(val);
         }
 
