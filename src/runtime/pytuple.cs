@@ -77,7 +77,7 @@ namespace Python.Runtime
                 if (res == 0)
                 {
                     Runtime.Py_DecRef(val);
-                    PythonException.ThrowIfIsNotZero(res);
+                    throw new PythonException();
                 }
             }
             return val;
