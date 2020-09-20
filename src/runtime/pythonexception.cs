@@ -261,11 +261,10 @@ namespace Python.Runtime
             }
         }
 
-        public static void ThrowIfIsNotZero(int value, Action onBeforeThrow = null)
+        public static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)
             {
-                onBeforeThrow?.Invoke();
                 throw new PythonException();
             }
         }

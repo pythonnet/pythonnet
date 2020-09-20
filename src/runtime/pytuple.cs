@@ -74,7 +74,11 @@ namespace Python.Runtime
                 IntPtr ptr = items[i].obj;
                 Runtime.XIncref(ptr);
                 int res = Runtime.PyTuple_SetItem(val, i, ptr);
-                PythonException.ThrowIfIsNotZero(res, () => Runtime.Py_DecRef(val));
+                if (res == 0)
+                {
+                    Runtime.Py_DecRef(val);
+                    PythonException.ThrowIfIsNotZero(res);
+                }
             }
             return val;
         }
