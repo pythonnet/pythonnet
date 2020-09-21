@@ -10,7 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 ### Changed
--   Drop support for Python 2
+-   Drop support for Python 2, 3.4, and 3.5
 -   `clr.AddReference` may now throw errors besides `FileNotFoundException`, that provide more
 details about the cause of the failure
 -   `clr.AddReference` no longer adds ".dll" implicitly
@@ -20,6 +20,7 @@ details about the cause of the failure
 
 -    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
 -    Fix incorrect dereference in params array handling
+-    Fix `object[]` parameters taking precedence when should not in overload resolution
 
 ## [2.5.0][] - 2020-06-14
 
