@@ -31,6 +31,15 @@ namespace Python.Runtime
         /// </remarks>
         internal PyTuple(BorrowedReference reference) : base(reference) { }
 
+        private static IntPtr FromObject(PyObject o)
+        {
+            if (o == null || !IsTupleType(o))
+            {
+                throw new ArgumentException("object is not a tuple");
+            }
+            Runtime.XIncref(o.obj);
+            return o.obj;
+        }
 
         /// <summary>
         /// PyTuple Constructor
@@ -40,14 +49,8 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python tuple object.
         /// </remarks>
-        public PyTuple(PyObject o)
+        public PyTuple(PyObject o) : base(FromObject(o))
         {
-            if (!IsTupleType(o))
-            {
-                throw new ArgumentException("object is not a tuple");
-            }
-            Runtime.XIncref(o.obj);
-            obj = o.obj;
         }
 
 
@@ -57,12 +60,28 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new empty PyTuple.
         /// </remarks>
-        public PyTuple()
+        public PyTuple() : base(Runtime.PyTuple_New(0))
         {
-            obj = Runtime.PyTuple_New(0);
             PythonException.ThrowIfIsNull(obj);
         }
 
+        private static IntPtr FromArray(PyObject[] items)
+        {
+            int count = items.Length;
+            IntPtr val = Runtime.PyTuple_New(count);
+            for (var i = 0; i < count; i++)
+            {
+                IntPtr ptr = items[i].obj;
+                Runtime.XIncref(ptr);
+                int res = Runtime.PyTuple_SetItem(val, i, ptr);
+                if (res != 0)
+                {
+                    Runtime.Py_DecRef(val);
+                    throw new PythonException();
+                }
+            }
+            return val;
+        }
 
         /// <summary>
         /// PyTuple Constructor
@@ -73,17 +92,8 @@ namespace Python.Runtime
         /// See caveats about PyTuple_SetItem:
         /// https://www.coursehero.com/file/p4j2ogg/important-exceptions-to-this-rule-PyTupleSetItem-and-PyListSetItem-These/
         /// </remarks>
-        public PyTuple(PyObject[] items)
+        public PyTuple(PyObject[] items) : base(FromArray(items))
         {
-            int count = items.Length;
-            obj = Runtime.PyTuple_New(count);
-            for (var i = 0; i < count; i++)
-            {
-                IntPtr ptr = items[i].obj;
-                Runtime.XIncref(ptr);
-                int res = Runtime.PyTuple_SetItem(obj, i, ptr);
-                PythonException.ThrowIfIsNotZero(res);
-            }
         }
 
 

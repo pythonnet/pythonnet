@@ -26,18 +26,22 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// PyIter Constructor
+        /// PyIter factory function.
         /// </summary>
         /// <remarks>
-        /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
+        /// Create a new PyIter from a given iterable.  Like doing "iter(iterable)" in python.
         /// </remarks>
-        public PyIter(PyObject iterable)
+        /// <param name="iterable"></param>
+        /// <returns></returns>
+        public static PyIter GetIter(PyObject iterable)
         {
-            obj = Runtime.PyObject_GetIter(iterable.obj);
-            if (obj == IntPtr.Zero)
+            if (iterable == null)
             {
-                throw new PythonException();
+                throw new ArgumentNullException();
             }
+            IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
+            PythonException.ThrowIfIsNull(val);
+            return new PyIter(val);
         }
 
         protected override void Dispose(bool disposing)

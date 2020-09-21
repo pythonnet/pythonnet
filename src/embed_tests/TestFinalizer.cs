@@ -87,6 +87,18 @@ namespace Python.EmbeddingTest
             Assert.GreaterOrEqual(objectCount, 1);
         }
 
+        [Test]
+        public void CollectOnShutdown()
+        {
+            MakeAGarbage(out var shortWeak, out var longWeak);
+            FullGCCollect();
+            var garbage = Finalizer.Instance.GetCollectedObjects();
+            Assert.IsNotEmpty(garbage);
+            PythonEngine.Shutdown();
+            garbage = Finalizer.Instance.GetCollectedObjects();
+            Assert.IsEmpty(garbage);
+        }
+
         private static void MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
         {
             PyLong obj = new PyLong(1024);

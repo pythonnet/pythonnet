@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   `clr.AddReference` may now throw errors besides `FileNotFoundException`, that provide more
 details about the cause of the failure
 -   `clr.AddReference` no longer adds ".dll" implicitly
+-   `PyIter(PyObject)` constructor replaced with static `PyIter.GetIter(PyObject)` method
 
 ### Fixed
 
