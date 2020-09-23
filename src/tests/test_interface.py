@@ -67,3 +67,19 @@ def test_explicit_cast_to_interface():
     assert i2.SayHello() == 'hello 2'
     assert hasattr(i2, 'SayHello')
     assert not hasattr(i2, 'HelloProperty')
+
+
+def test_interface_method_and_property_lookup():
+    """Test methods and properties in interfaces can be accessed"""
+    from Python.Test import InterfaceTest
+
+    ob = InterfaceTest()
+    assert hasattr(ob, 'TestMethod1')
+    assert ob.TestMethod1() == 'TestMethod1'
+    assert hasattr(ob, 'TestMethod2')
+    assert ob.TestMethod2() == 'TestMethod2'
+    assert hasattr(ob, 'TestProperty1')
+    assert ob.TestProperty1 == 'TestProperty1'
+    assert hasattr(ob, 'TestProperty2')
+    assert ob.TestProperty2 == 'TestProperty2'
+

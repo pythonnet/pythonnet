@@ -22,7 +22,16 @@ namespace Python.Test
         string SayHello();
     }
 
-    public class InterfaceTest : ISayHello1, ISayHello2
+    public interface IInterfaceResolutionTest
+    {
+        string TestMethod1();
+        string TestMethod2();
+
+        string TestProperty1 { get; }
+        string TestProperty2 { get; }
+    }
+
+    public class InterfaceTest : ISayHello1, ISayHello2, IInterfaceResolutionTest
     {
         public InterfaceTest()
         {
@@ -42,6 +51,20 @@ namespace Python.Test
         {
             return "hello 2";
         }
+
+        public string TestMethod1()
+        {
+            return "TestMethod1";
+        }
+
+        string IInterfaceResolutionTest.TestMethod2()
+        {
+            return "TestMethod2";
+        }
+
+        public string TestProperty1 => "TestProperty1";
+
+        string IInterfaceResolutionTest.TestProperty2 => "TestProperty2";
 
         public interface IPublic
         {

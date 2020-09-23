@@ -241,32 +241,29 @@ namespace Python.Runtime
                 }
             }
 
-            if (type.IsInterface)
+            // Interface inheritance seems to be a different animal:
+            // more contractual, less structural.  Thus, a Type that
+            // represents an interface that inherits from another
+            // interface does not return the inherited interface's
+            // methods in GetMembers. For example ICollection inherits
+            // from IEnumerable, but ICollection's GetMemebers does not
+            // return GetEnumerator.
+            //
+            // Not sure if this is the correct way to fix this, but it
+            // seems to work. Thanks to Bruce Dodson for the fix.
+
+            Type[] inheritedInterfaces = type.GetInterfaces();
+
+            for (i = 0; i < inheritedInterfaces.Length; ++i)
             {
-                // Interface inheritance seems to be a different animal:
-                // more contractual, less structural.  Thus, a Type that
-                // represents an interface that inherits from another
-                // interface does not return the inherited interface's
-                // methods in GetMembers. For example ICollection inherits
-                // from IEnumerable, but ICollection's GetMemebers does not
-                // return GetEnumerator.
-                //
-                // Not sure if this is the correct way to fix this, but it
-                // seems to work. Thanks to Bruce Dodson for the fix.
-
-                Type[] inheritedInterfaces = type.GetInterfaces();
-
-                for (i = 0; i < inheritedInterfaces.Length; ++i)
+                Type inheritedType = inheritedInterfaces[i];
+                MemberInfo[] imembers = inheritedType.GetMembers(flags);
+                for (n = 0; n < imembers.Length; n++)
                 {
-                    Type inheritedType = inheritedInterfaces[i];
-                    MemberInfo[] imembers = inheritedType.GetMembers(flags);
-                    for (n = 0; n < imembers.Length; n++)
+                    m = imembers[n];
+                    if (local[m.Name] == null)
                     {
-                        m = imembers[n];
-                        if (local[m.Name] == null)
-                        {
-                            items.Add(m);
-                        }
+                        items.Add(m);
                     }
                 }
             }
