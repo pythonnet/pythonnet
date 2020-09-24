@@ -748,22 +748,6 @@ namespace Python.Runtime
             return op;
         }
 
-        /// <remark>
-        /// We need this method because BorrowedReference can be implicitly casted to IntPtr.
-        /// </remark>
-        internal static void XDecref(BorrowedReference op)
-        {
-            throw new InvalidOperationException("Cannot DecRef a borrowed reference.");
-        }
-
-        /// <remark>
-        /// We need this method because NewReference can be implicitly casted to IntPtr.
-        /// </remark>
-        internal static void XDecref(NewReference op)
-        {
-            op.Dispose();
-        }
-
         internal static unsafe void XDecref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG || NETSTANDARD
@@ -2148,10 +2132,10 @@ namespace Python.Runtime
         internal static extern NewReference PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCapsule_GetPointer(IntPtr capsule, string name);
+        internal static extern IntPtr PyCapsule_GetPointer(BorrowedReference capsule, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyCapsule_SetPointer(IntPtr capsule, IntPtr pointer);
+        internal static extern int PyCapsule_SetPointer(BorrowedReference capsule, IntPtr pointer);
 
         //====================================================================
         // Miscellaneous
