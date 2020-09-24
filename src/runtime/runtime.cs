@@ -386,8 +386,8 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
-            MoveClrInstancesOnwershipToPython();
             ClassManager.DisposePythonWrappersForClrTypes();
+            MoveClrInstancesOnwershipToPython();
             TypeManager.RemoveTypes();
 
             MetaType.Release();
@@ -563,11 +563,8 @@ namespace Python.Runtime
                         PyObject_GC_Track(obj.pyHandle);
                     }
                 }
-                if (obj.gcHandle.IsAllocated)
-                {
-                    obj.gcHandle.Free();
-                }
-                obj.gcHandle = default;
+                obj.FreeGCHandle();
+                Marshal.WriteIntPtr(obj.pyHandle, ObjectOffset.magic(obj.tpHandle), IntPtr.Zero);
             }
             ManagedType.ClearTrackedObjects();
         }
@@ -1986,6 +1983,11 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr _PyType_Lookup(IntPtr type, IntPtr name);
 
+        internal static bool PyType_SUPPORTS_WEAKREFS(IntPtr type)
+        {
+            return Marshal.ReadIntPtr(type, TypeOffset.tp_weaklistoffset) != IntPtr.Zero;
+        }
+
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_GenericGetAttr(IntPtr obj, IntPtr name);
 
@@ -1996,6 +1998,9 @@ namespace Python.Runtime
         internal static extern IntPtr _PyObject_GetDictPtr(IntPtr obj);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr _PyObject_GC_Calloc(IntPtr basicsize);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyObject_GC_Del(IntPtr tp);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -2003,6 +2008,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyObject_GC_UnTrack(IntPtr tp);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void PyObject_ClearWeakRefs(IntPtr obj);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void _PyObject_Dump(IntPtr ob);
@@ -2134,6 +2142,16 @@ namespace Python.Runtime
         {
             XDecref(ob);
             ob = IntPtr.Zero;
+        }
+
+        internal static unsafe void Py_SETREF(IntPtr ob, int offset, IntPtr target)
+        {
+            var p = (void**)(ob + offset);
+            if (*p != null)
+            {
+                XDecref((IntPtr)(*p));
+            }
+            *p = (void*)target;
         }
 
         //====================================================================

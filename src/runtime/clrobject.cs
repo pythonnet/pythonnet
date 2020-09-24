@@ -29,10 +29,6 @@ namespace Python.Runtime
             tpHandle = tp;
             pyHandle = py;
             inst = ob;
-
-            // Fix the BaseException args (and __cause__ in case of Python 3)
-            // slot if wrapping a CLR exception
-            Exceptions.SetArgsAndCause(py);
         }
 
         protected CLRObject()
@@ -48,7 +44,7 @@ namespace Python.Runtime
         static CLRObject GetInstance(object ob)
         {
             ClassBase cc = ClassManager.GetClass(ob.GetType());
-            return GetInstance(ob, cc.tpHandle);
+            return GetInstance(ob, cc.pyHandle);
         }
 
 
@@ -62,7 +58,7 @@ namespace Python.Runtime
         internal static IntPtr GetInstHandle(object ob, Type type)
         {
             ClassBase cc = ClassManager.GetClass(type);
-            CLRObject co = GetInstance(ob, cc.tpHandle);
+            CLRObject co = GetInstance(ob, cc.pyHandle);
             return co.pyHandle;
         }
 

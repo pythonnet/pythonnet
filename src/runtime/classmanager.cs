@@ -443,6 +443,7 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         ob = GetClass(tp);
+                        ob.IncrRefCount();
                         ci.members[mi.Name] = ob;
                         continue;
                 }

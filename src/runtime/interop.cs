@@ -82,26 +82,25 @@ namespace Python.Runtime
                 fi.SetValue(null, offset);
             }
         }
-
-        public static int magic() => ManagedDataOffsets.Magic;
     }
+
 
     internal static class ManagedDataOffsets
     {
-        public static int Magic { get; private set; }
         public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
 
         static class DataOffsets
         {
             public static readonly int ob_data;
             public static readonly int ob_dict;
+            public static readonly int ob_weaklist;
 
             static DataOffsets()
             {
                 FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
                 for (int i = 0; i < fields.Length; i++)
                 {
-                    fields[i].SetValue(null, -(i * IntPtr.Size) - IntPtr.Size);
+                    fields[i].SetValue(null, (i) * IntPtr.Size);
                 }
             }
         }
@@ -113,11 +112,8 @@ namespace Python.Runtime
             {
                 NameMapping[fi.Name] = (int)fi.GetValue(null);
             }
-            // XXX: Use the members after PyHeapTypeObject as magic slot
-            Magic = TypeOffset.members;
-
             FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
-            size = fields.Length * IntPtr.Size;
+            Size = fields.Length * IntPtr.Size;
         }
 
         public static int GetSlotOffset(string name)
@@ -125,29 +121,10 @@ namespace Python.Runtime
             return NameMapping[name];
         }
 
-        private static int BaseOffset(IntPtr type)
-        {
-            Debug.Assert(type != IntPtr.Zero);
-            int typeSize = Marshal.ReadInt32(type, TypeOffset.tp_basicsize);
-            Debug.Assert(typeSize > 0);
-            return typeSize;
-        }
-
-        public static int DataOffset(IntPtr type)
-        {
-            return BaseOffset(type) + DataOffsets.ob_data;
-        }
-
-        public static int DictOffset(IntPtr type)
-        {
-            return BaseOffset(type) + DataOffsets.ob_dict;
-        }
-
         public static int ob_data => DataOffsets.ob_data;
         public static int ob_dict => DataOffsets.ob_dict;
-        public static int Size { get { return size; } }
-
-        private static readonly int size;
+        public static int ob_weaklist => DataOffsets.ob_weaklist;
+        public static int Size { get; private set; }
     }
 
     internal static class OriginalObjectOffsets
@@ -182,6 +159,26 @@ namespace Python.Runtime
         public static int ob_type;
     }
 
+
+    internal static class ManagedExceptionOffset
+    {
+        public static int ob_data { get; private set; }
+        public static int ob_dict { get; private set; }
+        public static int ob_weaklist { get; private set; }
+
+        public static int Size { get; private set; }
+
+        static ManagedExceptionOffset()
+        {
+            int baseOffset = OriginalObjectOffsets.Size + ExceptionOffset.Size();
+            ob_data = baseOffset + ManagedDataOffsets.ob_data;
+            ob_dict = baseOffset + ManagedDataOffsets.ob_dict;
+            ob_weaklist = baseOffset + ManagedDataOffsets.ob_weaklist;
+            Size = ob_weaklist + IntPtr.Size;
+        }
+    }
+
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal class ObjectOffset
     {
@@ -194,27 +191,17 @@ namespace Python.Runtime
             ob_refcnt = OriginalObjectOffsets.ob_refcnt;
             ob_type = OriginalObjectOffsets.ob_type;
 
-            size = OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
+            Size = OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
         }
 
         public static int magic(IntPtr type)
         {
-            return ManagedDataOffsets.DataOffset(type);
+            return (int)Marshal.ReadIntPtr(type, TypeOffset.members);
         }
 
         public static int TypeDictOffset(IntPtr type)
         {
-            return ManagedDataOffsets.DictOffset(type);
-        }
-
-        public static int Size(IntPtr pyType)
-        {
-            if (IsException(pyType))
-            {
-                return ExceptionOffset.Size();
-            }
-
-            return size;
+            return (int)Marshal.ReadIntPtr(type, TypeOffset.tp_dictoffset);
         }
 
 #if PYTHON_WITH_PYDEBUG
@@ -223,15 +210,8 @@ namespace Python.Runtime
 #endif
         public static int ob_refcnt;
         public static int ob_type;
-        private static readonly int size;
 
-        private static bool IsException(IntPtr pyObject)
-        {
-            var type = Runtime.PyObject_TYPE(pyObject);
-            return Runtime.PyType_IsSameAsOrSubtype(type, ofType: Exceptions.BaseException)
-                || Runtime.PyType_IsSameAsOrSubtype(type, ofType: Runtime.PyTypeType)
-                && Runtime.PyType_IsSubtype(pyObject, Exceptions.BaseException);
-        }
+        public static int Size { get; private set; }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -243,10 +223,9 @@ namespace Python.Runtime
             FieldInfo[] fi = type.GetFields(BindingFlags.Static | BindingFlags.Public);
             for (int i = 0; i < fi.Length; i++)
             {
-                fi[i].SetValue(null, (i * IntPtr.Size) + OriginalObjectOffsets.Size);
+                fi[i].SetValue(null, i * IntPtr.Size);
             }
-
-            size = fi.Length * IntPtr.Size + OriginalObjectOffsets.Size + ManagedDataOffsets.Size;
+            size = fi.Length * IntPtr.Size;
         }
 
         public static int Size() { return size; }

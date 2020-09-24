@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -147,36 +148,25 @@ namespace Python.Runtime
             flags |= TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
-            TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
+            //TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
 
             // Hmm - the standard subtype_traverse, clear look at ob_size to
             // do things, so to allow gc to work correctly we need to move
             // our hidden handle out of ob_size. Then, in theory we can
             // comment this out and still not crash.
-            TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
-            TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
-
+            //TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
+            //TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
 
             // for now, move up hidden handle...
-            IntPtr gc = Marshal.ReadIntPtr(base_type, TypeOffset.magic());
-            Marshal.WriteIntPtr(type, TypeOffset.magic(), gc);
-
+            unsafe
+            {
+                var baseTypeEx = ClrMetaTypeEx.FromType(base_type);
+                var typeEx = ClrMetaTypeEx.FromType(type);
+                typeEx->ClrHandleOffset = (IntPtr)(OriginalObjectOffsets.Size + ManagedDataOffsets.ob_data);
+                typeEx->ClrHandle = baseTypeEx->ClrHandle;
+            }
             return type;
         }
-
-
-        public static IntPtr tp_alloc(IntPtr mt, int n)
-        {
-            IntPtr type = Runtime.PyType_GenericAlloc(mt, n);
-            return type;
-        }
-
-
-        public static void tp_free(IntPtr tp)
-        {
-            Runtime.PyObject_GC_Del(tp);
-        }
-
 
         /// <summary>
         /// Metatype __call__ implementation. This is needed to ensure correct
@@ -280,7 +270,7 @@ namespace Python.Runtime
             var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
-                IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());
+                IntPtr gc = Marshal.ReadIntPtr(tp, ObjectOffset.magic(Runtime.PyObject_TYPE(tp)));
                 ((GCHandle)gc).Free();
             }
 
@@ -294,6 +284,14 @@ namespace Python.Runtime
 
             op = Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_dealloc);
             NativeCall.Void_Call_1(op, tp);
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            IntPtr type = Runtime.PyObject_TYPE(ob);
+            int dictOffset = ObjectOffset.TypeDictOffset(type);
+            Runtime.Py_SETREF(ob, dictOffset, IntPtr.Zero);
+            return 0;
         }
 
         private static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
@@ -352,4 +350,18 @@ namespace Python.Runtime
             return DoInstanceCheck(tp, args, true);
         }
     }
+
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct ClrMetaTypeEx
+    {
+        public IntPtr ClrHandleOffset;
+        public IntPtr ClrHandle;
+
+        public static unsafe ClrMetaTypeEx* FromType(IntPtr type)
+        {
+            return (ClrMetaTypeEx*)(type + TypeOffset.members);
+        }
+    }
+
 }

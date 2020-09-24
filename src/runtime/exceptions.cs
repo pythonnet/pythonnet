@@ -82,6 +82,13 @@ namespace Python.Runtime
             }
             return Runtime.PyUnicode_FromString(message);
         }
+
+        public static int tp_init(IntPtr ob, IntPtr args, IntPtr kwds)
+        {
+            Exceptions.SetArgsAndCause(ob);
+            return 0;
+        }
+
     }
 
     /// <summary>
@@ -177,13 +184,21 @@ namespace Python.Runtime
                 args = Runtime.PyTuple_New(0);
             }
 
-            Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
-
+            int baseOffset = OriginalObjectOffsets.Size;
+            Runtime.Py_SETREF(ob, baseOffset + ExceptionOffset.args, args);
+            
             if (e.InnerException != null)
             {
-                IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
-                Marshal.WriteIntPtr(ob, ExceptionOffset.cause, cause);
+                IntPtr cause = GetExceptHandle(e.InnerException);
+                Runtime.Py_SETREF(ob, baseOffset + ExceptionOffset.cause, cause);
             }
+        }
+
+        internal static IntPtr GetExceptHandle(Exception e)
+        {
+            IntPtr op = CLRObject.GetInstHandle(e);
+            SetArgsAndCause(op);
+            return op;
         }
 
         /// <summary>
@@ -283,7 +298,7 @@ namespace Python.Runtime
                 return;
             }
 
-            IntPtr op = CLRObject.GetInstHandle(e);
+            IntPtr op = GetExceptHandle(e);
             IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
             Runtime.PyErr_SetObject(new BorrowedReference(etype), new BorrowedReference(op));
             Runtime.XDecref(etype);

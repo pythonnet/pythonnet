@@ -26,7 +26,6 @@ namespace Python.Runtime
 
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
-
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
         internal void IncrRefCount()
@@ -80,29 +79,28 @@ namespace Python.Runtime
         /// </summary>
         internal static ManagedType GetManagedObject(IntPtr ob)
         {
-            if (ob != IntPtr.Zero)
+            if (ob == IntPtr.Zero)
             {
-                IntPtr tp = Runtime.PyObject_TYPE(ob);
-                if (tp == Runtime.PyTypeType || tp == Runtime.PyCLRMetaType)
-                {
-                    tp = ob;
-                }
-
-                var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
-                {
-                    IntPtr op = tp == ob
-                        ? Marshal.ReadIntPtr(tp, TypeOffset.magic())
-                        : Marshal.ReadIntPtr(ob, ObjectOffset.magic(tp));
-                    if (op == IntPtr.Zero)
-                    {
-                        return null;
-                    }
-                    var gc = (GCHandle)op;
-                    return (ManagedType)gc.Target;
-                }
+                return null;
             }
-            return null;
+            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
+            if ((flags & TypeFlags.Managed) == 0)
+            {
+                return null;
+            }
+            int offset = ObjectOffset.magic(tp);
+            if (offset == 0)
+            {
+                return null;
+            }
+            IntPtr op = Marshal.ReadIntPtr(ob, offset);
+            if (op == IntPtr.Zero)
+            {
+                return null;
+            }
+            var gc = (GCHandle)op;
+            return (ManagedType)gc.Target;
         }
 
 
@@ -122,11 +120,6 @@ namespace Python.Runtime
             if (ob != IntPtr.Zero)
             {
                 IntPtr tp = Runtime.PyObject_TYPE(ob);
-                if (tp == Runtime.PyTypeType || tp == Runtime.PyCLRMetaType)
-                {
-                    tp = ob;
-                }
-
                 var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
@@ -134,11 +127,6 @@ namespace Python.Runtime
                 }
             }
             return false;
-        }
-
-        public bool IsTypeObject()
-        {
-            return pyHandle == tpHandle;
         }
 
         internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()

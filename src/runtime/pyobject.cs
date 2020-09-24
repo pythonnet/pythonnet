@@ -122,7 +122,9 @@ namespace Python.Runtime
                 Runtime.XIncref(Runtime.PyNone);
                 return new PyObject(Runtime.PyNone);
             }
-            IntPtr op = CLRObject.GetInstHandle(ob);
+            IntPtr op = typeof(Exception).IsAssignableFrom(ob.GetType()) ?
+                Exceptions.GetExceptHandle((Exception)ob)
+                : CLRObject.GetInstHandle(ob);
             return new PyObject(op);
         }
 

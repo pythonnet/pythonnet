@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -288,44 +286,40 @@ namespace Python.Runtime
         public static void tp_dealloc(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
+            if (Runtime.PyType_SUPPORTS_WEAKREFS(Runtime.PyObject_TYPE(ob)))
+            {
+                Runtime.PyObject_ClearWeakRefs(ob);
+            }
             tp_clear(ob);
-            Runtime.PyObject_GC_UnTrack(self.pyHandle);
-            Runtime.PyObject_GC_Del(self.pyHandle);
+            Runtime.PyObject_GC_UnTrack(ob);
+            Runtime.PyObject_GC_Del(ob);
             self.FreeGCHandle();
         }
 
         public static int tp_clear(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            if (!self.IsTypeObject())
-            {
-                ClearObjectDict(ob);
-            }
-            self.tpHandle = IntPtr.Zero;
+            ClearObjectDict(ob);
+            Runtime.Py_CLEAR(ref self.tpHandle);
             return 0;
         }
 
         protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
-            if (pyHandle != tpHandle)
-            {
-                IntPtr dict = GetObjectDict(pyHandle);
-                Runtime.XIncref(dict);
-                context.Storage.AddValue("dict", dict);
-            }
+            IntPtr dict = GetObjectDict(pyHandle);
+            Runtime.XIncref(dict);
+            Runtime.XIncref(tpHandle);
+            context.Storage.AddValue("dict", dict);
         }
 
         protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
-            if (pyHandle != tpHandle)
-            {
-                IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
-                SetObjectDict(pyHandle, dict);
-            }
+            IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
+            SetObjectDict(pyHandle, dict);
             gcHandle = AllocGCHandle();
-            Marshal.WriteIntPtr(pyHandle, TypeOffset.magic(), (IntPtr)gcHandle);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gcHandle);
         }
     }
 }
