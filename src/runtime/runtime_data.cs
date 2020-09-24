@@ -36,8 +36,8 @@ namespace Python.Runtime
         /// </summary>
         static void ClearCLRData ()
         {
-            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddressUnchecked();
-            if (capsule != IntPtr.Zero)
+            BorrowedReference capsule = PySys_GetObject("clr_data");
+            if (!capsule.IsNull)
             {
                 IntPtr oldData = PyCapsule_GetPointer(capsule, null);
                 PyMem_Free(oldData);
@@ -85,10 +85,10 @@ namespace Python.Runtime
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
             ClearCLRData();
-            IntPtr capsule = PyCapsule_New(mem, null, IntPtr.Zero);
+            NewReference capsule = PyCapsule_New(mem, null, IntPtr.Zero);
             PySys_SetObject("clr_data", capsule);
             // Let the dictionary own the reference
-            XDecref(capsule);
+            capsule.Dispose();
         }
 
         internal static void RestoreRuntimeData()
@@ -105,8 +105,8 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
-            IntPtr capsule = PySys_GetObject("clr_data").DangerousGetAddressUnchecked();
-            if (capsule == IntPtr.Zero)
+            BorrowedReference capsule = PySys_GetObject("clr_data");
+            if (capsule.IsNull)
             {
                 return;
             }

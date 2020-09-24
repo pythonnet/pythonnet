@@ -15,6 +15,10 @@ namespace Python.Runtime
         public static implicit operator BorrowedReference(in NewReference reference)
             => new BorrowedReference(reference.pointer);
 
+        [Pure]
+        public static implicit operator IntPtr(in NewReference reference)
+            => DangerousGetAddress(reference);
+
         /// <summary>
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.

@@ -10,6 +10,8 @@ namespace Python.Runtime
         readonly IntPtr pointer;
         public bool IsNull => this.pointer == IntPtr.Zero;
 
+        public static implicit operator IntPtr(in BorrowedReference self) => self.DangerousGetAddress();
+
         /// <summary>Gets a raw pointer to the Python object</summary>
         public IntPtr DangerousGetAddress()
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
