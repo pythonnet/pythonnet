@@ -86,7 +86,7 @@ namespace Python.Runtime
 
             ClearCLRData();
             NewReference capsule = PyCapsule_New(mem, null, IntPtr.Zero);
-            PySys_SetObject("clr_data", capsule);
+            PySys_SetObject("clr_data", capsule.DangerousGetAddress());
             // Let the dictionary own the reference
             capsule.Dispose();
         }
