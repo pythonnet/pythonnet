@@ -173,6 +173,12 @@ namespace Python.Runtime
                 }
             }
 
+            if (type.IsInterface)
+            {
+                var ifaceObj = (InterfaceObject)ClassManager.GetClass(type);
+                return CLRObject.GetInstHandle(value, ifaceObj.pyHandle);
+            }
+
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
             var pyderived = value as IPythonDerivedType;
@@ -181,6 +187,7 @@ namespace Python.Runtime
                 if (!IsTransparentProxy(pyderived))
                     return ClassDerivedObject.ToPython(pyderived);
             }
+
 
             // hmm - from Python, we almost never care what the declared
             // type is. we'd rather have the object bound to the actual

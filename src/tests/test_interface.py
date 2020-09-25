@@ -67,3 +67,35 @@ def test_explicit_cast_to_interface():
     assert i2.SayHello() == 'hello 2'
     assert hasattr(i2, 'SayHello')
     assert not hasattr(i2, 'HelloProperty')
+
+
+def test_interface_object_returned_through_method():
+    """Test interface type is used if method return type is interface"""
+    from Python.Test import InterfaceTest
+
+    ob = InterfaceTest()
+    hello1 = ob.GetISayHello1()
+    assert type(hello1).__name__ == 'ISayHello1'
+
+    assert hello1.SayHello() == 'hello 1'
+
+
+def test_interface_object_returned_through_out_param():
+    """Test interface type is used for out parameters of interface types"""
+    from Python.Test import InterfaceTest
+
+    ob = InterfaceTest()
+    hello2 = ob.GetISayHello2(None)
+    assert type(hello2).__name__ == 'ISayHello2'
+
+    assert hello2.SayHello() == 'hello 2'
+
+
+def test_null_interface_object_returned():
+    """Test None is used also for methods with interface return types"""
+    from Python.Test import InterfaceTest
+
+    ob = InterfaceTest()
+    hello1, hello2 = ob.GetNoSayHello(None)
+    assert hello1 is None
+    assert hello2 is None
