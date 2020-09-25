@@ -16,12 +16,6 @@ namespace Python.Runtime
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
 
         /// <summary>
-        /// Gets a raw pointer to the Python object. Does not throw an exception
-        ///  if the pointer is null
-        /// </summary>
-        public IntPtr DangerousGetAddressUnchecked() => this.pointer;
-
-        /// <summary>
         /// Creates new instance of <see cref="BorrowedReference"/> from raw pointer. Unsafe.
         /// </summary>
         public BorrowedReference(IntPtr pointer)
