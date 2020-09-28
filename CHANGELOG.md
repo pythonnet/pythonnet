@@ -21,6 +21,7 @@ details about the cause of the failure
 -    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
 -    Fix incorrect dereference in params array handling
 -    Fix `object[]` parameters taking precedence when should not in overload resolution
+-    Fixed a bug where all .NET class instances were considered Iterable
 
 ## [2.5.0][] - 2020-06-14
 
