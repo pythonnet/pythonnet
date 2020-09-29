@@ -99,3 +99,11 @@ def test_null_interface_object_returned():
     hello1, hello2 = ob.GetNoSayHello(None)
     assert hello1 is None
     assert hello2 is None
+
+def test_interface_array_returned():
+    """Test interface type used for methods returning interface arrays"""
+    from Python.Test import InterfaceTest
+
+    ob = InterfaceTest()
+    hellos = ob.GetISayHello1Array()
+    assert type(hellos[0]).__name__ == 'ISayHello1'

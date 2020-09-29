@@ -179,6 +179,15 @@ namespace Python.Runtime
                 return CLRObject.GetInstHandle(value, ifaceObj.pyHandle);
             }
 
+            // We need to special case interface array handling to ensure we
+            // produce the correct type. Value may be an array of some concrete
+            // type (FooImpl[]), but we want access to go via the interface type
+            // (IFoo[]).
+            if (type.IsArray && type.GetElementType().IsInterface)
+            {
+                return CLRObject.GetInstHandle(value, type);
+            }
+
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
             var pyderived = value as IPythonDerivedType;
@@ -187,7 +196,6 @@ namespace Python.Runtime
                 if (!IsTransparentProxy(pyderived))
                     return ClassDerivedObject.ToPython(pyderived);
             }
-
 
             // hmm - from Python, we almost never care what the declared
             // type is. we'd rather have the object bound to the actual
