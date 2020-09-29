@@ -151,18 +151,12 @@ namespace Python.Runtime
                 {
                     PyEval_InitThreads();
                 }
-                if (mode == ShutdownMode.Soft)
-                {
-                    RuntimeState.Save();
-                }
-#if !NETSTANDARD
                 // XXX: Reload mode may reduct to Soft mode,
                 // so even on Reload mode it still needs to save the RuntimeState
-                else if (mode == ShutdownMode.Reload)
+                if (mode == ShutdownMode.Soft || mode == ShutdownMode.Reload)
                 {
                     RuntimeState.Save();
                 }
-#endif
             }
             else if (!fromPython)
             {
@@ -190,13 +184,11 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-#if !NETSTANDARD
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
                 RuntimeData.RestoreRuntimeData();
             }
             else
-#endif
             {
                 PyCLRMetaType = MetaType.Initialize(); // Steal a reference
                 ImportHook.Initialize();
@@ -342,9 +334,7 @@ namespace Python.Runtime
             if (
                 mode == Runtime.ShutdownMode
                 || mode == ShutdownMode.Normal
-#if !NETSTANDARD
                 || (mode == ShutdownMode.Soft && Runtime.ShutdownMode == ShutdownMode.Reload)
-#endif
                 )
             {
                 return mode;
@@ -374,12 +364,10 @@ namespace Python.Runtime
             {
                 RunExitFuncs();
             }
-#if !NETSTANDARD
             if (mode == ShutdownMode.Reload)
             {
                 RuntimeData.Stash();
             }
-#endif
             AssemblyManager.Shutdown();
             ImportHook.Shutdown();
 
@@ -2141,13 +2129,13 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
+        internal static extern NewReference PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCapsule_GetPointer(IntPtr capsule, string name);
+        internal static extern IntPtr PyCapsule_GetPointer(BorrowedReference capsule, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyCapsule_SetPointer(IntPtr capsule, IntPtr pointer);
+        internal static extern int PyCapsule_SetPointer(BorrowedReference capsule, IntPtr pointer);
 
         //====================================================================
         // Miscellaneous
@@ -2206,9 +2194,7 @@ namespace Python.Runtime
         Default,
         Normal,
         Soft,
-#if !NETSTANDARD
         Reload,
-#endif
     }
 
 

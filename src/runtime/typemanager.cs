@@ -459,7 +459,6 @@ namespace Python.Runtime
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
 
-#if !NETSTANDARD
             // XXX: Hard code with mode check.
             if (Runtime.ShutdownMode != ShutdownMode.Reload)
             {
@@ -470,7 +469,6 @@ namespace Python.Runtime
                     Marshal.WriteIntPtr(t, offset, IntPtr.Zero);
                 });
             }
-#endif
             return slotsHolder;
         }
 
@@ -480,10 +478,8 @@ namespace Python.Runtime
             ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
             slotsHolder.KeeapAlive(thunkInfo);
 
-#if !NETSTANDARD
             // XXX: Hard code with mode check.
             if (Runtime.ShutdownMode != ShutdownMode.Reload)
-#endif
             {
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>
