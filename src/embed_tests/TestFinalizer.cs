@@ -28,6 +28,14 @@ namespace Python.EmbeddingTest
         private static void FullGCCollect()
         {
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            try
+            {
+                GC.WaitForFullGCComplete();
+            }
+            catch (NotImplementedException)
+            {
+                // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
+            }
             GC.WaitForPendingFinalizers();
         }
 

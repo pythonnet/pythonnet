@@ -391,12 +391,13 @@ namespace Python.Runtime
                 GC.Collect();
                 try
                 {
-                    GC.WaitForPendingFinalizers();
+                    GC.WaitForFullGCComplete();
                 }
                 catch (NotImplementedException)
                 {
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
+                GC.WaitForPendingFinalizers();
                 PyGILState_Release(state);
                 // Then release the GIL for good, if there is somehting to release
                 // Use the unchecked version as the checked version calls `abort()`
