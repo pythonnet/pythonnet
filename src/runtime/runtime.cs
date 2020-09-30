@@ -463,14 +463,17 @@ namespace Python.Runtime
                 // The runtime may not provided `atexit` module.
                 return;
             }
-            try
+            using (atexit)
             {
-                atexit.InvokeMethod("_run_exitfuncs").Dispose();
-            }
-            catch (PythonException e)
-            {
-                Console.Error.WriteLine(e);
-                e.Dispose();
+                try
+                {
+                    atexit.InvokeMethod("_run_exitfuncs").Dispose();
+                }
+                catch (PythonException e)
+                {
+                    Console.Error.WriteLine(e);
+                    e.Dispose();
+                }
             }
         }
 
