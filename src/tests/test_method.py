@@ -206,17 +206,20 @@ def test_null_array_conversion():
 def test_string_params_args():
     """Test use of string params."""
     result = MethodTest.TestStringParamsArg('one', 'two', 'three')
-    assert result.Length == 3
-    assert len(result) == 3, result
+    assert result.Length == 4
+    assert len(result) == 4, result
     assert result[0] == 'one'
     assert result[1] == 'two'
     assert result[2] == 'three'
+    # ensures params string[] overload takes precedence over params object[]
+    assert result[3] == 'tail'
 
     result = MethodTest.TestStringParamsArg(['one', 'two', 'three'])
-    assert len(result) == 3
+    assert len(result) == 4
     assert result[0] == 'one'
     assert result[1] == 'two'
     assert result[2] == 'three'
+    assert result[3] == 'tail'
 
 
 def test_object_params_args():

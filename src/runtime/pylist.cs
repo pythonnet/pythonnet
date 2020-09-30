@@ -28,6 +28,16 @@ namespace Python.Runtime
         internal PyList(BorrowedReference reference) : base(reference) { }
 
 
+        private static IntPtr FromObject(PyObject o)
+        {
+            if (o == null || !IsListType(o))
+            {
+                throw new ArgumentException("object is not a list");
+            }
+            Runtime.XIncref(o.obj);
+            return o.obj;
+        }
+
         /// <summary>
         /// PyList Constructor
         /// </summary>
@@ -36,14 +46,8 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python list object.
         /// </remarks>
-        public PyList(PyObject o)
+        public PyList(PyObject o) : base(FromObject(o))
         {
-            if (!IsListType(o))
-            {
-                throw new ArgumentException("object is not a list");
-            }
-            Runtime.XIncref(o.obj);
-            obj = o.obj;
         }
 
 
@@ -53,15 +57,31 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new empty Python list object.
         /// </remarks>
-        public PyList()
+        public PyList() : base(Runtime.PyList_New(0))
         {
-            obj = Runtime.PyList_New(0);
             if (obj == IntPtr.Zero)
             {
                 throw new PythonException();
             }
         }
 
+        private static IntPtr FromArray(PyObject[] items)
+        {
+            int count = items.Length;
+            IntPtr val = Runtime.PyList_New(count);
+            for (var i = 0; i < count; i++)
+            {
+                IntPtr ptr = items[i].obj;
+                Runtime.XIncref(ptr);
+                int r = Runtime.PyList_SetItem(val, i, ptr);
+                if (r < 0)
+                {
+                    Runtime.Py_DecRef(val);
+                    throw new PythonException();
+                }
+            }
+            return val;
+        }
 
         /// <summary>
         /// PyList Constructor
@@ -69,20 +89,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python list object from an array of PyObjects.
         /// </remarks>
-        public PyList(PyObject[] items)
+        public PyList(PyObject[] items) : base(FromArray(items))
         {
-            int count = items.Length;
-            obj = Runtime.PyList_New(count);
-            for (var i = 0; i < count; i++)
-            {
-                IntPtr ptr = items[i].obj;
-                Runtime.XIncref(ptr);
-                int r = Runtime.PyList_SetItem(obj, i, ptr);
-                if (r < 0)
-                {
-                    throw new PythonException();
-                }
-            }
         }
 
         /// <summary>

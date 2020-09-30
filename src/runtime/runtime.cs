@@ -44,18 +44,14 @@ namespace Python.Runtime
 #error You must define either UCS2 or UCS4!
 #endif
 
-#if PYTHON34
-        const string _minor = "4";
-#elif PYTHON35
-        const string _minor = "5";
-#elif PYTHON36
+#if PYTHON36
         const string _minor = "6";
 #elif PYTHON37
         const string _minor = "7";
 #elif PYTHON38
         const string _minor = "8";
 #else
-#error You must define one of PYTHON34 to PYTHON38
+#error You must define one of PYTHON36 to PYTHON38
 #endif
 
 #if WINDOWS

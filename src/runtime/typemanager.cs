@@ -230,6 +230,13 @@ namespace Python.Runtime
                 InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
             }
 
+            if (!clrType.GetInterfaces().Any(ifc => ifc == typeof(IEnumerable) || ifc == typeof(IEnumerator)))
+            {
+                // The tp_iter slot should only be set for enumerable types.
+                Marshal.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
+            }
+
+
             if (base_ != IntPtr.Zero)
             {
                 Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
