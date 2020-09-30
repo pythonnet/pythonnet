@@ -176,7 +176,7 @@ namespace Python.Runtime
             if (type.IsInterface)
             {
                 var ifaceObj = (InterfaceObject)ClassManager.GetClass(type);
-                return CLRObject.GetInstHandle(value, ifaceObj.pyHandle);
+                return ifaceObj.WrapObject(value);
             }
 
             // We need to special case interface array handling to ensure we

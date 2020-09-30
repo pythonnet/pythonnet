@@ -61,6 +61,8 @@ def test_explicit_cast_to_interface():
     assert hasattr(i1, 'SayHello')
     assert i1.SayHello() == 'hello 1'
     assert not hasattr(i1, 'HelloProperty')
+    assert i1.__implementation__ == ob
+    assert i1.__raw_implementation__ == ob
 
     i2 = Test.ISayHello2(ob)
     assert type(i2).__name__ == 'ISayHello2'
@@ -76,6 +78,7 @@ def test_interface_object_returned_through_method():
     ob = InterfaceTest()
     hello1 = ob.GetISayHello1()
     assert type(hello1).__name__ == 'ISayHello1'
+    assert hello1.__implementation__.__class__.__name__ == "InterfaceTest"
 
     assert hello1.SayHello() == 'hello 1'
 
@@ -107,3 +110,13 @@ def test_interface_array_returned():
     ob = InterfaceTest()
     hellos = ob.GetISayHello1Array()
     assert type(hellos[0]).__name__ == 'ISayHello1'
+    assert hellos[0].__implementation__.__class__.__name__ == "InterfaceTest"
+
+def test_implementation_access():
+    """Test the __implementation__ and __raw_implementation__ properties"""
+    import System
+    clrVal =  System.Int32(100)
+    i = System.IComparable(clrVal)
+    assert 100 == i.__implementation__
+    assert clrVal == i.__raw_implementation__
+    assert i.__implementation__ != i.__raw_implementation__
