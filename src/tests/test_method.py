@@ -1149,3 +1149,10 @@ def test_optional_and_default_params():
 
     res = MethodTest.OptionalAndDefaultParams2(b=2, c=3)
     assert res == "0232"
+
+def test_keyword_arg_method_resolution():
+    from Python.Test import MethodArityTest
+
+    ob = MethodArityTest()
+    assert ob.Foo(1, b=2) == "Arity 2"
+
