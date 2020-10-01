@@ -43,8 +43,9 @@ namespace Python.Runtime
         public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
             var obj = (CLRObject)GetManagedObject(ob);
+            var arrObj = (ArrayObject)GetManagedObjectType(ob);
             var items = obj.inst as Array;
-            Type itemType = obj.inst.GetType().GetElementType();
+            Type itemType = arrObj.type.GetElementType();
             int rank = items.Rank;
             int index;
             object value;
