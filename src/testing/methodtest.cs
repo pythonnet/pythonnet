@@ -699,6 +699,12 @@ namespace Python.Test
             return echo;
         }
     }
+
+    public class MethodArityTest
+    {
+        public string Foo(int a) { return "Arity 1"; }
+        public string Foo(int a, int b) { return "Arity 2"; }
+    }
 }
 
 namespace PlainOldNamespace

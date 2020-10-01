@@ -22,6 +22,7 @@ details about the cause of the failure
 -    Fix incorrect dereference in params array handling
 -    Fix `object[]` parameters taking precedence when should not in overload resolution
 -    Fixed a bug where all .NET class instances were considered Iterable
+-    Fix incorrect choice of method to invoke when using keyword arguments.
 
 ## [2.5.0][] - 2020-06-14
 

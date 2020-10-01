@@ -580,7 +580,7 @@ namespace Python.Runtime
             var match = false;
             paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
 
-            if (positionalArgumentCount == parameters.Length)
+            if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)
             {
                 match = true;
             }
