@@ -164,12 +164,12 @@ namespace Python.Runtime
             // we want to do this after the slot stuff above in case the class itself implements a slot method
             InitializeSlots(type, impl.GetType());
 
-            if (!clrType.GetInterfaces().Any(ifc => ifc == typeof(IEnumerable) || ifc == typeof(IEnumerator)))
+            if (!typeof(IEnumerable).IsAssignableFrom(clrType) &&
+                !typeof(IEnumerator).IsAssignableFrom(clrType))
             {
                 // The tp_iter slot should only be set for enumerable types.
                 Marshal.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
             }
-
 
             if (base_ != IntPtr.Zero)
             {
