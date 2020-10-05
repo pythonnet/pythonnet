@@ -595,3 +595,11 @@ def test_indexer_abuse():
 
     with pytest.raises(AttributeError):
         del ob.__setitem__
+
+
+def test_indexer_accessed_through_interface():
+    """Test that indexers can be accessed through interfaces"""
+    from System.Collections.Generic import Dictionary, IDictionary
+    d = IDictionary[str, str](Dictionary[str, str]())
+    d["one"] = "1"
+    assert d["one"] == "1"

@@ -29,6 +29,7 @@ details about the cause of the failure
 -    Fixed a bug where all .NET class instances were considered Iterable
 -    Fix incorrect choice of method to invoke when using keyword arguments.
 -    Fix non-delegate types incorrectly appearing as callable.
+-    Indexers can now be used with interface objects
 
 ## [2.5.0][] - 2020-06-14
 

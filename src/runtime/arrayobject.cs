@@ -40,7 +40,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var arrObj = (ArrayObject)GetManagedObjectType(ob);
@@ -133,7 +133,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static new int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var items = obj.inst as Array;
