@@ -315,3 +315,13 @@ def test_method_inheritance():
 
     assert base.IsBase() == True
     assert derived.IsBase() == False
+
+
+def test_callable():
+    """Test that only delegate subtypes are callable"""
+
+    def foo():
+        pass
+
+    assert callable(System.String("foo")) == False
+    assert callable(System.Action(foo)) == True

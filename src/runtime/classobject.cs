@@ -278,36 +278,5 @@ namespace Python.Runtime
 
             return 0;
         }
-
-
-        /// <summary>
-        /// This is a hack. Generally, no managed class is considered callable
-        /// from Python - with the exception of System.Delegate. It is useful
-        /// to be able to call a System.Delegate instance directly, especially
-        /// when working with multicast delegates.
-        /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
-        {
-            //ManagedType self = GetManagedObject(ob);
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var cb = (ClassBase)GetManagedObject(tp);
-
-            if (cb.type != typeof(Delegate))
-            {
-                Exceptions.SetError(Exceptions.TypeError, "object is not callable");
-                return IntPtr.Zero;
-            }
-
-            var co = (CLRObject)GetManagedObject(ob);
-            var d = co.inst as Delegate;
-            BindingFlags flags = BindingFlags.Public |
-                                 BindingFlags.NonPublic |
-                                 BindingFlags.Instance |
-                                 BindingFlags.Static;
-
-            MethodInfo method = d.GetType().GetMethod("Invoke", flags);
-            var binder = new MethodBinder(method);
-            return binder.Invoke(ob, args, kw);
-        }
     }
 }
