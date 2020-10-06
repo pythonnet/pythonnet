@@ -31,6 +31,7 @@ details about the cause of the failure
 -    Fix non-delegate types incorrectly appearing as callable.
 -    Indexers can now be used with interface objects
 -    Fixed a bug where indexers could not be used if they were inherited
+-    Made it possible to use `__len__` also on `ICollection<>` interface objects
 
 ## [2.5.0][] - 2020-06-14
 
