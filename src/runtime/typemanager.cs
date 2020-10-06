@@ -171,6 +171,28 @@ namespace Python.Runtime
                 Marshal.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
             }
 
+
+            // Only set mp_subscript and mp_ass_subscript for types with indexers
+            if (impl is ClassBase cb)
+            {
+                if (!(impl is ArrayObject))
+                {
+                    if (cb.indexer == null || !cb.indexer.CanGet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                    }
+                    if (cb.indexer == null || !cb.indexer.CanSet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+                    }
+                }
+            }
+            else
+            {
+                Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+            }
+
             if (base_ != IntPtr.Zero)
             {
                 Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
