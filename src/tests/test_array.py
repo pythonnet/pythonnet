@@ -1321,16 +1321,14 @@ def test_array_abuse():
     with pytest.raises(TypeError):
         Test.PublicArrayTest.__getitem__(0, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         Test.PublicArrayTest.__setitem__(0, 0, 0)
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__getitem__']
-        desc(0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__getitem__']
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__setitem__']
-        desc(0, 0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__setitem__']
 
 
 def test_iterator_to_array():
