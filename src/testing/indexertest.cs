@@ -411,4 +411,29 @@ namespace Python.Test
             }
         }
     }
+
+    public class PublicInheritedIndexerTest : PublicIndexerTest { }
+
+    public class ProtectedInheritedIndexerTest : ProtectedIndexerTest { }
+
+    public class PrivateInheritedIndexerTest : ProtectedIndexerTest { }
+
+    public class InternalInheritedIndexerTest : InternalIndexerTest { }
+
+    public interface IIndexer
+    {
+        string this[int index] { get; set; }
+    }
+
+    public interface IInheritedIndexer : IIndexer { }
+
+    public class InterfaceInheritedIndexerTest :IndexerBase,  IInheritedIndexer  {
+        private System.Collections.Generic.IDictionary<int, string> d = new System.Collections.Generic.Dictionary<int, string>();
+
+        public string this[int index]
+        {
+            get { return GetValue(index); }
+            set { t[index] = value; }
+        }
+    }
 }
