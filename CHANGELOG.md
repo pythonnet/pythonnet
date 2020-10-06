@@ -30,6 +30,7 @@ details about the cause of the failure
 -    Fix incorrect choice of method to invoke when using keyword arguments.
 -    Fix non-delegate types incorrectly appearing as callable.
 -    Indexers can now be used with interface objects
+-    Fixed a bug where indexers could not be used if they were inherited
 
 ## [2.5.0][] - 2020-06-14
 
