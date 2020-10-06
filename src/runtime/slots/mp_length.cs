@@ -36,6 +36,10 @@ namespace Python.Runtime.Slots
             {
                 return true;
             }
+            if (clrType.IsInterface && clrType.IsGenericType && clrType.GetGenericTypeDefinition() == typeof(ICollection<>))
+            {
+                return true;
+            }
             return false;
         }
 

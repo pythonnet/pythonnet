@@ -47,3 +47,17 @@ def test_custom_generic_collection_explicit___len__():
     s.Add(1)
     s.Add(10)
     assert len(s) == 2
+
+def test_len_through_interface_generic():
+    """Test __len__ for ICollection<T>"""
+    import System.Collections.Generic
+    l = System.Collections.Generic.List[int]()
+    coll = System.Collections.Generic.ICollection[int](l)
+    assert len(coll) == 0
+
+def test_len_through_interface():
+    """Test __len__ for ICollection"""
+    import System.Collections
+    l = System.Collections.ArrayList()
+    coll = System.Collections.ICollection(l)
+    assert len(coll) == 0
