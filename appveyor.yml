@@ -16,7 +16,6 @@ environment:
 
   matrix:
     - PYTHON_VERSION: 3.8
-      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.7
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.6
@@ -24,7 +23,10 @@ environment:
     - PYTHON_VERSION: 3.8
     - PYTHON_VERSION: 3.7
     - PYTHON_VERSION: 3.6
-
+    - PYTHON_VERSION: 3.7
+      PYTHONNET_SHUTDOWN_MODE: Soft
+    - PYTHON_VERSION: 3.8
+      PYTHONNET_SHUTDOWN_MODE: Soft
 init:
   # Update Environment Variables based on matrix/platform
   - set PY_VER=%PYTHON_VERSION:.=%

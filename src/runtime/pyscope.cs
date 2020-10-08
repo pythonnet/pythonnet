@@ -278,10 +278,9 @@ namespace Python.Runtime
         {
             Check();
             IntPtr _locals = locals == null ? variables : locals.obj;
-            var flag = (IntPtr)Runtime.Py_eval_input;
 
             NewReference reference = Runtime.PyRun_String(
-                code, flag, variables, _locals
+                code, RunFlagType.Eval, variables, _locals
             );
             PythonException.ThrowIfIsNull(reference);
             return reference.MoveToPyObject();
@@ -317,9 +316,8 @@ namespace Python.Runtime
 
         private void Exec(string code, IntPtr _globals, IntPtr _locals)
         {
-            var flag = (IntPtr)Runtime.Py_file_input;
             NewReference reference = Runtime.PyRun_String(
-                code, flag, _globals, _locals
+                code, RunFlagType.File, _globals, _locals
             );
             PythonException.ThrowIfIsNull(reference);
             reference.Dispose();

@@ -187,6 +187,11 @@ namespace Python.Runtime
             return res;
         }
 
+        public bool IsMatches(IntPtr exc)
+        {
+            return Runtime.PyErr_GivenExceptionMatches(PyType, exc) != 0;
+        }
+
         /// <summary>
         /// Dispose Method
         /// </summary>

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -12,6 +14,7 @@ namespace Python.Runtime
     /// concrete subclasses provide slot implementations appropriate for
     /// each variety of reflected type.
     /// </summary>
+    [Serializable]
     internal class ClassBase : ManagedType
     {
         internal Indexer indexer;
@@ -28,13 +31,6 @@ namespace Python.Runtime
             return !type.IsEnum;
         }
 
-        /// <summary>
-        /// Implements __init__ for reflected classes and value types.
-        /// </summary>
-        public static int tp_init(IntPtr ob, IntPtr args, IntPtr kw)
-        {
-            return 0;
-        }
 
         /// <summary>
         /// Default implementation of [] semantics for reflected types.
@@ -292,15 +288,44 @@ namespace Python.Runtime
         public static void tp_dealloc(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.TypeDictOffset(self.tpHandle));
-            if (dict != IntPtr.Zero)
-            {
-                Runtime.XDecref(dict);
-            }
+            tp_clear(ob);
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
             Runtime.PyObject_GC_Del(self.pyHandle);
-            Runtime.XDecref(self.tpHandle);
-            self.gcHandle.Free();
+            self.FreeGCHandle();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            ManagedType self = GetManagedObject(ob);
+            if (!self.IsTypeObject())
+            {
+                ClearObjectDict(ob);
+            }
+            self.tpHandle = IntPtr.Zero;
+            return 0;
+        }
+
+        protected override void OnSave(InterDomainContext context)
+        {
+            base.OnSave(context);
+            if (pyHandle != tpHandle)
+            {
+                IntPtr dict = GetObjectDict(pyHandle);
+                Runtime.XIncref(dict);
+                context.Storage.AddValue("dict", dict);
+            }
+        }
+
+        protected override void OnLoad(InterDomainContext context)
+        {
+            base.OnLoad(context);
+            if (pyHandle != tpHandle)
+            {
+                IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
+                SetObjectDict(pyHandle, dict);
+            }
+            gcHandle = AllocGCHandle();
+            Marshal.WriteIntPtr(pyHandle, TypeOffset.magic(), (IntPtr)gcHandle);
         }
 
 

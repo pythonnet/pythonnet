@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// the same as a ClassObject, except that it provides sequence semantics
     /// to support natural array usage (indexing) from Python.
     /// </summary>
+    [Serializable]
     internal class ArrayObject : ClassBase
     {
         internal ArrayObject(Type tp) : base(tp)

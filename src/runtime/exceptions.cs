@@ -15,6 +15,7 @@ namespace Python.Runtime
     /// it subclasses System.Object. Instead TypeManager.CreateType() uses
     /// Python's exception.Exception class as base class for System.Exception.
     /// </remarks>
+    [Serializable]
     internal class ExceptionClassObject : ClassObject
     {
         internal ExceptionClassObject(Type tp) : base(tp)
@@ -89,14 +90,10 @@ namespace Python.Runtime
     /// <remarks>
     /// Readability of the Exceptions class improvements as we look toward version 2.7 ...
     /// </remarks>
-    public class Exceptions
+    public static class Exceptions
     {
         internal static IntPtr warnings_module;
         internal static IntPtr exceptions_module;
-
-        private Exceptions()
-        {
-        }
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
@@ -132,21 +129,23 @@ namespace Python.Runtime
         /// </summary>
         internal static void Shutdown()
         {
-            if (Runtime.Py_IsInitialized() != 0)
+            if (Runtime.Py_IsInitialized() == 0)
             {
-                Type type = typeof(Exceptions);
-                foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
-                {
-                    var op = (IntPtr)fi.GetValue(type);
-                    if (op != IntPtr.Zero)
-                    {
-                        Runtime.XDecref(op);
-                    }
-                }
-                Runtime.XDecref(exceptions_module);
-                Runtime.PyObject_HasAttrString(warnings_module, "xx");
-                Runtime.XDecref(warnings_module);
+                return;
             }
+            Type type = typeof(Exceptions);
+            foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var op = (IntPtr)fi.GetValue(type);
+                if (op == IntPtr.Zero)
+                {
+                    continue;
+                }
+                Runtime.XDecref(op);
+                fi.SetValue(null, IntPtr.Zero);
+            }
+            Runtime.Py_CLEAR(ref exceptions_module);
+            Runtime.Py_CLEAR(ref warnings_module);
         }
 
         /// <summary>

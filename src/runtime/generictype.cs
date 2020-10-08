@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// generic types. Both are essentially factories for creating closed
     /// types based on the required generic type parameters.
     /// </summary>
+    [Serializable]
     internal class GenericType : ClassBase
     {
         internal GenericType(Type tp) : base(tp)

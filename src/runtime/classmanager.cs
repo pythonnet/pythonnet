@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -18,7 +19,7 @@ namespace Python.Runtime
     internal class ClassManager
     {
         private static Dictionary<Type, ClassBase> cache;
-        private static Type dtype;
+        private static readonly Type dtype;
 
         private ClassManager()
         {
@@ -26,7 +27,6 @@ namespace Python.Runtime
 
         static ClassManager()
         {
-            cache = new Dictionary<Type, ClassBase>(128);
             // SEE: https://msdn.microsoft.com/en-us/library/96b1ayy4(v=vs.100).aspx
             // ""All delegates inherit from MulticastDelegate, which inherits from Delegate.""
             // Was Delegate, which caused a null MethodInfo returned from GetMethode("Invoke")
@@ -37,6 +37,76 @@ namespace Python.Runtime
         public static void Reset()
         {
             cache = new Dictionary<Type, ClassBase>(128);
+        }
+
+        internal static void DisposePythonWrappersForClrTypes()
+        {
+            var visited = new HashSet<IntPtr>();
+            var visitedHandle = GCHandle.Alloc(visited);
+            var visitedPtr = (IntPtr)visitedHandle;
+            try
+            {
+                foreach (var cls in cache.Values)
+                {
+                    // XXX: Force to release instance's managed resources
+                    // but not dealloc itself immediately.
+                    // These managed resources should preserve vacant shells
+                    // since others may still referencing it.
+                    cls.CallTypeTraverse(TraverseTypeClear, visitedPtr);
+                    cls.CallTypeClear();
+                    cls.DecrRefCount();
+                }
+            }
+            finally
+            {
+                visitedHandle.Free();
+            }
+            cache.Clear();
+        }
+
+        private static int TraverseTypeClear(IntPtr ob, IntPtr arg)
+        {
+            var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
+            if (!visited.Add(ob))
+            {
+                return 0;
+            }
+            var clrObj = ManagedType.GetManagedObject(ob);
+            if (clrObj != null)
+            {
+                clrObj.CallTypeTraverse(TraverseTypeClear, arg);
+                clrObj.CallTypeClear();
+            }
+            return 0;
+        }
+
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        {
+            var contexts = storage.AddValue("contexts",
+                new Dictionary<IntPtr, InterDomainContext>());
+            storage.AddValue("cache", cache);
+            foreach (var cls in cache.Values)
+            {
+                // This incref is for cache to hold the cls,
+                // thus no need for decreasing it at RestoreRuntimeData.
+                Runtime.XIncref(cls.pyHandle);
+                var context = contexts[cls.pyHandle] = new InterDomainContext();
+                cls.Save(context);
+            }
+        }
+
+        internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(RuntimeDataStorage storage)
+        {
+            cache = storage.GetValue<Dictionary<Type, ClassBase>>("cache");
+            var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
+            var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
+            foreach (var cls in cache.Values)
+            {
+                var context = contexts[cls.pyHandle];
+                cls.Load(context);
+                loadedObjs.Add(cls, context);
+            }
+            return loadedObjs;
         }
 
         /// <summary>
@@ -134,7 +204,6 @@ namespace Python.Runtime
 
 
             IntPtr tp = TypeManager.GetTypeHandle(impl, type);
-            impl.tpHandle = tp;
 
             // Finally, initialize the class __dict__ and return the object.
             IntPtr dict = Marshal.ReadIntPtr(tp, TypeOffset.tp_dict);
@@ -146,6 +215,8 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
+                // Decref the item now that it's been used.
+                item.DecrRefCount();
             }
 
             // If class has constructors, generate an __doc__ attribute.
@@ -180,6 +251,7 @@ namespace Python.Runtime
                         // TODO: deprecate __overloads__ soon...
                         Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
                         Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
+                        ctors.DecrRefCount();
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.
@@ -195,7 +267,7 @@ namespace Python.Runtime
 
         private static ClassInfo GetClassInfo(Type type)
         {
-            var ci = new ClassInfo(type);
+            var ci = new ClassInfo();
             var methods = new Hashtable();
             ArrayList list;
             MethodInfo meth;
@@ -410,18 +482,22 @@ namespace Python.Runtime
 
             return ci;
         }
-    }
-
-
-    internal class ClassInfo
-    {
-        public Indexer indexer;
-        public Hashtable members;
-
-        internal ClassInfo(Type t)
+        
+        /// <summary>
+        /// This class owns references to PyObjects in the `members` member.
+        /// The caller has responsibility to DECREF them.
+        /// </summary>
+        private class ClassInfo
         {
-            members = new Hashtable();
-            indexer = null;
+            public Indexer indexer;
+            public Hashtable members;
+
+            internal ClassInfo()
+            {
+                members = new Hashtable();
+                indexer = null;
+            }
         }
     }
+
 }

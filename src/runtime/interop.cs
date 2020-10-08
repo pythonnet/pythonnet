@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Text;
-using System.Collections.Generic;
 
 namespace Python.Runtime
 {
@@ -69,39 +68,83 @@ namespace Python.Runtime
         }
     }
 
-    internal static class ManagedDataOffsets
+    internal static partial class TypeOffset
     {
-        static ManagedDataOffsets()
+        static TypeOffset()
         {
-            FieldInfo[] fi = typeof(ManagedDataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
-            for (int i = 0; i < fi.Length; i++)
+            Type type = typeof(TypeOffset);
+            FieldInfo[] fields = type.GetFields();
+            int size = IntPtr.Size;
+            for (int i = 0; i < fields.Length; i++)
             {
-                fi[i].SetValue(null, -(i * IntPtr.Size) - IntPtr.Size);
+                int offset = i * size;
+                FieldInfo fi = fields[i];
+                fi.SetValue(null, offset);
             }
-
-            size = fi.Length * IntPtr.Size;
         }
 
-        public static readonly int ob_data;
-        public static readonly int ob_dict;
+        public static int magic() => ManagedDataOffsets.Magic;
+    }
+
+    internal static class ManagedDataOffsets
+    {
+        public static int Magic { get; private set; }
+        public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
+
+        static class DataOffsets
+        {
+            public static readonly int ob_data;
+            public static readonly int ob_dict;
+
+            static DataOffsets()
+            {
+                FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
+                for (int i = 0; i < fields.Length; i++)
+                {
+                    fields[i].SetValue(null, -(i * IntPtr.Size) - IntPtr.Size);
+                }
+            }
+        }
+
+        static ManagedDataOffsets()
+        {
+            Type type = typeof(TypeOffset);
+            foreach (FieldInfo fi in type.GetFields())
+            {
+                NameMapping[fi.Name] = (int)fi.GetValue(null);
+            }
+            // XXX: Use the members after PyHeapTypeObject as magic slot
+            Magic = TypeOffset.members;
+
+            FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
+            size = fields.Length * IntPtr.Size;
+        }
+
+        public static int GetSlotOffset(string name)
+        {
+            return NameMapping[name];
+        }
 
         private static int BaseOffset(IntPtr type)
         {
             Debug.Assert(type != IntPtr.Zero);
             int typeSize = Marshal.ReadInt32(type, TypeOffset.tp_basicsize);
-            Debug.Assert(typeSize > 0 && typeSize <= ExceptionOffset.Size());
+            Debug.Assert(typeSize > 0);
             return typeSize;
         }
+
         public static int DataOffset(IntPtr type)
         {
-            return BaseOffset(type) + ob_data;
+            return BaseOffset(type) + DataOffsets.ob_data;
         }
 
         public static int DictOffset(IntPtr type)
         {
-            return BaseOffset(type) + ob_dict;
+            return BaseOffset(type) + DataOffsets.ob_dict;
         }
 
+        public static int ob_data => DataOffsets.ob_data;
+        public static int ob_dict => DataOffsets.ob_dict;
         public static int Size { get { return size; } }
 
         private static readonly int size;
@@ -312,6 +355,7 @@ namespace Python.Runtime
         public static int name = 0;
     }
 
+
     /// <summary>
     /// TypeFlags(): The actual bit values for the Type Flags stored
     /// in a class.
@@ -320,34 +364,34 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeFlags
     {
-        public static int HeapType = (1 << 9);
-        public static int BaseType = (1 << 10);
-        public static int Ready = (1 << 12);
-        public static int Readying = (1 << 13);
-        public static int HaveGC = (1 << 14);
+        public const int HeapType = (1 << 9);
+        public const int BaseType = (1 << 10);
+        public const int Ready = (1 << 12);
+        public const int Readying = (1 << 13);
+        public const int HaveGC = (1 << 14);
         // 15 and 16 are reserved for stackless
-        public static int HaveStacklessExtension = 0;
+        public const int HaveStacklessExtension = 0;
         /* XXX Reusing reserved constants */
-        public static int Managed = (1 << 15); // PythonNet specific
-        public static int Subclass = (1 << 16); // PythonNet specific
-        public static int HaveIndex = (1 << 17);
+        public const int Managed = (1 << 15); // PythonNet specific
+        public const int Subclass = (1 << 16); // PythonNet specific
+        public const int HaveIndex = (1 << 17);
         /* Objects support nb_index in PyNumberMethods */
-        public static int HaveVersionTag = (1 << 18);
-        public static int ValidVersionTag = (1 << 19);
-        public static int IsAbstract = (1 << 20);
-        public static int HaveNewBuffer = (1 << 21);
+        public const int HaveVersionTag = (1 << 18);
+        public const int ValidVersionTag = (1 << 19);
+        public const int IsAbstract = (1 << 20);
+        public const int HaveNewBuffer = (1 << 21);
         // TODO: Implement FastSubclass functions
-        public static int IntSubclass = (1 << 23);
-        public static int LongSubclass = (1 << 24);
-        public static int ListSubclass = (1 << 25);
-        public static int TupleSubclass = (1 << 26);
-        public static int StringSubclass = (1 << 27);
-        public static int UnicodeSubclass = (1 << 28);
-        public static int DictSubclass = (1 << 29);
-        public static int BaseExceptionSubclass = (1 << 30);
-        public static int TypeSubclass = (1 << 31);
+        public const int IntSubclass = (1 << 23);
+        public const int LongSubclass = (1 << 24);
+        public const int ListSubclass = (1 << 25);
+        public const int TupleSubclass = (1 << 26);
+        public const int StringSubclass = (1 << 27);
+        public const int UnicodeSubclass = (1 << 28);
+        public const int DictSubclass = (1 << 29);
+        public const int BaseExceptionSubclass = (1 << 30);
+        public const int TypeSubclass = (1 << 31);
 
-        public static int Default = (
+        public const int Default = (
             HaveStacklessExtension |
             HaveVersionTag);
     }
@@ -360,7 +404,6 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        private static List<ThunkInfo> keepAlive;
         private static Hashtable pmap;
 
         static Interop()
@@ -377,7 +420,6 @@ namespace Python.Runtime
                 p[item.Name] = item;
             }
 
-            keepAlive = new List<ThunkInfo>();
             pmap = new Hashtable();
 
             pmap["tp_dealloc"] = p["DestructorFunc"];
@@ -482,10 +524,9 @@ namespace Python.Runtime
             }
             Delegate d = Delegate.CreateDelegate(dt, method);
             var info = new ThunkInfo(d);
-            // TODO: remove keepAlive when #958 merged, let the lifecycle of ThunkInfo transfer to caller.
-            keepAlive.Add(info);
             return info;
         }
+
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr UnaryFunc(IntPtr ob);
@@ -528,17 +569,6 @@ namespace Python.Runtime
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct Thunk
-    {
-        public Delegate fn;
-
-        public Thunk(Delegate d)
-        {
-            fn = d;
-        }
-    }
-
     internal class ThunkInfo
     {
         public readonly Delegate Target;
@@ -556,4 +586,29 @@ namespace Python.Runtime
             Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct PyGC_Node
+    {
+        public IntPtr gc_next;
+        public IntPtr gc_prev;
+        public IntPtr gc_refs;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct PyGC_Head
+    {
+        public PyGC_Node gc;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct PyMethodDef
+    {
+        public IntPtr ml_name;
+        public IntPtr ml_meth;
+        public int ml_flags;
+        public IntPtr ml_doc;
+    }
+
 }

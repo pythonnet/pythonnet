@@ -65,7 +65,7 @@ namespace Python.Runtime
         {
             var self = (OverloadMapper)GetManagedObject(ob);
             Runtime.XDecref(self.target);
-            FinalizeObject(self);
+            self.Dealloc();
         }
     }
 }

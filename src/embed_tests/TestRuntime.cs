@@ -28,16 +28,22 @@ namespace Python.EmbeddingTest
         {
             Runtime.Runtime.Initialize();
 
-            Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(MachineType.Other));
-            Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(OperatingSystemType.Other));
+            Assert.That(NativeCodePageHelper.Machine, Is.Not.EqualTo(MachineType.Other));
+            Assert.That(!string.IsNullOrEmpty(NativeCodePageHelper.MachineName));
 
-            // Don't shut down the runtime: if the python engine was initialized
-            // but not shut down by another test, we'd end up in a bad state.
-	}
+            Assert.That(NativeCodePageHelper.OperatingSystem, Is.Not.EqualTo(OperatingSystemType.Other));
+            Assert.That(!string.IsNullOrEmpty(NativeCodePageHelper.OperatingSystemName));
+
+            Runtime.Runtime.Shutdown();
+        }
 
         [Test]
         public static void Py_IsInitializedValue()
         {
+            if (Runtime.Runtime.Py_IsInitialized() == 1)
+            {
+                Runtime.Runtime.PyGILState_Ensure();
+            }
             Runtime.Runtime.Py_Finalize();
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();

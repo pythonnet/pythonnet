@@ -93,7 +93,6 @@ namespace Python.Runtime
         {
         }
 
-
         /// <summary>
         /// IsListType Method
         /// </summary>

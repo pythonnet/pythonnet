@@ -11,9 +11,11 @@ namespace Python.Runtime
     /// Implements a Python type that provides access to CLR namespaces. The
     /// type behaves like a Python module, and can contain other sub-modules.
     /// </summary>
+    [Serializable]
     internal class ModuleObject : ExtensionType
     {
         private Dictionary<string, ManagedType> cache;
+
         internal string moduleName;
         internal IntPtr dict;
         protected string _namespace;
@@ -54,7 +56,8 @@ namespace Python.Runtime
             Runtime.XDecref(pyfilename);
             Runtime.XDecref(pydocstring);
 
-            Marshal.WriteIntPtr(pyHandle, ObjectOffset.TypeDictOffset(tpHandle), dict);
+            Runtime.XIncref(dict);
+            SetObjectDict(pyHandle, dict);
 
             InitializeModuleMembers();
         }
@@ -100,6 +103,7 @@ namespace Python.Runtime
             {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
+                m.DecrRefCount();
                 return m;
             }
 
@@ -125,6 +129,7 @@ namespace Python.Runtime
                 {
                     m = new ModuleObject(qname);
                     StoreAttribute(name, m);
+                    m.DecrRefCount();
                     return m;
                 }
 
@@ -172,7 +177,11 @@ namespace Python.Runtime
         /// </summary>
         private void StoreAttribute(string name, ManagedType ob)
         {
-            Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
+            if (Runtime.PyDict_SetItemString(dict, name, ob.pyHandle) != 0)
+            {
+                throw new PythonException();
+            }
+            ob.IncrRefCount();
             cache[name] = ob;
         }
 
@@ -229,6 +238,7 @@ namespace Python.Runtime
                         mi[0] = method;
                         var m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
+                        m.DecrRefCount();
                     }
                 }
 
@@ -241,6 +251,7 @@ namespace Python.Runtime
                         string name = property.Name;
                         var p = new ModulePropertyObject(property);
                         StoreAttribute(name, p);
+                        p.DecrRefCount();
                     }
                 }
                 type = type.BaseType;
@@ -309,6 +320,58 @@ namespace Python.Runtime
             var self = (ModuleObject)GetManagedObject(ob);
             return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
+
+        public new static void tp_dealloc(IntPtr ob)
+        {
+            var self = (ModuleObject)GetManagedObject(ob);
+            tp_clear(ob);
+            self.Dealloc();
+        }
+
+        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
+        {
+            var self = (ModuleObject)GetManagedObject(ob);
+            int res = PyVisit(self.dict, visit, arg);
+            if (res != 0) return res;
+            foreach (var attr in self.cache.Values)
+            {
+                res = PyVisit(attr.pyHandle, visit, arg);
+                if (res != 0) return res;
+            }
+            return 0;
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (ModuleObject)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.dict);
+            ClearObjectDict(ob);
+            foreach (var attr in self.cache.Values)
+            {
+                Runtime.XDecref(attr.pyHandle);
+            }
+            self.cache.Clear();
+            return 0;
+        }
+
+        protected override void OnSave(InterDomainContext context)
+        {
+            base.OnSave(context);
+            System.Diagnostics.Debug.Assert(dict == GetObjectDict(pyHandle));
+            foreach (var attr in cache.Values)
+            {
+                Runtime.XIncref(attr.pyHandle);
+            }
+            // Decref twice in tp_clear, equilibrate them.
+            Runtime.XIncref(dict);
+            Runtime.XIncref(dict);
+        }
+
+        protected override void OnLoad(InterDomainContext context)
+        {
+            base.OnLoad(context);
+            SetObjectDict(pyHandle, dict);
+        }
     }
 
     /// <summary>
@@ -316,6 +379,7 @@ namespace Python.Runtime
     /// to import assemblies. It has a fixed module name "clr" and doesn't
     /// provide a namespace.
     /// </summary>
+    [Serializable]
     internal class CLRModule : ModuleObject
     {
         protected static bool hacked = false;
