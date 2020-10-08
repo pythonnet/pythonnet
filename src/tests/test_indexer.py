@@ -614,3 +614,35 @@ def test_using_indexer_on_object_without_indexer():
 
     with pytest.raises(TypeError):
         o[0] = 1
+
+
+def test_inherited_indexer():
+    """Test that inherited indexers are accessible"""
+    from Python.Test import PublicInheritedIndexerTest
+    from Python.Test import ProtectedInheritedIndexerTest
+    from Python.Test import PrivateInheritedIndexerTest
+    from Python.Test import InternalInheritedIndexerTest
+
+    pub = PublicInheritedIndexerTest()
+    pub[0] = "zero"
+    assert pub[0] == "zero"
+
+    def assert_no_indexer(obj):
+        with pytest.raises(TypeError):
+            obj[0]
+        with pytest.raises(TypeError):
+            obj[0] = "zero"
+
+    assert_no_indexer(PrivateInheritedIndexerTest)
+    assert_no_indexer(ProtectedInheritedIndexerTest)
+    assert_no_indexer(InternalInheritedIndexerTest)
+
+
+def test_inherited_indexer_interface():
+    """Test that indexers inherited from other interfaces are accessible"""
+    from Python.Test import InterfaceInheritedIndexerTest, IInheritedIndexer
+
+    impl = InterfaceInheritedIndexerTest()
+    ifc = IInheritedIndexer(impl)
+    ifc[0] = "zero"
+    assert ifc[0] == "zero"
