@@ -11,7 +11,6 @@ namespace Python.Test
     {
     }
 
-
     public interface ISayHello1
     {
         string SayHello();
@@ -41,6 +40,27 @@ namespace Python.Test
         string ISayHello2.SayHello()
         {
             return "hello 2";
+        }
+
+        public ISayHello1 GetISayHello1()
+        {
+            return this;
+        }
+
+        public void GetISayHello2(out ISayHello2 hello2)
+        {
+            hello2 = this;
+        }
+
+        public ISayHello1 GetNoSayHello(out ISayHello2 hello2)
+        {
+            hello2 = null;
+            return null;
+        }
+
+        public ISayHello1 [] GetISayHello1Array()
+        {
+            return new[] { this };
         }
 
         public interface IPublic

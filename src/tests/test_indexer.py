@@ -42,7 +42,7 @@ def test_internal_indexer():
     with pytest.raises(TypeError):
         Test.InternalIndexerTest.__getitem__(ob, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         ob.__getitem__(0)
 
 
@@ -56,7 +56,7 @@ def test_private_indexer():
     with pytest.raises(TypeError):
         Test.PrivateIndexerTest.__getitem__(ob, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         ob.__getitem__(0)
 
 
@@ -595,3 +595,22 @@ def test_indexer_abuse():
 
     with pytest.raises(AttributeError):
         del ob.__setitem__
+
+
+def test_indexer_accessed_through_interface():
+    """Test that indexers can be accessed through interfaces"""
+    from System.Collections.Generic import Dictionary, IDictionary
+    d = IDictionary[str, str](Dictionary[str, str]())
+    d["one"] = "1"
+    assert d["one"] == "1"
+
+
+def test_using_indexer_on_object_without_indexer():
+    """Test using subscript syntax on an object an without indexer raises"""
+    from System import Object
+    o = Object()
+    with pytest.raises(TypeError):
+        o[0]
+
+    with pytest.raises(TypeError):
+        o[0] = 1

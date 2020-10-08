@@ -230,12 +230,34 @@ namespace Python.Runtime
                 InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
             }
 
-            if (!clrType.GetInterfaces().Any(ifc => ifc == typeof(IEnumerable) || ifc == typeof(IEnumerator)))
+            if (!typeof(IEnumerable).IsAssignableFrom(clrType) &&
+                !typeof(IEnumerator).IsAssignableFrom(clrType))
             {
                 // The tp_iter slot should only be set for enumerable types.
                 Marshal.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
             }
 
+
+            // Only set mp_subscript and mp_ass_subscript for types with indexers
+            if (impl is ClassBase cb)
+            {
+                if (!(impl is ArrayObject))
+                {
+                    if (cb.indexer == null || !cb.indexer.CanGet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                    }
+                    if (cb.indexer == null || !cb.indexer.CanSet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+                    }
+                }
+            }
+            else
+            {
+                Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+            }
 
             if (base_ != IntPtr.Zero)
             {
