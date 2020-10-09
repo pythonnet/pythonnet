@@ -1,5 +1,8 @@
 using System;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace Python.Runtime
 {
@@ -9,11 +12,97 @@ namespace Python.Runtime
     [Serializable]
     internal class FieldObject : ExtensionType
     {
-        private FieldInfo info;
+        [Serializable]
+        private struct SerializedFieldInfo : ISerializable
+        {
+            // The field if we can find it. Otherwise null.
+            private FieldInfo m_info;
+
+            // The name of the field if the field is missing. Otherwise null.
+            private string m_name;
+
+            public SerializedFieldInfo(FieldInfo info)
+            {
+                if (info == null)
+                {
+                    throw new System.ArgumentNullException("null FieldInfo");
+                }
+                m_info = info;
+                m_name = null;
+            }
+
+            public FieldInfo Value
+            {
+                get
+                {
+                    if (m_info == null)
+                    {
+                        throw new SerializationException($".NET field {m_name} was renamed or removed during domain reload");
+                    }
+                    return m_info;
+                }
+            }
+
+            public string Name
+            {
+                get
+                {
+                    if (m_info == null)
+                    {
+                        return $"(missing {m_name})";
+                    }
+                    else
+                    {
+                        return m_info.Name;
+                    }
+                }
+            }
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                if (m_info == null)
+                {
+                    info.AddValue("n", m_name);
+                }
+                else
+                {
+                    // Serialize in a silly way. TODO optimize.
+                    var formatter = new BinaryFormatter();
+                    using (var ms = new MemoryStream())
+                    {
+                        formatter.Serialize(ms, m_info);
+                        info.AddValue("i", ms.ToArray());
+                    }
+
+                    // Also save the name in case the info doesn't deserialize
+                    info.AddValue("n", m_info.ToString());
+                }
+            }
+
+            private SerializedFieldInfo(SerializationInfo info, StreamingContext context)
+            {
+                try
+                {
+                    var serialized = (byte[])info.GetValue("i", typeof(byte[]));
+                    var formatter = new BinaryFormatter();
+                    using (var ms = new MemoryStream(serialized))
+                    {
+                        m_info = (FieldInfo)formatter.Deserialize(ms);
+                    }
+                }
+                catch (SerializationException _)
+                {
+                    m_info = null;
+                }
+                m_name = (m_info != null) ? null : info.GetString("n");
+            }
+        }
+
+        private SerializedFieldInfo m_info;
 
         public FieldObject(FieldInfo info)
         {
-            this.info = info;
+            m_info = new SerializedFieldInfo(info);
         }
 
         /// <summary>
@@ -24,14 +113,25 @@ namespace Python.Runtime
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
             var self = (FieldObject)GetManagedObject(ds);
-            object result;
 
             if (self == null)
             {
                 return IntPtr.Zero;
             }
+            try
+            {
+                return self.tp_descr_get(ob, tp);
+            }
+            catch (Exception e)
+            {
+                Exceptions.SetError(Exceptions.TypeError, e.Message);
+                return IntPtr.Zero;
+            }
+        }
 
-            FieldInfo info = self.info;
+        IntPtr tp_descr_get(IntPtr ob, IntPtr tp)
+        {
+            FieldInfo info = m_info.Value;
 
             if (ob == IntPtr.Zero || ob == Runtime.PyNone)
             {
@@ -43,7 +143,7 @@ namespace Python.Runtime
                 }
                 try
                 {
-                    result = info.GetValue(null);
+                    var result = info.GetValue(null);
                     return Converter.ToPython(result, info.FieldType);
                 }
                 catch (Exception e)
@@ -61,7 +161,7 @@ namespace Python.Runtime
                     Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
                     return IntPtr.Zero;
                 }
-                result = info.GetValue(co.inst);
+                var result = info.GetValue(co.inst);
                 return Converter.ToPython(result, info.FieldType);
             }
             catch (Exception e)
@@ -79,7 +179,6 @@ namespace Python.Runtime
         public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
             var self = (FieldObject)GetManagedObject(ds);
-            object newval;
 
             if (self == null)
             {
@@ -91,8 +190,21 @@ namespace Python.Runtime
                 Exceptions.SetError(Exceptions.TypeError, "cannot delete field");
                 return -1;
             }
+            try
+            {
+                return self.tp_descr_set(ob, val);
+            }
+            catch (Exception e)
+            {
+                Exceptions.SetError(Exceptions.TypeError, e.Message);
+                return -1;
+            }
+        }
 
-            FieldInfo info = self.info;
+
+        int tp_descr_set(IntPtr ob, IntPtr val)
+        {
+            FieldInfo info = m_info.Value;
 
             if (info.IsLiteral || info.IsInitOnly)
             {
@@ -111,6 +223,7 @@ namespace Python.Runtime
                 }
             }
 
+            object newval;
             if (!Converter.ToManaged(val, info.FieldType, out newval, true))
             {
                 return -1;
@@ -147,7 +260,7 @@ namespace Python.Runtime
         public static IntPtr tp_repr(IntPtr ob)
         {
             var self = (FieldObject)GetManagedObject(ob);
-            return Runtime.PyString_FromString($"<field '{self.info.Name}'>");
+            return Runtime.PyString_FromString($"<field '{self.m_info.Name}'>");
         }
     }
 }
