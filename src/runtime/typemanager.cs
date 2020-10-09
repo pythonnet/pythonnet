@@ -225,7 +225,7 @@ namespace Python.Runtime
             InitializeSlots(type, impl.GetType(), slotsHolder);
 
             if (Marshal.ReadIntPtr(type, TypeOffset.mp_length) == IntPtr.Zero
-                && mp_length_slot.CanAssgin(clrType))
+                && mp_length_slot.CanAssign(clrType))
             {
                 InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
             }

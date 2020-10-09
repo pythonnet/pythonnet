@@ -26,7 +26,7 @@ namespace Python.Runtime.Slots
             }
         }
 
-        public static bool CanAssgin(Type clrType)
+        public static bool CanAssign(Type clrType)
         {
             if (typeof(ICollection).IsAssignableFrom(clrType))
             {
