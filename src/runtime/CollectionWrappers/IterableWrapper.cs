@@ -30,6 +30,7 @@ namespace Python.Runtime.CollectionWrappers
                     var item = Runtime.PyIter_Next(iterObject.Handle);
                     if (item == IntPtr.Zero)
                     {
+                        Runtime.CheckExceptionOccurred();
                         iterObject.Dispose();
                         break;
                     }

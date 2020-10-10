@@ -56,6 +56,12 @@ namespace Python.Runtime.CollectionWrappers
 
         public void CopyTo(T[] array, int arrayIndex)
         {
+            if (array == null)
+                throw new NullReferenceException();
+
+            if ((array.Length - arrayIndex) < this.Count)
+                throw new InvalidOperationException("Attempting to copy to an array that is too small");
+
             var index = 0;
             foreach (var item in this)
             {
@@ -69,9 +75,15 @@ namespace Python.Runtime.CollectionWrappers
             if (IsReadOnly)
                 throw new NotImplementedException();
             if (index >= Count || index < 0)
-                throw new IndexOutOfRangeException();
+                return false;
 
-            return Runtime.PySequence_DelItem(pyObject.Handle, index) != 0;
+            var result = Runtime.PySequence_DelItem(pyObject.Handle, index);
+
+            if (result == 0)
+                return true;
+
+            Runtime.CheckExceptionOccurred();
+            return false;
         }
 
         protected int indexOf(T item)
