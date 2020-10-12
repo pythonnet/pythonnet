@@ -120,3 +120,19 @@ def test_implementation_access():
     assert 100 == i.__implementation__
     assert clrVal == i.__raw_implementation__
     assert i.__implementation__ != i.__raw_implementation__
+
+
+def test_interface_collection_iteration():
+    """Test interface type is used when iterating over interface collection"""
+    import System
+    from System.Collections.Generic import List
+    elem = System.IComparable(System.Int32(100))
+    typed_list = List[System.IComparable]()
+    typed_list.Add(elem)
+    for e in typed_list:
+        assert type(e).__name__ == "IComparable"
+
+    untyped_list = System.Collections.ArrayList()
+    untyped_list.Add(elem)
+    for e in untyped_list:
+        assert type(e).__name__ == "int"
