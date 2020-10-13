@@ -22,6 +22,7 @@ namespace Python.Runtime
     {
     }
 
+    [Serializable]
     internal class ClassDerivedObject : ClassObject
     {
         private static Dictionary<string, AssemblyBuilder> assemblyBuilders;
@@ -99,6 +100,10 @@ namespace Python.Runtime
             // collected while Python still has a reference to it.
             if (Runtime.Refcount(self.pyHandle) == 1)
             {
+
+#if PYTHON_WITH_PYDEBUG
+                Runtime._Py_NewReference(self.pyHandle);
+#endif
                 GCHandle gc = GCHandle.Alloc(self, GCHandleType.Normal);
                 Marshal.WriteIntPtr(self.pyHandle, ObjectOffset.magic(self.tpHandle), (IntPtr)gc);
                 self.gcHandle.Free();
@@ -130,7 +135,7 @@ namespace Python.Runtime
 
             if (null == assemblyName)
             {
-                assemblyName = Assembly.GetExecutingAssembly().FullName;
+                assemblyName = "Python.Runtime.Dynamic";
             }
 
             ModuleBuilder moduleBuilder = GetModuleBuilder(assemblyName, moduleName);

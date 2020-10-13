@@ -1288,9 +1288,10 @@ def test_special_array_creation():
     assert value[1].__class__ == inst.__class__
     assert value.Length == 2
 
+    iface_class = ISayHello1(inst).__class__
     value = Array[ISayHello1]([inst, inst])
-    assert value[0].__class__ == inst.__class__
-    assert value[1].__class__ == inst.__class__
+    assert value[0].__class__ == iface_class
+    assert value[1].__class__ == iface_class
     assert value.Length == 2
 
     inst = System.Exception("badness")
@@ -1320,16 +1321,14 @@ def test_array_abuse():
     with pytest.raises(TypeError):
         Test.PublicArrayTest.__getitem__(0, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         Test.PublicArrayTest.__setitem__(0, 0, 0)
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__getitem__']
-        desc(0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__getitem__']
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__setitem__']
-        desc(0, 0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__setitem__']
 
 
 def test_iterator_to_array():

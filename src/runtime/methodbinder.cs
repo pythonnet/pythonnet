@@ -13,6 +13,7 @@ namespace Python.Runtime
     /// a set of Python arguments. This is also used as a base class for the
     /// ConstructorBinder, a minor variation used to invoke constructors.
     /// </summary>
+    [Serializable]
     internal class MethodBinder
     {
         public ArrayList list;
@@ -203,6 +204,16 @@ namespace Python.Runtime
                 return 3000;
             }
 
+            if (t.IsArray)
+            {
+                Type e = t.GetElementType();
+                if (e == objectType)
+                {
+                    return 2500;
+                }
+                return 100 + ArgPrecedence(e);
+            }
+
             TypeCode tc = Type.GetTypeCode(t);
             // TODO: Clean up
             switch (tc)
@@ -248,16 +259,6 @@ namespace Python.Runtime
 
                 case TypeCode.Boolean:
                     return 40;
-            }
-
-            if (t.IsArray)
-            {
-                Type e = t.GetElementType();
-                if (e == objectType)
-                {
-                    return 2500;
-                }
-                return 100 + ArgPrecedence(e);
             }
 
             return 2000;
@@ -308,8 +309,8 @@ namespace Python.Runtime
                 IntPtr valueList = Runtime.PyDict_Values(kw);
                 for (int i = 0; i < pynkwargs; ++i)
                 {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist, i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i).DangerousGetAddress();
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
                 }
                 Runtime.XDecref(keylist);
                 Runtime.XDecref(valueList);
@@ -647,7 +648,7 @@ namespace Python.Runtime
             kwargsMatched = 0;
             defaultsNeeded = 0;
 
-            if (positionalArgumentCount == parameters.Length)
+            if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)
             {
                 match = true;
             }
@@ -813,7 +814,7 @@ namespace Python.Runtime
                     Type pt = pi[i].ParameterType;
                     if (pi[i].IsOut || pt.IsByRef)
                     {
-                        v = Converter.ToPython(binding.args[i], pt);
+                        v = Converter.ToPython(binding.args[i], pt.GetElementType());
                         Runtime.PyTuple_SetItem(t, n, v);
                         n++;
                     }

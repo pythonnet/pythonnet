@@ -187,6 +187,11 @@ namespace Python.Runtime
             return res;
         }
 
+        public bool IsMatches(IntPtr exc)
+        {
+            return Runtime.PyErr_GivenExceptionMatches(PyType, exc) != 0;
+        }
+
         /// <summary>
         /// Dispose Method
         /// </summary>
@@ -248,6 +253,14 @@ namespace Python.Runtime
         public static void ThrowIfIsNull(IntPtr ob)
         {
             if (ob == IntPtr.Zero)
+            {
+                throw new PythonException();
+            }
+        }
+
+        internal static void ThrowIfIsNull(BorrowedReference reference)
+        {
+            if (reference.IsNull)
             {
                 throw new PythonException();
             }

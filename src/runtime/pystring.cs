@@ -26,6 +26,16 @@ namespace Python.Runtime
         }
 
 
+        private static IntPtr FromObject(PyObject o)
+        {
+            if (o == null || !IsStringType(o))
+            {
+                throw new ArgumentException("object is not a string");
+            }
+            Runtime.XIncref(o.obj);
+            return o.obj;
+        }
+
         /// <summary>
         /// PyString Constructor
         /// </summary>
@@ -34,27 +44,25 @@ namespace Python.Runtime
         /// An ArgumentException will be thrown if the given object is not
         /// a Python string object.
         /// </remarks>
-        public PyString(PyObject o)
+        public PyString(PyObject o) : base(FromObject(o))
         {
-            if (!IsStringType(o))
-            {
-                throw new ArgumentException("object is not a string");
-            }
-            Runtime.XIncref(o.obj);
-            obj = o.obj;
         }
 
 
+        private static IntPtr FromString(string s)
+        {
+            IntPtr val = Runtime.PyUnicode_FromUnicode(s, s.Length);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
         /// <summary>
         /// PyString Constructor
         /// </summary>
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-        public PyString(string s)
+        public PyString(string s) : base(FromString(s))
         {
-            obj = Runtime.PyUnicode_FromUnicode(s, s.Length);
-            Runtime.CheckExceptionOccurred();
         }
 
 

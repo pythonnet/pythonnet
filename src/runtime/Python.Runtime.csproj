@@ -89,6 +89,7 @@
     <Compile Include="arrayobject.cs" />
     <Compile Include="assemblymanager.cs" />
     <Compile Include="BorrowedReference.cs" />
+    <Compile Include="bufferinterface.cs" />
     <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />
@@ -130,6 +131,7 @@
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />
     <Compile Include="pyansistring.cs" />
+    <Compile Include="pybuffer.cs" />
     <Compile Include="pydict.cs" />
     <Compile Include="PyExportAttribute.cs" />
     <Compile Include="pyfloat.cs" />
@@ -147,20 +149,21 @@
     <Compile Include="pytuple.cs" />
     <Compile Include="ReferenceExtensions.cs" />
     <Compile Include="runtime.cs" />
+    <Compile Include="runtime_data.cs" />
+    <Compile Include="runtime_state.cs" />
     <Compile Include="typemanager.cs" />
     <Compile Include="typemethod.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="platform\Types.cs" />
     <Compile Include="platform\LibraryLoader.cs" />
     <Compile Include="polyfill\ReflectionPolifills.cs" />
+    <Compile Include="platform\NativeCodePage.cs" />
     <Compile Include="slots\mp_length.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' == '' ">
-    <Compile Include="interop34.cs" />
-    <Compile Include="interop35.cs" />
     <Compile Include="interop36.cs" />
     <Compile Include="interop37.cs" />
     <Compile Include="interop38.cs" />

@@ -12,9 +12,10 @@ namespace Python.Runtime
     {
         public IntPtr mdef;
         public IntPtr ptr;
+        private ThunkInfo _thunk;
+
         private bool _disposed = false;
 
-        private ThunkInfo _thunk;
 
         public MethodWrapper(Type type, string name, string funcType = null)
         {
@@ -29,6 +30,7 @@ namespace Python.Runtime
             TypeManager.WriteMethodDef(mdef, name, _thunk.Address, 0x0003);
             ptr = Runtime.PyCFunction_NewEx(mdef, IntPtr.Zero, IntPtr.Zero);
         }
+
 
         public IntPtr Call(IntPtr args, IntPtr kw)
         {

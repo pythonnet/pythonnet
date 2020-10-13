@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// the same as a ClassObject, except that it provides sequence semantics
     /// to support natural array usage (indexing) from Python.
     /// </summary>
+    [Serializable]
     internal class ArrayObject : ClassBase
     {
         internal ArrayObject(Type tp) : base(tp)
@@ -40,11 +41,12 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
             var obj = (CLRObject)GetManagedObject(ob);
+            var arrObj = (ArrayObject)GetManagedObjectType(ob);
             var items = obj.inst as Array;
-            Type itemType = obj.inst.GetType().GetElementType();
+            Type itemType = arrObj.type.GetElementType();
             int rank = items.Rank;
             int index;
             object value;
@@ -132,7 +134,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static new int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var items = obj.inst as Array;

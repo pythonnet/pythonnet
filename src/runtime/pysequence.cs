@@ -16,9 +16,7 @@ namespace Python.Runtime
         {
         }
 
-        protected PySequence()
-        {
-        }
+        internal PySequence(BorrowedReference reference) : base(reference) { }
 
 
         /// <summary>

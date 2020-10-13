@@ -31,16 +31,26 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python long object.
         /// </remarks>
-        public PyLong(PyObject o)
+        public PyLong(PyObject o) : base(FromObject(o))
         {
-            if (!IsLongType(o))
+        }
+
+        private static IntPtr FromObject(PyObject o)
+        {
+            if (o == null || !IsLongType(o))
             {
                 throw new ArgumentException("object is not a long");
             }
             Runtime.XIncref(o.obj);
-            obj = o.obj;
+            return o.obj;
         }
 
+        private static IntPtr FromInt(int value)
+        {
+            IntPtr val = Runtime.PyLong_FromLong(value);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
 
         /// <summary>
         /// PyLong Constructor
@@ -48,10 +58,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an int32 value.
         /// </remarks>
-        public PyLong(int value)
+        public PyLong(int value) : base(FromInt(value))
         {
-            obj = Runtime.PyLong_FromLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -62,12 +70,17 @@ namespace Python.Runtime
         /// Creates a new PyLong from a uint32 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(uint value)
+        public PyLong(uint value) : base(FromInt((int)value))
         {
-            obj = Runtime.PyLong_FromLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
+
+        private static IntPtr FromLong(long value)
+        {
+            IntPtr val = Runtime.PyLong_FromLongLong(value);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
 
         /// <summary>
         /// PyLong Constructor
@@ -75,12 +88,16 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an int64 value.
         /// </remarks>
-        public PyLong(long value)
+        public PyLong(long value) : base(FromLong(value))
         {
-            obj = Runtime.PyLong_FromLongLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
+        private static IntPtr FromULong(ulong value)
+        {
+            IntPtr val = Runtime.PyLong_FromUnsignedLongLong(value);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
 
         /// <summary>
         /// PyLong Constructor
@@ -89,10 +106,8 @@ namespace Python.Runtime
         /// Creates a new PyLong from a uint64 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(ulong value)
+        public PyLong(ulong value) : base(FromULong(value))
         {
-            obj = Runtime.PyLong_FromUnsignedLongLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -102,10 +117,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an int16 value.
         /// </remarks>
-        public PyLong(short value)
+        public PyLong(short value) : base(FromInt((int)value))
         {
-            obj = Runtime.PyLong_FromLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -116,10 +129,8 @@ namespace Python.Runtime
         /// Creates a new PyLong from an uint16 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(ushort value)
+        public PyLong(ushort value) : base(FromInt((int)value))
         {
-            obj = Runtime.PyLong_FromLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -129,10 +140,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from a byte value.
         /// </remarks>
-        public PyLong(byte value)
+        public PyLong(byte value) : base(FromInt((int)value))
         {
-            obj = Runtime.PyLong_FromLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -143,12 +152,16 @@ namespace Python.Runtime
         /// Creates a new PyLong from an sbyte value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyLong(sbyte value)
+        public PyLong(sbyte value) : base(FromInt((int)value))
         {
-            obj = Runtime.PyLong_FromLong(value);
-            Runtime.CheckExceptionOccurred();
         }
 
+        private static IntPtr FromDouble(double value)
+        {
+            IntPtr val = Runtime.PyLong_FromDouble(value);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
 
         /// <summary>
         /// PyLong Constructor
@@ -156,12 +169,16 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an double value.
         /// </remarks>
-        public PyLong(double value)
+        public PyLong(double value) : base(FromDouble(value))
         {
-            obj = Runtime.PyLong_FromDouble(value);
-            Runtime.CheckExceptionOccurred();
         }
 
+        private static IntPtr FromString(string value)
+        {
+            IntPtr val = Runtime.PyLong_FromString(value, IntPtr.Zero, 0);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
 
         /// <summary>
         /// PyLong Constructor
@@ -169,10 +186,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from a string value.
         /// </remarks>
-        public PyLong(string value)
+        public PyLong(string value) : base(FromString(value))
         {
-            obj = Runtime.PyLong_FromString(value, IntPtr.Zero, 0);
-            Runtime.CheckExceptionOccurred();
         }
 
 
@@ -199,7 +214,7 @@ namespace Python.Runtime
         public static PyLong AsLong(PyObject value)
         {
             IntPtr op = Runtime.PyNumber_Long(value.obj);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(op);
             return new PyLong(op);
         }
 

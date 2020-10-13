@@ -11,6 +11,7 @@ namespace Python.Runtime
     /// standard MethodBinder because of a difference in invoking constructors
     /// using reflection (which is seems to be a CLR bug).
     /// </summary>
+    [Serializable]
     internal class ConstructorBinder : MethodBinder
     {
         private Type _containingType;
@@ -89,7 +90,7 @@ namespace Python.Runtime
                 // any extra args are intended for the subclass' __init__.
 
                 IntPtr eargs = Runtime.PyTuple_New(0);
-                binding = Bind(inst, eargs, kw);
+                binding = Bind(inst, eargs, IntPtr.Zero);
                 Runtime.XDecref(eargs);
 
                 if (binding == null)
