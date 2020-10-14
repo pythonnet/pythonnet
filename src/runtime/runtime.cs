@@ -50,6 +50,8 @@ namespace Python.Runtime
         const string _minor = "7";
 #elif PYTHON38
         const string _minor = "8";
+#elif PYTHON39
+        const string _minor = "9";
 #else
 #error You must define one of PYTHON36 to PYTHON38
 #endif

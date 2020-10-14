@@ -15,15 +15,20 @@ environment:
     CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
   matrix:
+    - PYTHON_VERSION: 3.9
+      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.8
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.7
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.6
       BUILD_OPTS: --xplat
+    - PYTHON_VERSION: 3.9
     - PYTHON_VERSION: 3.8
     - PYTHON_VERSION: 3.7
     - PYTHON_VERSION: 3.6
+    - PYTHON_VERSION: 3.9
+      PYTHONNET_SHUTDOWN_MODE: Soft
     - PYTHON_VERSION: 3.8
       PYTHONNET_SHUTDOWN_MODE: Soft
     - PYTHON_VERSION: 3.7
