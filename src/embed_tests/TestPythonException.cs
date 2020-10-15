@@ -90,5 +90,18 @@ namespace Python.EmbeddingTest
                 Assert.AreEqual(ex.StackTrace, ex.Format());
             }
         }
+
+        [Test]
+        public void TestPythonExceptionFormatNormalized()
+        {
+            try
+            {
+                PythonEngine.Exec("a=b\n");
+            }
+            catch (PythonException ex)
+            {
+                Assert.AreEqual("Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nNameError: name 'b' is not defined\n", ex.Format());
+            }
+        }
     }
 }
