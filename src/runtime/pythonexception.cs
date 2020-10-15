@@ -23,6 +23,7 @@ namespace Python.Runtime
         {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(out _pyType, out _pyValue, out _pyTB);
+            Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
             if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;
