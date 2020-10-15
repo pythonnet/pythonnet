@@ -32,6 +32,7 @@ details about the cause of the failure
 -    Indexers can now be used with interface objects
 -    Fixed a bug where indexers could not be used if they were inherited
 -    Made it possible to use `__len__` also on `ICollection<>` interface objects
+-    Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
 
 ## [2.5.0][] - 2020-06-14
 
