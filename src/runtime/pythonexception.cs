@@ -23,7 +23,6 @@ namespace Python.Runtime
         {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Fetch(out _pyType, out _pyValue, out _pyTB);
-            Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
             if (_pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
             {
                 string type;
@@ -159,12 +158,17 @@ namespace Python.Runtime
             {
                 if (_pyTB != IntPtr.Zero && _pyType != IntPtr.Zero && _pyValue != IntPtr.Zero)
                 {
-                    Runtime.XIncref(_pyType);
-                    Runtime.XIncref(_pyValue);
-                    Runtime.XIncref(_pyTB);
-                    using (PyObject pyType = new PyObject(_pyType))
-                    using (PyObject pyValue = new PyObject(_pyValue))
-                    using (PyObject pyTB = new PyObject(_pyTB))
+                    IntPtr tb = _pyTB;
+                    IntPtr type = _pyType;
+                    IntPtr value = _pyValue;
+                    Runtime.PyErr_NormalizeException(ref type, ref value, ref tb);
+
+                    Runtime.XIncref(type);
+                    Runtime.XIncref(value);
+                    Runtime.XIncref(tb);
+                    using (PyObject pyType = new PyObject(type))
+                    using (PyObject pyValue = new PyObject(value))
+                    using (PyObject pyTB = new PyObject(tb))
                     using (PyObject tb_mod = PythonEngine.ImportModule("traceback"))
                     {
                         var buffer = new StringBuilder();
