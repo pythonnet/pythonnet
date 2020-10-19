@@ -12,97 +12,11 @@ namespace Python.Runtime
     [Serializable]
     internal class FieldObject : ExtensionType
     {
-        [Serializable]
-        private struct SerializedFieldInfo : ISerializable
-        {
-            // The field if we can find it. Otherwise null.
-            private FieldInfo m_info;
-
-            // The name of the field if the field is missing. Otherwise null.
-            private string m_name;
-
-            public SerializedFieldInfo(FieldInfo info)
-            {
-                if (info == null)
-                {
-                    throw new System.ArgumentNullException("null FieldInfo");
-                }
-                m_info = info;
-                m_name = null;
-            }
-
-            public FieldInfo Value
-            {
-                get
-                {
-                    if (m_info == null)
-                    {
-                        throw new SerializationException($".NET field {m_name} was renamed or removed during domain reload");
-                    }
-                    return m_info;
-                }
-            }
-
-            public string Name
-            {
-                get
-                {
-                    if (m_info == null)
-                    {
-                        return $"(missing {m_name})";
-                    }
-                    else
-                    {
-                        return m_info.Name;
-                    }
-                }
-            }
-
-            public void GetObjectData(SerializationInfo info, StreamingContext context)
-            {
-                if (m_info == null)
-                {
-                    info.AddValue("n", m_name);
-                }
-                else
-                {
-                    // Serialize in a silly way. TODO optimize.
-                    var formatter = new BinaryFormatter();
-                    using (var ms = new MemoryStream())
-                    {
-                        formatter.Serialize(ms, m_info);
-                        info.AddValue("i", ms.ToArray());
-                    }
-
-                    // Also save the name in case the info doesn't deserialize
-                    info.AddValue("n", m_info.ToString());
-                }
-            }
-
-            private SerializedFieldInfo(SerializationInfo info, StreamingContext context)
-            {
-                try
-                {
-                    var serialized = (byte[])info.GetValue("i", typeof(byte[]));
-                    var formatter = new BinaryFormatter();
-                    using (var ms = new MemoryStream(serialized))
-                    {
-                        m_info = (FieldInfo)formatter.Deserialize(ms);
-                    }
-                }
-                catch (SerializationException _)
-                {
-                    m_info = null;
-                }
-                m_name = (m_info != null) ? null : info.GetString("n");
-            }
-        }
-
-        private SerializedFieldInfo m_info;
+        private MaybeSerialize<FieldInfo> m_info;
 
         public FieldObject(FieldInfo info)
         {
-            m_info = new SerializedFieldInfo(info);
+            m_info = new MaybeSerialize<FieldInfo>(info);
         }
 
         /// <summary>
@@ -260,7 +174,7 @@ namespace Python.Runtime
         public static IntPtr tp_repr(IntPtr ob)
         {
             var self = (FieldObject)GetManagedObject(ob);
-            return Runtime.PyString_FromString($"<field '{self.m_info.Name}'>");
+            return Runtime.PyString_FromString($"<field '{self.m_info}'>");
         }
     }
 }
