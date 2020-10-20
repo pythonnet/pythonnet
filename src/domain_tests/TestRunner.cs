@@ -13,7 +13,7 @@ namespace Python.DomainReloadTests
     /// It's Main() will:
     /// * Run the runner and unlod it's domain
     /// * Modify and re-compile the test class
-    /// * Run the runner and unload it's twice more
+    /// * Re-run the runner and unload it twice
     /// </summary>
     class TestRunner
     {
@@ -34,9 +34,9 @@ namespace TestNamespace
 }}";
 
         /// <summary>
-        /// The Python code that accesses the test class
+        /// The Python code that accesses the test class in the first step of the run
         /// </summary>
-        const string PythonCodeStep = @"import clr
+        const string PythonCodeStep1 = @"import clr
 clr.AddReference('TestClass')
 import sys
 from TestNamespace import TestClass
@@ -46,6 +46,20 @@ def do_work():
     obj = TestClass()
     foo = TestClass.{0}
     sys.my_obj = foo
+    print(sys.my_obj)
+";
+
+        /// <summary>
+        /// The Python code that accesses the test class
+        /// </summary>
+        const string PythonCodeStep2 = @"import clr
+clr.AddReference('TestClass')
+import sys
+from TestNamespace import TestClass
+foo = None
+def do_work():
+    global foo
+    print(foo)
     print(sys.my_obj)
 ";
 
@@ -102,7 +116,7 @@ namespace CaseRunner
 
             File.Copy(PythonDllLocation, tempFolderPython);
             
-            CreatePythonModule(args[2]);
+            CreatePythonModule(string.Format(PythonCodeStep1, args[2]));
             var runnerAssembly = CreateCaseRunnerAssembly();
             {
                 CreateTestClassAssembly(m1: args[0]);
@@ -110,6 +124,9 @@ namespace CaseRunner
                 var runnerDomain = CreateDomain("case runner");
                 RunAndUnload(runnerDomain, runnerAssembly);
             }
+
+            // Re-create the python module to checkup on the members
+            CreatePythonModule(PythonCodeStep2);
 
             {
                 // remove the method
@@ -165,10 +182,7 @@ namespace CaseRunner
             parameters.GenerateExecutable = exe;
             var assemblyName = name;
             var assemblyFullPath = Path.Combine(Path.GetTempPath(), assemblyName);
-
             parameters.OutputAssembly = assemblyFullPath;
-
-
             parameters.ReferencedAssemblies.Add("System.dll");
             parameters.ReferencedAssemblies.Add("System.Core.dll");
             parameters.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
@@ -218,7 +232,7 @@ namespace CaseRunner
             File.Create(Path.Combine(modulePath, "__init__.py")).Close(); //Create and don't forget to close!
             using (var writer = File.CreateText(Path.Combine(modulePath, "mod.py")))
             {
-                writer.Write(string.Format(PythonCodeStep, code));
+                writer.Write(code);
             }
 
             return null;
