@@ -218,12 +218,8 @@ class foo():
             Assert.IsFalse(codec.CanDecode(fooType, typeof(ICollection<int>)));
 
             //python tuples do satisfy the python sequence protocol
-            var pyTuple = new PyObject(Runtime.PyTuple_New(3));
+            var pyTuple = new PyTuple(items.ToArray());
             var pyTupleType = pyTuple.GetPythonType();
-
-            Runtime.PyTuple_SetItem(pyTuple.Handle, 0, items[0].Handle);
-            Runtime.PyTuple_SetItem(pyTuple.Handle, 1, items[1].Handle);
-            Runtime.PyTuple_SetItem(pyTuple.Handle, 2, items[2].Handle);
 
             Assert.IsTrue(codec.CanDecode(pyTupleType, typeof(ICollection<float>)));
             Assert.IsTrue(codec.CanDecode(pyTupleType, typeof(ICollection<int>)));
