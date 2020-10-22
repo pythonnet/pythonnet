@@ -44,18 +44,14 @@ namespace Python.Runtime
 #error You must define either UCS2 or UCS4!
 #endif
 
-#if PYTHON34
-        const string _minor = "4";
-#elif PYTHON35
-        const string _minor = "5";
-#elif PYTHON36
+#if PYTHON36
         const string _minor = "6";
 #elif PYTHON37
         const string _minor = "7";
 #elif PYTHON38
         const string _minor = "8";
 #else
-#error You must define one of PYTHON34 to PYTHON38
+#error You must define one of PYTHON36 to PYTHON38
 #endif
 
 #if WINDOWS
@@ -129,7 +125,7 @@ namespace Python.Runtime
         /// </summary>
         /// <remarks>Always call this method from the Main thread.  After the 
         /// first call to this method, the main thread has acquired the GIL.</remarks>
-        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default, bool fromPython = false)
+        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
             if (_isInitialized)
             {
@@ -143,7 +139,6 @@ namespace Python.Runtime
             }
             ShutdownMode = mode;
 
-            IntPtr state = IntPtr.Zero;
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
@@ -151,25 +146,19 @@ namespace Python.Runtime
                 {
                     PyEval_InitThreads();
                 }
-                if (mode == ShutdownMode.Soft)
-                {
-                    RuntimeState.Save();
-                }
-#if !NETSTANDARD
                 // XXX: Reload mode may reduct to Soft mode,
                 // so even on Reload mode it still needs to save the RuntimeState
-                else if (mode == ShutdownMode.Reload)
+                if (mode == ShutdownMode.Soft || mode == ShutdownMode.Reload)
                 {
                     RuntimeState.Save();
                 }
-#endif
             }
-            else if (!fromPython)
+            else
             {
                 // If we're coming back from a domain reload or a soft shutdown,
                 // we have previously released the thread state. Restore the main
                 // thread state here.
-                PyEval_RestoreThread(PyGILState_GetThisThreadState());
+                PyGILState_Ensure();
             }
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -190,13 +179,11 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
-#if !NETSTANDARD
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
                 RuntimeData.RestoreRuntimeData();
             }
             else
-#endif
             {
                 PyCLRMetaType = MetaType.Initialize(); // Steal a reference
                 ImportHook.Initialize();
@@ -342,9 +329,7 @@ namespace Python.Runtime
             if (
                 mode == Runtime.ShutdownMode
                 || mode == ShutdownMode.Normal
-#if !NETSTANDARD
                 || (mode == ShutdownMode.Soft && Runtime.ShutdownMode == ShutdownMode.Reload)
-#endif
                 )
             {
                 return mode;
@@ -374,12 +359,10 @@ namespace Python.Runtime
             {
                 RunExitFuncs();
             }
-#if !NETSTANDARD
             if (mode == ShutdownMode.Reload)
             {
                 RuntimeData.Stash();
             }
-#endif
             AssemblyManager.Shutdown();
             ImportHook.Shutdown();
 
@@ -407,12 +390,13 @@ namespace Python.Runtime
                 GC.Collect();
                 try
                 {
-                    GC.WaitForPendingFinalizers();
+                    GC.WaitForFullGCComplete();
                 }
                 catch (NotImplementedException)
                 {
                     // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
                 }
+                GC.WaitForPendingFinalizers();
                 PyGILState_Release(state);
                 // Then release the GIL for good, if there is somehting to release
                 // Use the unchecked version as the checked version calls `abort()`
@@ -478,14 +462,17 @@ namespace Python.Runtime
                 // The runtime may not provided `atexit` module.
                 return;
             }
-            try
+            using (atexit)
             {
-                atexit.InvokeMethod("_run_exitfuncs").Dispose();
-            }
-            catch (PythonException e)
-            {
-                Console.Error.WriteLine(e);
-                e.Dispose();
+                try
+                {
+                    atexit.InvokeMethod("_run_exitfuncs").Dispose();
+                }
+                catch (PythonException e)
+                {
+                    Console.Error.WriteLine(e);
+                    e.Dispose();
+                }
             }
         }
 
@@ -2159,13 +2146,13 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
+        internal static extern NewReference PyCapsule_New(IntPtr pointer, string name, IntPtr destructor);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCapsule_GetPointer(IntPtr capsule, string name);
+        internal static extern IntPtr PyCapsule_GetPointer(BorrowedReference capsule, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyCapsule_SetPointer(IntPtr capsule, IntPtr pointer);
+        internal static extern int PyCapsule_SetPointer(BorrowedReference capsule, IntPtr pointer);
 
         //====================================================================
         // Miscellaneous
@@ -2186,7 +2173,7 @@ namespace Python.Runtime
         internal static void SetNoSiteFlag()
         {
             var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
-            IntPtr dllLocal;
+            IntPtr dllLocal = IntPtr.Zero;
             if (_PythonDll != "__Internal")
             {
                 dllLocal = loader.Load(_PythonDll);
@@ -2224,9 +2211,7 @@ namespace Python.Runtime
         Default,
         Normal,
         Soft,
-#if !NETSTANDARD
         Reload,
-#endif
     }
 
 

@@ -26,13 +26,17 @@ namespace Python.Runtime.Slots
             }
         }
 
-        public static bool CanAssgin(Type clrType)
+        public static bool CanAssign(Type clrType)
         {
             if (typeof(ICollection).IsAssignableFrom(clrType))
             {
                 return true;
             }
             if (clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                return true;
+            }
+            if (clrType.IsInterface && clrType.IsGenericType && clrType.GetGenericTypeDefinition() == typeof(ICollection<>))
             {
                 return true;
             }

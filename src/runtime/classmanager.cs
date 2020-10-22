@@ -462,6 +462,25 @@ namespace Python.Runtime
                 ci.members[name] = ob;
             }
 
+            if (ci.indexer == null && type.IsClass)
+            {
+                // Indexer may be inherited.
+                var parent = type.BaseType;
+                while (parent != null && ci.indexer == null)
+                {
+                    foreach (var prop in parent.GetProperties()) {
+                        var args = prop.GetIndexParameters();
+                        if (args.GetLength(0) > 0)
+                        {
+                            ci.indexer = new Indexer();
+                            ci.indexer.AddProperty(prop);
+                            break;
+                        }
+                    }
+                    parent = parent.BaseType;
+                }
+            }
+
             return ci;
         }
         

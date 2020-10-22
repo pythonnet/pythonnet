@@ -90,7 +90,7 @@ namespace Python.Runtime
                 // any extra args are intended for the subclass' __init__.
 
                 IntPtr eargs = Runtime.PyTuple_New(0);
-                binding = Bind(inst, eargs, kw);
+                binding = Bind(inst, eargs, IntPtr.Zero);
                 Runtime.XDecref(eargs);
 
                 if (binding == null)

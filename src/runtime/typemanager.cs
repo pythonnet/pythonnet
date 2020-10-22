@@ -239,9 +239,38 @@ namespace Python.Runtime
             InitializeSlots(type, impl.GetType(), slotsHolder);
 
             if (Marshal.ReadIntPtr(type, TypeOffset.mp_length) == IntPtr.Zero
-                && mp_length_slot.CanAssgin(clrType))
+                && mp_length_slot.CanAssign(clrType))
             {
                 InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
+            }
+
+            if (!typeof(IEnumerable).IsAssignableFrom(clrType) &&
+                !typeof(IEnumerator).IsAssignableFrom(clrType))
+            {
+                // The tp_iter slot should only be set for enumerable types.
+                Marshal.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
+            }
+
+
+            // Only set mp_subscript and mp_ass_subscript for types with indexers
+            if (impl is ClassBase cb)
+            {
+                if (!(impl is ArrayObject))
+                {
+                    if (cb.indexer == null || !cb.indexer.CanGet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                    }
+                    if (cb.indexer == null || !cb.indexer.CanSet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+                    }
+                }
+            }
+            else
+            {
+                Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
             }
 
             if (base_ != IntPtr.Zero)
@@ -487,7 +516,6 @@ namespace Python.Runtime
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
 
-#if !NETSTANDARD
             // XXX: Hard code with mode check.
             if (Runtime.ShutdownMode != ShutdownMode.Reload)
             {
@@ -498,7 +526,6 @@ namespace Python.Runtime
                     Marshal.WriteIntPtr(t, offset, IntPtr.Zero);
                 });
             }
-#endif
             return slotsHolder;
         }
 
@@ -508,10 +535,8 @@ namespace Python.Runtime
             ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
             slotsHolder.KeeapAlive(thunkInfo);
 
-#if !NETSTANDARD
             // XXX: Hard code with mode check.
             if (Runtime.ShutdownMode != ShutdownMode.Reload)
-#endif
             {
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>

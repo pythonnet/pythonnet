@@ -31,16 +31,26 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python int object.
         /// </remarks>
-        public PyInt(PyObject o)
+        public PyInt(PyObject o) : base(FromObject(o))
         {
-            if (!IsIntType(o))
+        }
+
+        private static IntPtr FromObject(PyObject o)
+        {
+            if (o == null || !IsIntType(o))
             {
                 throw new ArgumentException("object is not an int");
             }
             Runtime.XIncref(o.obj);
-            obj = o.obj;
+            return o.obj;
         }
 
+        private static IntPtr FromInt(int value)
+        {
+            IntPtr val = Runtime.PyInt_FromInt32(value);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
 
         /// <summary>
         /// PyInt Constructor
@@ -48,10 +58,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an int32 value.
         /// </remarks>
-        public PyInt(int value)
+        public PyInt(int value) : base(FromInt(value))
         {
-            obj = Runtime.PyInt_FromInt32(value);
-            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -62,10 +70,8 @@ namespace Python.Runtime
         /// Creates a new Python int from a uint32 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyInt(uint value)
+        public PyInt(uint value) : base(FromLong(value))
         {
-            obj = Runtime.PyInt_FromInt64(value);
-            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -75,10 +81,15 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an int64 value.
         /// </remarks>
-        public PyInt(long value)
+        public PyInt(long value) : base(FromLong(value))
         {
-            obj = Runtime.PyInt_FromInt64(value);
-            PythonException.ThrowIfIsNull(obj);
+        }
+
+        private static IntPtr FromLong(long value)
+        {
+            IntPtr val = Runtime.PyInt_FromInt64(value);
+            PythonException.ThrowIfIsNull(val);
+            return val;
         }
 
 
@@ -89,10 +100,8 @@ namespace Python.Runtime
         /// Creates a new Python int from a uint64 value.
         /// </remarks>
         [CLSCompliant(false)]
-        public PyInt(ulong value)
+        public PyInt(ulong value) : base(FromLong((long)value))
         {
-            obj = Runtime.PyInt_FromInt64((long)value);
-            PythonException.ThrowIfIsNull(obj);
         }
 
 
@@ -142,16 +151,21 @@ namespace Python.Runtime
         }
 
 
+        private static IntPtr FromString(string value)
+        {
+            IntPtr val = Runtime.PyInt_FromString(value, IntPtr.Zero, 0);
+            PythonException.ThrowIfIsNull(val);
+            return val;
+        }
+
         /// <summary>
         /// PyInt Constructor
         /// </summary>
         /// <remarks>
         /// Creates a new Python int from a string value.
         /// </remarks>
-        public PyInt(string value)
+        public PyInt(string value) : base(FromString(value))
         {
-            obj = Runtime.PyInt_FromString(value, IntPtr.Zero, 0);
-            PythonException.ThrowIfIsNull(obj);
         }
 
 
