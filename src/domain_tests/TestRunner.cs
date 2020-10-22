@@ -92,7 +92,7 @@ namespace CaseRunner
             }}
             catch (PythonException pe)
             {{
-                throw new ArgumentException(message:pe.Message);
+                throw new ArgumentException(message:pe.Message+""    ""+pe.StackTrace);
             }}
             return 0;
         }}
@@ -103,11 +103,13 @@ namespace CaseRunner
 
         public static int Main(string[] args)
         {
-            Console.WriteLine($"Testing with arguments: {string.Join(", ", args)}");
             if (args.Length < 3)
             {
-                return 123;
+                args = new string[] { "public static int TestMember = 2;", "", "TestMember" };
+                // return 123;
             }
+            Console.WriteLine($"Testing with arguments: {string.Join(", ", args)}");
+
             var tempFolderPython = Path.Combine(Path.GetTempPath(), "Python.Runtime.dll");
             if (File.Exists(tempFolderPython))
             {
@@ -173,6 +175,7 @@ namespace CaseRunner
 
         static string CreateAssembly(string name, string code, bool exe = false)
         {
+            //Console.WriteLine(code);
             // Never return or hold the Assembly instance. This will cause
             // the assembly to be loaded into the current domain and this
             // interferes with the tests. The Domain can execute fine from a 
