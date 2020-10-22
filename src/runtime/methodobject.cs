@@ -133,8 +133,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("string expected");
             }
 
-            string name = Runtime.GetManagedString(key);
-            if (name == "__doc__")
+            if (Runtime.PyUnicode_Compare(key, PyIdentifier.__doc__) == 0)
             {
                 IntPtr doc = self.GetDocString();
                 Runtime.XIncref(doc);

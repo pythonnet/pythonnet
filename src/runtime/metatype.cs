@@ -109,7 +109,7 @@ namespace Python.Runtime
                 }
             }
 
-            IntPtr slots = Runtime.PyDict_GetItemString(dict, "__slots__");
+            IntPtr slots = Runtime.PyDict_GetItem(dict, PyIdentifier.__slots__);
             if (slots != IntPtr.Zero)
             {
                 return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
@@ -197,7 +197,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            var init = Runtime.PyObject_GetAttrString(obj, "__init__");
+            var init = Runtime.PyObject_GetAttr(obj, PyIdentifier.__init__);
             Runtime.PyErr_Clear();
 
             if (init != IntPtr.Zero)

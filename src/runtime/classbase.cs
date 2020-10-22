@@ -279,7 +279,7 @@ namespace Python.Runtime
                 IntPtr args = Runtime.PyTuple_New(1);
                 Runtime.XIncref(ob);
                 Runtime.PyTuple_SetItem(args, 0, ob);
-                IntPtr reprFunc = Runtime.PyObject_GetAttrString(Runtime.PyBaseObjectType, "__repr__");
+                IntPtr reprFunc = Runtime.PyObject_GetAttr(Runtime.PyBaseObjectType, PyIdentifier.__repr__);
                 var output =  Runtime.PyObject_Call(reprFunc, args, IntPtr.Zero);
                 Runtime.XDecref(args);
                 Runtime.XDecref(reprFunc);

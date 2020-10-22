@@ -84,7 +84,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            string name = Runtime.GetManagedString(key);
+            string name = InternString.GetManagedString(key);
             switch (name)
             {
                 case "__doc__":
