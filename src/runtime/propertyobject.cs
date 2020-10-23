@@ -11,7 +11,7 @@ namespace Python.Runtime
     [Serializable]
     internal class PropertyObject : ExtensionType
     {
-        private MaybeMemberInfo<PropertyInfo> info;
+        internal MaybeMemberInfo<PropertyInfo> info;
         private MaybeMethodInfo getter;
         private MaybeMethodInfo setter;
 
@@ -50,9 +50,9 @@ namespace Python.Runtime
             {
                 if (!getter.IsStatic)
                 {
-                    Exceptions.SetError(Exceptions.TypeError,
-                        "instance property must be accessed through a class instance");
-                    return IntPtr.Zero;
+                    Runtime.XIncref(ds);
+                    // unbound property
+                    return ds;
                 }
 
                 try
