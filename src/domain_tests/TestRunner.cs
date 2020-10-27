@@ -24,48 +24,28 @@ namespace Python.DomainReloadTests
 using System;
 
 namespace TestNamespace
-{{
+{
     [Serializable]
-    public class TestClass
-    {{
-        {0}
-        {1}
-    }}
-}}";
-
-//         /// <summary>
-//         /// The Python code that accesses the test class in the first step of the run
-//         /// </summary>
-//         const string PythonCodeStep1 = @"import clr
-// clr.AddReference('TestClass')
-// import sys
-// from TestNamespace import TestClass
-// foo = None
-// def do_work():
-//     global foo
-//     obj = TestClass()
-//     foo = TestClass.{0}
-//     sys.my_obj = foo
-//     print(sys.my_obj)
-// ";
+    public class {class}
+    {
+    }
+}";
 
         /// <summary>
         /// The Python code that accesses the test class
         /// </summary>
-        const string PythonCodeStep = @"import clr
+        const string PythonCode = @"import clr
 clr.AddReference('TestClass')
 import sys
-from TestNamespace import TestClass
+from TestNamespace import {class}
 import TestNamespace
 foo = None
 def do_work():
-     obj = TestClass()
-     foo = TestClass.{0}
-     sys.my_obj = foo
-     print(sys.my_obj)
+    sys.my_obj = {class}
 
 def test_work():
-    print(foo)
+    print({class})
+    print(sys.my_obj)
 ";
 
         /// <summary>
@@ -84,16 +64,15 @@ namespace CaseRunner
             try
             {{
                 PythonEngine.Initialize(mode:{0});
-                // using (Py.GIL())
-                // {{
-                //     // Because the generated assemblies are in the $TEMP folder, add it to the path
-                //     // var temp = Path.GetTempPath();
-                //     // dynamic sys = Py.Import(""sys"");
-                //     // sys.path.append(new PyString(temp));
-                //     // dynamic test_mod = Py.Import(""domain_test_module.mod"");
-                //     // Console.WriteLine(""verb: {1}"");
-                //     // test_mod.{1}_work();
-                // }}
+                using (Py.GIL())
+                {{
+                    // Because the generated assemblies are in the $TEMP folder, add it to the path
+                    var temp = Path.GetTempPath();
+                    dynamic sys = Py.Import(""sys"");
+                    sys.path.append(new PyString(temp));
+                    dynamic test_mod = Py.Import(""domain_test_module.mod"");
+                    test_mod.{1}_work();
+                }}
                 PythonEngine.Shutdown();
             }}
             catch (PythonException pe)
@@ -109,10 +88,9 @@ namespace CaseRunner
 
         public static int Main(string[] args)
         {
-            if (args.Length < 3)
+            if (args.Length < 1)
             {
-                // args = new string[] { "public static int TestMember = 2;", "", "TestMember" };
-                args = new string[] { @"public static void TestMethod() {Console.WriteLine(""from test method"");}", "", "TestMethod()" };
+                args = new string[] {"TestClass", "NewTestClass"};
                 // return 123;
             }
             Console.WriteLine($"Testing with arguments: {string.Join(", ", args)}");
@@ -125,22 +103,19 @@ namespace CaseRunner
 
             File.Copy(PythonDllLocation, tempFolderPython);
             
-            CreatePythonModule(string.Format(PythonCodeStep, args[2]));
+            CreatePythonModule(args[0]);
             {
                 var runnerAssembly = CreateCaseRunnerAssembly(verb:"do");
-                CreateTestClassAssembly(m1: args[0]);
+                CreateTestClassAssembly(className: args[0]);
 
                 var runnerDomain = CreateDomain("case runner");
                 RunAndUnload(runnerDomain, runnerAssembly);
             }
 
-            // Re-create the python module to checkup on the members
-            // CreatePythonModule(PythonCodeStep2);
-
             {
                 var runnerAssembly = CreateCaseRunnerAssembly(verb:"test");
                 // remove the method
-                CreateTestClassAssembly(m1: args[1]);
+                CreateTestClassAssembly(className: args[1]);
 
                 // Do it twice for good measure
                 {
@@ -168,16 +143,19 @@ namespace CaseRunner
             GC.Collect();
         }
 
-        static string CreateTestClassAssembly(string m1 = "", string m2 = "")
+        static string CreateTestClassAssembly(string className)
         {
             var name = "TestClass.dll";
-            return CreateAssembly(name, string.Format(ChangingClassTemplate, m1, m2), exe: false);
+            string code = ChangingClassTemplate.Replace("{class}", className);
+
+            return CreateAssembly(name, code, exe: false);
         }
 
         static string CreateCaseRunnerAssembly(string shutdownMode = "ShutdownMode.Reload", string verb = "do")
         {
             var code = string.Format(CaseRunnerTemplate, shutdownMode, verb);
             var name = "TestCaseRunner.exe";
+
             return CreateAssembly(name, code, exe: true);
         }
 
@@ -228,10 +206,11 @@ namespace CaseRunner
                     $"My Domain {name}",
                     currentDomain.Evidence,
                 domainsetup);
+
             return domain;
         }
 
-        static string CreatePythonModule(string code)
+        static string CreatePythonModule(string className)
         {
             var modulePath = Path.Combine(Path.GetTempPath(), "domain_test_module");
             if (Directory.Exists(modulePath))
@@ -243,7 +222,7 @@ namespace CaseRunner
             File.Create(Path.Combine(modulePath, "__init__.py")).Close(); //Create and don't forget to close!
             using (var writer = File.CreateText(Path.Combine(modulePath, "mod.py")))
             {
-                writer.Write(code);
+                writer.Write(PythonCode.Replace("{class}", className));
             }
 
             return null;
