@@ -7,8 +7,6 @@ import clr
 import System
 import pytest
 
-from ._compat import PY2, long, unicode, unichr, zip
-
 
 def assert_generic_wrapper_by_type(ptype, value):
     """Test Helper"""
@@ -137,15 +135,15 @@ def test_python_type_aliasing():
     dict_.Add(1, 1)
     assert dict_[1] == 1
 
-    dict_ = Dictionary[long, long]()
+    dict_ = Dictionary[int, int]()
     assert dict_.Count == 0
-    dict_.Add(long(1), long(1))
-    assert dict_[long(1)] == long(1)
+    dict_.Add(1, 1)
+    assert dict_[1] == 1
 
     dict_ = Dictionary[System.Int64, System.Int64]()
     assert dict_.Count == 0
-    dict_.Add(long(1), long(1))
-    assert dict_[long(1)] == long(1)
+    dict_.Add(1, 1)
+    assert dict_[1] == 1
 
     dict_ = Dictionary[float, float]()
     assert dict_.Count == 0
@@ -257,19 +255,15 @@ def test_generic_type_binding():
     assert_generic_wrapper_by_type(System.Int16, 32767)
     assert_generic_wrapper_by_type(System.Int32, 2147483647)
     assert_generic_wrapper_by_type(int, 2147483647)
-    assert_generic_wrapper_by_type(System.Int64, long(9223372036854775807))
-    # Python 3 has no explicit long type, use System.Int64 instead
-    if PY2:
-        assert_generic_wrapper_by_type(long, long(9223372036854775807))
+    assert_generic_wrapper_by_type(System.Int64, 9223372036854775807)
     assert_generic_wrapper_by_type(System.UInt16, 65000)
-    assert_generic_wrapper_by_type(System.UInt32, long(4294967295))
-    assert_generic_wrapper_by_type(System.UInt64, long(18446744073709551615))
+    assert_generic_wrapper_by_type(System.UInt32, 4294967295)
+    assert_generic_wrapper_by_type(System.UInt64, 18446744073709551615)
     assert_generic_wrapper_by_type(System.Single, 3.402823e38)
     assert_generic_wrapper_by_type(System.Double, 1.7976931348623157e308)
     assert_generic_wrapper_by_type(float, 1.7976931348623157e308)
     assert_generic_wrapper_by_type(System.Decimal, System.Decimal.One)
     assert_generic_wrapper_by_type(System.String, "test")
-    assert_generic_wrapper_by_type(unicode, "test")
     assert_generic_wrapper_by_type(str, "test")
     assert_generic_wrapper_by_type(ShortEnum, ShortEnum.Zero)
     assert_generic_wrapper_by_type(System.Object, InterfaceTest())
@@ -315,24 +309,16 @@ def test_generic_method_type_handling():
     assert_generic_method_by_type(System.Int16, 32767)
     assert_generic_method_by_type(System.Int32, 2147483647)
     assert_generic_method_by_type(int, 2147483647)
-    # Python 3 has no explicit long type, use System.Int64 instead
-    if PY2:
-        assert_generic_method_by_type(System.Int64, long(9223372036854775807))
-        assert_generic_method_by_type(long, long(9223372036854775807))
-        assert_generic_method_by_type(System.UInt32, long(4294967295))
-        assert_generic_method_by_type(System.Int64, long(1844674407370955161))
     assert_generic_method_by_type(System.UInt16, 65000)
     assert_generic_method_by_type(System.Single, 3.402823e38)
     assert_generic_method_by_type(System.Double, 1.7976931348623157e308)
     assert_generic_method_by_type(float, 1.7976931348623157e308)
     assert_generic_method_by_type(System.Decimal, System.Decimal.One)
     assert_generic_method_by_type(System.String, "test")
-    assert_generic_method_by_type(unicode, "test")
     assert_generic_method_by_type(str, "test")
     assert_generic_method_by_type(ShortEnum, ShortEnum.Zero)
     assert_generic_method_by_type(System.Object, InterfaceTest())
     assert_generic_method_by_type(InterfaceTest, InterfaceTest(), 1)
-    assert_generic_method_by_type(ISayHello1, InterfaceTest(), 1)
 
 
 def test_correct_overload_selection():
@@ -355,8 +341,6 @@ def test_correct_overload_selection():
         assert Math.Max(atype(value1),
                         atype(value2)) == Math.Max.__overloads__[atype, atype](
             atype(value1), atype(value2))
-        if PY2 and atype is Int64:
-            value2 = long(value2)
         assert Math.Max(atype(value1),
                         value2) == Math.Max.__overloads__[atype, atype](
             atype(value1), atype(value2))
@@ -481,7 +465,7 @@ def test_method_overload_selection_with_generic_types():
     vtype = GenericWrapper[System.Char]
     input_ = vtype(65535)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value == unichr(65535)
+    assert value.value == chr(65535)
 
     vtype = GenericWrapper[System.Int16]
     input_ = vtype(32767)
@@ -499,16 +483,9 @@ def test_method_overload_selection_with_generic_types():
     assert value.value == 2147483647
 
     vtype = GenericWrapper[System.Int64]
-    input_ = vtype(long(9223372036854775807))
+    input_ = vtype(9223372036854775807)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value == long(9223372036854775807)
-
-    # Python 3 has no explicit long type, use System.Int64 instead
-    if PY2:
-        vtype = GenericWrapper[long]
-        input_ = vtype(long(9223372036854775807))
-        value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        assert value.value == long(9223372036854775807)
+    assert value.value == 9223372036854775807
 
     vtype = GenericWrapper[System.UInt16]
     input_ = vtype(65000)
@@ -516,14 +493,14 @@ def test_method_overload_selection_with_generic_types():
     assert value.value == 65000
 
     vtype = GenericWrapper[System.UInt32]
-    input_ = vtype(long(4294967295))
+    input_ = vtype(4294967295)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value == long(4294967295)
+    assert value.value == 4294967295
 
     vtype = GenericWrapper[System.UInt64]
-    input_ = vtype(long(18446744073709551615))
+    input_ = vtype(18446744073709551615)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value == long(18446744073709551615)
+    assert value.value == 18446744073709551615
 
     vtype = GenericWrapper[System.Single]
     input_ = vtype(3.402823e38)
@@ -570,10 +547,11 @@ def test_method_overload_selection_with_generic_types():
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value.value.__class__ == inst.__class__
 
+    iface_class = ISayHello1(inst).__class__
     vtype = GenericWrapper[ISayHello1]
     input_ = vtype(inst)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value.__class__ == inst.__class__
+    assert value.value.__class__ == iface_class
 
     vtype = System.Array[GenericWrapper[int]]
     input_ = vtype([GenericWrapper[int](0), GenericWrapper[int](1)])
@@ -628,7 +606,7 @@ def test_overload_selection_with_arrays_of_generic_types():
     vtype = System.Array[gtype]
     input_ = vtype([gtype(65535), gtype(65535)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value == unichr(65535)
+    assert value[0].value == chr(65535)
     assert value.Length == 2
 
     gtype = GenericWrapper[System.Int16]
@@ -654,21 +632,11 @@ def test_overload_selection_with_arrays_of_generic_types():
 
     gtype = GenericWrapper[System.Int64]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(long(9223372036854775807)),
-                    gtype(long(9223372036854775807))])
+    input_ = vtype([gtype(9223372036854775807),
+                    gtype(9223372036854775807)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value == long(9223372036854775807)
+    assert value[0].value == 9223372036854775807
     assert value.Length == 2
-
-    # Python 3 has no explicit long type, use System.Int64 instead
-    if PY2:
-        gtype = GenericWrapper[long]
-        vtype = System.Array[gtype]
-        input_ = vtype([gtype(long(9223372036854775807)),
-                        gtype(long(9223372036854775807))])
-        value = MethodTest.Overloaded.__overloads__[vtype](input_)
-        assert value[0].value == long(9223372036854775807)
-        assert value.Length == 2
 
     gtype = GenericWrapper[System.UInt16]
     vtype = System.Array[gtype]
@@ -679,17 +647,17 @@ def test_overload_selection_with_arrays_of_generic_types():
 
     gtype = GenericWrapper[System.UInt32]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(long(4294967295)), gtype(long(4294967295))])
+    input_ = vtype([gtype(4294967295), gtype(4294967295)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value == long(4294967295)
+    assert value[0].value == 4294967295
     assert value.Length == 2
 
     gtype = GenericWrapper[System.UInt64]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(long(18446744073709551615)),
-                    gtype(long(18446744073709551615))])
+    input_ = vtype([gtype(18446744073709551615),
+                    gtype(18446744073709551615)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value == long(18446744073709551615)
+    assert value[0].value == 18446744073709551615
     assert value.Length == 2
 
     gtype = GenericWrapper[System.Single]
@@ -758,11 +726,12 @@ def test_overload_selection_with_arrays_of_generic_types():
     assert value[0].value.__class__ == inst.__class__
     assert value.Length == 2
 
+    iface_class = ISayHello1(inst).__class__
     gtype = GenericWrapper[ISayHello1]
     vtype = System.Array[gtype]
     input_ = vtype([gtype(inst), gtype(inst)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value.__class__ == inst.__class__
+    assert value[0].value.__class__ == iface_class
     assert value.Length == 2
 
 

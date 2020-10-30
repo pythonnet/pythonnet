@@ -6,6 +6,7 @@ namespace Python.Runtime
     /// <summary>
     /// Bundles the information required to support an indexer property.
     /// </summary>
+    [Serializable]
     internal class Indexer
     {
         public MethodBinder GetterBinder;

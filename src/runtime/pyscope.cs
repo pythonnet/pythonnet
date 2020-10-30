@@ -66,12 +66,13 @@ namespace Python.Runtime
             obj = ptr;
             //Refcount of the variables not increase
             variables = Runtime.PyModule_GetDict(obj);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(variables);
 
-            Runtime.PyDict_SetItemString(
+            int res = Runtime.PyDict_SetItemString(
                 variables, "__builtins__",
                 Runtime.PyEval_GetBuiltins()
             );
+            PythonException.ThrowIfIsNotZero(res);
             this.Name = this.Get<string>("__name__");
         }
 
@@ -237,7 +238,7 @@ namespace Python.Runtime
             Check();
             IntPtr _locals = locals == null ? variables : locals.obj;
             IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, variables, _locals);
-            Runtime.CheckExceptionOccurred();
+            PythonException.ThrowIfIsNull(ptr);
             if (ptr == Runtime.PyNone)
             {
                 Runtime.XDecref(ptr);
@@ -277,20 +278,12 @@ namespace Python.Runtime
         {
             Check();
             IntPtr _locals = locals == null ? variables : locals.obj;
-            var flag = (IntPtr)Runtime.Py_eval_input;
 
             NewReference reference = Runtime.PyRun_String(
-                code, flag, variables, _locals
+                code, RunFlagType.Eval, variables, _locals
             );
-            try
-            {
-                Runtime.CheckExceptionOccurred();
-                return reference.MoveToPyObject();
-            }
-            finally
-            {
-                reference.Dispose();
-            }
+            PythonException.ThrowIfIsNull(reference);
+            return reference.MoveToPyObject();
         }
 
         /// <summary>
@@ -323,23 +316,11 @@ namespace Python.Runtime
 
         private void Exec(string code, IntPtr _globals, IntPtr _locals)
         {
-            var flag = (IntPtr)Runtime.Py_file_input;
             NewReference reference = Runtime.PyRun_String(
-                code, flag, _globals, _locals
+                code, RunFlagType.File, _globals, _locals
             );
-
-            try
-            {
-                Runtime.CheckExceptionOccurred();
-                if (!reference.IsNone())
-                {
-                    throw new PythonException();
-                }
-            }
-            finally
-            {
-                reference.Dispose();
-            }
+            PythonException.ThrowIfIsNull(reference);
+            reference.Dispose();
         }
 
         /// <summary>

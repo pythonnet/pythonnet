@@ -6,7 +6,7 @@ import Python.Test as Test
 import System
 import pytest
 
-from ._compat import PY2, UserList, long, range, unichr
+from collections import UserList
 
 
 def test_public_array():
@@ -246,8 +246,8 @@ def test_char_array():
     assert items[0] == 'a'
     assert items[4] == 'e'
 
-    max_ = unichr(65535)
-    min_ = unichr(0)
+    max_ = chr(65535)
+    min_ = chr(0)
 
     items[0] = max_
     assert items[0] == max_
@@ -364,8 +364,8 @@ def test_int64_array():
     assert items[0] == 0
     assert items[4] == 4
 
-    max_ = long(9223372036854775807)
-    min_ = long(-9223372036854775808)
+    max_ = 9223372036854775807
+    min_ = -9223372036854775808
 
     items[0] = max_
     assert items[0] == max_
@@ -448,7 +448,7 @@ def test_uint32_array():
     assert items[0] == 0
     assert items[4] == 4
 
-    max_ = long(4294967295)
+    max_ = 4294967295
     min_ = 0
 
     items[0] = max_
@@ -490,7 +490,7 @@ def test_uint64_array():
     assert items[0] == 0
     assert items[4] == 4
 
-    max_ = long(18446744073709551615)
+    max_ = 18446744073709551615
     min_ = 0
 
     items[0] = max_
@@ -1204,8 +1204,8 @@ def test_special_array_creation():
     assert value.Length == 2
 
     value = Array[System.Char]([0, 65535])
-    assert value[0] == unichr(0)
-    assert value[1] == unichr(65535)
+    assert value[0] == chr(0)
+    assert value[1] == chr(65535)
     assert value.Length == 2
 
     value = Array[System.Int16]([0, 32767])
@@ -1223,31 +1223,24 @@ def test_special_array_creation():
     assert value[1] == 2147483647
     assert value.Length == 2
 
-    value = Array[System.Int64]([0, long(9223372036854775807)])
+    value = Array[System.Int64]([0, 9223372036854775807])
     assert value[0] == 0
-    assert value[1] == long(9223372036854775807)
+    assert value[1] == 9223372036854775807
     assert value.Length == 2
-
-    # there's no explicit long type in python3, use System.Int64 instead
-    if PY2:
-        value = Array[long]([0, long(9223372036854775807)])
-        assert value[0] == 0
-        assert value[1] == long(9223372036854775807)
-        assert value.Length == 2
 
     value = Array[System.UInt16]([0, 65000])
     assert value[0] == 0
     assert value[1] == 65000
     assert value.Length == 2
 
-    value = Array[System.UInt32]([0, long(4294967295)])
+    value = Array[System.UInt32]([0, 4294967295])
     assert value[0] == 0
-    assert value[1] == long(4294967295)
+    assert value[1] == 4294967295
     assert value.Length == 2
 
-    value = Array[System.UInt64]([0, long(18446744073709551615)])
+    value = Array[System.UInt64]([0, 18446744073709551615])
     assert value[0] == 0
-    assert value[1] == long(18446744073709551615)
+    assert value[1] == 18446744073709551615
     assert value.Length == 2
 
     value = Array[System.Single]([0.0, 3.402823e38])
@@ -1295,9 +1288,10 @@ def test_special_array_creation():
     assert value[1].__class__ == inst.__class__
     assert value.Length == 2
 
+    iface_class = ISayHello1(inst).__class__
     value = Array[ISayHello1]([inst, inst])
-    assert value[0].__class__ == inst.__class__
-    assert value[1].__class__ == inst.__class__
+    assert value[0].__class__ == iface_class
+    assert value[1].__class__ == iface_class
     assert value.Length == 2
 
     inst = System.Exception("badness")
@@ -1327,19 +1321,16 @@ def test_array_abuse():
     with pytest.raises(TypeError):
         Test.PublicArrayTest.__getitem__(0, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         Test.PublicArrayTest.__setitem__(0, 0, 0)
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__getitem__']
-        desc(0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__getitem__']
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__setitem__']
-        desc(0, 0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__setitem__']
 
 
-@pytest.mark.skipif(PY2, reason="Only applies in Python 3")
 def test_iterator_to_array():
     from System import Array, String
 
@@ -1354,7 +1345,6 @@ def test_iterator_to_array():
     assert arr[2] == "c"
 
 
-@pytest.mark.skipif(PY2, reason="Only applies in Python 3")
 def test_dict_keys_to_array():
     from System import Array, String
 

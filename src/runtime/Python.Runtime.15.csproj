@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
@@ -8,16 +8,21 @@
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
     <PackageId>pythonnet</PackageId>
-    <VersionPrefix>2.4.1</VersionPrefix>
+    <VersionPrefix>2.5.0</VersionPrefix>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Title>Python for .NET</Title>
-    <Copyright>Copyright (c) 2006-2019 the contributors of the 'Python for .NET' project</Copyright>
+    <Title>Python.NET</Title>
+    <Copyright>Copyright (c) 2006-2020 the contributors of the Python.NET project</Copyright>
     <Description>Python and CLR (.NET and Mono) cross-platform language interop</Description>
     <Authors>pythonnet</Authors>
     <PackageLicenseUrl>https://github.com/pythonnet/pythonnet/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <!-- The following is recommended for public projects -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <DebugSymbols>true</DebugSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!--<PackageReleaseNotes>https://github.com/pythonnet/pythonnet/releases/tag/v2.4.0</PackageReleaseNotes>-->
     <PackageTags>python interop dynamic dlr Mono pinvoke</PackageTags>
     <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
@@ -118,7 +123,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Security.Permissions" Version="4.4.0" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
@@ -134,6 +139,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <!-- The following is recommended for public projects -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />

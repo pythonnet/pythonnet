@@ -5,8 +5,6 @@
 import Python.Test as Test
 import pytest
 
-from ._compat import long, unichr
-
 
 def test_public_indexer():
     """Test public indexers."""
@@ -44,7 +42,7 @@ def test_internal_indexer():
     with pytest.raises(TypeError):
         Test.InternalIndexerTest.__getitem__(ob, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         ob.__getitem__(0)
 
 
@@ -58,7 +56,7 @@ def test_private_indexer():
     with pytest.raises(TypeError):
         Test.PrivateIndexerTest.__getitem__(ob, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         ob.__getitem__(0)
 
 
@@ -131,8 +129,8 @@ def test_sbyte_indexer():
 def test_char_indexer():
     """Test char indexers."""
     ob = Test.CharIndexerTest()
-    max_ = unichr(65535)
-    min_ = unichr(0)
+    max_ = chr(65535)
+    min_ = chr(0)
 
     assert ob[max_] is None
 
@@ -200,8 +198,8 @@ def test_int32_indexer():
 def test_int64_indexer():
     """Test Int64 indexers."""
     ob = Test.Int64IndexerTest()
-    max_ = long(9223372036854775807)
-    min_ = long(-9223372036854775808)
+    max_ = 9223372036854775807
+    min_ = -9223372036854775808
 
     assert ob[max_] is None
 
@@ -246,7 +244,7 @@ def test_uint16_indexer():
 def test_uint32_indexer():
     """Test UInt32 indexers."""
     ob = Test.UInt32IndexerTest()
-    max_ = long(4294967295)
+    max_ = 4294967295
     min_ = 0
 
     assert ob[max_] is None
@@ -269,7 +267,7 @@ def test_uint32_indexer():
 def test_uint64_indexer():
     """Test UInt64 indexers."""
     ob = Test.UInt64IndexerTest()
-    max_ = long(18446744073709551615)
+    max_ = 18446744073709551615
     min_ = 0
 
     assert ob[max_] is None
@@ -435,8 +433,8 @@ def test_object_indexer():
     ob[1] = "one"
     assert ob[1] == "one"
 
-    ob[long(1)] = "long"
-    assert ob[long(1)] == "long"
+    ob[1] = "long"
+    assert ob[1] == "long"
 
     class Eggs(object):
         pass
@@ -597,3 +595,54 @@ def test_indexer_abuse():
 
     with pytest.raises(AttributeError):
         del ob.__setitem__
+
+
+def test_indexer_accessed_through_interface():
+    """Test that indexers can be accessed through interfaces"""
+    from System.Collections.Generic import Dictionary, IDictionary
+    d = IDictionary[str, str](Dictionary[str, str]())
+    d["one"] = "1"
+    assert d["one"] == "1"
+
+
+def test_using_indexer_on_object_without_indexer():
+    """Test using subscript syntax on an object an without indexer raises"""
+    from System import Object
+    o = Object()
+    with pytest.raises(TypeError):
+        o[0]
+
+    with pytest.raises(TypeError):
+        o[0] = 1
+
+
+def test_inherited_indexer():
+    """Test that inherited indexers are accessible"""
+    from Python.Test import PublicInheritedIndexerTest
+    from Python.Test import ProtectedInheritedIndexerTest
+    from Python.Test import PrivateInheritedIndexerTest
+    from Python.Test import InternalInheritedIndexerTest
+
+    pub = PublicInheritedIndexerTest()
+    pub[0] = "zero"
+    assert pub[0] == "zero"
+
+    def assert_no_indexer(obj):
+        with pytest.raises(TypeError):
+            obj[0]
+        with pytest.raises(TypeError):
+            obj[0] = "zero"
+
+    assert_no_indexer(PrivateInheritedIndexerTest)
+    assert_no_indexer(ProtectedInheritedIndexerTest)
+    assert_no_indexer(InternalInheritedIndexerTest)
+
+
+def test_inherited_indexer_interface():
+    """Test that indexers inherited from other interfaces are accessible"""
+    from Python.Test import InterfaceInheritedIndexerTest, IInheritedIndexer
+
+    impl = InterfaceInheritedIndexerTest()
+    ifc = IInheritedIndexer(impl)
+    ifc[0] = "zero"
+    assert ifc[0] == "zero"

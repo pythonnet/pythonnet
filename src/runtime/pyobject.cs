@@ -20,7 +20,8 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    public class PyObject : DynamicObject, IEnumerable, IPyDisposable
+    [Serializable]
+    public partial class PyObject : DynamicObject, IEnumerable, IPyDisposable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -63,17 +64,6 @@ namespace Python.Runtime
             if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
 
             obj = Runtime.SelfIncRef(reference.DangerousGetAddress());
-            Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
-        }
-
-        // Protected default constructor to allow subclasses to manage
-        // initialization in different ways as appropriate.
-        [Obsolete("Please, always use PyObject(*Reference)")]
-        protected PyObject()
-        {
             Finalizer.Instance.ThrottledCollect();
 #if TRACE_ALLOC
             Traceback = new StackTrace(1);
@@ -710,7 +700,7 @@ namespace Python.Runtime
         /// </remarks>
         public IEnumerator GetEnumerator()
         {
-            return new PyIter(this);
+            return PyIter.GetIter(this);
         }
 
 
@@ -1102,7 +1092,6 @@ namespace Python.Runtime
         /// </remarks>
         public PyBuffer GetBuffer(PyBUF flags = PyBUF.SIMPLE)
         {
-            if (Runtime.pyversionnumber < 35) throw new NotSupportedException("GetBuffer requires at least Python 3.5");
             return new PyBuffer(this, flags);
         }
 

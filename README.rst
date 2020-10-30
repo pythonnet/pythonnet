@@ -1,4 +1,4 @@
-pythonnet - Python for .NET
+pythonnet - Python.NET
 ===========================
 
 |Join the chat at https://gitter.im/pythonnet/pythonnet|
@@ -8,19 +8,23 @@ pythonnet - Python for .NET
 |license shield| |pypi package version| |conda-forge version| |python supported shield|
 |stackexchange shield|
 
-Python for .NET is a package that gives Python programmers nearly
+Python.NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
 provides a powerful application scripting tool for .NET developers. It
 allows Python code to interact with the CLR, and may also be used to
 embed Python into a .NET application.
 
+.. note::
+   The master branch of this repository tracks the ongoing development of version 3.0.
+   Backports of patches to 2.5 are tracked in the
+   `backports-2.5 branch <https://github.com/pythonnet/pythonnet/tree/backports-2.5>`_.
+
 Calling .NET code from Python
 -----------------------------
 
-Python for .NET allows CLR namespaces to be treated essentially as
-Python packages.
+Python.NET allows CLR namespaces to be treated essentially as Python packages.
 
-.. code-block::
+.. code-block:: python
 
    import clr
    from System import String
@@ -29,7 +33,7 @@ Python packages.
 To load an assembly, use the ``AddReference`` function in the ``clr``
 module:
 
-.. code-block::
+.. code-block:: python
 
    import clr
    clr.AddReference("System.Windows.Forms")
@@ -81,7 +85,7 @@ Example
 
 Output:
 
-.. code::
+.. code:: csharp
 
    1.0
    -0.958924274663
@@ -90,18 +94,24 @@ Output:
    int32
    [  6.  10.  12.]
 
+
+
+Resources
+---------
+
 Information on installation, FAQ, troubleshooting, debugging, and
 projects using pythonnet can be found in the Wiki:
 
 https://github.com/pythonnet/pythonnet/wiki
 
-Python 3.8.0 support
---------------------
+Mailing list
+    https://mail.python.org/mailman/listinfo/pythondotnet
+Chat
+    https://gitter.im/pythonnet/pythonnet
 
-Some features are disabled in Python 3.8.0 because of
-`this bug in Python <https://bugs.python.org/issue37633>`_. The error is
-``System.EntryPointNotFoundException : Unable to find an entry point named
-'Py_CompileString' in DLL 'python38'``. This will be fixed in Python 3.8.1.
+.NET Foundation
+---------------
+This project is supported by the `.NET Foundation <https://dotnetfoundation.org>`_.
 
 .. |Join the chat at https://gitter.im/pythonnet/pythonnet| image:: https://badges.gitter.im/pythonnet/pythonnet.svg
    :target: https://gitter.im/pythonnet/pythonnet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
@@ -121,8 +131,3 @@ Some features are disabled in Python 3.8.0 because of
    :target: http://stackoverflow.com/questions/tagged/python.net
 .. |conda-forge version| image:: https://img.shields.io/conda/vn/conda-forge/pythonnet.svg
    :target: https://anaconda.org/conda-forge/pythonnet
-
-Resources
----------
-Mailing list: https://mail.python.org/mailman/listinfo/pythondotnet
-Chat: https://gitter.im/pythonnet/pythonnet

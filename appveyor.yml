@@ -3,7 +3,7 @@ build: off
 
 image:
   - Visual Studio 2017
-  
+
 platform:
   - x86
   - x64
@@ -21,16 +21,15 @@ environment:
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.6
       BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.5
-      BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 2.7 
-      BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.8
     - PYTHON_VERSION: 3.7
     - PYTHON_VERSION: 3.6
-    - PYTHON_VERSION: 3.5
-    - PYTHON_VERSION: 2.7
-
+    - PYTHON_VERSION: 3.8
+      PYTHONNET_SHUTDOWN_MODE: Soft
+    - PYTHON_VERSION: 3.7
+      PYTHONNET_SHUTDOWN_MODE: Soft
+    - PYTHON_VERSION: 3.6
+      PYTHONNET_SHUTDOWN_MODE: Soft
 init:
   # Update Environment Variables based on matrix/platform
   - set PY_VER=%PYTHON_VERSION:.=%
@@ -43,6 +42,7 @@ init:
 install:
   - python -m pip install -U pip
   - pip install --upgrade -r requirements.txt --quiet
+  - pip install pycparser --quiet
 
   # Install OpenCover. Can't put on `packages.config`, not Mono compatible
   - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages -Verbosity quiet
@@ -56,7 +56,6 @@ build_script:
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: .\ci\appveyor_run_tests.ps1
-  - ps: .\ci\appveyor_build_recipe.ps1
 
 on_finish:
   # Temporary disable multiple upload due to codecov limit of 20 per commit.

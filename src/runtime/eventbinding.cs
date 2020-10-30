@@ -5,6 +5,7 @@ namespace Python.Runtime
     /// <summary>
     /// Implements a Python event binding type, similar to a method binding.
     /// </summary>
+    [Serializable]
     internal class EventBinding : ExtensionType
     {
         private EventObject e;
@@ -118,7 +119,14 @@ namespace Python.Runtime
         {
             var self = (EventBinding)GetManagedObject(ob);
             Runtime.XDecref(self.target);
-            ExtensionType.FinalizeObject(self);
+            self.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (EventBinding)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.target);
+            return 0;
         }
     }
 }

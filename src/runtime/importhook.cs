@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -6,14 +7,13 @@ namespace Python.Runtime
     /// <summary>
     /// Implements the "import hook" used to integrate Python with the CLR.
     /// </summary>
-    internal class ImportHook
+    internal static class ImportHook
     {
         private static IntPtr py_import;
         private static CLRModule root;
         private static MethodWrapper hook;
         private static IntPtr py_clr_module;
 
-#if PYTHON3
         private static IntPtr module_def = IntPtr.Zero;
 
         internal static void InitializeModuleDef()
@@ -33,7 +33,6 @@ namespace Python.Runtime
             ModuleDefOffset.FreeModuleDef(module_def);
             module_def = IntPtr.Zero;
         }
-#endif
 
         /// <summary>
         /// Initialize just the __import__ hook itself.
@@ -82,7 +81,6 @@ namespace Python.Runtime
             // Initialize the clr module and tell Python about it.
             root = new CLRModule();
 
-#if PYTHON3
             // create a python module with the same methods as the clr module-like object
             InitializeModuleDef();
             py_clr_module = Runtime.PyModule_Create2(module_def, 3);
@@ -93,10 +91,6 @@ namespace Python.Runtime
             clr_dict = (IntPtr)Marshal.PtrToStructure(clr_dict, typeof(IntPtr));
 
             Runtime.PyDict_Update(mod_dict, clr_dict);
-#elif PYTHON2
-            Runtime.XIncref(root.pyHandle); // we are using the module two times
-            py_clr_module = root.pyHandle; // Alias handle for PY2/PY3
-#endif
             IntPtr dict = Runtime.PyImport_GetModuleDict();
             Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
@@ -118,16 +112,32 @@ namespace Python.Runtime
             bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
             Runtime.XDecref(py_clr_module);
             py_clr_module = IntPtr.Zero;
-#if PYTHON3
             if (shouldFreeDef)
             {
                 ReleaseModuleDef();
             }
-#endif
 
             Runtime.XDecref(root.pyHandle);
             root = null;
             CLRModule.Reset();
+        }
+
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        {
+            // Increment the reference counts here so that the objects don't 
+            // get freed in Shutdown.
+            Runtime.XIncref(py_clr_module);
+            Runtime.XIncref(root.pyHandle);
+            storage.AddValue("py_clr_module", py_clr_module);
+            storage.AddValue("root", root.pyHandle);
+        }
+
+        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
+        {
+            InitImport();
+            storage.GetValue("py_clr_module", out py_clr_module);
+            var rootHandle = storage.GetValue<IntPtr>("root");
+            root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
         }
 
         /// <summary>
@@ -137,13 +147,6 @@ namespace Python.Runtime
         {
             root.InitializePreload();
 
-            if (Runtime.IsPython2)
-            {
-                Runtime.XIncref(py_clr_module);
-                return py_clr_module;
-            }
-
-            // Python 3
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             IntPtr py_mod_dict = Runtime.PyModule_GetDict(py_clr_module);
@@ -238,8 +241,12 @@ namespace Python.Runtime
             // Check these BEFORE the built-in import runs; may as well
             // do the Incref()ed return here, since we've already found
             // the module.
-            if (mod_name == "clr")
+            if (mod_name == "clr" || mod_name == "CLR")
             {
+                if (mod_name == "CLR")
+                {
+                    Exceptions.deprecation("The CLR module is deprecated. Please use 'clr'.");
+                }
                 IntPtr clr_module = GetCLRModule(fromList);
                 if (clr_module != IntPtr.Zero)
                 {
@@ -251,22 +258,10 @@ namespace Python.Runtime
                 }
                 return clr_module;
             }
-            if (mod_name == "CLR")
-            {
-                Exceptions.deprecation("The CLR module is deprecated. Please use 'clr'.");
-                IntPtr clr_module = GetCLRModule(fromList);
-                if (clr_module != IntPtr.Zero)
-                {
-                    IntPtr sys_modules = Runtime.PyImport_GetModuleDict();
-                    if (sys_modules != IntPtr.Zero)
-                    {
-                        Runtime.PyDict_SetItemString(sys_modules, "clr", clr_module);
-                    }
-                }
-                return clr_module;
-            }
+
             string realname = mod_name;
             string clr_prefix = null;
+
             if (mod_name.StartsWith("CLR."))
             {
                 clr_prefix = "CLR."; // prepend when adding the module to sys.modules
@@ -328,11 +323,22 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
             if (!AssemblyManager.IsValidNamespace(realname))
             {
-                if (!AssemblyManager.LoadImplicit(realname))
+                var loadExceptions = new List<Exception>();
+                if (!AssemblyManager.LoadImplicit(realname, assemblyLoadErrorHandler: loadExceptions.Add))
                 {
                     // May be called when a module being imported imports a module.
                     // In particular, I've seen decimal import copy import org.python.core
-                    return Runtime.PyObject_Call(py_import, args, kw);
+                    IntPtr importResult = Runtime.PyObject_Call(py_import, args, kw);
+                    // TODO: use ModuleNotFoundError in Python 3.6+
+                    if (importResult == IntPtr.Zero && loadExceptions.Count > 0
+                        && Exceptions.ExceptionMatches(Exceptions.ImportError))
+                    {
+                        loadExceptions.Add(new PythonException());
+                        var importError = new PyObject(new BorrowedReference(Exceptions.ImportError));
+                        importError.SetAttr("__cause__", new AggregateException(loadExceptions).ToPython());
+                        Runtime.PyErr_SetObject(new BorrowedReference(Exceptions.ImportError), importError.Reference);
+                    }
+                    return importResult;
                 }
             }
 

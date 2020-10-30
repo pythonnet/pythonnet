@@ -150,8 +150,6 @@ VS_KEYS = (
 def _check_output(*args, **kwargs):
     """Check output wrapper for py2/py3 compatibility"""
     output = subprocess.check_output(*args, **kwargs)
-    if PY_MAJOR == 2:
-        return output
     return output.decode("ascii")
 
 
@@ -255,17 +253,11 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         # Up to Python 3.2 sys.maxunicode is used to determine the size of
         # Py_UNICODE, but from 3.3 onwards Py_UNICODE is a typedef of wchar_t.
-        # TODO: Is this doing the right check for Py27?
-        if sys.version_info[:2] <= (3, 2):
-            unicode_width = 2 if sys.maxunicode < 0x10FFFF else 4
-        else:
-            import ctypes
-
-            unicode_width = ctypes.sizeof(ctypes.c_wchar)
+        import ctypes
+        unicode_width = ctypes.sizeof(ctypes.c_wchar)
 
         defines = [
             "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR),
-            "PYTHON{0}".format(PY_MAJOR),  # Python Major Version
             "UCS{0}".format(unicode_width),
         ]
 
@@ -274,7 +266,6 @@ class BuildExtPythonnet(build_ext.build_ext):
 
         if sys.platform != "win32" and (DEVTOOLS == "Mono" or DEVTOOLS == "dotnet"):
             on_darwin = sys.platform == "darwin"
-            defines.append("MONO_OSX" if on_darwin else "MONO_LINUX")
 
             # Check if --enable-shared was set when Python was built
             enable_shared = sysconfig.get_config_var("Py_ENABLE_SHARED")
@@ -287,6 +278,9 @@ class BuildExtPythonnet(build_ext.build_ext):
 
             if not enable_shared:
                 defines.append("PYTHON_WITHOUT_ENABLE_SHARED")
+
+        if sys.platform == "win32":
+            defines.append("WINDOWS")
 
         if hasattr(sys, "abiflags"):
             if "d" in sys.abiflags:
@@ -400,7 +394,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         mono_cflags = _check_output("pkg-config --cflags mono-2", shell=True)
         cflags = mono_cflags.strip()
         libs = mono_libs.strip()
-        
+
         # build the clr python module
         clr_ext = Extension(
             "clr",
@@ -479,10 +473,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             return path
 
         # Search within registry to find build tools
-        try:  # PY2
-            import _winreg as winreg
-        except ImportError:  # PY3
-            import winreg
+        import winreg
 
         _collect_installed_windows_kits_v10(winreg)
 
@@ -618,10 +609,6 @@ setupdir = os.path.dirname(__file__)
 if setupdir:
     os.chdir(setupdir)
 
-setup_requires = []
-if not os.path.exists(_get_interop_filename()):
-    setup_requires.append("pycparser")
-
 cmdclass={
     "install": InstallPythonnet,
     "build_ext": BuildExtPythonnet,
@@ -633,13 +620,13 @@ if bdist_wheel:
 
 setup(
     name="pythonnet",
-    version="2.4.1-dev",
+    version="3.0.0dev1",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",
-    author="The Python for .Net developers",
-    author_email="pythondotnet@python.org",
-    setup_requires=setup_requires,
+    author="The Contributors of the Python.NET Project",
+    author_email="pythonnet@python.org",
+    install_requires=["pycparser"],
     long_description=_get_long_description(),
     ext_modules=[Extension("clr", sources=list(_get_source_files()))],
     data_files=[("{install_platlib}", ["{build_lib}/Python.Runtime.dll"])],
@@ -649,12 +636,10 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: C#",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",

@@ -17,7 +17,7 @@ import sys
 import threading
 import time
 
-from ._compat import range, thread
+import _thread as thread
 from .utils import dprint
 
 
