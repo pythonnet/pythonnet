@@ -178,7 +178,7 @@
       <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <TargetAssembly>$(TargetPath)</TargetAssembly>
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
