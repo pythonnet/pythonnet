@@ -43,11 +43,11 @@ namespace Python.Runtime
             // look in CLR modules, then if we don't find any call the default
             // Python __import__.
             IntPtr builtins = Runtime.GetBuiltins();
-            py_import = Runtime.PyObject_GetAttrString(builtins, "__import__");
+            py_import = Runtime.PyObject_GetAttr(builtins, PyIdentifier.__import__);
             PythonException.ThrowIfIsNull(py_import);
 
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
-            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
+            int res = Runtime.PyObject_SetAttr(builtins, PyIdentifier.__import__, hook.ptr);
             PythonException.ThrowIfIsNotZero(res);
 
             Runtime.XDecref(builtins);
@@ -60,7 +60,7 @@ namespace Python.Runtime
         {
             IntPtr builtins = Runtime.GetBuiltins();
 
-            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            int res = Runtime.PyObject_SetAttr(builtins, PyIdentifier.__import__, py_import);
             PythonException.ThrowIfIsNotZero(res);
             Runtime.XDecref(py_import);
             py_import = IntPtr.Zero;

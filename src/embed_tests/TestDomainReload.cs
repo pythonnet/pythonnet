@@ -203,13 +203,13 @@ test_obj_call()
                     // Create a new module
                     IntPtr module = PyRuntime.PyModule_New(name);
                     Assert.That(module != IntPtr.Zero);
-                    IntPtr globals = PyRuntime.PyObject_GetAttrString(module, "__dict__");
+                    IntPtr globals = PyRuntime.PyObject_GetAttr(module, PyIdentifier.__dict__);
                     Assert.That(globals != IntPtr.Zero);
                     try
                     {
                         // import builtins
                         // module.__dict__[__builtins__] = builtins
-                        int res = PyRuntime.PyDict_SetItemString(globals, "__builtins__",
+                        int res = PyRuntime.PyDict_SetItem(globals, PyIdentifier.__builtins__,
                             PyRuntime.PyEval_GetBuiltins());
                         PythonException.ThrowIfIsNotZero(res);
 

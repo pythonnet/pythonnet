@@ -165,7 +165,7 @@ namespace Python.Runtime
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
             Runtime.XDecref(mod);
 
             InitMethods(type, impl);
@@ -284,7 +284,7 @@ namespace Python.Runtime
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             string mn = clrType.Namespace ?? "";
             IntPtr mod = Runtime.PyString_FromString(mn);
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
             Runtime.XDecref(mod);
 
             // Hide the gchandle of the implementation in a magic type slot.
@@ -564,7 +564,7 @@ namespace Python.Runtime
 
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(tp_dict, "__module__", mod);
+            Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
 
             return type;
         }

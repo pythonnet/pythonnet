@@ -284,7 +284,7 @@ namespace Python.Runtime
             }
 
             IntPtr op = CLRObject.GetInstHandle(e);
-            IntPtr etype = Runtime.PyObject_GetAttrString(op, "__class__");
+            IntPtr etype = Runtime.PyObject_GetAttr(op, PyIdentifier.__class__);
             Runtime.PyErr_SetObject(new BorrowedReference(etype), new BorrowedReference(op));
             Runtime.XDecref(etype);
             Runtime.XDecref(op);
