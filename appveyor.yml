@@ -10,7 +10,7 @@ platform:
 
 environment:
   global:
-    PYTHONUNBUFFERED: True
+    PYTHONUNBUFFERED: 'True'
     PYTHONWARNINGS: 'ignore:::wheel.pep425tags:'
     CODECOV_ENV: PYTHON_VERSION, PLATFORM
 
@@ -47,35 +47,16 @@ init:
 install:
   - python -m pip install -U pip
   - pip install --upgrade -r requirements.txt --quiet
-  - pip install pycparser --quiet
-
-  # Install OpenCover. Can't put on `packages.config`, not Mono compatible
-  - .\tools\nuget\nuget.exe install OpenCover -OutputDirectory packages -Verbosity quiet
 
 build_script:
+  - python setup.py configure
   # Create clean `sdist`. Only used for releases
   - python setup.py --quiet sdist
-  # Build `wheel` with coverage of `setup.py`
-  - coverage run setup.py bdist_wheel %BUILD_OPTS%
+  - python setup.py bdist_wheel
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
   - ps: .\ci\appveyor_run_tests.ps1
 
-on_finish:
-  # Temporary disable multiple upload due to codecov limit of 20 per commit.
-  # https://docs.codecov.io/blog/week-8-2017
-  - coverage xml -i
-  # - codecov --file coverage.xml --flags setup_windows
-  # - codecov --file py.coverage --flags python_tests
-  # - codecov --file cs.coverage --flags embedded_tests
-  - codecov --file py.coverage cs.coverage coverage.xml --flags setup_windows
-
 artifacts:
   - path: dist\*
-  - path: '.\src\runtime\bin\*.nupkg'
-
-notifications:
-  - provider: Slack
-    incoming_webhook:
-      secure: 2S/t6rGHdbwoxehnvn5KgfsHrBFEtwnPD7M5olGErmz70oWFVpqoWd/EvDwh7rKZGdOTjDmpwcukc2xi5VRaGHbBAqFYS3tAdgAMrcaTNWs=
