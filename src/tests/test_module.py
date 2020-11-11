@@ -192,6 +192,8 @@ def test_dotted_name_import_from_with_alias():
 
 def test_from_module_import_star():
     """Test from module import * behavior."""
+    clr.AddReference('System.Xml')
+    
     count = len(locals().keys())
     m = __import__('System.Xml', globals(), locals(), ['*'])
     assert m.__name__ == 'System.Xml'
@@ -201,15 +203,13 @@ def test_from_module_import_star():
 
 def test_implicit_assembly_load():
     """Test implicit assembly loading via import."""
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+    with pytest.raises(ImportError):
+        # MS.Build should not have been added as a reference yet
+        # (and should exist for mono)
 
-        # should trigger a DeprecationWarning as Microsoft.Build hasn't
-        # been added as a reference yet (and should exist for mono)
+        # The implicit behavior has been disabled in 3.0
+        # therefore this should fail
         import Microsoft.Build
-
-        assert len(w) == 1
-        assert isinstance(w[0].message, DeprecationWarning)
 
     with warnings.catch_warnings(record=True) as w:
         clr.AddReference("System.Windows.Forms")

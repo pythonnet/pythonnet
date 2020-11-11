@@ -3,6 +3,7 @@
 
 """Test CLR class support."""
 
+import clr
 import Python.Test as Test
 import System
 import pytest
@@ -124,6 +125,9 @@ def test_subclass_with_various_constructors():
 
 def test_struct_construction():
     """Test construction of structs."""
+
+    clr.AddReference('System.Drawing')
+
     from System.Drawing import Point
 
     p = Point()
