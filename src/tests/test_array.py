@@ -2,6 +2,7 @@
 
 """Test support for managed arrays."""
 
+import clr
 import Python.Test as Test
 import System
 import pytest
@@ -1142,6 +1143,8 @@ def test_boxed_value_type_mutation_result():
     # value type semantics that can be mapped to the CLR, so it is easy
     # to accidentally write code like the following which is not really
     # mutating value types in-place but changing boxed copies.
+
+    clr.AddReference('System.Drawing')
 
     from System.Drawing import Point
     from System import Array

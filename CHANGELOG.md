@@ -33,6 +33,10 @@ details about the cause of the failure
 -    Fixed a bug where indexers could not be used if they were inherited
 -    Made it possible to use `__len__` also on `ICollection<>` interface objects
 
+### Removed
+
+-   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
+
 ## [2.5.0][] - 2020-06-14
 
 This version improves performance on benchmarks significantly compared to 2.3.

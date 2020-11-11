@@ -118,30 +118,6 @@ namespace Python.Runtime
                 return c;
             }
 
-            // This is a little repetitive, but it ensures that the right
-            // thing happens with implicit assembly loading at a reasonable
-            // cost. Ask the AssemblyManager to do implicit loading for each
-            // of the steps in the qualified name, then try it again.
-            bool ignore = name.StartsWith("__");
-            if (AssemblyManager.LoadImplicit(qname, assemblyLoadErrorHandler: ImportWarning, !ignore))
-            {
-                if (AssemblyManager.IsValidNamespace(qname))
-                {
-                    m = new ModuleObject(qname);
-                    StoreAttribute(name, m);
-                    m.DecrRefCount();
-                    return m;
-                }
-
-                type = AssemblyManager.LookupTypes(qname).FirstOrDefault(t => t.IsPublic);
-                if (type != null)
-                {
-                    c = ClassManager.GetClass(type);
-                    StoreAttribute(name, c);
-                    return c;
-                }
-            }
-
             // We didn't find the name, so we may need to see if there is a
             // generic type with this base name. If so, we'll go ahead and
             // return it. Note that we store the mapping of the unmangled
