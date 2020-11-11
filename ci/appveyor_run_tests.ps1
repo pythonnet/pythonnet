@@ -99,12 +99,12 @@ if ($XPLAT){
          $DOTNET_CMD = "c:\Program Files (x86)\dotnet\dotnet"
     }
 
-    # Run Embedded tests for netcoreapp2.0 (OpenCover currently does not supports dotnet core)
-    Write-Host ("Starting embedded tests for netcoreapp2.0") -ForegroundColor "Green"
-    &$DOTNET_CMD ".\src\embed_tests\bin\netcoreapp2.0_publish\Python.EmbeddingTest.dll"
+    # Run Embedded tests for netcoreapp3.1 (OpenCover currently does not supports dotnet core)
+    Write-Host ("Starting embedded tests for netcoreapp3.1") -ForegroundColor "Green"
+    &$DOTNET_CMD ".\src\embed_tests\bin\netcoreapp3.1_publish\Python.EmbeddingTest.dll"
     $CS_STATUS = $LastExitCode
     if ($CS_STATUS -ne 0) {
-        Write-Host "Embedded tests for netcoreapp2.0 failed" -ForegroundColor "Red"
+        Write-Host "Embedded tests for netcoreapp3.1 failed" -ForegroundColor "Red"
         ReportTime ""
     } else {
         ReportTime ".NET Core 2.0 tests completed"
