@@ -351,7 +351,7 @@ class BuildExtPythonnet(build_ext.build_ext):
                     cmd
                     + [
                         '"/t:Console_15:publish;Python_EmbeddingTest_15:publish"',
-                        "/p:TargetFramework=netcoreapp2.0",
+                        "/p:TargetFramework=netcoreapp3.1",
                     ]
                 ),
                 shell=use_shell,
