@@ -2,7 +2,7 @@ version: '{branch}-{build}'
 build: off
 
 image:
-  - Visual Studio 2017
+  - Visual Studio 2019
 
 platform:
   - x86
