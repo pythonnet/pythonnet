@@ -53,7 +53,7 @@ namespace Python.Runtime
 #elif PYTHON39
         const string _minor = "9";
 #else
-#error You must define one of PYTHON36 to PYTHON38
+#error You must define one of PYTHON36 to PYTHON39
 #endif
 
 #if WINDOWS
@@ -125,7 +125,7 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        /// <remarks>Always call this method from the Main thread.  After the 
+        /// <remarks>Always call this method from the Main thread.  After the
         /// first call to this method, the main thread has acquired the GIL.</remarks>
         internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
@@ -407,7 +407,7 @@ namespace Python.Runtime
                 {
                     PyEval_SaveThread();
                 }
-                
+
             }
             else
             {
@@ -1723,7 +1723,7 @@ namespace Python.Runtime
         internal static extern int PySet_Add(IntPtr set, IntPtr key);
 
         /// <summary>
-        /// Return 1 if found, 0 if not found, and -1 if an error is encountered. 
+        /// Return 1 if found, 0 if not found, and -1 if an error is encountered.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySet_Contains(IntPtr anyset, IntPtr key);
