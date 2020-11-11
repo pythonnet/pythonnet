@@ -250,6 +250,7 @@ namespace Python.Runtime
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
+        [System.Diagnostics.DebuggerHidden]
         public static void ThrowIfIsNull(IntPtr ob)
         {
             if (ob == IntPtr.Zero)
@@ -258,6 +259,7 @@ namespace Python.Runtime
             }
         }
 
+        [System.Diagnostics.DebuggerHidden]
         internal static void ThrowIfIsNull(BorrowedReference reference)
         {
             if (reference.IsNull)
@@ -266,6 +268,7 @@ namespace Python.Runtime
             }
         }
 
+        [System.Diagnostics.DebuggerHidden]
         public static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)
