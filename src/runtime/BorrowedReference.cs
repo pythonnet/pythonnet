@@ -11,9 +11,11 @@ namespace Python.Runtime
         public bool IsNull => this.pointer == IntPtr.Zero;
 
 
-        /// <summary>Gets a raw pointer to the Python object</summary>
+        /// <summary>Gets a raw pointer to the Python object. Performs null check</summary>
         public IntPtr DangerousGetAddress()
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
+        /// <summary>Gets a raw pointer to the Python object</summary>
+        public IntPtr DangerousGetAddressOrNull() => this.pointer;
 
         /// <summary>
         /// Creates new instance of <see cref="BorrowedReference"/> from raw pointer. Unsafe.
@@ -22,5 +24,7 @@ namespace Python.Runtime
         {
             this.pointer = pointer;
         }
+
+        public static BorrowedReference Null => default;
     }
 }
