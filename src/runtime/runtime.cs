@@ -8,6 +8,7 @@ using System.Threading;
 using System.Collections.Generic;
 using Python.Runtime.Platform;
 using System.Linq;
+using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -899,10 +900,16 @@ namespace Python.Runtime
         internal static extern IntPtr PyEval_GetBuiltins();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern PyFrameObjectReference PyEval_GetFrame();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_GetGlobals();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyEval_GetLocals();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyFrame_GetLineNumber(PyFrameObjectReference frame);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr Py_GetProgramName();
@@ -1605,7 +1612,7 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyUnicode_Compare(IntPtr left, IntPtr right);
 
-        internal static string GetManagedString(in BorrowedReference borrowedReference)
+        internal static string GetManagedString(BorrowedReference borrowedReference)
             => GetManagedString(borrowedReference.DangerousGetAddress());
         /// <summary>
         /// Function to access the internal PyUnicode/PyString object and
@@ -1691,9 +1698,15 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyMapping_HasKey(IntPtr pointer, IntPtr key);
 
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_Keys(IntPtr pointer);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyDict_Keys(BorrowedReference pointer);
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyDict_Values(BorrowedReference pointer);
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_Values(IntPtr pointer);
 
@@ -1709,6 +1722,8 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyDict_Clear(IntPtr pointer);
 
+        internal static long PyDict_Size(BorrowedReference dict) => PyDict_Size(dict.DangerousGetAddress());
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         internal static long PyDict_Size(IntPtr pointer)
         {
             return (long)_PyDict_Size(pointer);
@@ -1827,6 +1842,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_New(IntPtr size);
 
+        internal static BorrowedReference PyTuple_GetItem(BorrowedReference pointer, long index)
+            => new BorrowedReference(PyTuple_GetItem(pointer.DangerousGetAddress(), new IntPtr(index)));
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         internal static IntPtr PyTuple_GetItem(IntPtr pointer, long index)
         {
             return PyTuple_GetItem(pointer, new IntPtr(index));
@@ -1835,6 +1853,11 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_GetItem(IntPtr pointer, IntPtr index);
 
+        internal static int PyTuple_SetItem(BorrowedReference tuple, long index, IntPtr value)
+        {
+            return PyTuple_SetItem(tuple.DangerousGetAddress(), new IntPtr(index), value);
+        }
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         internal static int PyTuple_SetItem(IntPtr pointer, long index, IntPtr value)
         {
             return PyTuple_SetItem(pointer, new IntPtr(index), value);
@@ -1851,13 +1874,19 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_GetSlice(IntPtr pointer, IntPtr start, IntPtr end);
 
+        internal static long PyTuple_Size(BorrowedReference tuple)
+        {
+            return (long)_PyTuple_Size(tuple);
+        }
+
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         internal static long PyTuple_Size(IntPtr pointer)
         {
-            return (long)_PyTuple_Size(pointer);
+            return (long)_PyTuple_Size(new BorrowedReference(pointer));
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyTuple_Size")]
-        private static extern IntPtr _PyTuple_Size(IntPtr pointer);
+        private static extern IntPtr _PyTuple_Size(BorrowedReference pointer);
 
 
         //====================================================================

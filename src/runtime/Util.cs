@@ -7,6 +7,8 @@ namespace Python.Runtime
     {
         internal const string UnstableApiMessage =
             "This API is unstable, and might be changed or removed in the next minor release";
+        internal const string UseReferenceOverloadMessage =
+            "This is a legacy overload. Please use an overload, that works with *Reference types";
 
         internal static Int64 ReadCLong(IntPtr tp, int offset)
         {

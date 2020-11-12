@@ -298,11 +298,18 @@ namespace Python.Runtime
             return ToPython(value, objectType);
         }
 
+        /// <summary>
+        /// Return a managed object for the given Python object, taking funny
+        /// byref types into account.
+        /// </summary>
+        internal static bool ToManaged(BorrowedReference value, Type type, out object result, bool setError)
+            => ToManaged(value.DangerousGetAddress(), type, out result, setError);
 
         /// <summary>
         /// Return a managed object for the given Python object, taking funny
         /// byref types into account.
         /// </summary>
+        [Obsolete(Util.UseReferenceOverloadMessage)]
         internal static bool ToManaged(IntPtr value, Type type,
             out object result, bool setError)
         {
