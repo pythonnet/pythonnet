@@ -161,11 +161,12 @@ namespace Python.Runtime
                     IntPtr tb = _pyTB;
                     IntPtr type = _pyType;
                     IntPtr value = _pyValue;
-                    Runtime.PyErr_NormalizeException(ref type, ref value, ref tb);
 
                     Runtime.XIncref(type);
                     Runtime.XIncref(value);
                     Runtime.XIncref(tb);
+                    Runtime.PyErr_NormalizeException(ref type, ref value, ref tb);
+
                     using (PyObject pyType = new PyObject(type))
                     using (PyObject pyValue = new PyObject(value))
                     using (PyObject pyTB = new PyObject(tb))
