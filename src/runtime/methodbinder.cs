@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
@@ -16,29 +15,25 @@ namespace Python.Runtime
     [Serializable]
     internal class MethodBinder
     {
-        public ArrayList list;
-        public MethodBase[] methods;
+        readonly List<MethodBase> methods = new List<MethodBase>();
         public bool init = false;
         public bool allow_threads = true;
 
-        internal MethodBinder()
-        {
-            list = new ArrayList();
-        }
+        internal MethodBinder(){}
 
         internal MethodBinder(MethodInfo mi)
         {
-            list = new ArrayList { mi };
+            this.methods.Add(mi);
         }
 
         public int Count
         {
-            get { return list.Count; }
+            get { return this.methods.Count; }
         }
 
         internal void AddMethod(MethodBase m)
         {
-            list.Add(m);
+            this.methods.Add(m);
         }
 
         /// <summary>
@@ -158,13 +153,12 @@ namespace Python.Runtime
         /// is arranged in order of precedence (done lazily to avoid doing it
         /// at all for methods that are never called).
         /// </summary>
-        internal MethodBase[] GetMethods()
+        internal List<MethodBase> GetMethods()
         {
             if (!init)
             {
                 // I'm sure this could be made more efficient.
-                list.Sort(new MethodSorter());
-                methods = (MethodBase[])list.ToArray(typeof(MethodBase));
+                this.methods.Sort(new MethodSorter());
                 init = true;
             }
             return methods;
@@ -281,9 +275,6 @@ namespace Python.Runtime
 
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
-            // loop to find match, return invoker w/ or /wo error
-            MethodBase[] _methods = null;
-
             var kwargDict = new Dictionary<string, IntPtr>();
             if (kw != IntPtr.Zero)
             {
@@ -301,15 +292,9 @@ namespace Python.Runtime
 
             var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
-            if (info != null)
-            {
-                _methods = new MethodBase[1];
-                _methods.SetValue(info, 0);
-            }
-            else
-            {
-                _methods = GetMethods();
-            }
+
+            // loop to find match, return invoker w/ or /wo error
+            List<MethodBase> _methods = info != null ? new List<MethodBase> { info } : GetMethods();
 
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
@@ -319,16 +304,15 @@ namespace Python.Runtime
                     isGeneric = true;
                 }
                 ParameterInfo[] pi = mi.GetParameters();
-                ArrayList defaultArgList;
                 bool paramsArray;
 
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList))
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out var defaultArgList))
                 {
                     continue;
                 }
                 var outs = 0;
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
-                    needsResolution: _methods.Length > 1,
+                    needsResolution: _methods.Count > 1,
                     outs: out outs);
 
                 if (margs == null)
@@ -417,7 +401,7 @@ namespace Python.Runtime
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
             IntPtr args, int pyArgCount,
             Dictionary<string, IntPtr> kwargDict,
-            ArrayList defaultArgList,
+            List<object> defaultArgList,
             bool needsResolution,
             out int outs)
         {
@@ -575,7 +559,7 @@ namespace Python.Runtime
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             out bool paramsArray,
-            out ArrayList defaultArgList)
+            out List<object> defaultArgList)
         {
             defaultArgList = null;
             var match = false;
@@ -590,7 +574,7 @@ namespace Python.Runtime
                 // every parameter past 'positionalArgumentCount' must have either
                 // a corresponding keyword argument or a default parameter
                 match = true;
-                defaultArgList = new ArrayList();
+                defaultArgList = new List<object>();
                 for (var v = positionalArgumentCount; v < parameters.Length; v++)
                 {
                     if (kwargDict.ContainsKey(parameters[v].Name))
@@ -770,12 +754,10 @@ namespace Python.Runtime
     /// <summary>
     /// Utility class to sort method info by parameter type precedence.
     /// </summary>
-    internal class MethodSorter : IComparer
+    internal class MethodSorter : IComparer<MethodBase>
     {
-        int IComparer.Compare(object m1, object m2)
+        int IComparer<MethodBase>.Compare(MethodBase me1, MethodBase me2)
         {
-            var me1 = (MethodBase)m1;
-            var me2 = (MethodBase)m2;
             if (me1.DeclaringType != me2.DeclaringType)
             {
                 // m2's type derives from m1's type, favor m2
@@ -787,17 +769,9 @@ namespace Python.Runtime
                     return -1;
             }
 
-            int p1 = MethodBinder.GetPrecedence((MethodBase)m1);
-            int p2 = MethodBinder.GetPrecedence((MethodBase)m2);
-            if (p1 < p2)
-            {
-                return -1;
-            }
-            if (p1 > p2)
-            {
-                return 1;
-            }
-            return 0;
+            int p1 = MethodBinder.GetPrecedence(me1);
+            int p2 = MethodBinder.GetPrecedence(me2);
+            return p1.CompareTo(p2);
         }
     }
 

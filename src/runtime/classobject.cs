@@ -32,7 +32,7 @@ namespace Python.Runtime
         /// </summary>
         internal IntPtr GetDocString()
         {
-            MethodBase[] methods = binder.GetMethods();
+            var methods = binder.GetMethods();
             var str = "";
             foreach (MethodBase t in methods)
             {

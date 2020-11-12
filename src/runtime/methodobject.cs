@@ -70,7 +70,7 @@ namespace Python.Runtime
             }
             var str = "";
             Type marker = typeof(DocStringAttribute);
-            MethodBase[] methods = binder.GetMethods();
+            var methods = binder.GetMethods();
             foreach (MethodBase method in methods)
             {
                 if (str.Length > 0)
