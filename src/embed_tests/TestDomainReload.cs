@@ -94,7 +94,7 @@ clr.AddReference('{0}')
 from Python.EmbeddingTest.Domain import MyClass
 obj = MyClass()
 obj.Method()
-obj.StaticMethod()
+MyClass.StaticMethod()
 obj.Property = 1
 obj.Field = 10
 ", Assembly.GetExecutingAssembly().FullName);
@@ -137,16 +137,18 @@ obj.Field = 10
                         Assert.That(tp_clear, Is.Not.Null);
 
                         using (PyObject obj = new PyObject(handle))
+                        using (PyObject myClass = new PyObject(new BorrowedReference(tp)))
                         {
                             obj.InvokeMethod("Method");
-                            obj.InvokeMethod("StaticMethod");
+                            myClass.InvokeMethod("StaticMethod");
 
                             using (var scope = Py.CreateScope())
                             {
                                 scope.Set("obj", obj);
+                                scope.Set("myClass", myClass);
                                 scope.Exec(@"
 obj.Method()
-obj.StaticMethod()
+myClass.StaticMethod()
 obj.Property += 1
 obj.Field += 10
 ");
@@ -191,7 +193,7 @@ from Python.EmbeddingTest.Domain import MyClass
 def test_obj_call():
     obj = MyClass()
     obj.Method()
-    obj.StaticMethod()
+    MyClass.StaticMethod()
     obj.Property = 1
     obj.Field = 10
 
