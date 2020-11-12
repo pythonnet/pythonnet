@@ -3,6 +3,10 @@ using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace Python.Runtime
 {
@@ -13,15 +17,19 @@ namespace Python.Runtime
     /// ConstructorBinder, a minor variation used to invoke constructors.
     /// </summary>
     [Serializable]
-    internal class MethodBinder
+    internal class MethodBinder: System.Runtime.Serialization.IDeserializationCallback
     {
         readonly List<MethodBase> methods = new List<MethodBase>();
+        [NonSerialized]
+        Lazy<Dictionary<CallSiteCacheKey, CallSite>> callSiteCache;
         public bool init = false;
         public bool allow_threads = true;
 
-        internal MethodBinder(){}
+        internal MethodBinder() {
+            this.InitializeCallSiteCache();
+        }
 
-        internal MethodBinder(MethodInfo mi)
+        internal MethodBinder(MethodInfo mi):this()
         {
             this.methods.Add(mi);
         }
@@ -609,41 +617,49 @@ namespace Python.Runtime
             return match;
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
+        internal virtual IntPtr Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
             return Invoke(inst, args, kw, null, null);
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal virtual IntPtr Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase info)
         {
             return Invoke(inst, args, kw, info, null);
         }
 
-        protected static void AppendArgumentTypes(StringBuilder to, IntPtr args)
+        private static string GetName(IEnumerable<MethodBase> methodInfo)
+            => methodInfo.FirstOrDefault()?.Name;
+
+        private static void SetOverloadNotFoundError(BorrowedReference args, string methodName)
+        {
+            var value = new StringBuilder("No method matches given arguments");
+            if (methodName != null)
+            {
+                value.Append($" for {methodName}");
+            }
+
+            value.Append(": ");
+            AppendArgumentTypes(to: value, args);
+            Exceptions.SetError(Exceptions.TypeError, value.ToString());
+        }
+        protected static void AppendArgumentTypes(StringBuilder to, BorrowedReference args)
         {
             long argCount = Runtime.PyTuple_Size(args);
             to.Append("(");
             for (long argIndex = 0; argIndex < argCount; argIndex++)
             {
                 var arg = Runtime.PyTuple_GetItem(args, argIndex);
-                if (arg != IntPtr.Zero)
+                if (!arg.IsNull)
                 {
                     var type = Runtime.PyObject_Type(arg);
-                    if (type != IntPtr.Zero)
+                    if (!type.IsNull)
                     {
-                        try
+                        var description = Runtime.PyObject_Unicode(type);
+                        if (!description.IsNull())
                         {
-                            var description = Runtime.PyObject_Unicode(type);
-                            if (description != IntPtr.Zero)
-                            {
-                                to.Append(Runtime.GetManagedString(description));
-                                Runtime.XDecref(description);
-                            }
+                            to.Append(Runtime.GetManagedString(description));
                         }
-                        finally
-                        {
-                            Runtime.XDecref(type);
-                        }
+                        description.Dispose();
                     }
                 }
 
@@ -653,23 +669,147 @@ namespace Python.Runtime
             to.Append(')');
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        static List<CSharpArgumentInfo> GetArguments(BorrowedReference args, BorrowedReference kwArgs)
         {
-            Binding binding = Bind(inst, args, kw, info, methodinfo);
+            int argCount = (int)Runtime.PyTuple_Size(args);
+
+            var arguments = new List<CSharpArgumentInfo>() {
+                // the instance, on which the call is made (null for static methods)
+                CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
+            };
+            for (int argN = 0; argN < argCount; argN++)
+            {
+                arguments.Add(CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null));
+            }
+
+            if (!kwArgs.IsNull)
+            {
+                int kwCount = (int)Runtime.PyDict_Size(kwArgs);
+                NewReference keys = Runtime.PyDict_Keys(kwArgs);
+                NewReference items = Runtime.PyDict_Values(kwArgs);
+                for (int kwN = 0; kwN < kwCount; kwN++)
+                {
+                    string argName = Runtime.GetManagedString(Runtime.PyList_GetItem(keys, kwN));
+                    arguments.Add(CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.NamedArgument, argName));
+                }
+                keys.Dispose();
+                items.Dispose();
+            }
+
+            return arguments;
+        }
+
+        static object[] GetParameters(
+            BorrowedReference args, BorrowedReference kwArgs,
+            out int argCount, out int kwCount)
+        {
+            argCount = (int)Runtime.PyTuple_Size(args);
+            kwCount = kwArgs.IsNull ? 0 : (int)Runtime.PyDict_Size(kwArgs);
+            var result = new object[argCount + kwCount];
+            for (int argN = 0; argN < argCount; argN++)
+            {
+                var arg = Runtime.PyTuple_GetItem(args, argN);
+                if (!Converter.ToManaged(arg, typeof(object), out result[argN], setError: true))
+                    return null;
+            }
+
+            if (!kwArgs.IsNull)
+            {
+                NewReference items = Runtime.PyDict_Values(kwArgs);
+                for (int kwN = 0; kwN < kwCount; kwN++)
+                {
+                    var kwArg = Runtime.PyList_GetItem(items, kwN);
+                    if (!Converter.ToManaged(kwArg, typeof(object), out result[kwN + argCount], setError: true))
+                        return null;
+                }
+                items.Dispose();
+            }
+
+            return result;
+        }
+
+        internal virtual IntPtr Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase info, MethodInfo[] methodinfo)
+        {
+            var clrInstance = ManagedType.GetManagedObject(inst) as CLRObject;
+            if (clrInstance is null)
+                // static method binding is not yet implemented with DLR
+                return this.StaticInvoke(IntPtr.Zero, args, kw, info, methodinfo);
+
+            object[] parameters = GetParameters(args, kw, out int argCount, out int kwCount);
+            if (parameters is null) return IntPtr.Zero;
+
+            var method = info ?? methodinfo?.FirstOrDefault() ?? this.GetMethods()[0];
+            var callSite = this.GetOrCreateCallSite(args, kw, parameters.Length, argCount, kwCount, method);
+
+            object result;
+            IntPtr ts = IntPtr.Zero;
+
+            if (allow_threads)
+            {
+                ts = PythonEngine.BeginAllowThreads();
+            }
+
+            try
+            {
+                var invokeParameters = new object[parameters.Length + 2];
+                invokeParameters[0] = callSite;
+                invokeParameters[1] = clrInstance?.inst;
+                Array.Copy(parameters, sourceIndex: 0, invokeParameters, destinationIndex: 2, parameters.Length);
+                result = ((dynamic)callSite).Target.DynamicInvoke(invokeParameters);
+            } catch (TargetInvocationException e)
+                when (e.InnerException is RuntimeBinderException bindError)
+            {
+                if (allow_threads)
+                {
+                    PythonEngine.EndAllowThreads(ts);
+                }
+                // TODO: propagate bindError
+                SetOverloadNotFoundError(args, GetName(methodinfo ?? GetMethods().ToArray()));
+                return IntPtr.Zero;
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                }
+                if (allow_threads)
+                {
+                    PythonEngine.EndAllowThreads(ts);
+                }
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
+
+            if (allow_threads)
+            {
+                PythonEngine.EndAllowThreads(ts);
+            }
+
+            // If there are out parameters, we return a tuple containing
+            // the result followed by the out parameters. If there is only
+            // one out parameter and the return type of the method is void,
+            // we return the out parameter as the result to Python (for
+            // code compatibility with ironpython).
+
+#warning INCOMPLETE
+
+            return Converter.ToPython(result, typeof(object) /*must be actual return type here*/);
+        }
+
+        internal virtual IntPtr StaticInvoke(IntPtr inst, BorrowedReference args, BorrowedReference kw, MethodBase info, MethodInfo[] methodinfo)
+        {
+            Binding binding = Bind(inst,
+                args.DangerousGetAddress(),
+                kw.DangerousGetAddressOrNull(),
+                info, methodinfo);
+
             object result;
             IntPtr ts = IntPtr.Zero;
 
             if (binding == null)
             {
-                var value = new StringBuilder("No method matches given arguments");
-                if (methodinfo != null && methodinfo.Length > 0)
-                {
-                    value.Append($" for {methodinfo[0].Name}");
-                }
-
-                value.Append(": ");
-                AppendArgumentTypes(to: value, args);
-                Exceptions.SetError(Exceptions.TypeError, value.ToString());
+                SetOverloadNotFoundError(args, GetName(methodinfo));
                 return IntPtr.Zero;
             }
 
@@ -747,6 +887,77 @@ namespace Python.Runtime
             }
 
             return Converter.ToPython(result, mi.ReturnType);
+        }
+
+        private CallSite GetOrCreateCallSite(BorrowedReference args, BorrowedReference kw, int parameterCount, int argCount, int kwCount, MethodBase method)
+        {
+            var frame = Runtime.PyEval_GetFrame();
+            var cacheKey = new CallSiteCacheKey
+            {
+                Line = frame.IsNull ? -1 : Runtime.PyFrame_GetLineNumber(frame),
+                ArgCount = argCount,
+                KwArgCount = kwCount,
+            };
+            lock (this.callSiteCache.Value)
+            {
+                if (!this.callSiteCache.Value.TryGetValue(cacheKey, out var callSite))
+                {
+                    var arguments = GetArguments(args, kw);
+                    var binder = PythonNetCallSiteBinder.InvokeMember(
+                        method.Name,
+                        // TODO: forward type arguments
+                        typeArguments: null,
+                        context: method.DeclaringType,
+                        arguments.ToArray()
+                    );
+
+                    var callSiteTypeArgs = new List<Type>
+                    {
+                        typeof(CallSite),
+                        typeof(object),
+                    };
+                    for (int i = 0; i < parameterCount; i++)
+                        callSiteTypeArgs.Add(typeof(object));
+                    // return type
+                    callSiteTypeArgs.Add(typeof(object));
+                    var delegateType = Expression.GetFuncType(callSiteTypeArgs.ToArray());
+
+                    callSite = CallSite.Create(delegateType, binder);
+                    this.callSiteCache.Value[cacheKey] = callSite;
+                }
+
+                return callSite;
+            }
+        }
+
+        void System.Runtime.Serialization.IDeserializationCallback.OnDeserialization(object sender)
+        {
+            this.InitializeCallSiteCache();
+        }
+
+        void InitializeCallSiteCache()
+        {
+            this.callSiteCache = new Lazy<Dictionary<CallSiteCacheKey, CallSite>>(() => new Dictionary<CallSiteCacheKey, CallSite>());
+        }
+
+        struct CallSiteCacheKey : IEquatable<CallSiteCacheKey>
+        {
+            public int Line { get; set; }
+            public int ArgCount { get; set; }
+#warning has to be replaced with the full ordered list of kwarg names
+            public int KwArgCount { get; set; }
+
+            public override bool Equals(object obj) => obj is CallSiteCacheKey key && this.Equals(key);
+            public bool Equals(CallSiteCacheKey other) => this.Line == other.Line && this.ArgCount == other.ArgCount && this.KwArgCount == other.KwArgCount;
+
+            public override int GetHashCode()
+            {
+                int hashCode = -1650922183;
+                hashCode = hashCode * -1521134295 + this.Line.GetHashCode();
+                hashCode = hashCode * -1521134295 + this.ArgCount.GetHashCode();
+                hashCode = hashCode * -1521134295 + this.KwArgCount.GetHashCode();
+                return hashCode;
+            }
         }
     }
 

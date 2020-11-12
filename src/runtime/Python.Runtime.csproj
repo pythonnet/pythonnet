@@ -92,6 +92,7 @@
     <Compile Include="assemblymanager.cs" />
     <Compile Include="BorrowedReference.cs" />
     <Compile Include="bufferinterface.cs" />
+    <Compile Include="callsitebinder.cs" />
     <Compile Include="classderived.cs" />
     <Compile Include="classbase.cs" />
     <Compile Include="classmanager.cs" />

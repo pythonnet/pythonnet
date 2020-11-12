@@ -44,15 +44,15 @@ namespace Python.Runtime
             }
         }
 
-        internal IntPtr GetItem(IntPtr inst, IntPtr args)
+        internal IntPtr GetItem(BorrowedReference inst, BorrowedReference args)
         {
-            return GetterBinder.Invoke(inst, args, IntPtr.Zero);
+            return GetterBinder.Invoke(inst, args, BorrowedReference.Null);
         }
 
 
-        internal void SetItem(IntPtr inst, IntPtr args)
+        internal void SetItem(BorrowedReference inst, BorrowedReference args)
         {
-            SetterBinder.Invoke(inst, args, IntPtr.Zero);
+            SetterBinder.Invoke(inst, args, BorrowedReference.Null);
         }
 
         internal bool NeedsDefaultArgs(IntPtr args)

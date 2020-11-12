@@ -52,7 +52,7 @@ namespace Python.Runtime
             var cls = GetManagedObject(tp) as ClassDerivedObject;
 
             // call the managed constructor
-            object obj = cls.binder.InvokeRaw(IntPtr.Zero, args, kw);
+            object obj = cls.binder.InvokeRaw(IntPtr.Zero, new BorrowedReference(args), kw);
             if (obj == null)
             {
                 return IntPtr.Zero;

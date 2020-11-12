@@ -185,7 +185,7 @@ namespace Python.Runtime
                     }
                 }
 
-                return self.m.Invoke(target, args, kw, self.info);
+                return self.m.Invoke(new BorrowedReference(target), new BorrowedReference(args), new BorrowedReference(kw), self.info);
             }
             finally
             {

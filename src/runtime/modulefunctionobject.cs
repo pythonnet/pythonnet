@@ -22,10 +22,11 @@ namespace Python.Runtime
         /// <summary>
         /// __call__ implementation.
         /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        public static IntPtr tp_call(IntPtr obRaw, IntPtr args, IntPtr kw)
         {
+            var ob = new BorrowedReference(obRaw);
             var self = (ModuleFunctionObject)GetManagedObject(ob);
-            return self.Invoke(ob, args, kw);
+            return self.Invoke(ob, new BorrowedReference(args), new BorrowedReference(kw));
         }
 
         /// <summary>

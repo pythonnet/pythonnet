@@ -347,9 +347,10 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for reflected classes and value types.
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public static IntPtr mp_subscript(IntPtr obRaw, IntPtr idx)
         {
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var ob = new BorrowedReference(obRaw);
+            var tp = Runtime.PyObject_Type(ob);
             var cls = (ClassBase)GetManagedObject(tp);
 
             if (cls.indexer == null || !cls.indexer.CanGet)
@@ -361,40 +362,35 @@ namespace Python.Runtime
             // Arg may be a tuple in the case of an indexer with multiple
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
-            IntPtr args = idx;
-            var free = false;
 
-            if (!Runtime.PyTuple_Check(idx))
+            if (Runtime.PyTuple_Check(idx))
             {
-                args = Runtime.PyTuple_New(1);
-                Runtime.XIncref(idx);
-                Runtime.PyTuple_SetItem(args, 0, idx);
-                free = true;
+                return cls.indexer.GetItem(ob, new BorrowedReference(idx));
             }
-
-            IntPtr value;
-
-            try
+            else
             {
-                value = cls.indexer.GetItem(ob, args);
-            }
-            finally
-            {
-                if (free)
+                var args = NewReference.DangerousFromPointer(Runtime.PyTuple_New(1));
+                try
                 {
-                    Runtime.XDecref(args);
+                    Runtime.XIncref(idx);
+                    Runtime.PyTuple_SetItem(args, 0, idx);
+                    return cls.indexer.GetItem(ob, args);
+                }
+                finally
+                {
+                    args.Dispose();
                 }
             }
-            return value;
         }
 
 
         /// <summary>
         /// Implements __setitem__ for reflected classes and value types.
         /// </summary>
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static int mp_ass_subscript(IntPtr obRaw, IntPtr idx, IntPtr v)
         {
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var ob = new BorrowedReference(obRaw);
+            BorrowedReference tp = Runtime.PyObject_Type(ob);
             var cls = (ClassBase)GetManagedObject(tp);
 
             if (cls.indexer == null || !cls.indexer.CanSet)
@@ -422,7 +418,7 @@ namespace Python.Runtime
             IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
             var numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
             var temp = i + numOfDefaultArgs;
-            IntPtr real = Runtime.PyTuple_New(temp + 1);
+            var real = NewReference.DangerousFromPointer(Runtime.PyTuple_New(temp + 1));
             for (var n = 0; n < i; n++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
@@ -451,7 +447,7 @@ namespace Python.Runtime
             }
             finally
             {
-                Runtime.XDecref(real);
+                real.Dispose();
 
                 if (free)
                 {

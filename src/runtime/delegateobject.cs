@@ -72,10 +72,11 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __call__ for reflected delegate types.
         /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        public static IntPtr tp_call(IntPtr obRaw, IntPtr args, IntPtr kw)
         {
+            var ob = new BorrowedReference(obRaw);
             // TODO: add fast type check!
-            IntPtr pytype = Runtime.PyObject_TYPE(ob);
+            BorrowedReference pytype = Runtime.PyObject_Type(ob);
             var self = (DelegateObject)GetManagedObject(pytype);
             var o = GetManagedObject(ob) as CLRObject;
 
@@ -90,7 +91,7 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
-            return self.binder.Invoke(ob, args, kw);
+            return self.binder.Invoke(ob, new BorrowedReference(args), new BorrowedReference(kw));
         }
 
 

@@ -29,7 +29,7 @@ namespace Python.Runtime
         /// object - the reason is that only the caller knows the correct
         /// Python type to use when wrapping the result (may be a subclass).
         /// </summary>
-        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw)
+        internal object InvokeRaw(IntPtr inst, BorrowedReference args, IntPtr kw)
         {
             return InvokeRaw(inst, args, kw, null);
         }
@@ -49,7 +49,7 @@ namespace Python.Runtime
         /// Binding binding = this.Bind(inst, args, kw, info);
         /// to take advantage of Bind()'s ability to use a single MethodBase (CI or MI).
         /// </remarks>
-        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal object InvokeRaw(IntPtr inst, BorrowedReference args, IntPtr kw, MethodBase info)
         {
             object result;
 
@@ -78,7 +78,7 @@ namespace Python.Runtime
                 return result;
             }
 
-            Binding binding = Bind(inst, args, kw, info);
+            Binding binding = Bind(inst, args.DangerousGetAddress(), kw, info);
 
             if (binding == null)
             {

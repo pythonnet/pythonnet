@@ -49,8 +49,9 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __new__ for reflected classes and value types.
         /// </summary>
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        public static IntPtr tp_new(IntPtr tp, IntPtr rawArgs, IntPtr kw)
         {
+            var args = new BorrowedReference(rawArgs);
             var self = GetManagedObject(tp) as ClassObject;
 
             // Sanity check: this ensures a graceful error if someone does
@@ -74,7 +75,7 @@ namespace Python.Runtime
                     return IntPtr.Zero;
                 }
 
-                IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
                 object result;
 
                 if (!Converter.ToManaged(op, type, out result, true))
