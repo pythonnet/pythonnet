@@ -1031,6 +1031,15 @@ namespace Python.Runtime
             return tp;
         }
 
+        /// <summary>
+        /// Managed version of the standard Python C API PyObject_Type call.
+        /// This version avoids a managed  &lt;-&gt; unmanaged transition.
+        /// </summary>
+        internal static BorrowedReference PyObject_Type(BorrowedReference op)
+        {
+            return new BorrowedReference(PyObject_TYPE(op.DangerousGetAddress()));
+        }
+
         internal static string PyObject_GetTypeName(IntPtr op)
         {
             IntPtr pyType = Marshal.ReadIntPtr(op, ObjectOffset.ob_type);
@@ -1150,6 +1159,9 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyObject_Str")]
         internal static extern IntPtr PyObject_Unicode(IntPtr pointer);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "PyObject_Str")]
+        internal static extern NewReference PyObject_Unicode(BorrowedReference pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_Dir(IntPtr pointer);
