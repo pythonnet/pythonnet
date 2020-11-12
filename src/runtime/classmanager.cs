@@ -232,7 +232,7 @@ namespace Python.Runtime
                 var attr = (DocStringAttribute)attrs[0];
                 string docStr = attr.DocString;
                 doc = Runtime.PyString_FromString(docStr);
-                Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+                Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc);
                 Runtime.XDecref(doc);
             }
 
@@ -249,8 +249,8 @@ namespace Python.Runtime
                         var ctors = new ConstructorBinding(type, tp, co.binder);
                         // ExtensionType types are untracked, so don't Incref() them.
                         // TODO: deprecate __overloads__ soon...
-                        Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
-                        Runtime.PyDict_SetItemString(dict, "Overloads", ctors.pyHandle);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.pyHandle);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.pyHandle);
                         ctors.DecrRefCount();
                     }
 
@@ -258,7 +258,7 @@ namespace Python.Runtime
                     if (!CLRModule._SuppressDocs && doc == IntPtr.Zero)
                     {
                         doc = co.GetDocString();
-                        Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc);
                         Runtime.XDecref(doc);
                     }
                 }
