@@ -82,6 +82,8 @@
     <Compile Include="Codecs\TupleCodecs.cs" />
     <Compile Include="converterextensions.cs" />
     <Compile Include="finalizer.cs" />
+    <Compile Include="intern.cs" />
+    <Compile Include="intern_.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>

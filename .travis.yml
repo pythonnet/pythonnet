@@ -9,9 +9,9 @@ python:
 
 env:
   matrix:
-    - BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp2.0_publish/ PERF_TESTS_PATH=net461/
+    - BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp3.1_publish/ PERF_TESTS_PATH=net461/
     - BUILD_OPTS="" NUNIT_PATH="./packages/NUnit.*/tools/nunit3-console.exe" RUN_TESTS="mono $NUNIT_PATH" EMBED_TESTS_PATH="" PERF_TESTS_PATH=""
-    - PYTHONNET_SHUTDOWN_MODE="Soft" BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp2.0_publish/ PERF_TESTS_PATH=net461/
+    - PYTHONNET_SHUTDOWN_MODE="Soft" BUILD_OPTS=--xplat NUNIT_PATH="~/.nuget/packages/nunit.consolerunner/3.*/tools/nunit3-console.exe" RUN_TESTS=dotnet EMBED_TESTS_PATH=netcoreapp3.1_publish/ PERF_TESTS_PATH=net461/
     - PYTHONNET_SHUTDOWN_MODE="Soft" BUILD_OPTS="" NUNIT_PATH="./packages/NUnit.*/tools/nunit3-console.exe" RUN_TESTS="mono $NUNIT_PATH" EMBED_TESTS_PATH="" PERF_TESTS_PATH=""
 
   global:
@@ -30,9 +30,7 @@ addons:
     packages:
       - mono-devel
       - ca-certificates-mono
-      - dotnet-hostfxr-2.2
-      - dotnet-runtime-2.2
-      - dotnet-sdk-2.2
+      - dotnet-sdk-3.1
 
 before_install:
   # Set-up dll path for embedded tests

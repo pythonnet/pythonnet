@@ -68,8 +68,8 @@ namespace Python.Runtime
             variables = Runtime.PyModule_GetDict(obj);
             PythonException.ThrowIfIsNull(variables);
 
-            int res = Runtime.PyDict_SetItemString(
-                variables, "__builtins__",
+            int res = Runtime.PyDict_SetItem(
+                variables, PyIdentifier.__builtins__,
                 Runtime.PyEval_GetBuiltins()
             );
             PythonException.ThrowIfIsNotZero(res);

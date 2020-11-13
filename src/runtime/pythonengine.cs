@@ -595,8 +595,8 @@ namespace Python.Runtime
                 if (globals == IntPtr.Zero)
                 {
                     globals = Runtime.PyDict_New();
-                    Runtime.PyDict_SetItemString(
-                        globals.Value, "__builtins__",
+                    Runtime.PyDict_SetItem(
+                        globals.Value, PyIdentifier.__builtins__,
                         Runtime.PyEval_GetBuiltins()
                     );
                     borrowedGlobals = false;
