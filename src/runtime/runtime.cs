@@ -68,8 +68,11 @@ namespace Python.Runtime
 #elif PYTHON38
         internal const string _pyversion = "3.8";
         internal const string _pyver = "38";
+#elif PYTHON39
+        internal const string _pyversion = "3.9";
+        internal const string _pyver = "39";
 #else
-#error You must define one of PYTHON34 to PYTHON38 or PYTHON27
+#error You must define one of PYTHON34 to PYTHON39 or PYTHON27
 #endif
 
 #if MONO_LINUX || MONO_OSX // Linux/macOS use dotted version string
