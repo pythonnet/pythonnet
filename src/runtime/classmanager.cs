@@ -341,6 +341,17 @@ namespace Python.Runtime
                         }
                     }
                 }
+
+                // All interface implementations inherit from Object,
+                // but GetMembers don't return them either.
+                var objFlags = BindingFlags.Public | BindingFlags.Instance;
+                foreach (var mi in typeof(object).GetMembers(objFlags))
+                {
+                    if (local[mi.Name] == null)
+                    {
+                        items.Add(mi);
+                    }
+                }
             }
 
             for (i = 0; i < items.Count; i++)
