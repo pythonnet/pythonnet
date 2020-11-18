@@ -50,8 +50,10 @@ namespace Python.Runtime
         const string _minor = "7";
 #elif PYTHON38
         const string _minor = "8";
+#elif PYTHON39
+        const string _minor = "9";
 #else
-#error You must define one of PYTHON36 to PYTHON38
+#error You must define one of PYTHON36 to PYTHON39
 #endif
 
 #if WINDOWS
@@ -123,7 +125,7 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        /// <remarks>Always call this method from the Main thread.  After the 
+        /// <remarks>Always call this method from the Main thread.  After the
         /// first call to this method, the main thread has acquired the GIL.</remarks>
         internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
@@ -163,7 +165,7 @@ namespace Python.Runtime
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             IsFinalizing = false;
-
+            InternString.Initialize();
             GenericUtil.Reset();
             PyScopeManager.Reset();
             ClassManager.Reset();
@@ -237,7 +239,7 @@ namespace Python.Runtime
                 // a wrapper_descriptor, even though dict.__setitem__ is.
                 //
                 // object.__init__ seems safe, though.
-                op = PyObject_GetAttrString(PyBaseObjectType, "__init__");
+                op = PyObject_GetAttr(PyBaseObjectType, PyIdentifier.__init__);
                 SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op),
                     () => PyWrapperDescriptorType = IntPtr.Zero);
                 XDecref(op);
@@ -378,6 +380,7 @@ namespace Python.Runtime
 
             Exceptions.Shutdown();
             Finalizer.Shutdown();
+            InternString.Shutdown();
 
             if (mode != ShutdownMode.Normal)
             {
@@ -405,7 +408,7 @@ namespace Python.Runtime
                 {
                     PyEval_SaveThread();
                 }
-                
+
             }
             else
             {
@@ -1598,6 +1601,12 @@ namespace Python.Runtime
             return PyUnicode_FromUnicode(s, s.Length);
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyUnicode_InternFromString(string s);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyUnicode_Compare(IntPtr left, IntPtr right);
+
         internal static string GetManagedString(in BorrowedReference borrowedReference)
             => GetManagedString(borrowedReference.DangerousGetAddress());
         /// <summary>
@@ -1721,7 +1730,7 @@ namespace Python.Runtime
         internal static extern int PySet_Add(IntPtr set, IntPtr key);
 
         /// <summary>
-        /// Return 1 if found, 0 if not found, and -1 if an error is encountered. 
+        /// Return 1 if found, 0 if not found, and -1 if an error is encountered.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySet_Contains(IntPtr anyset, IntPtr key);
@@ -2183,7 +2192,7 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr GetBuiltins()
         {
-            return PyImport_ImportModule("builtins");
+            return PyImport_Import(PyIdentifier.builtins);
         }
     }
 

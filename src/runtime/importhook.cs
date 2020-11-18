@@ -43,11 +43,11 @@ namespace Python.Runtime
             // look in CLR modules, then if we don't find any call the default
             // Python __import__.
             IntPtr builtins = Runtime.GetBuiltins();
-            py_import = Runtime.PyObject_GetAttrString(builtins, "__import__");
+            py_import = Runtime.PyObject_GetAttr(builtins, PyIdentifier.__import__);
             PythonException.ThrowIfIsNull(py_import);
 
             hook = new MethodWrapper(typeof(ImportHook), "__import__", "TernaryFunc");
-            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", hook.ptr);
+            int res = Runtime.PyObject_SetAttr(builtins, PyIdentifier.__import__, hook.ptr);
             PythonException.ThrowIfIsNotZero(res);
 
             Runtime.XDecref(builtins);
@@ -60,7 +60,7 @@ namespace Python.Runtime
         {
             IntPtr builtins = Runtime.GetBuiltins();
 
-            int res = Runtime.PyObject_SetAttrString(builtins, "__import__", py_import);
+            int res = Runtime.PyObject_SetAttr(builtins, PyIdentifier.__import__, py_import);
             PythonException.ThrowIfIsNotZero(res);
             Runtime.XDecref(py_import);
             py_import = IntPtr.Zero;
@@ -309,38 +309,6 @@ namespace Python.Runtime
             }
 
             string[] names = realname.Split('.');
-
-            // Now we need to decide if the name refers to a CLR module,
-            // and may have to do an implicit load (for b/w compatibility)
-            // using the AssemblyManager. The assembly manager tries
-            // really hard not to use Python objects or APIs, because
-            // parts of it can run recursively and on strange threads.
-            //
-            // It does need an opportunity from time to time to check to
-            // see if sys.path has changed, in a context that is safe. Here
-            // we know we have the GIL, so we'll let it update if needed.
-
-            AssemblyManager.UpdatePath();
-            if (!AssemblyManager.IsValidNamespace(realname))
-            {
-                var loadExceptions = new List<Exception>();
-                if (!AssemblyManager.LoadImplicit(realname, assemblyLoadErrorHandler: loadExceptions.Add))
-                {
-                    // May be called when a module being imported imports a module.
-                    // In particular, I've seen decimal import copy import org.python.core
-                    IntPtr importResult = Runtime.PyObject_Call(py_import, args, kw);
-                    // TODO: use ModuleNotFoundError in Python 3.6+
-                    if (importResult == IntPtr.Zero && loadExceptions.Count > 0
-                        && Exceptions.ExceptionMatches(Exceptions.ImportError))
-                    {
-                        loadExceptions.Add(new PythonException());
-                        var importError = new PyObject(new BorrowedReference(Exceptions.ImportError));
-                        importError.SetAttr("__cause__", new AggregateException(loadExceptions).ToPython());
-                        Runtime.PyErr_SetObject(new BorrowedReference(Exceptions.ImportError), importError.Reference);
-                    }
-                    return importResult;
-                }
-            }
 
             // See if sys.modules for this interpreter already has the
             // requested module. If so, just return the existing module.

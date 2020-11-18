@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -82,6 +82,8 @@
     <Compile Include="Codecs\TupleCodecs.cs" />
     <Compile Include="converterextensions.cs" />
     <Compile Include="finalizer.cs" />
+    <Compile Include="intern.cs" />
+    <Compile Include="intern_.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
@@ -167,6 +169,7 @@
     <Compile Include="interop36.cs" />
     <Compile Include="interop37.cs" />
     <Compile Include="interop38.cs" />
+    <Compile Include="interop39.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pythonnet.snk" />
@@ -176,7 +179,7 @@
       <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <TargetAssembly>$(TargetPath)</TargetAssembly>
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
