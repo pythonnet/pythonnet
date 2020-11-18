@@ -684,7 +684,25 @@ namespace Python.Test
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        
+        public static string DefaultParamsWithOverloading(int a = 2, int b = 1)
+        {
+            return $"{a}{b}";
+        }
+
+        public static string DefaultParamsWithOverloading(string a = "a", string b = "b")
+        {
+            return $"{a}{b}X";
+        }
+
+        public static string DefaultParamsWithOverloading(int a = 0, int b = 1, int c = 2)
+        {
+            return $"{a}{b}{c}XX";
+        }
+
+        public static string DefaultParamsWithOverloading(int a = 5, int b = 6, int c = 7, int d = 8)
+        {
+            return $"{a}{b}{c}{d}XXX";
+        }
     }
 
 

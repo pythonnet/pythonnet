@@ -1153,6 +1153,35 @@ def test_optional_and_default_params():
     res = MethodTest.OptionalAndDefaultParams2(b=2, c=3)
     assert res == "0232"
 
+def test_default_params_overloads():
+    res = MethodTest.DefaultParamsWithOverloading(1, 2)
+    assert res == "12"
+
+    res = MethodTest.DefaultParamsWithOverloading(b=5)
+    assert res == "25"
+
+    res = MethodTest.DefaultParamsWithOverloading("d")
+    assert res == "dbX"
+
+    res = MethodTest.DefaultParamsWithOverloading(b="c")
+    assert res == "acX"
+
+    res = MethodTest.DefaultParamsWithOverloading(c=3)
+    assert res == "013XX"
+
+    res = MethodTest.DefaultParamsWithOverloading(5, c=2)
+    assert res == "512XX"
+
+    res = MethodTest.DefaultParamsWithOverloading(c=0, d=1)
+    assert res == "5601XXX"
+
+    res = MethodTest.DefaultParamsWithOverloading(1, d=1)
+    assert res == "1671XXX"
+
+def test_default_params_overloads_ambiguous_call():
+    with pytest.raises(TypeError):
+        MethodTest.DefaultParamsWithOverloading()
+
 def test_keyword_arg_method_resolution():
     from Python.Test import MethodArityTest
 

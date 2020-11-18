@@ -136,3 +136,14 @@ def test_interface_collection_iteration():
     untyped_list.Add(elem)
     for e in untyped_list:
         assert type(e).__name__ == "int"
+
+
+def test_methods_of_Object_are_available():
+    """Test calling methods inherited from Object"""
+    import System
+    clrVal =  System.Int32(100)
+    i = System.IComparable(clrVal)
+    assert i.Equals(clrVal)
+    assert clrVal.GetHashCode() == i.GetHashCode()
+    assert clrVal.GetType() == i.GetType()
+    assert clrVal.ToString() == i.ToString()

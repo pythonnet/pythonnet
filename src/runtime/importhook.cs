@@ -310,38 +310,6 @@ namespace Python.Runtime
 
             string[] names = realname.Split('.');
 
-            // Now we need to decide if the name refers to a CLR module,
-            // and may have to do an implicit load (for b/w compatibility)
-            // using the AssemblyManager. The assembly manager tries
-            // really hard not to use Python objects or APIs, because
-            // parts of it can run recursively and on strange threads.
-            //
-            // It does need an opportunity from time to time to check to
-            // see if sys.path has changed, in a context that is safe. Here
-            // we know we have the GIL, so we'll let it update if needed.
-
-            AssemblyManager.UpdatePath();
-            if (!AssemblyManager.IsValidNamespace(realname))
-            {
-                var loadExceptions = new List<Exception>();
-                if (!AssemblyManager.LoadImplicit(realname, assemblyLoadErrorHandler: loadExceptions.Add))
-                {
-                    // May be called when a module being imported imports a module.
-                    // In particular, I've seen decimal import copy import org.python.core
-                    IntPtr importResult = Runtime.PyObject_Call(py_import, args, kw);
-                    // TODO: use ModuleNotFoundError in Python 3.6+
-                    if (importResult == IntPtr.Zero && loadExceptions.Count > 0
-                        && Exceptions.ExceptionMatches(Exceptions.ImportError))
-                    {
-                        loadExceptions.Add(new PythonException());
-                        var importError = new PyObject(new BorrowedReference(Exceptions.ImportError));
-                        importError.SetAttr("__cause__", new AggregateException(loadExceptions).ToPython());
-                        Runtime.PyErr_SetObject(new BorrowedReference(Exceptions.ImportError), importError.Reference);
-                    }
-                    return importResult;
-                }
-            }
-
             // See if sys.modules for this interpreter already has the
             // requested module. If so, just return the existing module.
             IntPtr modules = Runtime.PyImport_GetModuleDict();

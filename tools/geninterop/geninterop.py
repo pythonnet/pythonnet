@@ -53,25 +53,25 @@ class AstParser(object):
     """Walk an AST and determine the members of all structs"""
 
     def __init__(self):
-        self.__typedefs = {}
-        self.__typedecls = {}
-        self.__structs = {}
-        self.__struct_stack = []
-        self.__struct_members_stack = []
-        self.__ptr_decl_depth = 0
-        self.__struct_members = {}
-        self.__decl_names = {}
+        self._typedefs = {}
+        self._typedecls = {}
+        self._structs = {}
+        self._struct_stack = []
+        self._struct_members_stack = []
+        self._ptr_decl_depth = 0
+        self._struct_members = {}
+        self._decl_names = {}
 
     def get_struct_members(self, name):
         """return a list of (name, type) of struct members"""
-        defs = self.__typedefs.get(name)
+        defs = self._typedefs.get(name)
         if defs is None:
             return None
-        node = self.__get_leaf_node(defs)
+        node = self._get_leaf_node(defs)
         name = node.name
         if name is None:
             name = defs.declname
-        return self.__struct_members.get(name)
+        return self._struct_members.get(name)
 
     def visit(self, node):
         if isinstance(node, c_ast.FileAST):
@@ -96,27 +96,27 @@ class AstParser(object):
             self.visit(node)
 
     def visit_typedef(self, typedef):
-        self.__typedefs[typedef.name] = typedef.type
+        self._typedefs[typedef.name] = typedef.type
         self.visit(typedef.type)
 
     def visit_typedecl(self, typedecl):
-        self.__decl_names[typedecl.type] = typedecl.declname
+        self._decl_names[typedecl.type] = typedecl.declname
         self.visit(typedecl.type)
 
     def visit_struct(self, struct):
-        self.__structs[self.__get_struct_name(struct)] = struct
         if struct.decls:
+            self._structs[self._get_struct_name(struct)] = struct
             # recurse into the struct
-            self.__struct_stack.insert(0, struct)
+            self._struct_stack.insert(0, struct)
             for decl in struct.decls:
-                self.__struct_members_stack.insert(0, decl.name)
+                self._struct_members_stack.insert(0, decl.name)
                 self.visit(decl)
-                self.__struct_members_stack.pop(0)
-            self.__struct_stack.pop(0)
-        elif self.__ptr_decl_depth:
+                self._struct_members_stack.pop(0)
+            self._struct_stack.pop(0)
+        elif self._ptr_decl_depth:
             # the struct is empty, but add it as a member to the current
             # struct as the current member maybe a pointer to it.
-            self.__add_struct_member(struct.name)
+            self._add_struct_member(struct.name)
 
     def visit_decl(self, decl):
         self.visit(decl.type)
@@ -125,51 +125,57 @@ class AstParser(object):
         self.visit(funcdecl.type)
 
     def visit_ptrdecl(self, ptrdecl):
-        self.__ptr_decl_depth += 1
+        self._ptr_decl_depth += 1
         self.visit(ptrdecl.type)
-        self.__ptr_decl_depth -= 1
+        self._ptr_decl_depth -= 1
 
     def visit_identifier(self, identifier):
         type_name = " ".join(identifier.names)
-        self.__add_struct_member(type_name)
+        self._add_struct_member(type_name)
 
-    def __add_struct_member(self, type_name):
-        if not (self.__struct_stack and self.__struct_members_stack):
+    def _add_struct_member(self, type_name):
+        if not (self._struct_stack and self._struct_members_stack):
             return
 
         # add member to current struct
-        current_struct = self.__struct_stack[0]
-        member_name = self.__struct_members_stack[0]
-        struct_members = self.__struct_members.setdefault(
-            self.__get_struct_name(current_struct), [])
+        current_struct = self._struct_stack[0]
+        member_name = self._struct_members_stack[0]
+        struct_members = self._struct_members.setdefault(
+            self._get_struct_name(current_struct), [])
 
         # get the node associated with this type
         node = None
-        if type_name in self.__typedefs:
-            node = self.__get_leaf_node(self.__typedefs[type_name])
-        elif type_name in self.__structs:
-            node = self.__structs[type_name]
+        if type_name in self._typedefs:
+            node = self._get_leaf_node(self._typedefs[type_name])
+            # If the struct was only declared when the typedef was created, its member
+            # information will not have been recorded and we have to look it up in the
+            # structs
+            if isinstance(node, c_ast.Struct) and node.decls is None:
+                if node.name in self._structs:
+                    node = self._structs[node.name]
+        elif type_name in self._structs:
+            node = self._structs[type_name]
 
         # If it's a struct (and not a pointer to a struct) expand
         # it into the current struct definition
-        if not self.__ptr_decl_depth and isinstance(node, c_ast.Struct):
+        if not self._ptr_decl_depth and isinstance(node, c_ast.Struct):
             for decl in node.decls or []:
-                self.__struct_members_stack.insert(0, decl.name)
+                self._struct_members_stack.insert(0, decl.name)
                 self.visit(decl)
-                self.__struct_members_stack.pop(0)
+                self._struct_members_stack.pop(0)
         else:
             # otherwise add it as a single member
             struct_members.append((member_name, type_name))
 
-    def __get_leaf_node(self, node):
+    def _get_leaf_node(self, node):
         if isinstance(node, c_ast.Typedef):
-            return self.__get_leaf_node(node.type)
+            return self._get_leaf_node(node.type)
         if isinstance(node, c_ast.TypeDecl):
-            return self.__get_leaf_node(node.type)
+            return self._get_leaf_node(node.type)
         return node
 
-    def __get_struct_name(self, node):
-        return node.name or self.__decl_names.get(node) or "_struct_%d" % id(node)
+    def _get_struct_name(self, node):
+        return node.name or self._decl_names.get(node) or "_struct_%d" % id(node)
 
 
 class Writer(object):
