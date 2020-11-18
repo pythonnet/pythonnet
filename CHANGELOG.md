@@ -25,6 +25,7 @@ details about the cause of the failure
 
 -    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
 -    Fix incorrect dereference in params array handling
+-    Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
 -    Fix `object[]` parameters taking precedence when should not in overload resolution
 -    Fixed a bug where all .NET class instances were considered Iterable
 -    Fix incorrect choice of method to invoke when using keyword arguments.
