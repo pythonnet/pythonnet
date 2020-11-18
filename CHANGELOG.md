@@ -33,6 +33,7 @@ details about the cause of the failure
 -    Fixed a bug where indexers could not be used if they were inherited
 -    Made it possible to use `__len__` also on `ICollection<>` interface objects
 -    Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
+-    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
 
 ### Removed
 
