@@ -5,7 +5,7 @@ import pytest
 
 def _run_test(testname):
     dirname = os.path.split(__file__)[0]
-    exename = os.path.join(dirname, 'bin', 'Python.DomainReloadTests.exe'),
+    exename = os.path.join(dirname, 'bin', 'Python.DomainReloadTests.exe')
     proc = subprocess.Popen([
         exename,
         testname,
