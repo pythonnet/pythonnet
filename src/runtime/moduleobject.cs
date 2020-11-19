@@ -341,6 +341,17 @@ namespace Python.Runtime
             // Decref twice in tp_clear, equilibrate them.
             Runtime.XIncref(dict);
             Runtime.XIncref(dict);
+            // destroy the cache(s)
+            foreach (var pair in cache)
+            {
+                Runtime.PyDict_DelItemString(dict, pair.Key);
+                pair.Value.DecrRefCount();
+            }
+            // Trying to remove a key that's not in the dictionary may 
+            // raise an error. We don't care about it.
+            Runtime.PyErr_Clear();
+
+            cache.Clear();
         }
 
         protected override void OnLoad(InterDomainContext context)

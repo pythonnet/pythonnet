@@ -14,47 +14,36 @@ def _run_test(testname):
 
     assert proc.returncode == 0
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_rename_class():
     _run_test('class_rename')
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_rename_class_member_static_function():
     _run_test('static_member_rename')
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_rename_class_member_function():
     _run_test('member_rename')
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_rename_class_member_field():
     _run_test('field_rename')
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_rename_class_member_property():
     _run_test('property_rename')
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_rename_namespace():
     _run_test('namespace_rename')
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_field_visibility_change():
     _run_test("field_visibility_change")
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_method_visibility_change():
     _run_test("method_visibility_change")
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_property_visibility_change():
     _run_test("property_visibility_change")
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_class_visibility_change():
     _run_test("class_visibility_change")
 
-@pytest.mark.xfail(reason="Issue not yet fixed.")
 def test_method_parameters_change():
     _run_test("method_parameters_change")
 

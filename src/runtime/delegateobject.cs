@@ -52,6 +52,11 @@ namespace Python.Runtime
         {
             var self = (DelegateObject)GetManagedObject(tp);
 
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+
             if (Runtime.PyTuple_Size(args) != 1)
             {
                 return Exceptions.RaiseTypeError("class takes exactly one argument");
@@ -64,7 +69,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("argument must be callable");
             }
 
-            Delegate d = PythonEngine.DelegateManager.GetDelegate(self.type, method);
+            Delegate d = PythonEngine.DelegateManager.GetDelegate(self.type.Value, method);
             return CLRObject.GetInstHandle(d, self.pyHandle);
         }
 

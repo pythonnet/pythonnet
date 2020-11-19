@@ -344,7 +344,7 @@ namespace Python.Runtime
                 }
                 if (mt is ClassBase)
                 {
-                    result = ((ClassBase)mt).type;
+                    result = ((ClassBase)mt).type.Value;
                     return true;
                 }
                 // shouldn't happen
