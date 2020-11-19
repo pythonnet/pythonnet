@@ -119,6 +119,7 @@
     <Compile Include="interop.cs" />
     <Compile Include="iterator.cs" />
     <Compile Include="managedtype.cs" />
+    <Compile Include="maybeserialize.cs" />
     <Compile Include="metatype.cs" />
     <Compile Include="methodbinder.cs" />
     <Compile Include="methodbinding.cs" />

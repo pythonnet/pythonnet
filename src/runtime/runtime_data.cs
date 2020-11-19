@@ -120,8 +120,8 @@ namespace Python.Runtime
 
             var objs = RestoreRuntimeDataObjects(storage.GetStorage("objs"));
             RestoreRuntimeDataModules(storage.GetStorage("modules"));
-            var clsObjs = ClassManager.RestoreRuntimeData(storage.GetStorage("classes"));
             TypeManager.RestoreRuntimeData(storage.GetStorage("types"));
+            var clsObjs = ClassManager.RestoreRuntimeData(storage.GetStorage("classes"));
             ImportHook.RestoreRuntimeData(storage.GetStorage("import"));
             PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
 

@@ -14,7 +14,7 @@ namespace Python.Runtime
     [Serializable]
     internal class ConstructorBinder : MethodBinder
     {
-        private Type _containingType;
+        private MaybeType _containingType;
 
         internal ConstructorBinder(Type containingType)
         {
@@ -51,10 +51,14 @@ namespace Python.Runtime
         /// </remarks>
         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
+            if (!_containingType.Valid)
+            {
+                return Exceptions.RaiseTypeError(_containingType.DeletedMessage);
+            }
             object result;
 
-            if (_containingType.IsValueType && !_containingType.IsPrimitive &&
-                !_containingType.IsEnum && _containingType != typeof(decimal) &&
+            if (_containingType.Value.IsValueType && !_containingType.Value.IsPrimitive &&
+                !_containingType.Value.IsEnum && _containingType.Value != typeof(decimal) &&
                 Runtime.PyTuple_Size(args) == 0)
             {
                 // If you are trying to construct an instance of a struct by
@@ -64,7 +68,7 @@ namespace Python.Runtime
                 // Activator.CreateInstance().
                 try
                 {
-                    result = Activator.CreateInstance(_containingType);
+                    result = Activator.CreateInstance(_containingType.Value);
                 }
                 catch (Exception e)
                 {

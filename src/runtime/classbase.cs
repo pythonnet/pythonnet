@@ -18,18 +18,21 @@ namespace Python.Runtime
     [Serializable]
     internal class ClassBase : ManagedType
     {
+        [NonSerialized]
+        internal List<string> dotNetMembers;
         internal Indexer indexer;
-        internal Type type;
+        internal MaybeType type;
 
         internal ClassBase(Type tp)
         {
+            dotNetMembers = new List<string>();
             indexer = null;
             type = tp;
         }
 
         internal virtual bool CanSubclass()
         {
-            return !type.IsEnum;
+            return !type.Value.IsEnum;
         }
 
 
@@ -44,7 +47,12 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            Type target = GenericUtil.GenericForType(type, types.Length);
+            if (!type.Valid)
+            {
+                return Exceptions.RaiseTypeError(type.DeletedMessage);
+            }
+
+            Type target = GenericUtil.GenericForType(type.Value, types.Length);
 
             if (target != null)
             {

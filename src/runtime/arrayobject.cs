@@ -23,6 +23,10 @@ namespace Python.Runtime
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             var self = GetManagedObject(tp) as ArrayObject;
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
             if (Runtime.PyTuple_Size(args) != 1)
             {
                 return Exceptions.RaiseTypeError("array expects 1 argument");
@@ -30,7 +34,7 @@ namespace Python.Runtime
             IntPtr op = Runtime.PyTuple_GetItem(args, 0);
             object result;
 
-            if (!Converter.ToManaged(op, self.type, out result, true))
+            if (!Converter.ToManaged(op, self.type.Value, out result, true))
             {
                 return IntPtr.Zero;
             }
@@ -45,8 +49,12 @@ namespace Python.Runtime
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var arrObj = (ArrayObject)GetManagedObjectType(ob);
+            if (!arrObj.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(arrObj.type.DeletedMessage);
+            }
             var items = obj.inst as Array;
-            Type itemType = arrObj.type.GetElementType();
+            Type itemType = arrObj.type.Value.GetElementType();
             int rank = items.Rank;
             int index;
             object value;

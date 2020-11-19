@@ -4,6 +4,7 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
+    using MaybeMethodInfo = MaybeMethod<MethodInfo>;
     /// <summary>
     /// Implements a Python binding type for CLR methods. These work much like
     /// standard Python method bindings, but the same type is used to bind
@@ -12,7 +13,7 @@ namespace Python.Runtime
     [Serializable]
     internal class MethodBinding : ExtensionType
     {
-        internal MethodInfo info;
+        internal MaybeMethodInfo info;
         internal MethodObject m;
         internal IntPtr target;
         internal IntPtr targetType;
@@ -111,15 +112,15 @@ namespace Python.Runtime
 
             // This works around a situation where the wrong generic method is picked,
             // for example this method in the tests: string Overloaded<T>(int arg1, int arg2, string arg3)
-            if (self.info != null)
+            if (self.info.Valid)
             {
-                if (self.info.IsGenericMethod)
+                if (self.info.Value.IsGenericMethod)
                 {
                     var len = Runtime.PyTuple_Size(args); //FIXME: Never used
                     Type[] sigTp = Runtime.PythonArgsToTypeArray(args, true);
                     if (sigTp != null)
                     {
-                        Type[] genericTp = self.info.GetGenericArguments();
+                        Type[] genericTp = self.info.Value.GetGenericArguments();
                         MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
                         if (betterMatch != null)
                         {
@@ -164,9 +165,9 @@ namespace Python.Runtime
                     if (inst?.inst is IPythonDerivedType)
                     {
                         var baseType = GetManagedObject(self.targetType) as ClassBase;
-                        if (baseType != null)
+                        if (baseType != null && baseType.type.Valid)
                         {
-                            string baseMethodName = "_" + baseType.type.Name + "__" + self.m.name;
+                            string baseMethodName = "_" + baseType.type.Value.Name + "__" + self.m.name;
                             IntPtr baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
                             if (baseMethod != IntPtr.Zero)
                             {
@@ -184,8 +185,7 @@ namespace Python.Runtime
                         }
                     }
                 }
-
-                return self.m.Invoke(target, args, kw, self.info);
+                return self.m.Invoke(target, args, kw, self.info.UnsafeValue);
             }
             finally
             {

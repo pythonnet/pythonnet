@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 namespace Python.Runtime
 {
+    using MaybeMethodInfo = MaybeMethod<MethodInfo>;
+
     /// <summary>
     /// Implements a Python type that represents a CLR method. Method objects
     /// support a subscript syntax [] to allow explicit overload selection.
@@ -13,39 +17,45 @@ namespace Python.Runtime
     [Serializable]
     internal class MethodObject : ExtensionType
     {
-        internal MethodInfo[] info;
+        [NonSerialized]
+        private MethodInfo[] _info = null;
+        private readonly List<MaybeMethodInfo> infoList;
         internal string name;
         internal MethodBinding unbound;
-        internal MethodBinder binder;
+        internal readonly MethodBinder binder;
         internal bool is_static = false;
 
         internal IntPtr doc;
         internal Type type;
 
-        public MethodObject(Type type, string name, MethodInfo[] info)
-        {
-            _MethodObject(type, name, info);
-        }
-
-        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads)
-        {
-            _MethodObject(type, name, info);
-            binder.allow_threads = allow_threads;
-        }
-
-        private void _MethodObject(Type type, string name, MethodInfo[] info)
+        //  `allow_threads = true`: True being the default value of MethodBinder.allow_threads
+        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads = true)
         {
             this.type = type;
             this.name = name;
-            this.info = info;
+            this.infoList = new List<MaybeMethodInfo>();
             binder = new MethodBinder();
             foreach (MethodInfo item in info)
             {
+                this.infoList.Add(item);
                 binder.AddMethod(item);
                 if (item.IsStatic)
                 {
                     this.is_static = true;
                 }
+            }
+            binder.allow_threads = allow_threads;
+        }
+
+        internal MethodInfo[] info
+        {
+            get
+            {
+                if (_info == null)
+                {
+                    _info = (from i in infoList where i.Valid select i.Value).ToArray();
+                }
+                return _info;
             }
         }
 
