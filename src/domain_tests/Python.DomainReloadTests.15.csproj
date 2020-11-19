@@ -1,54 +1,98 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}</ProjectGuid>
+    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
+    <Platforms>x64;x86</Platforms>
+    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Python.DomainReloadTests</RootNamespace>
+    <GenerateProgramFile>false</GenerateProgramFile>
     <AssemblyName>Python.DomainReloadTests</AssemblyName>
+    <RootNamespace>Python.DomainReloadTests</RootNamespace>
+    <PackageId>Python.DomainReloadTests</PackageId>
+    <VersionPrefix>2.5.0</VersionPrefix>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
+    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
+    <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <DocumentationFile Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>1591</NoWarn>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <PythonBuildDir Condition="'$(TargetFramework)'=='net40' AND '$(PythonBuildDir)' == ''">$(SolutionDir)\bin\</PythonBuildDir>
+    <PublishDir Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)_publish</PublishDir>
     <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CustomDefineConstants Condition="'$(CustomDefineConstants)' == ''">$(PYTHONNET_DEFINE_CONSTANTS)</CustomDefineConstants>
+    <BaseDefineConstants>XPLAT</BaseDefineConstants>
+    <DefineConstants>$(DefineConstants);$(CustomDefineConstants);$(BaseDefineConstants);</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.1'">$(DefineConstants);NETCOREAPP</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants Condition="'$(BuildingInsideVisualStudio)' == 'true' AND '$(CustomDefineConstants)' != '' AND $(Configuration.Contains('Debug'))">$(DefineConstants);TRACE;DEBUG</DefineConstants>
+    <FrameworkPathOverride Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono'))">$(NuGetPackageRoot)\microsoft.targetingpack.netframework.v4.5\1.0.1\lib\net45\</FrameworkPathOverride>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+  <PropertyGroup Condition=" '$(Platform)' == 'x86'">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
     <Optimize>false</Optimize>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
     <Optimize>true</Optimize>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='netstandard2.0'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='netstandard2.0'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.Contains('Release'))">
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="TestRunner.cs" />
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <TargetAssembly>$(TargetPath)</TargetAssembly>
+    <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
+  </PropertyGroup>
+
+  <Target Name="AfterBuild">
+    <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
+    <!-- Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" / -->
+  </Target>
+
 </Project>

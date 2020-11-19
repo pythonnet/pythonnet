@@ -821,6 +821,9 @@ namespace CaseRunner
 
         public static int Main(string[] args)
         {
+// We require this slightly convoluted way of ifdef'ing because the Python
+// comments '#' are mistaken as C# preprocessior directive
+#if !NETCOREAPP
             TestCase testCase;
             if (args.Length < 1)
             {
@@ -870,9 +873,10 @@ namespace CaseRunner
                     RunAndUnload(runnerDomain, runnerAssembly);
                 }
             }
-
+#endif
             return 0;
         }
+#if !NETCOREAPP
 
         static void RunAndUnload(AppDomain domain, string assemblyPath)
         {
@@ -898,7 +902,6 @@ namespace CaseRunner
 
             return CreateAssembly(name, code, exe: true);
         }
-
         static string CreateAssembly(string name, string code, bool exe = false)
         {
             // Console.WriteLine(code);
@@ -969,6 +972,7 @@ namespace CaseRunner
 
             return null;
         }
+#endif
 
     }
 }
