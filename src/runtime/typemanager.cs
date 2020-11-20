@@ -181,6 +181,10 @@ namespace Python.Runtime
             Runtime.XDecref(mod);
 
             InitMethods(type, impl);
+
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             return type;
         }
 
@@ -476,6 +480,9 @@ namespace Python.Runtime
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
 
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             //DebugUtil.DumpType(type);
 
             return type;
@@ -577,6 +584,10 @@ namespace Python.Runtime
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
+            
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
 
             return type;
         }
