@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Python.Runtime
 {
-    using MaybeMethodInfo = MaybeMethod<MethodInfo>;
+    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
 
     /// <summary>
     /// Implements a Python type that represents a CLR method. Method objects

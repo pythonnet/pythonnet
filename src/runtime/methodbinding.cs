@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    using MaybeMethodInfo = MaybeMethod<MethodInfo>;
+    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
     /// <summary>
     /// Implements a Python binding type for CLR methods. These work much like
     /// standard Python method bindings, but the same type is used to bind

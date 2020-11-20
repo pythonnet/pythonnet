@@ -119,7 +119,6 @@
     <Compile Include="interop.cs" />
     <Compile Include="iterator.cs" />
     <Compile Include="managedtype.cs" />
-    <Compile Include="maybeserialize.cs" />
     <Compile Include="metatype.cs" />
     <Compile Include="methodbinder.cs" />
     <Compile Include="methodbinding.cs" />
@@ -162,6 +161,9 @@
     <Compile Include="polyfill\ReflectionPolifills.cs" />
     <Compile Include="platform\NativeCodePage.cs" />
     <Compile Include="slots\mp_length.cs" />
+    <Compile Include="StateSerialization\MaybeType.cs" />
+    <Compile Include="StateSerialization\MaybeMethodInfo.cs" />
+    <Compile Include="StateSerialization\MaybeMemberInfo.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
     <Compile Include="$(PythonInteropFile)" />
