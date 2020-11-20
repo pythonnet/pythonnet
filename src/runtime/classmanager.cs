@@ -114,6 +114,8 @@ namespace Python.Runtime
                 // Trying to remove a key that's not in the dictionary may 
                 // raise an error. We don't care about it.
                 Runtime.PyErr_Clear();
+                // We modified the Type object, notify it we did.
+                Runtime.PyType_Modified(cls.Value.tpHandle);
             }
         }
 
@@ -131,6 +133,8 @@ namespace Python.Runtime
                 }
                 // re-init the class
                 InitClassBase(pair.Key.Value, pair.Value);
+                // We modified the Type object, notify it we did.
+                Runtime.PyType_Modified(pair.Value.tpHandle);
                 cache.Add(pair.Key, pair.Value);
                 var context = contexts[pair.Value.pyHandle];
                 pair.Value.Load(context);
@@ -298,6 +302,9 @@ namespace Python.Runtime
                     }
                 }
             }
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(tp);
         }
 
         private static ClassInfo GetClassInfo(Type type)
