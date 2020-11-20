@@ -4,7 +4,7 @@ using System.Security.Permissions;
 
 namespace Python.Runtime
 {
-    using MaybeMethodInfo = MaybeMethod<MethodInfo>;
+    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
     /// <summary>
     /// Implements a Python descriptor type that manages CLR properties.
     /// </summary>

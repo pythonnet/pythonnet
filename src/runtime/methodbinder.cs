@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Python.Runtime
 {
-    using MaybeMethodBase = MaybeMethod<MethodBase>;
+    using MaybeMethodBase = MaybeMethodBase<MethodBase>;
     /// <summary>
     /// A MethodBinder encapsulates information about a (possibly overloaded)
     /// managed method, and is responsible for selecting the right method given
