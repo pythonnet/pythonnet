@@ -14,11 +14,14 @@ namespace Python.Runtime
         string name;
         MemberInfo info;
 
+        [NonSerialized]
+        Exception deserializationException;
+
         public string DeletedMessage 
         {
             get
             {
-                return $"The .NET {typeof(T)} {name} no longer exists";
+                return $"The .NET {typeof(T)} {name} no longer exists. Cause: " + deserializationException?.Message ;
             }
         }
 
@@ -28,7 +31,7 @@ namespace Python.Runtime
             {
                 if (info == null)
                 {
-                    throw new SerializationException(DeletedMessage);
+                    throw new SerializationException(DeletedMessage, innerException: deserializationException);
                 }
                 return (T)info;
             }
@@ -46,6 +49,7 @@ namespace Python.Runtime
         {
             info = fi;
             name = info?.ToString();
+            deserializationException = null;
         }
 
         internal MaybeMemberInfo(SerializationInfo serializationInfo, StreamingContext context)
@@ -53,6 +57,7 @@ namespace Python.Runtime
             // Assumption: name is always stored in "s"
             name = serializationInfo.GetString("s");
             info = null;
+            deserializationException = null;
             try
             {
                 var tp = Type.GetType(serializationInfo.GetString("t"));
@@ -66,8 +71,9 @@ namespace Python.Runtime
                     }
                 }
             }
-            catch 
+            catch (Exception e)
             {
+                deserializationException = e;
             }
         }
 
