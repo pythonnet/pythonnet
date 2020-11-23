@@ -18,6 +18,19 @@ namespace Python.Runtime
     /// </summary>
     internal class ClassManager
     {
+
+        // Binding flags to determine which members to expose in Python.
+        // This is complicated because inheritance in Python is name
+        // based. We can't just find DeclaredOnly members, because we
+        // could have a base class A that defines two overloads of a
+        // method and a class B that defines two more. The name-based
+        // descriptor Python will find needs to know about inherited
+        // overloads as well as those declared on the sub class.
+        internal static readonly BindingFlags BindingFlags = BindingFlags.Static |
+                                                             BindingFlags.Instance |
+                                                             BindingFlags.Public |
+                                                             BindingFlags.NonPublic;
+
         private static Dictionary<MaybeType, ClassBase> cache;
         private static readonly Type dtype;
 
@@ -310,6 +323,47 @@ namespace Python.Runtime
             Runtime.PyType_Modified(tp);
         }
 
+        internal static bool ShouldBindMethod(MethodBase mb)
+        {
+            return (mb.IsPublic || mb.IsFamily || mb.IsFamilyOrAssembly);
+        }
+
+        internal static bool ShouldBindField(FieldInfo fi)
+        {
+            return (fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly);
+        }
+
+        internal static bool ShouldBindProperty(PropertyInfo pi)
+        {
+                MethodInfo mm = null;
+                try
+                {
+                    mm = pi.GetGetMethod(true);
+                    if (mm == null)
+                    {
+                        mm = pi.GetSetMethod(true);
+                    }
+                }
+                catch (SecurityException)
+                {
+                    // GetGetMethod may try to get a method protected by
+                    // StrongNameIdentityPermission - effectively private.
+                    return false;
+                }
+
+                if (mm == null)
+                {
+                    return false;
+                }
+
+                return ShouldBindMethod(mm);
+        }
+
+        internal static bool ShouldBindEvent(EventInfo ei)
+        {
+            return ShouldBindMethod(ei.GetAddMethod(true));
+        }
+
         private static ClassInfo GetClassInfo(Type type)
         {
             var ci = new ClassInfo();
@@ -322,18 +376,7 @@ namespace Python.Runtime
             Type tp;
             int i, n;
 
-            // This is complicated because inheritance in Python is name
-            // based. We can't just find DeclaredOnly members, because we
-            // could have a base class A that defines two overloads of a
-            // method and a class B that defines two more. The name-based
-            // descriptor Python will find needs to know about inherited
-            // overloads as well as those declared on the sub class.
-            BindingFlags flags = BindingFlags.Static |
-                                 BindingFlags.Instance |
-                                 BindingFlags.Public |
-                                 BindingFlags.NonPublic;
-
-            MemberInfo[] info = type.GetMembers(flags);
+            MemberInfo[] info = type.GetMembers(BindingFlags);
             var local = new Hashtable();
             var items = new ArrayList();
             MemberInfo m;
@@ -376,7 +419,7 @@ namespace Python.Runtime
                 for (i = 0; i < inheritedInterfaces.Length; ++i)
                 {
                     Type inheritedType = inheritedInterfaces[i];
-                    MemberInfo[] imembers = inheritedType.GetMembers(flags);
+                    MemberInfo[] imembers = inheritedType.GetMembers(BindingFlags);
                     for (n = 0; n < imembers.Length; n++)
                     {
                         m = imembers[n];
@@ -407,8 +450,7 @@ namespace Python.Runtime
                 {
                     case MemberTypes.Method:
                         meth = (MethodInfo)mi;
-                        if (!(meth.IsPublic || meth.IsFamily ||
-                              meth.IsFamilyOrAssembly))
+                        if (!ShouldBindMethod(meth))
                         {
                             continue;
                         }
@@ -425,28 +467,7 @@ namespace Python.Runtime
                     case MemberTypes.Property:
                         var pi = (PropertyInfo)mi;
 
-                        MethodInfo mm = null;
-                        try
-                        {
-                            mm = pi.GetGetMethod(true);
-                            if (mm == null)
-                            {
-                                mm = pi.GetSetMethod(true);
-                            }
-                        }
-                        catch (SecurityException)
-                        {
-                            // GetGetMethod may try to get a method protected by
-                            // StrongNameIdentityPermission - effectively private.
-                            continue;
-                        }
-
-                        if (mm == null)
-                        {
-                            continue;
-                        }
-
-                        if (!(mm.IsPublic || mm.IsFamily || mm.IsFamilyOrAssembly))
+                        if(!ShouldBindProperty(pi))
                         {
                             continue;
                         }
@@ -471,7 +492,7 @@ namespace Python.Runtime
 
                     case MemberTypes.Field:
                         var fi = (FieldInfo)mi;
-                        if (!(fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly))
+                        if (!ShouldBindField(fi))
                         {
                             continue;
                         }
@@ -481,8 +502,7 @@ namespace Python.Runtime
 
                     case MemberTypes.Event:
                         var ei = (EventInfo)mi;
-                        MethodInfo me = ei.GetAddMethod(true);
-                        if (!(me.IsPublic || me.IsFamily || me.IsFamilyOrAssembly))
+                        if (!ShouldBindEvent(ei))
                         {
                             continue;
                         }

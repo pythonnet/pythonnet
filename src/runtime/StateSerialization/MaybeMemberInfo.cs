@@ -13,11 +13,6 @@ namespace Python.Runtime
 
         string name;
         MemberInfo info;
-        
-        // As seen in ClassManager.GetClassInfo
-        const BindingFlags k_flags = BindingFlags.Static |
-                        BindingFlags.Instance |
-                        BindingFlags.Public ;
 
         public string DeletedMessage 
         {
@@ -64,12 +59,39 @@ namespace Python.Runtime
                 if (tp != null)
                 {
                     var field_name = serializationInfo.GetString("f");
-                    info = tp.GetField(field_name, k_flags);
+                    MemberInfo mi = tp.GetField(field_name, ClassManager.BindingFlags);
+                    if (mi != null && ShouldBindMember(mi))
+                    {
+                        info = mi;
+                    }
                 }
             }
             catch 
             {
             }
+        }
+
+        // This is complicated because we bind fields 
+        // based on the visibility of the field, properties 
+        // based on it's setter/getter (which is a method 
+        //  info) visibility and events based on their
+        // AddMethod visibility.
+        static bool ShouldBindMember(MemberInfo mi)
+        {
+            if (mi is PropertyInfo pi)
+            {
+                return ClassManager.ShouldBindProperty(pi);
+            }
+            else if (mi is FieldInfo fi)
+            {
+                return ClassManager.ShouldBindField(fi);
+            }
+            else if (mi is EventInfo ei)
+            {
+                return ClassManager.ShouldBindEvent(ei);
+            }
+
+            return false;
         }
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
