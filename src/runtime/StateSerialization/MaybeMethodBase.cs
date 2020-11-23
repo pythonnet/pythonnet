@@ -13,10 +13,6 @@ namespace Python.Runtime
 
         string name;
         MethodBase info;
-        // As seen in ClassManager.GetClassInfo
-        const BindingFlags k_flags = BindingFlags.Static |
-                        BindingFlags.Instance |
-                        BindingFlags.Public ;
 
         public T Value
         {
@@ -62,11 +58,17 @@ namespace Python.Runtime
                     types[i] = Type.GetType(param[i]);
                 }
                 // Try to get the method
-                info = tp.GetMethod(field_name, k_flags, binder:null, types:types, modifiers:null);
+                MethodBase mb = tp.GetMethod(field_name, ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
                 // Try again, may be a constructor
-                if (info == null && name.Contains(".ctor"))
+                if (mb == null && name.Contains(".ctor"))
                 {
-                    info = tp.GetConstructor(k_flags, binder:null, types:types, modifiers:null);
+                    mb = tp.GetConstructor(ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
+                }
+
+                // Do like in ClassManager.GetClassInfo
+                if(mb != null && ClassManager.ShouldBindMethod(mb))
+                {
+                    info = mb;
                 }
             }
             catch
