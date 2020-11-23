@@ -346,10 +346,13 @@ namespace Python.Runtime
             {
                 Runtime.PyDict_DelItemString(dict, pair.Key);
                 pair.Value.DecrRefCount();
+                 if (Exceptions.ExceptionMatches(Exceptions.KeyError))
+                {
+                    // Trying to remove a key that's not in the dictionary 
+                    // raises an error. We don't care about it.
+                    Runtime.PyErr_Clear();
+                }
             }
-            // Trying to remove a key that's not in the dictionary may 
-            // raise an error. We don't care about it.
-            Runtime.PyErr_Clear();
 
             cache.Clear();
         }
