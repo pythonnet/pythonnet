@@ -11,8 +11,8 @@ namespace Python.Runtime
     {
         public static implicit operator MaybeMemberInfo<T> (T ob) => new MaybeMemberInfo<T>(ob);
 
-        string m_name;
-        MemberInfo m_info;
+        string name;
+        MemberInfo info;
         
         // As seen in ClassManager.GetClassInfo
         const BindingFlags k_flags = BindingFlags.Static |
@@ -23,7 +23,7 @@ namespace Python.Runtime
         {
             get
             {
-                return $"The .NET {typeof(T)} {m_name} no longer exists";
+                return $"The .NET {typeof(T)} {name} no longer exists";
             }
         }
 
@@ -31,40 +31,40 @@ namespace Python.Runtime
         {
             get
             {
-                if (m_info == null)
+                if (info == null)
                 {
                     throw new SerializationException(DeletedMessage);
                 }
-                return (T)m_info;
+                return (T)info;
             }
         }
 
-        public string Name {get{return m_name;}}
-        public bool Valid => m_info != null;
+        public string Name {get{return name;}}
+        public bool Valid => info != null;
 
         public override string ToString()
         {
-            return (m_info != null ? m_info.ToString() : $"missing type: {m_name}");
+            return (info != null ? info.ToString() : $"missing type: {name}");
         }
 
         public MaybeMemberInfo(T fi)
         {
-            m_info = fi;
-            m_name = m_info?.ToString();
+            info = fi;
+            name = info?.ToString();
         }
 
-        internal MaybeMemberInfo(SerializationInfo info, StreamingContext context)
+        internal MaybeMemberInfo(SerializationInfo serializationInfo, StreamingContext context)
         {
             // Assumption: name is always stored in "s"
-            m_name = info.GetString("s");
-            m_info = null;
+            name = serializationInfo.GetString("s");
+            info = null;
             try
             {
-                var tp = Type.GetType(info.GetString("t"));
+                var tp = Type.GetType(serializationInfo.GetString("t"));
                 if (tp != null)
                 {
-                    var field_name = info.GetString("f");
-                    m_info = tp.GetField(field_name, k_flags);
+                    var field_name = serializationInfo.GetString("f");
+                    info = tp.GetField(field_name, k_flags);
                 }
             }
             catch 
@@ -72,13 +72,13 @@ namespace Python.Runtime
             }
         }
 
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
-            info.AddValue("s", m_name);
+            serializationInfo.AddValue("s", name);
             if (Valid)
             {
-                info.AddValue("f", m_info.Name);
-                info.AddValue("t", m_info.ReflectedType.AssemblyQualifiedName);
+                serializationInfo.AddValue("f", info.Name);
+                serializationInfo.AddValue("t", info.ReflectedType.AssemblyQualifiedName);
             }
         }
     }
