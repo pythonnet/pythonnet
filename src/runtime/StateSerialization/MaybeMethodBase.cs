@@ -14,13 +14,24 @@ namespace Python.Runtime
         string name;
         MethodBase info;
 
+        [NonSerialized]
+        Exception deserializationException;
+
+        public string DeletedMessage 
+        {
+            get
+            {
+                return $"The .NET {typeof(T)} {name} no longer exists. Cause: " + deserializationException?.Message ;
+            }
+        }
+
         public T Value
         {
             get
             {
                 if (info == null)
                 {
-                    throw new SerializationException($"The .NET {typeof(T)} {name} no longer exists");
+                    throw new SerializationException(DeletedMessage, innerException: deserializationException);
                 }
                 return (T)info;
             }
@@ -39,12 +50,14 @@ namespace Python.Runtime
         {
             info = mi;
             name = mi?.ToString();
+            deserializationException = null;
         }
 
         internal MaybeMethodBase(SerializationInfo serializationInfo, StreamingContext context)
         {
             name = serializationInfo.GetString("s");
             info = null;
+            deserializationException = null;
             try
             {
                 // Retrive the reflected type of the method;
@@ -71,8 +84,9 @@ namespace Python.Runtime
                     info = mb;
                 }
             }
-            catch
+            catch (Exception e)
             {
+                deserializationException = e;
             }
         }
 
