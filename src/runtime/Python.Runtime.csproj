@@ -162,7 +162,7 @@
     <Compile Include="platform\NativeCodePage.cs" />
     <Compile Include="slots\mp_length.cs" />
     <Compile Include="StateSerialization\MaybeType.cs" />
-    <Compile Include="StateSerialization\MaybeMethodInfo.cs" />
+    <Compile Include="StateSerialization\MaybeMethodBase.cs" />
     <Compile Include="StateSerialization\MaybeMemberInfo.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">

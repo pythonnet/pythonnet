@@ -39,13 +39,13 @@ namespace Python.Runtime
             return (m_info != null ? m_info.ToString() : $"missing method info: {m_name}");
         }
 
-        public MaybeMethod(T mi)
+        public MaybeMethodBase(T mi)
         {
             m_info = mi;
             m_name = mi?.ToString();
         }
 
-        internal MaybeMethod(SerializationInfo info, StreamingContext context)
+        internal MaybeMethodBase(SerializationInfo info, StreamingContext context)
         {
             m_name = info.GetString("s");
             m_info = null;
