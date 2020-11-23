@@ -77,20 +77,15 @@ namespace Python.Runtime
         {
             Debug.Assert(cache == null || cache.Count == 0);
             storage.GetValue("slots", out _slotsImpls);
-            var _cache = new Dictionary<MaybeType, IntPtr>();
-            storage.GetValue("cache", out _cache);
+            storage.GetValue<Dictionary<MaybeType, IntPtr>>("cache", out var _cache);
             foreach (var entry in _cache)
             {
-                Type type = null;
-                try
-                {
-                    type = entry.Key.Value;
-                }
-                catch
+                if (!entry.Key.Valid)
                 {
                     Runtime.XDecref(entry.Value);
                     continue;
                 }
+                Type type = entry.Key.Value;;
                 IntPtr handle = entry.Value;
                 cache[type] = handle;
                 SlotsHolder holder = CreateSolotsHolder(handle);
