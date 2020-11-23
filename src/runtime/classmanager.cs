@@ -110,10 +110,13 @@ namespace Python.Runtime
                     // No need to decref the member, the ClassBase instance does 
                     // not own the reference.
                     Runtime.PyDict_DelItemString(dict, member);
+                    if (Exceptions.ExceptionMatches(Exceptions.KeyError))
+                    {
+                        // Trying to remove a key that's not in the dictionary 
+                        // raises an error. We don't care about it.
+                        Runtime.PyErr_Clear();
+                    }
                 }
-                // Trying to remove a key that's not in the dictionary may 
-                // raise an error. We don't care about it.
-                Runtime.PyErr_Clear();
                 // We modified the Type object, notify it we did.
                 Runtime.PyType_Modified(cls.Value.tpHandle);
             }
