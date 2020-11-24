@@ -60,3 +60,6 @@ def test_rename_event():
 @pytest.mark.xfail(reason="newly instanced object uses PyType_GenericAlloc")
 def test_construct_removed_class():
     _run_test("construct_removed_class")
+
+def test_out_to_ref_param():
+    _run_test("out_to_ref_param")
