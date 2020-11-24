@@ -1013,6 +1013,8 @@ namespace Python.Runtime
                 ? new IntPtr((void*)(*((uint*)p + n)))
                 : new IntPtr((void*)(*((ulong*)p + n)));
         }
+        internal static unsafe BorrowedReference PyObject_TYPE(BorrowedReference op)
+            => new BorrowedReference(PyObject_TYPE(op.DangerousGetAddress()));
 
         /// <summary>
         /// Managed version of the standard Python C API PyObject_Type call.
@@ -1202,6 +1204,8 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool PyNumber_Check(IntPtr ob);
 
+        internal static bool PyInt_Check(BorrowedReference ob)
+            => PyObject_TypeCheck(ob, new BorrowedReference(PyIntType));
         internal static bool PyInt_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, PyIntType);
@@ -1291,6 +1295,8 @@ namespace Python.Runtime
                 return PyLong_AsUnsignedLong64(value);
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern long PyLong_AsLongLong(BorrowedReference value);
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern long PyLong_AsLongLong(IntPtr value);
 
@@ -1829,11 +1835,15 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_New(IntPtr size);
 
+        internal static BorrowedReference PyTuple_GetItem(BorrowedReference pointer, long index)
+            => PyTuple_GetItem(pointer, new IntPtr(index));
         internal static IntPtr PyTuple_GetItem(IntPtr pointer, long index)
         {
             return PyTuple_GetItem(pointer, new IntPtr(index));
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        private static extern BorrowedReference PyTuple_GetItem(BorrowedReference pointer, IntPtr index);
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_GetItem(IntPtr pointer, IntPtr index);
 
@@ -1950,10 +1960,14 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool PyType_IsSubtype(IntPtr t1, IntPtr t2);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool PyType_IsSubtype(BorrowedReference t1, BorrowedReference t2);
 
         internal static bool PyObject_TypeCheck(IntPtr ob, IntPtr tp)
+            => PyObject_TypeCheck(new BorrowedReference(ob), new BorrowedReference(tp));
+        internal static bool PyObject_TypeCheck(BorrowedReference ob, BorrowedReference tp)
         {
-            IntPtr t = PyObject_TYPE(ob);
+            BorrowedReference t = PyObject_TYPE(ob);
             return (t == tp) || PyType_IsSubtype(t, tp);
         }
 
