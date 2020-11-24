@@ -866,6 +866,19 @@ namespace Python.Runtime
         {
             MethodBase me1 = m1.Valid ? m1.Value : null;
             MethodBase me2 = m2.Valid ? m2.Value : null;
+            if (me1 == null && me2 == null)
+            {
+                return 0;
+            }
+            else if (me1 == null)
+            {
+                return -1;
+            }
+            else if (me2 == null)
+            {
+                return 1;
+            }
+
             if (me1.DeclaringType != me2.DeclaringType)
             {
                 // m2's type derives from m1's type, favor m2

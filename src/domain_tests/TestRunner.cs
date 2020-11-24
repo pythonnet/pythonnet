@@ -771,6 +771,84 @@ def after_reload():
     print(bar.__repr__())
                     ",
             },
+
+            new TestCase
+            {
+                Name = "out_to_ref_param",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls 
+                        {
+                            public static void MyFn (out Data a)
+                            {
+                                a = new Data();
+                                a.num = 9001;
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls
+                        {
+                            public static void MyFn (ref Data a)
+                            {
+                                a.num = 7;
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+import System
+
+def before_reload():
+
+    foo = TestNamespace.Data()
+    bar = TestNamespace.Cls.MyFn(foo)
+    assert bar.num == 9001
+    # foo shouldn't have changed.
+    assert foo.num == -1
+
+
+def after_reload():
+
+    try:
+        # Now that the function takes a ref type, we must pass a valid object.
+        bar = TestNamespace.Cls.MyFn(None)
+    except System.NullReferenceException as e:
+        print('caught expected exception')
+    else:
+        raise AssertionError('failed to raise')
+
+    foo = TestNamespace.Data()
+    bar = TestNamespace.Cls.MyFn(foo)
+    # foo should have changed
+    assert foo.num == 7
+    assert bar.num == 7
+    # Pythonnet also returns a new object with `ref`-quialified parameters
+    assert foo is not bar
+                    ",
+            },
         };
 
         /// <summary>
