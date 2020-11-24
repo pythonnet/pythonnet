@@ -675,9 +675,7 @@ namespace Python.Runtime
 
         static void InitializeSlot(IntPtr type, ThunkInfo thunk, string name, SlotsHolder slotsHolder = null, bool canOverride = true)
         {
-            Type typeOffset = typeof(TypeOffset);
-            FieldInfo fi = typeOffset.GetField(name);
-            var offset = (int)fi.GetValue(typeOffset);
+            int offset = ManagedDataOffsets.GetSlotOffset(name);
 
             if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
             {

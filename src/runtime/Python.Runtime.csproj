@@ -80,6 +80,10 @@
     <Compile Include="Codecs\DecoderGroup.cs" />
     <Compile Include="Codecs\RawProxyEncoder.cs" />
     <Compile Include="Codecs\TupleCodecs.cs" />
+    <Compile Include="native\ABI.cs" />
+    <Compile Include="native\GeneratedTypeOffsets.cs" />
+    <Compile Include="native\ITypeOffsets.cs" />
+    <Compile Include="native\TypeOffset.cs" />
     <Compile Include="converterextensions.cs" />
     <Compile Include="finalizer.cs" />
     <Compile Include="intern.cs" />
