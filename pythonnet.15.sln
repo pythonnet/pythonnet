@@ -42,6 +42,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conda.recipe", "conda.recip
 		conda.recipe\README.md = conda.recipe\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BC426F42-8494-4AA5-82C9-5109ACD97BD1}"
+	ProjectSection(SolutionItems) = preProject
+		tools\geninterop\geninterop.py = tools\geninterop\geninterop.py
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

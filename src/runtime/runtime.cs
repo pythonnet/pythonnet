@@ -6,6 +6,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using Python.Runtime.Native;
 using Python.Runtime.Platform;
 using System.Linq;
 
@@ -90,11 +91,13 @@ namespace Python.Runtime
         {
             get
             {
-                var versionTuple = new PyTuple(PySys_GetObject("version_info"));
-                var major = versionTuple[0].As<int>();
-                var minor = versionTuple[1].As<int>();
-                var micro = versionTuple[2].As<int>();
-                return new Version(major, minor, micro);
+                using (var versionTuple = new PyTuple(PySys_GetObject("version_info")))
+                {
+                    var major = versionTuple[0].As<int>();
+                    var minor = versionTuple[1].As<int>();
+                    var micro = versionTuple[2].As<int>();
+                    return new Version(major, minor, micro);
+                }
             }
         }
 
@@ -143,13 +146,17 @@ namespace Python.Runtime
 
             IsFinalizing = false;
             InternString.Initialize();
+
+            InitPyMembers();
+
+            ABI.Initialize(PyVersion,
+                           pyType: new BorrowedReference(PyTypeType));
+
             GenericUtil.Reset();
             PyScopeManager.Reset();
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
-
-            InitPyMembers();
 
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
