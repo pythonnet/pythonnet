@@ -22,6 +22,8 @@ namespace Python.Runtime
         internal static int mp_subscript { get; private set; }
         internal static int name { get; private set; }
         internal static int nb_add { get; private set; }
+        internal static int nb_inplace_add { get; private set; }
+        internal static int nb_inplace_subtract { get; private set; }
         internal static int ob_size { get; private set; }
         internal static int ob_type { get; private set; }
         internal static int qualname { get; private set; }
@@ -73,6 +75,7 @@ namespace Python.Runtime
             }
 
             ValidateUnusedTypeOffsetProperties(offsetProperties);
+            ValidateRequiredOffsetsPresent(offsetProperties);
         }
 
         static readonly BindingFlags FieldFlags = BindingFlags.NonPublic | BindingFlags.Static;
@@ -101,6 +104,49 @@ namespace Python.Runtime
             }
             extras.Sort();
             Debug.Assert(extras.Count == 0, message: string.Join(", ", extras));
+        }
+
+        [Conditional("DEBUG")]
+        static void ValidateRequiredOffsetsPresent(PropertyInfo[] offsetProperties)
+        {
+            var present = new HashSet<string>(offsetProperties.Select(p => p.Name));
+            var missing = new HashSet<string>();
+
+            var thisAssembly = Assembly.GetExecutingAssembly();
+            var managedTypes = thisAssembly.GetTypes()
+                .Where(typeof(ManagedType).IsAssignableFrom)
+                .ToList();
+            foreach (var managedType in managedTypes)
+            {
+                var slots = managedType.GetMethods(BindingFlags.Public | BindingFlags.Static);
+                foreach(var slot in slots)
+                    if (!present.Contains(slot.Name))
+                        missing.Add(slot.Name);
+            }
+            foreach (string notSlot in new[]
+            {
+                "__instancecheck__",
+                "__subclasscheck__",
+                "_AtExit",
+                "AddReference",
+                "FinalizeObject",
+                "FindAssembly",
+                "get_SuppressDocs",
+                "get_SuppressOverloads",
+                "GetClrType",
+                "getPreload",
+                "Initialize",
+                "ListAssemblies",
+                "Release",
+                "Reset",
+                "set_SuppressDocs",
+                "set_SuppressOverloads",
+                "setPreload",
+            })
+                missing.Remove(notSlot);
+
+            Debug.Assert(missing.Count == 0,
+                         "Missing slots: " + string.Join(", ", missing));
         }
     }
 }
