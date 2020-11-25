@@ -15,6 +15,8 @@ namespace Python.Runtime.Native
         int mp_subscript { get; }
         int name { get; }
         int nb_add { get; }
+        int nb_inplace_add { get; }
+        int nb_inplace_subtract { get; }
         int ob_size { get; }
         int ob_type { get; }
         int qualname { get; }
