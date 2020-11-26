@@ -43,7 +43,7 @@ namespace Python.Runtime
             }
             if (dimensions.Length != 1)
             {
-                return CreateMultidimensional(self.type.GetElementType(), dimensions,
+                return CreateMultidimensional(self.type.Value.GetElementType(), dimensions,
                          shapeTuple: new BorrowedReference(args),
                          pyType: tp)
                        .DangerousMoveToPointerOrNull();
@@ -61,7 +61,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    return NewInstance(self.type.GetElementType(), tp, dimensions)
+                    return NewInstance(self.type.Value.GetElementType(), tp, dimensions)
                            .DangerousMoveToPointerOrNull();
                 }
             }
