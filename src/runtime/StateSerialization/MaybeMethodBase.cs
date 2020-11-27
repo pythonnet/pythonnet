@@ -18,6 +18,7 @@ namespace Python.Runtime
                 Out,
                 Ref
             }
+
             public readonly string Name;
             public readonly TypeModifier Modifier;
 
@@ -45,6 +46,7 @@ namespace Python.Runtime
                 return this.Equals(new ParameterHelper(other));
             }
         }
+
         public static implicit operator MaybeMethodBase<T> (T ob) => new MaybeMethodBase<T>(ob);
 
         string name;
@@ -102,50 +104,90 @@ namespace Python.Runtime
                 var field_name = serializationInfo.GetString("f");
                 var param = (ParameterHelper[])serializationInfo.GetValue("p", typeof(ParameterHelper[]));
                 Type[] types = new Type[param.Length];
+                bool hasRefType = false;
                 for (int i = 0; i < param.Length; i++)
                 {
                     types[i] = Type.GetType(param[i].Name);
+                    if (types[i].IsByRef)
+                    {
+                        hasRefType = true;
+                    }
                 }
-                // Try to get the method
-                MethodBase mb = tp.GetMethod(field_name, ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
-                // Try again, may be a constructor
-                if (mb == null && name.Contains(".ctor"))
+
+                MethodBase mb = null;
+                var isCtor = serializationInfo.GetBoolean("c");
+                if (isCtor)
                 {
-                    mb = tp.GetConstructor(ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
+                    mb = ResolveConstructor(tp, types);
+                }
+                else
+                {
+                    mb = tp.GetMethod(field_name, ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
+                }
+                
+                if (mb != null && hasRefType)
+                {
+                    CheckRefTypes(mb, param);
                 }
 
                 // Do like in ClassManager.GetClassInfo
                 if(mb != null && ClassManager.ShouldBindMethod(mb))
                 {
-                    // One more step: Changing:
-                    // void MyFn (ref int a)
-                    // to:
-                    // void MyFn (out int a)
-                    // will still find the fucntion correctly as, `in`, `out` and `ref`
-                    // are all represented as a reference type. Query the method we got
-                    // and validate the parameters
-                    bool matches = true;
-                    if (param.Length != 0)
-                    {
-                        foreach (var item in Enumerable.Zip(param, mb.GetParameters(), (x, y) => new {x, y}))
-                        {
-                            if (!item.x.Equals(item.y))
-                            {
-                                matches = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (matches)
-                    {
-                        info = mb;
-                    }
+                    info = mb;
                 }
             }
             catch (Exception e)
             {
                 deserializationException = e;
             }
+        }
+
+        MethodBase ResolveConstructor (Type tp, Type[] parameters)
+        {
+            MethodBase mb = null;
+            try
+            {
+                mb = tp.GetConstructor(ClassManager.BindingFlags, binder:null, types:parameters, modifiers:null);
+            }
+            catch (AmbiguousMatchException)
+            {
+                // The static constructor and non-static constructor may 
+                // have the same signature. Use ToString to disambiguate.
+                var mbs = tp.GetConstructors(ClassManager.BindingFlags);
+                foreach (var ctor in mbs)
+                {
+                    if (name == ctor.ToString())
+                    {
+                        mb = ctor;
+                        break;
+                    }
+                }
+            }
+            return mb;
+        }
+
+        MethodBase CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
+        {
+            // One more step: Changing:
+            // void MyFn (ref int a)
+            // to:
+            // void MyFn (out int a)
+            // will still find the fucntion correctly as, `in`, `out` and `ref`
+            // are all represented as a reference type. Query the method we got
+            // and validate the parameters
+            if (ph.Length != 0)
+            {
+                foreach (var item in Enumerable.Zip(ph, mb.GetParameters(), (orig, current) => new {orig, current}))
+                {
+                    if (!item.current.Equals(item.orig))
+                    {
+                        // False positive
+                        return null;
+                    }
+                }
+            }
+
+            return mb;
         }
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
@@ -157,6 +199,7 @@ namespace Python.Runtime
                 serializationInfo.AddValue("t", info.ReflectedType.AssemblyQualifiedName);
                 ParameterHelper[] parameters = (from p in info.GetParameters() select new ParameterHelper(p)).ToArray();
                 serializationInfo.AddValue("p", parameters, typeof(ParameterHelper[]));
+                serializationInfo.AddValue("c", info.IsConstructor);
             }
         }
     }

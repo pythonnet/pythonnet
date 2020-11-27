@@ -63,3 +63,6 @@ def test_construct_removed_class():
 
 def test_out_to_ref_param():
     _run_test("out_to_ref_param")
+
+def test_nested_type():
+    _run_test("nested_type")

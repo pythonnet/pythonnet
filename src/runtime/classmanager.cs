@@ -137,25 +137,32 @@ namespace Python.Runtime
 
         internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(RuntimeDataStorage storage)
         {
-            var _cache = storage.GetValue<Dictionary<MaybeType, ClassBase>>("cache");
+            cache = storage.GetValue<Dictionary<MaybeType, ClassBase>>("cache");
+            var invalidClasses = new List<KeyValuePair<MaybeType, ClassBase>>();
             var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
             var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
-            foreach (var pair in _cache)
+            foreach (var pair in cache)
             {
                 if (!pair.Key.Valid)
                 {
-                    Runtime.XDecref(pair.Value.pyHandle);
+                    invalidClasses.Add(pair);
                     continue;
                 }
                 // re-init the class
                 InitClassBase(pair.Key.Value, pair.Value);
                 // We modified the Type object, notify it we did.
                 Runtime.PyType_Modified(pair.Value.tpHandle);
-                cache.Add(pair.Key, pair.Value);
                 var context = contexts[pair.Value.pyHandle];
                 pair.Value.Load(context);
                 loadedObjs.Add(pair.Value, context);
             }
+            
+            foreach (var pair in invalidClasses)
+            {
+                cache.Remove(pair.Key);
+                Runtime.XDecref(pair.Value.pyHandle);
+            }
+
             return loadedObjs;
         }
 
@@ -163,6 +170,7 @@ namespace Python.Runtime
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
+        /// <returns>A Borrowed reference to the ClassBase object</returns>
         internal static ClassBase GetClass(Type type)
         {
             ClassBase cb = null;
@@ -519,6 +527,8 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         ob = GetClass(tp);
+                        // GetClass returns a Borrowed ref. ci.members owns the reference.
+                        ob.IncrRefCount();
                         ci.members[mi.Name] = ob;
                         continue;
                 }
