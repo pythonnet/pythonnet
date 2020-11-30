@@ -66,9 +66,12 @@ namespace Python.Runtime
         {
             if (offsets is null) throw new ArgumentNullException(nameof(offsets));
 
+            slotNames.Clear();
             var offsetProperties = typeof(TypeOffset).GetProperties(FieldFlags);
             foreach (var offsetProperty in offsetProperties)
             {
+                slotNames.Add(offsetProperty.Name);
+
                 var sourceProperty = typeof(ITypeOffsets).GetProperty(offsetProperty.Name);
                 int value = (int)sourceProperty.GetValue(offsets, null);
                 offsetProperty.SetValue(obj: null, value: value, index: null);
@@ -92,6 +95,9 @@ namespace Python.Runtime
             var property = typeof(TypeOffset).GetProperty(name, FieldFlags);
             return (int)property.GetValue(obj: null, index: null);
         }
+
+        static readonly HashSet<string> slotNames = new HashSet<string>();
+        internal static bool IsSupportedSlotName(string name) => slotNames.Contains(name);
 
         [Conditional("DEBUG")]
         static void ValidateUnusedTypeOffsetProperties(PropertyInfo[] offsetProperties)
