@@ -1,10 +1,9 @@
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
-    <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU</Platforms>
-    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
-    <AssetTargetFallback Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono'))">net45</AssetTargetFallback>
+    <Configurations>DebugMono;ReleaseMono;DebugWin;ReleaseWin</Configurations>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
     <PackageId>pythonnet</PackageId>
@@ -28,9 +27,7 @@
     <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
     <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
     <OutputPath>bin\</OutputPath>
-    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
-    <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
-    <DocumentationFile Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591;NU1701</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition="'$(PythonBuildDir)' == ''">$(SolutionDir)\bin\</PythonBuildDir>
@@ -41,60 +38,39 @@
     <CustomDefineConstants Condition="'$(CustomDefineConstants)' == ''">$(PYTHONNET_DEFINE_CONSTANTS)</CustomDefineConstants>
     <BaseDefineConstants>XPLAT</BaseDefineConstants>
     <DefineConstants>$(DefineConstants);$(CustomDefineConstants);$(BaseDefineConstants);</DefineConstants>
-    <DefineConstants Condition="'$(TargetFramework)'=='netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
     <DefineConstants Condition="'$(BuildingInsideVisualStudio)' == 'true' AND '$(CustomDefineConstants)' != '' AND $(Configuration.Contains('Debug'))">$(DefineConstants);TRACE;DEBUG</DefineConstants>
-    <FrameworkPathOverride Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono'))">$(NuGetPackageRoot)\microsoft.targetingpack.netframework.v4.5\1.0.1\lib\net45\</FrameworkPathOverride>
     <Python2Version>$(PYTHONNET_PY2_VERSION)</Python2Version>
     <Python2Version Condition="'$(Python2Version)'==''">PYTHON27</Python2Version>
-    <Python3Version>$(PYTHONNET_PY3_VERSION)</Python3Version>
+    <Python3Version>$(PYTHONNET__VERSION)</Python3Version>
     <Python3Version Condition="'$(Python3Version)'==''">PYTHON38</Python3Version>
     <PythonWinDefineConstants>$(PYTHONNET_WIN_DEFINE_CONSTANTS)</PythonWinDefineConstants>
+    <PythonWinDefineConstants Condition="'$(PythonWinDefineConstants)'==''">WINDOWS</PythonWinDefineConstants>
     <PythonMonoDefineConstants>$(PYTHONNET_MONO_DEFINE_CONSTANTS)</PythonMonoDefineConstants>
     <PythonMonoDefineConstants Condition="'$(PythonMonoDefineConstants)'==''">MONO_LINUX;PYTHON_WITH_PYMALLOC</PythonMonoDefineConstants>
     <PythonInteropFile Condition="'$(PythonInteropFile)'==''">$(PYTHONNET_INTEROP_FILE)</PythonInteropFile>
   </PropertyGroup>
-  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='netstandard2.0'">
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='netstandard2.0'">
+  <PropertyGroup Condition="$(Configuration.Contains('Release'))">
     <DebugSymbols>true</DebugSymbols>
     <Optimize>true</Optimize>
     <DebugType>portable</DebugType>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;$(Python2Version);$(PythonMonoDefineConstants)</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;$(Python3Version);$(PythonMonoDefineConstants)</DefineConstants>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);$(Python3Version);$(PythonMonoDefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;$(Python2Version);$(PythonMonoDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;$(Python3Version);$(PythonMonoDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);$(Python3Version);$(PythonMonoDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;$(Python2Version);$(PythonWinDefineConstants)</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;$(Python3Version);$(PythonWinDefineConstants)</DefineConstants>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);$(Python3Version);$(PythonWinDefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON2;$(Python2Version);$(PythonWinDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
-    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);PYTHON3;$(Python3Version);$(PythonWinDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(CustomDefineConstants)' == ''">$(DefineConstants);$(Python3Version);$(PythonWinDefineConstants);FINALIZER_CHECK;TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
@@ -120,17 +96,9 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup>
     <PackageReference Include="System.Security.Permissions" Version="4.4.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)'=='net40'">
-    <PackageReference Include="Microsoft.TargetingPack.NETFramework.v4.5" Version="1.0.1" ExcludeAssets="All" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -165,12 +133,7 @@
     <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
   </PropertyGroup>
 
-  <Target Name="BeforeBuild" Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono')) AND '$(OS)' != 'Windows_NT'">
-    <!--Endless war!-->
-    <Exec Command="[[ -e $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.Xml.dll ]] || cp $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.XML.dll $(NuGetPackageRoot)/microsoft.targetingpack.netframework.v4.5/1.0.1/lib/net45/System.Xml.dll" />
-  </Target>
   <Target Name="AfterBuild">
-    <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-    <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
+    <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>

@@ -8,17 +8,6 @@ namespace Python.Runtime
     [Obsolete("This API is for internal use only")]
     public static class ReflectionPolifills
     {
-#if NETSTANDARD
-        public static AssemblyBuilder DefineDynamicAssembly(this AppDomain appDomain, AssemblyName assemblyName, AssemblyBuilderAccess assemblyBuilderAccess)
-        {
-            return AssemblyBuilder.DefineDynamicAssembly(assemblyName, assemblyBuilderAccess);
-        }
-
-        public static Type CreateType(this TypeBuilder typeBuilder)
-        {
-            return typeBuilder.CreateTypeInfo();
-        }
-#endif
         public static T GetCustomAttribute<T>(this Type type) where T: Attribute
         {
             return type.GetCustomAttributes(typeof(T), inherit: false)

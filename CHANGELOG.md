@@ -41,6 +41,8 @@ details about the cause of the failure
 ### Removed
 
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
+-   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
+(see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 
 ## [2.5.0][] - 2020-06-14
 

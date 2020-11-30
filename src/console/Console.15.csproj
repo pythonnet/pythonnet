@@ -1,9 +1,9 @@
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
-    <TargetFrameworks>net40;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>
     <Platforms>x64;x86</Platforms>
-    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
+    <Configurations>DebugMono;ReleaseMono;DebugWin;ReleaseWin</Configurations>
     <OutputType>Exe</OutputType>
     <AssemblyName>nPython</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
@@ -16,13 +16,13 @@
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <OutputPath>bin\</OutputPath>
-    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net40'">false</AppendTargetFrameworkToOutputPath>
-    <DocumentationFile Condition="'$(TargetFramework)'=='net40'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
-    <DocumentationFile Condition="'$(TargetFramework)'!='net40'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <AppendTargetFrameworkToOutputPath Condition="'$(TargetFramework)'=='net461'">false</AppendTargetFrameworkToOutputPath>
+    <DocumentationFile Condition="'$(TargetFramework)'=='net461'">$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <DocumentationFile Condition="'$(TargetFramework)'!='net461'">$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591</NoWarn>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
-    <PublishDir Condition="'$(TargetFramework)'!='net40'">$(PythonBuildDir)\$(TargetFramework)\</PublishDir>
+    <PublishDir Condition="'$(TargetFramework)'!='net461'">$(PythonBuildDir)\$(TargetFramework)\</PublishDir>
     <LangVersion>6</LangVersion>
     <ApplicationIcon>python-clear.ico</ApplicationIcon>
     <ErrorReport>prompt</ErrorReport>
@@ -30,7 +30,6 @@
     <BaseDefineConstants>XPLAT</BaseDefineConstants>
     <DefineConstants>$(DefineConstants);$(CustomDefineConstants);$(BaseDefineConstants);</DefineConstants>
     <DefineConstants Condition="'$(BuildingInsideVisualStudio)' == 'true' AND '$(CustomDefineConstants)' != '' AND $(Configuration.Contains('Debug'))">$(DefineConstants);TRACE;DEBUG</DefineConstants>
-    <FrameworkPathOverride Condition="'$(TargetFramework)'=='net40' AND $(Configuration.Contains('Mono'))">$(NuGetPackageRoot)\microsoft.targetingpack.netframework.v4.5\1.0.1\lib\net45\</FrameworkPathOverride>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -39,11 +38,11 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">
+  <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net461'">
     <Optimize>false</Optimize>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net40'">
+  <PropertyGroup Condition="$(Configuration.Contains('Release')) AND '$(TargetFramework)'=='net461'">
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
@@ -68,7 +67,7 @@
   <PropertyGroup Condition="'$(PythonManifest)' != ''">
     <ApplicationManifest>$(PythonManifest)</ApplicationManifest>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -78,9 +77,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="python-clear.ico" />
-    <EmbeddedResource Condition="'$(TargetFramework)'=='net40'" Include="$(PythonBuildDir)\Python.Runtime.dll">
+    <EmbeddedResource Condition="'$(TargetFramework)'=='net461'" Include="$(PythonBuildDir)\Python.Runtime.dll">
       <LogicalName>Python.Runtime.dll</LogicalName>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.15.csproj" />
@@ -89,6 +94,6 @@
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <Target Name="AfterBuild">
-    <Copy Condition="'$(TargetFramework)'=='net40'" SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
+    <Copy Condition="'$(TargetFramework)'=='net461'" SourceFiles="$(TargetPath)" DestinationFolder="$(PythonBuildDir)" />
   </Target>
 </Project>
