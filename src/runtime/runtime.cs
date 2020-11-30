@@ -18,31 +18,8 @@ namespace Python.Runtime
     /// </summary>
     public class Runtime
     {
-        // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow
-        // binary substitution of different Python.Runtime.dll builds in a target application.
-
         public static int UCS => _UCS;
-
-#if UCS4
-        internal const int _UCS = 4;
-
-        /// <summary>
-        /// EntryPoint to be used in DllImport to map to correct Unicode
-        /// methods prior to PEP393. Only used for PY27.
-        /// </summary>
-        private const string PyUnicodeEntryPoint = "PyUnicodeUCS4_";
-#elif UCS2
-        internal const int _UCS = 2;
-
-        /// <summary>
-        /// EntryPoint to be used in DllImport to map to correct Unicode
-        /// methods prior to PEP393. Only used for PY27.
-        /// </summary>
-        private const string PyUnicodeEntryPoint = "PyUnicodeUCS2_";
-#else
-#error You must define either UCS2 or UCS4!
-#endif
+        internal static readonly int _UCS = PyUnicode_GetMax() <= 0xFFFF ? 2 : 4;
 
 #if PYTHON36
         const string _minor = "6";
@@ -1537,17 +1514,6 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
-        internal static IntPtr PyString_FromStringAndSize(string value, long size)
-        {
-            return _PyString_FromStringAndSize(value, new IntPtr(size));
-        }
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_FromStringAndSize")]
-        internal static extern IntPtr _PyString_FromStringAndSize(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
-            IntPtr size
-        );
 
         internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, long size)
         {
@@ -1587,6 +1553,9 @@ namespace Python.Runtime
         {
             return PyUnicode_FromKindAndData(_UCS, s, size);
         }
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyUnicode_GetMax();
 
         internal static long PyUnicode_GetSize(IntPtr ob)
         {

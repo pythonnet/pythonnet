@@ -251,14 +251,8 @@ class BuildExtPythonnet(build_ext.build_ext):
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
 
-        # Up to Python 3.2 sys.maxunicode is used to determine the size of
-        # Py_UNICODE, but from 3.3 onwards Py_UNICODE is a typedef of wchar_t.
-        import ctypes
-        unicode_width = ctypes.sizeof(ctypes.c_wchar)
-
         defines = [
             "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR),
-            "UCS{0}".format(unicode_width),
         ]
 
         if CONFIG == "Debug":
