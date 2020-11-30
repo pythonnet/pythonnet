@@ -268,8 +268,7 @@ namespace Python.Runtime
 
 
 def gen_interop_tail(writer):
-    tail = """#endif
-}
+    tail = """}
 """
     writer.extend(tail)
 
@@ -297,7 +296,6 @@ def gen_heap_type_members(parser, writer, type_name = None):
         class_definition += "        public int %s  { get; private set; }\n" % name
 
     class_definition += """    }
-
 """
     writer.extend(class_definition)
 
@@ -316,19 +314,6 @@ def gen_structure_code(parser, writer, type_name, indent):
     out()
     return True
 
-
-def gen_supported_slot_record(writer, types, indent):
-    out = writer.append
-    out(indent, "internal static partial class SlotTypes")
-    out(indent, "{")
-    out(indent + 1, "public static readonly Type[] Types = {")
-    for name in types:
-        out(indent + 2, "typeof(%s)," % name)
-    out(indent + 1, "};")
-    out(indent, "}")
-    out()
-
-
 def main():
     # preprocess Python.h and build the AST
     python_h = preprocess_python_headers()
@@ -345,24 +330,6 @@ def main():
     gen_interop_head(writer)
 
     gen_heap_type_members(ast_parser, writer, type_name = offsets_type_name)
-
-    ver_define = "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR)
-    writer.append(code="#if " + ver_define)
-
-    slots_types = [
-        "PyNumberMethods",
-        "PySequenceMethods",
-        "PyMappingMethods",
-        "PyAsyncMethods",
-        "PyBufferProcs",
-    ]
-    supported_types = []
-    indent = 1
-    for type_name in slots_types:
-        if not gen_structure_code(ast_parser, writer, type_name, indent):
-            continue
-        supported_types.append(type_name)
-    gen_supported_slot_record(writer, supported_types, indent)
 
     gen_interop_tail(writer)
 
