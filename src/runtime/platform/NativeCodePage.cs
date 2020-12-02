@@ -8,17 +8,20 @@ namespace Python.Runtime.Platform
     {
         /// <summary>
         /// Initialized by InitializeNativeCodePage.
-        ///
+        /// <para>
         /// This points to a page of memory allocated using mmap or VirtualAlloc
         /// (depending on the system), and marked read and execute (not write).
         /// Very much on purpose, the page is *not* released on a shutdown and
         /// is instead leaked. See the TestDomainReload test case.
-        ///
+        /// </para>
+        /// <para>
         /// The contents of the page are two native functions: one that returns 0,
         /// one that returns 1.
-        ///
+        /// </para>
+        /// <para>
         /// If python didn't keep its gc list through a Py_Finalize we could remove
         /// this entire section.
+        /// </para>
         /// </summary>
         internal static IntPtr NativeCodePage = IntPtr.Zero;
 
@@ -95,10 +98,11 @@ namespace Python.Runtime.Platform
             };
 
             /// <summary>
-            /// Code for X86.
-            ///
+            /// <para>Code for X86.</para>
+            /// <para>
             /// It's bitwise identical to X86_64, so we just point to it.
             /// <see cref="NativeCode.X86_64"/>
+            /// </para>
             /// </summary>
             public static readonly NativeCode I386 = X86_64;
         }
@@ -145,7 +149,7 @@ namespace Python.Runtime.Platform
             }
         }
 
-        class UnixMemoryMapper : IMemoryMapper
+        class PosixMemoryMapper : IMemoryMapper
         {
             const int PROT_READ = 0x1;
             const int PROT_WRITE = 0x2;
@@ -196,7 +200,7 @@ namespace Python.Runtime.Platform
             else
             {
                 // Linux, OSX, FreeBSD
-                return new UnixMemoryMapper();
+                return new PosixMemoryMapper();
             }
         }
 
