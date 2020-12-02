@@ -37,7 +37,6 @@ namespace Python.Runtime
 
             long[] dimensions = new long[Runtime.PyTuple_Size(args)];
             if (dimensions.Length == 0)
-            if (Runtime.PyTuple_Size(args) != 1)
             {
                 return Exceptions.RaiseTypeError("array constructor requires at least one integer argument or an object convertible to array");
             }
