@@ -6,6 +6,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using Python.Runtime.Native;
 using Python.Runtime.Platform;
 using System.Linq;
 
@@ -18,31 +19,8 @@ namespace Python.Runtime
     /// </summary>
     public class Runtime
     {
-        // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow
-        // binary substitution of different Python.Runtime.dll builds in a target application.
-
         public static int UCS => _UCS;
-
-#if UCS4
-        internal const int _UCS = 4;
-
-        /// <summary>
-        /// EntryPoint to be used in DllImport to map to correct Unicode
-        /// methods prior to PEP393. Only used for PY27.
-        /// </summary>
-        private const string PyUnicodeEntryPoint = "PyUnicodeUCS4_";
-#elif UCS2
-        internal const int _UCS = 2;
-
-        /// <summary>
-        /// EntryPoint to be used in DllImport to map to correct Unicode
-        /// methods prior to PEP393. Only used for PY27.
-        /// </summary>
-        private const string PyUnicodeEntryPoint = "PyUnicodeUCS2_";
-#else
-#error You must define either UCS2 or UCS4!
-#endif
+        internal static readonly int _UCS = PyUnicode_GetMax() <= 0xFFFF ? 2 : 4;
 
 #if PYTHON36
         const string _minor = "6";
@@ -113,11 +91,13 @@ namespace Python.Runtime
         {
             get
             {
-                var versionTuple = new PyTuple(PySys_GetObject("version_info"));
-                var major = versionTuple[0].As<int>();
-                var minor = versionTuple[1].As<int>();
-                var micro = versionTuple[2].As<int>();
-                return new Version(major, minor, micro);
+                using (var versionTuple = new PyTuple(PySys_GetObject("version_info")))
+                {
+                    var major = versionTuple[0].As<int>();
+                    var minor = versionTuple[1].As<int>();
+                    var micro = versionTuple[2].As<int>();
+                    return new Version(major, minor, micro);
+                }
             }
         }
 
@@ -166,13 +146,17 @@ namespace Python.Runtime
 
             IsFinalizing = false;
             InternString.Initialize();
+
+            InitPyMembers();
+
+            ABI.Initialize(PyVersion,
+                           pyType: new BorrowedReference(PyTypeType));
+
             GenericUtil.Reset();
             PyScopeManager.Reset();
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
-
-            InitPyMembers();
 
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
@@ -1538,17 +1522,6 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
-        internal static IntPtr PyString_FromStringAndSize(string value, long size)
-        {
-            return _PyString_FromStringAndSize(value, new IntPtr(size));
-        }
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_FromStringAndSize")]
-        internal static extern IntPtr _PyString_FromStringAndSize(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
-            IntPtr size
-        );
 
         internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, long size)
         {
@@ -1588,6 +1561,9 @@ namespace Python.Runtime
         {
             return PyUnicode_FromKindAndData(_UCS, s, size);
         }
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyUnicode_GetMax();
 
         internal static long PyUnicode_GetSize(IntPtr ob)
         {

@@ -60,13 +60,13 @@ namespace Python.Runtime
             //DebugUtil.Print("  mro: ", op);
 
 
-            FieldInfo[] slots = typeof(TypeOffset).GetFields();
+            var slots = TypeOffset.GetOffsets();
             int size = IntPtr.Size;
 
-            for (var i = 0; i < slots.Length; i++)
+            foreach (var entry in slots)
             {
-                int offset = i * size;
-                name = slots[i].Name;
+                int offset = entry.Value;
+                name = entry.Key;
                 op = Marshal.ReadIntPtr(type, offset);
                 Console.WriteLine("  {0}: {1}", name, op);
             }

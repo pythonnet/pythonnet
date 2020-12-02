@@ -49,9 +49,8 @@
     <Python3Version>$(PYTHONNET_PY3_VERSION)</Python3Version>
     <Python3Version Condition="'$(Python3Version)'==''">PYTHON38</Python3Version>
     <PythonWinDefineConstants>$(PYTHONNET_WIN_DEFINE_CONSTANTS)</PythonWinDefineConstants>
-    <PythonWinDefineConstants Condition="'$(PythonWinDefineConstants)'==''">UCS2</PythonWinDefineConstants>
     <PythonMonoDefineConstants>$(PYTHONNET_MONO_DEFINE_CONSTANTS)</PythonMonoDefineConstants>
-    <PythonMonoDefineConstants Condition="'$(PythonMonoDefineConstants)'==''">UCS4;MONO_LINUX;PYTHON_WITH_PYMALLOC</PythonMonoDefineConstants>
+    <PythonMonoDefineConstants Condition="'$(PythonMonoDefineConstants)'==''">MONO_LINUX;PYTHON_WITH_PYMALLOC</PythonMonoDefineConstants>
     <PythonInteropFile Condition="'$(PythonInteropFile)'==''">$(PYTHONNET_INTEROP_FILE)</PythonInteropFile>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Debug')) AND '$(TargetFramework)'=='net40'">

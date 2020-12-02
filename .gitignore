@@ -1,3 +1,5 @@
+/src/runtime/interopNative.cs
+
 # General binaries and Build results
 *.dll
 *.exe
