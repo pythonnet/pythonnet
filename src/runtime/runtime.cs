@@ -706,7 +706,7 @@ namespace Python.Runtime
         /// </summary>
         internal static unsafe void XIncref(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG || NETSTANDARD
+#if PYTHON_WITH_PYDEBUG
             Py_IncRef(op);
             return;
 #else
@@ -736,7 +736,7 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG || NETSTANDARD
+#if PYTHON_WITH_PYDEBUG
             Py_DecRef(op);
             return;
 #else
