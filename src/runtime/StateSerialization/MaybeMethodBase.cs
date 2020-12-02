@@ -137,7 +137,7 @@ namespace Python.Runtime
                 if (serializationInfo.GetBoolean(SerializationIsCtor))
                 {
                     // We never want the static constructor.
-                    mb = tp.GetConstructor(ClassManager.BindingFlags&(~BindingFlags.Instance), binder:null, types:types, modifiers:null);
+                    mb = tp.GetConstructor(ClassManager.BindingFlags&(~BindingFlags.Static), binder:null, types:types, modifiers:null);
                 }
                 else
                 {
