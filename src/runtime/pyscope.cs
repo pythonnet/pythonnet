@@ -30,11 +30,13 @@ namespace Python.Runtime
         /// the python Module object the scope associated with.
         /// </summary>
         internal IntPtr obj;
+        internal BorrowedReference Reference => new BorrowedReference(obj);
 
         /// <summary>
         /// the variable dict of the scope.
         /// </summary>
         internal readonly IntPtr variables;
+        internal BorrowedReference VarsRef => new BorrowedReference(variables);
 
         private bool _isDisposed;
         private bool _finalized = false;
@@ -56,20 +58,20 @@ namespace Python.Runtime
         /// <remarks>
         /// Create a scope based on a Python Module.
         /// </remarks>
-        internal PyScope(IntPtr ptr, PyScopeManager manager)
+        internal PyScope(ref NewReference ptr, PyScopeManager manager)
         {
             if (!Runtime.PyType_IsSubtype(Runtime.PyObject_TYPE(ptr), Runtime.PyModuleType))
             {
                 throw new PyScopeException("object is not a module");
             }
             Manager = manager ?? PyScopeManager.Global;
-            obj = ptr;
+            obj = ptr.DangerousMoveToPointer();
             //Refcount of the variables not increase
-            variables = Runtime.PyModule_GetDict(obj);
+            variables = Runtime.PyModule_GetDict(Reference).DangerousGetAddress();
             PythonException.ThrowIfIsNull(variables);
 
             int res = Runtime.PyDict_SetItem(
-                variables, PyIdentifier.__builtins__,
+                VarsRef, PyIdentifier.__builtins__,
                 Runtime.PyEval_GetBuiltins()
             );
             PythonException.ThrowIfIsNotZero(res);
@@ -184,7 +186,7 @@ namespace Python.Runtime
         /// </remarks>
         public void ImportAll(PyScope scope)
         {
-            int result = Runtime.PyDict_Update(variables, scope.variables);
+            int result = Runtime.PyDict_Update(VarsRef, scope.VarsRef);
             if (result < 0)
             {
                 throw new PythonException();
@@ -203,8 +205,8 @@ namespace Python.Runtime
             {
                 throw new PyScopeException("object is not a module");
             }
-            var module_dict = Runtime.PyModule_GetDict(module.obj);
-            int result = Runtime.PyDict_Update(variables, module_dict);
+            var module_dict = Runtime.PyModule_GetDict(module.Reference);
+            int result = Runtime.PyDict_Update(VarsRef, module_dict);
             if (result < 0)
             {
                 throw new PythonException();
@@ -219,7 +221,7 @@ namespace Python.Runtime
         /// </remarks>
         public void ImportAll(PyDict dict)
         {
-            int result = Runtime.PyDict_Update(variables, dict.obj);
+            int result = Runtime.PyDict_Update(VarsRef, dict.Reference);
             if (result < 0)
             {
                 throw new PythonException();
@@ -277,10 +279,10 @@ namespace Python.Runtime
         public PyObject Eval(string code, PyDict locals = null)
         {
             Check();
-            IntPtr _locals = locals == null ? variables : locals.obj;
+            BorrowedReference _locals = locals == null ? VarsRef : locals.Reference;
 
             NewReference reference = Runtime.PyRun_String(
-                code, RunFlagType.Eval, variables, _locals
+                code, RunFlagType.Eval, VarsRef, _locals
             );
             PythonException.ThrowIfIsNull(reference);
             return reference.MoveToPyObject();
@@ -310,11 +312,11 @@ namespace Python.Runtime
         public void Exec(string code, PyDict locals = null)
         {
             Check();
-            IntPtr _locals = locals == null ? variables : locals.obj;
-            Exec(code, variables, _locals);
+            BorrowedReference _locals = locals == null ? VarsRef : locals.Reference;
+            Exec(code, VarsRef, _locals);
         }
 
-        private void Exec(string code, IntPtr _globals, IntPtr _locals)
+        private void Exec(string code, BorrowedReference _globals, BorrowedReference _locals)
         {
             NewReference reference = Runtime.PyRun_String(
                 code, RunFlagType.File, _globals, _locals
@@ -551,11 +553,11 @@ namespace Python.Runtime
                 name = "";
             }
             var module = Runtime.PyModule_New(name);
-            if (module == IntPtr.Zero)
+            if (module.IsNull())
             {
                 throw new PythonException();
             }
-            return new PyScope(module, this);
+            return new PyScope(ref module, this);
         }
 
         /// <summary>

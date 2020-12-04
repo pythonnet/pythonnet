@@ -295,7 +295,9 @@ namespace Python.Runtime
             var pyMoudles = PyImport_GetModuleDict();
             foreach (var item in modules)
             {
-                int res = PyDict_SetItem(pyMoudles, item.Key, item.Value);
+                var moduleName = new BorrowedReference(item.Key);
+                var module = new BorrowedReference(item.Value);
+                int res = PyDict_SetItem(pyMoudles, moduleName, module);
                 PythonException.ThrowIfIsNotZero(res);
                 XDecref(item.Key);
                 XDecref(item.Value);

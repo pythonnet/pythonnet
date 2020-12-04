@@ -27,6 +27,8 @@ namespace Python.Runtime
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
+        internal BorrowedReference ObjectReference => new BorrowedReference(pyHandle);
+
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
         internal void IncrRefCount()
@@ -138,6 +140,8 @@ namespace Python.Runtime
         }
 
 
+        internal static bool IsManagedType(BorrowedReference ob)
+            => IsManagedType(ob.DangerousGetAddressOrNull());
         internal static bool IsManagedType(IntPtr ob)
         {
             if (ob != IntPtr.Zero)

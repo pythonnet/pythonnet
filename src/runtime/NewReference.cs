@@ -29,6 +29,16 @@ namespace Python.Runtime
         }
 
         /// <summary>Moves ownership of this instance to unmanged pointer</summary>
+        public IntPtr DangerousMoveToPointer()
+        {
+            if (this.IsNull()) throw new NullReferenceException();
+
+            var result = this.pointer;
+            this.pointer = IntPtr.Zero;
+            return result;
+        }
+
+        /// <summary>Moves ownership of this instance to unmanged pointer</summary>
         public IntPtr DangerousMoveToPointerOrNull()
         {
             var result = this.pointer;
