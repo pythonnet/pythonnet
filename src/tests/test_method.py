@@ -1188,3 +1188,37 @@ def test_keyword_arg_method_resolution():
     ob = MethodArityTest()
     assert ob.Foo(1, b=2) == "Arity 2"
 
+def test_params_array_overload():
+    res = MethodTest.ParamsArrayOverloaded()
+    assert res == "without params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1)
+    assert res == "without params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(i=1)
+    assert res == "without params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, 2)
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, 2, 3)
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
+    assert res == "with params-array"
+
+    # res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
+    # assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, paramsArray=[])
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, i=1)
+    assert res == "with params-array"
+
+    # res = MethodTest.ParamsArrayOverloaded(1, 2, i=1)
+    # assert res == "with params-array"
+
+    # res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
+    # assert res == "with params-array"
+
