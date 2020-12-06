@@ -6,37 +6,12 @@ import System
 import pytest
 from Python.Test import MethodTest
 
+def test_instance_method_overwritable():
+    """Test instance method overwriting."""
 
-def test_instance_method_descriptor():
-    """Test instance method descriptor behavior."""
-
-    with pytest.raises(AttributeError):
-        MethodTest().PublicMethod = 0
-
-    with pytest.raises(AttributeError):
-        MethodTest.PublicMethod = 0
-
-    with pytest.raises(AttributeError):
-        del MethodTest().PublicMethod
-
-    with pytest.raises(AttributeError):
-        del MethodTest.PublicMethod
-
-
-def test_static_method_descriptor():
-    """Test static method descriptor behavior."""
-
-    with pytest.raises(AttributeError):
-        MethodTest().PublicStaticMethod = 0
-
-    with pytest.raises(AttributeError):
-        MethodTest.PublicStaticMethod = 0
-
-    with pytest.raises(AttributeError):
-        del MethodTest().PublicStaticMethod
-
-    with pytest.raises(AttributeError):
-        del MethodTest.PublicStaticMethod
+    ob = MethodTest()
+    ob.OverwritableMethod = lambda: "overwritten"
+    assert ob.OverwritableMethod() == "overwritten"
 
 
 def test_public_instance_method():
