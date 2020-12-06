@@ -14,6 +14,8 @@ namespace Python.Test
         {
         }
 
+        public string OverwritableMethod() => "overwritable";
+
         public string PublicMethod()
         {
             return "public";
