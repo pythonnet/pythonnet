@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{D301657F-5EAF-
 		appveyor.yml = appveyor.yml
 		ci\appveyor_build_recipe.ps1 = ci\appveyor_build_recipe.ps1
 		ci\appveyor_run_tests.ps1 = ci\appveyor_run_tests.ps1
+		.github\workflows\main.yml = .github\workflows\main.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57F5D701-F265-4736-A5A2-07249E7A4DA3}"
