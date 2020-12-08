@@ -534,7 +534,7 @@ namespace Python.Runtime
                     Runtime.XDecref(op);
                 }
 
-                if (parameter.IsOut || isOut)
+                if (isOut)
                 {
                     outs++;
                 }
