@@ -9,8 +9,11 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+-   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
+
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
+-   `wchar_t` size aka `Runtime.UCS` is now determined at runtime
 -   `clr.AddReference` may now throw errors besides `FileNotFoundException`, that provide more
 details about the cause of the failure
 -   `clr.AddReference` no longer adds ".dll" implicitly

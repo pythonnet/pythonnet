@@ -34,6 +34,10 @@ csharp_new_line_before_finally = true
 [*.sln]
 indent_style = tab
 
+[*.csproj]
+charset = utf-8
+insert_final_newline = true
+
 # bumpversion reformats itself after every bump
 [.bumpversion.cfg]
 trim_trailing_whitespace = false

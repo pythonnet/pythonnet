@@ -641,8 +641,9 @@ namespace Python.Runtime
                 foreach (MethodInfo method in methods)
                 {
                     string name = method.Name;
-                    if (!name.StartsWith("tp_") && !SlotTypes.IsSlotName(name))
+                    if (!name.StartsWith("tp_") && !TypeOffset.IsSupportedSlotName(name))
                     {
+                        Debug.Assert(!name.Contains("_") || name.StartsWith("_") || method.IsSpecialName);
                         continue;
                     }
 
@@ -693,9 +694,7 @@ namespace Python.Runtime
 
         static void InitializeSlot(IntPtr type, ThunkInfo thunk, string name, SlotsHolder slotsHolder = null, bool canOverride = true)
         {
-            Type typeOffset = typeof(TypeOffset);
-            FieldInfo fi = typeOffset.GetField(name);
-            var offset = (int)fi.GetValue(typeOffset);
+            int offset = ManagedDataOffsets.GetSlotOffset(name);
 
             if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
             {
@@ -945,29 +944,6 @@ namespace Python.Runtime
             Runtime.XIncref(A);
             Runtime.XDecref(globals);
             return A;
-        }
-    }
-
-
-    static partial class SlotTypes
-    {
-        private static Dictionary<string, Type> _nameMap = new Dictionary<string, Type>();
-
-        static SlotTypes()
-        {
-            foreach (var type in Types)
-            {
-                FieldInfo[] fields = type.GetFields();
-                foreach (var fi in fields)
-                {
-                    _nameMap[fi.Name] = type;
-                }
-            }
-        }
-
-        public static bool IsSlotName(string name)
-        {
-            return _nameMap.ContainsKey(name);
         }
     }
 }

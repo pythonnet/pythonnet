@@ -8,6 +8,15 @@ namespace Python.Runtime
     [Serializable]
     internal struct MaybeMethodBase<T> : ISerializable where T: MethodBase
     {
+        // .ToString() of the serialized object
+        const string SerializationName = "s";
+        // The ReflectedType of the object
+        const string SerializationType = "t";
+        // Fhe parameters of the MethodBase
+        const string SerializationParameters = "p";
+        const string SerializationIsCtor = "c";
+        const string SerializationMethodName = "n";
+
         [Serializable]
         struct ParameterHelper : IEquatable<ParameterInfo>
         {
@@ -91,55 +100,57 @@ namespace Python.Runtime
 
         internal MaybeMethodBase(SerializationInfo serializationInfo, StreamingContext context)
         {
-            name = serializationInfo.GetString("s");
+            name = serializationInfo.GetString(SerializationName);
             info = null;
             deserializationException = null;
             try
             {
                 // Retrive the reflected type of the method;
-                var tp = Type.GetType(serializationInfo.GetString("t"));
+                var typeName = serializationInfo.GetString(SerializationType);
+                var tp = Type.GetType(typeName);
+                if (tp == null)
+                {
+                    throw new SerializationException($"The underlying type {typeName} can't be found");
+                }
                 // Get the method's parameters types
-                var field_name = serializationInfo.GetString("f");
-                var param = (ParameterHelper[])serializationInfo.GetValue("p", typeof(ParameterHelper[]));
+                var field_name = serializationInfo.GetString(SerializationMethodName);
+                var param = (ParameterHelper[])serializationInfo.GetValue(SerializationParameters, typeof(ParameterHelper[]));
                 Type[] types = new Type[param.Length];
+                bool hasRefType = false;
                 for (int i = 0; i < param.Length; i++)
                 {
-                    types[i] = Type.GetType(param[i].Name);
+                    var paramTypeName = param[i].Name;
+                    types[i] = Type.GetType(paramTypeName);
+                    if (types[i] == null)
+                    {
+                        throw new SerializationException($"The parameter of type {paramTypeName} can't be found");
+                    }
+                    else if (types[i].IsByRef)
+                    {
+                        hasRefType = true;
+                    }
                 }
-                // Try to get the method
-                MethodBase mb = tp.GetMethod(field_name, ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
-                // Try again, may be a constructor
-                if (mb == null && name.Contains(".ctor"))
+
+                MethodBase mb = null;
+                if (serializationInfo.GetBoolean(SerializationIsCtor))
                 {
-                    mb = tp.GetConstructor(ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
+                    // We never want the static constructor.
+                    mb = tp.GetConstructor(ClassManager.BindingFlags&(~BindingFlags.Static), binder:null, types:types, modifiers:null);
+                }
+                else
+                {
+                    mb = tp.GetMethod(field_name, ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
+                }
+                
+                if (mb != null && hasRefType)
+                {
+                    CheckRefTypes(mb, param);
                 }
 
                 // Do like in ClassManager.GetClassInfo
                 if(mb != null && ClassManager.ShouldBindMethod(mb))
                 {
-                    // One more step: Changing:
-                    // void MyFn (ref int a)
-                    // to:
-                    // void MyFn (out int a)
-                    // will still find the fucntion correctly as, `in`, `out` and `ref`
-                    // are all represented as a reference type. Query the method we got
-                    // and validate the parameters
-                    bool matches = true;
-                    if (param.Length != 0)
-                    {
-                        foreach (var item in Enumerable.Zip(param, mb.GetParameters(), (x, y) => new {x, y}))
-                        {
-                            if (!item.x.Equals(item.y))
-                            {
-                                matches = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (matches)
-                    {
-                        info = mb;
-                    }
+                    info = mb;
                 }
             }
             catch (Exception e)
@@ -148,15 +159,40 @@ namespace Python.Runtime
             }
         }
 
+        MethodBase CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
+        {
+            // One more step: Changing:
+            // void MyFn (ref int a)
+            // to:
+            // void MyFn (out int a)
+            // will still find the fucntion correctly as, `in`, `out` and `ref`
+            // are all represented as a reference type. Query the method we got
+            // and validate the parameters
+            if (ph.Length != 0)
+            {
+                foreach (var item in Enumerable.Zip(ph, mb.GetParameters(), (orig, current) => new {orig, current}))
+                {
+                    if (!item.current.Equals(item.orig))
+                    {
+                        // False positive
+                        return null;
+                    }
+                }
+            }
+
+            return mb;
+        }
+
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
-            serializationInfo.AddValue("s", name);
+            serializationInfo.AddValue(SerializationName, name);
             if (Valid)
             {
-                serializationInfo.AddValue("f", info.Name);
-                serializationInfo.AddValue("t", info.ReflectedType.AssemblyQualifiedName);
+                serializationInfo.AddValue(SerializationMethodName, info.Name);
+                serializationInfo.AddValue(SerializationType, info.ReflectedType.AssemblyQualifiedName);
                 ParameterHelper[] parameters = (from p in info.GetParameters() select new ParameterHelper(p)).ToArray();
-                serializationInfo.AddValue("p", parameters, typeof(ParameterHelper[]));
+                serializationInfo.AddValue(SerializationParameters, parameters, typeof(ParameterHelper[]));
+                serializationInfo.AddValue(SerializationIsCtor, info.IsConstructor);
             }
         }
     }

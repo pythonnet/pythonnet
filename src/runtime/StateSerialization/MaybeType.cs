@@ -11,6 +11,8 @@ namespace Python.Runtime
     {
         public static implicit operator MaybeType (Type ob) => new MaybeType(ob);
 
+        // The AssemblyQualifiedName of the serialized Type
+        const string SerializationName = "n";
         string name;
         Type type;
         
@@ -50,13 +52,13 @@ namespace Python.Runtime
 
         private MaybeType(SerializationInfo serializationInfo, StreamingContext context)
         {
-            name = (string)serializationInfo.GetValue("n", typeof(string));
+            name = (string)serializationInfo.GetValue(SerializationName, typeof(string));
             type = Type.GetType(name, throwOnError:false);
         }
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
-            serializationInfo.AddValue("n", name);
+            serializationInfo.AddValue(SerializationName, name);
         }
     }
 }

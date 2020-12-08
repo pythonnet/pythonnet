@@ -849,6 +849,53 @@ def after_reload():
     assert foo is not bar
                     ",
             },
+            new TestCase
+            {
+                Name = "nested_type",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+                        [System.Serializable]
+                        public class WithNestedType
+                        {
+                            [System.Serializable]
+                            public class Inner
+                            {
+                                public static int Value = -1;
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+                        [System.Serializable]
+                        public class WithNestedType
+                        {
+                            [System.Serializable]
+                            public class Inner
+                            {
+                                public static int Value = -1;
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+
+def before_reload():
+
+    sys.my_obj = TestNamespace.WithNestedType
+
+def after_reload():
+
+    assert sys.my_obj is not None
+    foo = sys.my_obj.Inner()
+    print(foo)
+    
+                    ",
+            },
         };
 
         /// <summary>

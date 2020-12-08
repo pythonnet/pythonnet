@@ -11,6 +11,11 @@ namespace Python.Runtime
     {
         public static implicit operator MaybeMemberInfo<T> (T ob) => new MaybeMemberInfo<T>(ob);
 
+        // .ToString() of the serialized object
+        const string SerializationName = "s";
+        // The ReflectedType of the object
+        const string SerializationType = "t";
+        const string SerializationFieldName = "f";
         string name;
         MemberInfo info;
 
@@ -55,15 +60,15 @@ namespace Python.Runtime
         internal MaybeMemberInfo(SerializationInfo serializationInfo, StreamingContext context)
         {
             // Assumption: name is always stored in "s"
-            name = serializationInfo.GetString("s");
+            name = serializationInfo.GetString(SerializationName);
             info = null;
             deserializationException = null;
             try
             {
-                var tp = Type.GetType(serializationInfo.GetString("t"));
+                var tp = Type.GetType(serializationInfo.GetString(SerializationType));
                 if (tp != null)
                 {
-                    var field_name = serializationInfo.GetString("f");
+                    var field_name = serializationInfo.GetString(SerializationFieldName);
                     MemberInfo mi = tp.GetField(field_name, ClassManager.BindingFlags);
                     if (mi != null && ShouldBindMember(mi))
                     {
@@ -102,11 +107,11 @@ namespace Python.Runtime
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
-            serializationInfo.AddValue("s", name);
+            serializationInfo.AddValue(SerializationName, name);
             if (Valid)
             {
-                serializationInfo.AddValue("f", info.Name);
-                serializationInfo.AddValue("t", info.ReflectedType.AssemblyQualifiedName);
+                serializationInfo.AddValue(SerializationFieldName, info.Name);
+                serializationInfo.AddValue(SerializationType, info.ReflectedType.AssemblyQualifiedName);
             }
         }
     }
