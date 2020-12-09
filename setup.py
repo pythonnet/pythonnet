@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages, Command, Extension
+from setuptools import setup, Command, Extension
 from wheel.bdist_wheel import bdist_wheel
 from setuptools.command.build_ext import build_ext
 import distutils
@@ -165,17 +165,22 @@ with open("README.rst", "r") as f:
 
 ext_modules = [
     DotnetLib(
+        "python-runtime",
+        "src/runtime/Python.Runtime.csproj",
+        output="pythonnet/runtime"
+    ),
+    DotnetLib(
         "clrmodule-amd64",
         "src/clrmodule/",
         runtime="win-x64",
-        output="pythonnet/dlls/amd64",
+        output="pythonnet/netfx/amd64",
         rename={"clr.dll": "clr.pyd"},
     ),
     DotnetLib(
         "clrmodule-x86",
         "src/clrmodule/",
         runtime="win-x86",
-        output="pythonnet/dlls/x86",
+        output="pythonnet/netfx/x86",
         rename={"clr.dll": "clr.pyd"},
     ),
 ]
@@ -192,7 +197,7 @@ try:
     clr_ext = Extension(
         "clr",
         language="c++",
-        sources=["src/monoclr/pynetinit.c", "src/monoclr/clrmod.c"],
+        sources=["src/monoclr/clrmod.c"],
         extra_compile_args=cflags.split(" "),
         extra_link_args=libs.split(" "),
     )
@@ -209,6 +214,7 @@ setup(
     license="MIT",
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
+    packages=["pythonnet"],
     setup_requires=["setuptools_scm"],
     install_requires=["pycparser"],
     long_description=long_description,
