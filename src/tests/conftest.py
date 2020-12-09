@@ -15,6 +15,13 @@ import clr
 # Add path for `Python.Test`
 cwd = os.path.dirname(__file__)
 fixtures_path = os.path.join(cwd, "fixtures")
+
+BUILD_TEST = True
+if BUILD_TEST:
+    from subprocess import check_call
+    test_proj_path = os.path.join(cwd, "..", "testing")
+    check_call(["dotnet", "build", test_proj_path, "-o", fixtures_path])
+
 sys.path.append(fixtures_path)
 
 # Add References for tests
