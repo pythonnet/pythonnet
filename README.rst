@@ -1,12 +1,11 @@
 pythonnet - Python.NET
 ===========================
 
-|Join the chat at https://gitter.im/pythonnet/pythonnet|
+|Join the chat at https://gitter.im/pythonnet/pythonnet| |stackexchange shield|
 
-|appveyor shield| |travis shield| |codecov shield|
+|gh shield| |appveyor shield|
 
 |license shield| |pypi package version| |conda-forge version| |python supported shield|
-|stackexchange shield|
 
 Python.NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
@@ -131,3 +130,5 @@ This project is supported by the `.NET Foundation <https://dotnetfoundation.org>
    :target: http://stackoverflow.com/questions/tagged/python.net
 .. |conda-forge version| image:: https://img.shields.io/conda/vn/conda-forge/pythonnet.svg
    :target: https://anaconda.org/conda-forge/pythonnet
+.. |gh shield| image:: https://github.com/pythonnet/pythonnet/workflows/GitHub%20Actions/badge.svg
+   :target: https://github.com/pythonnet/pythonnet/actions?query=branch%3Amaster
