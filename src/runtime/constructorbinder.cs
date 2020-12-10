@@ -56,9 +56,10 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(_containingType.DeletedMessage);
             }
             object result;
+            Type tp = _containingType.Value;
 
-            if (_containingType.Value.IsValueType && !_containingType.Value.IsPrimitive &&
-                !_containingType.Value.IsEnum && _containingType.Value != typeof(decimal) &&
+            if (tp.IsValueType && !tp.IsPrimitive &&
+                !tp.IsEnum && tp != typeof(decimal) &&
                 Runtime.PyTuple_Size(args) == 0)
             {
                 // If you are trying to construct an instance of a struct by
@@ -68,7 +69,7 @@ namespace Python.Runtime
                 // Activator.CreateInstance().
                 try
                 {
-                    result = Activator.CreateInstance(_containingType.Value);
+                    result = Activator.CreateInstance(tp);
                 }
                 catch (Exception e)
                 {

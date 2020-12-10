@@ -56,6 +56,7 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
             }
+            Type type = self.type.Value;
 
             if (Runtime.PyTuple_Size(args) != 1)
             {
@@ -69,7 +70,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("argument must be callable");
             }
 
-            Delegate d = PythonEngine.DelegateManager.GetDelegate(self.type.Value, method);
+            Delegate d = PythonEngine.DelegateManager.GetDelegate(type, method);
             return CLRObject.GetInstHandle(d, self.pyHandle);
         }
 

@@ -114,13 +114,14 @@ namespace Python.Runtime
             // for example this method in the tests: string Overloaded<T>(int arg1, int arg2, string arg3)
             if (self.info.Valid)
             {
-                if (self.info.Value.IsGenericMethod)
+                var info = self.info.Value;
+                if (info.IsGenericMethod)
                 {
                     var len = Runtime.PyTuple_Size(args); //FIXME: Never used
                     Type[] sigTp = Runtime.PythonArgsToTypeArray(args, true);
                     if (sigTp != null)
                     {
-                        Type[] genericTp = self.info.Value.GetGenericArguments();
+                        Type[] genericTp = info.GetGenericArguments();
                         MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
                         if (betterMatch != null)
                         {

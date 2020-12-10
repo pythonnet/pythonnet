@@ -105,7 +105,7 @@ namespace Python.Runtime
             deserializationException = null;
             try
             {
-                // Retrive the reflected type of the method;
+                // Retrieve the reflected type of the method;
                 var typeName = serializationInfo.GetString(SerializationType);
                 var tp = Type.GetType(typeName);
                 if (tp == null)
@@ -144,7 +144,7 @@ namespace Python.Runtime
                 
                 if (mb != null && hasRefType)
                 {
-                    CheckRefTypes(mb, param);
+                    mb = CheckRefTypes(mb, param);
                 }
 
                 // Do like in ClassManager.GetClassInfo
@@ -165,7 +165,7 @@ namespace Python.Runtime
             // void MyFn (ref int a)
             // to:
             // void MyFn (out int a)
-            // will still find the fucntion correctly as, `in`, `out` and `ref`
+            // will still find the function correctly as, `in`, `out` and `ref`
             // are all represented as a reference type. Query the method we got
             // and validate the parameters
             if (ph.Length != 0)

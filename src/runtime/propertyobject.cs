@@ -36,7 +36,8 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError(self.info.DeletedMessage);
             }
-            MethodInfo getter = self.getter.Value;
+            var info = self.info.Value;
+            MethodInfo getter = self.getter.UnsafeValue;
             object result;
 
 
@@ -56,8 +57,8 @@ namespace Python.Runtime
 
                 try
                 {
-                    result = self.info.Value.GetValue(null, null);
-                    return Converter.ToPython(result, self.info.Value.PropertyType);
+                    result = info.GetValue(null, null);
+                    return Converter.ToPython(result, info.PropertyType);
                 }
                 catch (Exception e)
                 {
@@ -73,8 +74,8 @@ namespace Python.Runtime
 
             try
             {
-                result = self.info.Value.GetValue(co.inst, null);
-                return Converter.ToPython(result, self.info.Value.PropertyType);
+                result = info.GetValue(co.inst, null);
+                return Converter.ToPython(result, info.PropertyType);
             }
             catch (Exception e)
             {
@@ -101,8 +102,9 @@ namespace Python.Runtime
                 Exceptions.RaiseTypeError(self.info.DeletedMessage);
                 return -1;
             }
+            var info = self.info.Value;
 
-            MethodInfo setter = self.setter.Value;
+            MethodInfo setter = self.setter.UnsafeValue;
             object newval;
 
             if (val == IntPtr.Zero)
@@ -118,7 +120,7 @@ namespace Python.Runtime
             }
 
 
-            if (!Converter.ToManaged(val, self.info.Value.PropertyType, out newval, true))
+            if (!Converter.ToManaged(val, info.PropertyType, out newval, true))
             {
                 return -1;
             }
@@ -144,11 +146,11 @@ namespace Python.Runtime
                         Exceptions.RaiseTypeError("invalid target");
                         return -1;
                     }
-                    self.info.Value.SetValue(co.inst, newval, null);
+                    info.SetValue(co.inst, newval, null);
                 }
                 else
                 {
-                    self.info.Value.SetValue(null, newval, null);
+                    info.SetValue(null, newval, null);
                 }
                 return 0;
             }

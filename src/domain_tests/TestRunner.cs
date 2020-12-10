@@ -16,22 +16,22 @@ namespace Python.DomainReloadTests
     /// 3. This class at runtime creates a directory that has both C# and
     ///    python code, and compiles the C#.
     /// 4. This class then runs the C# code.
-    ///
-    /// But wait there's more indirection. The C# code that's run -- known as
-    /// the test runner --
-    /// This class compiles a DLL that contains the class which code will change
-    /// and a runner executable that will run Python code referencing the class.
-    /// Each test case:
+    /// 
+    /// But there's a bit more indirection. This class compiles a DLL that
+    /// contains code that will change.
+    /// Then, the test case:
     /// * Compiles some code, loads it into a domain, runs python that refers to it.
-    /// * Unload the domain.
-    /// * Compile a new piece of code, load it into a domain, run a new piece of python that accesses the code.
+    /// * Unload the domain, re-runs the domain to make sure domain reload happens correctly.
+    /// * Compile a new piece of code, load it into a new domain, run a new piece of 
+    ///   Python code to test the objects after they've been deleted or modified in C#.
     /// * Unload the domain. Reload the domain, run the same python again.
+    /// 
     /// This class gets built into an executable which takes one argument:
     /// which test case to run. That's because pytest assumes we'll run
     /// everything in one process, but we really want a clean process on each
-    /// test case to test the init/reload/teardown parts of the domain reload
-    /// code.
+    /// test case to test the init/reload/teardown parts of the domain reload.
     /// </summary>
+    /// 
     class TestRunner
     {
         const string TestAssemblyName = "DomainTests";
@@ -347,12 +347,6 @@ def after_reload():
     called = False
     Cls.Call()
     assert called is False
-    #try:
-    #    assert 2 == Cls.Before
-    #except TypeError:
-    #    print('Caught expected exception')
-    #else:
-    #    raise AssertionError('Failed to throw exception')
 ",
             },
 
@@ -398,7 +392,6 @@ def before_reload():
 def after_reload():
      try:
         TestNamespace.Cls(2)
-        sys.my_cls.Member()
      except AttributeError:
          print('Caught expected exception')
      else:
@@ -845,7 +838,7 @@ def after_reload():
     # foo should have changed
     assert foo.num == 7
     assert bar.num == 7
-    # Pythonnet also returns a new object with `ref`-quialified parameters
+    # Pythonnet also returns a new object with `ref`-qualified parameters
     assert foo is not bar
                     ",
             },
@@ -1029,7 +1022,6 @@ namespace CaseRunner
         }
         static string CreateAssembly(string name, string code, bool exe = false)
         {
-            // Console.WriteLine(code);
             // Never return or hold the Assembly instance. This will cause
             // the assembly to be loaded into the current domain and this
             // interferes with the tests. The Domain can execute fine from a 

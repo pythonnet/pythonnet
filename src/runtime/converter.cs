@@ -344,7 +344,13 @@ namespace Python.Runtime
                 }
                 if (mt is ClassBase)
                 {
-                    result = ((ClassBase)mt).type.Value;
+                    var cb = (ClassBase)mt;
+                    if (!cb.type.Valid)
+                    {
+                        Exceptions.SetError(Exceptions.TypeError, cb.type.DeletedMessage);
+                        return false;
+                    }
+                    result = cb.type.Value;
                     return true;
                 }
                 // shouldn't happen

@@ -34,6 +34,7 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
             }
+            Type arrType = self.type.Value;
 
             long[] dimensions = new long[Runtime.PyTuple_Size(args)];
             if (dimensions.Length == 0)
@@ -42,7 +43,7 @@ namespace Python.Runtime
             }
             if (dimensions.Length != 1)
             {
-                return CreateMultidimensional(self.type.Value.GetElementType(), dimensions,
+                return CreateMultidimensional(arrType.GetElementType(), dimensions,
                          shapeTuple: new BorrowedReference(args),
                          pyType: tp)
                        .DangerousMoveToPointerOrNull();
@@ -60,14 +61,14 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    return NewInstance(self.type.Value.GetElementType(), tp, dimensions)
+                    return NewInstance(arrType.GetElementType(), tp, dimensions)
                            .DangerousMoveToPointerOrNull();
                 }
             }
             object result;
 
             // this implements casting to Array[T]
-            if (!Converter.ToManaged(op, self.type.Value, out result, true))
+            if (!Converter.ToManaged(op, arrType, out result, true))
             {
                 return IntPtr.Zero;
             }

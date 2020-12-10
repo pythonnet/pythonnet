@@ -96,6 +96,7 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
             }
+            Type tp = self.type.Value;
 
             Type[] types = Runtime.PythonArgsToTypeArray(key);
             if (types == null)
@@ -104,12 +105,12 @@ namespace Python.Runtime
             }
             //MethodBase[] methBaseArray = self.ctorBinder.GetMethods();
             //MethodBase ci = MatchSignature(methBaseArray, types);
-            ConstructorInfo ci = self.type.Value.GetConstructor(types);
+            ConstructorInfo ci = tp.GetConstructor(types);
             if (ci == null)
             {
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
-            var boundCtor = new BoundContructor(self.type.Value, self.pyTypeHndl, self.ctorBinder, ci);
+            var boundCtor = new BoundContructor(tp, self.pyTypeHndl, self.ctorBinder, ci);
 
             return boundCtor.pyHandle;
         }
@@ -126,6 +127,11 @@ namespace Python.Runtime
                 return self.repr;
             }
             MethodBase[] methods = self.ctorBinder.GetMethods();
+
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
             string name = self.type.Value.FullName;
             var doc = "";
             foreach (MethodBase t in methods)
