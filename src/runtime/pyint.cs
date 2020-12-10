@@ -69,7 +69,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from a uint32 value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyInt(uint value) : base(FromLong(value))
         {
         }
@@ -99,7 +98,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from a uint64 value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyInt(ulong value) : base(FromLong((long)value))
         {
         }
@@ -122,7 +120,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from a uint16 value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyInt(ushort value) : this((int)value)
         {
         }
@@ -145,7 +142,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an sbyte value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyInt(sbyte value) : this((int)value)
         {
         }

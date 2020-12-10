@@ -14,7 +14,7 @@ using PyRuntime = Python.Runtime.Runtime;
 //
 // Unfortunately this means no continuous integration testing for this case.
 //
-#if !NETSTANDARD && !NETCOREAPP
+#if NETFRAMEWORK
 namespace Python.EmbeddingTest
 {
     class TestDomainReload
@@ -400,7 +400,7 @@ test_obj_call()
                 return method.Invoke(null, args);
             }
         }
-        
+
         static T CreateInstanceInstanceAndUnwrap<T>(AppDomain domain)
         {
             Type type = typeof(T);

@@ -69,7 +69,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from a uint32 value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyLong(uint value) : base(FromInt((int)value))
         {
         }
@@ -105,7 +104,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from a uint64 value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyLong(ulong value) : base(FromULong(value))
         {
         }
@@ -128,7 +126,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an uint16 value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyLong(ushort value) : base(FromInt((int)value))
         {
         }
@@ -151,7 +148,6 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new PyLong from an sbyte value.
         /// </remarks>
-        [CLSCompliant(false)]
         public PyLong(sbyte value) : base(FromInt((int)value))
         {
         }
