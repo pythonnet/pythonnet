@@ -2,6 +2,7 @@
 
 """Test support for managed arrays."""
 
+import clr
 import Python.Test as Test
 import System
 import pytest
@@ -1143,6 +1144,8 @@ def test_boxed_value_type_mutation_result():
     # to accidentally write code like the following which is not really
     # mutating value types in-place but changing boxed copies.
 
+    clr.AddReference('System.Drawing')
+
     from System.Drawing import Point
     from System import Array
 
@@ -1171,6 +1174,20 @@ def test_boxed_value_type_mutation_result():
         assert items[i].X == i + 1
         assert items[i].Y == i + 1
 
+def test_create_array_from_shape():
+    from System import Array
+
+    value = Array[int](3)
+    assert value[1] == 0
+    assert value.Length == 3
+
+    value = Array[int](3, 4)
+    assert value[1, 1] == 0
+    assert value.GetLength(0) == 3
+    assert value.GetLength(1) == 4
+
+    with pytest.raises(ValueError):
+        Array[int](-1)
 
 def test_special_array_creation():
     """Test using the Array[<type>] syntax for creating arrays."""
@@ -1288,9 +1305,10 @@ def test_special_array_creation():
     assert value[1].__class__ == inst.__class__
     assert value.Length == 2
 
+    iface_class = ISayHello1(inst).__class__
     value = Array[ISayHello1]([inst, inst])
-    assert value[0].__class__ == inst.__class__
-    assert value[1].__class__ == inst.__class__
+    assert value[0].__class__ == iface_class
+    assert value[1].__class__ == iface_class
     assert value.Length == 2
 
     inst = System.Exception("badness")
@@ -1320,16 +1338,14 @@ def test_array_abuse():
     with pytest.raises(TypeError):
         Test.PublicArrayTest.__getitem__(0, 0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         Test.PublicArrayTest.__setitem__(0, 0, 0)
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__getitem__']
-        desc(0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__getitem__']
 
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__setitem__']
-        desc(0, 0, 0)
+    with pytest.raises(KeyError):
+        Test.PublicArrayTest.__dict__['__setitem__']
 
 
 def test_iterator_to_array():

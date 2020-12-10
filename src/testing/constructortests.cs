@@ -48,4 +48,22 @@ namespace Python.Test
             value = v;
         }
     }
+
+    public class MultipleConstructorsTest
+    {
+        public string value;
+        public Type[] type;
+
+        public MultipleConstructorsTest()
+        {
+            value = "";
+            type = new Type[1] { null };
+        }
+
+        public MultipleConstructorsTest(string s, params Type[] tp)
+        {
+            value = s;
+            type = tp;
+        }
+    }
 }

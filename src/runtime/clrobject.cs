@@ -3,12 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
+    [Serializable]
     internal class CLRObject : ManagedType
     {
         internal object inst;
 
         internal CLRObject(object ob, IntPtr tp)
         {
+            System.Diagnostics.Debug.Assert(tp != IntPtr.Zero);
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
             long flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
@@ -22,11 +24,10 @@ namespace Python.Runtime
                 }
             }
 
-            GCHandle gc = GCHandle.Alloc(this);
+            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
             Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
             tpHandle = tp;
             pyHandle = py;
-            gcHandle = gc;
             inst = ob;
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
@@ -34,6 +35,9 @@ namespace Python.Runtime
             Exceptions.SetArgsAndCause(py);
         }
 
+        protected CLRObject()
+        {
+        }
 
         static CLRObject GetInstance(object ob, IntPtr pyType)
         {
@@ -47,7 +51,11 @@ namespace Python.Runtime
             return GetInstance(ob, cc.tpHandle);
         }
 
-
+        internal static NewReference GetInstHandle(object ob, BorrowedReference pyType)
+        {
+            CLRObject co = GetInstance(ob, pyType.DangerousGetAddress());
+            return NewReference.DangerousFromPointer(co.pyHandle);
+        }
         internal static IntPtr GetInstHandle(object ob, IntPtr pyType)
         {
             CLRObject co = GetInstance(ob, pyType);
@@ -67,6 +75,31 @@ namespace Python.Runtime
         {
             CLRObject co = GetInstance(ob);
             return co.pyHandle;
+        }
+
+        internal static CLRObject Restore(object ob, IntPtr pyHandle, InterDomainContext context)
+        {
+            CLRObject co = new CLRObject()
+            {
+                inst = ob,
+                pyHandle = pyHandle,
+                tpHandle = Runtime.PyObject_TYPE(pyHandle)
+            };
+            co.Load(context);
+            return co;
+        }
+
+        protected override void OnSave(InterDomainContext context)
+        {
+            base.OnSave(context);
+            Runtime.XIncref(pyHandle);
+        }
+
+        protected override void OnLoad(InterDomainContext context)
+        {
+            base.OnLoad(context);
+            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
+            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
         }
     }
 }

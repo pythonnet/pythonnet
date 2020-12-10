@@ -10,6 +10,7 @@ namespace Python.Runtime
     /// <remarks>
     /// TODO: ForbidPythonThreadsAttribute per method info
     /// </remarks>
+    [Serializable]
     internal class MethodObject : ExtensionType
     {
         internal MethodInfo[] info;
@@ -17,6 +18,7 @@ namespace Python.Runtime
         internal MethodBinding unbound;
         internal MethodBinder binder;
         internal bool is_static = false;
+
         internal IntPtr doc;
         internal Type type;
 
@@ -109,6 +111,16 @@ namespace Python.Runtime
             return is_static;
         }
 
+        private void ClearMembers()
+        {
+            Runtime.Py_CLEAR(ref doc);
+            if (unbound != null)
+            {
+                Runtime.XDecref(unbound.pyHandle);
+                unbound = null;
+            }
+        }
+
         /// <summary>
         /// Descriptor __getattribute__ implementation.
         /// </summary>
@@ -121,8 +133,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("string expected");
             }
 
-            string name = Runtime.GetManagedString(key);
-            if (name == "__doc__")
+            if (Runtime.PyUnicode_Compare(key, PyIdentifier.__doc__) == 0)
             {
                 IntPtr doc = self.GetDocString();
                 Runtime.XIncref(doc);
@@ -196,12 +207,27 @@ namespace Python.Runtime
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (MethodObject)GetManagedObject(ob);
-            Runtime.XDecref(self.doc);
-            if (self.unbound != null)
+            self.ClearMembers();
+            ClearObjectDict(ob);
+            self.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (MethodObject)GetManagedObject(ob);
+            self.ClearMembers();
+            ClearObjectDict(ob);
+            return 0;
+        }
+
+        protected override void OnSave(InterDomainContext context)
+        {
+            base.OnSave(context);
+            if (unbound != null)
             {
-                Runtime.XDecref(self.unbound.pyHandle);
+                Runtime.XIncref(unbound.pyHandle);
             }
-            ExtensionType.FinalizeObject(self);
+            Runtime.XIncref(doc);
         }
     }
 }

@@ -20,7 +20,8 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    public class PyObject : DynamicObject, IEnumerable, IPyDisposable
+    [Serializable]
+    public partial class PyObject : DynamicObject, IEnumerable, IPyDisposable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -63,17 +64,6 @@ namespace Python.Runtime
             if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
 
             obj = Runtime.SelfIncRef(reference.DangerousGetAddress());
-            Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
-        }
-
-        // Protected default constructor to allow subclasses to manage
-        // initialization in different ways as appropriate.
-        [Obsolete("Please, always use PyObject(*Reference)")]
-        protected PyObject()
-        {
             Finalizer.Instance.ThrottledCollect();
 #if TRACE_ALLOC
             Traceback = new StackTrace(1);
@@ -710,7 +700,7 @@ namespace Python.Runtime
         /// </remarks>
         public IEnumerator GetEnumerator()
         {
-            return new PyIter(this);
+            return PyIter.GetIter(this);
         }
 
 
@@ -1090,6 +1080,19 @@ namespace Python.Runtime
         public override int GetHashCode()
         {
             return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
+        }
+
+        /// <summary>
+        /// GetBuffer Method. This Method only works for objects that have a buffer (like "bytes", "bytearray" or "array.array")
+        /// </summary>
+        /// <remarks>
+        /// Send a request to the PyObject to fill in view as specified by flags. If the PyObject cannot provide a buffer of the exact type, it MUST raise PyExc_BufferError, set view->obj to NULL and return -1.
+        /// On success, fill in view, set view->obj to a new reference to exporter and return 0. In the case of chained buffer providers that redirect requests to a single object, view->obj MAY refer to this object instead of exporter(See Buffer Object Structures).
+        /// Successful calls to <see cref="PyObject.GetBuffer"/> must be paired with calls to <see cref="PyBuffer.Dispose()"/>, similar to malloc() and free(). Thus, after the consumer is done with the buffer, <see cref="PyBuffer.Dispose()"/> must be called exactly once.
+        /// </remarks>
+        public PyBuffer GetBuffer(PyBUF flags = PyBUF.SIMPLE)
+        {
+            return new PyBuffer(this, flags);
         }
 
 

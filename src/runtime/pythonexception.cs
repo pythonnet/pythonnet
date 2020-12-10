@@ -187,6 +187,11 @@ namespace Python.Runtime
             return res;
         }
 
+        public bool IsMatches(IntPtr exc)
+        {
+            return Runtime.PyErr_GivenExceptionMatches(PyType, exc) != 0;
+        }
+
         /// <summary>
         /// Dispose Method
         /// </summary>
@@ -245,6 +250,7 @@ namespace Python.Runtime
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
+        [System.Diagnostics.DebuggerHidden]
         public static void ThrowIfIsNull(IntPtr ob)
         {
             if (ob == IntPtr.Zero)
@@ -253,6 +259,16 @@ namespace Python.Runtime
             }
         }
 
+        [System.Diagnostics.DebuggerHidden]
+        internal static void ThrowIfIsNull(BorrowedReference reference)
+        {
+            if (reference.IsNull)
+            {
+                throw new PythonException();
+            }
+        }
+
+        [System.Diagnostics.DebuggerHidden]
         public static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)

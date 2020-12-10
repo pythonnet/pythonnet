@@ -3,6 +3,7 @@
 
 """Test CLR class support."""
 
+import clr
 import Python.Test as Test
 import System
 import pytest
@@ -124,6 +125,9 @@ def test_subclass_with_various_constructors():
 
 def test_struct_construction():
     """Test construction of structs."""
+
+    clr.AddReference('System.Drawing')
+
     from System.Drawing import Point
 
     p = Point()
@@ -171,6 +175,23 @@ def test_ienumerator_iteration():
 
     for item in chars:
         assert item in 'test string'
+
+def test_iterable():
+    """Test what objects are Iterable"""
+    from collections.abc import Iterable
+    from Python.Test import ClassTest
+
+    assert isinstance(System.String.Empty, Iterable)
+    assert isinstance(ClassTest.GetArrayList(), Iterable)
+    assert isinstance(ClassTest.GetEnumerator(), Iterable)
+    assert (not isinstance(ClassTest, Iterable))
+    assert (not isinstance(ClassTest(), Iterable))
+
+    class ShouldBeIterable(ClassTest):
+        def __iter__(self):
+            return iter([])
+
+    assert isinstance(ShouldBeIterable(), Iterable)
 
 
 def test_override_get_item():
@@ -298,3 +319,13 @@ def test_method_inheritance():
 
     assert base.IsBase() == True
     assert derived.IsBase() == False
+
+
+def test_callable():
+    """Test that only delegate subtypes are callable"""
+
+    def foo():
+        pass
+
+    assert callable(System.String("foo")) == False
+    assert callable(System.Action(foo)) == True

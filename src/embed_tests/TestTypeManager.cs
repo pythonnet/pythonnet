@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Python.Runtime;
+using Python.Runtime.Platform;
 using System.Runtime.InteropServices;
 
 namespace Python.EmbeddingTest
@@ -15,22 +16,21 @@ namespace Python.EmbeddingTest
         [TearDown]
         public static void Fini()
         {
-            // Don't shut down the runtime: if the python engine was initialized
-            // but not shut down by another test, we'd end up in a bad state.
+            Runtime.Runtime.Shutdown();
         }
 
         [Test]
         public static void TestNativeCode()
         {
-            Assert.That(() => { var _ = TypeManager.NativeCode.Active; }, Throws.Nothing);
-            Assert.That(TypeManager.NativeCode.Active.Code.Length, Is.GreaterThan(0));
+            Assert.That(() => { var _ = NativeCodePageHelper.NativeCode.Active; }, Throws.Nothing);
+            Assert.That(NativeCodePageHelper.NativeCode.Active.Code.Length, Is.GreaterThan(0));
         }
 
         [Test]
         public static void TestMemoryMapping()
         {
-            Assert.That(() => { var _ = TypeManager.CreateMemoryMapper(); }, Throws.Nothing);
-            var mapper = TypeManager.CreateMemoryMapper();
+            Assert.That(() => { var _ = NativeCodePageHelper.CreateMemoryMapper(); }, Throws.Nothing);
+            var mapper = NativeCodePageHelper.CreateMemoryMapper();
 
             // Allocate a read-write page.
             int len = 12;

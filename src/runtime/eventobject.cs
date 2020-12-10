@@ -7,6 +7,7 @@ namespace Python.Runtime
     /// <summary>
     /// Implements a Python descriptor type that provides access to CLR events.
     /// </summary>
+    [Serializable]
     internal class EventObject : ExtensionType
     {
         internal string name;
@@ -202,7 +203,7 @@ namespace Python.Runtime
             {
                 Runtime.XDecref(self.unbound.pyHandle);
             }
-            FinalizeObject(self);
+            self.Dealloc();
         }
     }
 

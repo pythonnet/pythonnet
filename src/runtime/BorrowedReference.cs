@@ -10,6 +10,7 @@ namespace Python.Runtime
         readonly IntPtr pointer;
         public bool IsNull => this.pointer == IntPtr.Zero;
 
+
         /// <summary>Gets a raw pointer to the Python object</summary>
         public IntPtr DangerousGetAddress()
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
@@ -21,5 +22,10 @@ namespace Python.Runtime
         {
             this.pointer = pointer;
         }
+
+        public static bool operator ==(BorrowedReference a, BorrowedReference b)
+            => a.pointer == b.pointer;
+        public static bool operator !=(BorrowedReference a, BorrowedReference b)
+            => a.pointer != b.pointer;
     }
 }

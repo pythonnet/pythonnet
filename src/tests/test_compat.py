@@ -3,6 +3,7 @@
 
 """Backward-compatibility tests for deprecated features."""
 
+import clr
 import types
 
 import pytest
@@ -137,6 +138,8 @@ def test_dotted_name_import_from_with_alias():
 
 def test_from_module_import_star():
     """Test from module import * behavior."""
+    clr.AddReference('System.Management')
+
     count = len(locals().keys())
     m = __import__('CLR.System.Management', globals(), locals(), ['*'])
     assert m.__name__ == 'System.Management'

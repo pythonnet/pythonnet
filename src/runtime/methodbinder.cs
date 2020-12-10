@@ -13,6 +13,7 @@ namespace Python.Runtime
     /// a set of Python arguments. This is also used as a base class for the
     /// ConstructorBinder, a minor variation used to invoke constructors.
     /// </summary>
+    [Serializable]
     internal class MethodBinder
     {
         public ArrayList list;
@@ -203,6 +204,16 @@ namespace Python.Runtime
                 return 3000;
             }
 
+            if (t.IsArray)
+            {
+                Type e = t.GetElementType();
+                if (e == objectType)
+                {
+                    return 2500;
+                }
+                return 100 + ArgPrecedence(e);
+            }
+
             TypeCode tc = Type.GetTypeCode(t);
             // TODO: Clean up
             switch (tc)
@@ -250,16 +261,6 @@ namespace Python.Runtime
                     return 40;
             }
 
-            if (t.IsArray)
-            {
-                Type e = t.GetElementType();
-                if (e == objectType)
-                {
-                    return 2500;
-                }
-                return 100 + ArgPrecedence(e);
-            }
-
             return 2000;
         }
 
@@ -278,6 +279,23 @@ namespace Python.Runtime
             return Bind(inst, args, kw, info, null);
         }
 
+        private readonly struct MatchedMethod {
+            public MatchedMethod(int kwargsMatched, int defaultsNeeded, object[] margs, int outs, MethodBase mb)
+            {
+                KwargsMatched = kwargsMatched;
+                DefaultsNeeded = defaultsNeeded;
+                ManagedArgs = margs;
+                Outs = outs;
+                Method = mb;
+            }
+
+            public int KwargsMatched { get; }
+            public int DefaultsNeeded { get; }
+            public object[] ManagedArgs { get; }
+            public int Outs { get; }
+            public MethodBase Method { get; }
+        }
+
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // loop to find match, return invoker w/ or /wo error
@@ -291,8 +309,8 @@ namespace Python.Runtime
                 IntPtr valueList = Runtime.PyDict_Values(kw);
                 for (int i = 0; i < pynkwargs; ++i)
                 {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist, i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i).DangerousGetAddress();
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
                 }
                 Runtime.XDecref(keylist);
                 Runtime.XDecref(valueList);
@@ -310,6 +328,8 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
+            var argMatchedMethods = new List<MatchedMethod>(_methods.Length);
+
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
             {
@@ -320,8 +340,10 @@ namespace Python.Runtime
                 ParameterInfo[] pi = mi.GetParameters();
                 ArrayList defaultArgList;
                 bool paramsArray;
+                int kwargsMatched;
+                int defaultsNeeded;
 
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList))
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
                 {
                     continue;
                 }
@@ -334,6 +356,47 @@ namespace Python.Runtime
                 {
                     continue;
                 }
+
+                var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi);
+                argMatchedMethods.Add(matchedMethod);
+            }
+            if (argMatchedMethods.Count > 0)
+            {
+                var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
+                var fewestDefaultsRequired = argMatchedMethods.Where(x => x.KwargsMatched == bestKwargMatchCount).Min(x => x.DefaultsNeeded);
+
+                int bestCount = 0;
+                int bestMatchIndex = -1;
+
+                for (int index = 0; index < argMatchedMethods.Count; index++)
+                {
+                    var testMatch = argMatchedMethods[index];
+                    if (testMatch.DefaultsNeeded == fewestDefaultsRequired && testMatch.KwargsMatched == bestKwargMatchCount)
+                    {
+                        bestCount++;
+                        if (bestMatchIndex == -1)
+                            bestMatchIndex = index;
+                    }
+                }
+
+                if (bestCount > 1 && fewestDefaultsRequired > 0)
+                {
+                    // Best effort for determining method to match on gives multiple possible
+                    // matches and we need at least one default argument - bail from this point
+                    return null;
+                }
+
+                // If we're here either:
+                //      (a) There is only one best match
+                //      (b) There are multiple best matches but none of them require
+                //          default arguments
+                // in the case of (a) we're done by default. For (b) regardless of which
+                // method we choose, all arguments are specified _and_ can be converted
+                // from python to C# so picking any will suffice
+                MatchedMethod bestMatch = argMatchedMethods[bestMatchIndex];
+                var margs = bestMatch.ManagedArgs;
+                var outs = bestMatch.Outs;
+                var mi = bestMatch.Method;
 
                 object target = null;
                 if (!mi.IsStatic && inst != IntPtr.Zero)
@@ -449,7 +512,7 @@ namespace Python.Runtime
                 {
                     if(arrayStart == paramIndex)
                     {
-                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);                                                                 
+                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);
                     }
                     else
                     {
@@ -471,7 +534,7 @@ namespace Python.Runtime
                     Runtime.XDecref(op);
                 }
 
-                if (parameter.IsOut || isOut)
+                if (isOut)
                 {
                     outs++;
                 }
@@ -574,17 +637,22 @@ namespace Python.Runtime
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             out bool paramsArray,
-            out ArrayList defaultArgList)
+            out ArrayList defaultArgList,
+            out int kwargsMatched,
+            out int defaultsNeeded)
         {
             defaultArgList = null;
             var match = false;
             paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
+            var kwargCount = kwargDict.Count;
+            kwargsMatched = 0;
+            defaultsNeeded = 0;
 
-            if (positionalArgumentCount == parameters.Length)
+            if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)
             {
                 match = true;
             }
-            else if (positionalArgumentCount < parameters.Length)
+            else if (positionalArgumentCount < parameters.Length && (!paramsArray || positionalArgumentCount == parameters.Length - 1))
             {
                 // every parameter past 'positionalArgumentCount' must have either
                 // a corresponding keyword argument or a default parameter
@@ -598,6 +666,7 @@ namespace Python.Runtime
                         // no need to check for a default parameter, but put a null
                         // placeholder in defaultArgList
                         defaultArgList.Add(null);
+                        kwargsMatched++;
                     }
                     else if (parameters[v].IsOptional)
                     {
@@ -606,8 +675,9 @@ namespace Python.Runtime
                         // The GetDefaultValue() extension method will return the value
                         // to be passed in as the parameter value
                         defaultArgList.Add(parameters[v].GetDefaultValue());
+                        defaultsNeeded++;
                     }
-                    else if(!paramsArray)
+                    else if (!paramsArray)
                     {
                         match = false;
                     }
@@ -744,7 +814,7 @@ namespace Python.Runtime
                     Type pt = pi[i].ParameterType;
                     if (pi[i].IsOut || pt.IsByRef)
                     {
-                        v = Converter.ToPython(binding.args[i], pt);
+                        v = Converter.ToPython(binding.args[i], pt.GetElementType());
                         Runtime.PyTuple_SetItem(t, n, v);
                         n++;
                     }

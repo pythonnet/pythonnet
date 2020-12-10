@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// the same as a ClassObject, except that it provides sequence semantics
     /// to support natural array usage (indexing) from Python.
     /// </summary>
+    [Serializable]
     internal class ArrayObject : ClassBase
     {
         internal ArrayObject(Type tp) : base(tp)
@@ -19,32 +20,121 @@ namespace Python.Runtime
             return false;
         }
 
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        public static IntPtr tp_new(IntPtr tpRaw, IntPtr args, IntPtr kw)
         {
-            var self = GetManagedObject(tp) as ArrayObject;
-            if (Runtime.PyTuple_Size(args) != 1)
+            if (kw != IntPtr.Zero)
             {
-                return Exceptions.RaiseTypeError("array expects 1 argument");
+                return Exceptions.RaiseTypeError("array constructor takes no keyword arguments");
             }
+
+            var tp = new BorrowedReference(tpRaw);
+
+            var self = GetManagedObject(tp) as ArrayObject;
+
+            long[] dimensions = new long[Runtime.PyTuple_Size(args)];
+            if (dimensions.Length == 0)
+            {
+                return Exceptions.RaiseTypeError("array constructor requires at least one integer argument or an object convertible to array");
+            }
+            if (dimensions.Length != 1)
+            {
+                return CreateMultidimensional(self.type.GetElementType(), dimensions,
+                         shapeTuple: new BorrowedReference(args),
+                         pyType: tp)
+                       .DangerousMoveToPointerOrNull();
+            }
+
             IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+
+            // create single dimensional array
+            if (Runtime.PyInt_Check(op))
+            {
+                dimensions[0] = Runtime.PyLong_AsLongLong(op);
+                if (dimensions[0] == -1 && Exceptions.ErrorOccurred())
+                {
+                    Exceptions.Clear();
+                }
+                else
+                {
+                    return NewInstance(self.type.GetElementType(), tp, dimensions)
+                           .DangerousMoveToPointerOrNull();
+                }
+            }
             object result;
 
+            // this implements casting to Array[T]
             if (!Converter.ToManaged(op, self.type, out result, true))
             {
                 return IntPtr.Zero;
             }
-            return CLRObject.GetInstHandle(result, tp);
+            return CLRObject.GetInstHandle(result, tp)
+                   .DangerousGetAddress();
+        }
+
+        static NewReference CreateMultidimensional(Type elementType, long[] dimensions, BorrowedReference shapeTuple, BorrowedReference pyType)
+        {
+            for (int dimIndex = 0; dimIndex < dimensions.Length; dimIndex++)
+            {
+                BorrowedReference dimObj = Runtime.PyTuple_GetItem(shapeTuple, dimIndex);
+                PythonException.ThrowIfIsNull(dimObj);
+
+                if (!Runtime.PyInt_Check(dimObj))
+                {
+                    Exceptions.RaiseTypeError("array constructor expects integer dimensions");
+                    return default;
+                }
+
+                dimensions[dimIndex] = Runtime.PyLong_AsLongLong(dimObj);
+                if (dimensions[dimIndex] == -1 && Exceptions.ErrorOccurred())
+                {
+                    Exceptions.RaiseTypeError("array constructor expects integer dimensions");
+                    return default;
+                }
+            }
+
+            return NewInstance(elementType, pyType, dimensions);
+        }
+
+        static NewReference NewInstance(Type elementType, BorrowedReference arrayPyType, long[] dimensions)
+        {
+            object result;
+            try
+            {
+                result = Array.CreateInstance(elementType, dimensions);
+            }
+            catch (ArgumentException badArgument)
+            {
+                Exceptions.SetError(Exceptions.ValueError, badArgument.Message);
+                return default;
+            }
+            catch (OverflowException overflow)
+            {
+                Exceptions.SetError(overflow);
+                return default;
+            }
+            catch (NotSupportedException notSupported)
+            {
+                Exceptions.SetError(notSupported);
+                return default;
+            }
+            catch (OutOfMemoryException oom)
+            {
+                Exceptions.SetError(Exceptions.MemoryError, oom.Message);
+                return default;
+            }
+            return CLRObject.GetInstHandle(result, arrayPyType);
         }
 
 
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
         {
             var obj = (CLRObject)GetManagedObject(ob);
+            var arrObj = (ArrayObject)GetManagedObjectType(ob);
             var items = obj.inst as Array;
-            Type itemType = obj.inst.GetType().GetElementType();
+            Type itemType = arrObj.type.GetElementType();
             int rank = items.Rank;
             int index;
             object value;
@@ -132,7 +222,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static new int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var items = obj.inst as Array;

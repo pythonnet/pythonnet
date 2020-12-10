@@ -27,14 +27,26 @@ namespace Python.Runtime
             this.pointer = IntPtr.Zero;
             return result;
         }
+
+        /// <summary>Moves ownership of this instance to unmanged pointer</summary>
+        public IntPtr DangerousMoveToPointerOrNull()
+        {
+            var result = this.pointer;
+            this.pointer = IntPtr.Zero;
+            return result;
+        }
+
         /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.
         /// </summary>
         public void Dispose()
         {
-            if (!this.IsNull())
-                Runtime.XDecref(this.pointer);
-            this.pointer = IntPtr.Zero;
+            if (this.IsNull())
+            {
+                return;
+            }
+            Runtime.XDecref(pointer);
+            pointer = IntPtr.Zero;
         }
 
         /// <summary>

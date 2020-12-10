@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -11,17 +13,55 @@ namespace Python.Runtime
     internal class MetaType : ManagedType
     {
         private static IntPtr PyCLRMetaType;
+        private static SlotsHolder _metaSlotsHodler;
 
+        internal static readonly string[] CustomMethods = new string[]
+        {
+            "__instancecheck__",
+            "__subclasscheck__",
+        };
 
         /// <summary>
         /// Metatype initialization. This bootstraps the CLR metatype to life.
         /// </summary>
         public static IntPtr Initialize()
         {
-            PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType));
+            PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType), out _metaSlotsHodler);
             return PyCLRMetaType;
         }
 
+        public static void Release()
+        {
+            if (Runtime.Refcount(PyCLRMetaType) > 1)
+            {
+                _metaSlotsHodler.ResetSlots();
+            }
+            Runtime.Py_CLEAR(ref PyCLRMetaType);
+            _metaSlotsHodler = null;
+        }
+
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        {
+            Runtime.XIncref(PyCLRMetaType);
+            storage.PushValue(PyCLRMetaType);
+        }
+
+        internal static IntPtr RestoreRuntimeData(RuntimeDataStorage storage)
+        {
+            PyCLRMetaType = storage.PopValue<IntPtr>();
+            _metaSlotsHodler = new SlotsHolder(PyCLRMetaType);
+            TypeManager.InitializeSlots(PyCLRMetaType, typeof(MetaType), _metaSlotsHodler);
+
+            IntPtr mdef = Marshal.ReadIntPtr(PyCLRMetaType, TypeOffset.tp_methods);
+            foreach (var methodName in CustomMethods)
+            {
+                var mi = typeof(MetaType).GetMethod(methodName);
+                ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+                _metaSlotsHodler.KeeapAlive(thunkInfo);
+                mdef = TypeManager.WriteMethodDef(mdef, methodName, thunkInfo.Address);
+            }
+            return PyCLRMetaType;
+        }
 
         /// <summary>
         /// Metatype __new__ implementation. This is called to create a new
@@ -69,7 +109,7 @@ namespace Python.Runtime
                 }
             }
 
-            IntPtr slots = Runtime.PyDict_GetItemString(dict, "__slots__");
+            IntPtr slots = Runtime.PyDict_GetItem(dict, PyIdentifier.__slots__);
             if (slots != IntPtr.Zero)
             {
                 return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
@@ -157,7 +197,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            var init = Runtime.PyObject_GetAttrString(obj, "__init__");
+            var init = Runtime.PyObject_GetAttr(obj, PyIdentifier.__init__);
             Runtime.PyErr_Clear();
 
             if (init != IntPtr.Zero)

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Python.Test
@@ -84,7 +85,7 @@ namespace Python.Test
 
         public static string[] TestStringParamsArg(params string[] args)
         {
-            return args;
+            return args.Concat(new []{"tail"}).ToArray();
         }
 
         public static object[] TestObjectParamsArg(params object[] args)
@@ -683,7 +684,35 @@ namespace Python.Test
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        
+        public static string DefaultParamsWithOverloading(int a = 2, int b = 1)
+        {
+            return $"{a}{b}";
+        }
+
+        public static string DefaultParamsWithOverloading(string a = "a", string b = "b")
+        {
+            return $"{a}{b}X";
+        }
+
+        public static string DefaultParamsWithOverloading(int a = 0, int b = 1, int c = 2)
+        {
+            return $"{a}{b}{c}XX";
+        }
+
+        public static string DefaultParamsWithOverloading(int a = 5, int b = 6, int c = 7, int d = 8)
+        {
+            return $"{a}{b}{c}{d}XXX";
+        }
+
+        public static string ParamsArrayOverloaded(int i = 1)
+        {
+            return "without params-array";
+        }
+
+        public static string ParamsArrayOverloaded(int i, params int[] paramsArray)
+        {
+            return "with params-array";
+        }
     }
 
 
@@ -697,6 +726,12 @@ namespace Python.Test
         {
             return echo;
         }
+    }
+
+    public class MethodArityTest
+    {
+        public string Foo(int a) { return "Arity 1"; }
+        public string Foo(int a, int b) { return "Arity 2"; }
     }
 }
 
