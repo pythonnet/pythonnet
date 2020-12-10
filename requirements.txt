@@ -1,11 +1,13 @@
 # Requirements for both Travis and AppVeyor
 pytest
-coverage
 psutil
 
 # Coverage upload
+coverage
 codecov
 
 # Platform specific requirements
 wheel
 pycparser
+setuptools
+setuptools_scm

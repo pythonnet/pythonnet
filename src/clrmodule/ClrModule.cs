@@ -26,7 +26,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using RGiesecke.DllExport;
+using NXPorts.Attributes;
 
 public class clrModule
 {

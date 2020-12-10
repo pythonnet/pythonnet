@@ -1,12 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
-    <Configurations>DebugMono;DebugMonoPY3;ReleaseMono;ReleaseMonoPY3;DebugWin;DebugWinPY3;ReleaseWin;ReleaseWinPY3</Configurations>
-    <OutputPath>bin\</OutputPath>
-
+    <TargetFramework>net472</TargetFramework>
     <IsPackable>false</IsPackable>
-
     <Platforms>x64;x86</Platforms>
   </PropertyGroup>
 
@@ -28,7 +24,7 @@
   </ItemGroup>
 
   <Target Name="GetRuntimeLibBuildOutput" BeforeTargets="Build">
-    <MSBuild Projects="..\runtime\Python.Runtime.15.csproj" Properties="PYTHONNET_PY3_VERSION=PYTHON38;Configuration=$(Configuration);TargetFramework=net40;Python3Version=PYTHON38;OutputPath=bin\for_perf\">
+    <MSBuild Projects="..\runtime\Python.Runtime.csproj" Properties="PYTHONNET_PY3_VERSION=PYTHON38;Python3Version=PYTHON38;OutputPath=bin\for_perf\">
       <Output TaskParameter="TargetOutputs" ItemName="NewPythonRuntime" />
     </MSBuild>
   </Target>

@@ -22,5 +22,10 @@ namespace Python.Runtime
         {
             this.pointer = pointer;
         }
+
+        public static bool operator ==(BorrowedReference a, BorrowedReference b)
+            => a.pointer == b.pointer;
+        public static bool operator !=(BorrowedReference a, BorrowedReference b)
+            => a.pointer != b.pointer;
     }
 }

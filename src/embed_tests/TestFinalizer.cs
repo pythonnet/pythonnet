@@ -47,6 +47,7 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        [Ignore("Ignore temporarily")]
         public void CollectBasicObject()
         {
             Assert.IsTrue(Finalizer.Instance.Enable);
