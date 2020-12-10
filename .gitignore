@@ -1,5 +1,8 @@
 /src/runtime/interopNative.cs
 
+# Configuration data
+configured.props
+
 # General binaries and Build results
 *.dll
 *.exe
@@ -17,6 +20,7 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.eggs/
 
 # Unit test / coverage reports
 htmlcov/
