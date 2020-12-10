@@ -12,6 +12,7 @@ jobs:
       matrix:
         os: [windows, ubuntu, macos]
         python: [3.6, 3.7, 3.8, 3.9]
+        platform: [x64]
         shutdown_mode: [Normal, Soft]
 
     env:
@@ -42,7 +43,7 @@ jobs:
         run: pytest
 
       - name: Run Embedding tests
-        run: dotnet test src/embed_tests/
+        run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
 
       # TODO: Run perf tests
       # TODO: Run mono tests on Windows?
