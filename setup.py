@@ -106,11 +106,7 @@ class BuildDotnet(build_ext):
         other_modules = [lib for lib in orig_modules if not isinstance(lib, DotnetLib)]
 
         if dotnet_modules:
-            if os.path.isfile(CONFIGURED_PROPS):
-                self.announce("Already configured", level=distutils.log.INFO)
-            else:
-                self.announce("Writing configured.props...", level=distutils.log.INFO)
-                _write_configure_props()
+            self.run_command("configure")
 
         for lib in dotnet_modules:
             output = os.path.join(os.path.abspath(self.build_lib), lib.args.pop("output"))
@@ -149,14 +145,6 @@ class BuildDotnet(build_ext):
             super().run()
             self.distribution.ext_modules = orig_modules
         # If no modules need to be compiled, skip
-
-
-class bdist_wheel_patched(bdist_wheel):
-    def finalize_options(self):
-        # Monkey patch bdist_wheel to think the package is pure even though we
-        # include DLLs
-        super().finalize_options()
-        self.root_is_pure = True
 
 
 with open("README.rst", "r") as f:
@@ -221,7 +209,6 @@ setup(
     # data_files=[("{install_platlib}", ["{build_lib}/pythonnet"])],
     cmdclass={
         "build_ext": BuildDotnet,
-        "bdist_wheel": bdist_wheel_patched,
         "configure": Configure,
     },
     py_modules=["clr"],
