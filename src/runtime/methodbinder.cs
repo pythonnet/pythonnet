@@ -512,7 +512,7 @@ namespace Python.Runtime
                 {
                     if(arrayStart == paramIndex)
                     {
-                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);                                                                 
+                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);
                     }
                     else
                     {
@@ -652,7 +652,7 @@ namespace Python.Runtime
             {
                 match = true;
             }
-            else if (positionalArgumentCount < parameters.Length)
+            else if (positionalArgumentCount < parameters.Length && (!paramsArray || positionalArgumentCount == parameters.Length - 1))
             {
                 // every parameter past 'positionalArgumentCount' must have either
                 // a corresponding keyword argument or a default parameter
@@ -677,7 +677,7 @@ namespace Python.Runtime
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                         defaultsNeeded++;
                     }
-                    else if(!paramsArray)
+                    else if (!paramsArray)
                     {
                         match = false;
                     }

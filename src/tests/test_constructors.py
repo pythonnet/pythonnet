@@ -44,3 +44,12 @@ def test_subclass_constructor():
     instance = Sub()
     ob = SubclassConstructorTest(instance)
     assert isinstance(ob.value, System.Exception)
+
+
+def test_multiple_constructor():
+    from Python.Test import MultipleConstructorsTest
+    import System
+
+    # Test parameterless
+    ob = MultipleConstructorsTest()
+    assert ob.value == ""
