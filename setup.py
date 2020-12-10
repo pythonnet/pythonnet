@@ -4,6 +4,7 @@ from setuptools import setup, Command, Extension
 from wheel.bdist_wheel import bdist_wheel
 from setuptools.command.build_ext import build_ext
 import distutils
+from distutils.command import build
 from subprocess import check_output, check_call
 
 import sys, os
@@ -26,6 +27,8 @@ def _get_interop_filename():
     return os.path.join("src", "runtime", interop_filename)
 
 
+# Write configuration to configured.props. This will go away once all of these
+# can be decided at runtime.
 def _write_configure_props():
     defines = [
         "PYTHON{0}{1}".format(PY_MAJOR, PY_MINOR),
@@ -60,7 +63,7 @@ def _write_configure_props():
     ET.ElementTree(proj).write(CONFIGURED_PROPS)
 
 
-class Configure(Command):
+class configure(Command):
     """Configure command"""
 
     description = "Configure the pythonnet build"
@@ -77,36 +80,34 @@ class Configure(Command):
         _write_configure_props()
 
 
-class DotnetLib(Extension):
+class DotnetLib:
     def __init__(self, name, path, **kwargs):
+        self.name = name
         self.path = path
         self.args = kwargs
-        super().__init__(name, sources=[])
 
 
-class BuildDotnet(build_ext):
+class build_dotnet(Command):
     """Build command for dotnet-cli based builds"""
 
     description = "Build DLLs with dotnet-cli"
     user_options = [("dotnet-config", None, "dotnet build configuration")]
 
     def initialize_options(self):
-        self.dotnet_config = "release"
-        super().initialize_options()
+        self.dotnet_config = None
+        self.build_lib = None
 
     def finalize_options(self):
-        super().finalize_options()
-
-    def get_source_files(self):
-        return super().get_source_files()
+        if self.dotnet_config is None:
+            self.dotnet_config = "release"
+        
+        build = self.distribution.get_command_obj("build")
+        build.ensure_finalized()
+        self.build_lib = build.build_lib
 
     def run(self):
-        orig_modules = self.distribution.ext_modules
-        dotnet_modules = [lib for lib in orig_modules if isinstance(lib, DotnetLib)]
-        other_modules = [lib for lib in orig_modules if not isinstance(lib, DotnetLib)]
-
-        if dotnet_modules:
-            self.run_command("configure")
+        dotnet_modules = self.distribution.dotnet_libs
+        self.run_command("configure")
 
         for lib in dotnet_modules:
             output = os.path.join(os.path.abspath(self.build_lib), lib.args.pop("output"))
@@ -140,18 +141,21 @@ class BuildDotnet(build_ext):
                 else:
                     self.warn("Can't find file to rename: {}, current dir: {}".format(source, os.getcwd()))
 
-        if other_modules:
-            self.distribution.ext_modules = other_modules
-            super().run()
-            self.distribution.ext_modules = orig_modules
-        # If no modules need to be compiled, skip
+# Add build_dotnet to the build tasks:
+from distutils.command.build import build as _build
+from setuptools import Distribution
+
+class build(_build):
+    sub_commands = _build.sub_commands + [('build_dotnet', None)]
+
+Distribution.dotnet_libs = None
 
 
 with open("README.rst", "r") as f:
     long_description = f.read()
 
 
-ext_modules = [
+dotnet_libs = [
     DotnetLib(
         "python-runtime",
         "src/runtime/Python.Runtime.csproj",
@@ -172,6 +176,8 @@ ext_modules = [
         rename={"clr.dll": "clr.pyd"},
     ),
 ]
+
+ext_modules = []
 
 try:
     mono_libs = check_output("pkg-config --libs mono-2", shell=True, encoding="utf8")
@@ -194,7 +200,14 @@ except Exception:
     print("Failed to find mono libraries via pkg-config, skipping the Mono CLR loader")
 
 
+
 setup(
+    cmdclass={
+        "build": build,
+        "build_dotnet": build_dotnet,
+        "configure": configure,
+    },
+
     name="pythonnet",
     version="3.0.0.dev1",
     description=".Net and Mono integration for Python",
@@ -207,12 +220,10 @@ setup(
     install_requires=["pycparser"],
     long_description=long_description,
     # data_files=[("{install_platlib}", ["{build_lib}/pythonnet"])],
-    cmdclass={
-        "build_ext": BuildDotnet,
-        "configure": Configure,
-    },
+
     py_modules=["clr"],
     ext_modules=ext_modules,
+    dotnet_libs=dotnet_libs,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
