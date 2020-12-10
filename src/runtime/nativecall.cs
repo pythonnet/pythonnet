@@ -12,14 +12,6 @@ namespace Python.Runtime
     /// C API can just be wrapped with p/invoke, but there are some
     /// situations (specifically, calling functions through Python
     /// type structures) where we need to call functions indirectly.
-    /// This class uses Reflection.Emit to generate IJW thunks that
-    /// support indirect calls to native code using various common
-    /// call signatures. This is mainly a workaround for the fact
-    /// that you can't spell an indirect call in C# (but can in IL).
-    /// Another approach that would work is for this to be turned
-    /// into a separate utility program that could be run during the
-    /// build process to generate the thunks as a separate assembly
-    /// that could then be referenced by the main Python runtime.
     /// </summary>
     internal class NativeCall
     {

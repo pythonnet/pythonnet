@@ -2,6 +2,7 @@
 
 """Test support for managed arrays."""
 
+import clr
 import Python.Test as Test
 import System
 import pytest
@@ -1143,6 +1144,8 @@ def test_boxed_value_type_mutation_result():
     # to accidentally write code like the following which is not really
     # mutating value types in-place but changing boxed copies.
 
+    clr.AddReference('System.Drawing')
+
     from System.Drawing import Point
     from System import Array
 
@@ -1171,6 +1174,20 @@ def test_boxed_value_type_mutation_result():
         assert items[i].X == i + 1
         assert items[i].Y == i + 1
 
+def test_create_array_from_shape():
+    from System import Array
+
+    value = Array[int](3)
+    assert value[1] == 0
+    assert value.Length == 3
+
+    value = Array[int](3, 4)
+    assert value[1, 1] == 0
+    assert value.GetLength(0) == 3
+    assert value.GetLength(1) == 4
+
+    with pytest.raises(ValueError):
+        Array[int](-1)
 
 def test_special_array_creation():
     """Test using the Array[<type>] syntax for creating arrays."""

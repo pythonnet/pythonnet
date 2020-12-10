@@ -761,7 +761,7 @@ def test_we_can_bind_to_encoding_get_string():
     read = 1
 
     while read > 0:
-        read, _ = stream.Read(buff, 0, buff.Length)
+        read = stream.Read(buff, 0, buff.Length)
         temp = Encoding.UTF8.GetString(buff, 0, read)
         data.append(temp)
 
@@ -1153,9 +1153,71 @@ def test_optional_and_default_params():
     res = MethodTest.OptionalAndDefaultParams2(b=2, c=3)
     assert res == "0232"
 
+def test_default_params_overloads():
+    res = MethodTest.DefaultParamsWithOverloading(1, 2)
+    assert res == "12"
+
+    res = MethodTest.DefaultParamsWithOverloading(b=5)
+    assert res == "25"
+
+    res = MethodTest.DefaultParamsWithOverloading("d")
+    assert res == "dbX"
+
+    res = MethodTest.DefaultParamsWithOverloading(b="c")
+    assert res == "acX"
+
+    res = MethodTest.DefaultParamsWithOverloading(c=3)
+    assert res == "013XX"
+
+    res = MethodTest.DefaultParamsWithOverloading(5, c=2)
+    assert res == "512XX"
+
+    res = MethodTest.DefaultParamsWithOverloading(c=0, d=1)
+    assert res == "5601XXX"
+
+    res = MethodTest.DefaultParamsWithOverloading(1, d=1)
+    assert res == "1671XXX"
+
+def test_default_params_overloads_ambiguous_call():
+    with pytest.raises(TypeError):
+        MethodTest.DefaultParamsWithOverloading()
+
 def test_keyword_arg_method_resolution():
     from Python.Test import MethodArityTest
 
     ob = MethodArityTest()
     assert ob.Foo(1, b=2) == "Arity 2"
+
+def test_params_array_overload():
+    res = MethodTest.ParamsArrayOverloaded()
+    assert res == "without params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1)
+    assert res == "without params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(i=1)
+    assert res == "without params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, 2)
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, 2, 3)
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, paramsArray=[])
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, i=1)
+    assert res == "with params-array"
+
+    res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
+    assert res == "with params-array"
+
+    # These two cases are still incorrectly failing:
+
+    # res = MethodTest.ParamsArrayOverloaded(1, 2, i=1)
+    # assert res == "with params-array"
+
+    # res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
+    # assert res == "with params-array"
 

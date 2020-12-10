@@ -70,23 +70,13 @@ namespace Python.Runtime
 
     internal static partial class TypeOffset
     {
-        static TypeOffset()
-        {
-            Type type = typeof(TypeOffset);
-            FieldInfo[] fields = type.GetFields();
-            int size = IntPtr.Size;
-            for (int i = 0; i < fields.Length; i++)
-            {
-                int offset = i * size;
-                FieldInfo fi = fields[i];
-                fi.SetValue(null, offset);
-            }
-        }
+        public static int magic() => ManagedDataOffsets.Magic;
     }
 
 
     internal static class ManagedDataOffsets
     {
+        public static int Magic { get; internal set; }
         public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
 
         static class DataOffsets
@@ -107,11 +97,8 @@ namespace Python.Runtime
 
         static ManagedDataOffsets()
         {
-            Type type = typeof(TypeOffset);
-            foreach (FieldInfo fi in type.GetFields())
-            {
-                NameMapping[fi.Name] = (int)fi.GetValue(null);
-            }
+            NameMapping = TypeOffset.GetOffsets();
+
             FieldInfo[] fields = typeof(DataOffsets).GetFields(BindingFlags.Static | BindingFlags.Public);
             Size = fields.Length * IntPtr.Size;
         }

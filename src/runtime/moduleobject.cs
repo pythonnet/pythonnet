@@ -48,10 +48,10 @@ namespace Python.Runtime
             IntPtr pyfilename = Runtime.PyString_FromString(filename);
             IntPtr pydocstring = Runtime.PyString_FromString(docstring);
             IntPtr pycls = TypeManager.GetTypeHandle(GetType());
-            Runtime.PyDict_SetItemString(dict, "__name__", pyname);
-            Runtime.PyDict_SetItemString(dict, "__file__", pyfilename);
-            Runtime.PyDict_SetItemString(dict, "__doc__", pydocstring);
-            Runtime.PyDict_SetItemString(dict, "__class__", pycls);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__name__, pyname);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__file__, pyfilename);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, pydocstring);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__class__, pycls);
             Runtime.XDecref(pyname);
             Runtime.XDecref(pyfilename);
             Runtime.XDecref(pydocstring);
@@ -116,30 +116,6 @@ namespace Python.Runtime
                 c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
                 return c;
-            }
-
-            // This is a little repetitive, but it ensures that the right
-            // thing happens with implicit assembly loading at a reasonable
-            // cost. Ask the AssemblyManager to do implicit loading for each
-            // of the steps in the qualified name, then try it again.
-            bool ignore = name.StartsWith("__");
-            if (AssemblyManager.LoadImplicit(qname, assemblyLoadErrorHandler: ImportWarning, !ignore))
-            {
-                if (AssemblyManager.IsValidNamespace(qname))
-                {
-                    m = new ModuleObject(qname);
-                    StoreAttribute(name, m);
-                    m.DecrRefCount();
-                    return m;
-                }
-
-                type = AssemblyManager.LookupTypes(qname).FirstOrDefault(t => t.IsPublic);
-                if (type != null)
-                {
-                    c = ClassManager.GetClass(type);
-                    StoreAttribute(name, c);
-                    return c;
-                }
             }
 
             // We didn't find the name, so we may need to see if there is a
@@ -282,7 +258,7 @@ namespace Python.Runtime
                 return op;
             }
 
-            string name = Runtime.GetManagedString(key);
+            string name = InternString.GetManagedString(key);
             if (name == "__dict__")
             {
                 Runtime.XIncref(self.dict);

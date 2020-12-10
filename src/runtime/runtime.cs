@@ -6,6 +6,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using Python.Runtime.Native;
 using Python.Runtime.Platform;
 using System.Linq;
 
@@ -18,31 +19,8 @@ namespace Python.Runtime
     /// </summary>
     public class Runtime
     {
-        // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow
-        // binary substitution of different Python.Runtime.dll builds in a target application.
-
         public static int UCS => _UCS;
-
-#if UCS4
-        internal const int _UCS = 4;
-
-        /// <summary>
-        /// EntryPoint to be used in DllImport to map to correct Unicode
-        /// methods prior to PEP393. Only used for PY27.
-        /// </summary>
-        private const string PyUnicodeEntryPoint = "PyUnicodeUCS4_";
-#elif UCS2
-        internal const int _UCS = 2;
-
-        /// <summary>
-        /// EntryPoint to be used in DllImport to map to correct Unicode
-        /// methods prior to PEP393. Only used for PY27.
-        /// </summary>
-        private const string PyUnicodeEntryPoint = "PyUnicodeUCS2_";
-#else
-#error You must define either UCS2 or UCS4!
-#endif
+        internal static readonly int _UCS = PyUnicode_GetMax() <= 0xFFFF ? 2 : 4;
 
 #if PYTHON36
         const string _minor = "6";
@@ -50,8 +28,10 @@ namespace Python.Runtime
         const string _minor = "7";
 #elif PYTHON38
         const string _minor = "8";
+#elif PYTHON39
+        const string _minor = "9";
 #else
-#error You must define one of PYTHON36 to PYTHON38
+#error You must define one of PYTHON36 to PYTHON39
 #endif
 
 #if WINDOWS
@@ -111,11 +91,13 @@ namespace Python.Runtime
         {
             get
             {
-                var versionTuple = new PyTuple(PySys_GetObject("version_info"));
-                var major = versionTuple[0].As<int>();
-                var minor = versionTuple[1].As<int>();
-                var micro = versionTuple[2].As<int>();
-                return new Version(major, minor, micro);
+                using (var versionTuple = new PyTuple(PySys_GetObject("version_info")))
+                {
+                    var major = versionTuple[0].As<int>();
+                    var minor = versionTuple[1].As<int>();
+                    var micro = versionTuple[2].As<int>();
+                    return new Version(major, minor, micro);
+                }
             }
         }
 
@@ -123,7 +105,7 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        /// <remarks>Always call this method from the Main thread.  After the 
+        /// <remarks>Always call this method from the Main thread.  After the
         /// first call to this method, the main thread has acquired the GIL.</remarks>
         internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
@@ -163,14 +145,18 @@ namespace Python.Runtime
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             IsFinalizing = false;
+            InternString.Initialize();
+
+            InitPyMembers();
+
+            ABI.Initialize(PyVersion,
+                           pyType: new BorrowedReference(PyTypeType));
 
             GenericUtil.Reset();
             PyScopeManager.Reset();
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
-
-            InitPyMembers();
 
             // Initialize data about the platform we're running on. We need
             // this for the type manager and potentially other details. Must
@@ -237,7 +223,7 @@ namespace Python.Runtime
                 // a wrapper_descriptor, even though dict.__setitem__ is.
                 //
                 // object.__init__ seems safe, though.
-                op = PyObject_GetAttrString(PyBaseObjectType, "__init__");
+                op = PyObject_GetAttr(PyBaseObjectType, PyIdentifier.__init__);
                 SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op),
                     () => PyWrapperDescriptorType = IntPtr.Zero);
                 XDecref(op);
@@ -378,6 +364,7 @@ namespace Python.Runtime
 
             Exceptions.Shutdown();
             Finalizer.Shutdown();
+            InternString.Shutdown();
 
             if (mode != ShutdownMode.Normal)
             {
@@ -405,7 +392,7 @@ namespace Python.Runtime
                 {
                     PyEval_SaveThread();
                 }
-                
+
             }
             else
             {
@@ -716,7 +703,7 @@ namespace Python.Runtime
         /// </summary>
         internal static unsafe void XIncref(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG || NETSTANDARD
+#if !CUSTOM_INCDEC_REF
             Py_IncRef(op);
             return;
 #else
@@ -746,7 +733,7 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG || NETSTANDARD
+#if !CUSTOM_INCDEC_REF
             Py_DecRef(op);
             return;
 #else
@@ -1007,6 +994,8 @@ namespace Python.Runtime
                 ? new IntPtr((void*)(*((uint*)p + n)))
                 : new IntPtr((void*)(*((ulong*)p + n)));
         }
+        internal static unsafe BorrowedReference PyObject_TYPE(BorrowedReference op)
+            => new BorrowedReference(PyObject_TYPE(op.DangerousGetAddress()));
 
         /// <summary>
         /// Managed version of the standard Python C API PyObject_Type call.
@@ -1196,6 +1185,8 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool PyNumber_Check(IntPtr ob);
 
+        internal static bool PyInt_Check(BorrowedReference ob)
+            => PyObject_TypeCheck(ob, new BorrowedReference(PyIntType));
         internal static bool PyInt_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, PyIntType);
@@ -1285,6 +1276,8 @@ namespace Python.Runtime
                 return PyLong_AsUnsignedLong64(value);
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern long PyLong_AsLongLong(BorrowedReference value);
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern long PyLong_AsLongLong(IntPtr value);
 
@@ -1525,17 +1518,6 @@ namespace Python.Runtime
             return ob + BytesOffset.ob_sval;
         }
 
-        internal static IntPtr PyString_FromStringAndSize(string value, long size)
-        {
-            return _PyString_FromStringAndSize(value, new IntPtr(size));
-        }
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyUnicode_FromStringAndSize")]
-        internal static extern IntPtr _PyString_FromStringAndSize(
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string value,
-            IntPtr size
-        );
 
         internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, long size)
         {
@@ -1576,6 +1558,9 @@ namespace Python.Runtime
             return PyUnicode_FromKindAndData(_UCS, s, size);
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyUnicode_GetMax();
+
         internal static long PyUnicode_GetSize(IntPtr ob)
         {
             return (long)_PyUnicode_GetSize(ob);
@@ -1594,6 +1579,12 @@ namespace Python.Runtime
         {
             return PyUnicode_FromUnicode(s, s.Length);
         }
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr PyUnicode_InternFromString(string s);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyUnicode_Compare(IntPtr left, IntPtr right);
 
         internal static string GetManagedString(in BorrowedReference borrowedReference)
             => GetManagedString(borrowedReference.DangerousGetAddress());
@@ -1718,7 +1709,7 @@ namespace Python.Runtime
         internal static extern int PySet_Add(IntPtr set, IntPtr key);
 
         /// <summary>
-        /// Return 1 if found, 0 if not found, and -1 if an error is encountered. 
+        /// Return 1 if found, 0 if not found, and -1 if an error is encountered.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySet_Contains(IntPtr anyset, IntPtr key);
@@ -1817,11 +1808,15 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_New(IntPtr size);
 
+        internal static BorrowedReference PyTuple_GetItem(BorrowedReference pointer, long index)
+            => PyTuple_GetItem(pointer, new IntPtr(index));
         internal static IntPtr PyTuple_GetItem(IntPtr pointer, long index)
         {
             return PyTuple_GetItem(pointer, new IntPtr(index));
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        private static extern BorrowedReference PyTuple_GetItem(BorrowedReference pointer, IntPtr index);
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyTuple_GetItem(IntPtr pointer, IntPtr index);
 
@@ -1938,10 +1933,14 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool PyType_IsSubtype(IntPtr t1, IntPtr t2);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool PyType_IsSubtype(BorrowedReference t1, BorrowedReference t2);
 
         internal static bool PyObject_TypeCheck(IntPtr ob, IntPtr tp)
+            => PyObject_TypeCheck(new BorrowedReference(ob), new BorrowedReference(tp));
+        internal static bool PyObject_TypeCheck(BorrowedReference ob, BorrowedReference tp)
         {
-            IntPtr t = PyObject_TYPE(ob);
+            BorrowedReference t = PyObject_TYPE(ob);
             return (t == tp) || PyType_IsSubtype(t, tp);
         }
 
@@ -2201,7 +2200,7 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr GetBuiltins()
         {
-            return PyImport_ImportModule("builtins");
+            return PyImport_Import(PyIdentifier.builtins);
         }
     }
 

@@ -9,22 +9,28 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+-   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
+
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
+-   `wchar_t` size aka `Runtime.UCS` is now determined at runtime
 -   `clr.AddReference` may now throw errors besides `FileNotFoundException`, that provide more
 details about the cause of the failure
 -   `clr.AddReference` no longer adds ".dll" implicitly
 -   `PyIter(PyObject)` constructor replaced with static `PyIter.GetIter(PyObject)` method
--    Return values from .NET methods that return an interface are now automatically
+-   BREAKING: Return values from .NET methods that return an interface are now automatically
      wrapped in that interface. This is a breaking change for users that rely on being
      able to access members that are part of the implementation class, but not the
      interface.  Use the new __implementation__ or __raw_implementation__ properties to
      if you need to "downcast" to the implementation class.
+-   BREAKING: Parameters marked with `ParameterAttributes.Out` are no longer returned in addition
+     to the regular method return value (unless they are passed with `ref` or `out` keyword).
 
 ### Fixed
 
 -    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
 -    Fix incorrect dereference in params array handling
+-    Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
 -    Fix `object[]` parameters taking precedence when should not in overload resolution
 -    Fixed a bug where all .NET class instances were considered Iterable
 -    Fix incorrect choice of method to invoke when using keyword arguments.
@@ -32,6 +38,11 @@ details about the cause of the failure
 -    Indexers can now be used with interface objects
 -    Fixed a bug where indexers could not be used if they were inherited
 -    Made it possible to use `__len__` also on `ICollection<>` interface objects
+-    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
+
+### Removed
+
+-   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
 
 ## [2.5.0][] - 2020-06-14
 

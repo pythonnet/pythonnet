@@ -165,7 +165,7 @@ namespace Python.Runtime
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
             Runtime.XDecref(mod);
 
             InitMethods(type, impl);
@@ -298,7 +298,7 @@ namespace Python.Runtime
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             string mn = clrType.Namespace ?? "";
             IntPtr mod = Runtime.PyString_FromString(mn);
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
             Runtime.XDecref(mod);
 
             // Hide the gchandle of the implementation in a magic type slot.
@@ -592,7 +592,7 @@ namespace Python.Runtime
 
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(tp_dict, "__module__", mod);
+            Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
 
             return type;
         }
@@ -625,8 +625,9 @@ namespace Python.Runtime
                 foreach (MethodInfo method in methods)
                 {
                     string name = method.Name;
-                    if (!name.StartsWith("tp_") && !SlotTypes.IsSlotName(name))
+                    if (!name.StartsWith("tp_") && !TypeOffset.IsSupportedSlotName(name))
                     {
+                        Debug.Assert(!name.Contains("_") || name.StartsWith("_") || method.IsSpecialName);
                         continue;
                     }
 
@@ -677,9 +678,7 @@ namespace Python.Runtime
 
         static void InitializeSlot(IntPtr type, ThunkInfo thunk, string name, SlotsHolder slotsHolder = null, bool canOverride = true)
         {
-            Type typeOffset = typeof(TypeOffset);
-            FieldInfo fi = typeOffset.GetField(name);
-            var offset = (int)fi.GetValue(typeOffset);
+            int offset = ManagedDataOffsets.GetSlotOffset(name);
 
             if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
             {
@@ -989,29 +988,6 @@ namespace Python.Runtime
             Runtime.XIncref(A);
             Runtime.XDecref(globals);
             return A;
-        }
-    }
-
-
-    static partial class SlotTypes
-    {
-        private static Dictionary<string, Type> _nameMap = new Dictionary<string, Type>();
-
-        static SlotTypes()
-        {
-            foreach (var type in Types)
-            {
-                FieldInfo[] fields = type.GetFields();
-                foreach (var fi in fields)
-                {
-                    _nameMap[fi.Name] = type;
-                }
-            }
-        }
-
-        public static bool IsSlotName(string name)
-        {
-            return _nameMap.ContainsKey(name);
         }
     }
 }
