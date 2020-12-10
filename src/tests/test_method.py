@@ -1204,21 +1204,20 @@ def test_params_array_overload():
     res = MethodTest.ParamsArrayOverloaded(1, 2, 3)
     assert res == "with params-array"
 
-    res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
-    assert res == "with params-array"
-
-    # res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
-    # assert res == "with params-array"
-
     res = MethodTest.ParamsArrayOverloaded(1, paramsArray=[])
     assert res == "with params-array"
 
     res = MethodTest.ParamsArrayOverloaded(1, i=1)
     assert res == "with params-array"
 
+    res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
+    assert res == "with params-array"
+
+    # These two cases are still incorrectly failing:
+
     # res = MethodTest.ParamsArrayOverloaded(1, 2, i=1)
     # assert res == "with params-array"
 
-    # res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
+    # res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
     # assert res == "with params-array"
 
