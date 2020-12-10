@@ -761,7 +761,7 @@ def test_we_can_bind_to_encoding_get_string():
     read = 1
 
     while read > 0:
-        read, _ = stream.Read(buff, 0, buff.Length)
+        read = stream.Read(buff, 0, buff.Length)
         temp = Encoding.UTF8.GetString(buff, 0, read)
         data.append(temp)
 
