@@ -101,14 +101,6 @@ PyNet_Args *PyNet_Init()
      */
     mono_config_parse(NULL);
 
-    /* I can't use this call to run the main_thread_handler. The function
-     * runs it in another thread but *this* thread holds the Python
-     * import lock -> DEAD LOCK.
-     *
-     * mono_runtime_exec_managed_code(pn_args->domain, main_thread_handler,
-     *                                pn_args);
-     */
-
     main_thread_handler(pn_args);
 
     if (pn_args->error != NULL)
