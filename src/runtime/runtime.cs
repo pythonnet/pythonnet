@@ -22,46 +22,18 @@ namespace Python.Runtime
         public static int UCS => _UCS;
         internal static readonly int _UCS = PyUnicode_GetMax() <= 0xFFFF ? 2 : 4;
 
-#if PYTHON36
-        const string _minor = "6";
-#elif PYTHON37
-        const string _minor = "7";
-#elif PYTHON38
-        const string _minor = "8";
-#elif PYTHON39
-        const string _minor = "9";
-#else
-#error You must define one of PYTHON36 to PYTHON39
-#endif
+        public static string PythonDLL
+        {
+            get => _PythonDll;
+            set
+            {
+                if (_isInitialized)
+                    throw new InvalidOperationException("This property must be set before runtime is initialized");
+                _PythonDll = value;
+            }
+        }
 
-#if WINDOWS
-        internal const string dllBase = "python3" + _minor;
-#else
-        internal const string dllBase = "python3." + _minor;
-#endif
-
-#if PYTHON_WITH_PYDEBUG
-        internal const string dllWithPyDebug = "d";
-#else
-        internal const string dllWithPyDebug = "";
-#endif
-#if PYTHON_WITH_PYMALLOC
-        internal const string dllWithPyMalloc = "m";
-#else
-        internal const string dllWithPyMalloc = "";
-#endif
-
-        // C# compiler copies constants to the assemblies that references this library.
-        // We needs to replace all public constants to static readonly fields to allow
-        // binary substitution of different Python.Runtime.dll builds in a target application.
-
-        public static readonly string PythonDLL = _PythonDll;
-
-#if PYTHON_WITHOUT_ENABLE_SHARED && !NETSTANDARD
-        internal const string _PythonDll = "__Internal";
-#else
-        internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
-#endif
+        static string _PythonDll;
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();
@@ -2215,6 +2187,8 @@ namespace Python.Runtime
 
         private static class Delegates
         {
+            static readonly ILibraryLoader libraryLoader = LibraryLoader.Get();
+
             static Delegates()
             {
                 PyDictProxy_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyDictProxy_New), GetUnmanagedDll(_PythonDll));
@@ -2473,15 +2447,10 @@ Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(P
                 PyThreadState_SetAsyncExcLP64 = (delegate* unmanaged[Cdecl]<ulong, IntPtr, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
             }
 
-            static global::System.IntPtr GetUnmanagedDll(string libraryName)
-            {
-                throw new NotImplementedException();
-            }
+            static global::System.IntPtr GetUnmanagedDll(string libraryName) => libraryLoader.Load(libraryName);
 
             static global::System.IntPtr GetFunctionByName(string functionName, global::System.IntPtr libraryHandle)
-            {
-                throw new NotImplementedException();
-            }
+                => libraryLoader.GetFunction(libraryHandle, functionName);
 
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyDictProxy_New { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> Py_IncRef { get; }
