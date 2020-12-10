@@ -16,14 +16,6 @@ environment:
 
   matrix:
     - PYTHON_VERSION: 3.9
-      BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.8
-      BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.7
-      BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.6
-      BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 3.9
     - PYTHON_VERSION: 3.8
     - PYTHON_VERSION: 3.7
     - PYTHON_VERSION: 3.6
@@ -56,7 +48,9 @@ build_script:
 
 test_script:
   - pip install --no-index --find-links=.\dist\ pythonnet
-  - ps: .\ci\appveyor_run_tests.ps1
+  #- ps: .\ci\appveyor_run_tests.ps1
+  - pytest
+  - dotnet test src/embed_tests/
 
 artifacts:
   - path: dist\*
