@@ -38,7 +38,6 @@ namespace Python.EmbeddingTest
             catch (NotImplementedException)
             {
                 // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
-                Thread.Sleep(300);
                 return false;
             }
             finally
