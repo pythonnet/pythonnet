@@ -54,6 +54,19 @@ namespace Python.Runtime
 #endif
         }
 
+        [Obsolete("for testing purposes only")]
+        internal PyObject(IntPtr ptr, bool skipCollect)
+        {
+            if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
+
+            obj = ptr;
+            if (!skipCollect)
+                Finalizer.Instance.ThrottledCollect();
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
+        }
+
         /// <summary>
         /// Creates new <see cref="PyObject"/> pointing to the same object as
         /// the <paramref name="reference"/>. Increments refcount, allowing <see cref="PyObject"/>
