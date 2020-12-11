@@ -52,11 +52,7 @@ namespace Python.EmbeddingTest
             Assert.IsFalse(called, "The event handler was called before it was installed");
             Finalizer.Instance.CollectOnce += handler;
 
-            WeakReference shortWeak;
-            WeakReference longWeak;
-            {
-                MakeAGarbage(out shortWeak, out longWeak);
-            }
+            IntPtr pyObj = MakeAGarbage(out var shortWeak, out var longWeak);
             FullGCCollect();
             // The object has been resurrected
             Warn.If(
@@ -74,7 +70,7 @@ namespace Python.EmbeddingTest
                 var garbage = Finalizer.Instance.GetCollectedObjects();
                 Assert.NotZero(garbage.Count, "There should still be garbage around");
                 Warn.Unless(
-                    garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)),
+                    garbage.Contains(pyObj),
                     $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
                     garbage
                 );
@@ -98,9 +94,9 @@ namespace Python.EmbeddingTest
             IntPtr op = MakeAGarbage(out var shortWeak, out var longWeak);
             FullGCCollect();
             Assert.IsFalse(shortWeak.IsAlive);
-            List<WeakReference> garbage = Finalizer.Instance.GetCollectedObjects();
+            List<IntPtr> garbage = Finalizer.Instance.GetCollectedObjects();
             Assert.IsNotEmpty(garbage, "The garbage object should be collected");
-            Assert.IsTrue(garbage.Any(r => ReferenceEquals(r.Target, longWeak.Target)),
+            Assert.IsTrue(garbage.Contains(op),
                 "Garbage should contains the collected object");
 
             PythonEngine.Shutdown();
@@ -189,63 +185,6 @@ namespace Python.EmbeddingTest
             {
                 Finalizer.Instance.Enable = oldState;
             }
-        }
-
-        class MyPyObject : PyObject
-        {
-            public MyPyObject(IntPtr op) : base(op)
-            {
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                base.Dispose(disposing);
-                GC.SuppressFinalize(this);
-                throw new Exception("MyPyObject");
-            }
-            internal static void CreateMyPyObject(IntPtr op)
-            {
-                Runtime.Runtime.XIncref(op);
-                new MyPyObject(op);
-            }
-        }
-
-        [Test]
-        [Obsolete("GC tests are not guaranteed")]
-        public void ErrorHandling()
-        {
-            bool called = false;
-            var errorMessage = "";
-            EventHandler<Finalizer.ErrorArgs> handleFunc = (sender, args) =>
-            {
-                called = true;
-                errorMessage = args.Error.Message;
-            };
-            Finalizer.Instance.Threshold = 1;
-            Finalizer.Instance.ErrorHandler += handleFunc;
-            try
-            {
-                WeakReference shortWeak;
-                WeakReference longWeak;
-                {
-                    MakeAGarbage(out shortWeak, out longWeak);
-                    var obj = (PyObject)longWeak.Target;
-                    IntPtr handle = obj.Handle;
-                    shortWeak = null;
-                    longWeak = null;
-                    MyPyObject.CreateMyPyObject(handle);
-                    obj.Dispose();
-                    obj = null;
-                }
-                FullGCCollect();
-                Finalizer.Instance.Collect();
-                Assert.IsTrue(called);
-            }
-            finally
-            {
-                Finalizer.Instance.ErrorHandler -= handleFunc;
-            }
-            Assert.AreEqual(errorMessage, "MyPyObject");
         }
 
         [Test]

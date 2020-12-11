@@ -288,7 +288,7 @@ test_obj_call()
 
                     GC.Collect();
                     GC.WaitForPendingFinalizers(); // <- this will put former `num` into Finalizer queue
-                    Finalizer.Instance.Collect(forceDispose: true);
+                    Finalizer.Instance.Collect();
                     // ^- this will call PyObject.Dispose, which will call XDecref on `num.Handle`,
                     // but Python interpreter from "run" 1 is long gone, so it will corrupt memory instead.
                     Assert.False(numRef.IsAlive);
@@ -333,7 +333,7 @@ test_obj_call()
                     PythonEngine.Initialize(); // <- "run" 2 starts
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
-                    Finalizer.Instance.Collect(forceDispose: true);
+                    Finalizer.Instance.Collect();
                     Assert.False(objRef.IsAlive);
                 }
                 finally
