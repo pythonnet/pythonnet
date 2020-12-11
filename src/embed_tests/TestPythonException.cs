@@ -86,7 +86,7 @@ namespace Python.EmbeddingTest
             }
             catch (PythonException ex)
             {
-                // ImportError/ModuleNotFoundError do not have a traceback when not running in a script 
+                // ImportError/ModuleNotFoundError do not have a traceback when not running in a script
                 Assert.AreEqual(ex.StackTrace, ex.Format());
             }
         }
@@ -101,6 +101,26 @@ namespace Python.EmbeddingTest
             catch (PythonException ex)
             {
                 Assert.AreEqual("Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nNameError: name 'b' is not defined\n", ex.Format());
+            }
+        }
+
+        [Test]
+        public void TestPythonExceptionFormatNormalizedWithExceptionIn__init__()
+        {
+            try
+            {
+                PythonEngine.Exec(@"
+class TestException(NameError):
+    def __init__(self, val):
+        super().__init__(val)
+        x = int(val)
+
+raise TestException('foo')
+");
+            }
+            catch(PythonException ex)
+            {
+                Assert.AreEqual("Traceback (most recent call last):\n  File \"<string>\", line 7, in <module>\n  File \"<string>\", line 5, in __init__\nValueError: invalid literal for int() with base 10: 'foo'\n", ex.Format());
             }
         }
     }
