@@ -191,7 +191,7 @@ from Python.EmbeddingTest.Domain import MyClass
 def test_obj_call():
     obj = MyClass()
     obj.Method()
-    obj.StaticMethod()
+    MyClass.StaticMethod()
     obj.Property = 1
     obj.Field = 10
 
