@@ -928,7 +928,7 @@ def test_getting_generic_method_binding_does_not_leak_memory():
         PlainOldClass().GenericMethod[str]
 
     gc.collect()
-    clr.System.GC.Collect()
+    System.GC.Collect()
 
     processBytesAfterCall = process.memory_info().rss
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
@@ -969,7 +969,7 @@ def test_getting_overloaded_method_binding_does_not_leak_memory():
         PlainOldClass().OverloadedMethod.Overloads[int]
 
     gc.collect()
-    clr.System.GC.Collect()
+    System.GC.Collect()
 
     processBytesAfterCall = process.memory_info().rss
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
@@ -1010,7 +1010,7 @@ def test_getting_method_overloads_binding_does_not_leak_memory():
         PlainOldClass().OverloadedMethod.Overloads
 
     gc.collect()
-    clr.System.GC.Collect()
+    System.GC.Collect()
 
     processBytesAfterCall = process.memory_info().rss
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))

@@ -492,7 +492,6 @@ namespace Python.Runtime
         private static void RemoveClrRootModule()
         {
             var modules = PyImport_GetModuleDict();
-            PyDictTryDelItem(modules, "CLR");
             PyDictTryDelItem(modules, "clr");
             PyDictTryDelItem(modules, "clr._extra");
         }
