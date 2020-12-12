@@ -6,8 +6,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime", "src\runti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "src\console\Console.csproj", "{E6B01706-00BA-4144-9029-186AC42FBE9A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "clrmodule", "src\clrmodule\clrmodule.csproj", "{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.EmbeddingTest", "src\embed_tests\Python.EmbeddingTest.csproj", "{819E089B-4770-400E-93C6-4F7A35F0EA12}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Test", "src\testing\Python.Test.csproj", "{14EF9518-5BB7-4F83-8686-015BD2CC788E}"
@@ -50,6 +48,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{45DA4286-7E31-42EC-A317-31F605BFFCA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Loader", "src\Python.Loader\Python.Loader.csproj", "{16288AA7-EB9F-45CC-90C0-3AFA7715BA8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Loader", "src\loader\Python.Loader.csproj", "{B9F0A702-A977-47E3-88FF-6082E9614F40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -145,6 +145,18 @@ Global
 		{16288AA7-EB9F-45CC-90C0-3AFA7715BA8A}.Release|x64.Build.0 = Release|Any CPU
 		{16288AA7-EB9F-45CC-90C0-3AFA7715BA8A}.Release|x86.ActiveCfg = Release|Any CPU
 		{16288AA7-EB9F-45CC-90C0-3AFA7715BA8A}.Release|x86.Build.0 = Release|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Debug|x64.Build.0 = Debug|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Debug|x86.Build.0 = Debug|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Release|x64.ActiveCfg = Release|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Release|x64.Build.0 = Release|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Release|x86.ActiveCfg = Release|Any CPU
+		{B9F0A702-A977-47E3-88FF-6082E9614F40}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -154,5 +166,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{16288AA7-EB9F-45CC-90C0-3AFA7715BA8A} = {45DA4286-7E31-42EC-A317-31F605BFFCA3}
+		{B9F0A702-A977-47E3-88FF-6082E9614F40} = {45DA4286-7E31-42EC-A317-31F605BFFCA3}
 	EndGlobalSection
 EndGlobal
