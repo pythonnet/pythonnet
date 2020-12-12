@@ -62,7 +62,9 @@ namespace Python.Runtime
         }
 
         public delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
-        public event IncorrectRefCntHandler IncorrectRefCntResolver;
+        #pragma warning disable 414
+        public event IncorrectRefCntHandler IncorrectRefCntResolver = null;
+        #pragma warning restore 414
         public bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
 
         #endregion
