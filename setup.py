@@ -204,54 +204,6 @@ dotnet_libs = [
     )
 ]
 
-if BUILD_NETFX:
-    dotnet_libs.extend(
-        [
-            DotnetLib(
-                "clrmodule-amd64",
-                "src/clrmodule/",
-                runtime="win-x64",
-                output="pythonnet/netfx/amd64",
-                rename={"clr.dll": "clr.pyd"},
-            ),
-            DotnetLib(
-                "clrmodule-x86",
-                "src/clrmodule/",
-                runtime="win-x86",
-                output="pythonnet/netfx/x86",
-                rename={"clr.dll": "clr.pyd"},
-            ),
-        ]
-    )
-
-ext_modules = []
-
-if BUILD_MONO:
-    try:
-        mono_libs = check_output(
-            "pkg-config --libs mono-2", shell=True, encoding="utf8"
-        )
-        mono_cflags = check_output(
-            "pkg-config --cflags mono-2", shell=True, encoding="utf8"
-        )
-        cflags = mono_cflags.strip()
-        libs = mono_libs.strip()
-
-        # build the clr python module
-        clr_ext = Extension(
-            "pythonnet.mono.clr",
-            language="c++",
-            sources=["src/monoclr/clrmod.c"],
-            extra_compile_args=cflags.split(" "),
-            extra_link_args=libs.split(" "),
-        )
-        ext_modules.append(clr_ext)
-    except Exception:
-        print(
-            "Failed to find mono libraries via pkg-config, skipping the Mono CLR loader"
-        )
-
-
 setup(
     cmdclass=cmdclass,
     name="pythonnet",
@@ -262,11 +214,10 @@ setup(
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
     packages=["pythonnet"],
-    install_requires=["pycparser"],
+    install_requires=["pycparser", "clr_loader"],
     long_description=long_description,
     # data_files=[("{install_platlib}", ["{build_lib}/pythonnet"])],
     py_modules=["clr"],
-    ext_modules=ext_modules,
     dotnet_libs=dotnet_libs,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
