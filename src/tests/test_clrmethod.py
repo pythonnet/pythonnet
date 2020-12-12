@@ -14,7 +14,7 @@ class ExampleClrClass(System.Object):
     @clr.clrmethod(int, [int])
     def test(self, x):
         return x*2
-    
+
     def get_X(self):
         return self._x
     def set_X(self, value):
