@@ -213,7 +213,7 @@ setup(
     license="MIT",
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
-    packages=["pythonnet"],
+    packages=["pythonnet", "pythonnet.util"],
     install_requires=["pycparser", "clr_loader"],
     long_description=long_description,
     # data_files=[("{install_platlib}", ["{build_lib}/pythonnet"])],
