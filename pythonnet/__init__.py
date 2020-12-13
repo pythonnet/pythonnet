@@ -39,7 +39,7 @@ def load():
     libpython = basename(find_libpython())
     # TODO: Add dirname of libpython to (DY)LD_LIBRARY_PATH or PATH
 
-    if _FFI is None and libpython != "__Internal":
+    if _FFI is None and libpython != "__Internal" and sys.platform != "win32":
         # Load and leak libpython handle s.t. the .NET runtime doesn't dlcloses it
         import posix
 
