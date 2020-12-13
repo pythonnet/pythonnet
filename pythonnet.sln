@@ -1,8 +1,10 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime", "src\runtime\Python.Runtime.csproj", "{4E8C8FE2-0FB8-4517-B2D9-5FB2D5FC849B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Loader", "src\loader\Python.Loader.csproj", "{B9F0A702-A977-47E3-88FF-6082E9614F40}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "src\console\Console.csproj", "{E6B01706-00BA-4144-9029-186AC42FBE9A}"
 EndProject
@@ -44,12 +46,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BC426F42
 	ProjectSection(SolutionItems) = preProject
 		tools\geninterop\geninterop.py = tools\geninterop\geninterop.py
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{45DA4286-7E31-42EC-A317-31F605BFFCA3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Loader", "src\Python.Loader\Python.Loader.csproj", "{16288AA7-EB9F-45CC-90C0-3AFA7715BA8A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Loader", "src\loader\Python.Loader.csproj", "{B9F0A702-A977-47E3-88FF-6082E9614F40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
