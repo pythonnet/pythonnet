@@ -140,8 +140,8 @@ class build_dotnet(Command):
             opts.extend(["--configuration", self.dotnet_config])
             opts.extend(["--output", output])
 
-            self.announce("Running dotnet build...", level=distutils.log.INFO)
-            self.spawn(["dotnet", "build", lib.path] + opts)
+            self.announce("Running dotnet publish...", level=distutils.log.INFO)
+            self.spawn(["dotnet", "publish", lib.path] + opts)
 
             for k, v in rename.items():
                 source = os.path.join(output, k)
@@ -198,8 +198,8 @@ with open("README.rst", "r") as f:
 
 dotnet_libs = [
     DotnetLib(
-        "python-runtime",
-        "src/runtime/Python.Runtime.csproj",
+        "pythonnet-loader",
+        "src/loader/Python.Loader.csproj",
         output="pythonnet/runtime",
     )
 ]

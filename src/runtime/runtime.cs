@@ -22,46 +22,13 @@ namespace Python.Runtime
         public static int UCS => _UCS;
         internal static readonly int _UCS = PyUnicode_GetMax() <= 0xFFFF ? 2 : 4;
 
-#if PYTHON36
-        const string _minor = "6";
-#elif PYTHON37
-        const string _minor = "7";
-#elif PYTHON38
-        const string _minor = "8";
-#elif PYTHON39
-        const string _minor = "9";
-#else
-#error You must define one of PYTHON36 to PYTHON39
-#endif
-
-#if WINDOWS
-        internal const string dllBase = "python3" + _minor;
-#else
-        internal const string dllBase = "python3." + _minor;
-#endif
-
-#if PYTHON_WITH_PYDEBUG
-        internal const string dllWithPyDebug = "d";
-#else
-        internal const string dllWithPyDebug = "";
-#endif
-#if PYTHON_WITH_PYMALLOC
-        internal const string dllWithPyMalloc = "m";
-#else
-        internal const string dllWithPyMalloc = "";
-#endif
-
         // C# compiler copies constants to the assemblies that references this library.
         // We needs to replace all public constants to static readonly fields to allow
         // binary substitution of different Python.Runtime.dll builds in a target application.
 
         public static readonly string PythonDLL = _PythonDll;
 
-#if PYTHON_WITHOUT_ENABLE_SHARED && !NETSTANDARD
         internal const string _PythonDll = "__Internal";
-#else
-        internal const string _PythonDll = dllBase + dllWithPyDebug + dllWithPyMalloc;
-#endif
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();
@@ -121,6 +88,9 @@ namespace Python.Runtime
             }
             ShutdownMode = mode;
 
+            bool mustReleaseGil = false;
+            IntPtr gilState = IntPtr.Zero;
+
             if (Py_IsInitialized() == 0)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
@@ -140,7 +110,11 @@ namespace Python.Runtime
                 // If we're coming back from a domain reload or a soft shutdown,
                 // we have previously released the thread state. Restore the main
                 // thread state here.
-                PyGILState_Ensure();
+                //
+                // When called from the cffi clr-module import, this must be released at
+                // the end.
+                mustReleaseGil = PyGILState_Check() == 0;
+                gilState = PyGILState_Ensure();
             }
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -182,6 +156,11 @@ namespace Python.Runtime
             }
             XDecref(item);
             AssemblyManager.UpdatePath();
+
+            if (mustReleaseGil)
+            {
+                PyGILState_Release(gilState);
+            }
         }
 
         private static void InitPyMembers()
@@ -841,6 +820,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyGILState_Release(IntPtr gs);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyGILState_Check();
 
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]

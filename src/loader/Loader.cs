@@ -18,8 +18,10 @@ namespace Python.Loader
 
         public RuntimeLoader(Stream stream)
         {
+            var asmResolver = new NetStandardResolver();
             assembly = AssemblyDefinition.ReadAssembly(stream, new ReaderParameters
             {
+                AssemblyResolver = asmResolver,
                 InMemory = true,
             });
         }
@@ -74,13 +76,16 @@ namespace Python.Loader
                 var dllPath = splitted[0];
                 var pythonDll = splitted[1];
 
+                Console.WriteLine("Remapping __Internal in {0} to {1}", dllPath, pythonDll);
                 var loader = RuntimeLoader.FromFile(dllPath);
                 loader.Remap(pythonDll);
                 var assembly = loader.LoadAssembly();
 
                 PythonEngine = assembly.GetType("Python.Runtime.PythonEngine");
                 var method = PythonEngine.GetMethod("InternalInitialize");
-                return (int)method.Invoke(null, new object[] { data, size });
+                var res = (int)method.Invoke(null, new object[] { data, size });
+                Console.WriteLine("Done calling init: {0}", res);
+                return res;
             }
             catch (Exception exc)
             {

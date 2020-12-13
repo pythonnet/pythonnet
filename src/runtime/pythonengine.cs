@@ -150,14 +150,39 @@ namespace Python.Runtime
             return Runtime.PyRun_SimpleString(code);
         }
 
+        // Entrypoint for the cffi clr-module import
+        public static int InternalInitialize(IntPtr data, int size)
+        {
+            IntPtr gilState = Runtime.PyGILState_Ensure();
+            try
+            {
+                Initialize(setSysArgv: false);
+                return 0;
+            }
+            finally
+            {
+                Runtime.PyGILState_Release(gilState);
+            }
+        }
+
+        public static int InternalShutdown(IntPtr data, int size)
+        {
+            IntPtr gilState = Runtime.PyGILState_Ensure();
+            try
+            {
+                // Crashes right now
+                // Shutdown();
+                return 0;
+            }
+            finally
+            {
+                Runtime.PyGILState_Release(gilState);
+            }
+        }
+
         public static void Initialize()
         {
             Initialize(setSysArgv: true);
-        }
-
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
-        {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode);
         }
 
         /// <summary>
@@ -170,8 +195,9 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        public static void Initialize(IEnumerable<string> args = null, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
+            args = args ?? new string[] { };
             if (initialized)
             {
                 return;
@@ -184,6 +210,7 @@ namespace Python.Runtime
             delegateManager = new DelegateManager();
             Runtime.Initialize(initSigs, mode);
             initialized = true;
+
             Exceptions.Clear();
 
             // Make sure we clean up properly on app domain unload.
@@ -235,16 +262,16 @@ namespace Python.Runtime
                 // and decorators into the main clr module.
                 Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
                 using (var keys = locals.Keys())
-                foreach (PyObject key in keys)
-                {
-                    if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
+                    foreach (PyObject key in keys)
                     {
-                        PyObject value = locals[key];
-                        Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
-                        value.Dispose();
+                        if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
+                        {
+                            PyObject value = locals[key];
+                            Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
+                            value.Dispose();
+                        }
+                        key.Dispose();
                     }
-                    key.Dispose();
-                }
             }
             finally
             {
@@ -405,7 +432,7 @@ namespace Python.Runtime
         /// </summary>
         static void ExecuteShutdownHandlers()
         {
-            while(ShutdownHandlers.Count > 0)
+            while (ShutdownHandlers.Count > 0)
             {
                 var handler = ShutdownHandlers[ShutdownHandlers.Count - 1];
                 ShutdownHandlers.RemoveAt(ShutdownHandlers.Count - 1);
