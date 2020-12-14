@@ -344,14 +344,14 @@ namespace Python.Runtime
             // destroy the cache(s)
             foreach (var pair in cache)
             {
-                Runtime.PyDict_DelItemString(dict, pair.Key);
-                pair.Value.DecrRefCount();
-                if (Exceptions.ExceptionMatches(Exceptions.KeyError))
+                if ((Runtime.PyDict_DelItemString(dict, pair.Key) == -1) &&
+                    (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                 {
                     // Trying to remove a key that's not in the dictionary 
                     // raises an error. We don't care about it.
                     Runtime.PyErr_Clear();
                 }
+                pair.Value.DecrRefCount();
             }
 
             cache.Clear();
