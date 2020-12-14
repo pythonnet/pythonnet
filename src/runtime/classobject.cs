@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Reflection;
 
@@ -152,7 +153,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            Type gtype = AssemblyManager.LookupType($"{type.Value.FullName}`{types.Length}");
+            Type gtype = AssemblyManager.LookupTypes($"{type.Value.FullName}`{types.Length}").FirstOrDefault();
             if (gtype != null)
             {
                 var g = ClassManager.GetClass(gtype) as GenericType;

@@ -137,5 +137,12 @@ namespace Python.Runtime
                 Console.WriteLine();
             }
         }
+
+        [Conditional("DEBUG")]
+        public static void AssertHasReferences(IntPtr obj)
+        {
+            long refcount = Runtime.Refcount(obj);
+            Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+        }
     }
 }

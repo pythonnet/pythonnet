@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Python.Runtime
 {
-    public sealed class PyBuffer : IPyDisposable
+    public sealed class PyBuffer : IDisposable
     {
         private PyObject _exporter;
         private Py_buffer _view;
@@ -236,7 +236,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            Finalizer.Instance.AddFinalizedObject(this);
+            Finalizer.Instance.AddFinalizedObject(ref _view.obj);
         }
 
         /// <summary>
@@ -247,11 +247,6 @@ namespace Python.Runtime
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        public IntPtr[] GetTrackedHandles()
-        {
-            return new IntPtr[] { _view.obj };
         }
     }
 }

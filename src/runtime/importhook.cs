@@ -124,7 +124,7 @@ namespace Python.Runtime
 
         internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
-            // Increment the reference counts here so that the objects don't 
+            // Increment the reference counts here so that the objects don't
             // get freed in Shutdown.
             Runtime.XIncref(py_clr_module);
             Runtime.XIncref(root.pyHandle);
@@ -241,12 +241,8 @@ namespace Python.Runtime
             // Check these BEFORE the built-in import runs; may as well
             // do the Incref()ed return here, since we've already found
             // the module.
-            if (mod_name == "clr" || mod_name == "CLR")
+            if (mod_name == "clr")
             {
-                if (mod_name == "CLR")
-                {
-                    Exceptions.deprecation("The CLR module is deprecated. Please use 'clr'.");
-                }
                 IntPtr clr_module = GetCLRModule(fromList);
                 if (clr_module != IntPtr.Zero)
                 {
@@ -262,51 +258,41 @@ namespace Python.Runtime
             string realname = mod_name;
             string clr_prefix = null;
 
-            if (mod_name.StartsWith("CLR."))
+            // 2010-08-15: Always seemed smart to let python try first...
+            // This shaves off a few tenths of a second on test_module.py
+            // and works around a quirk where 'sys' is found by the
+            // LoadImplicit() deprecation logic.
+            // Turns out that the AssemblyManager.ResolveHandler() checks to see if any
+            // Assembly's FullName.ToLower().StartsWith(name.ToLower()), which makes very
+            // little sense to me.
+            IntPtr res = Runtime.PyObject_Call(py_import, args, kw);
+            if (res != IntPtr.Zero)
             {
-                clr_prefix = "CLR."; // prepend when adding the module to sys.modules
-                realname = mod_name.Substring(4);
-                string msg = $"Importing from the CLR.* namespace is deprecated. Please import '{realname}' directly.";
-                Exceptions.deprecation(msg);
+                // There was no error.
+                if (fromlist && IsLoadAll(fromList))
+                {
+                    var mod = ManagedType.GetManagedObject(res) as ModuleObject;
+                    mod?.LoadNames();
+                }
+                return res;
             }
-            else
+            // There was an error
+            if (!Exceptions.ExceptionMatches(Exceptions.ImportError))
             {
-                // 2010-08-15: Always seemed smart to let python try first...
-                // This shaves off a few tenths of a second on test_module.py
-                // and works around a quirk where 'sys' is found by the
-                // LoadImplicit() deprecation logic.
-                // Turns out that the AssemblyManager.ResolveHandler() checks to see if any
-                // Assembly's FullName.ToLower().StartsWith(name.ToLower()), which makes very
-                // little sense to me.
-                IntPtr res = Runtime.PyObject_Call(py_import, args, kw);
-                if (res != IntPtr.Zero)
-                {
-                    // There was no error.
-                    if (fromlist && IsLoadAll(fromList))
-                    {
-                        var mod = ManagedType.GetManagedObject(res) as ModuleObject;
-                        mod?.LoadNames();
-                    }
-                    return res;
-                }
-                // There was an error
-                if (!Exceptions.ExceptionMatches(Exceptions.ImportError))
-                {
-                    // and it was NOT an ImportError; bail out here.
-                    return IntPtr.Zero;
-                }
+                // and it was NOT an ImportError; bail out here.
+                return IntPtr.Zero;
+            }
 
-                if (mod_name == string.Empty)
-                {
-                    // Most likely a missing relative import.
-                    // For example site-packages\bs4\builder\__init__.py uses it to check if a package exists:
-                    //     from . import _html5lib
-                    // We don't support them anyway
-                    return IntPtr.Zero;
-                }
-                // Otherwise,  just clear the it.
-                Exceptions.Clear();
+            if (mod_name == string.Empty)
+            {
+                // Most likely a missing relative import.
+                // For example site-packages\bs4\builder\__init__.py uses it to check if a package exists:
+                //     from . import _html5lib
+                // We don't support them anyway
+                return IntPtr.Zero;
             }
+            // Otherwise,  just clear the it.
+            Exceptions.Clear();
 
             string[] names = realname.Split('.');
 
@@ -372,7 +358,7 @@ namespace Python.Runtime
                 // Add the module to sys.modules
                 Runtime.PyDict_SetItemString(modules, tail.moduleName, tail.pyHandle);
 
-                // If imported from CLR add CLR.<modulename> to sys.modules as well
+                // If imported from CLR add clr.<modulename> to sys.modules as well
                 if (clr_prefix != null)
                 {
                     Runtime.PyDict_SetItemString(modules, clr_prefix + tail.moduleName, tail.pyHandle);

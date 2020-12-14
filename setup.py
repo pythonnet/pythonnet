@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
 from setuptools import setup, Command, Extension
-from wheel.bdist_wheel import bdist_wheel
 from setuptools.command.build_ext import build_ext
 import distutils
 from distutils.command import build
 from subprocess import check_output, check_call
 
 import sys, os
+
+BUILD_MONO = True
+BUILD_NETFX = True
 
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
@@ -91,26 +93,40 @@ class build_dotnet(Command):
     """Build command for dotnet-cli based builds"""
 
     description = "Build DLLs with dotnet-cli"
-    user_options = [("dotnet-config", None, "dotnet build configuration")]
+    user_options = [
+        ("dotnet-config", None, "dotnet build configuration"),
+        (
+            "inplace",
+            "i",
+            "ignore build-lib and put compiled extensions into the source "
+            + "directory alongside your pure Python modules",
+        ),
+    ]
 
     def initialize_options(self):
         self.dotnet_config = None
         self.build_lib = None
+        self.inplace = False
 
     def finalize_options(self):
         if self.dotnet_config is None:
             self.dotnet_config = "release"
-        
+
         build = self.distribution.get_command_obj("build")
         build.ensure_finalized()
-        self.build_lib = build.build_lib
+        if self.inplace:
+            self.build_lib = "."
+        else:
+            self.build_lib = build.build_lib
 
     def run(self):
         dotnet_modules = self.distribution.dotnet_libs
         self.run_command("configure")
 
         for lib in dotnet_modules:
-            output = os.path.join(os.path.abspath(self.build_lib), lib.args.pop("output"))
+            output = os.path.join(
+                os.path.abspath(self.build_lib), lib.args.pop("output")
+            )
             rename = lib.args.pop("rename", {})
 
             opts = sum(
@@ -139,75 +155,105 @@ class build_dotnet(Command):
 
                     self.move_file(src=source, dst=dest, level=distutils.log.INFO)
                 else:
-                    self.warn("Can't find file to rename: {}, current dir: {}".format(source, os.getcwd()))
+                    self.warn(
+                        "Can't find file to rename: {}, current dir: {}".format(
+                            source, os.getcwd()
+                        )
+                    )
+
 
 # Add build_dotnet to the build tasks:
 from distutils.command.build import build as _build
+from setuptools.command.develop import develop as _develop
 from setuptools import Distribution
+import setuptools
+
 
 class build(_build):
-    sub_commands = _build.sub_commands + [('build_dotnet', None)]
+    sub_commands = _build.sub_commands + [("build_dotnet", None)]
 
+
+class develop(_develop):
+    def install_for_development(self):
+        # Build extensions in-place
+        self.reinitialize_command("build_dotnet", inplace=1)
+        self.run_command("build_dotnet")
+
+        return super().install_for_development()
+
+
+# Monkey-patch Distribution s.t. it supports the dotnet_libs attribute
 Distribution.dotnet_libs = None
+
+cmdclass = {
+    "build": build,
+    "build_dotnet": build_dotnet,
+    "configure": configure,
+    "develop": develop,
+}
 
 
 with open("README.rst", "r") as f:
     long_description = f.read()
 
-
 dotnet_libs = [
     DotnetLib(
         "python-runtime",
         "src/runtime/Python.Runtime.csproj",
-        output="pythonnet/runtime"
-    ),
-    DotnetLib(
-        "clrmodule-amd64",
-        "src/clrmodule/",
-        runtime="win-x64",
-        output="pythonnet/netfx/amd64",
-        rename={"clr.dll": "clr.pyd"},
-    ),
-    DotnetLib(
-        "clrmodule-x86",
-        "src/clrmodule/",
-        runtime="win-x86",
-        output="pythonnet/netfx/x86",
-        rename={"clr.dll": "clr.pyd"},
-    ),
+        output="pythonnet/runtime",
+    )
 ]
+
+if BUILD_NETFX:
+    dotnet_libs.extend(
+        [
+            DotnetLib(
+                "clrmodule-amd64",
+                "src/clrmodule/",
+                runtime="win-x64",
+                output="pythonnet/netfx/amd64",
+                rename={"clr.dll": "clr.pyd"},
+            ),
+            DotnetLib(
+                "clrmodule-x86",
+                "src/clrmodule/",
+                runtime="win-x86",
+                output="pythonnet/netfx/x86",
+                rename={"clr.dll": "clr.pyd"},
+            ),
+        ]
+    )
 
 ext_modules = []
 
-try:
-    mono_libs = check_output("pkg-config --libs mono-2", shell=True, encoding="utf8")
-    mono_cflags = check_output(
-        "pkg-config --cflags mono-2", shell=True, encoding="utf8"
-    )
-    cflags = mono_cflags.strip()
-    libs = mono_libs.strip()
+if BUILD_MONO:
+    try:
+        mono_libs = check_output(
+            "pkg-config --libs mono-2", shell=True, encoding="utf8"
+        )
+        mono_cflags = check_output(
+            "pkg-config --cflags mono-2", shell=True, encoding="utf8"
+        )
+        cflags = mono_cflags.strip()
+        libs = mono_libs.strip()
 
-    # build the clr python module
-    clr_ext = Extension(
-        "clr",
-        language="c++",
-        sources=["src/monoclr/clrmod.c"],
-        extra_compile_args=cflags.split(" "),
-        extra_link_args=libs.split(" "),
-    )
-    ext_modules.append(clr_ext)
-except Exception:
-    print("Failed to find mono libraries via pkg-config, skipping the Mono CLR loader")
-
+        # build the clr python module
+        clr_ext = Extension(
+            "pythonnet.mono.clr",
+            language="c++",
+            sources=["src/monoclr/clrmod.c"],
+            extra_compile_args=cflags.split(" "),
+            extra_link_args=libs.split(" "),
+        )
+        ext_modules.append(clr_ext)
+    except Exception:
+        print(
+            "Failed to find mono libraries via pkg-config, skipping the Mono CLR loader"
+        )
 
 
 setup(
-    cmdclass={
-        "build": build,
-        "build_dotnet": build_dotnet,
-        "configure": configure,
-    },
-
+    cmdclass=cmdclass,
     name="pythonnet",
     version="3.0.0.dev1",
     description=".Net and Mono integration for Python",
@@ -216,11 +262,9 @@ setup(
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
     packages=["pythonnet"],
-    setup_requires=["setuptools_scm"],
     install_requires=["pycparser"],
     long_description=long_description,
     # data_files=[("{install_platlib}", ["{build_lib}/pythonnet"])],
-
     py_modules=["clr"],
     ext_modules=ext_modules,
     dotnet_libs=dotnet_libs,

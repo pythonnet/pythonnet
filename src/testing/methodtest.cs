@@ -703,6 +703,16 @@ namespace Python.Test
         {
             return $"{a}{b}{c}{d}XXX";
         }
+
+        public static string ParamsArrayOverloaded(int i = 1)
+        {
+            return "without params-array";
+        }
+
+        public static string ParamsArrayOverloaded(int i, params int[] paramsArray)
+        {
+            return "with params-array";
+        }
     }
 
 

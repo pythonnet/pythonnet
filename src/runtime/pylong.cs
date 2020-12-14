@@ -74,7 +74,7 @@ namespace Python.Runtime
         }
 
 
-        private static IntPtr FromLong(long value)
+        internal static IntPtr FromLong(long value)
         {
             IntPtr val = Runtime.PyLong_FromLongLong(value);
             PythonException.ThrowIfIsNull(val);

@@ -7,28 +7,6 @@ namespace Python.Runtime.Platform
     class NativeCodePageHelper
     {
         /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        public static OperatingSystemType OperatingSystem { get; private set; }
-
-        /// <summary>
-        /// Gets the operating system as reported by python's platform.system().
-        /// </summary>
-        [Obsolete]
-        public static string OperatingSystemName => PythonEngine.Platform;
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        public static MachineType Machine { get; private set; }/* set in Initialize using python's platform.machine */
-
-        /// <summary>
-        /// Gets the machine architecture as reported by python's platform.machine().
-        /// </summary>
-        [Obsolete]
-        public static string MachineName { get; private set; }
-
-        /// <summary>
         /// Initialized by InitializeNativeCodePage.
         ///
         /// This points to a page of memory allocated using mmap or VirtualAlloc
@@ -44,33 +22,6 @@ namespace Python.Runtime.Platform
         /// </summary>
         internal static IntPtr NativeCodePage = IntPtr.Zero;
 
-
-        static readonly Dictionary<string, OperatingSystemType> OperatingSystemTypeMapping = new Dictionary<string, OperatingSystemType>()
-        {
-            { "Windows", OperatingSystemType.Windows },
-            { "Darwin", OperatingSystemType.Darwin },
-            { "Linux", OperatingSystemType.Linux },
-        };
-
-        /// <summary>
-        /// Map lower-case version of the python machine name to the processor
-        /// type. There are aliases, e.g. x86_64 and amd64 are two names for
-        /// the same thing. Make sure to lower-case the search string, because
-        /// capitalization can differ.
-        /// </summary>
-        static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
-        {
-            ["i386"] = MachineType.i386,
-            ["i686"] = MachineType.i386,
-            ["x86"] = MachineType.i386,
-            ["x86_64"] = MachineType.x86_64,
-            ["amd64"] = MachineType.x86_64,
-            ["x64"] = MachineType.x86_64,
-            ["em64t"] = MachineType.x86_64,
-            ["armv7l"] = MachineType.armv7l,
-            ["armv8"] = MachineType.armv8,
-            ["aarch64"] = MachineType.aarch64,
-        };
 
         /// <summary>
         /// Structure to describe native code.
@@ -108,11 +59,11 @@ namespace Python.Runtime.Platform
             {
                 get
                 {
-                    switch (Machine)
+                    switch (RuntimeInformation.ProcessArchitecture)
                     {
-                        case MachineType.i386:
+                        case Architecture.X86:
                             return I386;
-                        case MachineType.x86_64:
+                        case Architecture.X64:
                             return X86_64;
                         default:
                             return null;
@@ -205,14 +156,14 @@ namespace Python.Runtime.Platform
             {
                 get
                 {
-                    switch (OperatingSystem)
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     {
-                        case OperatingSystemType.Darwin:
-                            return 0x1000;
-                        case OperatingSystemType.Linux:
-                            return 0x20;
-                        default:
-                            throw new NotImplementedException($"mmap is not supported on {OperatingSystemName}");
+                        return 0x20;
+                    }
+                    else
+                    {
+                        // OSX, FreeBSD
+                        return 0x1000;
                     }
                 }
             }
@@ -236,32 +187,16 @@ namespace Python.Runtime.Platform
             }
         }
 
-        /// <summary>
-        /// Initializes the data about platforms.
-        ///
-        /// This must be the last step when initializing the runtime:
-        /// GetManagedString needs to have the cached values for types.
-        /// But it must run before initializing anything outside the runtime
-        /// because those rely on the platform data.
-        /// </summary>
-        public static void InitializePlatformData()
-        {
-            MachineName = SystemInfo.GetArchitecture();
-            Machine = SystemInfo.GetMachineType();
-            OperatingSystem = SystemInfo.GetSystemType();
-        }
-
         internal static IMemoryMapper CreateMemoryMapper()
         {
-            switch (OperatingSystem)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                case OperatingSystemType.Darwin:
-                case OperatingSystemType.Linux:
-                    return new UnixMemoryMapper();
-                case OperatingSystemType.Windows:
-                    return new WindowsMemoryMapper();
-                default:
-                    throw new NotImplementedException($"No support for {OperatingSystemName}");
+                return new WindowsMemoryMapper();
+            }
+            else
+            {
+                // Linux, OSX, FreeBSD
+                return new UnixMemoryMapper();
             }
         }
 
