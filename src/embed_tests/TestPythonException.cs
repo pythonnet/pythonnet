@@ -105,22 +105,40 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        public void TestPythonExceptionFormatNormalizedWithExceptionIn__init__()
+        public void TestPythonException_PyErr_NormalizeException()
         {
-            try
+            using (Py.GIL())
             {
-                PythonEngine.Exec(@"
+                using (PythonEngine engine = new PythonEngine())
+                {
+                    var scope = Py.CreateScope();
+                    scope.Exec(@"
 class TestException(NameError):
     def __init__(self, val):
         super().__init__(val)
-        x = int(val)
+        x = int(val)");
 
-raise TestException('foo')
-");
-            }
-            catch(PythonException ex)
-            {
-                Assert.AreEqual("Traceback (most recent call last):\n  File \"<string>\", line 7, in <module>\n  File \"<string>\", line 5, in __init__\nValueError: invalid literal for int() with base 10: 'foo'\n", ex.Format());
+                    if (scope.TryGet("TestException", out PyObject type))
+                    {
+                        PyObject str = "dummy string".ToPython();
+                        IntPtr typePtr = type.Handle;
+                        IntPtr strPtr = str.Handle;
+                        IntPtr tbPtr = Runtime.Runtime.None.Handle;
+                        Runtime.Runtime.XIncref(typePtr);
+                        Runtime.Runtime.XIncref(strPtr);
+                        Runtime.Runtime.XIncref(tbPtr);
+                        Runtime.Runtime.PyErr_NormalizeException(ref typePtr, ref strPtr, ref tbPtr);
+
+                        using(PyObject typeObj = new PyObject(typePtr), strObj = new PyObject(strPtr), tbObj = new PyObject(tbPtr))
+                        {
+                            // the type returned from PyErr_NormalizeException should not be the same type since a new
+                            // exception was raised by initializing the exception
+                            Assert.AreNotEqual(type.Handle, typePtr);
+                            // the message should now be the string from the throw exception during normalization
+                            Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
+                        }
+                    }
+                }
             }
         }
     }
