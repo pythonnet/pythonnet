@@ -935,13 +935,11 @@ namespace CaseRunner
     }}
 }}
 ";
-        readonly static string PythonDllLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../runtime/bin/Python.Runtime.dll");
+        // readonly static string PythonDllLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../runtime/bin/Python.Runtime.dll");
+        readonly static string PythonDllLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Python.Runtime.dll");
 
         public static int Main(string[] args)
         {
-// We require this slightly convoluted way of ifdef'ing because the Python
-// comments '#' are mistaken as C# preprocessior directive
-#if !NETCOREAPP
             TestCase testCase;
             if (args.Length < 1)
             {
@@ -991,7 +989,6 @@ namespace CaseRunner
                     RunAndUnload(runnerDomain, runnerAssembly);
                 }
             }
-#endif
             return 0;
         }
 #if !NETCOREAPP
@@ -1035,6 +1032,7 @@ namespace CaseRunner
             parameters.ReferencedAssemblies.Add("System.dll");
             parameters.ReferencedAssemblies.Add("System.Core.dll");
             parameters.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
+            parameters.ReferencedAssemblies.Add("netstandard.dll");
             parameters.ReferencedAssemblies.Add(PythonDllLocation);
             CompilerResults results = provider.CompileAssemblyFromSource(parameters, code);
             if (results.NativeCompilerReturnValue != 0)
