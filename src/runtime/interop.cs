@@ -80,8 +80,8 @@ namespace Python.Runtime
 
         static class DataOffsets
         {
-            public static readonly int ob_data;
-            public static readonly int ob_dict;
+            public static readonly int ob_data = 0;
+            public static readonly int ob_dict = 0;
 
             static DataOffsets()
             {

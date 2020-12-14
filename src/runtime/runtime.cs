@@ -158,11 +158,6 @@ namespace Python.Runtime
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
 
-            // Initialize data about the platform we're running on. We need
-            // this for the type manager and potentially other details. Must
-            // happen after caching the python types, above.
-            NativeCodePageHelper.InitializePlatformData();
-
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
@@ -497,7 +492,6 @@ namespace Python.Runtime
         private static void RemoveClrRootModule()
         {
             var modules = PyImport_GetModuleDict();
-            PyDictTryDelItem(modules, "CLR");
             PyDictTryDelItem(modules, "clr");
             PyDictTryDelItem(modules, "clr._extra");
         }
@@ -2153,7 +2147,7 @@ namespace Python.Runtime
 
         internal static void SetNoSiteFlag()
         {
-            var loader = LibraryLoader.Get(NativeCodePageHelper.OperatingSystem);
+            var loader = LibraryLoader.Instance;
             IntPtr dllLocal = IntPtr.Zero;
             if (_PythonDll != "__Internal")
             {

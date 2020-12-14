@@ -2,9 +2,9 @@ using NUnit.Framework;
 using Python.Runtime;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Python.EmbeddingTest
@@ -28,26 +28,14 @@ namespace Python.EmbeddingTest
             PythonEngine.Shutdown();
         }
 
-        private static bool FullGCCollect()
+        private static void FullGCCollect()
         {
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
-            try
-            {
-                return GC.WaitForFullGCComplete() == GCNotificationStatus.Succeeded;
-            }
-            catch (NotImplementedException)
-            {
-                // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
-                return false;
-            }
-            finally
-            {
-                GC.WaitForPendingFinalizers();
-            }
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         [Test]
-        [Ignore("Ignore temporarily")]
+        [Obsolete("GC tests are not guaranteed")]
         public void CollectBasicObject()
         {
             Assert.IsTrue(Finalizer.Instance.Enable);
@@ -64,11 +52,7 @@ namespace Python.EmbeddingTest
             Assert.IsFalse(called, "The event handler was called before it was installed");
             Finalizer.Instance.CollectOnce += handler;
 
-            WeakReference shortWeak;
-            WeakReference longWeak;
-            {
-                MakeAGarbage(out shortWeak, out longWeak);
-            }
+            IntPtr pyObj = MakeAGarbage(out var shortWeak, out var longWeak);
             FullGCCollect();
             // The object has been resurrected
             Warn.If(
@@ -86,7 +70,7 @@ namespace Python.EmbeddingTest
                 var garbage = Finalizer.Instance.GetCollectedObjects();
                 Assert.NotZero(garbage.Count, "There should still be garbage around");
                 Warn.Unless(
-                    garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)),
+                    garbage.Contains(pyObj),
                     $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
                     garbage
                 );
@@ -104,20 +88,15 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        [Ignore("Ignore temporarily")]
+        [Obsolete("GC tests are not guaranteed")]
         public void CollectOnShutdown()
         {
             IntPtr op = MakeAGarbage(out var shortWeak, out var longWeak);
-            int hash = shortWeak.Target.GetHashCode();
-            List<WeakReference> garbage;
-            if (!FullGCCollect())
-            {
-                Assert.IsTrue(WaitForCollected(op, hash, 10000));
-            }
+            FullGCCollect();
             Assert.IsFalse(shortWeak.IsAlive);
-            garbage = Finalizer.Instance.GetCollectedObjects();
+            List<IntPtr> garbage = Finalizer.Instance.GetCollectedObjects();
             Assert.IsNotEmpty(garbage, "The garbage object should be collected");
-            Assert.IsTrue(garbage.Any(r => ReferenceEquals(r.Target, longWeak.Target)),
+            Assert.IsTrue(garbage.Contains(op),
                 "Garbage should contains the collected object");
 
             PythonEngine.Shutdown();
@@ -125,12 +104,29 @@ namespace Python.EmbeddingTest
             Assert.IsEmpty(garbage);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)] // ensure lack of references to obj
+        [Obsolete("GC tests are not guaranteed")]
         private static IntPtr MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
         {
-            PyLong obj = new PyLong(1024);
-            shortWeak = new WeakReference(obj);
-            longWeak = new WeakReference(obj, true);
-            return obj.Handle;
+            IntPtr handle = IntPtr.Zero;
+            WeakReference @short = null, @long = null;
+            // must create Python object in the thread where we have GIL
+            IntPtr val = PyLong.FromLong(1024);
+            // must create temp object in a different thread to ensure it is not present
+            // when conservatively scanning stack for GC roots.
+            // see https://xamarin.github.io/bugzilla-archives/17/17593/bug.html
+            var garbageGen = new Thread(() =>
+            {
+                var obj = new PyObject(val, skipCollect: true);
+                @short = new WeakReference(obj);
+                @long = new WeakReference(obj, true);
+                handle = obj.Handle;
+            });
+            garbageGen.Start();
+            Assert.IsTrue(garbageGen.Join(TimeSpan.FromSeconds(5)), "Garbage creation timed out");
+            shortWeak = @short;
+            longWeak = @long;
+            return handle;
         }
 
         private static long CompareWithFinalizerOn(PyObject pyCollect, bool enbale)
@@ -191,62 +187,6 @@ namespace Python.EmbeddingTest
             }
         }
 
-        class MyPyObject : PyObject
-        {
-            public MyPyObject(IntPtr op) : base(op)
-            {
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                base.Dispose(disposing);
-                GC.SuppressFinalize(this);
-                throw new Exception("MyPyObject");
-            }
-            internal static void CreateMyPyObject(IntPtr op)
-            {
-                Runtime.Runtime.XIncref(op);
-                new MyPyObject(op);
-            }
-        }
-
-        [Test]
-        public void ErrorHandling()
-        {
-            bool called = false;
-            var errorMessage = "";
-            EventHandler<Finalizer.ErrorArgs> handleFunc = (sender, args) =>
-            {
-                called = true;
-                errorMessage = args.Error.Message;
-            };
-            Finalizer.Instance.Threshold = 1;
-            Finalizer.Instance.ErrorHandler += handleFunc;
-            try
-            {
-                WeakReference shortWeak;
-                WeakReference longWeak;
-                {
-                    MakeAGarbage(out shortWeak, out longWeak);
-                    var obj = (PyLong)longWeak.Target;
-                    IntPtr handle = obj.Handle;
-                    shortWeak = null;
-                    longWeak = null;
-                    MyPyObject.CreateMyPyObject(handle);
-                    obj.Dispose();
-                    obj = null;
-                }
-                FullGCCollect();
-                Finalizer.Instance.Collect();
-                Assert.IsTrue(called);
-            }
-            finally
-            {
-                Finalizer.Instance.ErrorHandler -= handleFunc;
-            }
-            Assert.AreEqual(errorMessage, "MyPyObject");
-        }
-
         [Test]
         public void ValidateRefCount()
         {
@@ -279,36 +219,13 @@ namespace Python.EmbeddingTest
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)] // ensure lack of references to s1 and s2
         private static IntPtr CreateStringGarbage()
         {
             PyString s1 = new PyString("test_string");
             // s2 steal a reference from s1
             PyString s2 = new PyString(s1.Handle);
             return s1.Handle;
-        }
-
-        private static bool WaitForCollected(IntPtr op, int hash, int milliseconds)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            do
-            {
-                var garbage = Finalizer.Instance.GetCollectedObjects();
-                foreach (var item in garbage)
-                {
-                    // The validation is not 100% precise,
-                    // but it's rare that two conditions satisfied but they're still not the same object.
-                    if (item.Target.GetHashCode() != hash)
-                    {
-                        continue;
-                    }
-                    var obj = (IPyDisposable)item.Target;
-                    if (obj.GetTrackedHandles().Contains(op))
-                    {
-                        return true;
-                    }
-                }
-            } while (stopwatch.ElapsedMilliseconds < milliseconds);
-            return false;
         }
     }
 }

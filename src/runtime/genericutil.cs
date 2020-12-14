@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Resources;
@@ -124,7 +125,7 @@ namespace Python.Runtime
             foreach (string name in names)
             {
                 string qname = ns + "." + name;
-                Type o = AssemblyManager.LookupType(qname);
+                Type o = AssemblyManager.LookupTypes(qname).FirstOrDefault();
                 if (o != null)
                 {
                     result.Add(o);

@@ -22,14 +22,14 @@ namespace Python.Runtime
     }
 
     [PyGIL]
-    public class PyScope : DynamicObject, IPyDisposable
+    public class PyScope : DynamicObject, IDisposable
     {
         public readonly string Name;
 
         /// <summary>
         /// the python Module object the scope associated with.
         /// </summary>
-        internal readonly IntPtr obj;
+        internal IntPtr obj;
 
         /// <summary>
         /// the variable dict of the scope.
@@ -522,11 +522,6 @@ namespace Python.Runtime
             this.OnDispose?.Invoke(this);
         }
 
-        public IntPtr[] GetTrackedHandles()
-        {
-            return new IntPtr[] { obj };
-        }
-
         ~PyScope()
         {
             if (_finalized || _isDisposed)
@@ -534,7 +529,7 @@ namespace Python.Runtime
                 return;
             }
             _finalized = true;
-            Finalizer.Instance.AddFinalizedObject(this);
+            Finalizer.Instance.AddFinalizedObject(ref obj);
         }
     }
 

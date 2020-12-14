@@ -181,7 +181,7 @@ namespace Python.Runtime
        too "special" for this to work. It would be more work, so for now
        the 80/20 rule applies :) */
 
-    public class Dispatcher : IPyDisposable
+    public class Dispatcher
     {
         public IntPtr target;
         public Type dtype;
@@ -202,7 +202,7 @@ namespace Python.Runtime
                 return;
             }
             _finalized = true;
-            Finalizer.Instance.AddFinalizedObject(this);
+            Finalizer.Instance.AddFinalizedObject(ref target);
         }
 
         public void Dispose()
@@ -275,11 +275,6 @@ namespace Python.Runtime
 
             Runtime.XDecref(op);
             return result;
-        }
-
-        public IntPtr[] GetTrackedHandles()
-        {
-            return new IntPtr[] { target };
         }
     }
 

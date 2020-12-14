@@ -27,5 +27,14 @@ namespace Python.Runtime
             => a.pointer == b.pointer;
         public static bool operator !=(BorrowedReference a, BorrowedReference b)
             => a.pointer != b.pointer;
+
+        public override bool Equals(object obj) {
+            if (obj is IntPtr ptr)
+                return ptr == pointer;
+
+            return false;
+        }
+
+        public override int GetHashCode() => pointer.GetHashCode();
     }
 }

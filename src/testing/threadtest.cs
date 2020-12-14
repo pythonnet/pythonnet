@@ -11,8 +11,8 @@ namespace Python.Test
         private static PyObject module;
 
         private static string testmod =
-            "import CLR\n" +
-            "from CLR.Python.Test import ThreadTest\n" +
+            "import clr\n" +
+            "from Python.Test import ThreadTest\n" +
             "\n" +
             "def echostring(value):\n" +
             "    return value\n" +
