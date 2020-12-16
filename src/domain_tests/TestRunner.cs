@@ -1032,7 +1032,12 @@ namespace CaseRunner
             parameters.ReferencedAssemblies.Add("System.dll");
             parameters.ReferencedAssemblies.Add("System.Core.dll");
             parameters.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
-            parameters.ReferencedAssemblies.Add("netstandard.dll");
+            var netstandard = "netstandard.dll";
+            if (Type.GetType("Mono.Runtime") != null)
+            {
+                netstandard = "Facades/" + netstandard;
+            }
+            parameters.ReferencedAssemblies.Add(netstandard);
             parameters.ReferencedAssemblies.Add(PythonDllLocation);
             CompilerResults results = provider.CompileAssemblyFromSource(parameters, code);
             if (results.NativeCompilerReturnValue != 0)
