@@ -342,15 +342,34 @@ namespace Python.Runtime
                 bool paramsArray;
                 int kwargsMatched;
                 int defaultsNeeded;
-
+                bool isOperator = OperatorMethod.IsOperatorMethod(mi);  // e.g. op_Addition is defined for OperableObject
                 if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
                 {
-                    continue;
+                    if (isOperator)
+                    {
+                        defaultArgList = null;
+                    }
+                    else { continue; }
                 }
                 var outs = 0;
+                int clrnargs = pi.Length;
+                isOperator = isOperator && pynargs == clrnargs - 1;  // Handle mismatched arg numbers due to Python operator being bound.
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
-                    needsResolution: _methods.Length > 1,
+                    needsResolution: _methods.Length > 1,  // If there's more than one possible match.
+                    isOperator: isOperator,
                     outs: out outs);
+                if (isOperator)
+                {
+                    if (inst != IntPtr.Zero)
+                    {
+                        var co = ManagedType.GetManagedObject(inst) as CLRObject;
+                        if (co == null)
+                        {
+                            break;
+                        }
+                        margs[0] = co.inst;
+                    }
+                }
 
                 if (margs == null)
                 {
@@ -474,6 +493,7 @@ namespace Python.Runtime
         /// <param name="kwargDict">Dictionary of keyword argument name to python object pointer</param>
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
+        /// <param name="isOperator"><c>true</c>, if is operator method</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>An array of .NET arguments, that can be passed to a method.</returns>
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
@@ -481,6 +501,7 @@ namespace Python.Runtime
             Dictionary<string, IntPtr> kwargDict,
             ArrayList defaultArgList,
             bool needsResolution,
+            bool isOperator,
             out int outs)
         {
             outs = 0;
@@ -519,6 +540,12 @@ namespace Python.Runtime
                         op = Runtime.PyTuple_GetItem(args, paramIndex);
                     }
                 }
+                if (isOperator && paramIndex == 0)
+                {
+                    // After we've obtained the first argument from Python, we need to skip the first argument of the CLR
+                    // because operator method is a bound method in Python
+                    paramIndex++; // Leave the first .NET param as null (margs).
+                }
 
                 bool isOut;
                 if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut))
@@ -543,6 +570,15 @@ namespace Python.Runtime
             return margs;
         }
 
+        /// <summary>
+        /// Try to convert a Python argument object to a managed CLR type.
+        /// </summary>
+        /// <param name="op">Pointer to the object at a particular parameter.</param>
+        /// <param name="parameterType">That parameter's managed type.</param>
+        /// <param name="needsResolution">There are multiple overloading methods that need resolution.</param>
+        /// <param name="arg">Converted argument.</param>
+        /// <param name="isOut">Whether the CLR type is passed by reference.</param>
+        /// <returns></returns>
         static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
                                        out object arg, out bool isOut)
         {
@@ -633,7 +669,17 @@ namespace Python.Runtime
 
             return clrtype;
         }
-
+        /// <summary>
+        /// Check whether the number of Python and .NET arguments match, and compute additional arg information.
+        /// </summary>
+        /// <param name="positionalArgumentCount">Number of positional args passed from Python.</param>
+        /// <param name="parameters">Parameters of the specified .NET method.</param>
+        /// <param name="kwargDict">Keyword args passed from Python.</param>
+        /// <param name="paramsArray">True if the final param of the .NET method is an array (`params` keyword).</param>
+        /// <param name="defaultArgList">List of default values for arguments.</param>
+        /// <param name="kwargsMatched">Number of kwargs from Python that are also present in the .NET method.</param>
+        /// <param name="defaultsNeeded">Number of non-null defaultsArgs.</param>
+        /// <returns></returns>
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             out bool paramsArray,

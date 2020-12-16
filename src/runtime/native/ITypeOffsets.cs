@@ -15,6 +15,16 @@ namespace Python.Runtime.Native
         int mp_subscript { get; }
         int name { get; }
         int nb_add { get; }
+        int nb_subtract { get; }
+        int nb_multiply { get; }
+        int nb_true_divide { get; }
+        int nb_and { get; }
+        int nb_or { get; }
+        int nb_xor { get; }
+        int nb_lshift { get; }
+        int nb_rshift { get; }
+        int nb_remainder { get; }
+        int nb_invert { get; }
         int nb_inplace_add { get; }
         int nb_inplace_subtract { get; }
         int ob_size { get; }

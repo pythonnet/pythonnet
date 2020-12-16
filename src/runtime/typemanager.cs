@@ -281,6 +281,7 @@ namespace Python.Runtime
             {
                 throw new PythonException();
             }
+            OperatorMethod.FixupSlots(type, clrType);
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             string mn = clrType.Namespace ?? "";

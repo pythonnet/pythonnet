@@ -22,6 +22,16 @@ namespace Python.Runtime
         internal static int mp_subscript { get; private set; }
         internal static int name { get; private set; }
         internal static int nb_add { get; private set; }
+        internal static int nb_subtract { get; private set; }
+        internal static int nb_multiply { get; private set; }
+        internal static int nb_true_divide { get; private set; }
+        internal static int nb_and { get; private set; }
+        internal static int nb_or { get; private set; }
+        internal static int nb_xor { get; private set; }
+        internal static int nb_lshift { get; private set; }
+        internal static int nb_rshift { get; private set; }
+        internal static int nb_remainder { get; private set; }
+        internal static int nb_invert { get; private set; }
         internal static int nb_inplace_add { get; private set; }
         internal static int nb_inplace_subtract { get; private set; }
         internal static int ob_size { get; private set; }
