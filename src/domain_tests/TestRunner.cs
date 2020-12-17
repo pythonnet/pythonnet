@@ -55,9 +55,9 @@ namespace Python.DomainReloadTests
 
             /// <summary>
             /// The Python code to run as a module that imports the C#.
-            /// It should have two functions: before() and after(). Before
-            /// will be called when DotNetBefore is loaded; after will be
-            /// called (twice) when DotNetAfter is loaded.
+            /// It should have two functions: before_reload() and after_reload(). 
+            /// Before will be called twice when DotNetBefore is loaded; 
+            /// after will also be called twice when DotNetAfter is loaded.
             /// To make the test fail, have those functions raise exceptions.
             ///
             /// Make sure there's no leading spaces since Python cares.
@@ -936,7 +936,6 @@ namespace CaseRunner
     }}
 }}
 ";
-        // readonly static string PythonDllLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../runtime/bin/Python.Runtime.dll");
         readonly static string PythonDllLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Python.Runtime.dll");
 
         public static int Main(string[] args)
