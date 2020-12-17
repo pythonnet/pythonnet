@@ -26,11 +26,6 @@ namespace Python.EmbeddingTest
             public int VoidCall() => 10;
 
             public int Foo(int a, int b = 10) => a + b;
-
-            public int Foo2(int a = 10, params int[] args)
-            {
-                return a + args.Sum();
-            }
         }
 
         [Test]
@@ -62,11 +57,6 @@ SampleClass = {name}
 obj = SampleClass()
 assert obj.Foo(10) == 20
 assert obj.Foo(10, 1) == 11
-
-assert obj.Foo2() == 10
-assert obj.Foo2(20) == 20
-assert obj.Foo2(20, 30) == 50
-assert obj.Foo2(20, 30, 50) == 100
 ");
         }
 
