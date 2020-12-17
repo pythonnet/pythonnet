@@ -491,6 +491,9 @@ namespace Python.Runtime
             return pmap[name] as Type;
         }
 
+
+        internal static Dictionary<IntPtr, Delegate> allocatedThunks = new Dictionary<IntPtr, Delegate>();
+
         internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
         {
             Type dt;
@@ -505,6 +508,7 @@ namespace Python.Runtime
             }
             Delegate d = Delegate.CreateDelegate(dt, method);
             var info = new ThunkInfo(d);
+            allocatedThunks[info.Address] = d;
             return info;
         }
 
