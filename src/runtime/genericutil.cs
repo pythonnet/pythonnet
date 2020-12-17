@@ -75,20 +75,27 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// xxx
+        /// Finds a generic type with the given number of generic parameters and the same name and namespace as <paramref name="t"/>.
         /// </summary>
         public static Type GenericForType(Type t, int paramCount)
         {
             return GenericByName(t.Namespace, t.Name, paramCount);
         }
 
+        /// <summary>
+        /// Finds a generic type in the given namespace with the given name and number of generic parameters.
+        /// </summary>
         public static Type GenericByName(string ns, string name, int paramCount)
         {
-            foreach (Type t in GenericsByName(ns, name))
+            var types = GenericsByName(ns, name);
+            if (types != null)
             {
-                if (t.GetGenericArguments().Length == paramCount)
+                foreach (Type t in types)
                 {
-                    return t;
+                    if (t.GetGenericArguments().Length == paramCount)
+                    {
+                        return t;
+                    }
                 }
             }
             return null;
