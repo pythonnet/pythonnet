@@ -690,7 +690,6 @@ namespace Python.Runtime
             var match = false;
             int clrnargs = parameters.Length;
             paramsArray = clrnargs > 0 ? Attribute.IsDefined(parameters[clrnargs - 1], typeof(ParamArrayAttribute)) : false;
-            var kwargCount = kwargDict.Count;
             kwargsMatched = 0;
             defaultsNeeded = 0;
             if (pynargs == clrnargs && kwargDict.Count == 0)
@@ -701,7 +700,8 @@ namespace Python.Runtime
             {
                 // every parameter past 'positionalArgumentCount' must have either
                 // a corresponding keyword argument or a default parameter, unless
-                // the method is an operator or accepts a params array.
+                // the method is an operator or accepts a params array (which cannot
+                // have a default value)
                 match = true;
                 defaultArgList = new ArrayList();
                 for (var v = pynargs; v < clrnargs; v++)
@@ -725,6 +725,8 @@ namespace Python.Runtime
                     }
                     else if (!isOperator && !paramsArray)
                     {
+                        // this is separate above because an operator method cannot have
+                        // keyword args, default args, or params arrays (exclusive cases)
                         match = false;
                     }
                 }

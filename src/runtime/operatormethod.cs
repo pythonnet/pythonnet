@@ -78,9 +78,6 @@ namespace Python.Runtime
 
         public static void FixupSlots(IntPtr pyType, Type clrType)
         {
-            // This is not used
-            IntPtr tp_as_number = Marshal.ReadIntPtr(pyType, TypeOffset.tp_as_number);
-
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
             Debug.Assert(_opType != null);
             foreach (var method in clrType.GetMethods(flags))
