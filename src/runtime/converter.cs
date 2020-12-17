@@ -313,7 +313,9 @@ namespace Python.Runtime
             return Converter.ToManagedValue(value, type, out result, setError);
         }
 
-
+        internal static bool ToManagedValue(BorrowedReference value, Type obType,
+            out object result, bool setError)
+            => ToManagedValue(value.DangerousGetAddress(), obType, out result, setError);
         internal static bool ToManagedValue(IntPtr value, Type obType,
             out object result, bool setError)
         {
