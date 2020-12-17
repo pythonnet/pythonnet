@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Python.Runtime.Slots;
+using static Python.Runtime.PythonException;
 
 namespace Python.Runtime
 {
@@ -302,6 +303,7 @@ namespace Python.Runtime
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
         {
+            var dictRef = new BorrowedReference(py_dict);
             // Utility to create a subtype of a managed type with the ability for the
             // a python subtype able to override the managed implementation
             string name = Runtime.GetManagedString(py_name);
@@ -311,40 +313,29 @@ namespace Python.Runtime
             object assembly = null;
             object namespaceStr = null;
 
-            var disposeList = new List<PyObject>();
-            try
+            using (var assemblyKey = new PyString("__assembly__"))
             {
-                var assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(string)));
-                disposeList.Add(assemblyKey);
-                if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
+                var assemblyPtr = Runtime.PyDict_GetItemWithError(dictRef, assemblyKey.Reference);
+                if (assemblyPtr.IsNull)
                 {
-                    var pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
-                    Runtime.XIncref(pyAssembly.Handle);
-                    disposeList.Add(pyAssembly);
-                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(string), out assembly, false))
-                    {
-                        throw new InvalidCastException("Couldn't convert __assembly__ value to string");
-                    }
+                    if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
+                }
+                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, false))
+                {
+                    return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
 
-                var namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
-                disposeList.Add(namespaceKey);
-                if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
+                using (var namespaceKey = new PyString("__namespace__"))
                 {
-                    var pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
-                    Runtime.XIncref(pyNamespace.Handle);
-                    disposeList.Add(pyNamespace);
-                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(string), out namespaceStr, false))
+                    var pyNamespace = Runtime.PyDict_GetItemWithError(dictRef, namespaceKey.Reference);
+                    if (pyNamespace.IsNull)
                     {
-                        throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+                        if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
                     }
-                }
-            }
-            finally
-            {
-                foreach (PyObject o in disposeList)
-                {
-                    o.Dispose();
+                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, false))
+                    {
+                        return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
+                    }
                 }
             }
 
@@ -370,14 +361,14 @@ namespace Python.Runtime
                 // by default the class dict will have all the C# methods in it, but as this is a
                 // derived class we want the python overrides in there instead if they exist.
                 IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
-                Runtime.PyDict_Update(cls_dict, py_dict);
+                ThrowIfIsNotZero(Runtime.PyDict_Update(cls_dict, py_dict));
                 Runtime.XIncref(py_type);
                 // Update the __classcell__ if it exists
                 var cell = new BorrowedReference(Runtime.PyDict_GetItemString(cls_dict, "__classcell__"));
                 if (!cell.IsNull)
                 {
-                    Runtime.PyCell_Set(cell, py_type);
-                    Runtime.PyDict_DelItemString(cls_dict, "__classcell__");
+                    ThrowIfIsNotZero(Runtime.PyCell_Set(cell, py_type));
+                    ThrowIfIsNotZero(Runtime.PyDict_DelItemString(cls_dict, "__classcell__"));
                 }
 
                 return py_type;
