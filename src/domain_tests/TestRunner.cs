@@ -125,10 +125,11 @@ clr.AddReference('DomainTests')
 import TestNamespace
 
 def before_reload():
-    sys.my_cls = TestNamespace.Cls
-    sys.my_fn = TestNamespace.Cls.Before
-    sys.my_fn()
-    TestNamespace.Cls.Before()
+    if not hasattr(sys, 'my_cls'):
+        sys.my_cls = TestNamespace.Cls
+        sys.my_fn = TestNamespace.Cls.Before
+    assert 5 == sys.my_fn()
+    assert 5 == TestNamespace.Cls.Before()
 
 def after_reload():
 
