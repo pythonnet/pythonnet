@@ -26,6 +26,7 @@ details about the cause of the failure
 -   BREAKING: Parameters marked with `ParameterAttributes.Out` are no longer returned in addition
      to the regular method return value (unless they are passed with `ref` or `out` keyword).
 -   BREAKING: Drop support for the long-deprecated CLR.* prefix.
+-   `PyObject` now implements `IEnumerable<PyObject>` in addition to `IEnumerable`
 
 ### Fixed
 
@@ -41,6 +42,8 @@ details about the cause of the failure
 -    Made it possible to use `__len__` also on `ICollection<>` interface objects
 -    Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
 -    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
+-    Fixed objects returned by enumerating `PyObject` being disposed too soon
+-    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
 
 ### Removed
 

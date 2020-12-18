@@ -178,7 +178,7 @@ namespace Python.Runtime
             {
                 return 0;
             }
-            var visitFunc = (Interop.ObjObjFunc)Marshal.GetDelegateForFunctionPointer(visit, typeof(Interop.ObjObjFunc));
+            var visitFunc = NativeCall.GetDelegate<Interop.ObjObjFunc>(visit);
             return visitFunc(ob, arg);
         }
 
@@ -196,7 +196,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            var clearFunc = (Interop.InquiryFunc)Marshal.GetDelegateForFunctionPointer(clearPtr, typeof(Interop.InquiryFunc));
+            var clearFunc = NativeCall.GetDelegate<Interop.InquiryFunc>(clearPtr);
             clearFunc(pyHandle);
         }
 
@@ -214,7 +214,8 @@ namespace Python.Runtime
             {
                 return;
             }
-            var traverseFunc = (Interop.ObjObjArgFunc)Marshal.GetDelegateForFunctionPointer(traversePtr, typeof(Interop.ObjObjArgFunc));
+            var traverseFunc = NativeCall.GetDelegate<Interop.ObjObjArgFunc>(traversePtr);
+
             var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
             traverseFunc(pyHandle, visiPtr, arg);
         }

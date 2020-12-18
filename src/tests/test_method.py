@@ -1221,3 +1221,5 @@ def test_params_array_overload():
     # res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
     # assert res == "with params-array"
 
+def test_method_encoding():
+    MethodTest.EncodingTestÅngström()
