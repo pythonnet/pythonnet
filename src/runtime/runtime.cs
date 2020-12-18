@@ -1854,6 +1854,8 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyIter_Next(IntPtr pointer);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern NewReference PyIter_Next(BorrowedReference pointer);
 
 
         //====================================================================
