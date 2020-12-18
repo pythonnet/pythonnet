@@ -66,7 +66,12 @@ namespace Python.Runtime
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (CLRObject)GetManagedObject(ob);
-
+            // Amos's fix https://github.com/pythonnet/pythonnet/pull/1260#issuecomment-726719595
+            if (self.tpHandle == IntPtr.Zero)
+            {
+                ClassBase.tp_dealloc(ob);
+                return;
+            }
             // don't let the python GC destroy this object
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
 
