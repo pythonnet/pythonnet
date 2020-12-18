@@ -42,6 +42,7 @@ details about the cause of the failure
 -    Made it possible to use `__len__` also on `ICollection<>` interface objects
 -    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
 -    Fixed objects returned by enumerating `PyObject` being disposed too soon
+-    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
 
 ### Removed
 
