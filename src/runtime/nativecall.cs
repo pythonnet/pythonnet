@@ -45,8 +45,8 @@ namespace Python.Runtime
             Delegate d = null;
             if (!Interop.allocatedThunks.TryGetValue(fp, out d))
             {
-                // Use Marshal.GetDelegateForFunctionPointer<> directly after upgrade the framework
-                d = Marshal.GetDelegateForFunctionPointer(fp, typeof(T));
+                // We don't cache this delegate because this is a pure delegate ot unmanaged.
+                d = Marshal.GetDelegateForFunctionPointer<T>(fp);
             }
             return (T)d;
         }
