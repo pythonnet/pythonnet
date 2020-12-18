@@ -59,6 +59,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{142A6752
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Editor", "Editor\Editor.csproj", "{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -165,6 +167,18 @@ Global
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x64.Build.0 = Release|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x86.ActiveCfg = Release|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x86.Build.0 = Release|Any CPU
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Debug|Any CPU.Build.0 = Debug|x64
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Debug|x64.ActiveCfg = Debug|x64
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Debug|x64.Build.0 = Debug|x64
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Debug|x86.ActiveCfg = Debug|x86
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Debug|x86.Build.0 = Debug|x86
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Release|x64.ActiveCfg = Release|x64
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Release|x64.Build.0 = Release|x64
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Release|x86.ActiveCfg = Release|x86
+		{99FE9D2F-0E9A-428D-9F52-83C10EB48FD5}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
