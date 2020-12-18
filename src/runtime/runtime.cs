@@ -1641,6 +1641,8 @@ namespace Python.Runtime
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyDict_GetItem(IntPtr pointer, IntPtr key);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern BorrowedReference PyDict_GetItemWithError(BorrowedReference pointer, BorrowedReference key);
 
         /// <summary>
         /// Return value: Borrowed reference.
