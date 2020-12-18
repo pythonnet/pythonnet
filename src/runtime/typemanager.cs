@@ -143,7 +143,7 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr CreateType(Type impl)
         {
-            IntPtr type = AllocateTypeObject(impl.Name);
+            IntPtr type = AllocateTypeObject(impl.Name, metatype: Runtime.PyTypeType);
             int ob_size = ObjectOffset.Size(type);
 
             // Set tp_basicsize to the size of our managed instance objects.
@@ -212,7 +212,7 @@ namespace Python.Runtime
                 base_ = bc.pyHandle;
             }
 
-            IntPtr type = AllocateTypeObject(name);
+            IntPtr type = AllocateTypeObject(name, Runtime.PyCLRMetaType);
 
             Marshal.WriteIntPtr(type, TypeOffset.ob_type, Runtime.PyCLRMetaType);
             Runtime.XIncref(Runtime.PyCLRMetaType);
@@ -427,11 +427,14 @@ namespace Python.Runtime
             // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
-            IntPtr type = AllocateTypeObject("CLR Metatype");
-            IntPtr py_type = Runtime.PyTypeType;
+            IntPtr type = AllocateTypeObject("CLR Metatype", metatype: Runtime.PyTypeType);
 
+            IntPtr py_type = Runtime.PyTypeType;
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
+
+            int size = TypeOffset.magic() + IntPtr.Size;
+            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, new IntPtr(size));
 
             const int flags = TypeFlags.Default
                             | TypeFlags.Managed
@@ -522,7 +525,7 @@ namespace Python.Runtime
             // Utility to create a subtype of a std Python type, but with
             // a managed type able to override implementation
 
-            IntPtr type = AllocateTypeObject(name);
+            IntPtr type = AllocateTypeObject(name, metatype: Runtime.PyTypeType);
             //Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)obSize);
             //Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
 
@@ -564,9 +567,9 @@ namespace Python.Runtime
         /// <summary>
         /// Utility method to allocate a type object &amp; do basic initialization.
         /// </summary>
-        internal static IntPtr AllocateTypeObject(string name)
+        internal static IntPtr AllocateTypeObject(string name, IntPtr metatype)
         {
-            IntPtr type = Runtime.PyType_GenericAlloc(Runtime.PyTypeType, 0);
+            IntPtr type = Runtime.PyType_GenericAlloc(metatype, 0);
             // Clr type would not use __slots__,
             // and the PyMemberDef after PyHeapTypeObject will have other uses(e.g. type handle),
             // thus set the ob_size to 0 for avoiding slots iterations.
