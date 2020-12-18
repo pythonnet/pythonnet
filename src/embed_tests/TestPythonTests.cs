@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -8,7 +9,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class TestList
+    public class TestPythonTests
     {
         [OneTimeSetUp]
         public void SetUp()
@@ -22,14 +23,21 @@ namespace Python.EmbeddingTest
             PythonEngine.Shutdown();
         }
 
-        [Test]
-        public void MissingGenericTypeTest()
+        static IEnumerable<string[]> MyTestCases()
         {
-            Assert.Throws<PythonException>(() =>
+            yield return new[] { "test_generic", "test_missing_generic_type" };
+        }
+
+        [TestCaseSource(nameof(MyTestCases))]
+        public void EmbeddedPythonTest(string testFile, string testName)
+        {
+            string folder = @"..\\..\\..\\..\\tests";
             PythonEngine.Exec($@"
-from System.Collections import IList
-IList[bool]
-"));
+import sys
+sys.path.insert(0, '{folder}')
+from {testFile} import *
+{testName}()
+");
         }
     }
 }
