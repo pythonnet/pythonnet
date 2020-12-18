@@ -75,7 +75,8 @@ namespace Python.Runtime
             // So we don't call PyObject_GC_Del here and instead we set the python
             // reference to a weak reference so that the C# object can be collected.
             GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
-            Marshal.WriteIntPtr(self.pyHandle, ObjectOffset.magic(self.tpHandle), (IntPtr)gc);
+            int gcOffset = ObjectOffset.magic(Runtime.PyObject_TYPE(self.pyHandle));
+            Marshal.WriteIntPtr(self.pyHandle, gcOffset, (IntPtr)gc);
             self.gcHandle.Free();
             self.gcHandle = gc;
         }
