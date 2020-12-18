@@ -1025,16 +1025,13 @@ namespace Python.Runtime
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_HasAttrString(IntPtr pointer, string name);
+        internal static extern int PyObject_HasAttrString(IntPtr pointer, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, string name);
+        internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, IntPtr name);
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value);
+        internal static extern int PyObject_SetAttrString(IntPtr pointer, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string name, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_HasAttr(IntPtr pointer, IntPtr name);
@@ -1649,7 +1646,7 @@ namespace Python.Runtime
         /// Return value: Borrowed reference.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_GetItemString(IntPtr pointer, string key);
+        internal static extern IntPtr PyDict_GetItemString(IntPtr pointer, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string key);
 
         /// <summary>
         /// Return 0 on success or -1 on failure.
@@ -1661,13 +1658,13 @@ namespace Python.Runtime
         ///  Return 0 on success or -1 on failure.
         /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_SetItemString(IntPtr pointer, string key, IntPtr value);
+        internal static extern int PyDict_SetItemString(IntPtr pointer, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string key, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyDict_DelItem(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_DelItemString(IntPtr pointer, string key);
+        internal static extern int PyDict_DelItemString(IntPtr pointer, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyMapping_HasKey(IntPtr pointer, IntPtr key);
@@ -2019,7 +2016,7 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_SetString(IntPtr ob, string message);
+        internal static extern void PyErr_SetString(IntPtr ob, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Utf8Marshaler))] string message);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_SetObject(BorrowedReference type, BorrowedReference exceptionObject);
