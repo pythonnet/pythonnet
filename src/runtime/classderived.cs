@@ -858,7 +858,7 @@ namespace Python.Runtime
             {
                 if (0 == Runtime.Py_IsInitialized() || Runtime.IsFinalizing)
                 {
-                    self.gcHandle.Free();
+                    if (self.gcHandle.IsAllocated) self.gcHandle.Free();
                     return;
                 }
             }
@@ -873,7 +873,7 @@ namespace Python.Runtime
                     // If python's been terminated then just free the gchandle.
                     if (0 == Runtime.Py_IsInitialized() || Runtime.IsFinalizing)
                     {
-                        self.gcHandle.Free();
+                        if (self.gcHandle.IsAllocated) self.gcHandle.Free();
                         return;
                     }
 
