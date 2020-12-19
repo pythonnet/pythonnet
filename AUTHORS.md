@@ -60,6 +60,7 @@
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
 -   Simon Mourier ([@smourier](https://github.com/smourier))
+-   Tom Minka ([@tminka](https://github.com/tminka))
 -   Viktoria Kovescses ([@vkovec](https://github.com/vkovec))
 -   Ville M. Vainio ([@vivainio](https://github.com/vivainio))
 -   Virgil Dupras ([@hsoft](https://github.com/hsoft))

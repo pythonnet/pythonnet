@@ -20,9 +20,9 @@ namespace Python.Runtime
         // therefore this should be a ConcurrentDictionary
         //
         // WARNING: Dangerous if cross-app domain usage is ever supported
-        //    Reusing the dictionary with assemblies accross multiple initializations is problematic. 
-        //    Loading happens from CurrentDomain (see line 53). And if the first call is from AppDomain that is later unloaded, 
-        //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain - 
+        //    Reusing the dictionary with assemblies accross multiple initializations is problematic.
+        //    Loading happens from CurrentDomain (see line 53). And if the first call is from AppDomain that is later unloaded,
+        //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain -
         //     unless LoaderOptimization.MultiDomain is used);
         //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
         private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
@@ -363,25 +363,6 @@ namespace Python.Runtime
                 }
             }
             return names;
-        }
-
-        /// <summary>
-        /// Returns the System.Type object for a given qualified name,
-        /// looking in the currently loaded assemblies for the named
-        /// type. Returns null if the named type cannot be found.
-        /// </summary>
-        [Obsolete("Use LookupTypes and handle name conflicts")]
-        public static Type LookupType(string qname)
-        {
-            foreach (Assembly assembly in assemblies)
-            {
-                Type type = assembly.GetType(qname);
-                if (type != null && IsExported(type))
-                {
-                    return type;
-                }
-            }
-            return null;
         }
 
         /// <summary>

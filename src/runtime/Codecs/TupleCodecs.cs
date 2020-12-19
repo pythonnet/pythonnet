@@ -5,7 +5,6 @@ namespace Python.Runtime.Codecs
     using System.Linq;
     using System.Reflection;
 
-    [Obsolete(Util.UnstableApiMessage)]
     public sealed class TupleCodec<TTuple> : IPyObjectEncoder, IPyObjectDecoder
     {
         TupleCodec() { }

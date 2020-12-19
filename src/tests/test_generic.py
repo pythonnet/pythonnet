@@ -745,3 +745,8 @@ def test_nested_generic_class():
     """Check nested generic classes."""
     # TODO NotImplemented
     pass
+
+def test_missing_generic_type():
+    from System.Collections import IList
+    with pytest.raises(TypeError):
+        IList[bool]

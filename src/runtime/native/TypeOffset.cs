@@ -85,9 +85,11 @@ namespace Python.Runtime
         internal static Dictionary<string, int> GetOffsets()
         {
             var properties = typeof(TypeOffset).GetProperties(FieldFlags);
-            return properties.ToDictionary(
-                    keySelector: p => p.Name,
-                    elementSelector: p => (int)p.GetValue(obj: null, index: null));
+            var result = properties.ToDictionary(
+                            keySelector: p => p.Name,
+                            elementSelector: p => (int)p.GetValue(obj: null, index: null));
+            Debug.Assert(result.Values.Any(v => v != 0));
+            return result;
         }
 
         internal static int GetOffsetUncached(string name)
