@@ -107,37 +107,31 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestPythonException_PyErr_NormalizeException()
         {
-            using (Py.GIL())
+            using (var scope = Py.CreateScope())
             {
-                using (PythonEngine engine = new PythonEngine())
-                {
-                    var scope = Py.CreateScope();
-                    scope.Exec(@"
+                scope.Exec(@"
 class TestException(NameError):
     def __init__(self, val):
         super().__init__(val)
         x = int(val)");
+                Assert.IsTrue(scope.TryGet("TestException", out PyObject type));
 
-                    if (scope.TryGet("TestException", out PyObject type))
-                    {
-                        PyObject str = "dummy string".ToPython();
-                        IntPtr typePtr = type.Handle;
-                        IntPtr strPtr = str.Handle;
-                        IntPtr tbPtr = Runtime.Runtime.None.Handle;
-                        Runtime.Runtime.XIncref(typePtr);
-                        Runtime.Runtime.XIncref(strPtr);
-                        Runtime.Runtime.XIncref(tbPtr);
-                        Runtime.Runtime.PyErr_NormalizeException(ref typePtr, ref strPtr, ref tbPtr);
+                PyObject str = "dummy string".ToPython();
+                IntPtr typePtr = type.Handle;
+                IntPtr strPtr = str.Handle;
+                IntPtr tbPtr = Runtime.Runtime.None.Handle;
+                Runtime.Runtime.XIncref(typePtr);
+                Runtime.Runtime.XIncref(strPtr);
+                Runtime.Runtime.XIncref(tbPtr);
+                Runtime.Runtime.PyErr_NormalizeException(ref typePtr, ref strPtr, ref tbPtr);
 
-                        using(PyObject typeObj = new PyObject(typePtr), strObj = new PyObject(strPtr), tbObj = new PyObject(tbPtr))
-                        {
-                            // the type returned from PyErr_NormalizeException should not be the same type since a new
-                            // exception was raised by initializing the exception
-                            Assert.AreNotEqual(type.Handle, typePtr);
-                            // the message should now be the string from the throw exception during normalization
-                            Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
-                        }
-                    }
+                using (PyObject typeObj = new PyObject(typePtr), strObj = new PyObject(strPtr), tbObj = new PyObject(tbPtr))
+                {
+                    // the type returned from PyErr_NormalizeException should not be the same type since a new
+                    // exception was raised by initializing the exception
+                    Assert.AreNotEqual(type.Handle, typePtr);
+                    // the message should now be the string from the throw exception during normalization
+                    Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
                 }
             }
         }
