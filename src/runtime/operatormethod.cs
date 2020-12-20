@@ -12,30 +12,35 @@ namespace Python.Runtime
         // Maps the compiled method name in .NET CIL (e.g. op_Addition) to
         // the equivalent Python operator (e.g. __add__) as well as the offset
         // that identifies that operator's slot (e.g. nb_add) in heap space.
-        public static Dictionary<string, Tuple<string, int>> OpMethodMap { get; private set; }
-
+        public static Dictionary<string, SlotDefinition> OpMethodMap { get; private set; }
+        public readonly struct SlotDefinition
+        {
+            public SlotDefinition(string methodName, int typeOffset)
+            {
+                MethodName = methodName;
+                TypeOffset = typeOffset;
+            }
+            public string MethodName { get; }
+            public int TypeOffset { get; }
+        }
         private static PyObject _opType;
 
         static OperatorMethod()
         {
             // TODO: Rich compare, inplace operator support
-            OpMethodMap = new Dictionary<string, Tuple<string, int>>
+            OpMethodMap = new Dictionary<string, SlotDefinition>
             {
-                ["op_Addition"] = Tuple.Create("__add__", TypeOffset.nb_add),
-                ["op_Subtraction"] = Tuple.Create("__sub__", TypeOffset.nb_subtract),
-                ["op_Multiply"] = Tuple.Create("__mul__", TypeOffset.nb_multiply),
-#if PYTHON2
-                ["op_Division"] = Tuple.Create("__div__", TypeOffset.nb_divide),
-#else
-                ["op_Division"] = Tuple.Create("__truediv__", TypeOffset.nb_true_divide),
-#endif
-                ["op_BitwiseAnd"] = Tuple.Create("__and__", TypeOffset.nb_and),
-                ["op_BitwiseOr"] = Tuple.Create("__or__", TypeOffset.nb_or),
-                ["op_ExclusiveOr"] = Tuple.Create("__xor__", TypeOffset.nb_xor),
-                ["op_LeftShift"] = Tuple.Create("__lshift__", TypeOffset.nb_lshift),
-                ["op_RightShift"] = Tuple.Create("__rshift__", TypeOffset.nb_rshift),
-                ["op_Modulus"] = Tuple.Create("__mod__", TypeOffset.nb_remainder),
-                ["op_OneComplement"] = Tuple.Create("__invert__", TypeOffset.nb_invert)
+                ["op_Addition"] = new SlotDefinition("__add__", TypeOffset.nb_add),
+                ["op_Subtraction"] = new SlotDefinition("__sub__", TypeOffset.nb_subtract),
+                ["op_Multiply"] = new SlotDefinition("__mul__", TypeOffset.nb_multiply),
+                ["op_Division"] = new SlotDefinition("__truediv__", TypeOffset.nb_true_divide),
+                ["op_BitwiseAnd"] = new SlotDefinition("__and__", TypeOffset.nb_and),
+                ["op_BitwiseOr"] = new SlotDefinition("__or__", TypeOffset.nb_or),
+                ["op_ExclusiveOr"] = new SlotDefinition("__xor__", TypeOffset.nb_xor),
+                ["op_LeftShift"] = new SlotDefinition("__lshift__", TypeOffset.nb_lshift),
+                ["op_RightShift"] = new SlotDefinition("__rshift__", TypeOffset.nb_rshift),
+                ["op_Modulus"] = new SlotDefinition("__mod__", TypeOffset.nb_remainder),
+                ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert)
             };
         }
 
@@ -51,11 +56,6 @@ namespace Python.Runtime
                 _opType.Dispose();
                 _opType = null;
             }
-        }
-
-        public static bool IsOperatorMethod(string methodName)
-        {
-            return OpMethodMap.ContainsKey(methodName);
         }
 
         public static bool IsOperatorMethod(MethodBase method)
@@ -82,7 +82,7 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                int offset = OpMethodMap[method.Name].Item2;
+                int offset = OpMethodMap[method.Name].TypeOffset;
                 // Copy the default implementation of e.g. the nb_add slot,
                 // which simply calls __add__ on the type.
                 IntPtr func = Marshal.ReadIntPtr(_opType.Handle, offset);
@@ -97,7 +97,7 @@ namespace Python.Runtime
 
         public static string GetPyMethodName(string clrName)
         {
-            return OpMethodMap[clrName].Item1;
+            return OpMethodMap[clrName].MethodName;
         }
 
         private static string GenerateDummyCode()
@@ -106,7 +106,7 @@ namespace Python.Runtime
             sb.AppendLine("class OperatorMethod(object):");
             foreach (var item in OpMethodMap.Values)
             {
-                string def = string.Format("    def {0}(self, other): pass", item.Item1);
+                string def = string.Format("    def {0}(self, other): pass", item.MethodName);
                 sb.AppendLine(def);
             }
             return sb.ToString();

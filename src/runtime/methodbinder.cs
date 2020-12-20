@@ -354,6 +354,10 @@ namespace Python.Runtime
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
                     isOperator: isOperator,
                     outs: out outs);
+                if (margs == null)
+                {
+                    continue;
+                }
                 if (isOperator)
                 {
                     if (inst != IntPtr.Zero)
@@ -367,10 +371,6 @@ namespace Python.Runtime
                     }
                 }
 
-                if (margs == null)
-                {
-                    continue;
-                }
 
                 var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi);
                 argMatchedMethods.Add(matchedMethod);

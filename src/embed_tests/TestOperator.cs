@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace Python.EmbeddingTest
 {
-    public class TestPyMethod
+    public class TestOperator
     {
         [OneTimeSetUp]
         public void SetUp()
@@ -28,38 +28,6 @@ namespace Python.EmbeddingTest
             public int Foo(int a, int b = 10) => a + b;
         }
 
-        [Test]
-        public void TestVoidCall()
-        {
-            string name = string.Format("{0}.{1}",
-                typeof(SampleClass).DeclaringType.Name,
-                typeof(SampleClass).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
-            PythonEngine.Exec($@"
-from {module} import *
-SampleClass = {name}
-obj = SampleClass()
-assert obj.VoidCall() == 10
-");
-        }
-
-        [Test]
-        public void TestDefaultParameter()
-        {
-            string name = string.Format("{0}.{1}",
-                typeof(SampleClass).DeclaringType.Name,
-                typeof(SampleClass).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
-
-            PythonEngine.Exec($@"
-from {module} import *
-SampleClass = {name}
-obj = SampleClass()
-assert obj.Foo(10) == 20
-assert obj.Foo(10, 1) == 11
-");
-        }
-
         public class OperableObject
         {
             public int Num { get; set; }
@@ -72,6 +40,10 @@ assert obj.Foo(10, 1) == 11
             public static OperableObject operator +(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num + b.Num);
+            }
+            public static OperableObject operator +(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num + b);
             }
 
             public static OperableObject operator -(OperableObject a, OperableObject b)
@@ -151,7 +123,25 @@ assert c.Num == a.Num ^ b.Num
 ");
         }
         [Test]
-        public void BitOperatorOverloads()
+        public void ForwardOperatorOverloads()
+        {
+            string name = string.Format("{0}.{1}",
+                typeof(OperableObject).DeclaringType.Name,
+                typeof(OperableObject).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+            PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+a = cls(2)
+b = cls(10)
+
+c = a + b.Num
+assert c.Num == a.Num + b.Num
+");
+        }
+        [Test]
+        public void ShiftOperatorOverloads()
         {
             string name = string.Format("{0}.{1}",
                 typeof(OperableObject).DeclaringType.Name,
