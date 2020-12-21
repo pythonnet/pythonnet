@@ -182,10 +182,22 @@ namespace Python.EmbeddingTest
         {
             PythonEngine.Initialize();
 
+            const string moduleName = "pytest";
+            bool importShouldSucceed;
+            try
+            {
+                Py.Import(moduleName);
+                importShouldSucceed = true;
+            }
+            catch
+            {
+                importShouldSucceed = false;
+            }
+
             dynamic sys = Py.Import("sys");
             var locals = new PyDict();
             locals.SetItem("sys", sys);
-            var result = PythonEngine.Eval("';'.join(sys.path)", null, locals.Handle);
+            var result = PythonEngine.Eval($"'{System.IO.Path.PathSeparator}'.join(sys.path)", null, locals.Handle);
             // This does not work:
             //var result = PythonEngine.Eval("import sys\n';'.join(sys.path)");
             string path = (string)result.AsManagedObject(typeof(string));
@@ -203,6 +215,8 @@ namespace Python.EmbeddingTest
             PythonEngine.Initialize();
 
             Assert.AreEqual(path, PythonEngine.PythonPath);
+            if (importShouldSucceed) Py.Import(moduleName);
+
             PythonEngine.Shutdown();
         }
     }
