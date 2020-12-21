@@ -40,10 +40,15 @@ namespace Python.Runtime
             return d(a1, a2, a3);
         }
 
-        private static T GetDelegate<T>(IntPtr fp) where T: Delegate
+        internal static T GetDelegate<T>(IntPtr fp) where T: Delegate
         {
-            // Use Marshal.GetDelegateForFunctionPointer<> directly after upgrade the framework
-            return (T)Marshal.GetDelegateForFunctionPointer(fp, typeof(T));
+            Delegate d = null;
+            if (!Interop.allocatedThunks.TryGetValue(fp, out d))
+            {
+                // We don't cache this delegate because this is a pure delegate ot unmanaged.
+                d = Marshal.GetDelegateForFunctionPointer<T>(fp);
+            }
+            return (T)d;
         }
     }
 }

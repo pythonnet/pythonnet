@@ -16,7 +16,7 @@ namespace Python.Runtime
     /// for details.
     /// </summary>
     [Serializable]
-    public partial class PyObject : DynamicObject, IEnumerable, IDisposable
+    public partial class PyObject : DynamicObject, IEnumerable<PyObject>, IDisposable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -707,10 +707,11 @@ namespace Python.Runtime
         /// python object to be iterated over in C#. A PythonException will be
         /// raised if the object is not iterable.
         /// </remarks>
-        public IEnumerator GetEnumerator()
+        public IEnumerator<PyObject> GetEnumerator()
         {
             return PyIter.GetIter(this);
         }
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
 
         /// <summary>

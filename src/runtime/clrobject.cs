@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -81,6 +82,7 @@ namespace Python.Runtime
                 pyHandle = pyHandle,
                 tpHandle = Runtime.PyObject_TYPE(pyHandle)
             };
+            Debug.Assert(co.tpHandle != IntPtr.Zero);
             co.Load(context);
             return co;
         }

@@ -713,6 +713,10 @@ namespace Python.Test
         {
             return "with params-array";
         }
+
+        public static void EncodingTestÅngström()
+        {
+        }
     }
 
 

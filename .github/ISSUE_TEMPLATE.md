@@ -3,6 +3,7 @@
 -   Pythonnet version:
 -   Python version:
 -   Operating System:
+-   .NET Runtime:
 
 ### Details
 
