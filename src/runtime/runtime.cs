@@ -2035,7 +2035,7 @@ namespace Python.Runtime
         internal static extern int PyErr_GivenExceptionMatches(IntPtr ob, IntPtr val);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_NormalizeException(IntPtr ob, IntPtr val, IntPtr tb);
+        internal static extern void PyErr_NormalizeException(ref IntPtr ob, ref IntPtr val, ref IntPtr tb);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyErr_Occurred();
