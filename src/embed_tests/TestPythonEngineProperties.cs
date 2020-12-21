@@ -181,7 +181,22 @@ namespace Python.EmbeddingTest
         public void SetPythonPath()
         {
             PythonEngine.Initialize();
-            string path = PythonEngine.PythonPath;
+
+            dynamic sys = Py.Import("sys");
+            var locals = new PyDict();
+            locals.SetItem("sys", sys);
+            var result = PythonEngine.Eval("';'.join(sys.path)", null, locals.Handle);
+            // This does not work:
+            //var result = PythonEngine.Eval("import sys\n';'.join(sys.path)");
+            string path = (string)result.AsManagedObject(typeof(string));
+
+            // path should not be set to PythonEngine.PythonPath here.
+            // PythonEngine.PythonPath gets the default module search path, not the full search path.
+            // The list sys.path is initialized with this value on interpreter startup;
+            // it can be (and usually is) modified later to change the search path for loading modules.
+            // See https://docs.python.org/3/c-api/init.html#c.Py_GetPath
+            // After PythonPath is set, then PythonEngine.PythonPath will correctly return the full search path. 
+
             PythonEngine.Shutdown();
 
             PythonEngine.PythonPath = path;
