@@ -181,7 +181,7 @@ namespace Python.Runtime
         internal static IntPtr CreateType(ManagedType impl, Type clrType)
         {
             // Cleanup the type name to get rid of funny nested type names.
-            string name = "CLR." + clrType.FullName;
+            string name = $"clr.{clrType.FullName}";
             int i = name.LastIndexOf('+');
             if (i > -1)
             {

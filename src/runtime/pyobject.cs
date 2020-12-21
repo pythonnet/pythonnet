@@ -8,11 +8,6 @@ using System.Linq.Expressions;
 
 namespace Python.Runtime
 {
-    public interface IPyDisposable : IDisposable
-    {
-        IntPtr[] GetTrackedHandles();
-    }
-
     /// <summary>
     /// Represents a generic Python object. The methods of this class are
     /// generally equivalent to the Python "abstract object API". See
@@ -21,7 +16,7 @@ namespace Python.Runtime
     /// for details.
     /// </summary>
     [Serializable]
-    public partial class PyObject : DynamicObject, IEnumerable, IPyDisposable
+    public partial class PyObject : DynamicObject, IEnumerable, IDisposable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -54,6 +49,19 @@ namespace Python.Runtime
 #endif
         }
 
+        [Obsolete("for testing purposes only")]
+        internal PyObject(IntPtr ptr, bool skipCollect)
+        {
+            if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
+
+            obj = ptr;
+            if (!skipCollect)
+                Finalizer.Instance.ThrottledCollect();
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
+        }
+
         /// <summary>
         /// Creates new <see cref="PyObject"/> pointing to the same object as
         /// the <paramref name="reference"/>. Increments refcount, allowing <see cref="PyObject"/>
@@ -78,7 +86,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            Finalizer.Instance.AddFinalizedObject(this);
+            Finalizer.Instance.AddFinalizedObject(ref obj);
         }
 
 
@@ -204,6 +212,10 @@ namespace Python.Runtime
                     Runtime.XDecref(this.obj);
                 }
             }
+            else
+            {
+                throw new InvalidOperationException("Runtime is already finalizing");
+            }
             this.obj = IntPtr.Zero;
         }
 
@@ -211,11 +223,6 @@ namespace Python.Runtime
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        public IntPtr[] GetTrackedHandles()
-        {
-            return new IntPtr[] { obj };
         }
 
         /// <summary>

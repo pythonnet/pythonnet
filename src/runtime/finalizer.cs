@@ -27,7 +27,7 @@ namespace Python.Runtime
         public int Threshold { get; set; }
         public bool Enable { get; set; }
 
-        private ConcurrentQueue<IPyDisposable> _objQueue = new ConcurrentQueue<IPyDisposable>();
+        private ConcurrentQueue<IntPtr> _objQueue = new ConcurrentQueue<IntPtr>();
         private int _throttled;
 
         #region FINALIZER_CHECK
@@ -42,7 +42,7 @@ namespace Python.Runtime
         public class IncorrectFinalizeArgs : EventArgs
         {
             public IntPtr Handle { get; internal set; }
-            public ICollection<IPyDisposable> ImpactedObjects { get; internal set; }
+            public ICollection<IntPtr> ImpactedObjects { get; internal set; }
         }
 
         public class IncorrectRefCountException : Exception
@@ -62,7 +62,9 @@ namespace Python.Runtime
         }
 
         public delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
-        public event IncorrectRefCntHandler IncorrectRefCntResolver;
+        #pragma warning disable 414
+        public event IncorrectRefCntHandler IncorrectRefCntResolver = null;
+        #pragma warning restore 414
         public bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
 
         #endregion
@@ -73,8 +75,6 @@ namespace Python.Runtime
             Threshold = 200;
         }
 
-        [Obsolete("forceDispose parameter is unused. All objects are disposed regardless.")]
-        public void Collect(bool forceDispose) => this.DisposeAll();
         public void Collect() => this.DisposeAll();
 
         internal void ThrottledCollect()
@@ -85,14 +85,14 @@ namespace Python.Runtime
             this.Collect();
         }
 
-        public List<WeakReference> GetCollectedObjects()
+        internal List<IntPtr> GetCollectedObjects()
         {
-            return _objQueue.Select(T => new WeakReference(T)).ToList();
+            return _objQueue.ToList();
         }
 
-        internal void AddFinalizedObject(IPyDisposable obj)
+        internal void AddFinalizedObject(ref IntPtr obj)
         {
-            if (!Enable)
+            if (!Enable || obj == IntPtr.Zero)
             {
                 return;
             }
@@ -103,6 +103,7 @@ namespace Python.Runtime
             {
                 this._objQueue.Enqueue(obj);
             }
+            obj = IntPtr.Zero;
         }
 
         internal static void Shutdown()
@@ -123,28 +124,43 @@ namespace Python.Runtime
 #if FINALIZER_CHECK
                 ValidateRefCount();
 #endif
-                IPyDisposable obj;
-                while (_objQueue.TryDequeue(out obj))
-                {
-                    try
-                    {
-                        obj.Dispose();
-                    }
-                    catch (Exception e)
-                    {
-                        var handler = ErrorHandler;
-                        if (handler is null)
-                        {
-                            throw new FinalizationException(
-                                "Python object finalization failed",
-                                disposable: obj, innerException: e);
-                        }
+                IntPtr obj;
+                Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
 
-                        handler.Invoke(this, new ErrorArgs()
+                try
+                {
+                    while (!_objQueue.IsEmpty)
+                    {
+                        if (!_objQueue.TryDequeue(out obj))
+                            continue;
+
+                        Runtime.XDecref(obj);
+                        try
                         {
-                            Error = e
-                        });
+                            Runtime.CheckExceptionOccurred();
+                        }
+                        catch (Exception e)
+                        {
+                            var handler = ErrorHandler;
+                            if (handler is null)
+                            {
+                                throw new FinalizationException(
+                                    "Python object finalization failed",
+                                    disposable: obj, innerException: e);
+                            }
+
+                            handler.Invoke(this, new ErrorArgs()
+                            {
+                                Error = e
+                            });
+                        }
                     }
+                }
+                finally
+                {
+                    // Python requires finalizers to preserve exception:
+                    // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                    Runtime.PyErr_Restore(errType, errVal, traceback);
                 }
             }
         }
@@ -158,33 +174,26 @@ namespace Python.Runtime
             }
             var counter = new Dictionary<IntPtr, long>();
             var holdRefs = new Dictionary<IntPtr, long>();
-            var indexer = new Dictionary<IntPtr, List<IPyDisposable>>();
+            var indexer = new Dictionary<IntPtr, List<IntPtr>>();
             foreach (var obj in _objQueue)
             {
-                IntPtr[] handles = obj.GetTrackedHandles();
-                foreach (var handle in handles)
+                var handle = obj;
+                if (!counter.ContainsKey(handle))
                 {
-                    if (handle == IntPtr.Zero)
-                    {
-                        continue;
-                    }
-                    if (!counter.ContainsKey(handle))
-                    {
-                        counter[handle] = 0;
-                    }
-                    counter[handle]++;
-                    if (!holdRefs.ContainsKey(handle))
-                    {
-                        holdRefs[handle] = Runtime.Refcount(handle);
-                    }
-                    List<IPyDisposable> objs;
-                    if (!indexer.TryGetValue(handle, out objs))
-                    {
-                        objs = new List<IPyDisposable>();
-                        indexer.Add(handle, objs);
-                    }
-                    objs.Add(obj);
+                    counter[handle] = 0;
                 }
+                counter[handle]++;
+                if (!holdRefs.ContainsKey(handle))
+                {
+                    holdRefs[handle] = Runtime.Refcount(handle);
+                }
+                List<IntPtr> objs;
+                if (!indexer.TryGetValue(handle, out objs))
+                {
+                    objs = new List<IntPtr>();
+                    indexer.Add(handle, objs);
+                }
+                objs.Add(obj);
             }
             foreach (var pair in counter)
             {
@@ -227,12 +236,13 @@ namespace Python.Runtime
 
     public class FinalizationException : Exception
     {
-        public IPyDisposable Disposable { get; }
+        public IntPtr PythonObject { get; }
 
-        public FinalizationException(string message, IPyDisposable disposable, Exception innerException)
+        public FinalizationException(string message, IntPtr disposable, Exception innerException)
             : base(message, innerException)
         {
-            this.Disposable = disposable ?? throw new ArgumentNullException(nameof(disposable));
+            if (disposable == IntPtr.Zero) throw new ArgumentNullException(nameof(disposable));
+            this.PythonObject = disposable;
         }
     }
 }

@@ -291,7 +291,7 @@ def test_exception_is_instance_of_system_object():
     # classes, we wrap managed exceptions in a general-purpose old-style
     # class that delegates to the wrapped object. This makes _almost_
     # everything work as expected, except that an isinstance check against
-    # CLR.System.Object will fail for a managed exception (because a new
+    # System.Object will fail for a managed exception (because a new
     # style class cannot appear in the __bases__ of an old-style class
     # without causing a crash in the CPython interpreter). This test is
     # here mainly to remind me to update the caveat in the documentation
