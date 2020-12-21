@@ -50,30 +50,57 @@ namespace Python.EmbeddingTest
             {
                 return new OperableObject(a.Num - b.Num);
             }
+            public static OperableObject operator -(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num - b);
+            }
 
             public static OperableObject operator *(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num * b.Num);
+            }
+            public static OperableObject operator *(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num * b);
             }
 
             public static OperableObject operator /(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num / b.Num);
             }
+            public static OperableObject operator /(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num / b);
+            }
+
 
             public static OperableObject operator &(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num & b.Num);
             }
+            public static OperableObject operator &(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num & b);
+            }
+
 
             public static OperableObject operator |(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num | b.Num);
             }
+            public static OperableObject operator |(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num | b);
+            }
+
 
             public static OperableObject operator ^(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num ^ b.Num);
+            }
+            public static OperableObject operator ^(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num ^ b);
             }
 
             public static OperableObject operator <<(OperableObject a, int offset)
@@ -134,10 +161,27 @@ assert c.Num == a.Num ^ b.Num
 from {module} import *
 cls = {name}
 a = cls(2)
-b = cls(10)
+b = 10
+c = a + b
+assert c.Num == a.Num + b
 
-c = a + b.Num
-assert c.Num == a.Num + b.Num
+c = a - b
+assert c.Num == a.Num - b
+
+c = a * b
+assert c.Num == a.Num * b
+
+c = a / b
+assert c.Num == a.Num // b
+
+c = a & b
+assert c.Num == a.Num & b
+
+c = a | b
+assert c.Num == a.Num | b
+
+c = a ^ b
+assert c.Num == a.Num ^ b
 ");
         }
         [Test]
