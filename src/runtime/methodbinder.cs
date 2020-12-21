@@ -698,11 +698,18 @@ namespace Python.Runtime
             }
             else if (pynargs < clrnargs && (!paramsArray || pynargs == clrnargs - 1))
             {
-                // every parameter past 'positionalArgumentCount' must have either
-                // a corresponding keyword argument or a default parameter, unless
-                // the method is an operator or accepts a params array (which cannot
-                // have a default value)
                 match = true;
+                // operator methods will have 2 CLR args but only one Python arg,
+                // since Python operator methods are bound
+                if (isOperator)
+                {
+                    // return early since a C# operator method cannot have
+                    // keyword args, default args, or params arrays (exclusive cases)
+                    return match;
+                }
+                // every parameter past 'positionalArgumentCount' must have either
+                // a corresponding keyword arg or a default param, unless the method
+                // method accepts a params array (which cannot have a default value)
                 defaultArgList = new ArrayList();
                 for (var v = pynargs; v < clrnargs; v++)
                 {
@@ -723,17 +730,10 @@ namespace Python.Runtime
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                         defaultsNeeded++;
                     }
-                    else if (!isOperator && !paramsArray)
+                    else if (!paramsArray)
                     {
-                        // this is separate above because an operator method cannot have
-                        // keyword args, default args, or params arrays (exclusive cases)
                         match = false;
                     }
-                }
-                if (isOperator && defaultArgList.Count == 0)
-                {
-                    // If no default arguments were provided for an operable object.
-                    defaultArgList = null;
                 }
             }
             else if (pynargs > clrnargs && clrnargs > 0 &&
