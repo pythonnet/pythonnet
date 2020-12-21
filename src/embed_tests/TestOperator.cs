@@ -37,6 +37,10 @@ namespace Python.EmbeddingTest
                 Num = num;
             }
 
+            public static OperableObject operator +(int a, OperableObject b)
+            {
+                return new OperableObject(a + b.Num);
+            }
             public static OperableObject operator +(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num + b.Num);
@@ -46,6 +50,10 @@ namespace Python.EmbeddingTest
                 return new OperableObject(a.Num + b);
             }
 
+            public static OperableObject operator -(int a, OperableObject b)
+            {
+                return new OperableObject(a - b.Num);
+            }
             public static OperableObject operator -(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num - b.Num);
@@ -55,6 +63,11 @@ namespace Python.EmbeddingTest
                 return new OperableObject(a.Num - b);
             }
 
+
+            public static OperableObject operator *(int a, OperableObject b)
+            {
+                return new OperableObject(a * b.Num);
+            }
             public static OperableObject operator *(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num * b.Num);
@@ -64,6 +77,10 @@ namespace Python.EmbeddingTest
                 return new OperableObject(a.Num * b);
             }
 
+            public static OperableObject operator /(int a, OperableObject b)
+            {
+                return new OperableObject(a / b.Num);
+            }
             public static OperableObject operator /(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num / b.Num);
@@ -74,6 +91,10 @@ namespace Python.EmbeddingTest
             }
 
 
+            public static OperableObject operator &(int a, OperableObject b)
+            {
+                return new OperableObject(a & b.Num);
+            }
             public static OperableObject operator &(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num & b.Num);
@@ -84,6 +105,10 @@ namespace Python.EmbeddingTest
             }
 
 
+            public static OperableObject operator |(int a, OperableObject b)
+            {
+                return new OperableObject(a | b.Num);
+            }
             public static OperableObject operator |(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num | b.Num);
@@ -94,6 +119,10 @@ namespace Python.EmbeddingTest
             }
 
 
+            public static OperableObject operator ^(int a, OperableObject b)
+            {
+                return new OperableObject(a ^ b.Num);
+            }
             public static OperableObject operator ^(OperableObject a, OperableObject b)
             {
                 return new OperableObject(a.Num ^ b.Num);
