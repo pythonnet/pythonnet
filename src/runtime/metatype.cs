@@ -360,7 +360,7 @@ namespace Python.Runtime
 
         public static unsafe ClrMetaTypeEx* FromType(IntPtr type)
         {
-            return (ClrMetaTypeEx*)(type + TypeOffset.members);
+            return (ClrMetaTypeEx*)(type + TypeOffset.Size);
         }
     }
 

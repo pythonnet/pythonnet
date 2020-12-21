@@ -25,8 +25,6 @@ namespace Python.Runtime.Native
                 throw new NotSupportedException($"Python ABI v{version} is not supported");
             var typeOffsets = (ITypeOffsets)Activator.CreateInstance(typeOffsetsClass);
             TypeOffset.Use(typeOffsets);
-
-            ManagedDataOffsets.Magic = Marshal.ReadInt32(pyType.DangerousGetAddress(), TypeOffset.tp_basicsize);
         }
     }
 }

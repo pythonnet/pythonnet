@@ -458,7 +458,7 @@ namespace Python.Runtime
 
             IntPtr py_type = Runtime.PyTypeType;
             var heapTypeSize = (int)Marshal.ReadIntPtr(py_type, TypeOffset.tp_basicsize);
-            Debug.Assert(heapTypeSize == TypeOffset.members);
+            Debug.Assert(heapTypeSize == TypeOffset.Size);
             int metaSize = heapTypeSize + Marshal.SizeOf(typeof(ClrMetaTypeEx));
 
             IntPtr type = Runtime._PyObject_GC_Calloc(new IntPtr(metaSize));

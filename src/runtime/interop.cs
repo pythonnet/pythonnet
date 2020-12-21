@@ -68,22 +68,15 @@ namespace Python.Runtime
         }
     }
 
-    internal static partial class TypeOffset
-    {
-        public static int magic() => ManagedDataOffsets.Magic;
-    }
-
-
     internal static class ManagedDataOffsets
     {
-        public static int Magic { get; internal set; }
         public static readonly Dictionary<string, int> NameMapping = new Dictionary<string, int>();
 
         static class DataOffsets
         {
             public static readonly int ob_data = 0;
             public static readonly int ob_dict = 0;
-            public static readonly int ob_weaklist;
+            public static readonly int ob_weaklist = 0;
 
             static DataOffsets()
             {
@@ -183,7 +176,7 @@ namespace Python.Runtime
 
         public static int magic(IntPtr type)
         {
-            return (int)Marshal.ReadIntPtr(type, TypeOffset.members);
+            return (int)Marshal.ReadIntPtr(type, TypeOffset.Size);
         }
 
         public static int TypeDictOffset(IntPtr type)

@@ -25,6 +25,7 @@ namespace Python.Runtime
         internal static int nb_inplace_add { get; private set; }
         internal static int nb_inplace_subtract { get; private set; }
         internal static int ob_size { get; private set; }
+        internal static int ob_refcnt { get; private set; }
         internal static int ob_type { get; private set; }
         internal static int qualname { get; private set; }
         internal static int sq_contains { get; private set; }
@@ -44,6 +45,7 @@ namespace Python.Runtime
         internal static int tp_descr_set { get; private set; }
         internal static int tp_dict { get; private set; }
         internal static int tp_dictoffset { get; private set; }
+        internal static int tp_init { get; private set; }
         internal static int tp_flags { get; private set; }
         internal static int tp_free { get; private set; }
         internal static int tp_getattro { get; private set; }
@@ -58,9 +60,12 @@ namespace Python.Runtime
         internal static int tp_new { get; private set; }
         internal static int tp_repr { get; private set; }
         internal static int tp_richcompare { get; private set; }
+        internal static int tp_weaklistoffset { get; private set; }
         internal static int tp_setattro { get; private set; }
         internal static int tp_str { get; private set; }
         internal static int tp_traverse { get; private set; }
+
+        internal static int Size;
 
         internal static void Use(ITypeOffsets offsets)
         {
@@ -76,7 +81,7 @@ namespace Python.Runtime
                 int value = (int)sourceProperty.GetValue(offsets, null);
                 offsetProperty.SetValue(obj: null, value: value, index: null);
             }
-
+            Size = ((GeneratedTypeOffsets)offsets).Size;
             ValidateUnusedTypeOffsetProperties(offsetProperties);
             ValidateRequiredOffsetsPresent(offsetProperties);
         }

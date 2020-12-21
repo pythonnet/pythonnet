@@ -18,6 +18,7 @@ namespace Python.Runtime.Native
         int nb_inplace_add { get; }
         int nb_inplace_subtract { get; }
         int ob_size { get; }
+        int ob_refcnt { get; }
         int ob_type { get; }
         int qualname { get; }
         int sq_contains { get; }
@@ -37,6 +38,7 @@ namespace Python.Runtime.Native
         int tp_descr_set { get; }
         int tp_dict { get; }
         int tp_dictoffset { get; }
+        int tp_init { get; }
         int tp_flags { get; }
         int tp_free { get; }
         int tp_getattro { get; }
@@ -51,6 +53,7 @@ namespace Python.Runtime.Native
         int tp_new { get; }
         int tp_repr { get; }
         int tp_richcompare { get; }
+        int tp_weaklistoffset { get; }
         int tp_setattro { get; }
         int tp_str { get; }
         int tp_traverse { get; }
