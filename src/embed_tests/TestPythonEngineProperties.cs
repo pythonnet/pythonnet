@@ -194,13 +194,8 @@ namespace Python.EmbeddingTest
                 importShouldSucceed = false;
             }
 
-            dynamic sys = Py.Import("sys");
-            var locals = new PyDict();
-            locals.SetItem("sys", sys);
-            var result = PythonEngine.Eval($"'{System.IO.Path.PathSeparator}'.join(sys.path)", null, locals.Handle);
-            // This does not work:
-            //var result = PythonEngine.Eval("import sys\n';'.join(sys.path)");
-            string path = (string)result.AsManagedObject(typeof(string));
+            string[] paths = Py.Import("sys").GetAttr("path").As<string[]>();
+            string path = string.Join(System.IO.Path.PathSeparator.ToString(), paths);
 
             // path should not be set to PythonEngine.PythonPath here.
             // PythonEngine.PythonPath gets the default module search path, not the full search path.
