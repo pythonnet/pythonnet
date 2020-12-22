@@ -316,7 +316,7 @@ namespace Python.Runtime
                 Runtime.XDecref(valueList);
             }
 
-            var numPyArgs = (int)Runtime.PyTuple_Size(args);
+            var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
             if (info != null)
             {
@@ -343,14 +343,19 @@ namespace Python.Runtime
                 int kwargsMatched;
                 int defaultsNeeded;
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);  // e.g. op_Addition is defined for OperableObject
-                if (!MatchesArgumentCount(numPyArgs, pi, kwargDict, isOperator, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
+                if (isOperator )
+                {
+                    var a = 0;
+                    a++;
+                }
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, isOperator, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
                 {
                     continue;
                 }
                 var outs = 0;
-                int numClrArgs = pi.Length;
-                isOperator = isOperator && numPyArgs == numClrArgs - 1;  // Handle mismatched arg numbers due to Python operator being bound.
-                var margs = TryConvertArguments(pi, paramsArray, args, numPyArgs, kwargDict, defaultArgList,
+                int clrnargs = pi.Length;
+                isOperator = isOperator && pynargs == clrnargs - 1;  // Handle mismatched arg numbers due to Python operator being bound.
+                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
                     isOperator: isOperator,
                     outs: out outs);
@@ -669,7 +674,7 @@ namespace Python.Runtime
         /// <summary>
         /// Check whether the number of Python and .NET arguments match, and compute additional arg information.
         /// </summary>
-        /// <param name="numPyArgs">Number of positional args passed from Python.</param>
+        /// <param name="pynargs">Number of positional args passed from Python.</param>
         /// <param name="parameters">Parameters of the specified .NET method.</param>
         /// <param name="kwargDict">Keyword args passed from Python.</param>
         /// <param name="isOperator">True if the parameters' method is an operator.</param>
@@ -678,7 +683,7 @@ namespace Python.Runtime
         /// <param name="kwargsMatched">Number of kwargs from Python that are also present in the .NET method.</param>
         /// <param name="defaultsNeeded">Number of non-null defaultsArgs.</param>
         /// <returns></returns>
-        static bool MatchesArgumentCount(int numPyArgs, ParameterInfo[] parameters,
+        static bool MatchesArgumentCount(int pynargs, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             bool isOperator,
             out bool paramsArray,
@@ -688,15 +693,14 @@ namespace Python.Runtime
         {
             defaultArgList = null;
             var match = false;
-            int numClrArgs = parameters.Length;
-            paramsArray = numClrArgs > 0 ? Attribute.IsDefined(parameters[numClrArgs - 1], typeof(ParamArrayAttribute)) : false;
+            paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
             kwargsMatched = 0;
             defaultsNeeded = 0;
-            if (numPyArgs == numClrArgs && kwargDict.Count == 0)
+            if (pynargs == parameters.Length && kwargDict.Count == 0)
             {
                 match = true;
             }
-            else if (numPyArgs < numClrArgs && (!paramsArray || numPyArgs == numClrArgs - 1))
+            else if (pynargs < parameters.Length && (!paramsArray || pynargs == parameters.Length - 1))
             {
                 match = true;
                 // operator methods will have 2 CLR args but only one Python arg,
@@ -711,7 +715,7 @@ namespace Python.Runtime
                 // a corresponding keyword arg or a default param, unless the method
                 // method accepts a params array (which cannot have a default value)
                 defaultArgList = new ArrayList();
-                for (var v = numPyArgs; v < numClrArgs; v++)
+                for (var v = pynargs; v < parameters.Length; v++)
                 {
                     if (kwargDict.ContainsKey(parameters[v].Name))
                     {
@@ -736,8 +740,8 @@ namespace Python.Runtime
                     }
                 }
             }
-            else if (numPyArgs > numClrArgs && numClrArgs > 0 &&
-                       Attribute.IsDefined(parameters[numClrArgs - 1], typeof(ParamArrayAttribute)))
+            else if (pynargs > parameters.Length && parameters.Length > 0 &&
+                       Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)))
             {
                 // This is a `foo(params object[] bar)` style method
                 match = true;
