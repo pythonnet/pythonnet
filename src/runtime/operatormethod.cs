@@ -9,9 +9,11 @@ namespace Python.Runtime
 {
     internal static class OperatorMethod
     {
-        // Maps the compiled method name in .NET CIL (e.g. op_Addition) to
-        // the equivalent Python operator (e.g. __add__) as well as the offset
-        // that identifies that operator's slot (e.g. nb_add) in heap space.
+        /// <summary>
+        /// Maps the compiled method name in .NET CIL (e.g. op_Addition) to
+        /// the equivalent Python operator (e.g. __add__) as well as the offset
+        /// that identifies that operator's slot (e.g. nb_add) in heap space.
+        /// </summary>
         public static Dictionary<string, SlotDefinition> OpMethodMap { get; private set; }
         public readonly struct SlotDefinition
         {
@@ -27,6 +29,10 @@ namespace Python.Runtime
 
         static OperatorMethod()
         {
+            // .NET operator method names are documented at:
+            // https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/operator-overloads
+            // Python operator methods and slots are documented at:
+            // https://docs.python.org/3/c-api/typeobj.html
             // TODO: Rich compare, inplace operator support
             OpMethodMap = new Dictionary<string, SlotDefinition>
             {

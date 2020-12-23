@@ -21,13 +21,6 @@ namespace Python.EmbeddingTest
             PythonEngine.Shutdown();
         }
 
-        public class SampleClass
-        {
-            public int VoidCall() => 10;
-
-            public int Foo(int a, int b = 10) => a + b;
-        }
-
         public class OperableObject
         {
             public int Num { get; set; }

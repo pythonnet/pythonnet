@@ -343,11 +343,6 @@ namespace Python.Runtime
                 int kwargsMatched;
                 int defaultsNeeded;
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);  // e.g. op_Addition is defined for OperableObject
-                if (isOperator )
-                {
-                    var a = 0;
-                    a++;
-                }
                 if (!MatchesArgumentCount(pynargs, pi, kwargDict, isOperator, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
                 {
                     continue;
