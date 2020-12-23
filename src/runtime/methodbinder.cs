@@ -674,7 +674,7 @@ namespace Python.Runtime
         /// <summary>
         /// Check whether the number of Python and .NET arguments match, and compute additional arg information.
         /// </summary>
-        /// <param name="pynargs">Number of positional args passed from Python.</param>
+        /// <param name="positionalArgumentCount">Number of positional args passed from Python.</param>
         /// <param name="parameters">Parameters of the specified .NET method.</param>
         /// <param name="kwargDict">Keyword args passed from Python.</param>
         /// <param name="isOperator">True if the parameters' method is an operator.</param>
@@ -683,7 +683,7 @@ namespace Python.Runtime
         /// <param name="kwargsMatched">Number of kwargs from Python that are also present in the .NET method.</param>
         /// <param name="defaultsNeeded">Number of non-null defaultsArgs.</param>
         /// <returns></returns>
-        static bool MatchesArgumentCount(int pynargs, ParameterInfo[] parameters,
+        static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             bool isOperator,
             out bool paramsArray,
@@ -696,11 +696,11 @@ namespace Python.Runtime
             paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
             kwargsMatched = 0;
             defaultsNeeded = 0;
-            if (pynargs == parameters.Length && kwargDict.Count == 0)
+            if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)
             {
                 match = true;
             }
-            else if (pynargs < parameters.Length && (!paramsArray || pynargs == parameters.Length - 1))
+            else if (positionalArgumentCount < parameters.Length && (!paramsArray || positionalArgumentCount == parameters.Length - 1))
             {
                 match = true;
                 // operator methods will have 2 CLR args but only one Python arg,
@@ -715,7 +715,7 @@ namespace Python.Runtime
                 // a corresponding keyword arg or a default param, unless the method
                 // method accepts a params array (which cannot have a default value)
                 defaultArgList = new ArrayList();
-                for (var v = pynargs; v < parameters.Length; v++)
+                for (var v = positionalArgumentCount; v < parameters.Length; v++)
                 {
                     if (kwargDict.ContainsKey(parameters[v].Name))
                     {
@@ -740,7 +740,7 @@ namespace Python.Runtime
                     }
                 }
             }
-            else if (pynargs > parameters.Length && parameters.Length > 0 &&
+            else if (positionalArgumentCount > parameters.Length && parameters.Length > 0 &&
                        Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)))
             {
                 // This is a `foo(params object[] bar)` style method
