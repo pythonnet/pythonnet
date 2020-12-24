@@ -470,7 +470,7 @@ namespace Python.Runtime
 
                 ob = new MethodObject(type, name, mlist);
                 ci.members[name] = ob;
-                if (OperatorMethod.IsOperatorMethod(mlist[0]))
+                if (mlist.Any(OperatorMethod.IsOperatorMethod))
                 {
                     ci.members[OperatorMethod.GetPyMethodName(name)] = ob;
                 }

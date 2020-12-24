@@ -342,7 +342,7 @@ namespace Python.Runtime
                 bool paramsArray;
                 int kwargsMatched;
                 int defaultsNeeded;
-                bool isOperator = OperatorMethod.IsOperatorMethod(mi);  // e.g. op_Addition is defined for OperableObject
+                bool isOperator = OperatorMethod.IsOperatorMethod(mi);
                 if (!MatchesArgumentCount(pynargs, pi, kwargDict, isOperator, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
                 {
                     continue;
@@ -362,12 +362,11 @@ namespace Python.Runtime
                 {
                     if (inst != IntPtr.Zero)
                     {
-                        var co = ManagedType.GetManagedObject(inst) as CLRObject;
-                        if (co == null)
+                        if (ManagedType.GetManagedObject(inst) is CLRObject co)
                         {
-                            break;
+                            margs[0] = co.inst;
                         }
-                        margs[0] = co.inst;
+                        else { break; }
                     }
                 }
 
