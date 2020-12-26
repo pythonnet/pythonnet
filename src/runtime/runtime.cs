@@ -2144,6 +2144,9 @@ namespace Python.Runtime
         internal static extern int Py_AddPendingCall(IntPtr func, IntPtr arg);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int PyThreadState_SetAsyncExc(ulong id, IntPtr exc);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_MakePendingCalls();
 
         internal static void SetNoSiteFlag()

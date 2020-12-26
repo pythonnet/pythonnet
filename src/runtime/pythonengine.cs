@@ -567,6 +567,15 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Interrupts the execution of a thread.
+        /// </summary>
+        /// <param name="nativeThreadId">The native thread id.</param>
+        /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id isn’t found.</returns>
+        public static int Interrupt(ulong nativeThreadId)
+        {
+            return Runtime.PyThreadState_SetAsyncExc(nativeThreadId, Exceptions.KeyboardInterrupt);
+        }
 
         /// <summary>
         /// RunString Method. Function has been deprecated and will be removed.
