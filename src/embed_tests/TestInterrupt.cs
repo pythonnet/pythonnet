@@ -1,6 +1,5 @@
 
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,15 +12,6 @@ namespace Python.EmbeddingTest
     public class TestInterrupt
     {
         private IntPtr _threadState;
-
-        [DllImport("Kernel32", EntryPoint = "GetCurrentThreadId", ExactSpelling = true)]
-        private static extern uint GetCurrentThreadId();
-
-        [DllImport("libc", EntryPoint = "pthread_self")]
-        private static extern IntPtr pthread_selfLinux();
-
-        [DllImport("pthread", EntryPoint = "pthread_self", CallingConvention = CallingConvention.Cdecl)]
-        private static extern ulong pthread_selfOSX();
 
         [OneTimeSetUp]
         public void SetUp()
@@ -44,21 +34,9 @@ namespace Python.EmbeddingTest
             ulong nativeThreadId = 0;
             Task.Factory.StartNew(() =>
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    nativeThreadId = GetCurrentThreadId();
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    nativeThreadId = (ulong)pthread_selfLinux();
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    nativeThreadId = pthread_selfOSX();
-                }
-
                 using (Py.GIL())
                 {
+                    nativeThreadId = PythonEngine.GetNativeThreadID();
                     runSimpleStringReturnValue = PythonEngine.RunSimpleString(@"
 import time
 
@@ -75,7 +53,7 @@ while True:
                 Assert.AreEqual(1, interruptReturnValue);
             }
 
-            Thread.Sleep(300);
+            Thread.Sleep(500);
 
             Assert.AreEqual(-1, runSimpleStringReturnValue);
         }

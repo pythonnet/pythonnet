@@ -12,6 +12,15 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
+        [DllImport("Kernel32", EntryPoint = "GetCurrentThreadId", ExactSpelling = true)]
+        private static extern uint GetCurrentThreadId();
+
+        [DllImport("libc", EntryPoint = "pthread_self")]
+        private static extern IntPtr pthread_selfLinux();
+
+        [DllImport("pthread", EntryPoint = "pthread_self", CallingConvention = CallingConvention.Cdecl)]
+        private static extern ulong pthread_selfOSX();
+
         public static ShutdownMode ShutdownMode
         {
             get => Runtime.ShutdownMode;
@@ -568,13 +577,58 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// Gets the native thread ID.
+        /// </summary>
+        /// <returns>The native thread ID.</returns>
+        public static ulong GetNativeThreadID()
+        {
+            if (Runtime.PyVersion >= new Version(3, 8))
+            {
+                dynamic threading = Py.Import("threading");
+                return threading.get_native_id();
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return GetCurrentThreadId();
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return (ulong)pthread_selfLinux();
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return pthread_selfOSX();
+            }
+
+            return 0;
+        }
+
+        /// <summary>
         /// Interrupts the execution of a thread.
         /// </summary>
-        /// <param name="nativeThreadId">The native thread id.</param>
+        /// <param name="nativeThreadID">The native thread ID.</param>
         /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id isn’t found.</returns>
-        public static int Interrupt(ulong nativeThreadId)
+        public static int Interrupt(ulong nativeThreadID)
         {
-            return Runtime.PyThreadState_SetAsyncExc(nativeThreadId, Exceptions.KeyboardInterrupt);
+            if (Runtime.PyVersion >= new Version(3, 7))
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return Runtime.PyThreadState_SetAsyncExc37Windows(nativeThreadID, Exceptions.KeyboardInterrupt);
+                }
+
+                return Runtime.PyThreadState_SetAsyncExc37NonWindows((UIntPtr)nativeThreadID, Exceptions.KeyboardInterrupt);
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return Runtime.PyThreadState_SetAsyncExc36Windows((long)nativeThreadID, Exceptions.KeyboardInterrupt);
+            }
+
+            return Runtime.PyThreadState_SetAsyncExc36NonWindows((IntPtr)nativeThreadID, Exceptions.KeyboardInterrupt);
         }
 
         /// <summary>
