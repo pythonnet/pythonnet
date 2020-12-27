@@ -2144,16 +2144,10 @@ namespace Python.Runtime
         internal static extern int Py_AddPendingCall(IntPtr func, IntPtr arg);
 
         [DllImport(_PythonDll, EntryPoint = "PyThreadState_SetAsyncExc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyThreadState_SetAsyncExc37Windows(ulong id, IntPtr exc);
+        internal static extern int PyThreadState_SetAsyncExcLLP64(uint id, IntPtr exc);
 
         [DllImport(_PythonDll, EntryPoint = "PyThreadState_SetAsyncExc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyThreadState_SetAsyncExc36Windows(long id, IntPtr exc);
-
-        [DllImport(_PythonDll, EntryPoint = "PyThreadState_SetAsyncExc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyThreadState_SetAsyncExc37NonWindows(UIntPtr id, IntPtr exc);
-
-        [DllImport(_PythonDll, EntryPoint = "PyThreadState_SetAsyncExc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyThreadState_SetAsyncExc36NonWindows(IntPtr id, IntPtr exc);
+        internal static extern int PyThreadState_SetAsyncExcLP64(ulong id, IntPtr exc);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_MakePendingCalls();
