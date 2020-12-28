@@ -350,9 +350,20 @@ namespace Python.Runtime
                 var outs = 0;
                 int clrnargs = pi.Length;
                 isOperator = isOperator && pynargs == clrnargs - 1;  // Handle mismatched arg numbers due to Python operator being bound.
+                // Preprocessing pi to remove either the first or second argument.
+                bool isForward = isOperator && OperatorMethod.IsForward((MethodInfo)mi);  // Only cast if isOperator.
+                if (isOperator && isForward) {
+                    // The first Python arg is the right operand, while the bound instance is the left.
+                    // We need to skip the first (left operand) CLR argument.
+                    pi = pi.Skip(1).Take(1).ToArray();
+                }
+                else if (isOperator && !isForward) {
+                    // The first Python arg is the left operand.
+                    // We need to take the first CLR argument.
+                    pi = pi.Take(1).ToArray();
+                }
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
-                    isOperator: isOperator,
                     outs: out outs);
                 if (margs == null)
                 {
@@ -364,7 +375,15 @@ namespace Python.Runtime
                     {
                         if (ManagedType.GetManagedObject(inst) is CLRObject co)
                         {
-                            margs[0] = co.inst;
+                            // Postprocessing to extend margs.
+                            var margsTemp = new object[2];
+                            // If forward, the bound instance is the left operand.
+                            int boundOperandIndex = isForward ? 0 : 1;
+                            // If forward, the passed instance is the right operand.
+                            int passedOperandIndex = isForward ? 1 : 0;
+                            margsTemp[boundOperandIndex] = co.inst;
+                            margsTemp[passedOperandIndex] = margs[0];
+                            margs = margsTemp;
                         }
                         else { break; }
                     }
@@ -488,7 +507,6 @@ namespace Python.Runtime
         /// <param name="kwargDict">Dictionary of keyword argument name to python object pointer</param>
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
-        /// <param name="isOperator"><c>true</c>, if is operator method</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>An array of .NET arguments, that can be passed to a method.</returns>
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
@@ -496,7 +514,6 @@ namespace Python.Runtime
             Dictionary<string, IntPtr> kwargDict,
             ArrayList defaultArgList,
             bool needsResolution,
-            bool isOperator,
             out int outs)
         {
             outs = 0;
@@ -534,13 +551,6 @@ namespace Python.Runtime
                     {
                         op = Runtime.PyTuple_GetItem(args, paramIndex);
                     }
-                }
-                if (isOperator && paramIndex == 0)
-                {
-                    // After we've obtained the first argument from Python, we need to skip the first argument of the CLR
-                    // because operator method is a bound method in Python
-                    paramIndex++; // Leave the first .NET param as null (margs).
-                    parameter = pi[paramIndex];
                 }
 
                 bool isOut;

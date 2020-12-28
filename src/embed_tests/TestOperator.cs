@@ -202,6 +202,42 @@ c = a ^ b
 assert c.Num == a.Num ^ b
 ");
         }
+
+
+        [Test]
+        public void ReverseOperatorOverloads()
+        {
+            string name = string.Format("{0}.{1}",
+                typeof(OperableObject).DeclaringType.Name,
+                typeof(OperableObject).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+            PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+a = 2
+b = cls(10)
+
+c = a + b
+assert c.Num == a + b.Num
+
+c = a - b
+assert c.Num == a - b.Num
+
+c = a * b
+assert c.Num == a * b.Num
+
+c = a & b
+assert c.Num == a & b.Num
+
+c = a | b
+assert c.Num == a | b.Num
+
+c = a ^ b
+assert c.Num == a ^ b.Num
+");
+
+        }
         [Test]
         public void ShiftOperatorOverloads()
         {

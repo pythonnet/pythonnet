@@ -472,7 +472,14 @@ namespace Python.Runtime
                 ci.members[name] = ob;
                 if (mlist.Any(OperatorMethod.IsOperatorMethod))
                 {
-                    ci.members[OperatorMethod.GetPyMethodName(name)] = ob;
+                    string pyName = OperatorMethod.GetPyMethodName(name);
+                    string pyNameReverse = pyName.Insert(2, "r");
+                    MethodInfo[] forwardMethods, reverseMethods;
+                    OperatorMethod.FilterMethods(mlist, out forwardMethods, out reverseMethods);
+                    // Only methods where the left operand is the declaring type.
+                    ci.members[pyName] = new MethodObject(type, name, forwardMethods);
+                    // Only methods where only the right operand is the declaring type.
+                    ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods);
                 }
             }
 

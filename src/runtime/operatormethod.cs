@@ -130,5 +130,41 @@ namespace Python.Runtime
                 return locals.GetItem("OperatorMethod");
             }
         }
+
+        public static string ReversePyMethodName(string pyName)
+        {
+            return pyName.Insert(2, "r");
+        }
+
+        /// <summary>
+        /// Check if the method is performing a forward or reverse operation.
+        /// </summary>
+        /// <param name="method">The operator method.</param>
+        /// <returns></returns>
+        public static bool IsForward(MethodInfo method)
+        {
+            Type declaringType = method.DeclaringType;
+            Type leftOperandType = method.GetParameters()[0].ParameterType;
+            return leftOperandType == declaringType;
+        }
+
+        public static void FilterMethods(MethodInfo[] methods, out MethodInfo[] forwardMethods, out MethodInfo[] reverseMethods)
+        {
+            List<MethodInfo> forwardMethodsList = new List<MethodInfo>();
+            List<MethodInfo> reverseMethodsList = new List<MethodInfo>();
+            foreach (var method in methods)
+            {
+                if (IsForward(method))
+                {
+                    forwardMethodsList.Add(method);
+                } else
+                {
+                    reverseMethodsList.Add(method);
+                }
+
+            }
+            forwardMethods = forwardMethodsList.ToArray();
+            reverseMethods = reverseMethodsList.ToArray();
+        }
     }
 }
