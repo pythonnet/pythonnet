@@ -49,6 +49,11 @@ namespace Python.Runtime
                 ["op_OnesComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
                 ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
+                ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
+                ["op_GreaterThan"] = new SlotDefinition("__gt__", TypeOffset.tp_richcompare),
+                ["op_GreaterThanOrEqual"] = new SlotDefinition("__ge__", TypeOffset.tp_richcompare),
+                ["op_LessThan"] = new SlotDefinition("__lt__", TypeOffset.tp_richcompare),
+                ["op_LessThanOrEqual"] = new SlotDefinition("__le__", TypeOffset.tp_richcompare)
             };
         }
 
