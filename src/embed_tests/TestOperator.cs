@@ -149,6 +149,58 @@ namespace Python.EmbeddingTest
                 return new OperableObject(a.Num ^ b);
             }
 
+            public static bool operator <=(int a, OperableObject b)
+            {
+                return (a <= b.Num);
+            }
+            public static bool operator <=(OperableObject a, OperableObject b)
+            {
+                return (a.Num <= b.Num);
+            }
+            public static bool operator <=(OperableObject a, int b)
+            {
+                return (a.Num <= b);
+            }
+
+            public static bool operator >=(int a, OperableObject b)
+            {
+                return (a >= b.Num);
+            }
+            public static bool operator >=(OperableObject a, OperableObject b)
+            {
+                return (a.Num >= b.Num);
+            }
+            public static bool operator >=(OperableObject a, int b)
+            {
+                return (a.Num >= b);
+            }
+
+            public static bool operator<(int a, OperableObject b)
+            {
+                return (a < b.Num);
+            }
+            public static bool operator<(OperableObject a, OperableObject b)
+            {
+                return (a.Num < b.Num);
+            }
+            public static bool operator<(OperableObject a, int b)
+            {
+                return (a.Num < b);
+            }
+
+            public static bool operator>(int a, OperableObject b)
+            {
+                return (a > b.Num);
+            }
+            public static bool operator>(OperableObject a, OperableObject b)
+            {
+                return (a.Num > b.Num);
+            }
+            public static bool operator >(OperableObject a, int b)
+            {
+                return (a.Num > b);
+            }
+
             public static OperableObject operator <<(OperableObject a, int offset)
             {
                 return new OperableObject(a.Num << offset);
@@ -161,7 +213,7 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        public void OperatorOverloads()
+        public void SymmetricalOperatorOverloads()
         {
             string name = string.Format("{0}.{1}",
                 typeof(OperableObject).DeclaringType.Name,
@@ -206,6 +258,18 @@ assert c.Num == a.Num | b.Num
 
 c = a ^ b
 assert c.Num == a.Num ^ b.Num
+
+c = a <= b
+assert c == (a.Num <= b.Num)
+
+c = a >= b
+assert c == (a.Num >= b.Num)
+
+c = a < b
+assert c == (a.Num < b.Num)
+
+c = a > b
+assert c == (a.Num > b.Num)
 ");
         }
 
@@ -263,6 +327,18 @@ assert c.Num == a.Num | b
 
 c = a ^ b
 assert c.Num == a.Num ^ b
+
+c = a <= b
+assert c == (a.Num <= b)
+
+c = a >= b
+assert c == (a.Num >= b)
+
+c = a < b
+assert c == (a.Num < b)
+
+c = a > b
+assert c == (a.Num > b)
 ");
         }
 
@@ -304,6 +380,18 @@ assert c.Num == a | b.Num
 
 c = a ^ b
 assert c.Num == a ^ b.Num
+
+c = a <= b
+assert c == (a <= b.Num)
+
+c = a >= b
+assert c == (a >= b.Num)
+
+c = a < b
+assert c == (a < b.Num)
+
+c = a > b
+assert c == (a > b.Num)
 ");
 
         }
