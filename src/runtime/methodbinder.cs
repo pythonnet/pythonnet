@@ -351,13 +351,13 @@ namespace Python.Runtime
                 int clrnargs = pi.Length;
                 isOperator = isOperator && pynargs == clrnargs - 1;  // Handle mismatched arg numbers due to Python operator being bound.
                 // Preprocessing pi to remove either the first or second argument.
-                bool isForward = isOperator && OperatorMethod.IsForward((MethodInfo)mi);  // Only cast if isOperator.
-                if (isOperator && isForward) {
+                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
+                if (isOperator && !isReverse) {
                     // The first Python arg is the right operand, while the bound instance is the left.
                     // We need to skip the first (left operand) CLR argument.
                     pi = pi.Skip(1).Take(1).ToArray();
                 }
-                else if (isOperator && !isForward) {
+                else if (isOperator && isReverse) {
                     // The first Python arg is the left operand.
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();
@@ -377,10 +377,10 @@ namespace Python.Runtime
                         {
                             // Postprocessing to extend margs.
                             var margsTemp = new object[2];
-                            // If forward, the bound instance is the left operand.
-                            int boundOperandIndex = isForward ? 0 : 1;
-                            // If forward, the passed instance is the right operand.
-                            int passedOperandIndex = isForward ? 1 : 0;
+                            // If reverse, the passed instance is the left operand.
+                            int passedOperandIndex= isReverse ? 0 : 1;
+                            // If reverse, the bound instance is the right operand.
+                            int boundOperandIndex = isReverse ? 1 : 0;
                             margsTemp[boundOperandIndex] = co.inst;
                             margsTemp[passedOperandIndex] = margs[0];
                             margs = margsTemp;

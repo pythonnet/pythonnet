@@ -137,15 +137,15 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Check if the method is performing a forward or reverse operation.
+        /// Check if the method is performing a reverse operation.
         /// </summary>
         /// <param name="method">The operator method.</param>
         /// <returns></returns>
-        public static bool IsForward(MethodInfo method)
+        public static bool IsReverse(MethodInfo method)
         {
             Type declaringType = method.DeclaringType;
             Type leftOperandType = method.GetParameters()[0].ParameterType;
-            return leftOperandType == declaringType;
+            return leftOperandType != declaringType;
         }
 
         public static void FilterMethods(MethodInfo[] methods, out MethodInfo[] forwardMethods, out MethodInfo[] reverseMethods)
@@ -154,12 +154,12 @@ namespace Python.Runtime
             List<MethodInfo> reverseMethodsList = new List<MethodInfo>();
             foreach (var method in methods)
             {
-                if (IsForward(method))
-                {
-                    forwardMethodsList.Add(method);
-                } else
+                if (IsReverse(method))
                 {
                     reverseMethodsList.Add(method);
+                } else
+                {
+                    forwardMethodsList.Add(method);
                 }
 
             }
