@@ -355,7 +355,7 @@ namespace Python.Runtime
                 if (isOperator && !isReverse) {
                     // The first Python arg is the right operand, while the bound instance is the left.
                     // We need to skip the first (left operand) CLR argument.
-                    pi = pi.Skip(1).Take(1).ToArray();
+                    pi = pi.Skip(1).ToArray();
                 }
                 else if (isOperator && isReverse) {
                     // The first Python arg is the left operand.
@@ -375,14 +375,18 @@ namespace Python.Runtime
                     {
                         if (ManagedType.GetManagedObject(inst) is CLRObject co)
                         {
+                            bool isUnary = pynargs == 0;
                             // Postprocessing to extend margs.
-                            var margsTemp = new object[2];
-                            // If reverse, the passed instance is the left operand.
-                            int passedOperandIndex= isReverse ? 0 : 1;
+                            var margsTemp = isUnary ? new object[1] : new object[2];
                             // If reverse, the bound instance is the right operand.
                             int boundOperandIndex = isReverse ? 1 : 0;
+                            // If reverse, the passed instance is the left operand.
+                            int passedOperandIndex = isReverse ? 0 : 1;
                             margsTemp[boundOperandIndex] = co.inst;
-                            margsTemp[passedOperandIndex] = margs[0];
+                            if (!isUnary)
+                            {
+                                margsTemp[passedOperandIndex] = margs[0];
+                            }
                             margs = margsTemp;
                         }
                         else { break; }

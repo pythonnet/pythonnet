@@ -14,6 +14,8 @@ namespace Python.Runtime.Native
         int mp_length { get; }
         int mp_subscript { get; }
         int name { get; }
+        int nb_positive { get; }
+        int nb_negative { get; }
         int nb_add { get; }
         int nb_subtract { get; }
         int nb_multiply { get; }

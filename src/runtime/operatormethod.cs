@@ -46,7 +46,9 @@ namespace Python.Runtime
                 ["op_LeftShift"] = new SlotDefinition("__lshift__", TypeOffset.nb_lshift),
                 ["op_RightShift"] = new SlotDefinition("__rshift__", TypeOffset.nb_rshift),
                 ["op_Modulus"] = new SlotDefinition("__mod__", TypeOffset.nb_remainder),
-                ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert)
+                ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
+                ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
+                ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
             };
         }
 
