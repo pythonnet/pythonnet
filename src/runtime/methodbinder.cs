@@ -709,7 +709,7 @@ namespace Python.Runtime
                 match = true;
                 // operator methods will have 2 CLR args but only one Python arg,
                 // since Python operator methods are bound
-                if (isOperator)
+                if (isOperator && positionalArgumentCount == parameters.Length - 1)
                 {
                     // return early since a C# operator method cannot have
                     // keyword args, default args, or params arrays (exclusive cases)

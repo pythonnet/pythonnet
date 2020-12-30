@@ -167,6 +167,25 @@ c = a ^ b
 assert c.Num == a.Num ^ b.Num
 ");
         }
+
+        [Test]
+        public void OperatorOverloadMissingArgument()
+        {
+            string name = string.Format("{0}.{1}",
+                typeof(OperableObject).DeclaringType.Name,
+                typeof(OperableObject).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+            Assert.Throws<PythonException>(() =>
+            PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+a = cls(2)
+b = cls(10)
+a.op_Addition()
+"));
+        }
+
         [Test]
         public void ForwardOperatorOverloads()
         {

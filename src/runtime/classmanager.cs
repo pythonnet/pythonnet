@@ -473,7 +473,7 @@ namespace Python.Runtime
                 if (mlist.Any(OperatorMethod.IsOperatorMethod))
                 {
                     string pyName = OperatorMethod.GetPyMethodName(name);
-                    string pyNameReverse = pyName.Insert(2, "r");
+                    string pyNameReverse = OperatorMethod.ReversePyMethodName(pyName);
                     MethodInfo[] forwardMethods, reverseMethods;
                     OperatorMethod.FilterMethods(mlist, out forwardMethods, out reverseMethods);
                     // Only methods where the left operand is the declaring type.
