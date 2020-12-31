@@ -4,6 +4,7 @@
     <Platforms>AnyCPU</Platforms>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
+    <LangVersion>9.0</LangVersion>
     <PackageId>pythonnet</PackageId>
     <PackageLicenseUrl>https://github.com/pythonnet/pythonnet/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>

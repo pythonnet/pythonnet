@@ -511,7 +511,7 @@ namespace Python.Runtime
                 case TypeCode.Int32:
                     {
                         // Python3 always use PyLong API
-                        long num = Runtime.PyLong_AsLongLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -541,7 +541,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
 
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -567,7 +567,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
 
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -604,7 +604,7 @@ namespace Python.Runtime
                             }
                             goto type_error;
                         }
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -619,7 +619,7 @@ namespace Python.Runtime
 
                 case TypeCode.Int16:
                     {
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -634,18 +634,35 @@ namespace Python.Runtime
 
                 case TypeCode.Int64:
                     {
-                        long num = (long)Runtime.PyLong_AsLongLong(value);
-                        if (num == -1 && Exceptions.ErrorOccurred())
+                        if (Runtime.Is32Bit)
                         {
-                            goto convert_error;
+                            if (!Runtime.PyLong_Check(value))
+                            {
+                                goto type_error;
+                            }
+                            long num = Runtime.PyExplicitlyConvertToInt64(value);
+                            if (num == -1 && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
+                            result = num;
+                            return true;
                         }
-                        result = num;
-                        return true;
+                        else
+                        {
+                            nint num = Runtime.PyLong_AsSignedSize_t(value);
+                            if (num == -1 && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
+                            result = (long)num;
+                            return true;
+                        }
                     }
 
                 case TypeCode.UInt16:
                     {
-                        long num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -660,43 +677,16 @@ namespace Python.Runtime
 
                 case TypeCode.UInt32:
                     {
-                        op = value;
-                        if (Runtime.PyObject_TYPE(value) != Runtime.PyLongType)
+                        nuint num = Runtime.PyLong_AsUnsignedSize_t(value);
+                        if (num == unchecked((nuint)(-1)) && Exceptions.ErrorOccurred())
                         {
-                            op = Runtime.PyNumber_Long(value);
-                            if (op == IntPtr.Zero)
-                            {
-                                goto convert_error;
-                            }
+                            goto convert_error;
                         }
-                        if (Runtime.Is32Bit || Runtime.IsWindows)
+                        if (num > UInt32.MaxValue)
                         {
-                            uint num = Runtime.PyLong_AsUnsignedLong32(op);
-                            if (num == uint.MaxValue && Exceptions.ErrorOccurred())
-                            {
-                                goto convert_error;
-                            }
-                            result = num;
+                            goto overflow;
                         }
-                        else
-                        {
-                            ulong num = Runtime.PyLong_AsUnsignedLong64(op);
-                            if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
-                            {
-                                goto convert_error;
-                            }
-                            try
-                            {
-                                result = Convert.ToUInt32(num);
-                            }
-                            catch (OverflowException)
-                            {
-                                // Probably wasn't an overflow in python but was in C# (e.g. if cpython
-                                // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in
-                                // PyLong_AsUnsignedLong)
-                                goto overflow;
-                            }
-                        }
+                        result = (uint)num;
                         return true;
                     }
 

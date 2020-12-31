@@ -1251,30 +1251,27 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyLong_FromString(string value, IntPtr end, int radix);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyLong_AsLong(IntPtr value);
-
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyLong_AsUnsignedLong")]
-        internal static extern uint PyLong_AsUnsignedLong32(IntPtr value);
-
+                   EntryPoint = "PyLong_AsSize_t")]
+        internal static extern nuint PyLong_AsUnsignedSize_t(IntPtr value);
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
-            EntryPoint = "PyLong_AsUnsignedLong")]
-        internal static extern ulong PyLong_AsUnsignedLong64(IntPtr value);
+                   EntryPoint = "PyLong_AsSsize_t")]
+        internal static extern nint PyLong_AsSignedSize_t(IntPtr value);
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+                   EntryPoint = "PyLong_AsSsize_t")]
+        internal static extern nint PyLong_AsSignedSize_t(BorrowedReference value);
 
-        internal static object PyLong_AsUnsignedLong(IntPtr value)
-        {
-            if (Is32Bit || IsWindows)
-                return PyLong_AsUnsignedLong32(value);
-            else
-                return PyLong_AsUnsignedLong64(value);
-        }
-
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern long PyLong_AsLongLong(BorrowedReference value);
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern long PyLong_AsLongLong(IntPtr value);
-
+        /// <summary>
+        /// This function is a rename of PyLong_AsLongLong, which has a commonly undesired
+        /// behavior to convert everything (including floats) to integer type, before returning
+        /// the value as <see cref="Int64"/>.
+        ///
+        /// <para>In most cases you need to check that value is an instance of PyLongObject
+        /// before using this function using <see cref="PyLong_Check(IntPtr)"/>.</para>
+        /// </summary>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
+                   EntryPoint = "PyLong_AsLongLong")]
+        internal static extern long PyExplicitlyConvertToInt64(IntPtr value);
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern ulong PyLong_AsUnsignedLongLong(IntPtr value);
 

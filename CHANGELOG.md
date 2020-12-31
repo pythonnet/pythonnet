@@ -27,6 +27,8 @@ details about the cause of the failure
      to the regular method return value (unless they are passed with `ref` or `out` keyword).
 -   BREAKING: Drop support for the long-deprecated CLR.* prefix.
 -   `PyObject` now implements `IEnumerable<PyObject>` in addition to `IEnumerable`
+-   floating point values passed from Python are no longer silently truncated
+when .NET expects an integer [#1342][i1342]
 
 ### Fixed
 
@@ -807,3 +809,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [i755]: https://github.com/pythonnet/pythonnet/pull/755
 [p534]: https://github.com/pythonnet/pythonnet/pull/534
 [i449]: https://github.com/pythonnet/pythonnet/issues/449
+[i1342]: https://github.com/pythonnet/pythonnet/issues/1342

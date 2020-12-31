@@ -49,7 +49,7 @@ namespace Python.Runtime
             // create single dimensional array
             if (Runtime.PyInt_Check(op))
             {
-                dimensions[0] = Runtime.PyLong_AsLongLong(op);
+                dimensions[0] = Runtime.PyLong_AsSignedSize_t(op);
                 if (dimensions[0] == -1 && Exceptions.ErrorOccurred())
                 {
                     Exceptions.Clear();
@@ -84,7 +84,7 @@ namespace Python.Runtime
                     return default;
                 }
 
-                dimensions[dimIndex] = Runtime.PyLong_AsLongLong(dimObj);
+                dimensions[dimIndex] = Runtime.PyLong_AsSignedSize_t(dimObj);
                 if (dimensions[dimIndex] == -1 && Exceptions.ErrorOccurred())
                 {
                     Exceptions.RaiseTypeError("array constructor expects integer dimensions");
