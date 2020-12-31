@@ -49,8 +49,12 @@ jobs:
       - name: Python Tests
         run: pytest
 
-      - name: Run Embedding tests
+      - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
+        if: ${{ matrix.os != 'macos' }} # Not working right now, doesn't find libpython
+
+      - name: Python tests runner
+        run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
         if: ${{ matrix.os != 'macos' }} # Not working right now, doesn't find libpython
 
       # TODO: Run perf tests
