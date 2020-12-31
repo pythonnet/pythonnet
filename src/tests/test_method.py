@@ -807,6 +807,9 @@ def test_no_object_in_param():
     with pytest.raises(TypeError):
         MethodTest.TestOverloadedNoObject("test")
 
+    with pytest.raises(TypeError):
+        MethodTest.TestOverloadedNoObject(5.5)
+
 
 def test_object_in_param():
     """Test regression introduced by #151 in which Object method overloads

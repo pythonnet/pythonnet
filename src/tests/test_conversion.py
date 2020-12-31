@@ -343,7 +343,7 @@ def test_uint32_conversion():
     ob.UInt32Field = System.UInt32(0)
     assert ob.UInt32Field == 0
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ConversionTest().UInt32Field = "spam"
 
     with pytest.raises(TypeError):
