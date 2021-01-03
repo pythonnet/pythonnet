@@ -19,6 +19,14 @@
     <DefineConstants>$(DefineConstants);$(ConfiguredConstants)</DefineConstants>
   </PropertyGroup>
 
+  <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
+    <!-- Remove any files that might conflict with PythonInteropFile -->
+    <Compile Remove="interop*.cs" />
+    <Compile Include="interop.cs" />
+    <!-- Explicitly include PythonInteropFile because it might not be in the src/runtime folder -->
+    <Compile Include="$(PythonInteropFile)" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Remove="resources\clr.py" />
     <EmbeddedResource Include="resources\clr.py">
