@@ -37,7 +37,7 @@ namespace Python.EmbeddingPythonTest
             string attributeName = "abiflags";
             if (sys.HasAttr(attributeName) && !string.IsNullOrEmpty(sys.GetAttr(attributeName).ToString()))
             {
-                string typeName = "Python.Runtime.NativeTypeOffset";
+                string typeName = "Python.Runtime.NativeTypeOffset, Python.Runtime";
                 Assert.NotNull(Type.GetType(typeName), $"{typeName} does not exist and sys.{attributeName} is not empty");
             }
         }
