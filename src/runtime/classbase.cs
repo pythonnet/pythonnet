@@ -62,7 +62,7 @@ namespace Python.Runtime
                 return c.pyHandle;
             }
 
-            return Exceptions.RaiseTypeError($"{type.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
+            return Exceptions.RaiseTypeError($"{type.Value.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
         }
 
         /// <summary>
