@@ -30,6 +30,11 @@ namespace Python.EmbeddingTest
                 Num = num;
             }
 
+            public static OperableObject operator ~(OperableObject a)
+            {
+                return new OperableObject(~a.Num);
+            }
+
             public static OperableObject operator +(OperableObject a)
             {
                 return new OperableObject(+a.Num);
@@ -90,6 +95,19 @@ namespace Python.EmbeddingTest
             public static OperableObject operator /(OperableObject a, int b)
             {
                 return new OperableObject(a.Num / b);
+            }
+
+            public static OperableObject operator %(int a, OperableObject b)
+            {
+                return new OperableObject(a % b.Num);
+            }
+            public static OperableObject operator %(OperableObject a, OperableObject b)
+            {
+                return new OperableObject(a.Num % b.Num);
+            }
+            public static OperableObject operator %(OperableObject a, int b)
+            {
+                return new OperableObject(a.Num % b);
             }
 
             public static OperableObject operator &(int a, OperableObject b)
@@ -155,6 +173,9 @@ from {module} import *
 cls = {name}
 a = cls(-2)
 b = cls(10)
+c = ~a
+assert c.Num == ~a.Num
+
 c = +a
 assert c.Num == +a.Num
 
@@ -173,6 +194,9 @@ assert c.Num == a.Num * b.Num
 
 c = a / b
 assert c.Num == a.Num // b.Num
+
+c = a % b
+assert c.Num == a.Num % b.Num
 
 c = a & b
 assert c.Num == a.Num & b.Num
@@ -228,6 +252,9 @@ assert c.Num == a.Num * b
 c = a / b
 assert c.Num == a.Num // b
 
+c = a % b
+assert c.Num == a.Num % b
+
 c = a & b
 assert c.Num == a.Num & b
 
@@ -265,6 +292,9 @@ assert c.Num == a * b.Num
 
 c = a / b
 assert c.Num == a // b.Num
+
+c = a % b
+assert c.Num == a % b.Num
 
 c = a & b
 assert c.Num == a & b.Num
