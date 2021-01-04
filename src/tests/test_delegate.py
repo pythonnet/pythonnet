@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# TODO: Add test for ObjectDelegate
 
 """Test CLR delegate support."""
 
@@ -256,6 +255,26 @@ def test_bool_delegate():
 
     assert not d()
     assert not ob.CallBoolDelegate(d)
+
+def test_object_delegate():
+    """Test object delegate."""
+    from Python.Test import ObjectDelegate
+
+    def create_object():
+        return DelegateTest()
+
+    d = ObjectDelegate(create_object)
+    ob = DelegateTest()
+    ob.CallObjectDelegate(d)
+
+def test_invalid_object_delegate():
+    """Test invalid object delegate with mismatched return type."""
+    from Python.Test import ObjectDelegate
+
+    d = ObjectDelegate(hello_func)
+    ob = DelegateTest()
+    with pytest.raises(TypeError):
+        ob.CallObjectDelegate(d)
 
     # test async delegates
 
