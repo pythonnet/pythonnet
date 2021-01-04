@@ -36,7 +36,7 @@ namespace Python.Runtime
             }
         }
 
-        public string Name {get{return name;}}
+        public string Name => name;
         public bool Valid => type != null;
 
         public override string ToString()

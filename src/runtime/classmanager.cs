@@ -129,6 +129,10 @@ namespace Python.Runtime
                         // raises an error. We don't care about it.
                         Runtime.PyErr_Clear();
                     }
+                    else if (Exceptions.ErrorOccurred())
+                    {
+                        throw new PythonException();
+                    }
                 }
                 // We modified the Type object, notify it we did.
                 Runtime.PyType_Modified(cls.Value.tpHandle);

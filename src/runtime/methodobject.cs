@@ -28,8 +28,7 @@ namespace Python.Runtime
         internal IntPtr doc;
         internal Type type;
 
-        //  `allow_threads = true`: True being the default value of MethodBinder.allow_threads
-        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads = true)
+        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
         {
             this.type = type;
             this.name = name;

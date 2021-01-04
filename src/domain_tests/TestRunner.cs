@@ -913,8 +913,7 @@ namespace CaseRunner
                 PythonEngine.Initialize(mode:{0});
                 using (Py.GIL())
                 {{
-                    // Because the generated assemblies are in the $TEMP folder, add it to the path
-                    var temp = Path.GetTempPath();
+                    var temp = AppDomain.CurrentDomain.BaseDirectory;
                     dynamic sys = Py.Import(""sys"");
                     sys.path.append(new PyString(temp));
                     dynamic test_mod = Py.Import(""domain_test_module.mod"");
@@ -938,6 +937,8 @@ namespace CaseRunner
 ";
         readonly static string PythonDllLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Python.Runtime.dll");
 
+        static string TestPath = null;
+
         public static int Main(string[] args)
         {
             TestCase testCase;
@@ -951,16 +952,11 @@ namespace CaseRunner
                 Console.WriteLine($"-- Looking for domain reload test case {testName}");
                 testCase = Cases.First(c => c.Name == testName);
             }
+
             Console.WriteLine($"-- Running domain reload test case: {testCase.Name}");
 
-            var tempFolderPython = Path.Combine(Path.GetTempPath(), "Python.Runtime.dll");
-            if (File.Exists(tempFolderPython))
-            {
-                File.Delete(tempFolderPython);
-            }
+            SetupTestFolder(testCase.Name);
 
-            File.Copy(PythonDllLocation, tempFolderPython);
-            
             CreatePythonModule(testCase);
             {
                 var runnerAssembly = CreateCaseRunnerAssembly(verb:"before");
@@ -989,9 +985,32 @@ namespace CaseRunner
                     RunAndUnload(runnerDomain, runnerAssembly);
                 }
             }
+
+            // Don't delete unconditionally. It's sometimes useful to leave the
+            // folder behind to debug failing tests.
+            TeardownTestFolder();
+
             return 0;
         }
-#if !NETCOREAPP
+
+        static void SetupTestFolder(string testCaseName)
+        {
+            TestPath = Path.Combine(Path.GetTempPath(), $"Python.TestRunner.{testCaseName}");
+            if (Directory.Exists(TestPath))
+            {
+                Directory.Delete(TestPath, recursive: true);
+            }
+            Directory.CreateDirectory(TestPath);
+            File.Copy(PythonDllLocation, Path.Combine(TestPath, "Python.Runtime.dll"));
+        }
+
+        static void TeardownTestFolder()
+        {
+            if (Directory.Exists(TestPath))
+            {
+                Directory.Delete(TestPath, recursive: true);
+            }
+        }
 
         static void RunAndUnload(AppDomain domain, string assemblyPath)
         {
@@ -1027,7 +1046,7 @@ namespace CaseRunner
             CompilerParameters parameters = new CompilerParameters();
             parameters.GenerateExecutable = exe;
             var assemblyName = name;
-            var assemblyFullPath = Path.Combine(Path.GetTempPath(), assemblyName);
+            var assemblyFullPath = Path.Combine(TestPath, assemblyName);
             parameters.OutputAssembly = assemblyFullPath;
             parameters.ReferencedAssemblies.Add("System.dll");
             parameters.ReferencedAssemblies.Add("System.Core.dll");
@@ -1062,7 +1081,7 @@ namespace CaseRunner
             var currentDomain = AppDomain.CurrentDomain;
             var domainsetup = new AppDomainSetup()
             {
-                ApplicationBase = Path.GetTempPath(),
+                ApplicationBase = TestPath,
                 ConfigurationFile = currentDomain.SetupInformation.ConfigurationFile,
                 LoaderOptimization = LoaderOptimization.SingleDomain,
                 PrivateBinPath = "."
@@ -1077,7 +1096,7 @@ namespace CaseRunner
 
         static string CreatePythonModule(TestCase testCase)
         {
-            var modulePath = Path.Combine(Path.GetTempPath(), "domain_test_module");
+            var modulePath = Path.Combine(TestPath, "domain_test_module");
             if (Directory.Exists(modulePath))
             {
                 Directory.Delete(modulePath, recursive: true);
@@ -1092,7 +1111,5 @@ namespace CaseRunner
 
             return null;
         }
-#endif
-
     }
 }

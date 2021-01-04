@@ -6,10 +6,10 @@ using System.IO;
 
 namespace Python.Runtime
 {
-     [Serializable]
-    internal struct MaybeMemberInfo<T> : ISerializable where T: MemberInfo
+    [Serializable]
+    internal struct MaybeMemberInfo<T> : ISerializable where T : MemberInfo
     {
-        public static implicit operator MaybeMemberInfo<T> (T ob) => new MaybeMemberInfo<T>(ob);
+        public static implicit operator MaybeMemberInfo<T>(T ob) => new MaybeMemberInfo<T>(ob);
 
         // .ToString() of the serialized object
         const string SerializationName = "s";
@@ -22,7 +22,7 @@ namespace Python.Runtime
         [NonSerialized]
         Exception deserializationException;
 
-        public string DeletedMessage 
+        public string DeletedMessage
         {
             get
             {
@@ -42,7 +42,7 @@ namespace Python.Runtime
             }
         }
 
-        public string Name {get{return name;}}
+        public string Name => name;
         public bool Valid => info != null;
 
         public override string ToString()

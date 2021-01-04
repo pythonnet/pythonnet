@@ -351,6 +351,10 @@ namespace Python.Runtime
                     // raises an error. We don't care about it.
                     Runtime.PyErr_Clear();
                 }
+                else if (Exceptions.ErrorOccurred())
+                {
+                    throw new PythonException();
+                }
                 pair.Value.DecrRefCount();
             }
 

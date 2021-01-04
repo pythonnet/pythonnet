@@ -24,7 +24,8 @@ namespace Python.Runtime
 
         [NonSerialized]
         public bool init = false;
-        public bool allow_threads = true;
+        public const bool DefaultAllowThreads = true;
+        public bool allow_threads = DefaultAllowThreads;
 
         internal MethodBinder()
         {
@@ -187,7 +188,7 @@ namespace Python.Runtime
         {
             if (mi == null)
             {
-                return -1;
+                return int.MaxValue;
             }
 
             ParameterInfo[] pi = mi.GetParameters();
@@ -864,8 +865,8 @@ namespace Python.Runtime
     {
         int IComparer<MaybeMethodBase>.Compare(MaybeMethodBase m1, MaybeMethodBase m2)
         {
-            MethodBase me1 = m1.Valid ? m1.Value : null;
-            MethodBase me2 = m2.Valid ? m2.Value : null;
+            MethodBase me1 = m1.UnsafeValue;
+            MethodBase me2 = m2.UnsafeValue;
             if (me1 == null && me2 == null)
             {
                 return 0;
