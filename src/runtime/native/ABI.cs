@@ -22,7 +22,12 @@ namespace Python.Runtime.Native
                 thisAssembly.GetType(nativeTypeOffsetClassName, throwOnError: false)
                 ?? thisAssembly.GetType(className, throwOnError: false);
             if (typeOffsetsClass is null)
-                throw new NotSupportedException($"Python ABI v{version} is not supported");
+            {
+                var types = thisAssembly.GetTypes().Select(type => type.Name).Where(name => name.StartsWith("TypeOffset"));
+                string message = $"Searching for {className}, found {string.Join(",", types)}. " +
+                    "If you are building Python.NET from source, make sure you have run 'python setup.py configure' to fill in configured.props";
+                throw new NotSupportedException($"Python ABI v{version} is not supported: {message}");
+            }
             var typeOffsets = (ITypeOffsets)Activator.CreateInstance(typeOffsetsClass);
             TypeOffset.Use(typeOffsets);
 
