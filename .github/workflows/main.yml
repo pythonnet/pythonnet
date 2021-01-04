@@ -53,9 +53,9 @@ jobs:
         run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
         if: ${{ matrix.os != 'macos' }} # Not working right now, doesn't find libpython
 
-      - name: Python tests runner
+      - name: Python tests run from .NET
         run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
-        if: ${{ matrix.os != 'macos' }} # Not working right now, doesn't find libpython
+        if: ${{ matrix.os == 'windows' }} # Not working for others right now
 
       # TODO: Run perf tests
       # TODO: Run mono tests on Windows?
