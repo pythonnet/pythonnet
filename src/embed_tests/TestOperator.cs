@@ -263,6 +263,9 @@ assert c.Num == a - b.Num
 c = a * b
 assert c.Num == a * b.Num
 
+c = a / b
+assert c.Num == a // b.Num
+
 c = a & b
 assert c.Num == a & b.Num
 

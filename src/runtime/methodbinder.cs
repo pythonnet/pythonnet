@@ -343,13 +343,14 @@ namespace Python.Runtime
                 int kwargsMatched;
                 int defaultsNeeded;
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, isOperator, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
+                int clrnargs = pi.Length;
+                // Binary operator methods will have 2 CLR args but only one Python arg
+                // (unary operators will have 1 less each), since Python operator methods are bound.
+                isOperator = isOperator && pynargs == clrnargs - 1;
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded) && !isOperator)
                 {
                     continue;
                 }
-                var outs = 0;
-                int clrnargs = pi.Length;
-                isOperator = isOperator && pynargs == clrnargs - 1;  // Handle mismatched arg numbers due to Python operator being bound.
                 // Preprocessing pi to remove either the first or second argument.
                 bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
                 if (isOperator && !isReverse) {
@@ -362,6 +363,7 @@ namespace Python.Runtime
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();
                 }
+                var outs = 0;
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
                     outs: out outs);
@@ -685,7 +687,6 @@ namespace Python.Runtime
         /// <param name="positionalArgumentCount">Number of positional args passed from Python.</param>
         /// <param name="parameters">Parameters of the specified .NET method.</param>
         /// <param name="kwargDict">Keyword args passed from Python.</param>
-        /// <param name="isOperator">True if the parameters' method is an operator.</param>
         /// <param name="paramsArray">True if the final param of the .NET method is an array (`params` keyword).</param>
         /// <param name="defaultArgList">List of default values for arguments.</param>
         /// <param name="kwargsMatched">Number of kwargs from Python that are also present in the .NET method.</param>
@@ -693,7 +694,6 @@ namespace Python.Runtime
         /// <returns></returns>
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
-            bool isOperator,
             out bool paramsArray,
             out ArrayList defaultArgList,
             out int kwargsMatched,
@@ -711,12 +711,8 @@ namespace Python.Runtime
             else if (positionalArgumentCount < parameters.Length && (!paramsArray || positionalArgumentCount == parameters.Length - 1))
             {
                 match = true;
-                // operator methods will have 2 CLR args but only one Python arg,
-                // since Python operator methods are bound
-                if (isOperator && positionalArgumentCount == parameters.Length - 1)
+                if (positionalArgumentCount == parameters.Length - 1)
                 {
-                    // return early since a C# operator method cannot have
-                    // keyword args, default args, or params arrays (exclusive cases)
                     return match;
                 }
                 // every parameter past 'positionalArgumentCount' must have either
