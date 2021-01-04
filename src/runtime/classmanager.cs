@@ -477,9 +477,11 @@ namespace Python.Runtime
                     MethodInfo[] forwardMethods, reverseMethods;
                     OperatorMethod.FilterMethods(mlist, out forwardMethods, out reverseMethods);
                     // Only methods where the left operand is the declaring type.
-                    ci.members[pyName] = new MethodObject(type, name, forwardMethods);
+                    if (forwardMethods.Length > 0)
+                        ci.members[pyName] = new MethodObject(type, name, forwardMethods);
                     // Only methods where only the right operand is the declaring type.
-                    ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods);
+                    if (reverseMethods.Length > 0)
+                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods);
                 }
             }
 
