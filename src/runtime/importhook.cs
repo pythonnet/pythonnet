@@ -293,7 +293,6 @@ namespace Python.Runtime
             }
             // Save the exception
             var originalException = new PythonException();
-            var originalExceptionMessage = originalException.ToString();
             // Otherwise,  just clear the it.
             Exceptions.Clear();
 
@@ -345,7 +344,7 @@ namespace Python.Runtime
                 ManagedType mt = tail.GetAttribute(name, true);
                 if (!(mt is ModuleObject))
                 {
-                    Exceptions.SetError(Exceptions.ImportError, originalExceptionMessage);
+                    originalException.Restore();
                     return IntPtr.Zero;
                 }
                 if (head == null)
