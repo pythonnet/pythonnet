@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
+-   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
@@ -44,7 +45,7 @@ details about the cause of the failure
 -    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
 -    Fixed objects returned by enumerating `PyObject` being disposed too soon
 -    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
--    Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
+-   `import` may now raise errors with more detail than "No module named X"
 
 ### Removed
 
