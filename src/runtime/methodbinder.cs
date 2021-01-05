@@ -353,20 +353,59 @@ namespace Python.Runtime
                 bool paramsArray;
                 int kwargsMatched;
                 int defaultsNeeded;
-
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded))
+                bool isOperator = OperatorMethod.IsOperatorMethod(mi);
+                int clrnargs = pi.Length;
+                // Binary operator methods will have 2 CLR args but only one Python arg
+                // (unary operators will have 1 less each), since Python operator methods are bound.
+                isOperator = isOperator && pynargs == clrnargs - 1;
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded) && !isOperator)
                 {
                     continue;
                 }
+                // Preprocessing pi to remove either the first or second argument.
+                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
+                if (isOperator && !isReverse) {
+                    // The first Python arg is the right operand, while the bound instance is the left.
+                    // We need to skip the first (left operand) CLR argument.
+                    pi = pi.Skip(1).ToArray();
+                }
+                else if (isOperator && isReverse) {
+                    // The first Python arg is the left operand.
+                    // We need to take the first CLR argument.
+                    pi = pi.Take(1).ToArray();
+                }
                 var outs = 0;
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
-                    needsResolution: _methods.Length > 1,
+                    needsResolution: _methods.Length > 1,  // If there's more than one possible match.
                     outs: out outs);
-
                 if (margs == null)
                 {
                     continue;
                 }
+                if (isOperator)
+                {
+                    if (inst != IntPtr.Zero)
+                    {
+                        if (ManagedType.GetManagedObject(inst) is CLRObject co)
+                        {
+                            bool isUnary = pynargs == 0;
+                            // Postprocessing to extend margs.
+                            var margsTemp = isUnary ? new object[1] : new object[2];
+                            // If reverse, the bound instance is the right operand.
+                            int boundOperandIndex = isReverse ? 1 : 0;
+                            // If reverse, the passed instance is the left operand.
+                            int passedOperandIndex = isReverse ? 0 : 1;
+                            margsTemp[boundOperandIndex] = co.inst;
+                            if (!isUnary)
+                            {
+                                margsTemp[passedOperandIndex] = margs[0];
+                            }
+                            margs = margsTemp;
+                        }
+                        else { break; }
+                    }
+                }
+
 
                 var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi);
                 argMatchedMethods.Add(matchedMethod);
@@ -554,6 +593,15 @@ namespace Python.Runtime
             return margs;
         }
 
+        /// <summary>
+        /// Try to convert a Python argument object to a managed CLR type.
+        /// </summary>
+        /// <param name="op">Pointer to the object at a particular parameter.</param>
+        /// <param name="parameterType">That parameter's managed type.</param>
+        /// <param name="needsResolution">There are multiple overloading methods that need resolution.</param>
+        /// <param name="arg">Converted argument.</param>
+        /// <param name="isOut">Whether the CLR type is passed by reference.</param>
+        /// <returns></returns>
         static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
                                        out object arg, out bool isOut)
         {
@@ -644,7 +692,17 @@ namespace Python.Runtime
 
             return clrtype;
         }
-
+        /// <summary>
+        /// Check whether the number of Python and .NET arguments match, and compute additional arg information.
+        /// </summary>
+        /// <param name="positionalArgumentCount">Number of positional args passed from Python.</param>
+        /// <param name="parameters">Parameters of the specified .NET method.</param>
+        /// <param name="kwargDict">Keyword args passed from Python.</param>
+        /// <param name="paramsArray">True if the final param of the .NET method is an array (`params` keyword).</param>
+        /// <param name="defaultArgList">List of default values for arguments.</param>
+        /// <param name="kwargsMatched">Number of kwargs from Python that are also present in the .NET method.</param>
+        /// <param name="defaultsNeeded">Number of non-null defaultsArgs.</param>
+        /// <returns></returns>
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
             Dictionary<string, IntPtr> kwargDict,
             out bool paramsArray,
@@ -655,19 +713,18 @@ namespace Python.Runtime
             defaultArgList = null;
             var match = false;
             paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
-            var kwargCount = kwargDict.Count;
             kwargsMatched = 0;
             defaultsNeeded = 0;
-
             if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)
             {
                 match = true;
             }
             else if (positionalArgumentCount < parameters.Length && (!paramsArray || positionalArgumentCount == parameters.Length - 1))
             {
-                // every parameter past 'positionalArgumentCount' must have either
-                // a corresponding keyword argument or a default parameter
                 match = true;
+                // every parameter past 'positionalArgumentCount' must have either
+                // a corresponding keyword arg or a default param, unless the method
+                // method accepts a params array (which cannot have a default value)
                 defaultArgList = new ArrayList();
                 for (var v = positionalArgumentCount; v < parameters.Length; v++)
                 {

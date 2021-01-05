@@ -49,6 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BC426F42
 		tools\geninterop\geninterop.py = tools\geninterop\geninterop.py
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.PythonTestsRunner", "src\python_tests_runner\Python.PythonTestsRunner.csproj", "{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -143,6 +145,30 @@ Global
 		{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}.Release|x64.Build.0 = Release|Any CPU
 		{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}.Release|x86.ActiveCfg = Release|Any CPU
 		{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}.Release|x86.Build.0 = Release|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x64.Build.0 = Debug|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x86.Build.0 = Debug|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x64.ActiveCfg = Release|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x64.Build.0 = Release|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x86.ActiveCfg = Release|Any CPU
+		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x86.Build.0 = Release|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|x64.Build.0 = Debug|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|x86.Build.0 = Debug|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x64.ActiveCfg = Release|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x64.Build.0 = Release|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x86.ActiveCfg = Release|Any CPU
+		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

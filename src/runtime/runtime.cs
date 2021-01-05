@@ -160,6 +160,7 @@ namespace Python.Runtime
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
+            OperatorMethod.Initialize();
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
             {
                 RuntimeData.RestoreRuntimeData();
@@ -345,6 +346,7 @@ namespace Python.Runtime
                 RuntimeData.Stash();
             }
             AssemblyManager.Shutdown();
+            OperatorMethod.Shutdown();
             ImportHook.Shutdown();
 
             ClearClrModules();

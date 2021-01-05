@@ -291,6 +291,8 @@ namespace Python.Runtime
                 // We don't support them anyway
                 return IntPtr.Zero;
             }
+            // Save the exception
+            var originalException = new PythonException();
             // Otherwise,  just clear the it.
             Exceptions.Clear();
 
@@ -342,7 +344,7 @@ namespace Python.Runtime
                 ManagedType mt = tail.GetAttribute(name, true);
                 if (!(mt is ModuleObject))
                 {
-                    Exceptions.SetError(Exceptions.ImportError, $"No module named {name}");
+                    originalException.Restore();
                     return IntPtr.Zero;
                 }
                 if (head == null)

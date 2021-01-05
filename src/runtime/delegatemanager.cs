@@ -221,19 +221,17 @@ namespace Python.Runtime
         public object Dispatch(ArrayList args)
         {
             IntPtr gs = PythonEngine.AcquireLock();
-            object ob = null;
+            object ob;
 
             try
             {
                 ob = TrueDispatch(args);
             }
-            catch (Exception e)
+            finally
             {
                 PythonEngine.ReleaseLock(gs);
-                throw e;
             }
 
-            PythonEngine.ReleaseLock(gs);
             return ob;
         }
 
@@ -266,27 +264,15 @@ namespace Python.Runtime
                 return null;
             }
 
-            object result = null;
-            if (!Converter.ToManaged(op, rtype, out result, false))
+            object result;
+            if (!Converter.ToManaged(op, rtype, out result, true))
             {
                 Runtime.XDecref(op);
-                throw new ConversionException($"could not convert Python result to {rtype}");
+                throw new PythonException();
             }
 
             Runtime.XDecref(op);
             return result;
-        }
-    }
-
-
-    public class ConversionException : Exception
-    {
-        public ConversionException()
-        {
-        }
-
-        public ConversionException(string msg) : base(msg)
-        {
         }
     }
 }
