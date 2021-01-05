@@ -10,6 +10,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
+-   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5

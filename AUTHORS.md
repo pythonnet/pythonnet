@@ -24,6 +24,7 @@
 -   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
 -   Callum Noble ([@callumnoble](https://github.com/callumnoble))
+-   Christabella Irwanto([@christabella](https://github.com/christabella))
 -   Christian Heimes ([@tiran](https://github.com/tiran))
 -   Christoph Gohlke ([@cgohlke](https://github.com/cgohlke))
 -   Christopher Bremner ([@chrisjbremner](https://github.com/chrisjbremner))
