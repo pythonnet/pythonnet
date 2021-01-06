@@ -50,6 +50,8 @@ namespace Python.Runtime
                 ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
                 ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
+                ["op_Equality"] = new SlotDefinition("__eq__", TypeOffset.tp_richcompare),
+                ["op_Inequality"] = new SlotDefinition("__ne__", TypeOffset.tp_richcompare),
                 ["op_GreaterThan"] = new SlotDefinition("__gt__", TypeOffset.tp_richcompare),
                 ["op_GreaterThanOrEqual"] = new SlotDefinition("__ge__", TypeOffset.tp_richcompare),
                 ["op_LessThan"] = new SlotDefinition("__lt__", TypeOffset.tp_richcompare),
@@ -79,6 +81,12 @@ namespace Python.Runtime
             }
             return OpMethodMap.ContainsKey(method.Name);
         }
+
+        public static bool IsComparisonOp(MethodInfo method)
+        {
+            return OpMethodMap[method.Name].TypeOffset == TypeOffset.tp_richcompare;
+        }
+
         /// <summary>
         /// For the operator methods of a CLR type, set the special slots of the
         /// corresponding Python type's operator methods.
@@ -91,7 +99,7 @@ namespace Python.Runtime
             Debug.Assert(_opType != null);
             foreach (var method in clrType.GetMethods(flags))
             {
-                if (!IsOperatorMethod(method))
+                if (!IsOperatorMethod(method) || IsComparisonOp(method))  // We don't want to override ClassBase.tp_richcompare.
                 {
                     continue;
                 }

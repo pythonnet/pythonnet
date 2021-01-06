@@ -270,6 +270,12 @@ assert c == (a.Num < b.Num)
 
 c = a > b
 assert c == (a.Num > b.Num)
+
+c = a == b
+assert c == (a.Num == b.Num)
+
+c = a != b
+assert c == (a.Num != b.Num)
 ");
         }
 
@@ -339,6 +345,12 @@ assert c == (a.Num < b)
 
 c = a > b
 assert c == (a.Num > b)
+
+c = a == b
+assert c == (a.Num == b)
+
+c = a != b
+assert c == (a.Num != b)
 ");
         }
 
@@ -392,6 +404,12 @@ assert c == (a < b.Num)
 
 c = a > b
 assert c == (a > b.Num)
+
+c = a == b
+assert c == (a == b.Num)
+
+c = a != b
+assert c == (a != b.Num)
 ");
 
         }
