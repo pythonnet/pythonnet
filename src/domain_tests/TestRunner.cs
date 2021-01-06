@@ -995,12 +995,14 @@ namespace CaseRunner
 
         static void SetupTestFolder(string testCaseName)
         {
-            TestPath = Path.Combine(Path.GetTempPath(), $"Python.TestRunner.{testCaseName}");
+            var pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+            TestPath = Path.Combine(Path.GetTempPath(), $"Python.TestRunner.{testCaseName}-{pid}");
             if (Directory.Exists(TestPath))
             {
                 Directory.Delete(TestPath, recursive: true);
             }
             Directory.CreateDirectory(TestPath);
+            Console.WriteLine($"Using directory: {TestPath}");
             File.Copy(PythonDllLocation, Path.Combine(TestPath, "Python.Runtime.dll"));
         }
 
