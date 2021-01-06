@@ -843,6 +843,210 @@ def after_reload():
     assert foo is not bar
                     ",
             },
+
+            new TestCase
+            {
+                Name = "ref_to_out_param",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls 
+                        {
+                            public static void MyFn (ref Data a)
+                            {
+                                a.num = 7;
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls
+                        {
+                            public static void MyFn (out Data a)
+                            {
+                                a = new Data();
+                                a.num = 9001;
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+import System
+
+def before_reload():
+
+    foo = TestNamespace.Data()
+    bar = TestNamespace.Cls.MyFn(foo)
+    # foo should have changed
+    assert foo.num == 7
+    assert bar.num == 7
+
+
+def after_reload():
+
+    foo = TestNamespace.Data()
+    bar = TestNamespace.Cls.MyFn(foo)
+    assert bar.num == 9001
+    # foo shouldn't have changed.
+    assert foo.num == -1
+    # this should work too
+    baz = TestNamespace.Cls.MyFn(None)
+    assert baz.num == 9001
+                    ",
+            },
+            new TestCase
+            {
+                Name = "ref_to_in_param",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls 
+                        {
+                            public static void MyFn (ref Data a)
+                            {
+                                a.num = 7;
+                                System.Console.Write(""Method with ref parameter: "");
+                                System.Console.WriteLine(a.num);
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls
+                        {
+                            public static void MyFn (Data a)
+                            {
+                                System.Console.Write(""Method with in parameter: "");
+                                System.Console.WriteLine(a.num);
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+import System
+
+def before_reload():
+
+    foo = TestNamespace.Data()
+    bar = TestNamespace.Cls.MyFn(foo)
+    # foo should have changed
+    assert foo.num == 7
+    assert bar.num == 7
+
+def after_reload():
+
+    foo = TestNamespace.Data()
+    TestNamespace.Cls.MyFn(foo)
+    # foo should not have changed
+    assert foo.num == TestNamespace.Data().num
+    
+                    ",
+            },
+            new TestCase
+            {
+                Name = "in_to_ref_param",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls
+                        {
+                            public static void MyFn (Data a)
+                            {
+                                System.Console.Write(""Method with in parameter: "");
+                                System.Console.WriteLine(a.num);
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+
+                        [System.Serializable]
+                        public class Data
+                        {
+                            public int num = -1;
+                        }
+
+                        [System.Serializable]
+                        public class Cls
+                        {
+                            public static void MyFn (ref Data a)
+                            {
+                                a.num = 7;
+                                System.Console.Write(""Method with ref parameter: "");
+                                System.Console.WriteLine(a.num);
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+import System
+
+def before_reload():
+
+    foo = TestNamespace.Data()
+    TestNamespace.Cls.MyFn(foo)
+    # foo should not have changed
+    assert foo.num == TestNamespace.Data().num
+
+def after_reload():
+
+    foo = TestNamespace.Data()
+    bar = TestNamespace.Cls.MyFn(foo)
+    # foo should have changed
+    assert foo.num == 7
+    assert bar.num == 7
+                    ",
+            },
             new TestCase
             {
                 Name = "nested_type",

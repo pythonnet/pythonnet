@@ -84,5 +84,17 @@ def test_out_to_ref_param():
     _run_test("out_to_ref_param")
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason='FIXME: macos can\'t find the python library')
+def test_ref_to_out_param():
+    _run_test("ref_to_out_param")
+
+@pytest.mark.skipif(platform.system() == 'Darwin', reason='FIXME: macos can\'t find the python library')
+def test_ref_to_in_param():
+    _run_test("ref_to_in_param")
+
+@pytest.mark.skipif(platform.system() == 'Darwin', reason='FIXME: macos can\'t find the python library')
+def test_in_to_ref_param():
+    _run_test("in_to_ref_param")
+
+@pytest.mark.skipif(platform.system() == 'Darwin', reason='FIXME: macos can\'t find the python library')
 def test_nested_type():
     _run_test("nested_type")

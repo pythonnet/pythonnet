@@ -35,11 +35,11 @@ namespace Python.Runtime
                 Name = tp.ParameterType.AssemblyQualifiedName;
                 Modifier = TypeModifier.None;
 
-                if (tp.IsIn)
+                if (tp.IsIn && tp.ParameterType.IsByRef)
                 {
                     Modifier = TypeModifier.In;
                 }
-                else if (tp.IsOut)
+                else if (tp.IsOut && tp.ParameterType.IsByRef)
                 {
                     Modifier = TypeModifier.Out;
                 }
