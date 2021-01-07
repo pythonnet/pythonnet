@@ -666,7 +666,8 @@ namespace Python.Runtime
 
                 if (mt is ClassBase)
                 {
-                    t = ((ClassBase)mt).type;
+                    MaybeType _type = ((ClassBase)mt).type;
+                    t = _type.Valid ?  _type.Value : null;
                 }
                 else if (mt is CLRObject)
                 {

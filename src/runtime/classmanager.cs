@@ -18,7 +18,20 @@ namespace Python.Runtime
     /// </summary>
     internal class ClassManager
     {
-        private static Dictionary<Type, ClassBase> cache;
+
+        // Binding flags to determine which members to expose in Python.
+        // This is complicated because inheritance in Python is name
+        // based. We can't just find DeclaredOnly members, because we
+        // could have a base class A that defines two overloads of a
+        // method and a class B that defines two more. The name-based
+        // descriptor Python will find needs to know about inherited
+        // overloads as well as those declared on the sub class.
+        internal static readonly BindingFlags BindingFlags = BindingFlags.Static |
+                                                             BindingFlags.Instance |
+                                                             BindingFlags.Public |
+                                                             BindingFlags.NonPublic;
+
+        private static Dictionary<MaybeType, ClassBase> cache;
         private static readonly Type dtype;
 
         private ClassManager()
@@ -36,7 +49,7 @@ namespace Python.Runtime
 
         public static void Reset()
         {
-            cache = new Dictionary<Type, ClassBase>(128);
+            cache = new Dictionary<MaybeType, ClassBase>(128);
         }
 
         internal static void DisposePythonWrappersForClrTypes()
@@ -85,27 +98,75 @@ namespace Python.Runtime
             var contexts = storage.AddValue("contexts",
                 new Dictionary<IntPtr, InterDomainContext>());
             storage.AddValue("cache", cache);
-            foreach (var cls in cache.Values)
+            foreach (var cls in cache)
             {
+                if (!cls.Key.Valid)
+                {
+                    // Don't serialize an invalid class
+                    continue;
+                }
                 // This incref is for cache to hold the cls,
                 // thus no need for decreasing it at RestoreRuntimeData.
-                Runtime.XIncref(cls.pyHandle);
-                var context = contexts[cls.pyHandle] = new InterDomainContext();
-                cls.Save(context);
+                Runtime.XIncref(cls.Value.pyHandle);
+                var context = contexts[cls.Value.pyHandle] = new InterDomainContext();
+                cls.Value.Save(context);
+
+                // Remove all members added in InitBaseClass.
+                // this is done so that if domain reloads and a member of a
+                // reflected dotnet class is removed, it is removed from the
+                // Python object's dictionary tool; thus raising an AttributeError
+                // instead of a TypeError.
+                // Classes are re-initialized on in RestoreRuntimeData.
+                IntPtr dict = Marshal.ReadIntPtr(cls.Value.tpHandle, TypeOffset.tp_dict);
+                foreach (var member in cls.Value.dotNetMembers)
+                {
+                    // No need to decref the member, the ClassBase instance does 
+                    // not own the reference.
+                    if ((Runtime.PyDict_DelItemString(dict, member) == -1) &&
+                        (Exceptions.ExceptionMatches(Exceptions.KeyError)))
+                    {
+                        // Trying to remove a key that's not in the dictionary 
+                        // raises an error. We don't care about it.
+                        Runtime.PyErr_Clear();
+                    }
+                    else if (Exceptions.ErrorOccurred())
+                    {
+                        throw new PythonException();
+                    }
+                }
+                // We modified the Type object, notify it we did.
+                Runtime.PyType_Modified(cls.Value.tpHandle);
             }
         }
 
         internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(RuntimeDataStorage storage)
         {
-            cache = storage.GetValue<Dictionary<Type, ClassBase>>("cache");
+            cache = storage.GetValue<Dictionary<MaybeType, ClassBase>>("cache");
+            var invalidClasses = new List<KeyValuePair<MaybeType, ClassBase>>();
             var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
             var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
-            foreach (var cls in cache.Values)
+            foreach (var pair in cache)
             {
-                var context = contexts[cls.pyHandle];
-                cls.Load(context);
-                loadedObjs.Add(cls, context);
+                if (!pair.Key.Valid)
+                {
+                    invalidClasses.Add(pair);
+                    continue;
+                }
+                // re-init the class
+                InitClassBase(pair.Key.Value, pair.Value);
+                // We modified the Type object, notify it we did.
+                Runtime.PyType_Modified(pair.Value.tpHandle);
+                var context = contexts[pair.Value.pyHandle];
+                pair.Value.Load(context);
+                loadedObjs.Add(pair.Value, context);
             }
+            
+            foreach (var pair in invalidClasses)
+            {
+                cache.Remove(pair.Key);
+                Runtime.XDecref(pair.Value.pyHandle);
+            }
+
             return loadedObjs;
         }
 
@@ -113,6 +174,7 @@ namespace Python.Runtime
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
+        /// <returns>A Borrowed reference to the ClassBase object</returns>
         internal static ClassBase GetClass(Type type)
         {
             ClassBase cb = null;
@@ -209,11 +271,16 @@ namespace Python.Runtime
             IntPtr dict = Marshal.ReadIntPtr(tp, TypeOffset.tp_dict);
 
 
+            if (impl.dotNetMembers == null)
+            {
+                impl.dotNetMembers = new List<string>();
+            }
             IDictionaryEnumerator iter = info.members.GetEnumerator();
             while (iter.MoveNext())
             {
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
+                impl.dotNetMembers.Add(name);
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
                 // Decref the item now that it's been used.
                 item.DecrRefCount();
@@ -241,7 +308,7 @@ namespace Python.Runtime
             // required that the ClassObject.ctors be changed to internal
             if (co != null)
             {
-                if (co.ctors.Length > 0)
+                if (co.NumCtors > 0)
                 {
                     // Implement Overloads on the class object
                     if (!CLRModule._SuppressOverloads)
@@ -263,6 +330,50 @@ namespace Python.Runtime
                     }
                 }
             }
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(tp);
+        }
+
+        internal static bool ShouldBindMethod(MethodBase mb)
+        {
+            return (mb.IsPublic || mb.IsFamily || mb.IsFamilyOrAssembly);
+        }
+
+        internal static bool ShouldBindField(FieldInfo fi)
+        {
+            return (fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly);
+        }
+
+        internal static bool ShouldBindProperty(PropertyInfo pi)
+        {
+                MethodInfo mm = null;
+                try
+                {
+                    mm = pi.GetGetMethod(true);
+                    if (mm == null)
+                    {
+                        mm = pi.GetSetMethod(true);
+                    }
+                }
+                catch (SecurityException)
+                {
+                    // GetGetMethod may try to get a method protected by
+                    // StrongNameIdentityPermission - effectively private.
+                    return false;
+                }
+
+                if (mm == null)
+                {
+                    return false;
+                }
+
+                return ShouldBindMethod(mm);
+        }
+
+        internal static bool ShouldBindEvent(EventInfo ei)
+        {
+            return ShouldBindMethod(ei.GetAddMethod(true));
         }
 
         private static ClassInfo GetClassInfo(Type type)
@@ -277,18 +388,7 @@ namespace Python.Runtime
             Type tp;
             int i, n;
 
-            // This is complicated because inheritance in Python is name
-            // based. We can't just find DeclaredOnly members, because we
-            // could have a base class A that defines two overloads of a
-            // method and a class B that defines two more. The name-based
-            // descriptor Python will find needs to know about inherited
-            // overloads as well as those declared on the sub class.
-            BindingFlags flags = BindingFlags.Static |
-                                 BindingFlags.Instance |
-                                 BindingFlags.Public |
-                                 BindingFlags.NonPublic;
-
-            MemberInfo[] info = type.GetMembers(flags);
+            MemberInfo[] info = type.GetMembers(BindingFlags);
             var local = new Hashtable();
             var items = new ArrayList();
             MemberInfo m;
@@ -331,7 +431,7 @@ namespace Python.Runtime
                 for (i = 0; i < inheritedInterfaces.Length; ++i)
                 {
                     Type inheritedType = inheritedInterfaces[i];
-                    MemberInfo[] imembers = inheritedType.GetMembers(flags);
+                    MemberInfo[] imembers = inheritedType.GetMembers(BindingFlags);
                     for (n = 0; n < imembers.Length; n++)
                     {
                         m = imembers[n];
@@ -362,8 +462,7 @@ namespace Python.Runtime
                 {
                     case MemberTypes.Method:
                         meth = (MethodInfo)mi;
-                        if (!(meth.IsPublic || meth.IsFamily ||
-                              meth.IsFamilyOrAssembly))
+                        if (!ShouldBindMethod(meth))
                         {
                             continue;
                         }
@@ -380,28 +479,7 @@ namespace Python.Runtime
                     case MemberTypes.Property:
                         var pi = (PropertyInfo)mi;
 
-                        MethodInfo mm = null;
-                        try
-                        {
-                            mm = pi.GetGetMethod(true);
-                            if (mm == null)
-                            {
-                                mm = pi.GetSetMethod(true);
-                            }
-                        }
-                        catch (SecurityException)
-                        {
-                            // GetGetMethod may try to get a method protected by
-                            // StrongNameIdentityPermission - effectively private.
-                            continue;
-                        }
-
-                        if (mm == null)
-                        {
-                            continue;
-                        }
-
-                        if (!(mm.IsPublic || mm.IsFamily || mm.IsFamilyOrAssembly))
+                        if(!ShouldBindProperty(pi))
                         {
                             continue;
                         }
@@ -426,7 +504,7 @@ namespace Python.Runtime
 
                     case MemberTypes.Field:
                         var fi = (FieldInfo)mi;
-                        if (!(fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly))
+                        if (!ShouldBindField(fi))
                         {
                             continue;
                         }
@@ -436,8 +514,7 @@ namespace Python.Runtime
 
                     case MemberTypes.Event:
                         var ei = (EventInfo)mi;
-                        MethodInfo me = ei.GetAddMethod(true);
-                        if (!(me.IsPublic || me.IsFamily || me.IsFamilyOrAssembly))
+                        if (!ShouldBindEvent(ei))
                         {
                             continue;
                         }
@@ -454,6 +531,8 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         ob = GetClass(tp);
+                        // GetClass returns a Borrowed ref. ci.members owns the reference.
+                        ob.IncrRefCount();
                         ci.members[mi.Name] = ob;
                         continue;
                 }

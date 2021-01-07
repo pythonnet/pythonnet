@@ -21,9 +21,10 @@ namespace Python.Runtime
         internal static IntPtr subtype_clear;
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        private static Dictionary<Type, IntPtr> cache = new Dictionary<Type, IntPtr>();
+        private static Dictionary<MaybeType, IntPtr> cache = new Dictionary<MaybeType, IntPtr>();
+
         private static readonly Dictionary<IntPtr, SlotsHolder> _slotsHolders = new Dictionary<IntPtr, SlotsHolder>();
-        private static Dictionary<Type, Type> _slotsImpls = new Dictionary<Type, Type>();
+        private static Dictionary<MaybeType, Type> _slotsImpls = new Dictionary<MaybeType, Type>();
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -77,11 +78,17 @@ namespace Python.Runtime
         {
             Debug.Assert(cache == null || cache.Count == 0);
             storage.GetValue("slots", out _slotsImpls);
-            storage.GetValue("cache", out cache);
-            foreach (var entry in cache)
+            storage.GetValue<Dictionary<MaybeType, IntPtr>>("cache", out var _cache);
+            foreach (var entry in _cache)
             {
-                Type type = entry.Key;
+                if (!entry.Key.Valid)
+                {
+                    Runtime.XDecref(entry.Value);
+                    continue;
+                }
+                Type type = entry.Key.Value;;
                 IntPtr handle = entry.Value;
+                cache[type] = handle;
                 SlotsHolder holder = CreateSolotsHolder(handle);
                 InitializeSlots(handle, _slotsImpls[type], holder);
                 // FIXME: mp_length_slot.CanAssgin(clrType)
@@ -170,6 +177,10 @@ namespace Python.Runtime
             Runtime.XDecref(mod);
 
             InitMethods(type, impl);
+
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             return type;
         }
 
@@ -350,7 +361,7 @@ namespace Python.Runtime
             try
             {
                 Type subType = ClassDerivedObject.CreateDerivedType(name,
-                    baseClass.type,
+                    baseClass.type.Value,
                     py_dict,
                     (string)namespaceStr,
                     (string)assembly);
@@ -459,6 +470,9 @@ namespace Python.Runtime
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
 
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             //DebugUtil.DumpType(type);
 
             return type;
@@ -560,6 +574,10 @@ namespace Python.Runtime
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
+            
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
 
             return type;
         }

@@ -4,15 +4,16 @@ using System.Security.Permissions;
 
 namespace Python.Runtime
 {
+    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
     /// <summary>
     /// Implements a Python descriptor type that manages CLR properties.
     /// </summary>
     [Serializable]
     internal class PropertyObject : ExtensionType
     {
-        private PropertyInfo info;
-        private MethodInfo getter;
-        private MethodInfo setter;
+        private MaybeMemberInfo<PropertyInfo> info;
+        private MaybeMethodInfo getter;
+        private MaybeMethodInfo setter;
 
         [StrongNameIdentityPermission(SecurityAction.Assert)]
         public PropertyObject(PropertyInfo md)
@@ -31,7 +32,12 @@ namespace Python.Runtime
         public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
         {
             var self = (PropertyObject)GetManagedObject(ds);
-            MethodInfo getter = self.getter;
+            if (!self.info.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.info.DeletedMessage);
+            }
+            var info = self.info.Value;
+            MethodInfo getter = self.getter.UnsafeValue;
             object result;
 
 
@@ -51,8 +57,8 @@ namespace Python.Runtime
 
                 try
                 {
-                    result = self.info.GetValue(null, null);
-                    return Converter.ToPython(result, self.info.PropertyType);
+                    result = info.GetValue(null, null);
+                    return Converter.ToPython(result, info.PropertyType);
                 }
                 catch (Exception e)
                 {
@@ -68,8 +74,8 @@ namespace Python.Runtime
 
             try
             {
-                result = self.info.GetValue(co.inst, null);
-                return Converter.ToPython(result, self.info.PropertyType);
+                result = info.GetValue(co.inst, null);
+                return Converter.ToPython(result, info.PropertyType);
             }
             catch (Exception e)
             {
@@ -91,7 +97,14 @@ namespace Python.Runtime
         public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
         {
             var self = (PropertyObject)GetManagedObject(ds);
-            MethodInfo setter = self.setter;
+            if (!self.info.Valid)
+            {
+                Exceptions.RaiseTypeError(self.info.DeletedMessage);
+                return -1;
+            }
+            var info = self.info.Value;
+
+            MethodInfo setter = self.setter.UnsafeValue;
             object newval;
 
             if (val == IntPtr.Zero)
@@ -107,7 +120,7 @@ namespace Python.Runtime
             }
 
 
-            if (!Converter.ToManaged(val, self.info.PropertyType, out newval, true))
+            if (!Converter.ToManaged(val, info.PropertyType, out newval, true))
             {
                 return -1;
             }
@@ -133,11 +146,11 @@ namespace Python.Runtime
                         Exceptions.RaiseTypeError("invalid target");
                         return -1;
                     }
-                    self.info.SetValue(co.inst, newval, null);
+                    info.SetValue(co.inst, newval, null);
                 }
                 else
                 {
-                    self.info.SetValue(null, newval, null);
+                    info.SetValue(null, newval, null);
                 }
                 return 0;
             }
@@ -159,7 +172,7 @@ namespace Python.Runtime
         public static IntPtr tp_repr(IntPtr ob)
         {
             var self = (PropertyObject)GetManagedObject(ob);
-            return Runtime.PyString_FromString($"<property '{self.info.Name}'>");
+            return Runtime.PyString_FromString($"<property '{self.info}'>");
         }
     }
 }

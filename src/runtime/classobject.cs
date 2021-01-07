@@ -14,14 +14,14 @@ namespace Python.Runtime
     internal class ClassObject : ClassBase
     {
         internal ConstructorBinder binder;
-        internal ConstructorInfo[] ctors;
+        internal int NumCtors = 0;
 
         internal ClassObject(Type tp) : base(tp)
         {
-            ctors = type.GetConstructors();
-            binder = new ConstructorBinder(type);
-
-            foreach (ConstructorInfo t in ctors)
+            var _ctors = type.Value.GetConstructors();
+            NumCtors = _ctors.Length;
+            binder = new ConstructorBinder(type.Value);
+            foreach (ConstructorInfo t in _ctors)
             {
                 binder.AddMethod(t);
             }
@@ -62,7 +62,11 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
-            Type type = self.type;
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            Type type = self.type.Value;
 
             // Primitive types do not have constructors, but they look like
             // they do from Python. If the ClassObject represents one of the
@@ -115,16 +119,21 @@ namespace Python.Runtime
         /// </summary>
         public override IntPtr type_subscript(IntPtr idx)
         {
+            if (!type.Valid)
+            {
+                return Exceptions.RaiseTypeError(type.DeletedMessage);
+            }
+
             // If this type is the Array type, the [<type>] means we need to
             // construct and return an array type of the given element type.
-            if (type == typeof(Array))
+            if (type.Value == typeof(Array))
             {
                 if (Runtime.PyTuple_Check(idx))
                 {
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 var c = GetManagedObject(idx) as ClassBase;
-                Type t = c != null ? c.type : Converter.GetTypeByAlias(idx);
+                Type t = c != null ? c.type.Value : Converter.GetTypeByAlias(idx);
                 if (t == null)
                 {
                     return Exceptions.RaiseTypeError("type expected");
@@ -144,7 +153,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            Type gtype = AssemblyManager.LookupTypes($"{type.FullName}`{types.Length}").FirstOrDefault();
+            Type gtype = AssemblyManager.LookupTypes($"{type.Value.FullName}`{types.Length}").FirstOrDefault();
             if (gtype != null)
             {
                 var g = ClassManager.GetClass(gtype) as GenericType;

@@ -37,8 +37,12 @@ namespace Python.Runtime
         public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
         {
             var self = (InterfaceObject)GetManagedObject(tp);
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
             var nargs = Runtime.PyTuple_Size(args);
-            Type type = self.type;
+            Type type = self.type.Value;
             object obj;
 
             if (nargs == 1)
