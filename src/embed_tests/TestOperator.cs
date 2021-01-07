@@ -149,6 +149,32 @@ namespace Python.EmbeddingTest
                 return new OperableObject(a.Num ^ b);
             }
 
+            public static bool operator ==(int a, OperableObject b)
+            {
+                return (a == b.Num);
+            }
+            public static bool operator ==(OperableObject a, OperableObject b)
+            {
+                return (a.Num == b.Num);
+            }
+            public static bool operator ==(OperableObject a, int b)
+            {
+                return (a.Num == b);
+            }
+
+            public static bool operator !=(int a, OperableObject b)
+            {
+                return (a != b.Num);
+            }
+            public static bool operator !=(OperableObject a, OperableObject b)
+            {
+                return (a.Num != b.Num);
+            }
+            public static bool operator !=(OperableObject a, int b)
+            {
+                return (a.Num != b);
+            }
+
             public static bool operator <=(int a, OperableObject b)
             {
                 return (a <= b.Num);
