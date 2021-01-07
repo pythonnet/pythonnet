@@ -25,6 +25,17 @@ namespace Python.EmbeddingTest
         {
             public int Num { get; set; }
 
+            public override int GetHashCode()
+            {
+                return 159832395 + Num.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is OperableObject @object &&
+                       Num == @object.Num;
+            }
+
             public OperableObject(int num)
             {
                 Num = num;
