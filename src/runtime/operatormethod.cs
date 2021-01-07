@@ -52,10 +52,10 @@ namespace Python.Runtime
                 ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
                 ["op_Equality"] = new SlotDefinition("__eq__", TypeOffset.tp_richcompare),
                 ["op_Inequality"] = new SlotDefinition("__ne__", TypeOffset.tp_richcompare),
-                ["op_GreaterThan"] = new SlotDefinition("__gt__", TypeOffset.tp_richcompare),
+                ["op_LessThanOrEqual"] = new SlotDefinition("__le__", TypeOffset.tp_richcompare),
                 ["op_GreaterThanOrEqual"] = new SlotDefinition("__ge__", TypeOffset.tp_richcompare),
                 ["op_LessThan"] = new SlotDefinition("__lt__", TypeOffset.tp_richcompare),
-                ["op_LessThanOrEqual"] = new SlotDefinition("__le__", TypeOffset.tp_richcompare)
+                ["op_GreaterThan"] = new SlotDefinition("__gt__", TypeOffset.tp_richcompare),
             };
         }
 

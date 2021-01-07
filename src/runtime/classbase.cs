@@ -40,10 +40,10 @@ namespace Python.Runtime
         {
             [Runtime.Py_EQ] = "op_Equality",
             [Runtime.Py_NE] = "op_Inequality",
-            [Runtime.Py_GT] = "op_GreaterThan",
+            [Runtime.Py_LE] = "op_LessThanOrEqual",
             [Runtime.Py_GE] = "op_GreaterThanOrEqual",
             [Runtime.Py_LT] = "op_LessThan",
-            [Runtime.Py_LE] = "op_LessThanOrEqual",
+            [Runtime.Py_GT] = "op_GreaterThan",
         };
 
         /// <summary>

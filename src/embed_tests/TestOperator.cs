@@ -201,24 +201,24 @@ namespace Python.EmbeddingTest
                 return (a.Num >= b);
             }
 
-            public static bool operator<(int a, OperableObject b)
+            public static bool operator <(int a, OperableObject b)
             {
                 return (a < b.Num);
             }
-            public static bool operator<(OperableObject a, OperableObject b)
+            public static bool operator <(OperableObject a, OperableObject b)
             {
                 return (a.Num < b.Num);
             }
-            public static bool operator<(OperableObject a, int b)
+            public static bool operator <(OperableObject a, int b)
             {
                 return (a.Num < b);
             }
 
-            public static bool operator>(int a, OperableObject b)
+            public static bool operator >(int a, OperableObject b)
             {
                 return (a > b.Num);
             }
-            public static bool operator>(OperableObject a, OperableObject b)
+            public static bool operator >(OperableObject a, OperableObject b)
             {
                 return (a.Num > b.Num);
             }
@@ -285,6 +285,12 @@ assert c.Num == a.Num | b.Num
 c = a ^ b
 assert c.Num == a.Num ^ b.Num
 
+c = a == b
+assert c == (a.Num == b.Num)
+
+c = a != b
+assert c == (a.Num != b.Num)
+
 c = a <= b
 assert c == (a.Num <= b.Num)
 
@@ -296,12 +302,6 @@ assert c == (a.Num < b.Num)
 
 c = a > b
 assert c == (a.Num > b.Num)
-
-c = a == b
-assert c == (a.Num == b.Num)
-
-c = a != b
-assert c == (a.Num != b.Num)
 ");
         }
 
@@ -360,6 +360,12 @@ assert c.Num == a.Num | b
 c = a ^ b
 assert c.Num == a.Num ^ b
 
+c = a == b
+assert c == (a.Num == b)
+
+c = a != b
+assert c == (a.Num != b)
+
 c = a <= b
 assert c == (a.Num <= b)
 
@@ -371,12 +377,6 @@ assert c == (a.Num < b)
 
 c = a > b
 assert c == (a.Num > b)
-
-c = a == b
-assert c == (a.Num == b)
-
-c = a != b
-assert c == (a.Num != b)
 ");
         }
 
@@ -419,6 +419,12 @@ assert c.Num == a | b.Num
 c = a ^ b
 assert c.Num == a ^ b.Num
 
+c = a == b
+assert c == (a == b.Num)
+
+c = a != b
+assert c == (a != b.Num)
+
 c = a <= b
 assert c == (a <= b.Num)
 
@@ -430,12 +436,6 @@ assert c == (a < b.Num)
 
 c = a > b
 assert c == (a > b.Num)
-
-c = a == b
-assert c == (a == b.Num)
-
-c = a != b
-assert c == (a != b.Num)
 ");
 
         }
