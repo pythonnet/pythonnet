@@ -259,7 +259,7 @@ namespace Python.Runtime
             ClassInfo info = GetClassInfo(type);
 
             impl.indexer = info.indexer;
-            impl.richcompare = new Hashtable();
+            impl.richcompare = new Dictionary<int, MethodObject>();
 
             // Now we allocate the Python type object to reflect the given
             // managed type, filling the Python type slots with thunks that
@@ -285,8 +285,8 @@ namespace Python.Runtime
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
                 // Decref the item now that it's been used.
                 item.DecrRefCount();
-                if (ClassBase.PyToCilOpMap.ContainsValue(name)) {
-                    impl.richcompare.Add(name, iter.Value);
+                if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)) {
+                    impl.richcompare.Add(pyOp, (MethodObject)item);
                 }
             }
 

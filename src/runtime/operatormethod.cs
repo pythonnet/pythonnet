@@ -99,7 +99,9 @@ namespace Python.Runtime
             Debug.Assert(_opType != null);
             foreach (var method in clrType.GetMethods(flags))
             {
-                if (!IsOperatorMethod(method) || IsComparisonOp(method))  // We don't want to override ClassBase.tp_richcompare.
+                // We don't want to override slots for either non-operators or
+                // comparison operators, which are handled by ClassBase.tp_richcompare.
+                if (!IsOperatorMethod(method) || IsComparisonOp(method))
                 {
                     continue;
                 }

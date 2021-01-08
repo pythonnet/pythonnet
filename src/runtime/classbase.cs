@@ -21,7 +21,7 @@ namespace Python.Runtime
         [NonSerialized]
         internal List<string> dotNetMembers;
         internal Indexer indexer;
-        internal Hashtable richcompare;
+        internal Dictionary<int, MethodObject> richcompare;
         internal MaybeType type;
 
         internal ClassBase(Type tp)
@@ -36,14 +36,14 @@ namespace Python.Runtime
             return !type.Value.IsEnum;
         }
 
-        public readonly static Dictionary<int, string> PyToCilOpMap = new Dictionary<int, string>
+        public readonly static Dictionary<string, int> CilToPyOpMap = new Dictionary<string, int>
         {
-            [Runtime.Py_EQ] = "op_Equality",
-            [Runtime.Py_NE] = "op_Inequality",
-            [Runtime.Py_LE] = "op_LessThanOrEqual",
-            [Runtime.Py_GE] = "op_GreaterThanOrEqual",
-            [Runtime.Py_LT] = "op_LessThan",
-            [Runtime.Py_GT] = "op_GreaterThan",
+            ["op_Equality"] = Runtime.Py_EQ,
+            ["op_Inequality"] = Runtime.Py_NE,
+            ["op_LessThanOrEqual"] = Runtime.Py_LE,
+            ["op_GreaterThanOrEqual"] = Runtime.Py_GE,
+            ["op_LessThan"] = Runtime.Py_LT,
+            ["op_GreaterThan"] = Runtime.Py_GT,
         };
 
         /// <summary>
@@ -87,35 +87,32 @@ namespace Python.Runtime
             // C# operator methods take precedence over IComparable.
             // We first check if there's a comparison operator by looking up the richcompare table,
             // otherwise fallback to checking if an IComparable interface is handled.
-            if (PyToCilOpMap.ContainsKey(op)) {
-                string CilOp = PyToCilOpMap[op];
-                if (cls.richcompare.Contains(CilOp)) {
-                    var methodObject = (MethodObject)cls.richcompare[CilOp];
-                    IntPtr args = other;
-                    var free = false;
-                    if (!Runtime.PyTuple_Check(other))
-                    {
-                        // Wrap the `other` argument of a binary comparison operator in a PyTuple.
-                        args = Runtime.PyTuple_New(1);
-                        Runtime.XIncref(other);
-                        Runtime.PyTuple_SetItem(args, 0, other);
-                        free = true;
-                    }
-
-                    IntPtr value;
-                    try
-                    {
-                        value = methodObject.Invoke(ob, args, IntPtr.Zero);
-                    }
-                    finally
-                    {
-                        if (free)
-                        {
-                            Runtime.XDecref(args);  // Free args pytuple
-                        }
-                    }
-                    return value;
+            if (cls.richcompare.TryGetValue(op, out var methodObject))
+            {
+                IntPtr args = other;
+                var free = false;
+                if (true)
+                {
+                    // Wrap the `other` argument of a binary comparison operator in a PyTuple.
+                    args = Runtime.PyTuple_New(1);
+                    Runtime.XIncref(other);
+                    Runtime.PyTuple_SetItem(args, 0, other);
+                    free = true;
                 }
+
+                IntPtr value;
+                try
+                {
+                    value = methodObject.Invoke(ob, args, IntPtr.Zero);
+                }
+                finally
+                {
+                    if (free)
+                    {
+                        Runtime.XDecref(args);  // Free args pytuple
+                    }
+                }
+                return value;
             }
 
             switch (op)

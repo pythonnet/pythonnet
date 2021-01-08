@@ -27,7 +27,7 @@ namespace Python.EmbeddingTest
 
             public override int GetHashCode()
             {
-                return 159832395 + Num.GetHashCode();
+                return unchecked(159832395 + Num.GetHashCode());
             }
 
             public override bool Equals(object obj)
