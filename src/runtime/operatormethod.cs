@@ -15,6 +15,7 @@ namespace Python.Runtime
         /// that identifies that operator's slot (e.g. nb_add) in heap space.
         /// </summary>
         public static Dictionary<string, SlotDefinition> OpMethodMap { get; private set; }
+        public static Dictionary<string, string> ComparisonOpMap { get; private set; }
         public readonly struct SlotDefinition
         {
             public SlotDefinition(string methodName, int typeOffset)
@@ -24,6 +25,7 @@ namespace Python.Runtime
             }
             public string MethodName { get; }
             public int TypeOffset { get; }
+
         }
         private static PyObject _opType;
 
@@ -50,12 +52,15 @@ namespace Python.Runtime
                 ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
                 ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
-                ["op_Equality"] = new SlotDefinition("__eq__", TypeOffset.tp_richcompare),
-                ["op_Inequality"] = new SlotDefinition("__ne__", TypeOffset.tp_richcompare),
-                ["op_LessThanOrEqual"] = new SlotDefinition("__le__", TypeOffset.tp_richcompare),
-                ["op_GreaterThanOrEqual"] = new SlotDefinition("__ge__", TypeOffset.tp_richcompare),
-                ["op_LessThan"] = new SlotDefinition("__lt__", TypeOffset.tp_richcompare),
-                ["op_GreaterThan"] = new SlotDefinition("__gt__", TypeOffset.tp_richcompare),
+            };
+            ComparisonOpMap = new Dictionary<string, string>
+            {
+                ["op_Equality"] = "__eq__",
+                ["op_Inequality"] = "__ne__",
+                ["op_LessThanOrEqual"] = "__le__",
+                ["op_GreaterThanOrEqual"] = "__ge__",
+                ["op_LessThan"] = "__lt__",
+                ["op_GreaterThan"] = "__gt__",
             };
         }
 
@@ -79,12 +84,12 @@ namespace Python.Runtime
             {
                 return false;
             }
-            return OpMethodMap.ContainsKey(method.Name);
+            return OpMethodMap.ContainsKey(method.Name) || ComparisonOpMap.ContainsKey(method.Name);
         }
 
         public static bool IsComparisonOp(MethodInfo method)
         {
-            return OpMethodMap[method.Name].TypeOffset == TypeOffset.tp_richcompare;
+            return ComparisonOpMap.ContainsKey(method.Name);
         }
 
         /// <summary>
@@ -114,13 +119,18 @@ namespace Python.Runtime
                 // when used with a Python operator.
                 // https://tenthousandmeters.com/blog/python-behind-the-scenes-6-how-python-object-system-works/
                 Marshal.WriteIntPtr(pyType, offset, func);
-
             }
         }
 
         public static string GetPyMethodName(string clrName)
         {
-            return OpMethodMap[clrName].MethodName;
+            if (OpMethodMap.ContainsKey(clrName))
+            {
+                return OpMethodMap[clrName].MethodName;
+            } else
+            {
+                return ComparisonOpMap[clrName];
+            }
         }
 
         private static string GenerateDummyCode()
