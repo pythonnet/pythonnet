@@ -428,6 +428,12 @@ assert c == (a.Num >= b[0])
 
 c = a <= b
 assert c == (a.Num <= b[0])
+
+c = b >= a
+assert c == (b[0] >= a.Num)
+
+c = b <= a
+assert c == (b[0] <= a.Num)
 ");
         }
 
