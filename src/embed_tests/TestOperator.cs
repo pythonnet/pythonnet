@@ -212,6 +212,25 @@ namespace Python.EmbeddingTest
                 return (a.Num >= b);
             }
 
+            public static bool operator >=(OperableObject a, PyObject b)
+            {
+                using (Py.GIL())
+                {
+                    // Assuming b is a tuple, take the first element.
+                    int bNum = (int)b.ToArray()[0].AsManagedObject(typeof(int));
+                    return a.Num >= bNum;
+                }
+            }
+            public static bool operator <=(OperableObject a, PyObject b)
+            {
+                using (Py.GIL())
+                {
+                    // Assuming b is a tuple, take the first element.
+                    int bNum = (int)b.ToArray()[0].AsManagedObject(typeof(int));
+                    return a.Num <= bNum;
+                }
+            }
+
             public static bool operator <(int a, OperableObject b)
             {
                 return (a < b.Num);
@@ -388,6 +407,27 @@ assert c == (a.Num < b)
 
 c = a > b
 assert c == (a.Num > b)
+");
+        }
+
+        [Test]
+        public void TupleComparisonOperatorOverloads()
+        {
+                string name = string.Format("{0}.{1}",
+                typeof(OperableObject).DeclaringType.Name,
+                typeof(OperableObject).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+                PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+a = cls(2)
+b = (1, 2)
+
+c = a >= b
+assert c == (a.Num >= b[0])
+
+c = a <= b
+assert c == (a.Num <= b[0])
 ");
         }
 
