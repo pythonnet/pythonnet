@@ -89,16 +89,10 @@ namespace Python.Runtime
             // otherwise fallback to checking if an IComparable interface is handled.
             if (cls.richcompare.TryGetValue(op, out var methodObject))
             {
-                IntPtr args = other;
-                var free = false;
-                if (true)
-                {
-                    // Wrap the `other` argument of a binary comparison operator in a PyTuple.
-                    args = Runtime.PyTuple_New(1);
-                    Runtime.XIncref(other);
-                    Runtime.PyTuple_SetItem(args, 0, other);
-                    free = true;
-                }
+                // Wrap the `other` argument of a binary comparison operator in a PyTuple.
+                IntPtr args = Runtime.PyTuple_New(1);
+                Runtime.XIncref(other);
+                Runtime.PyTuple_SetItem(args, 0, other);
 
                 IntPtr value;
                 try
@@ -107,10 +101,7 @@ namespace Python.Runtime
                 }
                 finally
                 {
-                    if (free)
-                    {
-                        Runtime.XDecref(args);  // Free args pytuple
-                    }
+                    Runtime.XDecref(args);  // Free args pytuple
                 }
                 return value;
             }

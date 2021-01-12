@@ -217,7 +217,7 @@ namespace Python.EmbeddingTest
                 using (Py.GIL())
                 {
                     // Assuming b is a tuple, take the first element.
-                    int bNum = (int)b.ToArray()[0].AsManagedObject(typeof(int));
+                    int bNum = b[0].As<int>();
                     return a.Num >= bNum;
                 }
             }
@@ -226,7 +226,7 @@ namespace Python.EmbeddingTest
                 using (Py.GIL())
                 {
                     // Assuming b is a tuple, take the first element.
-                    int bNum = (int)b.ToArray()[0].AsManagedObject(typeof(int));
+                    int bNum = b[0].As<int>();
                     return a.Num <= bNum;
                 }
             }
