@@ -259,6 +259,7 @@ namespace Python.Runtime
             ClassInfo info = GetClassInfo(type);
 
             impl.indexer = info.indexer;
+            impl.richcompare = new Dictionary<int, MethodObject>();
 
             // Now we allocate the Python type object to reflect the given
             // managed type, filling the Python type slots with thunks that
@@ -284,6 +285,9 @@ namespace Python.Runtime
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
                 // Decref the item now that it's been used.
                 item.DecrRefCount();
+                if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)) {
+                    impl.richcompare.Add(pyOp, (MethodObject)item);
+                }
             }
 
             // If class has constructors, generate an __doc__ attribute.
@@ -553,8 +557,7 @@ namespace Python.Runtime
                 {
                     string pyName = OperatorMethod.GetPyMethodName(name);
                     string pyNameReverse = OperatorMethod.ReversePyMethodName(pyName);
-                    MethodInfo[] forwardMethods, reverseMethods;
-                    OperatorMethod.FilterMethods(mlist, out forwardMethods, out reverseMethods);
+                    OperatorMethod.FilterMethods(mlist, out var forwardMethods, out var reverseMethods);
                     // Only methods where the left operand is the declaring type.
                     if (forwardMethods.Length > 0)
                         ci.members[pyName] = new MethodObject(type, name, forwardMethods);

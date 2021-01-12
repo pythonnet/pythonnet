@@ -354,16 +354,17 @@ namespace Python.Runtime
                 int kwargsMatched;
                 int defaultsNeeded;
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);
-                int clrnargs = pi.Length;
                 // Binary operator methods will have 2 CLR args but only one Python arg
                 // (unary operators will have 1 less each), since Python operator methods are bound.
-                isOperator = isOperator && pynargs == clrnargs - 1;
+                isOperator = isOperator && pynargs == pi.Length - 1;
+                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
+                if (isReverse && OperatorMethod.IsComparisonOp((MethodInfo)mi))
+                    continue;  // Comparison operators in Python have no reverse mode.
                 if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded) && !isOperator)
                 {
                     continue;
                 }
                 // Preprocessing pi to remove either the first or second argument.
-                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
                 if (isOperator && !isReverse) {
                     // The first Python arg is the right operand, while the bound instance is the left.
                     // We need to skip the first (left operand) CLR argument.

@@ -15,6 +15,7 @@ namespace Python.Runtime
         /// that identifies that operator's slot (e.g. nb_add) in heap space.
         /// </summary>
         public static Dictionary<string, SlotDefinition> OpMethodMap { get; private set; }
+        public static Dictionary<string, string> ComparisonOpMap { get; private set; }
         public readonly struct SlotDefinition
         {
             public SlotDefinition(string methodName, int typeOffset)
@@ -24,6 +25,7 @@ namespace Python.Runtime
             }
             public string MethodName { get; }
             public int TypeOffset { get; }
+
         }
         private static PyObject _opType;
 
@@ -49,6 +51,16 @@ namespace Python.Runtime
                 ["op_OnesComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
                 ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
+                ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
+            };
+            ComparisonOpMap = new Dictionary<string, string>
+            {
+                ["op_Equality"] = "__eq__",
+                ["op_Inequality"] = "__ne__",
+                ["op_LessThanOrEqual"] = "__le__",
+                ["op_GreaterThanOrEqual"] = "__ge__",
+                ["op_LessThan"] = "__lt__",
+                ["op_GreaterThan"] = "__gt__",
             };
         }
 
@@ -72,8 +84,14 @@ namespace Python.Runtime
             {
                 return false;
             }
-            return OpMethodMap.ContainsKey(method.Name);
+            return OpMethodMap.ContainsKey(method.Name) || ComparisonOpMap.ContainsKey(method.Name);
         }
+
+        public static bool IsComparisonOp(MethodInfo method)
+        {
+            return ComparisonOpMap.ContainsKey(method.Name);
+        }
+
         /// <summary>
         /// For the operator methods of a CLR type, set the special slots of the
         /// corresponding Python type's operator methods.
@@ -86,7 +104,9 @@ namespace Python.Runtime
             Debug.Assert(_opType != null);
             foreach (var method in clrType.GetMethods(flags))
             {
-                if (!IsOperatorMethod(method))
+                // We only want to override slots for operators excluding
+                // comparison operators, which are handled by ClassBase.tp_richcompare.
+                if (!OpMethodMap.ContainsKey(method.Name))
                 {
                     continue;
                 }
@@ -99,13 +119,18 @@ namespace Python.Runtime
                 // when used with a Python operator.
                 // https://tenthousandmeters.com/blog/python-behind-the-scenes-6-how-python-object-system-works/
                 Marshal.WriteIntPtr(pyType, offset, func);
-
             }
         }
 
         public static string GetPyMethodName(string clrName)
         {
-            return OpMethodMap[clrName].MethodName;
+            if (OpMethodMap.ContainsKey(clrName))
+            {
+                return OpMethodMap[clrName].MethodName;
+            } else
+            {
+                return ComparisonOpMap[clrName];
+            }
         }
 
         private static string GenerateDummyCode()
