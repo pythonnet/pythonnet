@@ -83,7 +83,7 @@ namespace Python.Runtime
             {
                 message = "readonly attribute";
             }
-            Exceptions.SetError(Exceptions.TypeError, message);
+            Exceptions.SetError(Exceptions.AttributeError, message);
             return -1;
         }
 

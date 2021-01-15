@@ -20,6 +20,7 @@ namespace Python.Runtime
         internal IntPtr dict;
         internal BorrowedReference DictRef => new BorrowedReference(dict);
         protected string _namespace;
+        private IntPtr __all__ = IntPtr.Zero;
 
         public ModuleObject(string name)
         {
@@ -181,7 +182,23 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                GetAttribute(name, true);
+
+                if(GetAttribute(name, true) != null)
+                {
+                    // if it's a valid attribute, add it to __all__
+                    var pyname = Runtime.PyString_FromString(name);
+                    try
+                    {
+                        if (Runtime.PyList_Append(new BorrowedReference(__all__), pyname) != 0)
+                        {
+                            throw new PythonException();
+                        }
+                    }
+                    finally
+                    {
+                        Runtime.XDecref(pyname);
+                    }
+                }
             }
         }
 
@@ -263,6 +280,13 @@ namespace Python.Runtime
                 return self.dict;
             }
 
+            if (name == "__all__")
+            {
+                self.LoadNames();
+                Runtime.XIncref(self.__all__);
+                return self.__all__;
+            }
+
             ManagedType attr = null;
 
             try
@@ -318,6 +342,32 @@ namespace Python.Runtime
             }
             this.cache.Clear();
             base.Clear();
+        }
+
+        /// <summary>
+        /// Override the setattr implementation.
+        /// This is needed because the import mechanics need
+        /// to set a few attributes
+        /// </summary>
+        [ForbidPythonThreads]
+        public new static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        {
+            var self = (ModuleObject)ManagedType.GetManagedObject(ob);
+            var dict = self.dict;
+
+            var current = Runtime.PyDict_GetItem(dict, key);
+            if (current == val)
+            {
+                return 0;
+            }
+            else if (ManagedType.GetManagedObject(current) != null)
+            {
+                var message = "Can't override a .NET object";
+                Exceptions.SetError(Exceptions.AttributeError, message);
+                return -1;
+            }
+
+            return Runtime.PyDict_SetItem(dict, key, val);
         }
 
         protected override void OnSave(InterDomainContext context)
@@ -525,6 +575,29 @@ namespace Python.Runtime
                 }
             }
             return names;
+        }
+
+        [ModuleFunction]
+        public static int _AtExit()
+        {
+            return Runtime.AtExit();
+        }
+
+
+        [ModuleFunction]
+        [ForbidPythonThreads]
+        public static PyObject _LoadClrModule(PyObject spec)
+        {
+            var mod = ImportHook.__import__(spec.GetAttr("name").ToString());
+            if (mod == null)
+            {
+                // __import__ sets the exception.?
+                Console.WriteLine("NULL module");
+                return Runtime.None;
+            }
+            // We can't return directly a ModuleObject, because the tpHandle is
+            // not set, but we can return a PyObject.
+            return new PyObject(mod.pyHandle);
         }
     }
 }
