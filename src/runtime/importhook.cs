@@ -8,9 +8,7 @@ namespace Python.Runtime
     /// </summary>
     internal static class ImportHook
     {
-        private static IntPtr py_import;
         private static CLRModule root;
-        private static MethodWrapper hook;
         private static IntPtr py_clr_module;
         static BorrowedReference ClrModuleReference => new BorrowedReference(py_clr_module);
 
@@ -25,20 +23,13 @@ class DotNetLoader(importlib.abc.Loader):
 
     @classmethod
     def exec_module(klass, mod):
-        # this method is needed to mark this
-        # loader as a non-legacy loader.
+        # This method needs to exist.
         pass
 
     @classmethod
     def create_module(klass, spec):
         import clr
-        a = clr._LoadClrModule(spec)
-        #mod = getattr(clr, '__imported')
-        print(a)
-        #print(mod)
-        #print(mod is a)
-        #delattr(clr, '__imported')
-        return a
+        return clr._LoadClrModule(spec)
 
 class DotNetFinder(importlib.abc.MetaPathFinder):
     
@@ -49,9 +40,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
     @classmethod
     def find_spec(klass, fullname, paths=None, target=None): 
         import clr
-        # print(clr._availableNamespaces)
         if (hasattr(clr, '_availableNamespaces') and fullname in clr._availableNamespaces):
-        #if (clr._NamespaceLoaded(fullname)):
             return importlib.machinery.ModuleSpec(fullname, DotNetLoader(), is_package=True)
         return None
 

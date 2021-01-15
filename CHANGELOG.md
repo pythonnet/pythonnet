@@ -50,6 +50,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   .NET and Python exceptions are preserved when crossing Python/.NET boundary
 -   BREAKING: custom encoders are no longer called for instances of `System.Type`
 -   `PythonException.Restore` no longer clears `PythonException` instance.
+-   Replaced the old `__import__` hook hack with a PEP302-style Meta Path Loader
 
 ### Fixed
 
@@ -71,6 +72,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   Exception stacktraces on `PythonException.StackTrace` are now properly formatted
 -   Providing an invalid type parameter to a generic type or method produces a helpful Python error
 -   Empty parameter names (as can be generated from F#) do not cause crashes
+
 
 ### Removed
 

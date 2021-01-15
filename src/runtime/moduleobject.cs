@@ -588,7 +588,11 @@ namespace Python.Runtime
         [ForbidPythonThreads]
         public static PyObject _LoadClrModule(PyObject spec)
         {
-            var mod = ImportHook.__import__(spec.GetAttr("name").ToString());
+            ModuleObject mod = null;
+            using (var modname = spec.GetAttr("name"))
+            {
+                mod = ImportHook.__import__(modname.ToString());
+            }
             // We can't return directly a ModuleObject, because the tpHandle is
             // not set, but we can return a PyObject.
             return new PyObject(mod.pyHandle);
