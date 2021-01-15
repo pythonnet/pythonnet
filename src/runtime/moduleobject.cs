@@ -529,7 +529,8 @@ namespace Python.Runtime
             {
                 throw new FileNotFoundException($"Unable to find assembly '{name}'.");
             }
-
+            // Classes that are not in a namespace needs an extra nudge to be found.
+            ImportHook.UpdateCLRModuleDict();
             return assembly;
         }
 
@@ -583,18 +584,11 @@ namespace Python.Runtime
             return Runtime.AtExit();
         }
 
-
         [ModuleFunction]
         [ForbidPythonThreads]
         public static PyObject _LoadClrModule(PyObject spec)
         {
             var mod = ImportHook.__import__(spec.GetAttr("name").ToString());
-            if (mod == null)
-            {
-                // __import__ sets the exception.?
-                Console.WriteLine("NULL module");
-                return Runtime.None;
-            }
             // We can't return directly a ModuleObject, because the tpHandle is
             // not set, but we can return a PyObject.
             return new PyObject(mod.pyHandle);

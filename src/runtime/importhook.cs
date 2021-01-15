@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -58,6 +57,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
 
 sys.meta_path.append(DotNetFinder())
             ";
+        const string availableNsKey = "_availableNamespaces";
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
@@ -80,6 +80,7 @@ sys.meta_path.append(DotNetFinder())
             Runtime.PyDict_SetItemString(dict, "clr", ClrModuleReference);
 
             // Add/create the MetaPathLoader
+            SetupNamespaceTracking();
             PythonEngine.Exec(LoaderCode);
         }
 
@@ -98,6 +99,7 @@ sys.meta_path.append(DotNetFinder())
             Runtime.XDecref(py_clr_module);
             py_clr_module = IntPtr.Zero;
 
+            TeardownNameSpaceTracking();
             Runtime.XDecref(root.pyHandle);
             root = null;
             CLRModule.Reset();
@@ -118,12 +120,90 @@ sys.meta_path.append(DotNetFinder())
             storage.GetValue("py_clr_module", out py_clr_module);
             var rootHandle = storage.GetValue<IntPtr>("root");
             root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
+            SetupNamespaceTracking();
         }
 
+        static void SetupNamespaceTracking ()
+        {
+            var newset = Runtime.PySet_New(IntPtr.Zero);
+            try
+            {
+                foreach (var ns in AssemblyManager.GetNamespaces())
+                {
+                    var pyNs = Runtime.PyString_FromString(ns);
+                    try
+                    {
+                        if(Runtime.PySet_Add(newset, pyNs) != 0)
+                        {
+                            throw new PythonException();
+                        }
+                    }
+                    finally
+                    {
+                        Runtime.XDecref(pyNs);
+                    }
+                }
+
+                if(Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset) != 0)
+                {
+                    throw new PythonException();
+                }
+            }
+            finally
+            {
+                Runtime.XDecref(newset);
+            }
+
+            AssemblyManager.namespaceAdded += OnNamespaceAdded;
+            PythonEngine.AddShutdownHandler(()=>AssemblyManager.namespaceAdded -= OnNamespaceAdded);
+        }
+
+        static void TeardownNameSpaceTracking()
+        {
+            AssemblyManager.namespaceAdded -= OnNamespaceAdded;
+            // If the C# runtime isn't loaded, then there is no namespaces available
+            if ((Runtime.PyDict_DelItemString(root.dict, availableNsKey) != 0) &&
+                (Exceptions.ExceptionMatches(Exceptions.KeyError)))
+            {
+                // Trying to remove a key that's not in the dictionary 
+                // raises an error. We don't care about it.
+                Runtime.PyErr_Clear();
+            }
+            else if (Exceptions.ErrorOccurred())
+            {
+                throw new PythonException();
+            }
+        }
+
+        static void OnNamespaceAdded (string name)
+        {
+            using(Py.GIL())
+            {
+                var pyNs = Runtime.PyString_FromString(name);
+                try
+                {
+                    var nsSet = Runtime.PyDict_GetItemString(root.dict, availableNsKey);
+                    if (nsSet != IntPtr.Zero)
+                    {
+                        if(Runtime.PySet_Add(nsSet, pyNs) != 0)
+                        {
+                            throw new PythonException();
+                        }
+                    }
+                }
+                finally
+                {
+                    Runtime.XDecref(pyNs);
+                }
+            }
+        }
+
+
         /// <summary>
-        /// Return the clr python module (new reference)
+        /// Because we use a proxy module for the clr module, we somtimes need
+        /// to force the py_clr_module to sync with the actual clr module's dict.
         /// </summary>
-        public static unsafe NewReference GetCLRModule(BorrowedReference fromList = default)
+        internal static void UpdateCLRModuleDict()
         {
             root.InitializePreload();
 
@@ -134,21 +214,23 @@ sys.meta_path.append(DotNetFinder())
             {
                 Runtime.PyDict_Update(py_mod_dict, clr_dict);
             }
+        }
 
+        /// <summary>
+        /// Return the clr python module (new reference)
+        /// </summary>
+        public static unsafe NewReference GetCLRModule(BorrowedReference fromList = default)
+        {
+            UpdateCLRModuleDict();
             Runtime.XIncref(py_clr_module);
             return NewReference.DangerousFromPointer(py_clr_module);
         }
 
         /// <summary>
-        /// The actual import hook that ties Python to the managed world.
+        /// The hook to import a CLR module into Python
         /// </summary>
         public static ModuleObject __import__(string modname)
         {
-            // Console.WriteLine("Import hook");
-
-            string realname = modname;
-            string[] names = realname.Split('.');
-
             // Traverse the qualified module name to get the named module. 
             // Note that if
             // we are running in interactive mode we pre-load the names in
@@ -162,18 +244,15 @@ sys.meta_path.append(DotNetFinder())
             ModuleObject head = null;
             ModuleObject tail = root;
             root.InitializePreload();
-            // root.LoadNames();
 
+            string[] names = modname.Split('.');
             foreach (string name in names)
             {
                 ManagedType mt = tail.GetAttribute(name, true);
                 if (!(mt is ModuleObject))
                 {
-                    // originalException.Restore();
-                    // Exceptions.SetError(Exceptions.ImportError, "");
-                    // throw new PythonException();
-                    // TODO: set exception
-                    return null;
+                    Exceptions.SetError(Exceptions.ImportError, $"'{name}' Is not a ModuleObject.");
+                    throw new PythonException();
                 }
                 if (head == null)
                 {
@@ -186,10 +265,7 @@ sys.meta_path.append(DotNetFinder())
                 }
             }
 
-            {
-                Runtime.XIncref(tail.pyHandle);
-                return tail;
-            }
+            return tail;
         }
 
         private static bool IsLoadAll(BorrowedReference fromList)
