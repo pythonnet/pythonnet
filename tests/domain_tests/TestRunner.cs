@@ -1094,6 +1094,46 @@ def after_reload():
     
                     ",
             },
+            new TestCase
+            {
+                // The C# code for this test doesn't matter.
+                Name = "import_after_reload",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+                        [System.Serializable]
+                        public class Cls
+                        {
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+                        [System.Serializable]
+                        public class WithNestedType
+                        {
+                            [System.Serializable]
+                            public class Cls
+                            {
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import sys
+
+def before_reload():
+    import clr
+    import System
+
+
+def after_reload():
+    assert 'System' in sys.modules
+    assert 'clr' in sys.modules
+    import clr
+    import System
+    
+                    ",
+            },
         };
 
         /// <summary>

@@ -109,6 +109,9 @@ sys.meta_path.append(DotNetFinder())
             storage.GetValue("py_clr_module", out py_clr_module);
             var rootHandle = storage.GetValue<IntPtr>("root");
             root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
+            IntPtr dict = Runtime.PyImport_GetModuleDict();
+            Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
+            Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
             SetupNamespaceTracking();
         }
 
