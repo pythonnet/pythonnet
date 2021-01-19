@@ -22,6 +22,11 @@ namespace Python.Runtime
         protected string _namespace;
         private IntPtr __all__ = IntPtr.Zero;
 
+        // Attributes to be set on the module according to PEP302 and 451
+        // by the import machinery.
+        static readonly HashSet<string> settableAttributes = 
+            new HashSet<string> {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
+
         public ModuleObject(string name)
         {
             if (name == string.Empty)
@@ -352,22 +357,15 @@ namespace Python.Runtime
         [ForbidPythonThreads]
         public new static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
         {
-            var self = (ModuleObject)ManagedType.GetManagedObject(ob);
-            var dict = self.dict;
-
-            var current = Runtime.PyDict_GetItem(dict, key);
-            if (current == val)
+            var managedKey = Runtime.GetManagedString(key);
+            if ((settableAttributes.Contains(managedKey)) || 
+                (ManagedType.GetManagedObject(val)?.GetType() == typeof(ModuleObject)) )
             {
-                return 0;
-            }
-            else if (ManagedType.GetManagedObject(current) != null)
-            {
-                var message = "Can't override a .NET object";
-                Exceptions.SetError(Exceptions.AttributeError, message);
-                return -1;
+                var self = (ModuleObject)ManagedType.GetManagedObject(ob);
+                return Runtime.PyDict_SetItem(self.dict, key, val);
             }
 
-            return Runtime.PyDict_SetItem(dict, key, val);
+            return ExtensionType.tp_setattro(ob, key, val);
         }
 
         protected override void OnSave(InterDomainContext context)
