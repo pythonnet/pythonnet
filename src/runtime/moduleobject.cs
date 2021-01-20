@@ -582,6 +582,15 @@ namespace Python.Runtime
             return Runtime.AtExit();
         }
 
+
+        /// <summary>
+        /// Note: This should *not* be called directly.
+        /// The function that get/import a CLR assembly as a python module.
+        /// This function should only be called by the import machinery as seen
+        /// in importhook.cs
+        /// </summary>
+        /// <param name="spec">A ModuleSpec Python object</param>
+        /// <returns>A new reference to the imported module, as a PyObject.</returns>
         [ModuleFunction]
         [ForbidPythonThreads]
         public static PyObject _LoadClrModule(PyObject spec)

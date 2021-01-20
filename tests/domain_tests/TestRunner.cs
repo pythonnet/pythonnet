@@ -1096,28 +1096,11 @@ def after_reload():
             },
             new TestCase
             {
-                // The C# code for this test doesn't matter.
+                // The C# code for this test doesn't matter; we're testing
+                // that the import hook behaves properly after a domain reload
                 Name = "import_after_reload",
-                DotNetBefore = @"
-                    namespace TestNamespace
-                    {
-                        [System.Serializable]
-                        public class Cls
-                        {
-                        }
-                    }",
-                DotNetAfter = @"
-                    namespace TestNamespace
-                    {
-                        [System.Serializable]
-                        public class WithNestedType
-                        {
-                            [System.Serializable]
-                            public class Cls
-                            {
-                            }
-                        }
-                    }",
+                DotNetBefore = "",
+                DotNetAfter = "",
                 PythonCode = @"
 import sys
 

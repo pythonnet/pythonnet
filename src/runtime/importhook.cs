@@ -34,7 +34,6 @@ class DotNetLoader(importlib.abc.Loader):
 class DotNetFinder(importlib.abc.MetaPathFinder):
     
     def __init__(self):
-        print('DotNetFinder init')
         super(DotNetFinder, self).__init__()
     
     @classmethod
@@ -115,6 +114,12 @@ sys.meta_path.append(DotNetFinder())
             SetupNamespaceTracking();
         }
 
+        /// <summary>
+        /// Sets up the tracking of loaded namespaces. This makes available to 
+        /// Python, as a Python object, the loaded namespaces. The set of loaded
+        /// namespaces is used during the import to verify if we can import a 
+        /// CLR assembly as a module or not. The set is stored on the clr module.
+        /// </summary>
         static void SetupNamespaceTracking ()
         {
             var newset = Runtime.PySet_New(IntPtr.Zero);
@@ -150,6 +155,10 @@ sys.meta_path.append(DotNetFinder())
             PythonEngine.AddShutdownHandler(()=>AssemblyManager.namespaceAdded -= OnNamespaceAdded);
         }
 
+        /// <summary>
+        /// Removes the set of available namespaces from the clr module and 
+        /// removes the callback on the OnNamespaceAdded event.
+        /// </summary>
         static void TeardownNameSpaceTracking()
         {
             AssemblyManager.namespaceAdded -= OnNamespaceAdded;

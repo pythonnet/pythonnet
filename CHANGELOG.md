@@ -73,7 +73,6 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   Providing an invalid type parameter to a generic type or method produces a helpful Python error
 -   Empty parameter names (as can be generated from F#) do not cause crashes
 
-
 ### Removed
 
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
