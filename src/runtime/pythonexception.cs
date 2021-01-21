@@ -13,9 +13,9 @@ namespace Python.Runtime
         private IntPtr _pyType = IntPtr.Zero;
         private IntPtr _pyValue = IntPtr.Zero;
         private IntPtr _pyTB = IntPtr.Zero;
-        private string _tb = "";
-        private string _message = "";
-        private string _pythonTypeName = "";
+        private readonly string _tb = "";
+        private readonly string _message = "";
+        private readonly string _pythonTypeName = "";
         private bool disposed = false;
         private bool _finalized = false;
 
@@ -46,14 +46,18 @@ namespace Python.Runtime
             }
             if (_pyTB != IntPtr.Zero)
             {
-                using (PyObject tb_module = PythonEngine.ImportModule("traceback"))
-                {
-                    Runtime.XIncref(_pyTB);
-                    using (var pyTB = new PyObject(_pyTB))
-                    {
-                        _tb = tb_module.InvokeMethod("format_tb", pyTB).ToString();
-                    }
+                using PyObject tb_module = PythonEngine.ImportModule("traceback");
+
+                Runtime.XIncref(_pyTB);
+                using var pyTB = new PyObject(_pyTB);
+
+                using var tbList = tb_module.InvokeMethod("format_tb", pyTB);
+
+                var sb = new StringBuilder();
+                foreach (var line in tbList) {
+                    sb.Append(line.ToString());
                 }
+                _tb = sb.ToString();
             }
             PythonEngine.ReleaseLock(gs);
         }
@@ -136,10 +140,7 @@ namespace Python.Runtime
         /// <remarks>
         /// A string representing the python exception stack trace.
         /// </remarks>
-        public override string StackTrace
-        {
-            get { return _tb + base.StackTrace; }
-        }
+        public override string StackTrace => $"{_tb}===\n{base.StackTrace}";
 
         /// <summary>
         /// Python error type name.
