@@ -11,6 +11,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
 -   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
+-   Add GetPythonThreadID and Interrupt methods in PythonEngine
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5

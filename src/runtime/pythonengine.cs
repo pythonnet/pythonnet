@@ -567,6 +567,30 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Gets the Python thread ID.
+        /// </summary>
+        /// <returns>The Python thread ID.</returns>
+        public static ulong GetPythonThreadID()
+        {
+            dynamic threading = Py.Import("threading");
+            return threading.InvokeMethod("get_ident");
+        }
+
+        /// <summary>
+        /// Interrupts the execution of a thread.
+        /// </summary>
+        /// <param name="pythonThreadID">The Python thread ID.</param>
+        /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id isn’t found.</returns>
+        public static int Interrupt(ulong pythonThreadID)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return Runtime.PyThreadState_SetAsyncExcLLP64((uint)pythonThreadID, Exceptions.KeyboardInterrupt);
+            }
+
+            return Runtime.PyThreadState_SetAsyncExcLP64(pythonThreadID, Exceptions.KeyboardInterrupt);
+        }
 
         /// <summary>
         /// RunString Method. Function has been deprecated and will be removed.
