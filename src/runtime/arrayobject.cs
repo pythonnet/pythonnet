@@ -159,6 +159,10 @@ namespace Python.Runtime
 
             if (rank == 1)
             {
+                if (!Runtime.PyInt_Check(idx))
+                {
+                    return RaiseIndexMustBeIntegerError(idx);
+                }
                 index = Runtime.PyInt_AsLong(idx);
 
                 if (Exceptions.ErrorOccurred())
@@ -199,6 +203,10 @@ namespace Python.Runtime
             for (var i = 0; i < count; i++)
             {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
+                if (!Runtime.PyInt_Check(op))
+                {
+                    return RaiseIndexMustBeIntegerError(op);
+                }
                 index = Runtime.PyInt_AsLong(op);
 
                 if (Exceptions.ErrorOccurred())
@@ -253,6 +261,11 @@ namespace Python.Runtime
 
             if (rank == 1)
             {
+                if (!Runtime.PyInt_Check(idx))
+                {
+                    RaiseIndexMustBeIntegerError(idx);
+                    return -1;
+                }
                 index = Runtime.PyInt_AsLong(idx);
 
                 if (Exceptions.ErrorOccurred())
@@ -291,6 +304,11 @@ namespace Python.Runtime
             for (var i = 0; i < count; i++)
             {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
+                if (!Runtime.PyInt_Check(op))
+                {
+                    RaiseIndexMustBeIntegerError(op);
+                    return -1;
+                }
                 index = Runtime.PyInt_AsLong(op);
 
                 if (Exceptions.ErrorOccurred())
@@ -320,6 +338,11 @@ namespace Python.Runtime
             return 0;
         }
 
+        private static IntPtr RaiseIndexMustBeIntegerError(IntPtr idx)
+        {
+            string tpName = Runtime.PyObject_GetTypeName(idx);
+            return Exceptions.RaiseTypeError($"array index has type {tpName}, expected an integer");
+        }
 
         /// <summary>
         /// Implements __contains__ for array types.

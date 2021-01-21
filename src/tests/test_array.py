@@ -836,8 +836,15 @@ def test_typed_array():
 
     with pytest.raises(TypeError):
         ob = Test.TypedArrayTest()
-        ob.items["wrong"] = "wrong"
+        ob.items["wrong"] = Spam("0")
 
+    with pytest.raises(TypeError):
+        ob = Test.TypedArrayTest()
+        _ = ob.items[0.5]
+
+    with pytest.raises(TypeError):
+        ob = Test.TypedArrayTest()
+        ob.items[0.5] = Spam("0")
 
 def test_multi_dimensional_array():
     """Test multi-dimensional arrays."""
@@ -901,8 +908,23 @@ def test_multi_dimensional_array():
 
     with pytest.raises(TypeError):
         ob = Test.MultiDimensionalArrayTest()
-        ob[0, 0] = "wrong"
+        ob.items[0, 0] = "wrong"
 
+    with pytest.raises(TypeError):
+        ob = Test.MultiDimensionalArrayTest()
+        ob["0", 0] = 0
+
+    with pytest.raises(TypeError):
+        ob = Test.MultiDimensionalArrayTest()
+        ob.items["0", 0] = 0
+
+    with pytest.raises(TypeError):
+        ob = Test.MultiDimensionalArrayTest()
+        _ = ob.items[0.5, 0]
+
+    with pytest.raises(TypeError):
+        ob = Test.MultiDimensionalArrayTest()
+        ob.items[0.5, 0] = 0
 
 def test_array_iteration():
     """Test array iteration."""
@@ -1188,6 +1210,15 @@ def test_create_array_from_shape():
 
     with pytest.raises(ValueError):
         Array[int](-1)
+
+    with pytest.raises(TypeError):
+        Array[int]('1')
+
+    with pytest.raises(ValueError):
+        Array[int](-1, -1)
+
+    with pytest.raises(TypeError):
+        Array[int]('1', '1')
 
 def test_special_array_creation():
     """Test using the Array[<type>] syntax for creating arrays."""
