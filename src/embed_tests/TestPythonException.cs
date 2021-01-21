@@ -65,7 +65,21 @@ namespace Python.EmbeddingTest
             }
             catch (PythonException ex)
             {
-                Assert.That(ex.Format(), Does.Contain("Traceback").And.Contains("(most recent call last):").And.Contains("ValueError: Error!"));
+                // Console.WriteLine($"Format: {ex.Format()}");
+                // Console.WriteLine($"Stacktrace: {ex.StackTrace}");
+                Assert.That(
+                    ex.Format(),
+                    Does.Contain("Traceback")
+                    .And.Contains("(most recent call last):")
+                    .And.Contains("ValueError: Error!")
+                );
+
+                // Check that the stacktrace is properly formatted
+                Assert.That(
+                    ex.StackTrace,
+                    Does.Not.StartWith("[")
+                    .And.Not.Contain("\\n")
+                );
             }
         }
 
