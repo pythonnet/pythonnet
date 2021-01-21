@@ -31,12 +31,12 @@ namespace Python.EmbeddingTest
         public void InterruptTest()
         {
             int runSimpleStringReturnValue = int.MinValue;
-            ulong nativeThreadID = ulong.MinValue;
+            ulong pythonThreadID = ulong.MinValue;
             Task.Factory.StartNew(() =>
             {
                 using (Py.GIL())
                 {
-                    nativeThreadID = PythonEngine.GetNativeThreadID();
+                    pythonThreadID = PythonEngine.GetPythonThreadID();
                     runSimpleStringReturnValue = PythonEngine.RunSimpleString(@"
 import time
 
@@ -47,11 +47,11 @@ while True:
 
             Thread.Sleep(200);
 
-            Assert.AreNotEqual(ulong.MinValue, nativeThreadID);
+            Assert.AreNotEqual(ulong.MinValue, pythonThreadID);
 
             using (Py.GIL())
             {
-                int interruptReturnValue = PythonEngine.Interrupt(nativeThreadID);
+                int interruptReturnValue = PythonEngine.Interrupt(pythonThreadID);
                 Assert.AreEqual(1, interruptReturnValue);
             }
 
