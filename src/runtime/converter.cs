@@ -698,19 +698,10 @@ namespace Python.Runtime
 
                 case TypeCode.UInt64:
                     {
-                        op = value;
-                        if (Runtime.PyObject_TYPE(value) != Runtime.PyLongType)
-                        {
-                            op = Runtime.PyNumber_Long(value);
-                            if (op == IntPtr.Zero)
-                            {
-                                goto convert_error;
-                            }
-                        }
-                        ulong num = Runtime.PyLong_AsUnsignedLongLong(op);
+                        ulong num = Runtime.PyLong_AsUnsignedLongLong(value);
                         if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
                         {
-                            goto overflow;
+                            goto convert_error;
                         }
                         result = num;
                         return true;
