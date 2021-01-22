@@ -39,7 +39,7 @@ namespace Python.Runtime
             BorrowedReference capsule = PySys_GetObject("clr_data");
             if (!capsule.IsNull)
             {
-                IntPtr oldData = PyCapsule_GetPointer(capsule, null);
+                IntPtr oldData = PyCapsule_GetPointer(capsule, IntPtr.Zero);
                 PyMem_Free(oldData);
                 PyCapsule_SetPointer(capsule, IntPtr.Zero);
             }
@@ -85,8 +85,9 @@ namespace Python.Runtime
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
             ClearCLRData();
-            NewReference capsule = PyCapsule_New(mem, null, IntPtr.Zero);
-            PySys_SetObject("clr_data", capsule.DangerousGetAddress());
+            #warning this leaks memory in mem
+            NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
+            PySys_SetObject("clr_data", capsule);
             // Let the dictionary own the reference
             capsule.Dispose();
         }
@@ -110,7 +111,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            IntPtr mem = PyCapsule_GetPointer(capsule, null);
+            IntPtr mem = PyCapsule_GetPointer(capsule, IntPtr.Zero);
             int length = (int)Marshal.ReadIntPtr(mem);
             byte[] data = new byte[length];
             Marshal.Copy(mem + IntPtr.Size, data, 0, length);
@@ -143,7 +144,7 @@ namespace Python.Runtime
 
         public static void ClearStash()
         {
-            PySys_SetObject("clr_data", IntPtr.Zero);
+            PySys_SetObject("clr_data", default);
         }
 
         static bool CheckSerializable (object o)
