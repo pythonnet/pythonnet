@@ -30,6 +30,7 @@ environment:
 init:
   # Update Environment Variables based on matrix/platform
   - set PY_VER=%PYTHON_VERSION:.=%
+  - set PYTHONNET_PYDLL=python%PY_VER%.dll
   - set PYTHON=C:\PYTHON%PY_VER%
   - if %PLATFORM%==x64 (set PYTHON=%PYTHON%-x64)
 
