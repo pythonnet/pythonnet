@@ -54,7 +54,7 @@ namespace Python.Runtime
             string prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
             string suffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? Invariant($"{version.Major}{version.Minor}")
-                : Invariant($"{version.Major}.{version.Minor}");
+                : Invariant($"{version.Major}.{version.Minor}m");
             string ext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll"
                 : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib"
                 : ".so";
@@ -2534,7 +2534,11 @@ Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(P
                 PyThreadState_SetAsyncExcLP64 = (delegate* unmanaged[Cdecl]<ulong, IntPtr, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
             }
 
-            static global::System.IntPtr GetUnmanagedDll(string libraryName) => libraryLoader.Load(libraryName);
+            static global::System.IntPtr GetUnmanagedDll(string libraryName)
+            {
+                if (libraryName is null) return IntPtr.Zero;
+                return libraryLoader.Load(libraryName);
+            }
 
             static global::System.IntPtr GetFunctionByName(string functionName, global::System.IntPtr libraryHandle)
                 => libraryLoader.GetFunction(libraryHandle, functionName);
