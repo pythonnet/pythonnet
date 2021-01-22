@@ -49,13 +49,12 @@ namespace Python.Runtime.Platform
 
         public IntPtr Load(string dllToLoad)
         {
-            var filename = $"lib{dllToLoad}.so";
             ClearError();
-            var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+            var res = dlopen(dllToLoad, RTLD_NOW | RTLD_GLOBAL);
             if (res == IntPtr.Zero)
             {
                 var err = GetError();
-                throw new DllNotFoundException($"Could not load {filename} with flags RTLD_NOW | RTLD_GLOBAL: {err}");
+                throw new DllNotFoundException($"Could not load {dllToLoad} with flags RTLD_NOW | RTLD_GLOBAL: {err}");
             }
 
             return res;
@@ -120,13 +119,12 @@ namespace Python.Runtime.Platform
 
         public IntPtr Load(string dllToLoad)
         {
-            var filename = $"lib{dllToLoad}.dylib";
             ClearError();
-            var res = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+            var res = dlopen(dllToLoad, RTLD_NOW | RTLD_GLOBAL);
             if (res == IntPtr.Zero)
             {
                 var err = GetError();
-                throw new DllNotFoundException($"Could not load {filename} with flags RTLD_NOW | RTLD_GLOBAL: {err}");
+                throw new DllNotFoundException($"Could not load {dllToLoad} with flags RTLD_NOW | RTLD_GLOBAL: {err}");
             }
 
             return res;
