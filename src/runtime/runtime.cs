@@ -37,6 +37,12 @@ namespace Python.Runtime
             string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
             if (dll is not null) return dll;
 
+            try
+            {
+                LibraryLoader.Instance.GetFunction(IntPtr.Zero, "PyUnicode_GetMax");
+                return null;
+            } catch (MissingMethodException) { }
+
             string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
             if (!Version.TryParse(verString, out var version)) return null;
 
