@@ -54,7 +54,7 @@ namespace Python.Runtime
             string prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
             string suffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? Invariant($"{version.Major}{version.Minor}")
-                : Invariant($"{version.Major}.{version.Minor}m");
+                : Invariant($"{version.Major}.{version.Minor}");
             string ext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll"
                 : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib"
                 : ".so";
