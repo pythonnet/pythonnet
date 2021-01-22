@@ -34,6 +34,8 @@ details about the cause of the failure
 when .NET expects an integer [#1342][i1342]
 -   More specific error messages for method argument mismatch
 -   BREAKING: Methods with `ref` or `out` parameters and void return type return a tuple of only the `ref` and `out` parameters.
+-   BREAKING: to call Python from .NET `Runtime.PythonDLL` property must be set to Python DLL name
+or the DLL must be loaded in advance. This must be done before calling any other Python.NET functions.
 
 ### Fixed
 
