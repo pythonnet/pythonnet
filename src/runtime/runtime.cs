@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Python.Runtime.Native;
 using Python.Runtime.Platform;
 using System.Linq;
+using static System.FormattableString;
 
 namespace Python.Runtime
 {
@@ -30,7 +31,29 @@ namespace Python.Runtime
             }
         }
 
-        static string _PythonDll;
+        static string _PythonDll = GetDefaultDllName();
+        private static string GetDefaultDllName()
+        {
+            string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
+            if (dll is not null) return dll;
+
+            string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
+            if (!Version.TryParse(verString, out var version)) return null;
+
+            return GetDefaultDllName(version);
+        }
+
+        private static string GetDefaultDllName(Version version)
+        {
+            string prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
+            string suffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? Invariant($"{version.Major}{version.Minor}")
+                : Invariant($"{version.Major}.{version.Minor}");
+            string ext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll"
+                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib"
+                : ".so";
+            return prefix + "python" + suffix + ext;
+        }
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();

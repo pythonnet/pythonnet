@@ -18,6 +18,7 @@ jobs:
 
     env:
       PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
+      PYTHONNET_PYVER: ${{ matrix.PYTHON }}
 
     steps:
       - name: Set Environment on macOS
