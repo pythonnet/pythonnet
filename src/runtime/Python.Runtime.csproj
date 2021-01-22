@@ -31,9 +31,5 @@
   <ItemGroup>
     <PackageReference Include="System.Security.Permissions" Version="4.4.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
-    <PackageReference Include="Lost.NonCopyableAnalyzer" Version="0.7.0-m04">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 </Project>
