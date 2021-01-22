@@ -12,13 +12,36 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows, ubuntu, macos]
-        python: [3.6, 3.7, 3.8, 3.9]
+        pyver_minor: [6, 7, 8, 9]
         platform: [x64]
         shutdown_mode: [Normal, Soft]
+        include:
+        - os: ubuntu
+          pyver_minor: 6
+          dll_suffix: m
+        - os: ubuntu
+          pyver_minor: 7
+          dll_suffix: m
+
+        - os: macos
+          dll_prefix: lib
+          dll_pyver_major: '3.'
+        - os: ubuntu
+          dll_prefix: lib
+          dll_pyver_major: '3.'
+        - os: windows
+          dll_pyver_major: '3'
+
+        - os: ubuntu
+          dll_ext: .so
+        - os: windows
+          dll_ext: .dll
+        - os: macos
+          dll_ext: .dylib
 
     env:
       PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
-      PYTHONNET_PYVER: ${{ matrix.PYTHON }}
+      PYTHONNET_PYDLL: ${{ matrix.DLL_PREFIX }}python${{matrix.DLL_PYVER_MAJOR}}${{matrix.PYVER_MINOR}}${{matrix.DLL_SUFFIX}}${{matrix.DLL_EXT}}
 
     steps:
       - name: Set Environment on macOS
@@ -33,10 +56,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
 
-      - name: Set up Python ${{ matrix.python }}
+      - name: Set up Python 3.${{ matrix.pyver_minor }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python }}
+          python-version: 3.${{ matrix.pyver_minor }}
           architecture: ${{ matrix.platform }}
 
       - name: Install dependencies
