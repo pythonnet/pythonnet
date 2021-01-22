@@ -298,9 +298,8 @@ def test_generic_method_type_handling():
     from Python.Test import InterfaceTest, ISayHello1, ShortEnum
     import System
 
-    # FIXME: The value doesn't fit into Int64 and PythonNet doesn't
-    # recognize it as UInt64 for unknown reasons.
-    # assert_generic_method_by_type(System.UInt64, 18446744073709551615L)
+    # FIXME: Fails because Converter.GetTypeByAlias returns int32 for any integer, including ulong
+    # assert_generic_method_by_type(System.UInt64, 18446744073709551615)
     assert_generic_method_by_type(System.Boolean, True)
     assert_generic_method_by_type(bool, True)
     assert_generic_method_by_type(System.Byte, 255)
@@ -750,3 +749,32 @@ def test_missing_generic_type():
     from System.Collections import IList
     with pytest.raises(TypeError):
         IList[bool]
+
+def test_invalid_generic_type_parameter():
+    from Python.Test import GenericTypeWithConstraint
+    with pytest.raises(TypeError):
+        GenericTypeWithConstraint[System.Object]
+
+def test_invalid_generic_method_type_parameter():
+    from Python.Test import ConversionTest
+    with pytest.raises(TypeError):
+        ConversionTest.Echo[System.Object]
+
+def test_generic_list_array_conversion():
+    """Test conversion of lists to generic array arguments."""
+    from Python.Test import GenericArrayConversionTest
+    from Python.Test import Spam
+
+    items = []
+    for i in range(10):
+        items.append(Spam(str(i)))
+
+    result = GenericArrayConversionTest.EchoRange[Spam](items)
+    assert result[0].__class__ == Spam
+    assert len(result) == 10
+
+    # Currently raises an exception because the correct generic type parameter is not inferred
+    with pytest.raises(TypeError):
+        result = GenericArrayConversionTest.EchoRange(items)
+        assert result[0].__class__ == Spam
+        assert len(result) == 10

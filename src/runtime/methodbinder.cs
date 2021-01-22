@@ -102,7 +102,18 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                return t.MakeGenericMethod(tp);
+                try
+                {
+                    // MakeGenericMethod can throw ArgumentException if the type parameters do not obey the constraints.
+                    MethodInfo method = t.MakeGenericMethod(tp);
+                    Exceptions.Clear();
+                    return method;
+                }
+                catch (ArgumentException e)
+                {
+                    Exceptions.SetError(e);
+                    // The error will remain set until cleared by a successful match.
+                }
             }
             return null;
         }
@@ -378,6 +389,7 @@ namespace Python.Runtime
                 var outs = 0;
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
+                    setError: _methods.Length == 1 && !isGeneric,   // True when there are no alternatives.
                     outs: out outs);
                 if (margs == null)
                 {
@@ -525,6 +537,7 @@ namespace Python.Runtime
         /// <param name="kwargDict">Dictionary of keyword argument name to python object pointer</param>
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
+        /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>An array of .NET arguments, that can be passed to a method.</returns>
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
@@ -532,6 +545,7 @@ namespace Python.Runtime
             Dictionary<string, IntPtr> kwargDict,
             ArrayList defaultArgList,
             bool needsResolution,
+            bool setError,
             out int outs)
         {
             outs = 0;
@@ -572,7 +586,7 @@ namespace Python.Runtime
                 }
 
                 bool isOut;
-                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut))
+                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, setError, out margs[paramIndex], out isOut))
                 {
                     return null;
                 }
@@ -600,10 +614,11 @@ namespace Python.Runtime
         /// <param name="op">Pointer to the object at a particular parameter.</param>
         /// <param name="parameterType">That parameter's managed type.</param>
         /// <param name="needsResolution">There are multiple overloading methods that need resolution.</param>
+        /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
         /// <param name="arg">Converted argument.</param>
         /// <param name="isOut">Whether the CLR type is passed by reference.</param>
         /// <returns></returns>
-        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
+        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution, bool setError,
                                        out object arg, out bool isOut)
         {
             arg = null;
@@ -614,9 +629,8 @@ namespace Python.Runtime
                 return false;
             }
 
-            if (!Converter.ToManaged(op, clrtype, out arg, false))
+            if (!Converter.ToManaged(op, clrtype, out arg, setError))
             {
-                Exceptions.Clear();
                 return false;
             }
 
@@ -815,7 +829,7 @@ namespace Python.Runtime
                 var msg = new StringBuilder("The underlying C# method(s) have been deleted");
                 if (list.Count > 0 && list[0].Name != null)
                 {
-                    msg.Append($": {list[0].ToString()}");
+                    msg.Append($": {list[0]}");
                 }
                 return Exceptions.RaiseTypeError(msg.ToString());;
             }
@@ -831,10 +845,14 @@ namespace Python.Runtime
                 {
                     value.Append($" for {methodinfo[0].Name}");
                 }
+                else if (list.Count > 0 && list[0].Valid)
+                {
+                    value.Append($" for {list[0].Value.Name}");
+                }
 
                 value.Append(": ");
                 AppendArgumentTypes(to: value, args);
-                Exceptions.SetError(Exceptions.TypeError, value.ToString());
+                Exceptions.RaiseTypeError(value.ToString());
                 return IntPtr.Zero;
             }
 

@@ -68,35 +68,27 @@ namespace Python.Runtime
         /// <summary>
         /// EventBinding  __hash__ implementation.
         /// </summary>
-        public static IntPtr tp_hash(IntPtr ob)
+        public static nint tp_hash(IntPtr ob)
         {
             var self = (EventBinding)GetManagedObject(ob);
-            long x = 0;
-            long y = 0;
+            nint x = 0;
 
             if (self.target != IntPtr.Zero)
             {
-                x = Runtime.PyObject_Hash(self.target).ToInt64();
+                x = Runtime.PyObject_Hash(self.target);
                 if (x == -1)
                 {
-                    return new IntPtr(-1);
+                    return x;
                 }
             }
 
-            y = Runtime.PyObject_Hash(self.e.pyHandle).ToInt64();
+            nint y = Runtime.PyObject_Hash(self.e.pyHandle);
             if (y == -1)
             {
-                return new IntPtr(-1);
+                return y;
             }
 
-            x ^= y;
-
-            if (x == -1)
-            {
-                x = -1;
-            }
-
-            return new IntPtr(x);
+            return x ^ y;
         }
 
 

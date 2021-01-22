@@ -57,6 +57,14 @@ def derived_class_fixture(subnamespace):
 
     return DerivedClass
 
+def broken_derived_class_fixture(subnamespace):
+    """Delay creation of class until test starts."""
+
+    class DerivedClass(SubClassTest):
+        """class that derives from a class deriving from IInterfaceTest"""
+        __namespace__ = 3
+
+    return DerivedClass
 
 def derived_event_test_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
@@ -127,6 +135,11 @@ def test_derived_class():
     x = FunctionsTest.pass_through(ob)
     assert id(x) == id(ob)
 
+def test_broken_derived_class():
+    """Test python class derived from managed type with invalid namespace"""
+    with pytest.raises(TypeError):
+        DerivedClass = broken_derived_class_fixture(test_derived_class.__name__)
+        ob = DerivedClass()
 
 def test_derived_traceback():
     """Test python exception traceback in class derived from managed base"""

@@ -291,6 +291,20 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// When called after SetError, sets the cause of the error.
+        /// </summary>
+        /// <param name="cause"></param>
+        public static void SetCause(PythonException cause)
+        {
+            var currentException = new PythonException();
+            currentException.Normalize();
+            cause.Normalize();
+            Runtime.XIncref(cause.PyValue);
+            Runtime.PyException_SetCause(currentException.PyValue, cause.PyValue);
+            currentException.Restore();
+        }
+
+        /// <summary>
         /// ErrorOccurred Method
         /// </summary>
         /// <remarks>
@@ -368,17 +382,31 @@ namespace Python.Runtime
         // Internal helper methods for common error handling scenarios.
         //====================================================================
 
+        /// <summary>
+        /// Raises a TypeError exception and attaches any existing exception as its cause.
+        /// </summary>
+        /// <param name="message">The exception message</param>
+        /// <returns><c>IntPtr.Zero</c></returns>
         internal static IntPtr RaiseTypeError(string message)
         {
+            PythonException previousException = null;
+            if (ErrorOccurred())
+            {
+                previousException = new PythonException();
+            }
             Exceptions.SetError(Exceptions.TypeError, message);
+            if (previousException != null)
+            {
+                SetCause(previousException);
+            }
             return IntPtr.Zero;
         }
 
         // 2010-11-16: Arranged in python (2.6 & 2.7) source header file order
         /* Predefined exceptions are
-           puplic static variables on the Exceptions class filled in from
+           public static variables on the Exceptions class filled in from
            the python class using reflection in Initialize() looked up by
-		   name, not posistion. */
+		   name, not position. */
         public static IntPtr BaseException;
         public static IntPtr Exception;
         public static IntPtr StopIteration;

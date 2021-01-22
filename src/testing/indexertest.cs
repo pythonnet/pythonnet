@@ -427,10 +427,20 @@ namespace Python.Test
 
     public interface IInheritedIndexer : IIndexer { }
 
-    public class InterfaceInheritedIndexerTest :IndexerBase,  IInheritedIndexer  {
+    public class InterfaceInheritedIndexerTest : IndexerBase,  IInheritedIndexer
+    {
         private System.Collections.Generic.IDictionary<int, string> d = new System.Collections.Generic.Dictionary<int, string>();
 
         public string this[int index]
+        {
+            get { return GetValue(index); }
+            set { t[index] = value; }
+        }
+    }
+
+    public class PublicInheritedOverloadedIndexer : PublicIndexerTest
+    {
+        public string this[string index]
         {
             get { return GetValue(index); }
             set { t[index] = value; }

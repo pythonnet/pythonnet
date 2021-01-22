@@ -810,6 +810,9 @@ def test_no_object_in_param():
     with pytest.raises(TypeError):
         MethodTest.TestOverloadedNoObject(5.5)
 
+    # Ensure that the top-level error is TypeError even if the inner error is an OverflowError
+    with pytest.raises(TypeError):
+        MethodTest.TestOverloadedNoObject(2147483648)
 
 def test_object_in_param():
     """Test regression introduced by #151 in which Object method overloads
@@ -1216,13 +1219,17 @@ def test_params_array_overload():
     res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
     assert res == "with params-array"
 
-    # These two cases are still incorrectly failing:
+@pytest.mark.skip(reason="FIXME: incorrectly failing")
+def test_params_array_overloaded_failing():
+    res = MethodTest.ParamsArrayOverloaded(1, 2, i=1)
+    assert res == "with params-array"
 
-    # res = MethodTest.ParamsArrayOverloaded(1, 2, i=1)
-    # assert res == "with params-array"
-
-    # res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
-    # assert res == "with params-array"
+    res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
+    assert res == "with params-array"
 
 def test_method_encoding():
     MethodTest.EncodingTestÅngström()
+
+def test_method_with_pointer_array_argument():
+    with pytest.raises(TypeError):
+        MethodTest.PointerArray([0])

@@ -66,7 +66,16 @@ namespace Python.Runtime
 
             if (target != null)
             {
-                Type t = target.MakeGenericType(types);
+                Type t;
+                try
+                {
+                    // MakeGenericType can throw ArgumentException
+                    t = target.MakeGenericType(types);
+                }
+                catch (ArgumentException e)
+                {
+                    return Exceptions.RaiseTypeError(e.Message);
+                }
                 ManagedType c = ClassManager.GetClass(t);
                 Runtime.XIncref(c.pyHandle);
                 return c.pyHandle;
@@ -263,14 +272,14 @@ namespace Python.Runtime
         /// <summary>
         /// Standard __hash__ implementation for instances of reflected types.
         /// </summary>
-        public static IntPtr tp_hash(IntPtr ob)
+        public static nint tp_hash(IntPtr ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("unhashable type");
             }
-            return new IntPtr(co.inst.GetHashCode());
+            return co.inst.GetHashCode();
         }
 
 
