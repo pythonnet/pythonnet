@@ -26,6 +26,7 @@ jobs:
         - os: macos
           dll_prefix: lib
           dll_pyver_major: '3.'
+          dll_suffix: m
         - os: ubuntu
           dll_prefix: lib
           dll_pyver_major: '3.'
