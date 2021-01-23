@@ -157,6 +157,7 @@ namespace Python.Runtime
             return (T)AsManagedObject(typeof(T));
         }
 
+        internal bool IsDisposed => obj == IntPtr.Zero;
 
         /// <summary>
         /// Dispose Method
