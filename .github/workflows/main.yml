@@ -71,8 +71,16 @@ jobs:
           python setup.py configure
           pip install -v .
 
+      # TODO this should be gone once clr module sets PythonDLL or preloads it
       - name: Python Tests
         run: pytest
+        if: ${{ matrix.os != 'macos' }}
+        env:
+          PYTHONNET_PYDLL: ${{ matrix.DLL_PREFIX }}python${{matrix.DLL_PYVER_MAJOR}}${{matrix.PYVER_MINOR}}${{matrix.DLL_SUFFIX}}${{matrix.DLL_EXT}}
+
+      - name: Python Tests
+        run: pytest
+        if: ${{ matrix.os == 'macos' }}
 
       - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
