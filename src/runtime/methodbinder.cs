@@ -560,7 +560,8 @@ namespace Python.Runtime
 
         static AggregateException GetAggregateException(IEnumerable<MismatchedMethod> mismatchedMethods)
         {
-            return new AggregateException(mismatchedMethods.Select(m => new ArgumentException($"{m.Exception.Message} in method {m.Method}", m.Exception)));
+            // We cannot attach m.Exception as an InnerException here because it contains pointers to Python objects and therefore not serializable.
+            return new AggregateException(mismatchedMethods.Select(m => new ArgumentException($"{m.Exception.Message} in method {m.Method}")));
         }
 
         static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool isNewReference)
