@@ -72,31 +72,18 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
-            string message = string.Empty;
-            if (e.Message != string.Empty)
+            string message = e.ToString();
+            string fullTypeName = e.GetType().FullName;
+            string prefix = fullTypeName + ": ";
+            if (message.StartsWith(prefix))
             {
-                message = e.Message;
+                message = message.Substring(prefix.Length);
             }
-            if (e is AggregateException ae)
+            else if (message.StartsWith(fullTypeName))
             {
-                message += GetAggregateExceptionString(ae);
-            }
-            if (!string.IsNullOrEmpty(e.StackTrace))
-            {
-                message = message + "\n" + e.StackTrace;
+                message = message.Substring(fullTypeName.Length);
             }
             return Runtime.PyUnicode_FromString(message);
-        }
-
-        private static string GetAggregateExceptionString(AggregateException aggregateException)
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            foreach(var innerException in aggregateException.InnerExceptions)
-            {
-                stringBuilder.AppendLine();
-                stringBuilder.Append(innerException.Message);
-            }
-            return stringBuilder.ToString();
         }
     }
 

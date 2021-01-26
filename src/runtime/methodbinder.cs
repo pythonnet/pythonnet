@@ -17,6 +17,9 @@ namespace Python.Runtime
     [Serializable]
     internal class MethodBinder
     {
+        /// <summary>
+        /// The overloads of this method
+        /// </summary>
         public List<MaybeMethodBase> list;
 
         [NonSerialized]
@@ -289,14 +292,30 @@ namespace Python.Runtime
 
         /// <summary>
         /// Bind the given Python instance and arguments to a particular method
-        /// overload and return a structure that contains the converted Python
+        /// overload in <see cref="list"/> and return a structure that contains the converted Python
         /// instance, converted arguments and the correct method to call.
+        /// If unsuccessful, may set a Python error.
         /// </summary>
+        /// <param name="inst">The Python target of the method invocation.</param>
+        /// <param name="args">The Python arguments.</param>
+        /// <param name="kw">The Python keyword arguments.</param>
+        /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw)
         {
             return Bind(inst, args, kw, null, null);
         }
 
+        /// <summary>
+        /// Bind the given Python instance and arguments to a particular method
+        /// overload in <see cref="list"/> and return a structure that contains the converted Python
+        /// instance, converted arguments and the correct method to call.
+        /// If unsuccessful, may set a Python error.
+        /// </summary>
+        /// <param name="inst">The Python target of the method invocation.</param>
+        /// <param name="args">The Python arguments.</param>
+        /// <param name="kw">The Python keyword arguments.</param>
+        /// <param name="info">If not null, only bind to that method.</param>
+        /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
             return Bind(inst, args, kw, info, null);
@@ -332,6 +351,18 @@ namespace Python.Runtime
             public MethodBase Method { get; }
         }
 
+        /// <summary>
+        /// Bind the given Python instance and arguments to a particular method
+        /// overload in <see cref="list"/> and return a structure that contains the converted Python
+        /// instance, converted arguments and the correct method to call.
+        /// If unsuccessful, may set a Python error.
+        /// </summary>
+        /// <param name="inst">The Python target of the method invocation.</param>
+        /// <param name="args">The Python arguments.</param>
+        /// <param name="kw">The Python keyword arguments.</param>
+        /// <param name="info">If not null, only bind to that method.</param>
+        /// <param name="methodinfo">If not null, additionally attempt to bind to the generic methods in this array by inferring generic type parameters.</param>
+        /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // loop to find match, return invoker w/ or w/o error
@@ -401,7 +432,7 @@ namespace Python.Runtime
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();
                 }
-                var outs = 0;
+                int outs;
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
                     outs: out outs);
@@ -441,7 +472,6 @@ namespace Python.Runtime
             }
             if (argMatchedMethods.Count > 0)
             {
-                Exceptions.Clear();
                 var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
                 var fewestDefaultsRequired = argMatchedMethods.Where(x => x.KwargsMatched == bestKwargMatchCount).Min(x => x.DefaultsNeeded);
 
@@ -520,11 +550,7 @@ namespace Python.Runtime
                     return Bind(inst, args, kw, mi, null);
                 }
             }
-            if (mismatchedMethods.Count == 1)
-            {
-                mismatchedMethods[0].Exception.Restore();
-            }
-            else if (mismatchedMethods.Count > 1)
+            if (mismatchedMethods.Count > 0)
             {
                 var aggregateException = GetAggregateException(mismatchedMethods);
                 Exceptions.SetError(aggregateException);
@@ -534,7 +560,7 @@ namespace Python.Runtime
 
         static AggregateException GetAggregateException(IEnumerable<MismatchedMethod> mismatchedMethods)
         {
-            return new AggregateException(mismatchedMethods.Select(m => new ArgumentException($"{m.Exception.Message} in method {m.Method}")));
+            return new AggregateException(mismatchedMethods.Select(m => new ArgumentException($"{m.Exception.Message} in method {m.Method}", m.Exception)));
         }
 
         static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool isNewReference)
@@ -571,6 +597,7 @@ namespace Python.Runtime
         /// <summary>
         /// Attempts to convert Python positional argument tuple and keyword argument table
         /// into an array of managed objects, that can be passed to a method.
+        /// If unsuccessful, returns null and may set a Python error.
         /// </summary>
         /// <param name="pi">Information about expected parameters</param>
         /// <param name="paramsArray"><c>true</c>, if the last parameter is a params array.</param>
@@ -580,7 +607,7 @@ namespace Python.Runtime
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
         /// <param name="outs">Returns number of output parameters</param>
-        /// <returns>An array of .NET arguments, that can be passed to a method.</returns>
+        /// <returns>If successful, an array of .NET arguments that can be passed to the method.  Otherwise null.</returns>
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
             IntPtr args, int pyArgCount,
             Dictionary<string, IntPtr> kwargDict,
@@ -650,14 +677,15 @@ namespace Python.Runtime
 
         /// <summary>
         /// Try to convert a Python argument object to a managed CLR type.
+        /// If unsuccessful, may set a Python error.
         /// </summary>
         /// <param name="op">Pointer to the Python argument object.</param>
         /// <param name="parameterType">That parameter's managed type.</param>
         /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
         /// <param name="arg">Converted argument.</param>
         /// <param name="isOut">Whether the CLR type is passed by reference.</param>
-        /// <returns></returns>
-        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution, 
+        /// <returns>true on success</returns>
+        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
                                        out object arg, out bool isOut)
         {
             arg = null;
@@ -704,11 +732,11 @@ namespace Python.Runtime
 
             if (clrtype != null)
             {
-                var typematch = false;
                 if ((parameterType != typeof(object)) && (parameterType != clrtype))
                 {
                     IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
                     pyoptype = Runtime.PyObject_Type(argument);
+                    var typematch = false;
                     if (pyoptype != IntPtr.Zero)
                     {
                         if (pytype != pyoptype)
@@ -744,7 +772,6 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    typematch = true;
                     clrtype = parameterType;
                 }
             }
@@ -879,7 +906,7 @@ namespace Python.Runtime
                 {
                     msg.Append($": {list[0]}");
                 }
-                return Exceptions.RaiseTypeError(msg.ToString());;
+                return Exceptions.RaiseTypeError(msg.ToString());
             }
 
             Binding binding = Bind(inst, args, kw, info, methodinfo);
