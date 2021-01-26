@@ -86,7 +86,7 @@ namespace Python.Runtime
             }
 
             nint hash = Runtime.PyObject_Hash(handler);
-            if (hash == -1 || Exceptions.ErrorOccurred())
+            if (hash == -1 && Exceptions.ErrorOccurred())
             {
                 return false;
             }

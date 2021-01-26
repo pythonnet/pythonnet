@@ -83,6 +83,7 @@ namespace Python.Runtime
         /// <summary>
         /// Given a sequence of MethodInfo and a sequence of type parameters,
         /// return the MethodInfo that represents the matching closed generic.
+        /// If unsuccessful, returns null and may set a Python error.
         /// </summary>
         internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp)
         {
@@ -301,7 +302,8 @@ namespace Python.Runtime
             return Bind(inst, args, kw, info, null);
         }
 
-        private readonly struct MatchedMethod {
+        private readonly struct MatchedMethod
+        {
             public MatchedMethod(int kwargsMatched, int defaultsNeeded, object[] margs, int outs, MethodBase mb)
             {
                 KwargsMatched = kwargsMatched;
@@ -318,9 +320,21 @@ namespace Python.Runtime
             public MethodBase Method { get; }
         }
 
+        private readonly struct MismatchedMethod
+        {
+            public MismatchedMethod(PythonException exception, MethodBase mb)
+            {
+                Exception = exception;
+                Method = mb;
+            }
+
+            public PythonException Exception { get; }
+            public MethodBase Method { get; }
+        }
+
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
-            // loop to find match, return invoker w/ or /wo error
+            // loop to find match, return invoker w/ or w/o error
             MethodBase[] _methods = null;
 
             var kwargDict = new Dictionary<string, IntPtr>();
@@ -351,6 +365,7 @@ namespace Python.Runtime
             }
 
             var argMatchedMethods = new List<MatchedMethod>(_methods.Length);
+            var mismatchedMethods = new List<MismatchedMethod>();
 
             // TODO: Clean up
             foreach (MethodBase mi in _methods)
@@ -389,10 +404,11 @@ namespace Python.Runtime
                 var outs = 0;
                 var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
                     needsResolution: _methods.Length > 1,  // If there's more than one possible match.
-                    setError: _methods.Length == 1 && !isGeneric,   // True when there are no alternatives.
                     outs: out outs);
                 if (margs == null)
                 {
+                    mismatchedMethods.Add(new MismatchedMethod(new PythonException(), mi));
+                    Exceptions.Clear();
                     continue;
                 }
                 if (isOperator)
@@ -415,7 +431,7 @@ namespace Python.Runtime
                             }
                             margs = margsTemp;
                         }
-                        else { break; }
+                        else continue;
                     }
                 }
 
@@ -425,6 +441,7 @@ namespace Python.Runtime
             }
             if (argMatchedMethods.Count > 0)
             {
+                Exceptions.Clear();
                 var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
                 var fewestDefaultsRequired = argMatchedMethods.Where(x => x.KwargsMatched == bestKwargMatchCount).Min(x => x.DefaultsNeeded);
 
@@ -446,6 +463,13 @@ namespace Python.Runtime
                 {
                     // Best effort for determining method to match on gives multiple possible
                     // matches and we need at least one default argument - bail from this point
+                    StringBuilder stringBuilder = new StringBuilder("Not enough arguments provided to disambiguate the method.  Found:");
+                    foreach (var matchedMethod in argMatchedMethods)
+                    {
+                        stringBuilder.AppendLine();
+                        stringBuilder.Append(matchedMethod.Method.ToString());
+                    }
+                    Exceptions.SetError(Exceptions.TypeError, stringBuilder.ToString());
                     return null;
                 }
 
@@ -475,6 +499,7 @@ namespace Python.Runtime
                     // XXX maybe better to do this before all the other rigmarole.
                     if (co == null)
                     {
+                        Exceptions.SetError(Exceptions.TypeError, "Invoked a non-static method with an invalid instance");
                         return null;
                     }
                     target = co.inst;
@@ -482,17 +507,34 @@ namespace Python.Runtime
 
                 return new Binding(mi, target, margs, outs);
             }
-            // We weren't able to find a matching method but at least one
-            // is a generic method and info is null. That happens when a generic
-            // method was not called using the [] syntax. Let's introspect the
-            // type of the arguments and use it to construct the correct method.
-            if (isGeneric && info == null && methodinfo != null)
+            else if (isGeneric && info == null && methodinfo != null)
             {
+                // We weren't able to find a matching method but at least one
+                // is a generic method and info is null. That happens when a generic
+                // method was not called using the [] syntax. Let's introspect the
+                // type of the arguments and use it to construct the correct method.
                 Type[] types = Runtime.PythonArgsToTypeArray(args, true);
                 MethodInfo mi = MatchParameters(methodinfo, types);
-                return Bind(inst, args, kw, mi, null);
+                if (mi != null)
+                {
+                    return Bind(inst, args, kw, mi, null);
+                }
+            }
+            if (mismatchedMethods.Count == 1)
+            {
+                mismatchedMethods[0].Exception.Restore();
+            }
+            else if (mismatchedMethods.Count > 1)
+            {
+                var aggregateException = GetAggregateException(mismatchedMethods);
+                Exceptions.SetError(aggregateException);
             }
             return null;
+        }
+
+        static AggregateException GetAggregateException(IEnumerable<MismatchedMethod> mismatchedMethods)
+        {
+            return new AggregateException(mismatchedMethods.Select(m => new ArgumentException($"{m.Exception.Message} in method {m.Method}")));
         }
 
         static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool isNewReference)
@@ -537,7 +579,6 @@ namespace Python.Runtime
         /// <param name="kwargDict">Dictionary of keyword argument name to python object pointer</param>
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
-        /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>An array of .NET arguments, that can be passed to a method.</returns>
         static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
@@ -545,7 +586,6 @@ namespace Python.Runtime
             Dictionary<string, IntPtr> kwargDict,
             ArrayList defaultArgList,
             bool needsResolution,
-            bool setError,
             out int outs)
         {
             outs = 0;
@@ -586,7 +626,7 @@ namespace Python.Runtime
                 }
 
                 bool isOut;
-                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, setError, out margs[paramIndex], out isOut))
+                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut))
                 {
                     return null;
                 }
@@ -611,14 +651,13 @@ namespace Python.Runtime
         /// <summary>
         /// Try to convert a Python argument object to a managed CLR type.
         /// </summary>
-        /// <param name="op">Pointer to the object at a particular parameter.</param>
+        /// <param name="op">Pointer to the Python argument object.</param>
         /// <param name="parameterType">That parameter's managed type.</param>
-        /// <param name="needsResolution">There are multiple overloading methods that need resolution.</param>
-        /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
+        /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
         /// <param name="arg">Converted argument.</param>
         /// <param name="isOut">Whether the CLR type is passed by reference.</param>
         /// <returns></returns>
-        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution, bool setError,
+        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution, 
                                        out object arg, out bool isOut)
         {
             arg = null;
@@ -629,7 +668,7 @@ namespace Python.Runtime
                 return false;
             }
 
-            if (!Converter.ToManaged(op, clrtype, out arg, setError))
+            if (!Converter.ToManaged(op, clrtype, out arg, true))
             {
                 return false;
             }
@@ -638,6 +677,13 @@ namespace Python.Runtime
             return true;
         }
 
+        /// <summary>
+        /// Determine the managed type that a Python argument object needs to be converted into.
+        /// </summary>
+        /// <param name="parameterType">The parameter's managed type.</param>
+        /// <param name="argument">Pointer to the Python argument object.</param>
+        /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
+        /// <returns>null if conversion is not possible</returns>
         static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
         {
             // this logic below handles cases when multiple overloading methods
@@ -649,7 +695,6 @@ namespace Python.Runtime
             {
                 // HACK: each overload should be weighted in some way instead
                 pyoptype = Runtime.PyObject_Type(argument);
-                Exceptions.Clear();
                 if (pyoptype != IntPtr.Zero)
                 {
                     clrtype = Converter.GetTypeByAlias(pyoptype);
@@ -664,7 +709,6 @@ namespace Python.Runtime
                 {
                     IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
                     pyoptype = Runtime.PyObject_Type(argument);
-                    Exceptions.Clear();
                     if (pyoptype != IntPtr.Zero)
                     {
                         if (pytype != pyoptype)
@@ -680,12 +724,16 @@ namespace Python.Runtime
                     if (!typematch)
                     {
                         // this takes care of enum values
-                        TypeCode argtypecode = Type.GetTypeCode(parameterType);
-                        TypeCode paramtypecode = Type.GetTypeCode(clrtype);
-                        if (argtypecode == paramtypecode)
+                        TypeCode parameterTypeCode = Type.GetTypeCode(parameterType);
+                        TypeCode clrTypeCode = Type.GetTypeCode(clrtype);
+                        if (parameterTypeCode == clrTypeCode)
                         {
                             typematch = true;
                             clrtype = parameterType;
+                        }
+                        else
+                        {
+                            Exceptions.RaiseTypeError($"Expected {parameterTypeCode}, got {clrTypeCode}");
                         }
                     }
                     Runtime.XDecref(pyoptype);

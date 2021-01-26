@@ -157,8 +157,16 @@ namespace Python.Runtime
         public void Normalize()
         {
             IntPtr gs = PythonEngine.AcquireLock();
-            Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
-            PythonEngine.ReleaseLock(gs);
+            try
+            {
+                if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
+                // If an error is set and this PythonException is unnormalized, the error will be cleared and the PythonException will be replaced by a different error.
+                Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
+            }
+            finally
+            {
+                PythonEngine.ReleaseLock(gs);
+            }
         }
 
         /// <summary>

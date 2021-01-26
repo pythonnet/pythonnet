@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Python.Runtime
 {
@@ -76,11 +77,26 @@ namespace Python.Runtime
             {
                 message = e.Message;
             }
+            if (e is AggregateException ae)
+            {
+                message += GetAggregateExceptionString(ae);
+            }
             if (!string.IsNullOrEmpty(e.StackTrace))
             {
                 message = message + "\n" + e.StackTrace;
             }
             return Runtime.PyUnicode_FromString(message);
+        }
+
+        private static string GetAggregateExceptionString(AggregateException aggregateException)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            foreach(var innerException in aggregateException.InnerExceptions)
+            {
+                stringBuilder.AppendLine();
+                stringBuilder.Append(innerException.Message);
+            }
+            return stringBuilder.ToString();
         }
     }
 
@@ -181,6 +197,7 @@ namespace Python.Runtime
 
             if (e.InnerException != null)
             {
+                // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
                 IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
                 Marshal.WriteIntPtr(ob, ExceptionOffset.cause, cause);
             }
@@ -293,7 +310,7 @@ namespace Python.Runtime
         /// <summary>
         /// When called after SetError, sets the cause of the error.
         /// </summary>
-        /// <param name="cause"></param>
+        /// <param name="cause">The cause of the current error</param>
         public static void SetCause(PythonException cause)
         {
             var currentException = new PythonException();
