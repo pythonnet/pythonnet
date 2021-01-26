@@ -306,15 +306,14 @@ namespace Python.Runtime
                         var mod = ManagedType.GetManagedObject(module) as ModuleObject;
                         mod?.LoadNames();
                     }
-                    return Runtime.NewRef(module).DangerousMoveToPointer();
+                    return new NewReference(module).DangerousMoveToPointer();
                 }
                 if (clr_prefix != null)
                 {
                     return GetCLRModule(fromList).DangerousMoveToPointerOrNull();
                 }
                 module = Runtime.PyDict_GetItemString(modules, names[0]);
-                return Runtime.NewRefOrNull(module)
-                              .DangerousMoveToPointer();
+                return new NewReference(module, canBeNull: true).DangerousMoveToPointer();
             }
             Exceptions.Clear();
 

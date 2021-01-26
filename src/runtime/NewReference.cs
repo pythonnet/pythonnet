@@ -11,6 +11,16 @@ namespace Python.Runtime
     {
         IntPtr pointer;
 
+        /// <summary>Creates a <see cref="NewReference"/> pointing to the same object</summary>
+        public NewReference(BorrowedReference reference, bool canBeNull = false)
+        {
+            var address = canBeNull
+                ? reference.DangerousGetAddressOrNull()
+                : reference.DangerousGetAddress();
+            Runtime.XIncref(address);
+            this.pointer = address;
+        }
+
         [Pure]
         public static implicit operator BorrowedReference(in NewReference reference)
             => new BorrowedReference(reference.pointer);

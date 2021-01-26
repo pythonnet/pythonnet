@@ -66,9 +66,9 @@ namespace Python.Runtime
         {
             using (var s = new PyString(value))
             {
-                IntPtr val = Runtime.PyFloat_FromString(s.obj, IntPtr.Zero);
+                NewReference val = Runtime.PyFloat_FromString(s.Reference);
                 PythonException.ThrowIfIsNull(val);
-                return val;
+                return val.DangerousMoveToPointerOrNull();
             }
         }
 

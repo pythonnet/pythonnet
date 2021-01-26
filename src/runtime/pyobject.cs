@@ -272,7 +272,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            return Runtime.PyObject_HasAttr(obj, name.obj) != 0;
+            return Runtime.PyObject_HasAttr(Reference, name.Reference) != 0;
         }
 
 

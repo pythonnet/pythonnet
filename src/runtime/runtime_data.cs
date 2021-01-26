@@ -85,7 +85,7 @@ namespace Python.Runtime
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
             ClearCLRData();
-            #warning this leaks memory in mem
+
             NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
             PySys_SetObject("clr_data", capsule);
             // Let the dictionary own the reference

@@ -715,15 +715,6 @@ namespace Python.Runtime
 #endif
         }
 
-        internal static NewReference NewRef(BorrowedReference reference)
-        {
-            var address = reference.DangerousGetAddress();
-            XIncref(address);
-            return NewReference.DangerousFromPointer(address);
-        }
-        internal static NewReference NewRefOrNull(BorrowedReference reference)
-            => reference.IsNull ? default : NewRef(reference);
-
         /// <summary>
         /// Increase Python's ref counter for the given object, and get the object back.
         /// </summary>
@@ -1039,19 +1030,12 @@ namespace Python.Runtime
 
         internal static IntPtr PyObject_GetAttrString(IntPtr pointer, string name)
         {
-            IntPtr nameMem = Marshal.StringToHGlobalAnsi(name);
-            try
-            {
-                return Delegates.PyObject_GetAttrString(pointer, nameMem);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(nameMem);
-            }
+            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            return Delegates.PyObject_GetAttrString(pointer, namePtr);
         }
 
         
-        internal static IntPtr PyObject_GetAttrString(IntPtr pointer, IntPtr name) => Delegates.PyObject_GetAttrString(pointer, name);
+        internal static IntPtr PyObject_GetAttrString(IntPtr pointer, StrPtr name) => Delegates.PyObject_GetAttrString(pointer, name);
 
 
         internal static int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value)
@@ -1060,7 +1044,7 @@ namespace Python.Runtime
             return Delegates.PyObject_SetAttrString(pointer, namePtr, value);
         }
 
-        internal static int PyObject_HasAttr(IntPtr pointer, IntPtr name) => Delegates.PyObject_HasAttr(pointer, name);
+        internal static int PyObject_HasAttr(BorrowedReference pointer, BorrowedReference name) => Delegates.PyObject_HasAttr(pointer, name);
 
 
         internal static NewReference PyObject_GetAttr(BorrowedReference pointer, IntPtr name)
@@ -1324,7 +1308,7 @@ namespace Python.Runtime
         internal static IntPtr PyFloat_FromDouble(double value) => Delegates.PyFloat_FromDouble(value);
 
         
-        internal static IntPtr PyFloat_FromString(IntPtr value, IntPtr junk) => Delegates.PyFloat_FromString(value, junk);
+        internal static NewReference PyFloat_FromString(BorrowedReference value) => Delegates.PyFloat_FromString(value);
 
         
         internal static double PyFloat_AsDouble(IntPtr ob) => Delegates.PyFloat_AsDouble(ob);
@@ -1990,8 +1974,6 @@ namespace Python.Runtime
         //====================================================================
         // Python type object API
         //====================================================================
-        static readonly delegate* unmanaged[Cdecl]<IntPtr, bool> pyType_Check;
-
         internal static bool PyType_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, PyTypeType);
@@ -2272,7 +2254,7 @@ namespace Python.Runtime
             static Delegates()
             {
                 PyDictProxy_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyDictProxy_New), GetUnmanagedDll(_PythonDll));
-Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(Py_IncRef), GetUnmanagedDll(_PythonDll));
+                Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(Py_IncRef), GetUnmanagedDll(_PythonDll));
                 Py_DecRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(Py_DecRef), GetUnmanagedDll(_PythonDll));
                 Py_Initialize = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(Py_Initialize), GetUnmanagedDll(_PythonDll));
                 Py_InitializeEx = (delegate* unmanaged[Cdecl]<int, void>)GetFunctionByName(nameof(Py_InitializeEx), GetUnmanagedDll(_PythonDll));
@@ -2322,9 +2304,9 @@ Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(P
                 PyCFunction_Call = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCFunction_Call), GetUnmanagedDll(_PythonDll));
                 PyMethod_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyMethod_New), GetUnmanagedDll(_PythonDll));
                 PyObject_HasAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int>)GetFunctionByName(nameof(PyObject_HasAttrString), GetUnmanagedDll(_PythonDll));
-                PyObject_GetAttrString = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetAttrString), GetUnmanagedDll(_PythonDll));
+                PyObject_GetAttrString = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetAttrString), GetUnmanagedDll(_PythonDll));
                 PyObject_SetAttrString = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_SetAttrString), GetUnmanagedDll(_PythonDll));
-                PyObject_HasAttr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_HasAttr), GetUnmanagedDll(_PythonDll));
+                PyObject_HasAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_HasAttr), GetUnmanagedDll(_PythonDll));
                 PyObject_GetAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_GetAttr), GetUnmanagedDll(_PythonDll));
                 PyObject_SetAttr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_SetAttr), GetUnmanagedDll(_PythonDll));
                 PyObject_GetItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetItem), GetUnmanagedDll(_PythonDll));
@@ -2382,7 +2364,7 @@ Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(P
                 PyLong_FromVoidPtr = (delegate* unmanaged[Cdecl]<IntPtr, NewReference>)GetFunctionByName(nameof(PyLong_FromVoidPtr), GetUnmanagedDll(_PythonDll));
                 PyLong_AsVoidPtr = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyLong_AsVoidPtr), GetUnmanagedDll(_PythonDll));
                 PyFloat_FromDouble = (delegate* unmanaged[Cdecl]<double, IntPtr>)GetFunctionByName(nameof(PyFloat_FromDouble), GetUnmanagedDll(_PythonDll));
-                PyFloat_FromString = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyFloat_FromString), GetUnmanagedDll(_PythonDll));
+                PyFloat_FromString = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyFloat_FromString), GetUnmanagedDll(_PythonDll));
                 PyFloat_AsDouble = (delegate* unmanaged[Cdecl]<IntPtr, double>)GetFunctionByName(nameof(PyFloat_AsDouble), GetUnmanagedDll(_PythonDll));
                 PyNumber_Add = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyNumber_Add), GetUnmanagedDll(_PythonDll));
                 PyNumber_Subtract = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyNumber_Subtract), GetUnmanagedDll(_PythonDll));
@@ -2594,9 +2576,9 @@ Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(P
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyCFunction_Call { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyMethod_New { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int> PyObject_HasAttrString { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyObject_GetAttrString { get; }
+            internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr> PyObject_GetAttrString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr, int> PyObject_SetAttrString { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PyObject_HasAttr { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_HasAttr { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference> PyObject_GetAttr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int> PyObject_SetAttr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyObject_GetItem { get; }
@@ -2647,7 +2629,7 @@ Py_IncRef = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(P
             internal static delegate* unmanaged[Cdecl]<IntPtr, NewReference> PyLong_FromVoidPtr { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyLong_AsVoidPtr { get; }
             internal static delegate* unmanaged[Cdecl]<double, IntPtr> PyFloat_FromDouble { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyFloat_FromString { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyFloat_FromString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, double> PyFloat_AsDouble { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyNumber_Add { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyNumber_Subtract { get; }

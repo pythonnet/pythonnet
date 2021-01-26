@@ -241,9 +241,9 @@ namespace Python.Runtime
                     // return Runtime.PyFloat_FromDouble((double)((float)value));
                     string ss = ((float)value).ToString(nfi);
                     IntPtr ps = Runtime.PyString_FromString(ss);
-                    IntPtr op = Runtime.PyFloat_FromString(ps, IntPtr.Zero);
+                    NewReference op = Runtime.PyFloat_FromString(new BorrowedReference(ps));;
                     Runtime.XDecref(ps);
-                    return op;
+                    return op.DangerousMoveToPointerOrNull();
 
                 case TypeCode.Double:
                     return Runtime.PyFloat_FromDouble((double)value);

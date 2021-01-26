@@ -938,7 +938,7 @@ namespace Python.Runtime
             resRef.Dispose();
             BorrowedReference A = Runtime.PyDict_GetItemString(globals, "A");
             Debug.Assert(!A.IsNull);
-            return Runtime.NewRef(A).DangerousMoveToPointer();
+            return new NewReference(A).DangerousMoveToPointer();
         }
     }
 }
