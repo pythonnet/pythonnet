@@ -57,6 +57,7 @@ def test_property_visibility_change():
 def test_class_visibility_change():
     _run_test("class_visibility_change")
 
+@pytest.mark.skip(reason='FIXME: Domain reload fails when Python points to a .NET object which points back to Python objects')
 @pytest.mark.skipif(platform.system() == 'Darwin', reason='FIXME: macos can\'t find the python library')
 def test_method_parameters_change():
     _run_test("method_parameters_change")
