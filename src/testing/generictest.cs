@@ -35,6 +35,9 @@ namespace Python.Test
         }
     }
 
+    public class GenericTypeWithConstraint<T>
+        where T: struct
+    { }
 
     public class GenericNameTest1
     {
@@ -123,6 +126,14 @@ namespace Python.Test
         public static string Overloaded<Q>(int arg1, int arg2, string arg3)
         {
             return arg3;
+        }
+    }
+
+    public class GenericArrayConversionTest
+    {
+        public static T[] EchoRange<T>(T[] items)
+        {
+            return items;
         }
     }
 }

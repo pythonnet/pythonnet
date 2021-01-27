@@ -646,3 +646,21 @@ def test_inherited_indexer_interface():
     ifc = IInheritedIndexer(impl)
     ifc[0] = "zero"
     assert ifc[0] == "zero"
+
+def test_public_inherited_overloaded_indexer():
+    """Test public indexers."""
+    ob = Test.PublicInheritedOverloadedIndexer()
+
+    ob[0] = "zero"
+    assert ob[0] == "zero"
+
+    ob[1] = "one"
+    assert ob[1] == "one"
+
+    assert ob[10] is None
+
+    ob["spam"] = "spam"
+    assert ob["spam"] == "spam"
+
+    with pytest.raises(TypeError):
+        ob[[]]

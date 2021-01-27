@@ -332,7 +332,7 @@ namespace Python.Runtime
                 {
                     if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
                 }
-                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, false))
+                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, true))
                 {
                     return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
@@ -344,7 +344,7 @@ namespace Python.Runtime
                     {
                         if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
                     }
-                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, false))
+                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
                     {
                         return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
                     }

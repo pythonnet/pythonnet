@@ -1114,7 +1114,7 @@ namespace Python.Runtime
         private static extern IntPtr _PyObject_Size(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Hash(IntPtr op);
+        internal static extern nint PyObject_Hash(IntPtr op);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyObject_Repr(IntPtr pointer);
@@ -1947,8 +1947,11 @@ namespace Python.Runtime
             return (type == ofType) || PyType_IsSubtype(type, ofType);
         }
 
+        /// <summary>
+        /// Generic handler for the tp_new slot of a type object. Create a new instance using the type’s tp_alloc slot.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyType_GenericNew(IntPtr type, IntPtr args, IntPtr kw);
+        internal static extern IntPtr PyType_GenericNew(IntPtr type, IntPtr args, IntPtr kwds);
 
         internal static IntPtr PyType_GenericAlloc(IntPtr type, long n)
         {
@@ -2034,6 +2037,14 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyErr_GivenExceptionMatches(IntPtr ob, IntPtr val);
 
+        /// <summary>
+        /// Under certain circumstances, the values returned by PyErr_Fetch() below can be “unnormalized”,
+        /// meaning that *exc is a class object but *val is not an instance of the same class.
+        /// This function can be used to instantiate the class in that case.
+        /// If the values are already normalized, nothing happens.
+        /// The delayed normalization is implemented to improve performance.
+        /// Must not be called when an error is set.
+        /// </summary>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_NormalizeException(ref IntPtr ob, ref IntPtr val, ref IntPtr tb);
 
@@ -2051,6 +2062,12 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void PyErr_Print();
+
+        /// <summary>
+        /// Set the cause associated with the exception to cause. Use NULL to clear it. There is no type check to make sure that cause is either an exception instance or None. This steals a reference to cause.
+        /// </summary>
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void PyException_SetCause(IntPtr ex, IntPtr cause);
 
         //====================================================================
         // Cell API

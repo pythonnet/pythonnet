@@ -97,6 +97,7 @@ namespace Python.EmbeddingTest
             try
             {
                 PythonEngine.Exec("a=b\n");
+                Assert.Fail("Exception should have been raised");
             }
             catch (PythonException ex)
             {
@@ -134,6 +135,15 @@ class TestException(NameError):
                     Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
                 }
             }
+        }
+
+        [Test]
+        public void TestPythonException_Normalize_ThrowsWhenErrorSet()
+        {
+            Exceptions.SetError(Exceptions.TypeError, "Error!");
+            var pythonException = new PythonException();
+            Exceptions.SetError(Exceptions.TypeError, "Another error");
+            Assert.Throws<InvalidOperationException>(() => pythonException.Normalize());
         }
     }
 }

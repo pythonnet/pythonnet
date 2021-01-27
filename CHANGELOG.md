@@ -31,6 +31,7 @@ details about the cause of the failure
 -   `PyObject` now implements `IEnumerable<PyObject>` in addition to `IEnumerable`
 -   floating point values passed from Python are no longer silently truncated
 when .NET expects an integer [#1342][i1342]
+-   More specific error messages for method argument mismatch
 
 ### Fixed
 
@@ -49,6 +50,7 @@ when .NET expects an integer [#1342][i1342]
 -    Fixed objects returned by enumerating `PyObject` being disposed too soon
 -    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
 -   `import` may now raise errors with more detail than "No module named X"
+-    Providing an invalid type parameter to a generic type or method produces a helpful Python error
 
 ### Removed
 

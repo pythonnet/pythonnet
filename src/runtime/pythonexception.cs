@@ -36,6 +36,7 @@ namespace Python.Runtime
 
                 _pythonTypeName = type;
 
+                // TODO: If pyValue has a __cause__ attribute, then we could set this.InnerException to the equivalent managed exception.
                 Runtime.XIncref(_pyValue);
                 using (var pyValue = new PyObject(_pyValue))
                 {
@@ -146,6 +147,26 @@ namespace Python.Runtime
         public string PythonTypeName
         {
             get { return _pythonTypeName; }
+        }
+
+        /// <summary>
+        /// Replaces PyValue with an instance of PyType, if PyValue is not already an instance of PyType.
+        /// Often PyValue is a string and this method will replace it with a proper exception object.
+        /// Must not be called when an error is set.
+        /// </summary>
+        public void Normalize()
+        {
+            IntPtr gs = PythonEngine.AcquireLock();
+            try
+            {
+                if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
+                // If an error is set and this PythonException is unnormalized, the error will be cleared and the PythonException will be replaced by a different error.
+                Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
+            }
+            finally
+            {
+                PythonEngine.ReleaseLock(gs);
+            }
         }
 
         /// <summary>
