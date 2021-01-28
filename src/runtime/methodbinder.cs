@@ -960,16 +960,12 @@ namespace Python.Runtime
             }
 
             // If there are out parameters, we return a tuple containing
-            // the result followed by the out parameters. If there is only
+            // the result, if any, followed by the out parameters. If there is only
             // one out parameter and the return type of the method is void,
             // we return the out parameter as the result to Python (for
             // code compatibility with ironpython).
 
             var mi = (MethodInfo)binding.info;
-
-            if (binding.outs == 1 && mi.ReturnType == typeof(void))
-            {
-            }
 
             if (binding.outs > 0)
             {
@@ -977,17 +973,22 @@ namespace Python.Runtime
                 int c = pi.Length;
                 var n = 0;
 
-                IntPtr t = Runtime.PyTuple_New(binding.outs + 1);
-                IntPtr v = Converter.ToPython(result, mi.ReturnType);
-                Runtime.PyTuple_SetItem(t, n, v);
-                n++;
+                bool isVoid = mi.ReturnType == typeof(void);
+                int tupleSize = binding.outs + (isVoid ? 0 : 1);
+                IntPtr t = Runtime.PyTuple_New(tupleSize);
+                if (!isVoid)
+                {
+                    IntPtr v = Converter.ToPython(result, mi.ReturnType);
+                    Runtime.PyTuple_SetItem(t, n, v);
+                    n++;
+                }
 
                 for (var i = 0; i < c; i++)
                 {
                     Type pt = pi[i].ParameterType;
-                    if (pi[i].IsOut || pt.IsByRef)
+                    if (pt.IsByRef)
                     {
-                        v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                        IntPtr v = Converter.ToPython(binding.args[i], pt.GetElementType());
                         Runtime.PyTuple_SetItem(t, n, v);
                         n++;
                     }
@@ -995,7 +996,7 @@ namespace Python.Runtime
 
                 if (binding.outs == 1 && mi.ReturnType == typeof(void))
                 {
-                    v = Runtime.PyTuple_GetItem(t, 1);
+                    IntPtr v = Runtime.PyTuple_GetItem(t, 0);
                     Runtime.XIncref(v);
                     Runtime.XDecref(t);
                     return v;

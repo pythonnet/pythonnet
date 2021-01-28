@@ -276,6 +276,166 @@ def test_invalid_object_delegate():
     with pytest.raises(TypeError):
         ob.CallObjectDelegate(d)
 
+def test_out_int_delegate():
+    """Test delegate with an out int parameter."""
+    from Python.Test import OutIntDelegate
+    value = 7
+
+    def out_hello_func(ignored):
+        return 5
+
+    d = OutIntDelegate(out_hello_func)
+    result = d(value)
+    assert result == 5
+
+    ob = DelegateTest()
+    result = ob.CallOutIntDelegate(d, value)
+    assert result == 5
+
+    def invalid_handler(ignored):
+        return '5'
+
+    d = OutIntDelegate(invalid_handler)
+    with pytest.raises(TypeError):
+        result = d(value)
+
+def test_out_string_delegate():
+    """Test delegate with an out string parameter."""
+    from Python.Test import OutStringDelegate
+    value = 'goodbye'
+
+    def out_hello_func(ignored):
+        return 'hello'
+
+    d = OutStringDelegate(out_hello_func)
+    result = d(value)
+    assert result == 'hello'
+
+    ob = DelegateTest()
+    result = ob.CallOutStringDelegate(d, value)
+    assert result == 'hello'
+
+def test_ref_int_delegate():
+    """Test delegate with a ref string parameter."""
+    from Python.Test import RefIntDelegate
+    value = 7
+
+    def ref_hello_func(data):
+        assert data == value
+        return data + 1
+
+    d = RefIntDelegate(ref_hello_func)
+    result = d(value)
+    assert result == value + 1
+
+    ob = DelegateTest()
+    result = ob.CallRefIntDelegate(d, value)
+    assert result == value + 1
+
+def test_ref_string_delegate():
+    """Test delegate with a ref string parameter."""
+    from Python.Test import RefStringDelegate
+    value = 'goodbye'
+
+    def ref_hello_func(data):
+        assert data == value
+        return 'hello'
+
+    d = RefStringDelegate(ref_hello_func)
+    result = d(value)
+    assert result == 'hello'
+
+    ob = DelegateTest()
+    result = ob.CallRefStringDelegate(d, value)
+    assert result == 'hello'
+
+def test_ref_int_ref_string_delegate():
+    """Test delegate with a ref int and ref string parameter."""
+    from Python.Test import RefIntRefStringDelegate
+    intData = 7
+    stringData = 'goodbye'
+
+    def ref_hello_func(intValue, stringValue):
+        assert intData == intValue
+        assert stringData == stringValue
+        return (intValue + 1, stringValue + '!')
+
+    d = RefIntRefStringDelegate(ref_hello_func)
+    result = d(intData, stringData)
+    assert result == (intData + 1, stringData + '!')
+
+    ob = DelegateTest()
+    result = ob.CallRefIntRefStringDelegate(d, intData, stringData)
+    assert result == (intData + 1, stringData + '!')
+
+    def not_a_tuple(intValue, stringValue):
+        return 'a'
+
+    d = RefIntRefStringDelegate(not_a_tuple)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
+    def short_tuple(intValue, stringValue):
+        return (5,)
+
+    d = RefIntRefStringDelegate(short_tuple)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
+    def long_tuple(intValue, stringValue):
+        return (5, 'a', 'b')
+
+    d = RefIntRefStringDelegate(long_tuple)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
+    def wrong_tuple_item(intValue, stringValue):
+        return ('a', 'b')
+
+    d = RefIntRefStringDelegate(wrong_tuple_item)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
+def test_int_ref_int_ref_string_delegate():
+    """Test delegate with a ref int and ref string parameter."""
+    from Python.Test import IntRefIntRefStringDelegate
+    intData = 7
+    stringData = 'goodbye'
+
+    def ref_hello_func(intValue, stringValue):
+        assert intData == intValue
+        assert stringData == stringValue
+        return (intValue + len(stringValue), intValue + 1, stringValue + '!')
+
+    d = IntRefIntRefStringDelegate(ref_hello_func)
+    result = d(intData, stringData)
+    assert result == (intData + len(stringData), intData + 1, stringData + '!')
+
+    ob = DelegateTest()
+    result = ob.CallIntRefIntRefStringDelegate(d, intData, stringData)
+    assert result == (intData + len(stringData), intData + 1, stringData + '!')
+
+    def not_a_tuple(intValue, stringValue):
+        return 'a'
+
+    d = IntRefIntRefStringDelegate(not_a_tuple)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
+    def short_tuple(intValue, stringValue):
+        return (5,)
+
+    d = IntRefIntRefStringDelegate(short_tuple)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
+    def wrong_return_type(intValue, stringValue):
+        return ('a', 7, 'b')
+
+    d = IntRefIntRefStringDelegate(wrong_return_type)
+    with pytest.raises(TypeError):
+        result = d(intData, stringData)
+
     # test async delegates
 
     # test multicast delegates

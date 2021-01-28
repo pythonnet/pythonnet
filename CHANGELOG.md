@@ -12,6 +12,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
 -   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
 -   Add GetPythonThreadID and Interrupt methods in PythonEngine
+-   Ability to implement delegates with `ref` and `out` parameters in Python, by returning the modified parameter values in a tuple. ([#1355][i1355])
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
@@ -32,6 +33,7 @@ details about the cause of the failure
 -   floating point values passed from Python are no longer silently truncated
 when .NET expects an integer [#1342][i1342]
 -   More specific error messages for method argument mismatch
+-   BREAKING: Methods with `ref` or `out` parameters and void return type return a tuple of only the `ref` and `out` parameters.
 
 ### Fixed
 
@@ -48,8 +50,8 @@ when .NET expects an integer [#1342][i1342]
 -    Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
 -    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
 -    Fixed objects returned by enumerating `PyObject` being disposed too soon
--    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
--   `import` may now raise errors with more detail than "No module named X"
+-    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException ([#1325][i1325])
+-    `import` may now raise errors with more detail than "No module named X"
 -    Providing an invalid type parameter to a generic type or method produces a helpful Python error
 
 ### Removed

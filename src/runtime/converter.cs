@@ -338,9 +338,9 @@ namespace Python.Runtime
 
             if (mt != null)
             {
-                if (mt is CLRObject)
+                if (mt is CLRObject co)
                 {
-                    object tmp = ((CLRObject)mt).inst;
+                    object tmp = co.inst;
                     if (obType.IsInstanceOfType(tmp))
                     {
                         result = tmp;
@@ -348,13 +348,13 @@ namespace Python.Runtime
                     }
                     if (setError)
                     {
-                        Exceptions.SetError(Exceptions.TypeError, $"value cannot be converted to {obType}");
+                        string typeString = tmp is null ? "null" : tmp.GetType().ToString();
+                        Exceptions.SetError(Exceptions.TypeError, $"{typeString} value cannot be converted to {obType}");
                     }
                     return false;
                 }
-                if (mt is ClassBase)
+                if (mt is ClassBase cb)
                 {
-                    var cb = (ClassBase)mt;
                     if (!cb.type.Valid)
                     {
                         Exceptions.SetError(Exceptions.TypeError, cb.type.DeletedMessage);

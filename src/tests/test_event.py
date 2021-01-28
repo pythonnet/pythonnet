@@ -295,6 +295,41 @@ def test_function_handler():
     ob.OnPublicEvent(EventArgsTest(20))
     assert dict_['value'] == 10
 
+def test_out_function_handler():
+    """Test function handlers with Out arguments."""
+    ob = EventTest()
+
+    value = 10
+    def handler(ignored):
+        return value
+
+    ob.OutIntEvent += handler
+    result = ob.OnOutIntEvent(55)
+    assert result == value
+
+    ob.OutStringEvent += handler
+    value = 'This is the event data'
+    result = ob.OnOutStringEvent('Hello')
+    assert result == value
+
+def test_ref_function_handler():
+    """Test function handlers with Ref arguments."""
+    ob = EventTest()
+
+    value = 10
+    def handler(data):
+        return value + data
+
+    ob.RefIntEvent += ob.RefIntHandler
+    ob.RefIntEvent += handler
+    result = ob.OnRefIntEvent(5)
+    assert result == value + 5 + 1
+
+    ob.RefStringEvent += ob.RefStringHandler
+    ob.RefStringEvent += handler
+    value = 'This is the event data'
+    result = ob.OnRefStringEvent('!')
+    assert result == value + '!!'
 
 def test_add_non_callable_handler():
     """Test handling of attempts to add non-callable handlers."""
