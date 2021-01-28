@@ -1,7 +1,9 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text;
 
 namespace Python.Runtime
 {
@@ -11,23 +13,20 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateManager
     {
-        private Hashtable cache;
-        private Type basetype;
-        private Type listtype;
-        private Type voidtype;
-        private Type typetype;
-        private Type ptrtype;
-        private CodeGenerator codeGenerator;
+        private readonly Dictionary<Type,Type> cache = new Dictionary<Type, Type>();
+        private readonly Type basetype = typeof(Dispatcher);
+        private readonly Type arrayType = typeof(object[]);
+        private readonly Type voidtype = typeof(void);
+        private readonly Type typetype = typeof(Type);
+        private readonly Type ptrtype = typeof(IntPtr);
+        private readonly CodeGenerator codeGenerator = new CodeGenerator();
+        private readonly ConstructorInfo arrayCtor;
+        private readonly MethodInfo dispatch;
 
         public DelegateManager()
         {
-            basetype = typeof(Dispatcher);
-            listtype = typeof(ArrayList);
-            voidtype = typeof(void);
-            typetype = typeof(Type);
-            ptrtype = typeof(IntPtr);
-            cache = new Hashtable();
-            codeGenerator = new CodeGenerator();
+            arrayCtor = arrayType.GetConstructor(new[] { typeof(int) });
+            dispatch = basetype.GetMethod("Dispatch");
         }
 
         /// <summary>
@@ -58,10 +57,9 @@ namespace Python.Runtime
             // unique signatures rather than delegate types, since multiple
             // delegate types with the same sig could use the same dispatcher.
 
-            object item = cache[dtype];
-            if (item != null)
+            if (cache.TryGetValue(dtype, out Type item))
             {
-                return (Type)item;
+                return item;
             }
 
             string name = $"__{dtype.FullName}Dispatcher";
@@ -103,33 +101,76 @@ namespace Python.Runtime
 
             MethodBuilder mb = tb.DefineMethod("Invoke", MethodAttributes.Public, method.ReturnType, signature);
 
-            ConstructorInfo ctor = listtype.GetConstructor(Type.EmptyTypes);
-            MethodInfo dispatch = basetype.GetMethod("Dispatch");
-            MethodInfo add = listtype.GetMethod("Add");
-
             il = mb.GetILGenerator();
-            il.DeclareLocal(listtype);
-            il.Emit(OpCodes.Newobj, ctor);
+            // loc_0 = new object[pi.Length]
+            il.DeclareLocal(arrayType);
+            il.Emit(OpCodes.Ldc_I4, pi.Length);
+            il.Emit(OpCodes.Newobj, arrayCtor);
             il.Emit(OpCodes.Stloc_0);
+
+            bool anyByRef = false;
 
             for (var c = 0; c < signature.Length; c++)
             {
                 Type t = signature[c];
                 il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldarg_S, (byte)(c + 1));
+
+                if (t.IsByRef)
+                {
+                    // The argument is a pointer.  We must dereference the pointer to get the value or object it points to.
+                    t = t.GetElementType();
+                    if (t.IsValueType)
+                    {
+                        il.Emit(OpCodes.Ldobj, t);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldind_Ref);
+                    }
+                    anyByRef = true;
+                }
 
                 if (t.IsValueType)
                 {
                     il.Emit(OpCodes.Box, t);
                 }
 
-                il.Emit(OpCodes.Callvirt, add);
-                il.Emit(OpCodes.Pop);
+                // args[c] = arg
+                il.Emit(OpCodes.Stelem_Ref);
             }
 
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Call, dispatch);
+
+            if (anyByRef)
+            {
+                // Dispatch() will have modified elements of the args list that correspond to out parameters.
+                for (var c = 0; c < signature.Length; c++)
+                {
+                    Type t = signature[c];
+                    if (t.IsByRef)
+                    {
+                        t = t.GetElementType();
+                        // *arg = args[c]
+                        il.Emit(OpCodes.Ldarg_S, (byte)(c + 1));
+                        il.Emit(OpCodes.Ldloc_0);
+                        il.Emit(OpCodes.Ldc_I4, c);
+                        il.Emit(OpCodes.Ldelem_Ref);
+                        if (t.IsValueType)
+                        {
+                            il.Emit(OpCodes.Unbox_Any, t);
+                            il.Emit(OpCodes.Stobj, t);
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Stind_Ref);
+                        }
+                    }
+                }
+            }
 
             if (method.ReturnType == voidtype)
             {
@@ -218,7 +259,7 @@ namespace Python.Runtime
             GC.SuppressFinalize(this);
         }
 
-        public object Dispatch(ArrayList args)
+        public object Dispatch(object[] args)
         {
             IntPtr gs = PythonEngine.AcquireLock();
             object ob;
@@ -235,7 +276,7 @@ namespace Python.Runtime
             return ob;
         }
 
-        public object TrueDispatch(ArrayList args)
+        private object TrueDispatch(object[] args)
         {
             MethodInfo method = dtype.GetMethod("Invoke");
             ParameterInfo[] pi = method.GetParameters();
@@ -259,20 +300,108 @@ namespace Python.Runtime
                 throw e;
             }
 
-            if (rtype == typeof(void))
+            try
             {
-                return null;
-            }
+                int byRefCount = pi.Count(parameterInfo => parameterInfo.ParameterType.IsByRef);
+                if (byRefCount > 0)
+                {
+                    // By symmetry with MethodBinder.Invoke, when there are out
+                    // parameters we expect to receive a tuple containing
+                    // the result, if any, followed by the out parameters. If there is only
+                    // one out parameter and the return type of the method is void,
+                    // we instead receive the out parameter as the result from Python.
 
-            object result;
-            if (!Converter.ToManaged(op, rtype, out result, true))
+                    bool isVoid = rtype == typeof(void);
+                    int tupleSize = byRefCount + (isVoid ? 0 : 1);
+                    if (isVoid && byRefCount == 1)
+                    {
+                        // The return type is void and there is a single out parameter.
+                        for (int i = 0; i < pi.Length; i++)
+                        {
+                            Type t = pi[i].ParameterType;
+                            if (t.IsByRef)
+                            {
+                                if (!Converter.ToManaged(op, t, out object newArg, true))
+                                {
+                                    Exceptions.RaiseTypeError($"The Python function did not return {t.GetElementType()} (the out parameter type)");
+                                    throw new PythonException();
+                                }
+                                args[i] = newArg;
+                                break;
+                            }
+                        }
+                        return null;
+                    }
+                    else if (Runtime.PyTuple_Check(op) && Runtime.PyTuple_Size(op) == tupleSize)
+                    {
+                        int index = isVoid ? 0 : 1;
+                        for (int i = 0; i < pi.Length; i++)
+                        {
+                            Type t = pi[i].ParameterType;
+                            if (t.IsByRef)
+                            {
+                                IntPtr item = Runtime.PyTuple_GetItem(op, index++);
+                                if (!Converter.ToManaged(item, t, out object newArg, true))
+                                {
+                                    Exceptions.RaiseTypeError($"The Python function returned a tuple where element {i} was not {t.GetElementType()} (the out parameter type)");
+                                    throw new PythonException();
+                                }
+                                args[i] = newArg;
+                            }
+                        }
+                        if (isVoid)
+                        {
+                            return null;
+                        }
+                        IntPtr item0 = Runtime.PyTuple_GetItem(op, 0);
+                        if (!Converter.ToManaged(item0, rtype, out object result0, true))
+                        {
+                            Exceptions.RaiseTypeError($"The Python function returned a tuple where element 0 was not {rtype} (the return type)");
+                            throw new PythonException();
+                        }
+                        return result0;
+                    }
+                    else
+                    {
+                        string tpName = Runtime.PyObject_GetTypeName(op);
+                        if (Runtime.PyTuple_Check(op))
+                        {
+                            tpName += $" of size {Runtime.PyTuple_Size(op)}";
+                        }
+                        StringBuilder sb = new StringBuilder();
+                        if (!isVoid) sb.Append(rtype.FullName);
+                        for (int i = 0; i < pi.Length; i++)
+                        {
+                            Type t = pi[i].ParameterType;
+                            if (t.IsByRef)
+                            {
+                                if (sb.Length > 0) sb.Append(",");
+                                sb.Append(t.GetElementType().FullName);
+                            }
+                        }
+                        string returnValueString = isVoid ? "" : "the return value and ";
+                        Exceptions.RaiseTypeError($"Expected a tuple ({sb}) of {returnValueString}the values for out and ref parameters, got {tpName}.");
+                        throw new PythonException();
+                    }
+                }
+
+                if (rtype == typeof(void))
+                {
+                    return null;
+                }
+
+                object result;
+                if (!Converter.ToManaged(op, rtype, out result, true))
+                {
+                    throw new PythonException();
+                }
+
+                return result;
+            }
+            finally
             {
                 Runtime.XDecref(op);
-                throw new PythonException();
             }
-
-            Runtime.XDecref(op);
-            return result;
         }
     }
 }
