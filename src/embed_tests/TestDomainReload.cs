@@ -332,7 +332,7 @@ obj.Field += 10
             // assembly (and Python .NET) to reside
             var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
 
-            theProxy.Call("InitPython", ShutdownMode.Soft);
+            theProxy.Call(nameof(PythonRunner.InitPython), ShutdownMode.Soft, PyRuntime.PythonDLL);
             // From now on use the Proxy to call into the new assembly
             theProxy.RunPython();
 
@@ -400,7 +400,7 @@ obj.Field += 10
                 try
                 {
                     var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
-                    theProxy.Call("InitPython", ShutdownMode.Reload);
+                    theProxy.Call(nameof(PythonRunner.InitPython), ShutdownMode.Reload, PyRuntime.PythonDLL);
 
                     var caller = CreateInstanceInstanceAndUnwrap<T1>(domain);
                     arg = caller.Execute(arg);
@@ -418,7 +418,7 @@ obj.Field += 10
                 try
                 {
                     var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
-                    theProxy.Call("InitPython", ShutdownMode.Reload);
+                    theProxy.Call(nameof(PythonRunner.InitPython), ShutdownMode.Reload, PyRuntime.PythonDLL);
 
                     var caller = CreateInstanceInstanceAndUnwrap<T2>(domain);
                     caller.Execute(arg);
@@ -478,8 +478,9 @@ obj.Field += 10
 
         private static IntPtr _state;
 
-        public static void InitPython(ShutdownMode mode)
+        public static void InitPython(ShutdownMode mode, string dllName)
         {
+            PyRuntime.PythonDLL = dllName;
             PythonEngine.Initialize(mode: mode);
             _state = PythonEngine.BeginAllowThreads();
         }

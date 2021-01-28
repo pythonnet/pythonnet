@@ -18,6 +18,7 @@ namespace Python.Runtime
 
         internal string moduleName;
         internal IntPtr dict;
+        internal BorrowedReference DictRef => new BorrowedReference(dict);
         protected string _namespace;
 
         public ModuleObject(string name)
@@ -44,17 +45,14 @@ namespace Python.Runtime
             }
 
             dict = Runtime.PyDict_New();
-            IntPtr pyname = Runtime.PyString_FromString(moduleName);
-            IntPtr pyfilename = Runtime.PyString_FromString(filename);
-            IntPtr pydocstring = Runtime.PyString_FromString(docstring);
-            IntPtr pycls = TypeManager.GetTypeHandle(GetType());
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__name__, pyname);
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__file__, pyfilename);
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, pydocstring);
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__class__, pycls);
-            Runtime.XDecref(pyname);
-            Runtime.XDecref(pyfilename);
-            Runtime.XDecref(pydocstring);
+            using var pyname = NewReference.DangerousFromPointer(Runtime.PyString_FromString(moduleName));
+            using var pyfilename = NewReference.DangerousFromPointer(Runtime.PyString_FromString(filename));
+            using var pydocstring = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docstring));
+            BorrowedReference pycls = TypeManager.GetTypeReference(GetType());
+            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__name__, pyname);
+            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__file__, pyfilename);
+            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__doc__, pydocstring);
+            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__class__, pycls);
 
             Runtime.XIncref(dict);
             SetObjectDict(pyHandle, dict);
@@ -177,9 +175,9 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                IntPtr attr = Runtime.PyDict_GetItemString(dict, name);
+                BorrowedReference attr = Runtime.PyDict_GetItemString(DictRef, name);
                 // If __dict__ has already set a custom property, skip it.
-                if (attr != IntPtr.Zero)
+                if (!attr.IsNull)
                 {
                     continue;
                 }
@@ -344,7 +342,7 @@ namespace Python.Runtime
             // destroy the cache(s)
             foreach (var pair in cache)
             {
-                if ((Runtime.PyDict_DelItemString(dict, pair.Key) == -1) &&
+                if ((Runtime.PyDict_DelItemString(DictRef, pair.Key) == -1) &&
                     (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                 {
                     // Trying to remove a key that's not in the dictionary 

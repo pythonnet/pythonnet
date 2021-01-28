@@ -194,13 +194,15 @@ namespace Python.Runtime
         /// Shortcut for (pointer == NULL) -&gt; throw PythonException
         /// </summary>
         /// <param name="pointer">Pointer to a Python object</param>
-        internal static void ErrorCheck(IntPtr pointer)
+        internal static void ErrorCheck(BorrowedReference pointer)
         {
-            if (pointer == IntPtr.Zero)
+            if (pointer.IsNull)
             {
                 throw new PythonException();
             }
         }
+
+        internal static void ErrorCheck(IntPtr pointer) => ErrorCheck(new BorrowedReference(pointer));
 
         /// <summary>
         /// Shortcut for (pointer == NULL or ErrorOccurred()) -&gt; throw PythonException

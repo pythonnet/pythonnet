@@ -14,14 +14,8 @@
     <InterpreterId />
     <InterpreterVersion />
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'DebugMono'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'DebugWin'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'ReleaseMono'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'ReleaseWin'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'DebugMonoPY3'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'DebugWinPY3'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'ReleaseMonoPY3'" />
-  <PropertyGroup Condition="'$(Configuration)' == 'ReleaseWinPY3'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <PropertyGroup>
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>

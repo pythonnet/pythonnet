@@ -117,7 +117,7 @@ namespace Python.Runtime
                 // Python object's dictionary tool; thus raising an AttributeError
                 // instead of a TypeError.
                 // Classes are re-initialized on in RestoreRuntimeData.
-                IntPtr dict = Marshal.ReadIntPtr(cls.Value.tpHandle, TypeOffset.tp_dict);
+                var dict = new BorrowedReference(Marshal.ReadIntPtr(cls.Value.tpHandle, TypeOffset.tp_dict));
                 foreach (var member in cls.Value.dotNetMembers)
                 {
                     // No need to decref the member, the ClassBase instance does 
@@ -269,7 +269,7 @@ namespace Python.Runtime
             IntPtr tp = TypeManager.GetTypeHandle(impl, type);
 
             // Finally, initialize the class __dict__ and return the object.
-            IntPtr dict = Marshal.ReadIntPtr(tp, TypeOffset.tp_dict);
+            var dict = new BorrowedReference(Marshal.ReadIntPtr(tp, TypeOffset.tp_dict));
 
 
             if (impl.dotNetMembers == null)
@@ -282,7 +282,7 @@ namespace Python.Runtime
                 var item = (ManagedType)iter.Value;
                 var name = (string)iter.Key;
                 impl.dotNetMembers.Add(name);
-                Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
+                Runtime.PyDict_SetItemString(dict, name, item.ObjectReference);
                 // Decref the item now that it's been used.
                 item.DecrRefCount();
                 if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)) {
@@ -291,20 +291,15 @@ namespace Python.Runtime
             }
 
             // If class has constructors, generate an __doc__ attribute.
-            IntPtr doc = IntPtr.Zero;
+            NewReference doc = default;
             Type marker = typeof(DocStringAttribute);
             var attrs = (Attribute[])type.GetCustomAttributes(marker, false);
-            if (attrs.Length == 0)
-            {
-                doc = IntPtr.Zero;
-            }
-            else
+            if (attrs.Length != 0)
             {
                 var attr = (DocStringAttribute)attrs[0];
                 string docStr = attr.DocString;
-                doc = Runtime.PyString_FromString(docStr);
+                doc = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docStr));
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc);
-                Runtime.XDecref(doc);
             }
 
             var co = impl as ClassObject;
@@ -320,20 +315,21 @@ namespace Python.Runtime
                         var ctors = new ConstructorBinding(type, tp, co.binder);
                         // ExtensionType types are untracked, so don't Incref() them.
                         // TODO: deprecate __overloads__ soon...
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.pyHandle);
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.pyHandle);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.ObjectReference);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.ObjectReference);
                         ctors.DecrRefCount();
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.
-                    if (!CLRModule._SuppressDocs && doc == IntPtr.Zero)
+                    if (!CLRModule._SuppressDocs && doc.IsNull())
                     {
                         doc = co.GetDocString();
                         Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc);
-                        Runtime.XDecref(doc);
                     }
                 }
             }
+            doc.Dispose();
+
             // The type has been modified after PyType_Ready has been called
             // Refresh the type
             Runtime.PyType_Modified(tp);

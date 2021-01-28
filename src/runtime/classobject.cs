@@ -31,7 +31,7 @@ namespace Python.Runtime
         /// <summary>
         /// Helper to get docstring from reflected constructor info.
         /// </summary>
-        internal IntPtr GetDocString()
+        internal NewReference GetDocString()
         {
             MethodBase[] methods = binder.GetMethods();
             var str = "";
@@ -43,7 +43,7 @@ namespace Python.Runtime
                 }
                 str += t.ToString();
             }
-            return Runtime.PyString_FromString(str);
+            return NewReference.DangerousFromPointer(Runtime.PyString_FromString(str));
         }
 
 

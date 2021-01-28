@@ -206,8 +206,9 @@ namespace Python.Runtime
         public static int ob_type;
         private static readonly int size;
 
-        private static bool IsException(IntPtr pyObject)
+        private static bool IsException(IntPtr pyObjectPtr)
         {
+            var pyObject = new BorrowedReference(pyObjectPtr);
             var type = Runtime.PyObject_TYPE(pyObject);
             return Runtime.PyType_IsSameAsOrSubtype(type, ofType: Exceptions.BaseException)
                 || Runtime.PyType_IsSameAsOrSubtype(type, ofType: Runtime.PyTypeType)

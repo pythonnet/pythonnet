@@ -19,20 +19,20 @@ namespace Python.Runtime
                 throw new Exception("Runtime State set already");
             }
 
-            IntPtr objs = IntPtr.Zero;
+            NewReference objs = default;
             if (ShouldRestoreObjects)
             {
-                objs = PySet_New(IntPtr.Zero);
-                foreach (var obj in PyGCGetObjects())
+                objs = PySet_New(default);
+                foreach (var objRaw in PyGCGetObjects())
                 {
-                    AddObjPtrToSet(objs, obj);
+                    AddObjPtrToSet(objs, new BorrowedReference(objRaw));
                 }
             }
 
-            var modules = PySet_New(IntPtr.Zero);
+            var modules = PySet_New(default);
             foreach (var name in GetModuleNames())
             {
-                int res = PySet_Add(modules, name);
+                int res = PySet_Add(modules, new BorrowedReference(name));
                 PythonException.ThrowIfIsNotZero(res);
             }
 
@@ -46,10 +46,9 @@ namespace Python.Runtime
                 head->gc.gc_refs = IntPtr.Zero;
             }
             {
-                var pyDummyGC = PyLong_FromVoidPtr(dummyGCHead);
+                using var pyDummyGC = PyLong_FromVoidPtr(dummyGCHead);
                 int res = PySys_SetObject("dummy_gc", pyDummyGC);
                 PythonException.ThrowIfIsNotZero(res);
-                XDecref(pyDummyGC);
 
                 try
                 {
@@ -58,7 +57,7 @@ namespace Python.Runtime
                 }
                 finally
                 {
-                    XDecref(modules);
+                    modules.Dispose();
                 }
 
                 if (ShouldRestoreObjects)
@@ -71,7 +70,7 @@ namespace Python.Runtime
                     }
                     finally
                     {
-                        XDecref(objs);
+                        objs.Dispose();
                     }
                 }
             }
@@ -79,8 +78,8 @@ namespace Python.Runtime
 
         public static void Restore()
         {
-            var dummyGCAddr = PySys_GetObject("dummy_gc").DangerousGetAddress();
-            if (dummyGCAddr == IntPtr.Zero)
+            var dummyGCAddr = PySys_GetObject("dummy_gc");
+            if (dummyGCAddr.IsNull)
             {
                 throw new InvalidOperationException("Runtime state have not set");
             }
@@ -97,9 +96,10 @@ namespace Python.Runtime
             var intialModules = PySys_GetObject("initial_modules");
             Debug.Assert(!intialModules.IsNull);
             var modules = PyImport_GetModuleDict();
-            foreach (var name in GetModuleNames())
+            foreach (var nameRaw in GetModuleNames())
             {
-                if (PySet_Contains(intialModules.DangerousGetAddress(), name) == 1)
+                var name = new BorrowedReference(nameRaw);
+                if (PySet_Contains(intialModules, name) == 1)
                 {
                     continue;
                 }
@@ -122,21 +122,15 @@ namespace Python.Runtime
             {
                 throw new Exception("To prevent crash by _PyObject_GC_UNTRACK in Python internal, UseDummyGC should be enabled when using ResotreObjects");
             }
-            IntPtr intialObjs = PySys_GetObject("initial_objs").DangerousGetAddress();
-            Debug.Assert(intialObjs != IntPtr.Zero);
-            foreach (var obj in PyGCGetObjects())
+            BorrowedReference intialObjs = PySys_GetObject("initial_objs");
+            Debug.Assert(@intialObjs.IsNull);
+            foreach (var objRaw in PyGCGetObjects())
             {
-                var p = PyLong_FromVoidPtr(obj);
-                try
+                using var p = PyLong_FromVoidPtr(objRaw);
+                var obj = new BorrowedReference(objRaw);
+                if (PySet_Contains(intialObjs, p) == 1)
                 {
-                    if (PySet_Contains(intialObjs, p) == 1)
-                    {
-                        continue;
-                    }
-                }
-                finally
-                {
-                    XDecref(p);
+                    continue;
                 }
                 Debug.Assert(_PyObject_GC_IS_TRACKED(obj), "A GC object must be tracked");
                 ExchangeGCChain(obj, dummyGC);
@@ -162,34 +156,28 @@ namespace Python.Runtime
         public static IEnumerable<IntPtr> GetModuleNames()
         {
             var modules = PyImport_GetModuleDict();
-            var names = PyDict_Keys(modules);
-            var length = PyList_Size(new BorrowedReference(names));
+            using var names = PyDict_Keys(modules);
+            var length = PyList_Size(names);
+            var result = new IntPtr[length];
             for (int i = 0; i < length; i++)
             {
-                var name = PyList_GetItem(new BorrowedReference(names), i);
-                yield return name.DangerousGetAddress();
+                result[i] = PyList_GetItem(names, i).DangerousGetAddress();
             }
-            XDecref(names);
+            return result;
         }
 
-        private static void AddObjPtrToSet(IntPtr set, IntPtr obj)
+        private static void AddObjPtrToSet(BorrowedReference set, BorrowedReference obj)
         {
-            var p = PyLong_FromVoidPtr(obj);
-            XIncref(obj);
-            try
-            {
-                int res = PySet_Add(set, p);
-                PythonException.ThrowIfIsNotZero(res);
-            }
-            finally
-            {
-                XDecref(p);
-            }
+            IntPtr objRaw = obj.DangerousGetAddress();
+            using var p = PyLong_FromVoidPtr(objRaw);
+            XIncref(objRaw);
+            int res = PySet_Add(set, p);
+            PythonException.ThrowIfIsNotZero(res);
         }
         /// <summary>
         /// Exchange gc to a dummy gc prevent nullptr error in _PyObject_GC_UnTrack macro.
         /// </summary>
-        private static void ExchangeGCChain(IntPtr obj, IntPtr gc)
+        private static void ExchangeGCChain(BorrowedReference obj, IntPtr gc)
         {
             var head = _Py_AS_GC(obj);
             if ((long)_PyGCHead_REFS(head) == _PyGC_REFS_UNTRACKED)
