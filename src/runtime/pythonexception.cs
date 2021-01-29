@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -44,6 +45,7 @@ namespace Python.Runtime
                 }
                 _message = type + " : " + message;
             }
+
             if (_pyTB != IntPtr.Zero)
             {
                 using PyObject tb_module = PythonEngine.ImportModule("traceback");
@@ -54,7 +56,9 @@ namespace Python.Runtime
                 using var tbList = tb_module.InvokeMethod("format_tb", pyTB);
 
                 var sb = new StringBuilder();
-                foreach (var line in tbList) {
+                // Reverse Python's traceback list to match the order used in C#
+                // stacktraces
+                foreach (var line in tbList.Reverse()) {
                     sb.Append(line.ToString());
                 }
                 _tb = sb.ToString();
