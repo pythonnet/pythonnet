@@ -39,22 +39,23 @@ or the DLL must be loaded in advance. This must be done before calling any other
 
 ### Fixed
 
--    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
--    Fix incorrect dereference in params array handling
--    Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
--    Fix `object[]` parameters taking precedence when should not in overload resolution
--    Fixed a bug where all .NET class instances were considered Iterable
--    Fix incorrect choice of method to invoke when using keyword arguments.
--    Fix non-delegate types incorrectly appearing as callable.
--    Indexers can now be used with interface objects
--    Fixed a bug where indexers could not be used if they were inherited
--    Made it possible to use `__len__` also on `ICollection<>` interface objects
--    Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
--    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
--    Fixed objects returned by enumerating `PyObject` being disposed too soon
--    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException ([#1325][i1325])
--    `import` may now raise errors with more detail than "No module named X"
--    Providing an invalid type parameter to a generic type or method produces a helpful Python error
+-   Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
+-   Fix incorrect dereference in params array handling
+-   Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
+-   Fix `object[]` parameters taking precedence when should not in overload resolution
+-   Fixed a bug where all .NET class instances were considered Iterable
+-   Fix incorrect choice of method to invoke when using keyword arguments.
+-   Fix non-delegate types incorrectly appearing as callable.
+-   Indexers can now be used with interface objects
+-   Fixed a bug where indexers could not be used if they were inherited
+-   Made it possible to use `__len__` also on `ICollection<>` interface objects
+-   Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
+-   Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
+-   Fixed objects returned by enumerating `PyObject` being disposed too soon
+-   Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
+-   `import` may now raise errors with more detail than "No module named X"
+-   Exception stacktraces on `PythonException.StackTrace` are now properly formatted
+-   Providing an invalid type parameter to a generic type or method produces a helpful Python error
 
 ### Removed
 
