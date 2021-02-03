@@ -91,7 +91,7 @@ namespace Python.Runtime
             if (op == doubleType)
                 return Runtime.PyFloatType;
 
-            if (op == singleType)
+            if (op == singleType || op == decimalType)
                 return Runtime.PyFloatType;
 
             if (op == boolType)
@@ -259,6 +259,17 @@ namespace Python.Runtime
 
                 case TypeCode.UInt64:
                     return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
+
+                case TypeCode.Decimal:
+                    IntPtr mod = Runtime.PyImport_ImportModule("decimal");
+                    IntPtr ctor = Runtime.PyObject_GetAttrString(mod, "Decimal");
+
+                    string d2s = ((decimal)value).ToString(nfi);
+                    IntPtr d2p = Runtime.PyString_FromString(d2s);
+                    IntPtr args = Runtime.PyTuple_New(1);
+                    Runtime.PyTuple_SetItem(args, 0, d2p);
+
+                    return Runtime.PyObject_CallObject(ctor, args);
 
                 default:
                     if (value is IEnumerable)
@@ -752,6 +763,17 @@ namespace Python.Runtime
                         result = num;
                         return true;
                     }
+                case TypeCode.Decimal:
+                    op = Runtime.PyObject_Str(value);
+                    decimal m;
+                    string sm = Runtime.GetManagedString(op);
+                    if (!Decimal.TryParse(sm, NumberStyles.Number, nfi, out m))
+                    {
+                        goto type_error;
+                    }
+                    Runtime.XDecref(op);
+                    result = m;
+                    return true;
                 default:
                     goto type_error;
             }
