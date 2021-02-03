@@ -30,6 +30,10 @@ namespace Python.Runtime
         private static Type flagsType;
         private static Type boolType;
         private static Type typeType;
+        private static IntPtr decimalCtor;
+        private static IntPtr dateTimeCtor;
+        private static IntPtr timeSpanCtor;
+        private static IntPtr tzInfoCtor;
 
         static Converter()
         {
@@ -45,6 +49,38 @@ namespace Python.Runtime
             flagsType = typeof(FlagsAttribute);
             boolType = typeof(Boolean);
             typeType = typeof(Type);
+
+
+            IntPtr decimalMod = Runtime.PyImport_ImportModule("decimal");
+            if (decimalMod == null) throw new PythonException();
+
+            IntPtr dateTimeMod = Runtime.PyImport_ImportModule("datetime");
+            if (dateTimeMod == null) throw new PythonException();
+
+            decimalCtor = Runtime.PyObject_GetAttrString(decimalMod, "Decimal");
+            if (decimalCtor == null) throw new PythonException();
+
+            dateTimeCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "datetime");
+            if (dateTimeCtor == null) throw new PythonException();
+
+            timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "timedelta");
+            if (timeSpanCtor == null) throw new PythonException();
+
+            IntPtr tzInfoMod = PythonEngine.ModuleFromString("custom_tzinfo",
+                "from datetime import timedelta, tzinfo\n" +
+                "class GMT(tzinfo):\n" +
+                "    def __init__(self, hours, minutes):\n" +
+                "        self.hours = hours\n" +
+                "        self.minutes = minutes\n" +
+                "    def utcoffset(self, dt):\n" +
+                "        return timedelta(hours=self.hours, minutes=self.minutes)\n" +
+                "    def tzname(self, dt):\n" +
+                "        return \"GMT {0:00}:{1:00}\".format(self.hours, self.minutes)\n" +
+                "    def dst (self, dt):\n" +
+                "        return timedelta(0)\n").Handle;
+
+            tzInfoCtor = Runtime.PyObject_GetAttrString(tzInfoMod, "GMT");
+            if (tzInfoCtor == null) throw new PythonException();
         }
 
 
@@ -208,6 +244,14 @@ namespace Python.Runtime
             switch (tc)
             {
                 case TypeCode.Object:
+                    if (value is TimeSpan)
+                    {
+                        var timespan = (TimeSpan)value;
+
+                        IntPtr timeSpanArgs = Runtime.PyTuple_New(1);
+                        Runtime.PyTuple_SetItem(timeSpanArgs, 0, Runtime.PyFloat_FromDouble(timespan.TotalDays));
+                        return Runtime.PyObject_CallObject(timeSpanCtor, timeSpanArgs);
+                    }
                     return CLRObject.GetInstHandle(value, type);
 
                 case TypeCode.String:
@@ -269,7 +313,23 @@ namespace Python.Runtime
                     IntPtr args = Runtime.PyTuple_New(1);
                     Runtime.PyTuple_SetItem(args, 0, d2p);
 
-                    return Runtime.PyObject_CallObject(ctor, args);
+                    return Runtime.PyObject_CallObject(decimalCtor, args);
+
+                case TypeCode.DateTime:
+                    var datetime = (DateTime)value;
+
+                    IntPtr dateTimeArgs = Runtime.PyTuple_New(8);
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 0, Runtime.PyInt_FromInt32(datetime.Year));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 1, Runtime.PyInt_FromInt32(datetime.Month));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 2, Runtime.PyInt_FromInt32(datetime.Day));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 3, Runtime.PyInt_FromInt32(datetime.Hour));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 4, Runtime.PyInt_FromInt32(datetime.Minute));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 5, Runtime.PyInt_FromInt32(datetime.Second));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 6, Runtime.PyInt_FromInt32(datetime.Millisecond));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 7, TzInfo(datetime.Kind));
+
+                    return Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
+
 
                 default:
                     if (value is IEnumerable)
@@ -292,6 +352,15 @@ namespace Python.Runtime
             }
         }
 
+        private static IntPtr TzInfo(DateTimeKind kind)
+        {
+            if (kind == DateTimeKind.Unspecified) return Runtime.PyNone;
+            var offset = kind == DateTimeKind.Local ? DateTimeOffset.Now.Offset : TimeSpan.Zero;
+            IntPtr tzInfoArgs = Runtime.PyTuple_New(2);
+            Runtime.PyTuple_SetItem(tzInfoArgs, 0, Runtime.PyFloat_FromDouble(offset.Hours));
+            Runtime.PyTuple_SetItem(tzInfoArgs, 1, Runtime.PyFloat_FromDouble(offset.Minutes));
+            return Runtime.PyObject_CallObject(tzInfoCtor, tzInfoArgs);
+        }
 
         /// <summary>
         /// In a few situations, we don't have any advisory type information
@@ -507,6 +576,12 @@ namespace Python.Runtime
                 return false;
             }
 
+            var underlyingType = Nullable.GetUnderlyingType(obType);
+            if (underlyingType != null)
+            {
+                return ToManagedValue(value, underlyingType, out result, setError);
+            }
+
             TypeCode typeCode = Type.GetTypeCode(obType);
             if (typeCode == TypeCode.Object)
             {
@@ -533,6 +608,32 @@ namespace Python.Runtime
 
             switch (tc)
             {
+                case TypeCode.Object:
+                    if (obType == typeof(TimeSpan))
+                    {
+                        op = Runtime.PyObject_Str(value);
+                        TimeSpan ts;
+                        var arr = Runtime.GetManagedString(op).Split(',');
+                        string sts = arr.Length == 1 ? arr[0] : arr[1];
+                        if (!TimeSpan.TryParse(sts, out ts))
+                        {
+                            goto type_error;
+                        }
+                        Runtime.XDecref(op);
+
+                        int days = 0;
+                        if (arr.Length > 1)
+                        {
+                            if (!int.TryParse(arr[0].Split(' ')[0].Trim(), out days))
+                            {
+                                goto type_error;
+                            }
+                        }
+                        result = ts.Add(TimeSpan.FromDays(days));
+                        return true;
+                    }
+                    break;
+
                 case TypeCode.String:
                     string st = Runtime.GetManagedString(value);
                     if (st == null)
@@ -773,6 +874,17 @@ namespace Python.Runtime
                     }
                     Runtime.XDecref(op);
                     result = m;
+                    return true;
+                case TypeCode.DateTime:
+                    op = Runtime.PyObject_Str(value);
+                    DateTime dt;
+                    string sdt = Runtime.GetManagedString(op);
+                    if (!DateTime.TryParse(sdt, out dt))
+                    {
+                        goto type_error;
+                    }
+                    Runtime.XDecref(op);
+                    result = dt;
                     return true;
                 default:
                     goto type_error;

@@ -751,6 +751,13 @@ namespace Python.Runtime
                     }
                     if (!typematch)
                     {
+                        // this takes care of nullables
+                        var underlyingType = Nullable.GetUnderlyingType(parameterType);
+                        if (underlyingType != null)
+                        {
+                            parameterType = underlyingType;
+                        }
+
                         // this takes care of enum values
                         TypeCode parameterTypeCode = Type.GetTypeCode(parameterType);
                         TypeCode clrTypeCode = Type.GetTypeCode(clrtype);
@@ -762,6 +769,14 @@ namespace Python.Runtime
                         else
                         {
                             Exceptions.RaiseTypeError($"Expected {parameterTypeCode}, got {clrTypeCode}");
+                        }
+
+                        // this takes care of implicit conversions
+                        var opImplicit = parameterType.GetMethod("op_Implicit", new[] { clrtype });
+                        if (opImplicit != null)
+                        {
+                            typematch = opImplicit.ReturnType == parameterType;
+                            clrtype = parameterType;
                         }
                     }
                     Runtime.XDecref(pyoptype);
