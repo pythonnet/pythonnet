@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,110 +19,188 @@ namespace Python.Runtime
 
         public class ErrorArgs : EventArgs
         {
-            public Exception Error { get; set; }
+            public ErrorArgs(Exception error)
+            {
+                Error = error ?? throw new ArgumentNullException(nameof(error));
+            }
+            public bool Handled { get; set; }
+            public Exception Error { get; }
         }
 
-        public static readonly Finalizer Instance = new Finalizer();
+        public static Finalizer Instance { get; } = new ();
 
-        public event EventHandler<CollectArgs> CollectOnce;
-        public event EventHandler<ErrorArgs> ErrorHandler;
+        public event EventHandler<CollectArgs>? BeforeCollect;
+        public event EventHandler<ErrorArgs>? ErrorHandler;
 
-        public int Threshold { get; set; }
-        public bool Enable { get; set; }
+        const int DefaultThreshold = 200;
+        [DefaultValue(DefaultThreshold)]
+        public int Threshold { get; set; } = DefaultThreshold;
 
-        private ConcurrentQueue<IntPtr> _objQueue = new ConcurrentQueue<IntPtr>();
+        bool started;
+
+        [DefaultValue(true)]
+        public bool Enable { get; set; } = true;
+
+        private ConcurrentQueue<PendingFinalization> _objQueue = new();
+        private readonly ConcurrentQueue<PendingFinalization> _derivedQueue = new();
+        private readonly ConcurrentQueue<Py_buffer> _bufferQueue = new();
         private int _throttled;
 
         #region FINALIZER_CHECK
 
 #if FINALIZER_CHECK
         private readonly object _queueLock = new object();
-        public bool RefCountValidationEnabled { get; set; } = true;
+        internal bool RefCountValidationEnabled { get; set; } = true;
 #else
-        public readonly bool RefCountValidationEnabled = false;
+        internal bool RefCountValidationEnabled { get; set; } = false;
 #endif
         // Keep these declarations for compat even no FINALIZER_CHECK
-        public class IncorrectFinalizeArgs : EventArgs
+        internal class IncorrectFinalizeArgs : EventArgs
         {
-            public IntPtr Handle { get; internal set; }
-            public ICollection<IntPtr> ImpactedObjects { get; internal set; }
+            public IncorrectFinalizeArgs(IntPtr handle, IReadOnlyCollection<IntPtr> imacted)
+            {
+                Handle = handle;
+                ImpactedObjects = imacted;
+            }
+            public IntPtr Handle { get; }
+            public BorrowedReference Reference => new(Handle);
+            public IReadOnlyCollection<IntPtr> ImpactedObjects { get; }
         }
 
-        public class IncorrectRefCountException : Exception
+        internal class IncorrectRefCountException : Exception
         {
             public IntPtr PyPtr { get; internal set; }
-            private string _message;
-            public override string Message => _message;
+            string? message;
+            public override string Message
+            {
+                get
+                {
+                    if (message is not null) return message;
+                    var gil = PythonEngine.AcquireLock();
+                    try
+                    {
+                        using var pyname = Runtime.PyObject_Str(new BorrowedReference(PyPtr));
+                        string name = Runtime.GetManagedString(pyname.BorrowOrThrow()) ?? Util.BadStr;
+                        message = $"<{name}> may has a incorrect ref count";
+                    }
+                    finally
+                    {
+                        PythonEngine.ReleaseLock(gil);
+                    }
+                    return message;
+                }
+            }
 
-            public IncorrectRefCountException(IntPtr ptr)
+            internal IncorrectRefCountException(IntPtr ptr)
             {
                 PyPtr = ptr;
-                IntPtr pyname = Runtime.PyObject_Unicode(PyPtr);
-                string name = Runtime.GetManagedString(pyname);
-                Runtime.XDecref(pyname);
-                _message = $"<{name}> may has a incorrect ref count";
+                
             }
         }
 
-        public delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
+        internal delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
         #pragma warning disable 414
-        public event IncorrectRefCntHandler IncorrectRefCntResolver = null;
+        internal event IncorrectRefCntHandler? IncorrectRefCntResolver = null;
         #pragma warning restore 414
-        public bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
+        internal bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
 
         #endregion
-
-        private Finalizer()
-        {
-            Enable = true;
-            Threshold = 200;
-        }
 
         public void Collect() => this.DisposeAll();
 
         internal void ThrottledCollect()
         {
+            if (!started) throw new InvalidOperationException($"{nameof(PythonEngine)} is not initialized");
+
             _throttled = unchecked(this._throttled + 1);
-            if (!Enable || _throttled < Threshold) return;
+            if (!started || !Enable || _throttled < Threshold) return;
             _throttled = 0;
             this.Collect();
         }
 
         internal List<IntPtr> GetCollectedObjects()
         {
-            return _objQueue.ToList();
+            return _objQueue.Select(o => o.PyObj).ToList();
         }
 
-        internal void AddFinalizedObject(ref IntPtr obj)
+        internal void AddFinalizedObject(ref IntPtr obj, int run
+#if TRACE_ALLOC
+                                         , StackTrace stackTrace
+#endif
+        )
         {
-            if (!Enable || obj == IntPtr.Zero)
+            Debug.Assert(obj != IntPtr.Zero);
+            if (!Enable)
             {
                 return;
             }
+
+            Debug.Assert(Runtime.Refcount(new BorrowedReference(obj)) > 0);
 
 #if FINALIZER_CHECK
             lock (_queueLock)
 #endif
             {
-                this._objQueue.Enqueue(obj);
+                this._objQueue.Enqueue(new PendingFinalization {
+                    PyObj = obj, RuntimeRun = run,
+#if TRACE_ALLOC
+                    StackTrace = stackTrace.ToString(),
+#endif
+                });
             }
             obj = IntPtr.Zero;
+        }
+
+        internal void AddDerivedFinalizedObject(ref IntPtr derived, int run)
+        {
+            if (derived == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(derived));
+
+            if (!Enable)
+            {
+                return;
+            }
+
+            var pending = new PendingFinalization { PyObj = derived, RuntimeRun = run };
+            derived = IntPtr.Zero;
+            _derivedQueue.Enqueue(pending);
+        }
+
+        internal void AddFinalizedBuffer(ref Py_buffer buffer)
+        {
+            if (buffer.obj == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(buffer));
+
+            if (!Enable)
+                return;
+
+            var pending = buffer;
+            buffer = default;
+            _bufferQueue.Enqueue(pending);
+        }
+
+        internal static void Initialize()
+        {
+            Instance.started = true;
         }
 
         internal static void Shutdown()
         {
             Instance.DisposeAll();
+            Instance.started = false;
         }
 
-        private void DisposeAll()
+        internal nint DisposeAll()
         {
-#if DEBUG
-            // only used for testing
-            CollectOnce?.Invoke(this, new CollectArgs()
+            if (_objQueue.IsEmpty && _derivedQueue.IsEmpty && _bufferQueue.IsEmpty)
+                return 0;
+
+            nint collected = 0;
+
+            BeforeCollect?.Invoke(this, new CollectArgs()
             {
                 ObjectCount = _objQueue.Count
             });
-#endif
 #if FINALIZER_CHECK
             lock (_queueLock)
 #endif
@@ -127,41 +208,85 @@ namespace Python.Runtime
 #if FINALIZER_CHECK
                 ValidateRefCount();
 #endif
-                IntPtr obj;
                 Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+                Debug.Assert(errType.IsNull());
+
+                int run = Runtime.GetRun();
 
                 try
                 {
-                    while (_objQueue.TryDequeue(out obj))
+                    while (!_objQueue.IsEmpty)
                     {
-                        Runtime.XDecref(obj);
+                        if (!_objQueue.TryDequeue(out var obj))
+                            continue;
+
+                        if (obj.RuntimeRun != run)
+                        {
+                            HandleFinalizationException(obj.PyObj, new RuntimeShutdownException(obj.PyObj));
+                            continue;
+                        }
+
+                        IntPtr copyForException = obj.PyObj;
+                        Runtime.XDecref(StolenReference.Take(ref obj.PyObj));
+                        collected++;
                         try
                         {
                             Runtime.CheckExceptionOccurred();
                         }
                         catch (Exception e)
                         {
-                            var handler = ErrorHandler;
-                            if (handler is null)
-                            {
-                                throw new FinalizationException(
-                                    "Python object finalization failed",
-                                    disposable: obj, innerException: e);
-                            }
-
-                            handler.Invoke(this, new ErrorArgs()
-                            {
-                                Error = e
-                            });
+                            HandleFinalizationException(obj.PyObj, e);
                         }
+                    }
+
+                    while (!_derivedQueue.IsEmpty)
+                    {
+                        if (!_derivedQueue.TryDequeue(out var derived))
+                            continue;
+
+                        if (derived.RuntimeRun != run)
+                        {
+                            HandleFinalizationException(derived.PyObj, new RuntimeShutdownException(derived.PyObj));
+                            continue;
+                        }
+
+#pragma warning disable CS0618 // Type or member is obsolete. OK for internal use
+                        PythonDerivedType.Finalize(derived.PyObj);
+#pragma warning restore CS0618 // Type or member is obsolete
+
+                        collected++;
+                    }
+
+                    while (!_bufferQueue.IsEmpty)
+                    {
+                        if (!_bufferQueue.TryDequeue(out var buffer))
+                            continue;
+
+                        Runtime.PyBuffer_Release(ref buffer);
+                        collected++;
                     }
                 }
                 finally
                 {
                     // Python requires finalizers to preserve exception:
                     // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
-                    Runtime.PyErr_Restore(errType, errVal, traceback);
+                    Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
+            }
+            return collected;
+        }
+
+        void HandleFinalizationException(IntPtr obj, Exception cause)
+        {
+            var errorArgs = new ErrorArgs(cause);
+
+            ErrorHandler?.Invoke(this, errorArgs);
+
+            if (!errorArgs.Handled)
+            {
+                throw new FinalizationException(
+                    "Python object finalization failed",
+                    disposable: obj, innerException: cause);
             }
         }
 
@@ -234,15 +359,59 @@ namespace Python.Runtime
 #endif
     }
 
+    struct PendingFinalization
+    {
+        public IntPtr PyObj;
+        public BorrowedReference Ref => new(PyObj);
+        public int RuntimeRun;
+#if TRACE_ALLOC
+        public string StackTrace;
+#endif
+    }
+
     public class FinalizationException : Exception
     {
-        public IntPtr PythonObject { get; }
+        public IntPtr Handle { get; }
+
+        /// <summary>
+        /// Gets the object, whose finalization failed.
+        ///
+        /// <para>If this function crashes, you can also try <see cref="DebugGetObject"/>,
+        /// which does not attempt to increase the object reference count.</para>
+        /// </summary>
+        public PyObject GetObject() => new(new BorrowedReference(this.Handle));
+        /// <summary>
+        /// Gets the object, whose finalization failed without incrementing
+        /// its reference count. This should only ever be called during debugging.
+        /// When the result is disposed or finalized, the program will crash.
+        /// </summary>
+        public PyObject DebugGetObject()
+        {
+            IntPtr dangerousNoIncRefCopy = this.Handle;
+            return new(StolenReference.Take(ref dangerousNoIncRefCopy));
+        }
 
         public FinalizationException(string message, IntPtr disposable, Exception innerException)
             : base(message, innerException)
         {
             if (disposable == IntPtr.Zero) throw new ArgumentNullException(nameof(disposable));
-            this.PythonObject = disposable;
+            this.Handle = disposable;
+        }
+
+        protected FinalizationException(string message, IntPtr disposable)
+            : base(message)
+        {
+            if (disposable == IntPtr.Zero) throw new ArgumentNullException(nameof(disposable));
+            this.Handle = disposable;
+        }
+    }
+
+    public class RuntimeShutdownException : FinalizationException
+    {
+        public RuntimeShutdownException(IntPtr disposable)
+            : base("Python runtime was shut down after this object was created." +
+                   " It is an error to attempt to dispose or to continue using it even after restarting the runtime.", disposable)
+        {
         }
     }
 }
