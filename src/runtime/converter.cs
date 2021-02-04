@@ -416,6 +416,15 @@ namespace Python.Runtime
                 return true;
             }
 
+            if (obType.IsGenericType && Runtime.PyObject_TYPE(value) == Runtime.PyListType)
+            {
+                var typeDefinition = obType.GetGenericTypeDefinition();
+                if (typeDefinition == typeof(List<>))
+                {
+                    return ToList(value, obType, out result, setError);
+                }
+            }
+
             // Common case: if the Python value is a wrapped managed object
             // instance, just return the wrapped object.
             ManagedType mt = ManagedType.GetManagedObject(value);
@@ -948,7 +957,7 @@ namespace Python.Runtime
             result = null;
 
             IntPtr IterObject = Runtime.PyObject_GetIter(value);
-            if (IterObject == IntPtr.Zero)
+            if (IterObject == IntPtr.Zero || elementType.IsGenericType)
             {
                 if (setError)
                 {
@@ -962,6 +971,43 @@ namespace Python.Runtime
                 return false;
             }
 
+            var list = MakeList(value, IterObject, obType, elementType, setError);
+            if (list == null)
+            {
+                return false;
+            }
+
+            Array items = Array.CreateInstance(elementType, list.Count);
+            list.CopyTo(items, 0);
+
+            result = items;
+            return true;
+        }
+
+        /// <summary>
+        /// Convert a Python value to a correctly typed managed list instance.
+        /// The Python value must support the Python sequence protocol and the
+        /// items in the sequence must be convertible to the target list type.
+        /// </summary>
+        private static bool ToList(IntPtr value, Type obType, out object result, bool setError)
+        {
+            var elementType = obType.GetGenericArguments()[0];
+            IntPtr IterObject = Runtime.PyObject_GetIter(value);
+            result = MakeList(value, IterObject, obType, elementType, setError);
+            return result != null;
+        }
+
+        /// <summary>
+        /// Helper function for ToArray and ToList that creates a IList out of iterable objects
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="IterObject"></param>
+        /// <param name="obType"></param>
+        /// <param name="elementType"></param>
+        /// <param name="setError"></param>
+        /// <returns></returns>
+        private static IList MakeList(IntPtr value, IntPtr IterObject, Type obType, Type elementType, bool setError)
+        {
             IList list;
             try
             {
@@ -989,7 +1035,8 @@ namespace Python.Runtime
                     Exceptions.SetError(e);
                     SetConversionError(value, obType);
                 }
-                return false;
+
+                return null;
             }
 
             IntPtr item;
@@ -1001,7 +1048,7 @@ namespace Python.Runtime
                 if (!Converter.ToManaged(item, elementType, out obj, setError))
                 {
                     Runtime.XDecref(item);
-                    return false;
+                    return null;
                 }
 
                 list.Add(obj);
@@ -1009,11 +1056,7 @@ namespace Python.Runtime
             }
             Runtime.XDecref(IterObject);
 
-            Array items = Array.CreateInstance(elementType, list.Count);
-            list.CopyTo(items, 0);
-
-            result = items;
-            return true;
+            return list;
         }
 
 
