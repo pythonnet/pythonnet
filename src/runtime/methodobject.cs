@@ -79,14 +79,14 @@ namespace Python.Runtime
             }
             var str = "";
             Type marker = typeof(DocStringAttribute);
-            MethodBase[] methods = binder.GetMethods();
-            foreach (MethodBase method in methods)
+            var methods = binder.GetMethods();
+            foreach (var method in methods)
             {
                 if (str.Length > 0)
                 {
                     str += Environment.NewLine;
                 }
-                var attrs = (Attribute[])method.GetCustomAttributes(marker, false);
+                var attrs = (Attribute[])method.MethodBase.UnsafeValue.GetCustomAttributes(marker, false);
                 if (attrs.Length == 0)
                 {
                     str += method.ToString();

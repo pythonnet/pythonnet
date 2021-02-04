@@ -390,6 +390,12 @@ class GMT(tzinfo):
         }
 
 
+        internal static bool ToManaged(IntPtr value, Type type,
+            out object result, bool setError)
+        {
+            var usedImplicit = false;
+            return ToManaged(value, type, out result, setError, out usedImplicit);
+        }
         /// <summary>
         /// Return a managed object for the given Python object, taking funny
         /// byref types into account.
@@ -400,21 +406,26 @@ class GMT(tzinfo):
         /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
         /// <returns>True on success</returns>
         internal static bool ToManaged(IntPtr value, Type type,
-            out object result, bool setError)
+            out object result, bool setError, out bool usedImplicit)
         {
             if (type.IsByRef)
             {
                 type = type.GetElementType();
             }
-            return Converter.ToManagedValue(value, type, out result, setError);
+            return Converter.ToManagedValue(value, type, out result, setError, out usedImplicit);
         }
 
         internal static bool ToManagedValue(BorrowedReference value, Type obType,
             out object result, bool setError)
-            => ToManagedValue(value.DangerousGetAddress(), obType, out result, setError);
-        internal static bool ToManagedValue(IntPtr value, Type obType,
-            out object result, bool setError)
         {
+            var usedImplicit = false;
+            return ToManagedValue(value.DangerousGetAddress(), obType, out result, setError, out usedImplicit);
+        }
+
+        internal static bool ToManagedValue(IntPtr value, Type obType,
+            out object result, bool setError, out bool usedImplicit)
+        {
+            usedImplicit = false;
             if (obType == typeof(PyObject))
             {
                 Runtime.XIncref(value); // PyObject() assumes ownership
@@ -445,6 +456,18 @@ class GMT(tzinfo):
                     {
                         result = tmp;
                         return true;
+                    }
+                    else
+                    {
+                        var type = tmp.GetType();
+                        // check implicit conversions that receive tmp type and return obType
+                        var conversionMethod = type.GetMethod("op_Implicit", new[] { type });
+                        if (conversionMethod != null && conversionMethod.ReturnType == obType)
+                        {
+                            result = conversionMethod.Invoke(null, new[] { tmp });
+                            usedImplicit = true;
+                            return true;
+                        }
                     }
                     if (setError)
                     {
@@ -599,7 +622,7 @@ class GMT(tzinfo):
             var underlyingType = Nullable.GetUnderlyingType(obType);
             if (underlyingType != null)
             {
-                return ToManagedValue(value, underlyingType, out result, setError);
+                return ToManagedValue(value, underlyingType, out result, setError, out usedImplicit);
             }
 
             TypeCode typeCode = Type.GetTypeCode(obType);
@@ -609,6 +632,20 @@ class GMT(tzinfo):
                 if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
                 {
                     return true;
+                }
+            }
+
+            var opImplicit = obType.GetMethod("op_Implicit", new[] { obType });
+            if (opImplicit != null)
+            {
+                if (ToManagedValue(value, opImplicit.ReturnType, out result, setError, out usedImplicit))
+                {
+                    opImplicit = obType.GetMethod("op_Implicit", new[] { result.GetType() });
+                    if (opImplicit != null)
+                    {
+                        result = opImplicit.Invoke(null, new[] { result });
+                    }
+                    return opImplicit != null;
                 }
             }
 
@@ -1046,12 +1083,12 @@ class GMT(tzinfo):
             }
 
             IntPtr item;
-
+            var usedImplicit = false;
             while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
             {
                 object obj;
 
-                if (!Converter.ToManaged(item, elementType, out obj, setError))
+                if (!Converter.ToManaged(item, elementType, out obj, setError, out usedImplicit))
                 {
                     Runtime.XDecref(item);
                     return null;

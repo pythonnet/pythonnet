@@ -43,40 +43,39 @@ class PythonModel(TestMethodBinder.CSharpModel):
         [Test]
         public void ImplicitConversionToString()
         {
-            var data = (string)module.TestA();
-            // we assert implicit conversion took place
-            Assert.AreEqual("OnlyString impl: implicit to string", data);
-        }
+                // we assert implicit conversion took place
+                Assert.AreEqual("OnlyString impl: implicit to string", data);
+            }
 
         [Test]
         public void ImplicitConversionToClass()
         {
             var data = (string)module.TestB();
-            // we assert implicit conversion took place
-            Assert.AreEqual("OnlyClass impl", data);
-        }
+                // we assert implicit conversion took place
+                Assert.AreEqual("OnlyClass impl", data);
+            }
 
         [Test]
         public void WillAvoidUsingImplicitConversionIfPossible_String()
         {
             var data = (string)module.TestC();
-            // we assert no implicit conversion took place
-            Assert.AreEqual("string impl: input string", data);
-        }
+                // we assert no implicit conversion took place
+                Assert.AreEqual("string impl: input string", data);
+            }
 
         [Test]
         public void WillAvoidUsingImplicitConversionIfPossible_Class()
         {
             var data = (string)module.TestD();
-            // we assert no implicit conversion took place
-            Assert.AreEqual("TestImplicitConversion impl", data);
+                // we assert no implicit conversion took place
+                Assert.AreEqual("TestImplicitConversion impl", data);
             
         }
 
         [Test]
         public void ArrayLength()
         {
-            var array = new[] { "pepe", "pinocho" };
+                var array = new[] { "pepe", "pinocho" };
             var data = (bool)module.TestE(array);
 
             // Assert it is true

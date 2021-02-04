@@ -33,15 +33,15 @@ namespace Python.Runtime
         /// </summary>
         internal NewReference GetDocString()
         {
-            MethodBase[] methods = binder.GetMethods();
+           var methods = binder.GetMethods();
             var str = "";
-            foreach (MethodBase t in methods)
+            foreach (var t in methods)
             {
                 if (str.Length > 0)
                 {
                     str += Environment.NewLine;
                 }
-                str += t.ToString();
+                str += t.MethodBase.ToString();
             }
             return NewReference.DangerousFromPointer(Runtime.PyString_FromString(str));
         }

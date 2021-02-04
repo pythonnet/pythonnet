@@ -126,7 +126,7 @@ namespace Python.Runtime
                 Runtime.XIncref(self.repr);
                 return self.repr;
             }
-            MethodBase[] methods = self.ctorBinder.GetMethods();
+            var methods = self.ctorBinder.GetMethods();
 
             if (!self.type.Valid)
             {
@@ -134,8 +134,9 @@ namespace Python.Runtime
             }
             string name = self.type.Value.FullName;
             var doc = "";
-            foreach (MethodBase t in methods)
+            foreach (var methodInformation in methods)
             {
+                var t = methodInformation.MethodBase;
                 if (doc.Length > 0)
                 {
                     doc += "\n";

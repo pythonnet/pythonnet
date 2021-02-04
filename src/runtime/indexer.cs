@@ -58,13 +58,13 @@ namespace Python.Runtime
         internal bool NeedsDefaultArgs(IntPtr args)
         {
             var pynargs = Runtime.PyTuple_Size(args);
-            MethodBase[] methods = SetterBinder.GetMethods();
-            if (methods.Length == 0)
+            var methods = SetterBinder.GetMethods();
+            if (methods.Count == 0)
             {
                 return false;
             }
 
-            MethodBase mi = methods[0];
+            var mi = methods[0].MethodBase.UnsafeValue;
             ParameterInfo[] pi = mi.GetParameters();
             // need to subtract one for the value
             int clrnargs = pi.Length - 1;
@@ -99,8 +99,8 @@ namespace Python.Runtime
             var pynargs = Runtime.PyTuple_Size(args);
 
             // Get the default arg tuple
-            MethodBase[] methods = SetterBinder.GetMethods();
-            MethodBase mi = methods[0];
+            var methods = SetterBinder.GetMethods();
+            var mi = methods[0].MethodBase.UnsafeValue;
             ParameterInfo[] pi = mi.GetParameters();
             int clrnargs = pi.Length - 1;
             IntPtr defaultArgs = Runtime.PyTuple_New(clrnargs - pynargs);
