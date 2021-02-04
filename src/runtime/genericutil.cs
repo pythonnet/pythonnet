@@ -27,25 +27,30 @@ namespace Python.Runtime
         /// <param name="t">A generic type definition (<c>t.IsGenericTypeDefinition</c> must be true)</param>
         internal static void Register(Type t)
         {
-            if (null == t.Namespace || null == t.Name)
+            lock (mapping)
             {
-                return;
-            }
+                if (null == t.Namespace || null == t.Name)
+                {
+                    return;
+                }
 
-            Dictionary<string, List<string>> nsmap;
-            if (!mapping.TryGetValue(t.Namespace, out nsmap))
-            {
-                nsmap = new Dictionary<string, List<string>>();
-                mapping[t.Namespace] = nsmap;
+                Dictionary<string, List<string>> nsmap;
+                if (!mapping.TryGetValue(t.Namespace, out nsmap))
+                {
+                    nsmap = new Dictionary<string, List<string>>();
+                    mapping[t.Namespace] = nsmap;
+                }
+
+                string basename = GetBasename(t.Name);
+                List<string> gnames;
+                if (!nsmap.TryGetValue(basename, out gnames))
+                {
+                    gnames = new List<string>();
+                    nsmap[basename] = gnames;
+                }
+
+                gnames.Add(t.Name);
             }
-            string basename = GetBasename(t.Name);
-            List<string> gnames;
-            if (!nsmap.TryGetValue(basename, out gnames))
-            {
-                gnames = new List<string>();
-                nsmap[basename] = gnames;
-            }
-            gnames.Add(t.Name);
         }
 
         /// <summary>
@@ -53,17 +58,20 @@ namespace Python.Runtime
         /// </summary>
         public static List<string> GetGenericBaseNames(string ns)
         {
-            Dictionary<string, List<string>> nsmap;
-            if (!mapping.TryGetValue(ns, out nsmap))
+            lock (mapping)
             {
-                return null;
+                Dictionary<string, List<string>> nsmap;
+                if (!mapping.TryGetValue(ns, out nsmap))
+                {
+                    return null;
+                }
+                var names = new List<string>();
+                foreach (string key in nsmap.Keys)
+                {
+                    names.Add(key);
+                }
+                return names;
             }
-            var names = new List<string>();
-            foreach (string key in nsmap.Keys)
-            {
-                names.Add(key);
-            }
-            return names;
         }
 
         /// <summary>
@@ -79,29 +87,32 @@ namespace Python.Runtime
         /// </summary>
         public static Type GenericByName(string ns, string basename, int paramCount)
         {
-            Dictionary<string, List<string>> nsmap;
-            if (!mapping.TryGetValue(ns, out nsmap))
+            lock (mapping)
             {
-                return null;
-            }
-
-            List<string> names;
-            if (!nsmap.TryGetValue(GetBasename(basename), out names))
-            {
-                return null;
-            }
-
-            foreach (string name in names)
-            {
-                string qname = ns + "." + name;
-                Type o = AssemblyManager.LookupTypes(qname).FirstOrDefault();
-                if (o != null && o.GetGenericArguments().Length == paramCount)
+                Dictionary<string, List<string>> nsmap;
+                if (!mapping.TryGetValue(ns, out nsmap))
                 {
-                    return o;
+                    return null;
                 }
-            }
 
-            return null;
+                List<string> names;
+                if (!nsmap.TryGetValue(GetBasename(basename), out names))
+                {
+                    return null;
+                }
+
+                foreach (string name in names)
+                {
+                    string qname = ns + "." + name;
+                    Type o = AssemblyManager.LookupTypes(qname).FirstOrDefault();
+                    if (o != null && o.GetGenericArguments().Length == paramCount)
+                    {
+                        return o;
+                    }
+                }
+
+                return null;
+            }
         }
 
         /// <summary>
@@ -109,17 +120,22 @@ namespace Python.Runtime
         /// </summary>
         public static string GenericNameForBaseName(string ns, string name)
         {
-            Dictionary<string, List<string>> nsmap;
-            if (!mapping.TryGetValue(ns, out nsmap))
+            lock (mapping)
             {
-                return null;
+                Dictionary<string, List<string>> nsmap;
+                if (!mapping.TryGetValue(ns, out nsmap))
+                {
+                    return null;
+                }
+
+                List<string> gnames;
+                nsmap.TryGetValue(name, out gnames);
+                if (gnames?.Count > 0)
+                {
+                    return gnames[0];
+                }
             }
-            List<string> gnames;
-            nsmap.TryGetValue(name, out gnames);
-            if (gnames?.Count > 0)
-            {
-                return gnames[0];
-            }
+
             return null;
         }
 
