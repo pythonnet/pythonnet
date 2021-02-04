@@ -56,6 +56,7 @@ or the DLL must be loaded in advance. This must be done before calling any other
 -   `import` may now raise errors with more detail than "No module named X"
 -   Exception stacktraces on `PythonException.StackTrace` are now properly formatted
 -   Providing an invalid type parameter to a generic type or method produces a helpful Python error
+-   Empty parameter names (as can be generated from F#) do not cause crashes
 
 ### Removed
 
