@@ -216,6 +216,13 @@ namespace Python.Runtime
                 val += ArgPrecedence(pi[i].ParameterType);
             }
 
+            var info = mi as MethodInfo;
+            if (info != null)
+            {
+                val += ArgPrecedence(info.ReturnType);
+                val += mi.DeclaringType == mi.ReflectedType ? 0 : 3000;
+            }
+
             return val;
         }
 
@@ -757,7 +764,6 @@ namespace Python.Runtime
                         {
                             parameterType = underlyingType;
                         }
-
                         // this takes care of enum values
                         TypeCode parameterTypeCode = Type.GetTypeCode(parameterType);
                         TypeCode clrTypeCode = Type.GetTypeCode(clrtype);
@@ -769,6 +775,13 @@ namespace Python.Runtime
                         else
                         {
                             Exceptions.RaiseTypeError($"Expected {parameterTypeCode}, got {clrTypeCode}");
+                        }
+
+                        // accepts non-decimal numbers in decimal parameters 
+                        if (parameterType == typeof(decimal))
+                        {
+                            clrtype = parameterType;
+                            typematch = Converter.ToManaged(argument, clrtype, out _, false);
                         }
 
                         // this takes care of implicit conversions

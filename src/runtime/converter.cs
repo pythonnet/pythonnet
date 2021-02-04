@@ -99,6 +99,9 @@ namespace Python.Runtime
             if (op == Runtime.PyBoolType)
                 return boolType;
 
+            if (op == Runtime.PyDecimalType)
+                return decimalType;
+
             return null;
         }
 
@@ -119,11 +122,14 @@ namespace Python.Runtime
             if (op == doubleType)
                 return Runtime.PyFloatType;
 
-            if (op == singleType || op == decimalType)
+            if (op == singleType)
                 return Runtime.PyFloatType;
 
             if (op == boolType)
                 return Runtime.PyBoolType;
+
+            if (op == decimalType)
+                return Runtime.PyDecimalType;
 
             return IntPtr.Zero;
         }
