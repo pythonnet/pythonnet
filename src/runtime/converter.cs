@@ -873,7 +873,7 @@ namespace Python.Runtime
                     op = Runtime.PyObject_Str(value);
                     decimal m;
                     string sm = Runtime.GetManagedString(op);
-                    if (!Decimal.TryParse(sm, NumberStyles.Number, nfi, out m))
+                    if (!Decimal.TryParse(sm, NumberStyles.Number | NumberStyles.AllowExponent, nfi, out m))
                     {
                         goto type_error;
                     }
