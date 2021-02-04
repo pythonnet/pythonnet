@@ -250,7 +250,10 @@ namespace Python.Runtime
 
                         IntPtr timeSpanArgs = Runtime.PyTuple_New(1);
                         Runtime.PyTuple_SetItem(timeSpanArgs, 0, Runtime.PyFloat_FromDouble(timespan.TotalDays));
-                        return Runtime.PyObject_CallObject(timeSpanCtor, timeSpanArgs);
+                        var returnTimeSpan = Runtime.PyObject_CallObject(timeSpanCtor, timeSpanArgs);
+                        // clean up
+                        Runtime.XDecref(timeSpanArgs);
+                        return returnTimeSpan;
                     }
                     return CLRObject.GetInstHandle(value, type);
 
@@ -312,8 +315,10 @@ namespace Python.Runtime
                     IntPtr d2p = Runtime.PyString_FromString(d2s);
                     IntPtr args = Runtime.PyTuple_New(1);
                     Runtime.PyTuple_SetItem(args, 0, d2p);
-
-                    return Runtime.PyObject_CallObject(decimalCtor, args);
+                    var returnDecimal = Runtime.PyObject_CallObject(decimalCtor, args);
+                    // clean up
+                    Runtime.XDecref(args);
+                    return returnDecimal;
 
                 case TypeCode.DateTime:
                     var datetime = (DateTime)value;
@@ -327,8 +332,10 @@ namespace Python.Runtime
                     Runtime.PyTuple_SetItem(dateTimeArgs, 5, Runtime.PyInt_FromInt32(datetime.Second));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 6, Runtime.PyInt_FromInt32(datetime.Millisecond));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 7, TzInfo(datetime.Kind));
-
-                    return Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
+                    var returnDateTime = Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
+                    // clean up
+                    Runtime.XDecref(dateTimeArgs);
+                    return returnDateTime;
 
 
                 default:
@@ -359,7 +366,9 @@ namespace Python.Runtime
             IntPtr tzInfoArgs = Runtime.PyTuple_New(2);
             Runtime.PyTuple_SetItem(tzInfoArgs, 0, Runtime.PyFloat_FromDouble(offset.Hours));
             Runtime.PyTuple_SetItem(tzInfoArgs, 1, Runtime.PyFloat_FromDouble(offset.Minutes));
-            return Runtime.PyObject_CallObject(tzInfoCtor, tzInfoArgs);
+            var returnValue = Runtime.PyObject_CallObject(tzInfoCtor, tzInfoArgs);
+            Runtime.XDecref(tzInfoArgs);
+            return returnValue;
         }
 
         /// <summary>
