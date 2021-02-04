@@ -182,6 +182,7 @@ namespace Python.Runtime
             // during an initial "import clr", and the world ends shortly thereafter.
             // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
             delegateManager = new DelegateManager();
+            Console.WriteLine("PythonEngine.Initialize(): Runtime.Initialize()...");
             Runtime.Initialize(initSigs, mode);
             initialized = true;
             Exceptions.Clear();
@@ -199,6 +200,7 @@ namespace Python.Runtime
             }
 
             // Load the clr.py resource into the clr module
+            Console.WriteLine("PythonEngine.Initialize(): GetCLRModule()...");
             NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
             BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr);
 
@@ -210,6 +212,7 @@ namespace Python.Runtime
                 BorrowedReference builtins = Runtime.PyEval_GetBuiltins();
                 Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
+                Console.WriteLine("PythonEngine.Initialize(): clr GetManifestResourceStream...");
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
                 using (var reader = new StreamReader(stream))

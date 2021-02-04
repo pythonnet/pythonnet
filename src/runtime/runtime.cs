@@ -116,9 +116,11 @@ namespace Python.Runtime
 
             if (Py_IsInitialized() == 0)
             {
+                Console.WriteLine("Runtime.Initialize(): Py_Initialize...");
                 Py_InitializeEx(initSigs ? 1 : 0);
                 if (PyEval_ThreadsInitialized() == 0)
                 {
+                    Console.WriteLine("Runtime.Initialize(): PyEval_InitThreads...");
                     PyEval_InitThreads();
                 }
                 // XXX: Reload mode may reduct to Soft mode,
@@ -143,7 +145,9 @@ namespace Python.Runtime
             IsFinalizing = false;
             InternString.Initialize();
 
+            Console.WriteLine("Runtime.Initialize(): Initialize types...");
             InitPyMembers();
+            Console.WriteLine("Runtime.Initialize(): Initialize types end.");
 
             ABI.Initialize(PyVersion,
                            pyType: new BorrowedReference(PyTypeType));
@@ -155,6 +159,7 @@ namespace Python.Runtime
             TypeManager.Initialize();
 
             // Initialize modules that depend on the runtime class.
+            Console.WriteLine("Runtime.Initialize(): AssemblyManager.Initialize()...");
             AssemblyManager.Initialize();
             OperatorMethod.Initialize();
             if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
@@ -178,6 +183,7 @@ namespace Python.Runtime
                 PyList_Append(new BorrowedReference(path), item);
             }
             XDecref(item);
+            Console.WriteLine("Runtime.Initialize(): AssemblyManager.UpdatePath()...");
             AssemblyManager.UpdatePath();
         }
 
