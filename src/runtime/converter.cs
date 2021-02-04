@@ -30,7 +30,6 @@ namespace Python.Runtime
         private static Type flagsType;
         private static Type boolType;
         private static Type typeType;
-        private static IntPtr decimalCtor;
         private static IntPtr dateTimeCtor;
         private static IntPtr timeSpanCtor;
         private static IntPtr tzInfoCtor;
@@ -50,15 +49,8 @@ namespace Python.Runtime
             boolType = typeof(Boolean);
             typeType = typeof(Type);
 
-
-            IntPtr decimalMod = Runtime.PyImport_ImportModule("decimal");
-            if (decimalMod == null) throw new PythonException();
-
             IntPtr dateTimeMod = Runtime.PyImport_ImportModule("datetime");
             if (dateTimeMod == null) throw new PythonException();
-
-            decimalCtor = Runtime.PyObject_GetAttrString(decimalMod, "Decimal");
-            if (decimalCtor == null) throw new PythonException();
 
             dateTimeCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "datetime");
             if (dateTimeCtor == null) throw new PythonException();
@@ -308,17 +300,9 @@ namespace Python.Runtime
                     return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
 
                 case TypeCode.Decimal:
-                    IntPtr mod = Runtime.PyImport_ImportModule("decimal");
-                    IntPtr ctor = Runtime.PyObject_GetAttrString(mod, "Decimal");
-
-                    string d2s = ((decimal)value).ToString(nfi);
-                    IntPtr d2p = Runtime.PyString_FromString(d2s);
-                    IntPtr args = Runtime.PyTuple_New(1);
-                    Runtime.PyTuple_SetItem(args, 0, d2p);
-                    var returnDecimal = Runtime.PyObject_CallObject(decimalCtor, args);
-                    // clean up
-                    Runtime.XDecref(args);
-                    return returnDecimal;
+                    // C# decimal to python decimal has a big impact on performance
+                    // so we will use C# double and python float
+                    return Runtime.PyFloat_FromDouble(decimal.ToDouble((decimal)value));
 
                 case TypeCode.DateTime:
                     var datetime = (DateTime)value;
