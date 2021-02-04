@@ -427,7 +427,7 @@ namespace Python.Runtime
             for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
             {
                 var parameter = pi[paramIndex];
-                bool hasNamedParam = kwargDict.ContainsKey(parameter.Name);
+                bool hasNamedParam = parameter.Name != null ? kwargDict.ContainsKey(parameter.Name) : false;
                 bool isNewReference = false;
 
                 if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
