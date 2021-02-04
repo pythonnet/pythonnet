@@ -323,15 +323,27 @@ namespace Python.Runtime
                 case TypeCode.DateTime:
                     var datetime = (DateTime)value;
 
-                    IntPtr dateTimeArgs = Runtime.PyTuple_New(8);
+                    var size = datetime.Kind == DateTimeKind.Unspecified ? 7 : 8;
+
+                    IntPtr dateTimeArgs = Runtime.PyTuple_New(size);
                     Runtime.PyTuple_SetItem(dateTimeArgs, 0, Runtime.PyInt_FromInt32(datetime.Year));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 1, Runtime.PyInt_FromInt32(datetime.Month));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 2, Runtime.PyInt_FromInt32(datetime.Day));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 3, Runtime.PyInt_FromInt32(datetime.Hour));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 4, Runtime.PyInt_FromInt32(datetime.Minute));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 5, Runtime.PyInt_FromInt32(datetime.Second));
-                    Runtime.PyTuple_SetItem(dateTimeArgs, 6, Runtime.PyInt_FromInt32(datetime.Millisecond));
-                    Runtime.PyTuple_SetItem(dateTimeArgs, 7, TzInfo(datetime.Kind));
+
+                    // datetime.datetime 6th argument represents micro seconds
+                    var totalSeconds = datetime.TimeOfDay.TotalSeconds;
+                    var microSeconds = Convert.ToInt32((totalSeconds - Math.Truncate(totalSeconds)) * 1000000);
+                    if (microSeconds == 1000000) microSeconds = 999999;
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 6, Runtime.PyInt_FromInt32(microSeconds));
+
+                    if (size == 8)
+                    {
+                        Runtime.PyTuple_SetItem(dateTimeArgs, 7, TzInfo(datetime.Kind));
+                    }
+
                     var returnDateTime = Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
                     // clean up
                     Runtime.XDecref(dateTimeArgs);
