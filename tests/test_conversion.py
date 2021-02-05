@@ -507,6 +507,39 @@ def test_decimal_conversion():
     with pytest.raises(TypeError):
         ConversionTest().DecimalField = 1
 
+def test_timedelta_conversion():
+    import datetime
+
+    ob = ConversionTest()
+    assert type(ob.TimeSpanField) is type(datetime.timedelta(0))
+    assert ob.TimeSpanField.days == 0
+
+    ob.TimeSpanField = datetime.timedelta(days=1)
+    assert ob.TimeSpanField.days == 1
+
+    with pytest.raises(TypeError):
+        ConversionTest().TimeSpanField = None
+
+    with pytest.raises(TypeError):
+        ConversionTest().TimeSpanField = "spam"
+
+def test_datetime_conversion():
+    from datetime import datetime
+
+    ob = ConversionTest()
+    assert type(ob.DateTimeField) is type(datetime(1,1,1))
+    assert ob.DateTimeField.day == 1
+
+    ob.DateTimeField = datetime(2000,1,2)
+    assert ob.DateTimeField.day == 2
+    assert ob.DateTimeField.month == 1
+    assert ob.DateTimeField.year == 2000
+
+    with pytest.raises(TypeError):
+        ConversionTest().DateTimeField = None
+
+    with pytest.raises(TypeError):
+        ConversionTest().DateTimeField = "spam"
 
 def test_string_conversion():
     """Test string / unicode conversion."""
@@ -716,3 +749,5 @@ def test_codecs():
     l = ob.ListField
     l.Add(42)
     assert ob.ListField.Count == 1
+
+

@@ -59,6 +59,32 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void ConvertTimeSpanRoundTrip()
+        {
+            var timespan = new TimeSpan(0, 1, 0, 0);
+            var pyTimedelta = timespan.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyTimedelta.Handle, typeof(TimeSpan), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, timespan);
+        }
+
+        [Test]
+        public void ConvertDateTimeRoundTrip()
+        {
+            var datetime = new DateTime(2000, 1, 1);
+            var pyDatetime = datetime.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, datetime);
+        }
+
+        [Test]
         public void TestConvertSingleToManaged(
             [Values(float.PositiveInfinity, float.NegativeInfinity, float.MinValue, float.MaxValue, float.NaN,
                 float.Epsilon)] float testValue)
