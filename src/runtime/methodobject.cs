@@ -86,7 +86,7 @@ namespace Python.Runtime
                 {
                     str += Environment.NewLine;
                 }
-                var attrs = (Attribute[])method.MethodBase.UnsafeValue.GetCustomAttributes(marker, false);
+                var attrs = (Attribute[])method.MethodBase.GetCustomAttributes(marker, false);
                 if (attrs.Length == 0)
                 {
                     str += method.ToString();

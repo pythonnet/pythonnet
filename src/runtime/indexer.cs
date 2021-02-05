@@ -64,7 +64,7 @@ namespace Python.Runtime
                 return false;
             }
 
-            var mi = methods[0].MethodBase.UnsafeValue;
+            var mi = methods[0].MethodBase;
             ParameterInfo[] pi = mi.GetParameters();
             // need to subtract one for the value
             int clrnargs = pi.Length - 1;
@@ -100,7 +100,7 @@ namespace Python.Runtime
 
             // Get the default arg tuple
             var methods = SetterBinder.GetMethods();
-            var mi = methods[0].MethodBase.UnsafeValue;
+            var mi = methods[0].MethodBase;
             ParameterInfo[] pi = mi.GetParameters();
             int clrnargs = pi.Length - 1;
             IntPtr defaultArgs = Runtime.PyTuple_New(clrnargs - pynargs);

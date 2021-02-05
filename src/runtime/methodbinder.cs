@@ -1,31 +1,23 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Python.Runtime
 {
-    using MaybeMethodBase = MaybeMethodBase<MethodBase>;
     /// <summary>
     /// A MethodBinder encapsulates information about a (possibly overloaded)
     /// managed method, and is responsible for selecting the right method given
     /// a set of Python arguments. This is also used as a base class for the
     /// ConstructorBinder, a minor variation used to invoke constructors.
     /// </summary>
-    [Serializable]
     internal class MethodBinder
     {
-        /// <summary>
-        /// The overloads of this method
-        /// </summary>
-        public List<MethodInformation> list;
-
-        [NonSerialized]
-        public bool init = false;
+        private List<MethodInformation> list;
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
+        public bool init = false;
 
         internal MethodBinder()
         {
@@ -85,7 +77,6 @@ namespace Python.Runtime
         /// <summary>
         /// Given a sequence of MethodInfo and a sequence of type parameters,
         /// return the MethodInfo that represents the matching closed generic.
-        /// If unsuccessful, returns null and may set a Python error.
         /// </summary>
         internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp)
         {
@@ -172,6 +163,7 @@ namespace Python.Runtime
             return null;
         }
 
+
         /// <summary>
         /// Return the array of MethodInfo for this method. The result array
         /// is arranged in order of precedence (done lazily to avoid doing it
@@ -181,7 +173,6 @@ namespace Python.Runtime
         {
             if (!init)
             {
-                list = list.Where(information => information.MethodBase.Valid).ToList();
                 // I'm sure this could be made more efficient.
                 list.Sort(new MethodSorter());
                 init = true;
@@ -200,7 +191,7 @@ namespace Python.Runtime
         private static int GetPrecedence(MethodInformation methodInformation)
         {
             ParameterInfo[] pi = methodInformation.ParameterInfo;
-            var mi = methodInformation.MethodBase.UnsafeValue;
+            var mi = methodInformation.MethodBase;
             int val = mi.IsStatic ? 3000 : 0;
             int num = pi.Length;
 
@@ -231,14 +222,9 @@ namespace Python.Runtime
                 return 3000;
             }
 
-            if (t.IsArray)
+            if (t.IsAssignableFrom(typeof(PyObject)))
             {
-                Type e = t.GetElementType();
-                if (e == objectType)
-                {
-                    return 2500;
-                }
-                return 100 + ArgPrecedence(e);
+                return -1;
             }
 
             TypeCode tc = Type.GetTypeCode(t);
@@ -288,196 +274,103 @@ namespace Python.Runtime
                     return 40;
             }
 
+            if (t.IsArray)
+            {
+                Type e = t.GetElementType();
+                if (e == objectType)
+                {
+                    return 2500;
+                }
+                return 100 + ArgPrecedence(e);
+            }
+
             return 2000;
         }
 
         /// <summary>
         /// Bind the given Python instance and arguments to a particular method
-        /// overload in <see cref="list"/> and return a structure that contains the converted Python
+        /// overload and return a structure that contains the converted Python
         /// instance, converted arguments and the correct method to call.
-        /// If unsuccessful, may set a Python error.
         /// </summary>
-        /// <param name="inst">The Python target of the method invocation.</param>
-        /// <param name="args">The Python arguments.</param>
-        /// <param name="kw">The Python keyword arguments.</param>
-        /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw)
         {
             return Bind(inst, args, kw, null, null);
         }
 
-        /// <summary>
-        /// Bind the given Python instance and arguments to a particular method
-        /// overload in <see cref="list"/> and return a structure that contains the converted Python
-        /// instance, converted arguments and the correct method to call.
-        /// If unsuccessful, may set a Python error.
-        /// </summary>
-        /// <param name="inst">The Python target of the method invocation.</param>
-        /// <param name="args">The Python arguments.</param>
-        /// <param name="kw">The Python keyword arguments.</param>
-        /// <param name="info">If not null, only bind to that method.</param>
-        /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
             return Bind(inst, args, kw, info, null);
         }
 
-        private readonly struct MatchedMethod
-        {
-            public MatchedMethod(int kwargsMatched, int defaultsNeeded, object[] margs, int outs, MethodBase mb, bool usedImplicitConversion)
-            {
-                KwargsMatched = kwargsMatched;
-                DefaultsNeeded = defaultsNeeded;
-                ManagedArgs = margs;
-                Outs = outs;
-                Method = mb;
-                UsedImplicitConversion = usedImplicitConversion;
-            }
-            public bool UsedImplicitConversion { get; }
-            public int KwargsMatched { get; }
-            public int DefaultsNeeded { get; }
-            public object[] ManagedArgs { get; }
-            public int Outs { get; }
-            public MethodBase Method { get; }
-        }
-
-        private readonly struct MismatchedMethod
-        {
-            public MismatchedMethod(PythonException exception, MethodBase mb)
-            {
-                Exception = exception;
-                Method = mb;
-            }
-
-            public PythonException Exception { get; }
-            public MethodBase Method { get; }
-        }
-
-        /// <summary>
-        /// Bind the given Python instance and arguments to a particular method
-        /// overload in <see cref="list"/> and return a structure that contains the converted Python
-        /// instance, converted arguments and the correct method to call.
-        /// If unsuccessful, may set a Python error.
-        /// </summary>
-        /// <param name="inst">The Python target of the method invocation.</param>
-        /// <param name="args">The Python arguments.</param>
-        /// <param name="kw">The Python keyword arguments.</param>
-        /// <param name="info">If not null, only bind to that method.</param>
-        /// <param name="methodinfo">If not null, additionally attempt to bind to the generic methods in this array by inferring generic type parameters.</param>
-        /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
-            var kwargDict = new Dictionary<string, IntPtr>();
-            if (kw != IntPtr.Zero)
-            {
-                var pynkwargs = (int)Runtime.PyDict_Size(kw);
-                IntPtr keylist = Runtime.PyDict_Keys(kw);
-                IntPtr valueList = Runtime.PyDict_Values(kw);
-                for (int i = 0; i < pynkwargs; ++i)
-                {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
-                }
-                Runtime.XDecref(keylist);
-                Runtime.XDecref(valueList);
-            }
-
+            // loop to find match, return invoker w/ or /wo error
             var pynargs = (int)Runtime.PyTuple_Size(args);
+            object arg;
             var isGeneric = false;
+            ArrayList defaultArgList;
+            Type clrtype;
+            Binding bindingUsingImplicitConversion = null;
+
             var methods = info == null ? GetMethods()
                 : new List<MethodInformation>(1) { new MethodInformation(info, info.GetParameters()) };
-
-            var argMatchedMethods = new List<MatchedMethod>(methods.Count);
-            var mismatchedMethods = new List<MismatchedMethod>();
-
-            var anyUsedImplicitConversion = false;
 
             // TODO: Clean up
             foreach (var methodInformation in methods)
             {
-                var mi = methodInformation.MethodBase.UnsafeValue;
+                var mi = methodInformation.MethodBase;
                 var pi = methodInformation.ParameterInfo;
-                var usedImplicitConversion = false;
+
                 if (mi.IsGenericMethod)
                 {
                     isGeneric = true;
                 }
-                ArrayList defaultArgList;
-                bool paramsArray;
-                int kwargsMatched;
-                int defaultsNeeded;
-                bool isOperator = OperatorMethod.IsOperatorMethod(mi);
-                // Binary operator methods will have 2 CLR args but only one Python arg
-                // (unary operators will have 1 less each), since Python operator methods are bound.
-                isOperator = isOperator && pynargs == pi.Length - 1;
-                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
-                if (isReverse && OperatorMethod.IsComparisonOp((MethodInfo)mi))
-                    continue;  // Comparison operators in Python have no reverse mode.
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded) && !isOperator)
+                int clrnargs = pi.Length;
+                int arrayStart;
+
+                if (CheckMethodArgumentsMatch(clrnargs,
+                    pynargs,
+                    pi,
+                    out arrayStart,
+                    out defaultArgList))
                 {
-                    continue;
-                }
-                // Preprocessing pi to remove either the first or second argument.
-                if (isOperator && !isReverse) {
-                    // The first Python arg is the right operand, while the bound instance is the left.
-                    // We need to skip the first (left operand) CLR argument.
-                    pi = pi.Skip(1).ToArray();
-                }
-                else if (isOperator && isReverse) {
-                    // The first Python arg is the left operand.
-                    // We need to take the first CLR argument.
-                    pi = pi.Take(1).ToArray();
-                }
-                int outs;
-                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
-                    needsResolution: methods.Count > 1,  // If there's more than one possible match.
-                    outs: out outs, out usedImplicitConversion);
-                if (margs == null)
-                {
-                    mismatchedMethods.Add(new MismatchedMethod(new PythonException(), mi));
-                    Exceptions.Clear();
-                    continue;
-                }
-                if (isOperator)
-                {
-                    if (inst != IntPtr.Zero)
+                    var outs = 0;
+                    var margs = new object[clrnargs];
+                    var usedImplicitConversion = false;
+
+                    for (int n = 0; n < clrnargs; n++)
                     {
-                        if (ManagedType.GetManagedObject(inst) is CLRObject co)
+                        IntPtr op;
+                        if (n < pynargs)
                         {
-                            bool isUnary = pynargs == 0;
-                            // Postprocessing to extend margs.
-                            var margsTemp = isUnary ? new object[1] : new object[2];
-                            // If reverse, the bound instance is the right operand.
-                            int boundOperandIndex = isReverse ? 1 : 0;
-                            // If reverse, the passed instance is the left operand.
-                            int passedOperandIndex = isReverse ? 0 : 1;
-                            margsTemp[boundOperandIndex] = co.inst;
-                            if (!isUnary)
+                            if (arrayStart == n)
                             {
-                                margsTemp[passedOperandIndex] = margs[0];
+                                // map remaining Python arguments to a tuple since
+                                // the managed function accepts it - hopefully :]
+                                op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
                             }
-                            margs = margsTemp;
-                        }
-                        else continue;
-                    }
-                }
+                            else
+                            {
+                                op = Runtime.PyTuple_GetItem(args, n);
+                            }
 
+                            // this logic below handles cases when multiple overloading methods
+                            // are ambiguous, hence comparison between Python and CLR types
+                            // is necessary
+                            clrtype = null;
+                            IntPtr pyoptype;
+                            if (methods.Count > 1)
+                            {
+                                pyoptype = IntPtr.Zero;
+                                pyoptype = Runtime.PyObject_Type(op);
+                                Exceptions.Clear();
+                                if (pyoptype != IntPtr.Zero)
+                                {
+                                    clrtype = Converter.GetTypeByAlias(pyoptype);
+                                }
+                                Runtime.XDecref(pyoptype);
+                            }
 
-                var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi, usedImplicitConversion);
-                argMatchedMethods.Add(matchedMethod);
-                anyUsedImplicitConversion |= usedImplicitConversion;
-            }
-            if (argMatchedMethods.Count > 0)
-            {
-                if (anyUsedImplicitConversion)
-                {
-                    argMatchedMethods.Sort((method, matchedMethod) => matchedMethod.UsedImplicitConversion ? 0 : 1);
-                }
-                var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
-                var fewestDefaultsRequired = argMatchedMethods.Where(x => x.KwargsMatched == bestKwargMatchCount).Min(x => x.DefaultsNeeded);
-
-                int bestCount = 0;
-                int bestMatchIndex = -1;
 
                 for (int index = 0; index < argMatchedMethods.Count; index++)
                 {
@@ -625,7 +518,7 @@ namespace Python.Runtime
             for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
             {
                 var parameter = pi[paramIndex];
-                bool hasNamedParam = parameter.Name != null ? kwargDict.ContainsKey(parameter.Name) : false;
+                bool hasNamedParam = kwargDict.ContainsKey(parameter.Name);
                 bool isNewReference = false;
 
                 if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
@@ -638,237 +531,136 @@ namespace Python.Runtime
                     continue;
                 }
 
-                IntPtr op;
-                if (hasNamedParam)
-                {
-                    op = kwargDict[parameter.Name];
-                }
-                else
-                {
-                    if(arrayStart == paramIndex)
-                    {
-                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);
-                    }
-                    else
-                    {
-                        op = Runtime.PyTuple_GetItem(args, paramIndex);
-                    }
-                }
+                            if (pi[n].IsOut || clrtype.IsByRef)
+                            {
+                                outs++;
+                            }
 
-                bool isOut;
-                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut, out usedImplicitConversion))
-                {
-                    return null;
-                }
-
-                if (isNewReference)
-                {
-                    // TODO: is this a bug? Should this happen even if the conversion fails?
-                    // GetSlice() creates a new reference but GetItem()
-                    // returns only a borrow reference.
-                    Runtime.XDecref(op);
-                }
-
-                if (isOut)
-                {
-                    outs++;
-                }
-            }
-
-            return margs;
-        }
-
-        /// <summary>
-        /// Try to convert a Python argument object to a managed CLR type.
-        /// If unsuccessful, may set a Python error.
-        /// </summary>
-        /// <param name="op">Pointer to the Python argument object.</param>
-        /// <param name="parameterType">That parameter's managed type.</param>
-        /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
-        /// <param name="arg">Converted argument.</param>
-        /// <param name="isOut">Whether the CLR type is passed by reference.</param>
-        /// <returns>true on success</returns>
-        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
-                                       out object arg, out bool isOut, out bool usedImplicitConversion)
-        {
-            arg = null;
-            isOut = false;
-            var clrtype = TryComputeClrArgumentType(parameterType, op, needsResolution: needsResolution, out usedImplicitConversion);
-            if (clrtype == null)
-            {
-                return false;
-            }
-
-            if (!Converter.ToManaged(op, clrtype, out arg, true))
-            {
-                return false;
-            }
-
-            isOut = clrtype.IsByRef;
-            return true;
-        }
-
-        /// <summary>
-        /// Determine the managed type that a Python argument object needs to be converted into.
-        /// </summary>
-        /// <param name="parameterType">The parameter's managed type.</param>
-        /// <param name="argument">Pointer to the Python argument object.</param>
-        /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
-        /// <returns>null if conversion is not possible</returns>
-        static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution, out bool usedImplicitConversion)
-        {
-            usedImplicitConversion = false;
-            // this logic below handles cases when multiple overloading methods
-            // are ambiguous, hence comparison between Python and CLR types
-            // is necessary
-            Type clrtype = null;
-            IntPtr pyoptype;
-            if (needsResolution)
-            {
-                // HACK: each overload should be weighted in some way instead
-                pyoptype = Runtime.PyObject_Type(argument);
-                if (pyoptype != IntPtr.Zero)
-                {
-                    clrtype = Converter.GetTypeByAlias(pyoptype);
-                }
-                Runtime.XDecref(pyoptype);
-            }
-
-            if (clrtype != null)
-            {
-                if ((parameterType != typeof(object)) && (parameterType != clrtype))
-                {
-                    IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
-                    pyoptype = Runtime.PyObject_Type(argument);
-                    Exceptions.Clear();
-                    var typematch = false;
-                    if (pyoptype != IntPtr.Zero)
-                    {
-                        if (pytype != pyoptype)
-                        {
-                            typematch = false;
+                            if (!Converter.ToManaged(op, clrtype, out arg, false))
+                            {
+                                Exceptions.Clear();
+                                margs = null;
+                                break;
+                            }
+                            if (arrayStart == n)
+                            {
+                                // GetSlice() creates a new reference but GetItem()
+                                // returns only a borrow reference.
+                                Runtime.XDecref(op);
+                            }
+                            margs[n] = arg;
                         }
                         else
                         {
-                            typematch = true;
-                            clrtype = parameterType;
+                            if (defaultArgList != null)
+                            {
+                                margs[n] = defaultArgList[n - pynargs];
+                            }
                         }
                     }
-                    if (!typematch)
-                    {
-                        // this takes care of nullables
-                        var underlyingType = Nullable.GetUnderlyingType(parameterType);
-                        if (underlyingType != null)
-                        {
-                            parameterType = underlyingType;
-                        }
-                        // this takes care of enum values
-                        TypeCode parameterTypeCode = Type.GetTypeCode(parameterType);
-                        TypeCode clrTypeCode = Type.GetTypeCode(clrtype);
-                        if (parameterTypeCode == clrTypeCode)
-                        {
-                            typematch = true;
-                            clrtype = parameterType;
-                        }
 
-                        // accepts non-decimal numbers in decimal parameters 
-                        if (parameterType == typeof(decimal))
-                        {
-                            clrtype = parameterType;
-                            typematch = Converter.ToManaged(argument, clrtype, out _, false);
-                        }
-
-                        // this takes care of implicit conversions
-                        var opImplicit = parameterType.GetMethod("op_Implicit", new[] { clrtype });
-                        if (opImplicit != null)
-                        {
-                            usedImplicitConversion = typematch = opImplicit.ReturnType == parameterType;
-                            clrtype = parameterType;
-                        }
-                    }
-                    Runtime.XDecref(pyoptype);
-                    if (!typematch)
+                    if (margs == null)
                     {
-                        return null;
+                        continue;
                     }
-                }
-                else
-                {
-                    clrtype = parameterType;
+
+                    object target = null;
+                    if (!mi.IsStatic && inst != IntPtr.Zero)
+                    {
+                        //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
+                        // InvalidCastException: Unable to cast object of type
+                        // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
+                        var co = ManagedType.GetManagedObject(inst) as CLRObject;
+
+                        // Sanity check: this ensures a graceful exit if someone does
+                        // something intentionally wrong like call a non-static method
+                        // on the class rather than on an instance of the class.
+                        // XXX maybe better to do this before all the other rigmarole.
+                        if (co == null)
+                        {
+                            return null;
+                        }
+                        target = co.inst;
+                    }
+
+                    var binding = new Binding(mi, target, margs, outs);
+                    if (usedImplicitConversion)
+                    {
+                        // lets just keep the first binding using implicit conversion
+                        // this is to respect method order/precedence
+                        if (bindingUsingImplicitConversion == null)
+                        {
+                            // in this case we will not return the binding yet in case there is a match
+                            // which does not use implicit conversions, which will return directly
+                            bindingUsingImplicitConversion = binding;
+                        }
+                    }
+                    else
+                    {
+                        return binding;
+                    }
                 }
             }
-            else
+
+            // if we generated a binding using implicit conversion return it
+            if (bindingUsingImplicitConversion != null)
             {
-                clrtype = parameterType;
+                return bindingUsingImplicitConversion;
             }
 
-            return clrtype;
+            // We weren't able to find a matching method but at least one
+            // is a generic method and info is null. That happens when a generic
+            // method was not called using the [] syntax. Let's introspect the
+            // type of the arguments and use it to construct the correct method.
+            if (isGeneric && info == null && methodinfo != null)
+            {
+                Type[] types = Runtime.PythonArgsToTypeArray(args, true);
+                MethodInfo mi = MatchParameters(methodinfo, types);
+                return Bind(inst, args, kw, mi, null);
+            }
+            return null;
         }
+
         /// <summary>
-        /// Check whether the number of Python and .NET arguments match, and compute additional arg information.
+        /// This helper method will perform an initial check to determine if we found a matching
+        /// method based on its parameters count and type <see cref="Bind(IntPtr,IntPtr,IntPtr,MethodBase,MethodInfo[])"/>
         /// </summary>
-        /// <param name="positionalArgumentCount">Number of positional args passed from Python.</param>
-        /// <param name="parameters">Parameters of the specified .NET method.</param>
-        /// <param name="kwargDict">Keyword args passed from Python.</param>
-        /// <param name="paramsArray">True if the final param of the .NET method is an array (`params` keyword).</param>
-        /// <param name="defaultArgList">List of default values for arguments.</param>
-        /// <param name="kwargsMatched">Number of kwargs from Python that are also present in the .NET method.</param>
-        /// <param name="defaultsNeeded">Number of non-null defaultsArgs.</param>
-        /// <returns></returns>
-        static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
-            Dictionary<string, IntPtr> kwargDict,
-            out bool paramsArray,
-            out ArrayList defaultArgList,
-            out int kwargsMatched,
-            out int defaultsNeeded)
+        private bool CheckMethodArgumentsMatch(int clrnargs,
+            nint pynargs,
+            ParameterInfo[] parameterInfo,
+            out int arrayStart,
+            out ArrayList defaultArgList)
         {
+            arrayStart = -1;
             defaultArgList = null;
+
             var match = false;
-            paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
-            kwargsMatched = 0;
-            defaultsNeeded = 0;
-            if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)
+            if (pynargs == clrnargs)
             {
                 match = true;
             }
-            else if (positionalArgumentCount < parameters.Length && (!paramsArray || positionalArgumentCount == parameters.Length - 1))
+            else if (pynargs < clrnargs)
             {
                 match = true;
-                // every parameter past 'positionalArgumentCount' must have either
-                // a corresponding keyword arg or a default param, unless the method
-                // method accepts a params array (which cannot have a default value)
                 defaultArgList = new ArrayList();
-                for (var v = positionalArgumentCount; v < parameters.Length; v++)
+                for (var v = pynargs; v < clrnargs && match; v++)
                 {
-                    if (kwargDict.ContainsKey(parameters[v].Name))
-                    {
-                        // we have a keyword argument for this parameter,
-                        // no need to check for a default parameter, but put a null
-                        // placeholder in defaultArgList
-                        defaultArgList.Add(null);
-                        kwargsMatched++;
-                    }
-                    else if (parameters[v].IsOptional)
-                    {
-                        // IsOptional will be true if the parameter has a default value,
-                        // or if the parameter has the [Optional] attribute specified.
-                        // The GetDefaultValue() extension method will return the value
-                        // to be passed in as the parameter value
-                        defaultArgList.Add(parameters[v].GetDefaultValue());
-                        defaultsNeeded++;
-                    }
-                    else if (!paramsArray)
+                    if (parameterInfo[v].DefaultValue == DBNull.Value)
                     {
                         match = false;
                     }
+                    else
+                    {
+                        defaultArgList.Add(parameterInfo[v].DefaultValue);
+                    }
                 }
             }
-            else if (positionalArgumentCount > parameters.Length && parameters.Length > 0 &&
-                       Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)))
+            else if (pynargs > clrnargs && clrnargs > 0 &&
+                     Attribute.IsDefined(parameterInfo[clrnargs - 1], typeof(ParamArrayAttribute)))
             {
                 // This is a `foo(params object[] bar)` style method
                 match = true;
-                paramsArray = true;
+                arrayStart = clrnargs - 1;
             }
 
             return match;
@@ -884,6 +676,136 @@ namespace Python.Runtime
             return Invoke(inst, args, kw, info, null);
         }
 
+        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        {
+            Binding binding = Bind(inst, args, kw, info, methodinfo);
+            object result;
+            IntPtr ts = IntPtr.Zero;
+
+            if (binding == null)
+            {
+                var value = "No method matches given arguments";
+                if (methodinfo != null && methodinfo.Length > 0)
+                {
+                    value += $" for {methodinfo[0].Name}";
+                }
+                Exceptions.SetError(Exceptions.TypeError, value);
+                return IntPtr.Zero;
+            }
+
+            if (allow_threads)
+            {
+                ts = PythonEngine.BeginAllowThreads();
+            }
+
+            try
+            {
+                result = binding.info.Invoke(binding.inst, BindingFlags.Default, null, binding.args, null);
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                }
+                if (allow_threads)
+                {
+                    PythonEngine.EndAllowThreads(ts);
+                }
+                Exceptions.SetError(e);
+                return IntPtr.Zero;
+            }
+
+            if (allow_threads)
+            {
+                PythonEngine.EndAllowThreads(ts);
+            }
+
+            // If there are out parameters, we return a tuple containing
+            // the result followed by the out parameters. If there is only
+            // one out parameter and the return type of the method is void,
+            // we return the out parameter as the result to Python (for
+            // code compatibility with ironpython).
+
+            var mi = (MethodInfo)binding.info;
+
+            if (binding.outs > 0)
+            {
+                ParameterInfo[] pi = mi.GetParameters();
+                int c = pi.Length;
+                var n = 0;
+
+                IntPtr t = Runtime.PyTuple_New(binding.outs + 1);
+                IntPtr v = Converter.ToPython(result, mi.ReturnType);
+                Runtime.PyTuple_SetItem(t, n, v);
+                n++;
+
+                for (var i = 0; i < c; i++)
+                {
+                    Type pt = pi[i].ParameterType;
+                    if (pi[i].IsOut || pt.IsByRef)
+                    {
+                        v = Converter.ToPython(binding.args[i], pt);
+                        Runtime.PyTuple_SetItem(t, n, v);
+                        n++;
+                    }
+                }
+
+                if (binding.outs == 1 && mi.ReturnType == typeof(void))
+                {
+                    v = Runtime.PyTuple_GetItem(t, 1);
+                    Runtime.XIncref(v);
+                    Runtime.XDecref(t);
+                    return v;
+                }
+
+                return t;
+            }
+
+            return Converter.ToPython(result, mi.ReturnType);
+        }
+
+        /// <summary>
+        /// Utility class to store the information about a <see cref="MethodBase"/>
+        /// </summary>
+        internal class MethodInformation
+        {
+            public MethodBase MethodBase { get; }
+
+            public ParameterInfo[] ParameterInfo { get; }
+
+            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
+            {
+                MethodBase = methodBase;
+                ParameterInfo = parameterInfo;
+            }
+
+            public override string ToString()
+            {
+                return MethodBase.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Utility class to sort method info by parameter type precedence.
+        /// </summary>
+        private class MethodSorter : IComparer<MethodInformation>
+        {
+            public int Compare(MethodInformation x, MethodInformation y)
+            {
+                int p1 = GetPrecedence(x);
+                int p2 = GetPrecedence(y);
+                if (p1 < p2)
+                {
+                    return -1;
+                }
+                if (p1 > p2)
+                {
+                    return 1;
+                }
+                return 0;
+            }
+        }
         protected static void AppendArgumentTypes(StringBuilder to, IntPtr args)
         {
             long argCount = Runtime.PyTuple_Size(args);
@@ -917,162 +839,8 @@ namespace Python.Runtime
             }
             to.Append(')');
         }
-
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
-        {
-            // No valid methods, nothing to bind.
-            if (GetMethods().Count == 0)
-            {
-                var msg = new StringBuilder("The underlying C# method(s) have been deleted");
-                if (list.Count > 0 && list[0].MethodBase.Name != null)
-                {
-                    msg.Append($": {list[0]}");
-                }
-                return Exceptions.RaiseTypeError(msg.ToString());
-            }
-
-            Binding binding = Bind(inst, args, kw, info, methodinfo);
-            object result;
-            IntPtr ts = IntPtr.Zero;
-
-            if (binding == null)
-            {
-                var value = new StringBuilder("No method matches given arguments");
-                if (methodinfo != null && methodinfo.Length > 0)
-                {
-                    value.Append($" for {methodinfo[0].Name}");
-                }
-                else if (list.Count > 0 && list[0].MethodBase.Valid)
-                {
-                    value.Append($" for {list[0].MethodBase.Name}");
-                }
-
-                value.Append(": ");
-                AppendArgumentTypes(to: value, args);
-                Exceptions.RaiseTypeError(value.ToString());
-                return IntPtr.Zero;
-            }
-
-            if (allow_threads)
-            {
-                ts = PythonEngine.BeginAllowThreads();
-            }
-
-            try
-            {
-                result = binding.info.Invoke(binding.inst, BindingFlags.Default, null, binding.args, null);
-            }
-            catch (Exception e)
-            {
-                if (e.InnerException != null)
-                {
-                    e = e.InnerException;
-                }
-                if (allow_threads)
-                {
-                    PythonEngine.EndAllowThreads(ts);
-                }
-                Exceptions.SetError(e);
-                return IntPtr.Zero;
-            }
-
-            if (allow_threads)
-            {
-                PythonEngine.EndAllowThreads(ts);
-            }
-
-            // If there are out parameters, we return a tuple containing
-            // the result, if any, followed by the out parameters. If there is only
-            // one out parameter and the return type of the method is void,
-            // we return the out parameter as the result to Python (for
-            // code compatibility with ironpython).
-
-            var mi = (MethodInfo)binding.info;
-
-            if (binding.outs > 0)
-            {
-                ParameterInfo[] pi = mi.GetParameters();
-                int c = pi.Length;
-                var n = 0;
-
-                bool isVoid = mi.ReturnType == typeof(void);
-                int tupleSize = binding.outs + (isVoid ? 0 : 1);
-                IntPtr t = Runtime.PyTuple_New(tupleSize);
-                if (!isVoid)
-                {
-                    IntPtr v = Converter.ToPython(result, mi.ReturnType);
-                    Runtime.PyTuple_SetItem(t, n, v);
-                    n++;
-                }
-
-                for (var i = 0; i < c; i++)
-                {
-                    Type pt = pi[i].ParameterType;
-                    if (pt.IsByRef)
-                    {
-                        IntPtr v = Converter.ToPython(binding.args[i], pt.GetElementType());
-                        Runtime.PyTuple_SetItem(t, n, v);
-                        n++;
-                    }
-                }
-
-                if (binding.outs == 1 && mi.ReturnType == typeof(void))
-                {
-                    IntPtr v = Runtime.PyTuple_GetItem(t, 0);
-                    Runtime.XIncref(v);
-                    Runtime.XDecref(t);
-                    return v;
-                }
-
-                return t;
-            }
-
-            return Converter.ToPython(result, mi.ReturnType);
-        }
-
-        /// <summary>
-        /// Utility class to store the information about a <see cref="MethodBase"/>
-        /// </summary>
-        [Serializable]
-        internal class MethodInformation
-        {
-            public MaybeMethodBase MethodBase { get; }
-
-            public ParameterInfo[] ParameterInfo { get; }
-
-            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
-            {
-                MethodBase = methodBase;
-                ParameterInfo = parameterInfo;
-            }
-
-            public override string ToString()
-            {
-                return MethodBase.ToString();
-            }
-        }
-
-        /// <summary>
-        /// Utility class to sort method info by parameter type precedence.
-        /// </summary>
-        internal class MethodSorter : IComparer<MethodInformation>
-        {
-            public int Compare(MethodInformation x, MethodInformation y)
-            {
-                int p1 = GetPrecedence(x);
-                int p2 = GetPrecedence(y);
-                if (p1 < p2)
-                {
-                    return -1;
-                }
-                if (p1 > p2)
-                {
-                    return 1;
-                }
-                return 0;
-            }
-        }
     }
+
 
     /// <summary>
     /// A Binding is a utility instance that bundles together a MethodInfo
@@ -1092,35 +860,6 @@ namespace Python.Runtime
             this.inst = inst;
             this.args = args;
             this.outs = outs;
-        }
-    }
-
-
-    static internal class ParameterInfoExtensions
-    {
-        public static object GetDefaultValue(this ParameterInfo parameterInfo)
-        {
-            // parameterInfo.HasDefaultValue is preferable but doesn't exist in .NET 4.0
-            bool hasDefaultValue = (parameterInfo.Attributes & ParameterAttributes.HasDefault) ==
-                ParameterAttributes.HasDefault;
-
-            if (hasDefaultValue)
-            {
-                return parameterInfo.DefaultValue;
-            }
-            else
-            {
-                // [OptionalAttribute] was specified for the parameter.
-                // See https://stackoverflow.com/questions/3416216/optionalattribute-parameters-default-value
-                // for rules on determining the value to pass to the parameter
-                var type = parameterInfo.ParameterType;
-                if (type == typeof(object))
-                    return Type.Missing;
-                else if (type.IsValueType)
-                    return Activator.CreateInstance(type);
-                else
-                    return null;
-            }
         }
     }
 }
