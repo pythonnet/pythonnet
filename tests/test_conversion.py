@@ -475,9 +475,6 @@ def test_decimal_conversion():
     """Test decimal conversion."""
     from System import Decimal
 
-    max_d = Decimal.Parse("79228162514264337593543950335")
-    min_d = Decimal.Parse("-79228162514264337593543950335")
-
     assert Decimal.ToInt64(Decimal(10)) == 10
 
     ob = ConversionTest()
@@ -492,20 +489,11 @@ def test_decimal_conversion():
     ob.DecimalField = Decimal.Zero
     assert ob.DecimalField == Decimal.Zero
 
-    ob.DecimalField = max_d
-    assert ob.DecimalField == max_d
-
-    ob.DecimalField = min_d
-    assert ob.DecimalField == min_d
-
     with pytest.raises(TypeError):
         ConversionTest().DecimalField = None
 
     with pytest.raises(TypeError):
         ConversionTest().DecimalField = "spam"
-
-    with pytest.raises(TypeError):
-        ConversionTest().DecimalField = 1
 
 def test_timedelta_conversion():
     import datetime
