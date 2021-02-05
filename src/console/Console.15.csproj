@@ -8,7 +8,7 @@
     <AssemblyName>nPython</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
     <PackageId>nPython</PackageId>
-    <VersionPrefix>2.5.1</VersionPrefix>
+    <VersionPrefix>2.5.2</VersionPrefix>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
