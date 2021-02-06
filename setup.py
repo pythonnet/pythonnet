@@ -13,10 +13,10 @@ import os
 import subprocess
 import sys
 import sysconfig
-from distutils import spawn
-from distutils.command import install, build, build_ext, install_data, install_lib
 
 from setuptools import Extension, setup
+from distutils import spawn
+from distutils.command import install, build, build_ext, install_data, install_lib
 
 try:
     from wheel import bdist_wheel

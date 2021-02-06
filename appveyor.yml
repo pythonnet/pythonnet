@@ -2,8 +2,8 @@ version: '{branch}-{build}'
 build: off
 
 image:
-  - Visual Studio 2017
-  
+  - Visual Studio 2019
+
 platform:
   - x86
   - x64
@@ -25,7 +25,7 @@ environment:
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.5
       BUILD_OPTS: --xplat
-    - PYTHON_VERSION: 2.7 
+    - PYTHON_VERSION: 2.7
       BUILD_OPTS: --xplat
     - PYTHON_VERSION: 3.9
     - PYTHON_VERSION: 3.8
