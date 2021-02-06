@@ -120,14 +120,12 @@ def test_raise_instance_exception_with_args():
     assert isinstance(exc, NullReferenceException)
     assert exc.Message == 'Aiiieee!'
 
-
 def test_managed_exception_propagation():
     """Test propagation of exceptions raised in managed code."""
-    from System import Decimal, OverflowException
+    from System import Decimal, DivideByZeroException
 
-    with pytest.raises(OverflowException):
-        Decimal.ToInt64(Decimal.MaxValue)
-
+    with pytest.raises(DivideByZeroException):
+        Decimal.Divide(1, 0)
 
 def test_managed_exception_conversion():
     """Test conversion of managed exceptions."""

@@ -69,16 +69,16 @@ def test_dict_contains():
     """Test dict support for __contains__."""
 
     ob = Test.PublicDictionaryTest()
-    items = ob.items
+    keys = ob.items.Keys
 
-    assert '0' in items
-    assert '1' in items
-    assert '2' in items
-    assert '3' in items
-    assert '4' in items
+    assert '0' in keys
+    assert '1' in keys
+    assert '2' in keys
+    assert '3' in keys
+    assert '4' in keys
 
-    assert not ('5' in items)
-    assert not ('-1' in items)
+    assert not ('5' in keys)
+    assert not ('-1' in keys)
 
 def test_dict_abuse():
     """Test dict abuse."""
@@ -99,17 +99,6 @@ def test_dict_abuse():
 
     with pytest.raises(TypeError):
         Test.PublicArrayTest.__getitem__(0, 0)
-
-    with pytest.raises(TypeError):
-        Test.PublicArrayTest.__setitem__(0, 0, 0)
-
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__getitem__']
-        desc(0, 0)
-
-    with pytest.raises(TypeError):
-        desc = Test.PublicArrayTest.__dict__['__setitem__']
-        desc(0, 0, 0)
 
 def test_InheritedDictionary():
     """Test class that inherited from IDictionary."""

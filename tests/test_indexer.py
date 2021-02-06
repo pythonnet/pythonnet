@@ -333,31 +333,6 @@ def test_double_indexer():
         ob["wrong"] = "wrong"
 
 
-def test_decimal_indexer():
-    """Test Decimal indexers."""
-    ob = Test.DecimalIndexerTest()
-
-    from System import Decimal
-    max_d = Decimal.Parse("79228162514264337593543950335")
-    min_d = Decimal.Parse("-79228162514264337593543950335")
-
-    assert ob[max_d] is None
-
-    ob[max_d] = "max_"
-    assert ob[max_d] == "max_"
-
-    ob[min_d] = "min_"
-    assert ob[min_d] == "min_"
-
-    with pytest.raises(TypeError):
-        ob = Test.DecimalIndexerTest()
-        ob["wrong"]
-
-    with pytest.raises(TypeError):
-        ob = Test.DecimalIndexerTest()
-        ob["wrong"] = "wrong"
-
-
 def test_string_indexer():
     """Test String indexers."""
     ob = Test.StringIndexerTest()
