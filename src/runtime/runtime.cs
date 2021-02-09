@@ -277,7 +277,7 @@ namespace Python.Runtime
                 () => PyFloatType = IntPtr.Zero);
             XDecref(op);
 
-            IntPtr decimalMod = PyImport_ImportModule("decimal");
+            IntPtr decimalMod = PyImport_ImportModule("_pydecimal");
             IntPtr decimalCtor = PyObject_GetAttrString(decimalMod, "Decimal");
             op = PyObject_CallObject(decimalCtor, IntPtr.Zero);
             PyDecimalType = PyObject_Type(op);
