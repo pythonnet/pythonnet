@@ -22,7 +22,7 @@ namespace Python.Runtime
     [Serializable]
     internal class ConstructorBinding : ExtensionType
     {
-        private Type type; // The managed Type being wrapped in a ClassObject
+        private MaybeType type; // The managed Type being wrapped in a ClassObject
         private IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
         private ConstructorBinder ctorBinder;
 
@@ -92,6 +92,11 @@ namespace Python.Runtime
         public static IntPtr mp_subscript(IntPtr op, IntPtr key)
         {
             var self = (ConstructorBinding)GetManagedObject(op);
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            Type tp = self.type.Value;
 
             Type[] types = Runtime.PythonArgsToTypeArray(key);
             if (types == null)
@@ -100,12 +105,12 @@ namespace Python.Runtime
             }
             //MethodBase[] methBaseArray = self.ctorBinder.GetMethods();
             //MethodBase ci = MatchSignature(methBaseArray, types);
-            ConstructorInfo ci = self.type.GetConstructor(types);
+            ConstructorInfo ci = tp.GetConstructor(types);
             if (ci == null)
             {
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
-            var boundCtor = new BoundContructor(self.type, self.pyTypeHndl, self.ctorBinder, ci);
+            var boundCtor = new BoundContructor(tp, self.pyTypeHndl, self.ctorBinder, ci);
 
             return boundCtor.pyHandle;
         }
@@ -122,7 +127,12 @@ namespace Python.Runtime
                 return self.repr;
             }
             MethodBase[] methods = self.ctorBinder.GetMethods();
-            string name = self.type.FullName;
+
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            string name = self.type.Value.FullName;
             var doc = "";
             foreach (MethodBase t in methods)
             {

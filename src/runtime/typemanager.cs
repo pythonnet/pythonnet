@@ -21,9 +21,10 @@ namespace Python.Runtime
         internal static IntPtr subtype_clear;
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        private static Dictionary<Type, IntPtr> cache = new Dictionary<Type, IntPtr>();
+        private static Dictionary<MaybeType, IntPtr> cache = new Dictionary<MaybeType, IntPtr>();
+
         private static readonly Dictionary<IntPtr, SlotsHolder> _slotsHolders = new Dictionary<IntPtr, SlotsHolder>();
-        private static Dictionary<Type, Type> _slotsImpls = new Dictionary<Type, Type>();
+        private static Dictionary<MaybeType, Type> _slotsImpls = new Dictionary<MaybeType, Type>();
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -77,11 +78,17 @@ namespace Python.Runtime
         {
             Debug.Assert(cache == null || cache.Count == 0);
             storage.GetValue("slots", out _slotsImpls);
-            storage.GetValue("cache", out cache);
-            foreach (var entry in cache)
+            storage.GetValue<Dictionary<MaybeType, IntPtr>>("cache", out var _cache);
+            foreach (var entry in _cache)
             {
-                Type type = entry.Key;
+                if (!entry.Key.Valid)
+                {
+                    Runtime.XDecref(entry.Value);
+                    continue;
+                }
+                Type type = entry.Key.Value;;
                 IntPtr handle = entry.Value;
+                cache[type] = handle;
                 SlotsHolder holder = CreateSolotsHolder(handle);
                 InitializeSlots(handle, _slotsImpls[type], holder);
                 // FIXME: mp_length_slot.CanAssgin(clrType)
@@ -95,6 +102,7 @@ namespace Python.Runtime
         /// object. These Python type instances are used to implement internal
         /// descriptor and utility types like ModuleObject, PropertyObject, etc.
         /// </summary>
+        [Obsolete]
         internal static IntPtr GetTypeHandle(Type type)
         {
             // Note that these types are cached with a refcount of 1, so they
@@ -110,6 +118,14 @@ namespace Python.Runtime
             _slotsImpls.Add(type, type);
             return handle;
         }
+        /// <summary>
+        /// Given a managed Type derived from ExtensionType, get the handle to
+        /// a Python type object that delegates its implementation to the Type
+        /// object. These Python type instances are used to implement internal
+        /// descriptor and utility types like ModuleObject, PropertyObject, etc.
+        /// </summary>
+        internal static BorrowedReference GetTypeReference(Type type)
+            => new BorrowedReference(GetTypeHandle(type));
 
 
         /// <summary>
@@ -164,10 +180,10 @@ namespace Python.Runtime
                 throw new PythonException();
             }
 
-            IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            IntPtr mod = Runtime.PyString_FromString("CLR");
+            var dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
+            var mod = NewReference.DangerousFromPointer(Runtime.PyString_FromString("CLR"));
             Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
-            Runtime.XDecref(mod);
+            mod.Dispose();
 
             InitMethods(type, impl);
             unsafe
@@ -175,6 +191,10 @@ namespace Python.Runtime
                 var typeEx = ClrMetaTypeEx.FromType(type);
                 typeEx->ClrHandleOffset = (IntPtr)OriginalObjectOffsets.Size + ManagedDataOffsets.ob_data;
             }
+
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             return type;
         }
 
@@ -287,6 +307,7 @@ namespace Python.Runtime
                             | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
 
+            OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
             // call this, else PyType_Ready will skip some slot initialization.
@@ -296,11 +317,11 @@ namespace Python.Runtime
                 throw new PythonException();
             }
 
-            IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
+            var dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
             string mn = clrType.Namespace ?? "";
-            IntPtr mod = Runtime.PyString_FromString(mn);
+            var mod = NewReference.DangerousFromPointer(Runtime.PyString_FromString(mn));
             Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
-            Runtime.XDecref(mod);
+            mod.Dispose();
 
             // Hide the gchandle of the implementation in a magic type slot.
             GCHandle gc = impl.AllocGCHandle();
@@ -340,7 +361,7 @@ namespace Python.Runtime
                 {
                     if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
                 }
-                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, false))
+                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, true))
                 {
                     return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
@@ -352,7 +373,7 @@ namespace Python.Runtime
                     {
                         if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
                     }
-                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, false))
+                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
                     {
                         return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
                     }
@@ -369,7 +390,7 @@ namespace Python.Runtime
             try
             {
                 Type subType = ClassDerivedObject.CreateDerivedType(name,
-                    baseClass.type,
+                    baseClass.type.Value,
                     py_dict,
                     (string)namespaceStr,
                     (string)assembly);
@@ -380,11 +401,11 @@ namespace Python.Runtime
 
                 // by default the class dict will have all the C# methods in it, but as this is a
                 // derived class we want the python overrides in there instead if they exist.
-                IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
-                ThrowIfIsNotZero(Runtime.PyDict_Update(cls_dict, py_dict));
+                var cls_dict = new BorrowedReference(Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict));
+                ThrowIfIsNotZero(Runtime.PyDict_Update(cls_dict, new BorrowedReference(py_dict)));
                 Runtime.XIncref(py_type);
                 // Update the __classcell__ if it exists
-                var cell = new BorrowedReference(Runtime.PyDict_GetItemString(cls_dict, "__classcell__"));
+                BorrowedReference cell = Runtime.PyDict_GetItemString(cls_dict, "__classcell__");
                 if (!cell.IsNull)
                 {
                     ThrowIfIsNotZero(Runtime.PyCell_Set(cell, py_type));
@@ -483,6 +504,9 @@ namespace Python.Runtime
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
 
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             //DebugUtil.DumpType(type);
 
             return type;
@@ -532,7 +556,7 @@ namespace Python.Runtime
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>
                 {
-                    IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
+                    var tp_dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
                     if (Runtime.PyDict_DelItemString(tp_dict, name) != 0)
                     {
                         Runtime.PyErr_Print();
@@ -584,6 +608,10 @@ namespace Python.Runtime
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
+            
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
 
             return type;
         }
@@ -954,31 +982,23 @@ namespace Python.Runtime
     {
         public static IntPtr CreateObjectType()
         {
-            IntPtr globals = Runtime.PyDict_New();
+            using var globals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
             if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
             {
-                Runtime.XDecref(globals);
+                globals.Dispose();
                 throw new PythonException();
             }
             const string code = "class A(object): pass";
-            var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
+            using var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
             if (resRef.IsNull())
             {
-                try
-                {
-                    throw new PythonException();
-                }
-                finally
-                {
-                    Runtime.XDecref(globals);
-                }
+                globals.Dispose();
+                throw new PythonException();
             }
             resRef.Dispose();
-            IntPtr A = Runtime.PyDict_GetItemString(globals, "A");
-            Debug.Assert(A != IntPtr.Zero);
-            Runtime.XIncref(A);
-            Runtime.XDecref(globals);
-            return A;
+            BorrowedReference A = Runtime.PyDict_GetItemString(globals, "A");
+            Debug.Assert(!A.IsNull);
+            return new NewReference(A).DangerousMoveToPointer();
         }
     }
 }

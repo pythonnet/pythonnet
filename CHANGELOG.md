@@ -10,6 +10,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
+-   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
+-   Add GetPythonThreadID and Interrupt methods in PythonEngine
+-   Ability to implement delegates with `ref` and `out` parameters in Python, by returning the modified parameter values in a tuple. ([#1355][i1355])
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
@@ -27,26 +30,39 @@ details about the cause of the failure
      to the regular method return value (unless they are passed with `ref` or `out` keyword).
 -   BREAKING: Drop support for the long-deprecated CLR.* prefix.
 -   `PyObject` now implements `IEnumerable<PyObject>` in addition to `IEnumerable`
+-   floating point values passed from Python are no longer silently truncated
+when .NET expects an integer [#1342][i1342]
+-   More specific error messages for method argument mismatch
+-   BREAKING: Methods with `ref` or `out` parameters and void return type return a tuple of only the `ref` and `out` parameters.
+-   BREAKING: to call Python from .NET `Runtime.PythonDLL` property must be set to Python DLL name
+or the DLL must be loaded in advance. This must be done before calling any other Python.NET functions.
 
 ### Fixed
 
--    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
--    Fix incorrect dereference in params array handling
--    Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
--    Fix `object[]` parameters taking precedence when should not in overload resolution
--    Fixed a bug where all .NET class instances were considered Iterable
--    Fix incorrect choice of method to invoke when using keyword arguments.
--    Fix non-delegate types incorrectly appearing as callable.
--    Indexers can now be used with interface objects
--    Fixed a bug where indexers could not be used if they were inherited
--    Made it possible to use `__len__` also on `ICollection<>` interface objects
--    Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
--    Fixed objects returned by enumerating `PyObject` being disposed too soon
--    Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
+-   Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
+-   Fix incorrect dereference in params array handling
+-   Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
+-   Fix `object[]` parameters taking precedence when should not in overload resolution
+-   Fixed a bug where all .NET class instances were considered Iterable
+-   Fix incorrect choice of method to invoke when using keyword arguments.
+-   Fix non-delegate types incorrectly appearing as callable.
+-   Indexers can now be used with interface objects
+-   Fixed a bug where indexers could not be used if they were inherited
+-   Made it possible to use `__len__` also on `ICollection<>` interface objects
+-   Fixed issue when calling PythonException.Format where another exception would be raise for unnormalized exceptions
+-   Made it possible to call `ToString`, `GetHashCode`, and `GetType` on inteface objects
+-   Fixed objects returned by enumerating `PyObject` being disposed too soon
+-   Incorrectly using a non-generic type with type parameters now produces a helpful Python error instead of throwing NullReferenceException
+-   `import` may now raise errors with more detail than "No module named X"
+-   Exception stacktraces on `PythonException.StackTrace` are now properly formatted
+-   Providing an invalid type parameter to a generic type or method produces a helpful Python error
+-   Empty parameter names (as can be generated from F#) do not cause crashes
 
 ### Removed
 
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
+-   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
+(see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 
 ## [2.5.0][] - 2020-06-14
 
@@ -806,3 +822,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [i755]: https://github.com/pythonnet/pythonnet/pull/755
 [p534]: https://github.com/pythonnet/pythonnet/pull/534
 [i449]: https://github.com/pythonnet/pythonnet/issues/449
+[i1342]: https://github.com/pythonnet/pythonnet/issues/1342

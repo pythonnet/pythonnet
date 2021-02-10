@@ -16,20 +16,33 @@ namespace Python.Runtime
     [Serializable]
     internal class ClassBase : ManagedType
     {
+        [NonSerialized]
+        internal List<string> dotNetMembers;
         internal Indexer indexer;
-        internal Type type;
+        internal Dictionary<int, MethodObject> richcompare;
+        internal MaybeType type;
 
         internal ClassBase(Type tp)
         {
+            dotNetMembers = new List<string>();
             indexer = null;
             type = tp;
         }
 
         internal virtual bool CanSubclass()
         {
-            return !type.IsEnum;
+            return !type.Value.IsEnum;
         }
 
+        public readonly static Dictionary<string, int> CilToPyOpMap = new Dictionary<string, int>
+        {
+            ["op_Equality"] = Runtime.Py_EQ,
+            ["op_Inequality"] = Runtime.Py_NE,
+            ["op_LessThanOrEqual"] = Runtime.Py_LE,
+            ["op_GreaterThanOrEqual"] = Runtime.Py_GE,
+            ["op_LessThan"] = Runtime.Py_LT,
+            ["op_GreaterThan"] = Runtime.Py_GT,
+        };
 
         /// <summary>
         /// Default implementation of [] semantics for reflected types.
@@ -42,17 +55,31 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            Type target = GenericUtil.GenericForType(type, types.Length);
+            if (!type.Valid)
+            {
+                return Exceptions.RaiseTypeError(type.DeletedMessage);
+            }
+
+            Type target = GenericUtil.GenericForType(type.Value, types.Length);
 
             if (target != null)
             {
-                Type t = target.MakeGenericType(types);
+                Type t;
+                try
+                {
+                    // MakeGenericType can throw ArgumentException
+                    t = target.MakeGenericType(types);
+                }
+                catch (ArgumentException e)
+                {
+                    return Exceptions.RaiseTypeError(e.Message);
+                }
                 ManagedType c = ClassManager.GetClass(t);
                 Runtime.XIncref(c.pyHandle);
                 return c.pyHandle;
             }
 
-            return Exceptions.RaiseTypeError($"{type.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
+            return Exceptions.RaiseTypeError($"{type.Value.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
         }
 
         /// <summary>
@@ -62,6 +89,30 @@ namespace Python.Runtime
         {
             CLRObject co1;
             CLRObject co2;
+            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp);
+            // C# operator methods take precedence over IComparable.
+            // We first check if there's a comparison operator by looking up the richcompare table,
+            // otherwise fallback to checking if an IComparable interface is handled.
+            if (cls.richcompare.TryGetValue(op, out var methodObject))
+            {
+                // Wrap the `other` argument of a binary comparison operator in a PyTuple.
+                IntPtr args = Runtime.PyTuple_New(1);
+                Runtime.XIncref(other);
+                Runtime.PyTuple_SetItem(args, 0, other);
+
+                IntPtr value;
+                try
+                {
+                    value = methodObject.Invoke(ob, args, IntPtr.Zero);
+                }
+                finally
+                {
+                    Runtime.XDecref(args);  // Free args pytuple
+                }
+                return value;
+            }
+
             switch (op)
             {
                 case Runtime.Py_EQ:
@@ -219,14 +270,14 @@ namespace Python.Runtime
         /// <summary>
         /// Standard __hash__ implementation for instances of reflected types.
         /// </summary>
-        public static IntPtr tp_hash(IntPtr ob)
+        public static nint tp_hash(IntPtr ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("unhashable type");
             }
-            return new IntPtr(co.inst.GetHashCode());
+            return co.inst.GetHashCode();
         }
 
 

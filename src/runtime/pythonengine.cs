@@ -211,15 +211,15 @@ namespace Python.Runtime
             }
 
             // Load the clr.py resource into the clr module
-            IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
-            IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
+            NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
+            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr);
 
             var locals = new PyDict();
             try
             {
-                IntPtr module = Runtime.PyImport_AddModule("clr._extras");
-                IntPtr module_globals = Runtime.PyModule_GetDict(module);
-                IntPtr builtins = Runtime.PyEval_GetBuiltins();
+                BorrowedReference module = Runtime.PyImport_AddModule("clr._extras");
+                BorrowedReference module_globals = Runtime.PyModule_GetDict(module);
+                BorrowedReference builtins = Runtime.PyEval_GetBuiltins();
                 Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
                 Assembly assembly = Assembly.GetExecutingAssembly();
@@ -228,7 +228,7 @@ namespace Python.Runtime
                 {
                     // add the contents of clr.py to the module
                     string clr_py = reader.ReadToEnd();
-                    Exec(clr_py, module_globals, locals.Handle);
+                    Exec(clr_py, module_globals, locals.Reference);
                 }
 
                 // add the imported module to the clr module, and copy the API functions
@@ -240,7 +240,7 @@ namespace Python.Runtime
                     if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
                     {
                         PyObject value = locals[key];
-                        Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
+                        Runtime.PyDict_SetItem(clr_dict, key.Reference, value.Reference);
                         value.Dispose();
                     }
                     key.Dispose();
@@ -305,7 +305,8 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            return Python.Runtime.ImportHook.GetCLRModule();
+            return Python.Runtime.ImportHook.GetCLRModule()
+                   .DangerousMoveToPointerOrNull();
         }
 
         /// <summary>
@@ -544,7 +545,9 @@ namespace Python.Runtime
         /// </remarks>
         public static PyObject Eval(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            PyObject result = RunString(code, globals, locals, RunFlagType.Eval);
+            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
+            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
+            PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.Eval);
             return result;
         }
 
@@ -558,15 +561,54 @@ namespace Python.Runtime
         /// </remarks>
         public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            using (PyObject result = RunString(code, globals, locals, RunFlagType.File))
+            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
+            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
+            using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
+            if (result.obj != Runtime.PyNone)
             {
-                if (result.obj != Runtime.PyNone)
-                {
-                    throw new PythonException();
-                }
+                throw new PythonException();
+            }
+        }
+        /// <summary>
+        /// Exec Method
+        /// </summary>
+        /// <remarks>
+        /// Run a string containing Python code.
+        /// It's a subset of Python exec function.
+        /// </remarks>
+        internal static void Exec(string code, BorrowedReference globals, BorrowedReference locals = default)
+        {
+            using PyObject result = RunString(code, globals: globals, locals: locals, RunFlagType.File);
+            if (result.obj != Runtime.PyNone)
+            {
+                throw new PythonException();
             }
         }
 
+        /// <summary>
+        /// Gets the Python thread ID.
+        /// </summary>
+        /// <returns>The Python thread ID.</returns>
+        public static ulong GetPythonThreadID()
+        {
+            dynamic threading = Py.Import("threading");
+            return threading.InvokeMethod("get_ident");
+        }
+
+        /// <summary>
+        /// Interrupts the execution of a thread.
+        /// </summary>
+        /// <param name="pythonThreadID">The Python thread ID.</param>
+        /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id isn’t found.</returns>
+        public static int Interrupt(ulong pythonThreadID)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return Runtime.PyThreadState_SetAsyncExcLLP64((uint)pythonThreadID, Exceptions.KeyboardInterrupt);
+            }
+
+            return Runtime.PyThreadState_SetAsyncExcLP64(pythonThreadID, Exceptions.KeyboardInterrupt);
+        }
 
         /// <summary>
         /// RunString Method. Function has been deprecated and will be removed.
@@ -575,7 +617,7 @@ namespace Python.Runtime
         [Obsolete("RunString is deprecated and will be removed. Use Exec/Eval/RunSimpleString instead.")]
         public static PyObject RunString(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            return RunString(code, globals, locals, RunFlagType.File);
+            return RunString(code, new BorrowedReference(globals.GetValueOrDefault()), new BorrowedReference(locals.GetValueOrDefault()), RunFlagType.File);
         }
 
         /// <summary>
@@ -586,20 +628,19 @@ namespace Python.Runtime
         /// executing the code string as a PyObject instance, or null if
         /// an exception was raised.
         /// </remarks>
-        internal static PyObject RunString(string code, IntPtr? globals, IntPtr? locals, RunFlagType flag)
+        internal static PyObject RunString(string code, BorrowedReference globals, BorrowedReference locals, RunFlagType flag)
         {
-            var borrowedGlobals = true;
-            if (globals == null)
+            NewReference tempGlobals = default;
+            if (globals.IsNull)
             {
                 globals = Runtime.PyEval_GetGlobals();
-                if (globals == IntPtr.Zero)
+                if (globals.IsNull)
                 {
-                    globals = Runtime.PyDict_New();
+                    globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
                     Runtime.PyDict_SetItem(
-                        globals.Value, PyIdentifier.__builtins__,
+                        globals, PyIdentifier.__builtins__,
                         Runtime.PyEval_GetBuiltins()
                     );
-                    borrowedGlobals = false;
                 }
             }
 
@@ -611,17 +652,14 @@ namespace Python.Runtime
             try
             {
                 NewReference result = Runtime.PyRun_String(
-                    code, flag, globals.Value, locals.Value
+                    code, flag, globals, locals
                 );
                 PythonException.ThrowIfIsNull(result);
                 return result.MoveToPyObject();
             }
             finally
             {
-                if (!borrowedGlobals)
-                {
-                    Runtime.XDecref(globals.Value);
-                }
+                tempGlobals.Dispose();
             }
         }
     }

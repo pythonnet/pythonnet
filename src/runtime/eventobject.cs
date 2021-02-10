@@ -72,6 +72,12 @@ namespace Python.Runtime
         /// </summary>
         internal bool RemoveEventHandler(IntPtr target, IntPtr handler)
         {
+            if (reg == null)
+            {
+                Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
+                return false;
+            }
+
             object obj = null;
             if (target != IntPtr.Zero)
             {
@@ -79,10 +85,9 @@ namespace Python.Runtime
                 obj = co.inst;
             }
 
-            IntPtr hash = Runtime.PyObject_Hash(handler);
-            if (Exceptions.ErrorOccurred() || reg == null)
+            nint hash = Runtime.PyObject_Hash(handler);
+            if (hash == -1 && Exceptions.ErrorOccurred())
             {
-                Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
                 return false;
             }
 

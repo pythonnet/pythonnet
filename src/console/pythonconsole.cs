@@ -26,7 +26,7 @@ namespace Python.Runtime
         [STAThread]
         public static int Main(string[] args)
         {
-            // Only net40 is capable to safely inject python.runtime.dll into resources.
+            // Only .NET Framework is capable to safely inject python.runtime.dll into resources.
 #if NET40
             // reference the static assemblyLoader to stop it being optimized away
             AssemblyLoader a = assemblyLoader;

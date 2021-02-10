@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Platforms>AnyCPU</Platforms>
+    <LangVersion>9.0</LangVersion>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
     <PackageId>pythonnet</PackageId>
@@ -18,12 +19,6 @@
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);$(ConfiguredConstants)</DefineConstants>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
-    <Compile Remove="interop*.cs" />
-    <Compile Include="interop.cs" />
-    <Compile Include="$(PythonInteropFile)" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Remove="resources\clr.py" />

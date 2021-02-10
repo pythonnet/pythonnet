@@ -62,9 +62,9 @@ public class clrModule
             pythonRuntime = Assembly.Load(pythonRuntimeName);
             DebugPrint("Success loading 'Python.Runtime' using standard binding rules.");
         }
-        catch (IOException)
+        catch (IOException ex)
         {
-            DebugPrint("'Python.Runtime' not found using standard binding rules.");
+            DebugPrint($"'Python.Runtime' not found using standard binding rules: {ex}");
             try
             {
                 // If the above fails for any reason, we fallback to attempting to load "Python.Runtime.dll"

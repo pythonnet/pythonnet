@@ -241,9 +241,9 @@ namespace Python.Runtime
                     // return Runtime.PyFloat_FromDouble((double)((float)value));
                     string ss = ((float)value).ToString(nfi);
                     IntPtr ps = Runtime.PyString_FromString(ss);
-                    IntPtr op = Runtime.PyFloat_FromString(ps, IntPtr.Zero);
+                    NewReference op = Runtime.PyFloat_FromString(new BorrowedReference(ps));;
                     Runtime.XDecref(ps);
-                    return op;
+                    return op.DangerousMoveToPointerOrNull();
 
                 case TypeCode.Double:
                     return Runtime.PyFloat_FromDouble((double)value);
@@ -303,6 +303,11 @@ namespace Python.Runtime
         /// Return a managed object for the given Python object, taking funny
         /// byref types into account.
         /// </summary>
+        /// <param name="value">A Python object</param>
+        /// <param name="type">The desired managed type</param>
+        /// <param name="result">Receives the managed object</param>
+        /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
+        /// <returns>True on success</returns>
         internal static bool ToManaged(IntPtr value, Type type,
             out object result, bool setError)
         {
@@ -333,20 +338,29 @@ namespace Python.Runtime
 
             if (mt != null)
             {
-                if (mt is CLRObject)
+                if (mt is CLRObject co)
                 {
-                    object tmp = ((CLRObject)mt).inst;
+                    object tmp = co.inst;
                     if (obType.IsInstanceOfType(tmp))
                     {
                         result = tmp;
                         return true;
                     }
-                    Exceptions.SetError(Exceptions.TypeError, $"value cannot be converted to {obType}");
+                    if (setError)
+                    {
+                        string typeString = tmp is null ? "null" : tmp.GetType().ToString();
+                        Exceptions.SetError(Exceptions.TypeError, $"{typeString} value cannot be converted to {obType}");
+                    }
                     return false;
                 }
-                if (mt is ClassBase)
+                if (mt is ClassBase cb)
                 {
-                    result = ((ClassBase)mt).type;
+                    if (!cb.type.Valid)
+                    {
+                        Exceptions.SetError(Exceptions.TypeError, cb.type.DeletedMessage);
+                        return false;
+                    }
+                    result = cb.type.Value;
                     return true;
                 }
                 // shouldn't happen
@@ -368,6 +382,15 @@ namespace Python.Runtime
                 }
                 // Set type to underlying type
                 obType = obType.GetGenericArguments()[0];
+            }
+
+            if (obType.ContainsGenericParameters)
+            {
+                if (setError)
+                {
+                    Exceptions.SetError(Exceptions.TypeError, $"Cannot create an instance of the open generic type {obType}");
+                }
+                return false;
             }
 
             if (obType.IsArray)
@@ -511,7 +534,7 @@ namespace Python.Runtime
                 case TypeCode.Int32:
                     {
                         // Python3 always use PyLong API
-                        long num = Runtime.PyLong_AsLongLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -541,7 +564,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
 
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -567,7 +590,7 @@ namespace Python.Runtime
                             goto type_error;
                         }
 
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -604,7 +627,7 @@ namespace Python.Runtime
                             }
                             goto type_error;
                         }
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -619,7 +642,7 @@ namespace Python.Runtime
 
                 case TypeCode.Int16:
                     {
-                        int num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -634,18 +657,35 @@ namespace Python.Runtime
 
                 case TypeCode.Int64:
                     {
-                        long num = (long)Runtime.PyLong_AsLongLong(value);
-                        if (num == -1 && Exceptions.ErrorOccurred())
+                        if (Runtime.Is32Bit)
                         {
-                            goto convert_error;
+                            if (!Runtime.PyLong_Check(value))
+                            {
+                                goto type_error;
+                            }
+                            long num = Runtime.PyExplicitlyConvertToInt64(value);
+                            if (num == -1 && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
+                            result = num;
+                            return true;
                         }
-                        result = num;
-                        return true;
+                        else
+                        {
+                            nint num = Runtime.PyLong_AsSignedSize_t(value);
+                            if (num == -1 && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
+                            result = (long)num;
+                            return true;
+                        }
                     }
 
                 case TypeCode.UInt16:
                     {
-                        long num = Runtime.PyLong_AsLong(value);
+                        nint num = Runtime.PyLong_AsSignedSize_t(value);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -660,61 +700,25 @@ namespace Python.Runtime
 
                 case TypeCode.UInt32:
                     {
-                        op = value;
-                        if (Runtime.PyObject_TYPE(value) != Runtime.PyLongType)
+                        nuint num = Runtime.PyLong_AsUnsignedSize_t(value);
+                        if (num == unchecked((nuint)(-1)) && Exceptions.ErrorOccurred())
                         {
-                            op = Runtime.PyNumber_Long(value);
-                            if (op == IntPtr.Zero)
-                            {
-                                goto convert_error;
-                            }
+                            goto convert_error;
                         }
-                        if (Runtime.Is32Bit || Runtime.IsWindows)
+                        if (num > UInt32.MaxValue)
                         {
-                            uint num = Runtime.PyLong_AsUnsignedLong32(op);
-                            if (num == uint.MaxValue && Exceptions.ErrorOccurred())
-                            {
-                                goto convert_error;
-                            }
-                            result = num;
+                            goto overflow;
                         }
-                        else
-                        {
-                            ulong num = Runtime.PyLong_AsUnsignedLong64(op);
-                            if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
-                            {
-                                goto convert_error;
-                            }
-                            try
-                            {
-                                result = Convert.ToUInt32(num);
-                            }
-                            catch (OverflowException)
-                            {
-                                // Probably wasn't an overflow in python but was in C# (e.g. if cpython
-                                // longs are 64 bit then 0xFFFFFFFF + 1 will not overflow in
-                                // PyLong_AsUnsignedLong)
-                                goto overflow;
-                            }
-                        }
+                        result = (uint)num;
                         return true;
                     }
 
                 case TypeCode.UInt64:
                     {
-                        op = value;
-                        if (Runtime.PyObject_TYPE(value) != Runtime.PyLongType)
-                        {
-                            op = Runtime.PyNumber_Long(value);
-                            if (op == IntPtr.Zero)
-                            {
-                                goto convert_error;
-                            }
-                        }
-                        ulong num = Runtime.PyLong_AsUnsignedLongLong(op);
+                        ulong num = Runtime.PyLong_AsUnsignedLongLong(value);
                         if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
                         {
-                            goto overflow;
+                            goto convert_error;
                         }
                         result = num;
                         return true;
@@ -790,7 +794,7 @@ namespace Python.Runtime
             IntPtr ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
-            Exceptions.SetError(Exceptions.TypeError, $"Cannot convert {src} to {target}");
+            Exceptions.RaiseTypeError($"Cannot convert {src} to {target}");
         }
 
 
@@ -804,32 +808,58 @@ namespace Python.Runtime
             Type elementType = obType.GetElementType();
             result = null;
 
-            bool IsSeqObj = Runtime.PySequence_Check(value);
-            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-
             IntPtr IterObject = Runtime.PyObject_GetIter(value);
-
-            if(IterObject==IntPtr.Zero) {
+            if (IterObject == IntPtr.Zero)
+            {
                 if (setError)
                 {
+                    SetConversionError(value, obType);
+                }
+                else
+                {
+                    // PyObject_GetIter will have set an error
+                    Exceptions.Clear();
+                }
+                return false;
+            }
+
+            IList list;
+            try
+            {
+                // MakeGenericType can throw because elementType may not be a valid generic argument even though elementType[] is a valid array type.
+                // For example, if elementType is a pointer type.
+                // See https://docs.microsoft.com/en-us/dotnet/api/system.type.makegenerictype#System_Type_MakeGenericType_System_Type
+                var constructedListType = typeof(List<>).MakeGenericType(elementType);
+                bool IsSeqObj = Runtime.PySequence_Check(value);
+                if (IsSeqObj)
+                {
+                    var len = Runtime.PySequence_Size(value);
+                    list = (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len });
+                }
+                else
+                {
+                    // CreateInstance can throw even if MakeGenericType succeeded.
+                    // See https://docs.microsoft.com/en-us/dotnet/api/system.activator.createinstance#System_Activator_CreateInstance_System_Type_
+                    list = (IList)Activator.CreateInstance(constructedListType);
+                }
+            }
+            catch (Exception e)
+            {
+                if (setError)
+                {
+                    Exceptions.SetError(e);
                     SetConversionError(value, obType);
                 }
                 return false;
             }
 
-            Array items;
-
-            var listType = typeof(List<>);
-            var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) :
-                                        (IList) Activator.CreateInstance(constructedListType);
             IntPtr item;
 
             while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
             {
-                object obj = null;
+                object obj;
 
-                if (!Converter.ToManaged(item, elementType, out obj, true))
+                if (!Converter.ToManaged(item, elementType, out obj, setError))
                 {
                     Runtime.XDecref(item);
                     return false;
@@ -840,7 +870,7 @@ namespace Python.Runtime
             }
             Runtime.XDecref(IterObject);
 
-            items = Array.CreateInstance(elementType, list.Count);
+            Array items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
 
             result = items;

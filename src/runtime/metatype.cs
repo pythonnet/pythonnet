@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -104,9 +105,16 @@ namespace Python.Runtime
             var cb = GetManagedObject(base_type) as ClassBase;
             if (cb != null)
             {
-                if (!cb.CanSubclass())
+                try
                 {
-                    return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                    if (!cb.CanSubclass())
+                    {
+                        return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                    }
+                }
+                catch (SerializationException)
+                {
+                    return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
                 }
             }
 
@@ -298,7 +306,7 @@ namespace Python.Runtime
         {
             var cb = GetManagedObject(tp) as ClassBase;
 
-            if (cb == null)
+            if (cb == null || !cb.type.Valid)
             {
                 Runtime.XIncref(Runtime.PyFalse);
                 return Runtime.PyFalse;
@@ -330,13 +338,13 @@ namespace Python.Runtime
                 }
 
                 var otherCb = GetManagedObject(otherType.Handle) as ClassBase;
-                if (otherCb == null)
+                if (otherCb == null || !otherCb.type.Valid)
                 {
                     Runtime.XIncref(Runtime.PyFalse);
                     return Runtime.PyFalse;
                 }
 
-                return Converter.ToPython(cb.type.IsAssignableFrom(otherCb.type));
+                return Converter.ToPython(cb.type.Value.IsAssignableFrom(otherCb.type.Value));
             }
         }
 

@@ -30,6 +30,11 @@ namespace Python.Runtime
             var tp = new BorrowedReference(tpRaw);
 
             var self = GetManagedObject(tp) as ArrayObject;
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            Type arrType = self.type.Value;
 
             long[] dimensions = new long[Runtime.PyTuple_Size(args)];
             if (dimensions.Length == 0)
@@ -38,7 +43,7 @@ namespace Python.Runtime
             }
             if (dimensions.Length != 1)
             {
-                return CreateMultidimensional(self.type.GetElementType(), dimensions,
+                return CreateMultidimensional(arrType.GetElementType(), dimensions,
                          shapeTuple: new BorrowedReference(args),
                          pyType: tp)
                        .DangerousMoveToPointerOrNull();
@@ -49,21 +54,21 @@ namespace Python.Runtime
             // create single dimensional array
             if (Runtime.PyInt_Check(op))
             {
-                dimensions[0] = Runtime.PyLong_AsLongLong(op);
+                dimensions[0] = Runtime.PyLong_AsSignedSize_t(op);
                 if (dimensions[0] == -1 && Exceptions.ErrorOccurred())
                 {
                     Exceptions.Clear();
                 }
                 else
                 {
-                    return NewInstance(self.type.GetElementType(), tp, dimensions)
+                    return NewInstance(arrType.GetElementType(), tp, dimensions)
                            .DangerousMoveToPointerOrNull();
                 }
             }
             object result;
 
             // this implements casting to Array[T]
-            if (!Converter.ToManaged(op, self.type, out result, true))
+            if (!Converter.ToManaged(op, arrType, out result, true))
             {
                 return IntPtr.Zero;
             }
@@ -84,7 +89,7 @@ namespace Python.Runtime
                     return default;
                 }
 
-                dimensions[dimIndex] = Runtime.PyLong_AsLongLong(dimObj);
+                dimensions[dimIndex] = Runtime.PyLong_AsSignedSize_t(dimObj);
                 if (dimensions[dimIndex] == -1 && Exceptions.ErrorOccurred())
                 {
                     Exceptions.RaiseTypeError("array constructor expects integer dimensions");
@@ -133,8 +138,12 @@ namespace Python.Runtime
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var arrObj = (ArrayObject)GetManagedObjectType(ob);
+            if (!arrObj.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(arrObj.type.DeletedMessage);
+            }
             var items = obj.inst as Array;
-            Type itemType = arrObj.type.GetElementType();
+            Type itemType = arrObj.type.Value.GetElementType();
             int rank = items.Rank;
             int index;
             object value;
@@ -150,6 +159,10 @@ namespace Python.Runtime
 
             if (rank == 1)
             {
+                if (!Runtime.PyInt_Check(idx))
+                {
+                    return RaiseIndexMustBeIntegerError(idx);
+                }
                 index = Runtime.PyInt_AsLong(idx);
 
                 if (Exceptions.ErrorOccurred())
@@ -190,6 +203,10 @@ namespace Python.Runtime
             for (var i = 0; i < count; i++)
             {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
+                if (!Runtime.PyInt_Check(op))
+                {
+                    return RaiseIndexMustBeIntegerError(op);
+                }
                 index = Runtime.PyInt_AsLong(op);
 
                 if (Exceptions.ErrorOccurred())
@@ -244,6 +261,11 @@ namespace Python.Runtime
 
             if (rank == 1)
             {
+                if (!Runtime.PyInt_Check(idx))
+                {
+                    RaiseIndexMustBeIntegerError(idx);
+                    return -1;
+                }
                 index = Runtime.PyInt_AsLong(idx);
 
                 if (Exceptions.ErrorOccurred())
@@ -282,6 +304,11 @@ namespace Python.Runtime
             for (var i = 0; i < count; i++)
             {
                 IntPtr op = Runtime.PyTuple_GetItem(idx, i);
+                if (!Runtime.PyInt_Check(op))
+                {
+                    RaiseIndexMustBeIntegerError(op);
+                    return -1;
+                }
                 index = Runtime.PyInt_AsLong(op);
 
                 if (Exceptions.ErrorOccurred())
@@ -311,6 +338,11 @@ namespace Python.Runtime
             return 0;
         }
 
+        private static IntPtr RaiseIndexMustBeIntegerError(IntPtr idx)
+        {
+            string tpName = Runtime.PyObject_GetTypeName(idx);
+            return Exceptions.RaiseTypeError($"array index has type {tpName}, expected an integer");
+        }
 
         /// <summary>
         /// Implements __contains__ for array types.

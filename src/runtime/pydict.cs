@@ -22,6 +22,7 @@ namespace Python.Runtime
         {
         }
 
+        internal PyDict(BorrowedReference reference) : base(reference) { }
 
         /// <summary>
         /// PyDict Constructor
@@ -103,12 +104,12 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Keys()
         {
-            IntPtr items = Runtime.PyDict_Keys(obj);
-            if (items == IntPtr.Zero)
+            using var items = Runtime.PyDict_Keys(Reference);
+            if (items.IsNull())
             {
                 throw new PythonException();
             }
-            return new PyObject(items);
+            return items.MoveToPyObject();
         }
 
 
@@ -137,7 +138,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Items()
         {
-            var items = Runtime.PyDict_Items(this.obj);
+            var items = Runtime.PyDict_Items(this.Reference);
             try
             {
                 if (items.IsNull())
@@ -179,7 +180,7 @@ namespace Python.Runtime
         /// </remarks>
         public void Update(PyObject other)
         {
-            int result = Runtime.PyDict_Update(obj, other.obj);
+            int result = Runtime.PyDict_Update(Reference, other.Reference);
             if (result < 0)
             {
                 throw new PythonException();

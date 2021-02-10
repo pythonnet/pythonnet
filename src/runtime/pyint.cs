@@ -149,7 +149,7 @@ namespace Python.Runtime
 
         private static IntPtr FromString(string value)
         {
-            IntPtr val = Runtime.PyInt_FromString(value, IntPtr.Zero, 0);
+            IntPtr val = Runtime.PyLong_FromString(value, IntPtr.Zero, 0);
             PythonException.ThrowIfIsNull(val);
             return val;
         }

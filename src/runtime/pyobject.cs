@@ -136,9 +136,9 @@ namespace Python.Runtime
         public object AsManagedObject(Type t)
         {
             object result;
-            if (!Converter.ToManaged(obj, t, out result, false))
+            if (!Converter.ToManaged(obj, t, out result, true))
             {
-                throw new InvalidCastException("cannot convert object to target type");
+                throw new InvalidCastException("cannot convert object to target type", new PythonException());
             }
             return result;
         }
@@ -156,12 +156,7 @@ namespace Python.Runtime
             {
                 return (T)(this as object);
             }
-            object result;
-            if (!Converter.ToManaged(obj, typeof(T), out result, false))
-            {
-                throw new InvalidCastException("cannot convert object to target type");
-            }
-            return (T)result;
+            return (T)AsManagedObject(typeof(T));
         }
 
 
@@ -264,7 +259,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            return Runtime.PyObject_HasAttrString(obj, name) != 0;
+            return Runtime.PyObject_HasAttrString(Reference, name) != 0;
         }
 
 
@@ -279,7 +274,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            return Runtime.PyObject_HasAttr(obj, name.obj) != 0;
+            return Runtime.PyObject_HasAttr(Reference, name.Reference) != 0;
         }
 
 
