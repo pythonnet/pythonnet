@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -325,6 +326,28 @@ namespace Python.Runtime
                 {
                     isGeneric = true;
                 }
+
+                bool isOperator = OperatorMethod.IsOperatorMethod(mi);
+                // Binary operator methods will have 2 CLR args but only one Python arg
+                // (unary operators will have 1 less each), since Python operator methods are bound.
+                isOperator = isOperator && pynargs == pi.Length - 1;
+                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
+                if (isReverse && OperatorMethod.IsComparisonOp((MethodInfo)mi))
+                    continue;  // Comparison operators in Python have no reverse mode.
+                // Preprocessing pi to remove either the first or second argument.
+                if (isOperator && !isReverse)
+                {
+                    // The first Python arg is the right operand, while the bound instance is the left.
+                    // We need to skip the first (left operand) CLR argument.
+                    pi = pi.Skip(1).ToArray();
+                }
+                else if (isOperator && isReverse)
+                {
+                    // The first Python arg is the left operand.
+                    // We need to take the first CLR argument.
+                    pi = pi.Take(1).ToArray();
+                }
+
                 int clrnargs = pi.Length;
                 int arrayStart;
 
@@ -562,6 +585,30 @@ namespace Python.Runtime
                     if (margs == null)
                     {
                         continue;
+                    }
+
+                    if (isOperator)
+                    {
+                        if (inst != IntPtr.Zero)
+                        {
+                            if (ManagedType.GetManagedObject(inst) is CLRObject co)
+                            {
+                                bool isUnary = pynargs == 0;
+                                // Postprocessing to extend margs.
+                                var margsTemp = isUnary ? new object[1] : new object[2];
+                                // If reverse, the bound instance is the right operand.
+                                int boundOperandIndex = isReverse ? 1 : 0;
+                                // If reverse, the passed instance is the left operand.
+                                int passedOperandIndex = isReverse ? 0 : 1;
+                                margsTemp[boundOperandIndex] = co.inst;
+                                if (!isUnary)
+                                {
+                                    margsTemp[passedOperandIndex] = margs[0];
+                                }
+                                margs = margsTemp;
+                            }
+                            else continue;
+                        }
                     }
 
                     object target = null;
