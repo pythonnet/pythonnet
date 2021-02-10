@@ -13,6 +13,7 @@ namespace Python.Runtime
     /// a set of Python arguments. This is also used as a base class for the
     /// ConstructorBinder, a minor variation used to invoke constructors.
     /// </summary>
+    [Serializable]
     internal class MethodBinder
     {
         private List<MethodInformation> list;
@@ -822,6 +823,7 @@ namespace Python.Runtime
         /// <summary>
         /// Utility class to store the information about a <see cref="MethodBase"/>
         /// </summary>
+        [Serializable]
         internal class MethodInformation
         {
             public MethodBase MethodBase { get; }
