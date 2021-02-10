@@ -731,12 +731,19 @@ namespace Python.Runtime
 
             if (binding == null)
             {
-                var value = "No method matches given arguments";
+                var value = new StringBuilder("No method matches given arguments");
                 if (methodinfo != null && methodinfo.Length > 0)
                 {
-                    value += $" for {methodinfo[0].Name}";
+                    value.Append($" for {methodinfo[0].Name}");
                 }
-                Exceptions.SetError(Exceptions.TypeError, value);
+                else if (list.Count > 0)
+                {
+                    value.Append($" for {list[0].MethodBase.Name}");
+                }
+
+                value.Append(": ");
+                AppendArgumentTypes(to: value, args);
+                Exceptions.RaiseTypeError(value.ToString());
                 return IntPtr.Zero;
             }
 
