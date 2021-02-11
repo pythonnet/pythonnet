@@ -166,7 +166,16 @@ namespace Python.Runtime
             {
                 if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
                 // If an error is set and this PythonException is unnormalized, the error will be cleared and the PythonException will be replaced by a different error.
+                IntPtr oldValue = _pyValue;
                 Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
+
+                if (_pyValue != oldValue) 
+                {
+                    // we own the reference to _pyValue, so make adjustments if it changed.
+                    // Disown old, own new
+                    Runtime.XDecref(oldValue);
+                    Runtime.XIncref(_pyValue);
+                }
             }
             finally
             {
