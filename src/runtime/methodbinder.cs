@@ -200,13 +200,13 @@ namespace Python.Runtime
             val += mi.IsGenericMethod ? 1 : 0;
             for (var i = 0; i < num; i++)
             {
-                val += ArgPrecedence(pi[i].ParameterType);
+                val += ArgPrecedence(pi[i].ParameterType, methodInformation);
             }
 
             var info = mi as MethodInfo;
             if (info != null)
             {
-                val += ArgPrecedence(info.ReturnType);
+                val += ArgPrecedence(info.ReturnType, methodInformation);
                 val += mi.DeclaringType == mi.ReflectedType ? 0 : 3000;
             }
 
@@ -216,7 +216,7 @@ namespace Python.Runtime
         /// <summary>
         /// Return a precedence value for a particular Type object.
         /// </summary>
-        internal static int ArgPrecedence(Type t)
+        internal static int ArgPrecedence(Type t, MethodInformation mi)
         {
             Type objectType = typeof(object);
             if (t == objectType)
@@ -224,7 +224,7 @@ namespace Python.Runtime
                 return 3000;
             }
 
-            if (t.IsAssignableFrom(typeof(PyObject)))
+            if (t.IsAssignableFrom(typeof(PyObject)) && !OperatorMethod.IsOperatorMethod(mi.MethodBase))
             {
                 return -1;
             }
@@ -283,7 +283,7 @@ namespace Python.Runtime
                 {
                     return 2500;
                 }
-                return 100 + ArgPrecedence(e);
+                return 100 + ArgPrecedence(e, mi);
             }
 
             return 2000;
