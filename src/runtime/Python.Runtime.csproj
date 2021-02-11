@@ -5,20 +5,34 @@
     <LangVersion>9.0</LangVersion>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
+
     <PackageId>pythonnet</PackageId>
-    <PackageLicenseUrl>https://github.com/pythonnet/pythonnet/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>python interop dynamic dlr Mono pinvoke</PackageTags>
     <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
     <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Description>Python and CLR (.NET and Mono) cross-platform language interop</Description>
+
+    <DebugSymbols>true</DebugSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
     <NoWarn>1591;NU1701</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);$(ConfiguredConstants)</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath=""/>
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="resources\clr.py" />
@@ -30,5 +44,6 @@
   <ItemGroup>
     <PackageReference Include="System.Security.Permissions" Version="4.4.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 </Project>

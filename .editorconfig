@@ -38,6 +38,9 @@ indent_style = tab
 charset = utf-8
 insert_final_newline = true
 
+[Python.Runtime.csproj]
+charset = latin1
+
 # bumpversion reformats itself after every bump
 [.bumpversion.cfg]
 trim_trailing_whitespace = false
