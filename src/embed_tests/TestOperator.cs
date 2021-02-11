@@ -336,6 +336,29 @@ assert c == (a.Num > b.Num)
         }
 
         [Test]
+        public void OperatorInequality()
+        {
+            string name = string.Format("{0}.{1}",
+                typeof(OperableObject).DeclaringType.Name,
+                typeof(OperableObject).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+            PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+b = cls(10)
+a = cls(2)
+
+
+c = a <= b
+assert c == (a.Num <= b.Num)
+
+c = a >= b
+assert c == (a.Num >= b.Num)
+");
+        }
+
+        [Test]
         public void OperatorOverloadMissingArgument()
         {
             string name = string.Format("{0}.{1}",
