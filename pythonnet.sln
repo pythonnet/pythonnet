@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repo", "Repo", "{441A0123-F
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		CHANGELOG.md = CHANGELOG.md
+		LICENSE = LICENSE
 		README.rst = README.rst
 	EndProjectSection
 EndProject
@@ -30,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{D301657F-5EAF-
 		ci\appveyor_build_recipe.ps1 = ci\appveyor_build_recipe.ps1
 		ci\appveyor_run_tests.ps1 = ci\appveyor_run_tests.ps1
 		.github\workflows\main.yml = .github\workflows\main.yml
+		.github\workflows\nuget-preview.yml = .github\workflows\nuget-preview.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57F5D701-F265-4736-A5A2-07249E7A4DA3}"
@@ -50,6 +52,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BC426F42
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.PythonTestsRunner", "src\python_tests_runner\Python.PythonTestsRunner.csproj", "{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{142A6752-C2C2-4F95-B982-193418001B65}"
+	ProjectSection(SolutionItems) = preProject
+		configured.props = configured.props
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -145,18 +153,6 @@ Global
 		{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}.Release|x64.Build.0 = Release|Any CPU
 		{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}.Release|x86.ActiveCfg = Release|Any CPU
 		{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}.Release|x86.Build.0 = Release|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x64.Build.0 = Debug|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Debug|x86.Build.0 = Debug|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x64.ActiveCfg = Release|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x64.Build.0 = Release|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x86.ActiveCfg = Release|Any CPU
-		{6CF9EEA0-F865-4536-AABA-739AE3DA971E}.Release|x86.Build.0 = Release|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.Debug|x64.ActiveCfg = Debug|Any CPU
