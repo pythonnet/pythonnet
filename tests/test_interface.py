@@ -61,8 +61,6 @@ def test_explicit_cast_to_interface():
     assert hasattr(i1, 'SayHello')
     assert i1.SayHello() == 'hello 1'
     assert not hasattr(i1, 'HelloProperty')
-    assert i1.__implementation__ == ob
-    assert i1.__raw_implementation__ == ob
 
     i2 = Test.ISayHello2(ob)
     assert type(i2).__name__ == 'ISayHello2'

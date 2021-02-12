@@ -76,43 +76,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            return self.WrapObject(obj);
-        }
-
-        /// <summary>
-        /// Wrap the given object in an interface object, so that only methods
-        /// of the interface are available.
-        /// </summary>
-        public IntPtr WrapObject(object impl)
-        {
-            var objPtr = CLRObject.GetInstHandle(impl, pyHandle);
-            return objPtr;
-        }
-
-        /// <summary>
-        /// Expose the wrapped implementation through attributes in both
-        /// converted/encoded (__implementation__) and raw (__raw_implementation__) form.
-        /// </summary>
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
-        {
-            var clrObj = (CLRObject)GetManagedObject(ob);
-
-            if (!Runtime.PyString_Check(key))
-            {
-                return Exceptions.RaiseTypeError("string expected");
-            }
-
-            string name = Runtime.GetManagedString(key);
-            if (name == "__implementation__")
-            {
-                return Converter.ToPython(clrObj.inst);
-            }
-            else if (name == "__raw_implementation__")
-            {
-                return CLRObject.GetInstHandle(clrObj.inst);
-            }
-
-            return Runtime.PyObject_GenericGetAttr(ob, key);
+            return CLRObject.GetInstHandle(obj, self.pyHandle);
         }
     }
 }

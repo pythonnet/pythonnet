@@ -109,25 +109,6 @@ namespace Python.Runtime
             return null;
         }
 
-        /// <summary>
-        /// Given a Python object, return the associated managed object type or null.
-        /// </summary>
-        internal static ManagedType GetManagedObjectType(IntPtr ob)
-        {
-            if (ob != IntPtr.Zero)
-            {
-                IntPtr tp = Runtime.PyObject_TYPE(ob);
-                var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
-                {
-                    tp = Marshal.ReadIntPtr(tp, TypeOffset.magic());
-                    var gc = (GCHandle)tp;
-                    return (ManagedType)gc.Target;
-                }
-            }
-            return null;
-        }
-
 
         internal static ManagedType GetManagedObjectErr(IntPtr ob)
         {

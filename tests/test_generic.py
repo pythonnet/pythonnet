@@ -318,6 +318,7 @@ def test_generic_method_type_handling():
     assert_generic_method_by_type(ShortEnum, ShortEnum.Zero)
     assert_generic_method_by_type(System.Object, InterfaceTest())
     assert_generic_method_by_type(InterfaceTest, InterfaceTest(), 1)
+    assert_generic_method_by_type(ISayHello1, InterfaceTest(), 1)
 
 
 def test_correct_overload_selection():
@@ -546,11 +547,10 @@ def test_method_overload_selection_with_generic_types():
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value.value.__class__ == inst.__class__
 
-    iface_class = ISayHello1(inst).__class__
     vtype = GenericWrapper[ISayHello1]
     input_ = vtype(inst)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value.__class__ == iface_class
+    assert value.value.__class__ == inst.__class__
 
     vtype = System.Array[GenericWrapper[int]]
     input_ = vtype([GenericWrapper[int](0), GenericWrapper[int](1)])
@@ -725,12 +725,11 @@ def test_overload_selection_with_arrays_of_generic_types():
     assert value[0].value.__class__ == inst.__class__
     assert value.Length == 2
 
-    iface_class = ISayHello1(inst).__class__
     gtype = GenericWrapper[ISayHello1]
     vtype = System.Array[gtype]
     input_ = vtype([gtype(inst), gtype(inst)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value.__class__ == iface_class
+    assert value[0].value.__class__ == inst.__class__
     assert value.Length == 2
 
 

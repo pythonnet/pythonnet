@@ -1334,10 +1334,9 @@ def test_special_array_creation():
     assert value[1].__class__ == inst.__class__
     assert value.Length == 2
 
-    iface_class = ISayHello1(inst).__class__
     value = Array[ISayHello1]([inst, inst])
-    assert value[0].__class__ == iface_class
-    assert value[1].__class__ == iface_class
+    assert value[0].__class__ == inst.__class__
+    assert value[1].__class__ == inst.__class__
     assert value.Length == 2
 
     inst = System.Exception("badness")

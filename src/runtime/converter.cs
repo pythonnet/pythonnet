@@ -207,21 +207,6 @@ class GMT(tzinfo):
                 }
             }
 
-            if (type.IsInterface)
-            {
-                var ifaceObj = (InterfaceObject)ClassManager.GetClass(type);
-                return ifaceObj.WrapObject(value);
-            }
-
-            // We need to special case interface array handling to ensure we
-            // produce the correct type. Value may be an array of some concrete
-            // type (FooImpl[]), but we want access to go via the interface type
-            // (IFoo[]).
-            if (type.IsArray && type.GetElementType().IsInterface)
-            {
-                return CLRObject.GetInstHandle(value, type);
-            }
-
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
             var pyderived = value as IPythonDerivedType;
