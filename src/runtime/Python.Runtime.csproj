@@ -19,7 +19,10 @@
     <DebugSymbols>true</DebugSymbols>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    
+
+    <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+
     <NoWarn>1591;NU1701</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
@@ -31,7 +34,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE" Pack="true" PackagePath=""/>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
