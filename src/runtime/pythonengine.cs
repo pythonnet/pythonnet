@@ -198,18 +198,6 @@ namespace Python.Runtime
                 Py.SetArgv(args);
             }
 
-            if (mode == ShutdownMode.Normal)
-            {
-                // TOOD: Check if this can be remove completely or not.
-                // register the atexit callback (this doesn't use Py_AtExit as the C atexit
-                // callbacks are called after python is fully finalized but the python ones
-                // are called while the python engine is still running).
-                //string code =
-                //    "import atexit, clr\n" +
-                //    "atexit.register(clr._AtExit)\n";
-                //PythonEngine.Exec(code);
-            }
-
             // Load the clr.py resource into the clr module
             NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
             BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr);
@@ -266,7 +254,7 @@ namespace Python.Runtime
         {
             try
             {
-                Initialize(setSysArgv: false);
+                Initialize(setSysArgv: false, mode: ShutdownMode.Extension);
 
                 // Trickery - when the import hook is installed into an already
                 // running Python, the standard import machinery is still in

@@ -12,33 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows, ubuntu, macos]
-        pyver_minor: [6, 7, 8, 9]
+        python: ["3.6", "3.7", "3.8", "3.9"]
         platform: [x64]
         shutdown_mode: [Normal, Soft]
-        include:
-        - os: ubuntu
-          pyver_minor: 6
-          dll_suffix: m
-        - os: ubuntu
-          pyver_minor: 7
-          dll_suffix: m
-
-        - os: macos
-          dll_prefix: lib
-          dll_pyver_major: '3.'
-          dll_suffix: m
-        - os: ubuntu
-          dll_prefix: lib
-          dll_pyver_major: '3.'
-        - os: windows
-          dll_pyver_major: '3'
-
-        - os: ubuntu
-          dll_ext: .so
-        - os: windows
-          dll_ext: .dll
-        - os: macos
-          dll_ext: .dylib
 
     env:
       PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
@@ -56,10 +32,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
 
-      - name: Set up Python 3.${{ matrix.pyver_minor }}
+      - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v2
         with:
-          python-version: 3.${{ matrix.pyver_minor }}
+          python-version: ${{ matrix.python }}
           architecture: ${{ matrix.platform }}
 
       - name: Install dependencies
@@ -68,31 +44,26 @@ jobs:
 
       - name: Build and Install
         run: |
-          python setup.py configure
           pip install -v .
 
-      # TODO this should be gone once clr module sets PythonDLL or preloads it
-      - name: Python Tests
-        run: pytest
-        if: ${{ matrix.os != 'macos' }}
-        env:
-          PYTHONNET_PYDLL: ${{ matrix.DLL_PREFIX }}python${{matrix.DLL_PYVER_MAJOR}}${{matrix.PYVER_MINOR}}${{matrix.DLL_SUFFIX}}${{matrix.DLL_EXT}}
+      - name: Set Python DLL path (non Windows)
+        if: ${{ matrix.os != 'windows' }}
+        run: |
+          python -m pythonnet.find_libpython --export >> $GITHUB_ENV
 
+      - name: Set Python DLL path (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        run: |
+          python -m pythonnet.find_libpython --export | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+  
       - name: Python Tests
         run: pytest
-        if: ${{ matrix.os == 'macos' }}
 
       - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
-        if: ${{ matrix.os != 'macos' }} # Not working right now, doesn't find libpython
-        env:
-          PYTHONNET_PYDLL: ${{ matrix.DLL_PREFIX }}python${{matrix.DLL_PYVER_MAJOR}}${{matrix.PYVER_MINOR}}${{matrix.DLL_SUFFIX}}${{matrix.DLL_EXT}}
 
       - name: Python tests run from .NET
         run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
-        if: ${{ matrix.os == 'windows' }} # Not working for others right now
-        env:
-          PYTHONNET_PYDLL: ${{ matrix.DLL_PREFIX }}python${{matrix.DLL_PYVER_MAJOR}}${{matrix.PYVER_MINOR}}${{matrix.DLL_SUFFIX}}${{matrix.DLL_EXT}}
 
       # TODO: Run perf tests
       # TODO: Run mono tests on Windows?

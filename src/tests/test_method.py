@@ -899,9 +899,6 @@ def test_object_in_multiparam_exception():
     c = e.__cause__
     assert c.GetType().FullName == 'System.AggregateException'
     assert len(c.InnerExceptions) == 2
-    message = 'One or more errors occurred.'
-    s = str(c)
-    assert s[0:len(message)] == message
 
 def test_case_sensitive():
     """Test that case-sensitivity is respected. GH#81"""
