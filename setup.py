@@ -94,6 +94,7 @@ class build_dotnet(Command):
 # Add build_dotnet to the build tasks:
 from distutils.command.build import build as _build
 from setuptools.command.develop import develop as _develop
+from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 from setuptools import Distribution
 import setuptools
 
@@ -111,6 +112,14 @@ class develop(_develop):
         return super().install_for_development()
 
 
+class bdist_wheel(_bdist_wheel):
+    def finalize_options(self):
+        # Monkey patch bdist_wheel to think the package is pure even though we
+        # include DLLs
+        super().finalize_options()
+        self.root_is_pure = True
+
+
 # Monkey-patch Distribution s.t. it supports the dotnet_libs attribute
 Distribution.dotnet_libs = None
 
@@ -118,6 +127,7 @@ cmdclass = {
     "build": build,
     "build_dotnet": build_dotnet,
     "develop": develop,
+    "bdist_wheel": bdist_wheel,
 }
 
 
@@ -142,9 +152,8 @@ setup(
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
     packages=["pythonnet", "pythonnet.find_libpython"],
-    install_requires=["pycparser", "clr_loader"],
+    install_requires=["clr_loader"],
     long_description=long_description,
-    # data_files=[("{install_platlib}", ["{build_lib}/pythonnet"])],
     py_modules=["clr"],
     dotnet_libs=dotnet_libs,
     classifiers=[
@@ -156,6 +165,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",
