@@ -3,21 +3,15 @@ name: GitHub Actions
 on: [ pull_request, push ]
 
 jobs:
-  build-test:
-    name: Build and Test
+  build:
+    name: Build
     runs-on: ${{ matrix.os }}-latest
-    timeout-minutes: 5
 
     strategy:
       fail-fast: false
       matrix:
         os: [windows, ubuntu, macos]
         python: ["3.6", "3.7", "3.8", "3.9"]
-        platform: [x64]
-        shutdown_mode: [Normal, Soft]
-
-    env:
-      PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
 
     steps:
       - name: Set Environment on macOS
@@ -56,17 +50,58 @@ jobs:
         run: |
           python -m pythonnet.find_libpython --export | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Python Tests (Mono)
-        if: ${{ matrix.os != 'windows' }}
-        run: pytest --runtime mono
+  python-tests:
+    name: Python Tests
+    needs: build
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 5
 
-      - name: Python Tests (.NET Core)
-        run: pytest --runtime netcore
+    strategy:
+      matrix:
+        os: [windows, ubuntu, macos]
+        runtime: [mono, netcore, netfx]
+        exclude:
+          - os: windows
+            runtime: mono
+          - os: linux
+            runtime: netfx
+          - os: macos
+            runtime: netfx
 
-      - name: Python Tests (.NET Framework)
-        if: ${{ matrix.os == 'windows' }}
-        run: pytest --runtime netfx
+    steps:
+      - name: Python Tests
+        run: pytest --runtime ${{ matrix.runtime }}
 
+  domain-reload-tests:
+    name: Domain Reload Tests
+    needs: build
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 5
+
+    strategy:
+      matrix:
+        os: [windows, ubuntu, macos]
+
+    steps:
+      - name: Python Tests
+        run: pytest src/domain_tests
+
+  dotnet-tests:
+    name: Python Tests
+    needs: build
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 5
+
+    strategy:
+      matrix:
+        os: [windows, ubuntu, macos]
+        platform: [x64]
+        shutdown_mode: [Normal, Soft]
+
+    env:
+      PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
+
+    steps:
       - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
 
