@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj" />
+    <ProjectReference Include="..\testing\Python.Test.csproj" />
   </ItemGroup>
 
   <ItemGroup>

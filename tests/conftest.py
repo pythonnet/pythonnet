@@ -31,6 +31,12 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     global bin_path
+    if "clr" in sys.modules:
+        # Already loaded (e.g. by the C# test runner), skip build
+        import clr
+        clr.AddReference("Python.Test")
+        return
+
     runtime_opt = config.getoption("runtime")
 
     test_proj_path = os.path.join(cwd, "..", "src", "testing")
@@ -70,7 +76,10 @@ def pytest_configure(config):
 
 def pytest_unconfigure(config):
     global bin_path
-    shutil.rmtree(bin_path)
+    try:
+        shutil.rmtree(bin_path)
+    except Exception:
+        pass
 
 def pytest_report_header(config):
     """Generate extra report headers"""
