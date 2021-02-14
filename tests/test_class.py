@@ -126,9 +126,7 @@ def test_subclass_with_various_constructors():
 def test_struct_construction():
     """Test construction of structs."""
 
-    clr.AddReference('System.Drawing')
-
-    from System.Drawing import Point
+    from Python.Test import Point
 
     p = Point()
     assert p.X == 0
