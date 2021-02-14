@@ -66,10 +66,6 @@ def pytest_configure(config):
 
     import clr
     clr.AddReference("Python.Test")
-    clr.AddReference("System")
-    clr.AddReference("System.Collections")
-    clr.AddReference("System.Data")
-    clr.AddReference("System.Xml")
 
 
 def pytest_unconfigure(config):
