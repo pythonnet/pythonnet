@@ -406,8 +406,8 @@ def test_uint64_conversion():
 
 def test_single_conversion():
     """Test single conversion."""
-    assert System.Single.MaxValue == 3.402823e38
-    assert System.Single.MinValue == -3.402823e38
+    assert System.Single.MaxValue == pytest.approx(3.402823e38)
+    assert System.Single.MinValue == pytest.approx(-3.402823e38)
 
     ob = ConversionTest()
     assert ob.SingleField == 0.0

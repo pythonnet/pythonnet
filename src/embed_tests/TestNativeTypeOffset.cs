@@ -34,11 +34,12 @@ namespace Python.EmbeddingPythonTest
         public void LoadNativeTypeOffsetClass()
         {
             PyObject sys = Py.Import("sys");
-            string attributeName = "abiflags";
-            if (sys.HasAttr(attributeName) && !string.IsNullOrEmpty(sys.GetAttr(attributeName).ToString()))
+            // We can safely ignore the "m" abi flag
+            var abiflags = sys.GetAttr("abiflags", "".ToPython()).ToString().Replace("m", "");
+            if (!string.IsNullOrEmpty(abiflags))
             {
                 string typeName = "Python.Runtime.NativeTypeOffset, Python.Runtime";
-                Assert.NotNull(Type.GetType(typeName), $"{typeName} does not exist and sys.{attributeName} is not empty");
+                Assert.NotNull(Type.GetType(typeName), $"{typeName} does not exist and sys.abiflags={abiflags}");
             }
         }
     }

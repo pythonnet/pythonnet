@@ -1166,10 +1166,8 @@ def test_boxed_value_type_mutation_result():
     # to accidentally write code like the following which is not really
     # mutating value types in-place but changing boxed copies.
 
-    clr.AddReference('System.Drawing')
-
-    from System.Drawing import Point
     from System import Array
+    from Python.Test import Point
 
     items = Array.CreateInstance(Point, 5)
 

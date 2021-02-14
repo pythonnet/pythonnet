@@ -6,8 +6,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime", "src\runti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "src\console\Console.csproj", "{E6B01706-00BA-4144-9029-186AC42FBE9A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "clrmodule", "src\clrmodule\clrmodule.csproj", "{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.EmbeddingTest", "src\embed_tests\Python.EmbeddingTest.csproj", "{819E089B-4770-400E-93C6-4F7A35F0EA12}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Test", "src\testing\Python.Test.csproj", "{14EF9518-5BB7-4F83-8686-015BD2CC788E}"
@@ -55,7 +53,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.PythonTestsRunner", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{142A6752-C2C2-4F95-B982-193418001B65}"
 	ProjectSection(SolutionItems) = preProject
-		configured.props = configured.props
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject

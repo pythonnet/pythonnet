@@ -1,8 +1,5 @@
 /src/runtime/interopNative.cs
 
-# Configuration data
-configured.props
-
 # General binaries and Build results
 *.dll
 *.exe

@@ -30,7 +30,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);$(ConfiguredConstants)</DefineConstants>
+    <OutputPath>..\..\pythonnet\runtime</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

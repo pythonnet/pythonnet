@@ -30,7 +30,7 @@ def test_import_clr():
 
 def test_version_clr():
     import clr
-    assert clr.__version__ >= "2.2.0"
+    assert clr.__version__ >= "3.0.0"
 
 
 def test_preload_var():
@@ -111,12 +111,13 @@ def test_dotted_name_import():
 
 def test_multiple_dotted_name_import():
     """Test an import bug with multiple dotted imports."""
-    import System.Data
-    assert is_clr_module(System.Data)
-    assert System.Data.__name__ == 'System.Data'
-    import System.Data
-    assert is_clr_module(System.Data)
-    assert System.Data.__name__ == 'System.Data'
+
+    import System.Reflection
+    assert is_clr_module(System.Reflection)
+    assert System.Reflection.__name__ == 'System.Reflection'
+    import System.Reflection
+    assert is_clr_module(System.Reflection)
+    assert System.Reflection.__name__ == 'System.Reflection'
 
 
 def test_dotted_name_import_with_alias():
@@ -192,11 +193,11 @@ def test_dotted_name_import_from_with_alias():
 
 def test_from_module_import_star():
     """Test from module import * behavior."""
-    clr.AddReference('System.Xml')
-    
+    clr.AddReference("System")
+
     count = len(locals().keys())
-    m = __import__('System.Xml', globals(), locals(), ['*'])
-    assert m.__name__ == 'System.Xml'
+    m = __import__('System', globals(), locals(), ['*'])
+    assert m.__name__ == 'System'
     assert is_clr_module(m)
     assert len(locals().keys()) > count + 1
 
@@ -212,7 +213,11 @@ def test_implicit_assembly_load():
         import Microsoft.Build
 
     with warnings.catch_warnings(record=True) as w:
-        clr.AddReference("System.Windows.Forms")
+        try:
+            clr.AddReference("System.Windows.Forms")
+        except Exception:
+            pytest.skip()
+
         import System.Windows.Forms as Forms
         assert is_clr_module(Forms)
         assert Forms.__name__ == 'System.Windows.Forms'
@@ -227,11 +232,11 @@ def test_explicit_assembly_load():
     from System.Reflection import Assembly
     import System, sys
 
-    assembly = Assembly.LoadWithPartialName('System.Data')
+    assembly = Assembly.LoadWithPartialName('System.Runtime')
     assert assembly is not None
 
-    import System.Data
-    assert 'System.Data' in sys.modules
+    import System.Runtime
+    assert 'System.Runtime' in sys.modules
 
     assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
     assert assembly is None
@@ -275,12 +280,14 @@ def test_module_lookup_recursion():
 
 def test_module_get_attr():
     """Test module getattr behavior."""
+
     import System
+    import System.Runtime
 
     int_type = System.Int32
     assert is_clr_class(int_type)
 
-    module = System.Xml
+    module = System.Runtime
     assert is_clr_module(module)
 
     with pytest.raises(AttributeError):
@@ -324,7 +331,6 @@ def test_clr_list_assemblies():
     from clr import ListAssemblies
     verbose = list(ListAssemblies(True))
     short = list(ListAssemblies(False))
-    assert u'mscorlib' in short
     assert u'System' in short
     assert u'Culture=' in verbose[0]
     assert u'Version=' in verbose[0]
@@ -377,8 +383,11 @@ def test_assembly_load_thread_safety():
         _ = Dictionary[Guid, DateTime]()
     ModuleTest.JoinThreads()
 
+@pytest.mark.skipif()
 def test_assembly_load_recursion_bug():
     """Test fix for recursion bug documented in #627"""
-    from System.Configuration import ConfigurationManager
-    content = dir(ConfigurationManager)
+    sys_config = pytest.importorskip(
+        "System.Configuration", reason="System.Configuration can't be imported"
+    )
+    content = dir(sys_config.ConfigurationManager)
     assert len(content) > 5, content

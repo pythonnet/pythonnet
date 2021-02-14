@@ -534,11 +534,5 @@ namespace Python.Runtime
             }
             return names;
         }
-
-        [ModuleFunction]
-        public static int _AtExit()
-        {
-            return Runtime.AtExit();
-        }
     }
 }
