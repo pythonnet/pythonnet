@@ -63,7 +63,7 @@ def unload():
     global _RUNTIME
     if _LOADER_ASSEMBLY is not None:
         func = _LOADER_ASSEMBLY["Python.Runtime.Loader.Shutdown"]
-        if func(b"") != 0:
+        if func(b"full_shutdown") != 0:
             raise RuntimeError("Failed to call Python.NET shutdown")
 
     if _RUNTIME is not None:
