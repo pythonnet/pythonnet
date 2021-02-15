@@ -688,7 +688,12 @@ class GMT(tzinfo):
                 case TypeCode.Int32:
                     {
                         // Python3 always use PyLong API
-                        nint num = Runtime.PyLong_AsSignedSize_t(value);
+                        op = Runtime.PyNumber_Long(value);
+                        if (op == IntPtr.Zero && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        nint num = Runtime.PyLong_AsSignedSize_t(op);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -796,7 +801,12 @@ class GMT(tzinfo):
 
                 case TypeCode.Int16:
                     {
-                        nint num = Runtime.PyLong_AsSignedSize_t(value);
+                        op = Runtime.PyNumber_Long(value);
+                        if (op == IntPtr.Zero && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        nint num = Runtime.PyLong_AsSignedSize_t(op);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -827,7 +837,12 @@ class GMT(tzinfo):
                         }
                         else
                         {
-                            nint num = Runtime.PyLong_AsSignedSize_t(value);
+                            op = Runtime.PyNumber_Long(value);
+                            if (op == IntPtr.Zero && Exceptions.ErrorOccurred())
+                            {
+                                goto convert_error;
+                            }
+                            nint num = Runtime.PyLong_AsSignedSize_t(op);
                             if (num == -1 && Exceptions.ErrorOccurred())
                             {
                                 goto convert_error;
@@ -839,7 +854,12 @@ class GMT(tzinfo):
 
                 case TypeCode.UInt16:
                     {
-                        nint num = Runtime.PyLong_AsSignedSize_t(value);
+                        op = Runtime.PyNumber_Long(value);
+                        if (op == IntPtr.Zero && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        nint num = Runtime.PyLong_AsSignedSize_t(op);
                         if (num == -1 && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -854,7 +874,12 @@ class GMT(tzinfo):
 
                 case TypeCode.UInt32:
                     {
-                        nuint num = Runtime.PyLong_AsUnsignedSize_t(value);
+                        op = Runtime.PyNumber_Long(value);
+                        if (op == IntPtr.Zero && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        nuint num = Runtime.PyLong_AsUnsignedSize_t(op);
                         if (num == unchecked((nuint)(-1)) && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
@@ -869,7 +894,12 @@ class GMT(tzinfo):
 
                 case TypeCode.UInt64:
                     {
-                        ulong num = Runtime.PyLong_AsUnsignedLongLong(value);
+                        op = Runtime.PyNumber_Long(value);
+                        if (op == IntPtr.Zero && Exceptions.ErrorOccurred())
+                        {
+                            goto convert_error;
+                        }
+                        ulong num = Runtime.PyLong_AsUnsignedLongLong(op);
                         if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
                         {
                             goto convert_error;
