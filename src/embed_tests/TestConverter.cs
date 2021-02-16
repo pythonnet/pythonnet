@@ -186,5 +186,17 @@ namespace Python.EmbeddingTest
             var proxiedHandle = pyObjectProxy.GetAttr("Handle").As<IntPtr>();
             Assert.AreEqual(pyObject.Handle, proxiedHandle);
         }
+
+        [Test]
+        public void PrimitiveIntConversion()
+        {
+            decimal value = 10;
+            var pyValue = value.ToPython();
+
+            // Try to convert python value to int
+            var testInt = pyValue.As<int>();
+            Assert.AreEqual(testInt , 10);
+        }
+
     }
 }
