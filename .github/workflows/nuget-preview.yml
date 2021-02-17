@@ -3,6 +3,7 @@ name: GitHub Actions
 on:
   schedule:
   - cron: "5 4 3 */1 *" # once a month, at 4:05 on 3rd
+  workflow_dispatch:
 
 jobs:
   release:
