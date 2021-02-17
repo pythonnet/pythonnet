@@ -38,7 +38,6 @@ jobs:
 
       - name: Build and Install
         run: |
-          python setup.py configure
           pip install -v .
 
       - name: Python Tests
