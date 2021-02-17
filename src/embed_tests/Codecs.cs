@@ -290,7 +290,7 @@ class foo():
             IEnumerable<string> stringEnumerable = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringEnumerable); });
 
-            Assert.Throws(typeof(PythonException), () => {
+            Assert.Throws(typeof(InvalidCastException), () => {
                 foreach (string item in stringEnumerable)
                 {
                     var x = item;
