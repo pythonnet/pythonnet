@@ -161,7 +161,7 @@ class foo():
             IList<string> stringList = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringList); });
             Assert.AreEqual(stringList.Count, 3);
-            Assert.Throws(typeof(PythonException), () => { var x = stringList[0]; });
+            Assert.Throws(typeof(InvalidCastException), () => { var x = stringList[0]; });
 
             //can't convert python iterable to list (this will require a copy which isn't lossless)
             var foo = GetPythonIterable();
@@ -204,7 +204,7 @@ class foo():
             ICollection<string> stringCollection = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringCollection); });
             Assert.AreEqual(3, stringCollection.Count());
-            Assert.Throws(typeof(PythonException), () => {
+            Assert.Throws(typeof(InvalidCastException), () => {
                 string[] array = new string[3];
                 stringCollection.CopyTo(array, 0);
             });
@@ -241,7 +241,7 @@ class foo():
             ICollection<string> stringCollection2 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyTuple, out stringCollection2); });
             Assert.AreEqual(3, stringCollection2.Count());
-            Assert.Throws(typeof(PythonException), () => {
+            Assert.Throws(typeof(InvalidCastException), () => {
                 string[] array = new string[3];
                 stringCollection2.CopyTo(array, 0);
             });
@@ -296,7 +296,7 @@ class foo():
                     var x = item;
                 }
             });
-            Assert.Throws(typeof(PythonException), () => {
+            Assert.Throws(typeof(InvalidCastException), () => {
                 stringEnumerable.Count();
             });
 
