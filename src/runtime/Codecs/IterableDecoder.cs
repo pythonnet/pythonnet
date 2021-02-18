@@ -19,7 +19,7 @@ namespace Python.Runtime.Codecs
 
         internal static bool IsIterable(PyObject objectType)
         {
-            return Runtime.PyIter_Check(objectType.Handle);
+            return objectType.HasAttr("__iter__");
         }
 
         public bool CanDecode(PyObject objectType, Type targetType)
