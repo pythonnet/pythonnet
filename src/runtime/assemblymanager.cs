@@ -176,8 +176,7 @@ namespace Python.Runtime
             {
                 pypath.Clear();
                 probed.Clear();
-                // add first the current path
-                pypath.Add("");
+
                 for (var i = 0; i < count; i++)
                 {
                     BorrowedReference item = Runtime.PyList_GetItem(list, i);

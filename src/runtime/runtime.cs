@@ -6,6 +6,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 using Python.Runtime.Native;
 using Python.Runtime.Platform;
 using System.Linq;
@@ -175,16 +176,28 @@ namespace Python.Runtime
 
             // Need to add the runtime directory to sys.path so that we
             // can find built-in assemblies like System.Data, et. al.
-            string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
+            AddToPyPath(RuntimeEnvironment.GetRuntimeDirectory());
+            AddToPyPath(Directory.GetCurrentDirectory());
+
+            Console.WriteLine("Runtime.Initialize(): AssemblyManager.UpdatePath()...");
+            AssemblyManager.UpdatePath();
+        }
+
+        private static void AddToPyPath(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                return;
+            }
+
             IntPtr path = PySys_GetObject("path").DangerousGetAddress();
-            IntPtr item = PyString_FromString(rtdir);
+            IntPtr item = PyString_FromString(directory);
             if (PySequence_Contains(path, item) == 0)
             {
                 PyList_Append(new BorrowedReference(path), item);
             }
+
             XDecref(item);
-            Console.WriteLine("Runtime.Initialize(): AssemblyManager.UpdatePath()...");
-            AssemblyManager.UpdatePath();
         }
 
         private static void InitPyMembers()
