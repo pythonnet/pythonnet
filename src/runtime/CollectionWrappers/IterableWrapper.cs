@@ -12,7 +12,7 @@ namespace Python.Runtime.CollectionWrappers
         {
             if (pyObj == null)
                 throw new ArgumentNullException();
-            pyObject = pyObj;
+            pyObject = new PyObject(pyObj.Reference);
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

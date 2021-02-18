@@ -14,7 +14,7 @@ namespace Python.Runtime.CollectionWrappers
         {
             get
             {
-                var size = Runtime.PySequence_Size(pyObject.Handle);
+                var size = Runtime.PySequence_Size(pyObject.Reference);
                 if (size == -1)
                 {
                     Runtime.CheckExceptionOccurred();

@@ -15,8 +15,9 @@ namespace Python.Runtime.Codecs
 
         private static bool IsList(PyObject objectType)
         {
+            //TODO accept any python object that implements the sequence and list protocols
             //must implement sequence protocol to fully implement list protocol
-            if (!SequenceDecoder.IsSequence(objectType)) return false;
+            //if (!SequenceDecoder.IsSequence(objectType)) return false;
 
             //returns wheter the type is a list.
             return objectType.Handle == Runtime.PyListType;

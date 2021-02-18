@@ -98,34 +98,12 @@ namespace Python.EmbeddingTest {
             }
         }
 
-        static string GetIntIterableCommands(string instanceName)
-        {
-            var builder = new System.Text.StringBuilder();
-            builder.AppendLine(@"
-class foo():
-    def __init__(self):
-        self.counter = 0
-    def __iter__(self):
-        return self
-    def __next__(self):
-        if self.counter == 3:
-            raise StopIteration
-        self.counter = self.counter + 1
-        return self.counter");
-
-            builder.AppendLine(instanceName + " = foo()");
-            return builder.ToString();
-        }
-
         static PyObject GetPythonIterable()
         {
-            var locals = new PyDict();
             using (Py.GIL())
             {
-                PythonEngine.Exec(GetIntIterableCommands("foo_instance"), null, locals.Handle);
+                return PythonEngine.Eval("map(lambda x: x, [1,2,3])");
             }
-
-            return locals.GetItem("foo_instance");
         }
 
         [Test]
