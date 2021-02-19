@@ -9,7 +9,7 @@ using NUnit.Framework;
 
 using Python.Runtime;
 
-namespace Python.EmbeddingPythonTest
+namespace Python.EmbeddingTest
 {
     public class TestNativeTypeOffset
     {

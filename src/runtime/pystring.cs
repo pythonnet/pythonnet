@@ -67,11 +67,8 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// IsStringType Method
-        /// </summary>
-        /// <remarks>
         /// Returns true if the given object is a Python string.
-        /// </remarks>
+        /// </summary>
         public static bool IsStringType(PyObject value)
         {
             return Runtime.PyString_Check(value.obj);
