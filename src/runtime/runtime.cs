@@ -133,7 +133,10 @@ namespace Python.Runtime
                 // If we're coming back from a domain reload or a soft shutdown,
                 // we have previously released the thread state. Restore the main
                 // thread state here.
-                PyGILState_Ensure();
+                if (mode != ShutdownMode.Extension)
+                {
+                    PyGILState_Ensure();
+                }
             }
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -356,7 +359,7 @@ namespace Python.Runtime
             Finalizer.Shutdown();
             InternString.Shutdown();
 
-            if (mode != ShutdownMode.Normal)
+            if (mode != ShutdownMode.Normal && mode != ShutdownMode.Extension)
             {
                 PyGC_Collect();
                 if (mode == ShutdownMode.Soft)
@@ -387,7 +390,10 @@ namespace Python.Runtime
             else
             {
                 ResetPyMembers();
-                Py_Finalize();
+                if (mode != ShutdownMode.Extension)
+                {
+                    Py_Finalize();
+                }
             }
         }
 
@@ -410,16 +416,6 @@ namespace Python.Runtime
                 return mode;
             }
             return ShutdownMode.Normal;
-        }
-
-        // called *without* the GIL acquired by clr._AtExit
-        internal static int AtExit()
-        {
-            lock (IsFinalizingLock)
-            {
-                IsFinalizing = true;
-            }
-            return 0;
         }
 
         private static void RunExitFuncs()
@@ -778,7 +774,7 @@ namespace Python.Runtime
         /// Limit this function usage for Testing and Py_Debug builds
         /// </summary>
         /// <param name="ob">PyObject Ptr</param>
-        
+
         internal static void Py_IncRef(IntPtr ob) => Delegates.Py_IncRef(ob);
 
         /// <summary>
@@ -786,59 +782,59 @@ namespace Python.Runtime
         /// Limit this function usage for Testing and Py_Debug builds
         /// </summary>
         /// <param name="ob">PyObject Ptr</param>
-        
+
         internal static void Py_DecRef(IntPtr ob) => Delegates.Py_DecRef(ob);
 
-        
+
         internal static void Py_Initialize() => Delegates.Py_Initialize();
 
-        
+
         internal static void Py_InitializeEx(int initsigs) => Delegates.Py_InitializeEx(initsigs);
 
-        
+
         internal static int Py_IsInitialized() => Delegates.Py_IsInitialized();
 
-        
+
         internal static void Py_Finalize() => Delegates.Py_Finalize();
 
-        
+
         internal static IntPtr Py_NewInterpreter() => Delegates.Py_NewInterpreter();
 
-        
+
         internal static void Py_EndInterpreter(IntPtr threadState) => Delegates.Py_EndInterpreter(threadState);
 
-        
+
         internal static IntPtr PyThreadState_New(IntPtr istate) => Delegates.PyThreadState_New(istate);
 
-        
+
         internal static IntPtr PyThreadState_Get() => Delegates.PyThreadState_Get();
 
-        
+
         internal static IntPtr _PyThreadState_UncheckedGet() => Delegates._PyThreadState_UncheckedGet();
 
-        
+
         internal static IntPtr PyThread_get_key_value(IntPtr key) => Delegates.PyThread_get_key_value(key);
 
-        
+
         internal static int PyThread_get_thread_ident() => Delegates.PyThread_get_thread_ident();
 
-        
+
         internal static int PyThread_set_key_value(IntPtr key, IntPtr value) => Delegates.PyThread_set_key_value(key, value);
 
-        
+
         internal static IntPtr PyThreadState_Swap(IntPtr key) => Delegates.PyThreadState_Swap(key);
 
-        
+
         internal static IntPtr PyGILState_Ensure() => Delegates.PyGILState_Ensure();
 
-        
+
         internal static void PyGILState_Release(IntPtr gs) => Delegates.PyGILState_Release(gs);
 
 
-        
+
         internal static IntPtr PyGILState_GetThisThreadState() => Delegates.PyGILState_GetThisThreadState();
 
-        
+
         public static int Py_Main(int argc, string[] argv)
         {
             var marshaler = StrArrayMarshaler.GetInstance(null);
@@ -855,67 +851,67 @@ namespace Python.Runtime
 
         internal static void PyEval_InitThreads() => Delegates.PyEval_InitThreads();
 
-        
+
         internal static int PyEval_ThreadsInitialized() => Delegates.PyEval_ThreadsInitialized();
 
-        
+
         internal static void PyEval_AcquireLock() => Delegates.PyEval_AcquireLock();
 
-        
+
         internal static void PyEval_ReleaseLock() => Delegates.PyEval_ReleaseLock();
 
-        
+
         internal static void PyEval_AcquireThread(IntPtr tstate) => Delegates.PyEval_AcquireThread(tstate);
 
-        
+
         internal static void PyEval_ReleaseThread(IntPtr tstate) => Delegates.PyEval_ReleaseThread(tstate);
 
-        
+
         internal static IntPtr PyEval_SaveThread() => Delegates.PyEval_SaveThread();
 
-        
+
         internal static void PyEval_RestoreThread(IntPtr tstate) => Delegates.PyEval_RestoreThread(tstate);
 
-        
+
         internal static BorrowedReference PyEval_GetBuiltins() => Delegates.PyEval_GetBuiltins();
 
-        
+
         internal static BorrowedReference PyEval_GetGlobals() => Delegates.PyEval_GetGlobals();
 
-        
+
         internal static IntPtr PyEval_GetLocals() => Delegates.PyEval_GetLocals();
 
-        
+
         internal static IntPtr Py_GetProgramName() => Delegates.Py_GetProgramName();
 
-        
+
         internal static void Py_SetProgramName(IntPtr name) => Delegates.Py_SetProgramName(name);
 
-        
+
         internal static IntPtr Py_GetPythonHome() => Delegates.Py_GetPythonHome();
 
-        
+
         internal static void Py_SetPythonHome(IntPtr home) => Delegates.Py_SetPythonHome(home);
 
-        
+
         internal static IntPtr Py_GetPath() => Delegates.Py_GetPath();
 
-        
+
         internal static void Py_SetPath(IntPtr home) => Delegates.Py_SetPath(home);
 
-        
+
         internal static IntPtr Py_GetVersion() => Delegates.Py_GetVersion();
 
-        
+
         internal static IntPtr Py_GetPlatform() => Delegates.Py_GetPlatform();
 
-        
+
         internal static IntPtr Py_GetCopyright() => Delegates.Py_GetCopyright();
 
-        
+
         internal static IntPtr Py_GetCompiler() => Delegates.Py_GetCompiler();
 
-        
+
         internal static IntPtr Py_GetBuildInfo() => Delegates.Py_GetBuildInfo();
 
         const PyCompilerFlags Utf8String = PyCompilerFlags.IGNORE_COOKIE | PyCompilerFlags.SOURCE_IS_UTF8;
@@ -953,10 +949,10 @@ namespace Python.Runtime
 
         internal static IntPtr PyCFunction_NewEx(IntPtr ml, IntPtr self, IntPtr mod) => Delegates.PyCFunction_NewEx(ml, self, mod);
 
-        
+
         internal static IntPtr PyCFunction_Call(IntPtr func, IntPtr args, IntPtr kw) => Delegates.PyCFunction_Call(func, args, kw);
 
-        
+
         internal static IntPtr PyMethod_New(IntPtr func, IntPtr self, IntPtr cls) => Delegates.PyMethod_New(func, self, cls);
 
 
@@ -1018,7 +1014,7 @@ namespace Python.Runtime
             return tp_iter != IntPtr.Zero;
         }
 
-        
+
         internal static int PyObject_HasAttrString(BorrowedReference pointer, string name)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
@@ -1031,7 +1027,7 @@ namespace Python.Runtime
             return Delegates.PyObject_GetAttrString(pointer, namePtr);
         }
 
-        
+
         internal static IntPtr PyObject_GetAttrString(IntPtr pointer, StrPtr name) => Delegates.PyObject_GetAttrString(pointer, name);
 
 
@@ -1054,25 +1050,25 @@ namespace Python.Runtime
 
         internal static int PyObject_SetAttr(IntPtr pointer, IntPtr name, IntPtr value) => Delegates.PyObject_SetAttr(pointer, name, value);
 
-        
+
         internal static IntPtr PyObject_GetItem(IntPtr pointer, IntPtr key) => Delegates.PyObject_GetItem(pointer, key);
 
-        
+
         internal static int PyObject_SetItem(IntPtr pointer, IntPtr key, IntPtr value) => Delegates.PyObject_SetItem(pointer, key, value);
 
-        
+
         internal static int PyObject_DelItem(IntPtr pointer, IntPtr key) => Delegates.PyObject_DelItem(pointer, key);
 
-        
+
         internal static IntPtr PyObject_GetIter(IntPtr op) => Delegates.PyObject_GetIter(op);
 
-        
+
         internal static IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw) => Delegates.PyObject_Call(pointer, args, kw);
 
-        
+
         internal static IntPtr PyObject_CallObject(IntPtr pointer, IntPtr args) => Delegates.PyObject_CallObject(pointer, args);
 
-        
+
         internal static int PyObject_RichCompareBool(IntPtr value1, IntPtr value2, int opid) => Delegates.PyObject_RichCompareBool(value1, value2, opid);
 
         internal static int PyObject_Compare(IntPtr value1, IntPtr value2)
@@ -1100,20 +1096,20 @@ namespace Python.Runtime
             return -1;
         }
 
-        
+
         internal static int PyObject_IsInstance(IntPtr ob, IntPtr type) => Delegates.PyObject_IsInstance(ob, type);
 
-        
+
         internal static int PyObject_IsSubclass(IntPtr ob, IntPtr type) => Delegates.PyObject_IsSubclass(ob, type);
 
-        
+
         internal static int PyCallable_Check(IntPtr pointer) => Delegates.PyCallable_Check(pointer);
 
 
         internal static int PyObject_IsTrue(IntPtr pointer) => PyObject_IsTrue(new BorrowedReference(pointer));
         internal static int PyObject_IsTrue(BorrowedReference pointer) => Delegates.PyObject_IsTrue(pointer);
 
-        
+
         internal static int PyObject_Not(IntPtr pointer) => Delegates.PyObject_Not(pointer);
 
         internal static long PyObject_Size(IntPtr pointer)
@@ -1121,22 +1117,22 @@ namespace Python.Runtime
             return (long)_PyObject_Size(pointer);
         }
 
-        
+
         private static IntPtr _PyObject_Size(IntPtr pointer) => Delegates._PyObject_Size(pointer);
 
-        
+
         internal static nint PyObject_Hash(IntPtr op) => Delegates.PyObject_Hash(op);
 
-        
+
         internal static IntPtr PyObject_Repr(IntPtr pointer) => Delegates.PyObject_Repr(pointer);
 
-        
+
         internal static IntPtr PyObject_Str(IntPtr pointer) => Delegates.PyObject_Str(pointer);
 
-        
+
         internal static IntPtr PyObject_Unicode(IntPtr pointer) => Delegates.PyObject_Unicode(pointer);
 
-        
+
         internal static IntPtr PyObject_Dir(IntPtr pointer) => Delegates.PyObject_Dir(pointer);
 
 #if PYTHON_WITH_PYDEBUG
@@ -1148,13 +1144,13 @@ namespace Python.Runtime
         // Python buffer API
         //====================================================================
 
-        
+
         internal static int PyObject_GetBuffer(IntPtr exporter, ref Py_buffer view, int flags) => Delegates.PyObject_GetBuffer(exporter, ref view, flags);
 
-        
+
         internal static void PyBuffer_Release(ref Py_buffer view) => Delegates.PyBuffer_Release(ref view);
 
-        
+
         internal static IntPtr PyBuffer_SizeFromFormat(string format)
         {
             using var formatPtr = new StrPtr(format, Encoding.ASCII);
@@ -1163,35 +1159,35 @@ namespace Python.Runtime
 
         internal static int PyBuffer_IsContiguous(ref Py_buffer view, char order) => Delegates.PyBuffer_IsContiguous(ref view, order);
 
-        
+
         internal static IntPtr PyBuffer_GetPointer(ref Py_buffer view, IntPtr[] indices) => Delegates.PyBuffer_GetPointer(ref view, indices);
 
-        
+
         internal static int PyBuffer_FromContiguous(ref Py_buffer view, IntPtr buf, IntPtr len, char fort) => Delegates.PyBuffer_FromContiguous(ref view, buf, len, fort);
 
-        
+
         internal static int PyBuffer_ToContiguous(IntPtr buf, ref Py_buffer src, IntPtr len, char order) => Delegates.PyBuffer_ToContiguous(buf, ref src, len, order);
 
-        
+
         internal static void PyBuffer_FillContiguousStrides(int ndims, IntPtr shape, IntPtr strides, int itemsize, char order) => Delegates.PyBuffer_FillContiguousStrides(ndims, shape, strides, itemsize, order);
 
-        
+
         internal static int PyBuffer_FillInfo(ref Py_buffer view, IntPtr exporter, IntPtr buf, IntPtr len, int _readonly, int flags) => Delegates.PyBuffer_FillInfo(ref view, exporter, buf, len, _readonly, flags);
 
         //====================================================================
         // Python number API
         //====================================================================
 
-        
+
         internal static IntPtr PyNumber_Int(IntPtr ob) => Delegates.PyNumber_Int(ob);
 
-        
+
         internal static IntPtr PyNumber_Long(IntPtr ob) => Delegates.PyNumber_Long(ob);
 
-        
+
         internal static IntPtr PyNumber_Float(IntPtr ob) => Delegates.PyNumber_Float(ob);
 
-        
+
         internal static bool PyNumber_Check(IntPtr ob) => Delegates.PyNumber_Check(ob);
 
         internal static bool PyInt_Check(BorrowedReference ob)
@@ -1218,25 +1214,25 @@ namespace Python.Runtime
             return PyInt_FromLong(v);
         }
 
-        
+
         private static IntPtr PyInt_FromLong(IntPtr value) => Delegates.PyInt_FromLong(value);
 
-        
+
         internal static int PyInt_AsLong(IntPtr value) => Delegates.PyInt_AsLong(value);
 
-        
+
         internal static bool PyLong_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyLongType;
         }
 
-        
+
         internal static IntPtr PyLong_FromLong(long value) => Delegates.PyLong_FromLong(value);
 
-        
+
         internal static IntPtr PyLong_FromUnsignedLong32(uint value) => Delegates.PyLong_FromUnsignedLong32(value);
 
-        
+
         internal static IntPtr PyLong_FromUnsignedLong64(ulong value) => Delegates.PyLong_FromUnsignedLong64(value);
 
         internal static IntPtr PyLong_FromUnsignedLong(object value)
@@ -1247,16 +1243,16 @@ namespace Python.Runtime
                 return PyLong_FromUnsignedLong64(Convert.ToUInt64(value));
         }
 
-        
+
         internal static IntPtr PyLong_FromDouble(double value) => Delegates.PyLong_FromDouble(value);
 
-        
+
         internal static IntPtr PyLong_FromLongLong(long value) => Delegates.PyLong_FromLongLong(value);
 
-        
+
         internal static IntPtr PyLong_FromUnsignedLongLong(ulong value) => Delegates.PyLong_FromUnsignedLongLong(value);
 
-        
+
         internal static IntPtr PyLong_FromString(string value, IntPtr end, int radix)
         {
             using var valPtr = new StrPtr(value, Encoding.UTF8);
@@ -1264,11 +1260,11 @@ namespace Python.Runtime
         }
 
 
-        
+
         internal static nuint PyLong_AsUnsignedSize_t(IntPtr value) => Delegates.PyLong_AsUnsignedSize_t(value);
-        
+
         internal static nint PyLong_AsSignedSize_t(IntPtr value) => Delegates.PyLong_AsSignedSize_t(new BorrowedReference(value));
-        
+
         internal static nint PyLong_AsSignedSize_t(BorrowedReference value) => Delegates.PyLong_AsSignedSize_t(value);
 
         /// <summary>
@@ -1279,7 +1275,7 @@ namespace Python.Runtime
         /// <para>In most cases you need to check that value is an instance of PyLongObject
         /// before using this function using <see cref="PyLong_Check(IntPtr)"/>.</para>
         /// </summary>
-        
+
         internal static long PyExplicitlyConvertToInt64(IntPtr value) => Delegates.PyExplicitlyConvertToInt64(value);
 
         internal static ulong PyLong_AsUnsignedLongLong(IntPtr value) => Delegates.PyLong_AsUnsignedLongLong(value);
@@ -1298,91 +1294,91 @@ namespace Python.Runtime
         /// <summary>
         /// Convert a Python integer pylong to a C void pointer. If pylong cannot be converted, an OverflowError will be raised. This is only assured to produce a usable void pointer for values created with PyLong_FromVoidPtr().
         /// </summary>
-        
+
         internal static IntPtr PyLong_AsVoidPtr(BorrowedReference ob) => Delegates.PyLong_AsVoidPtr(ob);
 
-        
+
         internal static IntPtr PyFloat_FromDouble(double value) => Delegates.PyFloat_FromDouble(value);
 
-        
+
         internal static NewReference PyFloat_FromString(BorrowedReference value) => Delegates.PyFloat_FromString(value);
 
-        
+
         internal static double PyFloat_AsDouble(IntPtr ob) => Delegates.PyFloat_AsDouble(ob);
 
-        
+
         internal static IntPtr PyNumber_Add(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Add(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Subtract(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Subtract(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Multiply(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Multiply(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_TrueDivide(IntPtr o1, IntPtr o2) => Delegates.PyNumber_TrueDivide(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_And(IntPtr o1, IntPtr o2) => Delegates.PyNumber_And(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Xor(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Xor(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Or(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Or(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Lshift(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Lshift(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Rshift(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Rshift(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Power(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Power(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Remainder(IntPtr o1, IntPtr o2) => Delegates.PyNumber_Remainder(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceAdd(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceAdd(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceSubtract(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceSubtract(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceMultiply(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceMultiply(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceTrueDivide(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceTrueDivide(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceAnd(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceAnd(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceXor(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceXor(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceOr(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceOr(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceLshift(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceLshift(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceRshift(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceRshift(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlacePower(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlacePower(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_InPlaceRemainder(IntPtr o1, IntPtr o2) => Delegates.PyNumber_InPlaceRemainder(o1, o2);
 
-        
+
         internal static IntPtr PyNumber_Negative(IntPtr o1) => Delegates.PyNumber_Negative(o1);
 
-        
+
         internal static IntPtr PyNumber_Positive(IntPtr o1) => Delegates.PyNumber_Positive(o1);
 
-        
+
         internal static IntPtr PyNumber_Invert(IntPtr o1) => Delegates.PyNumber_Invert(o1);
 
 
@@ -1390,9 +1386,9 @@ namespace Python.Runtime
         // Python sequence API
         //====================================================================
 
-        
+
         internal static bool PySequence_Check(IntPtr pointer) => Delegates.PySequence_Check(pointer);
-        
+
         internal static NewReference PySequence_GetItem(BorrowedReference pointer, nint index) => Delegates.PySequence_GetItem(pointer, index);
 
         internal static int PySequence_SetItem(IntPtr pointer, long index, IntPtr value)
@@ -1400,7 +1396,7 @@ namespace Python.Runtime
             return PySequence_SetItem(pointer, new IntPtr(index), value);
         }
 
-        
+
         private static int PySequence_SetItem(IntPtr pointer, IntPtr index, IntPtr value) => Delegates.PySequence_SetItem(pointer, index, value);
 
         internal static int PySequence_DelItem(IntPtr pointer, long index)
@@ -1408,7 +1404,7 @@ namespace Python.Runtime
             return PySequence_DelItem(pointer, new IntPtr(index));
         }
 
-        
+
         private static int PySequence_DelItem(IntPtr pointer, IntPtr index) => Delegates.PySequence_DelItem(pointer, index);
 
         internal static IntPtr PySequence_GetSlice(IntPtr pointer, long i1, long i2)
@@ -1416,7 +1412,7 @@ namespace Python.Runtime
             return PySequence_GetSlice(pointer, new IntPtr(i1), new IntPtr(i2));
         }
 
-        
+
         private static IntPtr PySequence_GetSlice(IntPtr pointer, IntPtr i1, IntPtr i2) => Delegates.PySequence_GetSlice(pointer, i1, i2);
 
         internal static int PySequence_SetSlice(IntPtr pointer, long i1, long i2, IntPtr v)
@@ -1424,7 +1420,7 @@ namespace Python.Runtime
             return PySequence_SetSlice(pointer, new IntPtr(i1), new IntPtr(i2), v);
         }
 
-        
+
         private static int PySequence_SetSlice(IntPtr pointer, IntPtr i1, IntPtr i2, IntPtr v) => Delegates.PySequence_SetSlice(pointer, i1, i2, v);
 
         internal static int PySequence_DelSlice(IntPtr pointer, long i1, long i2)
@@ -1432,17 +1428,17 @@ namespace Python.Runtime
             return PySequence_DelSlice(pointer, new IntPtr(i1), new IntPtr(i2));
         }
 
-        
+
         private static int PySequence_DelSlice(IntPtr pointer, IntPtr i1, IntPtr i2) => Delegates.PySequence_DelSlice(pointer, i1, i2);
 
         [Obsolete]
         internal static nint PySequence_Size(IntPtr pointer) => PySequence_Size(new BorrowedReference(pointer));
         internal static nint PySequence_Size(BorrowedReference pointer) => Delegates.PySequence_Size(pointer);
 
-        
+
         internal static int PySequence_Contains(IntPtr pointer, IntPtr item) => Delegates.PySequence_Contains(pointer, item);
 
-        
+
         internal static IntPtr PySequence_Concat(IntPtr pointer, IntPtr other) => Delegates.PySequence_Concat(pointer, other);
 
         internal static IntPtr PySequence_Repeat(IntPtr pointer, long count)
@@ -1450,10 +1446,10 @@ namespace Python.Runtime
             return PySequence_Repeat(pointer, new IntPtr(count));
         }
 
-        
+
         private static IntPtr PySequence_Repeat(IntPtr pointer, IntPtr count) => Delegates.PySequence_Repeat(pointer, count);
 
-        
+
         internal static int PySequence_Index(IntPtr pointer, IntPtr item) => Delegates.PySequence_Index(pointer, item);
 
         internal static long PySequence_Count(IntPtr pointer, IntPtr value)
@@ -1461,13 +1457,13 @@ namespace Python.Runtime
             return (long)_PySequence_Count(pointer, value);
         }
 
-        
+
         private static IntPtr _PySequence_Count(IntPtr pointer, IntPtr value) => Delegates._PySequence_Count(pointer, value);
 
-        
+
         internal static IntPtr PySequence_Tuple(IntPtr pointer) => Delegates.PySequence_Tuple(pointer);
 
-        
+
         internal static IntPtr PySequence_List(IntPtr pointer) => Delegates.PySequence_List(pointer);
 
 
@@ -1497,7 +1493,7 @@ namespace Python.Runtime
                 return PyUnicode_FromKindAndData(2, (IntPtr)ptr, value.Length);
         }
 
-        
+
         internal static IntPtr EmptyPyBytes()
         {
             byte* bytes = stackalloc byte[1];
@@ -1510,7 +1506,7 @@ namespace Python.Runtime
             return (long)_PyBytes_Size(op);
         }
 
-        
+
         private static IntPtr _PyBytes_Size(IntPtr op) => Delegates._PyBytes_Size(op);
 
         internal static IntPtr PyBytes_AS_STRING(IntPtr ob)
@@ -1524,10 +1520,10 @@ namespace Python.Runtime
             return PyUnicode_FromStringAndSize(value, new IntPtr(size));
         }
 
-        
+
         private static IntPtr PyUnicode_FromStringAndSize(IntPtr value, IntPtr size) => Delegates.PyUnicode_FromStringAndSize(value, size);
 
-        
+
         internal static IntPtr PyUnicode_AsUTF8(IntPtr unicode) => Delegates.PyUnicode_AsUTF8(unicode);
 
         internal static bool PyUnicode_Check(IntPtr ob)
@@ -1535,10 +1531,10 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyUnicodeType;
         }
 
-        
+
         internal static IntPtr PyUnicode_FromObject(IntPtr ob) => Delegates.PyUnicode_FromObject(ob);
 
-        
+
         internal static IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err) => Delegates.PyUnicode_FromEncodedObject(ob, enc, err);
 
         internal static IntPtr PyUnicode_FromKindAndData(int kind, IntPtr s, long size)
@@ -1546,7 +1542,7 @@ namespace Python.Runtime
             return PyUnicode_FromKindAndData(kind, s, new IntPtr(size));
         }
 
-        
+
         private static IntPtr PyUnicode_FromKindAndData(int kind, IntPtr s, IntPtr size)
             => Delegates.PyUnicode_FromKindAndData(kind, s, size);
 
@@ -1556,7 +1552,7 @@ namespace Python.Runtime
                 return PyUnicode_FromKindAndData(2, (IntPtr)ptr, size);
         }
 
-        
+
         internal static int PyUnicode_GetMax() => Delegates.PyUnicode_GetMax();
 
         internal static long PyUnicode_GetSize(IntPtr ob)
@@ -1564,10 +1560,10 @@ namespace Python.Runtime
             return (long)_PyUnicode_GetSize(ob);
         }
 
-        
+
         private static IntPtr _PyUnicode_GetSize(IntPtr ob) => Delegates._PyUnicode_GetSize(ob);
 
-        
+
         internal static IntPtr PyUnicode_AsUnicode(IntPtr ob) => Delegates.PyUnicode_AsUnicode(ob);
         internal static NewReference PyUnicode_AsUTF16String(BorrowedReference ob) => Delegates.PyUnicode_AsUTF16String(ob);
 
@@ -1580,7 +1576,7 @@ namespace Python.Runtime
             return PyUnicode_FromUnicode(s, s.Length);
         }
 
-        
+
         internal static IntPtr PyUnicode_InternFromString(string s)
         {
             using var ptr = new StrPtr(s, Encoding.UTF8);
@@ -1631,13 +1627,13 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyDictType;
         }
 
-        
+
         internal static IntPtr PyDict_New() => Delegates.PyDict_New();
 
-        
+
         internal static int PyDict_Next(IntPtr p, out IntPtr ppos, out IntPtr pkey, out IntPtr pvalue) => Delegates.PyDict_Next(p, out ppos, out pkey, out pvalue);
 
-        
+
         internal static IntPtr PyDictProxy_New(IntPtr dict) => Delegates.PyDictProxy_New(dict);
 
         /// <summary>
@@ -1691,7 +1687,7 @@ namespace Python.Runtime
 
         internal static int PyDict_DelItem(BorrowedReference pointer, BorrowedReference key) => Delegates.PyDict_DelItem(pointer, key);
 
-        
+
         internal static int PyDict_DelItemString(BorrowedReference pointer, string key)
         {
             using var keyPtr = new StrPtr(key, Encoding.UTF8);
@@ -1707,19 +1703,19 @@ namespace Python.Runtime
                         .DangerousMoveToPointerOrNull();
         internal static NewReference PyDict_Keys(BorrowedReference pointer) => Delegates.PyDict_Keys(pointer);
 
-        
+
         internal static IntPtr PyDict_Values(IntPtr pointer) => Delegates.PyDict_Values(pointer);
 
-        
+
         internal static NewReference PyDict_Items(BorrowedReference pointer) => Delegates.PyDict_Items(pointer);
 
-        
+
         internal static IntPtr PyDict_Copy(IntPtr pointer) => Delegates.PyDict_Copy(pointer);
 
-        
+
         internal static int PyDict_Update(BorrowedReference pointer, BorrowedReference other) => Delegates.PyDict_Update(pointer, other);
 
-        
+
         internal static void PyDict_Clear(IntPtr pointer) => Delegates.PyDict_Clear(pointer);
 
         internal static long PyDict_Size(IntPtr pointer)
@@ -1727,19 +1723,19 @@ namespace Python.Runtime
             return (long)_PyDict_Size(pointer);
         }
 
-        
+
         internal static IntPtr _PyDict_Size(IntPtr pointer) => Delegates._PyDict_Size(pointer);
 
 
         internal static NewReference PySet_New(BorrowedReference iterable) => Delegates.PySet_New(iterable);
 
-        
+
         internal static int PySet_Add(BorrowedReference set, BorrowedReference key) => Delegates.PySet_Add(set, key);
 
         /// <summary>
         /// Return 1 if found, 0 if not found, and -1 if an error is encountered.
         /// </summary>
-        
+
         internal static int PySet_Contains(BorrowedReference anyset, BorrowedReference key) => Delegates.PySet_Contains(anyset, key);
 
         //====================================================================
@@ -1756,10 +1752,10 @@ namespace Python.Runtime
             return PyList_New(new IntPtr(size));
         }
 
-        
+
         private static IntPtr PyList_New(IntPtr size) => Delegates.PyList_New(size);
 
-        
+
         internal static IntPtr PyList_AsTuple(IntPtr pointer) => Delegates.PyList_AsTuple(pointer);
 
         internal static BorrowedReference PyList_GetItem(BorrowedReference pointer, long index)
@@ -1767,7 +1763,7 @@ namespace Python.Runtime
             return PyList_GetItem(pointer, new IntPtr(index));
         }
 
-        
+
         private static BorrowedReference PyList_GetItem(BorrowedReference pointer, IntPtr index) => Delegates.PyList_GetItem(pointer, index);
 
         internal static int PyList_SetItem(IntPtr pointer, long index, IntPtr value)
@@ -1775,7 +1771,7 @@ namespace Python.Runtime
             return PyList_SetItem(pointer, new IntPtr(index), value);
         }
 
-        
+
         private static int PyList_SetItem(IntPtr pointer, IntPtr index, IntPtr value) => Delegates.PyList_SetItem(pointer, index, value);
 
         internal static int PyList_Insert(BorrowedReference pointer, long index, IntPtr value)
@@ -1783,16 +1779,16 @@ namespace Python.Runtime
             return PyList_Insert(pointer, new IntPtr(index), value);
         }
 
-        
+
         private static int PyList_Insert(BorrowedReference pointer, IntPtr index, IntPtr value) => Delegates.PyList_Insert(pointer, index, value);
 
-        
+
         internal static int PyList_Append(BorrowedReference pointer, IntPtr value) => Delegates.PyList_Append(pointer, value);
 
-        
+
         internal static int PyList_Reverse(BorrowedReference pointer) => Delegates.PyList_Reverse(pointer);
 
-        
+
         internal static int PyList_Sort(BorrowedReference pointer) => Delegates.PyList_Sort(pointer);
 
         internal static IntPtr PyList_GetSlice(IntPtr pointer, long start, long end)
@@ -1800,7 +1796,7 @@ namespace Python.Runtime
             return PyList_GetSlice(pointer, new IntPtr(start), new IntPtr(end));
         }
 
-        
+
         private static IntPtr PyList_GetSlice(IntPtr pointer, IntPtr start, IntPtr end) => Delegates.PyList_GetSlice(pointer, start, end);
 
         internal static int PyList_SetSlice(IntPtr pointer, long start, long end, IntPtr value)
@@ -1808,10 +1804,10 @@ namespace Python.Runtime
             return PyList_SetSlice(pointer, new IntPtr(start), new IntPtr(end), value);
         }
 
-        
+
         private static int PyList_SetSlice(IntPtr pointer, IntPtr start, IntPtr end, IntPtr value) => Delegates.PyList_SetSlice(pointer, start, end, value);
 
-        
+
         internal static nint PyList_Size(BorrowedReference pointer) => Delegates.PyList_Size(pointer);
 
         //====================================================================
@@ -1832,7 +1828,7 @@ namespace Python.Runtime
             return PyTuple_New(new IntPtr(size));
         }
 
-        
+
         private static IntPtr PyTuple_New(IntPtr size) => Delegates.PyTuple_New(size);
 
         internal static BorrowedReference PyTuple_GetItem(BorrowedReference pointer, long index)
@@ -1843,7 +1839,7 @@ namespace Python.Runtime
                 .DangerousGetAddressOrNull();
         }
 
-        
+
         private static BorrowedReference PyTuple_GetItem(BorrowedReference pointer, IntPtr index) => Delegates.PyTuple_GetItem(pointer, index);
 
         internal static int PyTuple_SetItem(IntPtr pointer, long index, IntPtr value)
@@ -1851,7 +1847,7 @@ namespace Python.Runtime
             return PyTuple_SetItem(pointer, new IntPtr(index), value);
         }
 
-        
+
         private static int PyTuple_SetItem(IntPtr pointer, IntPtr index, IntPtr value) => Delegates.PyTuple_SetItem(pointer, index, value);
 
         internal static IntPtr PyTuple_GetSlice(IntPtr pointer, long start, long end)
@@ -1859,7 +1855,7 @@ namespace Python.Runtime
             return PyTuple_GetSlice(pointer, new IntPtr(start), new IntPtr(end));
         }
 
-        
+
         private static IntPtr PyTuple_GetSlice(IntPtr pointer, IntPtr start, IntPtr end) => Delegates.PyTuple_GetSlice(pointer, start, end);
 
 
@@ -1878,7 +1874,7 @@ namespace Python.Runtime
             return tp_iternext != IntPtr.Zero && tp_iternext != _PyObject_NextNotImplemented;
         }
 
-        
+
         internal static IntPtr PyIter_Next(IntPtr pointer)
             => Delegates.PyIter_Next(new BorrowedReference(pointer)).DangerousMoveToPointerOrNull();
         internal static NewReference PyIter_Next(BorrowedReference pointer) => Delegates.PyIter_Next(pointer);
@@ -1888,7 +1884,7 @@ namespace Python.Runtime
         // Python module API
         //====================================================================
 
-        
+
         internal static NewReference PyModule_New(string name)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
@@ -1900,18 +1896,18 @@ namespace Python.Runtime
 
         internal static BorrowedReference PyModule_GetDict(BorrowedReference module) => Delegates.PyModule_GetDict(module);
 
-        
+
         internal static string PyModule_GetFilename(IntPtr module)
             => Delegates.PyModule_GetFilename(module).ToString(Encoding.UTF8);
 
 #if PYTHON_WITH_PYDEBUG
         [DllImport(_PythonDll, EntryPoint = "PyModule_Create2TraceRefs", CallingConvention = CallingConvention.Cdecl)]
 #else
-        
+
 #endif
         internal static IntPtr PyModule_Create2(IntPtr module, int apiver) => Delegates.PyModule_Create2(module, apiver);
 
-        
+
         internal static IntPtr PyImport_Import(IntPtr name) => Delegates.PyImport_Import(name);
 
         /// <summary>
@@ -1926,7 +1922,7 @@ namespace Python.Runtime
 
         internal static IntPtr PyImport_ReloadModule(IntPtr module) => Delegates.PyImport_ReloadModule(module);
 
-        
+
         internal static BorrowedReference PyImport_AddModule(string name)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
@@ -1935,7 +1931,7 @@ namespace Python.Runtime
 
         internal static BorrowedReference PyImport_GetModuleDict() => Delegates.PyImport_GetModuleDict();
 
-        
+
         internal static void PySys_SetArgvEx(int argc, string[] argv, int updatepath)
         {
             var marshaler = StrArrayMarshaler.GetInstance(null);
@@ -1976,7 +1972,7 @@ namespace Python.Runtime
             return PyObject_TypeCheck(ob, PyTypeType);
         }
 
-        
+
         internal static void PyType_Modified(IntPtr type) => Delegates.PyType_Modified(type);
         internal static bool PyType_IsSubtype(BorrowedReference t1, IntPtr ofType)
             => PyType_IsSubtype(t1, new BorrowedReference(ofType));
@@ -1997,7 +1993,7 @@ namespace Python.Runtime
             return (type == ofType) || PyType_IsSubtype(type, ofType);
         }
 
-        
+
         internal static IntPtr PyType_GenericNew(IntPtr type, IntPtr args, IntPtr kw) => Delegates.PyType_GenericNew(type, args, kw);
 
         internal static IntPtr PyType_GenericAlloc(IntPtr type, long n)
@@ -2005,19 +2001,19 @@ namespace Python.Runtime
             return PyType_GenericAlloc(type, new IntPtr(n));
         }
 
-        
+
         private static IntPtr PyType_GenericAlloc(IntPtr type, IntPtr n) => Delegates.PyType_GenericAlloc(type, n);
 
         /// <summary>
         /// Finalize a type object. This should be called on all type objects to finish their initialization. This function is responsible for adding inherited slots from a type’s base class. Return 0 on success, or return -1 and sets an exception on error.
         /// </summary>
-        
+
         internal static int PyType_Ready(IntPtr type) => Delegates.PyType_Ready(type);
 
-        
+
         internal static IntPtr _PyType_Lookup(IntPtr type, IntPtr name) => Delegates._PyType_Lookup(type, name);
 
-        
+
         internal static IntPtr PyObject_GenericGetAttr(IntPtr obj, IntPtr name) => Delegates.PyObject_GenericGetAttr(obj, name);
         internal static bool PyType_SUPPORTS_WEAKREFS(IntPtr type)
         {
@@ -2034,9 +2030,8 @@ namespace Python.Runtime
 
         internal static void PyObject_GC_Track(IntPtr tp) => Delegates.PyObject_GC_Track(tp);
 
-        
         internal static void PyObject_GC_UnTrack(IntPtr tp) => Delegates.PyObject_GC_UnTrack(tp);
-        
+
         internal static void _PyObject_Dump(IntPtr ob) => Delegates._PyObject_Dump(ob);
 
         internal static void PyObject_ClearWeakRefs(IntPtr obj) => Delegates.PyObject_ClearWeakRefs(obj);
@@ -2050,7 +2045,7 @@ namespace Python.Runtime
             return PyMem_Malloc(new IntPtr(size));
         }
 
-        
+
         private static IntPtr PyMem_Malloc(IntPtr size) => Delegates.PyMem_Malloc(size);
 
         internal static IntPtr PyMem_Realloc(IntPtr ptr, long size)
@@ -2058,10 +2053,10 @@ namespace Python.Runtime
             return PyMem_Realloc(ptr, new IntPtr(size));
         }
 
-        
+
         private static IntPtr PyMem_Realloc(IntPtr ptr, IntPtr size) => Delegates.PyMem_Realloc(ptr, size);
 
-        
+
         internal static void PyMem_Free(IntPtr ptr) => Delegates.PyMem_Free(ptr);
 
 
@@ -2069,7 +2064,7 @@ namespace Python.Runtime
         // Python exception API
         //====================================================================
 
-        
+
         internal static void PyErr_SetString(IntPtr ob, string message)
         {
             using var msgPtr = new StrPtr(message, Encoding.UTF8);
@@ -2078,40 +2073,40 @@ namespace Python.Runtime
 
         internal static void PyErr_SetObject(BorrowedReference type, BorrowedReference exceptionObject) => Delegates.PyErr_SetObject(type, exceptionObject);
 
-        
+
         internal static IntPtr PyErr_SetFromErrno(IntPtr ob) => Delegates.PyErr_SetFromErrno(ob);
 
-        
+
         internal static void PyErr_SetNone(IntPtr ob) => Delegates.PyErr_SetNone(ob);
 
-        
+
         internal static int PyErr_ExceptionMatches(IntPtr exception) => Delegates.PyErr_ExceptionMatches(exception);
 
-        
+
         internal static int PyErr_GivenExceptionMatches(IntPtr ob, IntPtr val) => Delegates.PyErr_GivenExceptionMatches(ob, val);
 
-        
+
         internal static void PyErr_NormalizeException(ref IntPtr ob, ref IntPtr val, ref IntPtr tb) => Delegates.PyErr_NormalizeException(ref ob, ref val, ref tb);
 
-        
+
         internal static IntPtr PyErr_Occurred() => Delegates.PyErr_Occurred();
 
-        
+
         internal static void PyErr_Fetch(out IntPtr ob, out IntPtr val, out IntPtr tb) => Delegates.PyErr_Fetch(out ob, out val, out tb);
 
-        
+
         internal static void PyErr_Restore(IntPtr ob, IntPtr val, IntPtr tb) => Delegates.PyErr_Restore(ob, val, tb);
 
-        
+
         internal static void PyErr_Clear() => Delegates.PyErr_Clear();
 
-        
+
         internal static void PyErr_Print() => Delegates.PyErr_Print();
 
         /// <summary>
         /// Set the cause associated with the exception to cause. Use NULL to clear it. There is no type check to make sure that cause is either an exception instance or None. This steals a reference to cause.
         /// </summary>
-        
+
         internal static void PyException_SetCause(IntPtr ex, IntPtr cause) => Delegates.PyException_SetCause(ex, cause);
 
         //====================================================================
@@ -2121,7 +2116,7 @@ namespace Python.Runtime
 
         internal static NewReference PyCell_Get(BorrowedReference cell) => Delegates.PyCell_Get(cell);
 
-        
+
         internal static int PyCell_Set(BorrowedReference cell, IntPtr value) => Delegates.PyCell_Set(cell, value);
 
         //====================================================================
@@ -2134,7 +2129,7 @@ namespace Python.Runtime
         internal const long _PyGC_REFS_TENTATIVELY_UNREACHABLE = -4;
 
 
-        
+
         internal static IntPtr PyGC_Collect() => Delegates.PyGC_Collect();
 
         internal static IntPtr _Py_AS_GC(BorrowedReference ob)
@@ -2206,18 +2201,18 @@ namespace Python.Runtime
         // Miscellaneous
         //====================================================================
 
-        
+
         internal static IntPtr PyMethod_Self(IntPtr ob) => Delegates.PyMethod_Self(ob);
 
-        
+
         internal static IntPtr PyMethod_Function(IntPtr ob) => Delegates.PyMethod_Function(ob);
 
-        
+
         internal static int Py_AddPendingCall(IntPtr func, IntPtr arg) => Delegates.Py_AddPendingCall(func, arg);
 
-        
+
         internal static int PyThreadState_SetAsyncExcLLP64(uint id, IntPtr exc) => Delegates.PyThreadState_SetAsyncExcLLP64(id, exc);
-        
+
         internal static int PyThreadState_SetAsyncExcLP64(ulong id, IntPtr exc) => Delegates.PyThreadState_SetAsyncExcLP64(id, exc);
 
 
@@ -2803,6 +2798,7 @@ namespace Python.Runtime
         Normal,
         Soft,
         Reload,
+        Extension,
     }
 
 

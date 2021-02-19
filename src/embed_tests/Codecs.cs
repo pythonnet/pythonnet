@@ -1,33 +1,39 @@
 namespace Python.EmbeddingTest {
     using System;
     using System.Collections.Generic;
-    using System.Text;
+    using System.Linq;
     using NUnit.Framework;
     using Python.Runtime;
     using Python.Runtime.Codecs;
 
-    public class Codecs {
+    public class Codecs
+    {
         [SetUp]
-        public void SetUp() {
+        public void SetUp()
+        {
             PythonEngine.Initialize();
         }
 
         [TearDown]
-        public void Dispose() {
+        public void Dispose()
+        {
             PythonEngine.Shutdown();
         }
 
         [Test]
-        public void ConversionsGeneric() {
-            ConversionsGeneric<ValueTuple<int, string, object>, ValueTuple>();
+        public void TupleConversionsGeneric()
+        {
+            TupleConversionsGeneric<ValueTuple<int, string, object>, ValueTuple>();
         }
 
-        static void ConversionsGeneric<T, TTuple>() {
+        static void TupleConversionsGeneric<T, TTuple>()
+        {
             TupleCodec<TTuple>.Register();
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
             T restored = default;
             using (Py.GIL())
-            using (var scope = Py.CreateScope()) {
+            using (var scope = Py.CreateScope())
+            {
                 void Accept(T value) => restored = value;
                 var accept = new Action<T>(Accept).ToPython();
                 scope.Set(nameof(tuple), tuple);
@@ -38,15 +44,18 @@ namespace Python.EmbeddingTest {
         }
 
         [Test]
-        public void ConversionsObject() {
-            ConversionsObject<ValueTuple<int, string, object>, ValueTuple>();
+        public void TupleConversionsObject()
+        {
+            TupleConversionsObject<ValueTuple<int, string, object>, ValueTuple>();
         }
-        static void ConversionsObject<T, TTuple>() {
+        static void TupleConversionsObject<T, TTuple>()
+        {
             TupleCodec<TTuple>.Register();
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
             T restored = default;
             using (Py.GIL())
-            using (var scope = Py.CreateScope()) {
+            using (var scope = Py.CreateScope())
+            {
                 void Accept(object value) => restored = (T)value;
                 var accept = new Action<object>(Accept).ToPython();
                 scope.Set(nameof(tuple), tuple);
@@ -57,12 +66,15 @@ namespace Python.EmbeddingTest {
         }
 
         [Test]
-        public void TupleRoundtripObject() {
+        public void TupleRoundtripObject()
+        {
             TupleRoundtripObject<ValueTuple<int, string, object>, ValueTuple>();
         }
-        static void TupleRoundtripObject<T, TTuple>() {
+        static void TupleRoundtripObject<T, TTuple>()
+        {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            using (Py.GIL()) {
+            using (Py.GIL())
+            {
                 var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
                 Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
                 Assert.AreEqual(expected: tuple, actual: restored);
@@ -70,17 +82,219 @@ namespace Python.EmbeddingTest {
         }
 
         [Test]
-        public void TupleRoundtripGeneric() {
+        public void TupleRoundtripGeneric()
+        {
             TupleRoundtripGeneric<ValueTuple<int, string, object>, ValueTuple>();
         }
 
-        static void TupleRoundtripGeneric<T, TTuple>() {
+        static void TupleRoundtripGeneric<T, TTuple>()
+        {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            using (Py.GIL()) {
+            using (Py.GIL())
+            {
                 var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
                 Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
                 Assert.AreEqual(expected: tuple, actual: restored);
             }
+        }
+
+        static PyObject GetPythonIterable()
+        {
+            using (Py.GIL())
+            {
+                return PythonEngine.Eval("map(lambda x: x, [1,2,3])");
+            }
+        }
+
+        [Test]
+        public void ListDecoderTest()
+        {
+            var codec = ListDecoder.Instance;
+            var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
+
+            var pyList = new PyList(items.ToArray());
+
+            var pyListType = pyList.GetPythonType();
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(IList<bool>)));
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(IList<int>)));
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(System.Collections.IEnumerable)));
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(IEnumerable<int>)));
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(ICollection<float>)));
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(bool)));
+
+            //we'd have to copy into a list instance to do this, it would not be lossless.
+            //lossy converters can be implemented outside of the python.net core library
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(List<int>)));
+
+            //convert to list of int
+            IList<int> intList = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out intList); });
+            CollectionAssert.AreEqual(intList, new List<object> { 1, 2, 3 });
+
+            //convert to list of string.   This will not work.
+            //The ListWrapper class will throw a python exception when it tries to access any element.
+            //TryDecode is a lossless conversion so there will be no exception at that point
+            //interestingly, since the size of the python list can be queried without any conversion,
+            //the IList will report a Count of 3.
+            IList<string> stringList = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringList); });
+            Assert.AreEqual(stringList.Count, 3);
+            Assert.Throws(typeof(InvalidCastException), () => { var x = stringList[0]; });
+
+            //can't convert python iterable to list (this will require a copy which isn't lossless)
+            var foo = GetPythonIterable();
+            var fooType = foo.GetPythonType();
+            Assert.IsFalse(codec.CanDecode(fooType, typeof(IList<int>)));
+        }
+
+        [Test]
+        public void SequenceDecoderTest()
+        {
+            var codec = SequenceDecoder.Instance;
+            var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
+
+            //SequenceConverter can only convert to any ICollection
+            var pyList = new PyList(items.ToArray());
+            //it can convert a PyList, since PyList satisfies the python sequence protocol
+
+            Assert.IsFalse(codec.CanDecode(pyList, typeof(bool)));
+            Assert.IsFalse(codec.CanDecode(pyList, typeof(IList<int>)));
+            Assert.IsFalse(codec.CanDecode(pyList, typeof(System.Collections.IEnumerable)));
+            Assert.IsFalse(codec.CanDecode(pyList, typeof(IEnumerable<int>)));
+
+            Assert.IsTrue(codec.CanDecode(pyList, typeof(ICollection<float>)));
+            Assert.IsTrue(codec.CanDecode(pyList, typeof(ICollection<string>)));
+            Assert.IsTrue(codec.CanDecode(pyList, typeof(ICollection<int>)));
+
+            //convert to collection of int
+            ICollection<int> intCollection = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out intCollection); });
+            CollectionAssert.AreEqual(intCollection, new List<object> { 1, 2, 3 });
+
+            //no python exception should have occurred during the above conversion and check
+            Runtime.CheckExceptionOccurred();
+
+            //convert to collection of string.   This will not work.
+            //The SequenceWrapper class will throw a python exception when it tries to access any element.
+            //TryDecode is a lossless conversion so there will be no exception at that point
+            //interestingly, since the size of the python sequence can be queried without any conversion,
+            //the IList will report a Count of 3.
+            ICollection<string> stringCollection = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringCollection); });
+            Assert.AreEqual(3, stringCollection.Count());
+            Assert.Throws(typeof(InvalidCastException), () => {
+                string[] array = new string[3];
+                stringCollection.CopyTo(array, 0);
+            });
+
+            Runtime.CheckExceptionOccurred();
+
+            //can't convert python iterable to collection (this will require a copy which isn't lossless)
+            //python iterables do not satisfy the python sequence protocol
+            var foo = GetPythonIterable();
+            var fooType = foo.GetPythonType();
+            Assert.IsFalse(codec.CanDecode(fooType, typeof(ICollection<int>)));
+
+            //python tuples do satisfy the python sequence protocol
+            var pyTuple = new PyTuple(items.ToArray());
+            var pyTupleType = pyTuple.GetPythonType();
+
+            Assert.IsTrue(codec.CanDecode(pyTupleType, typeof(ICollection<float>)));
+            Assert.IsTrue(codec.CanDecode(pyTupleType, typeof(ICollection<int>)));
+            Assert.IsTrue(codec.CanDecode(pyTupleType, typeof(ICollection<string>)));
+
+            //convert to collection of int
+            ICollection<int> intCollection2 = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyTuple, out intCollection2); });
+            CollectionAssert.AreEqual(intCollection2, new List<object> { 1, 2, 3 });
+
+            //no python exception should have occurred during the above conversion and check
+            Runtime.CheckExceptionOccurred();
+
+            //convert to collection of string.   This will not work.
+            //The SequenceWrapper class will throw a python exception when it tries to access any element.
+            //TryDecode is a lossless conversion so there will be no exception at that point
+            //interestingly, since the size of the python sequence can be queried without any conversion,
+            //the IList will report a Count of 3.
+            ICollection<string> stringCollection2 = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyTuple, out stringCollection2); });
+            Assert.AreEqual(3, stringCollection2.Count());
+            Assert.Throws(typeof(InvalidCastException), () => {
+                string[] array = new string[3];
+                stringCollection2.CopyTo(array, 0);
+            });
+
+            Runtime.CheckExceptionOccurred();
+
+        }
+
+        [Test]
+        public void IterableDecoderTest()
+        {
+            var codec = IterableDecoder.Instance;
+            var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
+
+            var pyList = new PyList(items.ToArray());
+            var pyListType = pyList.GetPythonType();
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(IList<bool>)));
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(System.Collections.IEnumerable)));
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(IEnumerable<int>)));
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(ICollection<float>)));
+            Assert.IsFalse(codec.CanDecode(pyListType, typeof(bool)));
+
+            //ensure a PyList can be converted to a plain IEnumerable
+            System.Collections.IEnumerable plainEnumerable1 = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out plainEnumerable1); });
+            CollectionAssert.AreEqual(plainEnumerable1, new List<object> { 1, 2, 3 });
+
+            //can convert to any generic ienumerable.  If the type is not assignable from the python element
+            //it will lead to an empty iterable when decoding.  TODO - should it throw?
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(IEnumerable<int>)));
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(IEnumerable<double>)));
+            Assert.IsTrue(codec.CanDecode(pyListType, typeof(IEnumerable<string>)));
+
+            IEnumerable<int> intEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out intEnumerable); });
+            CollectionAssert.AreEqual(intEnumerable, new List<object> { 1, 2, 3 });
+
+            Runtime.CheckExceptionOccurred();
+
+            IEnumerable<double> doubleEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out doubleEnumerable); });
+            CollectionAssert.AreEqual(doubleEnumerable, new List<object> { 1, 2, 3 });
+
+            Runtime.CheckExceptionOccurred();
+
+            IEnumerable<string> stringEnumerable = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringEnumerable); });
+
+            Assert.Throws(typeof(InvalidCastException), () => {
+                foreach (string item in stringEnumerable)
+                {
+                    var x = item;
+                }
+            });
+            Assert.Throws(typeof(InvalidCastException), () => {
+                stringEnumerable.Count();
+            });
+
+            Runtime.CheckExceptionOccurred();
+
+            //ensure a python class which implements the iterator protocol can be converter to a plain IEnumerable
+            var foo = GetPythonIterable();
+            var fooType = foo.GetPythonType();
+            System.Collections.IEnumerable plainEnumerable2 = null;
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out plainEnumerable2); });
+            CollectionAssert.AreEqual(plainEnumerable2, new List<object> { 1, 2, 3 });
+
+            //can convert to any generic ienumerable.  If the type is not assignable from the python element
+            //it will be an exception during TryDecode
+            Assert.IsTrue(codec.CanDecode(fooType, typeof(IEnumerable<int>)));
+            Assert.IsTrue(codec.CanDecode(fooType, typeof(IEnumerable<double>)));
+            Assert.IsTrue(codec.CanDecode(fooType, typeof(IEnumerable<string>)));
+
+            Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out intEnumerable); });
+            CollectionAssert.AreEqual(intEnumerable, new List<object> { 1, 2, 3 });
         }
     }
 

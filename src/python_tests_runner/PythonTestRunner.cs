@@ -8,6 +8,7 @@ using System.Text;
 using NUnit.Framework;
 
 using Python.Runtime;
+using Python.Test;
 
 namespace Python.PythonTestsRunner
 {
@@ -50,7 +51,7 @@ namespace Python.PythonTestsRunner
             {
                 folder = Path.GetDirectoryName(folder);
             }
-            folder = Path.Combine(folder, "tests");
+            folder = Path.Combine(folder, "..", "tests");
             string path = Path.Combine(folder, testFile + ".py");
             if (!File.Exists(path)) throw new FileNotFoundException("Cannot find test file", path);
 

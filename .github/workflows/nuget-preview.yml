@@ -1,0 +1,60 @@
+name: NuGet Preview Release
+
+on:
+  schedule:
+  - cron: "5 4 3 */1 *" # once a month, at 4:05 on 3rd
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Release Preview
+    runs-on: ubuntu-latest
+    environment: NuGet
+    timeout-minutes: 10
+
+    env:
+      PYTHONNET_SHUTDOWN_MODE: Normal
+
+    steps:
+      - name: Get Date
+        run: |
+          echo "DATE_VER=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          architecture: x64
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade -r requirements.txt
+
+      - name: Build and Install
+        run: |
+          pip install -v .
+
+      - name: Python Tests
+        run: pytest
+        env:
+          PYTHONNET_PYDLL: libpython3.8.so
+
+      - name: Embedding tests
+        run: dotnet test --runtime any-ubuntu src/embed_tests/
+        env:
+          PYTHONNET_PYDLL: libpython3.8.so
+
+      - name: Pack
+        run: dotnet pack --configuration Release --version-suffix preview${{env.DATE_VER}} --output "Release-Preview"
+
+      - name: Publish NuGet
+        run: dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_MONTHLY }} Release-Preview/*.nupkg
+
+      # TODO: Run perf tests
+      # TODO: Run mono tests on Windows?

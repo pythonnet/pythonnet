@@ -152,7 +152,6 @@ namespace Python.Runtime
             {
                 "__instancecheck__",
                 "__subclasscheck__",
-                "_AtExit",
                 "AddReference",
                 "FinalizeObject",
                 "FindAssembly",

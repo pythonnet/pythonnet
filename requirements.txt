@@ -6,7 +6,7 @@ psutil
 coverage
 codecov
 
-# Platform specific requirements
 wheel
 pycparser
 setuptools
+clr-loader

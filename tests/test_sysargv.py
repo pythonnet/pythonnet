@@ -2,6 +2,7 @@
 
 import sys
 from subprocess import check_output
+from ast import literal_eval
 
 
 def test_sys_argv_state(filepath):
@@ -11,5 +12,5 @@ def test_sys_argv_state(filepath):
 
     script = filepath("argv-fixture.py")
     out = check_output([sys.executable, script, "foo", "bar"])
-    assert b"foo" in out
-    assert b"bar" in out
+    out = literal_eval(out.decode("ascii"))
+    assert out[-2:] == ["foo", "bar"]
