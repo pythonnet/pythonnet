@@ -217,7 +217,7 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ob);
             self.ClearMembers();
-            ClearObjectDict(ob);
+            RemoveObjectDict(ob);
             self.Dealloc();
         }
 

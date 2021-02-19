@@ -231,6 +231,16 @@ namespace Python.Runtime
             {
                 return;
             }
+            Runtime.PyDict_Clear(dict);
+        }
+
+        protected static void RemoveObjectDict(IntPtr ob)
+        {
+            IntPtr dict = GetObjectDict(ob);
+            if (dict == IntPtr.Zero)
+            {
+                return;
+            }
             SetObjectDict(ob, IntPtr.Zero);
             Runtime.XDecref(dict);
         }

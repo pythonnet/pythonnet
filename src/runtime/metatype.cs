@@ -296,9 +296,7 @@ namespace Python.Runtime
 
         public static int tp_clear(IntPtr ob)
         {
-            IntPtr type = Runtime.PyObject_TYPE(ob);
-            int dictOffset = ObjectOffset.TypeDictOffset(type);
-            Runtime.Py_SETREF(ob, dictOffset, IntPtr.Zero);
+            ClearObjectDict(ob);
             return 0;
         }
 

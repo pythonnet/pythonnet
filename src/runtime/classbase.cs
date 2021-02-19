@@ -356,7 +356,8 @@ namespace Python.Runtime
             {
                 Runtime.PyObject_ClearWeakRefs(ob);
             }
-            tp_clear(ob);
+            RemoveObjectDict(ob);
+            Runtime.Py_CLEAR(ref self.tpHandle);
             Runtime.PyObject_GC_UnTrack(ob);
             Runtime.PyObject_GC_Del(ob);
             self.FreeGCHandle();
@@ -364,9 +365,7 @@ namespace Python.Runtime
 
         public static int tp_clear(IntPtr ob)
         {
-            ManagedType self = GetManagedObject(ob);
             ClearObjectDict(ob);
-            Runtime.Py_CLEAR(ref self.tpHandle);
             return 0;
         }
 
