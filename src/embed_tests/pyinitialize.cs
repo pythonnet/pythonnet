@@ -175,7 +175,8 @@ namespace Python.EmbeddingTest
             {
                 called = true;
             };
-            atexit.InvokeMethod("register", callback.ToPython());
+            atexit.InvokeMethod("register", callback.ToPython()).Dispose();
+            atexit.Dispose();
             Runtime.Runtime.Shutdown();
             Assert.True(called);
         }

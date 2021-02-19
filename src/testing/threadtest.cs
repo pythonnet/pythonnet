@@ -34,7 +34,7 @@ namespace Python.Test
             {
                 if (module == null)
                 {
-                    module = PythonEngine.ModuleFromString("tt", testmod);
+                    module = PyModule.FromString("tt", testmod);
                 }
                 PyObject func = module.GetAttr("echostring");
                 var parg = new PyString(arg);
@@ -58,7 +58,7 @@ namespace Python.Test
             {
                 if (module == null)
                 {
-                    module = PythonEngine.ModuleFromString("tt", testmod);
+                    module = PyModule.FromString("tt", testmod);
                 }
 
                 PyObject func = module.GetAttr("echostring2");

@@ -139,18 +139,15 @@ namespace Python.Runtime
 
         public static IEnumerable<IntPtr> PyGCGetObjects()
         {
-            var gc = PyImport_ImportModule("gc");
-            PythonException.ThrowIfIsNull(gc);
-            var get_objects = PyObject_GetAttrString(gc, "get_objects");
-            var objs = PyObject_CallObject(get_objects, IntPtr.Zero);
+            using var gc = PyModule.Import("gc");
+            using var get_objects = gc.GetAttr("get_objects");
+            var objs = PyObject_CallObject(get_objects.Handle, IntPtr.Zero);
             var length = PyList_Size(new BorrowedReference(objs));
             for (long i = 0; i < length; i++)
             {
                 var obj = PyList_GetItem(new BorrowedReference(objs), i);
                 yield return obj.DangerousGetAddress();
             }
-            XDecref(objs);
-            XDecref(gc);
         }
 
         public static IEnumerable<IntPtr> GetModuleNames()

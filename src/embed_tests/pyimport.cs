@@ -52,7 +52,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestDottedName()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
+            var module = PyModule.Import("PyImportTest.test.one");
             Assert.IsNotNull(module);
         }
 
@@ -62,7 +62,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestSysArgsImportException()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
+            var module = PyModule.Import("PyImportTest.sysargv");
             Assert.IsNotNull(module);
         }
 

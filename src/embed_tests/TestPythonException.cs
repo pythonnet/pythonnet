@@ -46,7 +46,7 @@ namespace Python.EmbeddingTest
         {
             try
             {
-                var module = PythonEngine.ImportModule("really____unknown___module");
+                var module = PyModule.Import("really____unknown___module");
                 Assert.Fail("Unknown module should not be loaded");
             }
             catch (PythonException ex)
@@ -95,7 +95,7 @@ namespace Python.EmbeddingTest
         {
             try
             {
-                var module = PythonEngine.ImportModule("really____unknown___module");
+                var module = PyModule.Import("really____unknown___module");
                 Assert.Fail("Unknown module should not be loaded");
             }
             catch (PythonException ex)

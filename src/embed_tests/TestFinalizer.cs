@@ -101,7 +101,17 @@ namespace Python.EmbeddingTest
 
             PythonEngine.Shutdown();
             garbage = Finalizer.Instance.GetCollectedObjects();
-            Assert.IsEmpty(garbage);
+
+            if (garbage.Count > 0)
+            {
+                PythonEngine.Initialize();
+                string objects = string.Join("\n", garbage.Select(ob =>
+                {
+                    var obj = new PyObject(new BorrowedReference(ob));
+                    return $"{obj} [{obj.GetPythonType()}@{obj.Handle}]";
+                }));
+                Assert.Fail("Garbage is not empty:\n" + objects);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)] // ensure lack of references to obj
@@ -173,7 +183,7 @@ namespace Python.EmbeddingTest
             bool oldState = Finalizer.Instance.Enable;
             try
             {
-                using (PyObject gcModule = PythonEngine.ImportModule("gc"))
+                using (PyModule gcModule = PyModule.Import("gc"))
                 using (PyObject pyCollect = gcModule.GetAttr("collect"))
                 {
                     long span1 = CompareWithFinalizerOn(pyCollect, false);

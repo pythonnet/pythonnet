@@ -278,9 +278,8 @@ namespace Python.Runtime
 
             _PyObject_NextNotImplemented = Get_PyObject_NextNotImplemented();
             {
-                IntPtr sys = PyImport_ImportModule("sys");
-                PyModuleType = PyObject_Type(sys);
-                XDecref(sys);
+                using var sys = PyImport_ImportModule("sys");
+                PyModuleType = PyObject_Type(sys.DangerousMoveToPointer());
             }
         }
 
@@ -937,14 +936,14 @@ namespace Python.Runtime
         /// Return value: New reference.
         /// This is a simplified interface to Py_CompileStringFlags() below, leaving flags set to NULL.
         /// </summary>
-        internal static IntPtr Py_CompileString(string str, string file, int start)
+        internal static NewReference Py_CompileString(string str, string file, int start)
         {
             using var strPtr = new StrPtr(str, Encoding.UTF8);
             using var fileObj = new PyString(file);
             return Delegates.Py_CompileStringObject(strPtr, fileObj.Reference, start, Utf8String, -1);
         }
 
-        internal static IntPtr PyImport_ExecCodeModule(string name, IntPtr code)
+        internal static NewReference PyImport_ExecCodeModule(string name, BorrowedReference code)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
             return Delegates.PyImport_ExecCodeModule(namePtr, code);
@@ -1027,11 +1026,18 @@ namespace Python.Runtime
         internal static IntPtr PyObject_GetAttrString(IntPtr pointer, string name)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
+            return Delegates.PyObject_GetAttrString(new BorrowedReference(pointer), namePtr)
+                .DangerousMoveToPointerOrNull();
+        }
+
+        internal static NewReference PyObject_GetAttrString(BorrowedReference pointer, string name)
+        {
+            using var namePtr = new StrPtr(name, Encoding.UTF8);
             return Delegates.PyObject_GetAttrString(pointer, namePtr);
         }
 
-
-        internal static IntPtr PyObject_GetAttrString(IntPtr pointer, StrPtr name) => Delegates.PyObject_GetAttrString(pointer, name);
+        internal static NewReference PyObject_GetAttrString(BorrowedReference pointer, StrPtr name)
+            => Delegates.PyObject_GetAttrString(pointer, name);
 
 
         internal static int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value)
@@ -1917,13 +1923,13 @@ namespace Python.Runtime
         /// Return value: New reference.
         /// </summary>
 
-        internal static IntPtr PyImport_ImportModule(string name)
+        internal static NewReference PyImport_ImportModule(string name)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
             return Delegates.PyImport_ImportModule(namePtr);
         }
 
-        internal static IntPtr PyImport_ReloadModule(IntPtr module) => Delegates.PyImport_ReloadModule(module);
+        internal static NewReference PyImport_ReloadModule(BorrowedReference module) => Delegates.PyImport_ReloadModule(module);
 
 
         internal static BorrowedReference PyImport_AddModule(string name)
@@ -2294,13 +2300,13 @@ namespace Python.Runtime
                 PyRun_SimpleStringFlags = (delegate* unmanaged[Cdecl]<StrPtr, in PyCompilerFlags, int>)GetFunctionByName(nameof(PyRun_SimpleStringFlags), GetUnmanagedDll(_PythonDll));
                 PyRun_StringFlags = (delegate* unmanaged[Cdecl]<StrPtr, RunFlagType, BorrowedReference, BorrowedReference, in PyCompilerFlags, NewReference>)GetFunctionByName(nameof(PyRun_StringFlags), GetUnmanagedDll(_PythonDll));
                 PyEval_EvalCode = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyEval_EvalCode), GetUnmanagedDll(_PythonDll));
-                Py_CompileStringObject = (delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, int, in PyCompilerFlags, int, IntPtr>)GetFunctionByName(nameof(Py_CompileStringObject), GetUnmanagedDll(_PythonDll));
-                PyImport_ExecCodeModule = (delegate* unmanaged[Cdecl]<StrPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyImport_ExecCodeModule), GetUnmanagedDll(_PythonDll));
+                Py_CompileStringObject = (delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, int, in PyCompilerFlags, int, NewReference>)GetFunctionByName(nameof(Py_CompileStringObject), GetUnmanagedDll(_PythonDll));
+                PyImport_ExecCodeModule = (delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyImport_ExecCodeModule), GetUnmanagedDll(_PythonDll));
                 PyCFunction_NewEx = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCFunction_NewEx), GetUnmanagedDll(_PythonDll));
                 PyCFunction_Call = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCFunction_Call), GetUnmanagedDll(_PythonDll));
                 PyMethod_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyMethod_New), GetUnmanagedDll(_PythonDll));
                 PyObject_HasAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int>)GetFunctionByName(nameof(PyObject_HasAttrString), GetUnmanagedDll(_PythonDll));
-                PyObject_GetAttrString = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetAttrString), GetUnmanagedDll(_PythonDll));
+                PyObject_GetAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, NewReference>)GetFunctionByName(nameof(PyObject_GetAttrString), GetUnmanagedDll(_PythonDll));
                 PyObject_SetAttrString = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_SetAttrString), GetUnmanagedDll(_PythonDll));
                 PyObject_HasAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_HasAttr), GetUnmanagedDll(_PythonDll));
                 PyObject_GetAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_GetAttr), GetUnmanagedDll(_PythonDll));
@@ -2458,8 +2464,8 @@ namespace Python.Runtime
                 PyModule_GetFilename = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr>)GetFunctionByName(nameof(PyModule_GetFilename), GetUnmanagedDll(_PythonDll));
                 PyModule_Create2 = (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr>)GetFunctionByName(nameof(PyModule_Create2), GetUnmanagedDll(_PythonDll));
                 PyImport_Import = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyImport_Import), GetUnmanagedDll(_PythonDll));
-                PyImport_ImportModule = (delegate* unmanaged[Cdecl]<StrPtr, IntPtr>)GetFunctionByName(nameof(PyImport_ImportModule), GetUnmanagedDll(_PythonDll));
-                PyImport_ReloadModule = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyImport_ReloadModule), GetUnmanagedDll(_PythonDll));
+                PyImport_ImportModule = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyImport_ImportModule), GetUnmanagedDll(_PythonDll));
+                PyImport_ReloadModule = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyImport_ReloadModule), GetUnmanagedDll(_PythonDll));
                 PyImport_AddModule = (delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference>)GetFunctionByName(nameof(PyImport_AddModule), GetUnmanagedDll(_PythonDll));
                 PyImport_GetModuleDict = (delegate* unmanaged[Cdecl]<BorrowedReference>)GetFunctionByName(nameof(PyImport_GetModuleDict), GetUnmanagedDll(_PythonDll));
                 PySys_SetArgvEx = (delegate* unmanaged[Cdecl]<int, IntPtr, int, void>)GetFunctionByName(nameof(PySys_SetArgvEx), GetUnmanagedDll(_PythonDll));
@@ -2566,13 +2572,13 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<StrPtr, in PyCompilerFlags, int> PyRun_SimpleStringFlags { get; }
             internal static delegate* unmanaged[Cdecl]<StrPtr, RunFlagType, BorrowedReference, BorrowedReference, in PyCompilerFlags, NewReference> PyRun_StringFlags { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyEval_EvalCode { get; }
-            internal static delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, int, in PyCompilerFlags, int, IntPtr> Py_CompileStringObject { get; }
-            internal static delegate* unmanaged[Cdecl]<StrPtr, IntPtr, IntPtr> PyImport_ExecCodeModule { get; }
+            internal static delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, int, in PyCompilerFlags, int, NewReference> Py_CompileStringObject { get; }
+            internal static delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, NewReference> PyImport_ExecCodeModule { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyCFunction_NewEx { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyCFunction_Call { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyMethod_New { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int> PyObject_HasAttrString { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr> PyObject_GetAttrString { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, NewReference> PyObject_GetAttrString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr, IntPtr, int> PyObject_SetAttrString { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_HasAttr { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference> PyObject_GetAttr { get; }
@@ -2723,8 +2729,8 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr> PyModule_GetFilename { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr> PyModule_Create2 { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyImport_Import { get; }
-            internal static delegate* unmanaged[Cdecl]<StrPtr, IntPtr> PyImport_ImportModule { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyImport_ReloadModule { get; }
+            internal static delegate* unmanaged[Cdecl]<StrPtr, NewReference> PyImport_ImportModule { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyImport_ReloadModule { get; }
             internal static delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference> PyImport_AddModule { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference> PyImport_GetModuleDict { get; }
             internal static delegate* unmanaged[Cdecl]<int, IntPtr, int, void> PySys_SetArgvEx { get; }
