@@ -503,15 +503,19 @@ namespace Python.Runtime
         private static void MoveClrInstancesOnwershipToPython()
         {
             var objs = ManagedType.GetManagedObjects();
-            var copyObjs = objs.ToArray();
+            var copyObjs = new KeyValuePair<ManagedType, ManagedType.TrackTypes>[objs.Count];
+            {
+                int i = 0;
+                foreach (var entry in objs)
+                {
+                    ManagedType obj = entry.Key;
+                    XIncref(obj.pyHandle);
+                    copyObjs[i++] = entry;
+                }
+            }
             foreach (var entry in copyObjs)
             {
                 ManagedType obj = entry.Key;
-                if (!objs.ContainsKey(obj))
-                {
-                    System.Diagnostics.Debug.Assert(obj.gcHandle == default);
-                    continue;
-                }
                 if (entry.Value == ManagedType.TrackTypes.Extension)
                 {
                     obj.CallTypeClear();
@@ -522,11 +526,21 @@ namespace Python.Runtime
                         PyObject_GC_Track(obj.pyHandle);
                     }
                 }
-                if (obj.gcHandle.IsAllocated)
+            }
+            foreach (var entry in copyObjs)
+            {
+                ManagedType obj = entry.Key;
+                if (!objs.ContainsKey(obj))
                 {
-                    obj.gcHandle.Free();
+                    System.Diagnostics.Debug.Assert(obj.gcHandle == default);
+                    continue;
                 }
-                obj.gcHandle = default;
+                if (obj.RefCount > 1)
+                {
+                    obj.FreeGCHandle();
+                    Marshal.WriteIntPtr(obj.pyHandle, ObjectOffset.magic(obj.tpHandle), IntPtr.Zero);
+                }
+                XDecref(obj.pyHandle);
             }
             ManagedType.ClearTrackedObjects();
         }

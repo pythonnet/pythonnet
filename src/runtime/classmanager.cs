@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Python.Runtime
 {
@@ -270,7 +271,7 @@ namespace Python.Runtime
 
             // Finally, initialize the class __dict__ and return the object.
             var dict = new BorrowedReference(Marshal.ReadIntPtr(tp, TypeOffset.tp_dict));
-
+            Debug.Assert(!dict.IsNull);
 
             if (impl.dotNetMembers == null)
             {

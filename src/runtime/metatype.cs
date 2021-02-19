@@ -304,6 +304,12 @@ namespace Python.Runtime
             NativeCall.Void_Call_1(op, tp);
         }
 
+        public static int tp_clear(IntPtr ob)
+        {
+            ClearObjectDict(ob);
+            return 0;
+        }
+
         private static IntPtr DoInstanceCheck(IntPtr tp, IntPtr args, bool checkType)
         {
             var cb = GetManagedObject(tp) as ClassBase;

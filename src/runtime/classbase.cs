@@ -354,20 +354,16 @@ namespace Python.Runtime
         public static void tp_dealloc(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            tp_clear(ob);
-            Runtime.PyObject_GC_UnTrack(self.pyHandle);
-            Runtime.PyObject_GC_Del(self.pyHandle);
+            RemoveObjectDict(ob);
+            Runtime.Py_CLEAR(ref self.tpHandle);
+            Runtime.PyObject_GC_UnTrack(ob);
+            Runtime.PyObject_GC_Del(ob);
             self.FreeGCHandle();
         }
 
         public static int tp_clear(IntPtr ob)
         {
-            ManagedType self = GetManagedObject(ob);
-            if (!self.IsTypeObject())
-            {
-                ClearObjectDict(ob);
-            }
-            self.tpHandle = IntPtr.Zero;
+            ClearObjectDict(ob);
             return 0;
         }
 
