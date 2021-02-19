@@ -7,9 +7,6 @@ namespace Python.Runtime.Native
     [StructLayout(LayoutKind.Sequential)]
     abstract class GeneratedTypeOffsets
     {
-        // XXX: Use field to trick the public property finding
-        public readonly int Size;
-
         protected GeneratedTypeOffsets()
         {
             var type = this.GetType();
@@ -20,7 +17,6 @@ namespace Python.Runtime.Native
                 int offset = fieldIndex * fieldSize;
                 offsetProperties[fieldIndex].SetValue(this, offset, index: null);
             }
-            Size = offsetProperties.Length * fieldSize;
         }
     }
 }
