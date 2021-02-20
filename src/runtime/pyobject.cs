@@ -930,17 +930,21 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// IsSubclass Method
-        /// </summary>
-        /// <remarks>
-        /// Return true if the object is identical to or derived from the
+        /// Return <c>true</c> if the object is identical to or derived from the
         /// given Python type or class. This method always succeeds.
-        /// </remarks>
+        /// </summary>
         public bool IsSubclass(PyObject typeOrClass)
         {
             if (typeOrClass == null) throw new ArgumentNullException(nameof(typeOrClass));
 
-            int r = Runtime.PyObject_IsSubclass(obj, typeOrClass.obj);
+            return IsSubclass(typeOrClass.Reference);
+        }
+
+        internal bool IsSubclass(BorrowedReference typeOrClass)
+        {
+            if (typeOrClass.IsNull) throw new ArgumentNullException(nameof(typeOrClass));
+
+            int r = Runtime.PyObject_IsSubclass(Reference, typeOrClass);
             if (r < 0)
             {
                 Runtime.PyErr_Clear();

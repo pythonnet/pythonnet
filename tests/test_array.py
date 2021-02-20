@@ -680,7 +680,7 @@ def test_enum_array():
     items[-1] = ShortEnum.Zero
     assert items[-1] == ShortEnum.Zero
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ob = Test.EnumArrayTest()
         ob.items[0] = 99
 

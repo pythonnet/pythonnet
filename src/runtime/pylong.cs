@@ -188,11 +188,8 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// IsLongType Method
-        /// </summary>
-        /// <remarks>
         /// Returns true if the given object is a Python long.
-        /// </remarks>
+        /// </summary>
         public static bool IsLongType(PyObject value)
         {
             return Runtime.PyLong_Check(value.obj);

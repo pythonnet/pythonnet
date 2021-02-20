@@ -340,7 +340,7 @@ namespace Python.Runtime
         public static void warn(string message, IntPtr exception, int stacklevel)
         {
             if (exception == IntPtr.Zero ||
-                (Runtime.PyObject_IsSubclass(exception, Exceptions.Warning) != 1))
+                (Runtime.PyObject_IsSubclass(new BorrowedReference(exception), new BorrowedReference(Exceptions.Warning)) != 1))
             {
                 Exceptions.RaiseTypeError("Invalid exception");
             }
