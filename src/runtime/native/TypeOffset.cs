@@ -94,7 +94,7 @@ namespace Python.Runtime
                 int value = (int)sourceProperty.GetValue(offsets, null);
                 offsetProperty.SetValue(obj: null, value: value, index: null);
             }
-            Size = (int)Marshal.ReadIntPtr(Runtime.PyTypeType, tp_basicsize); ;
+            Size = (int)Marshal.ReadIntPtr(Runtime.PyTypeType, tp_basicsize);
             ValidateUnusedTypeOffsetProperties(offsetProperties);
             ValidateRequiredOffsetsPresent(offsetProperties);
         }

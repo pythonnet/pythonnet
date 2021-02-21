@@ -31,18 +31,14 @@ namespace Python.EmbeddingTest
         public void WeakRefForClrObject()
         {
             var obj = new MyClass();
-            using (var scope = Py.CreateScope())
-            {
-                scope.Set("clr_obj", obj);
-                scope.Exec(@"
+            using var scope = Py.CreateScope();
+            scope.Set("clr_obj", obj);
+            scope.Exec(@"
 import weakref
 ref = weakref.ref(clr_obj)
 ");
-                using (PyObject pyobj = scope.Get("clr_obj"))
-                {
-                    ValidateAttachedGCHandle(obj, pyobj.Handle);
-                }
-            }
+            using PyObject pyobj = scope.Get("clr_obj");
+            ValidateAttachedGCHandle(obj, pyobj.Handle);
         }
 
         [Test]

@@ -155,16 +155,6 @@ namespace Python.Runtime
             flags |= TypeFlags.Subclass;
             flags |= TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, flags);
-
-            //TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
-
-            // Hmm - the standard subtype_traverse, clear look at ob_size to
-            // do things, so to allow gc to work correctly we need to move
-            // our hidden handle out of ob_size. Then, in theory we can
-            // comment this out and still not crash.
-            //TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
-            //TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
-
             // for now, move up hidden handle...
             unsafe
             {
@@ -361,7 +351,7 @@ namespace Python.Runtime
     [StructLayout(LayoutKind.Sequential)]
     struct ClrMetaTypeEx
     {
-        public IntPtr ClrHandleOffset;
+        public nint ClrHandleOffset;
         public IntPtr ClrHandle;
 
         public static unsafe ClrMetaTypeEx* FromType(IntPtr type)
