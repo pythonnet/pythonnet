@@ -344,38 +344,42 @@ namespace Python.Runtime
     /// Note that the two values reserved for stackless have been put
     /// to good use as PythonNet specific flags (Managed and Subclass)
     /// </summary>
-    internal class TypeFlags
+    // Py_TPFLAGS_*
+    [Flags]
+    public enum TypeFlags: int
     {
-        public const int HeapType = (1 << 9);
-        public const int BaseType = (1 << 10);
-        public const int Ready = (1 << 12);
-        public const int Readying = (1 << 13);
-        public const int HaveGC = (1 << 14);
+        HeapType = (1 << 9),
+        BaseType = (1 << 10),
+        Ready = (1 << 12),
+        Readying = (1 << 13),
+        HaveGC = (1 << 14),
         // 15 and 16 are reserved for stackless
-        public const int HaveStacklessExtension = 0;
+        HaveStacklessExtension = 0,
         /* XXX Reusing reserved constants */
-        public const int Managed = (1 << 15); // PythonNet specific
-        public const int Subclass = (1 << 16); // PythonNet specific
-        public const int HaveIndex = (1 << 17);
+        /// <remarks>PythonNet specific</remarks>
+        Managed = (1 << 15),
+        /// <remarks>PythonNet specific</remarks>
+        Subclass = (1 << 16),
+        HaveIndex = (1 << 17),
         /* Objects support nb_index in PyNumberMethods */
-        public const int HaveVersionTag = (1 << 18);
-        public const int ValidVersionTag = (1 << 19);
-        public const int IsAbstract = (1 << 20);
-        public const int HaveNewBuffer = (1 << 21);
+        HaveVersionTag = (1 << 18),
+        ValidVersionTag = (1 << 19),
+        IsAbstract = (1 << 20),
+        HaveNewBuffer = (1 << 21),
         // TODO: Implement FastSubclass functions
-        public const int IntSubclass = (1 << 23);
-        public const int LongSubclass = (1 << 24);
-        public const int ListSubclass = (1 << 25);
-        public const int TupleSubclass = (1 << 26);
-        public const int StringSubclass = (1 << 27);
-        public const int UnicodeSubclass = (1 << 28);
-        public const int DictSubclass = (1 << 29);
-        public const int BaseExceptionSubclass = (1 << 30);
-        public const int TypeSubclass = (1 << 31);
+        IntSubclass = (1 << 23),
+        LongSubclass = (1 << 24),
+        ListSubclass = (1 << 25),
+        TupleSubclass = (1 << 26),
+        StringSubclass = (1 << 27),
+        UnicodeSubclass = (1 << 28),
+        DictSubclass = (1 << 29),
+        BaseExceptionSubclass = (1 << 30),
+        TypeSubclass = (1 << 31),
 
-        public const int Default = (
+        Default = (
             HaveStacklessExtension |
-            HaveVersionTag);
+            HaveVersionTag),
     }
 
 
