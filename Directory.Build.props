@@ -4,7 +4,7 @@
     <AssemblyCopyright>Copyright (c) 2006-2020 The Contributors of the Python.NET Project</AssemblyCopyright>
     <AssemblyCompany>pythonnet</AssemblyCompany>
     <AssemblyProduct>Python.NET</AssemblyProduct>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
