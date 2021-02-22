@@ -171,9 +171,9 @@ namespace Python.Runtime
             SlotsHolder slotsHolder = CreateSolotsHolder(type);
             InitializeSlots(type, impl, slotsHolder);
 
-            int flags = TypeFlags.Default | TypeFlags.Managed |
+            var flags = TypeFlags.Default | TypeFlags.Managed |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             if (Runtime.PyType_Ready(type) != 0)
             {
@@ -286,12 +286,12 @@ namespace Python.Runtime
                 Runtime.XIncref(base_);
             }
 
-            const int flags = TypeFlags.Default
+            const TypeFlags flags = TypeFlags.Default
                             | TypeFlags.Managed
                             | TypeFlags.HeapType
                             | TypeFlags.BaseType
                             | TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
@@ -457,11 +457,11 @@ namespace Python.Runtime
             int size = TypeOffset.magic() + IntPtr.Size;
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, new IntPtr(size));
 
-            const int flags = TypeFlags.Default
+            const TypeFlags flags = TypeFlags.Default
                             | TypeFlags.Managed
                             | TypeFlags.HeapType
                             | TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             // Slots will inherit from TypeType, it's not neccesary for setting them.
             // Inheried slots:
@@ -562,11 +562,11 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
             Runtime.XIncref(base_);
 
-            int flags = TypeFlags.Default;
+            var flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             CopySlot(base_, type, TypeOffset.tp_traverse);
             CopySlot(base_, type, TypeOffset.tp_clear);
