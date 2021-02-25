@@ -95,7 +95,7 @@ namespace Python.Runtime
 
             // both dicts are borrowed references
             BorrowedReference mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            BorrowedReference clr_dict = *Runtime._PyObject_GetDictPtr(root.ObjectReference);
+            using var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference);
 
             Runtime.PyDict_Update(mod_dict, clr_dict);
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
@@ -157,8 +157,10 @@ namespace Python.Runtime
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             BorrowedReference py_mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            BorrowedReference clr_dict = *Runtime._PyObject_GetDictPtr(root.ObjectReference);
-            Runtime.PyDict_Update(py_mod_dict, clr_dict);
+            using (var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference))
+            {
+                Runtime.PyDict_Update(py_mod_dict, clr_dict);
+            }
 
             // find any items from the from list and get them from the root if they're not
             // already in the module dictionary
