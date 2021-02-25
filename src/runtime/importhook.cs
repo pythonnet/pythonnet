@@ -61,6 +61,13 @@ namespace Python.Runtime
         {
             IntPtr builtins = Runtime.GetBuiltins();
 
+            IntPtr existing = Runtime.PyObject_GetAttr(builtins, PyIdentifier.__import__);
+            Runtime.XDecref(existing);
+            if (existing != hook.ptr)
+            {
+                throw new NotSupportedException("Unable to restore original __import__.");
+            }
+
             int res = Runtime.PyObject_SetAttr(builtins, PyIdentifier.__import__, py_import);
             PythonException.ThrowIfIsNotZero(res);
             Runtime.XDecref(py_import);
@@ -374,6 +381,8 @@ namespace Python.Runtime
 
         private static bool IsLoadAll(BorrowedReference fromList)
         {
+            if (fromList == null) throw new ArgumentNullException(nameof(fromList));
+
             if (CLRModule.preload)
             {
                 return false;
