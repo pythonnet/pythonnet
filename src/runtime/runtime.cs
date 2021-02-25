@@ -1115,13 +1115,7 @@ namespace Python.Runtime
 
         internal static int PyObject_Not(IntPtr pointer) => Delegates.PyObject_Not(pointer);
 
-        internal static long PyObject_Size(IntPtr pointer)
-        {
-            return (long)_PyObject_Size(pointer);
-        }
-
-
-        private static IntPtr _PyObject_Size(IntPtr pointer) => Delegates._PyObject_Size(pointer);
+        internal static nint PyObject_Size(BorrowedReference pointer) => Delegates.PyObject_Size(pointer);
 
 
         internal static nint PyObject_Hash(IntPtr op) => Delegates.PyObject_Hash(op);
@@ -2317,7 +2311,7 @@ namespace Python.Runtime
                 PyCallable_Check = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyCallable_Check), GetUnmanagedDll(_PythonDll));
                 PyObject_IsTrue = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyObject_IsTrue), GetUnmanagedDll(_PythonDll));
                 PyObject_Not = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyObject_Not), GetUnmanagedDll(_PythonDll));
-                _PyObject_Size = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyObject_Size", GetUnmanagedDll(_PythonDll));
+                PyObject_Size = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName("PyObject_Size", GetUnmanagedDll(_PythonDll));
                 PyObject_Hash = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Hash), GetUnmanagedDll(_PythonDll));
                 PyObject_Repr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Repr), GetUnmanagedDll(_PythonDll));
                 PyObject_Str = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Str), GetUnmanagedDll(_PythonDll));
@@ -2589,7 +2583,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyCallable_Check { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyObject_IsTrue { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyObject_Not { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyObject_Size { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyObject_Size { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Hash { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Repr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Str { get; }
