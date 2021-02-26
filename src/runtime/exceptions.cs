@@ -95,8 +95,8 @@ namespace Python.Runtime
     /// </remarks>
     public static class Exceptions
     {
-        internal static IntPtr warnings_module;
-        internal static IntPtr exceptions_module;
+        internal static PyModule warnings_module;
+        internal static PyModule exceptions_module;
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
@@ -104,15 +104,12 @@ namespace Python.Runtime
         internal static void Initialize()
         {
             string exceptionsModuleName = "builtins";
-            exceptions_module = Runtime.PyImport_ImportModule(exceptionsModuleName);
-
-            Exceptions.ErrorCheck(exceptions_module);
-            warnings_module = Runtime.PyImport_ImportModule("warnings");
-            Exceptions.ErrorCheck(warnings_module);
+            exceptions_module = PyModule.Import(exceptionsModuleName);
+            warnings_module = PyModule.Import("warnings");
             Type type = typeof(Exceptions);
             foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                IntPtr op = Runtime.PyObject_GetAttrString(exceptions_module, fi.Name);
+                IntPtr op = Runtime.PyObject_GetAttrString(exceptions_module.obj, fi.Name);
                 if (op != IntPtr.Zero)
                 {
                     fi.SetValue(type, op);
@@ -147,8 +144,8 @@ namespace Python.Runtime
                 Runtime.XDecref(op);
                 fi.SetValue(null, IntPtr.Zero);
             }
-            Runtime.Py_CLEAR(ref exceptions_module);
-            Runtime.Py_CLEAR(ref warnings_module);
+            exceptions_module.Dispose();
+            warnings_module.Dispose();
         }
 
         /// <summary>
@@ -348,9 +345,7 @@ namespace Python.Runtime
                 Exceptions.RaiseTypeError("Invalid exception");
             }
 
-            Runtime.XIncref(warnings_module);
-            IntPtr warn = Runtime.PyObject_GetAttrString(warnings_module, "warn");
-            Runtime.XDecref(warnings_module);
+            IntPtr warn = Runtime.PyObject_GetAttrString(warnings_module.obj, "warn");
             Exceptions.ErrorCheck(warn);
 
             IntPtr args = Runtime.PyTuple_New(3);

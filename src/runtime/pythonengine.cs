@@ -468,61 +468,26 @@ namespace Python.Runtime
             Runtime.PyEval_RestoreThread(ts);
         }
 
+        [Obsolete("Use PyModule.Import")]
+        public static PyObject ImportModule(string name) => PyModule.Import(name);
 
-        /// <summary>
-        /// ImportModule Method
-        /// </summary>
-        /// <remarks>
-        /// Given a fully-qualified module or package name, import the
-        /// module and return the resulting module object as a PyObject
-        /// or null if an exception is raised.
-        /// </remarks>
-        public static PyObject ImportModule(string name)
-        {
-            IntPtr op = Runtime.PyImport_ImportModule(name);
-            PythonException.ThrowIfIsNull(op);
-            return new PyObject(op);
-        }
-
-
-        /// <summary>
-        /// ReloadModule Method
-        /// </summary>
-        /// <remarks>
-        /// Given a PyObject representing a previously loaded module, reload
-        /// the module.
-        /// </remarks>
+        [Obsolete("Use PyModule.Reload")]
         public static PyObject ReloadModule(PyObject module)
-        {
-            IntPtr op = Runtime.PyImport_ReloadModule(module.Handle);
-            PythonException.ThrowIfIsNull(op);
-            return new PyObject(op);
-        }
+            => module is PyModule pyModule ? pyModule.Reload() : new PyModule(module).Reload();
 
-
-        /// <summary>
-        /// ModuleFromString Method
-        /// </summary>
-        /// <remarks>
-        /// Given a string module name and a string containing Python code,
-        /// execute the code in and return a module of the given name.
-        /// </remarks>
+        [Obsolete("Use PyModule.FromString")]
         public static PyObject ModuleFromString(string name, string code)
-        {
-            IntPtr c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
-            PythonException.ThrowIfIsNull(c);
-            IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
-            PythonException.ThrowIfIsNull(m);
-            return new PyObject(m);
-        }
+            => PyModule.FromString(name, code);
+
 
         public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
         {
             var flag = (int)mode;
-            IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
+            NewReference ptr = Runtime.Py_CompileString(code, filename, flag);
             PythonException.ThrowIfIsNull(ptr);
-            return new PyObject(ptr);
+            return ptr.MoveToPyObject();
         }
+
 
         /// <summary>
         /// Eval Method
@@ -742,10 +707,12 @@ namespace Python.Runtime
             return dict;
         }
 
-        public static PyObject Import(string name)
-        {
-            return PythonEngine.ImportModule(name);
-        }
+        /// <summary>
+        /// Given a module or package name, import the
+        /// module and return the resulting module object as a <see cref="PyModule"/>.
+        /// </summary>
+        /// <param name="name">Fully-qualified module or package name</param>
+        public static PyModule Import(string name) => PyModule.Import(name);
 
         public static void SetArgv()
         {

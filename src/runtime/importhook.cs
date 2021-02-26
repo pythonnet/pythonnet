@@ -155,7 +155,7 @@ namespace Python.Runtime
 
             // find any items from the from list and get them from the root if they're not
             // already in the module dictionary
-            if (fromList != null && fromList != default)
+            if (fromList != null)
             {
                 if (Runtime.PyTuple_Check(fromList))
                 {
@@ -224,7 +224,7 @@ namespace Python.Runtime
             if (num_args >= 4)
             {
                 fromList = Runtime.PyTuple_GetItem(args, 3);
-                if (fromList != default &&
+                if (fromList != null &&
                     Runtime.PyObject_IsTrue(fromList) == 1)
                 {
                     fromlist = true;
@@ -297,7 +297,7 @@ namespace Python.Runtime
             BorrowedReference modules = Runtime.PyImport_GetModuleDict();
             BorrowedReference module = Runtime.PyDict_GetItem(modules, py_mod_name);
 
-            if (module != default)
+            if (module != null)
             {
                 if (fromlist)
                 {
