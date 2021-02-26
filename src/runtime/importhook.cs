@@ -259,7 +259,6 @@ namespace Python.Runtime
             }
 
             string realname = mod_name;
-            string clr_prefix = null;
 
             // 2010-08-15: Always seemed smart to let python try first...
             // This shaves off a few tenths of a second on test_module.py
@@ -317,10 +316,7 @@ namespace Python.Runtime
                     }
                     return new NewReference(module).DangerousMoveToPointer();
                 }
-                if (clr_prefix != null)
-                {
-                    return GetCLRModule(fromList).DangerousMoveToPointerOrNull();
-                }
+
                 module = Runtime.PyDict_GetItemString(modules, names[0]);
                 return new NewReference(module, canBeNull: true).DangerousMoveToPointer();
             }
@@ -360,12 +356,6 @@ namespace Python.Runtime
 
                 // Add the module to sys.modules
                 Runtime.PyDict_SetItemString(modules, tail.moduleName, tail.ObjectReference);
-
-                // If imported from CLR add clr.<modulename> to sys.modules as well
-                if (clr_prefix != null)
-                {
-                    Runtime.PyDict_SetItemString(modules, clr_prefix + tail.moduleName, tail.ObjectReference);
-                }
             }
 
             {
