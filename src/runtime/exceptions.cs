@@ -85,6 +85,25 @@ namespace Python.Runtime
             }
             return Runtime.PyUnicode_FromString(message);
         }
+        
+        static void ClearOffsetHelper(IntPtr ob, int offset)
+        {
+            var field = Marshal.ReadIntPtr(ob, offset);
+            Runtime.Py_CLEAR(ref field);
+        }
+
+        // As seen in exceptions.c, every derived type must also clean the base.
+        // TODO: once the call tp_traverse and tp_clear on the instance and not
+        // the type, implement those.
+        public new static void tp_dealloc(IntPtr self)
+        {
+            ClearOffsetHelper(self, ExceptionOffset.dict);
+            ClearOffsetHelper(self, ExceptionOffset.args);
+            ClearOffsetHelper(self, ExceptionOffset.traceback);
+            ClearOffsetHelper(self, ExceptionOffset.context);
+            ClearOffsetHelper(self, ExceptionOffset.cause);
+            ClassBase.tp_dealloc(self);
+        }
     }
 
     /// <summary>
@@ -181,9 +200,19 @@ namespace Python.Runtime
 
             if (e.InnerException != null)
             {
-                // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
-                IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
-                Marshal.WriteIntPtr(ob, ExceptionOffset.cause, cause);
+                if(e.InnerException is PythonException)
+                {
+                    // If the error is a Python exception, write the real one
+                    var pyerr =  (e.InnerException as PythonException);
+                    Runtime.XIncref(pyerr.PyValue);
+                    Runtime.PyException_SetCause(ob, pyerr.PyValue);
+                }
+                else
+                {
+                    // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
+                    IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
+                    Runtime.PyException_SetCause(ob, cause);
+                }
             }
         }
 
@@ -279,10 +308,7 @@ namespace Python.Runtime
             var pe = e as PythonException;
             if (pe != null)
             {
-                Runtime.XIncref(pe.PyType);
-                Runtime.XIncref(pe.PyValue);
-                Runtime.XIncref(pe.PyTB);
-                Runtime.PyErr_Restore(pe.PyType, pe.PyValue, pe.PyTB);
+                pe.Restore();
                 return;
             }
 
@@ -399,6 +425,7 @@ namespace Python.Runtime
             if (previousException != null)
             {
                 SetCause(previousException);
+                previousException.Dispose();
             }
             return IntPtr.Zero;
         }

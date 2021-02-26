@@ -517,5 +517,11 @@ namespace Python.Runtime
 
             return 0;
         }
+
+        public override string ToString()
+        {
+            return $"<ClassBase of {type}>";
+        }
+
     }
 }

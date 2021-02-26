@@ -1,3 +1,4 @@
+using Python.Runtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -81,6 +82,38 @@ namespace Python.Test
                 throw new Exception("Outer exception", exc2);
             }
         }
+        public static IntPtr DoThrowSimple()
+        {
+            using (Py.GIL())
+            {
+                // Set a python TypeError.
+                Exceptions.SetError(Exceptions.TypeError, "type error, The first.");
+                var pyerr = new PythonException();
+                // PyErr_Fetch() it and set it as the cause of an ArgumentException (and raise).
+                throw new ArgumentException("Bogus bad parameter", pyerr);
+            }
+        }
+
+        public static void DoThrowWithInner()
+        {
+            using(Py.GIL())
+            {
+                // Set a python TypeError.
+                Exceptions.SetError(Exceptions.TypeError, "type error, The first.");
+                var pyerr = new PythonException();
+                // PyErr_Fetch() it and set it as the cause of an ArgumentException (and raise).
+                Exceptions.SetError(new ArgumentException("Bogus bad parameter", pyerr));
+                // But we want Python error.. raise a TypeError and set the cause to the 
+                // previous ArgumentError.
+                PythonException previousException = new PythonException();
+                Exceptions.SetError(Exceptions.TypeError, "type error, The second.");
+                Exceptions.SetCause(previousException);
+                previousException.Dispose();
+                // Then throw-raise the TypeError.
+                throw new PythonException();
+            }
+        }
+
     }
 
 

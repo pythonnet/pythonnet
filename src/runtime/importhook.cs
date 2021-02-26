@@ -368,6 +368,7 @@ namespace Python.Runtime
                 }
 
                 Runtime.XIncref(mod.pyHandle);
+                originalException.Dispose();
                 return mod.pyHandle;
             }
         }

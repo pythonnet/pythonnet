@@ -103,5 +103,10 @@ namespace Python.Runtime
             GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
             Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
         }
+
+        public override string ToString()
+        {
+            return $"<CLRObject wrapping {inst}>";
+        }
     }
 }
