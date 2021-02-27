@@ -34,7 +34,9 @@ namespace Python.EmbeddingTest
             TestContext.Out.WriteLine(testPath);
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
+            Assert.IsFalse(str == IntPtr.Zero);
             BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
+            Assert.IsFalse(path.IsNull);
             Runtime.Runtime.PyList_Append(path, str);
             Runtime.Runtime.XDecref(str);
         }

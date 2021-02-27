@@ -36,6 +36,7 @@ when .NET expects an integer [#1342][i1342]
 -   BREAKING: Methods with `ref` or `out` parameters and void return type return a tuple of only the `ref` and `out` parameters.
 -   BREAKING: to call Python from .NET `Runtime.PythonDLL` property must be set to Python DLL name
 or the DLL must be loaded in advance. This must be done before calling any other Python.NET functions.
+-   BREAKING: `PyObject.Length()` now raises a `PythonException` when object does not support a concept of length.
 -   Sign Runtime DLL with a strong name
 -   Implement loading through `clr_loader` instead of the included `ClrModule`, enables
     support for .NET Core

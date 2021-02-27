@@ -1121,13 +1121,7 @@ namespace Python.Runtime
 
         internal static int PyObject_Not(IntPtr pointer) => Delegates.PyObject_Not(pointer);
 
-        internal static long PyObject_Size(IntPtr pointer)
-        {
-            return (long)_PyObject_Size(pointer);
-        }
-
-
-        private static IntPtr _PyObject_Size(IntPtr pointer) => Delegates._PyObject_Size(pointer);
+        internal static nint PyObject_Size(BorrowedReference pointer) => Delegates.PyObject_Size(pointer);
 
 
         internal static nint PyObject_Hash(IntPtr op) => Delegates.PyObject_Hash(op);
@@ -2028,9 +2022,8 @@ namespace Python.Runtime
 
         internal static int PyObject_GenericSetAttr(IntPtr obj, IntPtr name, IntPtr value) => Delegates.PyObject_GenericSetAttr(obj, name, value);
 
-
-        internal static BorrowedReference* _PyObject_GetDictPtr(BorrowedReference obj) => Delegates._PyObject_GetDictPtr(obj);
-
+        internal static NewReference PyObject_GenericGetDict(BorrowedReference o) => PyObject_GenericGetDict(o, IntPtr.Zero);
+        internal static NewReference PyObject_GenericGetDict(BorrowedReference o, IntPtr context) => Delegates.PyObject_GenericGetDict(o, context);
 
         internal static void PyObject_GC_Del(IntPtr tp) => Delegates.PyObject_GC_Del(tp);
 
@@ -2323,7 +2316,7 @@ namespace Python.Runtime
                 PyCallable_Check = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyCallable_Check), GetUnmanagedDll(_PythonDll));
                 PyObject_IsTrue = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyObject_IsTrue), GetUnmanagedDll(_PythonDll));
                 PyObject_Not = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyObject_Not), GetUnmanagedDll(_PythonDll));
-                _PyObject_Size = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyObject_Size", GetUnmanagedDll(_PythonDll));
+                PyObject_Size = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName("PyObject_Size", GetUnmanagedDll(_PythonDll));
                 PyObject_Hash = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Hash), GetUnmanagedDll(_PythonDll));
                 PyObject_Repr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Repr), GetUnmanagedDll(_PythonDll));
                 PyObject_Str = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Str), GetUnmanagedDll(_PythonDll));
@@ -2478,8 +2471,8 @@ namespace Python.Runtime
                 PyType_Ready = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyType_Ready), GetUnmanagedDll(_PythonDll));
                 _PyType_Lookup = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(_PyType_Lookup), GetUnmanagedDll(_PythonDll));
                 PyObject_GenericGetAttr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GenericGetAttr), GetUnmanagedDll(_PythonDll));
+                PyObject_GenericGetDict = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, NewReference>)GetFunctionByName(nameof(PyObject_GenericGetDict), GetUnmanagedDll(PythonDLL));
                 PyObject_GenericSetAttr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_GenericSetAttr), GetUnmanagedDll(_PythonDll));
-                _PyObject_GetDictPtr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference*>)GetFunctionByName(nameof(_PyObject_GetDictPtr), GetUnmanagedDll(_PythonDll));
                 PyObject_GC_Del = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyObject_GC_Del), GetUnmanagedDll(_PythonDll));
                 PyObject_GC_Track = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyObject_GC_Track), GetUnmanagedDll(_PythonDll));
                 PyObject_GC_UnTrack = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyObject_GC_UnTrack), GetUnmanagedDll(_PythonDll));
@@ -2595,7 +2588,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyCallable_Check { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyObject_IsTrue { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyObject_Not { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyObject_Size { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyObject_Size { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Hash { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Repr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Str { get; }
@@ -2744,7 +2737,6 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> _PyType_Lookup { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyObject_GenericGetAttr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int> PyObject_GenericSetAttr { get; }
-            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference*> _PyObject_GetDictPtr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyObject_GC_Del { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyObject_GC_Track { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyObject_GC_UnTrack { get; }
@@ -2781,6 +2773,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, void> PyException_SetCause { get; }
             internal static delegate* unmanaged[Cdecl]<uint, IntPtr, int> PyThreadState_SetAsyncExcLLP64 { get; }
             internal static delegate* unmanaged[Cdecl]<ulong, IntPtr, int> PyThreadState_SetAsyncExcLP64 { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, NewReference> PyObject_GenericGetDict { get; }
         }
     }
 
