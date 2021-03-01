@@ -6,4 +6,5 @@ build-backend = "setuptools.build_meta"
 xfail_strict = true
 testpaths = [
     "tests",
+    "src/domain_tests"
 ]
