@@ -108,9 +108,9 @@ sys.meta_path.append(DotNetFinder())
             storage.GetValue("py_clr_module", out py_clr_module);
             var rootHandle = storage.GetValue<IntPtr>("root");
             root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
-            IntPtr dict = Runtime.PyImport_GetModuleDict();
-            Runtime.PyDict_SetItemString(dict, "CLR", py_clr_module);
-            Runtime.PyDict_SetItemString(dict, "clr", py_clr_module);
+            BorrowedReference dict = Runtime.PyImport_GetModuleDict();
+            Runtime.PyDict_SetItemString(dict.DangerousGetAddress(), "CLR", py_clr_module);
+            Runtime.PyDict_SetItemString(dict.DangerousGetAddress(), "clr", py_clr_module);
             SetupNamespaceTracking();
         }
 
@@ -122,7 +122,7 @@ sys.meta_path.append(DotNetFinder())
         /// </summary>
         static void SetupNamespaceTracking ()
         {
-            var newset = Runtime.PySet_New(IntPtr.Zero);
+            var newset = Runtime.PySet_New(new BorrowedReference(IntPtr.Zero));
             try
             {
                 foreach (var ns in AssemblyManager.GetNamespaces())
@@ -130,7 +130,7 @@ sys.meta_path.append(DotNetFinder())
                     var pyNs = Runtime.PyString_FromString(ns);
                     try
                     {
-                        if(Runtime.PySet_Add(newset, pyNs) != 0)
+                        if(Runtime.PySet_Add(newset, new BorrowedReference(pyNs)) != 0)
                         {
                             throw new PythonException();
                         }
@@ -141,14 +141,14 @@ sys.meta_path.append(DotNetFinder())
                     }
                 }
 
-                if(Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset) != 0)
+                if(Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.DangerousGetAddress()) != 0)
                 {
                     throw new PythonException();
                 }
             }
             finally
             {
-                Runtime.XDecref(newset);
+                newset.Dispose();
             }
 
             AssemblyManager.namespaceAdded += OnNamespaceAdded;
@@ -163,16 +163,12 @@ sys.meta_path.append(DotNetFinder())
         {
             AssemblyManager.namespaceAdded -= OnNamespaceAdded;
             // If the C# runtime isn't loaded, then there is no namespaces available
-            if ((Runtime.PyDict_DelItemString(root.dict, availableNsKey) != 0) &&
+            if ((Runtime.PyDict_DelItemString(new BorrowedReference(root.dict), availableNsKey) != 0) &&
                 (Exceptions.ExceptionMatches(Exceptions.KeyError)))
             {
                 // Trying to remove a key that's not in the dictionary 
                 // raises an error. We don't care about it.
                 Runtime.PyErr_Clear();
-            }
-            else if (Exceptions.ErrorOccurred())
-            {
-                throw new PythonException();
             }
         }
 
@@ -183,10 +179,10 @@ sys.meta_path.append(DotNetFinder())
                 var pyNs = Runtime.PyString_FromString(name);
                 try
                 {
-                    var nsSet = Runtime.PyDict_GetItemString(root.dict, availableNsKey);
-                    if (nsSet != IntPtr.Zero)
+                    var nsSet = Runtime.PyDict_GetItemString(new BorrowedReference(root.dict), availableNsKey);
+                    if (!nsSet.IsNull)
                     {
-                        if(Runtime.PySet_Add(nsSet, pyNs) != 0)
+                        if(Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
                         {
                             throw new PythonException();
                         }
@@ -211,16 +207,15 @@ sys.meta_path.append(DotNetFinder())
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             BorrowedReference py_mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            using (var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference))
-            {
-                Runtime.PyDict_Update(py_mod_dict, clr_dict);
-            }
+            using var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference);
+
+            Runtime.PyDict_Update(py_mod_dict, clr_dict);
         }
 
         /// <summary>
         /// Return the clr python module (new reference)
         /// </summary>
-        public static unsafe NewReference GetCLRModule(BorrowedReference fromList = default)
+        public static unsafe NewReference GetCLRModule()
         {
             UpdateCLRModuleDict();
             Runtime.XIncref(py_clr_module);
