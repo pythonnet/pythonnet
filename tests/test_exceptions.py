@@ -429,7 +429,8 @@ def leak_test(func):
         orig_exc = {x for x in get_all_objects() if isinstance(x, Exception)}
         func()
         exc = {x for x in get_all_objects() if isinstance(x, Exception)}
-        assert not exc - orig_exc
+        possibly_leaked = exc - orig_exc
+        assert not possibly_leaked
     
     return do_test_leak
 

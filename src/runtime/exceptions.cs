@@ -89,7 +89,8 @@ namespace Python.Runtime
         static void ClearOffsetHelper(IntPtr ob, int offset)
         {
             var field = Marshal.ReadIntPtr(ob, offset);
-            Runtime.Py_CLEAR(ref field);
+            Runtime.XDecref(field);
+            Marshal.WriteIntPtr(ob, offset, IntPtr.Zero);
         }
 
         // As seen in exceptions.c, every derived type must also clean the base.
@@ -200,19 +201,9 @@ namespace Python.Runtime
 
             if (e.InnerException != null)
             {
-                if(e.InnerException is PythonException)
-                {
-                    // If the error is a Python exception, write the real one
-                    var pyerr =  (e.InnerException as PythonException);
-                    Runtime.XIncref(pyerr.PyValue);
-                    Runtime.PyException_SetCause(ob, pyerr.PyValue);
-                }
-                else
-                {
-                    // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
-                    IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
-                    Runtime.PyException_SetCause(ob, cause);
-                }
+                // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
+                IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
+                Runtime.PyException_SetCause(ob, cause);
             }
         }
 

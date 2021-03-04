@@ -106,7 +106,7 @@ namespace Python.Runtime
 
         public override string ToString()
         {
-            return $"<CLRObject wrapping {inst}>";
+            return $"<CLRObject: {inst}>";
         }
     }
 }
