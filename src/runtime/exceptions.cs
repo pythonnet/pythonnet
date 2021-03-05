@@ -89,8 +89,11 @@ namespace Python.Runtime
         static void ClearOffsetHelper(IntPtr ob, int offset)
         {
             var field = Marshal.ReadIntPtr(ob, offset);
-            Runtime.XDecref(field);
-            Marshal.WriteIntPtr(ob, offset, IntPtr.Zero);
+            if (field != IntPtr.Zero)
+            {
+                Marshal.WriteIntPtr(ob, offset, IntPtr.Zero);
+                Runtime.XDecref(field);
+            }
         }
 
         // As seen in exceptions.c, every derived type must also clean the base.
