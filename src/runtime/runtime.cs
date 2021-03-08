@@ -2518,7 +2518,19 @@ namespace Python.Runtime
             }
 
             static global::System.IntPtr GetFunctionByName(string functionName, global::System.IntPtr libraryHandle)
-                => libraryLoader.GetFunction(libraryHandle, functionName);
+            {
+                try
+                {
+                    return libraryLoader.GetFunction(libraryHandle, functionName);
+                }
+                catch (MissingMethodException e) when (libraryHandle == IntPtr.Zero)
+                {
+                    throw new MissingMethodException(
+                        "Did you forget to set Runtime.PythonDLL?" +
+                        " See https://github.com/pythonnet/pythonnet#embedding-python-in-net",
+                        e);
+                }
+            }
 
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyDictProxy_New { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> Py_IncRef { get; }
