@@ -153,6 +153,16 @@ namespace Python.Runtime
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
 
+            // Need to add the runtime directory to sys.path so that we
+            // can find built-in assemblies like System.Data, et. al.
+            string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
+            IntPtr path = PySys_GetObject("path").DangerousGetAddress();
+            IntPtr item = PyString_FromString(rtdir);
+            if (PySequence_Contains(path, item) == 0)
+            {
+                PyList_Append(new BorrowedReference(path), item);
+            }
+            XDecref(item);
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             OperatorMethod.Initialize();
@@ -167,16 +177,6 @@ namespace Python.Runtime
             }
             Exceptions.Initialize();
 
-            // Need to add the runtime directory to sys.path so that we
-            // can find built-in assemblies like System.Data, et. al.
-            string rtdir = RuntimeEnvironment.GetRuntimeDirectory();
-            IntPtr path = PySys_GetObject("path").DangerousGetAddress();
-            IntPtr item = PyString_FromString(rtdir);
-            if (PySequence_Contains(path, item) == 0)
-            {
-                PyList_Append(new BorrowedReference(path), item);
-            }
-            XDecref(item);
             AssemblyManager.UpdatePath();
         }
 

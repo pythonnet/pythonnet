@@ -598,7 +598,7 @@ namespace Python.Runtime
             ModuleObject mod = null;
             using (var modname = spec.GetAttr("name"))
             {
-                mod = ImportHook.__import__(modname.ToString());
+                mod = ImportHook.Import(modname.ToString());
             }
             // We can't return directly a ModuleObject, because the tpHandle is
             // not set, but we can return a PyObject.

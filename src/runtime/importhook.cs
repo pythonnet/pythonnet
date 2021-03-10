@@ -69,7 +69,7 @@ sys.meta_path.append(DotNetFinder())
 
             // Add/create the MetaPathLoader
             SetupNamespaceTracking();
-            PythonEngine.Exec(LoaderCode);
+            PythonEngine.Exec("import pythonnet.util.import_hook;pythonnet.util.import_hook.init_import_hook()");
         }
 
 
@@ -225,7 +225,7 @@ sys.meta_path.append(DotNetFinder())
         /// <summary>
         /// The hook to import a CLR module into Python
         /// </summary>
-        public static ModuleObject __import__(string modname)
+        public static ModuleObject Import(string modname)
         {
             // Traverse the qualified module name to get the named module. 
             // Note that if
