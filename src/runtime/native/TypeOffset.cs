@@ -75,7 +75,7 @@ namespace Python.Runtime
         internal static int tp_str { get; private set; }
         internal static int tp_traverse { get; private set; }
 
-        internal static void Use(ITypeOffsets offsets)
+        internal static void Use(ITypeOffsets offsets, int extraHeadOffset)
         {
             if (offsets is null) throw new ArgumentNullException(nameof(offsets));
 
@@ -87,6 +87,7 @@ namespace Python.Runtime
 
                 var sourceProperty = typeof(ITypeOffsets).GetProperty(offsetProperty.Name);
                 int value = (int)sourceProperty.GetValue(offsets, null);
+                value += extraHeadOffset;
                 offsetProperty.SetValue(obj: null, value: value, index: null);
             }
 
