@@ -525,6 +525,16 @@ namespace Python.Runtime
 
         internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
 
+        internal static int ToInt32(BorrowedReference value)
+        {
+            nint num = Runtime.PyLong_AsSignedSize_t(value);
+            if (num == -1 && Exceptions.ErrorOccurred())
+            {
+                throw new PythonException();
+            }
+            return checked((int)num);
+        }
+
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>

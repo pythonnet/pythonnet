@@ -102,10 +102,7 @@ namespace Python.Runtime
             // collected while Python still has a reference to it.
             if (Runtime.Refcount(self.pyHandle) == 1)
             {
-
-#if PYTHON_WITH_PYDEBUG
-                Runtime._Py_NewReference(self.pyHandle);
-#endif
+                Runtime._Py_NewReference(self.ObjectReference);
                 GCHandle gc = GCHandle.Alloc(self, GCHandleType.Normal);
                 SetGCHandle(self.ObjectReference, self.TypeReference, gc);
                 self.gcHandle.Free();

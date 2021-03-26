@@ -85,9 +85,9 @@ namespace Python.Runtime
             {
                 using (var versionTuple = new PyTuple(PySys_GetObject("version_info")))
                 {
-                    var major = versionTuple[0].As<int>();
-                    var minor = versionTuple[1].As<int>();
-                    var micro = versionTuple[2].As<int>();
+                    var major = Converter.ToInt32(versionTuple[0].Reference);
+                    var minor = Converter.ToInt32(versionTuple[1].Reference);
+                    var micro = Converter.ToInt32(versionTuple[2].Reference);
                     return new Version(major, minor, micro);
                 }
             }
@@ -198,15 +198,15 @@ namespace Python.Runtime
                 SetPyMember(ref PyFalse, PyObject_GetAttrString(builtins, "False"),
                     () => PyFalse = IntPtr.Zero);
 
-                SetPyMember(ref PyBoolType, PyObject_Type(PyTrue),
+                SetPyMemberTypeOf(ref PyBoolType, PyTrue,
                     () => PyBoolType = IntPtr.Zero);
-                SetPyMember(ref PyNoneType, PyObject_Type(PyNone),
+                SetPyMemberTypeOf(ref PyNoneType, PyNone,
                     () => PyNoneType = IntPtr.Zero);
-                SetPyMember(ref PyTypeType, PyObject_Type(PyNoneType),
+                SetPyMemberTypeOf(ref PyTypeType, PyNoneType,
                     () => PyTypeType = IntPtr.Zero);
 
                 op = PyObject_GetAttrString(builtins, "len");
-                SetPyMember(ref PyMethodType, PyObject_Type(op),
+                SetPyMemberTypeOf(ref PyMethodType, op,
                     () => PyMethodType = IntPtr.Zero);
                 XDecref(op);
 
@@ -215,7 +215,7 @@ namespace Python.Runtime
                 //
                 // object.__init__ seems safe, though.
                 op = PyObject_GetAttr(PyBaseObjectType, PyIdentifier.__init__);
-                SetPyMember(ref PyWrapperDescriptorType, PyObject_Type(op),
+                SetPyMemberTypeOf(ref PyWrapperDescriptorType, op,
                     () => PyWrapperDescriptorType = IntPtr.Zero);
                 XDecref(op);
 
@@ -226,47 +226,47 @@ namespace Python.Runtime
             }
 
             op = PyString_FromString("string");
-            SetPyMember(ref PyStringType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyStringType, op,
                 () => PyStringType = IntPtr.Zero);
             XDecref(op);
 
             op = PyUnicode_FromString("unicode");
-            SetPyMember(ref PyUnicodeType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyUnicodeType, op,
                 () => PyUnicodeType = IntPtr.Zero);
             XDecref(op);
 
             op = EmptyPyBytes();
-            SetPyMember(ref PyBytesType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyBytesType, op,
                 () => PyBytesType = IntPtr.Zero);
             XDecref(op);
 
             op = PyTuple_New(0);
-            SetPyMember(ref PyTupleType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyTupleType, op,
                 () => PyTupleType = IntPtr.Zero);
             XDecref(op);
 
             op = PyList_New(0);
-            SetPyMember(ref PyListType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyListType, op,
                 () => PyListType = IntPtr.Zero);
             XDecref(op);
 
             op = PyDict_New();
-            SetPyMember(ref PyDictType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyDictType, op,
                 () => PyDictType = IntPtr.Zero);
             XDecref(op);
 
             op = PyInt_FromInt32(0);
-            SetPyMember(ref PyIntType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyIntType, op,
                 () => PyIntType = IntPtr.Zero);
             XDecref(op);
 
             op = PyLong_FromLong(0);
-            SetPyMember(ref PyLongType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyLongType, op,
                 () => PyLongType = IntPtr.Zero);
             XDecref(op);
 
             op = PyFloat_FromDouble(0);
-            SetPyMember(ref PyFloatType, PyObject_Type(op),
+            SetPyMemberTypeOf(ref PyFloatType, op,
                 () => PyFloatType = IntPtr.Zero);
             XDecref(op);
 
@@ -278,7 +278,8 @@ namespace Python.Runtime
             _PyObject_NextNotImplemented = Get_PyObject_NextNotImplemented();
             {
                 using var sys = PyImport_ImportModule("sys");
-                PyModuleType = PyObject_Type(sys.DangerousMoveToPointer());
+                SetPyMemberTypeOf(ref PyModuleType, sys.DangerousGetAddress(),
+                    () => PyModuleType = IntPtr.Zero);
             }
         }
 
@@ -453,6 +454,12 @@ namespace Python.Runtime
             PythonException.ThrowIfIsNull(value);
             obj = value;
             _pyRefs.Add(value, onRelease);
+        }
+
+        private static void SetPyMemberTypeOf(ref IntPtr obj, IntPtr value, Action onRelease)
+        {
+            var type = PyObject_Type(new BorrowedReference(value)).DangerousMoveToPointer();
+            SetPyMember(ref obj, type, onRelease);
         }
 
         private static void ResetPyMembers()
@@ -761,16 +768,12 @@ namespace Python.Runtime
         [Pure]
         internal static unsafe long Refcount(IntPtr op)
         {
-#if PYTHON_WITH_PYDEBUG
-            var p = (void*)(op + TypeOffset.ob_refcnt);
-#else
-            var p = (void*)op;
-#endif
-            if ((void*)0 == p)
+            if (op == IntPtr.Zero)
             {
                 return 0;
             }
-            return Is32Bit ? (*(int*)p) : (*(long*)p);
+            var p = (nint*)(op + ABI.RefCountOffset);
+            return *p;
         }
 
         /// <summary>
@@ -977,14 +980,9 @@ namespace Python.Runtime
             {
                 return IntPtr.Zero;
             }
-#if PYTHON_WITH_PYDEBUG
-            var n = 3;
-#else
-            var n = 1;
-#endif
-            return Is32Bit
-                ? new IntPtr((void*)(*((uint*)p + n)))
-                : new IntPtr((void*)(*((ulong*)p + n)));
+            Debug.Assert(TypeOffset.ob_type > 0);
+            IntPtr* typePtr = (IntPtr*)(op + TypeOffset.ob_type);
+            return *typePtr;
         }
         internal static unsafe BorrowedReference PyObject_TYPE(BorrowedReference op)
             => new BorrowedReference(PyObject_TYPE(op.DangerousGetAddress()));
@@ -1000,6 +998,9 @@ namespace Python.Runtime
             XIncref(tp);
             return tp;
         }
+
+        internal static NewReference PyObject_Type(BorrowedReference o)
+            => Delegates.PyObject_Type(o);
 
         internal static string PyObject_GetTypeName(IntPtr op)
         {
@@ -1145,10 +1146,11 @@ namespace Python.Runtime
 
         internal static IntPtr PyObject_Dir(IntPtr pointer) => Delegates.PyObject_Dir(pointer);
 
-#if PYTHON_WITH_PYDEBUG
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void _Py_NewReference(IntPtr ob);
-#endif
+        internal static void _Py_NewReference(BorrowedReference ob)
+        {
+            if (Delegates._Py_NewReference != null)
+                Delegates._Py_NewReference(ob);
+        }
 
         //====================================================================
         // Python buffer API
@@ -1912,11 +1914,6 @@ namespace Python.Runtime
         internal static string PyModule_GetFilename(IntPtr module)
             => Delegates.PyModule_GetFilename(module).ToString(Encoding.UTF8);
 
-#if PYTHON_WITH_PYDEBUG
-        [DllImport(_PythonDll, EntryPoint = "PyModule_Create2TraceRefs", CallingConvention = CallingConvention.Cdecl)]
-#else
-
-#endif
         internal static IntPtr PyModule_Create2(IntPtr module, int apiver) => Delegates.PyModule_Create2(module, apiver);
 
 
@@ -2331,6 +2328,7 @@ namespace Python.Runtime
                 PyObject_Hash = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Hash), GetUnmanagedDll(_PythonDll));
                 PyObject_Repr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Repr), GetUnmanagedDll(_PythonDll));
                 PyObject_Str = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Str), GetUnmanagedDll(_PythonDll));
+                PyObject_Type = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_Type), GetUnmanagedDll(_PythonDll));
                 PyObject_Dir = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Dir), GetUnmanagedDll(_PythonDll));
                 PyObject_GetBuffer = (delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, int, int>)GetFunctionByName(nameof(PyObject_GetBuffer), GetUnmanagedDll(_PythonDll));
                 PyBuffer_Release = (delegate* unmanaged[Cdecl]<ref Py_buffer, void>)GetFunctionByName(nameof(PyBuffer_Release), GetUnmanagedDll(_PythonDll));
@@ -2466,7 +2464,14 @@ namespace Python.Runtime
                 PyModule_GetName = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr>)GetFunctionByName(nameof(PyModule_GetName), GetUnmanagedDll(_PythonDll));
                 PyModule_GetDict = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference>)GetFunctionByName(nameof(PyModule_GetDict), GetUnmanagedDll(_PythonDll));
                 PyModule_GetFilename = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr>)GetFunctionByName(nameof(PyModule_GetFilename), GetUnmanagedDll(_PythonDll));
-                PyModule_Create2 = (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr>)GetFunctionByName(nameof(PyModule_Create2), GetUnmanagedDll(_PythonDll));
+                try
+                {
+                    PyModule_Create2 = (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr>)GetFunctionByName(nameof(PyModule_Create2), GetUnmanagedDll(_PythonDll));
+                }
+                catch (MissingMethodException)
+                {
+                    PyModule_Create2 = (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr>)GetFunctionByName("PyModule_Create2TraceRefs", GetUnmanagedDll(_PythonDll));
+                }
                 PyImport_Import = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyImport_Import), GetUnmanagedDll(_PythonDll));
                 PyImport_ImportModule = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyImport_ImportModule), GetUnmanagedDll(_PythonDll));
                 PyImport_ReloadModule = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyImport_ReloadModule), GetUnmanagedDll(_PythonDll));
@@ -2521,6 +2526,12 @@ namespace Python.Runtime
                 PyThreadState_SetAsyncExcLLP64 = (delegate* unmanaged[Cdecl]<uint, IntPtr, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
                 PyThreadState_SetAsyncExcLP64 = (delegate* unmanaged[Cdecl]<ulong, IntPtr, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
                 PyType_FromSpecWithBases = (delegate* unmanaged[Cdecl]<in NativeTypeSpec, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyType_FromSpecWithBases), GetUnmanagedDll(PythonDLL));
+
+                try
+                {
+                    _Py_NewReference = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(_Py_NewReference), GetUnmanagedDll(_PythonDll));
+                }
+                catch (MissingMethodException) { }
             }
 
             static global::System.IntPtr GetUnmanagedDll(string libraryName)
@@ -2616,6 +2627,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Hash { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Repr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Str { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyObject_Type { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Dir { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, int, int> PyObject_GetBuffer { get; }
             internal static delegate* unmanaged[Cdecl]<ref Py_buffer, void> PyBuffer_Release { get; }
@@ -2799,6 +2811,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<ulong, IntPtr, int> PyThreadState_SetAsyncExcLP64 { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, NewReference> PyObject_GenericGetDict { get; }
             internal static delegate* unmanaged[Cdecl]<in NativeTypeSpec, BorrowedReference, NewReference> PyType_FromSpecWithBases { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> _Py_NewReference { get; }
         }
     }
 
