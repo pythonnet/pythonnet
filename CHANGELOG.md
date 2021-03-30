@@ -44,6 +44,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   Sign Runtime DLL with a strong name
 -   Implement loading through `clr_loader` instead of the included `ClrModule`, enables
     support for .NET Core
+-   BREAKING: custom encoders are no longer called for instances of `System.Type`
 
 ### Fixed
 

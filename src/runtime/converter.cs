@@ -146,8 +146,11 @@ namespace Python.Runtime
                 return result;
             }
 
-            if (Type.GetTypeCode(type) == TypeCode.Object && value.GetType() != typeof(object)
-                || type.IsEnum) {
+            if (Type.GetTypeCode(type) == TypeCode.Object
+                && value.GetType() != typeof(object)
+                && value is not Type
+                || type.IsEnum
+            ) {
                 var encoded = PyObjectConversions.TryEncode(value, type);
                 if (encoded != null) {
                     result = encoded.Handle;
