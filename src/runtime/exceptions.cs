@@ -206,6 +206,15 @@ namespace Python.Runtime
             }
         }
 
+        internal static IntPtr ErrorCheckIfNull(IntPtr pointer)
+        {
+            if (pointer == IntPtr.Zero && ErrorOccurred())
+            {
+                throw new PythonException();
+            }
+            return pointer;
+        }
+
         /// <summary>
         /// ExceptionMatches Method
         /// </summary>

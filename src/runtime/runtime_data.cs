@@ -119,12 +119,13 @@ namespace Python.Runtime
             var formatter = CreateFormatter();
             var storage = (RuntimeDataStorage)formatter.Deserialize(ms);
 
+            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
+
             var objs = RestoreRuntimeDataObjects(storage.GetStorage("objs"));
             RestoreRuntimeDataModules(storage.GetStorage("modules"));
             TypeManager.RestoreRuntimeData(storage.GetStorage("types"));
             var clsObjs = ClassManager.RestoreRuntimeData(storage.GetStorage("classes"));
             ImportHook.RestoreRuntimeData(storage.GetStorage("import"));
-            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
 
             foreach (var item in objs)
             {

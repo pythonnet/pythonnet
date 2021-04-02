@@ -26,6 +26,8 @@ namespace Python.Runtime
             if (ob is Exception e) Exceptions.SetArgsAndCause(e, py);
         }
 
+        internal CLRObject(object ob, BorrowedReference tp) : this(ob, tp.DangerousGetAddress()) { }
+
         protected CLRObject()
         {
         }

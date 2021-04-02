@@ -122,11 +122,13 @@ namespace Python.Runtime
         /// </summary>
         internal static Type CreateDerivedType(string name,
             Type baseType,
-            IntPtr py_dict,
+            BorrowedReference dictRef,
             string namespaceStr,
             string assemblyName,
             string moduleName = "Python.Runtime.Dynamic.dll")
         {
+            // TODO: clean up
+            IntPtr py_dict = dictRef.DangerousGetAddress();
             if (null != namespaceStr)
             {
                 name = namespaceStr + "." + name;
@@ -824,7 +826,7 @@ namespace Python.Runtime
             try
             {
                 // create the python object
-                IntPtr type = TypeManager.GetTypeHandle(obj.GetType());
+                BorrowedReference type = TypeManager.GetTypeReference(obj.GetType());
                 self = new CLRObject(obj, type);
 
                 // set __pyobj__ to self and deref the python object which will allow this

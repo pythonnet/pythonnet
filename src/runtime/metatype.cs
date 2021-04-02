@@ -132,7 +132,7 @@ namespace Python.Runtime
                 {
                     if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
                     {
-                        return TypeManager.CreateSubType(name, base_type, dict);
+                        return TypeManager.CreateSubType(name, base_type, clsDict.Reference);
                     }
                 }
             }
@@ -266,7 +266,7 @@ namespace Python.Runtime
             }
 
             int res = Runtime.PyObject_GenericSetAttr(tp, name, value);
-            Runtime.PyType_Modified(tp);
+            Runtime.PyType_Modified(new BorrowedReference(tp));
 
             return res;
         }
