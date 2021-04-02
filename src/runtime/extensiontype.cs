@@ -18,7 +18,7 @@ namespace Python.Runtime
             // The Python instance object is related to an instance of a
             // particular concrete subclass with a hidden CLR gchandle.
 
-            IntPtr tp = TypeManager.GetTypeHandle(GetType());
+            BorrowedReference tp = TypeManager.GetTypeReference(GetType());
 
             //int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
             //if (rc > 1050)
@@ -27,11 +27,11 @@ namespace Python.Runtime
             //    DebugUtil.DumpType(tp);
             //}
 
-            IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
+            NewReference py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            // Steals a ref to tpHandle.
-            tpHandle = tp;
-            pyHandle = py;
+            // Borrowed reference. Valid as long as pyHandle is valid.
+            tpHandle = tp.DangerousGetAddress();
+            pyHandle = py.DangerousMoveToPointer();
 
 #if DEBUG
             GetGCHandle(ObjectReference, TypeReference, out var existing);
