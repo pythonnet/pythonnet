@@ -22,6 +22,7 @@ namespace Python.Runtime
         {
         }
 
+        internal PyDict(BorrowedReference reference) : base(reference) { }
 
         /// <summary>
         /// PyDict Constructor
@@ -29,9 +30,8 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python dictionary object.
         /// </remarks>
-        public PyDict()
+        public PyDict() : base(Runtime.PyDict_New())
         {
-            obj = Runtime.PyDict_New();
             if (obj == IntPtr.Zero)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -47,14 +47,13 @@ namespace Python.Runtime
         /// ArgumentException will be thrown if the given object is not a
         /// Python dictionary object.
         /// </remarks>
-        public PyDict(PyObject o)
+        public PyDict(PyObject o) : base(o.obj)
         {
+            Runtime.XIncref(o.obj);
             if (!IsDictType(o))
             {
                 throw new ArgumentException("object is not a dict");
             }
-            Runtime.XIncref(o.obj);
-            obj = o.obj;
         }
 
 
@@ -105,12 +104,12 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Keys()
         {
-            IntPtr items = Runtime.PyDict_Keys(obj);
-            if (items == IntPtr.Zero)
+            using var items = Runtime.PyDict_Keys(Reference);
+            if (items.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            return new PyObject(items);
+            return items.MoveToPyObject();
         }
 
 
@@ -139,7 +138,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Items()
         {
-            var items = Runtime.PyDict_Items(this.obj);
+            var items = Runtime.PyDict_Items(this.Reference);
             try
             {
                 if (items.IsNull())
@@ -181,7 +180,7 @@ namespace Python.Runtime
         /// </remarks>
         public void Update(PyObject other)
         {
-            int result = Runtime.PyDict_Update(obj, other.obj);
+            int result = Runtime.PyDict_Update(Reference, other.Reference);
             if (result < 0)
             {
                 throw PythonException.ThrowLastAsClrException();

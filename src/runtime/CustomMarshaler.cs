@@ -41,8 +41,9 @@ namespace Python.Runtime
     /// </summary>
     internal class UcsMarshaler : MarshalerBase
     {
+        internal static readonly int _UCS = Runtime.PyUnicode_GetMax() <= 0xFFFF ? 2 : 4;
+        internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
         private static readonly MarshalerBase Instance = new UcsMarshaler();
-        private static readonly Encoding PyEncoding = Runtime.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
@@ -91,13 +92,13 @@ namespace Python.Runtime
             var len = 0;
             while (true)
             {
-                int c = Runtime._UCS == 2
+                int c = _UCS == 2
                     ? Marshal.ReadInt16(p, len * 2)
                     : Marshal.ReadInt32(p, len * 4);
 
                 if (c == 0)
                 {
-                    return len * Runtime._UCS;
+                    return len * _UCS;
                 }
                 checked
                 {
@@ -120,9 +121,7 @@ namespace Python.Runtime
         /// </remarks>
         public static IntPtr Py3UnicodePy2StringtoPtr(string s)
         {
-            return Runtime.IsPython3
-                ? Instance.MarshalManagedToNative(s)
-                : Marshal.StringToHGlobalAnsi(s);
+            return Instance.MarshalManagedToNative(s);
         }
 
         /// <summary>
@@ -137,9 +136,7 @@ namespace Python.Runtime
         /// </returns>
         public static string PtrToPy3UnicodePy2String(IntPtr p)
         {
-            return Runtime.IsPython3
-                ? PtrToStringUni(p)
-                : Marshal.PtrToStringAnsi(p);
+            return PtrToStringUni(p);
         }
     }
 
@@ -151,7 +148,7 @@ namespace Python.Runtime
     internal class StrArrayMarshaler : MarshalerBase
     {
         private static readonly MarshalerBase Instance = new StrArrayMarshaler();
-        private static readonly Encoding PyEncoding = Runtime.PyEncoding;
+        private static readonly Encoding PyEncoding = UcsMarshaler.PyEncoding;
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
@@ -163,7 +160,7 @@ namespace Python.Runtime
             }
 
             int totalStrLength = argv.Sum(arg => arg.Length + 1);
-            int memSize = argv.Length * IntPtr.Size + totalStrLength * Runtime._UCS;
+            int memSize = argv.Length * IntPtr.Size + totalStrLength * UcsMarshaler._UCS;
 
             IntPtr mem = Marshal.AllocHGlobal(memSize);
             try
@@ -177,51 +174,6 @@ namespace Python.Runtime
                     Marshal.WriteIntPtr(mem + i * IntPtr.Size, curStrPtr);
                     curStrPtr += bStr.Length;
                 }
-            }
-            catch (Exception)
-            {
-                Marshal.FreeHGlobal(mem);
-                throw;
-            }
-
-            return mem;
-        }
-
-        public static ICustomMarshaler GetInstance(string cookie)
-        {
-            return Instance;
-        }
-    }
-
-
-    /// <summary>
-    /// Custom Marshaler to deal with Managed String to Native
-    /// conversion on UTF-8. Use on functions that expect UTF-8 encoded
-    /// strings like `PyUnicode_FromStringAndSize`
-    /// </summary>
-    /// <remarks>
-    /// If instead we used `MarshalAs(UnmanagedType.LPWStr)` the output to
-    /// `foo` would be `f\x00o\x00o\x00`.
-    /// </remarks>
-    internal class Utf8Marshaler : MarshalerBase
-    {
-        private static readonly MarshalerBase Instance = new Utf8Marshaler();
-        private static readonly Encoding PyEncoding = Encoding.UTF8;
-
-        public override IntPtr MarshalManagedToNative(object managedObj)
-        {
-            var s = managedObj as string;
-
-            if (s == null)
-            {
-                return IntPtr.Zero;
-            }
-
-            byte[] bStr = PyEncoding.GetBytes(s + "\0");
-            IntPtr mem = Marshal.AllocHGlobal(bStr.Length);
-            try
-            {
-                Marshal.Copy(bStr, 0, mem, bStr.Length);
             }
             catch (Exception)
             {

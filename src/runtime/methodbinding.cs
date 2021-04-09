@@ -4,14 +4,16 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
+    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
     /// <summary>
     /// Implements a Python binding type for CLR methods. These work much like
     /// standard Python method bindings, but the same type is used to bind
     /// both static and instance methods.
     /// </summary>
+    [Serializable]
     internal class MethodBinding : ExtensionType
     {
-        internal MethodInfo info;
+        internal MaybeMethodInfo info;
         internal MethodObject m;
         internal IntPtr target;
         internal IntPtr targetType;
@@ -21,11 +23,15 @@ namespace Python.Runtime
             Runtime.XIncref(target);
             this.target = target;
 
-            Runtime.XIncref(targetType);
             if (targetType == IntPtr.Zero)
             {
                 targetType = Runtime.PyObject_Type(target);
             }
+            else
+            {
+                Runtime.XIncref(targetType);
+            }
+            
             this.targetType = targetType;
 
             this.info = null;
@@ -34,6 +40,12 @@ namespace Python.Runtime
 
         public MethodBinding(MethodObject m, IntPtr target) : this(m, target, IntPtr.Zero)
         {
+        }
+
+        private void ClearMembers()
+        {
+            Runtime.Py_CLEAR(ref target);
+            Runtime.Py_CLEAR(ref targetType);
         }
 
         /// <summary>
@@ -73,7 +85,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            string name = Runtime.GetManagedString(key);
+            string name = InternString.GetManagedString(key);
             switch (name)
             {
                 case "__doc__":
@@ -100,15 +112,16 @@ namespace Python.Runtime
 
             // This works around a situation where the wrong generic method is picked,
             // for example this method in the tests: string Overloaded<T>(int arg1, int arg2, string arg3)
-            if (self.info != null)
+            if (self.info.Valid)
             {
-                if (self.info.IsGenericMethod)
+                var info = self.info.Value;
+                if (info.IsGenericMethod)
                 {
                     var len = Runtime.PyTuple_Size(args); //FIXME: Never used
                     Type[] sigTp = Runtime.PythonArgsToTypeArray(args, true);
                     if (sigTp != null)
                     {
-                        Type[] genericTp = self.info.GetGenericArguments();
+                        Type[] genericTp = info.GetGenericArguments();
                         MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
                         if (betterMatch != null)
                         {
@@ -153,9 +166,9 @@ namespace Python.Runtime
                     if (inst?.inst is IPythonDerivedType)
                     {
                         var baseType = GetManagedObject(self.targetType) as ClassBase;
-                        if (baseType != null)
+                        if (baseType != null && baseType.type.Valid)
                         {
-                            string baseMethodName = "_" + baseType.type.Name + "__" + self.m.name;
+                            string baseMethodName = "_" + baseType.type.Value.Name + "__" + self.m.name;
                             IntPtr baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
                             if (baseMethod != IntPtr.Zero)
                             {
@@ -173,8 +186,7 @@ namespace Python.Runtime
                         }
                     }
                 }
-
-                return self.m.Invoke(target, args, kw, self.info);
+                return self.m.Invoke(target, args, kw, self.info.UnsafeValue);
             }
             finally
             {
@@ -189,35 +201,27 @@ namespace Python.Runtime
         /// <summary>
         /// MethodBinding  __hash__ implementation.
         /// </summary>
-        public static IntPtr tp_hash(IntPtr ob)
+        public static nint tp_hash(IntPtr ob)
         {
             var self = (MethodBinding)GetManagedObject(ob);
-            long x = 0;
-            long y = 0;
+            nint x = 0;
 
             if (self.target != IntPtr.Zero)
             {
-                x = Runtime.PyObject_Hash(self.target).ToInt64();
+                x = Runtime.PyObject_Hash(self.target);
                 if (x == -1)
                 {
-                    return new IntPtr(-1);
+                    return x;
                 }
             }
 
-            y = Runtime.PyObject_Hash(self.m.pyHandle).ToInt64();
+            nint y = Runtime.PyObject_Hash(self.m.pyHandle);
             if (y == -1)
             {
-                return new IntPtr(-1);
+                return y;
             }
 
-            x ^= y;
-
-            if (x == -1)
-            {
-                x = -1;
-            }
-
-            return new IntPtr(x);
+            return x ^ y;
         }
 
         /// <summary>
@@ -237,9 +241,22 @@ namespace Python.Runtime
         public new static void tp_dealloc(IntPtr ob)
         {
             var self = (MethodBinding)GetManagedObject(ob);
-            Runtime.XDecref(self.target);
-            Runtime.XDecref(self.targetType);
-            FinalizeObject(self);
+            self.ClearMembers();
+            self.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (MethodBinding)GetManagedObject(ob);
+            self.ClearMembers();
+            return 0;
+        }
+
+        protected override void OnSave(InterDomainContext context)
+        {
+            base.OnSave(context);
+            Runtime.XIncref(target);
+            Runtime.XIncref(targetType);
         }
     }
 }

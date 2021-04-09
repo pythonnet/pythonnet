@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{250c535c-c060-4f0c-bd80-41f2bf373565}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>runtests.py</StartupFile>
+    <SearchPath>..\..\</SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+    <InterpreterVersion />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="__init__.py" />
+    <Compile Include="_missing_import.py" />
+    <Compile Include="leaktest.py" />
+    <Compile Include="profile.py" />
+    <Compile Include="runtests.py" />
+    <Compile Include="stress.py" />
+    <Compile Include="stresstest.py" />
+    <Compile Include="test_sysargv.py" />
+    <Compile Include="test_array.py" />
+    <Compile Include="test_callback.py" />
+    <Compile Include="test_class.py" />
+    <Compile Include="test_compat.py" />
+    <Compile Include="test_constructors.py" />
+    <Compile Include="test_conversion.py" />
+    <Compile Include="test_delegate.py" />
+    <Compile Include="test_docstring.py" />
+    <Compile Include="test_engine.py" />
+    <Compile Include="test_enum.py" />
+    <Compile Include="test_event.py" />
+    <Compile Include="test_exceptions.py" />
+    <Compile Include="test_field.py" />
+    <Compile Include="test_generic.py" />
+    <Compile Include="test_import.py" />
+    <Compile Include="test_indexer.py" />
+    <Compile Include="test_interface.py" />
+    <Compile Include="test_method.py" />
+    <Compile Include="test_module.py" />
+    <Compile Include="test_property.py" />
+    <Compile Include="test_recursive_types.py" />
+    <Compile Include="test_subclass.py" />
+    <Compile Include="test_thread.py" />
+    <Compile Include="test_codec.py" />
+    <Compile Include="test_repr.py" />
+    <Compile Include="utils.py" />
+    <Compile Include="fixtures\argv-fixture.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="fixtures" />
+  </ItemGroup>
+  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+</Project>

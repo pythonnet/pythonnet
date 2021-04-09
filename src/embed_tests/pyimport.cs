@@ -30,16 +30,15 @@ namespace Python.EmbeddingTest
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
              * modifiers placed on most Runtime methods. */
-#if NETCOREAPP
-            const string s = "../../fixtures";
-#else
-            const string s = "../fixtures";
-#endif
-            string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, s);
+            string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "fixtures");
+            TestContext.Out.WriteLine(testPath);
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
-            IntPtr path = Runtime.Runtime.PySys_GetObject("path");
-            Runtime.Runtime.PyList_Append(new BorrowedReference(path), str);
+            Assert.IsFalse(str == IntPtr.Zero);
+            BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
+            Assert.IsFalse(path.IsNull);
+            Runtime.Runtime.PyList_Append(path, str);
+            Runtime.Runtime.XDecref(str);
         }
 
         [TearDown]
@@ -55,7 +54,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestDottedName()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
+            var module = PyModule.Import("PyImportTest.test.one");
             Assert.IsNotNull(module);
         }
 
@@ -65,7 +64,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestSysArgsImportException()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
+            var module = PyModule.Import("PyImportTest.sysargv");
             Assert.IsNotNull(module);
         }
 
@@ -82,6 +81,29 @@ namespace Python.EmbeddingTest
             foo.FOO = 2;
             Assert.AreEqual("2", foo.FOO.ToString());
             Assert.AreEqual("2", foo.test_foo().ToString());
+        }
+
+        [Test]
+        public void BadAssembly()
+        {
+            string path;
+            if (Python.Runtime.Runtime.IsWindows)
+            {
+                path = @"C:\Windows\System32\kernel32.dll";
+            }
+            else
+            {
+                Assert.Pass("TODO: add bad assembly location for other platforms");
+                return;
+            }
+
+            string code = $@"
+import clr
+clr.AddReference('{path}')
+";
+
+            var error = Assert.Throws<PythonException>(() => PythonEngine.Exec(code));
+            Assert.AreEqual(nameof(FileLoadException), error.PythonTypeName);
         }
     }
 }

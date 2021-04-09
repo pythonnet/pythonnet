@@ -1,7 +1,10 @@
+/src/runtime/interopNative.cs
+
 # General binaries and Build results
 *.dll
 *.exe
 *.pdb
+*.deps.json
 
 ### JetBrains ###
 .idea/
@@ -15,6 +18,7 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.eggs/
 
 # Unit test / coverage reports
 htmlcov/

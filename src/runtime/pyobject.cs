@@ -8,11 +8,6 @@ using System.Linq.Expressions;
 
 namespace Python.Runtime
 {
-    public interface IPyDisposable : IDisposable
-    {
-        IntPtr[] GetTrackedHandles();
-    }
-
     /// <summary>
     /// Represents a generic Python object. The methods of this class are
     /// generally equivalent to the Python "abstract object API". See
@@ -20,7 +15,8 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/object.html
     /// for details.
     /// </summary>
-    public class PyObject : DynamicObject, IEnumerable, IPyDisposable
+    [Serializable]
+    public partial class PyObject : DynamicObject, IEnumerable<PyObject>, IDisposable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -57,6 +53,19 @@ namespace Python.Runtime
 #endif
         }
 
+        [Obsolete("for testing purposes only")]
+        internal PyObject(IntPtr ptr, bool skipCollect)
+        {
+            if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
+
+            obj = ptr;
+            if (!skipCollect)
+                Finalizer.Instance.ThrottledCollect();
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
+        }
+
         /// <summary>
         /// Creates new <see cref="PyObject"/> pointing to the same object as
         /// the <paramref name="reference"/>. Increments refcount, allowing <see cref="PyObject"/>
@@ -73,17 +82,6 @@ namespace Python.Runtime
 #endif
         }
 
-        // Protected default constructor to allow subclasses to manage
-        // initialization in different ways as appropriate.
-        [Obsolete("Please, always use PyObject(*Reference)")]
-        protected PyObject()
-        {
-            Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
-        }
-
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
         ~PyObject()
@@ -92,7 +90,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            Finalizer.Instance.AddFinalizedObject(this);
+            Finalizer.Instance.AddFinalizedObject(ref obj);
         }
 
 
@@ -147,9 +145,9 @@ namespace Python.Runtime
         public object AsManagedObject(Type t)
         {
             object result;
-            if (!Converter.ToManaged(obj, t, out result, false))
+            if (!Converter.ToManaged(obj, t, out result, true))
             {
-                throw new InvalidCastException("cannot convert object to target type");
+                throw new InvalidCastException("cannot convert object to target type", new PythonException());
             }
             return result;
         }
@@ -167,14 +165,10 @@ namespace Python.Runtime
             {
                 return (T)(this as object);
             }
-            object result;
-            if (!Converter.ToManaged(obj, typeof(T), out result, false))
-            {
-                throw new InvalidCastException("cannot convert object to target type");
-            }
-            return (T)result;
+            return (T)AsManagedObject(typeof(T));
         }
 
+        internal bool IsDisposed => obj == IntPtr.Zero;
 
         /// <summary>
         /// Dispose Method
@@ -223,6 +217,10 @@ namespace Python.Runtime
                     Runtime.XDecref(this.obj);
                 }
             }
+            else
+            {
+                throw new InvalidOperationException("Runtime is already finalizing");
+            }
             this.obj = IntPtr.Zero;
         }
 
@@ -230,11 +228,6 @@ namespace Python.Runtime
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        public IntPtr[] GetTrackedHandles()
-        {
-            return new IntPtr[] { obj };
         }
 
         internal BorrowedReference GetPythonTypeReference()
@@ -279,7 +272,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            return Runtime.PyObject_HasAttrString(obj, name) != 0;
+            return Runtime.PyObject_HasAttrString(Reference, name) != 0;
         }
 
 
@@ -294,7 +287,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            return Runtime.PyObject_HasAttr(obj, name.obj) != 0;
+            return Runtime.PyObject_HasAttr(Reference, name.Reference) != 0;
         }
 
 
@@ -636,19 +629,15 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// Length Method
-        /// </summary>
-        /// <remarks>
         /// Returns the length for objects that support the Python sequence
-        /// protocol, or 0 if the object does not support the protocol.
-        /// </remarks>
+        /// protocol.
+        /// </summary>
         public virtual long Length()
         {
-            var s = Runtime.PyObject_Size(obj);
+            var s = Runtime.PyObject_Size(Reference);
             if (s < 0)
             {
-                Runtime.PyErr_Clear();
-                return 0;
+                throw new PythonException();
             }
             return s;
         }
@@ -722,10 +711,11 @@ namespace Python.Runtime
         /// python object to be iterated over in C#. A PythonException will be
         /// raised if the object is not iterable.
         /// </remarks>
-        public IEnumerator GetEnumerator()
+        public IEnumerator<PyObject> GetEnumerator()
         {
-            return new PyIter(this);
+            return PyIter.GetIter(this);
         }
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
 
         /// <summary>
@@ -954,17 +944,21 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// IsSubclass Method
-        /// </summary>
-        /// <remarks>
-        /// Return true if the object is identical to or derived from the
+        /// Return <c>true</c> if the object is identical to or derived from the
         /// given Python type or class. This method always succeeds.
-        /// </remarks>
+        /// </summary>
         public bool IsSubclass(PyObject typeOrClass)
         {
             if (typeOrClass == null) throw new ArgumentNullException(nameof(typeOrClass));
 
-            int r = Runtime.PyObject_IsSubclass(obj, typeOrClass.obj);
+            return IsSubclass(typeOrClass.Reference);
+        }
+
+        internal bool IsSubclass(BorrowedReference typeOrClass)
+        {
+            if (typeOrClass.IsNull) throw new ArgumentNullException(nameof(typeOrClass));
+
+            int r = Runtime.PyObject_IsSubclass(Reference, typeOrClass);
             if (r < 0)
             {
                 Runtime.PyErr_Clear();
@@ -1104,6 +1098,19 @@ namespace Python.Runtime
         public override int GetHashCode()
         {
             return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
+        }
+
+        /// <summary>
+        /// GetBuffer Method. This Method only works for objects that have a buffer (like "bytes", "bytearray" or "array.array")
+        /// </summary>
+        /// <remarks>
+        /// Send a request to the PyObject to fill in view as specified by flags. If the PyObject cannot provide a buffer of the exact type, it MUST raise PyExc_BufferError, set view->obj to NULL and return -1.
+        /// On success, fill in view, set view->obj to a new reference to exporter and return 0. In the case of chained buffer providers that redirect requests to a single object, view->obj MAY refer to this object instead of exporter(See Buffer Object Structures).
+        /// Successful calls to <see cref="PyObject.GetBuffer"/> must be paired with calls to <see cref="PyBuffer.Dispose()"/>, similar to malloc() and free(). Thus, after the consumer is done with the buffer, <see cref="PyBuffer.Dispose()"/> must be called exactly once.
+        /// </remarks>
+        public PyBuffer GetBuffer(PyBUF flags = PyBUF.SIMPLE)
+        {
+            return new PyBuffer(this, flags);
         }
 
 

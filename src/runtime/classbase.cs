@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -12,29 +15,36 @@ namespace Python.Runtime
     /// concrete subclasses provide slot implementations appropriate for
     /// each variety of reflected type.
     /// </summary>
+    [Serializable]
     internal class ClassBase : ManagedType
     {
+        [NonSerialized]
+        internal List<string> dotNetMembers;
         internal Indexer indexer;
-        internal Type type;
+        internal Dictionary<int, MethodObject> richcompare;
+        internal MaybeType type;
 
         internal ClassBase(Type tp)
         {
+            dotNetMembers = new List<string>();
             indexer = null;
             type = tp;
         }
 
         internal virtual bool CanSubclass()
         {
-            return !type.IsEnum;
+            return !type.Value.IsEnum;
         }
 
-        /// <summary>
-        /// Implements __init__ for reflected classes and value types.
-        /// </summary>
-        public static int tp_init(IntPtr ob, IntPtr args, IntPtr kw)
+        public readonly static Dictionary<string, int> CilToPyOpMap = new Dictionary<string, int>
         {
-            return 0;
-        }
+            ["op_Equality"] = Runtime.Py_EQ,
+            ["op_Inequality"] = Runtime.Py_NE,
+            ["op_LessThanOrEqual"] = Runtime.Py_LE,
+            ["op_GreaterThanOrEqual"] = Runtime.Py_GE,
+            ["op_LessThan"] = Runtime.Py_LT,
+            ["op_GreaterThan"] = Runtime.Py_GT,
+        };
 
         /// <summary>
         /// Default implementation of [] semantics for reflected types.
@@ -47,17 +57,31 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            Type target = GenericUtil.GenericForType(type, types.Length);
+            if (!type.Valid)
+            {
+                return Exceptions.RaiseTypeError(type.DeletedMessage);
+            }
+
+            Type target = GenericUtil.GenericForType(type.Value, types.Length);
 
             if (target != null)
             {
-                Type t = target.MakeGenericType(types);
+                Type t;
+                try
+                {
+                    // MakeGenericType can throw ArgumentException
+                    t = target.MakeGenericType(types);
+                }
+                catch (ArgumentException e)
+                {
+                    return Exceptions.RaiseTypeError(e.Message);
+                }
                 ManagedType c = ClassManager.GetClass(t);
                 Runtime.XIncref(c.pyHandle);
                 return c.pyHandle;
             }
 
-            return Exceptions.RaiseTypeError("no type matches params");
+            return Exceptions.RaiseTypeError($"{type.Value.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
         }
 
         /// <summary>
@@ -67,6 +91,30 @@ namespace Python.Runtime
         {
             CLRObject co1;
             CLRObject co2;
+            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp);
+            // C# operator methods take precedence over IComparable.
+            // We first check if there's a comparison operator by looking up the richcompare table,
+            // otherwise fallback to checking if an IComparable interface is handled.
+            if (cls.richcompare.TryGetValue(op, out var methodObject))
+            {
+                // Wrap the `other` argument of a binary comparison operator in a PyTuple.
+                IntPtr args = Runtime.PyTuple_New(1);
+                Runtime.XIncref(other);
+                Runtime.PyTuple_SetItem(args, 0, other);
+
+                IntPtr value;
+                try
+                {
+                    value = methodObject.Invoke(ob, args, IntPtr.Zero);
+                }
+                finally
+                {
+                    Runtime.XDecref(args);  // Free args pytuple
+                }
+                return value;
+            }
+
             switch (op)
             {
                 case Runtime.Py_EQ:
@@ -188,7 +236,6 @@ namespace Python.Runtime
 
             var e = co.inst as IEnumerable;
             IEnumerator o;
-
             if (e != null)
             {
                 o = e.GetEnumerator();
@@ -203,21 +250,36 @@ namespace Python.Runtime
                 }
             }
 
-            return new Iterator(o).pyHandle;
+            var elemType = typeof(object);
+            var iterType = co.inst.GetType();
+            foreach(var ifc in iterType.GetInterfaces())
+            {
+                if (ifc.IsGenericType)
+                {
+                    var genTypeDef = ifc.GetGenericTypeDefinition();
+                    if (genTypeDef == typeof(IEnumerable<>) || genTypeDef == typeof(IEnumerator<>))
+                    {
+                        elemType = ifc.GetGenericArguments()[0];
+                        break;
+                    }
+                }
+            }
+
+            return new Iterator(o, elemType).pyHandle;
         }
 
 
         /// <summary>
         /// Standard __hash__ implementation for instances of reflected types.
         /// </summary>
-        public static IntPtr tp_hash(IntPtr ob)
+        public static nint tp_hash(IntPtr ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 return Exceptions.RaiseTypeError("unhashable type");
             }
-            return new IntPtr(co.inst.GetHashCode());
+            return co.inst.GetHashCode();
         }
 
 
@@ -268,7 +330,7 @@ namespace Python.Runtime
                 IntPtr args = Runtime.PyTuple_New(1);
                 Runtime.XIncref(ob);
                 Runtime.PyTuple_SetItem(args, 0, ob);
-                IntPtr reprFunc = Runtime.PyObject_GetAttrString(Runtime.PyBaseObjectType, "__repr__");
+                IntPtr reprFunc = Runtime.PyObject_GetAttr(Runtime.PyBaseObjectType, PyIdentifier.__repr__);
                 var output =  Runtime.PyObject_Call(reprFunc, args, IntPtr.Zero);
                 Runtime.XDecref(args);
                 Runtime.XDecref(reprFunc);
@@ -292,15 +354,168 @@ namespace Python.Runtime
         public static void tp_dealloc(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            IntPtr dict = Marshal.ReadIntPtr(ob, ObjectOffset.TypeDictOffset(self.tpHandle));
-            if (dict != IntPtr.Zero)
-            {
-                Runtime.XDecref(dict);
-            }
+            tp_clear(ob);
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
             Runtime.PyObject_GC_Del(self.pyHandle);
-            Runtime.XDecref(self.tpHandle);
-            self.gcHandle.Free();
+            self.FreeGCHandle();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            ManagedType self = GetManagedObject(ob);
+            if (!self.IsTypeObject())
+            {
+                ClearObjectDict(ob);
+            }
+            self.tpHandle = IntPtr.Zero;
+            return 0;
+        }
+
+        protected override void OnSave(InterDomainContext context)
+        {
+            base.OnSave(context);
+            if (pyHandle != tpHandle)
+            {
+                IntPtr dict = GetObjectDict(pyHandle);
+                Runtime.XIncref(dict);
+                context.Storage.AddValue("dict", dict);
+            }
+        }
+
+        protected override void OnLoad(InterDomainContext context)
+        {
+            base.OnLoad(context);
+            if (pyHandle != tpHandle)
+            {
+                IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
+                SetObjectDict(pyHandle, dict);
+            }
+            gcHandle = AllocGCHandle();
+            Marshal.WriteIntPtr(pyHandle, TypeOffset.magic(), (IntPtr)gcHandle);
+        }
+
+
+        /// <summary>
+        /// Implements __getitem__ for reflected classes and value types.
+        /// </summary>
+        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        {
+            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp);
+
+            if (cls.indexer == null || !cls.indexer.CanGet)
+            {
+                Exceptions.SetError(Exceptions.TypeError, "unindexable object");
+                return IntPtr.Zero;
+            }
+
+            // Arg may be a tuple in the case of an indexer with multiple
+            // parameters. If so, use it directly, else make a new tuple
+            // with the index arg (method binders expect arg tuples).
+            IntPtr args = idx;
+            var free = false;
+
+            if (!Runtime.PyTuple_Check(idx))
+            {
+                args = Runtime.PyTuple_New(1);
+                Runtime.XIncref(idx);
+                Runtime.PyTuple_SetItem(args, 0, idx);
+                free = true;
+            }
+
+            IntPtr value;
+
+            try
+            {
+                value = cls.indexer.GetItem(ob, args);
+            }
+            finally
+            {
+                if (free)
+                {
+                    Runtime.XDecref(args);
+                }
+            }
+            return value;
+        }
+
+
+        /// <summary>
+        /// Implements __setitem__ for reflected classes and value types.
+        /// </summary>
+        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        {
+            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp);
+
+            if (cls.indexer == null || !cls.indexer.CanSet)
+            {
+                Exceptions.SetError(Exceptions.TypeError, "object doesn't support item assignment");
+                return -1;
+            }
+
+            // Arg may be a tuple in the case of an indexer with multiple
+            // parameters. If so, use it directly, else make a new tuple
+            // with the index arg (method binders expect arg tuples).
+            IntPtr args = idx;
+            var free = false;
+
+            if (!Runtime.PyTuple_Check(idx))
+            {
+                args = Runtime.PyTuple_New(1);
+                Runtime.XIncref(idx);
+                Runtime.PyTuple_SetItem(args, 0, idx);
+                free = true;
+            }
+
+            // Get the args passed in.
+            var i = Runtime.PyTuple_Size(args);
+            IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
+            var numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+            var temp = i + numOfDefaultArgs;
+            IntPtr real = Runtime.PyTuple_New(temp + 1);
+            for (var n = 0; n < i; n++)
+            {
+                IntPtr item = Runtime.PyTuple_GetItem(args, n);
+                Runtime.XIncref(item);
+                Runtime.PyTuple_SetItem(real, n, item);
+            }
+
+            // Add Default Args if needed
+            for (var n = 0; n < numOfDefaultArgs; n++)
+            {
+                IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
+                Runtime.XIncref(item);
+                Runtime.PyTuple_SetItem(real, n + i, item);
+            }
+            // no longer need defaultArgs
+            Runtime.XDecref(defaultArgs);
+            i = temp;
+
+            // Add value to argument list
+            Runtime.XIncref(v);
+            Runtime.PyTuple_SetItem(real, i, v);
+
+            try
+            {
+                cls.indexer.SetItem(ob, real);
+            }
+            finally
+            {
+                Runtime.XDecref(real);
+
+                if (free)
+                {
+                    Runtime.XDecref(args);
+                }
+            }
+
+            if (Exceptions.ErrorOccurred())
+            {
+                return -1;
+            }
+
+            return 0;
         }
     }
 }

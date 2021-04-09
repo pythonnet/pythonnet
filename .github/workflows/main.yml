@@ -1,0 +1,77 @@
+name: GitHub Actions
+
+on: [ pull_request, push ]
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows, ubuntu, macos]
+        python: ["3.6", "3.7", "3.8", "3.9"]
+        platform: [x64]
+        shutdown_mode: [Normal, Soft]
+
+    env:
+      PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
+
+    steps:
+      - name: Set Environment on macOS
+        uses: maxim-lobanov/setup-xamarin@v1
+        if: ${{ matrix.os == 'macos' }}
+        with:
+          mono-version: latest
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: ${{ matrix.platform }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade -r requirements.txt
+
+      - name: Build and Install
+        run: |
+          pip install -v .
+
+      - name: Set Python DLL path (non Windows)
+        if: ${{ matrix.os != 'windows' }}
+        run: |
+          python -m pythonnet.find_libpython --export >> $GITHUB_ENV
+
+      - name: Set Python DLL path (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        run: |
+          python -m pythonnet.find_libpython --export | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Python Tests (Mono)
+        if: ${{ matrix.os != 'windows' }}
+        run: pytest --runtime mono
+
+      - name: Python Tests (.NET Core)
+        run: pytest --runtime netcore
+
+      - name: Python Tests (.NET Framework)
+        if: ${{ matrix.os == 'windows' }}
+        run: pytest --runtime netfx
+
+      - name: Embedding tests
+        run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
+
+      - name: Python tests run from .NET
+        run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
+
+      # TODO: Run perf tests
+      # TODO: Run mono tests on Windows?

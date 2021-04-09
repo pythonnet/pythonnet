@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -12,6 +13,14 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
+        public static ShutdownMode ShutdownMode
+        {
+            get => Runtime.ShutdownMode;
+            set => Runtime.ShutdownMode = value;
+        }
+
+        public static ShutdownMode DefaultShutdownMode => Runtime.GetDefaultShutdownMode();
+
         private static DelegateManager delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
@@ -42,6 +51,9 @@ namespace Python.Runtime
         {
             get { return initialized; }
         }
+
+        /// <summary>Set to <c>true</c> to enable GIL debugging assistance.</summary>
+        public static bool DebugGIL { get; set; } = false;
 
         internal static DelegateManager DelegateManager
         {
@@ -96,10 +108,6 @@ namespace Python.Runtime
             }
             set
             {
-                if (Runtime.IsPython2)
-                {
-                    throw new NotSupportedException("Set PythonPath not supported on Python 2");
-                }
                 Marshal.FreeHGlobal(_pythonPath);
                 _pythonPath = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
                 Runtime.Py_SetPath(_pythonPath);
@@ -151,9 +159,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode);
         }
 
         /// <summary>
@@ -166,82 +174,73 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
         {
-            if (!initialized)
+            if (initialized)
             {
-                // Creating the delegateManager MUST happen before Runtime.Initialize
-                // is called. If it happens afterwards, DelegateManager's CodeGenerator
-                // throws an exception in its ctor.  This exception is eaten somehow
-                // during an initial "import clr", and the world ends shortly thereafter.
-                // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
-                delegateManager = new DelegateManager();
-                Runtime.Initialize(initSigs);
-                initialized = true;
-                Exceptions.Clear();
+                return;
+            }
+            // Creating the delegateManager MUST happen before Runtime.Initialize
+            // is called. If it happens afterwards, DelegateManager's CodeGenerator
+            // throws an exception in its ctor.  This exception is eaten somehow
+            // during an initial "import clr", and the world ends shortly thereafter.
+            // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
+            delegateManager = new DelegateManager();
+            Runtime.Initialize(initSigs, mode);
+            initialized = true;
+            Exceptions.Clear();
 
-                // Make sure we clean up properly on app domain unload.
-                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+            // Make sure we clean up properly on app domain unload.
+            AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
-                // Remember to shut down the runtime.
-                AddShutdownHandler(Runtime.Shutdown);
+            // The global scope gets used implicitly quite early on, remember
+            // to clear it out when we shut down.
+            AddShutdownHandler(PyScopeManager.Global.Clear);
 
-                // The global scope gets used implicitly quite early on, remember
-                // to clear it out when we shut down.
-                AddShutdownHandler(PyScopeManager.Global.Clear);
+            if (setSysArgv)
+            {
+                Py.SetArgv(args);
+            }
 
-                if (setSysArgv)
+            // Load the clr.py resource into the clr module
+            NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
+            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr);
+
+            var locals = new PyDict();
+            try
+            {
+                BorrowedReference module = Runtime.PyImport_AddModule("clr._extras");
+                BorrowedReference module_globals = Runtime.PyModule_GetDict(module);
+                BorrowedReference builtins = Runtime.PyEval_GetBuiltins();
+                Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
+
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
+                using (var reader = new StreamReader(stream))
                 {
-                    Py.SetArgv(args);
+                    // add the contents of clr.py to the module
+                    string clr_py = reader.ReadToEnd();
+                    Exec(clr_py, module_globals, locals.Reference);
                 }
 
-                // register the atexit callback (this doesn't use Py_AtExit as the C atexit
-                // callbacks are called after python is fully finalized but the python ones
-                // are called while the python engine is still running).
-                string code =
-                    "import atexit, clr\n" +
-                    "atexit.register(clr._AtExit)\n";
-                PythonEngine.Exec(code);
-
-                // Load the clr.py resource into the clr module
-                IntPtr clr = Python.Runtime.ImportHook.GetCLRModule();
-                IntPtr clr_dict = Runtime.PyModule_GetDict(clr);
-
-                var locals = new PyDict();
-                try
+                // add the imported module to the clr module, and copy the API functions
+                // and decorators into the main clr module.
+                Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
+                using (var keys = locals.Keys())
+                foreach (PyObject key in keys)
                 {
-                    IntPtr module = Runtime.PyImport_AddModule("clr._extras");
-                    IntPtr module_globals = Runtime.PyModule_GetDict(module);
-                    IntPtr builtins = Runtime.PyEval_GetBuiltins();
-                    Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
-
-                    Assembly assembly = Assembly.GetExecutingAssembly();
-                    using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
-                    using (var reader = new StreamReader(stream))
+                    if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
                     {
-                        // add the contents of clr.py to the module
-                        string clr_py = reader.ReadToEnd();
-                        Exec(clr_py, module_globals, locals.Handle);
+                        PyObject value = locals[key];
+                        Runtime.PyDict_SetItem(clr_dict, key.Reference, value.Reference);
+                        value.Dispose();
                     }
-
-                    // add the imported module to the clr module, and copy the API functions
-                    // and decorators into the main clr module.
-                    Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
-                    foreach (PyObject key in locals.Keys())
-                    {
-                        if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
-                        {
-                            PyObject value = locals[key];
-                            Runtime.PyDict_SetItem(clr_dict, key.Handle, value.Handle);
-                            value.Dispose();
-                        }
-                        key.Dispose();
-                    }
+                    key.Dispose();
                 }
-                finally
-                {
-                    locals.Dispose();
-                }
+            }
+            finally
+            {
+                locals.Dispose();
             }
         }
 
@@ -255,15 +254,11 @@ namespace Python.Runtime
         /// CPython interpreter process - this bootstraps the managed runtime
         /// when it is imported by the CLR extension module.
         /// </summary>
-#if PYTHON3
         public static IntPtr InitExt()
-#elif PYTHON2
-        public static void InitExt()
-#endif
         {
             try
             {
-                Initialize(setSysArgv: false);
+                Initialize(setSysArgv: false, mode: ShutdownMode.Extension);
 
                 // Trickery - when the import hook is installed into an already
                 // running Python, the standard import machinery is still in
@@ -299,14 +294,39 @@ namespace Python.Runtime
             catch (PythonException e)
             {
                 e.Restore();
-#if PYTHON3
                 return IntPtr.Zero;
-#endif
             }
 
-#if PYTHON3
-            return Python.Runtime.ImportHook.GetCLRModule();
-#endif
+            return Python.Runtime.ImportHook.GetCLRModule()
+                   .DangerousMoveToPointerOrNull();
+        }
+
+        /// <summary>
+        /// Shutdown Method
+        /// </summary>
+        /// <remarks>
+        /// Shutdown and release resources held by the Python runtime. The
+        /// Python runtime can no longer be used in the current process
+        /// after calling the Shutdown method.
+        /// </remarks>
+        /// <param name="mode">The ShutdownMode to use when shutting down the Runtime</param>
+        public static void Shutdown(ShutdownMode mode)
+        {
+            if (!initialized)
+            {
+                return;
+            }
+            // If the shutdown handlers trigger a domain unload,
+            // don't call shutdown again.
+            AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+
+            PyScopeManager.Global.Clear();
+            ExecuteShutdownHandlers();
+            // Remember to shut down the runtime.
+            Runtime.Shutdown(mode);
+            PyObjectConversions.Reset();
+
+            initialized = false;
         }
 
         /// <summary>
@@ -319,20 +339,7 @@ namespace Python.Runtime
         /// </remarks>
         public static void Shutdown()
         {
-            if (initialized)
-            {
-                PyScopeManager.Global.Clear();
-                
-                // If the shutdown handlers trigger a domain unload,
-                // don't call shutdown again.
-                AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
-
-                ExecuteShutdownHandlers();
-
-                PyObjectConversions.Reset();
-
-                initialized = false;
-            }
+            Shutdown(Runtime.ShutdownMode);
         }
 
         /// <summary>
@@ -465,61 +472,26 @@ namespace Python.Runtime
             Runtime.PyEval_RestoreThread(ts);
         }
 
+        [Obsolete("Use PyModule.Import")]
+        public static PyObject ImportModule(string name) => PyModule.Import(name);
 
-        /// <summary>
-        /// ImportModule Method
-        /// </summary>
-        /// <remarks>
-        /// Given a fully-qualified module or package name, import the
-        /// module and return the resulting module object as a PyObject
-        /// or null if an exception is raised.
-        /// </remarks>
-        public static PyObject ImportModule(string name)
-        {
-            IntPtr op = Runtime.PyImport_ImportModule(name);
-            Runtime.CheckExceptionOccurred();
-            return new PyObject(op);
-        }
-
-
-        /// <summary>
-        /// ReloadModule Method
-        /// </summary>
-        /// <remarks>
-        /// Given a PyObject representing a previously loaded module, reload
-        /// the module.
-        /// </remarks>
+        [Obsolete("Use PyModule.Reload")]
         public static PyObject ReloadModule(PyObject module)
-        {
-            IntPtr op = Runtime.PyImport_ReloadModule(module.Handle);
-            Runtime.CheckExceptionOccurred();
-            return new PyObject(op);
-        }
+            => module is PyModule pyModule ? pyModule.Reload() : new PyModule(module).Reload();
 
-
-        /// <summary>
-        /// ModuleFromString Method
-        /// </summary>
-        /// <remarks>
-        /// Given a string module name and a string containing Python code,
-        /// execute the code in and return a module of the given name.
-        /// </remarks>
+        [Obsolete("Use PyModule.FromString")]
         public static PyObject ModuleFromString(string name, string code)
-        {
-            IntPtr c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
-            Runtime.CheckExceptionOccurred();
-            IntPtr m = Runtime.PyImport_ExecCodeModule(name, c);
-            Runtime.CheckExceptionOccurred();
-            return new PyObject(m);
-        }
+            => PyModule.FromString(name, code);
+
 
         public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
         {
             var flag = (int)mode;
-            IntPtr ptr = Runtime.Py_CompileString(code, filename, flag);
-            Runtime.CheckExceptionOccurred();
-            return new PyObject(ptr);
+            NewReference ptr = Runtime.Py_CompileString(code, filename, flag);
+            PythonException.ThrowIfIsNull(ptr);
+            return ptr.MoveToPyObject();
         }
+
 
         /// <summary>
         /// Eval Method
@@ -530,7 +502,9 @@ namespace Python.Runtime
         /// </remarks>
         public static PyObject Eval(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            PyObject result = RunString(code, globals, locals, RunFlagType.Eval);
+            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
+            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
+            PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.Eval);
             return result;
         }
 
@@ -544,15 +518,54 @@ namespace Python.Runtime
         /// </remarks>
         public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            using (PyObject result = RunString(code, globals, locals, RunFlagType.File))
+            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
+            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
+            using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
+            if (result.obj != Runtime.PyNone)
             {
-                if (result.obj != Runtime.PyNone)
-                {
-                    throw PythonException.ThrowLastAsClrException();
-                }
+                throw new PythonException();
+            }
+        }
+        /// <summary>
+        /// Exec Method
+        /// </summary>
+        /// <remarks>
+        /// Run a string containing Python code.
+        /// It's a subset of Python exec function.
+        /// </remarks>
+        internal static void Exec(string code, BorrowedReference globals, BorrowedReference locals = default)
+        {
+            using PyObject result = RunString(code, globals: globals, locals: locals, RunFlagType.File);
+            if (result.obj != Runtime.PyNone)
+            {
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
+        /// <summary>
+        /// Gets the Python thread ID.
+        /// </summary>
+        /// <returns>The Python thread ID.</returns>
+        public static ulong GetPythonThreadID()
+        {
+            dynamic threading = Py.Import("threading");
+            return threading.InvokeMethod("get_ident");
+        }
+
+        /// <summary>
+        /// Interrupts the execution of a thread.
+        /// </summary>
+        /// <param name="pythonThreadID">The Python thread ID.</param>
+        /// <returns>The number of thread states modified; this is normally one, but will be zero if the thread id isn’t found.</returns>
+        public static int Interrupt(ulong pythonThreadID)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return Runtime.PyThreadState_SetAsyncExcLLP64((uint)pythonThreadID, Exceptions.KeyboardInterrupt);
+            }
+
+            return Runtime.PyThreadState_SetAsyncExcLP64(pythonThreadID, Exceptions.KeyboardInterrupt);
+        }
 
         /// <summary>
         /// RunString Method. Function has been deprecated and will be removed.
@@ -561,7 +574,7 @@ namespace Python.Runtime
         [Obsolete("RunString is deprecated and will be removed. Use Exec/Eval/RunSimpleString instead.")]
         public static PyObject RunString(string code, IntPtr? globals = null, IntPtr? locals = null)
         {
-            return RunString(code, globals, locals, RunFlagType.File);
+            return RunString(code, new BorrowedReference(globals.GetValueOrDefault()), new BorrowedReference(locals.GetValueOrDefault()), RunFlagType.File);
         }
 
         /// <summary>
@@ -572,23 +585,22 @@ namespace Python.Runtime
         /// executing the code string as a PyObject instance, or null if
         /// an exception was raised.
         /// </remarks>
-        internal static PyObject RunString(string code, IntPtr? globals, IntPtr? locals, RunFlagType flag)
+        internal static PyObject RunString(string code, BorrowedReference globals, BorrowedReference locals, RunFlagType flag)
         {
-            var borrowedGlobals = true;
-            if (globals == null)
+            NewReference tempGlobals = default;
+            if (globals.IsNull)
             {
                 globals = Runtime.PyEval_GetGlobals();
-                if (globals == IntPtr.Zero)
+                if (globals.IsNull)
                 {
-                    globals = Runtime.PyDict_New();
-                    Runtime.PyDict_SetItemString(
-                        globals.Value, "__builtins__",
+                    globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
+                    Runtime.PyDict_SetItem(
+                        globals, PyIdentifier.__builtins__,
                         Runtime.PyEval_GetBuiltins()
                     );
-                    borrowedGlobals = false;
                 }
             }
-            
+
             if (locals == null)
             {
                 locals = globals;
@@ -597,26 +609,14 @@ namespace Python.Runtime
             try
             {
                 NewReference result = Runtime.PyRun_String(
-                    code, (IntPtr)flag, globals.Value, locals.Value
+                    code, flag, globals, locals
                 );
-
-                try
-                {
-                    Runtime.CheckExceptionOccurred();
-
-                    return result.MoveToPyObject();
-                }
-                finally
-                {
-                    result.Dispose();
-                }
+                PythonException.ThrowIfIsNull(result);
+                return result.MoveToPyObject();
             }
             finally
             {
-                if (!borrowedGlobals)
-                {
-                    Runtime.XDecref(globals.Value);
-                }
+                tempGlobals.Dispose();
             }
         }
     }
@@ -637,7 +637,7 @@ namespace Python.Runtime
                 PythonEngine.Initialize();
             }
 
-            return new GILState();
+            return PythonEngine.DebugGIL ? new DebugGILState() : new GILState();
         }
 
         public static PyScope CreateScope()
@@ -651,7 +651,7 @@ namespace Python.Runtime
             var scope = PyScopeManager.Global.Create(name);
             return scope;
         }
-        
+
         public class GILState : IDisposable
         {
             private readonly IntPtr state;
@@ -662,7 +662,7 @@ namespace Python.Runtime
                 state = PythonEngine.AcquireLock();
             }
 
-            public void Dispose()
+            public virtual void Dispose()
             {
                 if (this.isDisposed) return;
 
@@ -673,7 +673,23 @@ namespace Python.Runtime
 
             ~GILState()
             {
-                Dispose();
+                throw new InvalidOperationException("GIL must always be released, and it must be released from the same thread that acquired it.");
+            }
+        }
+
+        public class DebugGILState : GILState
+        {
+            readonly Thread owner;
+            internal DebugGILState() : base()
+            {
+                this.owner = Thread.CurrentThread;
+            }
+            public override void Dispose()
+            {
+                if (this.owner != Thread.CurrentThread)
+                    throw new InvalidOperationException("GIL must always be released from the same thread, that acquired it");
+
+                base.Dispose();
             }
         }
 
@@ -711,10 +727,12 @@ namespace Python.Runtime
             return dict;
         }
 
-        public static PyObject Import(string name)
-        {
-            return PythonEngine.ImportModule(name);
-        }
+        /// <summary>
+        /// Given a module or package name, import the
+        /// module and return the resulting module object as a <see cref="PyModule"/>.
+        /// </summary>
+        /// <param name="name">Fully-qualified module or package name</param>
+        public static PyModule Import(string name) => PyModule.Import(name);
 
         public static void SetArgv()
         {
@@ -752,7 +770,7 @@ namespace Python.Runtime
 
         public static void With(PyObject obj, Action<dynamic> Body)
         {
-            // Behavior described here: 
+            // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
             PyObject type = PyObject.None;

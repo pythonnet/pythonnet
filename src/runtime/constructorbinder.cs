@@ -11,9 +11,10 @@ namespace Python.Runtime
     /// standard MethodBinder because of a difference in invoking constructors
     /// using reflection (which is seems to be a CLR bug).
     /// </summary>
+    [Serializable]
     internal class ConstructorBinder : MethodBinder
     {
-        private Type _containingType;
+        private MaybeType _containingType;
 
         internal ConstructorBinder(Type containingType)
         {
@@ -50,10 +51,15 @@ namespace Python.Runtime
         /// </remarks>
         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
         {
+            if (!_containingType.Valid)
+            {
+                return Exceptions.RaiseTypeError(_containingType.DeletedMessage);
+            }
             object result;
+            Type tp = _containingType.Value;
 
-            if (_containingType.IsValueType && !_containingType.IsPrimitive &&
-                !_containingType.IsEnum && _containingType != typeof(decimal) &&
+            if (tp.IsValueType && !tp.IsPrimitive &&
+                !tp.IsEnum && tp != typeof(decimal) &&
                 Runtime.PyTuple_Size(args) == 0)
             {
                 // If you are trying to construct an instance of a struct by
@@ -63,7 +69,7 @@ namespace Python.Runtime
                 // Activator.CreateInstance().
                 try
                 {
-                    result = Activator.CreateInstance(_containingType);
+                    result = Activator.CreateInstance(tp);
                 }
                 catch (Exception e)
                 {
@@ -89,7 +95,7 @@ namespace Python.Runtime
                 // any extra args are intended for the subclass' __init__.
 
                 IntPtr eargs = Runtime.PyTuple_New(0);
-                binding = Bind(inst, eargs, kw);
+                binding = Bind(inst, eargs, IntPtr.Zero);
                 Runtime.XDecref(eargs);
 
                 if (binding == null)

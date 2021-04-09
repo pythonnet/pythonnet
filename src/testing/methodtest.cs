@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Python.Test
@@ -84,7 +85,7 @@ namespace Python.Test
 
         public static string[] TestStringParamsArg(params string[] args)
         {
-            return args;
+            return args.Concat(new[] { "tail" }).ToArray();
         }
 
         public static object[] TestObjectParamsArg(params object[] args)
@@ -653,37 +654,76 @@ namespace Python.Test
             return "Casesensitive";
         }
 
-        public static string DefaultParams(int a=0, int b=0, int c=0, int d=0)
+        public static string DefaultParams(int a = 0, int b = 0, int c = 0, int d = 0)
         {
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        public static string OptionalParams([Optional]int a, [Optional]int b, [Optional]int c, [Optional] int d)
+        public static string OptionalParams([Optional] int a, [Optional] int b, [Optional] int c, [Optional] int d)
         {
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        public static bool OptionalParams_TestMissing([Optional]object a)
+        public static bool OptionalParams_TestMissing([Optional] object a)
         {
             return a == Type.Missing;
         }
 
-        public static bool OptionalParams_TestReferenceType([Optional]string a)
+        public static bool OptionalParams_TestReferenceType([Optional] string a)
         {
             return a == null;
         }
 
-        public static string OptionalAndDefaultParams([Optional]int a, [Optional]int b, int c=0, int d=0)
+        public static string OptionalAndDefaultParams([Optional] int a, [Optional] int b, int c = 0, int d = 0)
         {
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        public static string OptionalAndDefaultParams2([Optional]int a, [Optional]int b, [Optional, DefaultParameterValue(1)]int c, int d = 2)
+        public static string OptionalAndDefaultParams2([Optional] int a, [Optional] int b, [Optional, DefaultParameterValue(1)] int c, int d = 2)
         {
             return string.Format("{0}{1}{2}{3}", a, b, c, d);
         }
 
-        
+        public static string DefaultParamsWithOverloading(int a = 2, int b = 1)
+        {
+            return $"{a}{b}";
+        }
+
+        public static string DefaultParamsWithOverloading(string a = "a", string b = "b")
+        {
+            return $"{a}{b}X";
+        }
+
+        public static string DefaultParamsWithOverloading(int a = 0, int b = 1, int c = 2)
+        {
+            return $"{a}{b}{c}XX";
+        }
+
+        public static string DefaultParamsWithOverloading(int a = 5, int b = 6, int c = 7, int d = 8)
+        {
+            return $"{a}{b}{c}{d}XXX";
+        }
+
+        public static string ParamsArrayOverloaded(int i = 1)
+        {
+            return "without params-array";
+        }
+
+        public static string ParamsArrayOverloaded(int i, params int[] paramsArray)
+        {
+            return "with params-array";
+        }
+
+        public static void EncodingTestÅngström()
+        {
+        }
+
+        // This method can never be invoked from Python, but we want to test that any attempt fails gracefully instead of crashing.
+        unsafe
+        public static void PointerArray(int*[] array)
+        {
+
+        }
     }
 
 
@@ -697,6 +737,12 @@ namespace Python.Test
         {
             return echo;
         }
+    }
+
+    public class MethodArityTest
+    {
+        public string Foo(int a) { return "Arity 1"; }
+        public string Foo(int a, int b) { return "Arity 2"; }
     }
 }
 

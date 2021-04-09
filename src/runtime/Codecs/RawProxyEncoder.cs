@@ -6,7 +6,6 @@ namespace Python.Runtime.Codecs
     /// A .NET object encoder, that returns raw proxies (e.g. no conversion to Python types).
     /// <para>You must inherit from this class and override <see cref="CanEncode"/>.</para>
     /// </summary>
-    [Obsolete(Util.UnstableApiMessage)]
     public class RawProxyEncoder: IPyObjectEncoder
     {
         public PyObject TryEncode(object value)

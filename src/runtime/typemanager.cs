@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Python.Runtime.Platform;
+using System.Diagnostics;
 using Python.Runtime.Slots;
+using static Python.Runtime.PythonException;
 
 namespace Python.Runtime
 {
@@ -16,26 +17,92 @@ namespace Python.Runtime
     /// </summary>
     internal class TypeManager
     {
-        private static BindingFlags tbFlags;
-        private static Dictionary<Type, IntPtr> cache;
+        internal static IntPtr subtype_traverse;
+        internal static IntPtr subtype_clear;
 
-        static TypeManager()
+        private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
+        private static Dictionary<MaybeType, IntPtr> cache = new Dictionary<MaybeType, IntPtr>();
+
+        private static readonly Dictionary<IntPtr, SlotsHolder> _slotsHolders = new Dictionary<IntPtr, SlotsHolder>();
+        private static Dictionary<MaybeType, Type> _slotsImpls = new Dictionary<MaybeType, Type>();
+
+        // Slots which must be set
+        private static readonly string[] _requiredSlots = new string[]
         {
-            tbFlags = BindingFlags.Public | BindingFlags.Static;
-            cache = new Dictionary<Type, IntPtr>(128);
+            "tp_traverse",
+            "tp_clear",
+        };
+
+        internal static void Initialize()
+        {
+            Debug.Assert(cache.Count == 0, "Cache should be empty",
+                "Some errors may occurred on last shutdown");
+            IntPtr type = SlotHelper.CreateObjectType();
+            subtype_traverse = Marshal.ReadIntPtr(type, TypeOffset.tp_traverse);
+            subtype_clear = Marshal.ReadIntPtr(type, TypeOffset.tp_clear);
+            Runtime.XDecref(type);
         }
 
-        public static void Reset()
+        internal static void RemoveTypes()
         {
-            cache = new Dictionary<Type, IntPtr>(128);
+            foreach (var tpHandle in cache.Values)
+            {
+                SlotsHolder holder;
+                if (_slotsHolders.TryGetValue(tpHandle, out holder))
+                {
+                    // If refcount > 1, it needs to reset the managed slot,
+                    // otherwise it can dealloc without any trick.
+                    if (Runtime.Refcount(tpHandle) > 1)
+                    {
+                        holder.ResetSlots();
+                    }
+                }
+                Runtime.XDecref(tpHandle);
+            }
+            cache.Clear();
+            _slotsImpls.Clear();
+            _slotsHolders.Clear();
+        }
+
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        {
+            foreach (var tpHandle in cache.Values)
+            {
+                Runtime.XIncref(tpHandle);
+            }
+            storage.AddValue("cache", cache);
+            storage.AddValue("slots", _slotsImpls);
+        }
+
+        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
+        {
+            Debug.Assert(cache == null || cache.Count == 0);
+            storage.GetValue("slots", out _slotsImpls);
+            storage.GetValue<Dictionary<MaybeType, IntPtr>>("cache", out var _cache);
+            foreach (var entry in _cache)
+            {
+                if (!entry.Key.Valid)
+                {
+                    Runtime.XDecref(entry.Value);
+                    continue;
+                }
+                Type type = entry.Key.Value;;
+                IntPtr handle = entry.Value;
+                cache[type] = handle;
+                SlotsHolder holder = CreateSolotsHolder(handle);
+                InitializeSlots(handle, _slotsImpls[type], holder);
+                // FIXME: mp_length_slot.CanAssgin(clrType)
+            }
         }
 
         /// <summary>
+        /// Return value: Borrowed reference.
         /// Given a managed Type derived from ExtensionType, get the handle to
         /// a Python type object that delegates its implementation to the Type
         /// object. These Python type instances are used to implement internal
         /// descriptor and utility types like ModuleObject, PropertyObject, etc.
         /// </summary>
+        [Obsolete]
         internal static IntPtr GetTypeHandle(Type type)
         {
             // Note that these types are cached with a refcount of 1, so they
@@ -48,11 +115,21 @@ namespace Python.Runtime
             }
             handle = CreateType(type);
             cache[type] = handle;
+            _slotsImpls.Add(type, type);
             return handle;
         }
+        /// <summary>
+        /// Given a managed Type derived from ExtensionType, get the handle to
+        /// a Python type object that delegates its implementation to the Type
+        /// object. These Python type instances are used to implement internal
+        /// descriptor and utility types like ModuleObject, PropertyObject, etc.
+        /// </summary>
+        internal static BorrowedReference GetTypeReference(Type type)
+            => new BorrowedReference(GetTypeHandle(type));
 
 
         /// <summary>
+        /// Return value: Borrowed reference.
         /// Get the handle of a Python type that reflects the given CLR type.
         /// The given ManagedType instance is a managed object that implements
         /// the appropriate semantics in Python for the reflected managed type.
@@ -67,6 +144,7 @@ namespace Python.Runtime
             }
             handle = CreateType(obj, type);
             cache[type] = handle;
+            _slotsImpls.Add(type, obj.GetType());
             return handle;
         }
 
@@ -81,7 +159,7 @@ namespace Python.Runtime
         /// </summary>
         internal static IntPtr CreateType(Type impl)
         {
-            IntPtr type = AllocateTypeObject(impl.Name);
+            IntPtr type = AllocateTypeObject(impl.Name, metatype: Runtime.PyTypeType);
             int ob_size = ObjectOffset.Size(type);
 
             // Set tp_basicsize to the size of our managed instance objects.
@@ -90,20 +168,28 @@ namespace Python.Runtime
             var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
-            InitializeSlots(type, impl);
+            SlotsHolder slotsHolder = CreateSolotsHolder(type);
+            InitializeSlots(type, impl, slotsHolder);
 
-            int flags = TypeFlags.Default | TypeFlags.Managed |
+            var flags = TypeFlags.Default | TypeFlags.Managed |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
-            IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            var dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
+            var mod = NewReference.DangerousFromPointer(Runtime.PyString_FromString("CLR"));
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
+            mod.Dispose();
 
             InitMethods(type, impl);
 
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             return type;
         }
 
@@ -111,7 +197,7 @@ namespace Python.Runtime
         internal static IntPtr CreateType(ManagedType impl, Type clrType)
         {
             // Cleanup the type name to get rid of funny nested type names.
-            string name = "CLR." + clrType.FullName;
+            string name = $"clr.{clrType.FullName}";
             int i = name.LastIndexOf('+');
             if (i > -1)
             {
@@ -146,7 +232,7 @@ namespace Python.Runtime
                 base_ = bc.pyHandle;
             }
 
-            IntPtr type = AllocateTypeObject(name);
+            IntPtr type = AllocateTypeObject(name, Runtime.PyCLRMetaType);
 
             Marshal.WriteIntPtr(type, TypeOffset.ob_type, Runtime.PyCLRMetaType);
             Runtime.XIncref(Runtime.PyCLRMetaType);
@@ -155,14 +241,44 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
-            // add a __len__ slot for inheritors of ICollection and ICollection<>
-            if (typeof(ICollection).IsAssignableFrom(clrType) || clrType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            // we want to do this after the slot stuff above in case the class itself implements a slot method
+            SlotsHolder slotsHolder = CreateSolotsHolder(type);
+            InitializeSlots(type, impl.GetType(), slotsHolder);
+
+            if (Marshal.ReadIntPtr(type, TypeOffset.mp_length) == IntPtr.Zero
+                && mp_length_slot.CanAssign(clrType))
             {
-                InitializeSlot(type, TypeOffset.mp_length, typeof(mp_length_slot).GetMethod(nameof(mp_length_slot.mp_length)));
+                InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
             }
 
-            // we want to do this after the slot stuff above in case the class itself implements a slot method
-            InitializeSlots(type, impl.GetType());
+            if (!typeof(IEnumerable).IsAssignableFrom(clrType) &&
+                !typeof(IEnumerator).IsAssignableFrom(clrType))
+            {
+                // The tp_iter slot should only be set for enumerable types.
+                Marshal.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
+            }
+
+
+            // Only set mp_subscript and mp_ass_subscript for types with indexers
+            if (impl is ClassBase cb)
+            {
+                if (!(impl is ArrayObject))
+                {
+                    if (cb.indexer == null || !cb.indexer.CanGet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                    }
+                    if (cb.indexer == null || !cb.indexer.CanSet)
+                    {
+                        Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+                    }
+                }
+            }
+            else
+            {
+                Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
+                Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+            }
 
             if (base_ != IntPtr.Zero)
             {
@@ -170,31 +286,35 @@ namespace Python.Runtime
                 Runtime.XIncref(base_);
             }
 
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.BaseType;
-            flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            const TypeFlags flags = TypeFlags.Default
+                            | TypeFlags.Managed
+                            | TypeFlags.HeapType
+                            | TypeFlags.BaseType
+                            | TypeFlags.HaveGC;
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
+            OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
             // call this, else PyType_Ready will skip some slot initialization.
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
-            IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
+            var dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
             string mn = clrType.Namespace ?? "";
-            IntPtr mod = Runtime.PyString_FromString(mn);
-            Runtime.PyDict_SetItemString(dict, "__module__", mod);
+            var mod = NewReference.DangerousFromPointer(Runtime.PyString_FromString(mn));
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
+            mod.Dispose();
 
             // Hide the gchandle of the implementation in a magic type slot.
-            GCHandle gc = GCHandle.Alloc(impl);
+            GCHandle gc = impl.AllocGCHandle();
             Marshal.WriteIntPtr(type, TypeOffset.magic(), (IntPtr)gc);
 
             // Set the handle attributes on the implementing instance.
-            impl.tpHandle = Runtime.PyCLRMetaType;
-            impl.gcHandle = gc;
+            impl.tpHandle = type;
             impl.pyHandle = type;
 
             //DebugUtil.DumpType(type);
@@ -202,14 +322,9 @@ namespace Python.Runtime
             return type;
         }
 
-        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method)
-        {
-            var thunk = Interop.GetThunk(method);
-            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
-        }
-
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
         {
+            var dictRef = new BorrowedReference(py_dict);
             // Utility to create a subtype of a managed type with the ability for the
             // a python subtype able to override the managed implementation
             string name = Runtime.GetManagedString(py_name);
@@ -219,40 +334,29 @@ namespace Python.Runtime
             object assembly = null;
             object namespaceStr = null;
 
-            var disposeList = new List<PyObject>();
-            try
+            using (var assemblyKey = new PyString("__assembly__"))
             {
-                var assemblyKey = new PyObject(Converter.ToPython("__assembly__", typeof(string)));
-                disposeList.Add(assemblyKey);
-                if (0 != Runtime.PyMapping_HasKey(py_dict, assemblyKey.Handle))
+                var assemblyPtr = Runtime.PyDict_GetItemWithError(dictRef, assemblyKey.Reference);
+                if (assemblyPtr.IsNull)
                 {
-                    var pyAssembly = new PyObject(Runtime.PyDict_GetItem(py_dict, assemblyKey.Handle));
-                    Runtime.XIncref(pyAssembly.Handle);
-                    disposeList.Add(pyAssembly);
-                    if (!Converter.ToManagedValue(pyAssembly.Handle, typeof(string), out assembly, false))
-                    {
-                        throw new InvalidCastException("Couldn't convert __assembly__ value to string");
-                    }
+                    if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
+                }
+                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, true))
+                {
+                    return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
 
-                var namespaceKey = new PyObject(Converter.ToPythonImplicit("__namespace__"));
-                disposeList.Add(namespaceKey);
-                if (0 != Runtime.PyMapping_HasKey(py_dict, namespaceKey.Handle))
+                using (var namespaceKey = new PyString("__namespace__"))
                 {
-                    var pyNamespace = new PyObject(Runtime.PyDict_GetItem(py_dict, namespaceKey.Handle));
-                    Runtime.XIncref(pyNamespace.Handle);
-                    disposeList.Add(pyNamespace);
-                    if (!Converter.ToManagedValue(pyNamespace.Handle, typeof(string), out namespaceStr, false))
+                    var pyNamespace = Runtime.PyDict_GetItemWithError(dictRef, namespaceKey.Reference);
+                    if (pyNamespace.IsNull)
                     {
-                        throw new InvalidCastException("Couldn't convert __namespace__ value to string");
+                        if (Exceptions.ErrorOccurred()) return IntPtr.Zero;
                     }
-                }
-            }
-            finally
-            {
-                foreach (PyObject o in disposeList)
-                {
-                    o.Dispose();
+                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
+                    {
+                        return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
+                    }
                 }
             }
 
@@ -266,7 +370,7 @@ namespace Python.Runtime
             try
             {
                 Type subType = ClassDerivedObject.CreateDerivedType(name,
-                    baseClass.type,
+                    baseClass.type.Value,
                     py_dict,
                     (string)namespaceStr,
                     (string)assembly);
@@ -277,15 +381,15 @@ namespace Python.Runtime
 
                 // by default the class dict will have all the C# methods in it, but as this is a
                 // derived class we want the python overrides in there instead if they exist.
-                IntPtr cls_dict = Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict);
-                Runtime.PyDict_Update(cls_dict, py_dict);
-
+                var cls_dict = new BorrowedReference(Marshal.ReadIntPtr(py_type, TypeOffset.tp_dict));
+                ThrowIfIsNotZero(Runtime.PyDict_Update(cls_dict, new BorrowedReference(py_dict)));
+                Runtime.XIncref(py_type);
                 // Update the __classcell__ if it exists
-                var cell = new BorrowedReference(Runtime.PyDict_GetItemString(cls_dict, "__classcell__"));
+                BorrowedReference cell = Runtime.PyDict_GetItemString(cls_dict, "__classcell__");
                 if (!cell.IsNull)
                 {
-                    Runtime.PyCell_Set(cell, py_type);
-                    Runtime.PyDict_DelItemString(cls_dict, "__classcell__");
+                    ThrowIfIsNotZero(Runtime.PyCell_Set(cell, py_type));
+                    ThrowIfIsNotZero(Runtime.PyDict_DelItemString(cls_dict, "__classcell__"));
                 }
 
                 return py_type;
@@ -319,76 +423,133 @@ namespace Python.Runtime
             return WriteMethodDef(mdef, IntPtr.Zero, IntPtr.Zero, 0, IntPtr.Zero);
         }
 
-        internal static IntPtr CreateMetaType(Type impl)
+        internal static void FreeMethodDef(IntPtr mdef)
+        {
+            unsafe
+            {
+                var def = (PyMethodDef*)mdef;
+                if (def->ml_name != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(def->ml_name);
+                    def->ml_name = IntPtr.Zero;
+                }
+                if (def->ml_doc != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(def->ml_doc);
+                    def->ml_doc = IntPtr.Zero;
+                }
+            }
+        }
+
+        internal static IntPtr CreateMetaType(Type impl, out SlotsHolder slotsHolder)
         {
             // The managed metatype is functionally little different than the
             // standard Python metatype (PyType_Type). It overrides certain of
             // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
-            IntPtr type = AllocateTypeObject("CLR Metatype");
-            IntPtr py_type = Runtime.PyTypeType;
+            IntPtr type = AllocateTypeObject("CLR Metatype", metatype: Runtime.PyTypeType);
 
+            IntPtr py_type = Runtime.PyTypeType;
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
+
+            int size = TypeOffset.magic() + IntPtr.Size;
+            Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, new IntPtr(size));
+
+            const TypeFlags flags = TypeFlags.Default
+                            | TypeFlags.Managed
+                            | TypeFlags.HeapType
+                            | TypeFlags.HaveGC;
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             // Slots will inherit from TypeType, it's not neccesary for setting them.
             // Inheried slots:
             // tp_basicsize, tp_itemsize,
             // tp_dictoffset, tp_weaklistoffset,
             // tp_traverse, tp_clear, tp_is_gc, etc.
+            slotsHolder = SetupMetaSlots(impl, type);
 
-            // Override type slots with those of the managed implementation.
-
-            InitializeSlots(type, impl);
-
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
-
-            // We need space for 3 PyMethodDef structs, each of them
-            // 4 int-ptrs in size.
-            IntPtr mdef = Runtime.PyMem_Malloc(3 * 4 * IntPtr.Size);
-            IntPtr mdefStart = mdef;
-            ThunkInfo thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__instancecheck__"), "BinaryFunc");
-            mdef = WriteMethodDef(
-                mdef,
-                "__instancecheck__",
-                thunkInfo.Address
-            );
-
-            thunkInfo = Interop.GetThunk(typeof(MetaType).GetMethod("__subclasscheck__"), "BinaryFunc");
-            mdef = WriteMethodDef(
-                mdef,
-                "__subclasscheck__",
-                thunkInfo.Address
-            );
-
-            // FIXME: mdef is not used
-            mdef = WriteMethodDefSentinel(mdef);
-
-            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
-
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
             Runtime.PyDict_SetItemString(dict, "__module__", mod);
 
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
             //DebugUtil.DumpType(type);
 
             return type;
         }
 
+        internal static SlotsHolder SetupMetaSlots(Type impl, IntPtr type)
+        {
+            // Override type slots with those of the managed implementation.
+            SlotsHolder slotsHolder = new SlotsHolder(type);
+            InitializeSlots(type, impl, slotsHolder);
+
+            // We need space for 3 PyMethodDef structs.
+            int mdefSize = (MetaType.CustomMethods.Length + 1) * Marshal.SizeOf(typeof(PyMethodDef));
+            IntPtr mdef = Runtime.PyMem_Malloc(mdefSize);
+            IntPtr mdefStart = mdef;
+            foreach (var methodName in MetaType.CustomMethods)
+            {
+                mdef = AddCustomMetaMethod(methodName, type, mdef, slotsHolder);
+            }
+            mdef = WriteMethodDefSentinel(mdef);
+            Debug.Assert((long)(mdefStart + mdefSize) <= (long)mdef);
+
+            Marshal.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
+
+            // XXX: Hard code with mode check.
+            if (Runtime.ShutdownMode != ShutdownMode.Reload)
+            {
+                slotsHolder.Set(TypeOffset.tp_methods, (t, offset) =>
+                {
+                    var p = Marshal.ReadIntPtr(t, offset);
+                    Runtime.PyMem_Free(p);
+                    Marshal.WriteIntPtr(t, offset, IntPtr.Zero);
+                });
+            }
+            return slotsHolder;
+        }
+
+        private static IntPtr AddCustomMetaMethod(string name, IntPtr type, IntPtr mdef, SlotsHolder slotsHolder)
+        {
+            MethodInfo mi = typeof(MetaType).GetMethod(name);
+            ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+            slotsHolder.KeeapAlive(thunkInfo);
+
+            // XXX: Hard code with mode check.
+            if (Runtime.ShutdownMode != ShutdownMode.Reload)
+            {
+                IntPtr mdefAddr = mdef;
+                slotsHolder.AddDealloctor(() =>
+                {
+                    var tp_dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
+                    if (Runtime.PyDict_DelItemString(tp_dict, name) != 0)
+                    {
+                        Runtime.PyErr_Print();
+                        Debug.Fail($"Cannot remove {name} from metatype");
+                    }
+                    FreeMethodDef(mdefAddr);
+                });
+            }
+            mdef = WriteMethodDef(mdef, name, thunkInfo.Address);
+            return mdef;
+        }
 
         internal static IntPtr BasicSubType(string name, IntPtr base_, Type impl)
         {
             // Utility to create a subtype of a std Python type, but with
             // a managed type able to override implementation
 
-            IntPtr type = AllocateTypeObject(name);
+            IntPtr type = AllocateTypeObject(name, metatype: Runtime.PyTypeType);
             //Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)obSize);
             //Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
 
@@ -401,23 +562,31 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
             Runtime.XIncref(base_);
 
-            int flags = TypeFlags.Default;
+            var flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             CopySlot(base_, type, TypeOffset.tp_traverse);
             CopySlot(base_, type, TypeOffset.tp_clear);
             CopySlot(base_, type, TypeOffset.tp_is_gc);
 
-            InitializeSlots(type, impl);
+            SlotsHolder slotsHolder = CreateSolotsHolder(type);
+            InitializeSlots(type, impl, slotsHolder);
 
-            Runtime.PyType_Ready(type);
+            if (Runtime.PyType_Ready(type) != 0)
+            {
+                throw new PythonException();
+            }
 
             IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
             IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItemString(tp_dict, "__module__", mod);
+            Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
+            
+            // The type has been modified after PyType_Ready has been called
+            // Refresh the type
+            Runtime.PyType_Modified(type);
 
             return type;
         }
@@ -426,277 +595,44 @@ namespace Python.Runtime
         /// <summary>
         /// Utility method to allocate a type object &amp; do basic initialization.
         /// </summary>
-        internal static IntPtr AllocateTypeObject(string name)
+        internal static IntPtr AllocateTypeObject(string name, IntPtr metatype)
         {
-            IntPtr type = Runtime.PyType_GenericAlloc(Runtime.PyTypeType, 0);
+            IntPtr type = Runtime.PyType_GenericAlloc(metatype, 0);
+            // Clr type would not use __slots__,
+            // and the PyMemberDef after PyHeapTypeObject will have other uses(e.g. type handle),
+            // thus set the ob_size to 0 for avoiding slots iterations.
+            Marshal.WriteIntPtr(type, TypeOffset.ob_size, IntPtr.Zero);
 
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-#if PYTHON3
             IntPtr temp = Runtime.PyUnicode_FromString(name);
             IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
-#elif PYTHON2
-            IntPtr temp = Runtime.PyString_FromString(name);
-            IntPtr raw = Runtime.PyString_AsString(temp);
-#endif
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);
 
-#if PYTHON3
+            Runtime.XIncref(temp);
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
-#endif
-
-            long ptr = type.ToInt64(); // 64-bit safe
-
-            temp = new IntPtr(ptr + TypeOffset.nb_add);
+            temp = type + TypeOffset.nb_add;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_number, temp);
 
-            temp = new IntPtr(ptr + TypeOffset.sq_length);
+            temp = type + TypeOffset.sq_length;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_sequence, temp);
 
-            temp = new IntPtr(ptr + TypeOffset.mp_length);
+            temp = type + TypeOffset.mp_length;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_mapping, temp);
 
-#if PYTHON3
-            temp = new IntPtr(ptr + TypeOffset.bf_getbuffer);
-#elif PYTHON2
-            temp = new IntPtr(ptr + TypeOffset.bf_getreadbuffer);
-#endif
+            temp = type + TypeOffset.bf_getbuffer;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_buffer, temp);
             return type;
         }
-
-
-        #region Native Code Page
-        /// <summary>
-        /// Initialized by InitializeNativeCodePage.
-        ///
-        /// This points to a page of memory allocated using mmap or VirtualAlloc
-        /// (depending on the system), and marked read and execute (not write).
-        /// Very much on purpose, the page is *not* released on a shutdown and
-        /// is instead leaked. See the TestDomainReload test case.
-        ///
-        /// The contents of the page are two native functions: one that returns 0,
-        /// one that returns 1.
-        ///
-        /// If python didn't keep its gc list through a Py_Finalize we could remove
-        /// this entire section.
-        /// </summary>
-        internal static IntPtr NativeCodePage = IntPtr.Zero;
-
-        /// <summary>
-        /// Structure to describe native code.
-        ///
-        /// Use NativeCode.Active to get the native code for the current platform.
-        ///
-        /// Generate the code by creating the following C code:
-        /// <code>
-        /// int Return0() { return 0; }
-        /// int Return1() { return 1; }
-        /// </code>
-        /// Then compiling on the target platform, e.g. with gcc or clang:
-        /// <code>cc -c -fomit-frame-pointer -O2 foo.c</code>
-        /// And then analyzing the resulting functions with a hex editor, e.g.:
-        /// <code>objdump -disassemble foo.o</code>
-        /// </summary>
-        internal class NativeCode
-        {
-            /// <summary>
-            /// The code, as a string of bytes.
-            /// </summary>
-            public byte[] Code { get; private set; }
-
-            /// <summary>
-            /// Where does the "return 0" function start?
-            /// </summary>
-            public int Return0 { get; private set; }
-
-            /// <summary>
-            /// Where does the "return 1" function start?
-            /// </summary>
-            public int Return1 { get; private set; }
-
-            public static NativeCode Active
-            {
-                get
-                {
-                    switch (Runtime.Machine)
-                    {
-                        case MachineType.i386:
-                            return I386;
-                        case MachineType.x86_64:
-                            return X86_64;
-                        default:
-                            return null;
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Code for x86_64. See the class comment for how it was generated.
-            /// </summary>
-            public static readonly NativeCode X86_64 = new NativeCode()
-            {
-                Return0 = 0x10,
-                Return1 = 0,
-                Code = new byte[]
-                {
-                    // First Return1:
-                    0xb8, 0x01, 0x00, 0x00, 0x00, // movl $1, %eax
-                    0xc3, // ret
-
-                    // Now some padding so that Return0 can be 16-byte-aligned.
-                    // I put Return1 first so there's not as much padding to type in.
-                    0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, // nop
-
-                    // Now Return0.
-                    0x31, 0xc0, // xorl %eax, %eax
-                    0xc3, // ret
-                }
-            };
-
-            /// <summary>
-            /// Code for X86.
-            ///
-            /// It's bitwise identical to X86_64, so we just point to it.
-            /// <see cref="NativeCode.X86_64"/>
-            /// </summary>
-            public static readonly NativeCode I386 = X86_64;
-        }
-
-        /// <summary>
-        /// Platform-dependent mmap and mprotect.
-        /// </summary>
-        internal interface IMemoryMapper
-        {
-            /// <summary>
-            /// Map at least numBytes of memory. Mark the page read-write (but not exec).
-            /// </summary>
-            IntPtr MapWriteable(int numBytes);
-
-            /// <summary>
-            /// Sets the mapped memory to be read-exec (but not write).
-            /// </summary>
-            void SetReadExec(IntPtr mappedMemory, int numBytes);
-        }
-
-        class WindowsMemoryMapper : IMemoryMapper
-        {
-            const UInt32 MEM_COMMIT = 0x1000;
-            const UInt32 MEM_RESERVE = 0x2000;
-            const UInt32 PAGE_READWRITE = 0x04;
-            const UInt32 PAGE_EXECUTE_READ = 0x20;
-
-            [DllImport("kernel32.dll")]
-            static extern IntPtr VirtualAlloc(IntPtr lpAddress, IntPtr dwSize, UInt32 flAllocationType, UInt32 flProtect);
-
-            [DllImport("kernel32.dll")]
-            static extern bool VirtualProtect(IntPtr lpAddress, IntPtr dwSize, UInt32 flNewProtect, out UInt32 lpflOldProtect);
-
-            public IntPtr MapWriteable(int numBytes)
-            {
-                return VirtualAlloc(IntPtr.Zero, new IntPtr(numBytes),
-                                    MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-            }
-
-            public void SetReadExec(IntPtr mappedMemory, int numBytes)
-            {
-                UInt32 _;
-                VirtualProtect(mappedMemory, new IntPtr(numBytes), PAGE_EXECUTE_READ, out _);
-            }
-        }
-
-        class UnixMemoryMapper : IMemoryMapper
-        {
-            const int PROT_READ = 0x1;
-            const int PROT_WRITE = 0x2;
-            const int PROT_EXEC = 0x4;
-
-            const int MAP_PRIVATE = 0x2;
-            int MAP_ANONYMOUS
-            {
-                get
-                {
-                    switch (Runtime.OperatingSystem)
-                    {
-                        case OperatingSystemType.Darwin:
-                            return 0x1000;
-                        case OperatingSystemType.Linux:
-                            return 0x20;
-                        default:
-                            throw new NotImplementedException(
-                                $"mmap is not supported on {Runtime.OperatingSystem}"
-                            );
-                    }
-                }
-            }
-
-            [DllImport("libc")]
-            static extern IntPtr mmap(IntPtr addr, IntPtr len, int prot, int flags, int fd, IntPtr offset);
-
-            [DllImport("libc")]
-            static extern int mprotect(IntPtr addr, IntPtr len, int prot);
-
-            public IntPtr MapWriteable(int numBytes)
-            {
-                // MAP_PRIVATE must be set on linux, even though MAP_ANON implies it.
-                // It doesn't hurt on darwin, so just do it.
-                return mmap(IntPtr.Zero, new IntPtr(numBytes), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, IntPtr.Zero);
-            }
-
-            public void SetReadExec(IntPtr mappedMemory, int numBytes)
-            {
-                mprotect(mappedMemory, new IntPtr(numBytes), PROT_READ | PROT_EXEC);
-            }
-        }
-
-        internal static IMemoryMapper CreateMemoryMapper()
-        {
-            switch (Runtime.OperatingSystem)
-            {
-                case OperatingSystemType.Darwin:
-                case OperatingSystemType.Linux:
-                    return new UnixMemoryMapper();
-                case OperatingSystemType.Windows:
-                    return new WindowsMemoryMapper();
-                default:
-                    throw new NotImplementedException(
-                        $"No support for {Runtime.OperatingSystem}"
-                    );
-            }
-        }
-
-        /// <summary>
-        /// Initializes the native code page.
-        ///
-        /// Safe to call if we already initialized (this function is idempotent).
-        /// <see cref="NativeCodePage"/>
-        /// </summary>
-        internal static void InitializeNativeCodePage()
-        {
-            // Do nothing if we already initialized.
-            if (NativeCodePage != IntPtr.Zero)
-            {
-                return;
-            }
-
-            // Allocate the page, write the native code into it, then set it
-            // to be executable.
-            IMemoryMapper mapper = CreateMemoryMapper();
-            int codeLength = NativeCode.Active.Code.Length;
-            NativeCodePage = mapper.MapWriteable(codeLength);
-            Marshal.Copy(NativeCode.Active.Code, 0, NativeCodePage, codeLength);
-            mapper.SetReadExec(NativeCodePage, codeLength);
-        }
-        #endregion
 
         /// <summary>
         /// Given a newly allocated Python type object and a managed Type that
         /// provides the implementation for the type, connect the type slots of
         /// the Python object to the managed methods of the implementing Type.
         /// </summary>
-        internal static void InitializeSlots(IntPtr type, Type impl)
+        internal static void InitializeSlots(IntPtr type, Type impl, SlotsHolder slotsHolder = null)
         {
             // We work from the most-derived class up; make sure to get
             // the most-derived slot and not to override it with a base
@@ -709,13 +645,9 @@ namespace Python.Runtime
                 foreach (MethodInfo method in methods)
                 {
                     string name = method.Name;
-                    if (!(name.StartsWith("tp_") ||
-                          name.StartsWith("nb_") ||
-                          name.StartsWith("sq_") ||
-                          name.StartsWith("mp_") ||
-                          name.StartsWith("bf_")
-                    ))
+                    if (!name.StartsWith("tp_") && !TypeOffset.IsSupportedSlotName(name))
                     {
+                        Debug.Assert(!name.Contains("_") || name.StartsWith("_") || method.IsSpecialName);
                         continue;
                     }
 
@@ -724,8 +656,7 @@ namespace Python.Runtime
                         continue;
                     }
 
-                    var thunkInfo = Interop.GetThunk(method);
-                    InitializeSlot(type, thunkInfo.Address, name);
+                    InitializeSlot(type, Interop.GetThunk(method), name, slotsHolder);
 
                     seen.Add(name);
                 }
@@ -733,39 +664,16 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
-            var native = NativeCode.Active;
-
-            // The garbage collection related slots always have to return 1 or 0
-            // since .NET objects don't take part in Python's gc:
-            //   tp_traverse (returns 0)
-            //   tp_clear    (returns 0)
-            //   tp_is_gc    (returns 1)
-            // These have to be defined, though, so by default we fill these with
-            // static C# functions from this class.
-
-            var ret0 = Interop.GetThunk(((Func<IntPtr, int>)Return0).Method).Address;
-            var ret1 = Interop.GetThunk(((Func<IntPtr, int>)Return1).Method).Address;
-
-            if (native != null)
+            foreach (string slot in _requiredSlots)
             {
-                // If we want to support domain reload, the C# implementation
-                // cannot be used as the assembly may get released before
-                // CPython calls these functions. Instead, for amd64 and x86 we
-                // load them into a separate code page that is leaked
-                // intentionally.
-                InitializeNativeCodePage();
-                ret1 = NativeCodePage + native.Return1;
-                ret0 = NativeCodePage + native.Return0;
+                if (seen.Contains(slot))
+                {
+                    continue;
+                }
+                var offset = ManagedDataOffsets.GetSlotOffset(slot);
+                Marshal.WriteIntPtr(type, offset, SlotsHolder.GetDefaultSlot(offset));
             }
-
-            InitializeSlot(type, ret0, "tp_traverse");
-            InitializeSlot(type, ret0, "tp_clear");
-            InitializeSlot(type, ret1, "tp_is_gc");
         }
-
-        static int Return1(IntPtr _) => 1;
-
-        static int Return0(IntPtr _) => 0;
 
         /// <summary>
         /// Helper for InitializeSlots.
@@ -777,13 +685,46 @@ namespace Python.Runtime
         /// <param name="type">Type being initialized.</param>
         /// <param name="slot">Function pointer.</param>
         /// <param name="name">Name of the method.</param>
-        static void InitializeSlot(IntPtr type, IntPtr slot, string name)
+        /// <param name="canOverride">Can override the slot when it existed</param>
+        static void InitializeSlot(IntPtr type, IntPtr slot, string name, bool canOverride = true)
         {
-            Type typeOffset = typeof(TypeOffset);
-            FieldInfo fi = typeOffset.GetField(name);
-            var offset = (int)fi.GetValue(typeOffset);
-
+            var offset = ManagedDataOffsets.GetSlotOffset(name);
+            if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
+            {
+                return;
+            }
             Marshal.WriteIntPtr(type, offset, slot);
+        }
+
+        static void InitializeSlot(IntPtr type, ThunkInfo thunk, string name, SlotsHolder slotsHolder = null, bool canOverride = true)
+        {
+            int offset = ManagedDataOffsets.GetSlotOffset(name);
+
+            if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
+            {
+                return;
+            }
+            Marshal.WriteIntPtr(type, offset, thunk.Address);
+            if (slotsHolder != null)
+            {
+                slotsHolder.Set(offset, thunk);
+            }
+        }
+
+        static void InitializeSlot(IntPtr type, int slotOffset, MethodInfo method, SlotsHolder slotsHolder = null)
+        {
+            var thunk = Interop.GetThunk(method);
+            Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
+            if (slotsHolder != null)
+            {
+                slotsHolder.Set(slotOffset, thunk);
+            }
+        }
+
+        static bool IsSlotSet(IntPtr type, string name)
+        {
+            int offset = ManagedDataOffsets.GetSlotOffset(name);
+            return Marshal.ReadIntPtr(type, offset) != IntPtr.Zero;
         }
 
         /// <summary>
@@ -814,6 +755,7 @@ namespace Python.Runtime
                             mi[0] = method;
                             MethodObject m = new TypeMethod(type, method_name, mi);
                             Runtime.PyDict_SetItemString(dict, method_name, m.pyHandle);
+                            m.DecrRefCount();
                             addedMethods.Add(method_name);
                         }
                     }
@@ -830,6 +772,173 @@ namespace Python.Runtime
         {
             IntPtr fp = Marshal.ReadIntPtr(from, offset);
             Marshal.WriteIntPtr(to, offset, fp);
+        }
+
+        private static SlotsHolder CreateSolotsHolder(IntPtr type)
+        {
+            var holder = new SlotsHolder(type);
+            _slotsHolders.Add(type, holder);
+            return holder;
+        }
+    }
+
+
+    class SlotsHolder
+    {
+        public delegate void Resetor(IntPtr type, int offset);
+
+        private readonly IntPtr _type;
+        private Dictionary<int, ThunkInfo> _slots = new Dictionary<int, ThunkInfo>();
+        private List<ThunkInfo> _keepalive = new List<ThunkInfo>();
+        private Dictionary<int, Resetor> _customResetors = new Dictionary<int, Resetor>();
+        private List<Action> _deallocators = new List<Action>();
+        private bool _alreadyReset = false;
+
+        /// <summary>
+        /// Create slots holder for holding the delegate of slots and be able  to reset them.
+        /// </summary>
+        /// <param name="type">Steals a reference to target type</param>
+        public SlotsHolder(IntPtr type)
+        {
+            _type = type;
+        }
+
+        public void Set(int offset, ThunkInfo thunk)
+        {
+            _slots[offset] = thunk;
+        }
+
+        public void Set(int offset, Resetor resetor)
+        {
+            _customResetors[offset] = resetor;
+        }
+
+        public void AddDealloctor(Action deallocate)
+        {
+            _deallocators.Add(deallocate);
+        }
+
+        public void KeeapAlive(ThunkInfo thunk)
+        {
+            _keepalive.Add(thunk);
+        }
+
+        public void ResetSlots()
+        {
+            if (_alreadyReset)
+            {
+                return;
+            }
+            _alreadyReset = true;
+#if DEBUG
+            IntPtr tp_name = Marshal.ReadIntPtr(_type, TypeOffset.tp_name);
+            string typeName = Marshal.PtrToStringAnsi(tp_name);
+#endif
+            foreach (var offset in _slots.Keys)
+            {
+                IntPtr ptr = GetDefaultSlot(offset);
+#if DEBUG
+                //DebugUtil.Print($"Set slot<{TypeOffsetHelper.GetSlotNameByOffset(offset)}> to 0x{ptr.ToString("X")} at {typeName}<0x{_type}>");
+#endif
+                Marshal.WriteIntPtr(_type, offset, ptr);
+            }
+
+            foreach (var action in _deallocators)
+            {
+                action();
+            }
+
+            foreach (var pair in _customResetors)
+            {
+                int offset = pair.Key;
+                var resetor = pair.Value;
+                resetor?.Invoke(_type, offset);
+            }
+
+            _customResetors.Clear();
+            _slots.Clear();
+            _keepalive.Clear();
+            _deallocators.Clear();
+
+            // Custom reset
+            IntPtr handlePtr = Marshal.ReadIntPtr(_type, TypeOffset.magic());
+            if (handlePtr != IntPtr.Zero)
+            {
+                GCHandle handle = GCHandle.FromIntPtr(handlePtr);
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+                Marshal.WriteIntPtr(_type, TypeOffset.magic(), IntPtr.Zero);
+            }
+        }
+
+        public static IntPtr GetDefaultSlot(int offset)
+        {
+            if (offset == TypeOffset.tp_clear)
+            {
+                return TypeManager.subtype_clear;
+            }
+            else if (offset == TypeOffset.tp_traverse)
+            {
+                return TypeManager.subtype_traverse;
+            }
+            else if (offset == TypeOffset.tp_dealloc)
+            {
+                // tp_free of PyTypeType is point to PyObejct_GC_Del.
+                return Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_free);
+            }
+            else if (offset == TypeOffset.tp_free)
+            {
+                // PyObject_GC_Del
+                return Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_free);
+            }
+            else if (offset == TypeOffset.tp_call)
+            {
+                return IntPtr.Zero;
+            }
+            else if (offset == TypeOffset.tp_new)
+            {
+                // PyType_GenericNew
+                return Marshal.ReadIntPtr(Runtime.PySuper_Type, TypeOffset.tp_new);
+            }
+            else if (offset == TypeOffset.tp_getattro)
+            {
+                // PyObject_GenericGetAttr
+                return Marshal.ReadIntPtr(Runtime.PyBaseObjectType, TypeOffset.tp_getattro);
+            }
+            else if (offset == TypeOffset.tp_setattro)
+            {
+                // PyObject_GenericSetAttr
+                return Marshal.ReadIntPtr(Runtime.PyBaseObjectType, TypeOffset.tp_setattro);
+            }
+
+            return Marshal.ReadIntPtr(Runtime.PyTypeType, offset);
+        }
+    }
+
+
+    static class SlotHelper
+    {
+        public static IntPtr CreateObjectType()
+        {
+            using var globals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
+            if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
+            {
+                globals.Dispose();
+                throw new PythonException();
+            }
+            const string code = "class A(object): pass";
+            using var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
+            if (resRef.IsNull())
+            {
+                globals.Dispose();
+                throw new PythonException();
+            }
+            resRef.Dispose();
+            BorrowedReference A = Runtime.PyDict_GetItemString(globals, "A");
+            Debug.Assert(!A.IsNull);
+            return new NewReference(A).DangerousMoveToPointer();
         }
     }
 }

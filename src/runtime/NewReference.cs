@@ -11,6 +11,16 @@ namespace Python.Runtime
     {
         IntPtr pointer;
 
+        /// <summary>Creates a <see cref="NewReference"/> pointing to the same object</summary>
+        public NewReference(BorrowedReference reference, bool canBeNull = false)
+        {
+            var address = canBeNull
+                ? reference.DangerousGetAddressOrNull()
+                : reference.DangerousGetAddress();
+            Runtime.XIncref(address);
+            this.pointer = address;
+        }
+
         [Pure]
         public static implicit operator BorrowedReference(in NewReference reference)
             => new BorrowedReference(reference.pointer);
@@ -27,6 +37,25 @@ namespace Python.Runtime
             this.pointer = IntPtr.Zero;
             return result;
         }
+
+        /// <summary>Moves ownership of this instance to unmanged pointer</summary>
+        public IntPtr DangerousMoveToPointer()
+        {
+            if (this.IsNull()) throw new NullReferenceException();
+
+            var result = this.pointer;
+            this.pointer = IntPtr.Zero;
+            return result;
+        }
+
+        /// <summary>Moves ownership of this instance to unmanged pointer</summary>
+        public IntPtr DangerousMoveToPointerOrNull()
+        {
+            var result = this.pointer;
+            this.pointer = IntPtr.Zero;
+            return result;
+        }
+
         /// <summary>
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
@@ -47,9 +76,12 @@ namespace Python.Runtime
         /// </summary>
         public void Dispose()
         {
-            if (!this.IsNull())
-                Runtime.XDecref(this.pointer);
-            this.pointer = IntPtr.Zero;
+            if (this.IsNull())
+            {
+                return;
+            }
+            Runtime.XDecref(pointer);
+            pointer = IntPtr.Zero;
         }
 
         /// <summary>

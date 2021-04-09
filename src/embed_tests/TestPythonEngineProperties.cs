@@ -180,40 +180,38 @@ namespace Python.EmbeddingTest
         [Test]
         public void SetPythonPath()
         {
-            if (Runtime.Runtime.pyversion == "2.7")
+            PythonEngine.Initialize();
+
+            const string moduleName = "pytest";
+            bool importShouldSucceed;
+            try
             {
-                // Assert.Skip outputs as a warning (ie. pending to fix)
-                Assert.Pass();
+                Py.Import(moduleName);
+                importShouldSucceed = true;
+            }
+            catch
+            {
+                importShouldSucceed = false;
             }
 
-            PythonEngine.Initialize();
-            string path = PythonEngine.PythonPath;
+            string[] paths = Py.Import("sys").GetAttr("path").As<string[]>();
+            string path = string.Join(System.IO.Path.PathSeparator.ToString(), paths);
+
+            // path should not be set to PythonEngine.PythonPath here.
+            // PythonEngine.PythonPath gets the default module search path, not the full search path.
+            // The list sys.path is initialized with this value on interpreter startup;
+            // it can be (and usually is) modified later to change the search path for loading modules.
+            // See https://docs.python.org/3/c-api/init.html#c.Py_GetPath
+            // After PythonPath is set, then PythonEngine.PythonPath will correctly return the full search path. 
+
             PythonEngine.Shutdown();
 
             PythonEngine.PythonPath = path;
             PythonEngine.Initialize();
 
             Assert.AreEqual(path, PythonEngine.PythonPath);
-            PythonEngine.Shutdown();
-        }
+            if (importShouldSucceed) Py.Import(moduleName);
 
-        [Test]
-        public void SetPythonPathExceptionOn27()
-        {
-            if (Runtime.Runtime.pyversion != "2.7")
-            {
-                Assert.Pass();
-            }
-
-            PythonEngine.Initialize();
-            string path = PythonEngine.PythonPath;
-            PythonEngine.Shutdown();
-
-            var ex = Assert.Throws<NotSupportedException>(() => PythonEngine.PythonPath = "foo");
-            Assert.AreEqual("Set PythonPath not supported on Python 2", ex.Message);
-
-            PythonEngine.Initialize();
-            Assert.AreEqual(path, PythonEngine.PythonPath);
             PythonEngine.Shutdown();
         }
     }

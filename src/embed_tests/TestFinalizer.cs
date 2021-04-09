@@ -1,7 +1,10 @@
 using NUnit.Framework;
 using Python.Runtime;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Python.EmbeddingTest
@@ -27,11 +30,12 @@ namespace Python.EmbeddingTest
 
         private static void FullGCCollect()
         {
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.Collect();
             GC.WaitForPendingFinalizers();
         }
 
         [Test]
+        [Obsolete("GC tests are not guaranteed")]
         public void CollectBasicObject()
         {
             Assert.IsTrue(Finalizer.Instance.Enable);
@@ -48,11 +52,7 @@ namespace Python.EmbeddingTest
             Assert.IsFalse(called, "The event handler was called before it was installed");
             Finalizer.Instance.CollectOnce += handler;
 
-            WeakReference shortWeak;
-            WeakReference longWeak;
-            {
-                MakeAGarbage(out shortWeak, out longWeak);
-            }
+            IntPtr pyObj = MakeAGarbage(out var shortWeak, out var longWeak);
             FullGCCollect();
             // The object has been resurrected
             Warn.If(
@@ -70,7 +70,7 @@ namespace Python.EmbeddingTest
                 var garbage = Finalizer.Instance.GetCollectedObjects();
                 Assert.NotZero(garbage.Count, "There should still be garbage around");
                 Warn.Unless(
-                    garbage.Any(T => ReferenceEquals(T.Target, longWeak.Target)),
+                    garbage.Contains(pyObj),
                     $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
                     garbage
                 );
@@ -87,12 +87,56 @@ namespace Python.EmbeddingTest
             Assert.GreaterOrEqual(objectCount, 1);
         }
 
-        private static void MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
+        [Test]
+        [Obsolete("GC tests are not guaranteed")]
+        public void CollectOnShutdown()
         {
-            PyLong obj = new PyLong(1024);
-            shortWeak = new WeakReference(obj);
-            longWeak = new WeakReference(obj, true);
-            obj = null;
+            IntPtr op = MakeAGarbage(out var shortWeak, out var longWeak);
+            FullGCCollect();
+            Assert.IsFalse(shortWeak.IsAlive);
+            List<IntPtr> garbage = Finalizer.Instance.GetCollectedObjects();
+            Assert.IsNotEmpty(garbage, "The garbage object should be collected");
+            Assert.IsTrue(garbage.Contains(op),
+                "Garbage should contains the collected object");
+
+            PythonEngine.Shutdown();
+            garbage = Finalizer.Instance.GetCollectedObjects();
+
+            if (garbage.Count > 0)
+            {
+                PythonEngine.Initialize();
+                string objects = string.Join("\n", garbage.Select(ob =>
+                {
+                    var obj = new PyObject(new BorrowedReference(ob));
+                    return $"{obj} [{obj.GetPythonType()}@{obj.Handle}]";
+                }));
+                Assert.Fail("Garbage is not empty:\n" + objects);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)] // ensure lack of references to obj
+        [Obsolete("GC tests are not guaranteed")]
+        private static IntPtr MakeAGarbage(out WeakReference shortWeak, out WeakReference longWeak)
+        {
+            IntPtr handle = IntPtr.Zero;
+            WeakReference @short = null, @long = null;
+            // must create Python object in the thread where we have GIL
+            IntPtr val = PyLong.FromLong(1024);
+            // must create temp object in a different thread to ensure it is not present
+            // when conservatively scanning stack for GC roots.
+            // see https://xamarin.github.io/bugzilla-archives/17/17593/bug.html
+            var garbageGen = new Thread(() =>
+            {
+                var obj = new PyObject(val, skipCollect: true);
+                @short = new WeakReference(obj);
+                @long = new WeakReference(obj, true);
+                handle = obj.Handle;
+            });
+            garbageGen.Start();
+            Assert.IsTrue(garbageGen.Join(TimeSpan.FromSeconds(5)), "Garbage creation timed out");
+            shortWeak = @short;
+            longWeak = @long;
+            return handle;
         }
 
         private static long CompareWithFinalizerOn(PyObject pyCollect, bool enbale)
@@ -139,7 +183,7 @@ namespace Python.EmbeddingTest
             bool oldState = Finalizer.Instance.Enable;
             try
             {
-                using (PyObject gcModule = PythonEngine.ImportModule("gc"))
+                using (PyModule gcModule = PyModule.Import("gc"))
                 using (PyObject pyCollect = gcModule.GetAttr("collect"))
                 {
                     long span1 = CompareWithFinalizerOn(pyCollect, false);
@@ -153,68 +197,12 @@ namespace Python.EmbeddingTest
             }
         }
 
-        class MyPyObject : PyObject
-        {
-            public MyPyObject(IntPtr op) : base(op)
-            {
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                base.Dispose(disposing);
-                GC.SuppressFinalize(this);
-                throw new Exception("MyPyObject");
-            }
-            internal static void CreateMyPyObject(IntPtr op)
-            {
-                Runtime.Runtime.XIncref(op);
-                new MyPyObject(op);
-            }
-        }
-
-        [Test]
-        public void ErrorHandling()
-        {
-            bool called = false;
-            var errorMessage = "";
-            EventHandler<Finalizer.ErrorArgs> handleFunc = (sender, args) =>
-            {
-                called = true;
-                errorMessage = args.Error.Message;
-            };
-            Finalizer.Instance.Threshold = 1;
-            Finalizer.Instance.ErrorHandler += handleFunc;
-            try
-            {
-                WeakReference shortWeak;
-                WeakReference longWeak;
-                {
-                    MakeAGarbage(out shortWeak, out longWeak);
-                    var obj = (PyLong)longWeak.Target;
-                    IntPtr handle = obj.Handle;
-                    shortWeak = null;
-                    longWeak = null;
-                    MyPyObject.CreateMyPyObject(handle);
-                    obj.Dispose();
-                    obj = null;
-                }
-                FullGCCollect();
-                Finalizer.Instance.Collect();
-                Assert.IsTrue(called);
-            }
-            finally
-            {
-                Finalizer.Instance.ErrorHandler -= handleFunc;
-            }
-            Assert.AreEqual(errorMessage, "MyPyObject");
-        }
-
         [Test]
         public void ValidateRefCount()
         {
             if (!Finalizer.Instance.RefCountValidationEnabled)
             {
-                Assert.Pass("Only run with FINALIZER_CHECK");
+                Assert.Ignore("Only run with FINALIZER_CHECK");
             }
             IntPtr ptr = IntPtr.Zero;
             bool called = false;
@@ -241,6 +229,7 @@ namespace Python.EmbeddingTest
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)] // ensure lack of references to s1 and s2
         private static IntPtr CreateStringGarbage()
         {
             PyString s1 = new PyString("test_string");
@@ -248,6 +237,5 @@ namespace Python.EmbeddingTest
             PyString s2 = new PyString(s1.Handle);
             return s1.Handle;
         }
-
     }
 }

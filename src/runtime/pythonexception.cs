@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Python.Runtime
     /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
-    public class PythonException : System.Exception, IDisposable
+    public class PythonException : System.Exception
     {
         private PyObject _type;
         private PyObject _value;
@@ -146,13 +147,11 @@ namespace Python.Runtime
             Exception inner = null;
             string pythonTypeName = null, msg = "", tracebackText = null;
 
-#if NETSTANDARD
             var exceptionDispatchInfo = TryGetDispatchInfo(valueHandle);
             if (exceptionDispatchInfo != null)
             {
                 return exceptionDispatchInfo.SourceException;
             }
-#endif
 
             var clrObject = ManagedType.GetManagedObject(valueHandle) as CLRObject;
             if (clrObject?.inst is Exception e)
@@ -190,7 +189,6 @@ namespace Python.Runtime
                                 : innerTraceback.Reference);
                     }
                 }
-                msg = pythonTypeName + " : " + value;
             }
             if (traceback != null)
             {
@@ -206,26 +204,15 @@ namespace Python.Runtime
             if (traceback is null)
             {
                 throw new ArgumentNullException(nameof(traceback));
+                throw new ArgumentNullException(nameof(traceback));
             }
-
-            PyObject tracebackModule = PythonEngine.ImportModule("traceback");
-            PyList stackLines = new PyList(tracebackModule.InvokeMethod("format_tb", traceback));
-            stackLines.Reverse();
-            var result = new StringBuilder();
-            foreach (object stackLine in stackLines)
-            {
-                result.Append(stackLine);
-            }
-            return result.ToString();
+            _finalized = true;
+            Finalizer.Instance.AddFinalizedObject(this);
         }
 
-        /// <summary>
-        /// Restores python error. Clears this instance.
-        /// </summary>
+        /// <summary>Restores python error.</summary>
         public void Restore()
         {
-            if (this.disposed) throw new ObjectDisposedException(nameof(PythonException));
-
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Restore(
                 _type.MakeNewReferenceOrNull().Steal(),
@@ -277,7 +264,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string StackTrace
         {
-            get { return _traceback + base.StackTrace; }
+            get { return _tb + base.StackTrace; }
         }
 
         /// <summary>
@@ -286,6 +273,23 @@ namespace Python.Runtime
         public string PythonTypeName
         {
             get { return _pythonTypeName; }
+        }
+
+        /// <summary>
+        /// Replaces PyValue with an instance of PyType, if PyValue is not already an instance of PyType.
+        public void Normalize()
+        {
+            IntPtr gs = PythonEngine.AcquireLock();
+            try
+            {
+                if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
+                // If an error is set and this PythonException is unnormalized, the error will be cleared and the PythonException will be replaced by a different error.
+                Runtime.PyErr_NormalizeException(ref _pyType, ref _pyValue, ref _pyTB);
+            }
+            finally
+            {
+                PythonEngine.ReleaseLock(gs);
+            }
         }
 
         /// <summary>
@@ -300,10 +304,22 @@ namespace Python.Runtime
             {
                 if (_pyTB != null && _type != null && _value != null)
                 {
+                    Runtime.XIncref(_pyType);
+                    Runtime.XIncref(_pyValue);
+                    Runtime.XIncref(_pyTB);
+                    using (PyObject pyType = new PyObject(_pyType))
+                    using (PyObject pyValue = new PyObject(_pyValue))
+                    using (PyObject pyTB = new PyObject(_pyTB))
                     using (PyObject tb_mod = PythonEngine.ImportModule("traceback"))
                     {
                         var buffer = new StringBuilder();
                         var values = tb_mod.InvokeMethod("format_exception", _type, _value, _pyTB);
+                        foreach (PyObject val in values)
+                        {
+                            buffer.Append(val.ToString());
+                        }
+                        res = buffer.ToString();
+                        var values = tb_mod.InvokeMethod("format_exception", pyType, pyValue, pyTB);
                         foreach (PyObject val in values)
                         {
                             buffer.Append(val.ToString());
@@ -321,6 +337,11 @@ namespace Python.Runtime
                 PythonEngine.ReleaseLock(gs);
             }
             return res;
+        }
+
+        public bool IsMatches(IntPtr exc)
+        {
+            return Runtime.PyErr_GivenExceptionMatches(PyType, exc) != 0;
         }
 
         /// <summary>
@@ -356,7 +377,7 @@ namespace Python.Runtime
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
-        internal static IntPtr ThrowIfIsNull(IntPtr ob)
+        public static void ThrowIfIsNull(IntPtr ob)
         {
             if (ob == IntPtr.Zero)
             {
@@ -366,7 +387,7 @@ namespace Python.Runtime
             return ob;
         }
 
-        internal static void ThrowIfIsNotZero(int value)
+        public static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)
             {

@@ -1,12 +1,12 @@
 # Requirements for both Travis and AppVeyor
-pytest==3.2.5
-coverage
+pytest
 psutil
 
 # Coverage upload
+coverage
 codecov
 
-# Platform specific requirements
-# pip; sys_platform == 'win32'
-wheel; sys_platform == 'win32'
-pycparser; sys_platform != 'win32'
+wheel
+pycparser
+setuptools
+clr-loader

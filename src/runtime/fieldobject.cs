@@ -3,12 +3,14 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
+    using MaybeFieldInfo = MaybeMemberInfo<FieldInfo>;
     /// <summary>
     /// Implements a Python descriptor type that provides access to CLR fields.
     /// </summary>
+    [Serializable]
     internal class FieldObject : ExtensionType
     {
-        private FieldInfo info;
+        private MaybeFieldInfo info;
 
         public FieldObject(FieldInfo info)
         {
@@ -29,8 +31,13 @@ namespace Python.Runtime
             {
                 return IntPtr.Zero;
             }
+            else if (!self.info.Valid)
+            {
+                Exceptions.SetError(Exceptions.AttributeError, self.info.DeletedMessage);
+                return IntPtr.Zero;
+            }
 
-            FieldInfo info = self.info;
+            FieldInfo info = self.info.Value;
 
             if (ob == IntPtr.Zero || ob == Runtime.PyNone)
             {
@@ -55,6 +62,11 @@ namespace Python.Runtime
             try
             {
                 var co = (CLRObject)GetManagedObject(ob);
+                if (co == null)
+                {
+                    Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
+                    return IntPtr.Zero;
+                }
                 result = info.GetValue(co.inst);
                 return Converter.ToPython(result, info.FieldType);
             }
@@ -79,6 +91,11 @@ namespace Python.Runtime
             {
                 return -1;
             }
+            else if (!self.info.Valid)
+            {
+                Exceptions.SetError(Exceptions.AttributeError, self.info.DeletedMessage);
+                return -1;
+            }
 
             if (val == IntPtr.Zero)
             {
@@ -86,7 +103,7 @@ namespace Python.Runtime
                 return -1;
             }
 
-            FieldInfo info = self.info;
+            FieldInfo info = self.info.Value;
 
             if (info.IsLiteral || info.IsInitOnly)
             {
@@ -115,6 +132,11 @@ namespace Python.Runtime
                 if (!is_static)
                 {
                     var co = (CLRObject)GetManagedObject(ob);
+                    if (co == null)
+                    {
+                        Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
+                        return -1;
+                    }
                     info.SetValue(co.inst, newval);
                 }
                 else
@@ -136,7 +158,7 @@ namespace Python.Runtime
         public static IntPtr tp_repr(IntPtr ob)
         {
             var self = (FieldObject)GetManagedObject(ob);
-            return Runtime.PyString_FromString($"<field '{self.info.Name}'>");
+            return Runtime.PyString_FromString($"<field '{self.info}'>");
         }
     }
 }

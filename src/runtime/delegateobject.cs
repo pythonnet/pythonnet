@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// Each of those type objects is associated an instance of this class,
     /// which provides its implementation.
     /// </summary>
+    [Serializable]
     internal class DelegateObject : ClassBase
     {
         private MethodBinder binder;
@@ -51,6 +52,12 @@ namespace Python.Runtime
         {
             var self = (DelegateObject)GetManagedObject(tp);
 
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            Type type = self.type.Value;
+
             if (Runtime.PyTuple_Size(args) != 1)
             {
                 return Exceptions.RaiseTypeError("class takes exactly one argument");
@@ -63,7 +70,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("argument must be callable");
             }
 
-            Delegate d = PythonEngine.DelegateManager.GetDelegate(self.type, method);
+            Delegate d = PythonEngine.DelegateManager.GetDelegate(type, method);
             return CLRObject.GetInstHandle(d, self.pyHandle);
         }
 
@@ -96,7 +103,6 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __cmp__ for reflected delegate types.
         /// </summary>
-#if PYTHON3 // TODO: Doesn't PY2 implement tp_richcompare too?
         public new static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
         {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
@@ -126,13 +132,5 @@ namespace Python.Runtime
             Runtime.XIncref(pyfalse);
             return pyfalse;
         }
-#elif PYTHON2
-        public static int tp_compare(IntPtr ob, IntPtr other)
-        {
-            Delegate d1 = GetTrueDelegate(ob);
-            Delegate d2 = GetTrueDelegate(other);
-            return d1 == d2 ? 0 : -1;
-        }
-#endif
     }
 }

@@ -20,9 +20,9 @@ namespace Python.Runtime
         // therefore this should be a ConcurrentDictionary
         //
         // WARNING: Dangerous if cross-app domain usage is ever supported
-        //    Reusing the dictionary with assemblies accross multiple initializations is problematic. 
-        //    Loading happens from CurrentDomain (see line 53). And if the first call is from AppDomain that is later unloaded, 
-        //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain - 
+        //    Reusing the dictionary with assemblies accross multiple initializations is problematic.
+        //    Loading happens from CurrentDomain (see line 53). And if the first call is from AppDomain that is later unloaded,
+        //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain -
         //     unless LoaderOptimization.MultiDomain is used);
         //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
         private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
@@ -137,7 +137,7 @@ namespace Python.Runtime
         /// </summary>
         internal static void UpdatePath()
         {
-            IntPtr list = Runtime.PySys_GetObject("path");
+            BorrowedReference list = Runtime.PySys_GetObject("path");
             var count = Runtime.PyList_Size(list);
             if (count != pypath.Count)
             {
@@ -199,19 +199,14 @@ namespace Python.Runtime
         /// </summary>
         public static Assembly LoadAssembly(string name)
         {
-            Assembly assembly = null;
             try
             {
-                assembly = Assembly.Load(name);
+                return Assembly.Load(name);
             }
-            catch (Exception)
+            catch (FileNotFoundException)
             {
-                //if (!(e is System.IO.FileNotFoundException))
-                //{
-                //    throw;
-                //}
+                return null;
             }
-            return assembly;
         }
 
 
@@ -221,18 +216,8 @@ namespace Python.Runtime
         public static Assembly LoadAssemblyPath(string name)
         {
             string path = FindAssembly(name);
-            Assembly assembly = null;
-            if (path != null)
-            {
-                try
-                {
-                    assembly = Assembly.LoadFrom(path);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            return assembly;
+            if (path == null) return null;
+            return Assembly.LoadFrom(path);
         }
 
         /// <summary>
@@ -242,25 +227,14 @@ namespace Python.Runtime
         /// <returns></returns>
         public static Assembly LoadAssemblyFullPath(string name)
         {
-            Assembly assembly = null;
             if (Path.IsPathRooted(name))
             {
-                if (!Path.HasExtension(name))
-                {
-                    name = name + ".dll";
-                }
                 if (File.Exists(name))
                 {
-                    try
-                    {
-                        assembly = Assembly.LoadFrom(name);
-                    }
-                    catch (Exception)
-                    {
-                    }
+                    return Assembly.LoadFrom(name);
                 }
             }
-            return assembly;
+            return null;
         }
 
         /// <summary>
@@ -277,66 +251,6 @@ namespace Python.Runtime
             }
             return null;
         }
-
-        /// <summary>
-        /// Given a qualified name of the form A.B.C.D, attempt to load
-        /// an assembly named after each of A.B.C.D, A.B.C, A.B, A. This
-        /// will only actually probe for the assembly once for each unique
-        /// namespace. Returns true if any assemblies were loaded.
-        /// </summary>
-        /// <remarks>
-        /// TODO item 3 "* Deprecate implicit loading of assemblies":
-        /// Set the fromFile flag if the name of the loaded assembly matches
-        /// the fully qualified name that was requested if the framework
-        /// actually loads an assembly.
-        /// Call ONLY for namespaces that HAVE NOT been cached yet.
-        /// </remarks>
-        public static bool LoadImplicit(string name, bool warn = true)
-        {
-            string[] names = name.Split('.');
-            var loaded = false;
-            var s = "";
-            Assembly lastAssembly = null;
-            HashSet<Assembly> assembliesSet = null;
-            for (var i = 0; i < names.Length; i++)
-            {
-                s = i == 0 ? names[0] : s + "." + names[i];
-                if (!probed.ContainsKey(s))
-                {
-                    if (assembliesSet == null)
-                    {
-                        assembliesSet = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
-                    }
-                    Assembly a = FindLoadedAssembly(s);
-                    if (a == null)
-                    {
-                        a = LoadAssemblyPath(s);
-                    }
-                    if (a == null)
-                    {
-                        a = LoadAssembly(s);
-                    }
-                    if (a != null && !assembliesSet.Contains(a))
-                    {
-                        loaded = true;
-                        lastAssembly = a;
-                    }
-                    probed[s] = 1;
-                }
-            }
-
-            // Deprecation warning
-            if (warn && loaded)
-            {
-                string location = Path.GetFileNameWithoutExtension(lastAssembly.Location);
-                string deprWarning = "The module was found, but not in a referenced namespace.\n" +
-                                     $"Implicit loading is deprecated. Please use clr.AddReference('{location}').";
-                Exceptions.deprecation(deprWarning);
-            }
-
-            return loaded;
-        }
-
 
         /// <summary>
         /// Scans an assembly for exported namespaces, adding them to the
@@ -449,25 +363,6 @@ namespace Python.Runtime
                 }
             }
             return names;
-        }
-
-        /// <summary>
-        /// Returns the System.Type object for a given qualified name,
-        /// looking in the currently loaded assemblies for the named
-        /// type. Returns null if the named type cannot be found.
-        /// </summary>
-        [Obsolete("Use LookupTypes and handle name conflicts")]
-        public static Type LookupType(string qname)
-        {
-            foreach (Assembly assembly in assemblies)
-            {
-                Type type = assembly.GetType(qname);
-                if (type != null && IsExported(type))
-                {
-                    return type;
-                }
-            }
-            return null;
         }
 
         /// <summary>

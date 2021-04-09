@@ -9,7 +9,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/iterator.html
     /// for details.
     /// </summary>
-    public class PyIter : PyObject, IEnumerator<object>
+    public class PyIter : PyObject, IEnumerator<PyObject>
     {
         private PyObject _current;
 
@@ -26,57 +26,55 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// PyIter Constructor
+        /// PyIter factory function.
         /// </summary>
         /// <remarks>
-        /// Creates a Python iterator from an iterable. Like doing "iter(iterable)" in python.
+        /// Create a new PyIter from a given iterable.  Like doing "iter(iterable)" in python.
         /// </remarks>
-        public PyIter(PyObject iterable)
+        /// <param name="iterable"></param>
+        /// <returns></returns>
+        public static PyIter GetIter(PyObject iterable)
         {
-            obj = Runtime.PyObject_GetIter(iterable.obj);
-            if (obj == IntPtr.Zero)
+            if (iterable == null)
             {
-                throw PythonException.ThrowLastAsClrException();
+                throw new ArgumentNullException();
             }
+            IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
+            PythonException.ThrowIfIsNull(val);
+            return new PyIter(val);
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (null != _current)
-            {
-                _current.Dispose();
-                _current = null;
-            }
+            _current = null;
             base.Dispose(disposing);
         }
 
         public bool MoveNext()
         {
-            // dispose of the previous object, if there was one
-            if (null != _current)
+            NewReference next = Runtime.PyIter_Next(Reference);
+            if (next.IsNull())
             {
-                _current.Dispose();
-                _current = null;
-            }
+                if (Exceptions.ErrorOccurred())
+                {
+                    throw new PythonException();
+                }
 
-            IntPtr next = Runtime.PyIter_Next(obj);
-            if (next == IntPtr.Zero)
-            {
+                // stop holding the previous object, if there was one
+                _current = null;
                 return false;
             }
 
-            _current = new PyObject(next);
+            _current = next.MoveToPyObject();
             return true;
         }
 
         public void Reset()
         {
-            //Not supported in python.
+            throw new NotSupportedException();
         }
 
-        public object Current
-        {
-            get { return _current; }
-        }
+        public PyObject Current => _current;
+        object System.Collections.IEnumerator.Current => _current;
     }
 }

@@ -10,10 +10,12 @@ namespace Python.Runtime
     internal class Iterator : ExtensionType
     {
         private IEnumerator iter;
+        private Type elemType;
 
-        public Iterator(IEnumerator e)
+        public Iterator(IEnumerator e, Type elemType)
         {
             iter = e;
+            this.elemType = elemType;
         }
 
 
@@ -41,7 +43,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
             object item = self.iter.Current;
-            return Converter.ToPythonImplicit(item);
+            return Converter.ToPython(item, self.elemType);
         }
 
         public static IntPtr tp_iter(IntPtr ob)

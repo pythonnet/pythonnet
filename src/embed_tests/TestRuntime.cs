@@ -18,26 +18,13 @@ namespace Python.EmbeddingTest
             }
         }
 
-        /// <summary>
-        /// Test the cache of the information from the platform module.
-        ///
-        /// Test fails on platforms we haven't implemented yet.
-        /// </summary>
-        [Test]
-        public static void PlatformCache()
-        {
-            Runtime.Runtime.Initialize();
-
-            Assert.That(Runtime.Runtime.Machine, Is.Not.EqualTo(MachineType.Other));
-            Assert.That(Runtime.Runtime.OperatingSystem, Is.Not.EqualTo(OperatingSystemType.Other));
-
-            // Don't shut down the runtime: if the python engine was initialized
-            // but not shut down by another test, we'd end up in a bad state.
-	}
-
         [Test]
         public static void Py_IsInitializedValue()
         {
+            if (Runtime.Runtime.Py_IsInitialized() == 1)
+            {
+                Runtime.Runtime.PyGILState_Ensure();
+            }
             Runtime.Runtime.Py_Finalize();
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();
@@ -112,14 +99,18 @@ namespace Python.EmbeddingTest
             var threadingDict = Runtime.Runtime.PyModule_GetDict(threading);
             Exceptions.ErrorCheck(threadingDict);
             var lockType = Runtime.Runtime.PyDict_GetItemString(threadingDict, "Lock");
-            if (lockType == IntPtr.Zero)
+            if (lockType.IsNull)
                 throw new KeyNotFoundException("class 'Lock' was not found in 'threading'");
 
-            var lockInstance = Runtime.Runtime.PyObject_CallObject(lockType, Runtime.Runtime.PyTuple_New(0));
+            var args = Runtime.Runtime.PyTuple_New(0);
+            var lockInstance = Runtime.Runtime.PyObject_CallObject(lockType.DangerousGetAddress(), args);
+            Runtime.Runtime.XDecref(args);
             Exceptions.ErrorCheck(lockInstance);
 
             Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(lockInstance));
             Assert.IsFalse(Runtime.Runtime.PyIter_Check(lockInstance));
+
+            threading.Dispose();
 
             Runtime.Runtime.Py_Finalize();
         }

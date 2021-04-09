@@ -11,8 +11,8 @@ namespace Python.Test
         private static PyObject module;
 
         private static string testmod =
-            "import CLR\n" +
-            "from CLR.Python.Test import ThreadTest\n" +
+            "import clr\n" +
+            "from Python.Test import ThreadTest\n" +
             "\n" +
             "def echostring(value):\n" +
             "    return value\n" +
@@ -34,7 +34,7 @@ namespace Python.Test
             {
                 if (module == null)
                 {
-                    module = PythonEngine.ModuleFromString("tt", testmod);
+                    module = PyModule.FromString("tt", testmod);
                 }
                 PyObject func = module.GetAttr("echostring");
                 var parg = new PyString(arg);
@@ -58,7 +58,7 @@ namespace Python.Test
             {
                 if (module == null)
                 {
-                    module = PythonEngine.ModuleFromString("tt", testmod);
+                    module = PyModule.FromString("tt", testmod);
                 }
 
                 PyObject func = module.GetAttr("echostring2");

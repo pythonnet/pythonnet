@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -11,17 +14,55 @@ namespace Python.Runtime
     internal class MetaType : ManagedType
     {
         private static IntPtr PyCLRMetaType;
+        private static SlotsHolder _metaSlotsHodler;
 
+        internal static readonly string[] CustomMethods = new string[]
+        {
+            "__instancecheck__",
+            "__subclasscheck__",
+        };
 
         /// <summary>
         /// Metatype initialization. This bootstraps the CLR metatype to life.
         /// </summary>
         public static IntPtr Initialize()
         {
-            PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType));
+            PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType), out _metaSlotsHodler);
             return PyCLRMetaType;
         }
 
+        public static void Release()
+        {
+            if (Runtime.Refcount(PyCLRMetaType) > 1)
+            {
+                _metaSlotsHodler.ResetSlots();
+            }
+            Runtime.Py_CLEAR(ref PyCLRMetaType);
+            _metaSlotsHodler = null;
+        }
+
+        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        {
+            Runtime.XIncref(PyCLRMetaType);
+            storage.PushValue(PyCLRMetaType);
+        }
+
+        internal static IntPtr RestoreRuntimeData(RuntimeDataStorage storage)
+        {
+            PyCLRMetaType = storage.PopValue<IntPtr>();
+            _metaSlotsHodler = new SlotsHolder(PyCLRMetaType);
+            TypeManager.InitializeSlots(PyCLRMetaType, typeof(MetaType), _metaSlotsHodler);
+
+            IntPtr mdef = Marshal.ReadIntPtr(PyCLRMetaType, TypeOffset.tp_methods);
+            foreach (var methodName in CustomMethods)
+            {
+                var mi = typeof(MetaType).GetMethod(methodName);
+                ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+                _metaSlotsHodler.KeeapAlive(thunkInfo);
+                mdef = TypeManager.WriteMethodDef(mdef, methodName, thunkInfo.Address);
+            }
+            return PyCLRMetaType;
+        }
 
         /// <summary>
         /// Metatype __new__ implementation. This is called to create a new
@@ -63,13 +104,20 @@ namespace Python.Runtime
             var cb = GetManagedObject(base_type) as ClassBase;
             if (cb != null)
             {
-                if (!cb.CanSubclass())
+                try
                 {
-                    return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                    if (!cb.CanSubclass())
+                    {
+                        return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                    }
+                }
+                catch (SerializationException)
+                {
+                    return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
                 }
             }
 
-            IntPtr slots = Runtime.PyDict_GetItemString(dict, "__slots__");
+            IntPtr slots = Runtime.PyDict_GetItem(dict, PyIdentifier.__slots__);
             if (slots != IntPtr.Zero)
             {
                 return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
@@ -99,13 +147,13 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            int flags = TypeFlags.Default;
+            var flags = TypeFlags.Default;
             flags |= TypeFlags.Managed;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.BaseType;
             flags |= TypeFlags.Subclass;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
 
@@ -157,7 +205,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            var init = Runtime.PyObject_GetAttrString(obj, "__init__");
+            var init = Runtime.PyObject_GetAttr(obj, PyIdentifier.__init__);
             Runtime.PyErr_Clear();
 
             if (init != IntPtr.Zero)
@@ -237,7 +285,7 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
+            var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
                 IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());
@@ -260,7 +308,7 @@ namespace Python.Runtime
         {
             var cb = GetManagedObject(tp) as ClassBase;
 
-            if (cb == null)
+            if (cb == null || !cb.type.Valid)
             {
                 Runtime.XIncref(Runtime.PyFalse);
                 return Runtime.PyFalse;
@@ -292,13 +340,13 @@ namespace Python.Runtime
                 }
 
                 var otherCb = GetManagedObject(otherType.Handle) as ClassBase;
-                if (otherCb == null)
+                if (otherCb == null || !otherCb.type.Valid)
                 {
                     Runtime.XIncref(Runtime.PyFalse);
                     return Runtime.PyFalse;
                 }
 
-                return Converter.ToPython(cb.type.IsAssignableFrom(otherCb.type));
+                return Converter.ToPython(cb.type.Value.IsAssignableFrom(otherCb.type.Value));
             }
         }
 

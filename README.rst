@@ -1,12 +1,15 @@
 pythonnet - Python.NET
 ===========================
 
-|Join the chat at https://gitter.im/pythonnet/pythonnet|
+|Join the chat at https://gitter.im/pythonnet/pythonnet| |stackexchange shield|
 
-|appveyor shield| |travis shield| |codecov shield|
+|gh shield| |appveyor shield|
 
-|license shield| |pypi package version| |conda-forge version| |python supported shield|
-|stackexchange shield|
+|license shield|
+
+|pypi package version| |conda-forge version| |python supported shield|
+
+|nuget preview shield| |nuget release shield|
 
 Python.NET is a package that gives Python programmers nearly
 seamless integration with the .NET Common Language Runtime (CLR) and
@@ -14,12 +17,17 @@ provides a powerful application scripting tool for .NET developers. It
 allows Python code to interact with the CLR, and may also be used to
 embed Python into a .NET application.
 
+.. note::
+   The master branch of this repository tracks the ongoing development of version 3.0.
+   Backports of patches to 2.5 are tracked in the
+   `backports-2.5 branch <https://github.com/pythonnet/pythonnet/tree/backports-2.5>`_.
+
 Calling .NET code from Python
 -----------------------------
 
 Python.NET allows CLR namespaces to be treated essentially as Python packages.
 
-.. code-block::
+.. code-block:: python
 
    import clr
    from System import String
@@ -28,7 +36,7 @@ Python.NET allows CLR namespaces to be treated essentially as Python packages.
 To load an assembly, use the ``AddReference`` function in the ``clr``
 module:
 
-.. code-block::
+.. code-block:: python
 
    import clr
    clr.AddReference("System.Windows.Forms")
@@ -37,6 +45,10 @@ module:
 Embedding Python in .NET
 ------------------------
 
+-  You must set `Runtime.PythonDLL` property or `PYTHONNET_PYDLL` environment variable
+   starting with version 3.0, otherwise you will receive `TypeInitializationException`.
+   Typical values are `python38.dll` (Windows), `libpython3.8.dylib` (Mac),
+   `libpython3.8.so` (most other *nix).
 -  All calls to python should be inside a
    ``using (Py.GIL()) {/* Your code here */}`` block.
 -  Import python modules using ``dynamic mod = Py.Import("mod")``, then
@@ -80,7 +92,7 @@ Example
 
 Output:
 
-.. code::
+.. code:: csharp
 
    1.0
    -0.958924274663
@@ -126,3 +138,9 @@ This project is supported by the `.NET Foundation <https://dotnetfoundation.org>
    :target: http://stackoverflow.com/questions/tagged/python.net
 .. |conda-forge version| image:: https://img.shields.io/conda/vn/conda-forge/pythonnet.svg
    :target: https://anaconda.org/conda-forge/pythonnet
+.. |nuget preview shield| image:: https://img.shields.io/nuget/vpre/pythonnet
+   :target: https://www.nuget.org/packages/pythonnet/
+.. |nuget release shield| image:: https://img.shields.io/nuget/v/pythonnet
+   :target: https://www.nuget.org/packages/pythonnet/
+.. |gh shield| image:: https://github.com/pythonnet/pythonnet/workflows/GitHub%20Actions/badge.svg
+   :target: https://github.com/pythonnet/pythonnet/actions?query=branch%3Amaster

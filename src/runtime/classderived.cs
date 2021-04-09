@@ -22,6 +22,7 @@ namespace Python.Runtime
     {
     }
 
+    [Serializable]
     internal class ClassDerivedObject : ClassObject
     {
         private static Dictionary<string, AssemblyBuilder> assemblyBuilders;
@@ -74,7 +75,8 @@ namespace Python.Runtime
             // So we don't call PyObject_GC_Del here and instead we set the python
             // reference to a weak reference so that the C# object can be collected.
             GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
-            Marshal.WriteIntPtr(self.pyHandle, ObjectOffset.magic(self.tpHandle), (IntPtr)gc);
+            int gcOffset = ObjectOffset.magic(Runtime.PyObject_TYPE(self.pyHandle));
+            Marshal.WriteIntPtr(self.pyHandle, gcOffset, (IntPtr)gc);
             self.gcHandle.Free();
             self.gcHandle = gc;
         }
@@ -99,6 +101,10 @@ namespace Python.Runtime
             // collected while Python still has a reference to it.
             if (Runtime.Refcount(self.pyHandle) == 1)
             {
+
+#if PYTHON_WITH_PYDEBUG
+                Runtime._Py_NewReference(self.pyHandle);
+#endif
                 GCHandle gc = GCHandle.Alloc(self, GCHandleType.Normal);
                 Marshal.WriteIntPtr(self.pyHandle, ObjectOffset.magic(self.tpHandle), (IntPtr)gc);
                 self.gcHandle.Free();
@@ -130,7 +136,7 @@ namespace Python.Runtime
 
             if (null == assemblyName)
             {
-                assemblyName = Assembly.GetExecutingAssembly().FullName;
+                assemblyName = "Python.Runtime.Dynamic";
             }
 
             ModuleBuilder moduleBuilder = GetModuleBuilder(assemblyName, moduleName);
@@ -852,7 +858,7 @@ namespace Python.Runtime
             {
                 if (0 == Runtime.Py_IsInitialized() || Runtime.IsFinalizing)
                 {
-                    self.gcHandle.Free();
+                    if (self.gcHandle.IsAllocated) self.gcHandle.Free();
                     return;
                 }
             }
@@ -867,7 +873,7 @@ namespace Python.Runtime
                     // If python's been terminated then just free the gchandle.
                     if (0 == Runtime.Py_IsInitialized() || Runtime.IsFinalizing)
                     {
-                        self.gcHandle.Free();
+                        if (self.gcHandle.IsAllocated) self.gcHandle.Free();
                         return;
                     }
 

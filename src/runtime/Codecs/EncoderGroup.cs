@@ -8,7 +8,6 @@ namespace Python.Runtime.Codecs
     /// <summary>
     /// Represents a group of <see cref="IPyObjectDecoder"/>s. Useful to group them by priority.
     /// </summary>
-    [Obsolete(Util.UnstableApiMessage)]
     public sealed class EncoderGroup: IPyObjectEncoder, IEnumerable<IPyObjectEncoder>
     {
         readonly List<IPyObjectEncoder> encoders = new List<IPyObjectEncoder>();
@@ -50,7 +49,6 @@ namespace Python.Runtime.Codecs
         IEnumerator IEnumerable.GetEnumerator() => this.encoders.GetEnumerator();
     }
 
-    [Obsolete(Util.UnstableApiMessage)]
     public static class EncoderGroupExtensions
     {
         /// <summary>
@@ -58,7 +56,6 @@ namespace Python.Runtime.Codecs
         /// (potentially selecting one from a collection),
         /// that can encode the specified <paramref name="type"/>.
         /// </summary>
-        [Obsolete(Util.UnstableApiMessage)]
         public static IEnumerable<IPyObjectEncoder> GetEncoders(this IPyObjectEncoder decoder, Type type)
         {
             if (decoder is null) throw new ArgumentNullException(nameof(decoder));

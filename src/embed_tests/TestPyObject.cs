@@ -59,9 +59,17 @@ a = MemberNamesTest()
         }
 
         [Test]
-        public void InvokeNull() {
+        public void InvokeNull()
+        {
             var list = PythonEngine.Eval("list");
             Assert.Throws<ArgumentNullException>(() => list.Invoke(new PyObject[] {null}));
+        }
+
+        [Test]
+        public void AsManagedObjectInvalidCast()
+        {
+            var list = PythonEngine.Eval("list");
+            Assert.Throws<InvalidCastException>(() => list.AsManagedObject(typeof(int)));
         }
     }
 }

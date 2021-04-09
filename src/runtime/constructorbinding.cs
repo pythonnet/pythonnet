@@ -19,18 +19,20 @@ namespace Python.Runtime
     /// and creating the BoundContructor object which contains ContructorInfo object.
     /// 3) In tp_call, if ctorInfo is not null, ctorBinder.InvokeRaw() is called.
     /// </remarks>
+    [Serializable]
     internal class ConstructorBinding : ExtensionType
     {
-        private Type type; // The managed Type being wrapped in a ClassObject
+        private MaybeType type; // The managed Type being wrapped in a ClassObject
         private IntPtr pyTypeHndl; // The python type tells GetInstHandle which Type to create.
         private ConstructorBinder ctorBinder;
+
+        [NonSerialized]
         private IntPtr repr;
 
         public ConstructorBinding(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder)
         {
             this.type = type;
-            Runtime.XIncref(pyTypeHndl);
-            this.pyTypeHndl = pyTypeHndl;
+            this.pyTypeHndl = pyTypeHndl; // steal a type reference
             this.ctorBinder = ctorBinder;
             repr = IntPtr.Zero;
         }
@@ -90,6 +92,11 @@ namespace Python.Runtime
         public static IntPtr mp_subscript(IntPtr op, IntPtr key)
         {
             var self = (ConstructorBinding)GetManagedObject(op);
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            Type tp = self.type.Value;
 
             Type[] types = Runtime.PythonArgsToTypeArray(key);
             if (types == null)
@@ -98,12 +105,12 @@ namespace Python.Runtime
             }
             //MethodBase[] methBaseArray = self.ctorBinder.GetMethods();
             //MethodBase ci = MatchSignature(methBaseArray, types);
-            ConstructorInfo ci = self.type.GetConstructor(types);
+            ConstructorInfo ci = tp.GetConstructor(types);
             if (ci == null)
             {
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
-            var boundCtor = new BoundContructor(self.type, self.pyTypeHndl, self.ctorBinder, ci);
+            var boundCtor = new BoundContructor(tp, self.pyTypeHndl, self.ctorBinder, ci);
 
             return boundCtor.pyHandle;
         }
@@ -120,7 +127,12 @@ namespace Python.Runtime
                 return self.repr;
             }
             MethodBase[] methods = self.ctorBinder.GetMethods();
-            string name = self.type.FullName;
+
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+            string name = self.type.Value.FullName;
             var doc = "";
             foreach (MethodBase t in methods)
             {
@@ -144,8 +156,25 @@ namespace Python.Runtime
         {
             var self = (ConstructorBinding)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
-            Runtime.XDecref(self.pyTypeHndl);
-            ExtensionType.FinalizeObject(self);
+            self.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (ConstructorBinding)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.repr);
+            return 0;
+        }
+
+        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
+        {
+            var self = (ConstructorBinding)GetManagedObject(ob);
+            int res = PyVisit(self.pyTypeHndl, visit, arg);
+            if (res != 0) return res;
+
+            res = PyVisit(self.repr, visit, arg);
+            if (res != 0) return res;
+            return 0;
         }
     }
 
@@ -157,6 +186,7 @@ namespace Python.Runtime
     /// An earlier implementation hung the __call__ on the ContructorBinding class and
     /// returned an Incref()ed self.pyHandle from the __get__ function.
     /// </remarks>
+    [Serializable]
     internal class BoundContructor : ExtensionType
     {
         private Type type; // The managed Type being wrapped in a ClassObject
@@ -168,8 +198,7 @@ namespace Python.Runtime
         public BoundContructor(Type type, IntPtr pyTypeHndl, ConstructorBinder ctorBinder, ConstructorInfo ci)
         {
             this.type = type;
-            Runtime.XIncref(pyTypeHndl);
-            this.pyTypeHndl = pyTypeHndl;
+            this.pyTypeHndl = pyTypeHndl; // steal a type reference
             this.ctorBinder = ctorBinder;
             ctorInfo = ci;
             repr = IntPtr.Zero;
@@ -230,8 +259,25 @@ namespace Python.Runtime
         {
             var self = (BoundContructor)GetManagedObject(ob);
             Runtime.XDecref(self.repr);
-            Runtime.XDecref(self.pyTypeHndl);
-            FinalizeObject(self);
+            self.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (BoundContructor)GetManagedObject(ob);
+            Runtime.Py_CLEAR(ref self.repr);
+            return 0;
+        }
+
+        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
+        {
+            var self = (BoundContructor)GetManagedObject(ob);
+            int res = PyVisit(self.pyTypeHndl, visit, arg);
+            if (res != 0) return res;
+
+            res = PyVisit(self.repr, visit, arg);
+            if (res != 0) return res;
+            return 0;
         }
     }
 }

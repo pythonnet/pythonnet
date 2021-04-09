@@ -1,187 +1,53 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{097B4AC0-74E9-4C58-BCF8-C69746EC8271}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AssemblyName>Python.Runtime</AssemblyName>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <Platforms>AnyCPU</Platforms>
+    <LangVersion>9.0</LangVersion>
     <RootNamespace>Python.Runtime</RootNamespace>
-    <DocumentationFile>bin\Python.Runtime.xml</DocumentationFile>
-    <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-    <NoWarn>1591</NoWarn>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <LangVersion>7.3</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <SignAssembly>false</SignAssembly>
+    <AssemblyName>Python.Runtime</AssemblyName>
+
+    <PackageId>pythonnet</PackageId>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>python interop dynamic dlr Mono pinvoke</PackageTags>
+    <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
+    <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Description>Python and CLR (.NET and Mono) cross-platform language interop</Description>
+
+    <DebugSymbols>true</DebugSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+
+    <NoWarn>1591;NU1701</NoWarn>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
-  <!--We can relax binding to platform because code references no any platform dependent assemblies-->
-  <!--This will allows to use any build of this assebly as a compile ref assebly-->
-  <!--<PropertyGroup Condition=" '$(Platform)' == 'x86'">
-    <PlatformTarget>x86</PlatformTarget>
+
+  <PropertyGroup>
+    <OutputPath>..\..\pythonnet\runtime</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Platform)' == 'x64'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>-->
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMono'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseMonoPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS4</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMono'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS4;TRACE;DEBUG</DefineConstants>
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugMonoPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS4;TRACE;DEBUG</DefineConstants>
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWin'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseWinPY3'">
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS2</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWin'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON2;PYTHON27;UCS2;TRACE;DEBUG</DefineConstants>
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'DebugWinPY3'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants Condition="'$(DefineConstants)' == ''">PYTHON3;PYTHON38;UCS2;TRACE;DEBUG</DefineConstants>
-    <Optimize>false</Optimize>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Codecs\EncoderGroup.cs" />
-    <Compile Include="Codecs\DecoderGroup.cs" />
-    <Compile Include="Codecs\RawProxyEncoder.cs" />
-    <Compile Include="Codecs\TupleCodecs.cs" />
-    <Compile Include="converterextensions.cs" />
-    <Compile Include="finalizer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\SharedAssemblyInfo.cs">
-      <Link>Properties\SharedAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="arrayobject.cs" />
-    <Compile Include="assemblymanager.cs" />
-    <Compile Include="BorrowedReference.cs" />
-    <Compile Include="classderived.cs" />
-    <Compile Include="classbase.cs" />
-    <Compile Include="classmanager.cs" />
-    <Compile Include="classobject.cs" />
-    <Compile Include="clrobject.cs" />
-    <Compile Include="codegenerator.cs" />
-    <Compile Include="constructorbinder.cs" />
-    <Compile Include="constructorbinding.cs" />
-    <Compile Include="converter.cs" />
-    <Compile Include="CustomMarshaler.cs" />
-    <Compile Include="debughelper.cs" />
-    <Compile Include="delegatemanager.cs" />
-    <Compile Include="delegateobject.cs" />
-    <Compile Include="eventbinding.cs" />
-    <Compile Include="eventobject.cs" />
-    <Compile Include="exceptions.cs" />
-    <Compile Include="extensiontype.cs" />
-    <Compile Include="fieldobject.cs" />
-    <Compile Include="generictype.cs" />
-    <Compile Include="genericutil.cs" />
-    <Compile Include="importhook.cs" />
-    <Compile Include="indexer.cs" />
-    <Compile Include="interfaceobject.cs" />
-    <Compile Include="interfaces.cs" />
-    <Compile Include="interop.cs" />
-    <Compile Include="iterator.cs" />
-    <Compile Include="managedtype.cs" />
-    <Compile Include="metatype.cs" />
-    <Compile Include="methodbinder.cs" />
-    <Compile Include="methodbinding.cs" />
-    <Compile Include="methodobject.cs" />
-    <Compile Include="methodwrapper.cs" />
-    <Compile Include="modulefunctionobject.cs" />
-    <Compile Include="moduleobject.cs" />
-    <Compile Include="modulepropertyobject.cs" />
-    <Compile Include="nativecall.cs" />
-    <Compile Include="NewReference.cs" />
-    <Compile Include="NonCopyableAttribute.cs" />
-    <Compile Include="overload.cs" />
-    <Compile Include="propertyobject.cs" />
-    <Compile Include="pyansistring.cs" />
-    <Compile Include="pydict.cs" />
-    <Compile Include="PyExportAttribute.cs" />
-    <Compile Include="pyfloat.cs" />
-    <Compile Include="pyint.cs" />
-    <Compile Include="pyiter.cs" />
-    <Compile Include="pylist.cs" />
-    <Compile Include="pylong.cs" />
-    <Compile Include="pynumber.cs" />
-    <Compile Include="pyobject.cs" />
-    <Compile Include="pyscope.cs" />
-    <Compile Include="pysequence.cs" />
-    <Compile Include="pystring.cs" />
-    <Compile Include="pythonengine.cs" />
-    <Compile Include="pythonexception.cs" />
-    <Compile Include="pytuple.cs" />
-    <Compile Include="ReferenceExtensions.cs" />
-    <Compile Include="runtime.cs" />
-    <Compile Include="StolenReference.cs" />
-    <Compile Include="typemanager.cs" />
-    <Compile Include="typemethod.cs" />
-    <Compile Include="Util.cs" />
-    <Compile Include="platform\Types.cs" />
-    <Compile Include="platform\LibraryLoader.cs" />
-    <Compile Include="polyfill\ReflectionPolifills.cs" />
-    <Compile Include="slots\mp_length.cs" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(PythonInteropFile)' != '' ">
-    <Compile Include="$(PythonInteropFile)" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(PythonInteropFile)' == '' ">
-    <Compile Include="interop27.cs" />
-    <Compile Include="interop34.cs" />
-    <Compile Include="interop35.cs" />
-    <Compile Include="interop36.cs" />
-    <Compile Include="interop37.cs" />
-    <Compile Include="interop38.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\pythonnet.snk" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Remove="resources\clr.py" />
     <EmbeddedResource Include="resources\clr.py">
       <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
-  <PropertyGroup>
-    <TargetAssembly>$(TargetPath)</TargetAssembly>
-    <TargetAssemblyPdb>$(TargetDir)$(TargetName).pdb</TargetAssemblyPdb>
-  </PropertyGroup>
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetAssembly)" DestinationFolder="$(PythonBuildDir)" />
-    <!--Copy SourceFiles="$(TargetAssemblyPdb)" Condition="Exists('$(TargetAssemblyPdb)')" DestinationFolder="$(PythonBuildDir)" /-->
-  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Permissions" Version="4.4.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
 </Project>
