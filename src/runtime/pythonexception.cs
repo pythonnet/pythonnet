@@ -268,8 +268,15 @@ namespace Python.Runtime
         /// A string representing the python exception stack trace.
         /// </remarks>
         public override string StackTrace
-            => (Traceback is null ? "" : TracebackToString(Traceback))
-               + base.StackTrace;
+        {
+            get
+            {
+                if (Traceback is null) return base.StackTrace;
+
+                using var _ = new Py.GILState();
+                return TracebackToString(Traceback) + base.StackTrace;
+            }
+        }
 
         public override string Message => GetMessage();
 
