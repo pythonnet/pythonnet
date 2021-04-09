@@ -94,7 +94,7 @@ namespace Python.Runtime
     /// <remarks>
     /// Readability of the Exceptions class improvements as we look toward version 2.7 ...
     /// </remarks>
-    public static class Exceptions
+    internal static class Exceptions
     {
         internal static PyModule warnings_module;
         internal static PyModule exceptions_module;
@@ -226,19 +226,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// ExceptionMatches Method
-        /// </summary>
-        /// <remarks>
-        /// Returns true if the given Python exception matches the given
-        /// Python object. This is a wrapper for PyErr_GivenExceptionMatches.
-        /// </remarks>
-        public static bool ExceptionMatches(IntPtr exc, IntPtr ob)
-        {
-            int i = Runtime.PyErr_GivenExceptionMatches(exc, ob);
-            return i != 0;
-        }
-
-        /// <summary>
         /// SetError Method
         /// </summary>
         /// <remarks>
@@ -271,7 +258,7 @@ namespace Python.Runtime
         /// object. The CLR exception instance is wrapped as a Python
         /// object, allowing it to be handled naturally from Python.
         /// </remarks>
-        public static void SetError(Exception e)
+        public static bool SetError(Exception e)
         {
             // Because delegates allow arbitrary nesting of Python calling
             // managed calling Python calling... etc. it is possible that we
@@ -282,32 +269,33 @@ namespace Python.Runtime
             if (pe != null)
             {
                 pe.Restore();
-                return;
+                return true;
             }
 
-            IntPtr op = Converter.ToPython(e);
-            IntPtr etype = Runtime.PyObject_GetAttr(op, PyIdentifier.__class__);
-            var exceptionInfo = ExceptionDispatchInfo.Capture(e);
-            IntPtr pyInfo = Converter.ToPython(exceptionInfo);
-            Runtime.PyObject_SetAttrString(op, DispatchInfoAttribute, pyInfo);
-            Runtime.XDecref(pyInfo);
+            using var instance = Converter.ToPythonReference(e);
+            if (instance.IsNull()) return false;
 
-            Runtime.PyErr_SetObject(etype, op);
-            Runtime.XDecref(etype);
-            Runtime.XDecref(op);
+            var exceptionInfo = ExceptionDispatchInfo.Capture(e);
+            using var pyInfo = Converter.ToPythonReference(exceptionInfo);
+
+            if (Runtime.PyObject_SetAttrString(instance, DispatchInfoAttribute, pyInfo) != 0)
+                return false;
+
+            var type = Runtime.PyObject_TYPE(instance);
+            Runtime.PyErr_SetObject(type, instance);
+            return true;
         }
 
         /// <summary>
         /// When called after SetError, sets the cause of the error.
         /// </summary>
         /// <param name="cause">The cause of the current error</param>
-        public static void SetCause(PythonException cause)
+        public static void SetCause(Exception cause)
         {
-            var currentException = new PythonException();
+            var currentException = PythonException.FetchCurrentRaw();
             currentException.Normalize();
-            cause.Normalize();
-            Runtime.XIncref(cause.PyValue);
-            Runtime.PyException_SetCause(currentException.PyValue, cause.PyValue);
+            using var causeInstance = Converter.ToPythonReference(cause);
+            Runtime.PyException_SetCause(currentException.Value.Reference, causeInstance);
             currentException.Restore();
         }
 
@@ -394,16 +382,19 @@ namespace Python.Runtime
         /// <returns><c>IntPtr.Zero</c></returns>
         internal static IntPtr RaiseTypeError(string message)
         {
-            PythonException previousException = null;
-            if (ErrorOccurred())
-            {
-                previousException = new PythonException();
-            }
+            var cause = PythonException.FetchCurrentOrNullRaw();
+            cause?.Normalize();
+
             Exceptions.SetError(Exceptions.TypeError, message);
-            if (previousException != null)
-            {
-                SetCause(previousException);
-            }
+
+            if (cause is null) return IntPtr.Zero;
+
+            var typeError = PythonException.FetchCurrentRaw();
+            typeError.Normalize();
+
+            Runtime.PyException_SetCause(typeError.Value.Reference, cause.Value.Reference);
+            typeError.Restore();
+
             return IntPtr.Zero;
         }
 

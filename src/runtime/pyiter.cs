@@ -57,7 +57,7 @@ namespace Python.Runtime
             {
                 if (Exceptions.ErrorOccurred())
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
 
                 // stop holding the previous object, if there was one

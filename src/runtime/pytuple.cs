@@ -77,7 +77,7 @@ namespace Python.Runtime
                 if (res != 0)
                 {
                     Runtime.Py_DecRef(val);
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
             }
             return val;

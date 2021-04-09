@@ -160,7 +160,7 @@ namespace Python.EmbeddingTest
                 string msg = e.ToString();
                 Runtime.Runtime.Shutdown();
 
-                if (e.IsMatches(Exceptions.ImportError))
+                if (e.Is(Exceptions.ImportError))
                 {
                     Assert.Ignore("no atexit module");
                 }

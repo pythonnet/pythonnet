@@ -294,9 +294,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
             // Save the exception
-            var originalException = new PythonException();
-            // Otherwise,  just clear the it.
-            Exceptions.Clear();
+            var originalException = PythonException.FetchCurrentRaw();
 
             string[] names = realname.Split('.');
 

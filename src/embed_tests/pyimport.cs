@@ -102,8 +102,7 @@ import clr
 clr.AddReference('{path}')
 ";
 
-            var error = Assert.Throws<PythonException>(() => PythonEngine.Exec(code));
-            Assert.AreEqual(nameof(FileLoadException), error.PythonTypeName);
+            Assert.Throws<FileLoadException>(() => PythonEngine.Exec(code));
         }
     }
 }

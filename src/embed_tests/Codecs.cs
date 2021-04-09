@@ -325,56 +325,58 @@ system_type = list_encoder.GetType()";
 
         const string TestExceptionMessage = "Hello World!";
         [Test]
-        public void ExceptionEncoded() {
+        public void ExceptionEncoded()
+        {
             PyObjectConversions.RegisterEncoder(new ValueErrorCodec());
             void CallMe() => throw new ValueErrorWrapper(TestExceptionMessage);
             var callMeAction = new Action(CallMe);
-            using (var _ = Py.GIL())
-            using (var scope = Py.CreateScope())
-            {
-                scope.Exec(@"
+            using var _ = Py.GIL();
+            using var scope = Py.CreateScope();
+            scope.Exec(@"
 def call(func):
   try:
     func()
   except ValueError as e:
     return str(e)
 ");
-                var callFunc = scope.Get("call");
-                string message = callFunc.Invoke(callMeAction.ToPython()).As<string>();
-                Assert.AreEqual(TestExceptionMessage, message);
-            }
+            var callFunc = scope.Get("call");
+            string message = callFunc.Invoke(callMeAction.ToPython()).As<string>();
+            Assert.AreEqual(TestExceptionMessage, message);
         }
 
         [Test]
-        public void ExceptionDecoded() {
+        public void ExceptionDecoded()
+        {
             PyObjectConversions.RegisterDecoder(new ValueErrorCodec());
-            using (var _ = Py.GIL())
-            using (var scope = Py.CreateScope())
-            {
-                var error = Assert.Throws<ValueErrorWrapper>(()
-                    => PythonEngine.Exec($"raise ValueError('{TestExceptionMessage}')"));
-                Assert.AreEqual(TestExceptionMessage, error.Message);
-            }
+            using var _ = Py.GIL();
+            using var scope = Py.CreateScope();
+            var error = Assert.Throws<ValueErrorWrapper>(()
+                => PythonEngine.Exec($"raise ValueError('{TestExceptionMessage}')"));
+            Assert.AreEqual(TestExceptionMessage, error.Message);
         }
 
-        class ValueErrorWrapper : Exception {
+        class ValueErrorWrapper : Exception
+        {
             public ValueErrorWrapper(string message) : base(message) { }
         }
 
-        class ValueErrorCodec : IPyObjectEncoder, IPyObjectDecoder {
+        class ValueErrorCodec : IPyObjectEncoder, IPyObjectDecoder
+        {
             public bool CanDecode(PyObject objectType, Type targetType)
                 => this.CanEncode(targetType) && objectType.Equals(PythonEngine.Eval("ValueError"));
 
             public bool CanEncode(Type type) => type == typeof(ValueErrorWrapper)
                                                 || typeof(ValueErrorWrapper).IsSubclassOf(type);
 
-            public bool TryDecode<T>(PyObject pyObj, out T value) {
+            public bool TryDecode<T>(PyObject pyObj, out T value)
+            {
                 var message = pyObj.GetAttr("args")[0].As<string>();
                 value = (T)(object)new ValueErrorWrapper(message);
                 return true;
             }
 
-            public PyObject TryEncode(object value) {
+            public PyObject TryEncode(object value)
+            {
                 var error = (ValueErrorWrapper)value;
                 return PythonEngine.Eval("ValueError").Invoke(error.Message.ToPython());
             }

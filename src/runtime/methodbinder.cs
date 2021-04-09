@@ -438,7 +438,7 @@ namespace Python.Runtime
                     outs: out outs);
                 if (margs == null)
                 {
-                    mismatchedMethods.Add(new MismatchedMethod(new PythonException(), mi));
+                    mismatchedMethods.Add(new MismatchedMethod(PythonException.FetchCurrentRaw(), mi));
                     Exceptions.Clear();
                     continue;
                 }

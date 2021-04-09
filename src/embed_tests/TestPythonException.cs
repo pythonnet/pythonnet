@@ -30,29 +30,29 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => foo = list[0]);
 
-            Assert.AreEqual("IndexError : list index out of range", ex.Message);
+            Assert.AreEqual("list index out of range", ex.Message);
+            Assert.IsNull(foo);
+        }
+
+        [Test]
+        public void TestType()
+        {
+            var list = new PyList();
+            PyObject foo = null;
+
+            var ex = Assert.Throws<PythonException>(() => foo = list[0]);
+
+            Assert.AreEqual("IndexError", ex.Type.Name);
             Assert.IsNull(foo);
         }
 
         [Test]
         public void TestNoError()
         {
-            var e = new PythonException(); // There is no PyErr to fetch
-            Assert.AreEqual("", e.Message);
-        }
-
-        [Test]
-        public void TestPythonErrorTypeName()
-        {
-            try
-            {
-                var module = PyModule.Import("really____unknown___module");
-                Assert.Fail("Unknown module should not be loaded");
-            }
-            catch (PythonException ex)
-            {
-                Assert.That(ex.PythonTypeName, Is.EqualTo("ModuleNotFoundError").Or.EqualTo("ImportError"));
-            }
+            // There is no PyErr to fetch
+            Assert.Throws<InvalidOperationException>(() => PythonException.FetchCurrentRaw());
+            var currentError = PythonException.FetchCurrentOrNullRaw();
+            Assert.IsNull(currentError);
         }
 
         [Test]
@@ -70,7 +70,7 @@ except Exception as ex:
             catch (PythonException ex)
             {
                 Assert.That(ex.InnerException, Is.InstanceOf<PythonException>());
-                Assert.That(ex.InnerException.Message, Is.EqualTo("Exception : inner"));
+                Assert.That(ex.InnerException.Message, Is.EqualTo("inner"));
             }
         }
 
@@ -111,13 +111,6 @@ except Exception as ex:
                     .And.Not.Contain("\\n")
                 );
             }
-        }
-
-        [Test]
-        public void TestPythonExceptionFormatNoError()
-        {
-            var ex = new PythonException();
-            Assert.AreEqual(ex.StackTrace, ex.Format());
         }
 
         [Test]
@@ -162,22 +155,19 @@ class TestException(NameError):
                 Assert.IsTrue(scope.TryGet("TestException", out PyObject type));
 
                 PyObject str = "dummy string".ToPython();
-                IntPtr typePtr = type.Handle;
-                IntPtr strPtr = str.Handle;
-                IntPtr tbPtr = Runtime.Runtime.None.Handle;
-                Runtime.Runtime.XIncref(typePtr);
-                Runtime.Runtime.XIncref(strPtr);
-                Runtime.Runtime.XIncref(tbPtr);
+                var typePtr = new NewReference(type.Reference);
+                var strPtr = new NewReference(str.Reference);
+                var tbPtr = new NewReference(Runtime.Runtime.None.Reference);
                 Runtime.Runtime.PyErr_NormalizeException(ref typePtr, ref strPtr, ref tbPtr);
 
-                using (PyObject typeObj = new PyObject(typePtr), strObj = new PyObject(strPtr), tbObj = new PyObject(tbPtr))
-                {
-                    // the type returned from PyErr_NormalizeException should not be the same type since a new
-                    // exception was raised by initializing the exception
-                    Assert.AreNotEqual(type.Handle, typePtr);
-                    // the message should now be the string from the throw exception during normalization
-                    Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
-                }
+                using var typeObj = typePtr.MoveToPyObject();
+                using var strObj = strPtr.MoveToPyObject();
+                using var tbObj = tbPtr.MoveToPyObject();
+                // the type returned from PyErr_NormalizeException should not be the same type since a new
+                // exception was raised by initializing the exception
+                Assert.AreNotEqual(type.Handle, typeObj.Handle);
+                // the message should now be the string from the throw exception during normalization
+                Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
             }
         }
 
@@ -185,7 +175,7 @@ class TestException(NameError):
         public void TestPythonException_Normalize_ThrowsWhenErrorSet()
         {
             Exceptions.SetError(Exceptions.TypeError, "Error!");
-            var pythonException = new PythonException();
+            var pythonException = PythonException.FetchCurrentRaw();
             Exceptions.SetError(Exceptions.TypeError, "Another error");
             Assert.Throws<InvalidOperationException>(() => pythonException.Normalize());
         }

@@ -523,7 +523,7 @@ namespace Python.Runtime
             using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
             if (result.obj != Runtime.PyNone)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
         /// <summary>
@@ -776,7 +776,8 @@ namespace Python.Runtime
             PyObject type = PyObject.None;
             PyObject val = PyObject.None;
             PyObject traceBack = PyObject.None;
-            PythonException ex = null;
+            Exception ex = null;
+            PythonException pyError = null;
 
             try
             {
@@ -786,11 +787,18 @@ namespace Python.Runtime
             }
             catch (PythonException e)
             {
-                ex = e;
-                type = ex.PyType ?? type;
-                val = ex.PyValue ?? val;
-                traceBack = ex.PyTB ?? traceBack;
+                ex = pyError = e;
             }
+            catch (Exception e)
+            {
+                ex = e;
+                Exceptions.SetError(e);
+                pyError = PythonException.FetchCurrentRaw();
+            }
+
+            type = pyError?.Type ?? type;
+            val = pyError?.Value ?? val;
+            traceBack = pyError?.Traceback ?? traceBack;
 
             var exitResult = obj.InvokeMethod("__exit__", type, val, traceBack);
 

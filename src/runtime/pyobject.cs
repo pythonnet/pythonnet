@@ -29,9 +29,6 @@ namespace Python.Runtime
 
         public static PyObject None => new PyObject(new BorrowedReference(Runtime.PyNone));
         internal BorrowedReference Reference => new BorrowedReference(this.obj);
-        internal NewReference MakeNewReferenceOrNull()
-            => NewReference.DangerousFromPointer(
-                this.obj == IntPtr.Zero ? IntPtr.Zero : Runtime.SelfIncRef(this.obj));
 
         /// <summary>
         /// PyObject Constructor
@@ -76,6 +73,17 @@ namespace Python.Runtime
             if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
 
             obj = Runtime.SelfIncRef(reference.DangerousGetAddress());
+            Finalizer.Instance.ThrottledCollect();
+#if TRACE_ALLOC
+            Traceback = new StackTrace(1);
+#endif
+        }
+
+        internal PyObject(StolenReference reference)
+        {
+            if (reference == null) throw new ArgumentNullException(nameof(reference));
+
+            obj = reference.DangerousGetAddressOrNull();
             Finalizer.Instance.ThrottledCollect();
 #if TRACE_ALLOC
             Traceback = new StackTrace(1);
@@ -147,7 +155,8 @@ namespace Python.Runtime
             object result;
             if (!Converter.ToManaged(obj, t, out result, true))
             {
-                throw new InvalidCastException("cannot convert object to target type", new PythonException());
+                throw new InvalidCastException("cannot convert object to target type",
+                    PythonException.FetchCurrentOrNull(out _));
             }
             return result;
         }
@@ -637,7 +646,7 @@ namespace Python.Runtime
             var s = Runtime.PyObject_Size(Reference);
             if (s < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return s;
         }
@@ -1454,5 +1463,14 @@ namespace Python.Runtime
                 yield return pyObj.ToString();
             }
         }
+    }
+
+    internal static class PyObjectExtensions
+    {
+        internal static NewReference NewReferenceOrNull(this PyObject self)
+            => NewReference.DangerousFromPointer(
+                (self?.obj ?? IntPtr.Zero) == IntPtr.Zero
+                    ? IntPtr.Zero
+                    : Runtime.SelfIncRef(self.obj));
     }
 }

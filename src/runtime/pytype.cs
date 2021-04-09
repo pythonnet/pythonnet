@@ -13,6 +13,27 @@ namespace Python.Runtime
         /// <summary>Wraps an existing type object.</summary>
         public PyType(PyObject o) : base(FromObject(o)) { }
 
+        internal PyType(StolenReference reference) : base(EnsureIsType(in reference))
+        {
+        }
+
+        internal new static PyType? FromNullableReference(BorrowedReference reference)
+            => reference == null
+                ? null
+                : new PyType(new NewReference(reference).Steal());
+
+        public string Name
+        {
+            get
+            {
+                var namePtr = new StrPtr
+                {
+                    RawPointer = Marshal.ReadIntPtr(Handle, TypeOffset.tp_name),
+                };
+                return namePtr.ToString(System.Text.Encoding.UTF8)!;
+            }
+        }
+
         /// <summary>Checks if specified object is a Python type.</summary>
         public static bool IsType(PyObject value)
         {
@@ -20,6 +41,19 @@ namespace Python.Runtime
 
             return Runtime.PyType_Check(value.obj);
         }
+
+        private static IntPtr EnsureIsType(in StolenReference reference)
+        {
+            IntPtr address = reference.DangerousGetAddressOrNull();
+            if (address == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(reference));
+            return EnsureIsType(address);
+        }
+
+        private static IntPtr EnsureIsType(IntPtr ob)
+            => Runtime.PyType_Check(ob)
+                ? ob
+                : throw new ArgumentException("object is not a type");
 
         private static BorrowedReference FromObject(PyObject o)
         {

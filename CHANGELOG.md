@@ -49,6 +49,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
     support for .NET Core
 -   .NET and Python exceptions are preserved when crossing Python/.NET boundary
 -   BREAKING: custom encoders are no longer called for instances of `System.Type`
+-   `PythonException.Restore` no longer clears `PythonException` instance.
 
 ### Fixed
 
@@ -74,6 +75,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 ### Removed
 
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
+-   messages in `PythonException` no longer start with exception type
 -   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
 (see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 

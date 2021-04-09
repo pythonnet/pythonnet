@@ -104,7 +104,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => t.Concat(s));
 
-            StringAssert.StartsWith("TypeError : can only concatenate tuple", ex.Message);
+            StringAssert.StartsWith("can only concatenate tuple", ex.Message);
             Assert.AreEqual(0, t.Length());
             Assert.IsEmpty(t);
         }
@@ -164,7 +164,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => t = PyTuple.AsTuple(i));
 
-            Assert.AreEqual("TypeError : 'int' object is not iterable", ex.Message);
+            Assert.AreEqual("'int' object is not iterable", ex.Message);
             Assert.IsNull(t);
         }
     }

@@ -41,7 +41,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => t = PyList.AsList(i));
 
-            Assert.AreEqual("TypeError : 'int' object is not iterable", ex.Message);
+            Assert.AreEqual("'int' object is not iterable", ex.Message);
             Assert.IsNull(t);
         }
 
