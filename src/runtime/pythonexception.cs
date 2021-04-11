@@ -14,15 +14,18 @@ namespace Python.Runtime
     /// </summary>
     public class PythonException : System.Exception
     {
-
         public PythonException(PyType type, PyObject? value, PyObject? traceback,
-                                Exception? innerException)
-            : base("An exception has occurred in Python code. See Message property for details.", innerException)
+                               string message, Exception? innerException)
+            : base(message, innerException)
         {
             Type = type ?? throw new ArgumentNullException(nameof(type));
             Value = value;
             Traceback = traceback;
         }
+
+        public PythonException(PyType type, PyObject? value, PyObject? traceback,
+                                Exception? innerException)
+            : this(type, value, traceback, GetMessage(value, type), innerException) { }
 
         public PythonException(PyType type, PyObject? value, PyObject? traceback)
             : this(type, value, traceback, innerException: null) { }
@@ -178,7 +181,8 @@ namespace Python.Runtime
 
         private static string GetMessage(PyObject? value, PyType type)
         {
-            using var _ = new Py.GILState();
+            if (type is null) throw new ArgumentNullException(nameof(type));
+
             if (value != null && !value.IsNone())
             {
                 return value.ToString();
@@ -256,17 +260,6 @@ namespace Python.Runtime
 
                 using var _ = new Py.GILState();
                 return TracebackToString(Traceback) + base.StackTrace;
-            }
-        }
-
-        public override string Message
-        {
-            get
-            {
-                if (!PythonEngine.IsInitialized && Runtime.Py_IsInitialized() == 0)
-                    return "Python error message is unavailable as runtime was shut down";
-
-                return GetMessage(this.Value, this.Type);
             }
         }
 
@@ -355,7 +348,8 @@ namespace Python.Runtime
         }
 
         public PythonException Clone()
-            => new PythonException(Type, Value, Traceback, InnerException);
+            => new PythonException(type: Type, value: Value, traceback: Traceback,
+                                   Message, InnerException);
 
         internal bool Is(IntPtr type)
         {
