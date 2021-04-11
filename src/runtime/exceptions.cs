@@ -1,8 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Python.Runtime
 {
@@ -260,6 +260,8 @@ namespace Python.Runtime
         /// </remarks>
         public static bool SetError(Exception e)
         {
+            Debug.Assert(e is not null);
+
             // Because delegates allow arbitrary nesting of Python calling
             // managed calling Python calling... etc. it is possible that we
             // might get a managed exception raised that is a wrapper for a
@@ -280,6 +282,8 @@ namespace Python.Runtime
 
             if (Runtime.PyObject_SetAttrString(instance, DispatchInfoAttribute, pyInfo) != 0)
                 return false;
+
+            Debug.Assert(Runtime.PyObject_TypeCheck(instance, new BorrowedReference(BaseException)));
 
             var type = Runtime.PyObject_TYPE(instance);
             Runtime.PyErr_SetObject(type, instance);
