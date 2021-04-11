@@ -1,8 +1,7 @@
-using System.Reflection.Emit;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
@@ -1127,13 +1126,18 @@ namespace Python.Runtime
         internal static nint PyObject_Hash(IntPtr op) => Delegates.PyObject_Hash(op);
 
 
-        internal static IntPtr PyObject_Repr(IntPtr pointer) => Delegates.PyObject_Repr(pointer);
+        internal static IntPtr PyObject_Repr(IntPtr pointer)
+        {
+            Debug.Assert(PyErr_Occurred() == IntPtr.Zero);
+            return Delegates.PyObject_Repr(pointer);
+        }
 
 
-        internal static IntPtr PyObject_Str(IntPtr pointer) => Delegates.PyObject_Str(pointer);
-
-
-        internal static IntPtr PyObject_Unicode(IntPtr pointer) => Delegates.PyObject_Unicode(pointer);
+        internal static IntPtr PyObject_Str(IntPtr pointer)
+        {
+            Debug.Assert(PyErr_Occurred() == IntPtr.Zero);
+            return Delegates.PyObject_Str(pointer);
+        }
 
 
         internal static IntPtr PyObject_Dir(IntPtr pointer) => Delegates.PyObject_Dir(pointer);
@@ -2322,7 +2326,6 @@ namespace Python.Runtime
                 PyObject_Hash = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Hash), GetUnmanagedDll(_PythonDll));
                 PyObject_Repr = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Repr), GetUnmanagedDll(_PythonDll));
                 PyObject_Str = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Str), GetUnmanagedDll(_PythonDll));
-                PyObject_Unicode = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyObject_Str", GetUnmanagedDll(_PythonDll));
                 PyObject_Dir = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Dir), GetUnmanagedDll(_PythonDll));
                 PyObject_GetBuffer = (delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, int, int>)GetFunctionByName(nameof(PyObject_GetBuffer), GetUnmanagedDll(_PythonDll));
                 PyBuffer_Release = (delegate* unmanaged[Cdecl]<ref Py_buffer, void>)GetFunctionByName(nameof(PyBuffer_Release), GetUnmanagedDll(_PythonDll));
@@ -2607,7 +2610,6 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Hash { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Repr { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Str { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Unicode { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_Dir { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, int, int> PyObject_GetBuffer { get; }
             internal static delegate* unmanaged[Cdecl]<ref Py_buffer, void> PyBuffer_Release { get; }

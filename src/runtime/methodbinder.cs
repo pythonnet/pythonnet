@@ -876,7 +876,7 @@ namespace Python.Runtime
                     {
                         try
                         {
-                            var description = Runtime.PyObject_Unicode(type);
+                            var description = Runtime.PyObject_Str(type);
                             if (description != IntPtr.Zero)
                             {
                                 to.Append(Runtime.GetManagedString(description));
@@ -926,7 +926,9 @@ namespace Python.Runtime
                 }
 
                 value.Append(": ");
+                Runtime.PyErr_Fetch(out var errType, out var errVal, out var errTrace);
                 AppendArgumentTypes(to: value, args);
+                Runtime.PyErr_Restore(errType, errVal, errTrace);
                 Exceptions.RaiseTypeError(value.ToString());
                 return IntPtr.Zero;
             }
