@@ -94,6 +94,10 @@ namespace Python.Runtime
             }
         }
 
+        internal static Exception FetchCurrent()
+            => FetchCurrentOrNull(out _)
+               ?? throw new InvalidOperationException("No exception is set");
+
         private static ExceptionDispatchInfo? TryGetDispatchInfo(BorrowedReference exception)
         {
             if (exception.IsNull) return null;

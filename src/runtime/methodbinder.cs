@@ -341,13 +341,13 @@ namespace Python.Runtime
 
         private readonly struct MismatchedMethod
         {
-            public MismatchedMethod(PythonException exception, MethodBase mb)
+            public MismatchedMethod(Exception exception, MethodBase mb)
             {
                 Exception = exception;
                 Method = mb;
             }
 
-            public PythonException Exception { get; }
+            public Exception Exception { get; }
             public MethodBase Method { get; }
         }
 
@@ -438,8 +438,8 @@ namespace Python.Runtime
                     outs: out outs);
                 if (margs == null)
                 {
-                    mismatchedMethods.Add(new MismatchedMethod(PythonException.FetchCurrentRaw(), mi));
-                    Exceptions.Clear();
+                    var mismatchCause = PythonException.FetchCurrent();
+                    mismatchedMethods.Add(new MismatchedMethod(mismatchCause, mi));
                     continue;
                 }
                 if (isOperator)
