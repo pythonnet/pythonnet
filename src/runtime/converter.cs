@@ -888,6 +888,7 @@ namespace Python.Runtime
                 if (!Converter.ToManaged(item, elementType, out obj, setError))
                 {
                     Runtime.XDecref(item);
+                    Runtime.XDecref(IterObject);
                     return false;
                 }
 
@@ -895,6 +896,12 @@ namespace Python.Runtime
                 Runtime.XDecref(item);
             }
             Runtime.XDecref(IterObject);
+
+            if (Exceptions.ErrorOccurred())
+            {
+                if (!setError) Exceptions.Clear();
+                return false;
+            }
 
             Array items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
