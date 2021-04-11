@@ -1040,7 +1040,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string ToString()
         {
-            IntPtr strval = Runtime.PyObject_Unicode(obj);
+            IntPtr strval = Runtime.PyObject_Str(obj);
             string result = Runtime.GetManagedString(strval);
             Runtime.XDecref(strval);
             return result;
