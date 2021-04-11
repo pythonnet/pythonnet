@@ -15,7 +15,7 @@ namespace Python.Runtime
 
         private PythonException(PyType type, PyObject value, PyObject traceback,
                                 Exception innerException)
-            : base("An exception has occurred in Python code", innerException)
+            : base("An exception has occurred in Python code. See Message property for details.", innerException)
         {
             Type = type;
             Value = value;
@@ -23,7 +23,7 @@ namespace Python.Runtime
         }
 
         private PythonException(PyType type, PyObject value, PyObject traceback)
-            : base("An exception has occurred in Python code")
+            : base("An exception has occurred in Python code. See Message property for details.")
         {
             Type = type;
             Value = value;
