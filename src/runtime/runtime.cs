@@ -1,8 +1,7 @@
-using System.Reflection.Emit;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
@@ -424,12 +423,8 @@ namespace Python.Runtime
             {
                 atexit = Py.Import("atexit");
             }
-            catch (PythonException e)
+            catch (PythonException e) when (e.Is(Exceptions.ImportError))
             {
-                if (!e.Is(Exceptions.ImportError))
-                {
-                    throw;
-                }
                 // The runtime may not provided `atexit` module.
                 return;
             }
@@ -586,7 +581,7 @@ namespace Python.Runtime
         /// </remarks>
         internal static void CheckExceptionOccurred()
         {
-            if (PyErr_Occurred() != IntPtr.Zero)
+            if (PyErr_Occurred() != null)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
@@ -2094,13 +2089,13 @@ namespace Python.Runtime
         internal static void PyErr_NormalizeException(ref NewReference type, ref NewReference val, ref NewReference tb) => Delegates.PyErr_NormalizeException(ref type, ref val, ref tb);
 
 
-        internal static IntPtr PyErr_Occurred() => Delegates.PyErr_Occurred();
+        internal static BorrowedReference PyErr_Occurred() => Delegates.PyErr_Occurred();
 
 
         internal static void PyErr_Fetch(out NewReference type, out NewReference val, out NewReference tb) => Delegates.PyErr_Fetch(out type, out val, out tb);
 
 
-        internal static void PyErr_Restore(StolenReference ob, StolenReference val, StolenReference tb) => Delegates.PyErr_Restore(ob, val, tb);
+        internal static void PyErr_Restore(StolenReference type, StolenReference val, StolenReference tb) => Delegates.PyErr_Restore(type, val, tb);
 
 
         internal static void PyErr_Clear() => Delegates.PyErr_Clear();
@@ -2500,7 +2495,7 @@ namespace Python.Runtime
                 PyErr_ExceptionMatches = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyErr_ExceptionMatches), GetUnmanagedDll(_PythonDll));
                 PyErr_GivenExceptionMatches = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyErr_GivenExceptionMatches), GetUnmanagedDll(_PythonDll));
                 PyErr_NormalizeException = (delegate* unmanaged[Cdecl]<ref NewReference, ref NewReference, ref NewReference, void>)GetFunctionByName(nameof(PyErr_NormalizeException), GetUnmanagedDll(_PythonDll));
-                PyErr_Occurred = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyErr_Occurred), GetUnmanagedDll(_PythonDll));
+                PyErr_Occurred = (delegate* unmanaged[Cdecl]<BorrowedReference>)GetFunctionByName(nameof(PyErr_Occurred), GetUnmanagedDll(_PythonDll));
                 PyErr_Fetch = (delegate* unmanaged[Cdecl]<out NewReference, out NewReference, out NewReference, void>)GetFunctionByName(nameof(PyErr_Fetch), GetUnmanagedDll(_PythonDll));
                 PyErr_Restore = (delegate* unmanaged[Cdecl]<StolenReference, StolenReference, StolenReference, void>)GetFunctionByName(nameof(PyErr_Restore), GetUnmanagedDll(_PythonDll));
                 PyErr_Clear = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyErr_Clear), GetUnmanagedDll(_PythonDll));
@@ -2780,7 +2775,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyErr_ExceptionMatches { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyErr_GivenExceptionMatches { get; }
             internal static delegate* unmanaged[Cdecl]<ref NewReference, ref NewReference, ref NewReference, void> PyErr_NormalizeException { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr> PyErr_Occurred { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference> PyErr_Occurred { get; }
             internal static delegate* unmanaged[Cdecl]<out NewReference, out NewReference, out NewReference, void> PyErr_Fetch { get; }
             internal static delegate* unmanaged[Cdecl]<StolenReference, StolenReference, StolenReference, void> PyErr_Restore { get; }
             internal static delegate* unmanaged[Cdecl]<void> PyErr_Clear { get; }

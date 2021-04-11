@@ -22,6 +22,9 @@ namespace Python.Runtime
                 ? null
                 : new PyType(new NewReference(reference).Steal());
 
+        internal static PyType FromReference(BorrowedReference reference)
+            => FromNullableReference(reference) ?? throw new ArgumentNullException(nameof(reference));
+
         public string Name
         {
             get
