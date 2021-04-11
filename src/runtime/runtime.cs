@@ -714,6 +714,9 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
+#if DEBUG
+            Debug.Assert(op == IntPtr.Zero || Refcount(op) > 0);
+#endif
 #if !CUSTOM_INCDEC_REF
             Py_DecRef(op);
             return;
