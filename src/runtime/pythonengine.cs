@@ -773,9 +773,6 @@ namespace Python.Runtime
             // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
-            PyObject type = PyObject.None;
-            PyObject val = PyObject.None;
-            PyObject traceBack = PyObject.None;
             Exception ex = null;
             PythonException pyError = null;
 
@@ -796,9 +793,9 @@ namespace Python.Runtime
                 pyError = PythonException.FetchCurrentRaw();
             }
 
-            type = pyError?.Type ?? type;
-            val = pyError?.Value ?? val;
-            traceBack = pyError?.Traceback ?? traceBack;
+            PyObject type = pyError?.Type ?? PyObject.None;
+            PyObject val = pyError?.Value ?? PyObject.None;
+            PyObject traceBack = pyError?.Traceback ?? PyObject.None;
 
             var exitResult = obj.InvokeMethod("__exit__", type, val, traceBack);
 
