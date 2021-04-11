@@ -295,7 +295,7 @@ namespace Python.Runtime
             var currentException = PythonException.FetchCurrentRaw();
             currentException.Normalize();
             using var causeInstance = Converter.ToPythonReference(cause);
-            Runtime.PyException_SetCause(currentException.Value.Reference, causeInstance);
+            Runtime.PyException_SetCause(currentException.Value!.Reference, causeInstance.Steal());
             currentException.Restore();
         }
 
@@ -392,7 +392,9 @@ namespace Python.Runtime
             var typeError = PythonException.FetchCurrentRaw();
             typeError.Normalize();
 
-            Runtime.PyException_SetCause(typeError.Value.Reference, cause.Value.Reference);
+            Runtime.PyException_SetCause(
+                typeError.Value!.Reference,
+                new NewReference(cause.Value!.Reference).Steal());
             typeError.Restore();
 
             return IntPtr.Zero;
