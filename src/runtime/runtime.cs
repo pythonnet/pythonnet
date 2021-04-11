@@ -1128,13 +1128,31 @@ namespace Python.Runtime
         internal static nint PyObject_Hash(IntPtr op) => Delegates.PyObject_Hash(op);
 
 
-        internal static IntPtr PyObject_Repr(IntPtr pointer) => Delegates.PyObject_Repr(pointer);
+        internal static IntPtr PyObject_Repr(IntPtr pointer)
+        {
+            AssertNoErorSet();
 
+            return Delegates.PyObject_Repr(pointer);
+        }
 
         internal static IntPtr PyObject_Str(IntPtr pointer) => Delegates.PyObject_Str(pointer);
 
 
-        internal static IntPtr PyObject_Unicode(IntPtr pointer) => Delegates.PyObject_Unicode(pointer);
+        internal static IntPtr PyObject_Unicode(IntPtr pointer)
+        {
+            AssertNoErorSet();
+
+            return Delegates.PyObject_Unicode(pointer);
+        }
+
+        [Conditional("DEBUG")]
+        internal static void AssertNoErorSet()
+        {
+            if (Exceptions.ErrorOccurred())
+                throw new InvalidOperationException(
+                    "Can't call with exception set",
+                    PythonException.FetchCurrent());
+        }
 
 
         internal static IntPtr PyObject_Dir(IntPtr pointer) => Delegates.PyObject_Dir(pointer);
