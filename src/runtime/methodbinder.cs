@@ -926,7 +926,9 @@ namespace Python.Runtime
                 }
 
                 value.Append(": ");
+                Runtime.PyErr_Fetch(out var errType, out var errVal, out var errTrace);
                 AppendArgumentTypes(to: value, args);
+                Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), errTrace.StealNullable());
                 Exceptions.RaiseTypeError(value.ToString());
                 return IntPtr.Zero;
             }

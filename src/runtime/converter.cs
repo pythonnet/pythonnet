@@ -817,9 +817,14 @@ namespace Python.Runtime
 
         private static void SetConversionError(IntPtr value, Type target)
         {
+            // PyObject_Repr might clear the error
+            Runtime.PyErr_Fetch(out var causeType, out var causeVal, out var causeTrace);
+
             IntPtr ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
+
+            Runtime.PyErr_Restore(causeType.StealNullable(), causeVal.StealNullable(), causeTrace.StealNullable());
             Exceptions.RaiseTypeError($"Cannot convert {src} to {target}");
         }
 
