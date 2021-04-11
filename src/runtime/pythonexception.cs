@@ -239,9 +239,9 @@ namespace Python.Runtime
         {
             IntPtr gs = PythonEngine.AcquireLock();
             Runtime.PyErr_Restore(
-                Type.NewReferenceOrNull().Steal(),
-                Value.NewReferenceOrNull().Steal(),
-                Traceback.NewReferenceOrNull().Steal());
+                Type.NewReferenceOrNull().StealNullable(),
+                Value.NewReferenceOrNull().StealNullable(),
+                Traceback.NewReferenceOrNull().StealNullable());
             PythonEngine.ReleaseLock(gs);
         }
 

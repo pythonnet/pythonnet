@@ -2,6 +2,7 @@ namespace Python.Runtime
 {
     using System;
     using System.Diagnostics.Contracts;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Represents a reference to a Python object, that is tracked by Python's reference counting.
@@ -65,11 +66,24 @@ namespace Python.Runtime
         /// Call this method to move ownership of this reference to a Python C API function,
         /// that steals reference passed to it.
         /// </summary>
-        public StolenReference Steal()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public StolenReference StealNullable()
         {
             IntPtr rawPointer = this.pointer;
             this.pointer = IntPtr.Zero;
             return new StolenReference(rawPointer);
+        }
+
+        /// <summary>
+        /// Call this method to move ownership of this reference to a Python C API function,
+        /// that steals reference passed to it.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public StolenReference Steal()
+        {
+            if (this.IsNull()) throw new NullReferenceException();
+
+            return this.StealNullable();
         }
         /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.

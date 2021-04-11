@@ -160,7 +160,7 @@ namespace Python.Runtime
                 {
                     // Python requires finalizers to preserve exception:
                     // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
-                    Runtime.PyErr_Restore(errType.Steal(), errVal.Steal(), traceback.Steal());
+                    Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
             }
         }
