@@ -24,19 +24,10 @@ namespace Python.Runtime
         {
         }
 
-        internal static Exception ToException(IntPtr ob)
+        internal static Exception ToException(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
-            {
-                return null;
-            }
-            var e = co.inst as Exception;
-            if (e == null)
-            {
-                return null;
-            }
-            return e;
+            return co?.inst as Exception;
         }
 
         /// <summary>
@@ -44,7 +35,7 @@ namespace Python.Runtime
         /// </summary>
         public new static IntPtr tp_repr(IntPtr ob)
         {
-            Exception e = ToException(ob);
+            Exception e = ToException(new BorrowedReference(ob));
             if (e == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");
@@ -67,7 +58,7 @@ namespace Python.Runtime
         /// </summary>
         public new static IntPtr tp_str(IntPtr ob)
         {
-            Exception e = ToException(ob);
+            Exception e = ToException(new BorrowedReference(ob));
             if (e == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");
@@ -157,7 +148,7 @@ namespace Python.Runtime
         /// pointer.
         /// </summary>
         /// <param name="ob">The python object wrapping </param>
-        internal static void SetArgsAndCause(IntPtr ob)
+        internal static void SetArgsAndCause(BorrowedReference ob)
         {
             // e: A CLR Exception
             Exception e = ExceptionClassObject.ToException(ob);
@@ -178,13 +169,13 @@ namespace Python.Runtime
                 args = Runtime.PyTuple_New(0);
             }
 
-            Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
+            Marshal.WriteIntPtr(ob.DangerousGetAddress(), ExceptionOffset.args, args);
 
             if (e.InnerException != null)
             {
                 // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
-                IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
-                Marshal.WriteIntPtr(ob, ExceptionOffset.cause, cause);
+                using var cause = CLRObject.GetReference(e.InnerException);
+                Runtime.PyException_SetCause(ob, cause.Steal());
             }
         }
 

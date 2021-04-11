@@ -33,7 +33,7 @@ namespace Python.Runtime
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
             // slot if wrapping a CLR exception
-            Exceptions.SetArgsAndCause(py);
+            Exceptions.SetArgsAndCause(ObjectReference);
         }
 
         protected CLRObject()
@@ -77,6 +77,9 @@ namespace Python.Runtime
             CLRObject co = GetInstance(ob);
             return co.pyHandle;
         }
+
+        internal static NewReference GetReference(object ob)
+            => NewReference.DangerousFromPointer(GetInstHandle(ob));
 
         internal static CLRObject Restore(object ob, IntPtr pyHandle, InterDomainContext context)
         {
