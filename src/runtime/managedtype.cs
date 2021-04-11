@@ -260,13 +260,17 @@ namespace Python.Runtime
         protected static IntPtr GetObjectDict(IntPtr ob)
         {
             IntPtr type = Runtime.PyObject_TYPE(ob);
-            return Marshal.ReadIntPtr(ob, ObjectOffset.TypeDictOffset(type));
+            int dictOffset = ObjectOffset.TypeDictOffset(type);
+            if (dictOffset == 0) return IntPtr.Zero;
+            return Marshal.ReadIntPtr(ob, dictOffset);
         }
 
         protected static void SetObjectDict(IntPtr ob, IntPtr value)
         {
             IntPtr type = Runtime.PyObject_TYPE(ob);
-            Marshal.WriteIntPtr(ob, ObjectOffset.TypeDictOffset(type), value);
+            int dictOffset = ObjectOffset.TypeDictOffset(type);
+            Debug.Assert(dictOffset > 0);
+            Marshal.WriteIntPtr(ob, dictOffset, value);
         }
     }
 }

@@ -185,7 +185,10 @@ namespace Python.Runtime
 
         public static int TypeDictOffset(IntPtr type)
         {
-            return ManagedDataOffsets.DictOffset(type);
+            Debug.Assert(TypeOffset.tp_dictoffset > 0);
+            int dictOffset = Marshal.ReadInt32(type, TypeOffset.tp_dictoffset);
+            Debug.Assert(dictOffset > 0);
+            return dictOffset;
         }
 
         public static int Size(IntPtr pyType)

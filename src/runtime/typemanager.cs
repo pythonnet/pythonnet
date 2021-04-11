@@ -165,7 +165,7 @@ namespace Python.Runtime
             // Set tp_basicsize to the size of our managed instance objects.
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
 
-            var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
+            var offset = (IntPtr)ManagedDataOffsets.DictOffset(type);
             Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
 
             SlotsHolder slotsHolder = CreateSolotsHolder(type);
