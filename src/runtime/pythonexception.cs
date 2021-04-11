@@ -230,6 +230,7 @@ namespace Python.Runtime
             foreach (PyObject stackLine in stackLines)
             {
                 result.Append(stackLine);
+                stackLine.Dispose();
             }
             return result.ToString();
         }
@@ -326,10 +327,11 @@ namespace Python.Runtime
                 {
                     using var traceback = PyModule.Import("traceback");
                     var buffer = new StringBuilder();
-                    var values = traceback.InvokeMethod("format_exception", copy.Type, copy.Value, copy.Traceback);
+                    using var values = traceback.InvokeMethod("format_exception", copy.Type, copy.Value, copy.Traceback);
                     foreach (PyObject val in values)
                     {
                         buffer.Append(val);
+                        val.Dispose();
                     }
                     res = buffer.ToString();
                 }
