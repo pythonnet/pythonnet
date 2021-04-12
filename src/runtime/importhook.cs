@@ -19,7 +19,7 @@ import sys
 class DotNetLoader(importlib.abc.Loader):
 
     def __init__(self):
-        super(DotNetLoader, self).__init__()
+        super().__init__()
 
     @classmethod
     def exec_module(klass, mod):
@@ -29,21 +29,19 @@ class DotNetLoader(importlib.abc.Loader):
     @classmethod
     def create_module(klass, spec):
         import clr
-        return clr._LoadClrModule(spec)
+        return clr._load_clr_module(spec)
 
 class DotNetFinder(importlib.abc.MetaPathFinder):
     
     def __init__(self):
-        super(DotNetFinder, self).__init__()
+        super().__init__()
     
     @classmethod
     def find_spec(klass, fullname, paths=None, target=None): 
         import clr
-        if (hasattr(clr, '_availableNamespaces') and fullname in clr._availableNamespaces):
+        if clr._availableNamespaces and fullname in clr._availableNamespaces:
             return importlib.machinery.ModuleSpec(fullname, DotNetLoader(), is_package=True)
         return None
-
-sys.meta_path.append(DotNetFinder())
             ";
         const string availableNsKey = "_availableNamespaces";
 
@@ -69,7 +67,7 @@ sys.meta_path.append(DotNetFinder())
 
             // Add/create the MetaPathLoader
             SetupNamespaceTracking();
-            PythonEngine.Exec(LoaderCode);
+            SetupImportHook();
         }
 
 
@@ -114,13 +112,66 @@ sys.meta_path.append(DotNetFinder())
             SetupNamespaceTracking();
         }
 
+        static void SetupImportHook()
+        {
+            // Create the import hook module
+            var import_hook_module_def = ModuleDefOffset.AllocModuleDef("clr.loader");
+            var import_hook_module = Runtime.PyModule_Create2(import_hook_module_def, 3);
+
+            // Run the python code to create the module's classes.
+            var mod_dict = Runtime.PyModule_GetDict(new BorrowedReference(import_hook_module));
+            var builtins = Runtime.PyEval_GetBuiltins();
+            var exec = Runtime.PyDict_GetItemString(builtins, "exec");
+            using var args = NewReference.DangerousFromPointer(Runtime.PyTuple_New(2));
+
+            var codeStr = Runtime.PyString_FromString(LoaderCode);
+            Runtime.PyTuple_SetItem(args.DangerousGetAddress(), 0, codeStr);
+            // PyTuple_SetItem steals a reference, mod_dict is borrowed.
+            Runtime.XIncref(mod_dict.DangerousGetAddress());
+            Runtime.PyTuple_SetItem(args.DangerousGetAddress(), 1, mod_dict.DangerousGetAddress());
+            Runtime.PyObject_Call(exec.DangerousGetAddress(), args.DangerousGetAddress(), IntPtr.Zero);
+
+            var loader = Runtime.PyDict_GetItemString(mod_dict, "DotNetLoader").DangerousGetAddressOrNull();
+            Runtime.XIncref(loader);
+
+            // Add the classes to the module
+            // PyModule_AddObject steals a reference only on success
+            if (Runtime.PyModule_AddObject(import_hook_module, "DotNetLoader", loader) != 0)
+            {
+                Runtime.XDecref(loader);
+                throw new PythonException();
+            }
+
+            var finder = Runtime.PyDict_GetItemString(mod_dict, "DotNetFinder").DangerousGetAddressOrNull();
+            Runtime.XIncref(finder);
+            if (Runtime.PyModule_AddObject(import_hook_module, "DotNetFinder", finder) != 0)
+            {
+                Runtime.XDecref(finder);
+                throw new PythonException();
+            }
+
+            // Set as a sub-module of clr.
+            Runtime.XIncref(import_hook_module);
+            if(Runtime.PyModule_AddObject(py_clr_module, "loader", import_hook_module) != 0)
+            {
+                Runtime.XDecref(import_hook_module);
+                throw new PythonException();
+            }
+
+            // Finally, add the hook to the meta path
+            var finder_inst = Runtime.PyDict_GetItemString(mod_dict, "finder_inst").DangerousGetAddressOrNull();
+            Runtime.XIncref(finder);
+            var metapath = Runtime.PySys_GetObject("meta_path");
+            Runtime.PyList_Append(metapath, finder);
+        }
+
         /// <summary>
         /// Sets up the tracking of loaded namespaces. This makes available to 
         /// Python, as a Python object, the loaded namespaces. The set of loaded
         /// namespaces is used during the import to verify if we can import a 
         /// CLR assembly as a module or not. The set is stored on the clr module.
         /// </summary>
-        static void SetupNamespaceTracking ()
+        static void SetupNamespaceTracking()
         {
             var newset = Runtime.PySet_New(new BorrowedReference(IntPtr.Zero));
             try
@@ -130,7 +181,7 @@ sys.meta_path.append(DotNetFinder())
                     var pyNs = Runtime.PyString_FromString(ns);
                     try
                     {
-                        if(Runtime.PySet_Add(newset, new BorrowedReference(pyNs)) != 0)
+                        if (Runtime.PySet_Add(newset, new BorrowedReference(pyNs)) != 0)
                         {
                             throw new PythonException();
                         }
@@ -141,7 +192,7 @@ sys.meta_path.append(DotNetFinder())
                     }
                 }
 
-                if(Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.DangerousGetAddress()) != 0)
+                if (Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.DangerousGetAddress()) != 0)
                 {
                     throw new PythonException();
                 }
@@ -152,7 +203,7 @@ sys.meta_path.append(DotNetFinder())
             }
 
             AssemblyManager.namespaceAdded += OnNamespaceAdded;
-            PythonEngine.AddShutdownHandler(()=>AssemblyManager.namespaceAdded -= OnNamespaceAdded);
+            PythonEngine.AddShutdownHandler(() => AssemblyManager.namespaceAdded -= OnNamespaceAdded);
         }
 
         /// <summary>
@@ -162,27 +213,21 @@ sys.meta_path.append(DotNetFinder())
         static void TeardownNameSpaceTracking()
         {
             AssemblyManager.namespaceAdded -= OnNamespaceAdded;
-            // If the C# runtime isn't loaded, then there is no namespaces available
-            if ((Runtime.PyDict_DelItemString(new BorrowedReference(root.dict), availableNsKey) != 0) &&
-                (Exceptions.ExceptionMatches(Exceptions.KeyError)))
-            {
-                // Trying to remove a key that's not in the dictionary 
-                // raises an error. We don't care about it.
-                Runtime.PyErr_Clear();
-            }
+            // If the C# runtime isn't loaded, then there are no namespaces available
+            Runtime.PyDict_SetItemString(root.dict, availableNsKey, Runtime.PyNone);
         }
 
-        static void OnNamespaceAdded (string name)
+        static void OnNamespaceAdded(string name)
         {
-            using(Py.GIL())
+            using (Py.GIL())
             {
                 var pyNs = Runtime.PyString_FromString(name);
                 try
                 {
                     var nsSet = Runtime.PyDict_GetItemString(new BorrowedReference(root.dict), availableNsKey);
-                    if (!nsSet.IsNull)
+                    if (!nsSet.IsNull || nsSet.DangerousGetAddress() != Runtime.PyNone)
                     {
-                        if(Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
+                        if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
                         {
                             throw new PythonException();
                         }
@@ -225,7 +270,7 @@ sys.meta_path.append(DotNetFinder())
         /// <summary>
         /// The hook to import a CLR module into Python
         /// </summary>
-        public static ModuleObject __import__(string modname)
+        public static ModuleObject Import(string modname)
         {
             // Traverse the qualified module name to get the named module. 
             // Note that if

@@ -593,12 +593,12 @@ namespace Python.Runtime
         /// <returns>A new reference to the imported module, as a PyObject.</returns>
         [ModuleFunction]
         [ForbidPythonThreads]
-        public static PyObject _LoadClrModule(PyObject spec)
+        public static PyObject _load_clr_module(PyObject spec)
         {
             ModuleObject mod = null;
             using (var modname = spec.GetAttr("name"))
             {
-                mod = ImportHook.__import__(modname.ToString());
+                mod = ImportHook.Import(modname.ToString());
             }
             // We can't return directly a ModuleObject, because the tpHandle is
             // not set, but we can return a PyObject.
