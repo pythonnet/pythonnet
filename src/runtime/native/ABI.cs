@@ -4,7 +4,6 @@ namespace Python.Runtime.Native
     using System.Globalization;
     using System.Linq;
     using System.Reflection;
-    using System.Runtime.InteropServices;
 
     static class ABI
     {
@@ -29,8 +28,6 @@ namespace Python.Runtime.Native
             }
             var typeOffsets = (ITypeOffsets)Activator.CreateInstance(typeOffsetsClass);
             TypeOffset.Use(typeOffsets);
-
-            ManagedDataOffsets.Magic = Marshal.ReadInt32(pyType.DangerousGetAddress(), TypeOffset.tp_basicsize);
         }
     }
 }

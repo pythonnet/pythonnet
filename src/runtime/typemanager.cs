@@ -134,7 +134,7 @@ namespace Python.Runtime
         /// The given ManagedType instance is a managed object that implements
         /// the appropriate semantics in Python for the reflected managed type.
         /// </summary>
-        internal static IntPtr GetTypeHandle(ManagedType obj, Type type)
+        internal static IntPtr GetTypeHandle(ClassBase obj, Type type)
         {
             IntPtr handle;
             cache.TryGetValue(type, out handle);
@@ -157,21 +157,28 @@ namespace Python.Runtime
         /// behavior needed and the desire to have the existing Python runtime
         /// do as much of the allocation and initialization work as possible.
         /// </summary>
-        internal static IntPtr CreateType(Type impl)
+        internal static unsafe IntPtr CreateType(Type impl)
         {
-            IntPtr type = AllocateTypeObject(impl.Name, metatype: Runtime.PyTypeType);
-            int ob_size = ObjectOffset.Size(type);
+            IntPtr type = AllocateTypeObject(impl.Name, metatype: Runtime.PyCLRMetaType);
+            IntPtr base_ = impl == typeof(CLRModule)
+                ? Runtime.PyModuleType
+                : Runtime.PyBaseObjectType;
 
+            int newFieldOffset = InheritOrAllocateStandardFields(type, base_);
+
+            int tp_clr_inst_offset = newFieldOffset;
+            newFieldOffset += IntPtr.Size;
+
+            int ob_size = newFieldOffset;
             // Set tp_basicsize to the size of our managed instance objects.
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
-
-            var offset = (IntPtr)ObjectOffset.TypeDictOffset(type);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
+            Marshal.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, tp_clr_inst_offset);
+            Marshal.WriteIntPtr(type, TypeOffset.tp_new, (IntPtr)Runtime.Delegates.PyType_GenericNew);
 
             SlotsHolder slotsHolder = CreateSolotsHolder(type);
             InitializeSlots(type, impl, slotsHolder);
 
-            var flags = TypeFlags.Default | TypeFlags.Managed |
+            var flags = TypeFlags.Default | TypeFlags.HasClrInstance |
                         TypeFlags.HeapType | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
@@ -194,7 +201,7 @@ namespace Python.Runtime
         }
 
 
-        internal static IntPtr CreateType(ManagedType impl, Type clrType)
+        internal static IntPtr CreateType(ClassBase impl, Type clrType)
         {
             // Cleanup the type name to get rid of funny nested type names.
             string name = $"clr.{clrType.FullName}";
@@ -209,19 +216,7 @@ namespace Python.Runtime
                 name = name.Substring(i + 1);
             }
 
-            IntPtr base_ = IntPtr.Zero;
-            int ob_size = ObjectOffset.Size(Runtime.PyTypeType);
-
-            // XXX Hack, use a different base class for System.Exception
-            // Python 2.5+ allows new style class exceptions but they *must*
-            // subclass BaseException (or better Exception).
-            if (typeof(Exception).IsAssignableFrom(clrType))
-            {
-                ob_size = ObjectOffset.Size(Exceptions.Exception);
-            }
-
-            int tp_dictoffset = ob_size + ManagedDataOffsets.ob_dict;
-
+            IntPtr base_ = Runtime.PyBaseObjectType;
             if (clrType == typeof(Exception))
             {
                 base_ = Exceptions.Exception;
@@ -229,17 +224,32 @@ namespace Python.Runtime
             else if (clrType.BaseType != null)
             {
                 ClassBase bc = ClassManager.GetClass(clrType.BaseType);
-                base_ = bc.pyHandle;
+                if (bc.ObjectReference != null)
+                {
+                    // there are cases when base class has not been fully initialized yet (nested types)
+                    base_ = bc.pyHandle;
+                }
             }
 
             IntPtr type = AllocateTypeObject(name, Runtime.PyCLRMetaType);
 
-            Marshal.WriteIntPtr(type, TypeOffset.ob_type, Runtime.PyCLRMetaType);
-            Runtime.XIncref(Runtime.PyCLRMetaType);
+            int newFieldOffset = InheritOrAllocateStandardFields(type, base_);
+
+            if (ManagedType.IsManagedType(new BorrowedReference(base_)))
+            {
+                int baseClrInstOffset = Marshal.ReadInt32(base_, ManagedType.Offsets.tp_clr_inst_offset);
+                Marshal.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, baseClrInstOffset);
+            }
+            else
+            {
+                Marshal.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, newFieldOffset);
+                newFieldOffset += IntPtr.Size;
+            }
+
+            int ob_size = newFieldOffset;
 
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)ob_size);
             Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
-            Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, (IntPtr)tp_dictoffset);
 
             // we want to do this after the slot stuff above in case the class itself implements a slot method
             SlotsHolder slotsHolder = CreateSolotsHolder(type);
@@ -260,24 +270,16 @@ namespace Python.Runtime
 
 
             // Only set mp_subscript and mp_ass_subscript for types with indexers
-            if (impl is ClassBase cb)
+            if (!(impl is ArrayObject))
             {
-                if (!(impl is ArrayObject))
+                if (impl.indexer == null || !impl.indexer.CanGet)
                 {
-                    if (cb.indexer == null || !cb.indexer.CanGet)
-                    {
-                        Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
-                    }
-                    if (cb.indexer == null || !cb.indexer.CanSet)
-                    {
-                        Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
-                    }
+                    Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
                 }
-            }
-            else
-            {
-                Marshal.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
-                Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+                if (impl.indexer == null || !impl.indexer.CanSet)
+                {
+                    Marshal.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
+                }
             }
 
             if (base_ != IntPtr.Zero)
@@ -287,7 +289,7 @@ namespace Python.Runtime
             }
 
             const TypeFlags flags = TypeFlags.Default
-                            | TypeFlags.Managed
+                            | TypeFlags.HasClrInstance
                             | TypeFlags.HeapType
                             | TypeFlags.BaseType
                             | TypeFlags.HaveGC;
@@ -309,9 +311,11 @@ namespace Python.Runtime
             Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod);
             mod.Dispose();
 
+            var typeRef = new BorrowedReference(type);
+
             // Hide the gchandle of the implementation in a magic type slot.
             GCHandle gc = impl.AllocGCHandle();
-            Marshal.WriteIntPtr(type, TypeOffset.magic(), (IntPtr)gc);
+            ManagedType.InitGCHandle(typeRef, Runtime.CLRMetaType, gc);
 
             // Set the handle attributes on the implementing instance.
             impl.tpHandle = type;
@@ -320,6 +324,31 @@ namespace Python.Runtime
             //DebugUtil.DumpType(type);
 
             return type;
+        }
+
+        static int InheritOrAllocateStandardFields(IntPtr type, IntPtr @base)
+        {
+            int baseSize = Marshal.ReadInt32(@base, TypeOffset.tp_basicsize);
+            int newFieldOffset = baseSize;
+
+            void InheritOrAllocate(int typeField)
+            {
+                int value = Marshal.ReadInt32(@base, typeField);
+                if (value == 0)
+                {
+                    Marshal.WriteIntPtr(type, typeField, new IntPtr(newFieldOffset));
+                    newFieldOffset += IntPtr.Size;
+                }
+                else
+                {
+                    Marshal.WriteIntPtr(type, typeField, new IntPtr(value));
+                }
+            }
+
+            InheritOrAllocate(TypeOffset.tp_dictoffset);
+            InheritOrAllocate(TypeOffset.tp_weaklistoffset);
+
+            return newFieldOffset;
         }
 
         internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, IntPtr py_dict)
@@ -454,11 +483,14 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);
             Runtime.XIncref(py_type);
 
-            int size = TypeOffset.magic() + IntPtr.Size;
+            int size = Marshal.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
+                       + IntPtr.Size // tp_clr_inst_offset
+                       + IntPtr.Size // tp_clr_inst
+            ;
             Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, new IntPtr(size));
+            Marshal.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, ManagedType.Offsets.tp_clr_inst);
 
             const TypeFlags flags = TypeFlags.Default
-                            | TypeFlags.Managed
                             | TypeFlags.HeapType
                             | TypeFlags.HaveGC;
             Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
@@ -544,53 +576,6 @@ namespace Python.Runtime
             return mdef;
         }
 
-        internal static IntPtr BasicSubType(string name, IntPtr base_, Type impl)
-        {
-            // Utility to create a subtype of a std Python type, but with
-            // a managed type able to override implementation
-
-            IntPtr type = AllocateTypeObject(name, metatype: Runtime.PyTypeType);
-            //Marshal.WriteIntPtr(type, TypeOffset.tp_basicsize, (IntPtr)obSize);
-            //Marshal.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
-
-            //IntPtr offset = (IntPtr)ObjectOffset.ob_dict;
-            //Marshal.WriteIntPtr(type, TypeOffset.tp_dictoffset, offset);
-
-            //IntPtr dc = Runtime.PyDict_Copy(dict);
-            //Marshal.WriteIntPtr(type, TypeOffset.tp_dict, dc);
-
-            Marshal.WriteIntPtr(type, TypeOffset.tp_base, base_);
-            Runtime.XIncref(base_);
-
-            var flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
-            flags |= TypeFlags.HeapType;
-            flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
-
-            CopySlot(base_, type, TypeOffset.tp_traverse);
-            CopySlot(base_, type, TypeOffset.tp_clear);
-            CopySlot(base_, type, TypeOffset.tp_is_gc);
-
-            SlotsHolder slotsHolder = CreateSolotsHolder(type);
-            InitializeSlots(type, impl, slotsHolder);
-
-            if (Runtime.PyType_Ready(type) != 0)
-            {
-                throw new PythonException();
-            }
-
-            IntPtr tp_dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            IntPtr mod = Runtime.PyString_FromString("CLR");
-            Runtime.PyDict_SetItem(tp_dict, PyIdentifier.__module__, mod);
-            
-            // The type has been modified after PyType_Ready has been called
-            // Refresh the type
-            Runtime.PyType_Modified(type);
-
-            return type;
-        }
-
 
         /// <summary>
         /// Utility method to allocate a type object &amp; do basic initialization.
@@ -598,6 +583,7 @@ namespace Python.Runtime
         internal static IntPtr AllocateTypeObject(string name, IntPtr metatype)
         {
             IntPtr type = Runtime.PyType_GenericAlloc(metatype, 0);
+            PythonException.ThrowIfIsNull(type);
             // Clr type would not use __slots__,
             // and the PyMemberDef after PyHeapTypeObject will have other uses(e.g. type handle),
             // thus set the ob_size to 0 for avoiding slots iterations.
@@ -670,7 +656,7 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                var offset = ManagedDataOffsets.GetSlotOffset(slot);
+                var offset = TypeOffset.GetSlotOffset(slot);
                 Marshal.WriteIntPtr(type, offset, SlotsHolder.GetDefaultSlot(offset));
             }
         }
@@ -688,7 +674,7 @@ namespace Python.Runtime
         /// <param name="canOverride">Can override the slot when it existed</param>
         static void InitializeSlot(IntPtr type, IntPtr slot, string name, bool canOverride = true)
         {
-            var offset = ManagedDataOffsets.GetSlotOffset(name);
+            var offset = TypeOffset.GetSlotOffset(name);
             if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
             {
                 return;
@@ -698,7 +684,7 @@ namespace Python.Runtime
 
         static void InitializeSlot(IntPtr type, ThunkInfo thunk, string name, SlotsHolder slotsHolder = null, bool canOverride = true)
         {
-            int offset = ManagedDataOffsets.GetSlotOffset(name);
+            int offset = TypeOffset.GetSlotOffset(name);
 
             if (!canOverride && Marshal.ReadIntPtr(type, offset) != IntPtr.Zero)
             {
@@ -723,7 +709,7 @@ namespace Python.Runtime
 
         static bool IsSlotSet(IntPtr type, string name)
         {
-            int offset = ManagedDataOffsets.GetSlotOffset(name);
+            int offset = TypeOffset.GetSlotOffset(name);
             return Marshal.ReadIntPtr(type, offset) != IntPtr.Zero;
         }
 
@@ -794,6 +780,8 @@ namespace Python.Runtime
         private List<Action> _deallocators = new List<Action>();
         private bool _alreadyReset = false;
 
+        BorrowedReference Type => new BorrowedReference(_type);
+
         /// <summary>
         /// Create slots holder for holding the delegate of slots and be able  to reset them.
         /// </summary>
@@ -861,15 +849,18 @@ namespace Python.Runtime
             _deallocators.Clear();
 
             // Custom reset
-            IntPtr handlePtr = Marshal.ReadIntPtr(_type, TypeOffset.magic());
-            if (handlePtr != IntPtr.Zero)
+            if (Type != Runtime.CLRMetaType)
             {
-                GCHandle handle = GCHandle.FromIntPtr(handlePtr);
-                if (handle.IsAllocated)
+                var metatype = Runtime.PyObject_TYPE(Type);
+                if (ManagedType.TryGetGCHandle(Type, metatype) is { } handle)
                 {
-                    handle.Free();
+                    if (handle.IsAllocated)
+                    {
+                        handle.Free();
+                    }
+
+                    ManagedType.SetGCHandle(Type, metatype, default);
                 }
-                Marshal.WriteIntPtr(_type, TypeOffset.magic(), IntPtr.Zero);
             }
         }
 

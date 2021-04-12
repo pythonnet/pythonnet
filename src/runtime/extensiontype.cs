@@ -33,13 +33,17 @@ namespace Python.Runtime
             tpHandle = tp;
             pyHandle = py;
 
+#if DEBUG
+            GetGCHandle(ObjectReference, TypeReference, out var existing);
+            System.Diagnostics.Debug.Assert(existing == IntPtr.Zero);
+#endif
             SetupGc();
         }
 
         void SetupGc ()
         {
             GCHandle gc = AllocGCHandle(TrackTypes.Extension);
-            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
+            InitGCHandle(ObjectReference, TypeReference, gc);
 
             // We have to support gc because the type machinery makes it very
             // hard not to - but we really don't have a need for it in most
