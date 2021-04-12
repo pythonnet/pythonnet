@@ -156,15 +156,8 @@ namespace Python.Runtime
         /// pointer.
         /// </summary>
         /// <param name="ob">The python object wrapping </param>
-        internal static void SetArgsAndCause(IntPtr ob)
+        internal static void SetArgsAndCause(Exception e, IntPtr ob)
         {
-            // e: A CLR Exception
-            Exception e = ExceptionClassObject.ToException(ob);
-            if (e == null)
-            {
-                return;
-            }
-
             IntPtr args;
             if (!string.IsNullOrEmpty(e.Message))
             {
@@ -177,13 +170,14 @@ namespace Python.Runtime
                 args = Runtime.PyTuple_New(0);
             }
 
-            Marshal.WriteIntPtr(ob, ExceptionOffset.args, args);
+            if (Runtime.PyObject_SetAttrString(ob, "args", args) != 0)
+                throw new PythonException();
 
             if (e.InnerException != null)
             {
                 // Note: For an AggregateException, InnerException is only the first of the InnerExceptions.
-                IntPtr cause = CLRObject.GetInstHandle(e.InnerException);
-                Marshal.WriteIntPtr(ob, ExceptionOffset.cause, cause);
+                using var cause = CLRObject.GetReference(e.InnerException);
+                Runtime.PyException_SetCause(ob, cause.DangerousMoveToPointer());
             }
         }
 

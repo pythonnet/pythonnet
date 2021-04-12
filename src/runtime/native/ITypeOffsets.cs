@@ -63,6 +63,7 @@ namespace Python.Runtime.Native
         int tp_new { get; }
         int tp_repr { get; }
         int tp_richcompare { get; }
+        int tp_weaklistoffset { get; }
         int tp_setattro { get; }
         int tp_str { get; }
         int tp_traverse { get; }

@@ -15,26 +15,6 @@ namespace Python.Runtime
         private static IntPtr py_clr_module;
         static BorrowedReference ClrModuleReference => new BorrowedReference(py_clr_module);
 
-        private static IntPtr module_def = IntPtr.Zero;
-
-        internal static void InitializeModuleDef()
-        {
-            if (module_def == IntPtr.Zero)
-            {
-                module_def = ModuleDefOffset.AllocModuleDef("clr");
-            }
-        }
-
-        internal static void ReleaseModuleDef()
-        {
-            if (module_def == IntPtr.Zero)
-            {
-                return;
-            }
-            ModuleDefOffset.FreeModuleDef(module_def);
-            module_def = IntPtr.Zero;
-        }
-
         /// <summary>
         /// Initialize just the __import__ hook itself.
         /// </summary>
@@ -90,8 +70,7 @@ namespace Python.Runtime
             root = new CLRModule();
 
             // create a python module with the same methods as the clr module-like object
-            InitializeModuleDef();
-            py_clr_module = Runtime.PyModule_Create2(module_def, 3);
+            py_clr_module = Runtime.PyModule_New("clr").DangerousMoveToPointer();
 
             // both dicts are borrowed references
             BorrowedReference mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
@@ -116,13 +95,8 @@ namespace Python.Runtime
 
             RestoreImport();
 
-            bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
             Runtime.XDecref(py_clr_module);
             py_clr_module = IntPtr.Zero;
-            if (shouldFreeDef)
-            {
-                ReleaseModuleDef();
-            }
 
             Runtime.XDecref(root.pyHandle);
             root = null;
