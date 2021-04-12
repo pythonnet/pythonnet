@@ -39,11 +39,11 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
     @classmethod
     def find_spec(klass, fullname, paths=None, target=None): 
         import clr
-        if clr._availableNamespaces and fullname in clr._availableNamespaces:
+        if clr._available_namespaces and fullname in clr._available_namespaces:
             return importlib.machinery.ModuleSpec(fullname, DotNetLoader(), is_package=True)
         return None
             ";
-        const string availableNsKey = "_availableNamespaces";
+        const string availableNsKey = "_available_namespaces";
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
