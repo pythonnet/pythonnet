@@ -30,5 +30,8 @@ namespace Python.Runtime
                 .Cast<T>()
                 .SingleOrDefault();
         }
+
+        public static bool IsFlagsEnum(this Type type)
+            => type.GetCustomAttribute<FlagsAttribute>() is not null;
     }
 }

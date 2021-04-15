@@ -77,6 +77,9 @@ class Dl_info(ctypes.Structure):
 
 
 def _linked_libpython_unix():
+    if not sysconfig.get_config_var("Py_ENABLE_SHARED"):
+        return None
+
     libdl = ctypes.CDLL(ctypes.util.find_library("dl"))
     libdl.dladdr.argtypes = [ctypes.c_void_p, ctypes.POINTER(Dl_info)]
     libdl.dladdr.restype = ctypes.c_int
@@ -88,8 +91,6 @@ def _linked_libpython_unix():
     if retcode == 0:  # means error
         return None
     path = os.path.realpath(dlinfo.dli_fname.decode())
-    if path == os.path.realpath(sys.executable):
-        return None
     return path
 
 

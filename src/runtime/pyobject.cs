@@ -157,6 +157,7 @@ namespace Python.Runtime
             return (T)AsManagedObject(typeof(T));
         }
 
+        internal bool IsDisposed => obj == IntPtr.Zero;
 
         /// <summary>
         /// Dispose Method
@@ -614,19 +615,15 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// Length Method
-        /// </summary>
-        /// <remarks>
         /// Returns the length for objects that support the Python sequence
-        /// protocol, or 0 if the object does not support the protocol.
-        /// </remarks>
+        /// protocol.
+        /// </summary>
         public virtual long Length()
         {
-            var s = Runtime.PyObject_Size(obj);
+            var s = Runtime.PyObject_Size(Reference);
             if (s < 0)
             {
-                Runtime.PyErr_Clear();
-                return 0;
+                throw new PythonException();
             }
             return s;
         }
@@ -933,17 +930,21 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// IsSubclass Method
-        /// </summary>
-        /// <remarks>
-        /// Return true if the object is identical to or derived from the
+        /// Return <c>true</c> if the object is identical to or derived from the
         /// given Python type or class. This method always succeeds.
-        /// </remarks>
+        /// </summary>
         public bool IsSubclass(PyObject typeOrClass)
         {
             if (typeOrClass == null) throw new ArgumentNullException(nameof(typeOrClass));
 
-            int r = Runtime.PyObject_IsSubclass(obj, typeOrClass.obj);
+            return IsSubclass(typeOrClass.Reference);
+        }
+
+        internal bool IsSubclass(BorrowedReference typeOrClass)
+        {
+            if (typeOrClass.IsNull) throw new ArgumentNullException(nameof(typeOrClass));
+
+            int r = Runtime.PyObject_IsSubclass(Reference, typeOrClass);
             if (r < 0)
             {
                 Runtime.PyErr_Clear();
@@ -1039,7 +1040,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string ToString()
         {
-            IntPtr strval = Runtime.PyObject_Unicode(obj);
+            IntPtr strval = Runtime.PyObject_Str(obj);
             string result = Runtime.GetManagedString(strval);
             Runtime.XDecref(strval);
             return result;

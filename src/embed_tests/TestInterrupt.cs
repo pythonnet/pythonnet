@@ -1,5 +1,5 @@
-
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,14 +30,13 @@ namespace Python.EmbeddingTest
         [Test]
         public void InterruptTest()
         {
-            int runSimpleStringReturnValue = int.MinValue;
-            ulong pythonThreadID = ulong.MinValue;
-            Task.Factory.StartNew(() =>
+            long pythonThreadID = 0;
+            var asyncCall = Task.Factory.StartNew(() =>
             {
                 using (Py.GIL())
                 {
-                    pythonThreadID = PythonEngine.GetPythonThreadID();
-                    runSimpleStringReturnValue = PythonEngine.RunSimpleString(@"
+                    Interlocked.Exchange(ref pythonThreadID, (long)PythonEngine.GetPythonThreadID());
+                    return PythonEngine.RunSimpleString(@"
 import time
 
 while True:
@@ -45,19 +44,21 @@ while True:
                 }
             });
 
-            Thread.Sleep(200);
-
-            Assert.AreNotEqual(ulong.MinValue, pythonThreadID);
+            var timeout = Stopwatch.StartNew();
+            while (Interlocked.Read(ref pythonThreadID) == 0)
+            {
+                Assert.Less(timeout.Elapsed, TimeSpan.FromSeconds(5), "thread ID was not assigned in time");
+            }
 
             using (Py.GIL())
             {
-                int interruptReturnValue = PythonEngine.Interrupt(pythonThreadID);
+                int interruptReturnValue = PythonEngine.Interrupt((ulong)Interlocked.Read(ref pythonThreadID));
                 Assert.AreEqual(1, interruptReturnValue);
             }
 
-            Thread.Sleep(300);
+            Assert.IsTrue(asyncCall.Wait(TimeSpan.FromSeconds(5)), "Async thread was not interrupted in time");
 
-            Assert.AreEqual(-1, runSimpleStringReturnValue);
+            Assert.AreEqual(-1, asyncCall.Result);
         }
     }
 }

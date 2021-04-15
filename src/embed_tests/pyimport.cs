@@ -34,7 +34,9 @@ namespace Python.EmbeddingTest
             TestContext.Out.WriteLine(testPath);
 
             IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
+            Assert.IsFalse(str == IntPtr.Zero);
             BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
+            Assert.IsFalse(path.IsNull);
             Runtime.Runtime.PyList_Append(path, str);
             Runtime.Runtime.XDecref(str);
         }
@@ -52,7 +54,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestDottedName()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.test.one");
+            var module = PyModule.Import("PyImportTest.test.one");
             Assert.IsNotNull(module);
         }
 
@@ -62,7 +64,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestSysArgsImportException()
         {
-            PyObject module = PythonEngine.ImportModule("PyImportTest.sysargv");
+            var module = PyModule.Import("PyImportTest.sysargv");
             Assert.IsNotNull(module);
         }
 

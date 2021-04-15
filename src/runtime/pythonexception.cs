@@ -48,7 +48,7 @@ namespace Python.Runtime
 
             if (_pyTB != IntPtr.Zero)
             {
-                using PyObject tb_module = PythonEngine.ImportModule("traceback");
+                using var tb_module = PyModule.Import("traceback");
 
                 Runtime.XIncref(_pyTB);
                 using var pyTB = new PyObject(_pyTB);
@@ -198,7 +198,7 @@ namespace Python.Runtime
                     using (PyObject pyType = new PyObject(type))
                     using (PyObject pyValue = new PyObject(value))
                     using (PyObject pyTB = new PyObject(tb))
-                    using (PyObject tb_mod = PythonEngine.ImportModule("traceback"))
+                    using (PyObject tb_mod = PyModule.Import("traceback"))
                     {
                         var buffer = new StringBuilder();
                         var values = tb_mod.InvokeMethod("format_exception", pyType, pyValue, pyTB);

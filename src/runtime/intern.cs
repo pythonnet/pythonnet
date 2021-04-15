@@ -42,9 +42,10 @@ namespace Python.Runtime
 
         public static void Shutdown()
         {
-            foreach (var ptr in _intern2strings.Keys)
+            foreach (var entry in _intern2strings)
             {
-                Runtime.XDecref(ptr);
+                Runtime.XDecref(entry.Key);
+                typeof(PyIdentifier).GetField(entry.Value).SetValue(null, IntPtr.Zero);
             }
             _string2interns = null;
             _intern2strings = null;

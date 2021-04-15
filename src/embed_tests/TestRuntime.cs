@@ -96,7 +96,7 @@ namespace Python.EmbeddingTest
             // TypeFlags.HaveIter set in Python 2. This tests a different code path in PyObject_IsIterable and PyIter_Check.
             var threading = Runtime.Runtime.PyImport_ImportModule("threading");
             Exceptions.ErrorCheck(threading);
-            var threadingDict = Runtime.Runtime.PyModule_GetDict(new BorrowedReference(threading));
+            var threadingDict = Runtime.Runtime.PyModule_GetDict(threading);
             Exceptions.ErrorCheck(threadingDict);
             var lockType = Runtime.Runtime.PyDict_GetItemString(threadingDict, "Lock");
             if (lockType.IsNull)
@@ -109,6 +109,8 @@ namespace Python.EmbeddingTest
 
             Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(lockInstance));
             Assert.IsFalse(Runtime.Runtime.PyIter_Check(lockInstance));
+
+            threading.Dispose();
 
             Runtime.Runtime.Py_Finalize();
         }

@@ -601,41 +601,6 @@ def test_object_conversion():
     assert ob.ObjectField == Foo
 
 
-def test_enum_conversion():
-    """Test enum conversion."""
-    from Python.Test import ShortEnum
-
-    ob = ConversionTest()
-    assert ob.EnumField == ShortEnum.Zero
-
-    ob.EnumField = ShortEnum.One
-    assert ob.EnumField == ShortEnum.One
-
-    ob.EnumField = 0
-    assert ob.EnumField == ShortEnum.Zero
-    assert ob.EnumField == 0
-
-    ob.EnumField = 1
-    assert ob.EnumField == ShortEnum.One
-    assert ob.EnumField == 1
-
-    with pytest.raises(ValueError):
-        ob = ConversionTest()
-        ob.EnumField = 10
-
-    with pytest.raises(ValueError):
-        ob = ConversionTest()
-        ob.EnumField = 255
-
-    with pytest.raises(OverflowError):
-        ob = ConversionTest()
-        ob.EnumField = 1000000
-
-    with pytest.raises(TypeError):
-        ob = ConversionTest()
-        ob.EnumField = "spam"
-
-
 def test_null_conversion():
     """Test null conversion."""
     import System

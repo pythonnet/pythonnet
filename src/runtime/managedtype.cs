@@ -92,7 +92,7 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
+                var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
                     IntPtr op = tp == ob
@@ -117,7 +117,7 @@ namespace Python.Runtime
             if (ob != IntPtr.Zero)
             {
                 IntPtr tp = Runtime.PyObject_TYPE(ob);
-                var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
+                var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
                     tp = Marshal.ReadIntPtr(tp, TypeOffset.magic());
@@ -152,7 +152,7 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
+                var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.Managed) != 0)
                 {
                     return true;

@@ -61,6 +61,13 @@ namespace Python.Runtime
         {
             IntPtr builtins = Runtime.GetBuiltins();
 
+            IntPtr existing = Runtime.PyObject_GetAttr(builtins, PyIdentifier.__import__);
+            Runtime.XDecref(existing);
+            if (existing != hook.ptr)
+            {
+                throw new NotSupportedException("Unable to restore original __import__.");
+            }
+
             int res = Runtime.PyObject_SetAttr(builtins, PyIdentifier.__import__, py_import);
             PythonException.ThrowIfIsNotZero(res);
             Runtime.XDecref(py_import);
@@ -88,7 +95,7 @@ namespace Python.Runtime
 
             // both dicts are borrowed references
             BorrowedReference mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            BorrowedReference clr_dict = *Runtime._PyObject_GetDictPtr(root.ObjectReference);
+            using var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference);
 
             Runtime.PyDict_Update(mod_dict, clr_dict);
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
@@ -150,12 +157,14 @@ namespace Python.Runtime
             // update the module dictionary with the contents of the root dictionary
             root.LoadNames();
             BorrowedReference py_mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            BorrowedReference clr_dict = *Runtime._PyObject_GetDictPtr(root.ObjectReference);
-            Runtime.PyDict_Update(py_mod_dict, clr_dict);
+            using (var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference))
+            {
+                Runtime.PyDict_Update(py_mod_dict, clr_dict);
+            }
 
             // find any items from the from list and get them from the root if they're not
             // already in the module dictionary
-            if (fromList != null && fromList != default)
+            if (fromList != null)
             {
                 if (Runtime.PyTuple_Check(fromList))
                 {
@@ -224,7 +233,7 @@ namespace Python.Runtime
             if (num_args >= 4)
             {
                 fromList = Runtime.PyTuple_GetItem(args, 3);
-                if (fromList != default &&
+                if (fromList != null &&
                     Runtime.PyObject_IsTrue(fromList) == 1)
                 {
                     fromlist = true;
@@ -250,7 +259,6 @@ namespace Python.Runtime
             }
 
             string realname = mod_name;
-            string clr_prefix = null;
 
             // 2010-08-15: Always seemed smart to let python try first...
             // This shaves off a few tenths of a second on test_module.py
@@ -297,7 +305,7 @@ namespace Python.Runtime
             BorrowedReference modules = Runtime.PyImport_GetModuleDict();
             BorrowedReference module = Runtime.PyDict_GetItem(modules, py_mod_name);
 
-            if (module != default)
+            if (module != null)
             {
                 if (fromlist)
                 {
@@ -308,10 +316,7 @@ namespace Python.Runtime
                     }
                     return new NewReference(module).DangerousMoveToPointer();
                 }
-                if (clr_prefix != null)
-                {
-                    return GetCLRModule(fromList).DangerousMoveToPointerOrNull();
-                }
+
                 module = Runtime.PyDict_GetItemString(modules, names[0]);
                 return new NewReference(module, canBeNull: true).DangerousMoveToPointer();
             }
@@ -351,12 +356,6 @@ namespace Python.Runtime
 
                 // Add the module to sys.modules
                 Runtime.PyDict_SetItemString(modules, tail.moduleName, tail.ObjectReference);
-
-                // If imported from CLR add clr.<modulename> to sys.modules as well
-                if (clr_prefix != null)
-                {
-                    Runtime.PyDict_SetItemString(modules, clr_prefix + tail.moduleName, tail.ObjectReference);
-                }
             }
 
             {
@@ -374,6 +373,8 @@ namespace Python.Runtime
 
         private static bool IsLoadAll(BorrowedReference fromList)
         {
+            if (fromList == null) throw new ArgumentNullException(nameof(fromList));
+
             if (CLRModule.preload)
             {
                 return false;
