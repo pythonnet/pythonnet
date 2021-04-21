@@ -472,6 +472,17 @@ namespace Python.Runtime
             Runtime.PyEval_RestoreThread(ts);
         }
 
+        public static PyObject AddModule(string name, string file="<unknown>")
+        {
+            IntPtr module = Runtime.PyImport_AddModule(name);
+            IntPtr module_globals = Runtime.PyModule_GetDict(module);
+            IntPtr builtins = Runtime.PyEval_GetBuiltins();
+            Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
+            Runtime.PyDict_SetItemString(module_globals, "__file__", file.ToPython().Handle);
+
+            return new PyObject(module);
+        }
+
         [Obsolete("Use PyModule.Import")]
         public static PyObject ImportModule(string name) => PyModule.Import(name);
 
