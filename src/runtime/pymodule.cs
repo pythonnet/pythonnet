@@ -1,4 +1,7 @@
 using System;
+using System.Text;
+
+using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -36,6 +39,41 @@ namespace Python.Runtime
             NewReference m = Runtime.PyImport_ExecCodeModule(name, c);
             PythonException.ThrowIfIsNull(m);
             return new PyModule(ref m);
+        }
+
+        public static PyModule Create(string name, string filename = "none")
+        {
+            NewReference op;
+
+            // first check if there is an existing module
+            BorrowedReference modules = Runtime.PyImport_GetModuleDict();
+            BorrowedReference m = Runtime.PyDict_GetItemString(modules, name);
+            if(!m.IsNull && Runtime.PyObject_TypeCheck(m, new BorrowedReference(Runtime.PyModuleType)))
+            {
+                // there is already a module by this name
+                op = new NewReference(m);
+                return new PyModule(ref op);
+            }
+
+            // create a new module
+            op = Runtime.PyModule_New(name);
+            PythonException.ThrowIfIsNull(op);
+
+            // setup the module basics (__builtins__ and __file__)
+            BorrowedReference globals = Runtime.PyModule_GetDict(new BorrowedReference(op.DangerousGetAddress()));
+            PythonException.ThrowIfIsNull(globals);
+            BorrowedReference __builtins__ = Runtime.PyEval_GetBuiltins();
+            PythonException.ThrowIfIsNull(__builtins__);
+            int rc = Runtime.PyDict_SetItemString(globals, "__builtins__", __builtins__);
+            PythonException.ThrowIfIsNotZero(rc);
+            rc = Runtime.PyDict_SetItemString(globals, "__file__", new BorrowedReference(filename.ToPython().Handle));
+            PythonException.ThrowIfIsNotZero(rc);
+
+            // add to sys.modules
+            rc = Runtime.PyDict_SetItemString(modules, name, op);
+            PythonException.ThrowIfIsNotZero(rc);
+
+            return new PyModule(ref op);
         }
     }
 }
