@@ -279,7 +279,7 @@ namespace Python.Runtime
                 var item = PyList_GetItem(items, i);
                 var name = PyTuple_GetItem(item.DangerousGetAddress(), 0);
                 var module = PyTuple_GetItem(item.DangerousGetAddress(), 1);
-                if (ManagedType.IsManagedType(module))
+                if (ManagedType.IsInstanceOfManagedType(module))
                 {
                     XIncref(name);
                     XIncref(module);

@@ -28,6 +28,7 @@ namespace Python.Runtime
         internal IntPtr tpHandle; // PyType *
 
         internal BorrowedReference ObjectReference => new BorrowedReference(pyHandle);
+        internal BorrowedReference TypeReference => new BorrowedReference(tpHandle);
 
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
@@ -93,17 +94,10 @@ namespace Python.Runtime
                 }
 
                 var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
+                if ((flags & TypeFlags.HasClrInstance) != 0)
                 {
-                    IntPtr op = tp == ob
-                        ? Marshal.ReadIntPtr(tp, TypeOffset.magic())
-                        : Marshal.ReadIntPtr(ob, ObjectOffset.magic(tp));
-                    if (op == IntPtr.Zero)
-                    {
-                        return null;
-                    }
-                    var gc = (GCHandle)op;
-                    return (ManagedType)gc.Target;
+                    var gc = TryGetGCHandle(new BorrowedReference(ob));
+                    return (ManagedType)gc?.Target;
                 }
             }
             return null;
@@ -118,10 +112,9 @@ namespace Python.Runtime
             {
                 IntPtr tp = Runtime.PyObject_TYPE(ob);
                 var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
+                if ((flags & TypeFlags.HasClrInstance) != 0)
                 {
-                    tp = Marshal.ReadIntPtr(tp, TypeOffset.magic());
-                    var gc = (GCHandle)tp;
+                    var gc = GetGCHandle(new BorrowedReference(tp), Runtime.CLRMetaType);
                     return (ManagedType)gc.Target;
                 }
             }
@@ -140,9 +133,9 @@ namespace Python.Runtime
         }
 
 
-        internal static bool IsManagedType(BorrowedReference ob)
-            => IsManagedType(ob.DangerousGetAddressOrNull());
-        internal static bool IsManagedType(IntPtr ob)
+        internal static bool IsInstanceOfManagedType(BorrowedReference ob)
+            => IsInstanceOfManagedType(ob.DangerousGetAddressOrNull());
+        internal static bool IsInstanceOfManagedType(IntPtr ob)
         {
             if (ob != IntPtr.Zero)
             {
@@ -152,18 +145,15 @@ namespace Python.Runtime
                     tp = ob;
                 }
 
-                var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
-                if ((flags & TypeFlags.Managed) != 0)
-                {
-                    return true;
-                }
+                return IsManagedType(new BorrowedReference(tp));
             }
             return false;
         }
 
-        public bool IsTypeObject()
+        internal static bool IsManagedType(BorrowedReference type)
         {
-            return pyHandle == tpHandle;
+            var flags = (TypeFlags)Util.ReadCLong(type.DangerousGetAddress(), TypeOffset.tp_flags);
+            return (flags & TypeFlags.HasClrInstance) != 0;
         }
 
         internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
@@ -256,13 +246,81 @@ namespace Python.Runtime
         protected static IntPtr GetObjectDict(IntPtr ob)
         {
             IntPtr type = Runtime.PyObject_TYPE(ob);
-            return Marshal.ReadIntPtr(ob, ObjectOffset.TypeDictOffset(type));
+            int instanceDictOffset = Marshal.ReadInt32(type, TypeOffset.tp_dictoffset);
+            Debug.Assert(instanceDictOffset > 0);
+            return Marshal.ReadIntPtr(ob, instanceDictOffset);
         }
 
         protected static void SetObjectDict(IntPtr ob, IntPtr value)
         {
             IntPtr type = Runtime.PyObject_TYPE(ob);
-            Marshal.WriteIntPtr(ob, ObjectOffset.TypeDictOffset(type), value);
+            int instanceDictOffset = Marshal.ReadInt32(type, TypeOffset.tp_dictoffset);
+            Debug.Assert(instanceDictOffset > 0);
+            Marshal.WriteIntPtr(ob, instanceDictOffset, value);
+        }
+
+        internal static void GetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type, out IntPtr handle)
+        {
+            Debug.Assert(reflectedClrObject != null);
+            Debug.Assert(IsManagedType(type) || type == Runtime.CLRMetaType);
+            Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
+
+            int gcHandleOffset = Marshal.ReadInt32(type.DangerousGetAddress(), Offsets.tp_clr_inst_offset);
+            Debug.Assert(gcHandleOffset > 0);
+
+            handle = Marshal.ReadIntPtr(reflectedClrObject.DangerousGetAddress(), gcHandleOffset);
+        }
+
+        internal static GCHandle? TryGetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type)
+        {
+            GetGCHandle(reflectedClrObject, type, out IntPtr handle);
+            return handle == IntPtr.Zero ? null : (GCHandle)handle;
+        }
+        internal static GCHandle? TryGetGCHandle(BorrowedReference reflectedClrObject)
+        {
+            BorrowedReference reflectedType = Runtime.PyObject_TYPE(reflectedClrObject);
+
+            return TryGetGCHandle(reflectedClrObject, reflectedType);
+        }
+
+        internal static GCHandle GetGCHandle(BorrowedReference reflectedClrObject)
+            => TryGetGCHandle(reflectedClrObject) ?? throw new InvalidOperationException();
+        internal static GCHandle GetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type)
+            => TryGetGCHandle(reflectedClrObject, type) ?? throw new InvalidOperationException();
+
+        internal static void InitGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type, GCHandle handle)
+        {
+            Debug.Assert(TryGetGCHandle(reflectedClrObject) == null);
+
+            SetGCHandle(reflectedClrObject, type: type, handle);
+        }
+        internal static void InitGCHandle(BorrowedReference reflectedClrObject, GCHandle handle)
+            => InitGCHandle(reflectedClrObject, Runtime.PyObject_TYPE(reflectedClrObject), handle);
+
+        internal static void SetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type, GCHandle newHandle)
+        {
+            Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
+
+            int offset = Marshal.ReadInt32(type.DangerousGetAddress(), Offsets.tp_clr_inst_offset);
+            Debug.Assert(offset > 0);
+
+            Marshal.WriteIntPtr(reflectedClrObject.DangerousGetAddress(), offset, (IntPtr)newHandle);
+        }
+        internal static void SetGCHandle(BorrowedReference reflectedClrObject, GCHandle newHandle)
+            => SetGCHandle(reflectedClrObject, Runtime.PyObject_TYPE(reflectedClrObject), newHandle);
+
+        internal static class Offsets
+        {
+            static Offsets()
+            {
+                int pyTypeSize = Marshal.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize);
+                if (pyTypeSize < 0) throw new InvalidOperationException();
+
+                tp_clr_inst_offset = pyTypeSize;
+                tp_clr_inst = tp_clr_inst_offset + IntPtr.Size;
+            }
+            public static int tp_clr_inst_offset { get; }
+            public static int tp_clr_inst { get;  }
         }
     }
 }

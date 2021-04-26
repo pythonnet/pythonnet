@@ -470,7 +470,7 @@ namespace Python.Runtime
                 var item = PyList_GetItem(items, i);
                 var name = PyTuple_GetItem(item, 0);
                 var module = PyTuple_GetItem(item, 1);
-                if (ManagedType.IsManagedType(module))
+                if (ManagedType.IsInstanceOfManagedType(module))
                 {
                     PyDict_DelItem(modules, name);
                 }
@@ -523,6 +523,7 @@ namespace Python.Runtime
                 if (obj.gcHandle.IsAllocated)
                 {
                     obj.gcHandle.Free();
+                    ManagedType.SetGCHandle(obj.ObjectReference, default);
                 }
                 obj.gcHandle = default;
             }
@@ -567,6 +568,8 @@ namespace Python.Runtime
         internal static IntPtr PyFalse;
         internal static IntPtr PyNone;
         internal static IntPtr Error;
+
+        internal static BorrowedReference CLRMetaType => new BorrowedReference(PyCLRMetaType);
 
         public static PyObject None
         {
@@ -1000,7 +1003,7 @@ namespace Python.Runtime
 
         internal static string PyObject_GetTypeName(IntPtr op)
         {
-            IntPtr pyType = Marshal.ReadIntPtr(op, ObjectOffset.ob_type);
+            IntPtr pyType = PyObject_TYPE(op);
             IntPtr ppName = Marshal.ReadIntPtr(pyType, TypeOffset.tp_name);
             return Marshal.PtrToStringAnsi(ppName);
         }
@@ -1010,7 +1013,7 @@ namespace Python.Runtime
         /// </summary>
         internal static bool PyObject_IsIterable(IntPtr pointer)
         {
-            var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
+            var ob_type = PyObject_TYPE(pointer);
             IntPtr tp_iter = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iter);
             return tp_iter != IntPtr.Zero;
         }
@@ -1508,6 +1511,13 @@ namespace Python.Runtime
             return Delegates.PyBytes_FromString((IntPtr)bytes);
         }
 
+        internal static IntPtr PyBytes_AsString(IntPtr ob) => PyBytes_AsString(new BorrowedReference(ob));
+        internal static IntPtr PyBytes_AsString(BorrowedReference ob)
+        {
+            Debug.Assert(ob != null);
+            return Delegates.PyBytes_AsString(ob);
+        }
+
         internal static long PyBytes_Size(IntPtr op)
         {
             return (long)_PyBytes_Size(op);
@@ -1515,11 +1525,6 @@ namespace Python.Runtime
 
 
         private static IntPtr _PyBytes_Size(IntPtr op) => Delegates._PyBytes_Size(op);
-
-        internal static IntPtr PyBytes_AS_STRING(IntPtr ob)
-        {
-            return ob + BytesOffset.ob_sval;
-        }
 
 
         internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, long size)
@@ -1615,7 +1620,7 @@ namespace Python.Runtime
             {
                 using var p = PyUnicode_AsUTF16String(new BorrowedReference(op));
                 int length = (int)PyUnicode_GetSize(op);
-                char* codePoints = (char*)PyBytes_AS_STRING(p.DangerousGetAddress());
+                char* codePoints = (char*)PyBytes_AsString(p.DangerousGetAddress());
                 return new string(codePoints,
                                   startIndex: 1, // skip BOM
                                   length: length);
@@ -1876,7 +1881,7 @@ namespace Python.Runtime
 
         internal static bool PyIter_Check(IntPtr pointer)
         {
-            var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
+            var ob_type = PyObject_TYPE(pointer);
             IntPtr tp_iternext = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iternext);
             return tp_iternext != IntPtr.Zero && tp_iternext != _PyObject_NextNotImplemented;
         }
@@ -2248,7 +2253,7 @@ namespace Python.Runtime
             return PyImport_Import(PyIdentifier.builtins);
         }
 
-        private static class Delegates
+        internal static class Delegates
         {
             static readonly ILibraryLoader libraryLoader = LibraryLoader.Instance;
 
@@ -2406,6 +2411,7 @@ namespace Python.Runtime
                 _PySequence_Count = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName("PySequence_Count", GetUnmanagedDll(_PythonDll));
                 PySequence_Tuple = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PySequence_Tuple), GetUnmanagedDll(_PythonDll));
                 PySequence_List = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PySequence_List), GetUnmanagedDll(_PythonDll));
+                PyBytes_AsString = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyBytes_AsString), GetUnmanagedDll(_PythonDll));
                 PyBytes_FromString = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyBytes_FromString), GetUnmanagedDll(_PythonDll));
                 _PyBytes_Size = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyBytes_Size", GetUnmanagedDll(_PythonDll));
                 PyUnicode_FromStringAndSize = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromStringAndSize), GetUnmanagedDll(_PythonDll));
@@ -2683,6 +2689,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> _PySequence_Count { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PySequence_Tuple { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PySequence_List { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyBytes_AsString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyBytes_FromString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyBytes_Size { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyUnicode_FromStringAndSize { get; }

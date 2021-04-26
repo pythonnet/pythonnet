@@ -14,26 +14,16 @@ namespace Python.Runtime
             System.Diagnostics.Debug.Assert(tp != IntPtr.Zero);
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
-            if ((flags & TypeFlags.Subclass) != 0)
-            {
-                IntPtr dict = Marshal.ReadIntPtr(py, ObjectOffset.TypeDictOffset(tp));
-                if (dict == IntPtr.Zero)
-                {
-                    dict = Runtime.PyDict_New();
-                    Marshal.WriteIntPtr(py, ObjectOffset.TypeDictOffset(tp), dict);
-                }
-            }
-
-            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
-            Marshal.WriteIntPtr(py, ObjectOffset.magic(tp), (IntPtr)gc);
             tpHandle = tp;
             pyHandle = py;
             inst = ob;
 
+            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
+            InitGCHandle(ObjectReference, type: TypeReference, gc);
+
             // Fix the BaseException args (and __cause__ in case of Python 3)
             // slot if wrapping a CLR exception
-            Exceptions.SetArgsAndCause(py);
+            if (ob is Exception e) Exceptions.SetArgsAndCause(e, py);
         }
 
         protected CLRObject()
@@ -78,6 +68,9 @@ namespace Python.Runtime
             return co.pyHandle;
         }
 
+        internal static NewReference GetReference(object ob)
+            => NewReference.DangerousFromPointer(GetInstHandle(ob));
+
         internal static CLRObject Restore(object ob, IntPtr pyHandle, InterDomainContext context)
         {
             CLRObject co = new CLRObject()
@@ -101,7 +94,7 @@ namespace Python.Runtime
         {
             base.OnLoad(context);
             GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
-            Marshal.WriteIntPtr(pyHandle, ObjectOffset.magic(tpHandle), (IntPtr)gc);
+            SetGCHandle(ObjectReference, TypeReference, gc);
         }
     }
 }
