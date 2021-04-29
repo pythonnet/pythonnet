@@ -45,8 +45,10 @@ module:
 Embedding Python in .NET
 ------------------------
 
--  You must set `Runtime.PythonDLL` or `PYTHONNET_PYDLL` environment variable
+-  You must set `Runtime.PythonDLL` property or `PYTHONNET_PYDLL` environment variable
    starting with version 3.0, otherwise you will receive `TypeInitializationException`.
+   Typical values are `python38.dll` (Windows), `libpython3.8.dylib` (Mac),
+   `libpython3.8.so` (most other *nix).
 -  All calls to python should be inside a
    ``using (Py.GIL()) {/* Your code here */}`` block.
 -  Import python modules using ``dynamic mod = Py.Import("mod")``, then

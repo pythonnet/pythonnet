@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -147,13 +145,13 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            int flags = TypeFlags.Default;
-            flags |= TypeFlags.Managed;
+            var flags = TypeFlags.Default;
+            flags |= TypeFlags.HasClrInstance;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.BaseType;
             flags |= TypeFlags.Subclass;
             flags |= TypeFlags.HaveGC;
-            Util.WriteCLong(type, TypeOffset.tp_flags, flags);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_dealloc);
 
@@ -164,10 +162,16 @@ namespace Python.Runtime
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_traverse);
             TypeManager.CopySlot(base_type, type, TypeOffset.tp_clear);
 
+            // derived types must have their GCHandle at the same offset as the base types
+            int clrInstOffset = Marshal.ReadInt32(base_type, Offsets.tp_clr_inst_offset);
+            Marshal.WriteInt32(type, Offsets.tp_clr_inst_offset, clrInstOffset);
 
             // for now, move up hidden handle...
-            IntPtr gc = Marshal.ReadIntPtr(base_type, TypeOffset.magic());
-            Marshal.WriteIntPtr(type, TypeOffset.magic(), gc);
+            IntPtr gc = Marshal.ReadIntPtr(base_type, Offsets.tp_clr_inst);
+            Marshal.WriteIntPtr(type, Offsets.tp_clr_inst, gc);
+
+            if (Runtime.PyType_Ready(type) != 0)
+                throw new PythonException();
 
             return type;
         }
@@ -205,6 +209,11 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
+            return CallInit(obj, args, kw);
+        }
+
+        private static IntPtr CallInit(IntPtr obj, IntPtr args, IntPtr kw)
+        {
             var init = Runtime.PyObject_GetAttr(obj, PyIdentifier.__init__);
             Runtime.PyErr_Clear();
 
@@ -285,11 +294,15 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = Util.ReadCLong(tp, TypeOffset.tp_flags);
+            var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
-                IntPtr gc = Marshal.ReadIntPtr(tp, TypeOffset.magic());
-                ((GCHandle)gc).Free();
+                GetGCHandle(new BorrowedReference(tp)).Free();
+#if DEBUG
+                // prevent ExecutionEngineException in debug builds in case we have a bug
+                // this would allow using managed debugger to investigate the issue
+                SetGCHandle(new BorrowedReference(tp), Runtime.CLRMetaType, default);
+#endif
             }
 
             IntPtr op = Marshal.ReadIntPtr(tp, TypeOffset.ob_type);

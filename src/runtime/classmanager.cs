@@ -403,6 +403,17 @@ namespace Python.Runtime
                 }
             }
 
+            // only [Flags] enums support bitwise operations
+            if (type.IsEnum && type.IsFlagsEnum())
+            {
+                var opsImpl = typeof(EnumOps<>).MakeGenericType(type);
+                foreach (var op in opsImpl.GetMethods(OpsHelper.BindingFlags))
+                {
+                    local[op.Name] = 1;
+                }
+                info = info.Concat(opsImpl.GetMethods(OpsHelper.BindingFlags)).ToArray();
+            }
+
             // Now again to filter w/o losing overloaded member info
             for (i = 0; i < info.Length; i++)
             {

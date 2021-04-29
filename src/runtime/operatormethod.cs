@@ -51,7 +51,6 @@ namespace Python.Runtime
                 ["op_OnesComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
                 ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
-                ["op_OneComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
             };
             ComparisonOpMap = new Dictionary<string, string>
             {
@@ -80,7 +79,7 @@ namespace Python.Runtime
 
         public static bool IsOperatorMethod(MethodBase method)
         {
-            if (!method.IsSpecialName)
+            if (!method.IsSpecialName && !method.IsOpsHelper())
             {
                 return false;
             }
@@ -102,7 +101,12 @@ namespace Python.Runtime
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
             Debug.Assert(_opType != null);
-            foreach (var method in clrType.GetMethods(flags))
+
+            var staticMethods =
+                clrType.IsEnum ? typeof(EnumOps<>).MakeGenericType(clrType).GetMethods(flags)
+                : clrType.GetMethods(flags);
+
+            foreach (var method in staticMethods)
             {
                 // We only want to override slots for operators excluding
                 // comparison operators, which are handled by ClassBase.tp_richcompare.
@@ -170,9 +174,11 @@ namespace Python.Runtime
         /// <returns></returns>
         public static bool IsReverse(MethodInfo method)
         {
-            Type declaringType = method.DeclaringType;
+            Type primaryType = method.IsOpsHelper()
+                ? method.DeclaringType.GetGenericArguments()[0]
+                : method.DeclaringType;
             Type leftOperandType = method.GetParameters()[0].ParameterType;
-            return leftOperandType != declaringType;
+            return leftOperandType != primaryType;
         }
 
         public static void FilterMethods(MethodInfo[] methods, out MethodInfo[] forwardMethods, out MethodInfo[] reverseMethods)

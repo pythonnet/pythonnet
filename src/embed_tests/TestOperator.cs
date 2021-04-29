@@ -336,6 +336,14 @@ assert c == (a.Num > b.Num)
         }
 
         [Test]
+        public void EnumOperator()
+        {
+            PythonEngine.Exec($@"
+from System.IO import FileAccess
+c = FileAccess.Read | FileAccess.Write");
+        }
+
+        [Test]
         public void OperatorOverloadMissingArgument()
         {
             string name = string.Format("{0}.{1}",

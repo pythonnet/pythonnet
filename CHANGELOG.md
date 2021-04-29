@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
 -   Add GetPythonThreadID and Interrupt methods in PythonEngine
 -   Ability to implement delegates with `ref` and `out` parameters in Python, by returning the modified parameter values in a tuple. ([#1355][i1355])
+-   `PyType` - a wrapper for Python type objects, that also permits creating new heap types from `TypeSpec`
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
@@ -37,9 +38,13 @@ when .NET expects an integer [#1342][i1342]
 -   BREAKING: to call Python from .NET `Runtime.PythonDLL` property must be set to Python DLL name
 or the DLL must be loaded in advance. This must be done before calling any other Python.NET functions.
 -   BREAKING: `PyObject.Length()` now raises a `PythonException` when object does not support a concept of length.
+-   BREAKING: disabled implicit conversion from C# enums to Python `int` and back.
+One must now either use enum members (e.g. `MyEnum.Option`), or use enum constructor
+(e.g. `MyEnum(42)` or `MyEnum(42, True)` when `MyEnum` does not have a member with value 42).
 -   Sign Runtime DLL with a strong name
 -   Implement loading through `clr_loader` instead of the included `ClrModule`, enables
     support for .NET Core
+-   BREAKING: custom encoders are no longer called for instances of `System.Type`
 
 ### Fixed
 

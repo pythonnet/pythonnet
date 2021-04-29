@@ -296,6 +296,32 @@ namespace Python.EmbeddingTest {
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out intEnumerable); });
             CollectionAssert.AreEqual(intEnumerable, new List<object> { 1, 2, 3 });
         }
+
+        // regression for https://github.com/pythonnet/pythonnet/issues/1427
+        [Ignore("https://github.com/pythonnet/pythonnet/issues/1256")]
+        [Test]
+        public void PythonRegisteredDecoder_NoStackOverflowOnSystemType()
+        {
+            const string PyCode = @"
+import clr
+import System
+from Python.Runtime import PyObjectConversions
+from Python.Runtime.Codecs import RawProxyEncoder
+
+
+class ListAsRawEncoder(RawProxyEncoder):
+    __namespace__ = 'Dummy'
+    def CanEncode(self, clr_type):
+        return clr_type.Name == 'IList`1' and clr_type.Namespace == 'System.Collections.Generic'
+
+
+list_encoder = ListAsRawEncoder()
+PyObjectConversions.RegisterEncoder(list_encoder)
+
+system_type = list_encoder.GetType()";
+
+            PythonEngine.Exec(PyCode);
+        }
     }
 
     /// <summary>

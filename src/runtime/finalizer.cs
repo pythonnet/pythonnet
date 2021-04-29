@@ -54,7 +54,7 @@ namespace Python.Runtime
             public IncorrectRefCountException(IntPtr ptr)
             {
                 PyPtr = ptr;
-                IntPtr pyname = Runtime.PyObject_Unicode(PyPtr);
+                IntPtr pyname = Runtime.PyObject_Str(PyPtr);
                 string name = Runtime.GetManagedString(pyname);
                 Runtime.XDecref(pyname);
                 _message = $"<{name}> may has a incorrect ref count";

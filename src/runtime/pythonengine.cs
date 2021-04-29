@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -50,6 +51,9 @@ namespace Python.Runtime
         {
             get { return initialized; }
         }
+
+        /// <summary>Set to <c>true</c> to enable GIL debugging assistance.</summary>
+        public static bool DebugGIL { get; set; } = false;
 
         internal static DelegateManager DelegateManager
         {
@@ -633,7 +637,7 @@ namespace Python.Runtime
                 PythonEngine.Initialize();
             }
 
-            return new GILState();
+            return PythonEngine.DebugGIL ? new DebugGILState() : new GILState();
         }
 
         public static PyScope CreateScope()
@@ -658,7 +662,7 @@ namespace Python.Runtime
                 state = PythonEngine.AcquireLock();
             }
 
-            public void Dispose()
+            public virtual void Dispose()
             {
                 if (this.isDisposed) return;
 
@@ -669,7 +673,23 @@ namespace Python.Runtime
 
             ~GILState()
             {
-                Dispose();
+                throw new InvalidOperationException("GIL must always be released, and it must be released from the same thread that acquired it.");
+            }
+        }
+
+        public class DebugGILState : GILState
+        {
+            readonly Thread owner;
+            internal DebugGILState() : base()
+            {
+                this.owner = Thread.CurrentThread;
+            }
+            public override void Dispose()
+            {
+                if (this.owner != Thread.CurrentThread)
+                    throw new InvalidOperationException("GIL must always be released from the same thread, that acquired it");
+
+                base.Dispose();
             }
         }
 

@@ -27,7 +27,6 @@ namespace Python.Runtime
         private static Type int16Type;
         private static Type int32Type;
         private static Type int64Type;
-        private static Type flagsType;
         private static Type boolType;
         private static Type typeType;
 
@@ -42,7 +41,6 @@ namespace Python.Runtime
             singleType = typeof(Single);
             doubleType = typeof(Double);
             decimalType = typeof(Decimal);
-            flagsType = typeof(FlagsAttribute);
             boolType = typeof(Boolean);
             typeType = typeof(Type);
         }
@@ -148,7 +146,11 @@ namespace Python.Runtime
                 return result;
             }
 
-            if (Type.GetTypeCode(type) == TypeCode.Object && value.GetType() != typeof(object)) {
+            if (Type.GetTypeCode(type) == TypeCode.Object
+                && value.GetType() != typeof(object)
+                && value is not Type
+                || type.IsEnum
+            ) {
                 var encoded = PyObjectConversions.TryEncode(value, type);
                 if (encoded != null) {
                     result = encoded.Handle;
@@ -202,6 +204,11 @@ namespace Python.Runtime
             // implementing class.
 
             type = value.GetType();
+
+            if (type.IsEnum)
+            {
+                return CLRObject.GetInstHandle(value, type);
+            }
 
             TypeCode tc = Type.GetTypeCode(type);
 
@@ -317,6 +324,18 @@ namespace Python.Runtime
             }
             return Converter.ToManagedValue(value, type, out result, setError);
         }
+        /// <summary>
+        /// Return a managed object for the given Python object, taking funny
+        /// byref types into account.
+        /// </summary>
+        /// <param name="value">A Python object</param>
+        /// <param name="type">The desired managed type</param>
+        /// <param name="result">Receives the managed object</param>
+        /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
+        /// <returns>True on success</returns>
+        internal static bool ToManaged(BorrowedReference value, Type type,
+            out object result, bool setError)
+            => ToManaged(value.DangerousGetAddress(), type, out result, setError);
 
         internal static bool ToManagedValue(BorrowedReference value, Type obType,
             out object result, bool setError)
@@ -396,11 +415,6 @@ namespace Python.Runtime
             if (obType.IsArray)
             {
                 return ToArray(value, obType, out result, setError);
-            }
-
-            if (obType.IsEnum)
-            {
-                return ToEnum(value, obType, out result, setError);
             }
 
             // Conversion to 'Object' is done based on some reasonable default
@@ -497,7 +511,7 @@ namespace Python.Runtime
             }
 
             TypeCode typeCode = Type.GetTypeCode(obType);
-            if (typeCode == TypeCode.Object)
+            if (typeCode == TypeCode.Object || obType.IsEnum)
             {
                 IntPtr pyType = Runtime.PyObject_TYPE(value);
                 if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
@@ -511,13 +525,32 @@ namespace Python.Runtime
 
         internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
 
+        internal static int ToInt32(BorrowedReference value)
+        {
+            nint num = Runtime.PyLong_AsSignedSize_t(value);
+            if (num == -1 && Exceptions.ErrorOccurred())
+            {
+                throw new PythonException();
+            }
+            return checked((int)num);
+        }
+
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>
         private static bool ToPrimitive(IntPtr value, Type obType, out object result, bool setError)
         {
-            TypeCode tc = Type.GetTypeCode(obType);
             result = null;
+            if (obType.IsEnum)
+            {
+                if (setError)
+                {
+                    Exceptions.SetError(Exceptions.TypeError, "since Python.NET 3.0 int can not be converted to Enum implicitly. Use Enum(int_value)");
+                }
+                return false;
+            }
+
+            TypeCode tc = Type.GetTypeCode(obType);
             IntPtr op = IntPtr.Zero;
 
             switch (tc)
@@ -557,7 +590,7 @@ namespace Python.Runtime
                         {
                             if (Runtime.PyBytes_Size(value) == 1)
                             {
-                                op = Runtime.PyBytes_AS_STRING(value);
+                                op = Runtime.PyBytes_AsString(value);
                                 result = (byte)Marshal.ReadByte(op);
                                 return true;
                             }
@@ -583,7 +616,7 @@ namespace Python.Runtime
                         {
                             if (Runtime.PyBytes_Size(value) == 1)
                             {
-                                op = Runtime.PyBytes_AS_STRING(value);
+                                op = Runtime.PyBytes_AsString(value);
                                 result = (byte)Marshal.ReadByte(op);
                                 return true;
                             }
@@ -609,7 +642,7 @@ namespace Python.Runtime
                         {
                             if (Runtime.PyBytes_Size(value) == 1)
                             {
-                                op = Runtime.PyBytes_AS_STRING(value);
+                                op = Runtime.PyBytes_AsString(value);
                                 result = (byte)Marshal.ReadByte(op);
                                 return true;
                             }
@@ -791,9 +824,14 @@ namespace Python.Runtime
 
         private static void SetConversionError(IntPtr value, Type target)
         {
+            // PyObject_Repr might clear the error
+            Runtime.PyErr_Fetch(out var causeType, out var causeVal, out var causeTrace);
+
             IntPtr ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
+
+            Runtime.PyErr_Restore(causeType, causeVal, causeTrace);
             Exceptions.RaiseTypeError($"Cannot convert {src} to {target}");
         }
 
@@ -875,40 +913,6 @@ namespace Python.Runtime
 
             result = items;
             return true;
-        }
-
-
-        /// <summary>
-        /// Convert a Python value to a correctly typed managed enum instance.
-        /// </summary>
-        private static bool ToEnum(IntPtr value, Type obType, out object result, bool setError)
-        {
-            Type etype = Enum.GetUnderlyingType(obType);
-            result = null;
-
-            if (!ToPrimitive(value, etype, out result, setError))
-            {
-                return false;
-            }
-
-            if (Enum.IsDefined(obType, result))
-            {
-                result = Enum.ToObject(obType, result);
-                return true;
-            }
-
-            if (obType.GetCustomAttributes(flagsType, true).Length > 0)
-            {
-                result = Enum.ToObject(obType, result);
-                return true;
-            }
-
-            if (setError)
-            {
-                Exceptions.SetError(Exceptions.ValueError, "invalid enumeration value");
-            }
-
-            return false;
         }
     }
 
