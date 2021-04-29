@@ -29,6 +29,8 @@ def pytest_addoption(parser):
         help="Must be one of default, netcore, netfx and mono"
     )
 
+collect_ignore = []
+
 def pytest_configure(config):
     global bin_path
     if "clr" in sys.modules:
@@ -72,6 +74,15 @@ def pytest_configure(config):
 
     import clr
     clr.AddReference("Python.Test")
+
+    if config.getoption("--runtime") == "netcore":
+        collect_ignore.append("domain_tests/test_domain_reload.py")
+    else:
+        domain_tests_dir = os.path.join(os.path.dirname(__file__), 'domain_tests')
+        bin_path = os.path.join(domain_tests_dir, 'bin')
+        check_call(["dotnet", "build", domain_tests_dir, '-o', bin_path])
+
+
 
 
 def pytest_unconfigure(config):
