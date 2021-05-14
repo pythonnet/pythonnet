@@ -1012,6 +1012,11 @@ namespace Python.Runtime
         /// <summary>
         /// Test whether the Python object is an iterable.
         /// </summary>
+        internal static bool PyObject_IsIterable(BorrowedReference ob)
+            => PyObject_IsIterable(ob.DangerousGetAddress());
+        /// <summary>
+        /// Test whether the Python object is an iterable.
+        /// </summary>
         internal static bool PyObject_IsIterable(IntPtr pointer)
         {
             var ob_type = PyObject_TYPE(pointer);
@@ -1078,7 +1083,10 @@ namespace Python.Runtime
         internal static IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw) => Delegates.PyObject_Call(pointer, args, kw);
 
 
-        internal static IntPtr PyObject_CallObject(IntPtr pointer, IntPtr args) => Delegates.PyObject_CallObject(pointer, args);
+        internal static NewReference PyObject_CallObject(BorrowedReference callable, BorrowedReference args) => Delegates.PyObject_CallObject(callable, args);
+        internal static IntPtr PyObject_CallObject(IntPtr pointer, IntPtr args)
+            => Delegates.PyObject_CallObject(new BorrowedReference(pointer), new BorrowedReference(args))
+                .DangerousMoveToPointerOrNull();
 
 
         internal static int PyObject_RichCompareBool(IntPtr value1, IntPtr value2, int opid) => Delegates.PyObject_RichCompareBool(value1, value2, opid);
@@ -1880,6 +1888,7 @@ namespace Python.Runtime
         //====================================================================
         // Python iterator API
         //====================================================================
+        internal static bool PyIter_Check(BorrowedReference ob) => PyIter_Check(ob.DangerousGetAddress());
 
         internal static bool PyIter_Check(IntPtr pointer)
         {
@@ -2317,7 +2326,7 @@ namespace Python.Runtime
                 PyObject_DelItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_DelItem), GetUnmanagedDll(_PythonDll));
                 PyObject_GetIter = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetIter), GetUnmanagedDll(_PythonDll));
                 PyObject_Call = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Call), GetUnmanagedDll(_PythonDll));
-                PyObject_CallObject = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_CallObject), GetUnmanagedDll(_PythonDll));
+                PyObject_CallObject = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_CallObject), GetUnmanagedDll(_PythonDll));
                 PyObject_RichCompareBool = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, int>)GetFunctionByName(nameof(PyObject_RichCompareBool), GetUnmanagedDll(_PythonDll));
                 PyObject_IsInstance = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_IsInstance), GetUnmanagedDll(_PythonDll));
                 PyObject_IsSubclass = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_IsSubclass), GetUnmanagedDll(_PythonDll));
@@ -2616,7 +2625,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PyObject_DelItem { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_GetIter { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyObject_Call { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyObject_CallObject { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference> PyObject_CallObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, int> PyObject_RichCompareBool { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PyObject_IsInstance { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_IsSubclass { get; }
