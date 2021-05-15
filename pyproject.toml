@@ -5,5 +5,5 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 xfail_strict = true
 testpaths = [
-    "tests",
+    "tests"
 ]

@@ -119,12 +119,13 @@ namespace Python.Runtime
             var formatter = CreateFormatter();
             var storage = (RuntimeDataStorage)formatter.Deserialize(ms);
 
+            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
+
             var objs = RestoreRuntimeDataObjects(storage.GetStorage("objs"));
             RestoreRuntimeDataModules(storage.GetStorage("modules"));
             TypeManager.RestoreRuntimeData(storage.GetStorage("types"));
             var clsObjs = ClassManager.RestoreRuntimeData(storage.GetStorage("classes"));
             ImportHook.RestoreRuntimeData(storage.GetStorage("import"));
-            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
 
             foreach (var item in objs)
             {
@@ -279,7 +280,7 @@ namespace Python.Runtime
                 var item = PyList_GetItem(items, i);
                 var name = PyTuple_GetItem(item.DangerousGetAddress(), 0);
                 var module = PyTuple_GetItem(item.DangerousGetAddress(), 1);
-                if (ManagedType.IsManagedType(module))
+                if (ManagedType.IsInstanceOfManagedType(module))
                 {
                     XIncref(name);
                     XIncref(module);

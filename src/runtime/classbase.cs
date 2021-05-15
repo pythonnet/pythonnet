@@ -1,9 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -355,26 +352,28 @@ namespace Python.Runtime
         {
             ManagedType self = GetManagedObject(ob);
             tp_clear(ob);
-            Runtime.PyObject_GC_UnTrack(self.pyHandle);
-            Runtime.PyObject_GC_Del(self.pyHandle);
-            self.FreeGCHandle();
+            Runtime.PyObject_GC_UnTrack(ob);
+            Runtime.PyObject_GC_Del(ob);
+            self?.FreeGCHandle();
         }
 
         public static int tp_clear(IntPtr ob)
         {
             ManagedType self = GetManagedObject(ob);
-            if (!self.IsTypeObject())
+
+            bool isTypeObject = Runtime.PyObject_TYPE(ob) == Runtime.PyCLRMetaType;
+            if (!isTypeObject)
             {
                 ClearObjectDict(ob);
             }
-            self.tpHandle = IntPtr.Zero;
+            if (self is not null) self.tpHandle = IntPtr.Zero;
             return 0;
         }
 
         protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
-            if (pyHandle != tpHandle)
+            if (!this.IsClrMetaTypeInstance())
             {
                 IntPtr dict = GetObjectDict(pyHandle);
                 Runtime.XIncref(dict);
@@ -385,13 +384,13 @@ namespace Python.Runtime
         protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
-            if (pyHandle != tpHandle)
+            if (!this.IsClrMetaTypeInstance())
             {
                 IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
                 SetObjectDict(pyHandle, dict);
             }
             gcHandle = AllocGCHandle();
-            Marshal.WriteIntPtr(pyHandle, TypeOffset.magic(), (IntPtr)gcHandle);
+            SetGCHandle(ObjectReference, gcHandle);
         }
 
 

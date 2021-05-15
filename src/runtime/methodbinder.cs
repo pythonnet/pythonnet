@@ -876,7 +876,7 @@ namespace Python.Runtime
                     {
                         try
                         {
-                            var description = Runtime.PyObject_Unicode(type);
+                            var description = Runtime.PyObject_Str(type);
                             if (description != IntPtr.Zero)
                             {
                                 to.Append(Runtime.GetManagedString(description));

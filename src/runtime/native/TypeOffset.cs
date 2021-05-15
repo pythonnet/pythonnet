@@ -70,11 +70,12 @@ namespace Python.Runtime
         internal static int tp_new { get; private set; }
         internal static int tp_repr { get; private set; }
         internal static int tp_richcompare { get; private set; }
+        internal static int tp_weaklistoffset { get; private set; }
         internal static int tp_setattro { get; private set; }
         internal static int tp_str { get; private set; }
         internal static int tp_traverse { get; private set; }
 
-        internal static void Use(ITypeOffsets offsets)
+        internal static void Use(ITypeOffsets offsets, int extraHeadOffset)
         {
             if (offsets is null) throw new ArgumentNullException(nameof(offsets));
 
@@ -86,14 +87,19 @@ namespace Python.Runtime
 
                 var sourceProperty = typeof(ITypeOffsets).GetProperty(offsetProperty.Name);
                 int value = (int)sourceProperty.GetValue(offsets, null);
+                value += extraHeadOffset;
                 offsetProperty.SetValue(obj: null, value: value, index: null);
             }
 
             ValidateUnusedTypeOffsetProperties(offsetProperties);
             ValidateRequiredOffsetsPresent(offsetProperties);
+
+            SlotOffsets = GetOffsets();
         }
 
         static readonly BindingFlags FieldFlags = BindingFlags.NonPublic | BindingFlags.Static;
+
+        static Dictionary<string, int> SlotOffsets;
         internal static Dictionary<string, int> GetOffsets()
         {
             var properties = typeof(TypeOffset).GetProperties(FieldFlags);
@@ -104,10 +110,9 @@ namespace Python.Runtime
             return result;
         }
 
-        internal static int GetOffsetUncached(string name)
+        public static int GetSlotOffset(string slotName)
         {
-            var property = typeof(TypeOffset).GetProperty(name, FieldFlags);
-            return (int)property.GetValue(obj: null, index: null);
+            return SlotOffsets[slotName];
         }
 
         static readonly HashSet<string> slotNames = new HashSet<string>();

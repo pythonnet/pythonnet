@@ -44,7 +44,10 @@ namespace Python.Runtime
                 docstring += "- " + a.FullName + "\n";
             }
 
-            dict = Runtime.PyDict_New();
+            var dictRef = Runtime.PyObject_GenericGetDict(ObjectReference);
+            PythonException.ThrowIfIsNull(dictRef);
+            dict = dictRef.DangerousMoveToPointer();
+
             using var pyname = NewReference.DangerousFromPointer(Runtime.PyString_FromString(moduleName));
             using var pyfilename = NewReference.DangerousFromPointer(Runtime.PyString_FromString(filename));
             using var pydocstring = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docstring));
@@ -53,9 +56,6 @@ namespace Python.Runtime
             Runtime.PyDict_SetItem(DictRef, PyIdentifier.__file__, pyfilename);
             Runtime.PyDict_SetItem(DictRef, PyIdentifier.__doc__, pydocstring);
             Runtime.PyDict_SetItem(DictRef, PyIdentifier.__class__, pycls);
-
-            Runtime.XIncref(dict);
-            SetObjectDict(pyHandle, dict);
 
             InitializeModuleMembers();
         }

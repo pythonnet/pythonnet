@@ -147,16 +147,8 @@ namespace Python.Runtime
         /// __getattr__ implementation, and thus dereferencing a NULL
         /// pointer.
         /// </summary>
-        /// <param name="ob">The python object wrapping </param>
-        internal static void SetArgsAndCause(BorrowedReference ob)
+        internal static void SetArgsAndCause(BorrowedReference ob, Exception e)
         {
-            // e: A CLR Exception
-            Exception e = ExceptionClassObject.ToException(ob);
-            if (e == null)
-            {
-                return;
-            }
-
             IntPtr args;
             if (!string.IsNullOrEmpty(e.Message))
             {
@@ -169,7 +161,10 @@ namespace Python.Runtime
                 args = Runtime.PyTuple_New(0);
             }
 
-            Marshal.WriteIntPtr(ob.DangerousGetAddress(), ExceptionOffset.args, args);
+            using var argsTuple = NewReference.DangerousFromPointer(args);
+
+            if (Runtime.PyObject_SetAttrString(ob, "args", argsTuple) != 0)
+                throw PythonException.ThrowLastAsClrException();
 
             if (e.InnerException != null)
             {
@@ -202,6 +197,15 @@ namespace Python.Runtime
             {
                 throw PythonException.ThrowLastAsClrException();
             }
+        }
+
+        internal static IntPtr ErrorCheckIfNull(IntPtr pointer)
+        {
+            if (pointer == IntPtr.Zero && ErrorOccurred())
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return pointer;
         }
 
         /// <summary>

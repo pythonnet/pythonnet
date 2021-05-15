@@ -16,7 +16,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\runtime\Python.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\runtime\Python.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

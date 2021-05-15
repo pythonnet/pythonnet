@@ -528,6 +528,16 @@ namespace Python.Runtime
 
         internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
 
+        internal static int ToInt32(BorrowedReference value)
+        {
+            nint num = Runtime.PyLong_AsSignedSize_t(value);
+            if (num == -1 && Exceptions.ErrorOccurred())
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return checked((int)num);
+        }
+
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>
@@ -583,7 +593,7 @@ namespace Python.Runtime
                         {
                             if (Runtime.PyBytes_Size(value) == 1)
                             {
-                                op = Runtime.PyBytes_AS_STRING(value);
+                                op = Runtime.PyBytes_AsString(value);
                                 result = (byte)Marshal.ReadByte(op);
                                 return true;
                             }
@@ -609,7 +619,7 @@ namespace Python.Runtime
                         {
                             if (Runtime.PyBytes_Size(value) == 1)
                             {
-                                op = Runtime.PyBytes_AS_STRING(value);
+                                op = Runtime.PyBytes_AsString(value);
                                 result = (byte)Marshal.ReadByte(op);
                                 return true;
                             }
@@ -635,7 +645,7 @@ namespace Python.Runtime
                         {
                             if (Runtime.PyBytes_Size(value) == 1)
                             {
-                                op = Runtime.PyBytes_AS_STRING(value);
+                                op = Runtime.PyBytes_AsString(value);
                                 result = (byte)Marshal.ReadByte(op);
                                 return true;
                             }

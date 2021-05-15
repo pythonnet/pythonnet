@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -75,8 +76,8 @@ namespace Python.Runtime
             // So we don't call PyObject_GC_Del here and instead we set the python
             // reference to a weak reference so that the C# object can be collected.
             GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
-            int gcOffset = ObjectOffset.magic(Runtime.PyObject_TYPE(self.pyHandle));
-            Marshal.WriteIntPtr(self.pyHandle, gcOffset, (IntPtr)gc);
+            Debug.Assert(self.TypeReference == Runtime.PyObject_TYPE(self.ObjectReference));
+            SetGCHandle(self.ObjectReference, self.TypeReference, gc);
             self.gcHandle.Free();
             self.gcHandle = gc;
         }
@@ -101,12 +102,9 @@ namespace Python.Runtime
             // collected while Python still has a reference to it.
             if (Runtime.Refcount(self.pyHandle) == 1)
             {
-
-#if PYTHON_WITH_PYDEBUG
-                Runtime._Py_NewReference(self.pyHandle);
-#endif
+                Runtime._Py_NewReference(self.ObjectReference);
                 GCHandle gc = GCHandle.Alloc(self, GCHandleType.Normal);
-                Marshal.WriteIntPtr(self.pyHandle, ObjectOffset.magic(self.tpHandle), (IntPtr)gc);
+                SetGCHandle(self.ObjectReference, self.TypeReference, gc);
                 self.gcHandle.Free();
                 self.gcHandle = gc;
 
@@ -124,11 +122,13 @@ namespace Python.Runtime
         /// </summary>
         internal static Type CreateDerivedType(string name,
             Type baseType,
-            IntPtr py_dict,
+            BorrowedReference dictRef,
             string namespaceStr,
             string assemblyName,
             string moduleName = "Python.Runtime.Dynamic.dll")
         {
+            // TODO: clean up
+            IntPtr py_dict = dictRef.DangerousGetAddress();
             if (null != namespaceStr)
             {
                 name = namespaceStr + "." + name;
@@ -826,7 +826,7 @@ namespace Python.Runtime
             try
             {
                 // create the python object
-                IntPtr type = TypeManager.GetTypeHandle(obj.GetType());
+                BorrowedReference type = TypeManager.GetTypeReference(obj.GetType());
                 self = new CLRObject(obj, type);
 
                 // set __pyobj__ to self and deref the python object which will allow this
@@ -883,11 +883,6 @@ namespace Python.Runtime
                         // the C# object is being destroyed which must mean there are no more
                         // references to the Python object as well so now we can dealloc the
                         // python object.
-                        IntPtr dict = Marshal.ReadIntPtr(self.pyHandle, ObjectOffset.TypeDictOffset(self.tpHandle));
-                        if (dict != IntPtr.Zero)
-                        {
-                            Runtime.XDecref(dict);
-                        }
                         Runtime.PyObject_GC_Del(self.pyHandle);
                         self.gcHandle.Free();
                     }
