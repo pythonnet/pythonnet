@@ -393,6 +393,10 @@ namespace Python.Runtime
                 {
                     Py_Finalize();
                 }
+                else
+                {
+                    PyGILState_Release(state);
+                }
             }
         }
 
