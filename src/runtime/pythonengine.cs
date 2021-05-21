@@ -192,6 +192,7 @@ namespace Python.Runtime
 
             // Make sure we clean up properly on app domain unload.
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
             // The global scope gets used implicitly quite early on, remember
             // to clear it out when we shut down.
@@ -245,6 +246,11 @@ namespace Python.Runtime
         }
 
         static void OnDomainUnload(object _, EventArgs __)
+        {
+            Shutdown();
+        }
+
+        static void OnProcessExit(object _, EventArgs __)
         {
             Shutdown();
         }
@@ -319,6 +325,7 @@ namespace Python.Runtime
             // If the shutdown handlers trigger a domain unload,
             // don't call shutdown again.
             AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+            AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
 
             PyScopeManager.Global.Clear();
             ExecuteShutdownHandlers();
