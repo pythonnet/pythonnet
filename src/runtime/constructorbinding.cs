@@ -155,11 +155,10 @@ namespace Python.Runtime
             base.Dealloc();
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (ConstructorBinding)GetManagedObject(ob);
-            Runtime.Py_CLEAR(ref self.repr);
-            return 0;
+            Runtime.Py_CLEAR(ref this.repr);
+            base.Clear();
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
@@ -254,11 +253,10 @@ namespace Python.Runtime
             base.Dealloc();
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (BoundContructor)GetManagedObject(ob);
-            Runtime.Py_CLEAR(ref self.repr);
-            return 0;
+            Runtime.Py_CLEAR(ref this.repr);
+            base.Clear();
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)

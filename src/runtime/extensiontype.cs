@@ -62,6 +62,9 @@ namespace Python.Runtime
             this.FreeGCHandle();
         }
 
+        /// <summary>DecRefs and nulls any fields pointing back to Python</summary>
+        protected virtual void Clear() { }
+
         /// <summary>
         /// Type __setattr__ implementation.
         /// </summary>
@@ -88,15 +91,19 @@ namespace Python.Runtime
         }
 
 
-        /// <summary>
-        /// Default dealloc implementation.
-        /// </summary>
         public static void tp_dealloc(IntPtr ob)
         {
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             var self = (ExtensionType)GetManagedObject(ob);
             self?.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (ExtensionType)GetManagedObject(ob);
+            self?.Clear();
+            return 0;
         }
 
         protected override void OnLoad(InterDomainContext context)

@@ -63,5 +63,11 @@ namespace Python.Runtime
             Runtime.Py_CLEAR(ref this.target);
             base.Dealloc();
         }
+
+        protected override void Clear()
+        {
+            Runtime.Py_CLEAR(ref this.target);
+            base.Clear();
+        }
     }
 }
