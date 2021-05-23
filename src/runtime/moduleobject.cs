@@ -274,7 +274,7 @@ namespace Python.Runtime
                 Exceptions.SetError(e);
                 return IntPtr.Zero;
             }
-            
+
 
             if (attr == null)
             {
@@ -295,11 +295,10 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
 
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Dealloc()
         {
-            var self = (ModuleObject)GetManagedObject(ob);
-            tp_clear(ob);
-            self.Dealloc();
+            tp_clear(this.pyHandle);
+            base.Dealloc();
         }
 
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
@@ -345,7 +344,7 @@ namespace Python.Runtime
                 if ((Runtime.PyDict_DelItemString(DictRef, pair.Key) == -1) &&
                     (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                 {
-                    // Trying to remove a key that's not in the dictionary 
+                    // Trying to remove a key that's not in the dictionary
                     // raises an error. We don't care about it.
                     Runtime.PyErr_Clear();
                 }
@@ -496,7 +495,7 @@ namespace Python.Runtime
         /// clr.GetClrType(IComparable) gives you the Type for IComparable,
         /// that you can e.g. perform reflection on. Similar to typeof(IComparable) in C#
         /// or clr.GetClrType(IComparable) in IronPython.
-        /// 
+        ///
         /// </summary>
         /// <param name="type"></param>
         /// <returns>The Type object</returns>
