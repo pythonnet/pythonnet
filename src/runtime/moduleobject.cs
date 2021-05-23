@@ -308,12 +308,6 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void Dealloc()
-        {
-            tp_clear(this.pyHandle);
-            base.Dealloc();
-        }
-
         protected override void Clear()
         {
             Runtime.Py_CLEAR(ref this.dict);

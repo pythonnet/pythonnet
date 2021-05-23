@@ -200,26 +200,15 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<method '{self.name}'>");
         }
 
-        private void ClearMembers()
-        {
-            Runtime.Py_CLEAR(ref doc);
-            if (unbound != null)
-            {
-                Runtime.XDecref(unbound.pyHandle);
-                unbound = null;
-            }
-        }
-
-        protected override void Dealloc()
-        {
-            this.ClearMembers();
-            ClearObjectDict(this.pyHandle);
-            base.Dealloc();
-        }
-
         protected override void Clear()
         {
-            this.ClearMembers();
+            Runtime.Py_CLEAR(ref this.doc);
+            if (this.unbound != null)
+            {
+                Runtime.XDecref(this.unbound.pyHandle);
+                this.unbound = null;
+            }
+
             ClearObjectDict(this.pyHandle);
             base.Clear();
         }

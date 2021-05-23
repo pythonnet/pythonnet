@@ -229,21 +229,10 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<{type} method '{name}'>");
         }
 
-        private void ClearMembers()
-        {
-            Runtime.Py_CLEAR(ref target);
-            Runtime.Py_CLEAR(ref targetType);
-        }
-
-        protected override void Dealloc()
-        {
-            this.ClearMembers();
-            base.Dealloc();
-        }
-
         protected override void Clear()
         {
-            this.ClearMembers();
+            Runtime.Py_CLEAR(ref this.target);
+            Runtime.Py_CLEAR(ref this.targetType);
             base.Clear();
         }
 
