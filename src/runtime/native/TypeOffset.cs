@@ -153,7 +153,6 @@ namespace Python.Runtime
                 "__instancecheck__",
                 "__subclasscheck__",
                 "AddReference",
-                "FinalizeObject",
                 "FindAssembly",
                 "get_SuppressDocs",
                 "get_SuppressOverloads",

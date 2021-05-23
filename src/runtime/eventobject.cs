@@ -198,17 +198,14 @@ namespace Python.Runtime
         }
 
 
-        /// <summary>
-        /// Descriptor dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Dealloc()
         {
-            var self = (EventObject)GetManagedObject(ob);
-            if (self.unbound != null)
+            if (this.unbound is not null)
             {
-                Runtime.XDecref(self.unbound.pyHandle);
+                Runtime.XDecref(this.unbound.pyHandle);
+                this.unbound = null;
             }
-            self.Dealloc();
+            base.Dealloc();
         }
     }
 

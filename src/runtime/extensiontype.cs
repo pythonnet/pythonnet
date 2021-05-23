@@ -54,20 +54,12 @@ namespace Python.Runtime
         }
 
 
-        /// <summary>
-        /// Common finalization code to support custom tp_deallocs.
-        /// </summary>
-        public static void FinalizeObject(ManagedType self)
+        protected virtual void Dealloc()
         {
-            ClearObjectDict(self.pyHandle);
-            Runtime.PyObject_GC_Del(self.pyHandle);
+            ClearObjectDict(this.pyHandle);
+            Runtime.PyObject_GC_Del(this.pyHandle);
             // Not necessary for decref of `tpHandle`.
-            self.FreeGCHandle();
-        }
-
-        protected void Dealloc()
-        {
-            FinalizeObject(this);
+            this.FreeGCHandle();
         }
 
         /// <summary>
@@ -104,7 +96,7 @@ namespace Python.Runtime
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             var self = (ExtensionType)GetManagedObject(ob);
-            self.Dealloc();
+            self?.Dealloc();
         }
 
         protected override void OnLoad(InterDomainContext context)
