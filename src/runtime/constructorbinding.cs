@@ -149,12 +149,6 @@ namespace Python.Runtime
             return self.repr;
         }
 
-        protected override void Dealloc()
-        {
-            Runtime.Py_CLEAR(ref this.repr);
-            base.Dealloc();
-        }
-
         protected override void Clear()
         {
             Runtime.Py_CLEAR(ref this.repr);
@@ -245,12 +239,6 @@ namespace Python.Runtime
             self.repr = Runtime.PyString_FromString(str);
             Runtime.XIncref(self.repr);
             return self.repr;
-        }
-
-        protected override void Dealloc()
-        {
-            Runtime.Py_CLEAR(ref this.repr);
-            base.Dealloc();
         }
 
         protected override void Clear()

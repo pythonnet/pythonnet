@@ -58,12 +58,6 @@ namespace Python.Runtime
             return doc;
         }
 
-        protected override void Dealloc()
-        {
-            Runtime.Py_CLEAR(ref this.target);
-            base.Dealloc();
-        }
-
         protected override void Clear()
         {
             Runtime.Py_CLEAR(ref this.target);

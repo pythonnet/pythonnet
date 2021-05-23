@@ -56,14 +56,22 @@ namespace Python.Runtime
 
         protected virtual void Dealloc()
         {
-            ClearObjectDict(this.pyHandle);
+            var type = Runtime.PyObject_TYPE(this.ObjectReference);
             Runtime.PyObject_GC_Del(this.pyHandle);
-            // Not necessary for decref of `tpHandle`.
+            // Not necessary for decref of `tpHandle` - it is borrowed
+
             this.FreeGCHandle();
+
+            // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
+            Runtime.XDecref(type.DangerousGetAddress());
         }
 
         /// <summary>DecRefs and nulls any fields pointing back to Python</summary>
-        protected virtual void Clear() { }
+        protected virtual void Clear()
+        {
+            ClearObjectDict(this.pyHandle);
+            // Not necessary for decref of `tpHandle` - it is borrowed
+        }
 
         /// <summary>
         /// Type __setattr__ implementation.
@@ -96,6 +104,7 @@ namespace Python.Runtime
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             var self = (ExtensionType)GetManagedObject(ob);
+            self?.Clear();
             self?.Dealloc();
         }
 
