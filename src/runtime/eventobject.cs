@@ -207,6 +207,16 @@ namespace Python.Runtime
             }
             base.Dealloc();
         }
+
+        protected override void Clear()
+        {
+            if (this.unbound is not null)
+            {
+                Runtime.XDecref(this.unbound.pyHandle);
+                this.unbound = null;
+            }
+            base.Clear();
+        }
     }
 
 

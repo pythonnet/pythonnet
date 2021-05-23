@@ -241,11 +241,10 @@ namespace Python.Runtime
             base.Dealloc();
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (MethodBinding)GetManagedObject(ob);
-            self.ClearMembers();
-            return 0;
+            this.ClearMembers();
+            base.Clear();
         }
 
         protected override void OnSave(InterDomainContext context)

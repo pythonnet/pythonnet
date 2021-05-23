@@ -109,11 +109,10 @@ namespace Python.Runtime
             base.Dealloc();
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (EventBinding)GetManagedObject(ob);
-            Runtime.Py_CLEAR(ref self.target);
-            return 0;
+            Runtime.Py_CLEAR(ref this.target);
+            base.Clear();
         }
     }
 }
