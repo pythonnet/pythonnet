@@ -149,14 +149,10 @@ namespace Python.Runtime
             return self.repr;
         }
 
-        /// <summary>
-        /// ConstructorBinding dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Dealloc()
         {
-            var self = (ConstructorBinding)GetManagedObject(ob);
-            Runtime.XDecref(self.repr);
-            self.Dealloc();
+            Runtime.Py_CLEAR(ref this.repr);
+            base.Dealloc();
         }
 
         public static int tp_clear(IntPtr ob)
@@ -252,14 +248,10 @@ namespace Python.Runtime
             return self.repr;
         }
 
-        /// <summary>
-        /// ConstructorBinding dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Dealloc()
         {
-            var self = (BoundContructor)GetManagedObject(ob);
-            Runtime.XDecref(self.repr);
-            self.Dealloc();
+            Runtime.Py_CLEAR(ref this.repr);
+            base.Dealloc();
         }
 
         public static int tp_clear(IntPtr ob)
