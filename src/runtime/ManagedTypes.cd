@@ -29,9 +29,9 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.BoundContructor" Collapsed="true">
-    <Position X="40.75" Y="3.25" Width="1.5" />
+    <Position X="29.5" Y="4.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAACAAAAAAABABAAAAACAAAABAJAAAAAAAAAAIAAAQ=</HashCode>
+      <HashCode>AAAACAAAAAAABABAAAAACAAAABAJAEAAAAAAAAIAAAA=</HashCode>
       <FileName>constructorbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -52,7 +52,7 @@
   <Class Name="Python.Runtime.ConstructorBinding" Collapsed="true">
     <Position X="29.5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAACAAAAAAABAAAAAAACAAAABAJAAAAAAAAAAIAEAQ=</HashCode>
+      <HashCode>AAAACAAAAAAABAAAAAAACAAAABAJAEAAAAAAAAIAEAA=</HashCode>
       <FileName>constructorbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -64,7 +64,15 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.EventBinding" Collapsed="true">
-    <Position X="43" Y="3.25" Width="1.5" />
+    <Position X="22.75" Y="1.75" Width="1.5" />
+    <InheritanceLine Type="Python.Runtime.ExtensionType" FixedFromPoint="true">
+      <Path>
+        <Point X="28.25" Y="2.441" />
+        <Point X="28.25" Y="2.875" />
+        <Point X="23.5" Y="2.875" />
+        <Point X="23.5" Y="2.441" />
+      </Path>
+    </InheritanceLine>
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAADAAAIAAAEABAAAAAAAACAAAAAAIAAAQ=</HashCode>
       <FileName>eventbinding.cs</FileName>
@@ -87,12 +95,12 @@
   <Class Name="Python.Runtime.ExtensionType" Collapsed="true">
     <Position X="27.5" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAECAAAAAEEBAAAAAAABAAQ=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAACAAAAAEEBAAAAAAABAAQ=</HashCode>
       <FileName>extensiontype.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.FieldObject" Collapsed="true">
-    <Position X="34" Y="3.25" Width="1.5" />
+    <Position X="31.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAIBEAA=</HashCode>
       <FileName>fieldobject.cs</FileName>
@@ -120,21 +128,29 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.MethodBinding" Collapsed="true">
-    <Position X="31.75" Y="3.25" Width="1.5" />
+    <Position X="33.75" Y="1.75" Width="1.5" />
+    <InheritanceLine Type="Python.Runtime.ExtensionType" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="28.25" Y="2.441" />
+        <Point X="28.25" Y="2.875" />
+        <Point X="34.5" Y="2.875" />
+        <Point X="34.5" Y="2.441" />
+      </Path>
+    </InheritanceLine>
     <TypeIdentifier>
       <HashCode>EAAAAAAAAIAADABAIAAAAAAAAAgBAAAAUgAAAAIAAAQ=</HashCode>
       <FileName>methodbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.MethodObject" Collapsed="true">
-    <Position X="36.25" Y="3.25" Width="1.5" />
+    <Position X="33.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>FIADAAAAAAAIBAAAIAAIAAAIAAgFAAAAUAAgAAIAEAQ=</HashCode>
       <FileName>methodobject.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.ModuleFunctionObject" Collapsed="true">
-    <Position X="36.25" Y="4.75" Width="1.5" />
+    <Position X="33.75" Y="4.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAIAAAA=</HashCode>
       <FileName>modulefunctionobject.cs</FileName>
@@ -148,17 +164,32 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.ModulePropertyObject" Collapsed="true">
-    <Position X="27.25" Y="3.25" Width="1.5" />
+    <Position X="27.25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>modulepropertyobject.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.PropertyObject" Collapsed="true">
-    <Position X="38.5" Y="3.25" Width="1.5" />
+    <Position X="27.25" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAQAAAAAIBEAg=</HashCode>
       <FileName>propertyobject.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Python.Runtime.OverloadMapper" Collapsed="true">
+    <Position X="35.5" Y="1.75" Width="1.5" />
+    <InheritanceLine Type="Python.Runtime.ExtensionType" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="28.25" Y="2.441" />
+        <Point X="28.25" Y="2.875" />
+        <Point X="36.188" Y="2.875" />
+        <Point X="36.188" Y="2.441" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAIAAAAAAAAAABAAAAAgAAAAIAAAQ=</HashCode>
+      <FileName>overload.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Font Name="Segoe UI" Size="9" />
