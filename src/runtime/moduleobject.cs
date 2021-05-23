@@ -295,12 +295,6 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
 
-        protected override void Dealloc()
-        {
-            tp_clear(this.pyHandle);
-            base.Dealloc();
-        }
-
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
         {
             var self = (ModuleObject)GetManagedObject(ob);
@@ -314,17 +308,22 @@ namespace Python.Runtime
             return 0;
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Dealloc()
         {
-            var self = (ModuleObject)GetManagedObject(ob);
-            Runtime.Py_CLEAR(ref self.dict);
-            ClearObjectDict(ob);
-            foreach (var attr in self.cache.Values)
+            tp_clear(this.pyHandle);
+            base.Dealloc();
+        }
+
+        protected override void Clear()
+        {
+            Runtime.Py_CLEAR(ref this.dict);
+            ClearObjectDict(this.pyHandle);
+            foreach (var attr in this.cache.Values)
             {
                 Runtime.XDecref(attr.pyHandle);
             }
-            self.cache.Clear();
-            return 0;
+            this.cache.Clear();
+            base.Clear();
         }
 
         protected override void OnSave(InterDomainContext context)

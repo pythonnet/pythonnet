@@ -217,12 +217,11 @@ namespace Python.Runtime
             base.Dealloc();
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (MethodObject)GetManagedObject(ob);
-            self.ClearMembers();
-            ClearObjectDict(ob);
-            return 0;
+            this.ClearMembers();
+            ClearObjectDict(this.pyHandle);
+            base.Clear();
         }
 
         protected override void OnSave(InterDomainContext context)
