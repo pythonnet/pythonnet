@@ -354,8 +354,8 @@ namespace Python.Runtime
         internal bool Is(IntPtr type)
         {
             return Runtime.PyErr_GivenExceptionMatches(
-                (Value ?? Type).Reference,
-                new BorrowedReference(type)) != 0;
+                given: (Value ?? Type).Reference,
+                typeOrTypes: new BorrowedReference(type)) != 0;
         }
 
         private static void CheckRuntimeIsRunning()

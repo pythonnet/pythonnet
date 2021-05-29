@@ -2109,7 +2109,7 @@ namespace Python.Runtime
         internal static int PyErr_ExceptionMatches(IntPtr exception) => Delegates.PyErr_ExceptionMatches(exception);
 
 
-        internal static int PyErr_GivenExceptionMatches(BorrowedReference ob, BorrowedReference val) => Delegates.PyErr_GivenExceptionMatches(ob, val);
+        internal static int PyErr_GivenExceptionMatches(BorrowedReference given, BorrowedReference typeOrTypes) => Delegates.PyErr_GivenExceptionMatches(given, typeOrTypes);
 
 
         internal static void PyErr_NormalizeException(ref NewReference type, ref NewReference val, ref NewReference tb) => Delegates.PyErr_NormalizeException(ref type, ref val, ref tb);
