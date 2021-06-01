@@ -202,6 +202,14 @@ namespace Python.Runtime
                     return ClassDerivedObject.ToPython(pyderived);
             }
 
+            // ModuleObjects are created in a way that their wrapping them as
+            // a CLRObject fails, the ClassObject has no tpHandle. Return the
+            // pyHandle as is, do not convert.
+            if (value is ModuleObject modobj)
+            {
+                return modobj.pyHandle;
+            }
+
             // hmm - from Python, we almost never care what the declared
             // type is. we'd rather have the object bound to the actual
             // implementing class.

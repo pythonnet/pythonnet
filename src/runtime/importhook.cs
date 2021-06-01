@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -18,9 +19,6 @@ import sys
 
 class DotNetLoader(importlib.abc.Loader):
 
-    def __init__(self):
-        super().__init__()
-
     @classmethod
     def exec_module(klass, mod):
         # This method needs to exist.
@@ -32,13 +30,13 @@ class DotNetLoader(importlib.abc.Loader):
         return clr._load_clr_module(spec)
 
 class DotNetFinder(importlib.abc.MetaPathFinder):
-    
-    def __init__(self):
-        super().__init__()
-    
+
     @classmethod
     def find_spec(klass, fullname, paths=None, target=None): 
-        import clr
+        # Don't import, we might call ourselves recursively!
+        if 'clr' not in sys.modules:
+            return None
+        clr = sys.modules['clr']
         if clr._available_namespaces and fullname in clr._available_namespaces:
             return importlib.machinery.ModuleSpec(fullname, DotNetLoader(), is_package=True)
         return None
@@ -64,12 +62,9 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
             Runtime.PyDict_SetItemString(dict, "CLR", ClrModuleReference);
             Runtime.PyDict_SetItemString(dict, "clr", ClrModuleReference);
-
-            // Add/create the MetaPathLoader
             SetupNamespaceTracking();
             SetupImportHook();
         }
-
 
         /// <summary>
         /// Cleanup resources upon shutdown of the Python runtime.
@@ -81,11 +76,10 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 return;
             }
 
-            bool shouldFreeDef = Runtime.Refcount(py_clr_module) == 1;
+            TeardownNameSpaceTracking();
             Runtime.XDecref(py_clr_module);
             py_clr_module = IntPtr.Zero;
 
-            TeardownNameSpaceTracking();
             Runtime.XDecref(root.pyHandle);
             root = null;
             CLRModule.Reset();
@@ -107,7 +101,6 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             var rootHandle = storage.GetValue<IntPtr>("root");
             root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
-            Runtime.PyDict_SetItemString(dict.DangerousGetAddress(), "CLR", py_clr_module);
             Runtime.PyDict_SetItemString(dict.DangerousGetAddress(), "clr", py_clr_module);
             SetupNamespaceTracking();
         }
@@ -115,54 +108,35 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         static void SetupImportHook()
         {
             // Create the import hook module
-            var import_hook_module_def = ModuleDefOffset.AllocModuleDef("clr.loader");
-            var import_hook_module = Runtime.PyModule_Create2(import_hook_module_def, 3);
+            var import_hook_module = Runtime.PyModule_New("clr.loader");
 
             // Run the python code to create the module's classes.
-            var mod_dict = Runtime.PyModule_GetDict(new BorrowedReference(import_hook_module));
             var builtins = Runtime.PyEval_GetBuiltins();
             var exec = Runtime.PyDict_GetItemString(builtins, "exec");
             using var args = NewReference.DangerousFromPointer(Runtime.PyTuple_New(2));
 
-            var codeStr = Runtime.PyString_FromString(LoaderCode);
+            IntPtr codeStr = Runtime.PyString_FromString(LoaderCode);
             Runtime.PyTuple_SetItem(args.DangerousGetAddress(), 0, codeStr);
             // PyTuple_SetItem steals a reference, mod_dict is borrowed.
+            var mod_dict = Runtime.PyModule_GetDict(import_hook_module);
             Runtime.XIncref(mod_dict.DangerousGetAddress());
             Runtime.PyTuple_SetItem(args.DangerousGetAddress(), 1, mod_dict.DangerousGetAddress());
             Runtime.PyObject_Call(exec.DangerousGetAddress(), args.DangerousGetAddress(), IntPtr.Zero);
 
-            var loader = Runtime.PyDict_GetItemString(mod_dict, "DotNetLoader").DangerousGetAddressOrNull();
-            Runtime.XIncref(loader);
-
-            // Add the classes to the module
-            // PyModule_AddObject steals a reference only on success
-            if (Runtime.PyModule_AddObject(import_hook_module, "DotNetLoader", loader) != 0)
-            {
-                Runtime.XDecref(loader);
-                throw new PythonException();
-            }
-
-            var finder = Runtime.PyDict_GetItemString(mod_dict, "DotNetFinder").DangerousGetAddressOrNull();
-            Runtime.XIncref(finder);
-            if (Runtime.PyModule_AddObject(import_hook_module, "DotNetFinder", finder) != 0)
-            {
-                Runtime.XDecref(finder);
-                throw new PythonException();
-            }
-
             // Set as a sub-module of clr.
-            Runtime.XIncref(import_hook_module);
-            if(Runtime.PyModule_AddObject(py_clr_module, "loader", import_hook_module) != 0)
+            if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module) != 0)
             {
-                Runtime.XDecref(import_hook_module);
+                Runtime.XDecref(import_hook_module.DangerousGetAddress());
                 throw new PythonException();
             }
 
             // Finally, add the hook to the meta path
-            var finder_inst = Runtime.PyDict_GetItemString(mod_dict, "finder_inst").DangerousGetAddressOrNull();
-            Runtime.XIncref(finder);
+            var findercls = Runtime.PyDict_GetItemString(mod_dict, "DotNetFinder");
+            var finderCtorArgs = Runtime.PyTuple_New(0);
+            var finder_inst = Runtime.PyObject_CallObject(findercls.DangerousGetAddress(), finderCtorArgs);
+            Runtime.XDecref(finderCtorArgs);
             var metapath = Runtime.PySys_GetObject("meta_path");
-            Runtime.PyList_Append(metapath, finder);
+            Runtime.PyList_Append(metapath, finder_inst);
         }
 
         /// <summary>
@@ -268,7 +242,8 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         }
 
         /// <summary>
-        /// The hook to import a CLR module into Python
+        /// The hook to import a CLR module into Python. Returns a new reference
+        /// to the module.
         /// </summary>
         public static ModuleObject Import(string modname)
         {
@@ -305,7 +280,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                     tail.LoadNames();
                 }
             }
-
+            tail.IncrRefCount();
             return tail;
         }
 

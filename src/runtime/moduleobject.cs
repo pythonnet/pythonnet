@@ -53,7 +53,7 @@ namespace Python.Runtime
             var dictRef = Runtime.PyObject_GenericGetDict(ObjectReference);
             PythonException.ThrowIfIsNull(dictRef);
             dict = dictRef.DangerousMoveToPointer();
-
+            __all__ = Runtime.PyList_New(0);
             using var pyname = NewReference.DangerousFromPointer(Runtime.PyString_FromString(moduleName));
             using var pyfilename = NewReference.DangerousFromPointer(Runtime.PyString_FromString(filename));
             using var pydocstring = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docstring));
@@ -576,13 +576,6 @@ namespace Python.Runtime
             return names;
         }
 
-        [ModuleFunction]
-        public static int _AtExit()
-        {
-            return Runtime.AtExit();
-        }
-
-
         /// <summary>
         /// Note: This should *not* be called directly.
         /// The function that get/import a CLR assembly as a python module.
@@ -593,16 +586,14 @@ namespace Python.Runtime
         /// <returns>A new reference to the imported module, as a PyObject.</returns>
         [ModuleFunction]
         [ForbidPythonThreads]
-        public static PyObject _load_clr_module(PyObject spec)
+        public static ModuleObject _load_clr_module(PyObject spec)
         {
             ModuleObject mod = null;
             using (var modname = spec.GetAttr("name"))
             {
                 mod = ImportHook.Import(modname.ToString());
             }
-            // We can't return directly a ModuleObject, because the tpHandle is
-            // not set, but we can return a PyObject.
-            return new PyObject(mod.pyHandle);
+            return mod;
         }
     }
 }
