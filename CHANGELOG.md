@@ -14,6 +14,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Add GetPythonThreadID and Interrupt methods in PythonEngine
 -   Ability to implement delegates with `ref` and `out` parameters in Python, by returning the modified parameter values in a tuple. ([#1355][i1355])
 -   `PyType` - a wrapper for Python type objects, that also permits creating new heap types from `TypeSpec`
+-    Improved exception handling:
+  -  exceptions can now be converted with codecs
+  -  `InnerException` and `__cause__` are propagated properly
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5
@@ -44,7 +47,9 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   Sign Runtime DLL with a strong name
 -   Implement loading through `clr_loader` instead of the included `ClrModule`, enables
     support for .NET Core
+-   .NET and Python exceptions are preserved when crossing Python/.NET boundary
 -   BREAKING: custom encoders are no longer called for instances of `System.Type`
+-   `PythonException.Restore` no longer clears `PythonException` instance.
 
 ### Fixed
 
@@ -70,6 +75,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 ### Removed
 
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
+-   messages in `PythonException` no longer start with exception type
 -   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
 (see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 

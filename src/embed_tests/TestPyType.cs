@@ -40,6 +40,7 @@ namespace Python.EmbeddingTest
 
             using var type = new PyType(spec);
             Assert.AreEqual(name, type.GetAttr("__name__").As<string>());
+            Assert.AreEqual(name, type.Name);
             Assert.AreEqual(docStr, type.GetAttr("__doc__").As<string>());
         }
     }

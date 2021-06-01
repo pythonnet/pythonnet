@@ -153,7 +153,7 @@ namespace Python.Runtime
         {
             if (Runtime.PyDict_SetItemString(dict, name, ob.pyHandle) != 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             ob.IncrRefCount();
             cache[name] = ob;
@@ -343,7 +343,7 @@ namespace Python.Runtime
                 }
                 else if (Exceptions.ErrorOccurred())
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
                 pair.Value.DecrRefCount();
             }

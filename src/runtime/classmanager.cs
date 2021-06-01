@@ -131,7 +131,7 @@ namespace Python.Runtime
                     }
                     else if (Exceptions.ErrorOccurred())
                     {
-                        throw new PythonException();
+                        throw PythonException.ThrowLastAsClrException();
                     }
                 }
                 // We modified the Type object, notify it we did.

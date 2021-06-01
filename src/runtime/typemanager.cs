@@ -167,7 +167,7 @@ namespace Python.Runtime
 
             if (Runtime.PyType_Ready(type) != 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
 
             // TODO: use PyType(TypeSpec) constructor
@@ -291,7 +291,7 @@ namespace Python.Runtime
 
             if (Runtime.PyType_Ready(type) != 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
 
             var dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
@@ -493,7 +493,7 @@ namespace Python.Runtime
 
             if (Runtime.PyType_Ready(type) != 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
 
             IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
@@ -880,14 +880,14 @@ namespace Python.Runtime
             if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
             {
                 globals.Dispose();
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             const string code = "class A(object): pass";
             using var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
             if (resRef.IsNull())
             {
                 globals.Dispose();
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             resRef.Dispose();
             BorrowedReference A = Runtime.PyDict_GetItemString(globals, "A");

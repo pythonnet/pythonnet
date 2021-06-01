@@ -110,6 +110,9 @@ namespace Python.Runtime
             return ToPython(value, typeof(T));
         }
 
+        internal static NewReference ToPythonReference<T>(T value)
+            => NewReference.DangerousFromPointer(ToPython(value, typeof(T)));
+
         private static readonly Func<object, bool> IsTransparentProxy = GetIsTransparentProxy();
 
         private static bool Never(object _) => false;
@@ -530,7 +533,7 @@ namespace Python.Runtime
             nint num = Runtime.PyLong_AsSignedSize_t(value);
             if (num == -1 && Exceptions.ErrorOccurred())
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return checked((int)num);
         }
@@ -831,7 +834,7 @@ namespace Python.Runtime
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
 
-            Runtime.PyErr_Restore(causeType, causeVal, causeTrace);
+            Runtime.PyErr_Restore(causeType.StealNullable(), causeVal.StealNullable(), causeTrace.StealNullable());
             Exceptions.RaiseTypeError($"Cannot convert {src} to {target}");
         }
 
@@ -900,6 +903,7 @@ namespace Python.Runtime
                 if (!Converter.ToManaged(item, elementType, out obj, setError))
                 {
                     Runtime.XDecref(item);
+                    Runtime.XDecref(IterObject);
                     return false;
                 }
 
@@ -907,6 +911,12 @@ namespace Python.Runtime
                 Runtime.XDecref(item);
             }
             Runtime.XDecref(IterObject);
+
+            if (Exceptions.ErrorOccurred())
+            {
+                if (!setError) Exceptions.Clear();
+                return false;
+            }
 
             Array items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);

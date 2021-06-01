@@ -428,13 +428,8 @@ namespace Python.Runtime
             {
                 atexit = Py.Import("atexit");
             }
-            catch (PythonException e)
+            catch (PythonException e) when (e.Is(Exceptions.ImportError))
             {
-                if (!e.IsMatches(Exceptions.ImportError))
-                {
-                    throw;
-                }
-                e.Dispose();
                 // The runtime may not provided `atexit` module.
                 return;
             }
@@ -447,7 +442,6 @@ namespace Python.Runtime
                 catch (PythonException e)
                 {
                     Console.Error.WriteLine(e);
-                    e.Dispose();
                 }
             }
         }
@@ -502,9 +496,9 @@ namespace Python.Runtime
             {
                 return;
             }
-            if (!PythonException.Matches(Exceptions.KeyError))
+            if (!PythonException.CurrentMatches(Exceptions.KeyError))
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             PyErr_Clear();
         }
@@ -601,9 +595,9 @@ namespace Python.Runtime
         /// </remarks>
         internal static void CheckExceptionOccurred()
         {
-            if (PyErr_Occurred() != IntPtr.Zero)
+            if (PyErr_Occurred() != null)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -734,6 +728,9 @@ namespace Python.Runtime
 
         internal static unsafe void XDecref(IntPtr op)
         {
+#if DEBUG
+            Debug.Assert(op == IntPtr.Zero || Refcount(op) > 0);
+#endif
 #if !CUSTOM_INCDEC_REF
             Py_DecRef(op);
             return;
@@ -1057,6 +1054,11 @@ namespace Python.Runtime
             using var namePtr = new StrPtr(name, Encoding.UTF8);
             return Delegates.PyObject_SetAttrString(pointer, namePtr, value);
         }
+        internal static int PyObject_SetAttrString(BorrowedReference @object, string name, BorrowedReference value)
+        {
+            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            return Delegates.PyObject_SetAttrString(@object.DangerousGetAddress(), namePtr, value.DangerousGetAddress());
+        }
 
         internal static int PyObject_HasAttr(BorrowedReference pointer, BorrowedReference name) => Delegates.PyObject_HasAttr(pointer, name);
 
@@ -1144,15 +1146,26 @@ namespace Python.Runtime
 
         internal static IntPtr PyObject_Repr(IntPtr pointer)
         {
-            Debug.Assert(PyErr_Occurred() == IntPtr.Zero);
+            AssertNoErorSet();
+
             return Delegates.PyObject_Repr(pointer);
         }
 
 
         internal static IntPtr PyObject_Str(IntPtr pointer)
         {
-            Debug.Assert(PyErr_Occurred() == IntPtr.Zero);
+            AssertNoErorSet();
+
             return Delegates.PyObject_Str(pointer);
+        }
+
+        [Conditional("DEBUG")]
+        internal static void AssertNoErorSet()
+        {
+            if (Exceptions.ErrorOccurred())
+                throw new InvalidOperationException(
+                    "Can't call with exception set",
+                    PythonException.FetchCurrent());
         }
 
 
@@ -2100,19 +2113,19 @@ namespace Python.Runtime
         internal static int PyErr_ExceptionMatches(IntPtr exception) => Delegates.PyErr_ExceptionMatches(exception);
 
 
-        internal static int PyErr_GivenExceptionMatches(IntPtr ob, IntPtr val) => Delegates.PyErr_GivenExceptionMatches(ob, val);
+        internal static int PyErr_GivenExceptionMatches(BorrowedReference given, BorrowedReference typeOrTypes) => Delegates.PyErr_GivenExceptionMatches(given, typeOrTypes);
 
 
-        internal static void PyErr_NormalizeException(ref IntPtr ob, ref IntPtr val, ref IntPtr tb) => Delegates.PyErr_NormalizeException(ref ob, ref val, ref tb);
+        internal static void PyErr_NormalizeException(ref NewReference type, ref NewReference val, ref NewReference tb) => Delegates.PyErr_NormalizeException(ref type, ref val, ref tb);
 
 
-        internal static IntPtr PyErr_Occurred() => Delegates.PyErr_Occurred();
+        internal static BorrowedReference PyErr_Occurred() => Delegates.PyErr_Occurred();
 
 
-        internal static void PyErr_Fetch(out IntPtr ob, out IntPtr val, out IntPtr tb) => Delegates.PyErr_Fetch(out ob, out val, out tb);
+        internal static void PyErr_Fetch(out NewReference type, out NewReference val, out NewReference tb) => Delegates.PyErr_Fetch(out type, out val, out tb);
 
 
-        internal static void PyErr_Restore(IntPtr ob, IntPtr val, IntPtr tb) => Delegates.PyErr_Restore(ob, val, tb);
+        internal static void PyErr_Restore(StolenReference type, StolenReference val, StolenReference tb) => Delegates.PyErr_Restore(type, val, tb);
 
 
         internal static void PyErr_Clear() => Delegates.PyErr_Clear();
@@ -2120,11 +2133,19 @@ namespace Python.Runtime
 
         internal static void PyErr_Print() => Delegates.PyErr_Print();
 
+
+        internal static NewReference PyException_GetCause(BorrowedReference ex)
+            => Delegates.PyException_GetCause(ex);
+        internal static NewReference PyException_GetTraceback(BorrowedReference ex)
+            => Delegates.PyException_GetTraceback(ex);
+
         /// <summary>
         /// Set the cause associated with the exception to cause. Use NULL to clear it. There is no type check to make sure that cause is either an exception instance or None. This steals a reference to cause.
         /// </summary>
-
-        internal static void PyException_SetCause(IntPtr ex, IntPtr cause) => Delegates.PyException_SetCause(ex, cause);
+        internal static void PyException_SetCause(BorrowedReference ex, StolenReference cause)
+            => Delegates.PyException_SetCause(ex, cause);
+        internal static int PyException_SetTraceback(BorrowedReference ex, BorrowedReference tb)
+            => Delegates.PyException_SetTraceback(ex, tb);
 
         //====================================================================
         // Cell API
@@ -2510,11 +2531,11 @@ namespace Python.Runtime
                 PyErr_SetFromErrno = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyErr_SetFromErrno), GetUnmanagedDll(_PythonDll));
                 PyErr_SetNone = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyErr_SetNone), GetUnmanagedDll(_PythonDll));
                 PyErr_ExceptionMatches = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyErr_ExceptionMatches), GetUnmanagedDll(_PythonDll));
-                PyErr_GivenExceptionMatches = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyErr_GivenExceptionMatches), GetUnmanagedDll(_PythonDll));
-                PyErr_NormalizeException = (delegate* unmanaged[Cdecl]<ref IntPtr, ref IntPtr, ref IntPtr, void>)GetFunctionByName(nameof(PyErr_NormalizeException), GetUnmanagedDll(_PythonDll));
-                PyErr_Occurred = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyErr_Occurred), GetUnmanagedDll(_PythonDll));
-                PyErr_Fetch = (delegate* unmanaged[Cdecl]<out IntPtr, out IntPtr, out IntPtr, void>)GetFunctionByName(nameof(PyErr_Fetch), GetUnmanagedDll(_PythonDll));
-                PyErr_Restore = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, void>)GetFunctionByName(nameof(PyErr_Restore), GetUnmanagedDll(_PythonDll));
+                PyErr_GivenExceptionMatches = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyErr_GivenExceptionMatches), GetUnmanagedDll(_PythonDll));
+                PyErr_NormalizeException = (delegate* unmanaged[Cdecl]<ref NewReference, ref NewReference, ref NewReference, void>)GetFunctionByName(nameof(PyErr_NormalizeException), GetUnmanagedDll(_PythonDll));
+                PyErr_Occurred = (delegate* unmanaged[Cdecl]<BorrowedReference>)GetFunctionByName(nameof(PyErr_Occurred), GetUnmanagedDll(_PythonDll));
+                PyErr_Fetch = (delegate* unmanaged[Cdecl]<out NewReference, out NewReference, out NewReference, void>)GetFunctionByName(nameof(PyErr_Fetch), GetUnmanagedDll(_PythonDll));
+                PyErr_Restore = (delegate* unmanaged[Cdecl]<StolenReference, StolenReference, StolenReference, void>)GetFunctionByName(nameof(PyErr_Restore), GetUnmanagedDll(_PythonDll));
                 PyErr_Clear = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyErr_Clear), GetUnmanagedDll(_PythonDll));
                 PyErr_Print = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyErr_Print), GetUnmanagedDll(_PythonDll));
                 PyCell_Get = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyCell_Get), GetUnmanagedDll(_PythonDll));
@@ -2531,7 +2552,10 @@ namespace Python.Runtime
                 PyLong_AsSignedSize_t = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName("PyLong_AsSsize_t", GetUnmanagedDll(_PythonDll));
                 PyExplicitlyConvertToInt64 = (delegate* unmanaged[Cdecl]<IntPtr, long>)GetFunctionByName("PyLong_AsLongLong", GetUnmanagedDll(_PythonDll));
                 PyDict_GetItemWithError = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference>)GetFunctionByName(nameof(PyDict_GetItemWithError), GetUnmanagedDll(_PythonDll));
-                PyException_SetCause = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, void>)GetFunctionByName(nameof(PyException_SetCause), GetUnmanagedDll(_PythonDll));
+                PyException_GetCause = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyException_GetCause), GetUnmanagedDll(_PythonDll));
+                PyException_GetTraceback = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyException_GetTraceback), GetUnmanagedDll(_PythonDll));
+                PyException_SetCause = (delegate* unmanaged[Cdecl]<BorrowedReference, StolenReference, void>)GetFunctionByName(nameof(PyException_SetCause), GetUnmanagedDll(_PythonDll));
+                PyException_SetTraceback = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyException_SetTraceback), GetUnmanagedDll(_PythonDll));
                 PyThreadState_SetAsyncExcLLP64 = (delegate* unmanaged[Cdecl]<uint, IntPtr, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
                 PyThreadState_SetAsyncExcLP64 = (delegate* unmanaged[Cdecl]<ulong, IntPtr, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
                 PyType_GetSlot = (delegate* unmanaged[Cdecl]<BorrowedReference, TypeSlotID, IntPtr>)GetFunctionByName(nameof(PyType_GetSlot), GetUnmanagedDll(_PythonDll));
@@ -2795,11 +2819,11 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyErr_SetFromErrno { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyErr_SetNone { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyErr_ExceptionMatches { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PyErr_GivenExceptionMatches { get; }
-            internal static delegate* unmanaged[Cdecl]<ref IntPtr, ref IntPtr, ref IntPtr, void> PyErr_NormalizeException { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr> PyErr_Occurred { get; }
-            internal static delegate* unmanaged[Cdecl]<out IntPtr, out IntPtr, out IntPtr, void> PyErr_Fetch { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, void> PyErr_Restore { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyErr_GivenExceptionMatches { get; }
+            internal static delegate* unmanaged[Cdecl]<ref NewReference, ref NewReference, ref NewReference, void> PyErr_NormalizeException { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference> PyErr_Occurred { get; }
+            internal static delegate* unmanaged[Cdecl]<out NewReference, out NewReference, out NewReference, void> PyErr_Fetch { get; }
+            internal static delegate* unmanaged[Cdecl]<StolenReference, StolenReference, StolenReference, void> PyErr_Restore { get; }
             internal static delegate* unmanaged[Cdecl]<void> PyErr_Clear { get; }
             internal static delegate* unmanaged[Cdecl]<void> PyErr_Print { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyCell_Get { get; }
@@ -2816,7 +2840,10 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyLong_AsSignedSize_t { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, long> PyExplicitlyConvertToInt64 { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference> PyDict_GetItemWithError { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, void> PyException_SetCause { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyException_GetCause { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyException_GetTraceback { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, StolenReference, void> PyException_SetCause { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyException_SetTraceback { get; }
             internal static delegate* unmanaged[Cdecl]<uint, IntPtr, int> PyThreadState_SetAsyncExcLLP64 { get; }
             internal static delegate* unmanaged[Cdecl]<ulong, IntPtr, int> PyThreadState_SetAsyncExcLP64 { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, NewReference> PyObject_GenericGetDict { get; }

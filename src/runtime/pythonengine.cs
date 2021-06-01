@@ -530,7 +530,7 @@ namespace Python.Runtime
             using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
             if (result.obj != Runtime.PyNone)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
         /// <summary>
@@ -545,7 +545,7 @@ namespace Python.Runtime
             using PyObject result = RunString(code, globals: globals, locals: locals, RunFlagType.File);
             if (result.obj != Runtime.PyNone)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -780,10 +780,8 @@ namespace Python.Runtime
             // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
-            IntPtr type = Runtime.PyNone;
-            IntPtr val = Runtime.PyNone;
-            IntPtr traceBack = Runtime.PyNone;
-            PythonException ex = null;
+            Exception ex = null;
+            PythonException pyError = null;
 
             try
             {
@@ -793,16 +791,20 @@ namespace Python.Runtime
             }
             catch (PythonException e)
             {
+                ex = pyError = e;
+            }
+            catch (Exception e)
+            {
                 ex = e;
-                type = ex.PyType.Coalesce(type);
-                val = ex.PyValue.Coalesce(val);
-                traceBack = ex.PyTB.Coalesce(traceBack);
+                Exceptions.SetError(e);
+                pyError = PythonException.FetchCurrentRaw();
             }
 
-            Runtime.XIncref(type);
-            Runtime.XIncref(val);
-            Runtime.XIncref(traceBack);
-            var exitResult = obj.InvokeMethod("__exit__", new PyObject(type), new PyObject(val), new PyObject(traceBack));
+            PyObject type = pyError?.Type ?? PyObject.None;
+            PyObject val = pyError?.Value ?? PyObject.None;
+            PyObject traceBack = pyError?.Traceback ?? PyObject.None;
+
+            var exitResult = obj.InvokeMethod("__exit__", type, val, traceBack);
 
             if (ex != null && !exitResult.IsTrue()) throw ex;
         }

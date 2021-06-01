@@ -34,7 +34,7 @@ namespace Python.Runtime
         {
             if (obj == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -107,7 +107,7 @@ namespace Python.Runtime
             using var items = Runtime.PyDict_Keys(Reference);
             if (items.IsNull())
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return items.MoveToPyObject();
         }
@@ -124,7 +124,7 @@ namespace Python.Runtime
             IntPtr items = Runtime.PyDict_Values(obj);
             if (items == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyObject(items);
         }
@@ -143,7 +143,7 @@ namespace Python.Runtime
             {
                 if (items.IsNull())
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
 
                 return items.MoveToPyObject();
@@ -166,7 +166,7 @@ namespace Python.Runtime
             IntPtr op = Runtime.PyDict_Copy(obj);
             if (op == IntPtr.Zero)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyDict(op);
         }
@@ -183,7 +183,7 @@ namespace Python.Runtime
             int result = Runtime.PyDict_Update(Reference, other.Reference);
             if (result < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 

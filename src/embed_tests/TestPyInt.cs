@@ -128,7 +128,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => a = new PyInt(i));
 
-            StringAssert.StartsWith("ValueError : invalid literal for int", ex.Message);
+            StringAssert.StartsWith("invalid literal for int", ex.Message);
             Assert.IsNull(a);
         }
 
@@ -161,7 +161,7 @@ namespace Python.EmbeddingTest
             PyInt a = null;
 
             var ex = Assert.Throws<PythonException>(() => a = PyInt.AsInt(s));
-            StringAssert.StartsWith("ValueError : invalid literal for int", ex.Message);
+            StringAssert.StartsWith("invalid literal for int", ex.Message);
             Assert.IsNull(a);
         }
 

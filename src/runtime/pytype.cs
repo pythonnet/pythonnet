@@ -20,6 +20,30 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a type");
         }
 
+        internal PyType(StolenReference reference) : base(EnsureIsType(in reference))
+        {
+        }
+
+        internal new static PyType? FromNullableReference(BorrowedReference reference)
+            => reference == null
+                ? null
+                : new PyType(new NewReference(reference).Steal());
+
+        internal static PyType FromReference(BorrowedReference reference)
+            => FromNullableReference(reference) ?? throw new ArgumentNullException(nameof(reference));
+
+        public string Name
+        {
+            get
+            {
+                var namePtr = new StrPtr
+                {
+                    RawPointer = Marshal.ReadIntPtr(Handle, TypeOffset.tp_name),
+                };
+                return namePtr.ToString(System.Text.Encoding.UTF8)!;
+            }
+        }
+
         /// <summary>Checks if specified object is a Python type.</summary>
         public static bool IsType(PyObject value)
         {
@@ -33,6 +57,19 @@ namespace Python.Runtime
             IntPtr result = Runtime.PyType_GetSlot(this.Reference, slot);
             return Exceptions.ErrorCheckIfNull(result);
         }
+
+        private static IntPtr EnsureIsType(in StolenReference reference)
+        {
+            IntPtr address = reference.DangerousGetAddressOrNull();
+            if (address == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(reference));
+            return EnsureIsType(address);
+        }
+
+        private static IntPtr EnsureIsType(IntPtr ob)
+            => Runtime.PyType_Check(ob)
+                ? ob
+                : throw new ArgumentException("object is not a type");
 
         private static BorrowedReference FromObject(PyObject o)
         {

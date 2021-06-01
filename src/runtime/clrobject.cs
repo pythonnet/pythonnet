@@ -23,7 +23,7 @@ namespace Python.Runtime
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
             // slot if wrapping a CLR exception
-            if (ob is Exception e) Exceptions.SetArgsAndCause(e, py);
+            if (ob is Exception e) Exceptions.SetArgsAndCause(ObjectReference, e);
         }
 
         internal CLRObject(object ob, BorrowedReference tp) : this(ob, tp.DangerousGetAddress()) { }

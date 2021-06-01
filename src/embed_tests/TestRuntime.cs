@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Python.Runtime;
-using Python.Runtime.Platform;
 
 namespace Python.EmbeddingTest
 {
@@ -102,7 +101,7 @@ namespace Python.EmbeddingTest
                 Exceptions.ErrorCheck(threadingDict);
                 var lockType = Runtime.Runtime.PyDict_GetItemString(threadingDict, "Lock");
                 if (lockType.IsNull)
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
 
                 using var args = NewReference.DangerousFromPointer(Runtime.Runtime.PyTuple_New(0));
                 using var lockInstance = Runtime.Runtime.PyObject_CallObject(lockType, args);

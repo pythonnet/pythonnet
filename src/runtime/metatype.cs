@@ -171,7 +171,7 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(type, Offsets.tp_clr_inst, gc);
 
             if (Runtime.PyType_Ready(type) != 0)
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
 
             return type;
         }
