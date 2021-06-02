@@ -127,7 +127,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module) != 0)
             {
                 Runtime.XDecref(import_hook_module.DangerousGetAddress());
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
 
             // Finally, add the hook to the meta path
@@ -157,7 +157,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                     {
                         if (Runtime.PySet_Add(newset, new BorrowedReference(pyNs)) != 0)
                         {
-                            throw new PythonException();
+                            throw PythonException.ThrowLastAsClrException();
                         }
                     }
                     finally
@@ -168,7 +168,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
 
                 if (Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.DangerousGetAddress()) != 0)
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
             }
             finally
@@ -208,7 +208,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                     {
                         if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
                         {
-                            throw new PythonException();
+                            throw PythonException.ThrowLastAsClrException();
                         }
                     }
                 }
@@ -275,7 +275,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 if (!(mt is ModuleObject))
                 {
                     Exceptions.SetError(Exceptions.ImportError, $"'{name}' Is not a ModuleObject.");
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
                 if (head == null)
                 {

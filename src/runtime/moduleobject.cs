@@ -196,7 +196,7 @@ namespace Python.Runtime
                     {
                         if (Runtime.PyList_Append(new BorrowedReference(__all__), pyname) != 0)
                         {
-                            throw new PythonException();
+                            throw PythonException.ThrowLastAsClrException();
                         }
                     }
                     finally
