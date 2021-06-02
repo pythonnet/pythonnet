@@ -176,30 +176,21 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 newset.Dispose();
             }
 
-            // AssemblyManager.namespaceAdded += OnNamespaceAdded;
-            // PythonEngine.AddShutdownHandler(() => AssemblyManager.namespaceAdded -= OnNamespaceAdded);
         }
 
         /// <summary>
-        /// Removes the set of available namespaces from the clr module and 
-        /// removes the callback on the OnNamespaceAdded event.
+        /// Removes the set of available namespaces from the clr module.
         /// </summary>
         static void TeardownNameSpaceTracking()
         {
-            // AssemblyManager.namespaceAdded -= OnNamespaceAdded;
             // If the C# runtime isn't loaded, then there are no namespaces available
             Runtime.PyDict_SetItemString(root.dict, availableNsKey, Runtime.PyNone);
         }
 
-        public static void OnNamespaceAdded(string name)
+        public static void AddNamespace(string name)
         {
-            Console.WriteLine(System.Environment.StackTrace);
-            Console.WriteLine("OnNamespaceAdded: acquiring");
-            Console.Out.Flush();
             using (Py.GIL())
             {
-                Console.WriteLine("OnNamespaceAdded: acquired");
-                Console.Out.Flush();
                 var pyNs = Runtime.PyString_FromString(name);
                 try
                 {
@@ -217,8 +208,6 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                     Runtime.XDecref(pyNs);
                 }
             }
-            Console.WriteLine("OnNamespaceAdded: released");
-            Console.Out.Flush();
         }
 
 

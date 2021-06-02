@@ -509,6 +509,7 @@ namespace Python.Runtime
         public static Assembly AddReference(string name)
         {
             AssemblyManager.UpdatePath();
+            var origNs = AssemblyManager.GetNamespaces();
             Assembly assembly = null;
             assembly = AssemblyManager.FindLoadedAssembly(name);
             if (assembly == null)
@@ -530,9 +531,12 @@ namespace Python.Runtime
             // Classes that are not in a namespace needs an extra nudge to be found.
             ImportHook.UpdateCLRModuleDict();
 
-            // Heavyhanded but otherwise we'd need a "addedSinceLastCall".
-            foreach(var ns in AssemblyManager.GetNamespaces()){
-                ImportHook.OnNamespaceAdded(ns);
+            // A bit heavyhanded, but we can't use the AssemblyManager's AssemblyLoadHandler
+            // method because it may be called from other threads, leading to deadlocks
+            // if it is called while Python code is executing.
+            var currNs = AssemblyManager.GetNamespaces().Except(origNs);
+            foreach(var ns in currNs){
+                ImportHook.AddNamespace(ns);
             }
             return assembly;
         }

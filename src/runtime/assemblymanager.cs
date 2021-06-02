@@ -37,10 +37,6 @@ namespace Python.Runtime
         // modified from event handlers below, potentially triggered from different .NET threads
         private static ConcurrentQueue<Assembly> assemblies;
         internal static List<string> pypath;
-        
-        // Triggered when a new namespace is added to the namespaces dictionary
-        // public static event Action<string> namespaceAdded;
-
         private AssemblyManager()
         {
         }
@@ -287,17 +283,6 @@ namespace Python.Runtime
                 if (ns != null)
                 {
                     namespaces[ns].TryAdd(assembly, string.Empty);
-                    // try
-                    // {
-                    //     namespaceAdded?.Invoke(ns);
-                    // }
-                    // catch (Exception e)
-                    // {
-                    //     // For some reason, exceptions happening here does... nothing.
-                    //     // Even System.AccessViolationExceptions gets ignored.
-                    //     Console.WriteLine($"Namespace added callback failed with: {e}");
-                    //     throw;
-                    // }
                 }
 
                 if (ns != null && t.IsGenericTypeDefinition)
