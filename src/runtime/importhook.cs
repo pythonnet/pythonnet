@@ -147,7 +147,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         /// </summary>
         static void SetupNamespaceTracking()
         {
-            var newset = Runtime.PySet_New(new BorrowedReference(IntPtr.Zero));
+            var newset = Runtime.PySet_New(default);
             try
             {
                 foreach (var ns in AssemblyManager.GetNamespaces())
@@ -176,8 +176,8 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 newset.Dispose();
             }
 
-            AssemblyManager.namespaceAdded += OnNamespaceAdded;
-            PythonEngine.AddShutdownHandler(() => AssemblyManager.namespaceAdded -= OnNamespaceAdded);
+            // AssemblyManager.namespaceAdded += OnNamespaceAdded;
+            // PythonEngine.AddShutdownHandler(() => AssemblyManager.namespaceAdded -= OnNamespaceAdded);
         }
 
         /// <summary>
@@ -186,20 +186,25 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         /// </summary>
         static void TeardownNameSpaceTracking()
         {
-            AssemblyManager.namespaceAdded -= OnNamespaceAdded;
+            // AssemblyManager.namespaceAdded -= OnNamespaceAdded;
             // If the C# runtime isn't loaded, then there are no namespaces available
             Runtime.PyDict_SetItemString(root.dict, availableNsKey, Runtime.PyNone);
         }
 
-        static void OnNamespaceAdded(string name)
+        public static void OnNamespaceAdded(string name)
         {
+            Console.WriteLine(System.Environment.StackTrace);
+            Console.WriteLine("OnNamespaceAdded: acquiring");
+            Console.Out.Flush();
             using (Py.GIL())
             {
+                Console.WriteLine("OnNamespaceAdded: acquired");
+                Console.Out.Flush();
                 var pyNs = Runtime.PyString_FromString(name);
                 try
                 {
                     var nsSet = Runtime.PyDict_GetItemString(new BorrowedReference(root.dict), availableNsKey);
-                    if (!nsSet.IsNull || nsSet.DangerousGetAddress() != Runtime.PyNone)
+                    if (!(nsSet.IsNull && nsSet.IsNone))
                     {
                         if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
                         {
@@ -212,6 +217,8 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                     Runtime.XDecref(pyNs);
                 }
             }
+            Console.WriteLine("OnNamespaceAdded: released");
+            Console.Out.Flush();
         }
 
 

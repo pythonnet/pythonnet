@@ -529,6 +529,11 @@ namespace Python.Runtime
             }
             // Classes that are not in a namespace needs an extra nudge to be found.
             ImportHook.UpdateCLRModuleDict();
+
+            // Heavyhanded but otherwise we'd need a "addedSinceLastCall".
+            foreach(var ns in AssemblyManager.GetNamespaces()){
+                ImportHook.OnNamespaceAdded(ns);
+            }
             return assembly;
         }
 
