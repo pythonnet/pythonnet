@@ -94,5 +94,15 @@ namespace Python.EmbeddingTest
             PyObject actual = new PyString(expected);
             Assert.AreEqual(expected, actual.ToString());
         }
+
+        [Test]
+        public void TestUnicodeSurrogate()
+        {
+            const string expected = "foo\ud83d\udc3c"; // "foo🐼"
+            PyObject actual = new PyString(expected);
+            // python treats "foo🐼" as 4 characters, dotnet as 5
+            Assert.AreEqual(4, actual.Length());
+            Assert.AreEqual(expected, actual.ToString());
+        }
     }
 }
