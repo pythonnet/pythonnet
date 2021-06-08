@@ -1646,11 +1646,12 @@ namespace Python.Runtime
             if (type == PyUnicodeType)
             {
                 using var p = PyUnicode_AsUTF16String(new BorrowedReference(op));
-                int length = (int)PyUnicode_GetSize(op);
-                char* codePoints = (char*)PyBytes_AsString(p.DangerousGetAddress());
+                var bytesPtr = p.DangerousGetAddress();
+                int bytesLength = (int)Runtime.PyBytes_Size(bytesPtr);
+                char* codePoints = (char*)PyBytes_AsString(bytesPtr);
                 return new string(codePoints,
                                   startIndex: 1, // skip BOM
-                                  length: length);
+                                  length: bytesLength/2-1); // utf16 - BOM
             }
 
             return null;
