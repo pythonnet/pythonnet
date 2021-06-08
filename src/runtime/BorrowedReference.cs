@@ -9,7 +9,6 @@ namespace Python.Runtime
     {
         readonly IntPtr pointer;
         public bool IsNull => this.pointer == IntPtr.Zero;
-        public bool IsNone => this.pointer == Runtime.PyNone;
 
         /// <summary>Gets a raw pointer to the Python object</summary>
         public IntPtr DangerousGetAddress()

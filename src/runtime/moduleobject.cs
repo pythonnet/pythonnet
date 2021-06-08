@@ -194,7 +194,7 @@ namespace Python.Runtime
                     var pyname = Runtime.PyString_FromString(name);
                     try
                     {
-                        if (Runtime.PyList_Append(new BorrowedReference(__all__), pyname) != 0)
+                        if (Runtime.PyList_Append(new BorrowedReference(__all__), new BorrowedReference(pyname)) != 0)
                         {
                             throw PythonException.ThrowLastAsClrException();
                         }
@@ -598,10 +598,8 @@ namespace Python.Runtime
         public static ModuleObject _load_clr_module(PyObject spec)
         {
             ModuleObject mod = null;
-            using (var modname = spec.GetAttr("name"))
-            {
-                mod = ImportHook.Import(modname.ToString());
-            }
+            using var modname = spec.GetAttr("name");
+            mod = ImportHook.Import(modname.ToString());
             return mod;
         }
     }

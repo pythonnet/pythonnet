@@ -101,7 +101,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             var rootHandle = storage.GetValue<IntPtr>("root");
             root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
-            Runtime.PyDict_SetItemString(dict.DangerousGetAddress(), "clr", py_clr_module);
+            Runtime.PyDict_SetItemString(dict, "clr", ClrModuleReference);
             SetupNamespaceTracking();
         }
 
@@ -115,14 +115,12 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             var exec = Runtime.PyDict_GetItemString(builtins, "exec");
             using var args = NewReference.DangerousFromPointer(Runtime.PyTuple_New(2));
 
-            IntPtr codeStr = Runtime.PyString_FromString(LoaderCode);
-            Runtime.PyTuple_SetItem(args.DangerousGetAddress(), 0, codeStr);
-            // PyTuple_SetItem steals a reference, mod_dict is borrowed.
+            var codeStr = NewReference.DangerousFromPointer(Runtime.PyString_FromString(LoaderCode));
+            Runtime.PyTuple_SetItem(args, 0, codeStr);
             var mod_dict = Runtime.PyModule_GetDict(import_hook_module);
-            Runtime.XIncref(mod_dict.DangerousGetAddress());
-            Runtime.PyTuple_SetItem(args.DangerousGetAddress(), 1, mod_dict.DangerousGetAddress());
-            Runtime.PyObject_Call(exec.DangerousGetAddress(), args.DangerousGetAddress(), IntPtr.Zero);
-
+            // reference not stolen due to overload incref'ing for us.
+            Runtime.PyTuple_SetItem(args, 1, mod_dict);
+            Runtime.PyObject_Call(exec, args, default);
             // Set as a sub-module of clr.
             if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module) != 0)
             {
@@ -132,9 +130,8 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
 
             // Finally, add the hook to the meta path
             var findercls = Runtime.PyDict_GetItemString(mod_dict, "DotNetFinder");
-            var finderCtorArgs = Runtime.PyTuple_New(0);
-            var finder_inst = Runtime.PyObject_CallObject(findercls.DangerousGetAddress(), finderCtorArgs);
-            Runtime.XDecref(finderCtorArgs);
+            var finderCtorArgs = NewReference.DangerousFromPointer(Runtime.PyTuple_New(0));
+            var finder_inst = Runtime.PyObject_CallObject(findercls, finderCtorArgs);
             var metapath = Runtime.PySys_GetObject("meta_path");
             Runtime.PyList_Append(metapath, finder_inst);
         }
@@ -147,33 +144,18 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         /// </summary>
         static void SetupNamespaceTracking()
         {
-            var newset = Runtime.PySet_New(default);
-            try
+            using var newset = Runtime.PySet_New(default);
+            foreach (var ns in AssemblyManager.GetNamespaces())
             {
-                foreach (var ns in AssemblyManager.GetNamespaces())
-                {
-                    var pyNs = Runtime.PyString_FromString(ns);
-                    try
-                    {
-                        if (Runtime.PySet_Add(newset, new BorrowedReference(pyNs)) != 0)
-                        {
-                            throw PythonException.ThrowLastAsClrException();
-                        }
-                    }
-                    finally
-                    {
-                        Runtime.XDecref(pyNs);
-                    }
-                }
-
-                if (Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.DangerousGetAddress()) != 0)
+                using var pyNs = NewReference.DangerousFromPointer(Runtime.PyString_FromString(ns));
+                if (Runtime.PySet_Add(newset, pyNs) != 0)
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
-            }
-            finally
-            {
-                newset.Dispose();
+                if (Runtime.PyDict_SetItemString(root.DictRef, availableNsKey, newset) != 0)
+                {
+                    throw PythonException.ThrowLastAsClrException();
+                }
             }
 
         }
@@ -189,24 +171,21 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
 
         public static void AddNamespace(string name)
         {
-            using (Py.GIL())
+            var pyNs = Runtime.PyString_FromString(name);
+            try
             {
-                var pyNs = Runtime.PyString_FromString(name);
-                try
+                var nsSet = Runtime.PyDict_GetItemString(new BorrowedReference(root.dict), availableNsKey);
+                if (!(nsSet.IsNull  || nsSet.DangerousGetAddress() == Runtime.PyNone))
                 {
-                    var nsSet = Runtime.PyDict_GetItemString(new BorrowedReference(root.dict), availableNsKey);
-                    if (!(nsSet.IsNull && nsSet.IsNone))
+                    if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
                     {
-                        if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
-                        {
-                            throw PythonException.ThrowLastAsClrException();
-                        }
+                        throw PythonException.ThrowLastAsClrException();
                     }
                 }
-                finally
-                {
-                    Runtime.XDecref(pyNs);
-                }
+            }
+            finally
+            {
+                Runtime.XDecref(pyNs);
             }
         }
 
