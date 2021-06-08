@@ -96,6 +96,16 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void TestUnicodeSurrogateToString()
+        {
+            var expected = "foo\ud83d\udc3c";
+            var actual = PythonEngine.Eval("'foo\ud83d\udc3c'");
+            Assert.AreEqual(4, actual.Length());
+            Assert.AreEqual(expected, actual.ToString());
+        }
+
+        [Test]
+        [Ignore("Bug: Unicode conversion issue #1466")]
         public void TestUnicodeSurrogate()
         {
             const string expected = "foo\ud83d\udc3c"; // "foo🐼"
