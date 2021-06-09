@@ -230,7 +230,7 @@ namespace Python.Runtime
                 () => PyStringType = IntPtr.Zero);
             XDecref(op);
 
-            op = PyUnicode_FromString("unicode");
+            op = PyString_FromString("unicode");
             SetPyMemberTypeOf(ref PyUnicodeType, op,
                 () => PyUnicodeType = IntPtr.Zero);
             XDecref(op);
@@ -1527,7 +1527,12 @@ namespace Python.Runtime
         internal static IntPtr PyString_FromString(string value)
         {
             fixed(char* ptr = value)
-                return PyUnicode_FromKindAndData(2, (IntPtr)ptr, value.Length);
+                return Delegates.PyUnicode_DecodeUTF16(
+                    (IntPtr)ptr,
+                    new IntPtr(value.Length * sizeof(Char)),
+                    IntPtr.Zero,
+                    IntPtr.Zero
+                ).DangerousGetAddress();
         }
 
 
@@ -1553,16 +1558,6 @@ namespace Python.Runtime
 
         private static IntPtr _PyBytes_Size(IntPtr op) => Delegates._PyBytes_Size(op);
 
-
-        internal static IntPtr PyUnicode_FromStringAndSize(IntPtr value, long size)
-        {
-            return PyUnicode_FromStringAndSize(value, new IntPtr(size));
-        }
-
-
-        private static IntPtr PyUnicode_FromStringAndSize(IntPtr value, IntPtr size) => Delegates.PyUnicode_FromStringAndSize(value, size);
-
-
         internal static IntPtr PyUnicode_AsUTF8(IntPtr unicode) => Delegates.PyUnicode_AsUTF8(unicode);
 
         internal static bool PyUnicode_Check(IntPtr ob)
@@ -1575,22 +1570,6 @@ namespace Python.Runtime
 
 
         internal static IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err) => Delegates.PyUnicode_FromEncodedObject(ob, enc, err);
-
-        internal static IntPtr PyUnicode_FromKindAndData(int kind, IntPtr s, long size)
-        {
-            return PyUnicode_FromKindAndData(kind, s, new IntPtr(size));
-        }
-
-
-        private static IntPtr PyUnicode_FromKindAndData(int kind, IntPtr s, IntPtr size)
-            => Delegates.PyUnicode_FromKindAndData(kind, s, size);
-
-        internal static IntPtr PyUnicode_FromUnicode(string s, long size)
-        {
-            fixed(char* ptr = s)
-                return PyUnicode_FromKindAndData(2, (IntPtr)ptr, size);
-        }
-
 
         internal static int PyUnicode_GetMax() => Delegates.PyUnicode_GetMax();
 
@@ -1609,12 +1588,6 @@ namespace Python.Runtime
 
 
         internal static IntPtr PyUnicode_FromOrdinal(int c) => Delegates.PyUnicode_FromOrdinal(c);
-
-        internal static IntPtr PyUnicode_FromString(string s)
-        {
-            return PyUnicode_FromUnicode(s, s.Length);
-        }
-
 
         internal static IntPtr PyUnicode_InternFromString(string s)
         {
@@ -2443,11 +2416,10 @@ namespace Python.Runtime
                 PyBytes_AsString = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyBytes_AsString), GetUnmanagedDll(_PythonDll));
                 PyBytes_FromString = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyBytes_FromString), GetUnmanagedDll(_PythonDll));
                 _PyBytes_Size = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyBytes_Size", GetUnmanagedDll(_PythonDll));
-                PyUnicode_FromStringAndSize = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromStringAndSize), GetUnmanagedDll(_PythonDll));
                 PyUnicode_AsUTF8 = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_AsUTF8), GetUnmanagedDll(_PythonDll));
                 PyUnicode_FromObject = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromObject), GetUnmanagedDll(_PythonDll));
+                PyUnicode_DecodeUTF16 = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyUnicode_DecodeUTF16), GetUnmanagedDll(_PythonDll));
                 PyUnicode_FromEncodedObject = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromEncodedObject), GetUnmanagedDll(_PythonDll));
-                PyUnicode_FromKindAndData = (delegate* unmanaged[Cdecl]<int, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromKindAndData), GetUnmanagedDll(_PythonDll));
                 PyUnicode_GetMax = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyUnicode_GetMax), GetUnmanagedDll(_PythonDll));
                 _PyUnicode_GetSize = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyUnicode_GetSize", GetUnmanagedDll(_PythonDll));
                 PyUnicode_AsUnicode = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_AsUnicode), GetUnmanagedDll(_PythonDll));
@@ -2739,11 +2711,10 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyBytes_AsString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyBytes_FromString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyBytes_Size { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyUnicode_FromStringAndSize { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyUnicode_AsUTF8 { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyUnicode_FromObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyUnicode_FromEncodedObject { get; }
-            internal static delegate* unmanaged[Cdecl]<int, IntPtr, IntPtr, IntPtr> PyUnicode_FromKindAndData { get; }
+            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr, NewReference> PyUnicode_DecodeUTF16 { get; }
             internal static delegate* unmanaged[Cdecl]<int> PyUnicode_GetMax { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyUnicode_GetSize { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyUnicode_AsUnicode { get; }
