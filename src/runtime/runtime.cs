@@ -1619,12 +1619,12 @@ namespace Python.Runtime
             if (type == PyUnicodeType)
             {
                 using var p = PyUnicode_AsUTF16String(new BorrowedReference(op));
-                var bytesPtr = p.DangerousMoveToPointerOrNull();
-                nint bytesLength = (nint)Runtime.PyBytes_Size(bytesPtr);
+                var bytesPtr = p.DangerousGetAddress();
+                int bytesLength = (int)Runtime.PyBytes_Size(bytesPtr);
                 char* codePoints = (char*)PyBytes_AsString(bytesPtr);
                 return new string(codePoints,
                                   startIndex: 1, // skip BOM
-                                  length: (int) (bytesLength/2-1)); // utf16 - BOM
+                                  length: bytesLength/2-1); // utf16 - BOM
             }
 
             return null;
