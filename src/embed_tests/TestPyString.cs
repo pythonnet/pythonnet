@@ -105,7 +105,6 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        [Ignore("Bug: Unicode conversion issue #1466")]
         public void TestUnicodeSurrogate()
         {
             const string expected = "foo\ud83d\udc3c"; // "foo🐼"
