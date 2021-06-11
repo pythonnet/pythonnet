@@ -580,7 +580,7 @@ namespace Python.Runtime
             // Cheat a little: we'll set tp_name to the internal char * of
             // the Python version of the type name - otherwise we'd have to
             // allocate the tp_name and would have no way to free it.
-            IntPtr temp = Runtime.PyUnicode_FromString(name);
+            IntPtr temp = Runtime.PyString_FromString(name);
             IntPtr raw = Runtime.PyUnicode_AsUTF8(temp);
             Marshal.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Marshal.WriteIntPtr(type, TypeOffset.name, temp);

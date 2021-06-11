@@ -51,7 +51,7 @@ namespace Python.Runtime
 
         private static IntPtr FromString(string s)
         {
-            IntPtr val = Runtime.PyUnicode_FromUnicode(s, s.Length);
+            IntPtr val = Runtime.PyString_FromString(s);
             PythonException.ThrowIfIsNull(val);
             return val;
         }

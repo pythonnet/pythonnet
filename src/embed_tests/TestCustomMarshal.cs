@@ -23,7 +23,7 @@ namespace Python.EmbeddingTest
         {
             const string expected = "FooBar";
 
-            IntPtr op = Runtime.Runtime.PyUnicode_FromString(expected);
+            IntPtr op = Runtime.Runtime.PyString_FromString(expected);
             string s1 = Runtime.Runtime.GetManagedString(op);
             string s2 = Runtime.Runtime.GetManagedString(op);
 
