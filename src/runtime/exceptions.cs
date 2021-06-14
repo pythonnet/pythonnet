@@ -50,7 +50,7 @@ namespace Python.Runtime
             {
                 message = String.Format("{0}()", name);
             }
-            return Runtime.PyUnicode_FromString(message);
+            return Runtime.PyString_FromString(message);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Python.Runtime
             {
                 message = message.Substring(fullTypeName.Length);
             }
-            return Runtime.PyUnicode_FromString(message);
+            return Runtime.PyString_FromString(message);
         }
     }
 
@@ -153,7 +153,7 @@ namespace Python.Runtime
             if (!string.IsNullOrEmpty(e.Message))
             {
                 args = Runtime.PyTuple_New(1);
-                IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
+                IntPtr msg = Runtime.PyString_FromString(e.Message);
                 Runtime.PyTuple_SetItem(args, 0, msg);
             }
             else

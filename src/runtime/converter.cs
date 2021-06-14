@@ -229,7 +229,7 @@ namespace Python.Runtime
                     return CLRObject.GetInstHandle(value, type);
 
                 case TypeCode.String:
-                    return Runtime.PyUnicode_FromString((string)value);
+                    return Runtime.PyString_FromString((string)value);
 
                 case TypeCode.Int32:
                     return Runtime.PyInt_FromInt32((int)value);

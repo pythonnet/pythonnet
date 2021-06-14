@@ -36,7 +36,7 @@ namespace Python.EmbeddingTest
         public static void RefCountTest()
         {
             Runtime.Runtime.Py_Initialize();
-            IntPtr op = Runtime.Runtime.PyUnicode_FromString("FooBar");
+            IntPtr op = Runtime.Runtime.PyString_FromString("FooBar");
 
             // New object RefCount should be one
             Assert.AreEqual(1, Runtime.Runtime.Refcount(op));

@@ -72,6 +72,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   Exception stacktraces on `PythonException.StackTrace` are now properly formatted
 -   Providing an invalid type parameter to a generic type or method produces a helpful Python error
 -   Empty parameter names (as can be generated from F#) do not cause crashes
+-   Unicode strings with surrogates were truncated when converting from Python
 
 ### Removed
 
