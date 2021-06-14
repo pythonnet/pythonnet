@@ -1934,9 +1934,12 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="module">The module to add the object to.</param>
         /// <param name="name">The key that will refer to the object.</param>
-        /// <param name="stolenObject">The object to add to the module.</param>
+        /// <param name="stolenObject">
+        ///     The object to add to the module. The reference will be stolen only if the
+        ///      method returns 0. 
+        /// </param>
         /// <returns>Return -1 on error, 0 on success.</returns>
-        internal static int PyModule_AddObject(BorrowedReference module, string name, BorrowedReference stolenObject)
+        internal static int PyModule_AddObject(BorrowedReference module, string name, IntPtr stolenObject)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
             return Delegates.PyModule_AddObject(module, namePtr, stolenObject);
@@ -2498,7 +2501,7 @@ namespace Python.Runtime
                 {
                     PyModule_Create2 = (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr>)GetFunctionByName("PyModule_Create2TraceRefs", GetUnmanagedDll(_PythonDll));
                 }
-                PyModule_AddObject = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, BorrowedReference, int>)GetFunctionByName(nameof(PyModule_AddObject), GetUnmanagedDll(_PythonDll));
+                PyModule_AddObject = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, IntPtr, int>)GetFunctionByName(nameof(PyModule_AddObject), GetUnmanagedDll(_PythonDll));
                 PyImport_Import = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyImport_Import), GetUnmanagedDll(_PythonDll));
                 PyImport_ImportModule = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyImport_ImportModule), GetUnmanagedDll(_PythonDll));
                 PyImport_ReloadModule = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyImport_ReloadModule), GetUnmanagedDll(_PythonDll));
@@ -2787,7 +2790,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference> PyModule_GetDict { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr> PyModule_GetFilename { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr> PyModule_Create2 { get; }
-            internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, BorrowedReference, int> PyModule_AddObject { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, IntPtr, int> PyModule_AddObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyImport_Import { get; }
             internal static delegate* unmanaged[Cdecl]<StrPtr, NewReference> PyImport_ImportModule { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyImport_ReloadModule { get; }
