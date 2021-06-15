@@ -207,7 +207,9 @@ namespace Python.Runtime
             // pyHandle as is, do not convert.
             if (value is ModuleObject modobj)
             {
-                return modobj.pyHandle;
+                var handle = modobj.pyHandle;
+                Runtime.XIncref(handle);
+                return handle;
             }
 
             // hmm - from Python, we almost never care what the declared
