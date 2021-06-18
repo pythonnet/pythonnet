@@ -160,6 +160,7 @@ namespace Python.Runtime
                 "getPreload",
                 "Initialize",
                 "ListAssemblies",
+                "_load_clr_module",
                 "Release",
                 "Reset",
                 "set_SuppressDocs",

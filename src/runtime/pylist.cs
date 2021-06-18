@@ -132,7 +132,7 @@ namespace Python.Runtime
         /// </remarks>
         public void Append(PyObject item)
         {
-            int r = Runtime.PyList_Append(this.Reference, item.obj);
+            int r = Runtime.PyList_Append(this.Reference, new BorrowedReference(item.obj));
             if (r < 0)
             {
                 throw PythonException.ThrowLastAsClrException();

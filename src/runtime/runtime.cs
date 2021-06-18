@@ -174,7 +174,7 @@ namespace Python.Runtime
             IntPtr item = PyString_FromString(rtdir);
             if (PySequence_Contains(path, item) == 0)
             {
-                PyList_Append(new BorrowedReference(path), item);
+                PyList_Append(new BorrowedReference(path), new BorrowedReference(item));
             }
             XDecref(item);
             AssemblyManager.UpdatePath();
@@ -1087,6 +1087,8 @@ namespace Python.Runtime
 
 
         internal static IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw) => Delegates.PyObject_Call(pointer, args, kw);
+        internal static IntPtr PyObject_Call(BorrowedReference pointer, BorrowedReference args, BorrowedReference kw) 
+            => Delegates.PyObject_Call(pointer.DangerousGetAddress(), args.DangerousGetAddress(), kw.DangerousGetAddressOrNull());
 
 
         internal static NewReference PyObject_CallObject(BorrowedReference callable, BorrowedReference args) => Delegates.PyObject_CallObject(callable, args);
@@ -1796,7 +1798,7 @@ namespace Python.Runtime
         private static int PyList_Insert(BorrowedReference pointer, IntPtr index, IntPtr value) => Delegates.PyList_Insert(pointer, index, value);
 
 
-        internal static int PyList_Append(BorrowedReference pointer, IntPtr value) => Delegates.PyList_Append(pointer, value);
+        internal static int PyList_Append(BorrowedReference pointer, BorrowedReference value) => Delegates.PyList_Append(pointer, value);
 
 
         internal static int PyList_Reverse(BorrowedReference pointer) => Delegates.PyList_Reverse(pointer);
@@ -1859,7 +1861,15 @@ namespace Python.Runtime
         {
             return PyTuple_SetItem(pointer, new IntPtr(index), value);
         }
+        internal static int PyTuple_SetItem(BorrowedReference pointer, long index, StolenReference value) 
+            => PyTuple_SetItem(pointer.DangerousGetAddress(), new IntPtr(index), value.DangerousGetAddressOrNull());
 
+        internal static int PyTuple_SetItem(BorrowedReference pointer, long index, BorrowedReference value)
+        {
+            var increfValue = value.DangerousGetAddress();
+            Runtime.XIncref(increfValue);
+            return PyTuple_SetItem(pointer.DangerousGetAddress(), new IntPtr(index), increfValue);
+        }
 
         private static int PyTuple_SetItem(IntPtr pointer, IntPtr index, IntPtr value) => Delegates.PyTuple_SetItem(pointer, index, value);
 
@@ -1918,6 +1928,22 @@ namespace Python.Runtime
 
 
         internal static IntPtr PyImport_Import(IntPtr name) => Delegates.PyImport_Import(name);
+
+        /// <summary>
+        /// We can't use a StolenReference here because the reference is stolen only on success.
+        /// </summary>
+        /// <param name="module">The module to add the object to.</param>
+        /// <param name="name">The key that will refer to the object.</param>
+        /// <param name="stolenObject">
+        ///     The object to add to the module. The reference will be stolen only if the
+        ///      method returns 0. 
+        /// </param>
+        /// <returns>Return -1 on error, 0 on success.</returns>
+        internal static int PyModule_AddObject(BorrowedReference module, string name, IntPtr stolenObject)
+        {
+            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            return Delegates.PyModule_AddObject(module, namePtr, stolenObject);
+        }
 
         /// <summary>
         /// Return value: New reference.
@@ -2451,7 +2477,7 @@ namespace Python.Runtime
                 PyList_GetItem = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, BorrowedReference>)GetFunctionByName(nameof(PyList_GetItem), GetUnmanagedDll(_PythonDll));
                 PyList_SetItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyList_SetItem), GetUnmanagedDll(_PythonDll));
                 PyList_Insert = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyList_Insert), GetUnmanagedDll(_PythonDll));
-                PyList_Append = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int>)GetFunctionByName(nameof(PyList_Append), GetUnmanagedDll(_PythonDll));
+                PyList_Append = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyList_Append), GetUnmanagedDll(_PythonDll));
                 PyList_Reverse = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyList_Reverse), GetUnmanagedDll(_PythonDll));
                 PyList_Sort = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyList_Sort), GetUnmanagedDll(_PythonDll));
                 PyList_GetSlice = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyList_GetSlice), GetUnmanagedDll(_PythonDll));
@@ -2475,6 +2501,7 @@ namespace Python.Runtime
                 {
                     PyModule_Create2 = (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr>)GetFunctionByName("PyModule_Create2TraceRefs", GetUnmanagedDll(_PythonDll));
                 }
+                PyModule_AddObject = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, IntPtr, int>)GetFunctionByName(nameof(PyModule_AddObject), GetUnmanagedDll(_PythonDll));
                 PyImport_Import = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyImport_Import), GetUnmanagedDll(_PythonDll));
                 PyImport_ImportModule = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyImport_ImportModule), GetUnmanagedDll(_PythonDll));
                 PyImport_ReloadModule = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyImport_ReloadModule), GetUnmanagedDll(_PythonDll));
@@ -2746,7 +2773,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, BorrowedReference> PyList_GetItem { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int> PyList_SetItem { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr, int> PyList_Insert { get; }
-            internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int> PyList_Append { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyList_Append { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyList_Reverse { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyList_Sort { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyList_GetSlice { get; }
@@ -2763,6 +2790,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference> PyModule_GetDict { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr> PyModule_GetFilename { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr> PyModule_Create2 { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, IntPtr, int> PyModule_AddObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyImport_Import { get; }
             internal static delegate* unmanaged[Cdecl]<StrPtr, NewReference> PyImport_ImportModule { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyImport_ReloadModule { get; }

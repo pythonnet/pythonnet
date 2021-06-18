@@ -178,6 +178,7 @@ class TestException(NameError):
             var pythonException = PythonException.FetchCurrentRaw();
             Exceptions.SetError(Exceptions.TypeError, "Another error");
             Assert.Throws<InvalidOperationException>(() => pythonException.Normalize());
+            Exceptions.Clear();
         }
     }
 }
