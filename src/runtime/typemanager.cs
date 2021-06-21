@@ -588,7 +588,7 @@ namespace Python.Runtime
             Runtime.XIncref(temp);
             Marshal.WriteIntPtr(type, TypeOffset.qualname, temp);
 
-            #warning dead code?
+            // TODO: dead code?
             temp = type + TypeOffset.nb_add;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_number, temp);
 

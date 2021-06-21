@@ -365,6 +365,8 @@ namespace Python.Runtime
         /// <returns>A Binding if successful.  Otherwise null.</returns>
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
+            var kwRef = new BorrowedReference(kw);
+
             // loop to find match, return invoker w/ or w/o error
             MethodBase[] _methods = null;
 
@@ -372,15 +374,13 @@ namespace Python.Runtime
             if (kw != IntPtr.Zero)
             {
                 var pynkwargs = (int)Runtime.PyDict_Size(kw);
-                IntPtr keylist = Runtime.PyDict_Keys(kw);
-                IntPtr valueList = Runtime.PyDict_Values(kw);
+                using var keylist = Runtime.PyDict_Keys(kwRef);
+                using var valueList = Runtime.PyDict_Values(kwRef);
                 for (int i = 0; i < pynkwargs; ++i)
                 {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist, i));
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i).DangerousGetAddress();
                 }
-                Runtime.XDecref(keylist);
-                Runtime.XDecref(valueList);
             }
 
             var pynargs = (int)Runtime.PyTuple_Size(args);

@@ -153,9 +153,11 @@ namespace Python.Runtime
                 && value.GetType() != typeof(object)
                 && value is not Type
                 || type.IsEnum
-            ) {
+            )
+            {
                 var encoded = PyObjectConversions.TryEncode(value, type);
-                if (encoded != null) {
+                if (encoded != null)
+                {
                     result = encoded.Handle;
                     Runtime.XIncref(result);
                     return result;
@@ -261,7 +263,7 @@ namespace Python.Runtime
                     // return Runtime.PyFloat_FromDouble((double)((float)value));
                     string ss = ((float)value).ToString(nfi);
                     IntPtr ps = Runtime.PyString_FromString(ss);
-                    NewReference op = Runtime.PyFloat_FromString(new BorrowedReference(ps));;
+                    NewReference op = Runtime.PyFloat_FromString(new BorrowedReference(ps)); ;
                     Runtime.XDecref(ps);
                     return op.DangerousMoveToPointerOrNull();
 
@@ -328,15 +330,19 @@ namespace Python.Runtime
         /// <param name="result">Receives the managed object</param>
         /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
         /// <returns>True on success</returns>
-        internal static bool ToManaged(IntPtr value, Type type,
+        internal static bool ToManaged(IntPtr pointer, Type type, out object result, bool setError) =>
+            ToManaged(new BorrowedReference(pointer), type, out result, setError);
+        
+        internal static bool ToManaged(BorrowedReference reference, Type type,
             out object result, bool setError)
         {
             if (type.IsByRef)
             {
                 type = type.GetElementType();
             }
-            return Converter.ToManagedValue(value, type, out result, setError);
+            return Converter.ToManagedValue(reference, type, out result, setError);
         }
+
         /// <summary>
         /// Return a managed object for the given Python object, taking funny
         /// byref types into account.
@@ -346,22 +352,17 @@ namespace Python.Runtime
         /// <param name="result">Receives the managed object</param>
         /// <param name="setError">If true, call <c>Exceptions.SetError</c> with the reason for failure.</param>
         /// <returns>True on success</returns>
-        internal static bool ToManaged(BorrowedReference value, Type type,
-            out object result, bool setError)
-            => ToManaged(value.DangerousGetAddress(), type, out result, setError);
-
-        internal static bool ToManagedValue(BorrowedReference value, Type obType,
-            out object result, bool setError)
-            => ToManagedValue(value.DangerousGetAddress(), obType, out result, setError);
-        internal static bool ToManagedValue(IntPtr value, Type obType,
+        internal static bool ToManagedValue(BorrowedReference reference, Type obType,
             out object result, bool setError)
         {
             if (obType == typeof(PyObject))
             {
-                Runtime.XIncref(value); // PyObject() assumes ownership
-                result = new PyObject(value);
+                result = new PyObject(reference);
                 return true;
             }
+
+            // TODO: Remove when not needed anymore
+            IntPtr value = reference.DangerousGetAddress();
 
             // Common case: if the Python value is a wrapped managed object
             // instance, just return the wrapped object.
@@ -407,7 +408,7 @@ namespace Python.Runtime
 
             if (obType.IsGenericType && obType.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                if( value == Runtime.PyNone )
+                if (value == Runtime.PyNone)
                 {
                     result = null;
                     return true;
@@ -427,7 +428,7 @@ namespace Python.Runtime
 
             if (obType.IsArray)
             {
-                return ToArray(value, obType, out result, setError);
+                return ToArray(reference, obType, out result, setError);
             }
 
             // Conversion to 'Object' is done based on some reasonable default
@@ -466,9 +467,9 @@ namespace Python.Runtime
                     return true;
                 }
 
-                if (Runtime.PySequence_Check(value))
+                if (Runtime.PySequence_Check(reference))
                 {
-                    return ToArray(value, typeof(object[]), out result, setError);
+                    return ToArray(reference, typeof(object[]), out result, setError);
                 }
 
                 Runtime.XIncref(value); // PyObject() assumes ownership
@@ -835,14 +836,13 @@ namespace Python.Runtime
         }
 
 
-        private static void SetConversionError(IntPtr value, Type target)
+        private static void SetConversionError(BorrowedReference value, Type target)
         {
             // PyObject_Repr might clear the error
             Runtime.PyErr_Fetch(out var causeType, out var causeVal, out var causeTrace);
 
-            IntPtr ob = Runtime.PyObject_Repr(value);
+            using var ob = Runtime.PyObject_Repr(value);
             string src = Runtime.GetManagedString(ob);
-            Runtime.XDecref(ob);
 
             Runtime.PyErr_Restore(causeType.StealNullable(), causeVal.StealNullable(), causeTrace.StealNullable());
             Exceptions.RaiseTypeError($"Cannot convert {src} to {target}");
@@ -854,17 +854,17 @@ namespace Python.Runtime
         /// The Python value must support the Python iterator protocol or and the
         /// items in the sequence must be convertible to the target array type.
         /// </summary>
-        private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
+        private static bool ToArray(BorrowedReference reference, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
             result = null;
 
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-            if (IterObject == IntPtr.Zero)
+            using var iterObject = Runtime.PyObject_GetIter(reference);
+            if (iterObject.IsNull())
             {
                 if (setError)
                 {
-                    SetConversionError(value, obType);
+                    SetConversionError(reference, obType);
                 }
                 else
                 {
@@ -881,10 +881,10 @@ namespace Python.Runtime
                 // For example, if elementType is a pointer type.
                 // See https://docs.microsoft.com/en-us/dotnet/api/system.type.makegenerictype#System_Type_MakeGenericType_System_Type
                 var constructedListType = typeof(List<>).MakeGenericType(elementType);
-                bool IsSeqObj = Runtime.PySequence_Check(value);
+                bool IsSeqObj = Runtime.PySequence_Check(reference);
                 if (IsSeqObj)
                 {
-                    var len = Runtime.PySequence_Size(value);
+                    var len = Runtime.PySequence_Size(reference);
                     list = (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len });
                 }
                 else
@@ -899,28 +899,26 @@ namespace Python.Runtime
                 if (setError)
                 {
                     Exceptions.SetError(e);
-                    SetConversionError(value, obType);
+                    SetConversionError(reference, obType);
                 }
                 return false;
             }
 
-            IntPtr item;
-
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
+            while (true)
             {
+                using var item = Runtime.PyIter_Next(iterObject);
+                if (item.IsNull())
+                    break;
+
                 object obj;
 
                 if (!Converter.ToManaged(item, elementType, out obj, setError))
                 {
-                    Runtime.XDecref(item);
-                    Runtime.XDecref(IterObject);
                     return false;
                 }
 
                 list.Add(obj);
-                Runtime.XDecref(item);
             }
-            Runtime.XDecref(IterObject);
 
             if (Exceptions.ErrorOccurred())
             {

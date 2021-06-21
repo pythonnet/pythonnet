@@ -355,14 +355,14 @@ namespace Python.Runtime
         /// to set a few attributes
         /// </summary>
         [ForbidPythonThreads]
-        public new static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        public new static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
             var managedKey = Runtime.GetManagedString(key);
             if ((settableAttributes.Contains(managedKey)) || 
                 (ManagedType.GetManagedObject(val)?.GetType() == typeof(ModuleObject)) )
             {
                 var self = (ModuleObject)ManagedType.GetManagedObject(ob);
-                return Runtime.PyDict_SetItem(self.dict, key, val);
+                return Runtime.PyDict_SetItem(self.DictRef, key, val);
             }
 
             return ExtensionType.tp_setattro(ob, key, val);

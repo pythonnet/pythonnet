@@ -102,7 +102,7 @@ namespace Python.Runtime
                 if ((flags & TypeFlags.HasClrInstance) != 0)
                 {
                     var gc = TryGetGCHandle(new BorrowedReference(ob));
-                    return (ManagedType)gc?.Target;
+                    return gc?.Target as ManagedType;
                 }
             }
             return null;

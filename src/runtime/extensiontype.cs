@@ -76,10 +76,10 @@ namespace Python.Runtime
         /// <summary>
         /// Type __setattr__ implementation.
         /// </summary>
-        public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        public static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
             var message = "type does not support setting attributes";
-            if (val == IntPtr.Zero)
+            if (val.IsNull)
             {
                 message = "readonly attribute";
             }
