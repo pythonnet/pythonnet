@@ -882,17 +882,26 @@ namespace Python.Runtime
                 // See https://docs.microsoft.com/en-us/dotnet/api/system.type.makegenerictype#System_Type_MakeGenericType_System_Type
                 var constructedListType = typeof(List<>).MakeGenericType(elementType);
                 bool IsSeqObj = Runtime.PySequence_Check(value);
+                object[] constructorArgs = Array.Empty<object>();
                 if (IsSeqObj)
                 {
                     var len = Runtime.PySequence_Size(value);
-                    list = (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len });
+                    if (len >= 0)
+                    {
+                        if (len <= int.MaxValue)
+                        {
+                            constructorArgs = new object[] { (int)len };
+                        }
+                    }
+                    else
+                    {
+                        // for the sequences, that explicitly deny calling __len__()
+                        Exceptions.Clear();
+                    }
                 }
-                else
-                {
-                    // CreateInstance can throw even if MakeGenericType succeeded.
-                    // See https://docs.microsoft.com/en-us/dotnet/api/system.activator.createinstance#System_Activator_CreateInstance_System_Type_
-                    list = (IList)Activator.CreateInstance(constructedListType);
-                }
+                // CreateInstance can throw even if MakeGenericType succeeded.
+                // See https://docs.microsoft.com/en-us/dotnet/api/system.activator.createinstance#System_Activator_CreateInstance_System_Type_
+                list = (IList)Activator.CreateInstance(constructedListType, args: constructorArgs);
             }
             catch (Exception e)
             {
