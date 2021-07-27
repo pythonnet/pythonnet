@@ -296,8 +296,7 @@ namespace Python.Runtime
 
             if (op == IntPtr.Zero)
             {
-                var e = new PythonException();
-                throw e;
+                throw PythonException.ThrowLastAsClrException();
             }
 
             try
@@ -324,7 +323,7 @@ namespace Python.Runtime
                                 if (!Converter.ToManaged(op, t, out object newArg, true))
                                 {
                                     Exceptions.RaiseTypeError($"The Python function did not return {t.GetElementType()} (the out parameter type)");
-                                    throw new PythonException();
+                                    throw PythonException.ThrowLastAsClrException();
                                 }
                                 args[i] = newArg;
                                 break;
@@ -344,7 +343,7 @@ namespace Python.Runtime
                                 if (!Converter.ToManaged(item, t, out object newArg, true))
                                 {
                                     Exceptions.RaiseTypeError($"The Python function returned a tuple where element {i} was not {t.GetElementType()} (the out parameter type)");
-                                    throw new PythonException();
+                                    throw PythonException.ThrowLastAsClrException();
                                 }
                                 args[i] = newArg;
                             }
@@ -357,7 +356,7 @@ namespace Python.Runtime
                         if (!Converter.ToManaged(item0, rtype, out object result0, true))
                         {
                             Exceptions.RaiseTypeError($"The Python function returned a tuple where element 0 was not {rtype} (the return type)");
-                            throw new PythonException();
+                            throw PythonException.ThrowLastAsClrException();
                         }
                         return result0;
                     }
@@ -381,7 +380,7 @@ namespace Python.Runtime
                         }
                         string returnValueString = isVoid ? "" : "the return value and ";
                         Exceptions.RaiseTypeError($"Expected a tuple ({sb}) of {returnValueString}the values for out and ref parameters, got {tpName}.");
-                        throw new PythonException();
+                        throw PythonException.ThrowLastAsClrException();
                     }
                 }
 
@@ -393,7 +392,7 @@ namespace Python.Runtime
                 object result;
                 if (!Converter.ToManaged(op, rtype, out result, true))
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
 
                 return result;

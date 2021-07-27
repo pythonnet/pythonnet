@@ -30,6 +30,11 @@ namespace Python.DomainReloadTests
     /// which test case to run. That's because pytest assumes we'll run
     /// everything in one process, but we really want a clean process on each
     /// test case to test the init/reload/teardown parts of the domain reload.
+    /// 
+    /// ### Debugging tips: ###
+    /// * Running pytest with the `-s` argument prevents stdout capture by pytest
+    /// * Add a sleep into the python test case before the crash/failure, then while 
+    ///   sleeping, attach the debugger to the Python.TestDomainReload.exe process.
     /// </summary>
     /// 
     class TestRunner
@@ -1094,6 +1099,29 @@ def after_reload():
     
                     ",
             },
+            new TestCase
+            {
+                // The C# code for this test doesn't matter; we're testing
+                // that the import hook behaves properly after a domain reload
+                Name = "import_after_reload",
+                DotNetBefore = "",
+                DotNetAfter = "",
+                PythonCode = @"
+import sys
+
+def before_reload():
+    import clr
+    import System
+
+
+def after_reload():
+    assert 'System' in sys.modules
+    assert 'clr' in sys.modules
+    import clr
+    import System
+    
+                    ",
+            },
         };
 
         /// <summary>
@@ -1264,7 +1292,13 @@ namespace CaseRunner
             }
             parameters.ReferencedAssemblies.Add(netstandard);
             parameters.ReferencedAssemblies.Add(PythonDllLocation);
-            CompilerResults results = provider.CompileAssemblyFromSource(parameters, code);
+            // Write code to file so it can debugged.
+            var sourcePath = Path.Combine(TestPath, name+"_source.cs");
+            using(var file = new StreamWriter(sourcePath))
+            {
+                file.Write(code);
+            }
+            CompilerResults results = provider.CompileAssemblyFromFile(parameters, sourcePath);
             if (results.NativeCompilerReturnValue != 0)
             {
                 var stderr = System.Console.Error;

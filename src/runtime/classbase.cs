@@ -373,7 +373,7 @@ namespace Python.Runtime
         protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
-            if (pyHandle != tpHandle)
+            if (!this.IsClrMetaTypeInstance())
             {
                 IntPtr dict = GetObjectDict(pyHandle);
                 Runtime.XIncref(dict);
@@ -384,7 +384,7 @@ namespace Python.Runtime
         protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
-            if (pyHandle != tpHandle)
+            if (!this.IsClrMetaTypeInstance())
             {
                 IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
                 SetObjectDict(pyHandle, dict);

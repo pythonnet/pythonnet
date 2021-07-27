@@ -18,7 +18,7 @@ namespace Python.Runtime
 
             if (Runtime.PyObject_GetBuffer(exporter.Handle, ref _view, (int)flags) < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
 
             _exporter = exporter;
@@ -127,7 +127,7 @@ namespace Python.Runtime
                 throw new NotSupportedException("FromContiguous requires at least Python 3.7");
 
             if (Runtime.PyBuffer_FromContiguous(ref _view, buf, (IntPtr)len, OrderStyleToChar(fort, false)) < 0)
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace Python.Runtime
                 throw new ObjectDisposedException(nameof(PyBuffer));
 
             if (Runtime.PyBuffer_ToContiguous(buf, ref _view, _view.len, OrderStyleToChar(order, true)) < 0)
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace Python.Runtime
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
             if (Runtime.PyBuffer_FillInfo(ref _view, exporter, buf, (IntPtr)len, Convert.ToInt32(_readonly), flags) < 0)
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
         }
 
         /// <summary>

@@ -184,7 +184,7 @@ namespace Python.Runtime
             int result = Runtime.PyDict_Update(VarsRef, scope.VarsRef);
             if (result < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -204,7 +204,7 @@ namespace Python.Runtime
             int result = Runtime.PyDict_Update(VarsRef, module_dict);
             if (result < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -219,7 +219,7 @@ namespace Python.Runtime
             int result = Runtime.PyDict_Update(VarsRef, dict.Reference);
             if (result < 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -313,11 +313,10 @@ namespace Python.Runtime
 
         private void Exec(string code, BorrowedReference _globals, BorrowedReference _locals)
         {
-            NewReference reference = Runtime.PyRun_String(
+            using NewReference reference = Runtime.PyRun_String(
                 code, RunFlagType.File, _globals, _locals
             );
             PythonException.ThrowIfIsNull(reference);
-            reference.Dispose();
         }
 
         /// <summary>
@@ -342,7 +341,7 @@ namespace Python.Runtime
                 int r = Runtime.PyObject_SetItem(variables, pyKey.obj, value);
                 if (r < 0)
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
             }
         }
@@ -361,7 +360,7 @@ namespace Python.Runtime
                 int r = Runtime.PyObject_DelItem(variables, pyKey.obj);
                 if (r < 0)
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
             }
         }
@@ -416,7 +415,7 @@ namespace Python.Runtime
                     IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
                     if (op == IntPtr.Zero)
                     {
-                        throw new PythonException();
+                        throw PythonException.ThrowLastAsClrException();
                     }
                     if (op == Runtime.PyNone)
                     {
@@ -539,7 +538,7 @@ namespace Python.Runtime
             var module = Runtime.PyModule_New(name);
             if (module.IsNull())
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             return new PyScope(ref module, this);
         }

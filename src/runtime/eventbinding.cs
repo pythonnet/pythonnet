@@ -103,22 +103,10 @@ namespace Python.Runtime
             return Runtime.PyString_FromString(s);
         }
 
-
-        /// <summary>
-        /// EventBinding dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (EventBinding)GetManagedObject(ob);
-            Runtime.XDecref(self.target);
-            self.Dealloc();
-        }
-
-        public static int tp_clear(IntPtr ob)
-        {
-            var self = (EventBinding)GetManagedObject(ob);
-            Runtime.Py_CLEAR(ref self.target);
-            return 0;
+            Runtime.Py_CLEAR(ref this.target);
+            base.Clear();
         }
     }
 }

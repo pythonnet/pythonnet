@@ -117,7 +117,7 @@ namespace Python.Runtime
                 // Python object's dictionary tool; thus raising an AttributeError
                 // instead of a TypeError.
                 // Classes are re-initialized on in RestoreRuntimeData.
-                var dict = new BorrowedReference(Marshal.ReadIntPtr(cls.Value.tpHandle, TypeOffset.tp_dict));
+                using var dict = Runtime.PyObject_GenericGetDict(cls.Value.TypeReference);
                 foreach (var member in cls.Value.dotNetMembers)
                 {
                     // No need to decref the member, the ClassBase instance does 
@@ -131,11 +131,11 @@ namespace Python.Runtime
                     }
                     else if (Exceptions.ErrorOccurred())
                     {
-                        throw new PythonException();
+                        throw PythonException.ThrowLastAsClrException();
                     }
                 }
                 // We modified the Type object, notify it we did.
-                Runtime.PyType_Modified(cls.Value.tpHandle);
+                Runtime.PyType_Modified(cls.Value.TypeReference);
             }
         }
 
@@ -155,7 +155,7 @@ namespace Python.Runtime
                 // re-init the class
                 InitClassBase(pair.Key.Value, pair.Value);
                 // We modified the Type object, notify it we did.
-                Runtime.PyType_Modified(pair.Value.tpHandle);
+                Runtime.PyType_Modified(pair.Value.TypeReference);
                 var context = contexts[pair.Value.pyHandle];
                 pair.Value.Load(context);
                 loadedObjs.Add(pair.Value, context);
@@ -266,10 +266,10 @@ namespace Python.Runtime
             // point to the managed methods providing the implementation.
 
 
-            IntPtr tp = TypeManager.GetTypeHandle(impl, type);
+            var pyType = TypeManager.GetType(impl, type);
 
             // Finally, initialize the class __dict__ and return the object.
-            var dict = new BorrowedReference(Marshal.ReadIntPtr(tp, TypeOffset.tp_dict));
+            using var dict = Runtime.PyObject_GenericGetDict(pyType.Reference);
 
 
             if (impl.dotNetMembers == null)
@@ -312,7 +312,7 @@ namespace Python.Runtime
                     // Implement Overloads on the class object
                     if (!CLRModule._SuppressOverloads)
                     {
-                        var ctors = new ConstructorBinding(type, tp, co.binder);
+                        var ctors = new ConstructorBinding(type, pyType, co.binder);
                         // ExtensionType types are untracked, so don't Incref() them.
                         // TODO: deprecate __overloads__ soon...
                         Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.ObjectReference);
@@ -332,7 +332,7 @@ namespace Python.Runtime
 
             // The type has been modified after PyType_Ready has been called
             // Refresh the type
-            Runtime.PyType_Modified(tp);
+            Runtime.PyType_Modified(pyType.Reference);
         }
 
         internal static bool ShouldBindMethod(MethodBase mb)

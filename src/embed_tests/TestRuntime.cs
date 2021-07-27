@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Python.Runtime;
-using Python.Runtime.Platform;
 
 namespace Python.EmbeddingTest
 {
@@ -37,7 +36,7 @@ namespace Python.EmbeddingTest
         public static void RefCountTest()
         {
             Runtime.Runtime.Py_Initialize();
-            IntPtr op = Runtime.Runtime.PyUnicode_FromString("FooBar");
+            IntPtr op = Runtime.Runtime.PyString_FromString("FooBar");
 
             // New object RefCount should be one
             Assert.AreEqual(1, Runtime.Runtime.Refcount(op));
@@ -92,27 +91,29 @@ namespace Python.EmbeddingTest
         {
             Runtime.Runtime.Py_Initialize();
 
-            // Create an instance of threading.Lock, which is one of the very few types that does not have the
-            // TypeFlags.HaveIter set in Python 2. This tests a different code path in PyObject_IsIterable and PyIter_Check.
-            var threading = Runtime.Runtime.PyImport_ImportModule("threading");
-            Exceptions.ErrorCheck(threading);
-            var threadingDict = Runtime.Runtime.PyModule_GetDict(threading);
-            Exceptions.ErrorCheck(threadingDict);
-            var lockType = Runtime.Runtime.PyDict_GetItemString(threadingDict, "Lock");
-            if (lockType.IsNull)
-                throw new KeyNotFoundException("class 'Lock' was not found in 'threading'");
+            try
+            {
+                // Create an instance of threading.Lock, which is one of the very few types that does not have the
+                // TypeFlags.HaveIter set in Python 2. This tests a different code path in PyObject_IsIterable and PyIter_Check.
+                using var threading = Runtime.Runtime.PyImport_ImportModule("threading");
+                Exceptions.ErrorCheck(threading);
+                var threadingDict = Runtime.Runtime.PyModule_GetDict(threading);
+                Exceptions.ErrorCheck(threadingDict);
+                var lockType = Runtime.Runtime.PyDict_GetItemString(threadingDict, "Lock");
+                if (lockType.IsNull)
+                    throw PythonException.ThrowLastAsClrException();
 
-            var args = Runtime.Runtime.PyTuple_New(0);
-            var lockInstance = Runtime.Runtime.PyObject_CallObject(lockType.DangerousGetAddress(), args);
-            Runtime.Runtime.XDecref(args);
-            Exceptions.ErrorCheck(lockInstance);
+                using var args = NewReference.DangerousFromPointer(Runtime.Runtime.PyTuple_New(0));
+                using var lockInstance = Runtime.Runtime.PyObject_CallObject(lockType, args);
+                Exceptions.ErrorCheck(lockInstance);
 
-            Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(lockInstance));
-            Assert.IsFalse(Runtime.Runtime.PyIter_Check(lockInstance));
-
-            threading.Dispose();
-
-            Runtime.Runtime.Py_Finalize();
+                Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(lockInstance));
+                Assert.IsFalse(Runtime.Runtime.PyIter_Check(lockInstance));
+            }
+            finally
+            {
+                Runtime.Runtime.Py_Finalize();
+            }
         }
     }
 }

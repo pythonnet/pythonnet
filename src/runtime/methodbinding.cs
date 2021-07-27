@@ -31,7 +31,7 @@ namespace Python.Runtime
             {
                 Runtime.XIncref(targetType);
             }
-            
+
             this.targetType = targetType;
 
             this.info = null;
@@ -40,12 +40,6 @@ namespace Python.Runtime
 
         public MethodBinding(MethodObject m, IntPtr target) : this(m, target, IntPtr.Zero)
         {
-        }
-
-        private void ClearMembers()
-        {
-            Runtime.Py_CLEAR(ref target);
-            Runtime.Py_CLEAR(ref targetType);
         }
 
         /// <summary>
@@ -235,21 +229,11 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<{type} method '{name}'>");
         }
 
-        /// <summary>
-        /// MethodBinding dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (MethodBinding)GetManagedObject(ob);
-            self.ClearMembers();
-            self.Dealloc();
-        }
-
-        public static int tp_clear(IntPtr ob)
-        {
-            var self = (MethodBinding)GetManagedObject(ob);
-            self.ClearMembers();
-            return 0;
+            Runtime.Py_CLEAR(ref this.target);
+            Runtime.Py_CLEAR(ref this.targetType);
+            base.Clear();
         }
 
         protected override void OnSave(InterDomainContext context)

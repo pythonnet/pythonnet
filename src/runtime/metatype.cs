@@ -132,7 +132,7 @@ namespace Python.Runtime
                 {
                     if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
                     {
-                        return TypeManager.CreateSubType(name, base_type, dict);
+                        return TypeManager.CreateSubType(name, base_type, clsDict.Reference);
                     }
                 }
             }
@@ -145,7 +145,9 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            var flags = TypeFlags.Default;
+            var flags = (TypeFlags)Util.ReadCLong(type, TypeOffset.tp_flags);
+            if (!flags.HasFlag(TypeFlags.Ready))
+                throw new NotSupportedException("PyType.tp_new returned an incomplete type");
             flags |= TypeFlags.HasClrInstance;
             flags |= TypeFlags.HeapType;
             flags |= TypeFlags.BaseType;
@@ -170,8 +172,7 @@ namespace Python.Runtime
             IntPtr gc = Marshal.ReadIntPtr(base_type, Offsets.tp_clr_inst);
             Marshal.WriteIntPtr(type, Offsets.tp_clr_inst, gc);
 
-            if (Runtime.PyType_Ready(type) != 0)
-                throw new PythonException();
+            Runtime.PyType_Modified(new BorrowedReference(type));
 
             return type;
         }
@@ -266,7 +267,7 @@ namespace Python.Runtime
             }
 
             int res = Runtime.PyObject_GenericSetAttr(tp, name, value);
-            Runtime.PyType_Modified(tp);
+            Runtime.PyType_Modified(new BorrowedReference(tp));
 
             return res;
         }

@@ -107,6 +107,8 @@ namespace Python.Runtime
         #region Decoding
         static readonly ConcurrentDictionary<TypePair, Converter.TryConvertFromPythonDelegate>
             pythonToClr = new ConcurrentDictionary<TypePair, Converter.TryConvertFromPythonDelegate>();
+        internal static bool TryDecode(BorrowedReference value, BorrowedReference type, Type targetType, out object result)
+            => TryDecode(value.DangerousGetAddress(), type.DangerousGetAddress(), targetType, out result);
         internal static bool TryDecode(IntPtr pyHandle, IntPtr pyType, Type targetType, out object result)
         {
             if (pyHandle == IntPtr.Zero) throw new ArgumentNullException(nameof(pyHandle));

@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,8 +28,8 @@ namespace Python.Runtime
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
-        internal BorrowedReference ObjectReference => new BorrowedReference(pyHandle);
-        internal BorrowedReference TypeReference => new BorrowedReference(tpHandle);
+        internal BorrowedReference ObjectReference => new(pyHandle);
+        internal BorrowedReference TypeReference => new(tpHandle);
 
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
@@ -78,12 +79,16 @@ namespace Python.Runtime
             }
         }
 
-        internal static ManagedType GetManagedObject(BorrowedReference ob)
-            => GetManagedObject(ob.DangerousGetAddress());
         /// <summary>
         /// Given a Python object, return the associated managed object or null.
         /// </summary>
-        internal static ManagedType GetManagedObject(IntPtr ob)
+        internal static ManagedType? GetManagedObject(BorrowedReference ob)
+            => GetManagedObject(ob.DangerousGetAddress());
+
+        /// <summary>
+        /// Given a Python object, return the associated managed object or null.
+        /// </summary>
+        internal static ManagedType? GetManagedObject(IntPtr ob)
         {
             if (ob != IntPtr.Zero)
             {
@@ -106,7 +111,7 @@ namespace Python.Runtime
         /// <summary>
         /// Given a Python object, return the associated managed object type or null.
         /// </summary>
-        internal static ManagedType GetManagedObjectType(IntPtr ob)
+        internal static ManagedType? GetManagedObjectType(IntPtr ob)
         {
             if (ob != IntPtr.Zero)
             {
@@ -120,18 +125,6 @@ namespace Python.Runtime
             }
             return null;
         }
-
-
-        internal static ManagedType GetManagedObjectErr(IntPtr ob)
-        {
-            ManagedType result = GetManagedObject(ob);
-            if (result == null)
-            {
-                Exceptions.SetError(Exceptions.TypeError, "invalid argument, expected CLR type");
-            }
-            return result;
-        }
-
 
         internal static bool IsInstanceOfManagedType(BorrowedReference ob)
             => IsInstanceOfManagedType(ob.DangerousGetAddressOrNull());
@@ -154,6 +147,13 @@ namespace Python.Runtime
         {
             var flags = (TypeFlags)Util.ReadCLong(type.DangerousGetAddress(), TypeOffset.tp_flags);
             return (flags & TypeFlags.HasClrInstance) != 0;
+        }
+
+        public bool IsClrMetaTypeInstance()
+        {
+            Debug.Assert(Runtime.PyCLRMetaType != IntPtr.Zero);
+            Debug.Assert(pyHandle != IntPtr.Zero);
+            return Runtime.PyObject_TYPE(pyHandle) == Runtime.PyCLRMetaType;
         }
 
         internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
@@ -185,7 +185,8 @@ namespace Python.Runtime
             {
                 return;
             }
-            var clearPtr = Marshal.ReadIntPtr(tpHandle, TypeOffset.tp_clear);
+
+            var clearPtr = Runtime.PyType_GetSlot(TypeReference, TypeSlotID.tp_clear);
             if (clearPtr == IntPtr.Zero)
             {
                 return;
@@ -203,7 +204,7 @@ namespace Python.Runtime
             {
                 return;
             }
-            var traversePtr = Marshal.ReadIntPtr(tpHandle, TypeOffset.tp_traverse);
+            var traversePtr = Runtime.PyType_GetSlot(TypeReference, TypeSlotID.tp_traverse);
             if (traversePtr == IntPtr.Zero)
             {
                 return;

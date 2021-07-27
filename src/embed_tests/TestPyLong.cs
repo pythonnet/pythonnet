@@ -144,7 +144,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => a = new PyLong(i));
 
-            StringAssert.StartsWith("ValueError : invalid literal", ex.Message);
+            StringAssert.StartsWith("invalid literal", ex.Message);
             Assert.IsNull(a);
         }
 
@@ -177,7 +177,7 @@ namespace Python.EmbeddingTest
             PyLong a = null;
 
             var ex = Assert.Throws<PythonException>(() => a = PyLong.AsLong(s));
-            StringAssert.StartsWith("ValueError : invalid literal", ex.Message);
+            StringAssert.StartsWith("invalid literal", ex.Message);
             Assert.IsNull(a);
         }
 

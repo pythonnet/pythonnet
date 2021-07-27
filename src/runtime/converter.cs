@@ -110,6 +110,9 @@ namespace Python.Runtime
             return ToPython(value, typeof(T));
         }
 
+        internal static NewReference ToPythonReference<T>(T value)
+            => NewReference.DangerousFromPointer(ToPython(value, typeof(T)));
+
         private static readonly Func<object, bool> IsTransparentProxy = GetIsTransparentProxy();
 
         private static bool Never(object _) => false;
@@ -199,6 +202,16 @@ namespace Python.Runtime
                     return ClassDerivedObject.ToPython(pyderived);
             }
 
+            // ModuleObjects are created in a way that their wrapping them as
+            // a CLRObject fails, the ClassObject has no tpHandle. Return the
+            // pyHandle as is, do not convert.
+            if (value is ModuleObject modobj)
+            {
+                var handle = modobj.pyHandle;
+                Runtime.XIncref(handle);
+                return handle;
+            }
+
             // hmm - from Python, we almost never care what the declared
             // type is. we'd rather have the object bound to the actual
             // implementing class.
@@ -218,7 +231,7 @@ namespace Python.Runtime
                     return CLRObject.GetInstHandle(value, type);
 
                 case TypeCode.String:
-                    return Runtime.PyUnicode_FromString((string)value);
+                    return Runtime.PyString_FromString((string)value);
 
                 case TypeCode.Int32:
                     return Runtime.PyInt_FromInt32((int)value);
@@ -525,6 +538,16 @@ namespace Python.Runtime
 
         internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
 
+        internal static int ToInt32(BorrowedReference value)
+        {
+            nint num = Runtime.PyLong_AsSignedSize_t(value);
+            if (num == -1 && Exceptions.ErrorOccurred())
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return checked((int)num);
+        }
+
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>
@@ -821,7 +844,7 @@ namespace Python.Runtime
             string src = Runtime.GetManagedString(ob);
             Runtime.XDecref(ob);
 
-            Runtime.PyErr_Restore(causeType, causeVal, causeTrace);
+            Runtime.PyErr_Restore(causeType.StealNullable(), causeVal.StealNullable(), causeTrace.StealNullable());
             Exceptions.RaiseTypeError($"Cannot convert {src} to {target}");
         }
 
@@ -859,17 +882,26 @@ namespace Python.Runtime
                 // See https://docs.microsoft.com/en-us/dotnet/api/system.type.makegenerictype#System_Type_MakeGenericType_System_Type
                 var constructedListType = typeof(List<>).MakeGenericType(elementType);
                 bool IsSeqObj = Runtime.PySequence_Check(value);
+                object[] constructorArgs = Array.Empty<object>();
                 if (IsSeqObj)
                 {
                     var len = Runtime.PySequence_Size(value);
-                    list = (IList)Activator.CreateInstance(constructedListType, new Object[] { (int)len });
+                    if (len >= 0)
+                    {
+                        if (len <= int.MaxValue)
+                        {
+                            constructorArgs = new object[] { (int)len };
+                        }
+                    }
+                    else
+                    {
+                        // for the sequences, that explicitly deny calling __len__()
+                        Exceptions.Clear();
+                    }
                 }
-                else
-                {
-                    // CreateInstance can throw even if MakeGenericType succeeded.
-                    // See https://docs.microsoft.com/en-us/dotnet/api/system.activator.createinstance#System_Activator_CreateInstance_System_Type_
-                    list = (IList)Activator.CreateInstance(constructedListType);
-                }
+                // CreateInstance can throw even if MakeGenericType succeeded.
+                // See https://docs.microsoft.com/en-us/dotnet/api/system.activator.createinstance#System_Activator_CreateInstance_System_Type_
+                list = (IList)Activator.CreateInstance(constructedListType, args: constructorArgs);
             }
             catch (Exception e)
             {
@@ -890,6 +922,7 @@ namespace Python.Runtime
                 if (!Converter.ToManaged(item, elementType, out obj, setError))
                 {
                     Runtime.XDecref(item);
+                    Runtime.XDecref(IterObject);
                     return false;
                 }
 
@@ -897,6 +930,12 @@ namespace Python.Runtime
                 Runtime.XDecref(item);
             }
             Runtime.XDecref(IterObject);
+
+            if (Exceptions.ErrorOccurred())
+            {
+                if (!setError) Exceptions.Clear();
+                return false;
+            }
 
             Array items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);

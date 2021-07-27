@@ -12,7 +12,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Test", "src\testing\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.PerformanceTests", "src\perf_tests\Python.PerformanceTests.csproj", "{4F2EA4A1-7ECA-48B5-8077-7A3C366F9931}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.DomainReloadTests", "src\domain_tests\Python.DomainReloadTests.csproj", "{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.DomainReloadTests", "tests\domain_tests\Python.DomainReloadTests.csproj", "{F2FB6DA3-318E-4F30-9A1F-932C667E38C5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repo", "Repo", "{441A0123-F4C6-4EE4-9AEE-315FD79BE2D5}"
 	ProjectSection(SolutionItems) = preProject

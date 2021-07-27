@@ -20,6 +20,12 @@ namespace Python.Runtime
         internal IntPtr dict;
         internal BorrowedReference DictRef => new BorrowedReference(dict);
         protected string _namespace;
+        private IntPtr __all__ = IntPtr.Zero;
+
+        // Attributes to be set on the module according to PEP302 and 451
+        // by the import machinery.
+        static readonly HashSet<string> settableAttributes = 
+            new HashSet<string> {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
 
         public ModuleObject(string name)
         {
@@ -47,7 +53,7 @@ namespace Python.Runtime
             var dictRef = Runtime.PyObject_GenericGetDict(ObjectReference);
             PythonException.ThrowIfIsNull(dictRef);
             dict = dictRef.DangerousMoveToPointer();
-
+            __all__ = Runtime.PyList_New(0);
             using var pyname = NewReference.DangerousFromPointer(Runtime.PyString_FromString(moduleName));
             using var pyfilename = NewReference.DangerousFromPointer(Runtime.PyString_FromString(filename));
             using var pydocstring = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docstring));
@@ -153,7 +159,7 @@ namespace Python.Runtime
         {
             if (Runtime.PyDict_SetItemString(dict, name, ob.pyHandle) != 0)
             {
-                throw new PythonException();
+                throw PythonException.ThrowLastAsClrException();
             }
             ob.IncrRefCount();
             cache[name] = ob;
@@ -181,7 +187,23 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                GetAttribute(name, true);
+
+                if(GetAttribute(name, true) != null)
+                {
+                    // if it's a valid attribute, add it to __all__
+                    var pyname = Runtime.PyString_FromString(name);
+                    try
+                    {
+                        if (Runtime.PyList_Append(new BorrowedReference(__all__), new BorrowedReference(pyname)) != 0)
+                        {
+                            throw PythonException.ThrowLastAsClrException();
+                        }
+                    }
+                    finally
+                    {
+                        Runtime.XDecref(pyname);
+                    }
+                }
             }
         }
 
@@ -263,6 +285,13 @@ namespace Python.Runtime
                 return self.dict;
             }
 
+            if (name == "__all__")
+            {
+                self.LoadNames();
+                Runtime.XIncref(self.__all__);
+                return self.__all__;
+            }
+
             ManagedType attr = null;
 
             try
@@ -274,7 +303,7 @@ namespace Python.Runtime
                 Exceptions.SetError(e);
                 return IntPtr.Zero;
             }
-            
+
 
             if (attr == null)
             {
@@ -295,13 +324,6 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
 
-        public new static void tp_dealloc(IntPtr ob)
-        {
-            var self = (ModuleObject)GetManagedObject(ob);
-            tp_clear(ob);
-            self.Dealloc();
-        }
-
         public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
         {
             var self = (ModuleObject)GetManagedObject(ob);
@@ -315,17 +337,35 @@ namespace Python.Runtime
             return 0;
         }
 
-        public static int tp_clear(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (ModuleObject)GetManagedObject(ob);
-            Runtime.Py_CLEAR(ref self.dict);
-            ClearObjectDict(ob);
-            foreach (var attr in self.cache.Values)
+            Runtime.Py_CLEAR(ref this.dict);
+            ClearObjectDict(this.pyHandle);
+            foreach (var attr in this.cache.Values)
             {
                 Runtime.XDecref(attr.pyHandle);
             }
-            self.cache.Clear();
-            return 0;
+            this.cache.Clear();
+            base.Clear();
+        }
+
+        /// <summary>
+        /// Override the setattr implementation.
+        /// This is needed because the import mechanics need
+        /// to set a few attributes
+        /// </summary>
+        [ForbidPythonThreads]
+        public new static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        {
+            var managedKey = Runtime.GetManagedString(key);
+            if ((settableAttributes.Contains(managedKey)) || 
+                (ManagedType.GetManagedObject(val)?.GetType() == typeof(ModuleObject)) )
+            {
+                var self = (ModuleObject)ManagedType.GetManagedObject(ob);
+                return Runtime.PyDict_SetItem(self.dict, key, val);
+            }
+
+            return ExtensionType.tp_setattro(ob, key, val);
         }
 
         protected override void OnSave(InterDomainContext context)
@@ -345,13 +385,13 @@ namespace Python.Runtime
                 if ((Runtime.PyDict_DelItemString(DictRef, pair.Key) == -1) &&
                     (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                 {
-                    // Trying to remove a key that's not in the dictionary 
+                    // Trying to remove a key that's not in the dictionary
                     // raises an error. We don't care about it.
                     Runtime.PyErr_Clear();
                 }
                 else if (Exceptions.ErrorOccurred())
                 {
-                    throw new PythonException();
+                    throw PythonException.ThrowLastAsClrException();
                 }
                 pair.Value.DecrRefCount();
             }
@@ -469,6 +509,7 @@ namespace Python.Runtime
         public static Assembly AddReference(string name)
         {
             AssemblyManager.UpdatePath();
+            var origNs = AssemblyManager.GetNamespaces();
             Assembly assembly = null;
             assembly = AssemblyManager.FindLoadedAssembly(name);
             if (assembly == null)
@@ -487,7 +528,16 @@ namespace Python.Runtime
             {
                 throw new FileNotFoundException($"Unable to find assembly '{name}'.");
             }
+            // Classes that are not in a namespace needs an extra nudge to be found.
+            ImportHook.UpdateCLRModuleDict();
 
+            // A bit heavyhanded, but we can't use the AssemblyManager's AssemblyLoadHandler
+            // method because it may be called from other threads, leading to deadlocks
+            // if it is called while Python code is executing.
+            var currNs = AssemblyManager.GetNamespaces().Except(origNs);
+            foreach(var ns in currNs){
+                ImportHook.AddNamespace(ns);
+            }
             return assembly;
         }
 
@@ -496,7 +546,7 @@ namespace Python.Runtime
         /// clr.GetClrType(IComparable) gives you the Type for IComparable,
         /// that you can e.g. perform reflection on. Similar to typeof(IComparable) in C#
         /// or clr.GetClrType(IComparable) in IronPython.
-        /// 
+        ///
         /// </summary>
         /// <param name="type"></param>
         /// <returns>The Type object</returns>
@@ -533,6 +583,24 @@ namespace Python.Runtime
                 }
             }
             return names;
+        }
+
+        /// <summary>
+        /// Note: This should *not* be called directly.
+        /// The function that get/import a CLR assembly as a python module.
+        /// This function should only be called by the import machinery as seen
+        /// in importhook.cs
+        /// </summary>
+        /// <param name="spec">A ModuleSpec Python object</param>
+        /// <returns>A new reference to the imported module, as a PyObject.</returns>
+        [ModuleFunction]
+        [ForbidPythonThreads]
+        public static ModuleObject _load_clr_module(PyObject spec)
+        {
+            ModuleObject mod = null;
+            using var modname = spec.GetAttr("name");
+            mod = ImportHook.Import(modname.ToString());
+            return mod;
         }
     }
 }

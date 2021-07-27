@@ -120,16 +120,6 @@ namespace Python.Runtime
             return is_static;
         }
 
-        private void ClearMembers()
-        {
-            Runtime.Py_CLEAR(ref doc);
-            if (unbound != null)
-            {
-                Runtime.XDecref(unbound.pyHandle);
-                unbound = null;
-            }
-        }
-
         /// <summary>
         /// Descriptor __getattribute__ implementation.
         /// </summary>
@@ -210,23 +200,17 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<method '{self.name}'>");
         }
 
-        /// <summary>
-        /// Descriptor dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (MethodObject)GetManagedObject(ob);
-            self.ClearMembers();
-            ClearObjectDict(ob);
-            self.Dealloc();
-        }
+            Runtime.Py_CLEAR(ref this.doc);
+            if (this.unbound != null)
+            {
+                Runtime.XDecref(this.unbound.pyHandle);
+                this.unbound = null;
+            }
 
-        public static int tp_clear(IntPtr ob)
-        {
-            var self = (MethodObject)GetManagedObject(ob);
-            self.ClearMembers();
-            ClearObjectDict(ob);
-            return 0;
+            ClearObjectDict(this.pyHandle);
+            base.Clear();
         }
 
         protected override void OnSave(InterDomainContext context)

@@ -58,14 +58,10 @@ namespace Python.Runtime
             return doc;
         }
 
-        /// <summary>
-        /// OverloadMapper dealloc implementation.
-        /// </summary>
-        public new static void tp_dealloc(IntPtr ob)
+        protected override void Clear()
         {
-            var self = (OverloadMapper)GetManagedObject(ob);
-            Runtime.XDecref(self.target);
-            self.Dealloc();
+            Runtime.Py_CLEAR(ref this.target);
+            base.Clear();
         }
     }
 }

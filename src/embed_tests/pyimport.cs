@@ -37,7 +37,7 @@ namespace Python.EmbeddingTest
             Assert.IsFalse(str == IntPtr.Zero);
             BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
             Assert.IsFalse(path.IsNull);
-            Runtime.Runtime.PyList_Append(path, str);
+            Runtime.Runtime.PyList_Append(path, new BorrowedReference(str));
             Runtime.Runtime.XDecref(str);
         }
 
@@ -102,8 +102,7 @@ import clr
 clr.AddReference('{path}')
 ";
 
-            var error = Assert.Throws<PythonException>(() => PythonEngine.Exec(code));
-            Assert.AreEqual(nameof(FileLoadException), error.PythonTypeName);
+            Assert.Throws<FileLoadException>(() => PythonEngine.Exec(code));
         }
     }
 }

@@ -37,7 +37,6 @@ namespace Python.Runtime
         // modified from event handlers below, potentially triggered from different .NET threads
         private static ConcurrentQueue<Assembly> assemblies;
         internal static List<string> pypath;
-
         private AssemblyManager()
         {
         }
@@ -310,6 +309,15 @@ namespace Python.Runtime
         public static bool IsValidNamespace(string name)
         {
             return !string.IsNullOrEmpty(name) && namespaces.ContainsKey(name);
+        }
+
+        /// <summary>
+        /// Returns an IEnumerable<string> containing the namepsaces exported
+        /// by loaded assemblies in the current app domain.
+        /// </summary>
+        public static IEnumerable<string> GetNamespaces ()
+        {
+            return namespaces.Keys;
         }
 
         /// <summary>

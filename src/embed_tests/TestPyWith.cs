@@ -51,7 +51,7 @@ a = CmTest()
             catch (PythonException e)
             {
                 TestContext.Out.WriteLine(e.Message);
-                Assert.IsTrue(e.Message.Contains("ZeroDivisionError"));
+                Assert.IsTrue(e.Type.Name == "ZeroDivisionError");
             }
         }
 

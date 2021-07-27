@@ -95,7 +95,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => a = new PyFloat(i));
 
-            StringAssert.StartsWith("ValueError : could not convert string to float", ex.Message);
+            StringAssert.StartsWith("could not convert string to float", ex.Message);
             Assert.IsNull(a);
         }
 
@@ -132,7 +132,7 @@ namespace Python.EmbeddingTest
             PyFloat a = null;
 
             var ex = Assert.Throws<PythonException>(() => a = PyFloat.AsFloat(s));
-            StringAssert.StartsWith("ValueError : could not convert string to float", ex.Message);
+            StringAssert.StartsWith("could not convert string to float", ex.Message);
             Assert.IsNull(a);
         }
     }

@@ -18,7 +18,7 @@ namespace Python.Runtime
             // The Python instance object is related to an instance of a
             // particular concrete subclass with a hidden CLR gchandle.
 
-            IntPtr tp = TypeManager.GetTypeHandle(GetType());
+            BorrowedReference tp = TypeManager.GetTypeReference(GetType());
 
             //int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
             //if (rc > 1050)
@@ -27,11 +27,11 @@ namespace Python.Runtime
             //    DebugUtil.DumpType(tp);
             //}
 
-            IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
+            NewReference py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            // Steals a ref to tpHandle.
-            tpHandle = tp;
-            pyHandle = py;
+            // Borrowed reference. Valid as long as pyHandle is valid.
+            tpHandle = tp.DangerousGetAddress();
+            pyHandle = py.DangerousMoveToPointer();
 
 #if DEBUG
             GetGCHandle(ObjectReference, TypeReference, out var existing);
@@ -54,20 +54,23 @@ namespace Python.Runtime
         }
 
 
-        /// <summary>
-        /// Common finalization code to support custom tp_deallocs.
-        /// </summary>
-        public static void FinalizeObject(ManagedType self)
+        protected virtual void Dealloc()
         {
-            ClearObjectDict(self.pyHandle);
-            Runtime.PyObject_GC_Del(self.pyHandle);
-            // Not necessary for decref of `tpHandle`.
-            self.FreeGCHandle();
+            var type = Runtime.PyObject_TYPE(this.ObjectReference);
+            Runtime.PyObject_GC_Del(this.pyHandle);
+            // Not necessary for decref of `tpHandle` - it is borrowed
+
+            this.FreeGCHandle();
+
+            // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
+            Runtime.XDecref(type.DangerousGetAddress());
         }
 
-        protected void Dealloc()
+        /// <summary>DecRefs and nulls any fields pointing back to Python</summary>
+        protected virtual void Clear()
         {
-            FinalizeObject(this);
+            ClearObjectDict(this.pyHandle);
+            // Not necessary for decref of `tpHandle` - it is borrowed
         }
 
         /// <summary>
@@ -80,7 +83,7 @@ namespace Python.Runtime
             {
                 message = "readonly attribute";
             }
-            Exceptions.SetError(Exceptions.TypeError, message);
+            Exceptions.SetError(Exceptions.AttributeError, message);
             return -1;
         }
 
@@ -96,15 +99,20 @@ namespace Python.Runtime
         }
 
 
-        /// <summary>
-        /// Default dealloc implementation.
-        /// </summary>
         public static void tp_dealloc(IntPtr ob)
         {
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             var self = (ExtensionType)GetManagedObject(ob);
-            self.Dealloc();
+            self?.Clear();
+            self?.Dealloc();
+        }
+
+        public static int tp_clear(IntPtr ob)
+        {
+            var self = (ExtensionType)GetManagedObject(ob);
+            self?.Clear();
+            return 0;
         }
 
         protected override void OnLoad(InterDomainContext context)

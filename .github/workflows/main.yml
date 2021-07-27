@@ -6,7 +6,7 @@ jobs:
   build-test:
     name: Build and Test
     runs-on: ${{ matrix.os }}-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     strategy:
       fail-fast: false
@@ -56,6 +56,9 @@ jobs:
         run: |
           python -m pythonnet.find_libpython --export | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Embedding tests
+        run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
+
       - name: Python Tests (Mono)
         if: ${{ matrix.os != 'windows' }}
         run: pytest --runtime mono
@@ -66,9 +69,6 @@ jobs:
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os == 'windows' }}
         run: pytest --runtime netfx
-
-      - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
 
       - name: Python tests run from .NET
         run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/

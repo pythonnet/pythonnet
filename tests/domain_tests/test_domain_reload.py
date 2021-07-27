@@ -88,3 +88,6 @@ def test_in_to_ref_param():
 
 def test_nested_type():
     _run_test("nested_type")
+
+def test_import_after_reload():
+    _run_test("import_after_reload")
