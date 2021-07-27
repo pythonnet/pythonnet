@@ -7,7 +7,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    class TestPyModule
+    public class TestPyModule
     {
         [OneTimeSetUp]
         public void SetUp()
@@ -25,8 +25,13 @@ namespace Python.EmbeddingTest
         public void TestCreate()
         {
             using PyScope scope = Py.CreateScope();
+
+            Assert.IsFalse(PyModule.IsInSysModules("testmod"));
+
             PyModule testmod = PyModule.Create("testmod");
             testmod.SetAttr("testattr1", "True".ToPython());
+
+            testmod.AddToSysModules();
 
             using PyObject code = PythonEngine.Compile(
                 "import testmod\n" +
@@ -36,17 +41,6 @@ namespace Python.EmbeddingTest
 
             Assert.IsTrue(scope.TryGet("x", out dynamic x));
             Assert.AreEqual("True", x.ToString());
-        }
-
-        [Test]
-        public void TestCreateExisting()
-        {
-            using PyScope scope = Py.CreateScope();
-            PyModule sysmod = PyModule.Create("sys");
-            sysmod.SetAttr("testattr1", "Hello, Python".ToPython());
-
-            dynamic sys = Py.Import("sys");
-            Assert.AreEqual("Hello, Python", sys.testattr1.ToString());
         }
     }
 }
