@@ -58,14 +58,19 @@ namespace Python.Runtime
 
         public static PyModule Create(string name, string filename=null)
         {
+            if(string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             NewReference op = Runtime.PyModule_New(name);
             PythonException.ThrowIfIsNull(op);
 
             if (filename != null)
             {
-                BorrowedReference globals = Runtime.PyModule_GetDict(new BorrowedReference(op.DangerousGetAddress()));
+                BorrowedReference globals = Runtime.PyModule_GetDict(op);
                 PythonException.ThrowIfIsNull(globals);
-                int rc = Runtime.PyDict_SetItemString(globals, "__file__", new BorrowedReference(filename.ToPython().Handle));
+                int rc = Runtime.PyDict_SetItemString(globals, "__file__", filename.ToPython().Reference);
                 PythonException.ThrowIfIsNotZero(rc);
             }
 
