@@ -355,6 +355,24 @@ def call(func):
             Assert.AreEqual(TestExceptionMessage, error.Message);
         }
 
+        [Test]
+        public void DateTimeDecoded()
+        {
+            using var scope = Py.CreateScope();
+            scope.Exec(@"
+import clr
+from datetime import datetime
+
+
+from Python.EmbeddingTest import Codecs, DateTimeDecoder
+
+DateTimeDecoder.Setup()
+");
+            scope.Exec("Codecs.AcceptsDateTime(datetime(2021, 1, 22))");
+        }
+
+        public static void AcceptsDateTime(DateTime v) {}
+
         class ValueErrorWrapper : Exception
         {
             public ValueErrorWrapper(string message) : base(message) { }
@@ -416,6 +434,32 @@ def call(func):
             if (typeof(T) != typeof(TTarget))
                 throw new ArgumentException(nameof(T));
             value = (T)(object)DecodeResult;
+            return true;
+        }
+    }
+
+    public class DateTimeDecoder : IPyObjectDecoder
+    {
+        public static void Setup()
+        {
+            PyObjectConversions.RegisterDecoder(new DateTimeDecoder());
+        }
+
+        public bool CanDecode(PyObject objectType, Type targetType)
+        {
+            return targetType == typeof(DateTime);
+        }
+
+        public bool TryDecode<T>(PyObject pyObj, out T value)
+        {
+            var dt = new DateTime(
+                pyObj.GetAttr("year").As<int>(),
+                pyObj.GetAttr("month").As<int>(),
+                pyObj.GetAttr("day").As<int>(),
+                pyObj.GetAttr("hour").As<int>(),
+                pyObj.GetAttr("minute").As<int>(),
+                pyObj.GetAttr("second").As<int>());
+            value = (T)(object)dt;
             return true;
         }
     }

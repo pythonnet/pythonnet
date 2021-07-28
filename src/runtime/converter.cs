@@ -149,11 +149,8 @@ namespace Python.Runtime
                 return result;
             }
 
-            if (Type.GetTypeCode(type) == TypeCode.Object
-                && value.GetType() != typeof(object)
-                && value is not Type
-                || type.IsEnum
-            ) {
+            if (EncodableByUser(type, value))
+            {
                 var encoded = PyObjectConversions.TryEncode(value, type);
                 if (encoded != null) {
                     result = encoded.Handle;
@@ -301,6 +298,13 @@ namespace Python.Runtime
             }
         }
 
+        static bool EncodableByUser(Type type, object value)
+        {
+            TypeCode typeCode = Type.GetTypeCode(type);
+            return type.IsEnum
+                   || typeCode is TypeCode.DateTime or TypeCode.Decimal
+                   || typeCode == TypeCode.Object && value.GetType() != typeof(object) && value is not Type;
+        }
 
         /// <summary>
         /// In a few situations, we don't have any advisory type information
@@ -523,8 +527,7 @@ namespace Python.Runtime
                 return false;
             }
 
-            TypeCode typeCode = Type.GetTypeCode(obType);
-            if (typeCode == TypeCode.Object || obType.IsEnum)
+            if (DecodableByUser(obType))
             {
                 IntPtr pyType = Runtime.PyObject_TYPE(value);
                 if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
@@ -534,6 +537,13 @@ namespace Python.Runtime
             }
 
             return ToPrimitive(value, obType, out result, setError);
+        }
+
+        static bool DecodableByUser(Type type)
+        {
+            TypeCode typeCode = Type.GetTypeCode(type);
+            return type.IsEnum
+                   || typeCode is TypeCode.Object or TypeCode.Decimal or TypeCode.DateTime;
         }
 
         internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
