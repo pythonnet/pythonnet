@@ -2280,6 +2280,16 @@ namespace Python.Runtime
             return PyImport_Import(PyIdentifier.builtins);
         }
 
+        public static PyDict Builtins
+        {
+            get
+            {
+                BorrowedReference builtins = PyEval_GetBuiltins();
+                PythonException.ThrowIfIsNull(builtins);
+                return new PyDict(builtins);
+            }
+        }
+
         internal static class Delegates
         {
             static readonly ILibraryLoader libraryLoader = LibraryLoader.Instance;
