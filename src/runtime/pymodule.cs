@@ -9,6 +9,7 @@ namespace Python.Runtime
     {
         internal PyModule(ref NewReference reference) : base(ref reference, PyScopeManager.Global) { }
         public PyModule(PyObject o) : base(o.Reference, PyScopeManager.Global) { }
+        public PyModule(string name, string filename = null) : this(Create(name, filename)) { }
 
         /// <summary>
         /// Given a module or package name, import the
@@ -32,13 +33,6 @@ namespace Python.Runtime
             return new PyModule(ref op);
         }
 
-        public void AddToSysModules()
-        {
-            BorrowedReference modules = Runtime.PyImport_GetModuleDict();
-            int rc = Runtime.PyDict_SetItemString(modules, this.Name, this.Reference);
-            PythonException.ThrowIfIsNotZero(rc);
-        }
-
         public static PyModule FromString(string name, string code)
         {
             using NewReference c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
@@ -48,15 +42,7 @@ namespace Python.Runtime
             return new PyModule(ref m);
         }
 
-        public static bool IsInSysModules(string name)
-        {
-            // first check if there is an existing module
-            BorrowedReference modules = Runtime.PyImport_GetModuleDict();
-            BorrowedReference m = Runtime.PyDict_GetItemString(modules, name);
-            return !m.IsNull && Runtime.PyObject_TypeCheck(m, new BorrowedReference(Runtime.PyModuleType));
-        }
-
-        public static PyModule Create(string name, string filename=null)
+        private static PyModule Create(string name, string filename=null)
         {
             if(string.IsNullOrWhiteSpace(name))
             {
@@ -77,14 +63,27 @@ namespace Python.Runtime
             return new PyModule(ref op);
         }
 
-        public void AddBuiltins()
+        public void SetBuiltins(PyDict builtins)
         {
+            if(builtins == null || builtins.IsNone())
+            {
+                throw new ArgumentNullException(nameof(builtins));
+            }
+
             BorrowedReference globals = Runtime.PyModule_GetDict(this.Reference);
             PythonException.ThrowIfIsNull(globals);
-            BorrowedReference __builtins__ = Runtime.PyEval_GetBuiltins();
-            PythonException.ThrowIfIsNull(__builtins__);
-            int rc = Runtime.PyDict_SetItemString(globals, "__builtins__", __builtins__);
+            int rc = Runtime.PyDict_SetItemString(globals, "__builtins__", builtins.Reference);
             PythonException.ThrowIfIsNotZero(rc);
+        }
+
+        public static PyDict SysModules
+        {
+            get
+            {
+                BorrowedReference sysModulesRef = Runtime.PyImport_GetModuleDict();
+                PythonException.ThrowIfIsNull(sysModulesRef);
+                return new PyDict(sysModulesRef);
+            }
         }
     }
 }

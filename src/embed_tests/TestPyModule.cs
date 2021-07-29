@@ -26,12 +26,13 @@ namespace Python.EmbeddingTest
         {
             using PyScope scope = Py.CreateScope();
 
-            Assert.IsFalse(PyModule.IsInSysModules("testmod"));
+            Assert.IsFalse(PyModule.SysModules.HasKey("testmod"));
 
-            PyModule testmod = PyModule.Create("testmod");
+            PyModule testmod = new PyModule("testmod");
+
             testmod.SetAttr("testattr1", "True".ToPython());
 
-            testmod.AddToSysModules();
+            PyModule.SysModules.SetItem("testmod", testmod);
 
             using PyObject code = PythonEngine.Compile(
                 "import testmod\n" +
