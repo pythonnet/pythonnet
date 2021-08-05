@@ -390,6 +390,12 @@ namespace Python.Runtime
             {
                 throw new InvalidOperationException("At least one base type must be specified");
             }
+            var nonBases = bases.Where(@base => !@base.Flags.HasFlag(TypeFlags.BaseType)).ToList();
+            if (nonBases.Count > 0)
+            {
+                throw new InvalidProgramException("The specified Python type(s) can not be inherited from: "
+                                                  + string.Join(", ", nonBases));
+            }
 
             return new PyTuple(bases);
         }
