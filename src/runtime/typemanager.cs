@@ -211,18 +211,7 @@ namespace Python.Runtime
 
         static PyType CreateClass(Type clrType)
         {
-            // Cleanup the type name to get rid of funny nested type names.
-            string name = $"clr.{clrType.FullName}";
-            int i = name.LastIndexOf('+');
-            if (i > -1)
-            {
-                name = name.Substring(i + 1);
-            }
-            i = name.LastIndexOf('.');
-            if (i > -1)
-            {
-                name = name.Substring(i + 1);
-            }
+            string name = GetPythonTypeName(clrType);
 
             using var baseTuple = GetBaseTypeTuple(clrType);
 
@@ -249,6 +238,65 @@ namespace Python.Runtime
             }
 
             return pyType;
+        }
+
+        static string GetPythonTypeName(Type clrType)
+        {
+            var result = new System.Text.StringBuilder();
+            GetPythonTypeName(clrType, target: result);
+            return result.ToString();
+        }
+
+        static void GetPythonTypeName(Type clrType, System.Text.StringBuilder target)
+        {
+            if (clrType.IsGenericType)
+            {
+                string fullName = clrType.GetGenericTypeDefinition().FullName;
+                int argCountIndex = fullName.LastIndexOf('`');
+                if (argCountIndex >= 0)
+                {
+                    string nonGenericFullName = fullName.Substring(0, argCountIndex);
+                    string nonGenericName = CleanupFullName(nonGenericFullName);
+                    target.Append(nonGenericName);
+
+                    var arguments = clrType.GetGenericArguments();
+                    target.Append('[');
+                    for (int argIndex = 0; argIndex < arguments.Length; argIndex++)
+                    {
+                        if (argIndex != 0)
+                        {
+                            target.Append(',');
+                        }
+
+                        GetPythonTypeName(arguments[argIndex], target);
+                    }
+
+                    target.Append(']');
+                    return;
+                }
+            }
+
+            string name = CleanupFullName(clrType.FullName);
+            target.Append(name);
+        }
+
+        static string CleanupFullName(string fullTypeName)
+        {
+            // Cleanup the type name to get rid of funny nested type names.
+            string name = "clr." + fullTypeName;
+            int i = name.LastIndexOf('+');
+            if (i > -1)
+            {
+                name = name.Substring(i + 1);
+            }
+
+            i = name.LastIndexOf('.');
+            if (i > -1)
+            {
+                name = name.Substring(i + 1);
+            }
+
+            return name;
         }
 
         static BorrowedReference InitializeBases(PyType pyType, PyTuple baseTuple)
