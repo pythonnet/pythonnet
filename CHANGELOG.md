@@ -6,13 +6,15 @@ project adheres to [Semantic Versioning][].
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 
-## Unreleased
+## [2.5.2](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.2) - 2021-02-05
+
+Bugfix release.
 
 ### Fixed
 -   Fix `object[]` parameters taking precedence when should not in overload resolution
 -   Empty parameter names (as can be generated from F#) do not cause crashes
 
-## [2.5.1][] - 2020-06-18
+## [2.5.1](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.1) - 2020-06-18
 
 Bugfix release.
 
@@ -21,7 +23,7 @@ Bugfix release.
 -    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
 -    Fix incorrect dereference in params array handling
 
-## [2.5.0][] - 2020-06-14
+## [2.5.0](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.0) - 2020-06-14
 
 This version improves performance on benchmarks significantly compared to 2.3.
 
@@ -73,7 +75,7 @@ This version improves performance on benchmarks significantly compared to 2.3.
 -   Fixed issue with params methods that are not passed an array.
 -   Use UTF8 to encode strings passed to `PyRun_String` on Python 3
 
-## [2.4.0][] - 2019-05-15
+## [2.4.0](https://github.com/pythonnet/pythonnet/releases/tag/v2.4.0) - 2019-05-15
 
 ### Added
 
