@@ -725,7 +725,7 @@ namespace Python.Runtime
                 pyoptype = Runtime.PyObject_Type(argument);
                 if (pyoptype != IntPtr.Zero)
                 {
-                    clrtype = Converter.GetTypeByAlias(pyoptype);
+                    clrtype = Converter.GetTypeByAlias(pyoptype, parameterType);
                 }
                 Runtime.XDecref(pyoptype);
             }

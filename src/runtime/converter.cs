@@ -29,6 +29,8 @@ namespace Python.Runtime
         private static Type int64Type;
         private static Type boolType;
         private static Type typeType;
+        private static Type uint64Type;
+        private static Type uint32Type;
 
         static Converter()
         {
@@ -43,13 +45,15 @@ namespace Python.Runtime
             decimalType = typeof(Decimal);
             boolType = typeof(Boolean);
             typeType = typeof(Type);
+            uint64Type = typeof(UInt64);
+            uint32Type = typeof(UInt32);
         }
 
 
         /// <summary>
         /// Given a builtin Python type, return the corresponding CLR type.
         /// </summary>
-        internal static Type GetTypeByAlias(IntPtr op)
+        internal static Type GetTypeByAlias(IntPtr op, Type preferred=null)
         {
             if (op == Runtime.PyStringType)
                 return stringType;
@@ -57,11 +61,17 @@ namespace Python.Runtime
             if (op == Runtime.PyUnicodeType)
                 return stringType;
 
-            if (op == Runtime.PyIntType)
+            if (op == Runtime.PyIntType && (preferred == null || preferred == int32Type))
                 return int32Type;
 
-            if (op == Runtime.PyLongType)
+            if (op == Runtime.PyIntType && (preferred == null || preferred == uint32Type))
+                return uint32Type;
+
+            if (op == Runtime.PyLongType && (preferred == null || preferred == int64Type))
                 return int64Type;
+
+            if (op == Runtime.PyLongType && (preferred == null || preferred == uint64Type))
+                return uint64Type;
 
             if (op == Runtime.PyFloatType)
                 return doubleType;

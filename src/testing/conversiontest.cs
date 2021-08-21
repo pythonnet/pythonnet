@@ -42,7 +42,7 @@ namespace Python.Test
 
     }
 
-    
+
 
     public interface ISpam
     {
@@ -63,7 +63,7 @@ namespace Python.Test
             return value;
         }
     }
-    
+
     public class UnicodeString
     {
         public string value = "안녕";
@@ -76,6 +76,19 @@ namespace Python.Test
         public override string ToString()
         {
             return value;
+        }
+    }
+
+    public class MethodResolutionInt
+    {
+        public IEnumerable<byte> MethodA(ulong address, int size)
+        {
+            return new byte[10];
+        }
+
+        public int MethodA(string dummy, ulong address, int size)
+        {
+            return 0;
         }
     }
 }
