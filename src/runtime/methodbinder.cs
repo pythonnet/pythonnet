@@ -330,6 +330,7 @@ namespace Python.Runtime
                 ManagedArgs = margs;
                 Outs = outs;
                 Method = mb;
+                HasPyObjectParameter = mb.GetParameters().Any(x => x.ParameterType == typeof(PyObject));
             }
 
             public int KwargsMatched { get; }
@@ -337,6 +338,7 @@ namespace Python.Runtime
             public object[] ManagedArgs { get; }
             public int Outs { get; }
             public MethodBase Method { get; }
+            public bool HasPyObjectParameter { get; }
         }
 
         private readonly struct MismatchedMethod
@@ -470,8 +472,15 @@ namespace Python.Runtime
                 var matchedMethod = new MatchedMethod(kwargsMatched, defaultsNeeded, margs, outs, mi);
                 argMatchedMethods.Add(matchedMethod);
             }
+
             if (argMatchedMethods.Count > 0)
             {
+                // order the matched methods such that PyObject overrides are last, we only care about
+                // this when there is more than one arg matched method
+                if (argMatchedMethods.Count > 1)
+                {
+                    argMatchedMethods = argMatchedMethods.OrderBy(x => x.HasPyObjectParameter).ToList();
+                }
                 var bestKwargMatchCount = argMatchedMethods.Max(x => x.KwargsMatched);
                 var fewestDefaultsRequired = argMatchedMethods.Where(x => x.KwargsMatched == bestKwargMatchCount).Min(x => x.DefaultsNeeded);
 
