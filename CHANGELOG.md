@@ -5,6 +5,11 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
+## [Unreleased]
+
+### Changed
+- Replaced Space in CLR Metatype to Underscore
+
 ## [Unreleased][]
 
 ### Added
