@@ -24,7 +24,7 @@ def is_clr_root_module(ob):
 
 
 def is_clr_class(ob):
-    return type(ob).__name__ == 'CLR Metatype'  # for now
+    return type(ob).__name__ == 'CLR_Metatype'  # for now
 
 
 class ClassicClass:

@@ -573,7 +573,7 @@ namespace Python.Runtime
             // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
-            IntPtr type = AllocateTypeObject("CLR Metatype", metatype: Runtime.PyTypeType);
+            IntPtr type = AllocateTypeObject("CLR_Metatype", metatype: Runtime.PyTypeType);
 
             IntPtr py_type = Runtime.PyTypeType;
             Marshal.WriteIntPtr(type, TypeOffset.tp_base, py_type);

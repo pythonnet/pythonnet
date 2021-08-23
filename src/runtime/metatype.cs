@@ -21,7 +21,7 @@ namespace Python.Runtime
         };
 
         /// <summary>
-        /// Metatype initialization. This bootstraps the CLR metatype to life.
+        /// Metatype initialization. This bootstraps the CLR_metatype to life.
         /// </summary>
         public static IntPtr Initialize()
         {
@@ -81,7 +81,7 @@ namespace Python.Runtime
             // We do not support multiple inheritance, so the bases argument
             // should be a 1-item tuple containing the type we are subtyping.
             // That type must itself have a managed implementation. We check
-            // that by making sure its metatype is the CLR metatype.
+            // that by making sure its metatype is the CLR_metatype.
 
             if (Runtime.PyTuple_Size(bases) != 1)
             {
@@ -312,7 +312,7 @@ namespace Python.Runtime
             // Delegate the rest of finalization the Python metatype. Note
             // that the PyType_Type implementation of tp_dealloc will call
             // tp_free on the type of the type being deallocated - in this
-            // case our CLR metatype. That is why we implement tp_free.
+            // case our CLR_metatype. That is why we implement tp_free.
 
             op = Marshal.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_dealloc);
             NativeCall.Void_Call_1(op, tp);
