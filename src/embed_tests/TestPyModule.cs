@@ -1,6 +1,3 @@
-
-using System;
-
 using NUnit.Framework;
 
 using Python.Runtime;
@@ -42,6 +39,12 @@ namespace Python.EmbeddingTest
 
             Assert.IsTrue(scope.TryGet("x", out dynamic x));
             Assert.AreEqual("True", x.ToString());
+        }
+
+        [Test]
+        public void ImportClrNamespace()
+        {
+            Py.Import(typeof(TestPyModule).Namespace);
         }
     }
 }
