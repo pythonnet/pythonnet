@@ -78,4 +78,17 @@ namespace Python.Test
             return value;
         }
     }
+
+    public class MethodResolutionInt
+    {
+        public IEnumerable<byte> MethodA(ulong address, int size)
+        {
+            return new byte[10];
+        }
+
+        public int MethodA(string dummy, ulong address, int size)
+        {
+            return 0;
+        }
+    }
 }
