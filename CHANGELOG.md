@@ -52,6 +52,8 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   `PythonException.Restore` no longer clears `PythonException` instance.
 -   Replaced the old `__import__` hook hack with a PEP302-style Meta Path Loader
 -   BREAKING: Names of .NET types (e.g. `str(__class__)`) changed to better support generic types
+-   BREAKING: overload resolution will no longer prefer basic types. Instead, first matching overload will
+be chosen.
 
 ### Fixed
 

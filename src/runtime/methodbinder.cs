@@ -433,9 +433,7 @@ namespace Python.Runtime
                     pi = pi.Take(1).ToArray();
                 }
                 int outs;
-                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList,
-                    needsResolution: _methods.Length > 1,  // If there's more than one possible match.
-                    outs: out outs);
+                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList, outs: out outs);
                 if (margs == null)
                 {
                     var mismatchCause = PythonException.FetchCurrent();
@@ -612,7 +610,6 @@ namespace Python.Runtime
             IntPtr args, int pyArgCount,
             Dictionary<string, IntPtr> kwargDict,
             ArrayList defaultArgList,
-            bool needsResolution,
             out int outs)
         {
             outs = 0;
@@ -653,7 +650,7 @@ namespace Python.Runtime
                 }
 
                 bool isOut;
-                if (!TryConvertArgument(op, parameter.ParameterType, needsResolution, out margs[paramIndex], out isOut))
+                if (!TryConvertArgument(op, parameter.ParameterType, out margs[paramIndex], out isOut))
                 {
                     return null;
                 }
@@ -681,16 +678,15 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="op">Pointer to the Python argument object.</param>
         /// <param name="parameterType">That parameter's managed type.</param>
-        /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
         /// <param name="arg">Converted argument.</param>
         /// <param name="isOut">Whether the CLR type is passed by reference.</param>
         /// <returns>true on success</returns>
-        static bool TryConvertArgument(IntPtr op, Type parameterType, bool needsResolution,
+        static bool TryConvertArgument(IntPtr op, Type parameterType,
                                        out object arg, out bool isOut)
         {
             arg = null;
             isOut = false;
-            var clrtype = TryComputeClrArgumentType(parameterType, op, needsResolution: needsResolution);
+            var clrtype = TryComputeClrArgumentType(parameterType, op);
             if (clrtype == null)
             {
                 return false;
@@ -710,25 +706,14 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="parameterType">The parameter's managed type.</param>
         /// <param name="argument">Pointer to the Python argument object.</param>
-        /// <param name="needsResolution">If true, there are multiple overloading methods that need resolution.</param>
         /// <returns>null if conversion is not possible</returns>
-        static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument, bool needsResolution)
+        static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument)
         {
             // this logic below handles cases when multiple overloading methods
             // are ambiguous, hence comparison between Python and CLR types
             // is necessary
             Type clrtype = null;
             IntPtr pyoptype;
-            if (needsResolution)
-            {
-                // HACK: each overload should be weighted in some way instead
-                pyoptype = Runtime.PyObject_Type(argument);
-                if (pyoptype != IntPtr.Zero)
-                {
-                    clrtype = Converter.GetTypeByAlias(pyoptype);
-                }
-                Runtime.XDecref(pyoptype);
-            }
 
             if (clrtype != null)
             {
