@@ -87,8 +87,8 @@ namespace Python.Runtime
     /// </remarks>
     internal static class Exceptions
     {
-        internal static PyModule warnings_module;
-        internal static PyModule exceptions_module;
+        internal static PyObject warnings_module;
+        internal static PyObject exceptions_module;
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
