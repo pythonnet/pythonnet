@@ -183,7 +183,7 @@ namespace Python.EmbeddingTest
             bool oldState = Finalizer.Instance.Enable;
             try
             {
-                using (PyModule gcModule = PyModule.Import("gc"))
+                using (PyObject gcModule = PyModule.Import("gc"))
                 using (PyObject pyCollect = gcModule.GetAttr("collect"))
                 {
                     long span1 = CompareWithFinalizerOn(pyCollect, false);

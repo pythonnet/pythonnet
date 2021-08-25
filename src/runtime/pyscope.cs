@@ -56,7 +56,7 @@ namespace Python.Runtime
         /// <summary>Create a scope based on a Python Module.</summary>
         private PyScope(IntPtr ptr, PyScopeManager manager) : base(ptr)
         {
-            if (!Runtime.PyType_IsSubtype(Runtime.PyObject_TYPE(Reference), Runtime.PyModuleType))
+            if (!PyModule.IsModule(Reference))
             {
                 throw new PyScopeException("object is not a module");
             }

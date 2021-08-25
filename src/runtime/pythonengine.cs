@@ -750,11 +750,10 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Given a module or package name, import the
-        /// module and return the resulting module object as a <see cref="PyModule"/>.
+        /// Given a module or package name, import the module and return the resulting object.
         /// </summary>
         /// <param name="name">Fully-qualified module or package name</param>
-        public static PyModule Import(string name) => PyModule.Import(name);
+        public static PyObject Import(string name) => PyModule.Import(name);
 
         public static void SetArgv()
         {

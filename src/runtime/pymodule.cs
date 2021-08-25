@@ -1,7 +1,4 @@
 using System;
-using System.Text;
-
-using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -12,15 +9,14 @@ namespace Python.Runtime
         public PyModule(string name, string filename = null) : this(Create(name, filename)) { }
 
         /// <summary>
-        /// Given a module or package name, import the
-        /// module and return the resulting module object as a <see cref="PyModule"/>.
+        /// Given a module or package name, import the module and return the resulting object.
         /// </summary>
         /// <param name="name">Fully-qualified module or package name</param>
-        public static PyModule Import(string name)
+        public static PyObject Import(string name)
         {
             NewReference op = Runtime.PyImport_ImportModule(name);
             PythonException.ThrowIfIsNull(op);
-            return new PyModule(ref op);
+            return IsModule(op) ? new PyModule(ref op) : op.MoveToPyObject();
         }
 
         /// <summary>
@@ -84,6 +80,13 @@ namespace Python.Runtime
                 PythonException.ThrowIfIsNull(sysModulesRef);
                 return new PyDict(sysModulesRef);
             }
+        }
+
+        internal static bool IsModule(BorrowedReference reference)
+        {
+            if (reference == null) return false;
+            BorrowedReference type = Runtime.PyObject_TYPE(reference);
+            return Runtime.PyType_IsSubtype(type, Runtime.PyModuleType);
         }
     }
 }
