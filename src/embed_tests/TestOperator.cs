@@ -1,7 +1,9 @@
 using NUnit.Framework;
 
 using Python.Runtime;
+using Python.Runtime.Codecs;
 
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -212,21 +214,19 @@ namespace Python.EmbeddingTest
                 return (a.Num >= b);
             }
 
-            public static bool operator >=(OperableObject a, PyObject b)
+            public static bool operator >=(OperableObject a, (int, int) b)
             {
                 using (Py.GIL())
                 {
-                    // Assuming b is a tuple, take the first element.
-                    int bNum = b[0].As<int>();
+                    int bNum = b.Item1;
                     return a.Num >= bNum;
                 }
             }
-            public static bool operator <=(OperableObject a, PyObject b)
+            public static bool operator <=(OperableObject a, (int, int) b)
             {
                 using (Py.GIL())
                 {
-                    // Assuming b is a tuple, take the first element.
-                    int bNum = b[0].As<int>();
+                    int bNum = b.Item1;
                     return a.Num <= bNum;
                 }
             }
@@ -421,6 +421,7 @@ assert c == (a.Num > b)
         [Test]
         public void TupleComparisonOperatorOverloads()
         {
+                TupleCodec<ValueTuple>.Register();
                 string name = string.Format("{0}.{1}",
                 typeof(OperableObject).DeclaringType.Name,
                 typeof(OperableObject).Name);
