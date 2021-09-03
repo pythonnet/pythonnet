@@ -159,6 +159,7 @@ namespace Python.Runtime
                 "GetClrType",
                 "getPreload",
                 "Initialize",
+                "InitializeSlots",
                 "ListAssemblies",
                 "_load_clr_module",
                 "Release",

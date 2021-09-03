@@ -745,6 +745,9 @@ namespace Python.Runtime
                     seen.Add(name);
                 }
 
+                var initSlot = impl.GetMethod("InitializeSlots", BindingFlags.Static | BindingFlags.Public);
+                initSlot?.Invoke(null, parameters: new object[] { type, seen, slotsHolder });
+
                 impl = impl.BaseType;
             }
 

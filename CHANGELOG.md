@@ -15,8 +15,10 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Ability to implement delegates with `ref` and `out` parameters in Python, by returning the modified parameter values in a tuple. ([#1355][i1355])
 -   `PyType` - a wrapper for Python type objects, that also permits creating new heap types from `TypeSpec`
 -    Improved exception handling:
-  -  exceptions can now be converted with codecs
-  -  `InnerException` and `__cause__` are propagated properly
+-   exceptions can now be converted with codecs
+-   `InnerException` and `__cause__` are propagated properly
+-   .NET arrays implement Python buffer protocol
+
 
 ### Changed
 -   Drop support for Python 2, 3.4, and 3.5

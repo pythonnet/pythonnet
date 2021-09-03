@@ -1,6 +1,8 @@
+using System;
 using System.Text;
 using NUnit.Framework;
 using Python.Runtime;
+using Python.Runtime.Codecs;
 
 namespace Python.EmbeddingTest {
     class TestPyBuffer
@@ -9,6 +11,7 @@ namespace Python.EmbeddingTest {
         public void SetUp()
         {
             PythonEngine.Initialize();
+            TupleCodec<ValueTuple>.Register();
         }
 
         [OneTimeTearDown]
@@ -63,6 +66,16 @@ namespace Python.EmbeddingTest {
                     Assert.IsTrue(result == bufferTestString);
                 }
             }
+        }
+
+        [Test]
+        public void ArrayHasBuffer()
+        {
+            var array = new[,] {{1, 2}, {3,4}};
+            var memoryView = PythonEngine.Eval("memoryview");
+            var mem = memoryView.Invoke(array.ToPython());
+            Assert.AreEqual(1, mem[(0, 0).ToPython()].As<int>());
+            Assert.AreEqual(array[1,0], mem[(1, 0).ToPython()].As<int>());
         }
     }
 }
