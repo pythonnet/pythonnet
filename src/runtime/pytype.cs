@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 using Python.Runtime.Native;
@@ -60,6 +61,11 @@ namespace Python.Runtime
 
             return Runtime.PyType_Check(value.obj);
         }
+        /// <summary>Checks if specified object is a Python type.</summary>
+        internal static bool IsType(BorrowedReference value)
+        {
+            return Runtime.PyType_Check(value.DangerousGetAddress());
+        }
 
         /// <summary>
         /// Gets <see cref="PyType"/>, which represents the specified CLR type.
@@ -78,10 +84,7 @@ namespace Python.Runtime
 
         internal BorrowedReference BaseReference
         {
-            get
-            {
-                return new(Marshal.ReadIntPtr(Handle, TypeOffset.tp_base));
-            }
+            get => GetBase(Reference);
             set
             {
                 var old = BaseReference.DangerousGetAddressOrNull();
@@ -98,6 +101,13 @@ namespace Python.Runtime
         {
             IntPtr result = Runtime.PyType_GetSlot(this.Reference, slot);
             return Exceptions.ErrorCheckIfNull(result);
+        }
+
+        internal static BorrowedReference GetBase(BorrowedReference type)
+        {
+            Debug.Assert(IsType(type));
+            IntPtr basePtr = Marshal.ReadIntPtr(type.DangerousGetAddress(), TypeOffset.tp_base);
+            return new BorrowedReference(basePtr);
         }
 
         private static IntPtr EnsureIsType(in StolenReference reference)

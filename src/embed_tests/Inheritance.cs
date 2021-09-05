@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 using NUnit.Framework;
 
@@ -99,6 +97,18 @@ namespace Python.EmbeddingTest
             scope.Exec($"super({nameof(instance)}.__class__, {nameof(instance)}).set_x_to_42()");
             int actual = scope.Eval<int>($"{nameof(instance)}.{nameof(Inherited.XProp)}");
             Assert.AreEqual(expected: Inherited.X, actual);
+        }
+
+        // https://github.com/pythonnet/pythonnet/issues/1476
+        [Test]
+        public void BaseClearIsCalled()
+        {
+            using var scope = Py.CreateScope();
+            scope.Set("exn", new Exception("42"));
+            var msg = scope.Eval("exn.args[0]");
+            Assert.AreEqual(2, msg.Refcount);
+            scope.Set("exn", null);
+            Assert.AreEqual(1, msg.Refcount);
         }
     }
 
