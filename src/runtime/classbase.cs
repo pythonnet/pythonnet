@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -365,9 +366,28 @@ namespace Python.Runtime
             if (!isTypeObject)
             {
                 ClearObjectDict(ob);
+
+                int baseClearResult = BaseUnmanagedClear(ob);
+                if (baseClearResult != 0)
+                {
+                    return baseClearResult;
+                }
             }
             if (self is not null) self.tpHandle = IntPtr.Zero;
             return 0;
+        }
+
+        static unsafe int BaseUnmanagedClear(IntPtr ob)
+        {
+            var type = Runtime.PyObject_TYPE(new BorrowedReference(ob));
+            var unmanagedBase = GetUnmanagedBaseType(type);
+            var clearPtr = Marshal.ReadIntPtr(unmanagedBase.DangerousGetAddress(), TypeOffset.tp_clear);
+            if (clearPtr == IntPtr.Zero)
+            {
+                return 0;
+            }
+            var clear = (delegate* unmanaged[Cdecl]<IntPtr, int>)clearPtr;
+            return clear(ob);
         }
 
         protected override void OnSave(InterDomainContext context)

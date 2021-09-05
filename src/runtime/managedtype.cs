@@ -149,6 +149,16 @@ namespace Python.Runtime
             return (flags & TypeFlags.HasClrInstance) != 0;
         }
 
+        internal static BorrowedReference GetUnmanagedBaseType(BorrowedReference managedType)
+        {
+            Debug.Assert(managedType != null && IsManagedType(managedType));
+            do
+            {
+                managedType = PyType.GetBase(managedType);
+            } while (IsManagedType(managedType));
+            return managedType;
+        }
+
         public bool IsClrMetaTypeInstance()
         {
             Debug.Assert(Runtime.PyCLRMetaType != IntPtr.Zero);
