@@ -17,6 +17,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -    Improved exception handling:
 -   exceptions can now be converted with codecs
 -   `InnerException` and `__cause__` are propagated properly
+-   .NET collection types now implement standard Python collection interfaces from `collections.abc`.
+See [Mixins/collections.py](src/runtime/Mixins/collections.py).
 -   .NET arrays implement Python buffer protocol
 
 
