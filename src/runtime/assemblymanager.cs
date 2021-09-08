@@ -206,10 +206,8 @@ namespace Python.Runtime
             {
                 return null;
             }
-            catch(FileLoadException)
-            {
-                return null;
-            }
+            
+
         }
 
 

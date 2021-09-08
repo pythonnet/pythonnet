@@ -518,7 +518,15 @@ namespace Python.Runtime
             }
             if (assembly == null)
             {
-                assembly = AssemblyManager.LoadAssembly(name);
+                try
+                {
+                    assembly = AssemblyManager.LoadAssembly(name);
+                }
+                // The Assembly.Load fail with FileLoadException in case name contains a path
+                catch(FileLoadException)
+                {
+                    assembly=null;
+                }
             }
             if (assembly == null)
             {
