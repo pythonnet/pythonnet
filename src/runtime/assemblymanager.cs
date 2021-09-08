@@ -205,7 +205,7 @@ namespace Python.Runtime
             catch (FileNotFoundException)
             {
                 return null;
-            }          
+            }
         }
 
 
