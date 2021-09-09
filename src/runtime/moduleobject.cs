@@ -518,20 +518,13 @@ namespace Python.Runtime
             }
             if (assembly == null)
             {
-                try
-                {
-                    assembly = AssemblyManager.LoadAssembly(name);
-                }
-                // The Assembly.Load fail with FileLoadException in case name contains a path
-                catch(FileLoadException)
-                {
-                    assembly=null;
-                }
+                assembly = AssemblyManager.LoadAssemblyFullPath(name);
             }
             if (assembly == null)
             {
-                assembly = AssemblyManager.LoadAssemblyFullPath(name);
+                    assembly = AssemblyManager.LoadAssembly(name);
             }
+
             if (assembly == null)
             {
                 throw new FileNotFoundException($"Unable to find assembly '{name}'.");
