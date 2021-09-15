@@ -10,26 +10,12 @@ namespace Python.Runtime
     /// </summary>
     public class PyDict : PyIterable
     {
-        /// <summary>
-        /// PyDict Constructor
-        /// </summary>
-        /// <remarks>
-        /// Creates a new PyDict from an existing object reference. Note
-        /// that the instance assumes ownership of the object reference.
-        /// The object reference is not checked for type-correctness.
-        /// </remarks>
-        public PyDict(IntPtr ptr) : base(ptr)
-        {
-        }
-
         internal PyDict(BorrowedReference reference) : base(reference) { }
+        internal PyDict(in StolenReference reference) : base(reference) { }
 
         /// <summary>
-        /// PyDict Constructor
-        /// </summary>
-        /// <remarks>
         /// Creates a new Python dictionary object.
-        /// </remarks>
+        /// </summary>
         public PyDict() : base(Runtime.PyDict_New())
         {
             if (obj == IntPtr.Zero)
@@ -40,16 +26,13 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// PyDict Constructor
+        /// Wraps existing dictionary object.
         /// </summary>
-        /// <remarks>
-        /// Copy constructor - obtain a PyDict from a generic PyObject. An
-        /// ArgumentException will be thrown if the given object is not a
-        /// Python dictionary object.
-        /// </remarks>
-        public PyDict(PyObject o) : base(o.obj)
+        /// <exception cref="ArgumentException">
+        /// Thrown if the given object is not a Python dictionary object
+        /// </exception>
+        public PyDict(PyObject o) : base(o is null ? throw new ArgumentNullException(nameof(o)) : o.Reference)
         {
-            Runtime.XIncref(o.obj);
             if (!IsDictType(o))
             {
                 throw new ArgumentException("object is not a dict");
@@ -65,6 +48,7 @@ namespace Python.Runtime
         /// </remarks>
         public static bool IsDictType(PyObject value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
             return Runtime.PyDict_Check(value.obj);
         }
 
@@ -77,6 +61,7 @@ namespace Python.Runtime
         /// </remarks>
         public bool HasKey(PyObject key)
         {
+            if (key is null) throw new ArgumentNullException(nameof(key));
             return Runtime.PyMapping_HasKey(obj, key.obj) != 0;
         }
 
@@ -155,12 +140,12 @@ namespace Python.Runtime
         /// </remarks>
         public PyDict Copy()
         {
-            IntPtr op = Runtime.PyDict_Copy(obj);
-            if (op == IntPtr.Zero)
+            var op = Runtime.PyDict_Copy(Reference);
+            if (op.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            return new PyDict(op);
+            return new PyDict(op.Steal());
         }
 
 
@@ -172,6 +157,8 @@ namespace Python.Runtime
         /// </remarks>
         public void Update(PyObject other)
         {
+            if (other is null) throw new ArgumentNullException(nameof(other));
+
             int result = Runtime.PyDict_Update(Reference, other.Reference);
             if (result < 0)
             {

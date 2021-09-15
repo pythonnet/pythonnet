@@ -432,7 +432,7 @@ namespace Python.Runtime
             return ob;
         }
 
-        public static IntPtr ThrowIfIsNull(IntPtr ob)
+        internal static IntPtr ThrowIfIsNull(IntPtr ob)
         {
             if (ob == IntPtr.Zero)
             {
@@ -442,7 +442,7 @@ namespace Python.Runtime
             return ob;
         }
 
-        public static void ThrowIfIsNotZero(int value)
+        internal static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)
             {

@@ -9,15 +9,7 @@ namespace Python.Runtime
     /// </summary>
     public class PyFloat : PyNumber
     {
-        /// <summary>
-        /// PyFloat Constructor
-        /// </summary>
-        /// <remarks>
-        /// Creates a new PyFloat from an existing object reference. Note
-        /// that the instance assumes ownership of the object reference.
-        /// The object reference is not checked for type-correctness.
-        /// </remarks>
-        public PyFloat(IntPtr ptr) : base(ptr)
+        internal PyFloat(in StolenReference ptr) : base(ptr)
         {
         }
 
@@ -41,34 +33,37 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python float from a double value.
         /// </remarks>
-        public PyFloat(double value) : base(FromDouble(value))
+        public PyFloat(double value) : base(FromDouble(value).Steal())
         {
         }
 
-        private static IntPtr FromObject(PyObject o)
+        private static BorrowedReference FromObject(PyObject o)
         {
-            if (o == null || !IsFloatType(o))
+            if (o is null) throw new ArgumentNullException(nameof(o));
+
+            if (!IsFloatType(o))
             {
                 throw new ArgumentException("object is not a float");
             }
-            Runtime.XIncref(o.obj);
-            return o.obj;
+            return o.Reference;
         }
 
-        private static IntPtr FromDouble(double value)
+        private static NewReference FromDouble(double value)
         {
             IntPtr val = Runtime.PyFloat_FromDouble(value);
             PythonException.ThrowIfIsNull(val);
-            return val;
+            return NewReference.DangerousFromPointer(val);
         }
 
-        private static IntPtr FromString(string value)
+        private static StolenReference FromString(string value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
             using (var s = new PyString(value))
             {
                 NewReference val = Runtime.PyFloat_FromString(s.Reference);
                 PythonException.ThrowIfIsNull(val);
-                return val.DangerousMoveToPointerOrNull();
+                return val.Steal();
             }
         }
 
@@ -91,23 +86,23 @@ namespace Python.Runtime
         /// </remarks>
         public static bool IsFloatType(PyObject value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
             return Runtime.PyFloat_Check(value.obj);
         }
 
 
         /// <summary>
-        /// AsFloat Method
-        /// </summary>
-        /// <remarks>
         /// Convert a Python object to a Python float if possible, raising
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "float(object)".
-        /// </remarks>
+        /// </summary>
         public static PyFloat AsFloat(PyObject value)
         {
-            IntPtr op = Runtime.PyNumber_Float(value.obj);
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
+            var op = Runtime.PyNumber_Float(value.Reference);
             PythonException.ThrowIfIsNull(op);
-            return new PyFloat(op);
+            return new PyFloat(op.Steal());
         }
     }
 }

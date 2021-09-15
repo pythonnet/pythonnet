@@ -10,18 +10,7 @@ namespace Python.Runtime
     /// </summary>
     public class PyTuple : PySequence
     {
-        /// <summary>
-        /// PyTuple Constructor
-        /// </summary>
-        /// <remarks>
-        /// Creates a new PyTuple from an existing object reference. Note
-        /// that the instance assumes ownership of the object reference.
-        /// The object reference is not checked for type-correctness.
-        /// </remarks>
-        public PyTuple(IntPtr ptr) : base(ptr)
-        {
-        }
-
+        internal PyTuple(in StolenReference reference) : base(reference) { }
         /// <summary>
         /// PyTuple Constructor
         /// </summary>
@@ -31,14 +20,15 @@ namespace Python.Runtime
         /// </remarks>
         internal PyTuple(BorrowedReference reference) : base(reference) { }
 
-        private static IntPtr FromObject(PyObject o)
+        private static BorrowedReference FromObject(PyObject o)
         {
-            if (o == null || !IsTupleType(o))
+            if (o is null) throw new ArgumentNullException(nameof(o));
+
+            if (!IsTupleType(o))
             {
                 throw new ArgumentException("object is not a tuple");
             }
-            Runtime.XIncref(o.obj);
-            return o.obj;
+            return o.Reference;
         }
 
         /// <summary>
@@ -60,13 +50,19 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new empty PyTuple.
         /// </remarks>
-        public PyTuple() : base(Runtime.PyTuple_New(0))
+        public PyTuple() : base(NewEmtpy().Steal()) { }
+
+        private static NewReference NewEmtpy()
         {
-            PythonException.ThrowIfIsNull(obj);
+            IntPtr ptr = Runtime.PyTuple_New(0);
+            PythonException.ThrowIfIsNull(ptr);
+            return NewReference.DangerousFromPointer(ptr);
         }
 
-        private static IntPtr FromArray(PyObject[] items)
+        private static NewReference FromArray(PyObject[] items)
         {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
             int count = items.Length;
             IntPtr val = Runtime.PyTuple_New(count);
             for (var i = 0; i < count; i++)
@@ -80,7 +76,7 @@ namespace Python.Runtime
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
-            return val;
+            return NewReference.DangerousFromPointer(val);
         }
 
         /// <summary>
@@ -92,36 +88,34 @@ namespace Python.Runtime
         /// See caveats about PyTuple_SetItem:
         /// https://www.coursehero.com/file/p4j2ogg/important-exceptions-to-this-rule-PyTupleSetItem-and-PyListSetItem-These/
         /// </remarks>
-        public PyTuple(PyObject[] items) : base(FromArray(items))
+        public PyTuple(PyObject[] items) : base(FromArray(items).Steal())
         {
         }
 
 
         /// <summary>
-        /// IsTupleType Method
+        /// Returns <c>true</c> if the given object is a Python tuple.
         /// </summary>
-        /// <remarks>
-        /// Returns true if the given object is a Python tuple.
-        /// </remarks>
         public static bool IsTupleType(PyObject value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
             return Runtime.PyTuple_Check(value.obj);
         }
 
 
         /// <summary>
-        /// AsTuple Method
+        /// Convert a Python object to a Python tuple if possible. This is
+        /// equivalent to the Python expression "tuple(<paramref name="value"/>)".
         /// </summary>
-        /// <remarks>
-        /// Convert a Python object to a Python tuple if possible, raising
-        /// a PythonException if the conversion is not possible. This is
-        /// equivalent to the Python expression "tuple(object)".
-        /// </remarks>
+        /// <exception cref="PythonException">Raised if the object can not be converted to a tuple.</exception>
         public static PyTuple AsTuple(PyObject value)
         {
-            IntPtr op = Runtime.PySequence_Tuple(value.obj);
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
+            NewReference op = Runtime.PySequence_Tuple(value.Reference);
             PythonException.ThrowIfIsNull(op);
-            return new PyTuple(op);
+            return new PyTuple(op.Steal());
         }
     }
 }

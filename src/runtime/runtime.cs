@@ -83,13 +83,11 @@ namespace Python.Runtime
         {
             get
             {
-                using (var versionTuple = new PyTuple(PySys_GetObject("version_info")))
-                {
-                    var major = Converter.ToInt32(versionTuple[0].Reference);
-                    var minor = Converter.ToInt32(versionTuple[1].Reference);
-                    var micro = Converter.ToInt32(versionTuple[2].Reference);
-                    return new Version(major, minor, micro);
-                }
+                var versionTuple = PySys_GetObject("version_info");
+                var major = Converter.ToInt32(PyTuple_GetItem(versionTuple, 0));
+                var minor = Converter.ToInt32(PyTuple_GetItem(versionTuple, 1));
+                var micro = Converter.ToInt32(PyTuple_GetItem(versionTuple, 2));
+                return new Version(major, minor, micro);
             }
         }
 
@@ -146,8 +144,7 @@ namespace Python.Runtime
 
             InitPyMembers();
 
-            ABI.Initialize(PyVersion,
-                           pyType: new BorrowedReference(PyTypeType));
+            ABI.Initialize(PyVersion);
 
             GenericUtil.Reset();
             PyScopeManager.Reset();
@@ -260,11 +257,6 @@ namespace Python.Runtime
             XDecref(op);
 
             op = PyInt_FromInt32(0);
-            SetPyMemberTypeOf(ref PyIntType, op,
-                () => PyIntType = IntPtr.Zero);
-            XDecref(op);
-
-            op = PyLong_FromLong(0);
             SetPyMemberTypeOf(ref PyLongType, op,
                 () => PyLongType = IntPtr.Zero);
             XDecref(op);
@@ -558,7 +550,6 @@ namespace Python.Runtime
         internal static IntPtr PyTupleType;
         internal static IntPtr PyListType;
         internal static IntPtr PyDictType;
-        internal static IntPtr PyIntType;
         internal static IntPtr PyLongType;
         internal static IntPtr PyFloatType;
         internal static IntPtr PyBoolType;
@@ -742,6 +733,7 @@ namespace Python.Runtime
         {
 #if DEBUG
             Debug.Assert(op == IntPtr.Zero || Refcount(op) > 0);
+            Debug.Assert(_isInitialized || Py_IsInitialized() != 0);
 #endif
 #if !CUSTOM_INCDEC_REF
             Py_DecRef(op);
@@ -1125,7 +1117,7 @@ namespace Python.Runtime
         internal static int PyObject_DelItem(IntPtr pointer, IntPtr key) => Delegates.PyObject_DelItem(pointer, key);
 
 
-        internal static IntPtr PyObject_GetIter(IntPtr op) => Delegates.PyObject_GetIter(op);
+        internal static NewReference PyObject_GetIter(BorrowedReference op) => Delegates.PyObject_GetIter(op);
 
 
         internal static IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw) => Delegates.PyObject_Call(pointer, args, kw);
@@ -1260,22 +1252,19 @@ namespace Python.Runtime
         //====================================================================
 
 
-        internal static IntPtr PyNumber_Int(IntPtr ob) => Delegates.PyNumber_Int(ob);
+        internal static NewReference PyNumber_Long(BorrowedReference ob) => Delegates.PyNumber_Long(ob);
 
 
-        internal static IntPtr PyNumber_Long(IntPtr ob) => Delegates.PyNumber_Long(ob);
-
-
-        internal static IntPtr PyNumber_Float(IntPtr ob) => Delegates.PyNumber_Float(ob);
+        internal static NewReference PyNumber_Float(BorrowedReference ob) => Delegates.PyNumber_Float(ob);
 
 
         internal static bool PyNumber_Check(IntPtr ob) => Delegates.PyNumber_Check(ob);
 
         internal static bool PyInt_Check(BorrowedReference ob)
-            => PyObject_TypeCheck(ob, new BorrowedReference(PyIntType));
+            => PyObject_TypeCheck(ob, new BorrowedReference(PyLongType));
         internal static bool PyInt_Check(IntPtr ob)
         {
-            return PyObject_TypeCheck(ob, PyIntType);
+            return PyObject_TypeCheck(ob, PyLongType);
         }
 
         internal static bool PyBool_Check(IntPtr ob)
@@ -1284,60 +1273,28 @@ namespace Python.Runtime
         }
 
         internal static IntPtr PyInt_FromInt32(int value)
-        {
-            var v = new IntPtr(value);
-            return PyInt_FromLong(v);
-        }
+            => PyLong_FromLongLong(value).DangerousMoveToPointerOrNull();
 
-        internal static IntPtr PyInt_FromInt64(long value)
-        {
-            var v = new IntPtr(value);
-            return PyInt_FromLong(v);
-        }
-
-
-        private static IntPtr PyInt_FromLong(IntPtr value) => Delegates.PyInt_FromLong(value);
-
-
-        internal static int PyInt_AsLong(IntPtr value) => Delegates.PyInt_AsLong(value);
-
+        internal static NewReference PyInt_FromInt64(long value) => PyLong_FromLongLong(value);
 
         internal static bool PyLong_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyLongType;
         }
 
-
-        internal static IntPtr PyLong_FromLong(long value) => Delegates.PyLong_FromLong(value);
-
-
-        internal static IntPtr PyLong_FromUnsignedLong32(uint value) => Delegates.PyLong_FromUnsignedLong32(value);
-
-
-        internal static IntPtr PyLong_FromUnsignedLong64(ulong value) => Delegates.PyLong_FromUnsignedLong64(value);
-
-        internal static IntPtr PyLong_FromUnsignedLong(object value)
-        {
-            if (Is32Bit || IsWindows)
-                return PyLong_FromUnsignedLong32(Convert.ToUInt32(value));
-            else
-                return PyLong_FromUnsignedLong64(Convert.ToUInt64(value));
-        }
-
-
         internal static IntPtr PyLong_FromDouble(double value) => Delegates.PyLong_FromDouble(value);
 
 
-        internal static IntPtr PyLong_FromLongLong(long value) => Delegates.PyLong_FromLongLong(value);
+        internal static NewReference PyLong_FromLongLong(long value) => Delegates.PyLong_FromLongLong(value);
 
 
-        internal static IntPtr PyLong_FromUnsignedLongLong(ulong value) => Delegates.PyLong_FromUnsignedLongLong(value);
+        internal static NewReference PyLong_FromUnsignedLongLong(ulong value) => Delegates.PyLong_FromUnsignedLongLong(value);
 
 
-        internal static IntPtr PyLong_FromString(string value, IntPtr end, int radix)
+        internal static NewReference PyLong_FromString(string value, int radix)
         {
             using var valPtr = new StrPtr(value, Encoding.UTF8);
-            return Delegates.PyLong_FromString(valPtr, end, radix);
+            return Delegates.PyLong_FromString(valPtr, IntPtr.Zero, radix);
         }
 
 
@@ -1348,18 +1305,25 @@ namespace Python.Runtime
 
         internal static nint PyLong_AsSignedSize_t(BorrowedReference value) => Delegates.PyLong_AsSignedSize_t(value);
 
-        /// <summary>
-        /// This function is a rename of PyLong_AsLongLong, which has a commonly undesired
-        /// behavior to convert everything (including floats) to integer type, before returning
-        /// the value as <see cref="Int64"/>.
-        ///
-        /// <para>In most cases you need to check that value is an instance of PyLongObject
-        /// before using this function using <see cref="PyLong_Check(IntPtr)"/>.</para>
-        /// </summary>
+        internal static long? PyLong_AsLongLong(IntPtr value)
+        {
+            long result = Delegates.PyLong_AsLongLong(value);
+            if (result == -1 && Exceptions.ErrorOccurred())
+            {
+                return null;
+            }
+            return result;
+        }
 
-        internal static long PyExplicitlyConvertToInt64(IntPtr value) => Delegates.PyExplicitlyConvertToInt64(value);
-
-        internal static ulong PyLong_AsUnsignedLongLong(IntPtr value) => Delegates.PyLong_AsUnsignedLongLong(value);
+        internal static ulong? PyLong_AsUnsignedLongLong(IntPtr value)
+        {
+            ulong result = Delegates.PyLong_AsUnsignedLongLong(value);
+            if (result == unchecked((ulong)-1) && Exceptions.ErrorOccurred())
+            {
+                return null;
+            }
+            return result;
+        }
 
         internal static bool PyFloat_Check(IntPtr ob)
         {
@@ -1542,10 +1506,10 @@ namespace Python.Runtime
         private static IntPtr _PySequence_Count(IntPtr pointer, IntPtr value) => Delegates._PySequence_Count(pointer, value);
 
 
-        internal static IntPtr PySequence_Tuple(IntPtr pointer) => Delegates.PySequence_Tuple(pointer);
+        internal static NewReference PySequence_Tuple(BorrowedReference pointer) => Delegates.PySequence_Tuple(pointer);
 
 
-        internal static IntPtr PySequence_List(IntPtr pointer) => Delegates.PySequence_List(pointer);
+        internal static NewReference PySequence_List(BorrowedReference pointer) => Delegates.PySequence_List(pointer);
 
 
         //====================================================================
@@ -1768,7 +1732,7 @@ namespace Python.Runtime
         internal static NewReference PyDict_Items(BorrowedReference pointer) => Delegates.PyDict_Items(pointer);
 
 
-        internal static IntPtr PyDict_Copy(IntPtr pointer) => Delegates.PyDict_Copy(pointer);
+        internal static NewReference PyDict_Copy(BorrowedReference pointer) => Delegates.PyDict_Copy(pointer);
 
 
         internal static int PyDict_Update(BorrowedReference pointer, BorrowedReference other) => Delegates.PyDict_Update(pointer, other);
@@ -1932,16 +1896,14 @@ namespace Python.Runtime
         //====================================================================
         // Python iterator API
         //====================================================================
-        internal static bool PyIter_Check(BorrowedReference ob) => PyIter_Check(ob.DangerousGetAddress());
-
-        internal static bool PyIter_Check(IntPtr pointer)
+        internal static bool PyIter_Check(BorrowedReference ob)
         {
-            var ob_type = PyObject_TYPE(pointer);
-            IntPtr tp_iternext = Marshal.ReadIntPtr(ob_type, TypeOffset.tp_iternext);
+            if (Delegates.PyIter_Check != null)
+                return Delegates.PyIter_Check(ob) != 0;
+            var ob_type = PyObject_TYPE(ob);
+            IntPtr tp_iternext = Marshal.ReadIntPtr(ob_type.DangerousGetAddress(), TypeOffset.tp_iternext);
             return tp_iternext != IntPtr.Zero && tp_iternext != _PyObject_NextNotImplemented;
         }
-
-
         internal static IntPtr PyIter_Next(IntPtr pointer)
             => Delegates.PyIter_Next(new BorrowedReference(pointer)).DangerousMoveToPointerOrNull();
         internal static NewReference PyIter_Next(BorrowedReference pointer) => Delegates.PyIter_Next(pointer);
@@ -2406,7 +2368,7 @@ namespace Python.Runtime
                 PyObject_GetItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetItem), GetUnmanagedDll(_PythonDll));
                 PyObject_SetItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_SetItem), GetUnmanagedDll(_PythonDll));
                 PyObject_DelItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyObject_DelItem), GetUnmanagedDll(_PythonDll));
-                PyObject_GetIter = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_GetIter), GetUnmanagedDll(_PythonDll));
+                PyObject_GetIter = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_GetIter), GetUnmanagedDll(_PythonDll));
                 PyObject_Call = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyObject_Call), GetUnmanagedDll(_PythonDll));
                 PyObject_CallObject = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_CallObject), GetUnmanagedDll(_PythonDll));
                 PyObject_RichCompareBool = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, int>)GetFunctionByName(nameof(PyObject_RichCompareBool), GetUnmanagedDll(_PythonDll));
@@ -2437,23 +2399,14 @@ namespace Python.Runtime
                 PyBuffer_ToContiguous = (delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, IntPtr, char, int>)GetFunctionByName(nameof(PyBuffer_ToContiguous), GetUnmanagedDll(_PythonDll));
                 PyBuffer_FillContiguousStrides = (delegate* unmanaged[Cdecl]<int, IntPtr, IntPtr, int, char, void>)GetFunctionByName(nameof(PyBuffer_FillContiguousStrides), GetUnmanagedDll(_PythonDll));
                 PyBuffer_FillInfo = (delegate* unmanaged[Cdecl]<ref Py_buffer, IntPtr, IntPtr, IntPtr, int, int, int>)GetFunctionByName(nameof(PyBuffer_FillInfo), GetUnmanagedDll(_PythonDll));
-                PyNumber_Int = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyNumber_Long", GetUnmanagedDll(_PythonDll));
-                PyNumber_Long = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyNumber_Long), GetUnmanagedDll(_PythonDll));
-                PyNumber_Float = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyNumber_Float), GetUnmanagedDll(_PythonDll));
+                PyNumber_Long = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyNumber_Long), GetUnmanagedDll(_PythonDll));
+                PyNumber_Float = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyNumber_Float), GetUnmanagedDll(_PythonDll));
                 PyNumber_Check = (delegate* unmanaged[Cdecl]<IntPtr, bool>)GetFunctionByName(nameof(PyNumber_Check), GetUnmanagedDll(_PythonDll));
-                PyInt_FromLong = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyLong_FromLong", GetUnmanagedDll(_PythonDll));
-                PyInt_AsLong = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName("PyLong_AsLong", GetUnmanagedDll(_PythonDll));
-                PyLong_FromLong = (delegate* unmanaged[Cdecl]<long, IntPtr>)GetFunctionByName(nameof(PyLong_FromLong), GetUnmanagedDll(_PythonDll));
-                PyLong_FromUnsignedLong32 = (delegate* unmanaged[Cdecl]<uint, IntPtr>)GetFunctionByName("PyLong_FromUnsignedLong", GetUnmanagedDll(_PythonDll));
-                PyLong_FromUnsignedLong64 = (delegate* unmanaged[Cdecl]<ulong, IntPtr>)GetFunctionByName("PyLong_FromUnsignedLong", GetUnmanagedDll(_PythonDll));
                 PyLong_FromDouble = (delegate* unmanaged[Cdecl]<double, IntPtr>)GetFunctionByName(nameof(PyLong_FromDouble), GetUnmanagedDll(_PythonDll));
-                PyLong_FromLongLong = (delegate* unmanaged[Cdecl]<long, IntPtr>)GetFunctionByName(nameof(PyLong_FromLongLong), GetUnmanagedDll(_PythonDll));
-                PyLong_FromUnsignedLongLong = (delegate* unmanaged[Cdecl]<ulong, IntPtr>)GetFunctionByName(nameof(PyLong_FromUnsignedLongLong), GetUnmanagedDll(_PythonDll));
-                PyLong_FromString = (delegate* unmanaged[Cdecl]<StrPtr, IntPtr, int, IntPtr>)GetFunctionByName(nameof(PyLong_FromString), GetUnmanagedDll(_PythonDll));
-                PyLong_AsLong = (delegate* unmanaged[Cdecl]<IntPtr, int>)GetFunctionByName(nameof(PyLong_AsLong), GetUnmanagedDll(_PythonDll));
-                PyLong_AsUnsignedLong32 = (delegate* unmanaged[Cdecl]<IntPtr, uint>)GetFunctionByName("PyLong_AsUnsignedLong", GetUnmanagedDll(_PythonDll));
-                PyLong_AsUnsignedLong64 = (delegate* unmanaged[Cdecl]<IntPtr, ulong>)GetFunctionByName("PyLong_AsUnsignedLong", GetUnmanagedDll(_PythonDll));
-                PyLong_AsLongLong = (delegate* unmanaged[Cdecl]<BorrowedReference, long>)GetFunctionByName(nameof(PyLong_AsLongLong), GetUnmanagedDll(_PythonDll));
+                PyLong_FromLongLong = (delegate* unmanaged[Cdecl]<long, NewReference>)GetFunctionByName(nameof(PyLong_FromLongLong), GetUnmanagedDll(_PythonDll));
+                PyLong_FromUnsignedLongLong = (delegate* unmanaged[Cdecl]<ulong, NewReference>)GetFunctionByName(nameof(PyLong_FromUnsignedLongLong), GetUnmanagedDll(_PythonDll));
+                PyLong_FromString = (delegate* unmanaged[Cdecl]<StrPtr, IntPtr, int, NewReference>)GetFunctionByName(nameof(PyLong_FromString), GetUnmanagedDll(_PythonDll));
+                PyLong_AsLongLong = (delegate* unmanaged[Cdecl]<IntPtr, long>)GetFunctionByName(nameof(PyLong_AsLongLong), GetUnmanagedDll(_PythonDll));
                 PyLong_AsUnsignedLongLong = (delegate* unmanaged[Cdecl]<IntPtr, ulong>)GetFunctionByName(nameof(PyLong_AsUnsignedLongLong), GetUnmanagedDll(_PythonDll));
                 PyLong_FromVoidPtr = (delegate* unmanaged[Cdecl]<IntPtr, NewReference>)GetFunctionByName(nameof(PyLong_FromVoidPtr), GetUnmanagedDll(_PythonDll));
                 PyLong_AsVoidPtr = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyLong_AsVoidPtr), GetUnmanagedDll(_PythonDll));
@@ -2498,8 +2451,8 @@ namespace Python.Runtime
                 PySequence_Repeat = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PySequence_Repeat), GetUnmanagedDll(_PythonDll));
                 PySequence_Index = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int>)GetFunctionByName(nameof(PySequence_Index), GetUnmanagedDll(_PythonDll));
                 _PySequence_Count = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr>)GetFunctionByName("PySequence_Count", GetUnmanagedDll(_PythonDll));
-                PySequence_Tuple = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PySequence_Tuple), GetUnmanagedDll(_PythonDll));
-                PySequence_List = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PySequence_List), GetUnmanagedDll(_PythonDll));
+                PySequence_Tuple = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PySequence_Tuple), GetUnmanagedDll(_PythonDll));
+                PySequence_List = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PySequence_List), GetUnmanagedDll(_PythonDll));
                 PyBytes_AsString = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyBytes_AsString), GetUnmanagedDll(_PythonDll));
                 PyBytes_FromString = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyBytes_FromString), GetUnmanagedDll(_PythonDll));
                 _PyBytes_Size = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyBytes_Size", GetUnmanagedDll(_PythonDll));
@@ -2526,7 +2479,7 @@ namespace Python.Runtime
                 PyDict_Keys = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyDict_Keys), GetUnmanagedDll(_PythonDll));
                 PyDict_Values = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyDict_Values), GetUnmanagedDll(_PythonDll));
                 PyDict_Items = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyDict_Items), GetUnmanagedDll(_PythonDll));
-                PyDict_Copy = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyDict_Copy), GetUnmanagedDll(_PythonDll));
+                PyDict_Copy = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyDict_Copy), GetUnmanagedDll(_PythonDll));
                 PyDict_Update = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyDict_Update), GetUnmanagedDll(_PythonDll));
                 PyDict_Clear = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyDict_Clear), GetUnmanagedDll(_PythonDll));
                 _PyDict_Size = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyDict_Size", GetUnmanagedDll(_PythonDll));
@@ -2549,6 +2502,10 @@ namespace Python.Runtime
                 PyTuple_SetItem = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int>)GetFunctionByName(nameof(PyTuple_SetItem), GetUnmanagedDll(_PythonDll));
                 PyTuple_GetSlice = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyTuple_GetSlice), GetUnmanagedDll(_PythonDll));
                 PyTuple_Size = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyTuple_Size), GetUnmanagedDll(_PythonDll));
+                try
+                {
+                    PyIter_Check = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyIter_Check), GetUnmanagedDll(_PythonDll));
+                } catch (MissingMethodException) { }
                 PyIter_Next = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyIter_Next), GetUnmanagedDll(_PythonDll));
                 PyModule_New = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyModule_New), GetUnmanagedDll(_PythonDll));
                 PyModule_GetName = (delegate* unmanaged[Cdecl]<IntPtr, StrPtr>)GetFunctionByName(nameof(PyModule_GetName), GetUnmanagedDll(_PythonDll));
@@ -2611,7 +2568,6 @@ namespace Python.Runtime
                 Py_MakePendingCalls = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(Py_MakePendingCalls), GetUnmanagedDll(_PythonDll));
                 PyLong_AsUnsignedSize_t = (delegate* unmanaged[Cdecl]<IntPtr, nuint>)GetFunctionByName("PyLong_AsSize_t", GetUnmanagedDll(_PythonDll));
                 PyLong_AsSignedSize_t = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName("PyLong_AsSsize_t", GetUnmanagedDll(_PythonDll));
-                PyExplicitlyConvertToInt64 = (delegate* unmanaged[Cdecl]<IntPtr, long>)GetFunctionByName("PyLong_AsLongLong", GetUnmanagedDll(_PythonDll));
                 PyDict_GetItemWithError = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference>)GetFunctionByName(nameof(PyDict_GetItemWithError), GetUnmanagedDll(_PythonDll));
                 PyException_GetCause = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyException_GetCause), GetUnmanagedDll(_PythonDll));
                 PyException_GetTraceback = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyException_GetTraceback), GetUnmanagedDll(_PythonDll));
@@ -2710,7 +2666,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PyObject_GetItem { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int> PyObject_SetItem { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PyObject_DelItem { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyObject_GetIter { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyObject_GetIter { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyObject_Call { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference> PyObject_CallObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int, int> PyObject_RichCompareBool { get; }
@@ -2734,23 +2690,14 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, IntPtr, char, int> PyBuffer_ToContiguous { get; }
             internal static delegate* unmanaged[Cdecl]<int, IntPtr, IntPtr, int, char, void> PyBuffer_FillContiguousStrides { get; }
             internal static delegate* unmanaged[Cdecl]<ref Py_buffer, IntPtr, IntPtr, IntPtr, int, int, int> PyBuffer_FillInfo { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyNumber_Int { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyNumber_Long { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyNumber_Float { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyNumber_Long { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyNumber_Float { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, bool> PyNumber_Check { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyInt_FromLong { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyInt_AsLong { get; }
-            internal static delegate* unmanaged[Cdecl]<long, IntPtr> PyLong_FromLong { get; }
-            internal static delegate* unmanaged[Cdecl]<uint, IntPtr> PyLong_FromUnsignedLong32 { get; }
-            internal static delegate* unmanaged[Cdecl]<ulong, IntPtr> PyLong_FromUnsignedLong64 { get; }
             internal static delegate* unmanaged[Cdecl]<double, IntPtr> PyLong_FromDouble { get; }
-            internal static delegate* unmanaged[Cdecl]<long, IntPtr> PyLong_FromLongLong { get; }
-            internal static delegate* unmanaged[Cdecl]<ulong, IntPtr> PyLong_FromUnsignedLongLong { get; }
-            internal static delegate* unmanaged[Cdecl]<StrPtr, IntPtr, int, IntPtr> PyLong_FromString { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, int> PyLong_AsLong { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, uint> PyLong_AsUnsignedLong32 { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, ulong> PyLong_AsUnsignedLong64 { get; }
-            internal static delegate* unmanaged[Cdecl]<BorrowedReference, long> PyLong_AsLongLong { get; }
+            internal static delegate* unmanaged[Cdecl]<long, NewReference> PyLong_FromLongLong { get; }
+            internal static delegate* unmanaged[Cdecl]<ulong, NewReference> PyLong_FromUnsignedLongLong { get; }
+            internal static delegate* unmanaged[Cdecl]<StrPtr, IntPtr, int, NewReference> PyLong_FromString { get; }
+            internal static delegate* unmanaged[Cdecl]<IntPtr, long> PyLong_AsLongLong { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, ulong> PyLong_AsUnsignedLongLong { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, NewReference> PyLong_FromVoidPtr { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyLong_AsVoidPtr { get; }
@@ -2795,8 +2742,8 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> PySequence_Repeat { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, int> PySequence_Index { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr> _PySequence_Count { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PySequence_Tuple { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PySequence_List { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PySequence_Tuple { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PySequence_List { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyBytes_AsString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyBytes_FromString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyBytes_Size { get; }
@@ -2823,7 +2770,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyDict_Keys { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyDict_Values { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyDict_Items { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyDict_Copy { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyDict_Copy { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyDict_Update { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyDict_Clear { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyDict_Size { get; }
@@ -2846,6 +2793,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int> PyTuple_SetItem { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyTuple_GetSlice { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyTuple_Size { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyIter_Check { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyIter_Next { get; }
             internal static delegate* unmanaged[Cdecl]<StrPtr, NewReference> PyModule_New { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, StrPtr> PyModule_GetName { get; }
@@ -2900,7 +2848,6 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<int> Py_MakePendingCalls { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, nuint> PyLong_AsUnsignedSize_t { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyLong_AsSignedSize_t { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr, long> PyExplicitlyConvertToInt64 { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference> PyDict_GetItemWithError { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyException_GetCause { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyException_GetTraceback { get; }

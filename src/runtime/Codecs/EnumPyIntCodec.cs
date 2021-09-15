@@ -3,9 +3,9 @@ using System;
 namespace Python.Runtime.Codecs
 {
     [Obsolete]
-    public sealed class EnumPyLongCodec : IPyObjectEncoder, IPyObjectDecoder
+    public sealed class EnumPyIntCodec : IPyObjectEncoder, IPyObjectDecoder
     {
-        public static EnumPyLongCodec Instance { get; } = new EnumPyLongCodec();
+        public static EnumPyIntCodec Instance { get; } = new EnumPyIntCodec();
 
         public bool CanDecode(PyObject objectType, Type targetType)
         {
@@ -25,7 +25,7 @@ namespace Python.Runtime.Codecs
 
             Type etype = Enum.GetUnderlyingType(typeof(T));
 
-            if (!PyLong.IsLongType(pyObj)) return false;
+            if (!PyInt.IsIntType(pyObj)) return false;
 
             object result;
             try
@@ -55,14 +55,14 @@ namespace Python.Runtime.Codecs
 
             try
             {
-                return new PyLong((long)value);
+                return new PyInt((long)value);
             }
             catch (InvalidCastException)
             {
-                return new PyLong((ulong)value);
+                return new PyInt((ulong)value);
             }
         }
 
-        private EnumPyLongCodec() { }
+        private EnumPyIntCodec() { }
     }
 }

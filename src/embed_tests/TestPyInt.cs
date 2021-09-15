@@ -83,15 +83,6 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        public void TestCtorPtr()
-        {
-            var i = new PyInt(5);
-            Runtime.Runtime.XIncref(i.Handle);
-            var a = new PyInt(i.Handle);
-            Assert.AreEqual(5, a.ToInt32());
-        }
-
-        [Test]
         public void TestCtorPyObject()
         {
             var i = new PyInt(5);
@@ -184,9 +175,10 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestConvertToInt64()
         {
-            var a = new PyInt(5);
+            long val = 5 + (long)int.MaxValue;
+            var a = new PyInt(val);
             Assert.IsInstanceOf(typeof(long), a.ToInt64());
-            Assert.AreEqual(5, a.ToInt64());
+            Assert.AreEqual(val, a.ToInt64());
         }
     }
 }

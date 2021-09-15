@@ -59,13 +59,12 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        public void TestCtorPtr()
+        public void TestCtorBorrowed()
         {
             const string expected = "foo";
 
             var t = new PyString(expected);
-            Runtime.Runtime.XIncref(t.Handle);
-            var actual = new PyString(t.Handle);
+            var actual = new PyString(t.Reference);
 
             Assert.AreEqual(expected, actual.ToString());
         }

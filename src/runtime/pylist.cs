@@ -10,32 +10,20 @@ namespace Python.Runtime
     /// </summary>
     public class PyList : PySequence
     {
-        /// <summary>
-        /// PyList Constructor
-        /// </summary>
-        /// <remarks>
-        /// Creates a new PyList from an existing object reference. Note
-        /// that the instance assumes ownership of the object reference.
-        /// The object reference is not checked for type-correctness.
-        /// </remarks>
-        public PyList(IntPtr ptr) : base(ptr)
-        {
-        }
-
+        internal PyList(in StolenReference reference) : base(reference) { }
         /// <summary>
         /// Creates new <see cref="PyList"/> pointing to the same object, as the given reference.
         /// </summary>
         internal PyList(BorrowedReference reference) : base(reference) { }
 
 
-        private static IntPtr FromObject(PyObject o)
+        private static BorrowedReference FromObject(PyObject o)
         {
             if (o == null || !IsListType(o))
             {
                 throw new ArgumentException("object is not a list");
             }
-            Runtime.XIncref(o.obj);
-            return o.obj;
+            return o.Reference;
         }
 
         /// <summary>
@@ -52,21 +40,23 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// PyList Constructor
-        /// </summary>
-        /// <remarks>
         /// Creates a new empty Python list object.
-        /// </remarks>
-        public PyList() : base(Runtime.PyList_New(0))
+        /// </summary>
+        public PyList() : base(NewEmtpy().Steal())
         {
-            if (obj == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
         }
 
-        private static IntPtr FromArray(PyObject[] items)
+        private static NewReference NewEmtpy()
         {
+            IntPtr ptr = Runtime.PyList_New(0);
+            PythonException.ThrowIfIsNull(ptr);
+            return NewReference.DangerousFromPointer(ptr);
+        }
+
+        private static NewReference FromArray(PyObject[] items)
+        {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
             int count = items.Length;
             IntPtr val = Runtime.PyList_New(count);
             for (var i = 0; i < count; i++)
@@ -80,59 +70,53 @@ namespace Python.Runtime
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
-            return val;
+            return NewReference.DangerousFromPointer(val);
         }
 
         /// <summary>
-        /// PyList Constructor
+        /// Creates a new Python list object from an array of objects.
         /// </summary>
-        /// <remarks>
-        /// Creates a new Python list object from an array of PyObjects.
-        /// </remarks>
-        public PyList(PyObject[] items) : base(FromArray(items))
+        public PyList(PyObject[] items) : base(FromArray(items).Steal())
         {
         }
 
         /// <summary>
-        /// IsListType Method
-        /// </summary>
-        /// <remarks>
         /// Returns true if the given object is a Python list.
-        /// </remarks>
+        /// </summary>
         public static bool IsListType(PyObject value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
             return Runtime.PyList_Check(value.obj);
         }
 
 
         /// <summary>
-        /// AsList Method
-        /// </summary>
-        /// <remarks>
         /// Converts a Python object to a Python list if possible, raising
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "list(object)".
-        /// </remarks>
+        /// </summary>
         public static PyList AsList(PyObject value)
         {
-            IntPtr op = Runtime.PySequence_List(value.obj);
-            if (op == IntPtr.Zero)
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
+            NewReference op = Runtime.PySequence_List(value.Reference);
+            if (op.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            return new PyList(op);
+            return new PyList(op.Steal());
         }
 
 
         /// <summary>
-        /// Append Method
-        /// </summary>
-        /// <remarks>
         /// Append an item to the list object.
-        /// </remarks>
+        /// </summary>
         public void Append(PyObject item)
         {
-            int r = Runtime.PyList_Append(this.Reference, new BorrowedReference(item.obj));
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
+            int r = Runtime.PyList_Append(this.Reference, item.Reference);
             if (r < 0)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -140,13 +124,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Insert Method
-        /// </summary>
-        /// <remarks>
         /// Insert an item in the list object at the given index.
-        /// </remarks>
+        /// </summary>
         public void Insert(int index, PyObject item)
         {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
             int r = Runtime.PyList_Insert(this.Reference, index, item.obj);
             if (r < 0)
             {

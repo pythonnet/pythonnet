@@ -10,7 +10,7 @@ namespace Python.Runtime.Native
         public static int RefCountOffset { get; } = GetRefCountOffset();
         public static int ObjectHeadOffset => RefCountOffset;
 
-        internal static void Initialize(Version version, BorrowedReference pyType)
+        internal static void Initialize(Version version)
         {
             string offsetsClassSuffix = string.Format(CultureInfo.InvariantCulture,
                                                       "{0}{1}", version.Major, version.Minor);

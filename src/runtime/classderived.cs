@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -172,8 +173,7 @@ namespace Python.Runtime
             var pyProperties = new HashSet<string>();
             if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
             {
-                Runtime.XIncref(py_dict);
-                using (var dict = new PyDict(py_dict))
+                using var dict = new PyDict(new BorrowedReference(py_dict));
                 using (PyIterable keys = dict.Keys())
                 {
                     foreach (PyObject pyKey in keys)
@@ -221,8 +221,7 @@ namespace Python.Runtime
             // Add any additional methods and properties explicitly exposed from Python.
             if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
             {
-                Runtime.XIncref(py_dict);
-                using (var dict = new PyDict(py_dict))
+                using var dict = new PyDict(new BorrowedReference(py_dict));
                 using (PyIterable keys = dict.Keys())
                 {
                     foreach (PyObject pyKey in keys)
@@ -257,7 +256,9 @@ namespace Python.Runtime
                 Type.EmptyTypes);
             ILGenerator il = methodBuilder.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
+#pragma warning disable CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("Finalize"));
+#pragma warning restore CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
             il.Emit(OpCodes.Ret);
@@ -329,7 +330,9 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Stelem, typeof(object));
             }
             il.Emit(OpCodes.Ldloc_0);
+#pragma warning disable CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeCtor"));
+#pragma warning restore CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Ret);
         }
 
@@ -407,6 +410,7 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Stelem, typeof(object));
             }
             il.Emit(OpCodes.Ldloc_0);
+#pragma warning disable CS0618 // PythonDerivedType is for internal use only
             if (method.ReturnType == typeof(void))
             {
                 il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
@@ -416,6 +420,7 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Call,
                     typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(method.ReturnType));
             }
+#pragma warning restore CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Ret);
         }
 
@@ -489,6 +494,7 @@ namespace Python.Runtime
                     il.Emit(OpCodes.Stelem, typeof(object));
                 }
                 il.Emit(OpCodes.Ldloc_0);
+#pragma warning disable CS0618 // PythonDerivedType is for internal use only
                 if (returnType == typeof(void))
                 {
                     il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
@@ -498,6 +504,7 @@ namespace Python.Runtime
                     il.Emit(OpCodes.Call,
                         typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(returnType));
                 }
+#pragma warning restore CS0618 // PythonDerivedType is for internal use only
                 il.Emit(OpCodes.Ret);
             }
         }
@@ -545,8 +552,10 @@ namespace Python.Runtime
                             ILGenerator il = methodBuilder.GetILGenerator();
                             il.Emit(OpCodes.Ldarg_0);
                             il.Emit(OpCodes.Ldstr, propertyName);
+#pragma warning disable CS0618 // PythonDerivedType is for internal use only
                             il.Emit(OpCodes.Call,
                                 typeof(PythonDerivedType).GetMethod("InvokeGetProperty").MakeGenericMethod(propertyType));
+#pragma warning restore CS0618 // PythonDerivedType is for internal use only
                             il.Emit(OpCodes.Ret);
 
                             propertyBuilder.SetGetMethod(methodBuilder);
@@ -569,8 +578,10 @@ namespace Python.Runtime
                             il.Emit(OpCodes.Ldarg_0);
                             il.Emit(OpCodes.Ldstr, propertyName);
                             il.Emit(OpCodes.Ldarg_1);
+#pragma warning disable CS0618 // PythonDerivedType is for internal use only
                             il.Emit(OpCodes.Call,
                                 typeof(PythonDerivedType).GetMethod("InvokeSetProperty").MakeGenericMethod(propertyType));
+#pragma warning restore CS0618 // PythonDerivedType is for internal use only
                             il.Emit(OpCodes.Ret);
 
                             propertyBuilder.SetSetMethod(methodBuilder);
@@ -622,6 +633,8 @@ namespace Python.Runtime
     /// This has to be public as it's called from methods on dynamically built classes
     /// potentially in other assemblies.
     /// </remarks>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete(Util.InternalUseOnly)]
     public class PythonDerivedType
     {
         /// <summary>

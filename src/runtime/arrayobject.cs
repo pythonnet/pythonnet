@@ -147,7 +147,7 @@ namespace Python.Runtime
             var items = obj.inst as Array;
             Type itemType = arrObj.type.Value.GetElementType();
             int rank = items.Rank;
-            int index;
+            nint index;
             object value;
 
             // Note that CLR 1.0 only supports int indexes - methods to
@@ -165,9 +165,9 @@ namespace Python.Runtime
                 {
                     return RaiseIndexMustBeIntegerError(idx);
                 }
-                index = Runtime.PyInt_AsLong(idx);
+                index = Runtime.PyLong_AsSignedSize_t(idx);
 
-                if (Exceptions.ErrorOccurred())
+                if (index == -1 && Exceptions.ErrorOccurred())
                 {
                     return Exceptions.RaiseTypeError("invalid index value");
                 }
@@ -200,33 +200,33 @@ namespace Python.Runtime
 
             var count = Runtime.PyTuple_Size(idx);
 
-            var args = new int[count];
+            long[] indices = new long[count];
 
-            for (var i = 0; i < count; i++)
+            for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, i);
+                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     return RaiseIndexMustBeIntegerError(op);
                 }
-                index = Runtime.PyInt_AsLong(op);
+                index = Runtime.PyLong_AsSignedSize_t(op);
 
-                if (Exceptions.ErrorOccurred())
+                if (index == -1 && Exceptions.ErrorOccurred())
                 {
                     return Exceptions.RaiseTypeError("invalid index value");
                 }
 
                 if (index < 0)
                 {
-                    index = items.GetLength(i) + index;
+                    index = items.GetLength(dimension) + index;
                 }
 
-                args.SetValue(index, i);
+                indices[dimension] = index;
             }
 
             try
             {
-                value = items.GetValue(args);
+                value = items.GetValue(indices);
             }
             catch (IndexOutOfRangeException)
             {
@@ -247,7 +247,7 @@ namespace Python.Runtime
             var items = obj.inst as Array;
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
-            int index;
+            nint index;
             object value;
 
             if (items.IsReadOnly)
@@ -268,9 +268,9 @@ namespace Python.Runtime
                     RaiseIndexMustBeIntegerError(idx);
                     return -1;
                 }
-                index = Runtime.PyInt_AsLong(idx);
+                index = Runtime.PyLong_AsSignedSize_t(idx);
 
-                if (Exceptions.ErrorOccurred())
+                if (index == -1 && Exceptions.ErrorOccurred())
                 {
                     Exceptions.RaiseTypeError("invalid index value");
                     return -1;
@@ -301,19 +301,19 @@ namespace Python.Runtime
             }
 
             var count = Runtime.PyTuple_Size(idx);
-            var args = new int[count];
+            long[] indices = new long[count];
 
-            for (var i = 0; i < count; i++)
+            for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, i);
+                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     RaiseIndexMustBeIntegerError(op);
                     return -1;
                 }
-                index = Runtime.PyInt_AsLong(op);
+                index = Runtime.PyLong_AsSignedSize_t(op);
 
-                if (Exceptions.ErrorOccurred())
+                if (index == -1 && Exceptions.ErrorOccurred())
                 {
                     Exceptions.RaiseTypeError("invalid index value");
                     return -1;
@@ -321,15 +321,15 @@ namespace Python.Runtime
 
                 if (index < 0)
                 {
-                    index = items.GetLength(i) + index;
+                    index = items.GetLength(dimension) + index;
                 }
 
-                args.SetValue(index, i);
+                indices[dimension] = index;
             }
 
             try
             {
-                items.SetValue(value, args);
+                items.SetValue(value, indices);
             }
             catch (IndexOutOfRangeException)
             {
