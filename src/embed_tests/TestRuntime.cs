@@ -68,20 +68,26 @@ namespace Python.EmbeddingTest
         {
             Runtime.Runtime.Py_Initialize();
 
-            // Tests that a python list is an iterable, but not an iterator
-            var pyList = Runtime.Runtime.PyList_New(0);
-            Assert.IsFalse(Runtime.Runtime.PyIter_Check(pyList));
-            Assert.IsTrue(Runtime.Runtime.PyObject_IsIterable(pyList));
+            Runtime.Native.ABI.Initialize(Runtime.Runtime.PyVersion);
 
-            // Tests that a python list iterator is both an iterable and an iterator
-            var pyListIter = Runtime.Runtime.PyObject_GetIter(pyList);
-            Assert.IsTrue(Runtime.Runtime.PyObject_IsIterable(pyListIter));
-            Assert.IsTrue(Runtime.Runtime.PyIter_Check(pyListIter));
+            // Tests that a python list is an iterable, but not an iterator
+            using (var pyList = NewReference.DangerousFromPointer(Runtime.Runtime.PyList_New(0)))
+            {
+                Assert.IsFalse(Runtime.Runtime.PyIter_Check(pyList));
+                Assert.IsTrue(Runtime.Runtime.PyObject_IsIterable(pyList));
+
+                // Tests that a python list iterator is both an iterable and an iterator
+                using var pyListIter = Runtime.Runtime.PyObject_GetIter(pyList);
+                Assert.IsTrue(Runtime.Runtime.PyObject_IsIterable(pyListIter));
+                Assert.IsTrue(Runtime.Runtime.PyIter_Check(pyListIter));
+            }
 
             // Tests that a python float is neither an iterable nor an iterator
-            var pyFloat = Runtime.Runtime.PyFloat_FromDouble(2.73);
-            Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(pyFloat));
-            Assert.IsFalse(Runtime.Runtime.PyIter_Check(pyFloat));
+            using (var pyFloat = NewReference.DangerousFromPointer(Runtime.Runtime.PyFloat_FromDouble(2.73)))
+            {
+                Assert.IsFalse(Runtime.Runtime.PyObject_IsIterable(pyFloat));
+                Assert.IsFalse(Runtime.Runtime.PyIter_Check(pyFloat));
+            }
 
             Runtime.Runtime.Py_Finalize();
         }
@@ -90,6 +96,8 @@ namespace Python.EmbeddingTest
         public static void PyCheck_Iter_PyObject_IsIterable_ThreadingLock_Test()
         {
             Runtime.Runtime.Py_Initialize();
+
+            Runtime.Native.ABI.Initialize(Runtime.Runtime.PyVersion);
 
             try
             {

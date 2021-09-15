@@ -94,7 +94,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void ConvertOverflow()
         {
-            using (var num = new PyLong(ulong.MaxValue))
+            using (var num = new PyInt(ulong.MaxValue))
             {
                 IntPtr largeNum = PyRuntime.PyNumber_Add(num.Handle, num.Handle);
                 try

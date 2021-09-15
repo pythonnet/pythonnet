@@ -79,8 +79,7 @@ namespace Python.Runtime
         /// </summary>
         public PyDict Variables()
         {
-            Runtime.XIncref(variables);
-            return new PyDict(variables);
+            return new PyDict(VarsRef);
         }
 
         /// <summary>
@@ -101,7 +100,7 @@ namespace Python.Runtime
         /// Import a scope or a module of given name,
         /// scope will be looked up first.
         /// </remarks>
-        public dynamic Import(string name, string asname = null)
+        public PyObject Import(string name, string asname = null)
         {
             Check();
             if (String.IsNullOrEmpty(asname))
@@ -124,25 +123,22 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Import method
-        /// </summary>
-        /// <remarks>
         /// Import a scope as a variable of given name.
-        /// </remarks>
+        /// </summary>
         public void Import(PyScope scope, string asname)
         {
+            if (scope is null) throw new ArgumentNullException(nameof(scope));
             this.SetPyValue(asname, scope.Handle);
         }
 
         /// <summary>
-        /// Import Method
-        /// </summary>
-        /// <remarks>
         /// The 'import .. as ..' statement in Python.
         /// Import a module as a variable into the scope.
-        /// </remarks>
+        /// </summary>
         public void Import(PyObject module, string asname = null)
         {
+            if (module is null) throw new ArgumentNullException(nameof(module));
+
             if (String.IsNullOrEmpty(asname))
             {
                 asname = module.GetAttr("__name__").As<string>();
@@ -151,12 +147,9 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// ImportAll Method
-        /// </summary>
-        /// <remarks>
         /// The 'import * from ..' statement in Python.
         /// Import all content of a scope/module of given name into the scope, scope will be looked up first.
-        /// </remarks>
+        /// </summary>
         public void ImportAll(string name)
         {
             PyScope scope;
@@ -174,13 +167,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// ImportAll Method
-        /// </summary>
-        /// <remarks>
         /// Import all variables of the scope into this scope.
-        /// </remarks>
+        /// </summary>
         public void ImportAll(PyScope scope)
         {
+            if (scope is null) throw new ArgumentNullException(nameof(scope));
+
             int result = Runtime.PyDict_Update(VarsRef, scope.VarsRef);
             if (result < 0)
             {
@@ -189,13 +181,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// ImportAll Method
-        /// </summary>
-        /// <remarks>
         /// Import all variables of the module into this scope.
-        /// </remarks>
+        /// </summary>
         public void ImportAll(PyObject module)
         {
+            if (module is null) throw new ArgumentNullException(nameof(module));
+
             if (Runtime.PyObject_Type(module.obj) != Runtime.PyModuleType)
             {
                 throw new PyScopeException("object is not a module");
@@ -209,13 +200,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// ImportAll Method
-        /// </summary>
-        /// <remarks>
         /// Import all variables in the dictionary into this scope.
-        /// </remarks>
+        /// </summary>
         public void ImportAll(PyDict dict)
         {
+            if (dict is null) throw new ArgumentNullException(nameof(dict));
+
             int result = Runtime.PyDict_Update(VarsRef, dict.Reference);
             if (result < 0)
             {
@@ -224,14 +214,13 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Execute method
-        /// </summary>
-        /// <remarks>
         /// Execute a Python ast and return the result as a PyObject.
         /// The ast can be either an expression or stmts.
-        /// </remarks>
+        /// </summary>
         public PyObject Execute(PyObject script, PyDict locals = null)
         {
+            if (script is null) throw new ArgumentNullException(nameof(script));
+
             Check();
             IntPtr _locals = locals == null ? variables : locals.obj;
             IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, variables, _locals);
@@ -245,15 +234,14 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Execute method
-        /// </summary>
-        /// <remarks>
         /// Execute a Python ast and return the result as a PyObject,
         /// and convert the result to a Managed Object of given type.
         /// The ast can be either an expression or stmts.
-        /// </remarks>
+        /// </summary>
         public T Execute<T>(PyObject script, PyDict locals = null)
         {
+            if (script is null) throw new ArgumentNullException(nameof(script));
+
             Check();
             PyObject pyObj = Execute(script, locals);
             if (pyObj == null)
@@ -265,14 +253,13 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Eval method
-        /// </summary>
-        /// <remarks>
         /// Evaluate a Python expression and return the result as a PyObject
         /// or null if an exception is raised.
-        /// </remarks>
+        /// </summary>
         public PyObject Eval(string code, PyDict locals = null)
         {
+            if (code is null) throw new ArgumentNullException(nameof(code));
+
             Check();
             BorrowedReference _locals = locals == null ? VarsRef : locals.Reference;
 
@@ -285,13 +272,12 @@ namespace Python.Runtime
 
         /// <summary>
         /// Evaluate a Python expression
+        /// and convert the result to a managed object of given type.
         /// </summary>
-        /// <remarks>
-        /// Evaluate a Python expression
-        /// and  convert the result to a Managed Object of given type.
-        /// </remarks>
         public T Eval<T>(string code, PyDict locals = null)
         {
+            if (code is null) throw new ArgumentNullException(nameof(code));
+
             Check();
             PyObject pyObj = Eval(code, locals);
             var obj = pyObj.As<T>();
@@ -306,6 +292,8 @@ namespace Python.Runtime
         /// </remarks>
         public void Exec(string code, PyDict locals = null)
         {
+            if (code is null) throw new ArgumentNullException(nameof(code));
+
             Check();
             BorrowedReference _locals = locals == null ? VarsRef : locals.Reference;
             Exec(code, VarsRef, _locals);

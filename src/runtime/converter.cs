@@ -54,7 +54,7 @@ namespace Python.Runtime
             if (op == Runtime.PyUnicodeType)
                 return stringType;
 
-            if (op == Runtime.PyIntType)
+            if (op == Runtime.PyLongType)
                 return int32Type;
 
             if (op == Runtime.PyLongType)
@@ -75,13 +75,13 @@ namespace Python.Runtime
                 return Runtime.PyUnicodeType;
 
             if (op == int16Type)
-                return Runtime.PyIntType;
+                return Runtime.PyLongType;
 
             if (op == int32Type)
-                return Runtime.PyIntType;
+                return Runtime.PyLongType;
 
             if (op == int64Type)
-                return Runtime.PyIntType;
+                return Runtime.PyLongType;
 
             if (op == doubleType)
                 return Runtime.PyFloatType;
@@ -231,7 +231,7 @@ namespace Python.Runtime
                     return Runtime.PyInt_FromInt32((short)value);
 
                 case TypeCode.Int64:
-                    return Runtime.PyLong_FromLongLong((long)value);
+                    return Runtime.PyLong_FromLongLong((long)value).DangerousMoveToPointerOrNull();
 
                 case TypeCode.Single:
                     return Runtime.PyFloat_FromDouble((float)value);
@@ -246,10 +246,10 @@ namespace Python.Runtime
                     return Runtime.PyInt_FromInt32((ushort)value);
 
                 case TypeCode.UInt32:
-                    return Runtime.PyLong_FromUnsignedLong((uint)value);
+                    return Runtime.PyLong_FromUnsignedLongLong((uint)value).DangerousMoveToPointerOrNull();
 
                 case TypeCode.UInt64:
-                    return Runtime.PyLong_FromUnsignedLongLong((ulong)value);
+                    return Runtime.PyLong_FromUnsignedLongLong((ulong)value).DangerousMoveToPointerOrNull();
 
                 default:
                     return CLRObject.GetInstHandle(value, type);
@@ -457,7 +457,7 @@ namespace Python.Runtime
                     return true;
                 }
 
-                if (value == Runtime.PyIntType || value == Runtime.PyLongType)
+                if (value == Runtime.PyLongType)
                 {
                     result = typeof(PyInt);
                     return true;
@@ -705,12 +705,12 @@ namespace Python.Runtime
                             {
                                 goto type_error;
                             }
-                            long num = Runtime.PyExplicitlyConvertToInt64(value);
-                            if (num == -1 && Exceptions.ErrorOccurred())
+                            long? num = Runtime.PyLong_AsLongLong(value);
+                            if (num is null)
                             {
                                 goto convert_error;
                             }
-                            result = num;
+                            result = num.Value;
                             return true;
                         }
                         else
@@ -757,12 +757,12 @@ namespace Python.Runtime
 
                 case TypeCode.UInt64:
                     {
-                        ulong num = Runtime.PyLong_AsUnsignedLongLong(value);
-                        if (num == ulong.MaxValue && Exceptions.ErrorOccurred())
+                        ulong? num = Runtime.PyLong_AsUnsignedLongLong(value);
+                        if (num is null)
                         {
                             goto convert_error;
                         }
-                        result = num;
+                        result = num.Value;
                         return true;
                     }
 
@@ -854,8 +854,8 @@ namespace Python.Runtime
             Type elementType = obType.GetElementType();
             result = null;
 
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-            if (IterObject == IntPtr.Zero)
+            using var IterObject = Runtime.PyObject_GetIter(new BorrowedReference(value));
+            if (IterObject.IsNull())
             {
                 if (setError)
                 {
@@ -908,21 +908,18 @@ namespace Python.Runtime
                 return false;
             }
 
-            IntPtr item;
-
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
+            while (true)
             {
+                using var item = Runtime.PyIter_Next(IterObject);
+                if (item.IsNull()) break;
+
                 if (!Converter.ToManaged(item, elementType, out var obj, setError))
                 {
-                    Runtime.XDecref(item);
-                    Runtime.XDecref(IterObject);
                     return false;
                 }
 
                 list.Add(obj);
-                Runtime.XDecref(item);
             }
-            Runtime.XDecref(IterObject);
 
             if (Exceptions.ErrorOccurred())
             {

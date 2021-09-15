@@ -10,15 +10,7 @@ namespace Python.Runtime
     /// </summary>
     public class PyInt : PyNumber
     {
-        /// <summary>
-        /// PyInt Constructor
-        /// </summary>
-        /// <remarks>
-        /// Creates a new PyInt from an existing object reference. Note
-        /// that the instance assumes ownership of the object reference.
-        /// The object reference is not checked for type-correctness.
-        /// </remarks>
-        public PyInt(IntPtr ptr) : base(ptr)
+        internal PyInt(in StolenReference ptr) : base(ptr)
         {
         }
 
@@ -40,21 +32,21 @@ namespace Python.Runtime
         {
         }
 
-        private static IntPtr FromObject(PyObject o)
+        private static BorrowedReference FromObject(PyObject o)
         {
-            if (o == null || !IsIntType(o))
+            if (o is null) throw new ArgumentNullException(nameof(o));
+            if (!IsIntType(o))
             {
                 throw new ArgumentException("object is not an int");
             }
-            Runtime.XIncref(o.obj);
-            return o.obj;
+            return o.Reference;
         }
 
-        private static IntPtr FromInt(int value)
+        private static NewReference FromInt(int value)
         {
             IntPtr val = Runtime.PyInt_FromInt32(value);
             PythonException.ThrowIfIsNull(val);
-            return val;
+            return NewReference.DangerousFromPointer(val);
         }
 
         /// <summary>
@@ -63,7 +55,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an int32 value.
         /// </remarks>
-        public PyInt(int value) : base(FromInt(value))
+        public PyInt(int value) : base(FromInt(value).Steal())
         {
         }
 
@@ -89,22 +81,25 @@ namespace Python.Runtime
         {
         }
 
-        private static IntPtr FromLong(long value)
+        private static StolenReference FromLong(long value)
         {
-            IntPtr val = Runtime.PyInt_FromInt64(value);
+            var val = Runtime.PyInt_FromInt64(value);
             PythonException.ThrowIfIsNull(val);
-            return val;
+            return val.Steal();
         }
 
-
         /// <summary>
-        /// PyInt Constructor
+        /// Creates a new Python int from a <see cref="UInt64"/> value.
         /// </summary>
-        /// <remarks>
-        /// Creates a new Python int from a uint64 value.
-        /// </remarks>
-        public PyInt(ulong value) : base(FromLong((long)value))
+        public PyInt(ulong value) : base(FromUInt64(value))
         {
+        }
+
+        private static StolenReference FromUInt64(ulong value)
+        {
+            var val = Runtime.PyLong_FromUnsignedLongLong(value);
+            PythonException.ThrowIfIsNull(val);
+            return val.Steal();
         }
 
 
@@ -152,11 +147,11 @@ namespace Python.Runtime
         }
 
 
-        private static IntPtr FromString(string value)
+        private static StolenReference FromString(string value)
         {
-            IntPtr val = Runtime.PyLong_FromString(value, IntPtr.Zero, 0);
+            NewReference val = Runtime.PyLong_FromString(value, 0);
             PythonException.ThrowIfIsNull(val);
-            return val;
+            return val.Steal();
         }
 
         /// <summary>
@@ -178,23 +173,22 @@ namespace Python.Runtime
         /// </remarks>
         public static bool IsIntType(PyObject value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
             return Runtime.PyInt_Check(value.obj);
         }
 
 
         /// <summary>
-        /// AsInt Method
-        /// </summary>
-        /// <remarks>
         /// Convert a Python object to a Python int if possible, raising
         /// a PythonException if the conversion is not possible. This is
         /// equivalent to the Python expression "int(object)".
-        /// </remarks>
+        /// </summary>
         public static PyInt AsInt(PyObject value)
         {
-            IntPtr op = Runtime.PyNumber_Int(value.obj);
+            if (value is null) throw new ArgumentNullException(nameof(value));
+            var op = Runtime.PyNumber_Long(value.Reference);
             PythonException.ThrowIfIsNull(op);
-            return new PyInt(op);
+            return new PyInt(op.Steal());
         }
 
 
@@ -211,16 +205,9 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// ToInt32 Method
+        /// Return the value of the Python int object as an <see cref="Int32"/>.
         /// </summary>
-        /// <remarks>
-        /// Return the value of the Python int object as an int32.
-        /// </remarks>
-        public int ToInt32()
-        {
-            return Runtime.PyInt_AsLong(obj);
-        }
-
+        public int ToInt32() => Converter.ToInt32(Reference);
 
         /// <summary>
         /// ToInt64 Method
@@ -230,7 +217,12 @@ namespace Python.Runtime
         /// </remarks>
         public long ToInt64()
         {
-            return Convert.ToInt64(ToInt32());
+            long? val = Runtime.PyLong_AsLongLong(obj);
+            if (val is null)
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return val.Value;
         }
     }
 }

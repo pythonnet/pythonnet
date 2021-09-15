@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Python.Runtime
 {
@@ -109,6 +108,7 @@ namespace Python.Runtime
         /// </summary>
         public IntPtr GetPointer(long[] indices)
         {
+            if (indices is null) throw new ArgumentNullException(nameof(indices));
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
             if (Runtime.PyVersion < new Version(3, 7))
@@ -147,7 +147,7 @@ namespace Python.Runtime
         /// <summary>
         /// Fill the strides array with byte-strides of a contiguous (C-style if order is 'C' or Fortran-style if order is 'F') array of the given shape with the given number of bytes per element.
         /// </summary>
-        public static void FillContiguousStrides(int ndims, IntPtr shape, IntPtr strides, int itemsize, BufferOrderStyle order)
+        internal static void FillContiguousStrides(int ndims, IntPtr shape, IntPtr strides, int itemsize, BufferOrderStyle order)
         {
             Runtime.PyBuffer_FillContiguousStrides(ndims, shape, strides, itemsize, OrderStyleToChar(order, false));
         }
@@ -162,7 +162,7 @@ namespace Python.Runtime
         /// If this function is used as part of a getbufferproc, exporter MUST be set to the exporting object and flags must be passed unmodified.Otherwise, exporter MUST be NULL.
         /// </remarks>
         /// <returns>On success, set view->obj to a new reference to exporter and return 0. Otherwise, raise PyExc_BufferError, set view->obj to NULL and return -1;</returns>
-        public void FillInfo(IntPtr exporter, IntPtr buf, long len, bool _readonly, int flags)
+        internal void FillInfo(IntPtr exporter, IntPtr buf, long len, bool _readonly, int flags)
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
@@ -187,6 +187,8 @@ namespace Python.Runtime
                 throw new ArgumentOutOfRangeException("count", "Count is bigger than the python buffer.");
             if (_view.ndim != 1)
                 throw new NotSupportedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
+            if (!this.IsContiguous(BufferOrderStyle.C))
+                throw new NotImplementedException("Only continuous buffers are supported");
 
             Marshal.Copy(buffer, offset, _view.buf, count);
         }
@@ -203,6 +205,8 @@ namespace Python.Runtime
                 throw new NotSupportedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
             if (_view.len.ToInt64() > int.MaxValue)
                 throw new NotSupportedException("Python buffers bigger than int.MaxValue are not supported.");
+            if (!this.IsContiguous(BufferOrderStyle.C))
+                throw new NotImplementedException("Only continuous buffers are supported");
 
             int copylen = count < (int)_view.len ? count : (int)_view.len;
             Marshal.Copy(_view.buf, buffer, offset, copylen);

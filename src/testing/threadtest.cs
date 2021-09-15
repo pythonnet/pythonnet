@@ -29,8 +29,7 @@ namespace Python.Test
         /// </summary>
         public static string CallEchoString(string arg)
         {
-            IntPtr gs = PythonEngine.AcquireLock();
-            try
+            using (Py.GIL())
             {
                 if (module == null)
                 {
@@ -45,16 +44,11 @@ namespace Python.Test
                 temp.Dispose();
                 return result;
             }
-            finally
-            {
-                PythonEngine.ReleaseLock(gs);
-            }
         }
 
         public static string CallEchoString2(string arg)
         {
-            IntPtr gs = PythonEngine.AcquireLock();
-            try
+            using (Py.GIL())
             {
                 if (module == null)
                 {
@@ -69,10 +63,6 @@ namespace Python.Test
                 parg.Dispose();
                 temp.Dispose();
                 return result;
-            }
-            finally
-            {
-                PythonEngine.ReleaseLock(gs);
             }
         }
     }

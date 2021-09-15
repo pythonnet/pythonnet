@@ -38,7 +38,7 @@ namespace Python.Runtime.Codecs
                 Runtime.PyTuple_SetItem(tuple, fieldIndex, pyItem);
                 fieldIndex++;
             }
-            return new PyTuple(tuple);
+            return new PyTuple(StolenReference.DangerousFromPointer(tuple));
         }
 
         public bool CanDecode(PyObject objectType, Type targetType)

@@ -19,9 +19,13 @@ namespace Python.Runtime.CollectionWrappers
 
         public IEnumerator<T> GetEnumerator()
         {
-            PyObject iterObject = null;
+            PyObject iterObject;
             using (Py.GIL())
-                iterObject = new PyObject(Runtime.PyObject_GetIter(pyObject.Handle));
+            {
+                var iter = Runtime.PyObject_GetIter(pyObject.Reference);
+                PythonException.ThrowIfIsNull(iter);
+                iterObject = iter.MoveToPyObject();
+            }
 
             while (true)
             {

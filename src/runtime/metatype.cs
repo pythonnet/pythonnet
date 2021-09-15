@@ -127,8 +127,7 @@ namespace Python.Runtime
             // into python.
             if (IntPtr.Zero != dict)
             {
-                Runtime.XIncref(dict);
-                using (var clsDict = new PyDict(dict))
+                using (var clsDict = new PyDict(new BorrowedReference(dict)))
                 {
                     if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
                     {
@@ -328,8 +327,7 @@ namespace Python.Runtime
                 return Runtime.PyFalse;
             }
 
-            Runtime.XIncref(args);
-            using (var argsObj = new PyList(args))
+            using (var argsObj = new PyList(new BorrowedReference(args)))
             {
                 if (argsObj.Length() != 1)
                 {

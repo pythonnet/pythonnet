@@ -13,11 +13,8 @@ namespace Python.Runtime
     /// </remarks>
     public class PyNumber : PyObject
     {
-        protected PyNumber(IntPtr ptr) : base(ptr)
-        {
-        }
-
-        internal PyNumber(BorrowedReference reference): base(reference) { }
+        internal PyNumber(in StolenReference reference) : base(reference) { }
+        internal PyNumber(BorrowedReference reference) : base(reference) { }
 
         /// <summary>
         /// IsNumberType Method
@@ -27,6 +24,8 @@ namespace Python.Runtime
         /// </remarks>
         public static bool IsNumberType(PyObject value)
         {
+            if (value is null) throw new ArgumentNullException(nameof(value));
+
             return Runtime.PyNumber_Check(value.obj);
         }
     }

@@ -13,27 +13,18 @@ namespace Python.Runtime
     /// </remarks>
     public class PyString : PySequence
     {
-        /// <summary>
-        /// PyString Constructor
-        /// </summary>
-        /// <remarks>
-        /// Creates a new PyString from an existing object reference. Note
-        /// that the instance assumes ownership of the object reference.
-        /// The object reference is not checked for type-correctness.
-        /// </remarks>
-        public PyString(IntPtr ptr) : base(ptr)
-        {
-        }
+        internal PyString(in StolenReference reference) : base(reference) { }
+        internal PyString(BorrowedReference reference) : base(reference) { }
 
 
-        private static IntPtr FromObject(PyObject o)
+        private static BorrowedReference FromObject(PyObject o)
         {
-            if (o == null || !IsStringType(o))
+            if (o is null) throw new ArgumentNullException(nameof(o));
+            if (!IsStringType(o))
             {
                 throw new ArgumentException("object is not a string");
             }
-            Runtime.XIncref(o.obj);
-            return o.obj;
+            return o.Reference;
         }
 
         /// <summary>
@@ -49,11 +40,11 @@ namespace Python.Runtime
         }
 
 
-        private static IntPtr FromString(string s)
+        private static NewReference FromString(string s)
         {
             IntPtr val = Runtime.PyString_FromString(s);
             PythonException.ThrowIfIsNull(val);
-            return val;
+            return NewReference.DangerousFromPointer(val);
         }
         /// <summary>
         /// PyString Constructor
@@ -61,7 +52,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-        public PyString(string s) : base(FromString(s))
+        public PyString(string s) : base(FromString(s).Steal())
         {
         }
 

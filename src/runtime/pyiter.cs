@@ -21,7 +21,7 @@ namespace Python.Runtime
         /// that the instance assumes ownership of the object reference.
         /// The object reference is not checked for type-correctness.
         /// </remarks>
-        public PyIter(IntPtr ptr) : base(ptr)
+        internal PyIter(in StolenReference reference) : base(reference)
         {
         }
 
@@ -42,22 +42,19 @@ namespace Python.Runtime
         internal PyIter(BorrowedReference reference) : base(reference) { }
 
         /// <summary>
-        /// PyIter factory function.
+        /// Create a new <see cref="PyIter"/> from a given iterable.
+        ///
+        /// Like doing "iter(<paramref name="iterable"/>)" in Python.
         /// </summary>
-        /// <remarks>
-        /// Create a new PyIter from a given iterable.  Like doing "iter(iterable)" in python.
-        /// </remarks>
-        /// <param name="iterable"></param>
-        /// <returns></returns>
         public static PyIter GetIter(PyObject iterable)
         {
             if (iterable == null)
             {
                 throw new ArgumentNullException();
             }
-            IntPtr val = Runtime.PyObject_GetIter(iterable.obj);
+            var val = Runtime.PyObject_GetIter(iterable.Reference);
             PythonException.ThrowIfIsNull(val);
-            return new PyIter(val);
+            return new PyIter(val.Steal());
         }
 
         protected override void Dispose(bool disposing)
