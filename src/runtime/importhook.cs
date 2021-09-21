@@ -120,7 +120,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             var mod_dict = Runtime.PyModule_GetDict(import_hook_module);
             // reference not stolen due to overload incref'ing for us.
             Runtime.PyTuple_SetItem(args, 1, mod_dict);
-            Runtime.PyObject_Call(exec, args, default);
+            Runtime.PyObject_Call(exec, args, default).Dispose();
             // Set as a sub-module of clr.
             if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module.DangerousGetAddress()) != 0)
             {

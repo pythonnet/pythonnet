@@ -30,21 +30,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Given a true delegate instance, return the PyObject handle of the
-        /// Python object implementing the delegate (or IntPtr.Zero if the
-        /// delegate is not implemented in Python code.
-        /// </summary>
-        public IntPtr GetPythonHandle(Delegate d)
-        {
-            if (d?.Target is Dispatcher)
-            {
-                var disp = (Dispatcher)d.Target;
-                return disp.target;
-            }
-            return IntPtr.Zero;
-        }
-
-        /// <summary>
         /// GetDispatcher is responsible for creating a class that provides
         /// an appropriate managed callback method for a given delegate type.
         /// </summary>
@@ -224,39 +209,13 @@ namespace Python.Runtime
 
     public class Dispatcher
     {
-        public IntPtr target;
-        public Type dtype;
-        private bool _disposed = false;
-        private bool _finalized = false;
+        readonly PyObject target;
+        readonly Type dtype;
 
         public Dispatcher(IntPtr target, Type dtype)
         {
-            Runtime.XIncref(target);
-            this.target = target;
+            this.target = new PyObject(new BorrowedReference(target));
             this.dtype = dtype;
-        }
-
-        ~Dispatcher()
-        {
-            if (_finalized || _disposed)
-            {
-                return;
-            }
-            _finalized = true;
-            Finalizer.Instance.AddFinalizedObject(ref target);
-        }
-
-        public void Dispose()
-        {
-            if (_disposed)
-            {
-                return;
-            }
-            _disposed = true;
-            Runtime.XDecref(target);
-            target = IntPtr.Zero;
-            dtype = null;
-            GC.SuppressFinalize(this);
         }
 
         public object Dispatch(object[] args)
@@ -280,26 +239,36 @@ namespace Python.Runtime
         {
             MethodInfo method = dtype.GetMethod("Invoke");
             ParameterInfo[] pi = method.GetParameters();
-            IntPtr pyargs = Runtime.PyTuple_New(pi.Length);
             Type rtype = method.ReturnType;
 
-            for (var i = 0; i < pi.Length; i++)
+            NewReference op;
+            using (var pyargs = NewReference.DangerousFromPointer(Runtime.PyTuple_New(pi.Length)))
             {
-                // Here we own the reference to the Python value, and we
-                // give the ownership to the arg tuple.
-                IntPtr arg = Converter.ToPython(args[i], pi[i].ParameterType);
-                Runtime.PyTuple_SetItem(pyargs, i, arg);
+                for (var i = 0; i < pi.Length; i++)
+                {
+                    // Here we own the reference to the Python value, and we
+                    // give the ownership to the arg tuple.
+                    var arg = Converter.ToPythonReference(args[i], pi[i].ParameterType);
+                    if (arg.IsNull())
+                    {
+                        throw PythonException.ThrowLastAsClrException();
+                    }
+                    int res = Runtime.PyTuple_SetItem(pyargs, i, arg.Steal());
+                    if (res != 0)
+                    {
+                        throw PythonException.ThrowLastAsClrException();
+                    }
+                }
+
+                op = Runtime.PyObject_Call(target.Reference, pyargs, BorrowedReference.Null);
             }
 
-            IntPtr op = Runtime.PyObject_Call(target, pyargs, IntPtr.Zero);
-            Runtime.XDecref(pyargs);
-
-            if (op == IntPtr.Zero)
+            if (op.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
 
-            try
+            using (op)
             {
                 int byRefCount = pi.Count(parameterInfo => parameterInfo.ParameterType.IsByRef);
                 if (byRefCount > 0)
@@ -339,7 +308,7 @@ namespace Python.Runtime
                             Type t = pi[i].ParameterType;
                             if (t.IsByRef)
                             {
-                                IntPtr item = Runtime.PyTuple_GetItem(op, index++);
+                                BorrowedReference item = Runtime.PyTuple_GetItem(op, index++);
                                 if (!Converter.ToManaged(item, t, out object newArg, true))
                                 {
                                     Exceptions.RaiseTypeError($"The Python function returned a tuple where element {i} was not {t.GetElementType()} (the out parameter type)");
@@ -352,7 +321,7 @@ namespace Python.Runtime
                         {
                             return null;
                         }
-                        IntPtr item0 = Runtime.PyTuple_GetItem(op, 0);
+                        BorrowedReference item0 = Runtime.PyTuple_GetItem(op, 0);
                         if (!Converter.ToManaged(item0, rtype, out object result0, true))
                         {
                             Exceptions.RaiseTypeError($"The Python function returned a tuple where element 0 was not {rtype} (the return type)");
@@ -396,10 +365,6 @@ namespace Python.Runtime
                 }
 
                 return result;
-            }
-            finally
-            {
-                Runtime.XDecref(op);
             }
         }
     }
