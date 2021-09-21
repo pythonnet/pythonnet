@@ -1013,6 +1013,8 @@ namespace Python.Runtime
         internal static NewReference PyObject_Type(BorrowedReference o)
             => Delegates.PyObject_Type(o);
 
+        internal static string PyObject_GetTypeName(BorrowedReference op)
+            => PyObject_GetTypeName(op.DangerousGetAddress());
         internal static string PyObject_GetTypeName(IntPtr op)
         {
             IntPtr pyType = PyObject_TYPE(op);
@@ -1097,8 +1099,8 @@ namespace Python.Runtime
 
 
         internal static IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw) => Delegates.PyObject_Call(pointer, args, kw);
-        internal static IntPtr PyObject_Call(BorrowedReference pointer, BorrowedReference args, BorrowedReference kw) 
-            => Delegates.PyObject_Call(pointer.DangerousGetAddress(), args.DangerousGetAddress(), kw.DangerousGetAddressOrNull());
+        internal static NewReference PyObject_Call(BorrowedReference pointer, BorrowedReference args, BorrowedReference kw) 
+            => NewReference.DangerousFromPointer(Delegates.PyObject_Call(pointer.DangerousGetAddress(), args.DangerousGetAddress(), kw.DangerousGetAddressOrNull()));
 
 
         internal static NewReference PyObject_CallObject(BorrowedReference callable, BorrowedReference args) => Delegates.PyObject_CallObject(callable, args);

@@ -112,6 +112,8 @@ namespace Python.Runtime
 
         internal static NewReference ToPythonReference<T>(T value)
             => NewReference.DangerousFromPointer(ToPython(value, typeof(T)));
+        internal static NewReference ToPythonReference(object value, Type type)
+            => NewReference.DangerousFromPointer(ToPython(value, type));
 
         private static readonly Func<object, bool> IsTransparentProxy = GetIsTransparentProxy();
 
