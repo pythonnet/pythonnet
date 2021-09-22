@@ -19,13 +19,10 @@ namespace Python.EmbeddingTest
     /// </remarks>
     public class PyImportTest
     {
-        private IntPtr _gs;
-
-        [SetUp]
+        [OneTimeSetUp]
         public void SetUp()
         {
             PythonEngine.Initialize();
-            _gs = PythonEngine.AcquireLock();
 
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
@@ -41,10 +38,9 @@ namespace Python.EmbeddingTest
             Runtime.Runtime.XDecref(str);
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.ReleaseLock(_gs);
             PythonEngine.Shutdown();
         }
 
