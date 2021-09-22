@@ -6,19 +6,15 @@ namespace Python.EmbeddingTest
 {
     public class TestPythonException
     {
-        private IntPtr _gs;
-
-        [SetUp]
+        [OneTimeSetUp]
         public void SetUp()
         {
             PythonEngine.Initialize();
-            _gs = PythonEngine.AcquireLock();
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.ReleaseLock(_gs);
             PythonEngine.Shutdown();
         }
 

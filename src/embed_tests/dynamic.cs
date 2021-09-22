@@ -7,28 +7,16 @@ namespace Python.EmbeddingTest
 {
     public class DynamicTest
     {
-        private Py.GILState _gs;
-
-        [SetUp]
+        [OneTimeSetUp]
         public void SetUp()
         {
-            try {
-                _gs = Py.GIL();
-            } catch (Exception e) {
-                Console.WriteLine($"exception in SetUp: {e}");
-                throw;
-            }
+            PythonEngine.Initialize();
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
-            try {
-                _gs.Dispose();
-            } catch(Exception e) {
-                Console.WriteLine($"exception in TearDown: {e}");
-                throw;
-            }
+            PythonEngine.Shutdown();
         }
 
         /// <summary>
