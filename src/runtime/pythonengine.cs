@@ -570,8 +570,9 @@ namespace Python.Runtime
         /// <returns>The Python thread ID.</returns>
         public static ulong GetPythonThreadID()
         {
-            dynamic threading = Py.Import("threading");
-            return threading.InvokeMethod("get_ident");
+            using PyObject threading = Py.Import("threading");
+            using PyObject id = threading.InvokeMethod("get_ident");
+            return id.As<ulong>();
         }
 
         /// <summary>
