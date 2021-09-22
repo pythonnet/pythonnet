@@ -103,6 +103,12 @@ namespace Python.Runtime
             return Exceptions.ErrorCheckIfNull(result);
         }
 
+        internal static TypeFlags GetFlags(BorrowedReference type)
+        {
+            Debug.Assert(TypeOffset.tp_flags > 0);
+            return (TypeFlags)Util.ReadCLong(type.DangerousGetAddress(), TypeOffset.tp_flags);
+        }
+
         internal static BorrowedReference GetBase(BorrowedReference type)
         {
             Debug.Assert(IsType(type));

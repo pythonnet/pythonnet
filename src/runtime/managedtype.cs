@@ -28,6 +28,8 @@ namespace Python.Runtime
         internal IntPtr pyHandle; // PyObject *
         internal IntPtr tpHandle; // PyType *
 
+        internal bool clearReentryGuard;
+
         internal BorrowedReference ObjectReference => new(pyHandle);
         internal BorrowedReference TypeReference => new(tpHandle);
 
@@ -145,7 +147,7 @@ namespace Python.Runtime
 
         internal static bool IsManagedType(BorrowedReference type)
         {
-            var flags = (TypeFlags)Util.ReadCLong(type.DangerousGetAddress(), TypeOffset.tp_flags);
+            var flags = PyType.GetFlags(type);
             return (flags & TypeFlags.HasClrInstance) != 0;
         }
 

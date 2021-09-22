@@ -360,18 +360,40 @@ namespace Python.Runtime
 
         public static int tp_clear(IntPtr ob)
         {
-            ManagedType self = GetManagedObject(ob);
+            if (GetManagedObject(ob) is { } self)
+            {
+                if (self.clearReentryGuard) return 0;
 
+                // workaround for https://bugs.python.org/issue45266
+                self.clearReentryGuard = true;
+
+                try
+                {
+                    return ClearImpl(ob, self);
+                }
+                finally
+                {
+                    self.clearReentryGuard = false;
+                }
+            }
+            else
+            {
+                return ClearImpl(ob, null);
+            }
+        }
+
+        static int ClearImpl(IntPtr ob, ManagedType self)
+        {
             bool isTypeObject = Runtime.PyObject_TYPE(ob) == Runtime.PyCLRMetaType;
             if (!isTypeObject)
             {
-                ClearObjectDict(ob);
-
                 int baseClearResult = BaseUnmanagedClear(ob);
                 if (baseClearResult != 0)
                 {
                     return baseClearResult;
                 }
+
+                ClearObjectDict(ob);
             }
             if (self is not null) self.tpHandle = IntPtr.Zero;
             return 0;
