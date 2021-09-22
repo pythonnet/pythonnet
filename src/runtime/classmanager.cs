@@ -67,7 +67,6 @@ namespace Python.Runtime
                     // since others may still referencing it.
                     cls.CallTypeTraverse(TraverseTypeClear, visitedPtr);
                     cls.CallTypeClear();
-                    cls.DecrRefCount();
                 }
             }
             finally

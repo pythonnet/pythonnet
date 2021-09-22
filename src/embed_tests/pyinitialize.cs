@@ -46,6 +46,22 @@ namespace Python.EmbeddingTest
             }
         }
 
+        // regression test for https://github.com/pythonnet/pythonnet/issues/1561
+        [Test]
+        public void ImportClassShutdownRefcount()
+        {
+            PythonEngine.Initialize();
+
+            PyObject ns = Py.Import(typeof(ImportClassShutdownRefcountClass).Namespace);
+            PyObject cls = ns.GetAttr(nameof(ImportClassShutdownRefcountClass));
+            ns.Dispose();
+
+            Assert.Less(cls.Refcount, 256);
+
+            PythonEngine.Shutdown();
+            Assert.Greater(cls.Refcount, 0);
+        }
+
         /// <summary>
         /// Failing test demonstrating current issue with OverflowException (#376)
         /// and ArgumentException issue after that one is fixed.
@@ -182,4 +198,6 @@ namespace Python.EmbeddingTest
             Assert.True(called);
         }
     }
+
+    public class ImportClassShutdownRefcountClass { }
 }
