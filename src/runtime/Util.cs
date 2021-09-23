@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -68,5 +69,7 @@ namespace Python.Runtime
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
         }
+
+        public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> enumerator) => enumerator;
     }
 }

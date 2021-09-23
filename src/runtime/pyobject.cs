@@ -17,7 +17,7 @@ namespace Python.Runtime
     /// </summary>
     [Serializable]
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public partial class PyObject : DynamicObject, IEnumerable<PyObject>, IDisposable
+    public partial class PyObject : DynamicObject, IDisposable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -80,7 +80,7 @@ namespace Python.Runtime
 #endif
         }
 
-        internal PyObject(StolenReference reference)
+        internal PyObject(in StolenReference reference)
         {
             if (reference == null) throw new ArgumentNullException(nameof(reference));
 
@@ -702,21 +702,6 @@ namespace Python.Runtime
             }
             return new PyObject(r);
         }
-
-        /// <summary>
-        /// GetEnumerator Method
-        /// </summary>
-        /// <remarks>
-        /// Return a new PyIter object for the object. This allows any iterable
-        /// python object to be iterated over in C#. A PythonException will be
-        /// raised if the object is not iterable.
-        /// </remarks>
-        public IEnumerator<PyObject> GetEnumerator()
-        {
-            return PyIter.GetIter(this);
-        }
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
 
         /// <summary>
         /// Invoke Method

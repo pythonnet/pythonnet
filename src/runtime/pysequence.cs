@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 
 namespace Python.Runtime
 {
@@ -10,13 +9,14 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/sequence.html
     /// for details.
     /// </summary>
-    public class PySequence : PyObject, IEnumerable
+    public class PySequence : PyIterable
     {
-        protected PySequence(IntPtr ptr) : base(ptr)
+        protected internal PySequence(IntPtr ptr) : base(ptr)
         {
         }
 
         internal PySequence(BorrowedReference reference) : base(reference) { }
+        internal PySequence(StolenReference reference) : base(reference) { }
 
 
         /// <summary>
@@ -29,7 +29,6 @@ namespace Python.Runtime
         {
             return Runtime.PySequence_Check(value.obj);
         }
-
 
         /// <summary>
         /// GetSlice Method

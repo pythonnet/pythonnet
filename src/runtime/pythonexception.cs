@@ -387,7 +387,7 @@ namespace Python.Runtime
             using var traceback = PyModule.Import("traceback");
             var buffer = new StringBuilder();
             using var values = traceback.InvokeMethod("format_exception", copy.Type, copy.Value, copy.Traceback);
-            foreach (PyObject val in values)
+            foreach (PyObject val in PyIter.GetIter(values))
             {
                 buffer.Append(val);
                 val.Dispose();

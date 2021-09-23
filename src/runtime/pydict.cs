@@ -8,7 +8,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/dict.html
     /// for details.
     /// </summary>
-    public class PyDict : PyObject
+    public class PyDict : PyIterable
     {
         /// <summary>
         /// PyDict Constructor
@@ -102,14 +102,14 @@ namespace Python.Runtime
         /// <remarks>
         /// Returns a sequence containing the keys of the dictionary.
         /// </remarks>
-        public PyObject Keys()
+        public PyIterable Keys()
         {
             using var items = Runtime.PyDict_Keys(Reference);
             if (items.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            return items.MoveToPyObject();
+            return new PyIterable(items.Steal());
         }
 
 
@@ -119,14 +119,14 @@ namespace Python.Runtime
         /// <remarks>
         /// Returns a sequence containing the values of the dictionary.
         /// </remarks>
-        public PyObject Values()
+        public PyIterable Values()
         {
             IntPtr items = Runtime.PyDict_Values(obj);
             if (items == IntPtr.Zero)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            return new PyObject(items);
+            return new PyIterable(items);
         }
 
 
@@ -136,22 +136,14 @@ namespace Python.Runtime
         /// <remarks>
         /// Returns a sequence containing the items of the dictionary.
         /// </remarks>
-        public PyObject Items()
+        public PyIterable Items()
         {
-            var items = Runtime.PyDict_Items(this.Reference);
-            try
+            using var items = Runtime.PyDict_Items(this.Reference);
+            if (items.IsNull())
             {
-                if (items.IsNull())
-                {
-                    throw PythonException.ThrowLastAsClrException();
-                }
-
-                return items.MoveToPyObject();
+                throw PythonException.ThrowLastAsClrException();
             }
-            finally
-            {
-                items.Dispose();
-            }
+            return new PyIterable(items.Steal());
         }
 
 

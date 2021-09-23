@@ -45,12 +45,12 @@ namespace Python.EmbeddingTest {
         [Test]
         public void TupleConversionsObject()
         {
-            TupleConversionsObject<ValueTuple<int, string, object>, ValueTuple>();
+            TupleConversionsObject<ValueTuple<double, string, object>, ValueTuple>();
         }
         static void TupleConversionsObject<T, TTuple>()
         {
             TupleCodec<TTuple>.Register();
-            var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
+            var tuple = Activator.CreateInstance(typeof(T), 42.0, "42", new object());
             T restored = default;
             using (var scope = Py.CreateScope())
             {
@@ -66,11 +66,11 @@ namespace Python.EmbeddingTest {
         [Test]
         public void TupleRoundtripObject()
         {
-            TupleRoundtripObject<ValueTuple<int, string, object>, ValueTuple>();
+            TupleRoundtripObject<ValueTuple<double, string, object>, ValueTuple>();
         }
         static void TupleRoundtripObject<T, TTuple>()
         {
-            var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
+            var tuple = Activator.CreateInstance(typeof(T), 42.0, "42", new object());
             var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
             Assert.AreEqual(expected: tuple, actual: restored);
@@ -231,7 +231,7 @@ namespace Python.EmbeddingTest {
             //ensure a PyList can be converted to a plain IEnumerable
             System.Collections.IEnumerable plainEnumerable1 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out plainEnumerable1); });
-            CollectionAssert.AreEqual(plainEnumerable1, new List<object> { 1, 2, 3 });
+            CollectionAssert.AreEqual(plainEnumerable1.Cast<PyInt>().Select(i => i.ToInt32()), new List<object> { 1, 2, 3 });
 
             //can convert to any generic ienumerable.  If the type is not assignable from the python element
             //it will lead to an empty iterable when decoding.  TODO - should it throw?
@@ -271,7 +271,7 @@ namespace Python.EmbeddingTest {
             var fooType = foo.GetPythonType();
             System.Collections.IEnumerable plainEnumerable2 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out plainEnumerable2); });
-            CollectionAssert.AreEqual(plainEnumerable2, new List<object> { 1, 2, 3 });
+            CollectionAssert.AreEqual(plainEnumerable2.Cast<PyInt>().Select(i => i.ToInt32()), new List<object> { 1, 2, 3 });
 
             //can convert to any generic ienumerable.  If the type is not assignable from the python element
             //it will be an exception during TryDecode
