@@ -174,7 +174,7 @@ namespace Python.Runtime
             {
                 Runtime.XIncref(py_dict);
                 using (var dict = new PyDict(py_dict))
-                using (PyObject keys = dict.Keys())
+                using (PyIterable keys = dict.Keys())
                 {
                     foreach (PyObject pyKey in keys)
                     {
@@ -223,7 +223,7 @@ namespace Python.Runtime
             {
                 Runtime.XIncref(py_dict);
                 using (var dict = new PyDict(py_dict))
-                using (PyObject keys = dict.Keys())
+                using (PyIterable keys = dict.Keys())
                 {
                     foreach (PyObject pyKey in keys)
                     {
@@ -439,17 +439,12 @@ namespace Python.Runtime
             }
 
             using (PyObject pyReturnType = func.GetAttr("_clr_return_type_"))
-            using (PyObject pyArgTypes = func.GetAttr("_clr_arg_types_"))
+            using (var pyArgTypes = PyIter.GetIter(func.GetAttr("_clr_arg_types_")))
             {
                 var returnType = pyReturnType.AsManagedObject(typeof(Type)) as Type;
                 if (returnType == null)
                 {
                     returnType = typeof(void);
-                }
-
-                if (!pyArgTypes.IsIterable())
-                {
-                    throw new ArgumentException("_clr_arg_types_ must be a list or tuple of CLR types");
                 }
 
                 var argTypes = new List<Type>();
