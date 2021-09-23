@@ -22,6 +22,11 @@ namespace Python.Runtime
         {
         }
 
+        internal PyInt(BorrowedReference reference): base(reference)
+        {
+            if (!Runtime.PyInt_Check(reference)) throw new ArgumentException("object is not an int");
+        }
+
 
         /// <summary>
         /// PyInt Constructor

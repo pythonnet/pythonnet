@@ -17,6 +17,8 @@ namespace Python.Runtime
         {
         }
 
+        internal PyNumber(BorrowedReference reference): base(reference) { }
+
         /// <summary>
         /// IsNumberType Method
         /// </summary>
