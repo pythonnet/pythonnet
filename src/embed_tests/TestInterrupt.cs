@@ -66,9 +66,9 @@ namespace Python.EmbeddingTest
                 {
                     Interlocked.Exchange(ref pythonThreadID, (long)PythonEngine.GetPythonThreadID());
                     return PythonEngine.RunSimpleString(@"
-import time
-
 try:
+  import time
+
   while True:
     time.sleep(0.2)
 except KeyboardInterrupt:
