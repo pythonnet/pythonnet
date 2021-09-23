@@ -5,9 +5,9 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
-    public class PyScopeTest
+    public class Modules
     {
-        private PyScope ps;
+        private PyModule ps;
 
         [SetUp]
         public void SetUp()
@@ -15,7 +15,7 @@ namespace Python.EmbeddingTest
             using (Py.GIL())
             {
                 ps = Py.CreateScope("test");
-            }                
+            }
         }
 
         [TearDown]
@@ -26,6 +26,18 @@ namespace Python.EmbeddingTest
                 ps.Dispose();
                 ps = null;
             }
+        }
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            PythonEngine.Initialize();
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            PythonEngine.Shutdown();
         }
 
         /// <summary>
@@ -243,7 +255,7 @@ namespace Python.EmbeddingTest
                     "def func1():\n" +
                     "    return cc + bb\n");
 
-                using (PyScope scope = ps.NewScope())
+                using (var scope = ps.NewScope())
                 {
                     //'func1' is imported from the origion scope
                     scope.Exec(
@@ -264,27 +276,6 @@ namespace Python.EmbeddingTest
                     Assert.AreEqual(10, result3);
                     ps.Set("cc", 10); //rollback
                 }
-            }
-        }
-
-        /// <summary>
-        /// Import a python module into the session with a new name.
-        /// Equivalent to the Python "import .. as .." statement.
-        /// </summary>
-        [Test]
-        public void TestImportScopeByName()
-        {
-            using (Py.GIL())
-            {
-                ps.Set("bb", 100);
-
-                using (var scope = Py.CreateScope())
-                {
-                    scope.ImportAll("test");
-                    //scope.ImportModule("test");
-
-                    Assert.IsTrue(scope.Contains("bb"));
-                }                    
             }
         }
 
@@ -380,6 +371,35 @@ namespace Python.EmbeddingTest
             {
                 PythonEngine.EndAllowThreads(ts);
             }
+        }
+
+        [Test]
+        public void TestCreate()
+        {
+            using var scope = Py.CreateScope();
+
+            Assert.IsFalse(PyModule.SysModules.HasKey("testmod"));
+
+            PyModule testmod = new PyModule("testmod");
+
+            testmod.SetAttr("testattr1", "True".ToPython());
+
+            PyModule.SysModules.SetItem("testmod", testmod);
+
+            using PyObject code = PythonEngine.Compile(
+                "import testmod\n" +
+                "x = testmod.testattr1"
+                );
+            scope.Execute(code);
+
+            Assert.IsTrue(scope.TryGet("x", out dynamic x));
+            Assert.AreEqual("True", x.ToString());
+        }
+
+        [Test]
+        public void ImportClrNamespace()
+        {
+            Py.Import(GetType().Namespace);
         }
     }
 }

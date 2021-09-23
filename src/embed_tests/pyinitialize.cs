@@ -95,15 +95,6 @@ namespace Python.EmbeddingTest
             PythonEngine.Shutdown();
         }
 
-        [Test]
-        public void TestScopeIsShutdown()
-        {
-            PythonEngine.Initialize();
-            var scope = PyScopeManager.Global.Create("test");
-            PythonEngine.Shutdown();
-            Assert.That(PyScopeManager.Global.Contains("test"), Is.False);
-        }
-
         /// <summary>
         /// Helper for testing the shutdown handlers.
         /// </summary>
