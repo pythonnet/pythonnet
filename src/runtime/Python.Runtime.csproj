@@ -39,13 +39,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="resources\clr.py" />
     <EmbeddedResource Include="resources\clr.py">
       <LogicalName>clr.py</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\interop.py">
       <LogicalName>interop.py</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Mixins\*.py" />
   </ItemGroup>
 
   <ItemGroup>

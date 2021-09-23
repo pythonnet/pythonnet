@@ -12,7 +12,7 @@ namespace Python.Runtime
 
         internal CLRObject(object ob, IntPtr tp)
         {
-            System.Diagnostics.Debug.Assert(tp != IntPtr.Zero);
+            Debug.Assert(tp != IntPtr.Zero);
             IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
 
             tpHandle = tp;

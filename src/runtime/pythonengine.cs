@@ -224,10 +224,8 @@ namespace Python.Runtime
             var locals = new PyDict();
             try
             {
-                BorrowedReference module = Runtime.PyImport_AddModule("clr._extras");
+                BorrowedReference module = DefineModule("clr._extras");
                 BorrowedReference module_globals = Runtime.PyModule_GetDict(module);
-                BorrowedReference builtins = Runtime.PyEval_GetBuiltins();
-                Runtime.PyDict_SetItemString(module_globals, "__builtins__", builtins);
 
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 // add the contents of clr.py to the module
@@ -235,6 +233,8 @@ namespace Python.Runtime
                 Exec(clr_py, module_globals, locals.Reference);
 
                 LoadSubmodule(module_globals, "clr.interop", "interop.py");
+
+                    LoadMixins(module_globals);
 
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
@@ -279,6 +279,16 @@ namespace Python.Runtime
             Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
 
             Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
+        }
+
+        static void LoadMixins(BorrowedReference targetModuleDict)
+        {
+            foreach (string nested in new[] { "collections" })
+            {
+                LoadSubmodule(targetModuleDict,
+                    fullName: "clr._extras." + nested,
+                    resourceName: typeof(PythonEngine).Namespace + ".Mixins." + nested + ".py");
+            }
         }
 
         static void OnDomainUnload(object _, EventArgs __)
@@ -641,7 +651,7 @@ namespace Python.Runtime
                 {
                     globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
                     Runtime.PyDict_SetItem(
-                        globals, PyIdentifier.__builtins__,
+                        globals, new BorrowedReference(PyIdentifier.__builtins__),
                         Runtime.PyEval_GetBuiltins()
                     );
                 }

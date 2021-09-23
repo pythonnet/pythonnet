@@ -3,6 +3,8 @@ namespace Python.Runtime
     using System;
     using System.Collections.Generic;
 
+    using Python.Runtime.Mixins;
+
     public sealed class InteropConfiguration
     {
         internal readonly PythonBaseTypeProviderGroup pythonBaseTypeProviders
@@ -18,6 +20,7 @@ namespace Python.Runtime
                 PythonBaseTypeProviders =
                 {
                     DefaultBaseTypeProvider.Instance,
+                    new CollectionMixinsProvider(new Lazy<PyObject>(() => Py.Import("clr._extras.collections"))),
                 },
             };
         }
