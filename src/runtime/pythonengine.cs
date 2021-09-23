@@ -228,13 +228,11 @@ namespace Python.Runtime
                 BorrowedReference module_globals = Runtime.PyModule_GetDict(module);
 
                 Assembly assembly = Assembly.GetExecutingAssembly();
-                using (Stream stream = assembly.GetManifestResourceStream("clr.py"))
-                using (var reader = new StreamReader(stream))
-                {
-                    // add the contents of clr.py to the module
-                    string clr_py = reader.ReadToEnd();
-                    Exec(clr_py, module_globals, locals.Reference);
-                }
+                // add the contents of clr.py to the module
+                string clr_py = assembly.ReadStringResource("clr.py");
+                Exec(clr_py, module_globals, locals.Reference);
+
+                LoadSubmodule(module_globals, "clr.interop", "interop.py");
 
                     LoadMixins(module_globals);
 
@@ -268,31 +266,29 @@ namespace Python.Runtime
             return module;
         }
 
+        static void LoadSubmodule(BorrowedReference targetModuleDict, string fullName, string resourceName)
+        {
+            string memberName = fullName.AfterLast('.');
+            Debug.Assert(memberName != null);
+
+            var module = DefineModule(fullName);
+            var module_globals = Runtime.PyModule_GetDict(module);
+
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string pyCode = assembly.ReadStringResource(resourceName);
+            Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+
+            Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
+        }
+
         static void LoadMixins(BorrowedReference targetModuleDict)
         {
-            foreach (string nested in new[] {"collections"})
+            foreach (string nested in new[] { "collections" })
             {
                 LoadSubmodule(targetModuleDict,
                     fullName: "clr._extras." + nested,
                     resourceName: typeof(PythonEngine).Namespace + ".Mixins." + nested + ".py");
             }
-        }
-
-        static void LoadSubmodule(BorrowedReference targetModuleDict, string fullName, string resourceName)
-        {
-            string memberName = fullName.AfterLast('.');
-            Debug.Assert(memberName != null);
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            var module = DefineModule(fullName);
-            var module_globals = Runtime.PyModule_GetDict(module);
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            using (var reader = new StreamReader(stream))
-            {
-                string pyCode = reader.ReadToEnd();
-                Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
-            }
-
-            Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
         }
 
         static void OnDomainUnload(object _, EventArgs __)

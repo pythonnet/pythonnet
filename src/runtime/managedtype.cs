@@ -30,8 +30,23 @@ namespace Python.Runtime
 
         internal bool clearReentryGuard;
 
-        internal BorrowedReference ObjectReference => new(pyHandle);
-        internal BorrowedReference TypeReference => new(tpHandle);
+        internal BorrowedReference ObjectReference
+        {
+            get
+            {
+                Debug.Assert(pyHandle != IntPtr.Zero);
+                return new(pyHandle);
+            }
+        }
+
+        internal BorrowedReference TypeReference
+        {
+            get
+            {
+                Debug.Assert(tpHandle != IntPtr.Zero);
+                return new(tpHandle);
+            }
+        }
 
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
@@ -312,6 +327,8 @@ namespace Python.Runtime
 
         internal static void SetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type, GCHandle newHandle)
         {
+            Debug.Assert(type != null);
+            Debug.Assert(reflectedClrObject != null);
             Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
 
             int offset = Marshal.ReadInt32(type.DangerousGetAddress(), Offsets.tp_clr_inst_offset);

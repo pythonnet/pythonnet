@@ -395,7 +395,6 @@ namespace Python.Runtime
 
                 ClearObjectDict(ob);
             }
-            if (self is not null) self.tpHandle = IntPtr.Zero;
             return 0;
         }
 

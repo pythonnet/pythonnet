@@ -13,18 +13,16 @@ namespace Python.EmbeddingTest
 {
     public class TestNativeTypeOffset
     {
-        private Py.GILState _gs;
-
-        [SetUp]
+        [OneTimeSetUp]
         public void SetUp()
         {
-            _gs = Py.GIL();
+            PythonEngine.Initialize();
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
-            _gs.Dispose();
+            PythonEngine.Shutdown();
         }
 
         /// <summary>

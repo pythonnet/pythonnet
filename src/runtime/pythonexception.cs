@@ -37,6 +37,10 @@ namespace Python.Runtime
         /// </summary>
         internal static Exception ThrowLastAsClrException()
         {
+            // prevent potential interop errors in this method
+            // from crashing process with undebuggable StackOverflowException
+            RuntimeHelpers.EnsureSufficientExecutionStack();
+
             var exception = FetchCurrentOrNull(out ExceptionDispatchInfo? dispatchInfo)
                             ?? throw new InvalidOperationException("No exception is set");
             dispatchInfo?.Throw();
@@ -81,6 +85,24 @@ namespace Python.Runtime
                 Debug.Assert(value.IsNull());
                 Debug.Assert(traceback.IsNull());
                 return null;
+            }
+
+            try
+            {
+                if (TryDecodePyErr(type, value, traceback) is { } pyErr)
+                {
+                    type.Dispose();
+                    value.Dispose();
+                    traceback.Dispose();
+                    return pyErr;
+                }
+            }
+            catch
+            {
+                type.Dispose();
+                value.Dispose();
+                traceback.Dispose();
+                throw;
             }
 
             Runtime.PyErr_NormalizeException(type: ref type, val: ref value, tb: ref traceback);
@@ -153,6 +175,11 @@ namespace Python.Runtime
                 return e;
             }
 
+            if (TryDecodePyErr(typeRef, valRef, tbRef) is { } pyErr)
+            {
+                return pyErr;
+            }
+
             if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object decoded)
                 && decoded is Exception decodedException)
             {
@@ -162,6 +189,28 @@ namespace Python.Runtime
             using var cause = Runtime.PyException_GetCause(valRef);
             Exception? inner = FromCause(cause);
             return new PythonException(type, value, traceback, inner);
+        }
+
+        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        {
+            using var type = PyType.FromReference(typeRef);
+            using var value = PyObject.FromNullableReference(valRef);
+            using var traceback = PyObject.FromNullableReference(tbRef);
+
+            using var errorDict = new PyDict();
+            if (typeRef != null) errorDict["type"] = type;
+            if (valRef != null) errorDict["value"] = value;
+            if (tbRef != null) errorDict["traceback"] = traceback;
+
+            using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
+            using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
+            if (PyObjectConversions.TryDecode(pyErrInfo.Reference, pyErrType.Reference,
+                typeof(Exception), out object decoded) && decoded is Exception decodedPyErrInfo)
+            {
+                return decodedPyErrInfo;
+            }
+
+            return null;
         }
 
         private static Exception? FromCause(BorrowedReference cause)

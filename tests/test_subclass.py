@@ -290,3 +290,19 @@ def test_construction_from_clr():
     assert len(calls) == 1
     assert calls[0][0] == 1
     assert calls[0][1] == "foo"
+
+# regression test for https://github.com/pythonnet/pythonnet/issues/1565
+def test_can_be_collected_by_gc():
+    from Python.Test import BaseClass
+
+    class Derived(BaseClass):
+        __namespace__ = 'test_can_be_collected_by_gc'
+
+    inst = Derived()
+    cycle = [inst]
+    del inst
+    cycle.append(cycle)
+    del cycle
+
+    import gc
+    gc.collect()
