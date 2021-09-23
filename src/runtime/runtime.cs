@@ -2021,7 +2021,11 @@ namespace Python.Runtime
         internal static void PyType_Modified(BorrowedReference type) => Delegates.PyType_Modified(type);
         internal static bool PyType_IsSubtype(BorrowedReference t1, IntPtr ofType)
             => PyType_IsSubtype(t1, new BorrowedReference(ofType));
-        internal static bool PyType_IsSubtype(BorrowedReference t1, BorrowedReference t2) => Delegates.PyType_IsSubtype(t1, t2);
+        internal static bool PyType_IsSubtype(BorrowedReference t1, BorrowedReference t2)
+        {
+            Debug.Assert(t1 != null && t2 != null);
+            return Delegates.PyType_IsSubtype(t1, t2);
+        }
 
         internal static bool PyObject_TypeCheck(IntPtr ob, IntPtr tp)
             => PyObject_TypeCheck(new BorrowedReference(ob), new BorrowedReference(tp));
