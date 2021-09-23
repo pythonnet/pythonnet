@@ -139,9 +139,9 @@ namespace Python.Runtime
 
             try
             {
-                if (Converter.ToManagedValue(pyInfo, typeof(ExceptionDispatchInfo), out object result, setError: false))
+                if (Converter.ToManagedValue(pyInfo, typeof(ExceptionDispatchInfo), out object? result, setError: false))
                 {
-                    return (ExceptionDispatchInfo)result;
+                    return (ExceptionDispatchInfo)result!;
                 }
 
                 return null;

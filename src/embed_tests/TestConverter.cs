@@ -117,6 +117,25 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void ToNullable()
+        {
+            const int Const = 42;
+            var i = new PyInt(Const);
+            var ni = i.As<int?>();
+            Assert.AreEqual(Const, ni);
+        }
+
+        [Test]
+        public void ToPyList()
+        {
+            var list = new PyList();
+            list.Append("hello".ToPython());
+            list.Append("world".ToPython());
+            var back = list.ToPython().As<PyList>();
+            Assert.AreEqual(list.Length(), back.Length());
+        }
+
+        [Test]
         public void RawListProxy()
         {
             var list = new List<string> {"hello", "world"};

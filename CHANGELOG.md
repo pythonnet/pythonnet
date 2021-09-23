@@ -20,6 +20,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   .NET collection types now implement standard Python collection interfaces from `collections.abc`.
 See [Mixins/collections.py](src/runtime/Mixins/collections.py).
 -   .NET arrays implement Python buffer protocol
+-   Python.NET will correctly resolve .NET methods, that accept `PyList`, `PyInt`,
+and other `PyObject` derived types when called from Python.
 
 
 ### Changed
@@ -51,13 +53,20 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   Sign Runtime DLL with a strong name
 -   Implement loading through `clr_loader` instead of the included `ClrModule`, enables
     support for .NET Core
--   .NET and Python exceptions are preserved when crossing Python/.NET boundary
+-   BREAKING: .NET and Python exceptions are preserved when crossing Python/.NET boundary
 -   BREAKING: custom encoders are no longer called for instances of `System.Type`
 -   `PythonException.Restore` no longer clears `PythonException` instance.
 -   Replaced the old `__import__` hook hack with a PEP302-style Meta Path Loader
 -   BREAKING: Names of .NET types (e.g. `str(__class__)`) changed to better support generic types
 -   BREAKING: overload resolution will no longer prefer basic types. Instead, first matching overload will
 be chosen.
+-   BREAKING: .NET collections and arrays are no longer automatically converted to
+Python collections. Instead, they implement standard Python
+collection interfaces from `collections.abc`.
+See [Mixins/collections.py](src/runtime/Mixins/collections.py).
+-   BREAKING: When trying to convert Python `int` to `System.Object`, result will
+be of type `PyInt` instead of `System.Int32` due to possible loss of information.
+Python `float` will continue to be converted to `System.Double`.
 
 ### Fixed
 
