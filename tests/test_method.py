@@ -510,7 +510,7 @@ def test_explicit_overload_selection():
     assert value == 18446744073709551615
 
     value = MethodTest.Overloaded.__overloads__[System.Single](3.402823e38)
-    assert value == 3.402823e38
+    assert value == System.Single(3.402823e38)
 
     value = MethodTest.Overloaded.__overloads__[System.Double](
         1.7976931348623157e308)
@@ -645,7 +645,7 @@ def test_overload_selection_with_array_types():
     input_ = vtype([0.0, 3.402823e38])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0] == 0.0
-    assert value[1] == 3.402823e38
+    assert value[1] == System.Single(3.402823e38)
 
     vtype = Array[System.Double]
     input_ = vtype([0.0, 1.7976931348623157e308])

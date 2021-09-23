@@ -300,7 +300,7 @@ def test_single_field():
     assert ob.SingleField == 0.0
 
     ob.SingleField = 1.1
-    assert ob.SingleField == 1.1
+    assert ob.SingleField == System.Single(1.1)
 
 
 def test_double_field():

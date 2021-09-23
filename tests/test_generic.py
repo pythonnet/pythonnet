@@ -259,7 +259,7 @@ def test_generic_type_binding():
     assert_generic_wrapper_by_type(System.UInt16, 65000)
     assert_generic_wrapper_by_type(System.UInt32, 4294967295)
     assert_generic_wrapper_by_type(System.UInt64, 18446744073709551615)
-    assert_generic_wrapper_by_type(System.Single, 3.402823e38)
+    assert_generic_wrapper_by_type(System.Single, System.Single(3.402823e38))
     assert_generic_wrapper_by_type(System.Double, 1.7976931348623157e308)
     assert_generic_wrapper_by_type(float, 1.7976931348623157e308)
     assert_generic_wrapper_by_type(System.Decimal, System.Decimal.One)
@@ -309,7 +309,7 @@ def test_generic_method_type_handling():
     assert_generic_method_by_type(System.Int32, 2147483647)
     assert_generic_method_by_type(int, 2147483647)
     assert_generic_method_by_type(System.UInt16, 65000)
-    assert_generic_method_by_type(System.Single, 3.402823e38)
+    assert_generic_method_by_type(System.Single, System.Single(3.402823e38))
     assert_generic_method_by_type(System.Double, 1.7976931348623157e308)
     assert_generic_method_by_type(float, 1.7976931348623157e308)
     assert_generic_method_by_type(System.Decimal, System.Decimal.One)
@@ -504,7 +504,7 @@ def test_method_overload_selection_with_generic_types():
     vtype = GenericWrapper[System.Single]
     input_ = vtype(3.402823e38)
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value == 3.402823e38
+    assert value.value == System.Single(3.402823e38)
 
     vtype = GenericWrapper[System.Double]
     input_ = vtype(1.7976931348623157e308)
@@ -663,7 +663,7 @@ def test_overload_selection_with_arrays_of_generic_types():
     vtype = System.Array[gtype]
     input_ = vtype([gtype(3.402823e38), gtype(3.402823e38)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value == 3.402823e38
+    assert value[0].value == System.Single(3.402823e38)
     assert value.Length == 2
 
     gtype = GenericWrapper[System.Double]

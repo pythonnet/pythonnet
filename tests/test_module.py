@@ -357,7 +357,7 @@ def test_clr_get_clr_type():
     comparable = GetClrType(IComparable)
     assert comparable.FullName == "System.IComparable"
     assert comparable.IsInterface
-    assert GetClrType(int).FullName == "System.Int32"
+    assert GetClrType(int).FullName == "Python.Runtime.PyInt"
     assert GetClrType(str).FullName == "System.String"
     assert GetClrType(float).FullName == "System.Double"
     dblarr = System.Array[System.Double]

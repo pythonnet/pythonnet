@@ -8,6 +8,7 @@ import System
 import pytest
 
 from collections import UserList
+from System import Single as float32
 
 
 def test_public_array():
@@ -533,8 +534,8 @@ def test_single_array():
     assert items[0] == 0.0
     assert items[4] == 4.0
 
-    max_ = 3.402823e38
-    min_ = -3.402823e38
+    max_ = float32(3.402823e38)
+    min_ = float32(-3.402823e38)
 
     items[0] = max_
     assert items[0] == max_
@@ -1291,7 +1292,7 @@ def test_special_array_creation():
 
     value = Array[System.Single]([0.0, 3.402823e38])
     assert value[0] == 0.0
-    assert value[1] == 3.402823e38
+    assert value[1] == System.Single(3.402823e38)
     assert value.Length == 2
 
     value = Array[System.Double]([0.0, 1.7976931348623157e308])

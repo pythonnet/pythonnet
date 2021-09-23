@@ -413,16 +413,10 @@ def test_single_conversion():
     assert ob.SingleField == 0.0
 
     ob.SingleField = 3.402823e38
-    assert ob.SingleField == 3.402823e38
+    assert ob.SingleField == System.Single(3.402823e38)
 
     ob.SingleField = -3.402823e38
-    assert ob.SingleField == -3.402823e38
-
-    ob.SingleField = System.Single(3.402823e38)
-    assert ob.SingleField == 3.402823e38
-
-    ob.SingleField = System.Single(-3.402823e38)
-    assert ob.SingleField == -3.402823e38
+    assert ob.SingleField == System.Single(-3.402823e38)
 
     with pytest.raises(TypeError):
         ConversionTest().SingleField = "spam"
