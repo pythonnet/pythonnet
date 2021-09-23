@@ -107,8 +107,10 @@ namespace Python.Runtime
                     }
 
                     errorMessage.Append(": ");
+                    Runtime.PyErr_Fetch(out var errType, out var errVal, out var errTrace);
                     AppendArgumentTypes(to: errorMessage, args);
-                    Exceptions.SetError(Exceptions.TypeError, errorMessage.ToString());
+                    Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), errTrace.StealNullable());
+                    Exceptions.RaiseTypeError(errorMessage.ToString());
                     return null;
                 }
             }
