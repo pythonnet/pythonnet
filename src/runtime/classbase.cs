@@ -373,7 +373,6 @@ namespace Python.Runtime
                     return baseClearResult;
                 }
             }
-            if (self is not null) self.tpHandle = IntPtr.Zero;
             return 0;
         }
 
