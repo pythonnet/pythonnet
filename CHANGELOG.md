@@ -44,6 +44,8 @@ details about the cause of the failure
 -   floating point values passed from Python are no longer silently truncated
 when .NET expects an integer [#1342][i1342]
 -   More specific error messages for method argument mismatch
+-   BREAKING: most `PyScope` methods will never return `null`. Instead, `PyObject` `None` will be returned.
+-   BREAKING: `PyScope` was renamed to `PyModule`
 -   BREAKING: Methods with `ref` or `out` parameters and void return type return a tuple of only the `ref` and `out` parameters.
 -   BREAKING: to call Python from .NET `Runtime.PythonDLL` property must be set to Python DLL name
 or the DLL must be loaded in advance. This must be done before calling any other Python.NET functions.
@@ -97,6 +99,7 @@ Instead, `PyIterable` does that.
 
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
 -   messages in `PythonException` no longer start with exception type
+-   `PyScopeManager`, `PyScopeException`, `PyScope` (use `PyModule` instead)
 -   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
 (see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 

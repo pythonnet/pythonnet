@@ -1366,7 +1366,7 @@ namespace Python.Runtime
 
         // Workaround for https://bugzilla.xamarin.com/show_bug.cgi?id=41509
         // See https://github.com/pythonnet/pythonnet/pull/219
-        private static object CheckNone(PyObject pyObj)
+        internal static object CheckNone(PyObject pyObj)
         {
             if (pyObj != null)
             {

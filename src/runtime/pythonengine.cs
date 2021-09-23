@@ -214,10 +214,6 @@ namespace Python.Runtime
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
             AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
-            // The global scope gets used implicitly quite early on, remember
-            // to clear it out when we shut down.
-            AddShutdownHandler(PyScopeManager.Global.Clear);
-
             if (setSysArgv)
             {
                 Py.SetArgv(args);
@@ -381,7 +377,6 @@ namespace Python.Runtime
             AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
             AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
 
-            PyScopeManager.Global.Clear();
             ExecuteShutdownHandlers();
             // Remember to shut down the runtime.
             Runtime.Shutdown(mode);
@@ -694,19 +689,10 @@ namespace Python.Runtime
             return PythonEngine.DebugGIL ? new DebugGILState() : new GILState();
         }
 
-        public static PyScope CreateScope()
-        {
-            var scope = PyScopeManager.Global.Create();
-            return scope;
-        }
+        public static PyModule CreateScope() => new();
+        public static PyModule CreateScope(string name)
+            => new(name ?? throw new ArgumentNullException(nameof(name)));
 
-        public static PyScope CreateScope(string name)
-        {
-            if (name is null) throw new ArgumentNullException(nameof(name));
-
-            var scope = PyScopeManager.Global.Create(name);
-            return scope;
-        }
 
         public class GILState : IDisposable
         {

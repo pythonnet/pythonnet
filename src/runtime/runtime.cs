@@ -147,7 +147,6 @@ namespace Python.Runtime
             ABI.Initialize(PyVersion);
 
             GenericUtil.Reset();
-            PyScopeManager.Reset();
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
