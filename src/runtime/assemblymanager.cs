@@ -290,7 +290,10 @@ namespace Python.Runtime
                     for (var n = 0; n < names.Length; n++)
                     {
                         s = n == 0 ? names[0] : s + "." + names[n];
-                        namespaces.TryAdd(s, new ConcurrentDictionary<Assembly, string>());
+                        if (namespaces.TryAdd(s, new ConcurrentDictionary<Assembly, string>()))
+                        {
+                            ImportHook.AddNamespace(s);
+                        }
                     }
                 }
 

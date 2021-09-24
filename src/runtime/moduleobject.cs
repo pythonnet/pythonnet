@@ -535,8 +535,9 @@ namespace Python.Runtime
             // method because it may be called from other threads, leading to deadlocks
             // if it is called while Python code is executing.
             var currNs = AssemblyManager.GetNamespaces().Except(origNs);
-            foreach(var ns in currNs){
-                ImportHook.AddNamespace(ns);
+            foreach(var ns in currNs)
+            {
+                ImportHook.AddNamespaceWithGIL(ns);
             }
             return assembly;
         }
@@ -602,5 +603,9 @@ namespace Python.Runtime
             mod = ImportHook.Import(modname.ToString());
             return mod;
         }
+
+        [ModuleFunction]
+        [ForbidPythonThreads]
+        public static int _add_pending_namespaces() => ImportHook.AddPendingNamespaces();
     }
 }
