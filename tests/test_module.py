@@ -232,11 +232,11 @@ def test_explicit_assembly_load():
     from System.Reflection import Assembly
     import System, sys
 
-    assembly = Assembly.LoadWithPartialName('System.Runtime')
+    assembly = Assembly.LoadWithPartialName('Microsoft.CSharp')
     assert assembly is not None
 
-    import System.Runtime
-    assert 'System.Runtime' in sys.modules
+    import Microsoft.CSharp
+    assert 'Microsoft.CSharp' in sys.modules
 
     assembly = Assembly.LoadWithPartialName('SpamSpamSpamSpamEggsAndSpam')
     assert assembly is None

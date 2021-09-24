@@ -110,16 +110,15 @@ namespace Python.Runtime
         /// </summary>
         private static Assembly ResolveHandler(object ob, ResolveEventArgs args)
         {
-            string name = args.Name.ToLower();
-            foreach (Assembly a in assemblies)
+            var name = new AssemblyName(args.Name);
+            foreach (var alreadyLoaded in assemblies)
             {
-                string full = a.FullName.ToLower();
-                if (full.StartsWith(name))
+                if (AssemblyName.ReferenceMatchesDefinition(name, alreadyLoaded.GetName()))
                 {
-                    return a;
+                    return alreadyLoaded;
                 }
             }
-            return LoadAssemblyPath(args.Name);
+            return LoadAssemblyPath(name.Name);
         }
 
 
@@ -154,6 +153,17 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Given an assembly name, try to find this assembly file using the
+        /// PYTHONPATH. If not found, return null to indicate implicit load
+        /// using standard load semantics (app base directory then GAC, etc.)
+        /// </summary>
+        public static string FindAssembly(AssemblyName name)
+        {
+            if (name is null) throw new ArgumentNullException(nameof(name));
+
+            return FindAssembly(name.Name);
+        }
 
         /// <summary>
         /// Given an assembly name, try to find this assembly file using the
@@ -162,8 +172,13 @@ namespace Python.Runtime
         /// </summary>
         public static string FindAssembly(string name)
         {
-            char sep = Path.DirectorySeparatorChar;
+            if (name is null) throw new ArgumentNullException(nameof(name));
 
+            return FindAssemblyCandidates(name).FirstOrDefault();
+        }
+
+        static IEnumerable<string> FindAssemblyCandidates(string name)
+        {
             foreach (string head in pypath)
             {
                 string path;
@@ -173,22 +188,21 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    path = head + sep + name;
+                    path = Path.Combine(head, name);
                 }
 
                 string temp = path + ".dll";
                 if (File.Exists(temp))
                 {
-                    return temp;
+                    yield return temp;
                 }
 
                 temp = path + ".exe";
                 if (File.Exists(temp))
                 {
-                    return temp;
+                    yield return temp;
                 }
             }
-            return null;
         }
 
 
