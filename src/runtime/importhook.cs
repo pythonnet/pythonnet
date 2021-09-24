@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Collections.Concurrent;
 
 namespace Python.Runtime
 {
@@ -37,6 +36,9 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         if 'clr' not in sys.modules:
             return None
         clr = sys.modules['clr']
+
+        clr._add_pending_namespaces()
+
         if clr._available_namespaces and fullname in clr._available_namespaces:
             return importlib.machinery.ModuleSpec(fullname, DotNetLoader(), is_package=True)
         return None
@@ -169,12 +171,26 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             Runtime.PyDict_SetItemString(root.dict, availableNsKey, Runtime.PyNone);
         }
 
-        public static void AddNamespace(string name)
+        static readonly ConcurrentQueue<string> addPending = new();
+        public static void AddNamespace(string name) => addPending.Enqueue(name);
+
+        internal static int AddPendingNamespaces()
+        {
+            int added = 0;
+            while (addPending.TryDequeue(out string ns))
+            {
+                AddNamespaceWithGIL(ns);
+                added++;
+            }
+            return added;
+        }
+
+        internal static void AddNamespaceWithGIL(string name)
         {
             var pyNs = Runtime.PyString_FromString(name);
             try
             {
-                var nsSet = Runtime.PyDict_GetItemString(new BorrowedReference(root.dict), availableNsKey);
+                var nsSet = Runtime.PyDict_GetItemString(root.DictRef, availableNsKey);
                 if (!(nsSet.IsNull  || nsSet.DangerousGetAddress() == Runtime.PyNone))
                 {
                     if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)
