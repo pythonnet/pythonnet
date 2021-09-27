@@ -361,6 +361,12 @@ namespace Python.Runtime
                     }
                     result = cb.type.Value;
                     return true;
+
+                case null:
+                    break;
+
+                default:
+                    throw new ArgumentException("We should never receive instances of other managed types");
             }
 
             if (value == Runtime.PyNone && !obType.IsValueType)
@@ -513,7 +519,7 @@ namespace Python.Runtime
             {
                 if (setError)
                 {
-                    Exceptions.SetError(ex.InnerException);
+                    Exceptions.SetError(ex);
                 }
                 return null;
             }
