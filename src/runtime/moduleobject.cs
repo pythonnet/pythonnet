@@ -516,9 +516,9 @@ namespace Python.Runtime
             {
                 assembly = AssemblyManager.LoadAssemblyPath(name);
             }
-            if (assembly == null)
+            if (assembly == null && AssemblyManager.TryParseAssemblyName(name) is { } parsedName)
             {
-                assembly = AssemblyManager.LoadAssembly(name);
+                assembly = AssemblyManager.LoadAssembly(parsedName);
             }
             if (assembly == null)
             {
