@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
+
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -83,9 +85,17 @@ namespace Python.EmbeddingTest
         public void BadAssembly()
         {
             string path;
-            if (Python.Runtime.Runtime.IsWindows)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 path = @"C:\Windows\System32\kernel32.dll";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                path = "/usr/lib/libc.dylib";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                path = "/usr/lib/locale/locale-archive";
             }
             else
             {
@@ -98,7 +108,7 @@ import clr
 clr.AddReference('{path}')
 ";
 
-            Assert.Throws<FileLoadException>(() => PythonEngine.Exec(code));
+            Assert.Throws<BadImageFormatException>(() => PythonEngine.Exec(code));
         }
     }
 }

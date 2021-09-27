@@ -121,6 +121,18 @@ namespace Python.Runtime
             return LoadAssemblyPath(name.Name);
         }
 
+        internal static AssemblyName? TryParseAssemblyName(string name)
+        {
+            try
+            {
+                return new AssemblyName(name);
+            }
+            catch (FileLoadException)
+            {
+                return null;
+            }
+        }
+
 
         /// <summary>
         /// We __really__ want to avoid using Python objects or APIs when
@@ -208,18 +220,11 @@ namespace Python.Runtime
 
         /// <summary>
         /// Loads an assembly from the application directory or the GAC
-        /// given a simple assembly name. Returns the assembly if loaded.
+        /// given its name. Returns the assembly if loaded.
         /// </summary>
-        public static Assembly LoadAssembly(string name)
+        public static Assembly LoadAssembly(AssemblyName name)
         {
-            try
-            {
-                return Assembly.Load(name);
-            }
-            catch (FileNotFoundException)
-            {
-                return null;
-            }
+            return Assembly.Load(name);
         }
 
 
