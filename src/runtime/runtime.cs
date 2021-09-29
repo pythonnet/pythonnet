@@ -93,7 +93,6 @@ namespace Python.Runtime
             }
         }
 
-
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
@@ -113,7 +112,10 @@ namespace Python.Runtime
             }
             ShutdownMode = mode;
 
-            if (Py_IsInitialized() == 0)
+            bool interpreterAlreadyInitialized = TryUsingDll(
+                () => Py_IsInitialized() != 0
+            );
+            if (!interpreterAlreadyInitialized)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
                 if (PyEval_ThreadsInitialized() == 0)
@@ -785,6 +787,34 @@ namespace Python.Runtime
             }
             var p = (nint*)(op + ABI.RefCountOffset);
             return *p;
+        }
+
+        /// <summary>
+        /// Call specified function, and handle PythonDLL-related failures.
+        /// </summary>
+        internal static T TryUsingDll<T>(Func<T> op)
+        {
+            try
+            {
+                return op();
+            }
+            catch (TypeInitializationException loadFailure)
+            {
+                var delegatesLoadFailure = loadFailure;
+                // failure to load Delegates type might have been the cause
+                // of failure to load some higher-level type
+                while (delegatesLoadFailure.InnerException is TypeInitializationException nested)
+                {
+                    delegatesLoadFailure = nested;
+                }
+
+                if (delegatesLoadFailure.InnerException is BadPythonDllException badDll)
+                {
+                    throw badDll;
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
@@ -2270,10 +2300,6 @@ namespace Python.Runtime
             if (_PythonDll != "__Internal")
             {
                 dllLocal = loader.Load(_PythonDll);
-                if (dllLocal == IntPtr.Zero)
-                {
-                    throw new Exception($"Cannot load {_PythonDll}");
-                }
             }
             try
             {
@@ -2617,8 +2643,8 @@ namespace Python.Runtime
                 }
                 catch (MissingMethodException e) when (libraryHandle == IntPtr.Zero)
                 {
-                    throw new MissingMethodException(
-                        "Did you forget to set Runtime.PythonDLL?" +
+                    throw new BadPythonDllException(
+                        "Runtime.PythonDLL was not set or does not point to a supported Python runtime DLL." +
                         " See https://github.com/pythonnet/pythonnet#embedding-python-in-net",
                         e);
                 }
@@ -2887,6 +2913,12 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<in NativeTypeSpec, BorrowedReference, NewReference> PyType_FromSpecWithBases { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> _Py_NewReference { get; }
         }
+    }
+
+    internal class BadPythonDllException : MissingMethodException
+    {
+        public BadPythonDllException(string message, Exception innerException)
+            : base(message, innerException) { }
     }
 
 
