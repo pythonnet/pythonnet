@@ -81,7 +81,7 @@ namespace Python.EmbeddingTest
         public static void GetProgramNameDefault()
         {
             PythonEngine.Initialize();
-            string s = PythonEngine.PythonHome;
+            string s = PythonEngine.ProgramName;
 
             Assert.NotNull(s);
             PythonEngine.Shutdown();

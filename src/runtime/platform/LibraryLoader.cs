@@ -111,7 +111,7 @@ namespace Python.Runtime.Platform
         {
             var res = WindowsLoader.LoadLibrary(dllToLoad);
             if (res == IntPtr.Zero)
-                throw new DllNotFoundException($"Could not load {dllToLoad}", new Win32Exception());
+                throw new DllNotFoundException($"Could not load {dllToLoad}.", new Win32Exception());
             return res;
         }
 
@@ -128,7 +128,7 @@ namespace Python.Runtime.Platform
 
             var res = WindowsLoader.GetProcAddress(hModule, procedureName);
             if (res == IntPtr.Zero)
-                throw new MissingMethodException($"Failed to load symbol {procedureName}", new Win32Exception());
+                throw new MissingMethodException($"Failed to load symbol {procedureName}.", new Win32Exception());
             return res;
         }
 

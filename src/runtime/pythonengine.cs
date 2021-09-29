@@ -86,13 +86,15 @@ namespace Python.Runtime
         {
             get
             {
-                IntPtr p = Runtime.Py_GetProgramName();
+                IntPtr p = Runtime.TryUsingDll(() => Runtime.Py_GetProgramName());
                 return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
             set
             {
                 Marshal.FreeHGlobal(_programName);
-                _programName = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
+                _programName = Runtime.TryUsingDll(
+                    () => UcsMarshaler.Py3UnicodePy2StringtoPtr(value)
+                );
                 Runtime.Py_SetProgramName(_programName);
             }
         }
@@ -101,14 +103,16 @@ namespace Python.Runtime
         {
             get
             {
-                IntPtr p = Runtime.Py_GetPythonHome();
+                IntPtr p = Runtime.TryUsingDll(() => Runtime.Py_GetPythonHome());
                 return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
             set
             {
                 // this value is null in the beginning
                 Marshal.FreeHGlobal(_pythonHome);
-                _pythonHome = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
+                _pythonHome = Runtime.TryUsingDll(
+                    () => UcsMarshaler.Py3UnicodePy2StringtoPtr(value)
+                );
                 Runtime.Py_SetPythonHome(_pythonHome);
             }
         }
@@ -117,13 +121,15 @@ namespace Python.Runtime
         {
             get
             {
-                IntPtr p = Runtime.Py_GetPath();
+                IntPtr p = Runtime.TryUsingDll(() => Runtime.Py_GetPath());
                 return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
             set
             {
                 Marshal.FreeHGlobal(_pythonPath);
-                _pythonPath = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
+                _pythonPath = Runtime.TryUsingDll(
+                    () => UcsMarshaler.Py3UnicodePy2StringtoPtr(value)
+                );
                 Runtime.Py_SetPath(_pythonPath);
             }
         }
