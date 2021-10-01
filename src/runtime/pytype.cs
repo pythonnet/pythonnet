@@ -15,13 +15,18 @@ namespace Python.Runtime
         /// <summary>Wraps an existing type object.</summary>
         public PyType(PyObject o) : base(FromObject(o)) { }
 
+        internal PyType(PyType o)
+            : base(o is not null ? o.Reference : throw new ArgumentNullException(nameof(o)))
+        {
+        }
+
         internal PyType(BorrowedReference reference) : base(reference)
         {
             if (!Runtime.PyType_Check(this.Handle))
                 throw new ArgumentException("object is not a type");
         }
 
-        internal PyType(StolenReference reference) : base(EnsureIsType(in reference))
+        internal PyType(in StolenReference reference) : base(EnsureIsType(in reference))
         {
         }
 
@@ -69,17 +74,15 @@ namespace Python.Runtime
 
         /// <summary>
         /// Gets <see cref="PyType"/>, which represents the specified CLR type.
-        /// Must be called after the CLR type was mapped to its Python type.
         /// </summary>
-        internal static PyType Get(Type clrType)
+        public static PyType Get(Type clrType)
         {
-            if (clrType == null)
+            if (clrType is null)
             {
                 throw new ArgumentNullException(nameof(clrType));
             }
 
-            ClassBase pyClass = ClassManager.GetClass(clrType);
-            return new PyType(pyClass.ObjectReference);
+            return new PyType(TypeManager.GetType(clrType));
         }
 
         internal BorrowedReference BaseReference
