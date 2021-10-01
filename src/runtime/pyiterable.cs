@@ -14,6 +14,18 @@ namespace Python.Runtime
         internal PyIterable(in StolenReference reference) : base(reference) { }
 
         /// <summary>
+        /// Creates new instance from an existing object.
+        /// </summary>
+        /// <remarks>This constructor does not check if <paramref name="o"/> is actually iterable.</remarks>
+        public PyIterable(PyObject o) : base(FromObject(o)) { }
+
+        static BorrowedReference FromObject(PyObject o)
+        {
+            if (o is null) throw new ArgumentNullException(nameof(o));
+            return o.Reference;
+        }
+
+        /// <summary>
         /// Return a new PyIter object for the object. This allows any iterable
         /// python object to be iterated over in C#. A PythonException will be
         /// raised if the object is not iterable.
