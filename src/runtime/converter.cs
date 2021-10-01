@@ -937,7 +937,7 @@ namespace Python.Runtime
 
     public static class ConverterExtension
     {
-        public static PyObject ToPython(this object o)
+        public static PyObject ToPython(this object? o)
         {
             if (o is null) return Runtime.None;
             return new PyObject(Converter.ToPython(o, o.GetType()));
