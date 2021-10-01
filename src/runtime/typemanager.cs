@@ -146,7 +146,17 @@ namespace Python.Runtime
         {
             if (!cache.TryGetValue(type, out var pyType))
             {
-                pyType = CreateClass(type);
+                pyType = AllocateClass(type);
+                cache.Add(type, pyType);
+                try
+                {
+                    InitializeClass(type, pyType);
+                }
+                catch
+                {
+                    cache.Remove(type);
+                    throw;
+                }
             }
             return pyType;
         }
@@ -209,11 +219,24 @@ namespace Python.Runtime
         }
 
 
-        static PyType CreateClass(Type clrType)
+        static void InitializeClass(Type clrType, PyType pyType)
         {
-            string name = GetPythonTypeName(clrType);
+            if (pyType.BaseReference != null)
+            {
+                return;
+            }
 
             using var baseTuple = GetBaseTypeTuple(clrType);
+
+            InitializeBases(pyType, baseTuple);
+            // core fields must be initialized in partially constructed classes,
+            // otherwise it would be impossible to manipulate GCHandle and check type size
+            InitializeCoreFields(pyType);
+        }
+
+        static PyType AllocateClass(Type clrType)
+        {
+            string name = GetPythonTypeName(clrType);
 
             IntPtr type = AllocateTypeObject(name, Runtime.PyCLRMetaType);
             var pyType = new PyType(StolenReference.DangerousFromPointer(type));
@@ -222,20 +245,6 @@ namespace Python.Runtime
                             | TypeFlags.HeapType
                             | TypeFlags.BaseType
                             | TypeFlags.HaveGC;
-
-            cache.Add(clrType, pyType);
-            try
-            {
-                InitializeBases(pyType, baseTuple);
-                // core fields must be initialized in partically constructed classes,
-                // otherwise it would be impossible to manipulate GCHandle and check type size
-                InitializeCoreFields(pyType);
-            }
-            catch
-            {
-                cache.Remove(clrType);
-                throw;
-            }
 
             return pyType;
         }
