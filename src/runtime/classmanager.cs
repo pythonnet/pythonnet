@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Linq;
 
 namespace Python.Runtime
 {
@@ -151,8 +152,12 @@ namespace Python.Runtime
                     invalidClasses.Add(pair);
                     continue;
                 }
+                // Ensure, that matching Python type exists first.
+                // It is required for self-referential classes
+                // (e.g. with members, that refer to the same class)
+                var pyType = InitPyType(pair.Key.Value, pair.Value);
                 // re-init the class
-                InitClassBase(pair.Key.Value, pair.Value);
+                InitClassBase(pair.Key.Value, pair.Value, pyType);
                 // We modified the Type object, notify it we did.
                 Runtime.PyType_Modified(pair.Value.TypeReference);
                 var context = contexts[pair.Value.pyHandle];
@@ -184,9 +189,13 @@ namespace Python.Runtime
             }
             cb = CreateClass(type);
             cache.Add(type, cb);
+            // Ensure, that matching Python type exists first.
+            // It is required for self-referential classes
+            // (e.g. with members, that refer to the same class)
+            var pyType = InitPyType(type, cb);
             // Initialize the object later, as this might call this GetClass method
             // recursively (for example when a nested class inherits its declaring class...)
-            InitClassBase(type, cb);
+            InitClassBase(type, cb, pyType);
             return cb;
         }
 
@@ -249,16 +258,18 @@ namespace Python.Runtime
             return impl;
         }
 
-        private static void InitClassBase(Type type, ClassBase impl)
+        private static PyType InitPyType(Type type, ClassBase impl)
         {
-            // Ensure, that matching Python type exists first.
-            // It is required for self-referential classes
-            // (e.g. with members, that refer to the same class)
             var pyType = TypeManager.GetOrCreateClass(type);
 
             // Set the handle attributes on the implementing instance.
             impl.tpHandle = impl.pyHandle = pyType.Handle;
 
+            return pyType;
+        }
+
+        private static void InitClassBase(Type type, ClassBase impl, PyType pyType)
+        {
             // First, we introspect the managed type and build some class
             // information, including generating the member descriptors
             // that we'll be putting in the Python class __dict__.
@@ -549,6 +560,11 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         ob = GetClass(tp);
+                        if (ob.pyHandle == IntPtr.Zero && ob is ClassObject)
+                        {
+                            ob.pyHandle = ob.tpHandle = TypeManager.GetOrCreateClass(tp).Handle;
+                        }
+                        Debug.Assert(ob.pyHandle != IntPtr.Zero);
                         // GetClass returns a Borrowed ref. ci.members owns the reference.
                         ob.IncrRefCount();
                         ci.members[mi.Name] = ob;
