@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 
 namespace Python.Runtime
@@ -14,6 +15,18 @@ namespace Python.Runtime
         internal PySequence(BorrowedReference reference) : base(reference) { }
         internal PySequence(in StolenReference reference) : base(reference) { }
 
+        /// <summary>
+        /// Creates new instance from an existing object.
+        /// </summary>
+        /// <exception cref="ArgumentException"><paramref name="o"/> does not provide sequence protocol</exception>
+        public PySequence(PyObject o) : base(FromObject(o)) { }
+
+        static BorrowedReference FromObject(PyObject o)
+        {
+            if (o is null) throw new ArgumentNullException(nameof(o));
+            if (!IsSequenceType(o)) throw new ArgumentException("object is not a sequence");
+            return o.Reference;
+        }
 
         /// <summary>
         /// Returns <c>true</c> if the given object implements the sequence protocol.
