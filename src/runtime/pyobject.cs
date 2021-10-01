@@ -309,12 +309,20 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// GetAttr Method. Returns fallback value if getting attribute fails for any reason.
+        /// Returns the named attribute of the Python object, or the given
+        /// default object if the attribute access throws AttributeError.
         /// </summary>
         /// <remarks>
-        /// Returns the named attribute of the Python object, or the given
-        /// default object if the attribute access fails.
+        /// This method ignores any AttrubiteError(s), even ones
+        /// not raised due to missing requested attribute.
+        ///
+        /// For example, if attribute getter calls other Python code, and
+        /// that code happens to cause AttributeError elsewhere, it will be ignored
+        /// and <paramref name="_default"/> value will be returned instead.
         /// </remarks>
+        /// <param name="name">Name of the attribute.</param>
+        /// <param name="_default">The object to return on AttributeError.</param>
+        [Obsolete("See remarks")]
         public PyObject GetAttr(string name, PyObject _default)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
@@ -322,8 +330,15 @@ namespace Python.Runtime
             IntPtr op = Runtime.PyObject_GetAttrString(obj, name);
             if (op == IntPtr.Zero)
             {
-                Runtime.PyErr_Clear();
-                return _default;
+                if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
+                {
+                    Runtime.PyErr_Clear();
+                    return _default;
+                }
+                else
+                {
+                    throw PythonException.ThrowLastAsClrException();
+                }
             }
             return new PyObject(op);
         }
@@ -351,13 +366,20 @@ namespace Python.Runtime
 
 
         /// <summary>
-        /// GetAttr Method
+        /// Returns the named attribute of the Python object, or the given
+        /// default object if the attribute access throws AttributeError.
         /// </summary>
         /// <remarks>
-        /// Returns the named attribute of the Python object, or the given
-        /// default object if the attribute access fails. The name argument
-        /// is a PyObject wrapping a Python string or unicode object.
+        /// This method ignores any AttrubiteError(s), even ones
+        /// not raised due to missing requested attribute.
+        ///
+        /// For example, if attribute getter calls other Python code, and
+        /// that code happens to cause AttributeError elsewhere, it will be ignored
+        /// and <paramref name="_default"/> value will be returned instead.
         /// </remarks>
+        /// <param name="name">Name of the attribute. Must be of Python type 'str'.</param>
+        /// <param name="_default">The object to return on AttributeError.</param>
+        [Obsolete("See remarks")]
         public PyObject GetAttr(PyObject name, PyObject _default)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
@@ -365,8 +387,15 @@ namespace Python.Runtime
             IntPtr op = Runtime.PyObject_GetAttr(obj, name.obj);
             if (op == IntPtr.Zero)
             {
-                Runtime.PyErr_Clear();
-                return _default;
+                if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
+                {
+                    Runtime.PyErr_Clear();
+                    return _default;
+                }
+                else
+                {
+                    throw PythonException.ThrowLastAsClrException();
+                }
             }
             return new PyObject(op);
         }

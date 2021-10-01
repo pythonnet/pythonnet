@@ -79,5 +79,26 @@ a = MemberNamesTest()
             var error = Assert.Throws<PythonException>(() => list = -list);
             Assert.AreEqual("TypeError", error.Type.Name);
         }
+
+        [Test]
+        [Obsolete]
+        public void GetAttrDefault_IgnoresAttributeErrorOnly()
+        {
+            var ob = new PyObjectTestMethods().ToPython();
+            using var fallback = new PyList();
+            var attrErrResult = ob.GetAttr(nameof(PyObjectTestMethods.RaisesAttributeError), fallback);
+            Assert.IsTrue(PythonReferenceComparer.Instance.Equals(fallback, attrErrResult));
+
+            var typeErrResult = Assert.Throws<PythonException>(
+                () => ob.GetAttr(nameof(PyObjectTestMethods.RaisesTypeError), fallback)
+            );
+            Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type.Handle);
+        }
+    }
+
+    public class PyObjectTestMethods
+    {
+        public string RaisesAttributeError => throw new PythonException(new PyType(new BorrowedReference(Exceptions.AttributeError)), value: null, traceback: null);
+        public string RaisesTypeError => throw new PythonException(new PyType(new BorrowedReference(Exceptions.TypeError)), value: null, traceback: null);
     }
 }

@@ -71,6 +71,7 @@ See [Mixins/collections.py](src/runtime/Mixins/collections.py).
 -   BREAKING: When trying to convert Python `int` to `System.Object`, result will
 be of type `PyInt` instead of `System.Int32` due to possible loss of information.
 Python `float` will continue to be converted to `System.Double`.
+-   BREAKING: `PyObject.GetAttr(name, default)` now only ignores `AttributeError` (previously ignored all exceptions).
 -   BREAKING: `PyObject` no longer implements `IEnumerable<PyObject>`.
 Instead, `PyIterable` does that.
 
