@@ -13,7 +13,7 @@ namespace Python.Runtime.Codecs
             return targetType.GetGenericTypeDefinition() == typeof(IList<>);
         }
 
-        private static bool IsList(PyObject objectType)
+        private static bool IsList(PyType objectType)
         {
             //TODO accept any python object that implements the sequence and list protocols
             //must implement sequence protocol to fully implement list protocol
@@ -23,7 +23,7 @@ namespace Python.Runtime.Codecs
             return objectType.Handle == Runtime.PyListType;
         }
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
         {
             return IsList(objectType) && IsList(targetType);
         }

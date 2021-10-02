@@ -141,16 +141,17 @@ namespace Python.EmbeddingTest {
 
             //SequenceConverter can only convert to any ICollection
             var pyList = new PyList(items.ToArray());
+            var listType = pyList.GetPythonType();
             //it can convert a PyList, since PyList satisfies the python sequence protocol
 
-            Assert.IsFalse(codec.CanDecode(pyList, typeof(bool)));
-            Assert.IsFalse(codec.CanDecode(pyList, typeof(IList<int>)));
-            Assert.IsFalse(codec.CanDecode(pyList, typeof(System.Collections.IEnumerable)));
-            Assert.IsFalse(codec.CanDecode(pyList, typeof(IEnumerable<int>)));
+            Assert.IsFalse(codec.CanDecode(listType, typeof(bool)));
+            Assert.IsFalse(codec.CanDecode(listType, typeof(IList<int>)));
+            Assert.IsFalse(codec.CanDecode(listType, typeof(System.Collections.IEnumerable)));
+            Assert.IsFalse(codec.CanDecode(listType, typeof(IEnumerable<int>)));
 
-            Assert.IsTrue(codec.CanDecode(pyList, typeof(ICollection<float>)));
-            Assert.IsTrue(codec.CanDecode(pyList, typeof(ICollection<string>)));
-            Assert.IsTrue(codec.CanDecode(pyList, typeof(ICollection<int>)));
+            Assert.IsTrue(codec.CanDecode(listType, typeof(ICollection<float>)));
+            Assert.IsTrue(codec.CanDecode(listType, typeof(ICollection<string>)));
+            Assert.IsTrue(codec.CanDecode(listType, typeof(ICollection<int>)));
 
             //convert to collection of int
             ICollection<int> intCollection = null;
@@ -380,7 +381,7 @@ DateTimeDecoder.Setup()
 
         public class EverythingElseToSelfDecoder : IPyObjectDecoder
         {
-            public bool CanDecode(PyObject objectType, Type targetType)
+            public bool CanDecode(PyType objectType, Type targetType)
             {
                 return targetType.IsAssignableFrom(typeof(EverythingElseToSelfDecoder));
             }
@@ -399,7 +400,7 @@ DateTimeDecoder.Setup()
 
         class ValueErrorCodec : IPyObjectEncoder, IPyObjectDecoder
         {
-            public bool CanDecode(PyObject objectType, Type targetType)
+            public bool CanDecode(PyType objectType, Type targetType)
                 => this.CanEncode(targetType)
                    && PythonReferenceComparer.Instance.Equals(objectType, PythonEngine.Eval("ValueError"));
 
@@ -424,7 +425,7 @@ DateTimeDecoder.Setup()
         {
             readonly PyObject PyErr = Py.Import("clr.interop").GetAttr("PyErr");
 
-            public bool CanDecode(PyObject objectType, Type targetType)
+            public bool CanDecode(PyType objectType, Type targetType)
                 => PythonReferenceComparer.Instance.Equals(PyErr, objectType);
 
             public bool TryDecode<T>(PyObject pyObj, out T value)
@@ -466,7 +467,7 @@ DateTimeDecoder.Setup()
             this.DecodeResult = decodeResult;
         }
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
             => objectType.Handle == TheOnlySupportedSourceType.Handle
                && targetType == typeof(TTarget);
         public bool TryDecode<T>(PyObject pyObj, out T value)
@@ -485,7 +486,7 @@ DateTimeDecoder.Setup()
             PyObjectConversions.RegisterDecoder(new DateTimeDecoder());
         }
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
         {
             return targetType == typeof(DateTime);
         }

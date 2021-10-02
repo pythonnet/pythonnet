@@ -41,7 +41,7 @@ namespace Python.Runtime.Codecs
             return new PyTuple(StolenReference.DangerousFromPointer(tuple));
         }
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
             => objectType.Handle == Runtime.PyTupleType && this.CanEncode(targetType);
 
         public bool TryDecode<T>(PyObject pyObj, out T value)

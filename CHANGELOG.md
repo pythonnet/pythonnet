@@ -74,6 +74,7 @@ Python `float` will continue to be converted to `System.Double`.
 -   BREAKING: `PyObject.GetAttr(name, default)` now only ignores `AttributeError` (previously ignored all exceptions).
 -   BREAKING: `PyObject` no longer implements `IEnumerable<PyObject>`.
 Instead, `PyIterable` does that.
+-   BREAKING: `IPyObjectDecoder.CanDecode` `objectType` parameter type changed from `PyObject` to `PyType`
 
 ### Fixed
 

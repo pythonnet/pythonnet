@@ -3,6 +3,7 @@ namespace Python.Runtime
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
     using Python.Runtime.Codecs;
@@ -15,7 +16,7 @@ namespace Python.Runtime
         /// <summary>
         /// Checks if this decoder can decode from <paramref name="objectType"/> to <paramref name="targetType"/>
         /// </summary>
-        bool CanDecode(PyObject objectType, Type targetType);
+        bool CanDecode(PyType objectType, Type targetType);
         /// <summary>
         /// Attempts do decode <paramref name="pyObj"/> into a variable of specified type
         /// </summary>
@@ -124,7 +125,9 @@ namespace Python.Runtime
         static Converter.TryConvertFromPythonDelegate GetDecoder(IntPtr sourceType, Type targetType)
         {
             IPyObjectDecoder decoder;
-            using (var pyType = new PyObject(Runtime.SelfIncRef(sourceType)))
+            var sourceTypeRef = new BorrowedReference(sourceType);
+            Debug.Assert(PyType.IsType(sourceTypeRef));
+            using (var pyType = new PyType(sourceTypeRef, prevalidated: true))
             {
                 lock (decoders)
                 {
