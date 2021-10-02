@@ -13,7 +13,7 @@ namespace Python.Runtime.Codecs
             return targetType.GetGenericTypeDefinition() == typeof(ICollection<>);
         }
 
-        internal static bool IsSequence(PyObject objectType)
+        internal static bool IsSequence(PyType objectType)
         {
             //must implement iterable protocol to fully implement sequence protocol
             if (!IterableDecoder.IsIterable(objectType)) return false;
@@ -25,7 +25,7 @@ namespace Python.Runtime.Codecs
             return objectType.HasAttr("__getitem__");
         }
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
         {
             return IsSequence(objectType) && IsSequence(targetType);
         }

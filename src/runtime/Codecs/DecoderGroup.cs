@@ -27,7 +27,7 @@ namespace Python.Runtime.Codecs
         public void Clear() => this.decoders.Clear();
 
         /// <inheritdoc />
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
             => this.decoders.Any(decoder => decoder.CanDecode(objectType, targetType));
         /// <inheritdoc />
         public bool TryDecode<T>(PyObject pyObj, out T value)
@@ -58,7 +58,7 @@ namespace Python.Runtime.Codecs
         /// </summary>
         public static IPyObjectDecoder GetDecoder(
             this IPyObjectDecoder decoder,
-            PyObject objectType, Type targetType)
+            PyType objectType, Type targetType)
         {
             if (decoder is null) throw new ArgumentNullException(nameof(decoder));
 

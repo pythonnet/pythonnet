@@ -17,12 +17,12 @@ namespace Python.Runtime.Codecs
             return targetType.GetGenericTypeDefinition() == typeof(IEnumerable<>);
         }
 
-        internal static bool IsIterable(PyObject objectType)
+        internal static bool IsIterable(PyType objectType)
         {
             return objectType.HasAttr("__iter__");
         }
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
         {
             return IsIterable(objectType) && IsIterable(targetType);
         }

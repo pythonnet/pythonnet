@@ -7,7 +7,7 @@ namespace Python.Runtime.Codecs
     {
         public static EnumPyIntCodec Instance { get; } = new EnumPyIntCodec();
 
-        public bool CanDecode(PyObject objectType, Type targetType)
+        public bool CanDecode(PyType objectType, Type targetType)
         {
             return targetType.IsEnum
                 && objectType.IsSubclass(new BorrowedReference(Runtime.PyLongType));
