@@ -11,6 +11,7 @@
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>python interop dynamic dlr Mono pinvoke</PackageTags>
+    <PackageIcon>python-clear.png</PackageIcon>
     <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
     <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -36,6 +37,7 @@
 
   <ItemGroup>
     <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+    <None Include="..\..\src\console\python-clear.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
