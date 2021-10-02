@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -501,6 +502,44 @@ namespace Python.Runtime
             return ToPrimitive(value, obType, out result, setError);
         }
 
+        /// <remarks>
+        /// Unlike <see cref="ToManaged(BorrowedReference, Type, out object?, bool)"/>,
+        /// this method does not have a <c>setError</c> parameter, because it should
+        /// only be called after <see cref="ToManaged(BorrowedReference, Type, out object?, bool)"/>.
+        /// </remarks>
+        internal static bool ToManagedExplicit(BorrowedReference value, Type obType,
+            out object? result)
+        {
+            result = null;
+
+            // this method would potentially clean any existing error resulting in information loss
+            Debug.Assert(Runtime.PyErr_Occurred() == null);
+
+            string? converterName =
+                  IsInteger(obType) ? "__int__"
+                : IsFloatingNumber(obType) ? "__float__"
+                : null;
+
+            if (converterName is null) return false;
+
+            Debug.Assert(obType.IsPrimitive);
+
+            using var converter = Runtime.PyObject_GetAttrString(value, converterName);
+            if (converter.IsNull())
+            {
+                Exceptions.Clear();
+                return false;
+            }
+
+            using var explicitlyCoerced = Runtime.PyObject_CallObject(converter, BorrowedReference.Null);
+            if (explicitlyCoerced.IsNull())
+            {
+                Exceptions.Clear();
+                return false;
+            }
+            return ToPrimitive(explicitlyCoerced, obType, out result, false);
+        }
+
         static object? ToPyObjectSubclass(ConstructorInfo ctor, PyObject instance, bool setError)
         {
             try
@@ -544,6 +583,8 @@ namespace Python.Runtime
             return checked((int)num);
         }
 
+        private static bool ToPrimitive(BorrowedReference value, Type obType, out object? result, bool setError)
+            => ToPrimitive(value.DangerousGetAddress(), obType, out result, setError);
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>
@@ -590,8 +631,21 @@ namespace Python.Runtime
                     }
 
                 case TypeCode.Boolean:
-                    result = Runtime.PyObject_IsTrue(value) != 0;
-                    return true;
+                    if (value == Runtime.PyTrue)
+                    {
+                        result = true;
+                        return true;
+                    }
+                    if (value == Runtime.PyFalse)
+                    {
+                        result = false;
+                        return true;
+                    }
+                    if (setError)
+                    {
+                        goto type_error;
+                    }
+                    return false;
 
                 case TypeCode.Byte:
                     {
@@ -768,6 +822,10 @@ namespace Python.Runtime
 
                 case TypeCode.Single:
                     {
+                        if (!Runtime.PyFloat_Check(value) && !Runtime.PyInt_Check(value))
+                        {
+                            goto type_error;
+                        }
                         double num = Runtime.PyFloat_AsDouble(value);
                         if (num == -1.0 && Exceptions.ErrorOccurred())
                         {
@@ -786,6 +844,10 @@ namespace Python.Runtime
 
                 case TypeCode.Double:
                     {
+                        if (!Runtime.PyFloat_Check(value) && !Runtime.PyInt_Check(value))
+                        {
+                            goto type_error;
+                        }
                         double num = Runtime.PyFloat_AsDouble(value);
                         if (num == -1.0 && Exceptions.ErrorOccurred())
                         {
@@ -933,6 +995,13 @@ namespace Python.Runtime
             result = items;
             return true;
         }
+
+        internal static bool IsFloatingNumber(Type type) => type == typeof(float) || type == typeof(double);
+        internal static bool IsInteger(Type type)
+            => type == typeof(Byte) || type == typeof(SByte)
+            || type == typeof(Int16) || type == typeof(UInt16)
+            || type == typeof(Int32) || type == typeof(UInt32)
+            || type == typeof(Int64) || type == typeof(UInt64);
     }
 
     public static class ConverterExtension

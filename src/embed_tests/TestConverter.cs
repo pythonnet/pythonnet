@@ -117,6 +117,13 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void NoImplicitConversionToBool()
+        {
+            var pyObj = new PyList(items: new[] { 1.ToPython(), 2.ToPython() }).ToPython();
+            Assert.Throws<InvalidCastException>(() => pyObj.As<bool>());
+        }
+
+        [Test]
         public void ToNullable()
         {
             const int Const = 42;

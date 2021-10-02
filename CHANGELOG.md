@@ -71,6 +71,9 @@ See [Mixins/collections.py](src/runtime/Mixins/collections.py).
 -   BREAKING: When trying to convert Python `int` to `System.Object`, result will
 be of type `PyInt` instead of `System.Int32` due to possible loss of information.
 Python `float` will continue to be converted to `System.Double`.
+-   BREAKING: Python.NET will no longer implicitly convert types like `numpy.float64`, that implement `__float__` to
+`System.Single` and `System.Double`. An explicit conversion is required on Python or .NET side.
+-   BREAKING: Python.NET will no longer implicitly convert any Python object to `System.Boolean`.
 -   BREAKING: `PyObject.GetAttr(name, default)` now only ignores `AttributeError` (previously ignored all exceptions).
 -   BREAKING: `PyObject` no longer implements `IEnumerable<PyObject>`.
 Instead, `PyIterable` does that.

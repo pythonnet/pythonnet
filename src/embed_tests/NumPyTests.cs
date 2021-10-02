@@ -40,7 +40,7 @@ namespace Python.EmbeddingTest
             dynamic sin = np.sin;
             StringAssert.StartsWith("-0.95892", sin(5).ToString());
 
-            double c = np.cos(5) + sin(5);
+            double c = (double)(np.cos(5) + sin(5));
             Assert.AreEqual(-0.675262, c, 0.01);
 
             dynamic a = np.array(new List<float> { 1, 2, 3 });

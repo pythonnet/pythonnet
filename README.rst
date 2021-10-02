@@ -77,7 +77,7 @@ Example
            dynamic sin = np.sin;
            Console.WriteLine(sin(5));
 
-           double c = np.cos(5) + sin(5);
+           double c = (double)(np.cos(5) + sin(5));
            Console.WriteLine(c);
 
            dynamic a = np.array(new List<float> { 1, 2, 3 });
