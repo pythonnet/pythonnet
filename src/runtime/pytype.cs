@@ -20,8 +20,10 @@ namespace Python.Runtime
         {
         }
 
-        internal PyType(BorrowedReference reference) : base(reference)
+        internal PyType(BorrowedReference reference, bool prevalidated = false) : base(reference)
         {
+            if (prevalidated) return;
+
             if (!Runtime.PyType_Check(this.Handle))
                 throw new ArgumentException("object is not a type");
         }

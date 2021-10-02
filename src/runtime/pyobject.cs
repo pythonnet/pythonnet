@@ -237,10 +237,10 @@ namespace Python.Runtime
         /// Returns the Python type of the object. This method is equivalent
         /// to the Python expression: type(object).
         /// </remarks>
-        public PyObject GetPythonType()
+        public PyType GetPythonType()
         {
-            IntPtr tp = Runtime.PyObject_Type(obj);
-            return new PyObject(tp);
+            var tp = Runtime.PyObject_TYPE(Reference);
+            return new PyType(tp, prevalidated: true);
         }
 
 
