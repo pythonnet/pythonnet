@@ -56,7 +56,7 @@ jobs:
       - name: Publish NuGet
         run: |
           dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_MONTHLY }} Release-Preview/*.nupkg
-          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_MONTHLY }} Release-Preview/*.snupkg
+          dotnet nuget push --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_MONTHLY }} Release-Preview/*.snupkg
 
       # TODO: Run perf tests
       # TODO: Run mono tests on Windows?
