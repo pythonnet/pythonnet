@@ -34,7 +34,7 @@ namespace Python.Runtime.Codecs
             foreach (FieldInfo field in tupleType.GetFields())
             {
                 var item = field.GetValue(value);
-                IntPtr pyItem = Converter.ToPython(item);
+                IntPtr pyItem = Converter.ToPython(item, field.FieldType);
                 Runtime.PyTuple_SetItem(tuple, fieldIndex, pyItem);
                 fieldIndex++;
             }
