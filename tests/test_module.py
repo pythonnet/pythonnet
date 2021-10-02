@@ -41,10 +41,6 @@ def test_preload_var():
     try:
         clr.setPreload(True)
         assert clr.getPreload() is True, clr.getPreload()
-        clr.setPreload(0)
-        assert clr.getPreload() is False, clr.getPreload()
-        clr.setPreload(1)
-        assert clr.getPreload() is True, clr.getPreload()
 
         import System.Configuration
         content = dir(System.Configuration)

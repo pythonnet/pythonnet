@@ -1293,7 +1293,21 @@ namespace Python.Runtime
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            return Converter.ToManaged(this.obj, binder.Type, out result, false);
+            // always try implicit conversion first
+            if (Converter.ToManaged(this.obj, binder.Type, out result, false))
+            {
+                return true;
+            }
+
+            if (binder.Explicit)
+            {
+                Runtime.PyErr_Fetch(out var errType, out var errValue, out var tb);
+                bool converted = Converter.ToManagedExplicit(Reference, binder.Type, out result);
+                Runtime.PyErr_Restore(errType.StealNullable(), errValue.StealNullable(), tb.StealNullable());
+                return converted;
+            }
+
+            return false;
         }
 
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)

@@ -247,7 +247,7 @@ def test_bool_delegate():
     from Python.Test import BoolDelegate
 
     def always_so_negative():
-        return 0
+        return False
 
     d = BoolDelegate(always_so_negative)
     ob = DelegateTest()
@@ -255,6 +255,12 @@ def test_bool_delegate():
 
     assert not d()
     assert not ob.CallBoolDelegate(d)
+
+    def always_so_positive():
+        return 1
+    bad = BoolDelegate(always_so_positive)
+    with pytest.raises(TypeError):
+        ob.CallBoolDelegate(bad)
 
 def test_object_delegate():
     """Test object delegate."""

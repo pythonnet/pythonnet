@@ -65,13 +65,15 @@ def test_boolean_indexer():
     ob = Test.BooleanIndexerTest()
 
     assert ob[True] is None
-    assert ob[1] is None
 
-    ob[0] = "false"
-    assert ob[0] == "false"
-
-    ob[1] = "true"
-    assert ob[1] == "true"
+    with pytest.raises(TypeError):
+        ob[1]
+    with pytest.raises(TypeError):
+        ob[0]
+    with pytest.raises(TypeError):
+        ob[1] = "true"
+    with pytest.raises(TypeError):
+        ob[0] = "false"
 
     ob[False] = "false"
     assert ob[False] == "false"

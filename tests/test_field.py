@@ -200,11 +200,11 @@ def test_boolean_field():
     ob.BooleanField = False
     assert ob.BooleanField is False
 
-    ob.BooleanField = 1
-    assert ob.BooleanField is True
+    with pytest.raises(TypeError):
+        ob.BooleanField = 1
 
-    ob.BooleanField = 0
-    assert ob.BooleanField is False
+    with pytest.raises(TypeError):
+        ob.BooleanField = 0
 
 
 def test_sbyte_field():

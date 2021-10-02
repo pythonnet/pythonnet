@@ -13,53 +13,36 @@ def test_bool_conversion():
     """Test bool conversion."""
     ob = ConversionTest()
     assert ob.BooleanField is False
-    assert ob.BooleanField is False
     assert ob.BooleanField == 0
 
     ob.BooleanField = True
-    assert ob.BooleanField is True
     assert ob.BooleanField is True
     assert ob.BooleanField == 1
 
     ob.BooleanField = False
     assert ob.BooleanField is False
-    assert ob.BooleanField is False
     assert ob.BooleanField == 0
 
-    ob.BooleanField = 1
-    assert ob.BooleanField is True
-    assert ob.BooleanField is True
-    assert ob.BooleanField == 1
+    with pytest.raises(TypeError):
+        ob.BooleanField = 1
+    
+    with pytest.raises(TypeError):
+        ob.BooleanField = 0
 
-    ob.BooleanField = 0
-    assert ob.BooleanField is False
-    assert ob.BooleanField is False
-    assert ob.BooleanField == 0
+    with pytest.raises(TypeError):
+        ob.BooleanField = None
 
-    ob.BooleanField = System.Boolean(None)
-    assert ob.BooleanField is False
-    assert ob.BooleanField is False
-    assert ob.BooleanField == 0
+    with pytest.raises(TypeError):
+        ob.BooleanField = ''
 
-    ob.BooleanField = System.Boolean('')
-    assert ob.BooleanField is False
-    assert ob.BooleanField is False
-    assert ob.BooleanField == 0
+    with pytest.raises(TypeError):
+        ob.BooleanField = System.Boolean(0)
 
-    ob.BooleanField = System.Boolean(0)
-    assert ob.BooleanField is False
-    assert ob.BooleanField is False
-    assert ob.BooleanField == 0
+    with pytest.raises(TypeError):
+        ob.BooleanField = System.Boolean(1)
 
-    ob.BooleanField = System.Boolean(1)
-    assert ob.BooleanField is True
-    assert ob.BooleanField is True
-    assert ob.BooleanField == 1
-
-    ob.BooleanField = System.Boolean('a')
-    assert ob.BooleanField is True
-    assert ob.BooleanField is True
-    assert ob.BooleanField == 1
+    with pytest.raises(TypeError):
+        ob.BooleanField = System.Boolean('a')
 
 
 def test_sbyte_conversion():
