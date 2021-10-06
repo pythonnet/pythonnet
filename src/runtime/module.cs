@@ -53,7 +53,7 @@ namespace Python.Runtime
             PythonException.ThrowIfIsNull(variables);
 
             int res = Runtime.PyDict_SetItem(
-                VarsRef, new BorrowedReference(PyIdentifier.__builtins__),
+                VarsRef, PyIdentifier.__builtins__,
                 Runtime.PyEval_GetBuiltins()
             );
             PythonException.ThrowIfIsNotZero(res);

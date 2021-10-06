@@ -34,7 +34,8 @@ namespace Python.Runtime
     foreach (var name in internNames)
     {
 #>
-         public static IntPtr <#= name #>;
+         static IntPtr f<#= name #>;
+         public static BorrowedReference <#= name #> => new(f<#= name #>);
 <#
     }
 #>
