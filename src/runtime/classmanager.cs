@@ -162,6 +162,9 @@ namespace Python.Runtime
                 Runtime.PyType_Modified(pair.Value.TypeReference);
                 var context = contexts[pair.Value.pyHandle];
                 pair.Value.Load(context);
+                var slotsHolder = TypeManager.GetSlotsHolder(pyType);
+                pair.Value.InitializeSlots(slotsHolder);
+                Runtime.PyType_Modified(pair.Value.TypeReference);
                 loadedObjs.Add(pair.Value, context);
             }
             

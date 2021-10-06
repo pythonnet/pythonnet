@@ -23,6 +23,7 @@ See [Mixins/collections.py](src/runtime/Mixins/collections.py).
 -   .NET arrays implement Python buffer protocol
 -   Python.NET will correctly resolve .NET methods, that accept `PyList`, `PyInt`,
 and other `PyObject` derived types when called from Python.
+-   .NET classes, that have `__call__` method are callable from Python
 -   `PyIterable` type, that wraps any iterable object in Python
 
 

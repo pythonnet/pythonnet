@@ -404,6 +404,10 @@ namespace Python.Runtime
             impl.tpHandle = type;
             impl.pyHandle = type;
 
+            impl.InitializeSlots(slotsHolder);
+
+            Runtime.PyType_Modified(pyType.Reference);
+
             //DebugUtil.DumpType(type);
         }
 
@@ -787,6 +791,12 @@ namespace Python.Runtime
             InitializeSlot(type, slotOffset, thunk, slotsHolder);
         }
 
+        internal static void InitializeSlot(BorrowedReference type, int slotOffset, Delegate impl, SlotsHolder slotsHolder)
+        {
+            var thunk = Interop.GetThunk(impl);
+            InitializeSlot(type.DangerousGetAddress(), slotOffset, thunk, slotsHolder);
+        }
+
         static void InitializeSlot(IntPtr type, int slotOffset, ThunkInfo thunk, SlotsHolder slotsHolder)
         {
             Marshal.WriteIntPtr(type, slotOffset, thunk.Address);
@@ -848,6 +858,9 @@ namespace Python.Runtime
             _slotsHolders.Add(type, holder);
             return holder;
         }
+
+        internal static SlotsHolder GetSlotsHolder(PyType type)
+            => _slotsHolders[type.Handle];
     }
 
 
@@ -872,6 +885,8 @@ namespace Python.Runtime
         {
             _type = type;
         }
+
+        public bool IsHolding(int offset) => _slots.ContainsKey(offset);
 
         public void Set(int offset, ThunkInfo thunk)
         {

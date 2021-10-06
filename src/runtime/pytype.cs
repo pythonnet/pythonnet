@@ -121,6 +121,20 @@ namespace Python.Runtime
             return new BorrowedReference(basePtr);
         }
 
+        internal static BorrowedReference GetBases(BorrowedReference type)
+        {
+            Debug.Assert(IsType(type));
+            IntPtr basesPtr = Marshal.ReadIntPtr(type.DangerousGetAddress(), TypeOffset.tp_bases);
+            return new BorrowedReference(basesPtr);
+        }
+
+        internal static BorrowedReference GetMRO(BorrowedReference type)
+        {
+            Debug.Assert(IsType(type));
+            IntPtr basesPtr = Marshal.ReadIntPtr(type.DangerousGetAddress(), TypeOffset.tp_mro);
+            return new BorrowedReference(basesPtr);
+        }
+
         private static IntPtr EnsureIsType(in StolenReference reference)
         {
             IntPtr address = reference.DangerousGetAddressOrNull();
