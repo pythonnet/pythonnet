@@ -162,5 +162,31 @@ namespace Python.EmbeddingTest
             var proxiedHandle = pyObjectProxy.GetAttr("Handle").As<IntPtr>();
             Assert.AreEqual(pyObject.Handle, proxiedHandle);
         }
+
+        // regression for https://github.com/pythonnet/pythonnet/issues/451
+        [Test]
+        public void CanGetListFromDerivedClass()
+        {
+            using var scope = Py.CreateScope();
+            scope.Import(typeof(GetListImpl).Namespace, asname: "test");
+            scope.Exec(@"
+class PyGetListImpl(test.GetListImpl):
+    pass
+    ");
+            var pyImpl = scope.Get("PyGetListImpl");
+            dynamic inst = pyImpl.Invoke();
+            List<string> result = inst.GetList();
+            CollectionAssert.AreEqual(new[] { "testing" }, result);
+        }
+    }
+
+    public interface IGetList
+    {
+        List<string> GetList();
+    }
+
+    public class GetListImpl : IGetList
+    {
+        public List<string> GetList() => new() { "testing" };
     }
 }
