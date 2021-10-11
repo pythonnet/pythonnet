@@ -1,4 +1,3 @@
-import os
 import sys
 import clr_loader
 
@@ -11,7 +10,7 @@ _LOADED = False
 def set_runtime(runtime):
     global _RUNTIME
     if _LOADED:
-        raise RuntimeError("The runtime {runtime} has already been loaded".format(_RUNTIME))
+        raise RuntimeError("The runtime {} has already been loaded".format(_RUNTIME))
 
     _RUNTIME = runtime
 
