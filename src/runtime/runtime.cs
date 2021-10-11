@@ -36,12 +36,6 @@ namespace Python.Runtime
             string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
             if (dll is not null) return dll;
 
-            try
-            {
-                LibraryLoader.Instance.GetFunction(IntPtr.Zero, "PyUnicode_GetMax");
-                return null;
-            } catch (MissingMethodException) { }
-
             string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
             if (!Version.TryParse(verString, out var version)) return null;
 
@@ -1581,8 +1575,6 @@ namespace Python.Runtime
 
         internal static IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err) => Delegates.PyUnicode_FromEncodedObject(ob, enc, err);
 
-        internal static int PyUnicode_GetMax() => Delegates.PyUnicode_GetMax();
-
         internal static long PyUnicode_GetSize(IntPtr ob)
         {
             return (long)_PyUnicode_GetSize(ob);
@@ -2462,7 +2454,6 @@ namespace Python.Runtime
                 PyUnicode_FromObject = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromObject), GetUnmanagedDll(_PythonDll));
                 PyUnicode_DecodeUTF16 = (delegate* unmanaged[Cdecl]<IntPtr, nint, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyUnicode_DecodeUTF16), GetUnmanagedDll(_PythonDll));
                 PyUnicode_FromEncodedObject = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_FromEncodedObject), GetUnmanagedDll(_PythonDll));
-                PyUnicode_GetMax = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyUnicode_GetMax), GetUnmanagedDll(_PythonDll));
                 _PyUnicode_GetSize = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName("PyUnicode_GetSize", GetUnmanagedDll(_PythonDll));
                 PyUnicode_AsUnicode = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)GetFunctionByName(nameof(PyUnicode_AsUnicode), GetUnmanagedDll(_PythonDll));
                 PyUnicode_AsUTF16String = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyUnicode_AsUTF16String), GetUnmanagedDll(_PythonDll));
@@ -2753,7 +2744,6 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyUnicode_FromObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, IntPtr> PyUnicode_FromEncodedObject { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, nint, IntPtr, IntPtr, NewReference> PyUnicode_DecodeUTF16 { get; }
-            internal static delegate* unmanaged[Cdecl]<int> PyUnicode_GetMax { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> _PyUnicode_GetSize { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr> PyUnicode_AsUnicode { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyUnicode_AsUTF16String { get; }
