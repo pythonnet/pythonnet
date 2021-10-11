@@ -58,7 +58,7 @@ jobs:
           python -m pythonnet.find_libpython --export | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.platform }} -p:DefineConstants=FINALIZER_CHECK src/embed_tests/
+        run: dotnet test --runtime any-${{ matrix.platform }} src/embed_tests/
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os != 'windows' }}
