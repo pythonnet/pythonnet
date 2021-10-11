@@ -6,13 +6,13 @@ jobs:
   build-test:
     name: Build and Test
     runs-on: ${{ matrix.os }}-latest
-    timeout-minutes: 7
+    timeout-minutes: 15
 
     strategy:
       fail-fast: false
       matrix:
         os: [windows, ubuntu, macos]
-        python: ["3.6", "3.7", "3.8", "3.9"]
+        python: ["3.6", "3.7", "3.8", "3.9", "3.10"]
         platform: [x64]
         shutdown_mode: [Normal, Soft]
 
