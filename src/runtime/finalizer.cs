@@ -33,7 +33,7 @@ namespace Python.Runtime
         [DefaultValue(true)]
         public bool Enable { get; set; } = true;
 
-        private ConcurrentQueue<IntPtr> _objQueue = new ConcurrentQueue<IntPtr>();
+        private readonly ConcurrentQueue<IntPtr> _objQueue = new();
         private int _throttled;
 
         #region FINALIZER_CHECK

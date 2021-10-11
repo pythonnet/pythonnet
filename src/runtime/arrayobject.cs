@@ -22,7 +22,7 @@ namespace Python.Runtime
             return false;
         }
 
-        public static IntPtr tp_new(IntPtr tpRaw, IntPtr args, IntPtr kw)
+        public static IntPtr tp_new(IntPtr tpRaw, IntPtr argsRaw, IntPtr kw)
         {
             if (kw != IntPtr.Zero)
             {
@@ -30,6 +30,7 @@ namespace Python.Runtime
             }
 
             var tp = new BorrowedReference(tpRaw);
+            var args = new BorrowedReference(argsRaw);
 
             var self = GetManagedObject(tp) as ArrayObject;
             if (!self.type.Valid)
@@ -38,7 +39,7 @@ namespace Python.Runtime
             }
             Type arrType = self.type.Value;
 
-            long[] dimensions = new long[Runtime.PyTuple_Size(args)];
+            var dimensions = new long[Runtime.PyTuple_Size(args)];
             if (dimensions.Length == 0)
             {
                 return Exceptions.RaiseTypeError("array constructor requires at least one integer argument or an object convertible to array");
@@ -46,12 +47,12 @@ namespace Python.Runtime
             if (dimensions.Length != 1)
             {
                 return CreateMultidimensional(arrType.GetElementType(), dimensions,
-                         shapeTuple: new BorrowedReference(args),
+                         shapeTuple: args,
                          pyType: tp)
                        .DangerousMoveToPointerOrNull();
             }
 
-            IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+            var op = Runtime.PyTuple_GetItem(args, 0);
 
             // create single dimensional array
             if (Runtime.PyInt_Check(op))
@@ -136,8 +137,9 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idxRaw)
         {
+            var idx = new BorrowedReference(idxRaw);
             var obj = (CLRObject)GetManagedObject(ob);
             var arrObj = (ArrayObject)GetManagedObjectType(ob);
             if (!arrObj.type.Valid)
@@ -204,7 +206,7 @@ namespace Python.Runtime
 
             for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
+                var op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     return RaiseIndexMustBeIntegerError(op);
@@ -241,8 +243,9 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static new int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static new int mp_ass_subscript(IntPtr ob, IntPtr idxRaw, IntPtr v)
         {
+            var idx = new BorrowedReference(idxRaw);
             var obj = (CLRObject)GetManagedObject(ob);
             var items = obj.inst as Array;
             Type itemType = obj.inst.GetType().GetElementType();
@@ -305,7 +308,7 @@ namespace Python.Runtime
 
             for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
+                var op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     RaiseIndexMustBeIntegerError(op);
@@ -340,7 +343,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        private static IntPtr RaiseIndexMustBeIntegerError(IntPtr idx)
+        private static IntPtr RaiseIndexMustBeIntegerError(BorrowedReference idx)
         {
             string tpName = Runtime.PyObject_GetTypeName(idx);
             return Exceptions.RaiseTypeError($"array index has type {tpName}, expected an integer");

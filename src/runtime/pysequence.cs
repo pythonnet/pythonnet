@@ -35,7 +35,7 @@ namespace Python.Runtime
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
-            return Runtime.PySequence_Check(value.obj);
+            return Runtime.PySequence_Check(value.Reference);
         }
 
         /// <summary>

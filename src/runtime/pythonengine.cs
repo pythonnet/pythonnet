@@ -642,7 +642,7 @@ namespace Python.Runtime
                 globals = Runtime.PyEval_GetGlobals();
                 if (globals.IsNull)
                 {
-                    globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
+                    globals = tempGlobals = Runtime.PyDict_New();
                     Runtime.PyDict_SetItem(
                         globals, new BorrowedReference(PyIdentifier.__builtins__),
                         Runtime.PyEval_GetBuiltins()

@@ -87,7 +87,7 @@ namespace Python.Runtime
         public static bool IsFloatType(PyObject value)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
-            return Runtime.PyFloat_Check(value.obj);
+            return Runtime.PyFloat_Check(value.Reference);
         }
 
 

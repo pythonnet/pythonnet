@@ -11,7 +11,7 @@ namespace Python.Runtime
     public class PyType : PyObject
     {
         /// <summary>Creates heap type object from the <paramref name="spec"/>.</summary>
-        public PyType(TypeSpec spec, PyTuple? bases = null) : base(FromSpec(spec, bases)) { }
+        public PyType(TypeSpec spec, PyTuple? bases = null) : this(FromSpec(spec, bases)) { }
         /// <summary>Wraps an existing type object.</summary>
         public PyType(PyObject o) : base(FromObject(o)) { }
 
@@ -142,22 +142,19 @@ namespace Python.Runtime
             return o.Reference;
         }
 
-        private static IntPtr FromSpec(TypeSpec spec, PyTuple? bases = null)
+        private static PyObject FromSpec(TypeSpec spec, PyTuple? bases = null)
         {
             if (spec is null) throw new ArgumentNullException(nameof(spec));
 
             if ((spec.Flags & TypeFlags.HeapType) == 0)
                 throw new NotSupportedException("Only heap types are supported");
 
-            var nativeSpec = new NativeTypeSpec(spec);
+            using var nativeSpec = new NativeTypeSpec(spec);
             var basesRef = bases is null ? default : bases.Reference;
             var result = Runtime.PyType_FromSpecWithBases(in nativeSpec, basesRef);
-
             PythonException.ThrowIfIsNull(result);
 
-            nativeSpec.Dispose();
-
-            return result.DangerousMoveToPointer();
+            return result.MoveToPyObject();
         }
     }
 }

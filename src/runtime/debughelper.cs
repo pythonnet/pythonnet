@@ -25,9 +25,8 @@ namespace Python.Runtime
                 {
                     Console.WriteLine("null arg to print");
                 }
-                IntPtr ob = Runtime.PyObject_Repr(t);
+                using var ob = Runtime.PyObject_Repr(new BorrowedReference(t));
                 result += Runtime.GetManagedString(ob);
-                Runtime.XDecref(ob);
                 result += " ";
             }
             Console.WriteLine(result);

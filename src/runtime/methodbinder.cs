@@ -363,8 +363,9 @@ namespace Python.Runtime
         /// <param name="info">If not null, only bind to that method.</param>
         /// <param name="methodinfo">If not null, additionally attempt to bind to the generic methods in this array by inferring generic type parameters.</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kwRaw, MethodBase info, MethodInfo[] methodinfo)
         {
+            var kw = new BorrowedReference(kwRaw);
             // loop to find match, return invoker w/ or w/o error
             MethodBase[] _methods = null;
 
@@ -372,15 +373,13 @@ namespace Python.Runtime
             if (kw != IntPtr.Zero)
             {
                 var pynkwargs = (int)Runtime.PyDict_Size(kw);
-                IntPtr keylist = Runtime.PyDict_Keys(kw);
-                IntPtr valueList = Runtime.PyDict_Values(kw);
+                using var keyList = Runtime.PyDict_Keys(kw);
+                using var valueList = Runtime.PyDict_Values(kw);
                 for (int i = 0; i < pynkwargs; ++i)
                 {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keyList, i));
+                    kwargDict[keyStr] = Runtime.PyList_GetItem(valueList, i).DangerousGetAddress();
                 }
-                Runtime.XDecref(keylist);
-                Runtime.XDecref(valueList);
             }
 
             var pynargs = (int)Runtime.PyTuple_Size(args);
@@ -545,7 +544,7 @@ namespace Python.Runtime
                 MethodInfo mi = MatchParameters(methodinfo, types);
                 if (mi != null)
                 {
-                    return Bind(inst, args, kw, mi, null);
+                    return Bind(inst, args, kw.DangerousGetAddressOrNull(), mi, null);
                 }
             }
             if (mismatchedMethods.Count > 0)
@@ -573,7 +572,7 @@ namespace Python.Runtime
                 // we only have one argument left, so we need to check it
                 // to see if it is a sequence or a single item
                 IntPtr item = Runtime.PyTuple_GetItem(args, arrayStart);
-                if (!Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
+                if (!Runtime.PyString_Check(item) && Runtime.PySequence_Check(new BorrowedReference(item)))
                 {
                     // it's a sequence (and not a string), so we use it as the op
                     op = item;

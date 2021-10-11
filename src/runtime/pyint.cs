@@ -217,7 +217,7 @@ namespace Python.Runtime
         /// </remarks>
         public long ToInt64()
         {
-            long? val = Runtime.PyLong_AsLongLong(obj);
+            long? val = Runtime.PyLong_AsLongLong(Reference);
             if (val is null)
             {
                 throw PythonException.ThrowLastAsClrException();

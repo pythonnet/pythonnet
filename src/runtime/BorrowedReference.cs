@@ -38,6 +38,14 @@ namespace Python.Runtime
             => reference.IsNull;
         public static bool operator !=(NullOnly @null, BorrowedReference reference)
             => !reference.IsNull;
+        public static bool operator ==(BorrowedReference reference, IntPtr pointer)
+            => reference.pointer == pointer;
+        public static bool operator !=(BorrowedReference reference, IntPtr pointer)
+            => reference.pointer != pointer;
+        public static bool operator ==(IntPtr pointer, BorrowedReference reference)
+            => reference.pointer == pointer;
+        public static bool operator !=(IntPtr pointer, BorrowedReference reference)
+            => reference.pointer != pointer;
 
         public override bool Equals(object obj) {
             if (obj is IntPtr ptr)

@@ -995,7 +995,7 @@ namespace Python.Runtime
     {
         public static IntPtr CreateObjectType()
         {
-            using var globals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
+            using var globals = Runtime.PyDict_New();
             if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
             {
                 globals.Dispose();

@@ -31,8 +31,8 @@ namespace Python.Runtime.CollectionWrappers
             {
                 using (Py.GIL())
                 {
-                    var item = Runtime.PyIter_Next(iterObject.Handle);
-                    if (item == IntPtr.Zero)
+                    var item = Runtime.PyIter_Next(iterObject.Reference);
+                    if (item.IsNull())
                     {
                         Runtime.CheckExceptionOccurred();
                         iterObject.Dispose();

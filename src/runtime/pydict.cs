@@ -106,8 +106,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyIterable Values()
         {
-            IntPtr items = Runtime.PyDict_Values(obj);
-            if (items == IntPtr.Zero)
+            var items = Runtime.PyDict_Values(Reference);
+            if (items.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }

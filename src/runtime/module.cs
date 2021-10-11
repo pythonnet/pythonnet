@@ -395,24 +395,22 @@ namespace Python.Runtime
             if (name is null) throw new ArgumentNullException(nameof(name));
 
             Check();
-            using (var pyKey = new PyString(name))
+            using var pyKey = new PyString(name);
+            if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
             {
-                if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
+                IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
+                if (op == IntPtr.Zero)
                 {
-                    IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
-                    if (op == IntPtr.Zero)
-                    {
-                        throw PythonException.ThrowLastAsClrException();
-                    }
+                    throw PythonException.ThrowLastAsClrException();
+                }
 
-                    value = new PyObject(op);
-                    return true;
-                }
-                else
-                {
-                    value = null;
-                    return false;
-                }
+                value = new PyObject(op);
+                return true;
+            }
+            else
+            {
+                value = null;
+                return false;
             }
         }
 

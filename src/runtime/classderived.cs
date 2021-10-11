@@ -655,20 +655,15 @@ namespace Python.Runtime
                 IntPtr gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    Runtime.XIncref(self.pyHandle);
-                    var pyself = new PyObject(self.pyHandle);
+                    var pyself = new PyObject(self.ObjectReference);
                     disposeList.Add(pyself);
 
-                    Runtime.XIncref(Runtime.PyNone);
-                    var pynone = new PyObject(Runtime.PyNone);
-                    disposeList.Add(pynone);
+                    if (pyself.HasAttr(methodName)) {
+                        PyObject method = pyself.GetAttr(methodName);
+                        disposeList.Add(method);
 
-                    PyObject method = pyself.GetAttr(methodName, pynone);
-                    disposeList.Add(method);
-                    if (method.Handle != Runtime.PyNone)
-                    {
                         // if the method hasn't been overridden then it will be a managed object
-                        ManagedType managedMethod = ManagedType.GetManagedObject(method.Handle);
+                        ManagedType managedMethod = ManagedType.GetManagedObject(method.Reference);
                         if (null == managedMethod)
                         {
                             var pyargs = new PyObject[args.Length];
@@ -717,20 +712,15 @@ namespace Python.Runtime
                 IntPtr gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    Runtime.XIncref(self.pyHandle);
-                    var pyself = new PyObject(self.pyHandle);
+                    var pyself = new PyObject(self.ObjectReference);
                     disposeList.Add(pyself);
 
-                    Runtime.XIncref(Runtime.PyNone);
-                    var pynone = new PyObject(Runtime.PyNone);
-                    disposeList.Add(pynone);
+                    if (pyself.HasAttr(methodName)) { 
+                        PyObject method = pyself.GetAttr(methodName);
+                        disposeList.Add(method);
 
-                    PyObject method = pyself.GetAttr(methodName, pynone);
-                    disposeList.Add(method);
-                    if (method.Handle != Runtime.PyNone)
-                    {
                         // if the method hasn't been overridden then it will be a managed object
-                        ManagedType managedMethod = ManagedType.GetManagedObject(method.Handle);
+                        ManagedType managedMethod = ManagedType.GetManagedObject(method.Reference);
                         if (null == managedMethod)
                         {
                             var pyargs = new PyObject[args.Length];
@@ -781,12 +771,10 @@ namespace Python.Runtime
             IntPtr gs = Runtime.PyGILState_Ensure();
             try
             {
-                Runtime.XIncref(self.pyHandle);
-                using (var pyself = new PyObject(self.pyHandle))
-                using (PyObject pyvalue = pyself.GetAttr(propertyName))
-                {
-                    return (T)pyvalue.AsManagedObject(typeof(T));
-                }
+                using var pyself = new PyObject(self.ObjectReference);
+                using var pyvalue = pyself.GetAttr(propertyName);
+
+                return (T)pyvalue.AsManagedObject(typeof(T));
             }
             finally
             {
@@ -807,12 +795,10 @@ namespace Python.Runtime
             IntPtr gs = Runtime.PyGILState_Ensure();
             try
             {
-                Runtime.XIncref(self.pyHandle);
-                using (var pyself = new PyObject(self.pyHandle))
-                using (var pyvalue = new PyObject(Converter.ToPythonImplicit(value)))
-                {
-                    pyself.SetAttr(propertyName, pyvalue);
-                }
+                var pyself = new PyObject(self.ObjectReference);
+                var pyvalue = new PyObject(Converter.ToPythonImplicit(value));
+
+                pyself.SetAttr(propertyName, pyvalue);
             }
             finally
             {
