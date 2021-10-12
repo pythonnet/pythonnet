@@ -31,7 +31,7 @@ namespace Python.Runtime.CollectionWrappers
             {
                 using (Py.GIL())
                 {
-                    var item = Runtime.PyIter_Next(iterObject.Reference);
+                    using var item = Runtime.PyIter_Next(iterObject.Reference);
                     if (item.IsNull())
                     {
                         Runtime.CheckExceptionOccurred();

@@ -1319,7 +1319,7 @@ namespace Python.Runtime
 
         internal static bool PyFloat_Check(BorrowedReference ob)
         {
-            return PyObject_TYPE(ob).Equals(PyFloatType);
+            return PyObject_TYPE(ob) == PyFloatType;
         }
 
         /// <summary>
