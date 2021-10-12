@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using System.Security.Permissions;
 
 namespace Python.Runtime
 {
@@ -15,7 +14,6 @@ namespace Python.Runtime
         private MaybeMethodInfo getter;
         private MaybeMethodInfo setter;
 
-        [StrongNameIdentityPermission(SecurityAction.Assert)]
         public PropertyObject(PropertyInfo md)
         {
             getter = md.GetGetMethod(true);
