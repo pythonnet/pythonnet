@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -556,6 +559,45 @@ namespace Python.Runtime
             }
 
             return 0;
+        }
+
+        static IntPtr tp_call_impl(IntPtr ob, IntPtr args, IntPtr kw)
+        {
+            IntPtr tp = Runtime.PyObject_TYPE(ob);
+            var self = (ClassBase)GetManagedObject(tp);
+
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+
+            Type type = self.type.Value;
+
+            var calls = GetCallImplementations(type).ToList();
+            Debug.Assert(calls.Count > 0);
+            var callBinder = new MethodBinder();
+            foreach (MethodInfo call in calls)
+            {
+                callBinder.AddMethod(call);
+            }
+            return callBinder.Invoke(ob, args, kw);
+        }
+
+        static IEnumerable<MethodInfo> GetCallImplementations(Type type)
+            => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(m => m.Name == "__call__");
+
+        static readonly Interop.TernaryFunc tp_call_delegate = tp_call_impl;
+
+        public virtual void InitializeSlots(SlotsHolder slotsHolder)
+        {
+            if (!this.type.Valid) return;
+
+            if (GetCallImplementations(this.type.Value).Any()
+                && !slotsHolder.IsHolding(TypeOffset.tp_call))
+            {
+                TypeManager.InitializeSlot(ObjectReference, TypeOffset.tp_call, tp_call_delegate, slotsHolder);
+            }
         }
     }
 }

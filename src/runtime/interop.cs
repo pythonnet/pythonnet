@@ -242,8 +242,13 @@ namespace Python.Runtime
                 return ThunkInfo.Empty;
             }
             Delegate d = Delegate.CreateDelegate(dt, method);
-            var info = new ThunkInfo(d);
-            allocatedThunks[info.Address] = d;
+            return GetThunk(d);
+        }
+
+        internal static ThunkInfo GetThunk(Delegate @delegate)
+        {
+            var info = new ThunkInfo(@delegate);
+            allocatedThunks[info.Address] = @delegate;
             return info;
         }
 
