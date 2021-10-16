@@ -220,8 +220,7 @@ namespace Python.Runtime
             }
 
             // Load the clr.py resource into the clr module
-            NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
-            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr);
+            BorrowedReference clr_dict = Runtime.PyModule_GetDict(ImportHook.ClrModuleReference);
 
             var locals = new PyDict();
             try
@@ -236,7 +235,7 @@ namespace Python.Runtime
 
                 LoadSubmodule(module_globals, "clr.interop", "interop.py");
 
-                    LoadMixins(module_globals);
+                LoadMixins(module_globals);
 
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
@@ -257,6 +256,8 @@ namespace Python.Runtime
             {
                 locals.Dispose();
             }
+
+            ImportHook.UpdateCLRModuleDict();
         }
 
         static BorrowedReference DefineModule(string name)
