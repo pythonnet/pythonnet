@@ -44,18 +44,18 @@ namespace Python.Runtime
             }
         }
 
-        internal IntPtr GetItem(IntPtr inst, IntPtr args)
+        internal NewReference GetItem(BorrowedReference inst, BorrowedReference args)
         {
-            return GetterBinder.Invoke(inst, args, IntPtr.Zero);
+            return GetterBinder.Invoke(inst, args, null);
         }
 
 
-        internal void SetItem(IntPtr inst, IntPtr args)
+        internal void SetItem(BorrowedReference inst, BorrowedReference args)
         {
-            SetterBinder.Invoke(inst, args, IntPtr.Zero);
+            SetterBinder.Invoke(inst, args, null);
         }
 
-        internal bool NeedsDefaultArgs(IntPtr args)
+        internal bool NeedsDefaultArgs(BorrowedReference args)
         {
             var pynargs = Runtime.PyTuple_Size(args);
             MethodBase[] methods = SetterBinder.GetMethods();
@@ -89,7 +89,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="args">This is pointing to the tuple args passed in</param>
         /// <returns>a new instance of the tuple containing the default args</returns>
-        internal IntPtr GetDefaultArgs(IntPtr args)
+        internal NewReference GetDefaultArgs(BorrowedReference args)
         {
             // if we don't need default args return empty tuple
             if (!NeedsDefaultArgs(args))

@@ -22,14 +22,12 @@ namespace Python.Runtime
             return false;
         }
 
-        public static IntPtr tp_new(IntPtr tpRaw, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            if (kw != IntPtr.Zero)
+            if (kw != null)
             {
                 return Exceptions.RaiseTypeError("array constructor takes no keyword arguments");
             }
-
-            var tp = new BorrowedReference(tpRaw);
 
             var self = GetManagedObject(tp) as ArrayObject;
             if (!self.type.Valid)
@@ -46,12 +44,11 @@ namespace Python.Runtime
             if (dimensions.Length != 1)
             {
                 return CreateMultidimensional(arrType.GetElementType(), dimensions,
-                         shapeTuple: new BorrowedReference(args),
-                         pyType: tp)
-                       .DangerousMoveToPointerOrNull();
+                         shapeTuple: args,
+                         pyType: tp);
             }
 
-            IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+            BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
 
             // create single dimensional array
             if (Runtime.PyInt_Check(op))
@@ -63,8 +60,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    return NewInstance(arrType.GetElementType(), tp, dimensions)
-                           .DangerousMoveToPointerOrNull();
+                    return NewInstance(arrType.GetElementType(), tp, dimensions);
                 }
             }
             object result;
@@ -72,10 +68,9 @@ namespace Python.Runtime
             // this implements casting to Array[T]
             if (!Converter.ToManaged(op, arrType, out result, true))
             {
-                return IntPtr.Zero;
+                return default;
             }
-            return CLRObject.GetInstHandle(result, tp)
-                   .DangerousGetAddress();
+            return CLRObject.GetReference(result, tp);
         }
 
         static NewReference CreateMultidimensional(Type elementType, long[] dimensions, BorrowedReference shapeTuple, BorrowedReference pyType)

@@ -280,7 +280,6 @@ namespace Python.Runtime
             ClassInfo info = GetClassInfo(type);
 
             impl.indexer = info.indexer;
-            impl.richcompare = new Dictionary<int, MethodObject>();
 
             // Now we force initialize the Python type object to reflect the given
             // managed type, filling the Python type slots with thunks that
@@ -293,10 +292,6 @@ namespace Python.Runtime
             using var dict = Runtime.PyObject_GenericGetDict(pyType.Reference);
 
 
-            if (impl.dotNetMembers == null)
-            {
-                impl.dotNetMembers = new List<string>();
-            }
             IDictionaryEnumerator iter = info.members.GetEnumerator();
             while (iter.MoveNext())
             {

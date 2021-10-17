@@ -23,18 +23,43 @@ namespace Python.Runtime
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe static T* ReadPtr<T>(BorrowedReference @ref, int offset)
+        internal static int ReadInt32(BorrowedReference ob, int offset)
+        {
+            return Marshal.ReadInt32(ob.DangerousGetAddress(), offset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static T* ReadPtr<T>(BorrowedReference ob, int offset)
             where T: unmanaged
         {
-            IntPtr ptr = Marshal.ReadIntPtr(@ref.DangerousGetAddress(), offset);
+            IntPtr ptr = Marshal.ReadIntPtr(ob.DangerousGetAddress(), offset);
             return (T*)ptr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe static IntPtr ReadIntPtr(BorrowedReference @ref, int offset)
+        internal unsafe static IntPtr ReadIntPtr(BorrowedReference ob, int offset)
         {
-            return Marshal.ReadIntPtr(@ref.DangerousGetAddress(), offset);
+            return Marshal.ReadIntPtr(ob.DangerousGetAddress(), offset);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static BorrowedReference ReadRef(BorrowedReference @ref, int offset)
+        {
+            return new BorrowedReference(ReadIntPtr(@ref, offset));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static void WriteRef(BorrowedReference ob, int offset, in StolenReference @ref)
+        {
+            Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, @ref.DangerousGetAddress());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static void WriteNullableRef(BorrowedReference ob, int offset, in StolenReference @ref)
+        {
+            Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, @ref.DangerousGetAddressOrNull());
+        }
+
 
         internal static Int64 ReadCLong(IntPtr tp, int offset)
         {

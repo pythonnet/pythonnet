@@ -263,6 +263,9 @@ namespace Python.Runtime
         public delegate IntPtr TernaryFunc(IntPtr ob, IntPtr a1, IntPtr a2);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate NewReference BBB_N(BorrowedReference ob, BorrowedReference a1, BorrowedReference a2);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int InquiryFunc(IntPtr ob);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

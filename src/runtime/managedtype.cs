@@ -178,9 +178,8 @@ namespace Python.Runtime
 
         public bool IsClrMetaTypeInstance()
         {
-            Debug.Assert(Runtime.PyCLRMetaType != IntPtr.Zero);
-            Debug.Assert(pyHandle != IntPtr.Zero);
-            return Runtime.PyObject_TYPE(pyHandle) == Runtime.PyCLRMetaType;
+            Debug.Assert(Runtime.PyCLRMetaType != null);
+            return Runtime.PyObject_TYPE(ObjectReference) == Runtime.PyCLRMetaType;
         }
 
         internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
@@ -244,7 +243,7 @@ namespace Python.Runtime
 
         protected void TypeClear()
         {
-            ClearObjectDict(pyHandle);
+            ClearObjectDict(ObjectReference);
         }
 
         internal void Save(InterDomainContext context)
@@ -260,31 +259,33 @@ namespace Python.Runtime
         protected virtual void OnSave(InterDomainContext context) { }
         protected virtual void OnLoad(InterDomainContext context) { }
 
-        protected static void ClearObjectDict(IntPtr ob)
+        protected static void ClearObjectDict(BorrowedReference ob)
         {
-            IntPtr dict = GetObjectDict(ob);
-            if (dict == IntPtr.Zero)
-            {
-                return;
-            }
-            SetObjectDict(ob, IntPtr.Zero);
-            Runtime.XDecref(dict);
+            BorrowedReference type = Runtime.PyObject_TYPE(ob);
+            int instanceDictOffset = Util.ReadInt32(type, TypeOffset.tp_dictoffset);
+            Debug.Assert(instanceDictOffset > 0);
+            Runtime.Py_CLEAR(ob, instanceDictOffset);
         }
 
-        protected static IntPtr GetObjectDict(IntPtr ob)
+        protected static BorrowedReference GetObjectDict(BorrowedReference ob)
         {
-            IntPtr type = Runtime.PyObject_TYPE(ob);
-            int instanceDictOffset = Marshal.ReadInt32(type, TypeOffset.tp_dictoffset);
+            BorrowedReference type = Runtime.PyObject_TYPE(ob);
+            int instanceDictOffset = Util.ReadInt32(type, TypeOffset.tp_dictoffset);
             Debug.Assert(instanceDictOffset > 0);
-            return Marshal.ReadIntPtr(ob, instanceDictOffset);
+            return Util.ReadRef(ob, instanceDictOffset);
         }
 
-        protected static void SetObjectDict(IntPtr ob, IntPtr value)
+        protected static void SetObjectDict(BorrowedReference ob, in StolenReference value)
         {
-            IntPtr type = Runtime.PyObject_TYPE(ob);
-            int instanceDictOffset = Marshal.ReadInt32(type, TypeOffset.tp_dictoffset);
+            if (value.Pointer == IntPtr.Zero) throw new ArgumentNullException(nameof(value));
+            SetObjectDictNullable(ob, value);
+        }
+        protected static void SetObjectDictNullable(BorrowedReference ob, in StolenReference value)
+        {
+            BorrowedReference type = Runtime.PyObject_TYPE(ob);
+            int instanceDictOffset = Util.ReadInt32(type, TypeOffset.tp_dictoffset);
             Debug.Assert(instanceDictOffset > 0);
-            Marshal.WriteIntPtr(ob, instanceDictOffset, value);
+            Runtime.ReplaceReference(ob, instanceDictOffset, value);
         }
 
         internal static void GetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type, out IntPtr handle)

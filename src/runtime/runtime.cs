@@ -1589,8 +1589,6 @@ namespace Python.Runtime
 
         private static NewReference PyTuple_GetSlice(BorrowedReference pointer, nint start, nint end) => Delegates.PyTuple_GetSlice(pointer, start, end);
 
-
-        internal static nint PyTuple_Size(IntPtr pointer) => PyTuple_Size(new BorrowedReference(pointer));
         internal static nint PyTuple_Size(BorrowedReference pointer) => Delegates.PyTuple_Size(pointer);
 
 
@@ -1605,8 +1603,6 @@ namespace Python.Runtime
             var tp_iternext = (NativeFunc*)Marshal.ReadIntPtr(ob_type.DangerousGetAddress(), TypeOffset.tp_iternext);
             return tp_iternext != (NativeFunc*)0 && tp_iternext != _PyObject_NextNotImplemented;
         }
-        internal static IntPtr PyIter_Next(IntPtr pointer)
-            => Delegates.PyIter_Next(new BorrowedReference(pointer)).DangerousMoveToPointerOrNull();
         internal static NewReference PyIter_Next(BorrowedReference pointer) => Delegates.PyIter_Next(pointer);
 
 
@@ -1884,6 +1880,15 @@ namespace Python.Runtime
 
         internal static bool _PyObject_GC_IS_TRACKED(BorrowedReference ob)
             => (long)_PyGC_REFS(ob) != _PyGC_REFS_UNTRACKED;
+
+        internal static void Py_CLEAR(BorrowedReference ob, int offset) => ReplaceReference(ob, offset, default);
+
+        internal static void ReplaceReference(BorrowedReference ob, int offset, in StolenReference newValue)
+        {
+            IntPtr raw = Util.ReadIntPtr(ob, offset);
+            Util.WriteNullableRef(ob, offset, newValue);
+            XDecref(new StolenReference(raw));
+        }
 
         //====================================================================
         // Python Capsules API

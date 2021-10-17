@@ -837,12 +837,12 @@ namespace Python.Runtime
             return match;
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
             return Invoke(inst, args, kw, null, null);
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase info)
         {
             return Invoke(inst, args, kw, info, null);
         }
@@ -881,7 +881,7 @@ namespace Python.Runtime
             to.Append(')');
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase info, MethodInfo[] methodinfo)
         {
             // No valid methods, nothing to bind.
             if (GetMethods().Length == 0)

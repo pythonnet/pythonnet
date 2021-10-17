@@ -379,14 +379,14 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="message">The exception message</param>
         /// <returns><c>IntPtr.Zero</c></returns>
-        internal static IntPtr RaiseTypeError(string message)
+        internal static NewReference RaiseTypeError(string message)
         {
             var cause = PythonException.FetchCurrentOrNullRaw();
             cause?.Normalize();
 
             Exceptions.SetError(Exceptions.TypeError, message);
 
-            if (cause is null) return IntPtr.Zero;
+            if (cause is null) return default;
 
             var typeError = PythonException.FetchCurrentRaw();
             typeError.Normalize();
@@ -396,7 +396,7 @@ namespace Python.Runtime
                 new NewReference(cause.Value!.Reference).Steal());
             typeError.Restore();
 
-            return IntPtr.Zero;
+            return default;
         }
 
         // 2010-11-16: Arranged in python (2.6 & 2.7) source header file order

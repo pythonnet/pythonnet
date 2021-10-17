@@ -49,5 +49,8 @@ namespace Python.Runtime
         [Pure]
         public static IntPtr DangerousGetAddressOrNull(this in StolenReference reference)
             => reference.Pointer;
+        [Pure]
+        public static IntPtr DangerousGetAddress(this in StolenReference reference)
+            => reference.Pointer == IntPtr.Zero ? throw new NullReferenceException() : reference.Pointer;
     }
 }

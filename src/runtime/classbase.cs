@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,14 +21,15 @@ namespace Python.Runtime
     internal class ClassBase : ManagedType
     {
         [NonSerialized]
-        internal List<string> dotNetMembers;
-        internal Indexer indexer;
-        internal Dictionary<int, MethodObject> richcompare;
+        internal readonly List<string> dotNetMembers = new();
+        internal Indexer? indexer;
+        internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
 
         internal ClassBase(Type tp)
         {
-            dotNetMembers = new List<string>();
+            if (tp is null) throw new ArgumentNullException(nameof(type));
+
             indexer = null;
             type = tp;
         }
@@ -50,9 +52,9 @@ namespace Python.Runtime
         /// <summary>
         /// Default implementation of [] semantics for reflected types.
         /// </summary>
-        public virtual IntPtr type_subscript(IntPtr idx)
+        public virtual NewReference type_subscript(BorrowedReference idx)
         {
-            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            Type[]? types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
@@ -78,8 +80,7 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError(e.Message);
                 }
                 ManagedType c = ClassManager.GetClass(t);
-                Runtime.XIncref(c.pyHandle);
-                return c.pyHandle;
+                return new NewReference(c.ObjectReference);
             }
 
             return Exceptions.RaiseTypeError($"{type.Value.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
@@ -88,40 +89,29 @@ namespace Python.Runtime
         /// <summary>
         /// Standard comparison implementation for instances of reflected types.
         /// </summary>
-        public static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
+        public static NewReference tp_richcompare(BorrowedReference ob, BorrowedReference other, int op)
         {
             CLRObject co1;
-            CLRObject co2;
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var cls = (ClassBase)GetManagedObject(tp);
+            CLRObject? co2;
+            BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp)!;
             // C# operator methods take precedence over IComparable.
             // We first check if there's a comparison operator by looking up the richcompare table,
             // otherwise fallback to checking if an IComparable interface is handled.
             if (cls.richcompare.TryGetValue(op, out var methodObject))
             {
                 // Wrap the `other` argument of a binary comparison operator in a PyTuple.
-                IntPtr args = Runtime.PyTuple_New(1);
-                Runtime.XIncref(other);
-                Runtime.PyTuple_SetItem(args, 0, other);
-
-                IntPtr value;
-                try
-                {
-                    value = methodObject.Invoke(ob, args, IntPtr.Zero);
-                }
-                finally
-                {
-                    Runtime.XDecref(args);  // Free args pytuple
-                }
-                return value;
+                using var args = Runtime.PyTuple_New(1);
+                Runtime.PyTuple_SetItem(args.Borrow(), 0, other);
+                return methodObject.Invoke(ob, args.Borrow(), null);
             }
 
             switch (op)
             {
                 case Runtime.Py_EQ:
                 case Runtime.Py_NE:
-                    IntPtr pytrue = Runtime.PyTrue;
-                    IntPtr pyfalse = Runtime.PyFalse;
+                    PyObject pytrue = Runtime.PyTrue;
+                    PyObject pyfalse = Runtime.PyFalse;
 
                     // swap true and false for NE
                     if (op != Runtime.Py_EQ)
@@ -132,16 +122,14 @@ namespace Python.Runtime
 
                     if (ob == other)
                     {
-                        Runtime.XIncref(pytrue);
-                        return pytrue;
+                        return new NewReference(pytrue);
                     }
 
-                    co1 = GetManagedObject(ob) as CLRObject;
+                    co1 = (CLRObject)GetManagedObject(ob)!;
                     co2 = GetManagedObject(other) as CLRObject;
                     if (null == co2)
                     {
-                        Runtime.XIncref(pyfalse);
-                        return pyfalse;
+                        return new NewReference(pyfalse);
                     }
 
                     object o1 = co1.inst;
@@ -149,17 +137,15 @@ namespace Python.Runtime
 
                     if (Equals(o1, o2))
                     {
-                        Runtime.XIncref(pytrue);
-                        return pytrue;
+                        return new NewReference(pytrue);
                     }
 
-                    Runtime.XIncref(pyfalse);
-                    return pyfalse;
+                    return new NewReference(pyfalse);
                 case Runtime.Py_LT:
                 case Runtime.Py_LE:
                 case Runtime.Py_GT:
                 case Runtime.Py_GE:
-                    co1 = GetManagedObject(ob) as CLRObject;
+                    co1 = (CLRObject)GetManagedObject(ob)!;
                     co2 = GetManagedObject(other) as CLRObject;
                     if (co1 == null || co2 == null)
                     {
@@ -175,7 +161,7 @@ namespace Python.Runtime
                     {
                         int cmp = co1Comp.CompareTo(co2.inst);
 
-                        IntPtr pyCmp;
+                        PyObject pyCmp;
                         if (cmp < 0)
                         {
                             if (op == Runtime.Py_LT || op == Runtime.Py_LE)
@@ -209,16 +195,14 @@ namespace Python.Runtime
                                 pyCmp = Runtime.PyFalse;
                             }
                         }
-                        Runtime.XIncref(pyCmp);
-                        return pyCmp;
+                        return new NewReference(pyCmp);
                     }
                     catch (ArgumentException e)
                     {
                         return Exceptions.RaiseTypeError(e.Message);
                     }
                 default:
-                    Runtime.XIncref(Runtime.PyNotImplemented);
-                    return Runtime.PyNotImplemented;
+                    return new NewReference(Runtime.PyNotImplemented);
             }
         }
 
@@ -227,7 +211,7 @@ namespace Python.Runtime
         /// allows natural iteration over objects that either are IEnumerable
         /// or themselves support IEnumerator directly.
         /// </summary>
-        public static IntPtr tp_iter(IntPtr ob)
+        public static NewReference tp_iter(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
@@ -236,7 +220,7 @@ namespace Python.Runtime
             }
 
             var e = co.inst as IEnumerable;
-            IEnumerator o;
+            IEnumerator? o;
             if (e != null)
             {
                 o = e.GetEnumerator();
@@ -266,19 +250,20 @@ namespace Python.Runtime
                 }
             }
 
-            return new Iterator(o, elemType).pyHandle;
+            return new NewReference(new Iterator(o, elemType).ObjectReference);
         }
 
 
         /// <summary>
         /// Standard __hash__ implementation for instances of reflected types.
         /// </summary>
-        public static nint tp_hash(IntPtr ob)
+        public static nint tp_hash(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
-                return Exceptions.RaiseTypeError("unhashable type");
+                Exceptions.RaiseTypeError("unhashable type");
+                return 0;
             }
             return co.inst.GetHashCode();
         }
@@ -287,7 +272,7 @@ namespace Python.Runtime
         /// <summary>
         /// Standard __str__ implementation for instances of reflected types.
         /// </summary>
-        public static IntPtr tp_str(IntPtr ob)
+        public static NewReference tp_str(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
@@ -305,11 +290,11 @@ namespace Python.Runtime
                     e = e.InnerException;
                 }
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
         }
 
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
@@ -324,18 +309,14 @@ namespace Python.Runtime
                 if (methodInfo != null && methodInfo.IsPublic)
                 {
                     var reprString = methodInfo.Invoke(co.inst, null) as string;
-                    return Runtime.PyString_FromString(reprString);
+                    return reprString is null ? new NewReference(Runtime.PyNone) : Runtime.PyString_FromString(reprString);
                 }
 
                 //otherwise use the standard object.__repr__(inst)
-                IntPtr args = Runtime.PyTuple_New(1);
-                Runtime.XIncref(ob);
-                Runtime.PyTuple_SetItem(args, 0, ob);
-                IntPtr reprFunc = Runtime.PyObject_GetAttr(Runtime.PyBaseObjectType, PyIdentifier.__repr__);
-                var output =  Runtime.PyObject_Call(reprFunc, args, IntPtr.Zero);
-                Runtime.XDecref(args);
-                Runtime.XDecref(reprFunc);
-                return output;
+                using var args = Runtime.PyTuple_New(1);
+                Runtime.PyTuple_SetItem(args.Borrow(), 0, ob);
+                using var reprFunc = Runtime.PyObject_GetAttr(Runtime.PyBaseObjectType, PyIdentifier.__repr__);
+                return Runtime.PyObject_Call(reprFunc.Borrow(), args.Borrow(), null);
             }
             catch (Exception e)
             {
@@ -344,7 +325,7 @@ namespace Python.Runtime
                     e = e.InnerException;
                 }
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
         }
 
@@ -352,16 +333,16 @@ namespace Python.Runtime
         /// <summary>
         /// Standard dealloc implementation for instances of reflected types.
         /// </summary>
-        public static void tp_dealloc(IntPtr ob)
+        public static void tp_dealloc(NewReference ob)
         {
-            ManagedType self = GetManagedObject(ob);
-            tp_clear(ob);
-            Runtime.PyObject_GC_UnTrack(ob);
-            Runtime.PyObject_GC_Del(ob);
+            ManagedType self = GetManagedObject(ob.Borrow())!;
+            tp_clear(ob.Borrow());
+            Runtime.PyObject_GC_UnTrack(ob.Borrow());
+            Runtime.PyObject_GC_Del(ob.Steal());
             self?.FreeGCHandle();
         }
 
-        public static int tp_clear(IntPtr ob)
+        public static int tp_clear(BorrowedReference ob)
         {
             if (GetManagedObject(ob) is { } self)
             {
@@ -385,7 +366,7 @@ namespace Python.Runtime
             }
         }
 
-        static int ClearImpl(IntPtr ob, ManagedType self)
+        static int ClearImpl(BorrowedReference ob, ManagedType? self)
         {
             bool isTypeObject = Runtime.PyObject_TYPE(ob) == Runtime.PyCLRMetaType;
             if (!isTypeObject)
@@ -401,16 +382,16 @@ namespace Python.Runtime
             return 0;
         }
 
-        static unsafe int BaseUnmanagedClear(IntPtr ob)
+        static unsafe int BaseUnmanagedClear(BorrowedReference ob)
         {
-            var type = Runtime.PyObject_TYPE(new BorrowedReference(ob));
+            var type = Runtime.PyObject_TYPE(ob);
             var unmanagedBase = GetUnmanagedBaseType(type);
-            var clearPtr = Marshal.ReadIntPtr(unmanagedBase.DangerousGetAddress(), TypeOffset.tp_clear);
+            var clearPtr = Util.ReadIntPtr(unmanagedBase, TypeOffset.tp_clear);
             if (clearPtr == IntPtr.Zero)
             {
                 return 0;
             }
-            var clear = (delegate* unmanaged[Cdecl]<IntPtr, int>)clearPtr;
+            var clear = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
             return clear(ob);
         }
 
@@ -419,7 +400,7 @@ namespace Python.Runtime
             base.OnSave(context);
             if (!this.IsClrMetaTypeInstance())
             {
-                IntPtr dict = GetObjectDict(pyHandle);
+                BorrowedReference dict = GetObjectDict(ObjectReference);
                 Runtime.XIncref(dict);
                 context.Storage.AddValue("dict", dict);
             }
@@ -431,7 +412,7 @@ namespace Python.Runtime
             if (!this.IsClrMetaTypeInstance())
             {
                 IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
-                SetObjectDict(pyHandle, dict);
+                SetObjectDict(ObjectReference, dict);
             }
             gcHandle = AllocGCHandle();
             SetGCHandle(ObjectReference, gcHandle);
@@ -441,55 +422,40 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for reflected classes and value types.
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
         {
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var cls = (ClassBase)GetManagedObject(tp);
+            BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp)!;
 
             if (cls.indexer == null || !cls.indexer.CanGet)
             {
                 Exceptions.SetError(Exceptions.TypeError, "unindexable object");
-                return IntPtr.Zero;
+                return default;
             }
 
             // Arg may be a tuple in the case of an indexer with multiple
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
-            IntPtr args = idx;
-            var free = false;
-
             if (!Runtime.PyTuple_Check(idx))
             {
-                args = Runtime.PyTuple_New(1);
-                Runtime.XIncref(idx);
-                Runtime.PyTuple_SetItem(args, 0, idx);
-                free = true;
+                using var argTuple = Runtime.PyTuple_New(1);
+                Runtime.PyTuple_SetItem(argTuple.Borrow(), 0, idx);
+                return cls.indexer.GetItem(ob, argTuple.Borrow());
             }
-
-            IntPtr value;
-
-            try
+            else
             {
-                value = cls.indexer.GetItem(ob, args);
+                return cls.indexer.GetItem(ob, idx);
             }
-            finally
-            {
-                if (free)
-                {
-                    Runtime.XDecref(args);
-                }
-            }
-            return value;
         }
 
 
         /// <summary>
         /// Implements __setitem__ for reflected classes and value types.
         /// </summary>
-        public static int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var cls = (ClassBase)GetManagedObject(tp);
+            BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+            var cls = (ClassBase)GetManagedObject(tp)!;
 
             if (cls.indexer == null || !cls.indexer.CanSet)
             {
@@ -500,58 +466,41 @@ namespace Python.Runtime
             // Arg may be a tuple in the case of an indexer with multiple
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
-            IntPtr args = idx;
-            var free = false;
+            NewReference argsTuple = default;
 
             if (!Runtime.PyTuple_Check(idx))
             {
-                args = Runtime.PyTuple_New(1);
-                Runtime.XIncref(idx);
-                Runtime.PyTuple_SetItem(args, 0, idx);
-                free = true;
+                argsTuple = Runtime.PyTuple_New(1);
+                Runtime.PyTuple_SetItem(argsTuple.Borrow(), 0, idx);
+                idx = argsTuple.Borrow();
             }
 
             // Get the args passed in.
-            var i = Runtime.PyTuple_Size(args);
-            IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
-            var numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+            var i = Runtime.PyTuple_Size(idx);
+            using var defaultArgs = cls.indexer.GetDefaultArgs(idx);
+            var numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs.Borrow());
             var temp = i + numOfDefaultArgs;
-            IntPtr real = Runtime.PyTuple_New(temp + 1);
+            using var real = Runtime.PyTuple_New(temp + 1);
             for (var n = 0; n < i; n++)
             {
-                IntPtr item = Runtime.PyTuple_GetItem(args, n);
-                Runtime.XIncref(item);
-                Runtime.PyTuple_SetItem(real, n, item);
+                BorrowedReference item = Runtime.PyTuple_GetItem(idx, n);
+                Runtime.PyTuple_SetItem(real.Borrow(), n, item);
             }
+
+            argsTuple.Dispose();
 
             // Add Default Args if needed
             for (var n = 0; n < numOfDefaultArgs; n++)
             {
-                IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
-                Runtime.XIncref(item);
-                Runtime.PyTuple_SetItem(real, n + i, item);
+                BorrowedReference item = Runtime.PyTuple_GetItem(defaultArgs.Borrow(), n);
+                Runtime.PyTuple_SetItem(real.Borrow(), n + i, item);
             }
-            // no longer need defaultArgs
-            Runtime.XDecref(defaultArgs);
             i = temp;
 
             // Add value to argument list
-            Runtime.XIncref(v);
-            Runtime.PyTuple_SetItem(real, i, v);
+            Runtime.PyTuple_SetItem(real.Borrow(), i, v);
 
-            try
-            {
-                cls.indexer.SetItem(ob, real);
-            }
-            finally
-            {
-                Runtime.XDecref(real);
-
-                if (free)
-                {
-                    Runtime.XDecref(args);
-                }
-            }
+            cls.indexer.SetItem(ob, real.Borrow());
 
             if (Exceptions.ErrorOccurred())
             {
@@ -561,10 +510,10 @@ namespace Python.Runtime
             return 0;
         }
 
-        static IntPtr tp_call_impl(IntPtr ob, IntPtr args, IntPtr kw)
+        static NewReference tp_call_impl(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var self = (ClassBase)GetManagedObject(tp);
+            BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+            var self = (ClassBase)GetManagedObject(tp)!;
 
             if (!self.type.Valid)
             {
@@ -587,8 +536,6 @@ namespace Python.Runtime
             => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.Name == "__call__");
 
-        static readonly Interop.TernaryFunc tp_call_delegate = tp_call_impl;
-
         public virtual void InitializeSlots(SlotsHolder slotsHolder)
         {
             if (!this.type.Valid) return;
@@ -596,7 +543,7 @@ namespace Python.Runtime
             if (GetCallImplementations(this.type.Value).Any()
                 && !slotsHolder.IsHolding(TypeOffset.tp_call))
             {
-                TypeManager.InitializeSlot(ObjectReference, TypeOffset.tp_call, tp_call_delegate, slotsHolder);
+                TypeManager.InitializeSlot(ObjectReference, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
             }
         }
     }
