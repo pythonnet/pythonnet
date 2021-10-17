@@ -243,7 +243,7 @@ namespace Python.Runtime
         /// In a few situations, we don't have any advisory type information
         /// when we want to convert an object to Python.
         /// </summary>
-        internal static NewReference ToPythonImplicit(object value)
+        internal static NewReference ToPythonImplicit(object? value)
         {
             if (value == null)
             {

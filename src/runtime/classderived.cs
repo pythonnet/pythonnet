@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -5,9 +6,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Resources;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+
+using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -49,15 +51,15 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __new__ for derived classes of reflected classes.
         /// </summary>
-        public new static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        public new static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            var cls = GetManagedObject(tp) as ClassDerivedObject;
+            var cls = (ClassDerivedObject)GetManagedObject(tp)!;
 
             // call the managed constructor
-            object obj = cls.binder.InvokeRaw(IntPtr.Zero, args, kw);
+            object obj = cls.binder.InvokeRaw(null, args, kw);
             if (obj == null)
             {
-                return IntPtr.Zero;
+                return default;
             }
 
             // return the pointer to the python object
@@ -65,9 +67,9 @@ namespace Python.Runtime
             return Converter.ToPython(obj, cls.GetType());
         }
 
-        public new static void tp_dealloc(IntPtr ob)
+        public new static void tp_dealloc(NewReference ob)
         {
-            var self = (CLRObject)GetManagedObject(ob);
+            var self = (CLRObject)GetManagedObject(ob.Borrow())!;
 
             // don't let the python GC destroy this object
             Runtime.PyObject_GC_UnTrack(self.pyHandle);
@@ -94,14 +96,14 @@ namespace Python.Runtime
             FieldInfo fi = obj.GetType().GetField("__pyobj__");
             var self = (CLRObject)fi.GetValue(obj);
 
-            Runtime.XIncref(self.pyHandle);
+            var result = new NewReference(self.ObjectReference);
 
             // when the C# constructor creates the python object it starts as a weak
             // reference with a reference count of 0. Now we're passing this object
             // to Python the reference count needs to be incremented and the reference
             // needs to be replaced with a strong reference to stop the C# object being
             // collected while Python still has a reference to it.
-            if (Runtime.Refcount(self.pyHandle) == 1)
+            if (Runtime.Refcount(result.Borrow()) == 1)
             {
                 Runtime._Py_NewReference(self.ObjectReference);
                 GCHandle gc = GCHandle.Alloc(self, GCHandleType.Normal);
@@ -113,7 +115,7 @@ namespace Python.Runtime
                 Runtime.PyObject_GC_Track(self.pyHandle);
             }
 
-            return self.pyHandle;
+            return result;
         }
 
         /// <summary>
@@ -123,13 +125,12 @@ namespace Python.Runtime
         /// </summary>
         internal static Type CreateDerivedType(string name,
             Type baseType,
-            BorrowedReference dictRef,
+            BorrowedReference py_dict,
             string namespaceStr,
             string assemblyName,
             string moduleName = "Python.Runtime.Dynamic.dll")
         {
             // TODO: clean up
-            IntPtr py_dict = dictRef.DangerousGetAddress();
             if (null != namespaceStr)
             {
                 name = namespaceStr + "." + name;
@@ -171,9 +172,9 @@ namespace Python.Runtime
 
             // Override any properties explicitly overridden in python
             var pyProperties = new HashSet<string>();
-            if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
+            if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
-                using var dict = new PyDict(new BorrowedReference(py_dict));
+                using var dict = new PyDict(py_dict);
                 using (PyIterable keys = dict.Keys())
                 {
                     foreach (PyObject pyKey in keys)
@@ -182,7 +183,7 @@ namespace Python.Runtime
                         {
                             if (value.HasAttr("_clr_property_type_"))
                             {
-                                string propertyName = pyKey.ToString();
+                                string propertyName = pyKey.ToString()!;
                                 pyProperties.Add(propertyName);
 
                                 // Add the property to the type
@@ -219,9 +220,9 @@ namespace Python.Runtime
             }
 
             // Add any additional methods and properties explicitly exposed from Python.
-            if (py_dict != IntPtr.Zero && Runtime.PyDict_Check(py_dict))
+            if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
-                using var dict = new PyDict(new BorrowedReference(py_dict));
+                using var dict = new PyDict(py_dict);
                 using (PyIterable keys = dict.Keys())
                 {
                     foreach (PyObject pyKey in keys)
@@ -230,7 +231,7 @@ namespace Python.Runtime
                         {
                             if (value.HasAttr("_clr_return_type_") && value.HasAttr("_clr_arg_types_"))
                             {
-                                string methodName = pyKey.ToString();
+                                string methodName = pyKey.ToString()!;
 
                                 // if this method has already been redirected to the python method skip it
                                 if (virtualMethods.Contains(methodName))
@@ -652,11 +653,10 @@ namespace Python.Runtime
             if (null != self)
             {
                 var disposeList = new List<PyObject>();
-                IntPtr gs = Runtime.PyGILState_Ensure();
+                PyGILState gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    Runtime.XIncref(self.pyHandle);
-                    var pyself = new PyObject(self.pyHandle);
+                    var pyself = new PyObject(self.ObjectReference);
                     disposeList.Add(pyself);
 
                     Runtime.XIncref(Runtime.PyNone);
@@ -665,16 +665,16 @@ namespace Python.Runtime
 
                     PyObject method = pyself.GetAttr(methodName, pynone);
                     disposeList.Add(method);
-                    if (method.Handle != Runtime.PyNone)
+                    if (method.Reference != Runtime.PyNone)
                     {
                         // if the method hasn't been overridden then it will be a managed object
-                        ManagedType managedMethod = ManagedType.GetManagedObject(method.Handle);
+                        ManagedType? managedMethod = ManagedType.GetManagedObject(method.Reference);
                         if (null == managedMethod)
                         {
                             var pyargs = new PyObject[args.Length];
                             for (var i = 0; i < args.Length; ++i)
                             {
-                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]));
+                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]).Steal());
                                 disposeList.Add(pyargs[i]);
                             }
 
@@ -714,11 +714,10 @@ namespace Python.Runtime
             if (null != self)
             {
                 var disposeList = new List<PyObject>();
-                IntPtr gs = Runtime.PyGILState_Ensure();
+                PyGILState gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    Runtime.XIncref(self.pyHandle);
-                    var pyself = new PyObject(self.pyHandle);
+                    var pyself = new PyObject(self.ObjectReference);
                     disposeList.Add(pyself);
 
                     Runtime.XIncref(Runtime.PyNone);
@@ -727,16 +726,16 @@ namespace Python.Runtime
 
                     PyObject method = pyself.GetAttr(methodName, pynone);
                     disposeList.Add(method);
-                    if (method.Handle != Runtime.PyNone)
+                    if (method.Reference != Runtime.PyNone)
                     {
                         // if the method hasn't been overridden then it will be a managed object
-                        ManagedType managedMethod = ManagedType.GetManagedObject(method.Handle);
+                        ManagedType? managedMethod = ManagedType.GetManagedObject(method.Handle);
                         if (null == managedMethod)
                         {
                             var pyargs = new PyObject[args.Length];
                             for (var i = 0; i < args.Length; ++i)
                             {
-                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]));
+                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]).Steal());
                                 disposeList.Add(pyargs[i]);
                             }
 
@@ -778,11 +777,10 @@ namespace Python.Runtime
                 throw new NullReferenceException("Instance must be specified when getting a property");
             }
 
-            IntPtr gs = Runtime.PyGILState_Ensure();
+            PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
-                Runtime.XIncref(self.pyHandle);
-                using (var pyself = new PyObject(self.pyHandle))
+                using var pyself = new PyObject(self.ObjectReference);
                 using (PyObject pyvalue = pyself.GetAttr(propertyName))
                 {
                     return (T)pyvalue.AsManagedObject(typeof(T));
@@ -804,15 +802,12 @@ namespace Python.Runtime
                 throw new NullReferenceException("Instance must be specified when setting a property");
             }
 
-            IntPtr gs = Runtime.PyGILState_Ensure();
+            PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
-                Runtime.XIncref(self.pyHandle);
-                using (var pyself = new PyObject(self.pyHandle))
-                using (var pyvalue = new PyObject(Converter.ToPythonImplicit(value)))
-                {
-                    pyself.SetAttr(propertyName, pyvalue);
-                }
+                using var pyself = new PyObject(self.ObjectReference);
+                using var pyvalue = new PyObject(Converter.ToPythonImplicit(value).Steal());
+                pyself.SetAttr(propertyName, pyvalue);
             }
             finally
             {
@@ -829,8 +824,8 @@ namespace Python.Runtime
                 obj,
                 args);
 
-            CLRObject self = null;
-            IntPtr gs = Runtime.PyGILState_Ensure();
+            CLRObject? self = null;
+            PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
                 // create the python object
@@ -885,7 +880,7 @@ namespace Python.Runtime
                         return;
                     }
 
-                    IntPtr gs = Runtime.PyGILState_Ensure();
+                    PyGILState gs = Runtime.PyGILState_Ensure();
                     try
                     {
                         // the C# object is being destroyed which must mean there are no more
