@@ -7,6 +7,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+using Python.Runtime.Native;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -478,7 +480,7 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        internal static IntPtr AcquireLock()
+        internal static PyGILState AcquireLock()
         {
             return Runtime.PyGILState_Ensure();
         }
@@ -493,7 +495,7 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        internal static void ReleaseLock(IntPtr gs)
+        internal static void ReleaseLock(PyGILState gs)
         {
             Runtime.PyGILState_Release(gs);
         }
