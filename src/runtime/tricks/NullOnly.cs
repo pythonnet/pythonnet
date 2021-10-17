@@ -5,8 +5,8 @@ namespace Python.Runtime
     /// <para>Useful for overloading operators on structs,
     /// that have meaningful concept of <c>null</c> value (e.g. pointers and references).</para>
     /// </summary>
-    class NullOnly
+    class NullOnly : PyObject
     {
-        private NullOnly() { }
+        private NullOnly() : base(BorrowedReference.Null) { }
     }
 }

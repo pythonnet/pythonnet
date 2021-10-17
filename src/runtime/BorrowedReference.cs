@@ -46,6 +46,8 @@ namespace Python.Runtime
             return false;
         }
 
+        public static implicit operator BorrowedReference(PyObject pyObject) => pyObject.Reference;
+
         public override int GetHashCode() => pointer.GetHashCode();
     }
 }

@@ -18,13 +18,11 @@ namespace Python.Runtime
             var address = canBeNull
                 ? reference.DangerousGetAddressOrNull()
                 : reference.DangerousGetAddress();
-            Runtime.XIncref(address);
+#pragma warning disable CS0618 // Type or member is obsolete
+            Runtime.XIncref(reference);
+#pragma warning restore CS0618 // Type or member is obsolete
             this.pointer = address;
         }
-
-        [Pure]
-        public static implicit operator BorrowedReference(in NewReference reference)
-            => new BorrowedReference(reference.pointer);
 
         /// <summary>
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
@@ -62,6 +60,12 @@ namespace Python.Runtime
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
         /// </summary>
         public PyObject MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
+
+        [Pure]
+        public BorrowedReference BorrowNullable() => new(pointer);
+        [Pure]
+        public BorrowedReference Borrow() => this.IsNull() ? throw new NullReferenceException() : this.BorrowNullable();
+
         /// <summary>
         /// Call this method to move ownership of this reference to a Python C API function,
         /// that steals reference passed to it.
@@ -88,14 +92,14 @@ namespace Python.Runtime
         /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             if (this.IsNull())
             {
                 return;
             }
-            Runtime.XDecref(pointer);
-            pointer = IntPtr.Zero;
+            Runtime.XDecref(this.Steal());
         }
 
         /// <summary>

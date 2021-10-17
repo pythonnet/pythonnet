@@ -23,7 +23,7 @@ namespace Python.Runtime
         /// <summary>
         /// Metatype initialization. This bootstraps the CLR metatype to life.
         /// </summary>
-        public static IntPtr Initialize()
+        public static PyObject Initialize()
         {
             PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType), out _metaSlotsHodler);
             return PyCLRMetaType;

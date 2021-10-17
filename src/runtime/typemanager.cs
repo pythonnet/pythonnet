@@ -1008,25 +1008,24 @@ namespace Python.Runtime
 
     static class SlotHelper
     {
-        public static IntPtr CreateObjectType()
+        public static NewReference CreateObjectType()
         {
-            using var globals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
-            if (Runtime.PyDict_SetItemString(globals, "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
+            using var globals = Runtime.PyDict_New();
+            if (Runtime.PyDict_SetItemString(globals.Borrow(), "__builtins__", Runtime.PyEval_GetBuiltins()) != 0)
             {
                 globals.Dispose();
                 throw PythonException.ThrowLastAsClrException();
             }
             const string code = "class A(object): pass";
-            using var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals, globals);
+            using var resRef = Runtime.PyRun_String(code, RunFlagType.File, globals.Borrow(), globals.Borrow());
             if (resRef.IsNull())
             {
                 globals.Dispose();
                 throw PythonException.ThrowLastAsClrException();
             }
             resRef.Dispose();
-            BorrowedReference A = Runtime.PyDict_GetItemString(globals, "A");
-            Debug.Assert(!A.IsNull);
-            return new NewReference(A).DangerousMoveToPointer();
+            BorrowedReference A = Runtime.PyDict_GetItemString(globals.Borrow(), "A");
+            return new NewReference(A);
         }
     }
 }

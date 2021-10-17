@@ -1,7 +1,10 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -17,6 +20,21 @@ namespace Python.Runtime
 
         internal const string UseOverloadWithReferenceTypes =
             "This API is unsafe, and will be removed in the future. Use overloads working with *Reference types";
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static T* ReadPtr<T>(BorrowedReference @ref, int offset)
+            where T: unmanaged
+        {
+            IntPtr ptr = Marshal.ReadIntPtr(@ref.DangerousGetAddress(), offset);
+            return (T*)ptr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static IntPtr ReadIntPtr(BorrowedReference @ref, int offset)
+        {
+            return Marshal.ReadIntPtr(@ref.DangerousGetAddress(), offset);
+        }
 
         internal static Int64 ReadCLong(IntPtr tp, int offset)
         {

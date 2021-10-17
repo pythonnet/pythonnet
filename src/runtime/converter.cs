@@ -47,7 +47,7 @@ namespace Python.Runtime
         /// <summary>
         /// Given a builtin Python type, return the corresponding CLR type.
         /// </summary>
-        internal static Type? GetTypeByAlias(IntPtr op)
+        internal static Type? GetTypeByAlias(BorrowedReference op)
         {
             if (op == Runtime.PyStringType)
                 return stringType;
