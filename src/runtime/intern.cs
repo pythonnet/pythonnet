@@ -51,7 +51,7 @@ namespace Python.Runtime
             _intern2strings = null;
         }
 
-        public static string GetManagedString(IntPtr op)
+        public static string GetManagedString(BorrowedReference op)
         {
             string s;
             if (TryGetInterned(op, out s))

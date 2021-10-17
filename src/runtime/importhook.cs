@@ -154,7 +154,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
-                if (Runtime.PyDict_SetItemString(root.DictRef, availableNsKey, newset) != 0)
+                if (Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset) != 0)
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
@@ -190,7 +190,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             var pyNs = Runtime.PyString_FromString(name);
             try
             {
-                var nsSet = Runtime.PyDict_GetItemString(root.DictRef, availableNsKey);
+                var nsSet = Runtime.PyDict_GetItemString(root.dict, availableNsKey);
                 if (!(nsSet.IsNull  || nsSet.DangerousGetAddress() == Runtime.PyNone))
                 {
                     if (Runtime.PySet_Add(nsSet, new BorrowedReference(pyNs)) != 0)

@@ -1459,13 +1459,6 @@ namespace Python.Runtime
         internal static NewReference PyDict_New() => Delegates.PyDict_New();
 
         /// <summary>
-        /// Return value: Borrowed reference.
-        /// Return NULL if the key is not present, but without setting an exception.
-        /// </summary>
-        internal static IntPtr PyDict_GetItem(IntPtr pointer, IntPtr key)
-            => Delegates.PyDict_GetItem(new BorrowedReference(pointer), new BorrowedReference(key))
-                .DangerousGetAddressOrNull();
-        /// <summary>
         /// Return NULL if the key is not present, but without setting an exception.
         /// </summary>
         internal static BorrowedReference PyDict_GetItem(BorrowedReference pointer, BorrowedReference key) => Delegates.PyDict_GetItem(pointer, key);

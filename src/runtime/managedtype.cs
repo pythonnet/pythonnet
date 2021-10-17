@@ -192,9 +192,9 @@ namespace Python.Runtime
             _managedObjs.Clear();
         }
 
-        internal static int PyVisit(IntPtr ob, IntPtr visit, IntPtr arg)
+        internal static int PyVisit(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            if (ob == IntPtr.Zero)
+            if (ob == null)
             {
                 return 0;
             }

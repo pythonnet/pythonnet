@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -17,10 +16,9 @@ namespace Python.Runtime
         private Dictionary<string, ManagedType> cache;
 
         internal string moduleName;
-        internal IntPtr dict;
-        internal BorrowedReference DictRef => new BorrowedReference(dict);
+        private readonly PyDict dict;
         protected string _namespace;
-        private IntPtr __all__ = IntPtr.Zero;
+        private readonly PyList __all__ = new ();
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
@@ -50,18 +48,16 @@ namespace Python.Runtime
                 docstring += "- " + a.FullName + "\n";
             }
 
-            var dictRef = Runtime.PyObject_GenericGetDict(ObjectReference);
-            PythonException.ThrowIfIsNull(dictRef);
-            dict = dictRef.DangerousMoveToPointer();
-            __all__ = Runtime.PyList_New(0);
-            using var pyname = NewReference.DangerousFromPointer(Runtime.PyString_FromString(moduleName));
-            using var pyfilename = NewReference.DangerousFromPointer(Runtime.PyString_FromString(filename));
-            using var pydocstring = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docstring));
+            using var dictRef = Runtime.PyObject_GenericGetDict(ObjectReference);
+            dict = new PyDict(dictRef.StealOrThrow());
+            using var pyname = Runtime.PyString_FromString(moduleName);
+            using var pyfilename = Runtime.PyString_FromString(filename);
+            using var pydocstring = Runtime.PyString_FromString(docstring);
             BorrowedReference pycls = TypeManager.GetTypeReference(GetType());
-            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__name__, pyname);
-            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__file__, pyfilename);
-            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__doc__, pydocstring);
-            Runtime.PyDict_SetItem(DictRef, PyIdentifier.__class__, pycls);
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__name__, pyname.Borrow());
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__file__, pyfilename.Borrow());
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, pydocstring.Borrow());
+            Runtime.PyDict_SetItem(dict, PyIdentifier.__class__, pycls);
 
             InitializeModuleMembers();
         }
@@ -157,7 +153,7 @@ namespace Python.Runtime
         /// </summary>
         private void StoreAttribute(string name, ManagedType ob)
         {
-            if (Runtime.PyDict_SetItemString(dict, name, ob.pyHandle) != 0)
+            if (Runtime.PyDict_SetItemString(dict, name, ob.ObjectReference) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
@@ -181,7 +177,7 @@ namespace Python.Runtime
                 {
                     continue;
                 }
-                BorrowedReference attr = Runtime.PyDict_GetItemString(DictRef, name);
+                BorrowedReference attr = Runtime.PyDict_GetItemString(dict, name);
                 // If __dict__ has already set a custom property, skip it.
                 if (!attr.IsNull)
                 {
@@ -191,17 +187,10 @@ namespace Python.Runtime
                 if(GetAttribute(name, true) != null)
                 {
                     // if it's a valid attribute, add it to __all__
-                    var pyname = Runtime.PyString_FromString(name);
-                    try
+                    using var pyname = Runtime.PyString_FromString(name);
+                    if (Runtime.PyList_Append(__all__, pyname.Borrow()) != 0)
                     {
-                        if (Runtime.PyList_Append(new BorrowedReference(__all__), new BorrowedReference(pyname)) != 0)
-                        {
-                            throw PythonException.ThrowLastAsClrException();
-                        }
-                    }
-                    finally
-                    {
-                        Runtime.XDecref(pyname);
+                        throw PythonException.ThrowLastAsClrException();
                     }
                 }
             }
@@ -261,35 +250,32 @@ namespace Python.Runtime
         /// namespaces. CLR modules implement a lazy pattern - the sub-modules
         /// and classes are created when accessed and cached for future use.
         /// </summary>
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
         {
             var self = (ModuleObject)GetManagedObject(ob);
 
             if (!Runtime.PyString_Check(key))
             {
                 Exceptions.SetError(Exceptions.TypeError, "string expected");
-                return IntPtr.Zero;
+                return default;
             }
 
-            IntPtr op = Runtime.PyDict_GetItem(self.dict, key);
-            if (op != IntPtr.Zero)
+            BorrowedReference op = Runtime.PyDict_GetItem(self.dict, key);
+            if (op != null)
             {
-                Runtime.XIncref(op);
-                return op;
+                return new NewReference(op);
             }
 
             string name = InternString.GetManagedString(key);
             if (name == "__dict__")
             {
-                Runtime.XIncref(self.dict);
-                return self.dict;
+                return new NewReference(self.dict);
             }
 
             if (name == "__all__")
             {
                 self.LoadNames();
-                Runtime.XIncref(self.__all__);
-                return self.__all__;
+                return new NewReference(self.__all__);
             }
 
             ManagedType attr = null;
@@ -301,37 +287,36 @@ namespace Python.Runtime
             catch (Exception e)
             {
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
 
 
             if (attr == null)
             {
                 Exceptions.SetError(Exceptions.AttributeError, name);
-                return IntPtr.Zero;
+                return default;
             }
 
-            Runtime.XIncref(attr.pyHandle);
-            return attr.pyHandle;
+            return new NewReference(attr.ObjectReference);
         }
 
         /// <summary>
         /// ModuleObject __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
             var self = (ModuleObject)GetManagedObject(ob);
             return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
 
-        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
+        public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
             var self = (ModuleObject)GetManagedObject(ob);
             int res = PyVisit(self.dict, visit, arg);
             if (res != 0) return res;
             foreach (var attr in self.cache.Values)
             {
-                res = PyVisit(attr.pyHandle, visit, arg);
+                res = PyVisit(attr.ObjectReference, visit, arg);
                 if (res != 0) return res;
             }
             return 0;
@@ -339,8 +324,8 @@ namespace Python.Runtime
 
         protected override void Clear()
         {
-            Runtime.Py_CLEAR(ref this.dict);
-            ClearObjectDict(this.pyHandle);
+            this.dict.Dispose();
+            ClearObjectDict(this.ObjectReference);
             foreach (var attr in this.cache.Values)
             {
                 Runtime.XDecref(attr.pyHandle);
@@ -355,7 +340,7 @@ namespace Python.Runtime
         /// to set a few attributes
         /// </summary>
         [ForbidPythonThreads]
-        public new static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        public new static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
             var managedKey = Runtime.GetManagedString(key);
             if ((settableAttributes.Contains(managedKey)) || 
@@ -371,7 +356,7 @@ namespace Python.Runtime
         protected override void OnSave(InterDomainContext context)
         {
             base.OnSave(context);
-            System.Diagnostics.Debug.Assert(dict == GetObjectDict(pyHandle));
+            System.Diagnostics.Debug.Assert(dict == GetObjectDict(ObjectReference));
             foreach (var attr in cache.Values)
             {
                 Runtime.XIncref(attr.pyHandle);
@@ -382,7 +367,7 @@ namespace Python.Runtime
             // destroy the cache(s)
             foreach (var pair in cache)
             {
-                if ((Runtime.PyDict_DelItemString(DictRef, pair.Key) == -1) &&
+                if ((Runtime.PyDict_DelItemString(dict, pair.Key) == -1) &&
                     (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                 {
                     // Trying to remove a key that's not in the dictionary
@@ -436,11 +421,9 @@ namespace Python.Runtime
             // import requires the module to pass PyModule_Check. :(
             if (!hacked)
             {
-                IntPtr type = tpHandle;
-                IntPtr mro = Marshal.ReadIntPtr(type, TypeOffset.tp_mro);
-                IntPtr ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
-                Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);
-                Runtime.XDecref(mro);
+                BorrowedReference mro = Util.ReadRef(TypeReference, TypeOffset.tp_mro);
+                using var ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
+                Util.WriteRef(TypeReference, TypeOffset.tp_mro, ext.Steal());
                 hacked = true;
             }
         }
