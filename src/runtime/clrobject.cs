@@ -73,6 +73,8 @@ namespace Python.Runtime
 
         internal static NewReference GetReference(object ob)
             => NewReference.DangerousFromPointer(GetInstHandle(ob));
+        internal static NewReference GetReference(object ob, Type type)
+            => NewReference.DangerousFromPointer(GetInstHandle(ob, type));
 
         internal static CLRObject Restore(object ob, IntPtr pyHandle, InterDomainContext context)
         {

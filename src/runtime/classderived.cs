@@ -87,7 +87,7 @@ namespace Python.Runtime
         /// Called from Converter.ToPython for types that are python subclasses of managed types.
         /// The referenced python object is returned instead of a new wrapper.
         /// </summary>
-        internal static IntPtr ToPython(IPythonDerivedType obj)
+        internal static NewReference ToPython(IPythonDerivedType obj)
         {
             // derived types have a __pyobj__ field that gets set to the python
             // object in the overridden constructor

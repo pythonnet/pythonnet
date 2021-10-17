@@ -269,11 +269,11 @@ namespace Python.Runtime
                 return true;
             }
 
-            using var instance = Converter.ToPythonReference(e);
+            using var instance = Converter.ToPython(e);
             if (instance.IsNull()) return false;
 
             var exceptionInfo = ExceptionDispatchInfo.Capture(e);
-            using var pyInfo = Converter.ToPythonReference(exceptionInfo);
+            using var pyInfo = Converter.ToPython(exceptionInfo);
 
             if (Runtime.PyObject_SetAttrString(instance, DispatchInfoAttribute, pyInfo) != 0)
                 return false;
@@ -293,7 +293,7 @@ namespace Python.Runtime
         {
             var currentException = PythonException.FetchCurrentRaw();
             currentException.Normalize();
-            using var causeInstance = Converter.ToPythonReference(cause);
+            using var causeInstance = Converter.ToPython(cause);
             Runtime.PyException_SetCause(currentException.Value!.Reference, causeInstance.Steal());
             currentException.Restore();
         }

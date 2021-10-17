@@ -248,7 +248,7 @@ namespace Python.Runtime
                 {
                     // Here we own the reference to the Python value, and we
                     // give the ownership to the arg tuple.
-                    var arg = Converter.ToPythonReference(args[i], pi[i].ParameterType);
+                    var arg = Converter.ToPython(args[i], pi[i].ParameterType);
                     if (arg.IsNull())
                     {
                         throw PythonException.ThrowLastAsClrException();

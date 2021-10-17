@@ -83,11 +83,7 @@ namespace Python.Runtime
         /// Wrap the given object in an interface object, so that only methods
         /// of the interface are available.
         /// </summary>
-        public IntPtr WrapObject(object impl)
-        {
-            var objPtr = CLRObject.GetInstHandle(impl, pyHandle);
-            return objPtr;
-        }
+        public NewReference WrapObject(object impl) => CLRObject.GetReference(impl, pyHandle);
 
         /// <summary>
         /// Expose the wrapped implementation through attributes in both
