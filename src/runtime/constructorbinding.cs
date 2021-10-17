@@ -218,7 +218,7 @@ namespace Python.Runtime
             }
             // Instantiate the python object that wraps the result of the method call
             // and return the PyObject* to it.
-            return CLRObject.GetInstHandle(obj, self.typeToCreate.Reference).DangerousMoveToPointer();
+            return CLRObject.GetReference(obj, self.typeToCreate.Reference).DangerousMoveToPointer();
         }
 
         /// <summary>

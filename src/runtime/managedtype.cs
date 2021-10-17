@@ -128,7 +128,7 @@ namespace Python.Runtime
         /// <summary>
         /// Given a Python object, return the associated managed object type or null.
         /// </summary>
-        internal static ManagedType? GetManagedObjectType(IntPtr ob)
+        internal static ManagedType? GetManagedObjectType(BorrowedReference ob)
         {
             if (ob != IntPtr.Zero)
             {

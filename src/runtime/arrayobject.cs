@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -124,14 +125,14 @@ namespace Python.Runtime
                 Exceptions.SetError(Exceptions.MemoryError, oom.Message);
                 return default;
             }
-            return CLRObject.GetInstHandle(result, arrayPyType);
+            return CLRObject.GetReference(result, arrayPyType);
         }
 
 
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public new static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var arrObj = (ArrayObject)GetManagedObjectType(ob);
@@ -179,7 +180,7 @@ namespace Python.Runtime
                 catch (IndexOutOfRangeException)
                 {
                     Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                    return IntPtr.Zero;
+                    return default;
                 }
 
                 return Converter.ToPython(value, itemType);
@@ -190,7 +191,7 @@ namespace Python.Runtime
             if (!Runtime.PyTuple_Check(idx))
             {
                 Exceptions.SetError(Exceptions.TypeError, "invalid index value");
-                return IntPtr.Zero;
+                return default;
             }
 
             var count = Runtime.PyTuple_Size(idx);
@@ -199,7 +200,7 @@ namespace Python.Runtime
 
             for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
+                BorrowedReference op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     return RaiseIndexMustBeIntegerError(op);
@@ -226,7 +227,7 @@ namespace Python.Runtime
             catch (IndexOutOfRangeException)
             {
                 Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                return IntPtr.Zero;
+                return default;
             }
 
             return Converter.ToPython(value, itemType);
@@ -236,14 +237,14 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static new int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static new int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
-            var obj = (CLRObject)GetManagedObject(ob);
-            var items = obj.inst as Array;
+            var obj = (CLRObject)GetManagedObject(ob)!;
+            var items = (Array)obj.inst;
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
             nint index;
-            object value;
+            object? value;
 
             if (items.IsReadOnly)
             {
@@ -300,7 +301,7 @@ namespace Python.Runtime
 
             for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
+                BorrowedReference op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     RaiseIndexMustBeIntegerError(op);
@@ -335,7 +336,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        private static IntPtr RaiseIndexMustBeIntegerError(IntPtr idx)
+        private static NewReference RaiseIndexMustBeIntegerError(BorrowedReference idx)
         {
             string tpName = Runtime.PyObject_GetTypeName(idx);
             return Exceptions.RaiseTypeError($"array index has type {tpName}, expected an integer");
@@ -344,7 +345,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __contains__ for array types.
         /// </summary>
-        public static int sq_contains(IntPtr ob, IntPtr v)
+        public static int sq_contains(BorrowedReference ob, BorrowedReference v)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             Type itemType = obj.inst.GetType().GetElementType();
@@ -379,7 +380,7 @@ namespace Python.Runtime
                 Exceptions.SetError(Exceptions.BufferError, "only C-contiguous supported");
                 return -1;
             }
-            var self = (Array)((CLRObject)GetManagedObject(obj)).inst;
+            var self = (Array)((CLRObject)GetManagedObject(obj)!).inst;
             Type itemType = self.GetType().GetElementType();
 
             bool formatRequested = (flags & PyBUF.FORMATS) != 0;
@@ -405,7 +406,7 @@ namespace Python.Runtime
             buffer = new Py_buffer
             {
                 buf = gcHandle.AddrOfPinnedObject(),
-                obj = Runtime.SelfIncRef(obj.DangerousGetAddress()),
+                obj = new NewReference(obj).DangerousMoveToPointer(),
                 len = (IntPtr)(self.LongLength*itemSize),
                 itemsize = (IntPtr)itemSize,
                 _readonly = false,
@@ -426,6 +427,8 @@ namespace Python.Runtime
             UnmanagedFree(ref buffer.shape);
             UnmanagedFree(ref buffer.strides);
             UnmanagedFree(ref buffer.suboffsets);
+
+            // TODO: decref buffer.obj?
 
             var gcHandle = (GCHandle)buffer._internal;
             gcHandle.Free();

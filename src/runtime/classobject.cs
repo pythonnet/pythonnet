@@ -88,7 +88,7 @@ namespace Python.Runtime
                     return IntPtr.Zero;
                 }
 
-                return CLRObject.GetInstHandle(result, tp).DangerousMoveToPointerOrNull();
+                return CLRObject.GetReference(result, tp).DangerousMoveToPointerOrNull();
             }
 
             if (type.IsAbstract)
@@ -108,7 +108,7 @@ namespace Python.Runtime
                 return IntPtr.Zero;
             }
 
-            return CLRObject.GetInstHandle(obj, tp).DangerousMoveToPointerOrNull();
+            return CLRObject.GetReference(obj, tp).DangerousMoveToPointerOrNull();
         }
 
         private static NewReference NewEnum(Type type, BorrowedReference args, BorrowedReference tp)
@@ -145,7 +145,7 @@ namespace Python.Runtime
             }
 
             object enumValue = Enum.ToObject(type, result);
-            return CLRObject.GetInstHandle(enumValue, tp);
+            return CLRObject.GetReference(enumValue, tp);
         }
 
 

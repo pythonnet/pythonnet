@@ -45,7 +45,7 @@ namespace Python.Runtime
             return GetInstance(ob, cc.tpHandle);
         }
 
-        internal static NewReference GetInstHandle(object ob, BorrowedReference pyType)
+        internal static NewReference GetReference(object ob, BorrowedReference pyType)
         {
             CLRObject co = GetInstance(ob, pyType.DangerousGetAddress());
             return NewReference.DangerousFromPointer(co.pyHandle);
