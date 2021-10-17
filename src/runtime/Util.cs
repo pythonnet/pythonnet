@@ -21,6 +21,8 @@ namespace Python.Runtime
         internal const string UseOverloadWithReferenceTypes =
             "This API is unsafe, and will be removed in the future. Use overloads working with *Reference types";
 
+        internal const string BadStr = "bad __str__";
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int ReadInt32(BorrowedReference ob, int offset)

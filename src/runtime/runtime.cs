@@ -1586,7 +1586,7 @@ namespace Python.Runtime
 
         internal static int PyTuple_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyTuple_SetItem(pointer, index, value);
 
-        private static NewReference PyTuple_GetSlice(BorrowedReference pointer, nint start, nint end) => Delegates.PyTuple_GetSlice(pointer, start, end);
+        internal static NewReference PyTuple_GetSlice(BorrowedReference pointer, nint start, nint end) => Delegates.PyTuple_GetSlice(pointer, start, end);
 
         internal static nint PyTuple_Size(BorrowedReference pointer) => Delegates.PyTuple_Size(pointer);
 
