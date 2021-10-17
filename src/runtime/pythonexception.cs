@@ -422,6 +422,13 @@ namespace Python.Runtime
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
+        internal static void ThrowIfIsNull(in NewReference ob)
+        {
+            if (ob.BorrowNullable() == null)
+            {
+                throw ThrowLastAsClrException();
+            }
+        }
         internal static BorrowedReference ThrowIfIsNull(BorrowedReference ob)
         {
             if (ob == null)

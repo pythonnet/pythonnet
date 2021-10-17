@@ -71,12 +71,7 @@ namespace Python.Runtime
         /// that steals reference passed to it.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StolenReference StealNullable()
-        {
-            IntPtr rawPointer = this.pointer;
-            this.pointer = IntPtr.Zero;
-            return new StolenReference(rawPointer);
-        }
+        public StolenReference StealNullable() => StolenReference.TakeNullable(ref this.pointer);
 
         /// <summary>
         /// Call this method to move ownership of this reference to a Python C API function,
@@ -131,5 +126,22 @@ namespace Python.Runtime
         [Pure]
         public static bool IsNull(this in NewReference reference)
             => NewReference.IsNull(reference);
+        [Pure]
+        public static BorrowedReference BorrowOrThrow(this in NewReference reference)
+        {
+            if (IsNull(reference))
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return reference.BorrowNullable();
+        }
+        public static StolenReference StealOrThrow(this in NewReference reference)
+        {
+            if (IsNull(reference))
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return reference.StealNullable();
+        }
     }
 }

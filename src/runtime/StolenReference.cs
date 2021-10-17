@@ -2,6 +2,7 @@ namespace Python.Runtime
 {
     using System;
     using System.Diagnostics.Contracts;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Should only be used for the arguments of Python C API functions, that steal references,
@@ -12,9 +13,23 @@ namespace Python.Runtime
     {
         internal readonly IntPtr Pointer;
 
-        internal StolenReference(IntPtr pointer)
+        StolenReference(IntPtr pointer)
         {
             Pointer = pointer;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static StolenReference Take(ref IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
+            return TakeNullable(ref ptr);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static StolenReference TakeNullable(ref IntPtr ptr)
+        {
+            var stolenAddr = ptr;
+            ptr = IntPtr.Zero;
+            return new StolenReference(stolenAddr);
         }
 
         [Pure]
