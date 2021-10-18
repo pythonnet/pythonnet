@@ -7,39 +7,30 @@ namespace Python.Runtime
 {
     public class PyModule : PyObject
     {
-        /// <summary>
-        /// the variable dict of the module. Borrowed.
-        /// </summary>
-        internal readonly IntPtr variables;
-        internal BorrowedReference VarsRef => new BorrowedReference(variables);
-
-        public PyModule(string name = "")
-            : this(Create(name ?? throw new ArgumentNullException(nameof(name))))
+        internal BorrowedReference variables => VarsRef;
+        internal BorrowedReference VarsRef
         {
+            get
+            {
+                var vars = Runtime.PyModule_GetDict(Reference);
+                PythonException.ThrowIfIsNull(vars);
+                return vars;
+            }
         }
 
-        public PyModule(string name, string? fileName = null) : this(Create(name, fileName)) { }
+        public PyModule(string name = "") : this(Create(name))
+        {
+            InitializeBuiltins();
+        }
 
-        static StolenReference Create(string name, string? filename = null)
+        static StolenReference Create(string name)
         {
             if (name is null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
 
-            NewReference op = Runtime.PyModule_New(name);
-            PythonException.ThrowIfIsNull(op);
-
-            if (filename is not null)
-            {
-                BorrowedReference globals = Runtime.PyModule_GetDict(op);
-                PythonException.ThrowIfIsNull(globals);
-                using var pyFileName = filename.ToPython();
-                int rc = Runtime.PyDict_SetItemString(globals, "__file__", pyFileName.Reference);
-                PythonException.ThrowIfIsNotZero(rc);
-            }
-
-            return op.Steal();
+            return Runtime.PyModule_New(name).StealOrThrow();
         }
 
         internal PyModule(in StolenReference reference) : base(reference)
@@ -48,16 +39,17 @@ namespace Python.Runtime
             {
                 throw new ArgumentException("object is not a module");
             }
-            //Refcount of the variables not increase
-            variables = Runtime.PyModule_GetDict(Reference).DangerousGetAddress();
-            PythonException.ThrowIfIsNull(variables);
+        }
 
+        private void InitializeBuiltins()
+        {
             int res = Runtime.PyDict_SetItem(
                 VarsRef, PyIdentifier.__builtins__,
                 Runtime.PyEval_GetBuiltins()
             );
             PythonException.ThrowIfIsNotZero(res);
         }
+
         internal PyModule(BorrowedReference reference) : this(new NewReference(reference).Steal())
         {
         }
@@ -71,8 +63,7 @@ namespace Python.Runtime
             if (name is null) throw new ArgumentNullException(nameof(name));
 
             NewReference op = Runtime.PyImport_ImportModule(name);
-            PythonException.ThrowIfIsNull(op);
-            return IsModule(op) ? new PyModule(op.Steal()) : op.MoveToPyObject();
+            return IsModule(op.BorrowOrThrow()) ? new PyModule(op.Steal()) : op.MoveToPyObject();
         }
 
         /// <summary>
@@ -81,20 +72,17 @@ namespace Python.Runtime
         public PyModule Reload()
         {
             NewReference op = Runtime.PyImport_ReloadModule(this.Reference);
-            PythonException.ThrowIfIsNull(op);
-            return new PyModule(op.Steal());
+            return new PyModule(op.StealOrThrow());
         }
 
         public static PyModule FromString(string name, string code)
         {
             using NewReference c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
-            PythonException.ThrowIfIsNull(c);
-            NewReference m = Runtime.PyImport_ExecCodeModule(name, c);
-            PythonException.ThrowIfIsNull(m);
-            return new PyModule(m.Steal());
+            NewReference m = Runtime.PyImport_ExecCodeModule(name, c.BorrowOrThrow());
+            return new PyModule(m.StealOrThrow());
         }
 
-        public void SetBuiltins(PyDict builtins)
+        public PyModule SetBuiltins(PyDict builtins)
         {
             if (builtins == null || builtins.IsNone())
             {
@@ -105,6 +93,7 @@ namespace Python.Runtime
             PythonException.ThrowIfIsNull(globals);
             int rc = Runtime.PyDict_SetItemString(globals, "__builtins__", builtins.Reference);
             PythonException.ThrowIfIsNotZero(rc);
+            return this;
         }
 
         public static PyDict SysModules
@@ -157,7 +146,9 @@ namespace Python.Runtime
         /// </summary>
         public void Import(PyModule module, string asname)
         {
-            this.SetPyValue(asname, module.Handle);
+            if (module is null) throw new ArgumentNullException(nameof(module));
+            if (asname is null) throw new ArgumentNullException(nameof(asname));
+            this.SetPyValue(asname, module);
         }
 
         /// <summary>
@@ -166,6 +157,8 @@ namespace Python.Runtime
         /// </summary>
         public void Import(PyObject module, string? asname = null)
         {
+            if (module is null) throw new ArgumentNullException(nameof(module));
+
             asname ??= module.GetAttr("__name__").As<string>();
             Set(asname, module);
         }
@@ -175,6 +168,8 @@ namespace Python.Runtime
         /// </summary>
         public void ImportAll(PyModule module)
         {
+            if (module is null) throw new ArgumentNullException(nameof(module));
+
             int result = Runtime.PyDict_Update(VarsRef, module.VarsRef);
             if (result < 0)
             {
@@ -206,6 +201,8 @@ namespace Python.Runtime
         /// </summary>
         public void ImportAll(PyDict dict)
         {
+            if (dict is null) throw new ArgumentNullException(nameof(dict));
+
             int result = Runtime.PyDict_Update(VarsRef, dict.Reference);
             if (result < 0)
             {
@@ -222,11 +219,13 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Execute(PyObject script, PyDict? locals = null)
         {
+            if (script is null) throw new ArgumentNullException(nameof(script));
+
             Check();
-            IntPtr _locals = locals == null ? variables : locals.obj;
-            IntPtr ptr = Runtime.PyEval_EvalCode(script.Handle, variables, _locals);
+            BorrowedReference _locals = locals == null ? variables : locals.obj;
+            using var ptr = Runtime.PyEval_EvalCode(script, variables, _locals);
             PythonException.ThrowIfIsNull(ptr);
-            return new PyObject(ptr);
+            return ptr.MoveToPyObject();
         }
 
         /// <summary>
@@ -254,6 +253,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyObject Eval(string code, PyDict? locals = null)
         {
+            if (code is null) throw new ArgumentNullException(nameof(code));
+
             Check();
             BorrowedReference _locals = locals == null ? VarsRef : locals.Reference;
 
@@ -285,11 +286,12 @@ namespace Python.Runtime
         /// <remarks>
         /// Exec a Python script and save its local variables in the current local variable dict.
         /// </remarks>
-        public void Exec(string code, PyDict? locals = null)
+        public PyModule Exec(string code, PyDict? locals = null)
         {
             Check();
             BorrowedReference _locals = locals == null ? VarsRef : locals.Reference;
             Exec(code, VarsRef, _locals);
+            return this;
         }
 
         private void Exec(string code, BorrowedReference _globals, BorrowedReference _locals)
@@ -307,16 +309,16 @@ namespace Python.Runtime
         /// Add a new variable to the variables dict if it not exist
         /// or update its value if the variable exists.
         /// </remarks>
-        public void Set(string name, object value)
+        public PyModule Set(string name, object value)
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
-            IntPtr _value = Converter.ToPython(value, value?.GetType());
-            SetPyValue(name, _value);
-            Runtime.XDecref(_value);
+            using var _value = Converter.ToPython(value, value?.GetType() ?? typeof(object));
+            SetPyValue(name, _value.Borrow());
+            return this;
         }
 
-        private void SetPyValue(string name, IntPtr value)
+        private void SetPyValue(string name, BorrowedReference value)
         {
             Check();
             using (var pyKey = new PyString(name))
@@ -335,7 +337,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Remove a variable from the variables dict.
         /// </remarks>
-        public void Remove(string name)
+        public PyModule Remove(string name)
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
@@ -348,6 +350,7 @@ namespace Python.Runtime
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
+            return this;
         }
 
         /// <summary>
@@ -398,13 +401,8 @@ namespace Python.Runtime
             {
                 if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
                 {
-                    IntPtr op = Runtime.PyObject_GetItem(variables, pyKey.obj);
-                    if (op == IntPtr.Zero)
-                    {
-                        throw PythonException.ThrowLastAsClrException();
-                    }
-
-                    value = new PyObject(op);
+                    using var op = Runtime.PyObject_GetItem(variables, pyKey.obj);
+                    value = new PyObject(op.StealOrThrow());
                     return true;
                 }
                 else
@@ -467,7 +465,7 @@ namespace Python.Runtime
 
         private void Check()
         {
-            if (this.obj == IntPtr.Zero)
+            if (this.rawPtr == IntPtr.Zero)
             {
                 throw new ObjectDisposedException(nameof(PyModule));
             }
