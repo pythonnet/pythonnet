@@ -264,6 +264,8 @@ namespace Python.Runtime
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate NewReference BBB_N(BorrowedReference ob, BorrowedReference a1, BorrowedReference a2);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int BBB_I32(BorrowedReference ob, BorrowedReference a1, BorrowedReference a2);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int InquiryFunc(IntPtr ob);

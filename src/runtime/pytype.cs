@@ -111,7 +111,12 @@ namespace Python.Runtime
         internal static TypeFlags GetFlags(BorrowedReference type)
         {
             Debug.Assert(TypeOffset.tp_flags > 0);
-            return (TypeFlags)Util.ReadCLong(type.DangerousGetAddress(), TypeOffset.tp_flags);
+            return (TypeFlags)Util.ReadCLong(type, TypeOffset.tp_flags);
+        }
+        internal static void SetFlags(BorrowedReference type, TypeFlags flags)
+        {
+            Debug.Assert(TypeOffset.tp_flags > 0);
+            Util.WriteCLong(type, TypeOffset.tp_flags, (long)flags);
         }
 
         internal static BorrowedReference GetBase(BorrowedReference type)

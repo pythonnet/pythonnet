@@ -18,7 +18,7 @@ namespace Python.Runtime
         {
         }
 
-        public override IntPtr Invoke(IntPtr ob, IntPtr args, IntPtr kw)
+        public override NewReference Invoke(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
             MethodInfo mi = info[0];
             var arglist = new object[3];

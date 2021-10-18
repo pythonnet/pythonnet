@@ -461,7 +461,7 @@ namespace Python.Runtime
             return new PyTuple(bases);
         }
 
-        internal static IntPtr CreateSubType(IntPtr py_name, IntPtr py_base_type, BorrowedReference dictRef)
+        internal static NewReference CreateSubType(BorrowedReference py_name, BorrowedReference py_base_type, BorrowedReference dictRef)
         {
             // Utility to create a subtype of a managed type with the ability for the
             // a python subtype able to override the managed implementation
@@ -579,7 +579,7 @@ namespace Python.Runtime
             }
         }
 
-        internal static IntPtr CreateMetaType(Type impl, out SlotsHolder slotsHolder)
+        internal static PyType CreateMetaType(Type impl, out SlotsHolder slotsHolder)
         {
             // The managed metatype is functionally little different than the
             // standard Python metatype (PyType_Type). It overrides certain of
@@ -729,7 +729,7 @@ namespace Python.Runtime
         /// provides the implementation for the type, connect the type slots of
         /// the Python object to the managed methods of the implementing Type.
         /// </summary>
-        internal static void InitializeSlots(IntPtr type, Type impl, SlotsHolder slotsHolder = null)
+        internal static void InitializeSlots(BorrowedReference type, Type impl, SlotsHolder slotsHolder = null)
         {
             // We work from the most-derived class up; make sure to get
             // the most-derived slot and not to override it with a base
@@ -846,10 +846,10 @@ namespace Python.Runtime
         /// <summary>
         /// Utility method to copy slots from a given type to another type.
         /// </summary>
-        internal static void CopySlot(IntPtr from, IntPtr to, int offset)
+        internal static void CopySlot(BorrowedReference from, BorrowedReference to, int offset)
         {
-            IntPtr fp = Marshal.ReadIntPtr(from, offset);
-            Marshal.WriteIntPtr(to, offset, fp);
+            IntPtr fp = Util.ReadIntPtr(from, offset);
+            Util.WriteIntPtr(to, offset, fp);
         }
 
         private static SlotsHolder CreateSolotsHolder(IntPtr type)
@@ -881,7 +881,7 @@ namespace Python.Runtime
         /// Create slots holder for holding the delegate of slots and be able  to reset them.
         /// </summary>
         /// <param name="type">Steals a reference to target type</param>
-        public SlotsHolder(IntPtr type)
+        public SlotsHolder(PyType type)
         {
             _type = type;
         }

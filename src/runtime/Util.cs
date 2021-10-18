@@ -29,6 +29,11 @@ namespace Python.Runtime
         {
             return Marshal.ReadInt32(ob.DangerousGetAddress(), offset);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static long ReadInt64(BorrowedReference ob, int offset)
+        {
+            return Marshal.ReadInt64(ob.DangerousGetAddress(), offset);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static T* ReadPtr<T>(BorrowedReference ob, int offset)
@@ -51,6 +56,21 @@ namespace Python.Runtime
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void WriteInt32(BorrowedReference ob, int offset, int value)
+        {
+            Marshal.WriteInt32(ob.DangerousGetAddress(), offset, value);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void WriteInt64(BorrowedReference ob, int offset, long value)
+        {
+            Marshal.WriteInt64(ob.DangerousGetAddress(), offset, value);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static void WriteIntPtr(BorrowedReference ob, int offset, IntPtr value)
+        {
+            Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, value);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static void WriteRef(BorrowedReference ob, int offset, in StolenReference @ref)
         {
             Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, @ref.DangerousGetAddress());
@@ -63,28 +83,28 @@ namespace Python.Runtime
         }
 
 
-        internal static Int64 ReadCLong(IntPtr tp, int offset)
+        internal static Int64 ReadCLong(BorrowedReference tp, int offset)
         {
             // On Windows, a C long is always 32 bits.
             if (Runtime.IsWindows || Runtime.Is32Bit)
             {
-                return Marshal.ReadInt32(tp, offset);
+                return ReadInt32(tp, offset);
             }
             else
             {
-                return Marshal.ReadInt64(tp, offset);
+                return ReadInt64(tp, offset);
             }
         }
 
-        internal static void WriteCLong(IntPtr type, int offset, Int64 flags)
+        internal static void WriteCLong(BorrowedReference type, int offset, Int64 value)
         {
             if (Runtime.IsWindows || Runtime.Is32Bit)
             {
-                Marshal.WriteInt32(type, offset, (Int32)(flags & 0xffffffffL));
+                WriteInt32(type, offset, (Int32)(value & 0xffffffffL));
             }
             else
             {
-                Marshal.WriteInt64(type, offset, flags);
+                WriteInt64(type, offset, value);
             }
         }
 
