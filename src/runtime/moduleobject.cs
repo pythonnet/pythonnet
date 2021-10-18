@@ -16,7 +16,7 @@ namespace Python.Runtime
         private Dictionary<string, ManagedType> cache;
 
         internal string moduleName;
-        private readonly PyDict dict;
+        internal readonly PyDict dict;
         protected string _namespace;
         private readonly PyList __all__ = new ();
 
@@ -69,10 +69,9 @@ namespace Python.Runtime
         /// namespace (or null if the name is not found). This method does
         /// not increment the Python refcount of the returned object.
         /// </summary>
-        public ManagedType GetAttribute(string name, bool guess)
+        public ManagedType? GetAttribute(string name, bool guess)
         {
-            ManagedType cached = null;
-            cache.TryGetValue(name, out cached);
+            cache.TryGetValue(name, out var cached);
             if (cached != null)
             {
                 return cached;
@@ -130,7 +129,7 @@ namespace Python.Runtime
                 string gname = GenericUtil.GenericNameForBaseName(_namespace, name);
                 if (gname != null)
                 {
-                    ManagedType o = GetAttribute(gname, false);
+                    ManagedType? o = GetAttribute(gname, false);
                     if (o != null)
                     {
                         StoreAttribute(name, o);
@@ -169,10 +168,9 @@ namespace Python.Runtime
         /// </summary>
         public void LoadNames()
         {
-            ManagedType m = null;
             foreach (string name in AssemblyManager.GetNames(_namespace))
             {
-                cache.TryGetValue(name, out m);
+                cache.TryGetValue(name, out var m);
                 if (m != null)
                 {
                     continue;
@@ -252,7 +250,7 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
         {
-            var self = (ModuleObject)GetManagedObject(ob);
+            var self = (ModuleObject)GetManagedObject(ob)!;
 
             if (!Runtime.PyString_Check(key))
             {
@@ -266,7 +264,7 @@ namespace Python.Runtime
                 return new NewReference(op);
             }
 
-            string name = InternString.GetManagedString(key);
+            string? name = InternString.GetManagedString(key);
             if (name == "__dict__")
             {
                 return new NewReference(self.dict);
@@ -278,10 +276,11 @@ namespace Python.Runtime
                 return new NewReference(self.__all__);
             }
 
-            ManagedType attr = null;
+            ManagedType? attr;
 
             try
             {
+                if (name is null) throw new ArgumentNullException();
                 attr = self.GetAttribute(name, true);
             }
             catch (Exception e)
@@ -305,13 +304,13 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (ModuleObject)GetManagedObject(ob);
+            var self = (ModuleObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<module '{self.moduleName}'>");
         }
 
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            var self = (ModuleObject)GetManagedObject(ob);
+            var self = (ModuleObject)GetManagedObject(ob)!;
             int res = PyVisit(self.dict, visit, arg);
             if (res != 0) return res;
             foreach (var attr in self.cache.Values)
@@ -346,7 +345,7 @@ namespace Python.Runtime
             if ((settableAttributes.Contains(managedKey)) || 
                 (ManagedType.GetManagedObject(val)?.GetType() == typeof(ModuleObject)) )
             {
-                var self = (ModuleObject)ManagedType.GetManagedObject(ob);
+                var self = (ModuleObject)ManagedType.GetManagedObject(ob)!;
                 return Runtime.PyDict_SetItem(self.dict, key, val);
             }
 
@@ -493,7 +492,7 @@ namespace Python.Runtime
         {
             AssemblyManager.UpdatePath();
             var origNs = AssemblyManager.GetNamespaces();
-            Assembly assembly = null;
+            Assembly? assembly = null;
             assembly = AssemblyManager.FindLoadedAssembly(name);
             if (assembly == null)
             {
@@ -579,11 +578,11 @@ namespace Python.Runtime
         /// <returns>A new reference to the imported module, as a PyObject.</returns>
         [ModuleFunction]
         [ForbidPythonThreads]
-        public static ModuleObject _load_clr_module(PyObject spec)
+        public static PyObject _load_clr_module(PyObject spec)
         {
-            ModuleObject mod = null;
             using var modname = spec.GetAttr("name");
-            mod = ImportHook.Import(modname.ToString());
+            string name = modname.As<string?>() ?? throw new ArgumentException("name must not be None");
+            var mod = ImportHook.Import(name);
             return mod;
         }
 
