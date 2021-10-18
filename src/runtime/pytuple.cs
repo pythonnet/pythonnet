@@ -66,7 +66,7 @@ namespace Python.Runtime
                 throw new ArgumentException(message: Util.UseNone, paramName: nameof(items));
 
             int count = items.Length;
-            var val = Runtime.PyTuple_New(count);
+            using var val = Runtime.PyTuple_New(count);
             for (var i = 0; i < count; i++)
             {
                 int res = Runtime.PyTuple_SetItem(val.Borrow(), i, items[i]);

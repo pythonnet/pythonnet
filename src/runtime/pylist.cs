@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Python.Runtime
 {
@@ -42,41 +43,34 @@ namespace Python.Runtime
         /// <summary>
         /// Creates a new empty Python list object.
         /// </summary>
-        public PyList() : base(NewEmtpy().Steal())
+        public PyList() : base(Runtime.PyList_New(0).StealOrThrow())
         {
         }
 
-        private static NewReference NewEmtpy()
-        {
-            IntPtr ptr = Runtime.PyList_New(0);
-            PythonException.ThrowIfIsNull(ptr);
-            return NewReference.DangerousFromPointer(ptr);
-        }
-
-        private static NewReference FromArray(PyObject[] items)
+        private static StolenReference FromArray(PyObject[] items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
+            if (items.Any(item => item is null))
+                throw new ArgumentException(message: Util.UseNone, paramName: nameof(items));
 
             int count = items.Length;
-            IntPtr val = Runtime.PyList_New(count);
+            using var val = Runtime.PyList_New(count);
             for (var i = 0; i < count; i++)
             {
-                IntPtr ptr = items[i].obj;
-                Runtime.XIncref(ptr);
-                int r = Runtime.PyList_SetItem(val, i, ptr);
+                int r = Runtime.PyList_SetItem(val.Borrow(), i, new NewReference(items[i]).Steal());
                 if (r < 0)
                 {
-                    Runtime.Py_DecRef(val);
+                    val.Dispose();
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
-            return NewReference.DangerousFromPointer(val);
+            return val.Steal();
         }
 
         /// <summary>
         /// Creates a new Python list object from an array of objects.
         /// </summary>
-        public PyList(PyObject[] items) : base(FromArray(items).Steal())
+        public PyList(PyObject[] items) : base(FromArray(items))
         {
         }
 
@@ -130,7 +124,7 @@ namespace Python.Runtime
         {
             if (item is null) throw new ArgumentNullException(nameof(item));
 
-            int r = Runtime.PyList_Insert(this.Reference, index, item.obj);
+            int r = Runtime.PyList_Insert(this, index, item);
             if (r < 0)
             {
                 throw PythonException.ThrowLastAsClrException();

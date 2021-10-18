@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// </summary>
     public class PyIter : PyObject, IEnumerator<PyObject>
     {
-        private PyObject _current;
+        private PyObject? _current;
 
         /// <summary>
         /// PyIter Constructor
@@ -87,7 +87,7 @@ namespace Python.Runtime
             throw new NotSupportedException();
         }
 
-        public PyObject Current => _current;
-        object System.Collections.IEnumerator.Current => _current;
+        public PyObject Current => _current ?? throw new InvalidOperationException();
+        object System.Collections.IEnumerator.Current => Current;
     }
 }

@@ -1307,15 +1307,15 @@ namespace Python.Runtime
         internal static bool PySequence_Check(BorrowedReference pointer) => Delegates.PySequence_Check(pointer);
 
         internal static NewReference PySequence_GetItem(BorrowedReference pointer, nint index) => Delegates.PySequence_GetItem(pointer, index);
-        private static int PySequence_SetItem(BorrowedReference pointer, nint index, BorrowedReference value) => Delegates.PySequence_SetItem(pointer, index, value);
+        internal static int PySequence_SetItem(BorrowedReference pointer, nint index, BorrowedReference value) => Delegates.PySequence_SetItem(pointer, index, value);
 
         internal static int PySequence_DelItem(BorrowedReference pointer, nint index) => Delegates.PySequence_DelItem(pointer, index);
 
-        private static NewReference PySequence_GetSlice(BorrowedReference pointer, nint i1, nint i2) => Delegates.PySequence_GetSlice(pointer, i1, i2);
+        internal static NewReference PySequence_GetSlice(BorrowedReference pointer, nint i1, nint i2) => Delegates.PySequence_GetSlice(pointer, i1, i2);
 
         internal static int PySequence_SetSlice(BorrowedReference pointer, nint i1, nint i2, BorrowedReference v) => Delegates.PySequence_SetSlice(pointer, i1, i2, v);
 
-        private static int PySequence_DelSlice(BorrowedReference pointer, nint i1, nint i2) => Delegates.PySequence_DelSlice(pointer, i1, i2);
+        internal static int PySequence_DelSlice(BorrowedReference pointer, nint i1, nint i2) => Delegates.PySequence_DelSlice(pointer, i1, i2);
 
         internal static nint PySequence_Size(BorrowedReference pointer) => Delegates.PySequence_Size(pointer);
 
@@ -1534,20 +1534,13 @@ namespace Python.Runtime
             return PyObject_TYPE(ob) == PyListType;
         }
 
-        private static NewReference PyList_New(nint size) => Delegates.PyList_New(size);
-
-
-        internal static BorrowedReference PyList_GetItem(BorrowedReference pointer, long index)
-        {
-            return PyList_GetItem(pointer, new IntPtr(index));
-        }
-
+        internal static NewReference PyList_New(nint size) => Delegates.PyList_New(size);
 
         private static BorrowedReference PyList_GetItem(BorrowedReference pointer, IntPtr index) => Delegates.PyList_GetItem(pointer, index);
 
-        private static int PyList_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyList_SetItem(pointer, index, value);
+        internal static int PyList_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyList_SetItem(pointer, index, value);
 
-        private static int PyList_Insert(BorrowedReference pointer, nint index, BorrowedReference value) => Delegates.PyList_Insert(pointer, index, value);
+        internal static int PyList_Insert(BorrowedReference pointer, nint index, BorrowedReference value) => Delegates.PyList_Insert(pointer, index, value);
 
 
         internal static int PyList_Append(BorrowedReference pointer, BorrowedReference value) => Delegates.PyList_Append(pointer, value);

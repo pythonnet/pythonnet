@@ -6,10 +6,6 @@ namespace Python.Runtime
 {
     public class PyIterable : PyObject, IEnumerable<PyObject>
     {
-        internal PyIterable(IntPtr ptr) : base(ptr)
-        {
-        }
-
         internal PyIterable(BorrowedReference reference) : base(reference) { }
         internal PyIterable(in StolenReference reference) : base(reference) { }
 

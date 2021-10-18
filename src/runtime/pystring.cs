@@ -39,20 +39,13 @@ namespace Python.Runtime
         {
         }
 
-
-        private static NewReference FromString(string s)
-        {
-            IntPtr val = Runtime.PyString_FromString(s);
-            PythonException.ThrowIfIsNull(val);
-            return NewReference.DangerousFromPointer(val);
-        }
         /// <summary>
         /// PyString Constructor
         /// </summary>
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-        public PyString(string s) : base(FromString(s).Steal())
+        public PyString(string s) : base(Runtime.PyString_FromString(s).StealOrThrow())
         {
         }
 

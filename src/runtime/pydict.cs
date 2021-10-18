@@ -16,14 +16,7 @@ namespace Python.Runtime
         /// <summary>
         /// Creates a new Python dictionary object.
         /// </summary>
-        public PyDict() : base(Runtime.PyDict_New())
-        {
-            if (obj == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-        }
-
+        public PyDict() : base(Runtime.PyDict_New().StealOrThrow()) { }
 
         /// <summary>
         /// Wraps existing dictionary object.
@@ -106,12 +99,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyIterable Values()
         {
-            IntPtr items = Runtime.PyDict_Values(obj);
-            if (items == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyIterable(items);
+            using var items = Runtime.PyDict_Values(obj);
+            return new PyIterable(items.StealOrThrow());
         }
 
 
