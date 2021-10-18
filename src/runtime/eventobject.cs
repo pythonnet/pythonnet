@@ -11,9 +11,9 @@ namespace Python.Runtime
     internal class EventObject : ExtensionType
     {
         internal string name;
-        internal EventBinding unbound;
+        internal EventBinding? unbound;
         internal EventInfo info;
-        internal Hashtable reg;
+        internal Hashtable? reg;
 
         public EventObject(EventInfo info)
         {
@@ -25,12 +25,12 @@ namespace Python.Runtime
         /// <summary>
         /// Register a new Python object event handler with the event.
         /// </summary>
-        internal bool AddEventHandler(IntPtr target, IntPtr handler)
+        internal bool AddEventHandler(BorrowedReference target, PyObject handler)
         {
-            object obj = null;
-            if (target != IntPtr.Zero)
+            object? obj = null;
+            if (target != null)
             {
-                var co = (CLRObject)GetManagedObject(target);
+                var co = (CLRObject)GetManagedObject(target)!;
                 obj = co.inst;
             }
 
@@ -70,7 +70,7 @@ namespace Python.Runtime
         /// <summary>
         /// Remove the given Python object event handler.
         /// </summary>
-        internal bool RemoveEventHandler(IntPtr target, IntPtr handler)
+        internal bool RemoveEventHandler(BorrowedReference target, BorrowedReference handler)
         {
             if (reg == null)
             {
@@ -78,10 +78,10 @@ namespace Python.Runtime
                 return false;
             }
 
-            object obj = null;
-            if (target != IntPtr.Zero)
+            object? obj = null;
+            if (target != null)
             {
-                var co = (CLRObject)GetManagedObject(target);
+                var co = (CLRObject)GetManagedObject(target)!;
                 obj = co.inst;
             }
 
@@ -100,7 +100,7 @@ namespace Python.Runtime
                 return false;
             }
 
-            object[] args = { null };
+            object?[] args = { null };
             MethodInfo mi = info.GetRemoveMethod(true);
 
             for (var i = 0; i < list.Count; i++)
@@ -132,7 +132,7 @@ namespace Python.Runtime
         /// Descriptor __get__ implementation. A getattr on an event returns
         /// a "bound" event that keeps a reference to the object instance.
         /// </summary>
-        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
+        public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
             var self = GetManagedObject(ds) as EventObject;
             EventBinding binding;
@@ -146,15 +146,14 @@ namespace Python.Runtime
             // an instance) we return an 'unbound' EventBinding that will
             // be cached for future accesses through the type.
 
-            if (ob == IntPtr.Zero)
+            if (ob == null)
             {
                 if (self.unbound == null)
                 {
-                    self.unbound = new EventBinding(self, IntPtr.Zero);
+                    self.unbound = new EventBinding(self, target: null);
                 }
                 binding = self.unbound;
-                Runtime.XIncref(binding.pyHandle);
-                return binding.pyHandle;
+                return new NewReference(binding.pyHandle);
             }
 
             if (Runtime.PyObject_IsInstance(ob, tp) < 1)
@@ -162,8 +161,8 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            binding = new EventBinding(self, ob);
-            return binding.pyHandle;
+            binding = new EventBinding(self, new PyObject(ob));
+            return new NewReference(binding.pyHandle);
         }
 
 
@@ -174,7 +173,7 @@ namespace Python.Runtime
         /// 'ob.SomeEvent += method', Python will attempt to set the attribute
         /// SomeEvent on ob to the result of the '+=' operation.
         /// </summary>
-        public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
         {
             var e = GetManagedObject(val) as EventBinding;
 
@@ -191,20 +190,16 @@ namespace Python.Runtime
         /// <summary>
         /// Descriptor __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (EventObject)GetManagedObject(ob);
+            var self = (EventObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<event '{self.name}'>");
         }
 
 
         protected override void Clear()
         {
-            if (this.unbound is not null)
-            {
-                Runtime.XDecref(this.unbound.pyHandle);
-                this.unbound = null;
-            }
+            this.unbound = null!;
             base.Clear();
         }
     }
@@ -212,10 +207,10 @@ namespace Python.Runtime
 
     internal class Handler
     {
-        public IntPtr hash;
-        public Delegate del;
+        public readonly nint hash;
+        public readonly Delegate del;
 
-        public Handler(IntPtr hash, Delegate d)
+        public Handler(nint hash, Delegate d)
         {
             this.hash = hash;
             this.del = d;

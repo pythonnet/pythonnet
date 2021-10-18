@@ -1429,5 +1429,8 @@ namespace Python.Runtime
     {
         internal static NewReference NewReferenceOrNull(this PyObject? self)
             => self is null || self.IsDisposed ? default : new NewReference(self);
+
+        internal static BorrowedReference BorrowNullable(this PyObject? self)
+            => self is null ? default : self.Reference;
     }
 }

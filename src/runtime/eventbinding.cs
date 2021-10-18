@@ -9,11 +9,10 @@ namespace Python.Runtime
     internal class EventBinding : ExtensionType
     {
         private EventObject e;
-        private IntPtr target;
+        private PyObject? target;
 
-        public EventBinding(EventObject e, IntPtr target)
+        public EventBinding(EventObject e, PyObject? target)
         {
-            Runtime.XIncref(target);
             this.target = target;
             this.e = e;
         }
@@ -22,58 +21,56 @@ namespace Python.Runtime
         /// <summary>
         /// EventBinding += operator implementation.
         /// </summary>
-        public static IntPtr nb_inplace_add(IntPtr ob, IntPtr arg)
+        public static NewReference nb_inplace_add(BorrowedReference ob, BorrowedReference arg)
         {
-            var self = (EventBinding)GetManagedObject(ob);
+            var self = (EventBinding)GetManagedObject(ob)!;
 
             if (Runtime.PyCallable_Check(arg) < 1)
             {
                 Exceptions.SetError(Exceptions.TypeError, "event handlers must be callable");
-                return IntPtr.Zero;
+                return default;
             }
 
-            if (!self.e.AddEventHandler(self.target, arg))
+            if (!self.e.AddEventHandler(self.target.BorrowNullable(), new PyObject(arg)))
             {
-                return IntPtr.Zero;
+                return default;
             }
 
-            Runtime.XIncref(self.pyHandle);
-            return self.pyHandle;
+            return new NewReference(self.pyHandle);
         }
 
 
         /// <summary>
         /// EventBinding -= operator implementation.
         /// </summary>
-        public static IntPtr nb_inplace_subtract(IntPtr ob, IntPtr arg)
+        public static NewReference nb_inplace_subtract(BorrowedReference ob, BorrowedReference arg)
         {
-            var self = (EventBinding)GetManagedObject(ob);
+            var self = (EventBinding)GetManagedObject(ob)!;
 
             if (Runtime.PyCallable_Check(arg) < 1)
             {
                 Exceptions.SetError(Exceptions.TypeError, "invalid event handler");
-                return IntPtr.Zero;
+                return default;
             }
 
-            if (!self.e.RemoveEventHandler(self.target, arg))
+            if (!self.e.RemoveEventHandler(self.target.BorrowNullable(), arg))
             {
-                return IntPtr.Zero;
+                return default;
             }
 
-            Runtime.XIncref(self.pyHandle);
-            return self.pyHandle;
+            return new NewReference(self.pyHandle);
         }
 
 
         /// <summary>
         /// EventBinding  __hash__ implementation.
         /// </summary>
-        public static nint tp_hash(IntPtr ob)
+        public static nint tp_hash(BorrowedReference ob)
         {
-            var self = (EventBinding)GetManagedObject(ob);
+            var self = (EventBinding)GetManagedObject(ob)!;
             nint x = 0;
 
-            if (self.target != IntPtr.Zero)
+            if (self.target != null)
             {
                 x = Runtime.PyObject_Hash(self.target);
                 if (x == -1)
@@ -95,10 +92,10 @@ namespace Python.Runtime
         /// <summary>
         /// EventBinding __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (EventBinding)GetManagedObject(ob);
-            string type = self.target == IntPtr.Zero ? "unbound" : "bound";
+            var self = (EventBinding)GetManagedObject(ob)!;
+            string type = self.target == null ? "unbound" : "bound";
             string s = string.Format("<{0} event '{1}'>", type, self.e.name);
             return Runtime.PyString_FromString(s);
         }
