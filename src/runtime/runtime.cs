@@ -1879,6 +1879,12 @@ namespace Python.Runtime
             => (long)_PyGC_REFS(ob) != _PyGC_REFS_UNTRACKED;
 
         internal static void Py_CLEAR(BorrowedReference ob, int offset) => ReplaceReference(ob, offset, default);
+        internal static void Py_CLEAR<T>(ref T? ob)
+            where T: PyObject
+        {
+            ob?.Dispose();
+            ob = null;
+        }
 
         internal static void ReplaceReference(BorrowedReference ob, int offset, in StolenReference newValue)
         {

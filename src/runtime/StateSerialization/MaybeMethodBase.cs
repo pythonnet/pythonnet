@@ -57,10 +57,10 @@ namespace Python.Runtime
         public static implicit operator MaybeMethodBase<T> (T ob) => new MaybeMethodBase<T>(ob);
 
         string name;
-        MethodBase info;
+        MethodBase? info;
 
         [NonSerialized]
-        Exception deserializationException;
+        Exception? deserializationException;
 
         public string DeletedMessage 
         {
@@ -82,7 +82,7 @@ namespace Python.Runtime
             }
         }
 
-        public T UnsafeValue { get { return (T)info; } }
+        public T UnsafeValue => (T)info!;
         public string Name {get{return name;}}
         public bool Valid => info != null;
 
@@ -91,7 +91,7 @@ namespace Python.Runtime
             return (info != null ? info.ToString() : $"missing method info: {name}");
         }
 
-        public MaybeMethodBase(T mi)
+        public MaybeMethodBase(T? mi)
         {
             info = mi;
             name = mi?.ToString();
@@ -131,7 +131,7 @@ namespace Python.Runtime
                     }
                 }
 
-                MethodBase mb = null;
+                MethodBase? mb = null;
                 if (serializationInfo.GetBoolean(SerializationIsCtor))
                 {
                     // We never want the static constructor.
@@ -159,7 +159,7 @@ namespace Python.Runtime
             }
         }
 
-        MethodBase CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
+        MethodBase? CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
         {
             // One more step: Changing:
             // void MyFn (ref int a)
