@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -56,7 +55,7 @@ namespace Python.Runtime
             var cls = (ClassDerivedObject)GetManagedObject(tp)!;
 
             // call the managed constructor
-            object obj = cls.binder.InvokeRaw(null, args, kw);
+            object? obj = cls.binder.InvokeRaw(null, args, kw);
             if (obj == null)
             {
                 return default;

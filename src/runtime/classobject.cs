@@ -1,5 +1,5 @@
-using System.Linq;
 using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -43,16 +43,15 @@ namespace Python.Runtime
                 }
                 str += t.ToString();
             }
-            return NewReference.DangerousFromPointer(Runtime.PyString_FromString(str));
+            return Runtime.PyString_FromString(str);
         }
 
 
         /// <summary>
         /// Implements __new__ for reflected classes and value types.
         /// </summary>
-        public static IntPtr tp_new(IntPtr tpRaw, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            var tp = new BorrowedReference(tpRaw);
             var self = GetManagedObject(tp) as ClassObject;
 
             // Sanity check: this ensures a graceful error if someone does
@@ -77,32 +76,32 @@ namespace Python.Runtime
                 if (Runtime.PyTuple_Size(args) != 1)
                 {
                     Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
-                    return IntPtr.Zero;
+                    return default;
                 }
 
-                IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
                 object result;
 
                 if (!Converter.ToManaged(op, type, out result, true))
                 {
-                    return IntPtr.Zero;
+                    return default;
                 }
 
-                return CLRObject.GetReference(result, tp).DangerousMoveToPointerOrNull();
+                return CLRObject.GetReference(result, tp);
             }
 
             if (type.IsAbstract)
             {
                 Exceptions.SetError(Exceptions.TypeError, "cannot instantiate abstract class");
-                return IntPtr.Zero;
+                return default;
             }
 
             if (type.IsEnum)
             {
-                return NewEnum(type, new BorrowedReference(args), tp).DangerousMoveToPointerOrNull();
+                return NewEnum(type, args, tp);
             }
 
-            object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
+            object obj = self.binder.InvokeRaw(null, args, kw);
             if (obj == null)
             {
                 return IntPtr.Zero;
@@ -154,7 +153,7 @@ namespace Python.Runtime
         /// both to implement the Array[int] syntax for creating arrays and
         /// to support generic name overload resolution using [].
         /// </summary>
-        public override IntPtr type_subscript(IntPtr idx)
+        public override NewReference type_subscript(BorrowedReference idx)
         {
             if (!type.Valid)
             {
