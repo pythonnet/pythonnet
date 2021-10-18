@@ -80,14 +80,13 @@ namespace Python.Runtime
                 }
 
                 BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
-                object result;
 
-                if (!Converter.ToManaged(op, type, out result, true))
+                if (!Converter.ToManaged(op, type, out var result, true))
                 {
                     return default;
                 }
 
-                return CLRObject.GetReference(result, tp);
+                return CLRObject.GetReference(result!, tp);
             }
 
             if (type.IsAbstract)
@@ -101,13 +100,13 @@ namespace Python.Runtime
                 return NewEnum(type, args, tp);
             }
 
-            object obj = self.binder.InvokeRaw(null, args, kw);
+            object? obj = self.binder.InvokeRaw(null, args, kw);
             if (obj == null)
             {
-                return IntPtr.Zero;
+                return default;
             }
 
-            return CLRObject.GetReference(obj, tp).DangerousMoveToPointerOrNull();
+            return CLRObject.GetReference(obj, tp);
         }
 
         private static NewReference NewEnum(Type type, BorrowedReference args, BorrowedReference tp)
@@ -132,7 +131,7 @@ namespace Python.Runtime
             }
 
             var op = Runtime.PyTuple_GetItem(args, 0);
-            if (!Converter.ToManaged(op, type.GetEnumUnderlyingType(), out object result, true))
+            if (!Converter.ToManaged(op, type.GetEnumUnderlyingType(), out object? result, true))
             {
                 return default;
             }
@@ -169,21 +168,20 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 var c = GetManagedObject(idx) as ClassBase;
-                Type t = c != null ? c.type.Value : Converter.GetTypeByAlias(idx);
+                Type? t = c != null ? c.type.Value : Converter.GetTypeByAlias(idx);
                 if (t == null)
                 {
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 Type a = t.MakeArrayType();
                 ClassBase o = ClassManager.GetClass(a);
-                Runtime.XIncref(o.pyHandle);
-                return o.pyHandle;
+                return new NewReference(o.ObjectReference);
             }
 
             // If there are generics in our namespace with the same base name
             // as the current type, then [<type>] means the caller wants to
             // bind the generic type matching the given type parameters.
-            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            Type[]? types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
@@ -192,10 +190,8 @@ namespace Python.Runtime
             Type gtype = AssemblyManager.LookupTypes($"{type.Value.FullName}`{types.Length}").FirstOrDefault();
             if (gtype != null)
             {
-                var g = ClassManager.GetClass(gtype) as GenericType;
+                var g = (GenericType)ClassManager.GetClass(gtype);
                 return g.type_subscript(idx);
-                //Runtime.XIncref(g.pyHandle);
-                //return g.pyHandle;
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
         }
