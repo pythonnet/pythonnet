@@ -29,7 +29,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("array constructor takes no keyword arguments");
             }
 
-            var self = GetManagedObject(tp) as ArrayObject;
+            var self = (ArrayObject)GetManagedObject(tp)!;
             if (!self.type.Valid)
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
@@ -63,14 +63,14 @@ namespace Python.Runtime
                     return NewInstance(arrType.GetElementType(), tp, dimensions);
                 }
             }
-            object result;
+            object? result;
 
             // this implements casting to Array[T]
             if (!Converter.ToManaged(op, arrType, out result, true))
             {
                 return default;
             }
-            return CLRObject.GetReference(result, tp);
+            return CLRObject.GetReference(result!, tp);
         }
 
         static NewReference CreateMultidimensional(Type elementType, long[] dimensions, BorrowedReference shapeTuple, BorrowedReference pyType)
@@ -133,13 +133,13 @@ namespace Python.Runtime
         /// </summary>
         public new static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
         {
-            var obj = (CLRObject)GetManagedObject(ob);
-            var arrObj = (ArrayObject)GetManagedObjectType(ob);
+            var obj = (CLRObject)GetManagedObject(ob)!;
+            var arrObj = (ArrayObject)GetManagedObjectType(ob)!;
             if (!arrObj.type.Valid)
             {
                 return Exceptions.RaiseTypeError(arrObj.type.DeletedMessage);
             }
-            var items = obj.inst as Array;
+            var items = (Array)obj.inst;
             Type itemType = arrObj.type.Value.GetElementType();
             int rank = items.Rank;
             nint index;
@@ -346,10 +346,10 @@ namespace Python.Runtime
         /// </summary>
         public static int sq_contains(BorrowedReference ob, BorrowedReference v)
         {
-            var obj = (CLRObject)GetManagedObject(ob);
+            var obj = (CLRObject)GetManagedObject(ob)!;
             Type itemType = obj.inst.GetType().GetElementType();
-            var items = obj.inst as IList;
-            object value;
+            var items = (IList)obj.inst;
+            object? value;
 
             if (!Converter.ToManaged(v, itemType, out value, false))
             {
@@ -383,7 +383,7 @@ namespace Python.Runtime
             Type itemType = self.GetType().GetElementType();
 
             bool formatRequested = (flags & PyBUF.FORMATS) != 0;
-            string format = GetFormat(itemType);
+            string? format = GetFormat(itemType);
             if (formatRequested && format is null)
             {
                 Exceptions.SetError(Exceptions.BufferError, "unsupported element type: " + itemType.Name);
@@ -495,7 +495,7 @@ namespace Python.Runtime
             [typeof(double)] = "d",
         };
 
-        static string GetFormat(Type elementType)
+        static string? GetFormat(Type elementType)
             => ItemFormats.TryGetValue(elementType, out string result) ? result : null;
 
         static readonly GetBufferProc getBufferProc = GetBuffer;
