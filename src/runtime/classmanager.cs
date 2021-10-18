@@ -77,10 +77,10 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        private static int TraverseTypeClear(IntPtr ob, IntPtr arg)
+        private static int TraverseTypeClear(BorrowedReference ob, IntPtr arg)
         {
             var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
-            if (!visited.Add(ob))
+            if (!visited.Add(ob.DangerousGetAddressOrNull()))
             {
                 return 0;
             }
@@ -96,7 +96,7 @@ namespace Python.Runtime
         internal static void SaveRuntimeData(RuntimeDataStorage storage)
         {
             var contexts = storage.AddValue("contexts",
-                new Dictionary<IntPtr, InterDomainContext>());
+                new Dictionary<PyType, InterDomainContext>(PythonReferenceComparer.Instance));
             storage.AddValue("cache", cache);
             foreach (var cls in cache)
             {
@@ -143,7 +143,7 @@ namespace Python.Runtime
         {
             cache = storage.GetValue<Dictionary<MaybeType, ClassBase>>("cache");
             var invalidClasses = new List<KeyValuePair<MaybeType, ClassBase>>();
-            var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
+            var contexts = storage.GetValue <Dictionary<PyType, InterDomainContext>>("contexts");
             var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var pair in cache)
             {
@@ -265,7 +265,7 @@ namespace Python.Runtime
             var pyType = TypeManager.GetOrCreateClass(type);
 
             // Set the handle attributes on the implementing instance.
-            impl.tpHandle = impl.pyHandle = pyType.Handle;
+            impl.pyHandle = impl.tpHandle = pyType;
 
             return pyType;
         }
@@ -558,11 +558,11 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         ob = GetClass(tp);
-                        if (ob.pyHandle == IntPtr.Zero && ob is ClassObject)
+                        if (ob.pyHandle is null && ob is ClassObject)
                         {
-                            ob.pyHandle = ob.tpHandle = TypeManager.GetOrCreateClass(tp).Handle;
+                            ob.pyHandle = ob.tpHandle = TypeManager.GetOrCreateClass(tp);
                         }
-                        Debug.Assert(ob.pyHandle != IntPtr.Zero);
+                        Debug.Assert(ob.pyHandle is not null);
                         // GetClass returns a Borrowed ref. ci.members owns the reference.
                         ob.IncrRefCount();
                         ci.members[mi.Name] = ob;

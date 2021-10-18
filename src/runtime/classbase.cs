@@ -24,6 +24,12 @@ namespace Python.Runtime
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
 
+        internal new PyType pyHandle
+        {
+            get => (PyType)base.pyHandle;
+            set => base.pyHandle = value;
+        }
+
         internal ClassBase(Type tp)
         {
             if (tp is null) throw new ArgumentNullException(nameof(type));

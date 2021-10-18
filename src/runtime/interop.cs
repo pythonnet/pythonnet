@@ -289,6 +289,9 @@ namespace Python.Runtime
         public delegate int ObjObjFunc(IntPtr ob, IntPtr arg);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int BP_I32(BorrowedReference ob, IntPtr arg);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void DestructorFunc(IntPtr ob);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

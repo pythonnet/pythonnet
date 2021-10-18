@@ -727,7 +727,7 @@ namespace Python.Runtime
                     if (method.Reference != Runtime.PyNone)
                     {
                         // if the method hasn't been overridden then it will be a managed object
-                        ManagedType? managedMethod = ManagedType.GetManagedObject(method.Handle);
+                        ManagedType? managedMethod = ManagedType.GetManagedObject(method);
                         if (null == managedMethod)
                         {
                             var pyargs = new PyObject[args.Length];
@@ -827,7 +827,7 @@ namespace Python.Runtime
             try
             {
                 // create the python object
-                BorrowedReference type = TypeManager.GetTypeReference(obj.GetType());
+                var type = TypeManager.GetType(obj.GetType());
                 self = new CLRObject(obj, type);
 
                 // set __pyobj__ to self and deref the python object which will allow this

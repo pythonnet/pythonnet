@@ -167,7 +167,7 @@ namespace Python.Runtime
             var extensionObjs = new List<ManagedType>();
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var serializeObjs = new CLRWrapperCollection();
-            var contexts = new Dictionary<IntPtr, InterDomainContext>();
+            var contexts = new Dictionary<PyType, InterDomainContext>(PythonReferenceComparer.Instance);
             foreach (var entry in objs)
             {
                 var obj = entry.Key;
@@ -243,7 +243,7 @@ namespace Python.Runtime
         {
             var extensions = storage.GetValue<List<ManagedType>>("extensions");
             var internalStores = storage.GetValue<List<CLRObject>>("internalStores");
-            var contexts = storage.GetValue <Dictionary<IntPtr, InterDomainContext>>("contexts");
+            var contexts = storage.GetValue <Dictionary<PyType, InterDomainContext>>("contexts");
             var storedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var obj in Enumerable.Union(extensions, internalStores))
             {
