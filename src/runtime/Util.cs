@@ -19,6 +19,8 @@ namespace Python.Runtime
 
         internal const string UseOverloadWithReferenceTypes =
             "This API is unsafe, and will be removed in the future. Use overloads working with *Reference types";
+        internal const string UseNone =
+            $"null is not supported in this context. Use {nameof(PyObject)}.{nameof(PyObject.None)}";
 
         internal const string BadStr = "bad __str__";
 
