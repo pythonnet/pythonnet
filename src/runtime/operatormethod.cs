@@ -95,9 +95,7 @@ namespace Python.Runtime
         /// For the operator methods of a CLR type, set the special slots of the
         /// corresponding Python type's operator methods.
         /// </summary>
-        /// <param name="pyType"></param>
-        /// <param name="clrType"></param>
-        public static void FixupSlots(IntPtr pyType, Type clrType)
+        public static void FixupSlots(BorrowedReference pyType, Type clrType)
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
             Debug.Assert(_opType != null);
@@ -117,12 +115,12 @@ namespace Python.Runtime
                 int offset = OpMethodMap[method.Name].TypeOffset;
                 // Copy the default implementation of e.g. the nb_add slot,
                 // which simply calls __add__ on the type.
-                IntPtr func = Marshal.ReadIntPtr(_opType.Handle, offset);
+                IntPtr func = Util.ReadIntPtr(_opType, offset);
                 // Write the slot definition of the target Python type, so
                 // that we can later modify __add___ and it will be called
                 // when used with a Python operator.
                 // https://tenthousandmeters.com/blog/python-behind-the-scenes-6-how-python-object-system-works/
-                Marshal.WriteIntPtr(pyType, offset, func);
+                Util.WriteIntPtr(pyType, offset, func);
             }
         }
 

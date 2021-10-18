@@ -24,6 +24,10 @@ namespace Python.Runtime
             this.pointer = address;
         }
 
+        /// <summary>Creates a <see cref="NewReference"/> pointing to the same object</summary>
+        public NewReference(in NewReference reference, bool canBeNull = false)
+            : this(reference.BorrowNullable(), canBeNull) { }
+
         /// <summary>
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
@@ -32,9 +36,7 @@ namespace Python.Runtime
         {
             if (this.IsNull()) throw new NullReferenceException();
 
-            var result = new PyObject(this.pointer);
-            this.pointer = IntPtr.Zero;
-            return result;
+            return new PyObject(this.StealNullable());
         }
 
         /// <summary>Moves ownership of this instance to unmanged pointer</summary>

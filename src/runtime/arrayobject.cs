@@ -518,13 +518,13 @@ namespace Python.Runtime
         /// <summary>
         /// <see cref="TypeManager.InitializeSlots(IntPtr, Type, SlotsHolder)"/>
         /// </summary>
-        public static void InitializeSlots(IntPtr type, ISet<string> initialized, SlotsHolder slotsHolder)
+        public static void InitializeSlots(PyType type, ISet<string> initialized, SlotsHolder slotsHolder)
         {
             if (initialized.Add(nameof(TypeOffset.tp_as_buffer)))
             {
                 // TODO: only for unmanaged arrays
                 int offset = TypeOffset.GetSlotOffset(nameof(TypeOffset.tp_as_buffer));
-                Marshal.WriteIntPtr(type, offset, BufferProcsAddress);
+                Util.WriteIntPtr(type, offset, BufferProcsAddress);
             }
         }
     }

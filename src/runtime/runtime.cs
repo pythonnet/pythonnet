@@ -503,7 +503,7 @@ namespace Python.Runtime
         internal static PyObject PyBaseObjectType;
         internal static PyObject PyModuleType;
         internal static PyObject PySuper_Type;
-        internal static PyObject PyCLRMetaType;
+        internal static PyType PyCLRMetaType;
         internal static PyObject PyMethodType;
         internal static PyObject PyWrapperDescriptorType;
 
@@ -516,7 +516,7 @@ namespace Python.Runtime
         internal static PyObject PyFloatType;
         internal static PyObject PyBoolType;
         internal static PyObject PyNoneType;
-        internal static PyObject PyTypeType;
+        internal static PyType PyTypeType;
 
         internal static int* Py_NoSiteFlag;
 

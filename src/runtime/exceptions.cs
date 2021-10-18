@@ -392,8 +392,8 @@ namespace Python.Runtime
             typeError.Normalize();
 
             Runtime.PyException_SetCause(
-                typeError.Value!.Reference,
-                new NewReference(cause.Value!.Reference).Steal());
+                typeError.Value,
+                new NewReference(cause.Value).Steal());
             typeError.Restore();
 
             return default;

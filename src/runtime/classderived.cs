@@ -674,7 +674,7 @@ namespace Python.Runtime
                             var pyargs = new PyObject[args.Length];
                             for (var i = 0; i < args.Length; ++i)
                             {
-                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]).Steal());
+                                pyargs[i] = Converter.ToPythonImplicit(args[i]).MoveToPyObject();
                                 disposeList.Add(pyargs[i]);
                             }
 
@@ -735,7 +735,7 @@ namespace Python.Runtime
                             var pyargs = new PyObject[args.Length];
                             for (var i = 0; i < args.Length; ++i)
                             {
-                                pyargs[i] = new PyObject(Converter.ToPythonImplicit(args[i]).Steal());
+                                pyargs[i] = Converter.ToPythonImplicit(args[i]).MoveToPyObject();
                                 disposeList.Add(pyargs[i]);
                             }
 
@@ -806,7 +806,7 @@ namespace Python.Runtime
             try
             {
                 using var pyself = new PyObject(self.ObjectReference);
-                using var pyvalue = new PyObject(Converter.ToPythonImplicit(value).Steal());
+                using var pyvalue = Converter.ToPythonImplicit(value).MoveToPyObject();
                 pyself.SetAttr(propertyName, pyvalue);
             }
             finally
