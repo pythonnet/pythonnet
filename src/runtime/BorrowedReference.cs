@@ -47,6 +47,7 @@ namespace Python.Runtime
         }
 
         public static implicit operator BorrowedReference(PyObject pyObject) => pyObject.Reference;
+        public static implicit operator BorrowedReference(NullOnly? @null) => Null;
 
         public override int GetHashCode() => pointer.GetHashCode();
     }

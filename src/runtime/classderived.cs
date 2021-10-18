@@ -435,12 +435,11 @@ namespace Python.Runtime
         /// <param name="typeBuilder">TypeBuilder for the new type the method/property is to be added to</param>
         private static void AddPythonMethod(string methodName, PyObject func, TypeBuilder typeBuilder)
         {
-            if (func.HasAttr("_clr_method_name_"))
+            const string methodNameAttribute = "_clr_method_name_";
+            if (func.HasAttr(methodNameAttribute))
             {
-                using (PyObject pyMethodName = func.GetAttr("_clr_method_name_"))
-                {
-                    methodName = pyMethodName.ToString();
-                }
+                using PyObject pyMethodName = func.GetAttr(methodNameAttribute);
+                methodName = pyMethodName.As<string>() ?? throw new ArgumentNullException(methodNameAttribute);
             }
 
             using (PyObject pyReturnType = func.GetAttr("_clr_return_type_"))

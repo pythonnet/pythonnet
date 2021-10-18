@@ -32,7 +32,7 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        private static Dictionary<MaybeType, ClassBase> cache;
+        private static Dictionary<MaybeType, ClassBase> cache = new(capacity: 128);
         private static readonly Type dtype;
 
         private ClassManager()
@@ -50,7 +50,7 @@ namespace Python.Runtime
 
         public static void Reset()
         {
-            cache = new Dictionary<MaybeType, ClassBase>(128);
+            cache.Clear();
         }
 
         internal static void DisposePythonWrappersForClrTypes()
@@ -122,7 +122,7 @@ namespace Python.Runtime
                 {
                     // No need to decref the member, the ClassBase instance does 
                     // not own the reference.
-                    if ((Runtime.PyDict_DelItemString(dict, member) == -1) &&
+                    if ((Runtime.PyDict_DelItemString(dict.Borrow(), member) == -1) &&
                         (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                     {
                         // Trying to remove a key that's not in the dictionary 
@@ -184,8 +184,7 @@ namespace Python.Runtime
         /// <returns>A Borrowed reference to the ClassBase object</returns>
         internal static ClassBase GetClass(Type type)
         {
-            ClassBase cb = null;
-            cache.TryGetValue(type, out cb);
+            cache.TryGetValue(type, out var cb);
             if (cb != null)
             {
                 return cb;
@@ -289,7 +288,8 @@ namespace Python.Runtime
             TypeManager.GetOrInitializeClass(impl, type);
 
             // Finally, initialize the class __dict__ and return the object.
-            using var dict = Runtime.PyObject_GenericGetDict(pyType.Reference);
+            using var newDict = Runtime.PyObject_GenericGetDict(pyType.Reference);
+            BorrowedReference dict = newDict.Borrow();
 
 
             IDictionaryEnumerator iter = info.members.GetEnumerator();
@@ -314,8 +314,8 @@ namespace Python.Runtime
             {
                 var attr = (DocStringAttribute)attrs[0];
                 string docStr = attr.DocString;
-                doc = NewReference.DangerousFromPointer(Runtime.PyString_FromString(docStr));
-                Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc);
+                doc = Runtime.PyString_FromString(docStr);
+                Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc.Borrow());
             }
 
             var co = impl as ClassObject;
@@ -340,7 +340,7 @@ namespace Python.Runtime
                     if (!CLRModule._SuppressDocs && doc.IsNull())
                     {
                         doc = co.GetDocString();
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc.Borrow());
                     }
                 }
             }
@@ -363,7 +363,7 @@ namespace Python.Runtime
 
         internal static bool ShouldBindProperty(PropertyInfo pi)
         {
-                MethodInfo mm = null;
+                MethodInfo? mm;
                 try
                 {
                     mm = pi.GetGetMethod(true);
@@ -515,7 +515,7 @@ namespace Python.Runtime
                         ParameterInfo[] args = pi.GetIndexParameters();
                         if (args.GetLength(0) > 0)
                         {
-                            Indexer idx = ci.indexer;
+                            Indexer? idx = ci.indexer;
                             if (idx == null)
                             {
                                 ci.indexer = new Indexer();
@@ -623,7 +623,7 @@ namespace Python.Runtime
         /// </summary>
         private class ClassInfo
         {
-            public Indexer indexer;
+            public Indexer? indexer;
             public Hashtable members;
 
             internal ClassInfo()
