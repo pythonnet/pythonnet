@@ -1719,7 +1719,6 @@ namespace Python.Runtime
 
         internal static NewReference PyType_GenericNew(BorrowedReference type, BorrowedReference args, BorrowedReference kw) => Delegates.PyType_GenericNew(type, args, kw);
 
-        internal static IntPtr PyType_GenericAlloc(IntPtr type, nint n) => PyType_GenericAlloc(new BorrowedReference(type), n).DangerousMoveToPointer();
         internal static NewReference PyType_GenericAlloc(BorrowedReference type, nint n) => Delegates.PyType_GenericAlloc(type, n);
 
         internal static IntPtr PyType_GetSlot(BorrowedReference type, TypeSlotID slot) => Delegates.PyType_GetSlot(type, slot);

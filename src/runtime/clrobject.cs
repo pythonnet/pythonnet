@@ -10,10 +10,10 @@ namespace Python.Runtime
     {
         internal object inst;
 
-        internal CLRObject(object ob, IntPtr tp)
+        internal CLRObject(object ob, PyType tp)
         {
-            Debug.Assert(tp != IntPtr.Zero);
-            IntPtr py = Runtime.PyType_GenericAlloc(tp, 0);
+            Debug.Assert(tp != null);
+            using var py = Runtime.PyType_GenericAlloc(tp, 0);
 
             tpHandle = tp;
             pyHandle = py;
@@ -27,13 +27,11 @@ namespace Python.Runtime
             if (ob is Exception e) Exceptions.SetArgsAndCause(ObjectReference, e);
         }
 
-        internal CLRObject(object ob, BorrowedReference tp) : this(ob, tp.DangerousGetAddress()) { }
-
         protected CLRObject()
         {
         }
 
-        static CLRObject GetInstance(object ob, IntPtr pyType)
+        static CLRObject GetInstance(object ob, PyType pyType)
         {
             return new CLRObject(ob, pyType);
         }

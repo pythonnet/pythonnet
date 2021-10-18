@@ -24,8 +24,8 @@ namespace Python.Runtime
         [NonSerialized]
         internal GCHandle gcHandle; // Native handle
 
-        internal IntPtr pyHandle; // PyObject *
-        internal IntPtr tpHandle; // PyType *
+        internal PyObject pyHandle; // PyObject *
+        internal PyType tpHandle; // PyType *
 
         internal bool clearReentryGuard;
 
@@ -33,8 +33,8 @@ namespace Python.Runtime
         {
             get
             {
-                Debug.Assert(pyHandle != IntPtr.Zero);
-                return new(pyHandle);
+                Debug.Assert(pyHandle != null);
+                return pyHandle.Reference;
             }
         }
 
@@ -42,18 +42,20 @@ namespace Python.Runtime
         {
             get
             {
-                Debug.Assert(tpHandle != IntPtr.Zero);
-                return new(tpHandle);
+                Debug.Assert(tpHandle != null);
+                return tpHandle.Reference;
             }
         }
 
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
+        [Obsolete]
         internal void IncrRefCount()
         {
             Runtime.XIncref(pyHandle);
         }
 
+        [Obsolete]
         internal void DecrRefCount()
         {
             Runtime.XDecref(pyHandle);
@@ -99,16 +101,10 @@ namespace Python.Runtime
         /// Given a Python object, return the associated managed object or null.
         /// </summary>
         internal static ManagedType? GetManagedObject(BorrowedReference ob)
-            => GetManagedObject(ob.DangerousGetAddress());
-
-        /// <summary>
-        /// Given a Python object, return the associated managed object or null.
-        /// </summary>
-        internal static ManagedType? GetManagedObject(IntPtr ob)
         {
-            if (ob != IntPtr.Zero)
+            if (ob != null)
             {
-                IntPtr tp = Runtime.PyObject_TYPE(ob);
+                BorrowedReference tp = Runtime.PyObject_TYPE(ob);
                 if (tp == Runtime.PyTypeType || tp == Runtime.PyCLRMetaType)
                 {
                     tp = ob;
@@ -117,8 +113,8 @@ namespace Python.Runtime
                 var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
                 if ((flags & TypeFlags.HasClrInstance) != 0)
                 {
-                    var gc = TryGetGCHandle(new BorrowedReference(ob));
-                    return (ManagedType)gc?.Target;
+                    var gc = TryGetGCHandle(ob);
+                    return (ManagedType?)gc?.Target;
                 }
             }
             return null;
@@ -129,13 +125,13 @@ namespace Python.Runtime
         /// </summary>
         internal static ManagedType? GetManagedObjectType(BorrowedReference ob)
         {
-            if (ob != IntPtr.Zero)
+            if (ob != null)
             {
-                IntPtr tp = Runtime.PyObject_TYPE(ob);
-                var flags = (TypeFlags)Util.ReadCLong(tp, TypeOffset.tp_flags);
+                BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+                var flags = PyType.GetFlags(tp);
                 if ((flags & TypeFlags.HasClrInstance) != 0)
                 {
-                    var gc = GetGCHandle(new BorrowedReference(tp), Runtime.CLRMetaType);
+                    var gc = GetGCHandle(tp, Runtime.CLRMetaType);
                     return (ManagedType)gc.Target;
                 }
             }
@@ -143,18 +139,16 @@ namespace Python.Runtime
         }
 
         internal static bool IsInstanceOfManagedType(BorrowedReference ob)
-            => IsInstanceOfManagedType(ob.DangerousGetAddressOrNull());
-        internal static bool IsInstanceOfManagedType(IntPtr ob)
         {
-            if (ob != IntPtr.Zero)
+            if (ob != null)
             {
-                IntPtr tp = Runtime.PyObject_TYPE(ob);
+                BorrowedReference tp = Runtime.PyObject_TYPE(ob);
                 if (tp == Runtime.PyTypeType || tp == Runtime.PyCLRMetaType)
                 {
                     tp = ob;
                 }
 
-                return IsManagedType(new BorrowedReference(tp));
+                return IsManagedType(tp);
             }
             return false;
         }
@@ -191,53 +185,52 @@ namespace Python.Runtime
             _managedObjs.Clear();
         }
 
-        internal static int PyVisit(BorrowedReference ob, IntPtr visit, IntPtr arg)
+        internal unsafe static int PyVisit(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
             if (ob == null)
             {
                 return 0;
             }
-            var visitFunc = NativeCall.GetDelegate<Interop.ObjObjFunc>(visit);
+            var visitFunc = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int>)(visit);
             return visitFunc(ob, arg);
         }
 
         /// <summary>
         /// Wrapper for calling tp_clear
         /// </summary>
-        internal void CallTypeClear()
+        internal unsafe int CallTypeClear()
         {
-            if (tpHandle == IntPtr.Zero || pyHandle == IntPtr.Zero)
+            if (tpHandle == BorrowedReference.Null || pyHandle == BorrowedReference.Null)
             {
-                return;
+                return 0;
             }
 
             var clearPtr = Runtime.PyType_GetSlot(TypeReference, TypeSlotID.tp_clear);
             if (clearPtr == IntPtr.Zero)
             {
-                return;
+                return 0;
             }
-            var clearFunc = NativeCall.GetDelegate<Interop.InquiryFunc>(clearPtr);
-            clearFunc(pyHandle);
+            var clearFunc = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
+            return clearFunc(pyHandle);
         }
 
         /// <summary>
         /// Wrapper for calling tp_traverse
         /// </summary>
-        internal void CallTypeTraverse(Interop.ObjObjFunc visitproc, IntPtr arg)
+        internal unsafe int CallTypeTraverse(Interop.BP_I32 visitproc, IntPtr arg)
         {
-            if (tpHandle == IntPtr.Zero || pyHandle == IntPtr.Zero)
+            if (tpHandle == BorrowedReference.Null || pyHandle == BorrowedReference.Null)
             {
-                return;
+                return 0;
             }
             var traversePtr = Runtime.PyType_GetSlot(TypeReference, TypeSlotID.tp_traverse);
             if (traversePtr == IntPtr.Zero)
             {
-                return;
+                return 0;
             }
-            var traverseFunc = NativeCall.GetDelegate<Interop.ObjObjArgFunc>(traversePtr);
-
+            var traverseFunc = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr, int>)traversePtr;
             var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
-            traverseFunc(pyHandle, visiPtr, arg);
+            return traverseFunc(pyHandle, visiPtr, arg);
         }
 
         protected void TypeClear()
