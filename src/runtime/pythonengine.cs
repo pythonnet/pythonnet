@@ -741,7 +741,7 @@ namespace Python.Runtime
         {
         }
 
-        public static KeywordArguments kw(params object[] kv)
+        public static KeywordArguments kw(params object?[] kv)
         {
             var dict = new KeywordArguments();
             if (kv.Length % 2 != 0)

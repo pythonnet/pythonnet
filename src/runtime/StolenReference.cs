@@ -33,10 +33,10 @@ namespace Python.Runtime
         }
 
         [Pure]
-        public static bool operator ==(in StolenReference reference, NullOnly @null)
+        public static bool operator ==(in StolenReference reference, NullOnly? @null)
             => reference.Pointer == IntPtr.Zero;
         [Pure]
-        public static bool operator !=(in StolenReference reference, NullOnly @null)
+        public static bool operator !=(in StolenReference reference, NullOnly? @null)
             => reference.Pointer != IntPtr.Zero;
 
         [Pure]

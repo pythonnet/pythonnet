@@ -131,15 +131,14 @@ namespace Python.Runtime
             {
                 return new PyObject(Runtime.PyNone);
             }
-            IntPtr op = CLRObject.GetInstHandle(ob);
-            return new PyObject(op);
+            return CLRObject.GetReference(ob).MoveToPyObject();
         }
 
         /// <summary>
         /// Creates new <see cref="PyObject"/> from a nullable reference.
         /// When <paramref name="reference"/> is <c>null</c>, <c>null</c> is returned.
         /// </summary>
-        internal static PyObject FromNullableReference(BorrowedReference reference)
+        internal static PyObject? FromNullableReference(BorrowedReference reference)
             => reference.IsNull ? null : new PyObject(reference);
 
 
@@ -150,10 +149,9 @@ namespace Python.Runtime
         /// Return a managed object of the given type, based on the
         /// value of the Python object.
         /// </remarks>
-        public object AsManagedObject(Type t)
+        public object? AsManagedObject(Type t)
         {
-            object result;
-            if (!Converter.ToManaged(obj, t, out result, true))
+            if (!Converter.ToManaged(obj, t, out var result, true))
             {
                 throw new InvalidCastException("cannot convert object to target type",
                     PythonException.FetchCurrentOrNull(out _));
@@ -754,7 +752,7 @@ namespace Python.Runtime
         /// Invoke the callable object with the given positional and keyword
         /// arguments. A PythonException is raised if the invocation fails.
         /// </remarks>
-        public PyObject Invoke(PyObject[] args, PyDict kw)
+        public PyObject Invoke(PyObject[] args, PyDict? kw)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
             if (args.Contains(null)) throw new ArgumentNullException();
@@ -772,7 +770,7 @@ namespace Python.Runtime
         /// Invoke the callable object with the given positional and keyword
         /// arguments. A PythonException is raised if the invocation fails.
         /// </remarks>
-        public PyObject Invoke(PyTuple args, PyDict kw)
+        public PyObject Invoke(PyTuple args, PyDict? kw)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
 
@@ -866,7 +864,7 @@ namespace Python.Runtime
         /// and keyword arguments. Keyword args are passed as a PyDict object.
         /// A PythonException is raised if the invocation is unsuccessful.
         /// </remarks>
-        public PyObject InvokeMethod(string name, PyObject[] args, PyDict kw)
+        public PyObject InvokeMethod(string name, PyObject[] args, PyDict? kw)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             if (args == null) throw new ArgumentNullException(nameof(args));
@@ -887,7 +885,7 @@ namespace Python.Runtime
         /// and keyword arguments. Keyword args are passed as a PyDict object.
         /// A PythonException is raised if the invocation is unsuccessful.
         /// </remarks>
-        public PyObject InvokeMethod(string name, PyTuple args, PyDict kw)
+        public PyObject InvokeMethod(string name, PyTuple args, PyDict? kw)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             if (args == null) throw new ArgumentNullException(nameof(args));
@@ -1096,15 +1094,15 @@ namespace Python.Runtime
         }
 
 
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
             result = CheckNone(this.GetAttr(binder.Name));
             return true;
         }
 
-        public override bool TrySetMember(SetMemberBinder binder, object value)
+        public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
-            using var newVal = Converter.ToPython(value, value?.GetType());
+            using var newVal = Converter.ToPythonDetectType(value);
             int r = Runtime.PyObject_SetAttrString(obj, binder.Name, newVal.Borrow());
             if (r < 0)
             {
@@ -1113,7 +1111,7 @@ namespace Python.Runtime
             return true;
         }
 
-        private void GetArgs(object[] inargs, CallInfo callInfo, out PyTuple args, out PyDict kwargs)
+        private void GetArgs(object?[] inargs, CallInfo callInfo, out PyTuple args, out PyDict? kwargs)
         {
             if (callInfo == null || callInfo.ArgumentNames.Count == 0)
             {
@@ -1132,7 +1130,7 @@ namespace Python.Runtime
             }
             args = new PyTuple(argTuple.Steal());
 
-            var namedArgs = new object[namedArgumentCount * 2];
+            var namedArgs = new object?[namedArgumentCount * 2];
             for (int i = 0; i < namedArgumentCount; ++i)
             {
                 namedArgs[i * 2] = callInfo.ArgumentNames[i];
@@ -1141,7 +1139,7 @@ namespace Python.Runtime
             kwargs = Py.kw(namedArgs);
         }
 
-        private void GetArgs(object[] inargs, out PyTuple args, out PyDict kwargs)
+        private void GetArgs(object?[] inargs, out PyTuple args, out PyDict? kwargs)
         {
             int arg_count;
             for (arg_count = 0; arg_count < inargs.Length && !(inargs[arg_count] is Py.KeywordArguments); ++arg_count)
@@ -1158,22 +1156,22 @@ namespace Python.Runtime
             kwargs = null;
             for (int i = arg_count; i < inargs.Length; i++)
             {
-                if (!(inargs[i] is Py.KeywordArguments))
+                if (inargs[i] is not Py.KeywordArguments kw)
                 {
                     throw new ArgumentException("Keyword arguments must come after normal arguments.");
                 }
                 if (kwargs == null)
                 {
-                    kwargs = (Py.KeywordArguments)inargs[i];
+                    kwargs = kw;
                 }
                 else
                 {
-                    kwargs.Update((Py.KeywordArguments)inargs[i]);
+                    kwargs.Update(kw);
                 }
             }
         }
 
-        private static void AddArgument(BorrowedReference argtuple, nint i, object target)
+        private static void AddArgument(BorrowedReference argtuple, nint i, object? target)
         {
             using var ptr = GetPythonObject(target);
 
@@ -1183,7 +1181,7 @@ namespace Python.Runtime
             }
         }
 
-        private static NewReference GetPythonObject(object target)
+        private static NewReference GetPythonObject(object? target)
         {
             if (target is PyObject pyObject)
             {
@@ -1191,16 +1189,16 @@ namespace Python.Runtime
             }
             else
             {
-                return Converter.ToPython(target, target?.GetType());
+                return Converter.ToPythonDetectType(target);
             }
         }
 
-        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object?[] args, out object? result)
         {
             if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
             {
-                PyTuple pyargs = null;
-                PyDict kwargs = null;
+                PyTuple? pyargs = null;
+                PyDict? kwargs = null;
                 try
                 {
                     GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
@@ -1208,14 +1206,8 @@ namespace Python.Runtime
                 }
                 finally
                 {
-                    if (null != pyargs)
-                    {
-                        pyargs.Dispose();
-                    }
-                    if (null != kwargs)
-                    {
-                        kwargs.Dispose();
-                    }
+                    pyargs?.Dispose();
+                    kwargs?.Dispose();
                 }
                 return true;
             }
@@ -1225,12 +1217,12 @@ namespace Python.Runtime
             }
         }
 
-        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+        public override bool TryInvoke(InvokeBinder binder, object?[] args, out object? result)
         {
             if (this.IsCallable())
             {
-                PyTuple pyargs = null;
-                PyDict kwargs = null;
+                PyTuple? pyargs = null;
+                PyDict? kwargs = null;
                 try
                 {
                     GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
@@ -1238,14 +1230,8 @@ namespace Python.Runtime
                 }
                 finally
                 {
-                    if (null != pyargs)
-                    {
-                        pyargs.Dispose();
-                    }
-                    if (null != kwargs)
-                    {
-                        kwargs.Dispose();
-                    }
+                    pyargs?.Dispose();
+                    kwargs?.Dispose();
                 }
                 return true;
             }
@@ -1255,7 +1241,7 @@ namespace Python.Runtime
             }
         }
 
-        public override bool TryConvert(ConvertBinder binder, out object result)
+        public override bool TryConvert(ConvertBinder binder, out object? result)
         {
             // always try implicit conversion first
             if (Converter.ToManaged(this.obj, binder.Type, out result, false))
@@ -1274,7 +1260,7 @@ namespace Python.Runtime
             return false;
         }
 
-        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
+        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
             NewReference res;
             if (!(arg is PyObject))
@@ -1373,7 +1359,7 @@ namespace Python.Runtime
 
         // Workaround for https://bugzilla.xamarin.com/show_bug.cgi?id=41509
         // See https://github.com/pythonnet/pythonnet/pull/219
-        internal static object CheckNone(PyObject pyObj)
+        internal static object? CheckNone(PyObject pyObj)
         {
             if (pyObj != null)
             {
@@ -1386,7 +1372,7 @@ namespace Python.Runtime
             return pyObj;
         }
 
-        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
+        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object? result)
         {
             int r;
             NewReference res;
@@ -1434,7 +1420,7 @@ namespace Python.Runtime
         {
             foreach (PyObject pyObj in Dir())
             {
-                yield return pyObj.ToString();
+                yield return pyObj.ToString()!;
             }
         }
     }
@@ -1442,6 +1428,6 @@ namespace Python.Runtime
     internal static class PyObjectExtensions
     {
         internal static NewReference NewReferenceOrNull(this PyObject? self)
-            => self?.IsDisposed != false ? new NewReference(self) : default;
+            => self is null || self.IsDisposed ? default : new NewReference(self);
     }
 }

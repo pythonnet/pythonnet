@@ -115,6 +115,8 @@ namespace Python.Runtime
               throwOnBindFailure: true);
         }
 
+        internal static NewReference ToPythonDetectType(object? value)
+            => value is null ? new NewReference(Runtime.PyNone) : ToPython(value, value.GetType());
         internal static NewReference ToPython(object? value, Type type)
         {
             if (value is PyObject pyObj)
