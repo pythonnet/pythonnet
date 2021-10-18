@@ -61,12 +61,7 @@ namespace Python.Runtime
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
         /// </summary>
-        public PyObject MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
-
-        [Pure]
-        public BorrowedReference BorrowNullable() => new(pointer);
-        [Pure]
-        public BorrowedReference Borrow() => this.IsNull() ? throw new NullReferenceException() : this.BorrowNullable();
+        public PyObject? MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
 
         /// <summary>
         /// Call this method to move ownership of this reference to a Python C API function,
@@ -86,6 +81,15 @@ namespace Python.Runtime
 
             return this.StealNullable();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public StolenReference StealOrThrow()
+        {
+            if (this.IsNull()) throw PythonException.ThrowLastAsClrException();
+
+            return this.StealNullable();
+        }
+
         /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.
         /// </summary>
@@ -106,6 +110,8 @@ namespace Python.Runtime
         public static NewReference DangerousFromPointer(IntPtr pointer)
             => new NewReference {pointer = pointer};
 
+        [Pure]
+        internal static IntPtr DangerousGetAddressOrNull(in NewReference reference) => reference.pointer;
         [Pure]
         internal static IntPtr DangerousGetAddress(in NewReference reference)
             => IsNull(reference) ? throw new NullReferenceException() : reference.pointer;
@@ -128,22 +134,16 @@ namespace Python.Runtime
         [Pure]
         public static bool IsNull(this in NewReference reference)
             => NewReference.IsNull(reference);
+
+
+        [Pure]
+        public static BorrowedReference BorrowNullable(this in NewReference reference)
+            => new(NewReference.DangerousGetAddressOrNull(reference));
+        [Pure]
+        public static BorrowedReference Borrow(this in NewReference reference)
+            => reference.IsNull() ? throw new NullReferenceException() : reference.BorrowNullable();
         [Pure]
         public static BorrowedReference BorrowOrThrow(this in NewReference reference)
-        {
-            if (IsNull(reference))
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return reference.BorrowNullable();
-        }
-        public static StolenReference StealOrThrow(this in NewReference reference)
-        {
-            if (IsNull(reference))
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return reference.StealNullable();
-        }
+            => reference.IsNull() ? throw PythonException.ThrowLastAsClrException() : reference.BorrowNullable();
     }
 }

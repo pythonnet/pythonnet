@@ -1,8 +1,4 @@
 using System;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Python.Runtime
 {
@@ -15,9 +11,6 @@ namespace Python.Runtime
     /// </summary>
     internal unsafe class NativeCall
     {
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate void Void_1_Delegate(IntPtr a1);
-
         public static void CallDealloc(IntPtr fp, StolenReference a1)
         {
             var d = (delegate* unmanaged[Cdecl]<StolenReference, void>)fp;
@@ -35,17 +28,6 @@ namespace Python.Runtime
         {
             var d = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, int>)fp;
             return d(a1, a2, a3);
-        }
-
-        internal static T GetDelegate<T>(IntPtr fp) where T: Delegate
-        {
-            Delegate d = null;
-            if (!Interop.allocatedThunks.TryGetValue(fp, out d))
-            {
-                // We don't cache this delegate because this is a pure delegate ot unmanaged.
-                d = Marshal.GetDelegateForFunctionPointer<T>(fp);
-            }
-            return (T)d;
         }
     }
 }
