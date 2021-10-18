@@ -5,6 +5,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
 
+using Python.Runtime.Native;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -88,7 +90,7 @@ namespace Python.Runtime
 
             try
             {
-                if (TryDecodePyErr(type, value, traceback) is { } pyErr)
+                if (TryDecodePyErr(type.Borrow(), value.BorrowNullable(), traceback.BorrowNullable()) is { } pyErr)
                 {
                     type.Dispose();
                     value.Dispose();
@@ -108,7 +110,7 @@ namespace Python.Runtime
 
             try
             {
-                return FromPyErr(typeRef: type, valRef: value, tbRef: traceback, out dispatchInfo);
+                return FromPyErr(typeRef: type.Borrow(), valRef: value.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
             }
             finally
             {
@@ -126,7 +128,7 @@ namespace Python.Runtime
         {
             if (exception.IsNull) return null;
 
-            var pyInfo = Runtime.PyObject_GetAttrString(exception, Exceptions.DispatchInfoAttribute);
+            using var pyInfo = Runtime.PyObject_GetAttrString(exception, Exceptions.DispatchInfoAttribute);
             if (pyInfo.IsNull())
             {
                 if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
@@ -136,19 +138,12 @@ namespace Python.Runtime
                 return null;
             }
 
-            try
+            if (Converter.ToManagedValue(pyInfo.Borrow(), typeof(ExceptionDispatchInfo), out object? result, setError: false))
             {
-                if (Converter.ToManagedValue(pyInfo, typeof(ExceptionDispatchInfo), out object? result, setError: false))
-                {
-                    return (ExceptionDispatchInfo)result!;
-                }
+                return (ExceptionDispatchInfo)result!;
+            }
 
-                return null;
-            }
-            finally
-            {
-                pyInfo.Dispose();
-            }
+            return null;
         }
 
         /// <summary>
@@ -186,7 +181,7 @@ namespace Python.Runtime
             }
 
             using var cause = Runtime.PyException_GetCause(valRef);
-            Exception? inner = FromCause(cause);
+            Exception? inner = FromCause(cause.BorrowNullable());
             return new PythonException(type, value, traceback, inner);
         }
 
@@ -198,8 +193,8 @@ namespace Python.Runtime
 
             using var errorDict = new PyDict();
             if (typeRef != null) errorDict["type"] = type;
-            if (valRef != null) errorDict["value"] = value;
-            if (tbRef != null) errorDict["traceback"] = traceback;
+            if (valRef != null) errorDict["value"] = value ?? PyObject.None;
+            if (tbRef != null) errorDict["traceback"] = traceback ?? PyObject.None;
 
             using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
             using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
@@ -216,13 +211,13 @@ namespace Python.Runtime
         {
             if (cause == null || cause.IsNone()) return null;
 
-            Debug.Assert(Runtime.PyObject_TypeCheck(cause, new BorrowedReference(Exceptions.BaseException)));
+            Debug.Assert(Runtime.PyObject_TypeCheck(cause, Exceptions.BaseException));
 
             using var innerTraceback = Runtime.PyException_GetTraceback(cause);
             return FromPyErr(
                 typeRef: Runtime.PyObject_TYPE(cause),
                 valRef: cause,
-                tbRef: innerTraceback,
+                tbRef: innerTraceback.BorrowNullable(),
                 out _);
 
         }
@@ -233,7 +228,7 @@ namespace Python.Runtime
 
             if (value != null && !value.IsNone())
             {
-                return value.ToString();
+                return value.ToString() ?? "no message";
             }
 
             return type.Name;
@@ -331,7 +326,7 @@ namespace Python.Runtime
         {
             CheckRuntimeIsRunning();
 
-            IntPtr gs = PythonEngine.AcquireLock();
+            PyGILState gs = PythonEngine.AcquireLock();
             try
             {
                 if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
@@ -350,9 +345,9 @@ namespace Python.Runtime
                     Debug.Assert(Traceback is null == tb.IsNull());
                     if (!tb.IsNull())
                     {
-                        Debug.Assert(Traceback!.Reference == tb);
+                        Debug.Assert(Traceback!.Reference == tb.Borrow());
 
-                        int r = Runtime.PyException_SetTraceback(Value.Reference, tb);
+                        int r = Runtime.PyException_SetTraceback(Value.Reference, tb.Borrow());
                         ThrowIfIsNotZero(r);
                     }
                 }
@@ -416,7 +411,7 @@ namespace Python.Runtime
         /// Returns <c>true</c> if the current Python exception
         /// matches the given exception type.
         /// </summary>
-        internal static bool CurrentMatches(IntPtr ob)
+        internal static bool CurrentMatches(BorrowedReference ob)
         {
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
