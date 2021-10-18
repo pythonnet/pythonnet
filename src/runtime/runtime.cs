@@ -1612,21 +1612,22 @@ namespace Python.Runtime
 
         internal static NewReference PyImport_Import(BorrowedReference name) => Delegates.PyImport_Import(name);
 
-        /// <summary>
-        /// We can't use a StolenReference here because the reference is stolen only on success.
-        /// </summary>
         /// <param name="module">The module to add the object to.</param>
         /// <param name="name">The key that will refer to the object.</param>
-        /// <param name="stolenObject">
-        ///     The object to add to the module. The reference will be stolen only if the
-        ///      method returns 0. 
-        /// </param>
+        /// <param name="value">The object to add to the module.</param>
         /// <returns>Return -1 on error, 0 on success.</returns>
-        [Obsolete("Make two overloads for regular and stolen references")]
-        internal static int PyModule_AddObject(BorrowedReference module, string name, IntPtr stolenObject)
+        internal static int PyModule_AddObject(BorrowedReference module, string name, StolenReference value)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
-            return Delegates.PyModule_AddObject(module, namePtr, stolenObject);
+            IntPtr valueAddr = value.DangerousGetAddressOrNull();
+            int res = Delegates.PyModule_AddObject(module, namePtr, valueAddr);
+            // We can't just exit here because the reference is stolen only on success.
+            if (res != 0)
+            {
+                XDecref(StolenReference.TakeNullable(ref valueAddr));
+            }
+            return res;
+
         }
 
         /// <summary>

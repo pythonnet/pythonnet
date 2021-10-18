@@ -127,7 +127,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             Runtime.PyTuple_SetItem(args.Borrow(), 1, mod_dict);
             Runtime.PyObject_Call(exec, args.Borrow(), default).Dispose();
             // Set as a sub-module of clr.
-            if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module) != 0)
+            if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module.Steal()) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
