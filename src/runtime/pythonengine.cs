@@ -24,7 +24,7 @@ namespace Python.Runtime
 
         public static ShutdownMode DefaultShutdownMode => Runtime.GetDefaultShutdownMode();
 
-        private static DelegateManager delegateManager;
+        private static DelegateManager? delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
         private static IntPtr _programName = IntPtr.Zero;
@@ -223,7 +223,7 @@ namespace Python.Runtime
 
             // Load the clr.py resource into the clr module
             NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
-            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr);
+            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr.Borrow());
 
             var locals = new PyDict();
             try
@@ -246,7 +246,7 @@ namespace Python.Runtime
                 using (var keys = locals.Keys())
                 foreach (PyObject key in keys)
                 {
-                    if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
+                    if (!key.ToString()!.StartsWith("_") || key.ToString()!.Equals("__version__"))
                     {
                         PyObject value = locals[key];
                         Runtime.PyDict_SetItem(clr_dict, key.Reference, value.Reference);
@@ -272,7 +272,7 @@ namespace Python.Runtime
 
         static void LoadSubmodule(BorrowedReference targetModuleDict, string fullName, string resourceName)
         {
-            string memberName = fullName.AfterLast('.');
+            string? memberName = fullName.AfterLast('.');
             Debug.Assert(memberName != null);
 
             var module = DefineModule(fullName);
@@ -282,7 +282,7 @@ namespace Python.Runtime
             string pyCode = assembly.ReadStringResource(resourceName);
             Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
 
-            Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
+            Runtime.PyDict_SetItemString(targetModuleDict, memberName!, module);
         }
 
         static void LoadMixins(BorrowedReference targetModuleDict)
@@ -511,9 +511,9 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        public static IntPtr BeginAllowThreads()
+        public static unsafe IntPtr BeginAllowThreads()
         {
-            return Runtime.PyEval_SaveThread();
+            return (IntPtr)Runtime.PyEval_SaveThread();
         }
 
 
@@ -527,9 +527,9 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        public static void EndAllowThreads(IntPtr ts)
+        public static unsafe void EndAllowThreads(IntPtr ts)
         {
-            Runtime.PyEval_RestoreThread(ts);
+            Runtime.PyEval_RestoreThread((PyThreadState*)ts);
         }
 
         public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
@@ -644,7 +644,8 @@ namespace Python.Runtime
                 globals = Runtime.PyEval_GetGlobals();
                 if (globals.IsNull)
                 {
-                    globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
+                    tempGlobals = Runtime.PyDict_New();
+                    globals = tempGlobals.BorrowOrThrow();
                     Runtime.PyDict_SetItem(
                         globals, PyIdentifier.__builtins__,
                         Runtime.PyEval_GetBuiltins()
@@ -698,7 +699,7 @@ namespace Python.Runtime
 
         public class GILState : IDisposable
         {
-            private readonly IntPtr state;
+            private readonly PyGILState state;
             private bool isDisposed;
 
             internal GILState()
@@ -750,22 +751,29 @@ namespace Python.Runtime
             }
             for (var i = 0; i < kv.Length; i += 2)
             {
-                IntPtr value;
-                if (kv[i + 1] is PyObject)
+                var key = kv[i] as string;
+                if (key is null)
+                    throw new ArgumentException("Keys must be non-null strings");
+
+                BorrowedReference value;
+                NewReference temp = default;
+                if (kv[i + 1] is PyObject pyObj)
                 {
-                    value = ((PyObject)kv[i + 1]).Handle;
+                    value = pyObj;
                 }
                 else
                 {
-                    value = Converter.ToPython(kv[i + 1], kv[i + 1]?.GetType());
+                    temp = Converter.ToPythonDetectType(kv[i + 1]);
+                    value = temp.Borrow();
                 }
-                if (Runtime.PyDict_SetItemString(dict.Handle, (string)kv[i], value) != 0)
+                using (temp)
                 {
-                    throw new ArgumentException(string.Format("Cannot add key '{0}' to dictionary.", (string)kv[i]));
-                }
-                if (!(kv[i + 1] is PyObject))
-                {
-                    Runtime.XDecref(value);
+                    if (Runtime.PyDict_SetItemString(dict, key, value) != 0)
+                    {
+                        throw new ArgumentException(
+                            string.Format("Cannot add key '{0}' to dictionary.", key),
+                            innerException: PythonException.FetchCurrent());
+                    }
                 }
             }
             return dict;
@@ -821,8 +829,8 @@ namespace Python.Runtime
             // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
-            Exception ex = null;
-            PythonException pyError = null;
+            Exception? ex = null;
+            PythonException? pyError = null;
 
             try
             {
