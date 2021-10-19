@@ -337,12 +337,12 @@ namespace Python.Runtime
         /// <summary>
         /// Standard dealloc implementation for instances of reflected types.
         /// </summary>
-        public static void tp_dealloc(NewReference ob)
+        public static void tp_dealloc(NewReference lastRef)
         {
-            ManagedType self = GetManagedObject(ob.Borrow())!;
-            tp_clear(ob.Borrow());
-            Runtime.PyObject_GC_UnTrack(ob.Borrow());
-            Runtime.PyObject_GC_Del(ob.Steal());
+            ManagedType self = GetManagedObject(lastRef.Borrow())!;
+            tp_clear(lastRef.Borrow());
+            Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
+            Runtime.PyObject_GC_Del(lastRef.Steal());
             self?.FreeGCHandle();
         }
 

@@ -285,22 +285,22 @@ namespace Python.Runtime
         /// Dealloc implementation. This is called when a Python type generated
         /// by this metatype is no longer referenced from the Python runtime.
         /// </summary>
-        public static void tp_dealloc(NewReference tp)
+        public static void tp_dealloc(NewReference lastRef)
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = (TypeFlags)Util.ReadCLong(tp.Borrow(), TypeOffset.tp_flags);
+            var flags = (TypeFlags)Util.ReadCLong(lastRef.Borrow(), TypeOffset.tp_flags);
             if ((flags & TypeFlags.Subclass) == 0)
             {
-                GetGCHandle(tp.Borrow()).Free();
+                GetGCHandle(lastRef.Borrow()).Free();
 #if DEBUG
                 // prevent ExecutionEngineException in debug builds in case we have a bug
                 // this would allow using managed debugger to investigate the issue
-                SetGCHandle(tp.Borrow(), Runtime.CLRMetaType, default);
+                SetGCHandle(lastRef.Borrow(), Runtime.CLRMetaType, default);
 #endif
             }
 
-            var op = Util.ReadIntPtr(tp.Borrow(), TypeOffset.ob_type);
+            var op = Util.ReadIntPtr(lastRef.Borrow(), TypeOffset.ob_type);
             // We must decref our type.
             // type_dealloc from PyType will use it to get tp_free so we must keep the value
             Runtime.XDecref(StolenReference.DangerousFromPointer(op));
@@ -311,7 +311,7 @@ namespace Python.Runtime
             // case our CLR metatype. That is why we implement tp_free.
 
             IntPtr tp_dealloc = Util.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_dealloc);
-            NativeCall.CallDealloc(tp_dealloc, tp.Steal());
+            NativeCall.CallDealloc(tp_dealloc, lastRef.Steal());
         }
 
         private static NewReference DoInstanceCheck(BorrowedReference tp, BorrowedReference args, bool checkType)

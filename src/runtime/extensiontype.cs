@@ -86,11 +86,11 @@ namespace Python.Runtime
             return -1;
         }
 
-        public static void tp_dealloc(NewReference ob)
+        public static void tp_dealloc(NewReference lastRef)
         {
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
-            var self = (ExtensionType?)GetManagedObject(ob.Borrow());
+            var self = (ExtensionType?)GetManagedObject(lastRef.Borrow());
             self?.Clear();
             self?.Dealloc();
         }
