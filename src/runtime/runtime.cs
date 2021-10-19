@@ -985,11 +985,11 @@ namespace Python.Runtime
             => Delegates.PyObject_GetAttrString(pointer, name);
 
 
-        internal static int PyObject_DelAttr(BorrowedReference @object, BorrowedReference name) => Delegates.PyObject_DelAttr(@object, name);
+        internal static int PyObject_DelAttr(BorrowedReference @object, BorrowedReference name) => Delegates.PyObject_SetAttr(@object, name, null);
         internal static int PyObject_DelAttrString(BorrowedReference @object, string name)
         {
             using var namePtr = new StrPtr(name, Encoding.UTF8);
-            return Delegates.PyObject_DelAttrString(@object, namePtr);
+            return Delegates.PyObject_SetAttrString(@object, namePtr, null);
         }
         internal static int PyObject_SetAttrString(BorrowedReference @object, string name, BorrowedReference value)
         {
@@ -1604,7 +1604,7 @@ namespace Python.Runtime
             if (Delegates.PyIter_Check != null)
                 return Delegates.PyIter_Check(ob) != 0;
             var ob_type = PyObject_TYPE(ob);
-            var tp_iternext = (NativeFunc*)Marshal.ReadIntPtr(ob_type.DangerousGetAddress(), TypeOffset.tp_iternext);
+            var tp_iternext = (NativeFunc*)Util.ReadIntPtr(ob_type, TypeOffset.tp_iternext);
             return tp_iternext != (NativeFunc*)0 && tp_iternext != _PyObject_NextNotImplemented;
         }
         internal static NewReference PyIter_Next(BorrowedReference pointer) => Delegates.PyIter_Next(pointer);
@@ -2015,8 +2015,6 @@ namespace Python.Runtime
                 PyImport_ExecCodeModule = (delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyImport_ExecCodeModule), GetUnmanagedDll(_PythonDll));
                 PyObject_HasAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int>)GetFunctionByName(nameof(PyObject_HasAttrString), GetUnmanagedDll(_PythonDll));
                 PyObject_GetAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, NewReference>)GetFunctionByName(nameof(PyObject_GetAttrString), GetUnmanagedDll(_PythonDll));
-                PyObject_DelAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_DelAttr), GetUnmanagedDll(_PythonDll));
-                PyObject_DelAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int>)GetFunctionByName(nameof(PyObject_DelAttrString), GetUnmanagedDll(_PythonDll));
                 PyObject_SetAttrString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_SetAttrString), GetUnmanagedDll(_PythonDll));
                 PyObject_HasAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_HasAttr), GetUnmanagedDll(_PythonDll));
                 PyObject_GetAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyObject_GetAttr), GetUnmanagedDll(_PythonDll));
@@ -2285,8 +2283,6 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<StrPtr, BorrowedReference, NewReference> PyImport_ExecCodeModule { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int> PyObject_HasAttrString { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, NewReference> PyObject_GetAttrString { get; }
-            internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_DelAttr { get; }
-            internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, int> PyObject_DelAttrString { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, BorrowedReference, int> PyObject_SetAttrString { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_HasAttr { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference> PyObject_GetAttr { get; }
