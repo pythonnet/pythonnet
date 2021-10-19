@@ -22,8 +22,8 @@ namespace Python.Runtime
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
-        static readonly HashSet<string> settableAttributes = 
-            new HashSet<string> {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
+        static readonly HashSet<string?> settableAttributes = 
+            new () {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
 
         public ModuleObject(string name)
         {
@@ -102,7 +102,6 @@ namespace Python.Runtime
             {
                 m = new ModuleObject(qname);
                 StoreAttribute(name, m);
-                m.DecrRefCount();
                 return m;
             }
 
@@ -156,7 +155,6 @@ namespace Python.Runtime
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            ob.IncrRefCount();
             cache[name] = ob;
         }
 
@@ -221,7 +219,6 @@ namespace Python.Runtime
                         mi[0] = method;
                         var m = new ModuleFunctionObject(type, name, mi, allow_threads);
                         StoreAttribute(name, m);
-                        m.DecrRefCount();
                     }
                 }
 
@@ -234,7 +231,6 @@ namespace Python.Runtime
                         string name = property.Name;
                         var p = new ModulePropertyObject(property);
                         StoreAttribute(name, p);
-                        p.DecrRefCount();
                     }
                 }
                 type = type.BaseType;
@@ -325,10 +321,6 @@ namespace Python.Runtime
         {
             this.dict.Dispose();
             ClearObjectDict(this.ObjectReference);
-            foreach (var attr in this.cache.Values)
-            {
-                Runtime.XDecref(attr.pyHandle);
-            }
             this.cache.Clear();
             base.Clear();
         }
@@ -356,13 +348,6 @@ namespace Python.Runtime
         {
             base.OnSave(context);
             System.Diagnostics.Debug.Assert(dict == GetObjectDict(ObjectReference));
-            foreach (var attr in cache.Values)
-            {
-                Runtime.XIncref(attr.pyHandle);
-            }
-            // Decref twice in tp_clear, equilibrate them.
-            Runtime.XIncref(dict);
-            Runtime.XIncref(dict);
             // destroy the cache(s)
             foreach (var pair in cache)
             {
@@ -377,7 +362,6 @@ namespace Python.Runtime
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
-                pair.Value.DecrRefCount();
             }
 
             cache.Clear();
@@ -386,7 +370,7 @@ namespace Python.Runtime
         protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);
-            SetObjectDict(pyHandle, dict);
+            SetObjectDict(pyHandle, new NewReference(dict).Steal());
         }
     }
 

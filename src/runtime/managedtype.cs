@@ -50,18 +50,6 @@ namespace Python.Runtime
 
         private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
 
-        [Obsolete]
-        internal void IncrRefCount()
-        {
-            Runtime.XIncref(pyHandle);
-        }
-
-        [Obsolete]
-        internal void DecrRefCount()
-        {
-            Runtime.XDecref(pyHandle);
-        }
-
         internal long RefCount
         {
             get
@@ -268,12 +256,12 @@ namespace Python.Runtime
             return Util.ReadRef(ob, instanceDictOffset);
         }
 
-        protected static void SetObjectDict(BorrowedReference ob, in StolenReference value)
+        protected static void SetObjectDict(BorrowedReference ob, StolenReference value)
         {
             if (value.Pointer == IntPtr.Zero) throw new ArgumentNullException(nameof(value));
             SetObjectDictNullable(ob, value);
         }
-        protected static void SetObjectDictNullable(BorrowedReference ob, in StolenReference value)
+        protected static void SetObjectDictNullable(BorrowedReference ob, StolenReference value)
         {
             BorrowedReference type = Runtime.PyObject_TYPE(ob);
             int instanceDictOffset = Util.ReadInt32(type, TypeOffset.tp_dictoffset);

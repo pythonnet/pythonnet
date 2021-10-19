@@ -433,8 +433,9 @@ namespace Python.Runtime
         {
             var modules = PyImport_GetModuleDict();
             using var items = PyDict_Items(modules);
-            long length = PyList_Size(items.Borrow());
-            for (long i = 0; i < length; i++)
+            nint length = PyList_Size(items.BorrowOrThrow());
+            if (length < 0) throw PythonException.ThrowLastAsClrException();
+            for (nint i = 0; i < length; i++)
             {
                 var item = PyList_GetItem(items.Borrow(), i);
                 var name = PyTuple_GetItem(item, 0);
@@ -676,6 +677,7 @@ namespace Python.Runtime
             Debug.Assert(_isInitialized || Py_IsInitialized() != 0);
 #endif
 #if !CUSTOM_INCDEC_REF
+            if (op == null) return;
             Py_DecRef(op);
             return;
 #else
@@ -1881,11 +1883,11 @@ namespace Python.Runtime
             ob = null;
         }
 
-        internal static void ReplaceReference(BorrowedReference ob, int offset, in StolenReference newValue)
+        internal static void ReplaceReference(BorrowedReference ob, int offset, StolenReference newValue)
         {
             IntPtr raw = Util.ReadIntPtr(ob, offset);
             Util.WriteNullableRef(ob, offset, newValue);
-            XDecref(StolenReference.Take(ref raw));
+            XDecref(StolenReference.TakeNullable(ref raw));
         }
 
         //====================================================================

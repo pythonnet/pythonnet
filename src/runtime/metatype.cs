@@ -300,8 +300,10 @@ namespace Python.Runtime
 #endif
             }
 
-            BorrowedReference op = Util.ReadRef(tp.Borrow(), TypeOffset.ob_type);
-            Runtime.XDecref(op);
+            var op = Util.ReadIntPtr(tp.Borrow(), TypeOffset.ob_type);
+            // We must decref our type.
+            // type_dealloc from PyType will use it to get tp_free so we must keep the value
+            Runtime.XDecref(StolenReference.DangerousFromPointer(op));
 
             // Delegate the rest of finalization the Python metatype. Note
             // that the PyType_Type implementation of tp_dealloc will call

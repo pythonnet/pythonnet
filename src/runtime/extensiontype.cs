@@ -58,12 +58,11 @@ namespace Python.Runtime
         {
             var type = Runtime.PyObject_TYPE(this.ObjectReference);
             Runtime.PyObject_GC_Del(this.pyHandle);
-            // Not necessary for decref of `tpHandle` - it is borrowed
 
             this.FreeGCHandle();
 
             // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
-            Runtime.XDecref(type.DangerousGetAddress());
+            Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
         }
 
         /// <summary>DecRefs and nulls any fields pointing back to Python</summary>

@@ -303,7 +303,6 @@ namespace Python.Runtime
                 impl.dotNetMembers.Add(name);
                 Runtime.PyDict_SetItemString(dict, name, item.ObjectReference);
                 // Decref the item now that it's been used.
-                item.DecrRefCount();
                 if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)) {
                     impl.richcompare.Add(pyOp, (MethodObject)item);
                 }
@@ -336,7 +335,6 @@ namespace Python.Runtime
                         // TODO: deprecate __overloads__ soon...
                         Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.ObjectReference);
                         Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.ObjectReference);
-                        ctors.DecrRefCount();
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.
@@ -567,7 +565,6 @@ namespace Python.Runtime
                         }
                         Debug.Assert(ob.pyHandle is not null);
                         // GetClass returns a Borrowed ref. ci.members owns the reference.
-                        ob.IncrRefCount();
                         ci.members[mi.Name] = ob;
                         continue;
                 }
