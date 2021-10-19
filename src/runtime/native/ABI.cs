@@ -36,8 +36,8 @@ namespace Python.Runtime.Native
 
         static unsafe int GetRefCountOffset()
         {
-            IntPtr tempObject = Runtime.PyList_New(0);
-            IntPtr* tempPtr = (IntPtr*)tempObject;
+            using var tempObject = Runtime.PyList_New(0);
+            IntPtr* tempPtr = (IntPtr*)tempObject.DangerousGetAddress();
             int offset = 0;
             while(tempPtr[offset] != (IntPtr)1)
             {
@@ -45,7 +45,6 @@ namespace Python.Runtime.Native
                 if (offset > 100)
                     throw new InvalidProgramException("PyObject_HEAD could not be found withing reasonable distance from the start of PyObject");
             }
-            Runtime.XDecref(tempObject);
             return offset * IntPtr.Size;
         }
     }
