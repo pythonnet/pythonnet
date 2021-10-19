@@ -21,24 +21,25 @@ namespace Python.Runtime
         public override NewReference Invoke(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
             MethodInfo mi = info[0];
-            var arglist = new object[3];
-            arglist[0] = ob;
-            arglist[1] = args;
-            arglist[2] = kw;
+            var arglist = new object?[3];
+            arglist[0] = PyObject.FromNullableReference(ob);
+            arglist[1] = PyObject.FromNullableReference(args);
+            arglist[2] = PyObject.FromNullableReference(kw);
 
             try
             {
-                object inst = null;
-                if (ob != IntPtr.Zero)
+                object? inst = null;
+                if (ob != null)
                 {
                     inst = GetManagedObject(ob);
                 }
-                return (IntPtr)mi.Invoke(inst, BindingFlags.Default, null, arglist, null);
+                var result = (PyObject)mi.Invoke(inst, BindingFlags.Default, null, arglist, null);
+                return new NewReference(result);
             }
             catch (Exception e)
             {
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
         }
     }
