@@ -1426,13 +1426,13 @@ namespace Python.Runtime
         }
 
         [OnSerialized]
-        protected virtual void OnSerialized(StreamingContext context)
+        void OnSerialized(StreamingContext context)
         {
 #warning check that these methods are inherited properly
             new NewReference(this, canBeNull: true).Steal();
         }
         [OnDeserialized]
-        protected virtual void OnDeserialized(StreamingContext context)
+        void OnDeserialized(StreamingContext context)
         {
             if (IsDisposed) GC.SuppressFinalize(this);
         }
