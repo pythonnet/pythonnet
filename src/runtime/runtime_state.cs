@@ -134,12 +134,12 @@ namespace Python.Runtime
         {
             using var gc = PyModule.Import("gc");
             using var get_objects = gc.GetAttr("get_objects");
-            using var objs = PyObject_CallObject(get_objects, args: null);
-            nint length = PyList_Size(objs.BorrowOrThrow());
+            using var objs = new PyObject(PyObject_CallObject(get_objects, args: null).StealOrThrow());
+            nint length = PyList_Size(objs);
             if (length < 0) throw PythonException.ThrowLastAsClrException();
             for (nint i = 0; i < length; i++)
             {
-                var obj = PyList_GetItem(objs.Borrow(), i);
+                BorrowedReference obj = PyList_GetItem(objs, i);
                 yield return obj.DangerousGetAddress();
             }
         }
