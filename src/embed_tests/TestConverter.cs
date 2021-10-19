@@ -42,7 +42,7 @@ namespace Python.EmbeddingTest
             var pyFloat = new PyFloat(testValue);
 
             object convertedValue;
-            var converted = Converter.ToManaged(pyFloat.Handle, typeof(float), out convertedValue, false);
+            var converted = Converter.ToManaged(pyFloat, typeof(float), out convertedValue, false);
 
             Assert.IsTrue(converted);
             Assert.IsTrue(((float) convertedValue).Equals(testValue));
@@ -56,7 +56,7 @@ namespace Python.EmbeddingTest
             var pyFloat = new PyFloat(testValue);
 
             object convertedValue;
-            var converted = Converter.ToManaged(pyFloat.Handle, typeof(double), out convertedValue, false);
+            var converted = Converter.ToManaged(pyFloat, typeof(double), out convertedValue, false);
 
             Assert.IsTrue(converted);
             Assert.IsTrue(((double) convertedValue).Equals(testValue));
@@ -77,7 +77,7 @@ namespace Python.EmbeddingTest
                     object value;
                     try
                     {
-                        bool res = Converter.ToManaged(s.Handle, type, out value, true);
+                        bool res = Converter.ToManaged(s, type, out value, true);
                         Assert.IsFalse(res);
                         var bo = Exceptions.ExceptionMatches(Exceptions.TypeError);
                         Assert.IsTrue(Exceptions.ExceptionMatches(Exceptions.TypeError)
@@ -96,13 +96,13 @@ namespace Python.EmbeddingTest
         {
             using (var num = new PyInt(ulong.MaxValue))
             {
-                IntPtr largeNum = PyRuntime.PyNumber_Add(num.Handle, num.Handle);
+                using var largeNum = PyRuntime.PyNumber_Add(num, num);
                 try
                 {
                     object value;
                     foreach (var type in _numTypes)
                     {
-                        bool res = Converter.ToManaged(largeNum, type, out value, true);
+                        bool res = Converter.ToManaged(largeNum.BorrowOrThrow(), type, out value, true);
                         Assert.IsFalse(res);
                         Assert.IsTrue(Exceptions.ExceptionMatches(Exceptions.OverflowError));
                         Exceptions.Clear();
@@ -111,7 +111,6 @@ namespace Python.EmbeddingTest
                 finally
                 {
                     Exceptions.Clear();
-                    PyRuntime.XDecref(largeNum);
                 }
             }
         }
@@ -147,7 +146,7 @@ namespace Python.EmbeddingTest
         {
             var list = new List<string> {"hello", "world"};
             var listProxy = PyObject.FromManagedObject(list);
-            var clrObject = (CLRObject)ManagedType.GetManagedObject(listProxy.Handle);
+            var clrObject = (CLRObject)ManagedType.GetManagedObject(listProxy);
             Assert.AreSame(list, clrObject.inst);
         }
 
@@ -156,7 +155,7 @@ namespace Python.EmbeddingTest
         {
             var pyObject = "hello world!".ToPython();
             var pyObjectProxy = PyObject.FromManagedObject(pyObject);
-            var clrObject = (CLRObject)ManagedType.GetManagedObject(pyObjectProxy.Handle);
+            var clrObject = (CLRObject)ManagedType.GetManagedObject(pyObjectProxy);
             Assert.AreSame(pyObject, clrObject.inst);
 
             var proxiedHandle = pyObjectProxy.GetAttr("Handle").As<IntPtr>();

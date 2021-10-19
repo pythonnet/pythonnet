@@ -32,12 +32,11 @@ namespace Python.EmbeddingTest
             string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "fixtures");
             TestContext.Out.WriteLine(testPath);
 
-            IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
-            Assert.IsFalse(str == IntPtr.Zero);
+            using var str = Runtime.Runtime.PyString_FromString(testPath);
+            Assert.IsFalse(str.IsNull());
             BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
             Assert.IsFalse(path.IsNull);
-            Runtime.Runtime.PyList_Append(path, new BorrowedReference(str));
-            Runtime.Runtime.XDecref(str);
+            Runtime.Runtime.PyList_Append(path, str.Borrow());
         }
 
         [OneTimeTearDown]
