@@ -312,7 +312,7 @@ namespace Python.Runtime
 
             if (baseTuple.Length() > 1)
             {
-                Marshal.WriteIntPtr(pyType.Handle, TypeOffset.tp_bases, baseTuple.NewReferenceOrNull().DangerousMoveToPointer());
+                Util.WriteIntPtr(pyType, TypeOffset.tp_bases, baseTuple.NewReferenceOrNull().DangerousMoveToPointer());
             }
             return primaryBase;
         }
@@ -323,7 +323,7 @@ namespace Python.Runtime
 
             if (ManagedType.IsManagedType(type.BaseReference))
             {
-                int baseClrInstOffset = Marshal.ReadInt32(type.BaseReference.DangerousGetAddress(), ManagedType.Offsets.tp_clr_inst_offset);
+                int baseClrInstOffset = Util.ReadInt32(type.BaseReference, ManagedType.Offsets.tp_clr_inst_offset);
                 Util.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, baseClrInstOffset);
             }
             else
@@ -344,7 +344,7 @@ namespace Python.Runtime
             SlotsHolder slotsHolder = CreateSolotsHolder(type);
             InitializeSlots(type, impl.GetType(), slotsHolder);
 
-            if (Marshal.ReadIntPtr(type, TypeOffset.mp_length) == IntPtr.Zero
+            if (Util.ReadIntPtr(type, TypeOffset.mp_length) == IntPtr.Zero
                 && mp_length_slot.CanAssign(clrType))
             {
                 InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
@@ -381,7 +381,7 @@ namespace Python.Runtime
                 throw PythonException.ThrowLastAsClrException();
             }
 
-            var dict = new BorrowedReference(Marshal.ReadIntPtr(type, TypeOffset.tp_dict));
+            var dict = Util.ReadRef(type, TypeOffset.tp_dict);
             string mn = clrType.Namespace ?? "";
             using (var mod = Runtime.PyString_FromString(mn))
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod.Borrow());
@@ -410,7 +410,7 @@ namespace Python.Runtime
         {
             IntPtr baseAddress = @base.DangerousGetAddress();
             IntPtr type = typeRef.DangerousGetAddress();
-            int baseSize = Marshal.ReadInt32(baseAddress, TypeOffset.tp_basicsize);
+            int baseSize = Util.ReadInt32(@base, TypeOffset.tp_basicsize);
             int newFieldOffset = baseSize;
 
             void InheritOrAllocate(int typeField)
@@ -538,7 +538,7 @@ namespace Python.Runtime
         }
 
         internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001,
-            string doc = null)
+            string? doc = null)
         {
             IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
             IntPtr docPtr = doc != null ? Marshal.StringToHGlobalAnsi(doc) : IntPtr.Zero;
@@ -581,7 +581,7 @@ namespace Python.Runtime
             PyType py_type = Runtime.PyTypeType;
             Util.WriteRef(type, TypeOffset.tp_base, new NewReference(py_type).Steal());
 
-            int size = Marshal.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
+            int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
                        + IntPtr.Size // tp_clr_inst_offset
                        + IntPtr.Size // tp_clr_inst
             ;
@@ -641,7 +641,7 @@ namespace Python.Runtime
             {
                 slotsHolder.Set(TypeOffset.tp_methods, (t, offset) =>
                 {
-                    var p = Marshal.ReadIntPtr(t, offset);
+                    var p = Util.ReadIntPtr(t, offset);
                     Runtime.PyMem_Free(p);
                     Util.WriteIntPtr(t, offset, IntPtr.Zero);
                 });

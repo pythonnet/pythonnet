@@ -92,7 +92,7 @@ namespace Python.Runtime.Platform
             libDL.dlerror();
         }
 
-        string GetError()
+        string? GetError()
         {
             var res = libDL.dlerror();
             if (res != IntPtr.Zero)

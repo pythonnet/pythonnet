@@ -20,7 +20,7 @@ namespace Python.Runtime
 
             BorrowedReference tp = TypeManager.GetTypeReference(GetType());
 
-            //int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
+            //int rc = (int)Util.ReadIntPtr(tp, TypeOffset.ob_refcnt);
             //if (rc > 1050)
             //{
             //    DebugUtil.Print("tp is: ", tp);

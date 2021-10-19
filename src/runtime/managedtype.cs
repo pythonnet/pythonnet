@@ -275,10 +275,10 @@ namespace Python.Runtime
             Debug.Assert(IsManagedType(type) || type == Runtime.CLRMetaType);
             Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
 
-            int gcHandleOffset = Marshal.ReadInt32(type.DangerousGetAddress(), Offsets.tp_clr_inst_offset);
+            int gcHandleOffset = Util.ReadInt32(type, Offsets.tp_clr_inst_offset);
             Debug.Assert(gcHandleOffset > 0);
 
-            handle = Marshal.ReadIntPtr(reflectedClrObject.DangerousGetAddress(), gcHandleOffset);
+            handle = Util.ReadIntPtr(reflectedClrObject, gcHandleOffset);
         }
 
         internal static GCHandle? TryGetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type)
@@ -313,10 +313,10 @@ namespace Python.Runtime
             Debug.Assert(reflectedClrObject != null);
             Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
 
-            int offset = Marshal.ReadInt32(type.DangerousGetAddress(), Offsets.tp_clr_inst_offset);
+            int offset = Util.ReadInt32(type, Offsets.tp_clr_inst_offset);
             Debug.Assert(offset > 0);
 
-            Marshal.WriteIntPtr(reflectedClrObject.DangerousGetAddress(), offset, (IntPtr)newHandle);
+            Util.WriteIntPtr(reflectedClrObject, offset, (IntPtr)newHandle);
         }
         internal static void SetGCHandle(BorrowedReference reflectedClrObject, GCHandle newHandle)
             => SetGCHandle(reflectedClrObject, Runtime.PyObject_TYPE(reflectedClrObject), newHandle);
@@ -325,7 +325,7 @@ namespace Python.Runtime
         {
             static Offsets()
             {
-                int pyTypeSize = Marshal.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize);
+                int pyTypeSize = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize);
                 if (pyTypeSize < 0) throw new InvalidOperationException();
 
                 tp_clr_inst_offset = pyTypeSize;
