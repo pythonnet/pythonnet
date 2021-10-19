@@ -670,6 +670,16 @@ namespace Python.Runtime
 #endif
         }
 
+
+#if DEBUG
+        [Obsolete("Do not use")]
+#else
+        [Obsolete("Do not use", error: true)]
+#endif
+        internal static unsafe void XDecref(BorrowedReference op)
+        {
+            XDecref(StolenReference.DangerousFromPointer(op.DangerousGetAddress()));
+        }
         internal static unsafe void XDecref(StolenReference op)
         {
 #if DEBUG
@@ -1739,13 +1749,23 @@ namespace Python.Runtime
         internal static NewReference PyObject_GenericGetDict(BorrowedReference o) => PyObject_GenericGetDict(o, IntPtr.Zero);
         internal static NewReference PyObject_GenericGetDict(BorrowedReference o, IntPtr context) => Delegates.PyObject_GenericGetDict(o, context);
 
-        internal static void PyObject_GC_Del(StolenReference tp) => Delegates.PyObject_GC_Del(tp);
+#if DEBUG
+        [Obsolete("Do not use")]
+#else
+        [Obsolete("Do not use", error: true)]
+#endif
+        internal static void PyObject_GC_Del(BorrowedReference ob)
+        {
+            PyObject_GC_Del(StolenReference.DangerousFromPointer(ob.DangerousGetAddress()));
+        }
+
+        internal static void PyObject_GC_Del(StolenReference ob) => Delegates.PyObject_GC_Del(ob);
 
 
-        internal static void PyObject_GC_Track(BorrowedReference tp) => Delegates.PyObject_GC_Track(tp);
+        internal static void PyObject_GC_Track(BorrowedReference ob) => Delegates.PyObject_GC_Track(ob);
 
 
-        internal static void PyObject_GC_UnTrack(BorrowedReference tp) => Delegates.PyObject_GC_UnTrack(tp);
+        internal static void PyObject_GC_UnTrack(BorrowedReference ob) => Delegates.PyObject_GC_UnTrack(ob);
 
 
         internal static void _PyObject_Dump(BorrowedReference ob) => Delegates._PyObject_Dump(ob);
