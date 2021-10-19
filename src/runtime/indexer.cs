@@ -103,15 +103,15 @@ namespace Python.Runtime
             MethodBase mi = methods[0];
             ParameterInfo[] pi = mi.GetParameters();
             int clrnargs = pi.Length - 1;
-            IntPtr defaultArgs = Runtime.PyTuple_New(clrnargs - pynargs);
+            var defaultArgs = Runtime.PyTuple_New(clrnargs - pynargs);
             for (var i = 0; i < clrnargs - pynargs; i++)
             {
                 if (pi[i + pynargs].DefaultValue == DBNull.Value)
                 {
                     continue;
                 }
-                IntPtr arg = Converter.ToPython(pi[i + pynargs].DefaultValue, pi[i + pynargs].ParameterType);
-                Runtime.PyTuple_SetItem(defaultArgs, i, arg);
+                using var arg = Converter.ToPython(pi[i + pynargs].DefaultValue, pi[i + pynargs].ParameterType);
+                Runtime.PyTuple_SetItem(defaultArgs.Borrow(), i, arg.Steal());
             }
             return defaultArgs;
         }
