@@ -174,7 +174,7 @@ namespace Python.Runtime
                 return pyErr;
             }
 
-            if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object decoded)
+            if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object? decoded)
                 && decoded is Exception decodedException)
             {
                 return decodedException;
@@ -199,7 +199,7 @@ namespace Python.Runtime
             using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
             using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
             if (PyObjectConversions.TryDecode(pyErrInfo.Reference, pyErrType.Reference,
-                typeof(Exception), out object decoded) && decoded is Exception decodedPyErrInfo)
+                typeof(Exception), out object? decoded) && decoded is Exception decodedPyErrInfo)
             {
                 return decodedPyErrInfo;
             }
@@ -394,11 +394,11 @@ namespace Python.Runtime
             => new PythonException(type: Type, value: Value, traceback: Traceback,
                                    Message, InnerException);
 
-        internal bool Is(IntPtr type)
+        internal bool Is(BorrowedReference type)
         {
             return Runtime.PyErr_GivenExceptionMatches(
                 given: (Value ?? Type).Reference,
-                typeOrTypes: new BorrowedReference(type)) != 0;
+                typeOrTypes: type) != 0;
         }
 
         private static void CheckRuntimeIsRunning()

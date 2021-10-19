@@ -53,7 +53,8 @@ namespace Python.Runtime
         {
             if (!_containingType.Valid)
             {
-                return Exceptions.RaiseTypeError(_containingType.DeletedMessage);
+                Exceptions.RaiseTypeError(_containingType.DeletedMessage);
+                return null;
             }
             object result;
             Type tp = _containingType.Value;
@@ -83,7 +84,7 @@ namespace Python.Runtime
                 return result;
             }
 
-            Binding binding = Bind(inst, args, kw, info);
+            Binding? binding = Bind(inst, args, kw, info);
 
             if (binding == null)
             {
@@ -94,9 +95,8 @@ namespace Python.Runtime
                 // if there is a default constructor and, if so, assume that
                 // any extra args are intended for the subclass' __init__.
 
-                IntPtr eargs = Runtime.PyTuple_New(0);
-                binding = Bind(inst, eargs, IntPtr.Zero);
-                Runtime.XDecref(eargs);
+                using var eargs = Runtime.PyTuple_New(0);
+                binding = Bind(inst, eargs.BorrowOrThrow(), kw: null);
 
                 if (binding == null)
                 {

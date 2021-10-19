@@ -349,7 +349,7 @@ namespace Python.Runtime
             Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
 
             // If the method isn't abstract create a method for calling the original method
-            string baseMethodName = null;
+            string? baseMethodName = null;
             if (!method.IsAbstract)
             {
                 baseMethodName = "_" + baseType.Name + "__" + method.Name;
@@ -678,7 +678,7 @@ namespace Python.Runtime
 
                             PyObject py_result = method.Invoke(pyargs);
                             disposeList.Add(py_result);
-                            return (T)py_result.AsManagedObject(typeof(T));
+                            return py_result.As<T>();
                         }
                     }
                 }
@@ -781,7 +781,7 @@ namespace Python.Runtime
                 using var pyself = new PyObject(self.ObjectReference);
                 using (PyObject pyvalue = pyself.GetAttr(propertyName))
                 {
-                    return (T)pyvalue.AsManagedObject(typeof(T));
+                    return pyvalue.As<T>();
                 }
             }
             finally

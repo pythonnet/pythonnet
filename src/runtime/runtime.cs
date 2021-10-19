@@ -176,7 +176,7 @@ namespace Python.Runtime
 
         private static void InitPyMembers()
         {
-            using (var builtinsOwned = PyImport_Import(new BorrowedReference(PyIdentifier.builtins)))
+            using (var builtinsOwned = PyImport_Import(PyIdentifier.builtins))
             {
                 var builtins = builtinsOwned.Borrow();
                 SetPyMember(out PyNotImplemented, PyObject_GetAttrString(builtins, "NotImplemented").StealNullable());
@@ -403,10 +403,11 @@ namespace Python.Runtime
             _pyRefs.Add(obj);
         }
 
-        private static void SetPyMemberTypeOf(out PyObject obj, PyObject value)
+        private static void SetPyMemberTypeOf(out PyType obj, PyObject value)
         {
             var type = PyObject_Type(value);
-            SetPyMember(out obj, type.StealNullable());
+            obj = new PyType(type.StealOrThrow(), prevalidated: true);
+            _pyRefs.Add(obj);
         }
 
         private static void SetPyMemberTypeOf(out PyObject obj, StolenReference value)
@@ -513,8 +514,8 @@ namespace Python.Runtime
         internal static PyObject PyDictType;
         internal static PyObject PyLongType;
         internal static PyObject PyFloatType;
-        internal static PyObject PyBoolType;
-        internal static PyObject PyNoneType;
+        internal static PyType PyBoolType;
+        internal static PyType PyNoneType;
         internal static PyType PyTypeType;
 
         internal static int* Py_NoSiteFlag;

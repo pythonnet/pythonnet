@@ -10,7 +10,7 @@ namespace Python.Runtime.Codecs
         public bool CanDecode(PyType objectType, Type targetType)
         {
             return targetType.IsEnum
-                && objectType.IsSubclass(new BorrowedReference(Runtime.PyLongType));
+                && objectType.IsSubclass(Runtime.PyLongType);
         }
 
         public bool CanEncode(Type type)
@@ -18,7 +18,7 @@ namespace Python.Runtime.Codecs
             return type == typeof(object) || type == typeof(ValueType) || type.IsEnum;
         }
 
-        public bool TryDecode<T>(PyObject pyObj, out T value)
+        public bool TryDecode<T>(PyObject pyObj, out T? value)
         {
             value = default;
             if (!typeof(T).IsEnum) return false;
@@ -27,7 +27,7 @@ namespace Python.Runtime.Codecs
 
             if (!PyInt.IsIntType(pyObj)) return false;
 
-            object result;
+            object? result;
             try
             {
                 result = pyObj.AsManagedObject(etype);
@@ -46,7 +46,7 @@ namespace Python.Runtime.Codecs
             return false;
         }
 
-        public PyObject TryEncode(object value)
+        public PyObject? TryEncode(object value)
         {
             if (value is null) return null;
 

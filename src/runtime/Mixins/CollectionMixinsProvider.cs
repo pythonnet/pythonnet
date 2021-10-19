@@ -70,7 +70,7 @@ namespace Python.Runtime.Mixins
 
             if (type.IsInterface && type.BaseType is null)
             {
-                newBases.RemoveAll(@base => @base.Handle == Runtime.PyBaseObjectType);
+                newBases.RemoveAll(@base => PythonReferenceComparer.Instance.Equals(@base, Runtime.PyBaseObjectType));
             }
 
             return newBases;
