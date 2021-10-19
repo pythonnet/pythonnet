@@ -174,7 +174,7 @@ namespace Python.Runtime
 
             Runtime.PyType_Modified(type.Borrow());
 
-            return type;
+            return type.AnalyzerWorkaround();
         }
 
 

@@ -418,7 +418,7 @@ namespace Python.Runtime
             }
             var @ref = new BorrowedReference(value.Pointer);
             var type = PyObject_Type(@ref);
-            XDecref(value);
+            XDecref(value.AnalyzerWorkaround());
             SetPyMember(out obj, type.StealNullable());
         }
 
@@ -578,7 +578,7 @@ namespace Python.Runtime
                 PyTuple_SetItem(items.Borrow(), size + n, args[n]);
             }
 
-            return items;
+            return items.AnalyzerWorkaround();
         }
 
         internal static Type[]? PythonArgsToTypeArray(BorrowedReference arg)
@@ -688,7 +688,7 @@ namespace Python.Runtime
 #endif
 #if !CUSTOM_INCDEC_REF
             if (op == null) return;
-            Py_DecRef(op);
+            Py_DecRef(op.AnalyzerWorkaround());
             return;
 #else
             var p = (void*)op;

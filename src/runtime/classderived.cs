@@ -114,7 +114,7 @@ namespace Python.Runtime
                 Runtime.PyObject_GC_Track(self.pyHandle);
             }
 
-            return result;
+            return result.AnalyzerWorkaround();
         }
 
         /// <summary>

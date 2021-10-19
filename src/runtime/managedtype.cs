@@ -259,14 +259,14 @@ namespace Python.Runtime
         protected static void SetObjectDict(BorrowedReference ob, StolenReference value)
         {
             if (value.Pointer == IntPtr.Zero) throw new ArgumentNullException(nameof(value));
-            SetObjectDictNullable(ob, value);
+            SetObjectDictNullable(ob, value.AnalyzerWorkaround());
         }
         protected static void SetObjectDictNullable(BorrowedReference ob, StolenReference value)
         {
             BorrowedReference type = Runtime.PyObject_TYPE(ob);
             int instanceDictOffset = Util.ReadInt32(type, TypeOffset.tp_dictoffset);
             Debug.Assert(instanceDictOffset > 0);
-            Runtime.ReplaceReference(ob, instanceDictOffset, value);
+            Runtime.ReplaceReference(ob, instanceDictOffset, value.AnalyzerWorkaround());
         }
 
         internal static void GetGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type, out IntPtr handle)
