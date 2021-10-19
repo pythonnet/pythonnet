@@ -24,7 +24,7 @@ namespace Python.Runtime
         /// <param name="pyObj">Object to decode</param>
         /// <param name="value">The variable, that will receive decoding result</param>
         /// <returns></returns>
-        bool TryDecode<T>(PyObject pyObj, out T value);
+        bool TryDecode<T>(PyObject pyObj, out T? value);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ namespace Python.Runtime
         /// <summary>
         /// Attempts to encode CLR object <paramref name="value"/> into Python object
         /// </summary>
-        PyObject TryEncode(object value);
+        PyObject? TryEncode(object value);
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ namespace Python.Runtime
         }
 
         #region Encoding
-        internal static PyObject TryEncode(object obj, Type type)
+        internal static PyObject? TryEncode(object obj, Type type)
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -106,13 +106,12 @@ namespace Python.Runtime
         #endregion
 
         #region Decoding
-        static readonly ConcurrentDictionary<TypePair, Converter.TryConvertFromPythonDelegate>
-            pythonToClr = new ConcurrentDictionary<TypePair, Converter.TryConvertFromPythonDelegate>();
-        internal static bool TryDecode(BorrowedReference value, BorrowedReference type, Type targetType, out object result)
-            => TryDecode(value.DangerousGetAddress(), type.DangerousGetAddress(), targetType, out result);
-        internal static bool TryDecode(IntPtr pyHandle, IntPtr pyType, Type targetType, out object result)
+        static readonly ConcurrentDictionary<TypePair, Converter.TryConvertFromPythonDelegate?> pythonToClr = new();
+        internal static bool TryDecode(BorrowedReference value, BorrowedReference type, Type targetType, out object? result)
+            => TryDecode(value, type.DangerousGetAddress(), targetType, out result);
+        internal static bool TryDecode(BorrowedReference pyHandle, IntPtr pyType, Type targetType, out object? result)
         {
-            if (pyHandle == IntPtr.Zero) throw new ArgumentNullException(nameof(pyHandle));
+            if (pyHandle == null) throw new ArgumentNullException(nameof(pyHandle));
             if (pyType == IntPtr.Zero) throw new ArgumentNullException(nameof(pyType));
             if (targetType == null) throw new ArgumentNullException(nameof(targetType));
 
@@ -122,7 +121,7 @@ namespace Python.Runtime
             return decoder.Invoke(pyHandle, out result);
         }
 
-        static Converter.TryConvertFromPythonDelegate GetDecoder(IntPtr sourceType, Type targetType)
+        static Converter.TryConvertFromPythonDelegate? GetDecoder(IntPtr sourceType, Type targetType)
         {
             IPyObjectDecoder decoder;
             var sourceTypeRef = new BorrowedReference(sourceType);
@@ -138,10 +137,10 @@ namespace Python.Runtime
 
             var decode = genericDecode.MakeGenericMethod(targetType);
 
-            bool TryDecode(IntPtr pyHandle, out object result)
+            bool TryDecode(BorrowedReference pyHandle, out object? result)
             {
-                var pyObj = new PyObject(Runtime.SelfIncRef(pyHandle));
-                var @params = new object[] { pyObj, null };
+                var pyObj = new PyObject(pyHandle);
+                var @params = new object?[] { pyObj, null };
                 bool success = (bool)decode.Invoke(decoder, @params);
                 if (!success)
                 {

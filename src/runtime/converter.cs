@@ -527,7 +527,7 @@ namespace Python.Runtime
                    || typeCode is TypeCode.Object or TypeCode.Decimal or TypeCode.DateTime;
         }
 
-        internal delegate bool TryConvertFromPythonDelegate(IntPtr pyObj, out object result);
+        internal delegate bool TryConvertFromPythonDelegate(BorrowedReference pyObj, out object? result);
 
         internal static int ToInt32(BorrowedReference value)
         {
