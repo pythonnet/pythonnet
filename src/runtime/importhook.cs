@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+
+using Python.Runtime.StateSerialization;
 
 namespace Python.Runtime
 {
@@ -84,29 +87,63 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             TeardownNameSpaceTracking();
             Runtime.Py_CLEAR(ref py_clr_module!);
 
-            Runtime.XDecref(root.pyHandle);
+            root.pyHandle.Dispose();
             root = null!;
             CLRModule.Reset();
         }
 
-        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        private static Dictionary<PyString, PyObject> GetDotNetModules()
         {
-            // Increment the reference counts here so that the objects don't
-            // get freed in Shutdown.
-            Runtime.XIncref(py_clr_module);
-            Runtime.XIncref(root.pyHandle);
-            storage.AddValue("py_clr_module", py_clr_module);
-            storage.AddValue("root", root.pyHandle);
+            BorrowedReference pyModules = Runtime.PyImport_GetModuleDict();
+            using var items = Runtime.PyDict_Items(pyModules);
+            nint length = Runtime.PyList_Size(items.BorrowOrThrow());
+            var modules = new Dictionary<PyString, PyObject>();
+            for (nint i = 0; i < length; i++)
+            {
+                BorrowedReference item = Runtime.PyList_GetItem(items.Borrow(), i);
+                BorrowedReference name = Runtime.PyTuple_GetItem(item, 0);
+                BorrowedReference module = Runtime.PyTuple_GetItem(item, 1);
+                if (ManagedType.IsInstanceOfManagedType(module))
+                {
+                    modules.Add(new PyString(name), new PyObject(module));
+                }
+            }
+            return modules;
+        }
+        internal static ImportHookState SaveRuntimeData()
+        {
+            return new()
+            {
+                PyCLRModule = py_clr_module,
+                Root = root.pyHandle,
+                Modules = GetDotNetModules(),
+            };
         }
 
-        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
+        private static void RestoreDotNetModules(Dictionary<PyString, PyObject> modules)
         {
-            storage.GetValue("py_clr_module", out py_clr_module);
-            var rootHandle = storage.GetValue<IntPtr>("root");
-            root = (CLRModule)ManagedType.GetManagedObject(rootHandle);
+            var pyMoudles = Runtime.PyImport_GetModuleDict();
+            foreach (var item in modules)
+            {
+                var moduleName = item.Key;
+                var module = item.Value;
+                int res = Runtime.PyDict_SetItem(pyMoudles, moduleName, module);
+                PythonException.ThrowIfIsNotZero(res);
+                item.Key.Dispose();
+                item.Value.Dispose();
+            }
+            modules.Clear();
+        }
+        internal static void RestoreRuntimeData(ImportHookState storage)
+        {
+            py_clr_module = storage.PyCLRModule;
+            var rootHandle = storage.Root;
+            root = (CLRModule)ManagedType.GetManagedObject(rootHandle)!;
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
             Runtime.PyDict_SetItemString(dict, "clr", ClrModuleReference);
             SetupNamespaceTracking();
+
+            RestoreDotNetModules(storage.Modules);
         }
 
         static void SetupImportHook()

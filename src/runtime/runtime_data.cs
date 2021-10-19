@@ -9,6 +9,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
+using Python.Runtime.StateSerialization;
+
 using static Python.Runtime.Runtime;
 
 namespace Python.Runtime
@@ -47,32 +49,15 @@ namespace Python.Runtime
 
         internal static void Stash()
         {
-            var metaStorage = new RuntimeDataStorage();
-            MetaType.SaveRuntimeData(metaStorage);
-
-            var importStorage = new RuntimeDataStorage();
-            ImportHook.SaveRuntimeData(importStorage);
-
-            var typeStorage = new RuntimeDataStorage();
-            TypeManager.SaveRuntimeData(typeStorage);
-
-            var clsStorage = new RuntimeDataStorage();
-            ClassManager.SaveRuntimeData(clsStorage);
-
-            var moduleStorage = new RuntimeDataStorage();
-            SaveRuntimeDataModules(moduleStorage);
-
-            var objStorage = new RuntimeDataStorage();
-            SaveRuntimeDataObjects(objStorage);
-
-            var runtimeStorage = new RuntimeDataStorage();
-            runtimeStorage.AddValue("meta", metaStorage);
-            runtimeStorage.AddValue("import", importStorage);
-            runtimeStorage.AddValue("types", typeStorage);
-            runtimeStorage.AddValue("classes", clsStorage);
-            runtimeStorage.AddValue("modules", moduleStorage);
-            runtimeStorage.AddValue("objs", objStorage);
-
+            var runtimeStorage = new PythonNetState
+            {
+                Metatype = MetaType.SaveRuntimeData(),
+                ImportHookState = ImportHook.SaveRuntimeData(),
+                Types = TypeManager.SaveRuntimeData(),
+                Classes = ClassManager.SaveRuntimeData(),
+                SharedObjects = SaveRuntimeDataObjects(),
+            };
+            
             IFormatter formatter = CreateFormatter();
             var ms = new MemoryStream();
             formatter.Serialize(ms, runtimeStorage);
@@ -86,10 +71,9 @@ namespace Python.Runtime
 
             ClearCLRData();
 
-            NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
-            PySys_SetObject("clr_data", capsule);
-            // Let the dictionary own the reference
-            capsule.Dispose();
+            using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
+            int res = PySys_SetObject("clr_data", capsule.BorrowOrThrow());
+            PythonException.ThrowIfIsNotZero(res);
         }
 
         internal static void RestoreRuntimeData()
@@ -117,20 +101,20 @@ namespace Python.Runtime
             Marshal.Copy(mem + IntPtr.Size, data, 0, length);
             var ms = new MemoryStream(data);
             var formatter = CreateFormatter();
-            var storage = (RuntimeDataStorage)formatter.Deserialize(ms);
+            var storage = (PythonNetState)formatter.Deserialize(ms);
 
-            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.GetStorage("meta"));
+            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.Metatype);
 
-            var objs = RestoreRuntimeDataObjects(storage.GetStorage("objs"));
-            RestoreRuntimeDataModules(storage.GetStorage("modules"));
-            TypeManager.RestoreRuntimeData(storage.GetStorage("types"));
-            var clsObjs = ClassManager.RestoreRuntimeData(storage.GetStorage("classes"));
-            ImportHook.RestoreRuntimeData(storage.GetStorage("import"));
+            var objs = RestoreRuntimeDataObjects(storage.SharedObjects);
+            // RestoreRuntimeDataModules(storage.Assmeblies);
+            TypeManager.RestoreRuntimeData(storage.Types);
+            var clsObjs = ClassManager.RestoreRuntimeData(storage.Classes);
+            ImportHook.RestoreRuntimeData(storage.ImportHookState);
 
             foreach (var item in objs)
             {
                 item.Value.ExecutePostActions();
-                XDecref(item.Key.pyHandle);
+                #warning XDecref(item.Key.pyHandle);
             }
             foreach (var item in clsObjs)
             {
@@ -161,13 +145,13 @@ namespace Python.Runtime
             return true;
         }
 
-        private static void SaveRuntimeDataObjects(RuntimeDataStorage storage)
+        private static SharedObjectsState SaveRuntimeDataObjects()
         {
             var objs = ManagedType.GetManagedObjects();
             var extensionObjs = new List<ManagedType>();
             var wrappers = new Dictionary<object, List<CLRObject>>();
-            var serializeObjs = new CLRWrapperCollection();
-            var contexts = new Dictionary<PyType, InterDomainContext>(PythonReferenceComparer.Instance);
+            var userObjects = new CLRWrapperCollection();
+            var contexts = new Dictionary<PyObject, InterDomainContext>(PythonReferenceComparer.Instance);
             foreach (var entry in objs)
             {
                 var obj = entry.Key;
@@ -187,13 +171,10 @@ namespace Python.Runtime
                         object inst = clrObj.inst;
                         CLRMappedItem item;
                         List<CLRObject> mappedObjs;
-                        if (!serializeObjs.TryGetValue(inst, out item))
+                        if (!userObjects.TryGetValue(inst, out item))
                         {
-                            item = new CLRMappedItem(inst)
-                            {
-                                Handles = new List<IntPtr>()
-                            };
-                            serializeObjs.Add(item);
+                            item = new CLRMappedItem(inst);
+                            userObjects.Add(item);
 
                             Debug.Assert(!wrappers.ContainsKey(inst));
                             mappedObjs = new List<CLRObject>();
@@ -203,7 +184,7 @@ namespace Python.Runtime
                         {
                             mappedObjs = wrappers[inst];
                         }
-                        item.Handles.Add(clrObj.pyHandle);
+                        item.AddRef(clrObj.pyHandle);
                         mappedObjs.Add(clrObj);
                         break;
                     default:
@@ -212,19 +193,17 @@ namespace Python.Runtime
             }
 
             var wrapperStorage = new RuntimeDataStorage();
-            WrappersStorer?.Store(serializeObjs, wrapperStorage);
+            WrappersStorer?.Store(userObjects, wrapperStorage);
 
             var internalStores = new List<CLRObject>();
-            foreach (var item in serializeObjs)
+            foreach (var item in userObjects)
             {
-                if (!item.Stored)
+                if (!CheckSerializable(item.Instance))
                 {
-                    if (!CheckSerializable(item.Instance))
-                    {
-                        continue;
-                    }
-                    internalStores.AddRange(wrappers[item.Instance]);
+                    continue;
                 }
+                internalStores.AddRange(wrappers[item.Instance]);
+
                 foreach (var clrObj in wrappers[item.Instance])
                 {
                     XIncref(clrObj.pyHandle);
@@ -233,17 +212,21 @@ namespace Python.Runtime
                     clrObj.Save(context);
                 }
             }
-            storage.AddValue("internalStores", internalStores);
-            storage.AddValue("extensions", extensionObjs);
-            storage.AddValue("wrappers", wrapperStorage);
-            storage.AddValue("contexts", contexts);
+
+            return new()
+            {
+                InternalStores = internalStores,
+                Extensions = extensionObjs,
+                Wrappers = wrapperStorage,
+                Contexts = contexts,
+            };
         }
 
-        private static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeDataObjects(RuntimeDataStorage storage)
+        private static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeDataObjects(SharedObjectsState storage)
         {
-            var extensions = storage.GetValue<List<ManagedType>>("extensions");
-            var internalStores = storage.GetValue<List<CLRObject>>("internalStores");
-            var contexts = storage.GetValue <Dictionary<PyType, InterDomainContext>>("contexts");
+            var extensions = storage.Extensions;
+            var internalStores = storage.InternalStores;
+            var contexts = storage.Contexts;
             var storedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var obj in Enumerable.Union(extensions, internalStores))
             {
@@ -253,58 +236,20 @@ namespace Python.Runtime
             }
             if (WrappersStorer != null)
             {
-                var wrapperStorage = storage.GetStorage("wrappers");
+                var wrapperStorage = storage.Wrappers;
                 var handle2Obj = WrappersStorer.Restore(wrapperStorage);
                 foreach (var item in handle2Obj)
                 {
                     object obj = item.Instance;
-                    foreach (var handle in item.Handles)
+                    foreach (var pyRef in item.PyRefs ?? new List<PyObject>())
                     {
-                        var context = contexts[handle];
-                        var co = CLRObject.Restore(obj, handle, context);
+                        var context = contexts[pyRef];
+                        var co = CLRObject.Restore(obj, pyRef, context);
                         storedObjs.Add(co, context);
                     }
                 }
             }
             return storedObjs;
-        }
-
-        private static void SaveRuntimeDataModules(RuntimeDataStorage storage)
-        {
-            var pyModules = PyImport_GetModuleDict();
-            var items = PyDict_Items(pyModules);
-            long length = PyList_Size(items);
-            var modules = new Dictionary<IntPtr, IntPtr>(); ;
-            for (long i = 0; i < length; i++)
-            {
-                var item = PyList_GetItem(items, i);
-                var name = PyTuple_GetItem(item.DangerousGetAddress(), 0);
-                var module = PyTuple_GetItem(item.DangerousGetAddress(), 1);
-                if (ManagedType.IsInstanceOfManagedType(module))
-                {
-                    XIncref(name);
-                    XIncref(module);
-                    modules.Add(name, module);
-                }
-            }
-            items.Dispose();
-            storage.AddValue("modules", modules);
-        }
-
-        private static void RestoreRuntimeDataModules(RuntimeDataStorage storage)
-        {
-            var modules = storage.GetValue<Dictionary<IntPtr, IntPtr>>("modules");
-            var pyMoudles = PyImport_GetModuleDict();
-            foreach (var item in modules)
-            {
-                var moduleName = new BorrowedReference(item.Key);
-                var module = new BorrowedReference(item.Value);
-                int res = PyDict_SetItem(pyMoudles, moduleName, module);
-                PythonException.ThrowIfIsNotZero(res);
-                XDecref(item.Key);
-                XDecref(item.Value);
-            }
-            modules.Clear();
         }
 
         private static IFormatter CreateFormatter()
@@ -414,12 +359,17 @@ namespace Python.Runtime
     public class CLRMappedItem
     {
         public object Instance { get; private set; }
-        public IList<IntPtr> Handles { get; set; }
-        public bool Stored { get; set; }
+        public List<PyObject>? PyRefs { get; set; }
 
         public CLRMappedItem(object instance)
         {
             Instance = instance;
+        }
+
+        internal void AddRef(PyObject pyRef)
+        {
+            this.PyRefs ??= new List<PyObject>();
+            this.PyRefs.Add(pyRef);
         }
     }
 

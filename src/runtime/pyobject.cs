@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -1422,6 +1423,18 @@ namespace Python.Runtime
             {
                 yield return pyObj.ToString()!;
             }
+        }
+
+        [OnSerialized]
+        protected virtual void OnSerialized(StreamingContext context)
+        {
+#warning check that these methods are inherited properly
+            new NewReference(this, canBeNull: true).Steal();
+        }
+        [OnDeserialized]
+        protected virtual void OnDeserialized(StreamingContext context)
+        {
+            if (IsDisposed) GC.SuppressFinalize(this);
         }
     }
 

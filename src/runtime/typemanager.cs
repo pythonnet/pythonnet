@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Python.Runtime.Slots;
+using Python.Runtime.StateSerialization;
 using static Python.Runtime.PythonException;
 
 namespace Python.Runtime
@@ -67,22 +68,19 @@ namespace Python.Runtime
             _slotsHolders.Clear();
         }
 
-        internal static void SaveRuntimeData(RuntimeDataStorage storage)
-        {
-            foreach (var tpHandle in cache.Values)
+        internal static TypeManagerState SaveRuntimeData()
+            => new()
             {
-                Runtime.XIncref(tpHandle.Handle);
-            }
-            storage.AddValue("cache", cache);
-            storage.AddValue("slots", _slotsImpls);
-        }
+                Cache = cache,
+                SlotImplementations = _slotsImpls,
+            };
 
-        internal static void RestoreRuntimeData(RuntimeDataStorage storage)
+        internal static void RestoreRuntimeData(TypeManagerState storage)
         {
             Debug.Assert(cache == null || cache.Count == 0);
-            storage.GetValue("slots", out _slotsImpls);
-            storage.GetValue<Dictionary<MaybeType, PyType>>("cache", out var _cache);
-            foreach (var entry in _cache)
+            _slotsImpls = storage.SlotImplementations;
+            var typeCache = storage.Cache;
+            foreach (var entry in typeCache)
             {
                 if (!entry.Key.Valid)
                 {

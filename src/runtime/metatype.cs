@@ -2,6 +2,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
+using Python.Runtime.StateSerialization;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -39,19 +41,14 @@ namespace Python.Runtime
                 _metaSlotsHodler.ResetSlots();
             }
             PyCLRMetaType.Dispose();
-            _metaSlotsHodler = null;
+            _metaSlotsHodler = null!;
         }
 
-        internal static void SaveRuntimeData(RuntimeDataStorage storage)
-        {
-            #warning needs handling
-            Runtime.XIncref(PyCLRMetaType);
-            storage.PushValue(PyCLRMetaType);
-        }
+        internal static MetatypeState SaveRuntimeData() => new() { CLRMetaType = PyCLRMetaType };
 
-        internal static PyObject RestoreRuntimeData(RuntimeDataStorage storage)
+        internal static PyType RestoreRuntimeData(MetatypeState storage)
         {
-            PyCLRMetaType = storage.PopValue<IntPtr>();
+            PyCLRMetaType = storage.CLRMetaType;
             _metaSlotsHodler = new SlotsHolder(PyCLRMetaType);
             TypeManager.InitializeSlots(PyCLRMetaType, typeof(MetaType), _metaSlotsHodler);
 

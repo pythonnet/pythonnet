@@ -25,14 +25,14 @@ namespace Python.Runtime
                 objs = PySet_New(default);
                 foreach (var objRaw in PyGCGetObjects())
                 {
-                    AddObjPtrToSet(objs, new BorrowedReference(objRaw));
+                    AddObjPtrToSet(objs.Borrow(), new BorrowedReference(objRaw));
                 }
             }
 
-            var modules = PySet_New(default);
+            using var modules = PySet_New(default);
             foreach (var name in GetModuleNames())
             {
-                int res = PySet_Add(modules, new BorrowedReference(name));
+                int res = PySet_Add(modules.Borrow(), new BorrowedReference(name));
                 PythonException.ThrowIfIsNotZero(res);
             }
 
@@ -47,25 +47,18 @@ namespace Python.Runtime
             }
             {
                 using var pyDummyGC = PyLong_FromVoidPtr(dummyGCHead);
-                int res = PySys_SetObject("dummy_gc", pyDummyGC);
+                int res = PySys_SetObject("dummy_gc", pyDummyGC.Borrow());
                 PythonException.ThrowIfIsNotZero(res);
 
-                try
-                {
-                    res = PySys_SetObject("initial_modules", modules);
-                    PythonException.ThrowIfIsNotZero(res);
-                }
-                finally
-                {
-                    modules.Dispose();
-                }
+                res = PySys_SetObject("initial_modules", modules.Borrow());
+                PythonException.ThrowIfIsNotZero(res);
 
                 if (ShouldRestoreObjects)
                 {
-                    AddObjPtrToSet(objs, modules);
+                    AddObjPtrToSet(objs.Borrow(), modules.Borrow());
                     try
                     {
-                        res = PySys_SetObject("initial_objs", objs);
+                        res = PySys_SetObject("initial_objs", objs.Borrow());
                         PythonException.ThrowIfIsNotZero(res);
                     }
                     finally
@@ -128,7 +121,7 @@ namespace Python.Runtime
             {
                 using var p = PyLong_FromVoidPtr(objRaw);
                 var obj = new BorrowedReference(objRaw);
-                if (PySet_Contains(intialObjs, p) == 1)
+                if (PySet_Contains(intialObjs, p.Borrow()) == 1)
                 {
                     continue;
                 }
@@ -141,11 +134,12 @@ namespace Python.Runtime
         {
             using var gc = PyModule.Import("gc");
             using var get_objects = gc.GetAttr("get_objects");
-            var objs = PyObject_CallObject(get_objects.Handle, IntPtr.Zero);
-            var length = PyList_Size(new BorrowedReference(objs));
-            for (long i = 0; i < length; i++)
+            using var objs = PyObject_CallObject(get_objects, args: null);
+            nint length = PyList_Size(objs.BorrowOrThrow());
+            if (length < 0) throw PythonException.ThrowLastAsClrException();
+            for (nint i = 0; i < length; i++)
             {
-                var obj = PyList_GetItem(new BorrowedReference(objs), i);
+                var obj = PyList_GetItem(objs.Borrow(), i);
                 yield return obj.DangerousGetAddress();
             }
         }
@@ -154,11 +148,12 @@ namespace Python.Runtime
         {
             var modules = PyImport_GetModuleDict();
             using var names = PyDict_Keys(modules);
-            var length = PyList_Size(names);
+            nint length = PyList_Size(names.BorrowOrThrow());
+            if (length < 0) throw PythonException.ThrowLastAsClrException();
             var result = new IntPtr[length];
             for (int i = 0; i < length; i++)
             {
-                result[i] = PyList_GetItem(names, i).DangerousGetAddress();
+                result[i] = PyList_GetItem(names.Borrow(), i).DangerousGetAddress();
             }
             return result;
         }
@@ -167,8 +162,8 @@ namespace Python.Runtime
         {
             IntPtr objRaw = obj.DangerousGetAddress();
             using var p = PyLong_FromVoidPtr(objRaw);
-            XIncref(objRaw);
-            int res = PySet_Add(set, p);
+            XIncref(obj);
+            int res = PySet_Add(set, p.Borrow());
             PythonException.ThrowIfIsNotZero(res);
         }
         /// <summary>

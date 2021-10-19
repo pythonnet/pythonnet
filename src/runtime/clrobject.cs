@@ -16,7 +16,7 @@ namespace Python.Runtime
             using var py = Runtime.PyType_GenericAlloc(tp, 0);
 
             tpHandle = tp;
-            pyHandle = py;
+            pyHandle = py.MoveToPyObject();
             inst = ob;
 
             GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
@@ -45,44 +45,34 @@ namespace Python.Runtime
 
         internal static NewReference GetReference(object ob, BorrowedReference pyType)
         {
-            CLRObject co = GetInstance(ob, pyType.DangerousGetAddress());
-            return NewReference.DangerousFromPointer(co.pyHandle);
-        }
-        internal static IntPtr GetInstHandle(object ob, IntPtr pyType)
-        {
-            CLRObject co = GetInstance(ob, pyType);
-            return co.pyHandle;
+            CLRObject co = GetInstance(ob, new PyType(pyType));
+            return new NewReference(co.pyHandle);
         }
 
-
-        internal static IntPtr GetInstHandle(object ob, Type type)
+        internal static NewReference GetReference(object ob, Type type)
         {
             ClassBase cc = ClassManager.GetClass(type);
             CLRObject co = GetInstance(ob, cc.tpHandle);
-            return co.pyHandle;
+            return new NewReference(co.pyHandle);
         }
 
-
-        internal static IntPtr GetInstHandle(object ob)
-        {
-            CLRObject co = GetInstance(ob);
-            return co.pyHandle;
-        }
 
         internal static NewReference GetReference(object ob)
-            => NewReference.DangerousFromPointer(GetInstHandle(ob));
-        internal static NewReference GetReference(object ob, Type type)
-            => NewReference.DangerousFromPointer(GetInstHandle(ob, type));
-
-        internal static CLRObject Restore(object ob, IntPtr pyHandle, InterDomainContext context)
         {
+            CLRObject co = GetInstance(ob);
+            return new NewReference(co.pyHandle);
+        }
+
+        internal static CLRObject Restore(object ob, BorrowedReference pyHandle, InterDomainContext context)
+        {
+            var pyObj = new PyObject(pyHandle);
             CLRObject co = new CLRObject()
             {
                 inst = ob,
-                pyHandle = pyHandle,
-                tpHandle = Runtime.PyObject_TYPE(pyHandle)
+                pyHandle = pyObj,
+                tpHandle = pyObj.GetPythonType(),
             };
-            Debug.Assert(co.tpHandle != IntPtr.Zero);
+            Debug.Assert(co.tpHandle != null);
             co.Load(context);
             return co;
         }

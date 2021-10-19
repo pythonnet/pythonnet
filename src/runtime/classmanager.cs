@@ -7,6 +7,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 
+using Python.Runtime.StateSerialization;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -93,11 +95,9 @@ namespace Python.Runtime
             return 0;
         }
 
-        internal static void SaveRuntimeData(RuntimeDataStorage storage)
+        internal static ClassManagerState SaveRuntimeData()
         {
-            var contexts = storage.AddValue("contexts",
-                new Dictionary<PyType, InterDomainContext>(PythonReferenceComparer.Instance));
-            storage.AddValue("cache", cache);
+            var contexts = new Dictionary<PyType, InterDomainContext>(PythonReferenceComparer.Instance);
             foreach (var cls in cache)
             {
                 if (!cls.Key.Valid)
@@ -105,9 +105,6 @@ namespace Python.Runtime
                     // Don't serialize an invalid class
                     continue;
                 }
-                // This incref is for cache to hold the cls,
-                // thus no need for decreasing it at RestoreRuntimeData.
-                Runtime.XIncref(cls.Value.pyHandle);
                 var context = contexts[cls.Value.pyHandle] = new InterDomainContext();
                 cls.Value.Save(context);
 
@@ -137,13 +134,19 @@ namespace Python.Runtime
                 // We modified the Type object, notify it we did.
                 Runtime.PyType_Modified(cls.Value.TypeReference);
             }
+
+            return new()
+            {
+                Contexts = contexts,
+                Cache = cache,
+            };
         }
 
-        internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(RuntimeDataStorage storage)
+        internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(ClassManagerState storage)
         {
-            cache = storage.GetValue<Dictionary<MaybeType, ClassBase>>("cache");
+            cache = storage.Cache;
             var invalidClasses = new List<KeyValuePair<MaybeType, ClassBase>>();
-            var contexts = storage.GetValue <Dictionary<PyType, InterDomainContext>>("contexts");
+            var contexts = storage.Contexts;
             var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var pair in cache)
             {
@@ -171,7 +174,7 @@ namespace Python.Runtime
             foreach (var pair in invalidClasses)
             {
                 cache.Remove(pair.Key);
-                Runtime.XDecref(pair.Value.pyHandle);
+                pair.Value.pyHandle.Dispose();
             }
 
             return loadedObjs;

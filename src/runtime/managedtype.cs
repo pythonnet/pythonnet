@@ -27,6 +27,7 @@ namespace Python.Runtime
         internal PyObject pyHandle; // PyObject *
         internal PyType tpHandle; // PyType *
 
+        [NonSerialized]
         internal bool clearReentryGuard;
 
         internal BorrowedReference ObjectReference

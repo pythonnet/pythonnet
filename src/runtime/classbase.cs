@@ -405,8 +405,7 @@ namespace Python.Runtime
             if (!this.IsClrMetaTypeInstance())
             {
                 BorrowedReference dict = GetObjectDict(ObjectReference);
-                Runtime.XIncref(dict);
-                context.Storage.AddValue("dict", dict);
+                context.Storage.AddValue("dict", PyObject.FromNullableReference(dict));
             }
         }
 
@@ -415,8 +414,8 @@ namespace Python.Runtime
             base.OnLoad(context);
             if (!this.IsClrMetaTypeInstance())
             {
-                IntPtr dict = context.Storage.GetValue<IntPtr>("dict");
-                SetObjectDict(ObjectReference, dict);
+                var dict = context.Storage.GetValue<PyObject>("dict");
+                SetObjectDict(ObjectReference, dict.NewReferenceOrNull().StealNullable());
             }
             gcHandle = AllocGCHandle();
             SetGCHandle(ObjectReference, gcHandle);

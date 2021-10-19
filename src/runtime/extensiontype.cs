@@ -30,8 +30,8 @@ namespace Python.Runtime
             NewReference py = Runtime.PyType_GenericAlloc(tp, 0);
 
             // Borrowed reference. Valid as long as pyHandle is valid.
-            tpHandle = tp.DangerousGetAddress();
-            pyHandle = py.DangerousMoveToPointer();
+            tpHandle = new PyType(tp, prevalidated: true);
+            pyHandle = py.MoveToPyObject();
 
 #if DEBUG
             GetGCHandle(ObjectReference, TypeReference, out var existing);
@@ -79,7 +79,7 @@ namespace Python.Runtime
         public static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
             var message = "type does not support setting attributes";
-            if (val == IntPtr.Zero)
+            if (val == null)
             {
                 message = "readonly attribute";
             }
@@ -87,18 +87,18 @@ namespace Python.Runtime
             return -1;
         }
 
-        public static void tp_dealloc(IntPtr ob)
+        public static void tp_dealloc(NewReference ob)
         {
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
-            var self = (ExtensionType)GetManagedObject(ob);
+            var self = (ExtensionType?)GetManagedObject(ob.Borrow());
             self?.Clear();
             self?.Dealloc();
         }
 
-        public static int tp_clear(IntPtr ob)
+        public static int tp_clear(BorrowedReference ob)
         {
-            var self = (ExtensionType)GetManagedObject(ob);
+            var self = (ExtensionType?)GetManagedObject(ob);
             self?.Clear();
             return 0;
         }
