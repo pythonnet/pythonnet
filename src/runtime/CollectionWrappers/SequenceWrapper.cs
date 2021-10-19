@@ -20,7 +20,7 @@ namespace Python.Runtime.CollectionWrappers
                     Runtime.CheckExceptionOccurred();
                 }
 
-                return (int)size;
+                return checked((int)size);
             }
         }
 
@@ -38,7 +38,7 @@ namespace Python.Runtime.CollectionWrappers
         {
             if (IsReadOnly)
                 throw new NotImplementedException();
-            var result = Runtime.PySequence_DelSlice(pyObject.Handle, 0, Count);
+            int result = Runtime.PySequence_DelSlice(pyObject, 0, Count);
             if (result == -1)
             {
                 Runtime.CheckExceptionOccurred();
@@ -49,7 +49,7 @@ namespace Python.Runtime.CollectionWrappers
         {
             //not sure if IEquatable is implemented and this will work!
             foreach (var element in this)
-                if (element.Equals(item)) return true;
+                if (object.Equals(element, item)) return true;
 
             return false;
         }
@@ -77,7 +77,7 @@ namespace Python.Runtime.CollectionWrappers
             if (index >= Count || index < 0)
                 return false;
 
-            var result = Runtime.PySequence_DelItem(pyObject.Handle, index);
+            int result = Runtime.PySequence_DelItem(pyObject, index);
 
             if (result == 0)
                 return true;
@@ -91,7 +91,7 @@ namespace Python.Runtime.CollectionWrappers
             var index = 0;
             foreach (var element in this)
             {
-                if (element.Equals(item)) return index;
+                if (object.Equals(element, item)) return index;
                 index++;
             }
 

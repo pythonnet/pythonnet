@@ -1536,7 +1536,7 @@ namespace Python.Runtime
 
         internal static NewReference PyList_New(nint size) => Delegates.PyList_New(size);
 
-        private static BorrowedReference PyList_GetItem(BorrowedReference pointer, IntPtr index) => Delegates.PyList_GetItem(pointer, index);
+        internal static BorrowedReference PyList_GetItem(BorrowedReference pointer, nint index) => Delegates.PyList_GetItem(pointer, index);
 
         internal static int PyList_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyList_SetItem(pointer, index, value);
 

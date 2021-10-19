@@ -27,19 +27,20 @@ namespace Python.Runtime.CollectionWrappers
                 iterObject = iter.MoveToPyObject();
             }
 
+            using (iterObject)
             while (true)
             {
                 using (Py.GIL())
                 {
-                    var item = Runtime.PyIter_Next(iterObject.Handle);
-                    if (item == IntPtr.Zero)
+                    using var item = Runtime.PyIter_Next(iterObject);
+                    if (item.IsNull())
                     {
                         Runtime.CheckExceptionOccurred();
                         iterObject.Dispose();
                         break;
                     }
 
-                    yield return (T)new PyObject(item).AsManagedObject(typeof(T));
+                    yield return item.MoveToPyObject().As<T>();
                 }
             }
         }
