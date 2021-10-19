@@ -17,14 +17,18 @@ namespace Python.Runtime
 
         public class ErrorArgs : EventArgs
         {
+            public ErrorArgs(Exception error)
+            {
+                Error = error ?? throw new ArgumentNullException(nameof(error));
+            }
             public bool Handled { get; set; }
-            public Exception Error { get; set; }
+            public Exception Error { get; }
         }
 
         public static readonly Finalizer Instance = new Finalizer();
 
-        public event EventHandler<CollectArgs> BeforeCollect;
-        public event EventHandler<ErrorArgs> ErrorHandler;
+        public event EventHandler<CollectArgs>? BeforeCollect;
+        public event EventHandler<ErrorArgs>? ErrorHandler;
 
         const int DefaultThreshold = 200;
         [DefaultValue(DefaultThreshold)]
@@ -47,29 +51,49 @@ namespace Python.Runtime
         // Keep these declarations for compat even no FINALIZER_CHECK
         internal class IncorrectFinalizeArgs : EventArgs
         {
-            public IntPtr Handle { get; internal set; }
-            public ICollection<IntPtr> ImpactedObjects { get; internal set; }
+            public IncorrectFinalizeArgs(IntPtr handle, IReadOnlyCollection<IntPtr> imacted)
+            {
+                Handle = handle;
+                ImpactedObjects = imacted;
+            }
+            public IntPtr Handle { get; }
+            public IReadOnlyCollection<IntPtr> ImpactedObjects { get; }
         }
 
         internal class IncorrectRefCountException : Exception
         {
             public IntPtr PyPtr { get; internal set; }
-            private string _message;
-            public override string Message => _message;
+            string? message;
+            public override string Message
+            {
+                get
+                {
+                    if (message is not null) return message;
+                    var gil = PythonEngine.AcquireLock();
+                    try
+                    {
+                        using var pyname = Runtime.PyObject_Str(new BorrowedReference(PyPtr));
+                        string name = Runtime.GetManagedString(pyname.BorrowOrThrow()) ?? Util.BadStr;
+                        message = $"<{name}> may has a incorrect ref count";
+                    }
+                    finally
+                    {
+                        PythonEngine.ReleaseLock(gil);
+                    }
+                    return message;
+                }
+            }
 
             internal IncorrectRefCountException(IntPtr ptr)
             {
                 PyPtr = ptr;
-                IntPtr pyname = Runtime.PyObject_Str(PyPtr);
-                string name = Runtime.GetManagedString(pyname);
-                Runtime.XDecref(pyname);
-                _message = $"<{name}> may has a incorrect ref count";
+                
             }
         }
 
         internal delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
         #pragma warning disable 414
-        internal event IncorrectRefCntHandler IncorrectRefCntResolver = null;
+        internal event IncorrectRefCntHandler? IncorrectRefCntResolver = null;
         #pragma warning restore 414
         internal bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
 
@@ -134,17 +158,15 @@ namespace Python.Runtime
                         if (!_objQueue.TryDequeue(out obj))
                             continue;
 
-                        Runtime.XDecref(obj);
+                        IntPtr copyForException = obj;
+                        Runtime.XDecref(StolenReference.Take(ref obj));
                         try
                         {
                             Runtime.CheckExceptionOccurred();
                         }
                         catch (Exception e)
                         {
-                            var errorArgs = new ErrorArgs
-                            {
-                                Error = e,
-                            };
+                            var errorArgs = new ErrorArgs(e);
 
                             ErrorHandler?.Invoke(this, errorArgs);
 
@@ -152,7 +174,7 @@ namespace Python.Runtime
                             {
                                 throw new FinalizationException(
                                     "Python object finalization failed",
-                                    disposable: obj, innerException: e);
+                                    disposable: copyForException, innerException: e);
                             }
                         }
                     }
@@ -251,7 +273,11 @@ namespace Python.Runtime
         /// its reference count. This should only ever be called during debugging.
         /// When the result is disposed or finalized, the program will crash.
         /// </summary>
-        public PyObject DebugGetObject() => new(this.Handle);
+        public PyObject DebugGetObject()
+        {
+            IntPtr dangerousNoIncRefCopy = this.Handle;
+            return new(StolenReference.Take(ref dangerousNoIncRefCopy));
+        }
 
         public FinalizationException(string message, IntPtr disposable, Exception innerException)
             : base(message, innerException)
