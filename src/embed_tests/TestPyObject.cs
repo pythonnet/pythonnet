@@ -98,7 +98,7 @@ a = MemberNamesTest()
 
     public class PyObjectTestMethods
     {
-        public string RaisesAttributeError => throw new PythonException(new PyType(new BorrowedReference(Exceptions.AttributeError)), value: null, traceback: null);
-        public string RaisesTypeError => throw new PythonException(new PyType(new BorrowedReference(Exceptions.TypeError)), value: null, traceback: null);
+        public string RaisesAttributeError => throw new PythonException(new PyType(Exceptions.AttributeError), value: null, traceback: null);
+        public string RaisesTypeError => throw new PythonException(new PyType(Exceptions.TypeError), value: null, traceback: null);
     }
 }

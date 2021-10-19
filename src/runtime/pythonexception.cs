@@ -424,24 +424,7 @@ namespace Python.Runtime
             }
         }
         internal static BorrowedReference ThrowIfIsNull(BorrowedReference ob)
-        {
-            if (ob == null)
-            {
-                throw ThrowLastAsClrException();
-            }
-
-            return ob;
-        }
-
-        internal static IntPtr ThrowIfIsNull(IntPtr ob)
-        {
-            if (ob == IntPtr.Zero)
-            {
-                throw ThrowLastAsClrException();
-            }
-
-            return ob;
-        }
+            => Exceptions.ErrorCheck(ob);
 
         internal static void ThrowIfIsNotZero(int value)
         {

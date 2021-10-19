@@ -57,6 +57,7 @@ namespace Python.Runtime
                 ImpactedObjects = imacted;
             }
             public IntPtr Handle { get; }
+            public BorrowedReference Reference => new(Handle);
             public IReadOnlyCollection<IntPtr> ImpactedObjects { get; }
         }
 

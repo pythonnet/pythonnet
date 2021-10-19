@@ -171,7 +171,7 @@ namespace Python.EmbeddingTest
                     {
                         return scope.Eval<int>($"super(this.__class__, this).{nameof(XProp)}");
                     }
-                    catch (PythonException ex) when (ex.Type.Handle == Exceptions.AttributeError)
+                    catch (PythonException ex) when (PythonReferenceComparer.Instance.Equals(ex.Type, Exceptions.AttributeError))
                     {
                         if (this.extras.TryGetValue(nameof(this.XProp), out object value))
                             return (int)value;
