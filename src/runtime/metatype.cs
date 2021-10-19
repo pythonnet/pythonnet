@@ -178,7 +178,7 @@ namespace Python.Runtime
         }
 
 
-        public static NewReference tp_alloc(BorrowedReference mt, int n)
+        public static NewReference tp_alloc(BorrowedReference mt, nint n)
             => Runtime.PyType_GenericAlloc(mt, n);
 
 

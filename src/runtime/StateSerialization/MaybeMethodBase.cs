@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Linq;
 
+using Python.Runtime.Reflection;
+
 namespace Python.Runtime
 {
     [Serializable]
@@ -17,43 +19,6 @@ namespace Python.Runtime
         const string SerializationIsCtor = "c";
         const string SerializationMethodName = "n";
 
-        [Serializable]
-        struct ParameterHelper : IEquatable<ParameterInfo>
-        {
-            public enum TypeModifier
-            {
-                None,
-                In,
-                Out,
-                Ref
-            }
-            public readonly string Name;
-            public readonly TypeModifier Modifier;
-
-            public ParameterHelper(ParameterInfo tp)
-            {
-                Name = tp.ParameterType.AssemblyQualifiedName;
-                Modifier = TypeModifier.None;
-
-                if (tp.IsIn && tp.ParameterType.IsByRef)
-                {
-                    Modifier = TypeModifier.In;
-                }
-                else if (tp.IsOut && tp.ParameterType.IsByRef)
-                {
-                    Modifier = TypeModifier.Out;
-                }
-                else if (tp.ParameterType.IsByRef)
-                {
-                    Modifier = TypeModifier.Ref;
-                }
-            }
-
-            public bool Equals(ParameterInfo other)
-            {
-                return this.Equals(new ParameterHelper(other));
-            }
-        }
         public static implicit operator MaybeMethodBase<T> (T ob) => new MaybeMethodBase<T>(ob);
 
         string name;
@@ -119,7 +84,7 @@ namespace Python.Runtime
                 bool hasRefType = false;
                 for (int i = 0; i < param.Length; i++)
                 {
-                    var paramTypeName = param[i].Name;
+                    var paramTypeName = param[i].TypeName;
                     types[i] = Type.GetType(paramTypeName);
                     if (types[i] == null)
                     {
