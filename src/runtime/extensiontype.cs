@@ -54,10 +54,10 @@ namespace Python.Runtime
         }
 
 
-        protected virtual void Dealloc()
+        protected virtual void Dealloc(NewReference lastRef)
         {
-            var type = Runtime.PyObject_TYPE(this.ObjectReference);
-            Runtime.PyObject_GC_Del(this.pyHandle);
+            var type = Runtime.PyObject_TYPE(lastRef.Borrow());
+            Runtime.PyObject_GC_Del(lastRef.Steal());
 
             this.FreeGCHandle();
 
@@ -66,9 +66,12 @@ namespace Python.Runtime
         }
 
         /// <summary>DecRefs and nulls any fields pointing back to Python</summary>
-        protected virtual void Clear()
+        protected virtual void Clear(BorrowedReference ob)
         {
-            ClearObjectDict(this.pyHandle);
+            if (this.pyHandle?.IsDisposed == false)
+            {
+                ClearObjectDict(this.ObjectReference);
+            }
             // Not necessary for decref of `tpHandle` - it is borrowed
         }
 
@@ -91,14 +94,14 @@ namespace Python.Runtime
             // Clean up a Python instance of this extension type. This
             // frees the allocated Python object and decrefs the type.
             var self = (ExtensionType?)GetManagedObject(lastRef.Borrow());
-            self?.Clear();
-            self?.Dealloc();
+            self?.Clear(lastRef.Borrow());
+            self?.Dealloc(lastRef.AnalyzerWorkaround());
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
             var self = (ExtensionType?)GetManagedObject(ob);
-            self?.Clear();
+            self?.Clear(ob);
             return 0;
         }
 

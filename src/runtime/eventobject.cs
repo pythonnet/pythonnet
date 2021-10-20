@@ -197,10 +197,10 @@ namespace Python.Runtime
         }
 
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             this.unbound = null!;
-            base.Clear();
+            base.Clear(ob);
         }
     }
 

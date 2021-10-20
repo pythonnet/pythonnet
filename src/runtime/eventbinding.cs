@@ -100,10 +100,10 @@ namespace Python.Runtime
             return Runtime.PyString_FromString(s);
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             Runtime.Py_CLEAR(ref this.target);
-            base.Clear();
+            base.Clear(ob);
         }
     }
 }

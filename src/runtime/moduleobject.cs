@@ -317,12 +317,15 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             this.dict.Dispose();
-            ClearObjectDict(this.ObjectReference);
+            if (this.pyHandle?.IsDisposed == false)
+            {
+                ClearObjectDict(this.ObjectReference);
+            }
             this.cache.Clear();
-            base.Clear();
+            base.Clear(ob);
         }
 
         /// <summary>

@@ -206,12 +206,12 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<method '{self.name}'>");
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             Runtime.Py_CLEAR(ref this.doc);
             this.unbound = null;
             ClearObjectDict(this.pyHandle);
-            base.Clear();
+            base.Clear(ob);
         }
 
         protected override void OnSave(InterDomainContext context)

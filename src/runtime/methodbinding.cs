@@ -283,11 +283,11 @@ namespace Python.Runtime
             return Runtime.PyString_FromString($"<{type} method '{name}'>");
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             this.target = null;
             this.targetType = null!;
-            base.Clear();
+            base.Clear(ob);
         }
 
         protected override void OnSave(InterDomainContext context)

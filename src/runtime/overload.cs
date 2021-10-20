@@ -55,11 +55,11 @@ namespace Python.Runtime
             return self.m.GetDocString();
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             this.target = null;
             this.m = null!;
-            base.Clear();
+            base.Clear(ob);
         }
     }
 }

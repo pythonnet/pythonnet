@@ -147,10 +147,10 @@ namespace Python.Runtime
             return new NewReference(self.repr);
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             Runtime.Py_CLEAR(ref this.repr);
-            base.Clear();
+            base.Clear(ob);
         }
 
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
@@ -241,10 +241,10 @@ namespace Python.Runtime
             return new NewReference(self.repr);
         }
 
-        protected override void Clear()
+        protected override void Clear(BorrowedReference ob)
         {
             Runtime.Py_CLEAR(ref this.repr);
-            base.Clear();
+            base.Clear(ob);
         }
 
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
