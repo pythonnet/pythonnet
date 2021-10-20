@@ -104,7 +104,7 @@ namespace Python.Runtime
             foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
                 using var op = Runtime.PyObject_GetAttrString(exceptions_module.obj, fi.Name);
-                if (@op.IsNull())
+                if (!@op.IsNull())
                 {
                     fi.SetValue(type, op.MoveToPyObject());
                 }
