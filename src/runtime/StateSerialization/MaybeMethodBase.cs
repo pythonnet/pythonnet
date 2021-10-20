@@ -19,7 +19,7 @@ namespace Python.Runtime
         const string SerializationIsCtor = "c";
         const string SerializationMethodName = "n";
 
-        public static implicit operator MaybeMethodBase<T> (T ob) => new MaybeMethodBase<T>(ob);
+        public static implicit operator MaybeMethodBase<T> (T? ob) => new (ob);
 
         string name;
         MethodBase? info;
