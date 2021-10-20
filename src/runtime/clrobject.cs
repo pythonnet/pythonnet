@@ -77,12 +77,6 @@ namespace Python.Runtime
             return co;
         }
 
-        protected override void OnSave(InterDomainContext context)
-        {
-            base.OnSave(context);
-            Runtime.XIncref(pyHandle);
-        }
-
         protected override void OnLoad(InterDomainContext context)
         {
             base.OnLoad(context);

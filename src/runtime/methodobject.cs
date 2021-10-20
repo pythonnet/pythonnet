@@ -213,15 +213,5 @@ namespace Python.Runtime
             ClearObjectDict(this.pyHandle);
             base.Clear(ob);
         }
-
-        protected override void OnSave(InterDomainContext context)
-        {
-            base.OnSave(context);
-            if (unbound != null)
-            {
-                Runtime.XIncref(unbound.pyHandle);
-            }
-            Runtime.XIncref(doc);
-        }
     }
 }
