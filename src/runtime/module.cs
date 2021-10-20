@@ -313,7 +313,7 @@ namespace Python.Runtime
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
-            using var _value = Converter.ToPython(value, value?.GetType() ?? typeof(object));
+            using var _value = Converter.ToPythonDetectType(value);
             SetPyValue(name, _value.Borrow());
             return this;
         }
