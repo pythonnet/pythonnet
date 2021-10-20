@@ -229,13 +229,10 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Execute method
-        /// </summary>
-        /// <remarks>
-        /// Execute a Python ast and return the result as a PyObject,
+        /// Execute a Python ast and return the result as a <see cref="PyObject"/>,
         /// and convert the result to a Managed Object of given type.
         /// The ast can be either an expression or stmts.
-        /// </remarks>
+        /// </summary>
         public T Execute<T>(PyObject script, PyDict? locals = null)
         {
             Check();
@@ -245,12 +242,8 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Eval method
+        /// Evaluate a Python expression and return the result as a <see cref="PyObject"/>.
         /// </summary>
-        /// <remarks>
-        /// Evaluate a Python expression and return the result as a PyObject
-        /// or null if an exception is raised.
-        /// </remarks>
         public PyObject Eval(string code, PyDict? locals = null)
         {
             if (code is null) throw new ArgumentNullException(nameof(code));
@@ -272,7 +265,7 @@ namespace Python.Runtime
         /// Evaluate a Python expression
         /// and  convert the result to a Managed Object of given type.
         /// </remarks>
-        public T Eval<T>(string code, PyDict? locals = null)
+        public T? Eval<T>(string code, PyDict? locals = null)
         {
             Check();
             PyObject pyObj = Eval(code, locals);
