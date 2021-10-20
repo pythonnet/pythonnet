@@ -17,13 +17,13 @@ namespace Python.Runtime
         internal MaybeMethodInfo info;
         internal MethodObject m;
         internal PyObject? target;
-        internal PyType targetType;
+        internal PyType? targetType;
 
         public MethodBinding(MethodObject m, PyObject? target, PyType? targetType = null)
         {
             this.target = target;
 
-            this.targetType = targetType ?? target.GetPythonType();
+            this.targetType = targetType ?? target?.GetPythonType();
 
             this.info = null;
             this.m = m;
@@ -48,7 +48,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("No match found for given type params");
             }
 
-            var mb = new MethodBinding(self.m, self.target) { info = mi };
+            var mb = new MethodBinding(self.m, self.target, self.targetType) { info = mi };
             return new NewReference(mb.pyHandle);
         }
 
@@ -288,13 +288,6 @@ namespace Python.Runtime
             this.target = null;
             this.targetType = null!;
             base.Clear(ob);
-        }
-
-        protected override void OnSave(InterDomainContext context)
-        {
-            base.OnSave(context);
-            Runtime.XIncref(target);
-            Runtime.XIncref(targetType);
         }
     }
 }
