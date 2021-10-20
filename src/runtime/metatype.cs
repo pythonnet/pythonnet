@@ -56,7 +56,7 @@ namespace Python.Runtime
             foreach (var methodName in CustomMethods)
             {
                 var mi = typeof(MetaType).GetMethod(methodName);
-                ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+                ThunkInfo thunkInfo = Interop.GetThunk(mi);
                 _metaSlotsHodler.KeeapAlive(thunkInfo);
                 mdef = TypeManager.WriteMethodDef(mdef, methodName, thunkInfo.Address);
             }

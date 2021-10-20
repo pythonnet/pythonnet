@@ -157,18 +157,9 @@ namespace Python.Runtime
 
         internal static Dictionary<IntPtr, Delegate> allocatedThunks = new Dictionary<IntPtr, Delegate>();
 
-        internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
+        internal static ThunkInfo GetThunk(MethodInfo method)
         {
-            Type dt;
-            if (funcType != null)
-                dt = typeof(Interop).GetNestedType(funcType) as Type;
-            else
-                dt = GetPrototype(method);
-
-            if (dt == null)
-            {
-                return ThunkInfo.Empty;
-            }
+            Type dt = GetPrototype(method);
             Delegate d = Delegate.CreateDelegate(dt, method);
             return GetThunk(d);
         }
@@ -191,6 +182,9 @@ namespace Python.Runtime
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int B_I32(BorrowedReference ob);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int BB_I32(BorrowedReference ob, BorrowedReference a);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int BBB_I32(BorrowedReference ob, BorrowedReference a1, BorrowedReference a2);

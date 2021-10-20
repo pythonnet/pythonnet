@@ -652,7 +652,7 @@ namespace Python.Runtime
         private static IntPtr AddCustomMetaMethod(string name, PyType type, IntPtr mdef, SlotsHolder slotsHolder)
         {
             MethodInfo mi = typeof(MetaType).GetMethod(name);
-            ThunkInfo thunkInfo = Interop.GetThunk(mi, "BinaryFunc");
+            ThunkInfo thunkInfo = Interop.GetThunk(mi);
             slotsHolder.KeeapAlive(thunkInfo);
 
             // XXX: Hard code with mode check.
