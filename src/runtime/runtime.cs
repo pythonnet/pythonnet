@@ -134,11 +134,12 @@ namespace Python.Runtime
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             IsFinalizing = false;
-            InternString.Initialize();
 
             InitPyMembers();
 
             ABI.Initialize(PyVersion);
+
+            InternString.Initialize();
 
             GenericUtil.Reset();
             ClassManager.Reset();
@@ -176,7 +177,7 @@ namespace Python.Runtime
 
         private static void InitPyMembers()
         {
-            using (var builtinsOwned = PyImport_Import(PyIdentifier.builtins))
+            using (var builtinsOwned = PyImport_ImportModule("builtins"))
             {
                 var builtins = builtinsOwned.Borrow();
                 SetPyMember(out PyNotImplemented, PyObject_GetAttrString(builtins, "NotImplemented").StealNullable());
@@ -197,7 +198,7 @@ namespace Python.Runtime
                 // a wrapper_descriptor, even though dict.__setitem__ is.
                 //
                 // object.__init__ seems safe, though.
-                SetPyMemberTypeOf(out PyWrapperDescriptorType, PyObject_GetAttr(PyBaseObjectType, PyIdentifier.__init__).StealNullable());
+                SetPyMemberTypeOf(out PyWrapperDescriptorType, PyObject_GetAttrString(PyBaseObjectType, "__init__").StealNullable());
 
                 SetPyMember(out PySuper_Type, PyObject_GetAttrString(builtins, "super").StealNullable());
             }

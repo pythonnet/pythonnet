@@ -8,7 +8,7 @@ namespace Python.Runtime
 {
     static partial class InternString
     {
-        private static readonly Dictionary<string, PyObject> _string2interns = new();
+        private static readonly Dictionary<string, PyString> _string2interns = new();
         private static readonly Dictionary<IntPtr, string> _intern2strings = new();
         const BindingFlags PyIdentifierFieldFlags = BindingFlags.Static | BindingFlags.NonPublic;
 
@@ -37,7 +37,9 @@ namespace Python.Runtime
             Type type = typeof(PyIdentifier);
             foreach (string name in _builtinNames)
             {
-                var op = Runtime.PyUnicode_InternFromString(name).MoveToPyObject();
+                NewReference pyStr = Runtime.PyUnicode_InternFromString(name);
+                var op = new PyString(pyStr.StealOrThrow());
+                Debug.Assert(name == op.ToString());
                 SetIntern(name, op);
                 var field = type.GetField("f" + name, PyIdentifierFieldFlags)!;
                 field.SetValue(null, op.rawPtr);
@@ -48,8 +50,8 @@ namespace Python.Runtime
         {
             foreach (var entry in _string2interns)
             {
-                entry.Value.Dispose();
                 var field = typeof(PyIdentifier).GetField("f" + entry.Value, PyIdentifierFieldFlags)!;
+                entry.Value.Dispose();
                 field.SetValue(null, IntPtr.Zero);
             }
 
@@ -72,7 +74,7 @@ namespace Python.Runtime
             return _intern2strings.TryGetValue(op.DangerousGetAddress(), out s);
         }
 
-        private static void SetIntern(string s, PyObject op)
+        private static void SetIntern(string s, PyString op)
         {
             _string2interns.Add(s, op);
             _intern2strings.Add(op.rawPtr, s);
