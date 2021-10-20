@@ -42,7 +42,8 @@ namespace Python.Runtime.Codecs
         }
 
         public bool CanDecode(PyType objectType, Type targetType)
-            => objectType == Runtime.PyTupleType && this.CanEncode(targetType);
+            => PythonReferenceComparer.Instance.Equals(objectType, Runtime.PyTupleType)
+            && this.CanEncode(targetType);
 
         public bool TryDecode<T>(PyObject pyObj, out T? value)
         {

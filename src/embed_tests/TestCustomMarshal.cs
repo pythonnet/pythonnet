@@ -27,7 +27,7 @@ namespace Python.EmbeddingTest
             string s1 = Runtime.Runtime.GetManagedString(op.BorrowOrThrow());
             string s2 = Runtime.Runtime.GetManagedString(op.Borrow());
 
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(op.Borrow()));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
             Assert.AreEqual(expected, s1);
             Assert.AreEqual(expected, s2);
         }

@@ -732,6 +732,8 @@ namespace Python.Runtime
             var p = (nint*)(op.DangerousGetAddress() + ABI.RefCountOffset);
             return *p;
         }
+        [Pure]
+        internal static int Refcount32(BorrowedReference op) => checked((int)Refcount(op));
 
         /// <summary>
         /// Call specified function, and handle PythonDLL-related failures.

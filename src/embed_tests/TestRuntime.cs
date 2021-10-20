@@ -39,26 +39,26 @@ namespace Python.EmbeddingTest
             using var op = Runtime.Runtime.PyString_FromString("FooBar");
 
             // New object RefCount should be one
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(op.BorrowOrThrow()));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.BorrowOrThrow()));
 
             // Checking refcount didn't change refcount
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(op.Borrow()));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
 
             // Borrowing a reference doesn't increase refcount
             BorrowedReference p = op.Borrow();
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(p));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
 
             // Py_IncRef/Py_DecRef increase and decrease RefCount
             Runtime.Runtime.Py_IncRef(op.Borrow());
-            Assert.AreEqual(2, Runtime.Runtime.Refcount(p));
+            Assert.AreEqual(2, Runtime.Runtime.Refcount32(p));
             Runtime.Runtime.Py_DecRef(StolenReference.DangerousFromPointer(op.DangerousGetAddress()));
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(p));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
 
             // XIncref/XDecref increase and decrease RefCount
             Runtime.Runtime.XIncref(p);
-            Assert.AreEqual(2, Runtime.Runtime.Refcount(p));
+            Assert.AreEqual(2, Runtime.Runtime.Refcount32(p));
             Runtime.Runtime.XDecref(p);
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(p));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
 
             op.Dispose();
 

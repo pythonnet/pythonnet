@@ -87,9 +87,9 @@ namespace Python.EmbeddingTest
         {
             var t1 = new PyString("FooBar");
 
-            Assert.AreEqual(4, t1.Index(new PyString("a")));
-            Assert.AreEqual(5, t1.Index(new PyString("r")));
-            Assert.AreEqual(-1, t1.Index(new PyString("z")));
+            Assert.AreEqual(4, t1.Index32(new PyString("a")));
+            Assert.AreEqual(5L, t1.Index64(new PyString("r")));
+            Assert.AreEqual(-(nint)1, t1.Index(new PyString("z")));
         }
     }
 }

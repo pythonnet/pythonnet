@@ -92,7 +92,7 @@ a = MemberNamesTest()
             var typeErrResult = Assert.Throws<PythonException>(
                 () => ob.GetAttr(nameof(PyObjectTestMethods.RaisesTypeError), fallback)
             );
-            Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type.Handle);
+            Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type);
         }
     }
 
