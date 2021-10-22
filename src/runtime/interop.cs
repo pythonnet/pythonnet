@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
-using System.Text;
 
 namespace Python.Runtime
 {
@@ -29,15 +28,6 @@ namespace Python.Runtime
         }
 
         private string docStr;
-    }
-
-    [Serializable]
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class PythonMethodAttribute : Attribute
-    {
-        public PythonMethodAttribute()
-        {
-        }
     }
 
     [Serializable]
