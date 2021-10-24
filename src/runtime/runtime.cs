@@ -54,10 +54,6 @@ namespace Python.Runtime
             return prefix + "python" + suffix + ext;
         }
 
-        // set to true when python is finalizing
-        internal static object IsFinalizingLock = new object();
-        internal static bool IsFinalizing;
-
         private static bool _isInitialized = false;
 
         internal static readonly bool Is32Bit = IntPtr.Size == 4;
@@ -132,8 +128,6 @@ namespace Python.Runtime
                 }
             }
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
-
-            IsFinalizing = false;
 
             InitPyMembers();
 
@@ -470,34 +464,31 @@ namespace Python.Runtime
 
         private static void MoveClrInstancesOnwershipToPython()
         {
-            var objs = ManagedType.GetManagedObjects();
-            var copyObjs = objs.ToArray();
-            foreach (var entry in copyObjs)
+            foreach (IntPtr extensionAddr in ExtensionType.loadedExtensions.ToArray())
             {
-                ManagedType obj = entry.Key;
-                if (!objs.ContainsKey(obj))
+                var @ref = new BorrowedReference(extensionAddr);
+                var type = PyObject_TYPE(@ref);
+                ManagedType.CallTypeClear(@ref, type);
+                // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
+                // thus just be safe to give it back to GC chain.
+                if (!_PyObject_GC_IS_TRACKED(@ref))
                 {
-                    System.Diagnostics.Debug.Assert(obj.gcHandle == default);
-                    continue;
+                    PyObject_GC_Track(@ref);
                 }
-                if (entry.Value == ManagedType.TrackTypes.Extension)
-                {
-                    obj.CallTypeClear();
-                    // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
-                    // thus just be safe to give it back to GC chain.
-                    if (!_PyObject_GC_IS_TRACKED(obj.ObjectReference))
-                    {
-                        PyObject_GC_Track(obj.ObjectReference);
-                    }
-                }
-                if (obj.gcHandle.IsAllocated)
-                {
-                    obj.gcHandle.Free();
-                    ManagedType.SetGCHandle(obj.ObjectReference, default);
-                }
-                obj.gcHandle = default;
             }
-            ManagedType.ClearTrackedObjects();
+
+            foreach (IntPtr objWithGcHandle in ExtensionType.loadedExtensions.Concat(CLRObject.reflectedObjects).ToArray())
+            {
+                var @ref = new BorrowedReference(objWithGcHandle);
+                GCHandle? handle = ManagedType.TryGetGCHandle(@ref);
+                handle?.Free();
+                if (handle is not null)
+                {
+                ManagedType.SetGCHandle(@ref, default);
+                }
+            }
+
+            ExtensionType.loadedExtensions.Clear();
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

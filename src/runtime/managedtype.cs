@@ -14,77 +14,8 @@ namespace Python.Runtime
     [Serializable]
     internal abstract class ManagedType
     {
-        internal enum TrackTypes
-        {
-            Untrack,
-            Extension,
-            Wrapper,
-        }
-
-        [NonSerialized]
-        internal GCHandle gcHandle; // Native handle
-
-        internal PyObject pyHandle; // PyObject *
-        internal PyType tpHandle; // PyType *
-
         [NonSerialized]
         internal bool clearReentryGuard;
-
-        internal BorrowedReference ObjectReference
-        {
-            get
-            {
-                Debug.Assert(pyHandle != null);
-                return pyHandle.Reference;
-            }
-        }
-
-        internal BorrowedReference TypeReference
-        {
-            get
-            {
-                Debug.Assert(tpHandle != null);
-                return tpHandle.Reference;
-            }
-        }
-
-        private static readonly Dictionary<ManagedType, TrackTypes> _managedObjs = new Dictionary<ManagedType, TrackTypes>();
-
-        internal long RefCount
-        {
-            get
-            {
-                var gs = Runtime.PyGILState_Ensure();
-                try
-                {
-                    return Runtime.Refcount(pyHandle);
-                }
-                finally
-                {
-                    Runtime.PyGILState_Release(gs);
-                }
-            }
-        }
-
-        internal GCHandle AllocGCHandle(TrackTypes track = TrackTypes.Untrack)
-        {
-            gcHandle = GCHandle.Alloc(this);
-            if (track != TrackTypes.Untrack)
-            {
-                _managedObjs.Add(this, track);
-            }
-            return gcHandle;
-        }
-
-        internal void FreeGCHandle()
-        {
-            _managedObjs.Remove(this);
-            if (gcHandle.IsAllocated)
-            {
-                gcHandle.Free();
-                gcHandle = default;
-            }
-        }
 
         /// <summary>
         /// Given a Python object, return the associated managed object or null.
@@ -158,22 +89,6 @@ namespace Python.Runtime
             return managedType;
         }
 
-        public bool IsClrMetaTypeInstance()
-        {
-            Debug.Assert(Runtime.PyCLRMetaType != null);
-            return Runtime.PyObject_TYPE(ObjectReference) == Runtime.PyCLRMetaType;
-        }
-
-        internal static IDictionary<ManagedType, TrackTypes> GetManagedObjects()
-        {
-            return _managedObjs;
-        }
-
-        internal static void ClearTrackedObjects()
-        {
-            _managedObjs.Clear();
-        }
-
         internal unsafe static int PyVisit(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
             if (ob == null)
@@ -187,58 +102,50 @@ namespace Python.Runtime
         /// <summary>
         /// Wrapper for calling tp_clear
         /// </summary>
-        internal unsafe int CallTypeClear()
+        internal static unsafe int CallTypeClear(BorrowedReference ob, BorrowedReference tp)
         {
-            if (tpHandle == BorrowedReference.Null || pyHandle == BorrowedReference.Null)
-            {
-                return 0;
-            }
+            if (ob == null) throw new ArgumentNullException(nameof(ob));
+            if (tp == null) throw new ArgumentNullException(nameof(tp));
 
-            var clearPtr = Runtime.PyType_GetSlot(TypeReference, TypeSlotID.tp_clear);
+            var clearPtr = Runtime.PyType_GetSlot(tp, TypeSlotID.tp_clear);
             if (clearPtr == IntPtr.Zero)
             {
                 return 0;
             }
             var clearFunc = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
-            return clearFunc(pyHandle);
+            return clearFunc(ob);
         }
 
         /// <summary>
         /// Wrapper for calling tp_traverse
         /// </summary>
-        internal unsafe int CallTypeTraverse(Interop.BP_I32 visitproc, IntPtr arg)
+        internal static unsafe int CallTypeTraverse(BorrowedReference ob, BorrowedReference tp, Interop.BP_I32 visitproc, IntPtr arg)
         {
-            if (tpHandle == BorrowedReference.Null || pyHandle == BorrowedReference.Null)
-            {
-                return 0;
-            }
-            var traversePtr = Runtime.PyType_GetSlot(TypeReference, TypeSlotID.tp_traverse);
+            if (ob == null) throw new ArgumentNullException(nameof(ob));
+            if (tp == null) throw new ArgumentNullException(nameof(tp));
+
+            var traversePtr = Runtime.PyType_GetSlot(tp, TypeSlotID.tp_traverse);
             if (traversePtr == IntPtr.Zero)
             {
                 return 0;
             }
             var traverseFunc = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr, int>)traversePtr;
             var visiPtr = Marshal.GetFunctionPointerForDelegate(visitproc);
-            return traverseFunc(pyHandle, visiPtr, arg);
+            return traverseFunc(ob, visiPtr, arg);
         }
 
-        protected void TypeClear()
+        internal void Save(BorrowedReference ob, InterDomainContext context)
         {
-            ClearObjectDict(ObjectReference);
+            OnSave(ob, context);
         }
 
-        internal void Save(InterDomainContext context)
+        internal void Load(BorrowedReference ob, InterDomainContext context)
         {
-            OnSave(context);
+            OnLoad(ob, context);
         }
 
-        internal void Load(InterDomainContext context)
-        {
-            OnLoad(context);
-        }
-
-        protected virtual void OnSave(InterDomainContext context) { }
-        protected virtual void OnLoad(InterDomainContext context) { }
+        protected virtual void OnSave(BorrowedReference ob, InterDomainContext context) { }
+        protected virtual void OnLoad(BorrowedReference ob, InterDomainContext context) { }
 
         protected static void ClearObjectDict(BorrowedReference ob)
         {

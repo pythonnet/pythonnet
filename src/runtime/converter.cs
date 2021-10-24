@@ -140,8 +140,8 @@ namespace Python.Runtime
 
             if (type.IsInterface)
             {
-                var ifaceObj = (InterfaceObject)ClassManager.GetClass(type);
-                return ifaceObj.WrapObject(value);
+                var ifaceObj = (InterfaceObject)ClassManager.GetClassImpl(type);
+                return ifaceObj.TryWrapObject(value);
             }
 
             if (type.IsArray || type.IsEnum)
@@ -163,7 +163,7 @@ namespace Python.Runtime
             // pyHandle as is, do not convert.
             if (value is ModuleObject modobj)
             {
-                return new NewReference(modobj.ObjectReference);
+                throw new NotImplementedException();
             }
 
             // hmm - from Python, we almost never care what the declared

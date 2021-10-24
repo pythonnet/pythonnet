@@ -3,7 +3,7 @@
   <Class Name="Python.Runtime.ClassBase" Collapsed="true">
     <Position X="15" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>FAAAAgAIAAAEDAAAAAAAAEACIACJAAIAAAAAAAIAAAQ=</HashCode>
+      <HashCode>VAAAAgAIAAAEDAAAAAAAAEACIACLAAIAAAAAAAIAoBU=</HashCode>
       <FileName>classbase.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -17,7 +17,7 @@
   <Class Name="Python.Runtime.ArrayObject" Collapsed="true">
     <Position X="10.5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAABAAAAAAAAAAACAAIAAJAAAAIAAAAACAAAI=</HashCode>
+      <HashCode>AAQAgAAAABAQAAAAAAAARGAAMgAJAAAAJAACACSABAI=</HashCode>
       <FileName>arrayobject.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -31,28 +31,28 @@
   <Class Name="Python.Runtime.BoundContructor" Collapsed="true">
     <Position X="29.5" Y="4.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAACAAAAAAABABAAAAACAAAABAJAEAAAAAAAAIAAAA=</HashCode>
+      <HashCode>AAAACAAAAAAAAABAAAAACAAAABAJAAAAAAAAAAJAAAA=</HashCode>
       <FileName>constructorbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.CLRObject" Collapsed="true">
     <Position X="18.25" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>EAAAAAAAAAAAAAAAAAACAAACBIAAAAJAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAACAAACAIAAAAIAAAAAAAAAABA=</HashCode>
       <FileName>clrobject.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.CLRModule" Collapsed="true">
     <Position X="25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAEAgIAQABAAAAABAAAAAIAIAAAAAAhAQAAAAKBA=</HashCode>
+      <HashCode>AAAAAEIgIAQABAAAAABAAAAAIAIAAAAgAhAQAAAAKBA=</HashCode>
       <FileName>moduleobject.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.ConstructorBinding" Collapsed="true">
     <Position X="29.5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAACAAAAAAABAAAAAAACAAAABAJAEAAAAAAAAIAEAA=</HashCode>
+      <HashCode>AAAACAAAAAAAAAAAAAAACAAAABAJAAAAAAAAAAJAEAA=</HashCode>
       <FileName>constructorbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -74,14 +74,14 @@
       </Path>
     </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAADAAAIAAAEABAAAAAAAACAAAAAAIAAAQ=</HashCode>
+      <HashCode>AAAAAAAAAAAACAAAIAAAEABAAAAAAAACAAAAAAJAAAA=</HashCode>
       <FileName>eventbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.EventObject" Collapsed="true">
     <Position X="22.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAACAAAAAAAAAAAAAAIAAIAAAAAEAAAAQABAAAIBEAQ=</HashCode>
+      <HashCode>AAACAAAAAAAAAAAAAAIAAIAAAAAEAAAAQABAAAJBEAA=</HashCode>
       <FileName>eventobject.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -95,7 +95,7 @@
   <Class Name="Python.Runtime.ExtensionType" Collapsed="true">
     <Position X="27.5" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAACAAAAAEEBAAAAAAABAAQ=</HashCode>
+      <HashCode>AAAAAAAAAAAABAAAAAAAAAgCAAAAAEEBAAAAAABAABQ=</HashCode>
       <FileName>extensiontype.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -116,14 +116,14 @@
   <Class Name="Python.Runtime.ManagedType" Collapsed="true">
     <Position X="25" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>UCBBgoBAIUgAAAEAACAAsAACAgAIABIAQYAAACIYIBA=</HashCode>
+      <HashCode>UCBBgIAAAUgAAAAAASAAMACCAAAIABIAAZAAAAIYABA=</HashCode>
       <FileName>managedtype.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.MetaType" Collapsed="true">
     <Position X="20.5" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AQAAAAAICBAAAQBAAAABAAIAAgABAAABAAAAUBCAAAQ=</HashCode>
+      <HashCode>AQAAAAAICBAAAQBAAAABAAIAAgABAAABAAAAUBCAABQ=</HashCode>
       <FileName>metatype.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -138,14 +138,14 @@
       </Path>
     </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>EAAAAAAAAIAADABAIAAAAAAAAAgBAAAAUgAAAAIAAAQ=</HashCode>
+      <HashCode>AAAAAAAAAIAACABAIAAAAAAAAAABAAAAUgAAAAJAAAE=</HashCode>
       <FileName>methodbinding.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Python.Runtime.MethodObject" Collapsed="true">
     <Position X="33.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>FIADAAAAAAAIBAAAIAAIAAAIAAgFAAAAUAAgAAIAEAQ=</HashCode>
+      <HashCode>BIADAAAAAAAIAAAAIAAIAAAIAAAFAAAAUAAgAAJAFAA=</HashCode>
       <FileName>methodobject.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -159,7 +159,7 @@
   <Class Name="Python.Runtime.ModuleObject" Collapsed="true">
     <Position X="25" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>ECCCCkAAAAAABAAAAAABAAACAAAIAIIAEAAAAAIACAQ=</HashCode>
+      <HashCode>ECCCCkAAgAAAAAAAAAABAAgCAABIAAIBEAAAAAJACAA=</HashCode>
       <FileName>moduleobject.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -188,7 +188,7 @@
       </Path>
     </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAIAAAAAAAAAABAAAAAgAAAAIAAAQ=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAIAAAAAAAAAABAAAAAgAAAAJAAAA=</HashCode>
       <FileName>overload.cs</FileName>
     </TypeIdentifier>
   </Class>

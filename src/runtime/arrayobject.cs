@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// to support natural array usage (indexing) from Python.
     /// </summary>
     [Serializable]
-    internal class ArrayObject : ClassBase
+    internal sealed class ArrayObject : ClassBase
     {
         internal ArrayObject(Type tp) : base(tp)
         {

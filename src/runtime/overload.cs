@@ -43,7 +43,7 @@ namespace Python.Runtime
             }
 
             var mb = new MethodBinding(self.m, self.target) { info = mi };
-            return new NewReference(mb.pyHandle);
+            return mb.Alloc();
         }
 
         /// <summary>

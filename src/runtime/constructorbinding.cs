@@ -77,7 +77,7 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("How in the world could that happen!");
                 }
             }*/
-            return new NewReference(self.pyHandle);
+            return new NewReference(op);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
             var boundCtor = new BoundContructor(tp, self.typeToCreate, self.ctorBinder, ci);
-            return new NewReference(boundCtor.pyHandle);
+            return boundCtor.Alloc();
         }
 
         /// <summary>

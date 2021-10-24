@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// types. It also provides support for single-inheritance from reflected
     /// managed types.
     /// </summary>
-    internal class MetaType : ManagedType
+    internal sealed class MetaType : ManagedType
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         // set in Initialize

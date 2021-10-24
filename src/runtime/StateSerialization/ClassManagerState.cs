@@ -7,5 +7,5 @@ namespace Python.Runtime.StateSerialization;
 internal class ClassManagerState
 {
     public Dictionary<PyType, InterDomainContext> Contexts { get; set; }
-    public Dictionary<MaybeType, ClassBase> Cache { get; set; }
+    public Dictionary<MaybeType, PyType> Cache { get; set; }
 }

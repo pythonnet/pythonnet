@@ -13,7 +13,8 @@ namespace Python.Runtime
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         // set in Initialize
-        private static CLRModule root;
+        private static PyObject root;
+        private static CLRModule clrModule;
         private static PyModule py_clr_module;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static BorrowedReference ClrModuleReference => py_clr_module.Reference;
@@ -57,14 +58,14 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         internal static unsafe void Initialize()
         {
             // Initialize the clr module and tell Python about it.
-            root = new CLRModule();
+            root = CLRModule.Create(out clrModule).MoveToPyObject();
 
             // create a python module with the same methods as the clr module-like object
             py_clr_module = new PyModule(Runtime.PyModule_New("clr").StealOrThrow());
 
             // both dicts are borrowed references
             BorrowedReference mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            using var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference);
+            using var clr_dict = Runtime.PyObject_GenericGetDict(root);
 
             Runtime.PyDict_Update(mod_dict, clr_dict.BorrowOrThrow());
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
@@ -87,7 +88,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             TeardownNameSpaceTracking();
             Runtime.Py_CLEAR(ref py_clr_module!);
 
-            root.pyHandle.Dispose();
+            root.Dispose();
             root = null!;
             CLRModule.Reset();
         }
@@ -115,7 +116,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             return new()
             {
                 PyCLRModule = py_clr_module,
-                Root = root.pyHandle,
+                Root = new PyObject(root),
                 Modules = GetDotNetModules(),
             };
         }
@@ -138,7 +139,8 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         {
             py_clr_module = storage.PyCLRModule;
             var rootHandle = storage.Root;
-            root = (CLRModule)ManagedType.GetManagedObject(rootHandle)!;
+            root = new PyObject(rootHandle);
+            clrModule = (CLRModule)ManagedType.GetManagedObject(rootHandle)!;
             BorrowedReference dict = Runtime.PyImport_GetModuleDict();
             Runtime.PyDict_SetItemString(dict, "clr", ClrModuleReference);
             SetupNamespaceTracking();
@@ -193,7 +195,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
-                if (Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.Borrow()) != 0)
+                if (Runtime.PyDict_SetItemString(clrModule.dict, availableNsKey, newset.Borrow()) != 0)
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
@@ -207,7 +209,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         static void TeardownNameSpaceTracking()
         {
             // If the C# runtime isn't loaded, then there are no namespaces available
-            Runtime.PyDict_SetItemString(root.dict, availableNsKey, Runtime.PyNone);
+            Runtime.PyDict_SetItemString(clrModule.dict, availableNsKey, Runtime.PyNone);
         }
 
         static readonly ConcurrentQueue<string> addPending = new();
@@ -227,7 +229,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         internal static void AddNamespaceWithGIL(string name)
         {
             using var pyNs = Runtime.PyString_FromString(name);
-            var nsSet = Runtime.PyDict_GetItemString(root.dict, availableNsKey);
+            var nsSet = Runtime.PyDict_GetItemString(clrModule.dict, availableNsKey);
             if (!(nsSet.IsNull  || nsSet == Runtime.PyNone))
             {
                 if (Runtime.PySet_Add(nsSet, pyNs.BorrowOrThrow()) != 0)
@@ -244,12 +246,12 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         /// </summary>
         internal static void UpdateCLRModuleDict()
         {
-            root.InitializePreload();
+            clrModule.InitializePreload();
 
             // update the module dictionary with the contents of the root dictionary
-            root.LoadNames();
+            clrModule.LoadNames();
             BorrowedReference py_mod_dict = Runtime.PyModule_GetDict(ClrModuleReference);
-            using var clr_dict = Runtime.PyObject_GenericGetDict(root.ObjectReference);
+            using var clr_dict = Runtime.PyObject_GenericGetDict(root);
             Runtime.PyDict_Update(py_mod_dict, clr_dict.BorrowOrThrow());
         }
 
@@ -279,29 +281,29 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             // setting clr.preload = True
 
             ModuleObject? head = null;
-            ModuleObject tail = root;
-            root.InitializePreload();
+            ModuleObject tail = clrModule;
+            clrModule.InitializePreload();
 
             string[] names = modname.Split('.');
             foreach (string name in names)
             {
-                ManagedType mt = tail.GetAttribute(name, true);
-                if (!(mt is ModuleObject))
+                using var nested = tail.GetAttribute(name, true);
+                if (nested.IsNull() || ManagedType.GetManagedObject(nested.Borrow()) is not ModuleObject module)
                 {
                     Exceptions.SetError(Exceptions.ImportError, $"'{name}' Is not a ModuleObject.");
                     throw PythonException.ThrowLastAsClrException();
                 }
                 if (head == null)
                 {
-                    head = (ModuleObject)mt;
+                    head = module;
                 }
-                tail = (ModuleObject)mt;
+                tail = module;
                 if (CLRModule.preload)
                 {
                     tail.LoadNames();
                 }
             }
-            return new PyObject(tail.ObjectReference);
+            return tail.Alloc().MoveToPyObject();
         }
     }
 }

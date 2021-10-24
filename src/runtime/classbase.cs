@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -23,12 +24,6 @@ namespace Python.Runtime
         internal Indexer? indexer;
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
-
-        internal new PyType pyHandle
-        {
-            get => (PyType)base.pyHandle;
-            set => base.pyHandle = value;
-        }
 
         internal ClassBase(Type tp)
         {
@@ -83,8 +78,8 @@ namespace Python.Runtime
                 {
                     return Exceptions.RaiseTypeError(e.Message);
                 }
-                ManagedType c = ClassManager.GetClass(t);
-                return new NewReference(c.ObjectReference);
+                var c = ClassManager.GetClass(t);
+                return new NewReference(c);
             }
 
             return Exceptions.RaiseTypeError($"{type.Value.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
@@ -254,7 +249,7 @@ namespace Python.Runtime
                 }
             }
 
-            return new NewReference(new Iterator(o, elemType).ObjectReference);
+            return new Iterator(o, elemType).Alloc();
         }
 
 
@@ -339,11 +334,16 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
-            ManagedType self = GetManagedObject(lastRef.Borrow())!;
+            var self = (CLRObject)GetManagedObject(lastRef.Borrow())!;
+            GCHandle gcHandle = GetGCHandle(lastRef.Borrow());
             tp_clear(lastRef.Borrow());
             Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
             Runtime.PyObject_GC_Del(lastRef.Steal());
-            self?.FreeGCHandle();
+
+            bool deleted = CLRObject.reflectedObjects.Remove(lastRef.DangerousGetAddress());
+            Debug.Assert(deleted);
+
+            gcHandle.Free();
         }
 
         public static int tp_clear(BorrowedReference ob)
@@ -399,26 +399,17 @@ namespace Python.Runtime
             return clear(ob);
         }
 
-        protected override void OnSave(InterDomainContext context)
+        protected override void OnSave(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnSave(context);
-            if (!this.IsClrMetaTypeInstance())
-            {
-                BorrowedReference dict = GetObjectDict(ObjectReference);
-                context.Storage.AddValue("dict", PyObject.FromNullableReference(dict));
-            }
+            base.OnSave(ob, context);
+            context.Storage.AddValue("impl", this);
         }
 
-        protected override void OnLoad(InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnLoad(context);
-            if (!this.IsClrMetaTypeInstance())
-            {
-                var dict = context.Storage.GetValue<PyObject>("dict");
-                SetObjectDict(ObjectReference, dict.NewReferenceOrNull().StealNullable());
-            }
-            gcHandle = AllocGCHandle();
-            SetGCHandle(ObjectReference, gcHandle);
+            base.OnLoad(ob, context);
+            var gcHandle = GCHandle.Alloc(this);
+            SetGCHandle(ob, gcHandle);
         }
 
 
@@ -539,14 +530,14 @@ namespace Python.Runtime
             => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.Name == "__call__");
 
-        public virtual void InitializeSlots(SlotsHolder slotsHolder)
+        public virtual void InitializeSlots(BorrowedReference pyType, SlotsHolder slotsHolder)
         {
             if (!this.type.Valid) return;
 
             if (GetCallImplementations(this.type.Value).Any()
                 && !slotsHolder.IsHolding(TypeOffset.tp_call))
             {
-                TypeManager.InitializeSlot(ObjectReference, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
+                TypeManager.InitializeSlot(pyType, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
             }
         }
     }

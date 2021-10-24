@@ -49,7 +49,7 @@ namespace Python.Runtime
             }
 
             var mb = new MethodBinding(self.m, self.target, self.targetType) { info = mi };
-            return new NewReference(mb.pyHandle);
+            return mb.Alloc();
         }
 
         PyObject Signature
@@ -136,7 +136,7 @@ namespace Python.Runtime
                 case "__overloads__":
                 case "Overloads":
                     var om = new OverloadMapper(self.m, self.target);
-                    return new NewReference(om.pyHandle);
+                    return om.Alloc();
                 case "__signature__" when Runtime.InspectModule is not null:
                     var sig = self.Signature;
                     if (sig is null)
@@ -263,12 +263,7 @@ namespace Python.Runtime
                 }
             }
 
-            nint y = Runtime.PyObject_Hash(self.m.pyHandle);
-            if (y == -1)
-            {
-                return y;
-            }
-
+            nint y = self.m.GetHashCode();
             return x ^ y;
         }
 

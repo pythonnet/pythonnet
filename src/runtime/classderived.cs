@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -6,9 +7,11 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+using System.Threading;
 
 using Python.Runtime.Native;
+
+using static Python.Runtime.PythonDerivedType;
 
 namespace Python.Runtime
 {
@@ -71,17 +74,16 @@ namespace Python.Runtime
             var self = (CLRObject)GetManagedObject(ob.Borrow())!;
 
             // don't let the python GC destroy this object
-            Runtime.PyObject_GC_UnTrack(self.pyHandle);
+            Runtime.PyObject_GC_UnTrack(ob.Borrow());
 
             // The python should now have a ref count of 0, but we don't actually want to
             // deallocate the object until the C# object that references it is destroyed.
             // So we don't call PyObject_GC_Del here and instead we set the python
             // reference to a weak reference so that the C# object can be collected.
+            GCHandle oldHandle = GetGCHandle(ob.Borrow());
             GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
-            Debug.Assert(self.TypeReference == Runtime.PyObject_TYPE(self.ObjectReference));
-            SetGCHandle(self.ObjectReference, self.TypeReference, gc);
-            self.gcHandle.Free();
-            self.gcHandle = gc;
+            SetGCHandle(ob.Borrow(), gc);
+            oldHandle.Free();
         }
 
         /// <summary>
@@ -92,26 +94,26 @@ namespace Python.Runtime
         {
             // derived types have a __pyobj__ field that gets set to the python
             // object in the overridden constructor
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            var self = (CLRObject)fi.GetValue(obj);
+            var self = GetPyObj(obj); 
 
-            var result = new NewReference(self.ObjectReference);
+            var result = new NewReference(self);
 
             // when the C# constructor creates the python object it starts as a weak
             // reference with a reference count of 0. Now we're passing this object
             // to Python the reference count needs to be incremented and the reference
             // needs to be replaced with a strong reference to stop the C# object being
             // collected while Python still has a reference to it.
-            if (Runtime.Refcount(result.Borrow()) == 1)
+            if (Runtime.Refcount(self) == 1)
             {
-                Runtime._Py_NewReference(self.ObjectReference);
-                GCHandle gc = GCHandle.Alloc(self, GCHandleType.Normal);
-                SetGCHandle(self.ObjectReference, self.TypeReference, gc);
-                self.gcHandle.Free();
-                self.gcHandle = gc;
+                Runtime._Py_NewReference(self);
+                GCHandle weak = GetGCHandle(self);
+                var clrObject = GetManagedObject(self);
+                GCHandle gc = GCHandle.Alloc(clrObject, GCHandleType.Normal);
+                SetGCHandle(self, gc);
+                weak.Free();
 
                 // now the object has a python reference it's safe for the python GC to track it
-                Runtime.PyObject_GC_Track(self.pyHandle);
+                Runtime.PyObject_GC_Track(self);
             }
 
             return result.AnalyzerWorkaround();
@@ -160,7 +162,7 @@ namespace Python.Runtime
 
             // add a field for storing the python object pointer
             // FIXME: fb not used
-            FieldBuilder fb = typeBuilder.DefineField("__pyobj__", typeof(CLRObject), FieldAttributes.Public);
+            FieldBuilder fb = typeBuilder.DefineField("__pyobj__", typeof(IntPtr), FieldAttributes.Public);
 
             // override any constructors
             ConstructorInfo[] constructors = baseClass.GetConstructors();
@@ -257,7 +259,7 @@ namespace Python.Runtime
             ILGenerator il = methodBuilder.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
-            il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("Finalize"));
+            il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(PyFinalize)));
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
@@ -331,7 +333,7 @@ namespace Python.Runtime
             }
             il.Emit(OpCodes.Ldloc_0);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
-            il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeCtor"));
+            il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(InvokeCtor)));
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Ret);
         }
@@ -645,8 +647,7 @@ namespace Python.Runtime
         /// </summary>
         public static T InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName, object[] args)
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            var self = (CLRObject)fi.GetValue(obj);
+            var self = GetPyObj(obj);
 
             if (null != self)
             {
@@ -654,15 +655,8 @@ namespace Python.Runtime
                 PyGILState gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    var pyself = new PyObject(self.ObjectReference);
-                    disposeList.Add(pyself);
-
-                    Runtime.XIncref(Runtime.PyNone);
-                    var pynone = new PyObject(Runtime.PyNone);
-                    disposeList.Add(pynone);
-
-                    PyObject method = pyself.GetAttr(methodName, pynone);
-                    disposeList.Add(method);
+                    using var pyself = new PyObject(self);
+                    using PyObject method = pyself.GetAttr(methodName, Runtime.PyNone);
                     if (method.Reference != Runtime.PyNone)
                     {
                         // if the method hasn't been overridden then it will be a managed object
@@ -707,22 +701,15 @@ namespace Python.Runtime
         public static void InvokeMethodVoid(IPythonDerivedType obj, string methodName, string origMethodName,
             object[] args)
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            var self = (CLRObject)fi.GetValue(obj);
+            var self = GetPyObj(obj);
             if (null != self)
             {
                 var disposeList = new List<PyObject>();
                 PyGILState gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    var pyself = new PyObject(self.ObjectReference);
-                    disposeList.Add(pyself);
-
-                    Runtime.XIncref(Runtime.PyNone);
-                    var pynone = new PyObject(Runtime.PyNone);
-                    disposeList.Add(pynone);
-
-                    PyObject method = pyself.GetAttr(methodName, pynone);
+                    using var pyself = new PyObject(self);
+                    PyObject method = pyself.GetAttr(methodName, Runtime.PyNone);
                     disposeList.Add(method);
                     if (method.Reference != Runtime.PyNone)
                     {
@@ -767,8 +754,7 @@ namespace Python.Runtime
 
         public static T InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            var self = (CLRObject)fi.GetValue(obj);
+            var self = GetPyObj(obj);
 
             if (null == self)
             {
@@ -778,7 +764,7 @@ namespace Python.Runtime
             PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
-                using var pyself = new PyObject(self.ObjectReference);
+                using var pyself = new PyObject(self);
                 using (PyObject pyvalue = pyself.GetAttr(propertyName))
                 {
                     return pyvalue.As<T>();
@@ -792,8 +778,7 @@ namespace Python.Runtime
 
         public static void InvokeSetProperty<T>(IPythonDerivedType obj, string propertyName, T value)
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            var self = (CLRObject)fi.GetValue(obj);
+            var self = GetPyObj(obj);
 
             if (null == self)
             {
@@ -803,7 +788,7 @@ namespace Python.Runtime
             PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
-                using var pyself = new PyObject(self.ObjectReference);
+                using var pyself = new PyObject(self);
                 using var pyvalue = Converter.ToPythonImplicit(value).MoveToPyObject();
                 pyself.SetAttr(propertyName, pyvalue);
             }
@@ -822,77 +807,96 @@ namespace Python.Runtime
                 obj,
                 args);
 
-            CLRObject? self = null;
+            NewReference self = default;
             PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
                 // create the python object
                 var type = TypeManager.GetType(obj.GetType());
-                self = new CLRObject(obj, type);
+                self = CLRObject.GetReference(obj, type);
 
                 // set __pyobj__ to self and deref the python object which will allow this
                 // object to be collected.
-                FieldInfo fi = obj.GetType().GetField("__pyobj__");
-                fi.SetValue(obj, self);
+                SetPyObj(obj, self.Borrow());
             }
             finally
             {
                 // Decrement the python object's reference count.
                 // This doesn't actually destroy the object, it just sets the reference to this object
                 // to be a weak reference and it will be destroyed when the C# object is destroyed.
-                if (null != self)
+                if (!self.IsNull())
                 {
-                    Runtime.XDecref(self.pyHandle);
+                    Runtime.XDecref(self.Steal());
                 }
 
                 Runtime.PyGILState_Release(gs);
             }
         }
 
-        public static void Finalize(IPythonDerivedType obj)
+        static readonly ConcurrentQueue<IntPtr> finalizeQueue = new();
+        static readonly Lazy<Thread> derivedFinalizer = new(() =>
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            var self = (CLRObject)fi.GetValue(obj);
+           var thread = new Thread(DerivedFinalizerMain)
+           {
+               IsBackground = true,
+           };
+           thread.Start();
+           return thread;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-            // If python's been terminated then just free the gchandle.
-            lock (Runtime.IsFinalizingLock)
+        static void DerivedFinalizerMain()
+        {
+            while (true)
             {
-                if (0 == Runtime.Py_IsInitialized() || Runtime.IsFinalizing)
+                if (0 == Runtime.Py_IsInitialized())
                 {
-                    if (self.gcHandle.IsAllocated) self.gcHandle.Free();
-                    return;
+                    Thread.Sleep(millisecondsTimeout: 1000);
+                }
+
+                PyGILState gs = Runtime.PyGILState_Ensure();
+                try
+                {
+                    while (finalizeQueue.Count > 0)
+                    {
+                        finalizeQueue.TryDequeue(out IntPtr obj);
+                        var @ref = new BorrowedReference(obj);
+                        GCHandle gcHandle = ManagedType.GetGCHandle(@ref);
+
+                        bool deleted = CLRObject.reflectedObjects.Remove(obj);
+                        Debug.Assert(deleted);
+                        Runtime.PyObject_GC_Del(@ref);
+
+                        gcHandle.Free();
+                    }
+
+                }
+                finally
+                {
+                    Runtime.PyGILState_Release(gs);
                 }
             }
+        }
+        public static void PyFinalize(IPythonDerivedType obj)
+        {
+            // the C# object is being destroyed which must mean there are no more
+            // references to the Python object as well
+            var self = GetPyObj(obj).DangerousGetAddress();
+            finalizeQueue.Enqueue(self);
+            SetPyObj(obj, null);
 
-            // delete the python object in an async task as we may not be able to acquire
-            // the GIL immediately and we don't want to block the GC thread.
-            // FIXME: t isn't used
-            Task t = Task.Factory.StartNew(() =>
-            {
-                lock (Runtime.IsFinalizingLock)
-                {
-                    // If python's been terminated then just free the gchandle.
-                    if (0 == Runtime.Py_IsInitialized() || Runtime.IsFinalizing)
-                    {
-                        if (self.gcHandle.IsAllocated) self.gcHandle.Free();
-                        return;
-                    }
+            GC.KeepAlive(derivedFinalizer.Value);
+        }
 
-                    PyGILState gs = Runtime.PyGILState_Ensure();
-                    try
-                    {
-                        // the C# object is being destroyed which must mean there are no more
-                        // references to the Python object as well so now we can dealloc the
-                        // python object.
-                        Runtime.PyObject_GC_Del(self.pyHandle);
-                        self.gcHandle.Free();
-                    }
-                    finally
-                    {
-                        Runtime.PyGILState_Release(gs);
-                    }
-                }
-            });
+        internal static BorrowedReference GetPyObj(IPythonDerivedType obj)
+        {
+            FieldInfo fi = obj.GetType().GetField("__pyobj__");
+            return new BorrowedReference((IntPtr)fi.GetValue(obj));
+        }
+
+        static void SetPyObj(IPythonDerivedType obj, BorrowedReference pyObj)
+        {
+            FieldInfo fi = obj.GetType().GetField("__pyobj__");
+            fi.SetValue(obj, pyObj.DangerousGetAddressOrNull());
         }
     }
 }

@@ -36,7 +36,7 @@ namespace Python.Runtime
                 return default;
             }
 
-            return new NewReference(self.pyHandle);
+            return new NewReference(ob);
         }
 
 
@@ -58,7 +58,7 @@ namespace Python.Runtime
                 return default;
             }
 
-            return new NewReference(self.pyHandle);
+            return new NewReference(ob);
         }
 
 
@@ -79,12 +79,7 @@ namespace Python.Runtime
                 }
             }
 
-            nint y = Runtime.PyObject_Hash(self.e.pyHandle);
-            if (y == -1)
-            {
-                return y;
-            }
-
+            nint y = self.e.GetHashCode();
             return x ^ y;
         }
 

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -34,7 +33,7 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        private static Dictionary<MaybeType, ClassBase> cache = new(capacity: 128);
+        private static Dictionary<MaybeType, PyType> cache = new(capacity: 128);
         private static readonly Type dtype;
 
         private ClassManager()
@@ -68,8 +67,9 @@ namespace Python.Runtime
                     // but not dealloc itself immediately.
                     // These managed resources should preserve vacant shells
                     // since others may still referencing it.
-                    cls.CallTypeTraverse(TraverseTypeClear, visitedPtr);
-                    cls.CallTypeClear();
+                    BorrowedReference meta = Runtime.PyObject_TYPE(cls);
+                    ManagedType.CallTypeTraverse(cls, meta, TraverseTypeClear, visitedPtr);
+                    ManagedType.CallTypeClear(cls, meta);
                 }
             }
             finally
@@ -89,8 +89,9 @@ namespace Python.Runtime
             var clrObj = ManagedType.GetManagedObject(ob);
             if (clrObj != null)
             {
-                clrObj.CallTypeTraverse(TraverseTypeClear, arg);
-                clrObj.CallTypeClear();
+                BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+                ManagedType.CallTypeTraverse(ob, tp, TraverseTypeClear, arg);
+                ManagedType.CallTypeClear(ob, tp);
             }
             return 0;
         }
@@ -105,8 +106,9 @@ namespace Python.Runtime
                     // Don't serialize an invalid class
                     continue;
                 }
-                var context = contexts[cls.Value.pyHandle] = new InterDomainContext();
-                cls.Value.Save(context);
+                var context = contexts[cls.Value] = new InterDomainContext();
+                var cb = (ClassBase)ManagedType.GetManagedObject(cls.Value)!;
+                cb.Save(cls.Value, context);
 
                 // Remove all members added in InitBaseClass.
                 // this is done so that if domain reloads and a member of a
@@ -114,8 +116,8 @@ namespace Python.Runtime
                 // Python object's dictionary tool; thus raising an AttributeError
                 // instead of a TypeError.
                 // Classes are re-initialized on in RestoreRuntimeData.
-                using var dict = Runtime.PyObject_GenericGetDict(cls.Value.TypeReference);
-                foreach (var member in cls.Value.dotNetMembers)
+                using var dict = Runtime.PyObject_GenericGetDict(cls.Value);
+                foreach (var member in cb.dotNetMembers)
                 {
                     // No need to decref the member, the ClassBase instance does 
                     // not own the reference.
@@ -132,7 +134,7 @@ namespace Python.Runtime
                     }
                 }
                 // We modified the Type object, notify it we did.
-                Runtime.PyType_Modified(cls.Value.TypeReference);
+                Runtime.PyType_Modified(cls.Value);
             }
 
             return new()
@@ -142,12 +144,11 @@ namespace Python.Runtime
             };
         }
 
-        internal static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeData(ClassManagerState storage)
+        internal static void RestoreRuntimeData(ClassManagerState storage)
         {
             cache = storage.Cache;
-            var invalidClasses = new List<KeyValuePair<MaybeType, ClassBase>>();
+            var invalidClasses = new List<KeyValuePair<MaybeType, PyType>>();
             var contexts = storage.Contexts;
-            var loadedObjs = new Dictionary<ManagedType, InterDomainContext>();
             foreach (var pair in cache)
             {
                 if (!pair.Key.Valid)
@@ -158,49 +159,57 @@ namespace Python.Runtime
                 // Ensure, that matching Python type exists first.
                 // It is required for self-referential classes
                 // (e.g. with members, that refer to the same class)
-                var pyType = InitPyType(pair.Key.Value, pair.Value);
+                var cb = (ClassBase)ManagedType.GetManagedObject(pair.Value)!;
+                var pyType = InitPyType(pair.Key.Value, cb);
                 // re-init the class
-                InitClassBase(pair.Key.Value, pair.Value, pyType);
+                InitClassBase(pair.Key.Value, cb, pyType);
                 // We modified the Type object, notify it we did.
-                Runtime.PyType_Modified(pair.Value.TypeReference);
-                var context = contexts[pair.Value.pyHandle];
-                pair.Value.Load(context);
+                Runtime.PyType_Modified(pair.Value);
+                var context = contexts[pair.Value];
+                cb.Load(pyType, context);
                 var slotsHolder = TypeManager.GetSlotsHolder(pyType);
-                pair.Value.InitializeSlots(slotsHolder);
-                Runtime.PyType_Modified(pair.Value.TypeReference);
-                loadedObjs.Add(pair.Value, context);
+                cb.InitializeSlots(pyType, slotsHolder);
+                Runtime.PyType_Modified(pair.Value);
             }
             
             foreach (var pair in invalidClasses)
             {
                 cache.Remove(pair.Key);
-                pair.Value.pyHandle.Dispose();
+                pair.Value.Dispose();
             }
-
-            return loadedObjs;
         }
 
         /// <summary>
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
-        /// <returns>A Borrowed reference to the ClassBase object</returns>
-        internal static ClassBase GetClass(Type type)
+        internal static PyType GetClass(Type type, out ClassBase cb)
         {
-            cache.TryGetValue(type, out var cb);
-            if (cb != null)
+            cache.TryGetValue(type, out var pyType);
+            if (pyType != null)
             {
-                return cb;
+                cb = (ClassBase)ManagedType.GetManagedObject(pyType)!;
+                return pyType;
             }
             cb = CreateClass(type);
-            cache.Add(type, cb);
             // Ensure, that matching Python type exists first.
             // It is required for self-referential classes
             // (e.g. with members, that refer to the same class)
-            var pyType = InitPyType(type, cb);
+            pyType = InitPyType(type, cb);
+            cache.Add(type, pyType);
             // Initialize the object later, as this might call this GetClass method
             // recursively (for example when a nested class inherits its declaring class...)
             InitClassBase(type, cb, pyType);
+            return pyType;
+        }
+        /// <summary>
+        /// Return the ClassBase-derived instance that implements a particular
+        /// reflected managed type, creating it if it doesn't yet exist.
+        /// </summary>
+        internal static PyType GetClass(Type type) => GetClass(type, out _);
+        internal static ClassBase GetClassImpl(Type type)
+        {
+            GetClass(type, out var cb);
             return cb;
         }
 
@@ -265,12 +274,7 @@ namespace Python.Runtime
 
         private static PyType InitPyType(Type type, ClassBase impl)
         {
-            var pyType = TypeManager.GetOrCreateClass(type);
-
-            // Set the handle attributes on the implementing instance.
-            impl.pyHandle = impl.tpHandle = pyType;
-
-            return pyType;
+            return TypeManager.GetOrCreateClass(type);
         }
 
         private static void InitClassBase(Type type, ClassBase impl, PyType pyType)
@@ -294,16 +298,27 @@ namespace Python.Runtime
             using var newDict = Runtime.PyObject_GenericGetDict(pyType.Reference);
             BorrowedReference dict = newDict.Borrow();
 
-
-            IDictionaryEnumerator iter = info.members.GetEnumerator();
-            while (iter.MoveNext())
+            foreach (var iter in info.members)
             {
-                var item = (ManagedType)iter.Value;
-                var name = (string)iter.Key;
+                var item = iter.Value;
+                var name = iter.Key;
                 impl.dotNetMembers.Add(name);
-                Runtime.PyDict_SetItemString(dict, name, item.ObjectReference);
-                // Decref the item now that it's been used.
-                if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)) {
+                switch (item)
+                {
+                    case ClassBase nestedClass:
+                        Runtime.PyDict_SetItemString(dict, name, GetClass(nestedClass.type.Value));
+                        break;
+                    case ExtensionType extension:
+                        using (var pyRef = extension.Alloc())
+                        {
+                            Runtime.PyDict_SetItemString(dict, name, pyRef.Borrow());
+                        }
+                        break;
+                    default:
+                        throw new NotSupportedException();
+                }
+                if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp))
+                {
                     impl.richcompare.Add(pyOp, (MethodObject)item);
                 }
             }
@@ -330,11 +345,11 @@ namespace Python.Runtime
                     // Implement Overloads on the class object
                     if (!CLRModule._SuppressOverloads)
                     {
-                        var ctors = new ConstructorBinding(type, pyType, co.binder);
+                        using var ctors = new ConstructorBinding(type, pyType, co.binder).Alloc();
                         // ExtensionType types are untracked, so don't Incref() them.
                         // TODO: deprecate __overloads__ soon...
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.ObjectReference);
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.ObjectReference);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.Borrow());
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.Borrow());
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.
@@ -396,18 +411,16 @@ namespace Python.Runtime
         private static ClassInfo GetClassInfo(Type type)
         {
             var ci = new ClassInfo();
-            var methods = new Hashtable();
-            ArrayList list;
+            var methods = new Dictionary<string, List<MethodInfo>>();
             MethodInfo meth;
             ManagedType ob;
             string name;
-            object item;
             Type tp;
             int i, n;
 
             MemberInfo[] info = type.GetMembers(BindingFlags);
-            var local = new Hashtable();
-            var items = new ArrayList();
+            var local = new HashSet<string>();
+            var items = new List<MemberInfo>();
             MemberInfo m;
 
             // Loop through once to find out which names are declared
@@ -416,7 +429,7 @@ namespace Python.Runtime
                 m = info[i];
                 if (m.DeclaringType == type)
                 {
-                    local[m.Name] = 1;
+                    local.Add(m.Name);
                 }
             }
 
@@ -426,7 +439,7 @@ namespace Python.Runtime
                 var opsImpl = typeof(EnumOps<>).MakeGenericType(type);
                 foreach (var op in opsImpl.GetMethods(OpsHelper.BindingFlags))
                 {
-                    local[op.Name] = 1;
+                    local.Add(op.Name);
                 }
                 info = info.Concat(opsImpl.GetMethods(OpsHelper.BindingFlags)).ToArray();
             }
@@ -435,7 +448,7 @@ namespace Python.Runtime
             for (i = 0; i < info.Length; i++)
             {
                 m = info[i];
-                if (local[m.Name] != null)
+                if (local.Contains(m.Name))
                 {
                     items.Add(m);
                 }
@@ -463,7 +476,7 @@ namespace Python.Runtime
                     for (n = 0; n < imembers.Length; n++)
                     {
                         m = imembers[n];
-                        if (local[m.Name] == null)
+                        if (!local.Contains(m.Name))
                         {
                             items.Add(m);
                         }
@@ -475,7 +488,7 @@ namespace Python.Runtime
                 var objFlags = BindingFlags.Public | BindingFlags.Instance;
                 foreach (var mi in typeof(object).GetMembers(objFlags))
                 {
-                    if (local[mi.Name] == null)
+                    if (!local.Contains(mi.Name) && mi is not ConstructorInfo)
                     {
                         items.Add(mi);
                     }
@@ -495,13 +508,11 @@ namespace Python.Runtime
                             continue;
                         }
                         name = meth.Name;
-                        item = methods[name];
-                        if (item == null)
+                        if (!methods.TryGetValue(name, out var methodList))
                         {
-                            item = methods[name] = new ArrayList();
+                            methodList = methods[name] = new List<MethodInfo>();
                         }
-                        list = (ArrayList)item;
-                        list.Add(meth);
+                        methodList.Add(meth);
                         continue;
 
                     case MemberTypes.Property:
@@ -558,26 +569,19 @@ namespace Python.Runtime
                             continue;
                         }
                         // Note the given instance might be uninitialized
-                        ob = GetClass(tp);
-                        if (ob.pyHandle is null && ob is ClassObject)
-                        {
-                            ob.pyHandle = ob.tpHandle = TypeManager.GetOrCreateClass(tp);
-                        }
-                        Debug.Assert(ob.pyHandle is not null);
-                        // GetClass returns a Borrowed ref. ci.members owns the reference.
+                        var pyType = GetClass(tp);
+                        TypeManager.GetOrCreateClass(tp);
+                        ob = ManagedType.GetManagedObject(pyType)!;
+                        Debug.Assert(ob is not null);
                         ci.members[mi.Name] = ob;
                         continue;
                 }
             }
 
-            IDictionaryEnumerator iter = methods.GetEnumerator();
-
-            while (iter.MoveNext())
+            foreach (var iter in methods)
             {
-                name = (string)iter.Key;
-                list = (ArrayList)iter.Value;
-
-                var mlist = (MethodInfo[])list.ToArray(typeof(MethodInfo));
+                name = iter.Key;
+                var mlist = iter.Value.ToArray();
 
                 ob = new MethodObject(type, name, mlist);
                 ci.members[name] = ob;
@@ -624,11 +628,10 @@ namespace Python.Runtime
         private class ClassInfo
         {
             public Indexer? indexer;
-            public Hashtable members;
+            public readonly Dictionary<string, ManagedType> members = new();
 
             internal ClassInfo()
             {
-                members = new Hashtable();
                 indexer = null;
             }
         }

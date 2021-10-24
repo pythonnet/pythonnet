@@ -11,7 +11,7 @@ namespace Python.Runtime
     internal class EventObject : ExtensionType
     {
         internal string name;
-        internal EventBinding? unbound;
+        internal PyObject? unbound;
         internal EventInfo info;
         internal Hashtable? reg;
 
@@ -135,7 +135,6 @@ namespace Python.Runtime
         public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
             var self = GetManagedObject(ds) as EventObject;
-            EventBinding binding;
 
             if (self == null)
             {
@@ -150,10 +149,9 @@ namespace Python.Runtime
             {
                 if (self.unbound == null)
                 {
-                    self.unbound = new EventBinding(self, target: null);
+                    self.unbound = new EventBinding(self, target: null).Alloc().MoveToPyObject();
                 }
-                binding = self.unbound;
-                return new NewReference(binding.pyHandle);
+                return new NewReference(self.unbound);
             }
 
             if (Runtime.PyObject_IsInstance(ob, tp) < 1)
@@ -161,8 +159,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            binding = new EventBinding(self, new PyObject(ob));
-            return new NewReference(binding.pyHandle);
+            return new EventBinding(self, new PyObject(ob)).Alloc();
         }
 
 

@@ -71,7 +71,7 @@ namespace Python.Runtime
             }
 
             Delegate d = PythonEngine.DelegateManager.GetDelegate(type, new PyObject(method));
-            return CLRObject.GetReference(d, self.pyHandle);
+            return CLRObject.GetReference(d, ClassManager.GetClass(type));
         }
 
 

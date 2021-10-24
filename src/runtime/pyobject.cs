@@ -189,36 +189,30 @@ namespace Python.Runtime
             if (Runtime.Py_IsInitialized() == 0)
                 throw new InvalidOperationException("Python runtime must be initialized");
 
-            if (!Runtime.IsFinalizing)
+            nint refcount = Runtime.Refcount(this.obj);
+            Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+
+            if (refcount == 1)
             {
-                long refcount = Runtime.Refcount(this.obj);
-                Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+                Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
 
-                if (refcount == 1)
-                {
-                    Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
-
-                    try
-                    {
-                        Runtime.XDecref(StolenReference.Take(ref rawPtr));
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    finally
-                    {
-                        // Python requires finalizers to preserve exception:
-                        // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
-                        Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
-                    }
-                }
-                else
+                try
                 {
                     Runtime.XDecref(StolenReference.Take(ref rawPtr));
+                    Runtime.CheckExceptionOccurred();
+                }
+                finally
+                {
+                    // Python requires finalizers to preserve exception:
+                    // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                    Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
             }
             else
             {
-                throw new InvalidOperationException("Runtime is already finalizing");
+                Runtime.XDecref(StolenReference.Take(ref rawPtr));
             }
+
             this.rawPtr = IntPtr.Zero;
         }
 
@@ -1429,7 +1423,7 @@ namespace Python.Runtime
         void OnSerialized(StreamingContext context)
         {
 #warning check that these methods are inherited properly
-            new NewReference(this, canBeNull: true).Steal();
+            new NewReference(this, canBeNull: true).StealNullable();
         }
         [OnDeserialized]
         void OnDeserialized(StreamingContext context)
