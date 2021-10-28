@@ -253,6 +253,8 @@ namespace Python.Runtime
             return Runtime.PyObject_TypeCheck(obj, typeOrClass.obj);
         }
 
+        internal PyType PyType => this.GetPythonType();
+
 
         /// <summary>
         /// HasAttr Method

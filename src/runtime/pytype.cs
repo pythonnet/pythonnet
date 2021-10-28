@@ -63,6 +63,10 @@ namespace Python.Runtime
             set => Util.WriteCLong(this, TypeOffset.tp_flags, (long)value);
         }
 
+        internal PyDict Dict => new(Util.ReadRef(this, TypeOffset.tp_dict));
+
+        internal PyTuple MRO => new(GetMRO(this));
+
         /// <summary>Checks if specified object is a Python type.</summary>
         public static bool IsType(PyObject value)
         {
