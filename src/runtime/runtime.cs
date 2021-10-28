@@ -149,9 +149,10 @@ namespace Python.Runtime
             }
             else
             {
-                PyCLRMetaType = MetaType.Initialize(); // Steal a reference
+                PyCLRMetaType = MetaType.Initialize();
                 ImportHook.Initialize();
             }
+            Finalizer.Initialize();
             Exceptions.Initialize();
 
             // Need to add the runtime directory to sys.path so that we
@@ -286,12 +287,13 @@ namespace Python.Runtime
             ClassManager.DisposePythonWrappersForClrTypes();
             TypeManager.RemoveTypes();
 
+            Finalizer.Shutdown();
+
             MetaType.Release();
             PyCLRMetaType.Dispose();
             PyCLRMetaType = null!;
 
             Exceptions.Shutdown();
-            Finalizer.Shutdown();
             InternString.Shutdown();
 
             if (mode != ShutdownMode.Normal && mode != ShutdownMode.Extension)

@@ -34,6 +34,8 @@ namespace Python.Runtime
         [DefaultValue(DefaultThreshold)]
         public int Threshold { get; set; } = DefaultThreshold;
 
+        bool started;
+
         [DefaultValue(true)]
         public bool Enable { get; set; } = true;
 
@@ -105,7 +107,7 @@ namespace Python.Runtime
         internal void ThrottledCollect()
         {
             _throttled = unchecked(this._throttled + 1);
-            if (!Enable || _throttled < Threshold) return;
+            if (!started || !Enable || _throttled < Threshold) return;
             _throttled = 0;
             this.Collect();
         }
@@ -131,9 +133,15 @@ namespace Python.Runtime
             obj = IntPtr.Zero;
         }
 
+        internal static void Initialize()
+        {
+            Instance.started = true;
+        }
+
         internal static void Shutdown()
         {
             Instance.DisposeAll();
+            Instance.started = false;
         }
 
         private void DisposeAll()
