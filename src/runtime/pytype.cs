@@ -90,7 +90,7 @@ namespace Python.Runtime
                 throw new ArgumentNullException(nameof(clrType));
             }
 
-            return new PyType(TypeManager.GetType(clrType));
+            return new PyType(ClassManager.GetClass(clrType));
         }
 
         internal BorrowedReference BaseReference

@@ -8,6 +8,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/dict.html
     /// for details.
     /// </summary>
+    [Serializable]
     public class PyDict : PyIterable
     {
         internal PyDict(BorrowedReference reference) : base(reference) { }
@@ -165,6 +166,16 @@ namespace Python.Runtime
         public void Clear()
         {
             Runtime.PyDict_Clear(obj);
+        }
+
+        public override int GetHashCode() => rawPtr.GetHashCode();
+
+        public override bool Equals(PyObject? other)
+        {
+            if (other is null) return false;
+            if (obj == other.obj) return true;
+            if (other is PyDict || IsDictType(other)) return base.Equals(other);
+            return false;
         }
     }
 }

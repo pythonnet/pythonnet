@@ -9,6 +9,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/list.html
     /// for details.
     /// </summary>
+    [Serializable]
     public class PyList : PySequence
     {
         internal PyList(in StolenReference reference) : base(reference) { }
@@ -161,6 +162,16 @@ namespace Python.Runtime
             {
                 throw PythonException.ThrowLastAsClrException();
             }
+        }
+
+        public override int GetHashCode() => rawPtr.GetHashCode();
+
+        public override bool Equals(PyObject? other)
+        {
+            if (other is null) return false;
+            if (obj == other.obj) return true;
+            if (other is PyList || IsListType(other)) return base.Equals(other);
+            return false;
         }
     }
 }

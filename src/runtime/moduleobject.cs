@@ -45,21 +45,21 @@ namespace Python.Runtime
         {
             var py = base.Alloc();
 
-            // Use the filename from any of the assemblies just so there's something for
-            // anything that expects __file__ to be set.
-            var filename = "unknown";
-            var docstring = "Namespace containing types from the following assemblies:\n\n";
-            foreach (Assembly a in AssemblyManager.GetAssemblies(moduleName))
-            {
-                if (!a.IsDynamic && a.Location != null)
-                {
-                    filename = a.Location;
-                }
-                docstring += "- " + a.FullName + "\n";
-            }
-
             if (dict is null)
             {
+                // Use the filename from any of the assemblies just so there's something for
+                // anything that expects __file__ to be set.
+                var filename = "unknown";
+                var docstring = "Namespace containing types from the following assemblies:\n\n";
+                foreach (Assembly a in AssemblyManager.GetAssemblies(moduleName))
+                {
+                    if (!a.IsDynamic && a.Location != null)
+                    {
+                        filename = a.Location;
+                    }
+                    docstring += "- " + a.FullName + "\n";
+                }
+
                 using var dictRef = Runtime.PyObject_GenericGetDict(py.Borrow());
                 dict = new PyDict(dictRef.StealOrThrow());
                 using var pyname = Runtime.PyString_FromString(moduleName);
@@ -70,6 +70,10 @@ namespace Python.Runtime
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__file__, pyfilename.Borrow());
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, pydocstring.Borrow());
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__class__, pycls);
+            }
+            else
+            {
+                SetObjectDict(py.Borrow(), new NewReference(dict).Steal());
             }
 
             InitializeModuleMembers();

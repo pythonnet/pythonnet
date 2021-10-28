@@ -11,6 +11,7 @@ namespace Python.Runtime
     /// <remarks>
     /// 2011-01-29: ...Then why does the string constructor call PyUnicode_FromUnicode()???
     /// </remarks>
+    [Serializable]
     public class PyString : PySequence
     {
         internal PyString(in StolenReference reference) : base(reference) { }

@@ -5,6 +5,7 @@ using System.Dynamic;
 
 namespace Python.Runtime
 {
+    [Serializable]
     public class PyModule : PyObject
     {
         internal BorrowedReference variables => VarsRef;

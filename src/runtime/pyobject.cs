@@ -219,7 +219,13 @@ namespace Python.Runtime
         public void Dispose()
         {
             Dispose(true);
+            
+        }
+
+        internal StolenReference Steal()
+        {
             GC.SuppressFinalize(this);
+            return StolenReference.Take(ref this.rawPtr);
         }
 
         internal BorrowedReference GetPythonTypeReference()
@@ -1036,17 +1042,17 @@ namespace Python.Runtime
         /// Return true if this object is equal to the given object. This
         /// method is based on Python equality semantics.
         /// </remarks>
-        public override bool Equals(object o)
+        public override bool Equals(object o) => Equals(o as PyObject);
+
+        public virtual bool Equals(PyObject? other)
         {
-            if (!(o is PyObject))
-            {
-                return false;
-            }
-            if (obj == ((PyObject)o).obj)
+            if (other is null) return false;
+
+            if (obj == other.obj)
             {
                 return true;
             }
-            int r = Runtime.PyObject_Compare(obj, ((PyObject)o).obj);
+            int r = Runtime.PyObject_Compare(this, other);
             if (Exceptions.ErrorOccurred())
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -1065,7 +1071,12 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
-            return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
+            nint pyHash = Runtime.PyObject_Hash(obj);
+            if (pyHash == -1 && Exceptions.ErrorOccurred())
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return pyHash.GetHashCode();
         }
 
         /// <summary>

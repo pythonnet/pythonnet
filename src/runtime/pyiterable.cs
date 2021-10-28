@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace Python.Runtime
 {
+    [Serializable]
     public class PyIterable : PyObject, IEnumerable<PyObject>
     {
         internal PyIterable(BorrowedReference reference) : base(reference) { }

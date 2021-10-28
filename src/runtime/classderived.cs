@@ -128,7 +128,7 @@ namespace Python.Runtime
             Type baseType,
             BorrowedReference py_dict,
             string namespaceStr,
-            string assemblyName,
+            string? assemblyName,
             string moduleName = "Python.Runtime.Dynamic.dll")
         {
             // TODO: clean up

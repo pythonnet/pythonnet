@@ -9,6 +9,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/sequence.html
     /// for details.
     /// </summary>
+    [Serializable]
     public class PySequence : PyIterable
     {
         internal PySequence(BorrowedReference reference) : base(reference) { }

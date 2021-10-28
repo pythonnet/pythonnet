@@ -163,10 +163,13 @@ namespace Python.Runtime
                 args = Runtime.PyTuple_New(0);
             }
 
-            if (Runtime.PyObject_SetAttrString(ob, "args", args.Borrow()) != 0)
+            using (args)
             {
-                args.Dispose();
-                throw PythonException.ThrowLastAsClrException();
+                if (Runtime.PyObject_SetAttrString(ob, "args", args.Borrow()) != 0)
+                {
+                    args.Dispose();
+                    throw PythonException.ThrowLastAsClrException();
+                }
             }
 
             if (e.InnerException != null)
@@ -226,15 +229,12 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// SetError Method
-        /// </summary>
-        /// <remarks>
         /// Sets the current Python exception given a native string.
         /// This is a wrapper for the Python PyErr_SetString call.
-        /// </remarks>
-        public static void SetError(BorrowedReference ob, string value)
+        /// </summary>
+        public static void SetError(BorrowedReference type, string message)
         {
-            Runtime.PyErr_SetString(ob, value);
+            Runtime.PyErr_SetString(type, message);
         }
 
         /// <summary>

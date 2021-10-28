@@ -33,7 +33,7 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        private static Dictionary<MaybeType, PyType> cache = new(capacity: 128);
+        internal static Dictionary<MaybeType, ReflectedClrType> cache = new(capacity: 128);
         private static readonly Type dtype;
 
         private ClassManager()
@@ -98,7 +98,7 @@ namespace Python.Runtime
 
         internal static ClassManagerState SaveRuntimeData()
         {
-            var contexts = new Dictionary<PyType, InterDomainContext>(PythonReferenceComparer.Instance);
+            var contexts = new Dictionary<ReflectedClrType, InterDomainContext>();
             foreach (var cls in cache)
             {
                 if (!cls.Key.Valid)
@@ -147,7 +147,7 @@ namespace Python.Runtime
         internal static void RestoreRuntimeData(ClassManagerState storage)
         {
             cache = storage.Cache;
-            var invalidClasses = new List<KeyValuePair<MaybeType, PyType>>();
+            var invalidClasses = new List<KeyValuePair<MaybeType, ReflectedClrType>>();
             var contexts = storage.Contexts;
             foreach (var pair in cache)
             {
@@ -156,20 +156,8 @@ namespace Python.Runtime
                     invalidClasses.Add(pair);
                     continue;
                 }
-                // Ensure, that matching Python type exists first.
-                // It is required for self-referential classes
-                // (e.g. with members, that refer to the same class)
-                var cb = (ClassBase)ManagedType.GetManagedObject(pair.Value)!;
-                var pyType = InitPyType(pair.Key.Value, cb);
-                // re-init the class
-                InitClassBase(pair.Key.Value, cb, pyType);
-                // We modified the Type object, notify it we did.
-                Runtime.PyType_Modified(pair.Value);
-                var context = contexts[pair.Value];
-                cb.Load(pyType, context);
-                var slotsHolder = TypeManager.GetSlotsHolder(pyType);
-                cb.InitializeSlots(pyType, slotsHolder);
-                Runtime.PyType_Modified(pair.Value);
+
+                pair.Value.Restore(contexts[pair.Value]);
             }
             
             foreach (var pair in invalidClasses)
@@ -183,33 +171,10 @@ namespace Python.Runtime
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
-        internal static PyType GetClass(Type type, out ClassBase cb)
-        {
-            cache.TryGetValue(type, out var pyType);
-            if (pyType != null)
-            {
-                cb = (ClassBase)ManagedType.GetManagedObject(pyType)!;
-                return pyType;
-            }
-            cb = CreateClass(type);
-            // Ensure, that matching Python type exists first.
-            // It is required for self-referential classes
-            // (e.g. with members, that refer to the same class)
-            pyType = InitPyType(type, cb);
-            cache.Add(type, pyType);
-            // Initialize the object later, as this might call this GetClass method
-            // recursively (for example when a nested class inherits its declaring class...)
-            InitClassBase(type, cb, pyType);
-            return pyType;
-        }
-        /// <summary>
-        /// Return the ClassBase-derived instance that implements a particular
-        /// reflected managed type, creating it if it doesn't yet exist.
-        /// </summary>
-        internal static PyType GetClass(Type type) => GetClass(type, out _);
+        internal static ReflectedClrType GetClass(Type type) => ReflectedClrType.GetOrCreate(type, out _);
         internal static ClassBase GetClassImpl(Type type)
         {
-            GetClass(type, out var cb);
+            ReflectedClrType.GetOrCreate(type, out var cb);
             return cb;
         }
 
@@ -219,7 +184,7 @@ namespace Python.Runtime
         /// managed type. The new object will be associated with a generated
         /// Python type object.
         /// </summary>
-        private static ClassBase CreateClass(Type type)
+        internal static ClassBase CreateClass(Type type)
         {
             // Next, select the appropriate managed implementation class.
             // Different kinds of types, such as array types or interface
@@ -272,12 +237,7 @@ namespace Python.Runtime
             return impl;
         }
 
-        private static PyType InitPyType(Type type, ClassBase impl)
-        {
-            return TypeManager.GetOrCreateClass(type);
-        }
-
-        private static void InitClassBase(Type type, ClassBase impl, PyType pyType)
+        internal static void InitClassBase(Type type, ClassBase impl, PyType pyType)
         {
             // First, we introspect the managed type and build some class
             // information, including generating the member descriptors
@@ -286,14 +246,9 @@ namespace Python.Runtime
             ClassInfo info = GetClassInfo(type);
 
             impl.indexer = info.indexer;
+            impl.richcompare.Clear();
 
-            // Now we force initialize the Python type object to reflect the given
-            // managed type, filling the Python type slots with thunks that
-            // point to the managed methods providing the implementation.
-
-
-            TypeManager.GetOrInitializeClass(impl, type);
-
+            
             // Finally, initialize the class __dict__ and return the object.
             using var newDict = Runtime.PyObject_GenericGetDict(pyType.Reference);
             BorrowedReference dict = newDict.Borrow();
@@ -317,9 +272,10 @@ namespace Python.Runtime
                     default:
                         throw new NotSupportedException();
                 }
-                if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp))
+                if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)
+                    && item is MethodObject method)
                 {
-                    impl.richcompare.Add(pyOp, (MethodObject)item);
+                    impl.richcompare.Add(pyOp, method);
                 }
             }
 
@@ -570,7 +526,6 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         var pyType = GetClass(tp);
-                        TypeManager.GetOrCreateClass(tp);
                         ob = ManagedType.GetManagedObject(pyType)!;
                         Debug.Assert(ob is not null);
                         ci.members[mi.Name] = ob;

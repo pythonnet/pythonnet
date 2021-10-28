@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -17,10 +18,10 @@ namespace Python.Runtime
     /// each variety of reflected type.
     /// </summary>
     [Serializable]
-    internal class ClassBase : ManagedType
+    internal class ClassBase : ManagedType, IDeserializationCallback
     {
         [NonSerialized]
-        internal readonly List<string> dotNetMembers = new();
+        internal List<string> dotNetMembers = new();
         internal Indexer? indexer;
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
@@ -334,43 +335,21 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
-            var self = (CLRObject)GetManagedObject(lastRef.Borrow())!;
-            GCHandle gcHandle = GetGCHandle(lastRef.Borrow());
+            GCHandle? gcHandle = TryGetGCHandle(lastRef.Borrow());
+
             tp_clear(lastRef.Borrow());
+
+                IntPtr addr = lastRef.DangerousGetAddress();
+                bool deleted = CLRObject.reflectedObjects.Remove(addr);
+                Debug.Assert(deleted);
+
             Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
             Runtime.PyObject_GC_Del(lastRef.Steal());
 
-            bool deleted = CLRObject.reflectedObjects.Remove(lastRef.DangerousGetAddress());
-            Debug.Assert(deleted);
-
-            gcHandle.Free();
+            gcHandle?.Free();
         }
 
         public static int tp_clear(BorrowedReference ob)
-        {
-            if (GetManagedObject(ob) is { } self)
-            {
-                if (self.clearReentryGuard) return 0;
-
-                // workaround for https://bugs.python.org/issue45266
-                self.clearReentryGuard = true;
-
-                try
-                {
-                    return ClearImpl(ob, self);
-                }
-                finally
-                {
-                    self.clearReentryGuard = false;
-                }
-            }
-            else
-            {
-                return ClearImpl(ob, null);
-            }
-        }
-
-        static int ClearImpl(BorrowedReference ob, ManagedType? self)
         {
             bool isTypeObject = Runtime.PyObject_TYPE(ob) == Runtime.PyCLRMetaType;
             if (!isTypeObject)
@@ -396,6 +375,21 @@ namespace Python.Runtime
                 return 0;
             }
             var clear = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
+
+            bool usesSubtypeClear = clearPtr == Util.ReadIntPtr(Runtime.CLRMetaType, TypeOffset.tp_clear);
+            if (usesSubtypeClear)
+            {
+                // workaround for https://bugs.python.org/issue45266
+                using var dict = Runtime.PyObject_GenericGetDict(ob);
+                if (Runtime.PyMapping_HasKey(dict.Borrow(), PyIdentifier.__clear_reentry_guard__) != 0)
+                    return 0;
+                int res = Runtime.PyDict_SetItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__, Runtime.None);
+                if (res != 0) return res;
+
+                res = clear(ob);
+                Runtime.PyDict_DelItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__);
+                return res;
+            }
             return clear(ob);
         }
 
@@ -540,5 +534,12 @@ namespace Python.Runtime
                 TypeManager.InitializeSlot(pyType, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
             }
         }
+
+        protected virtual void OnDeserialization(object sender)
+        {
+            this.dotNetMembers = new List<string>();
+        }
+
+        void IDeserializationCallback.OnDeserialization(object sender) => this.OnDeserialization(sender);
     }
 }

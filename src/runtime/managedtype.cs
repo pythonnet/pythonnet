@@ -14,9 +14,6 @@ namespace Python.Runtime
     [Serializable]
     internal abstract class ManagedType
     {
-        [NonSerialized]
-        internal bool clearReentryGuard;
-
         /// <summary>
         /// Given a Python object, return the associated managed object or null.
         /// </summary>
