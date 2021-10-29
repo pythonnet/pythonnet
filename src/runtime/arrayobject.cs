@@ -99,6 +99,15 @@ namespace Python.Runtime
 
         static NewReference NewInstance(Type elementType, BorrowedReference arrayPyType, long[] dimensions)
         {
+            for (int dim = 0; dim < dimensions.Length; dim++)
+            {
+                if (dimensions[dim] < 0)
+                {
+                    Exceptions.SetError(Exceptions.ValueError, $"Non-negative number required (dims[{dim}])");
+                    return default;
+                }
+            }
+
             object result;
             try
             {
@@ -142,7 +151,7 @@ namespace Python.Runtime
             var items = (Array)obj.inst;
             Type itemType = arrObj.type.Value.GetElementType();
             int rank = items.Rank;
-            nint index;
+            long index;
             object value;
 
             // Note that CLR 1.0 only supports int indexes - methods to
@@ -169,18 +178,16 @@ namespace Python.Runtime
 
                 if (index < 0)
                 {
-                    index = items.Length + index;
+                    index = items.LongLength + index;
                 }
 
-                try
-                {
-                    value = items.GetValue(index);
-                }
-                catch (IndexOutOfRangeException)
+                if (index < 0 || index >= items.LongLength)
                 {
                     Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                     return default;
                 }
+
+                value = items.GetValue(index);
 
                 return Converter.ToPython(value, itemType);
             }
@@ -211,23 +218,23 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("invalid index value");
                 }
 
+                long len = items.GetLongLength(dimension);
+
                 if (index < 0)
                 {
-                    index = items.GetLength(dimension) + index;
+                    index = len + index;
+                }
+
+                if (index < 0 || index >= len)
+                {
+                    Exceptions.SetError(Exceptions.IndexError, "array index out of range");
+                    return default;
                 }
 
                 indices[dimension] = index;
             }
 
-            try
-            {
-                value = items.GetValue(indices);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                return default;
-            }
+            value = items.GetValue(indices);
 
             return Converter.ToPython(value, itemType);
         }
@@ -242,7 +249,7 @@ namespace Python.Runtime
             var items = (Array)obj.inst;
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
-            nint index;
+            long index;
             object? value;
 
             if (items.IsReadOnly)
@@ -273,19 +280,16 @@ namespace Python.Runtime
 
                 if (index < 0)
                 {
-                    index = items.Length + index;
+                    index = items.LongLength + index;
                 }
 
-                try
-                {
-                    items.SetValue(value, index);
-                }
-                catch (IndexOutOfRangeException)
+                if (index < 0 || index >= items.LongLength)
                 {
                     Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                     return -1;
                 }
 
+                items.SetValue(value, index);
                 return 0;
             }
 
@@ -314,23 +318,23 @@ namespace Python.Runtime
                     return -1;
                 }
 
+                long len = items.GetLongLength(dimension);
+
                 if (index < 0)
                 {
-                    index = items.GetLength(dimension) + index;
+                    index = len + index;
+                }
+
+                if (index < 0 || index >= len)
+                {
+                    Exceptions.SetError(Exceptions.IndexError, "array index out of range");
+                    return -1;
                 }
 
                 indices[dimension] = index;
             }
 
-            try
-            {
-                items.SetValue(value, indices);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                return -1;
-            }
+            items.SetValue(value, indices);
 
             return 0;
         }
