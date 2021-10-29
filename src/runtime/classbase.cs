@@ -341,9 +341,9 @@ namespace Python.Runtime
 
             tp_clear(lastRef.Borrow());
 
-                IntPtr addr = lastRef.DangerousGetAddress();
-                bool deleted = CLRObject.reflectedObjects.Remove(addr);
-                Debug.Assert(deleted);
+            IntPtr addr = lastRef.DangerousGetAddress();
+            bool deleted = CLRObject.reflectedObjects.Remove(addr);
+            Debug.Assert(deleted);
 
             Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
             Runtime.PyObject_GC_Del(lastRef.Steal());
@@ -353,17 +353,13 @@ namespace Python.Runtime
 
         public static int tp_clear(BorrowedReference ob)
         {
-            bool isTypeObject = Runtime.PyObject_TYPE(ob) == Runtime.PyCLRMetaType;
-            if (!isTypeObject)
+            int baseClearResult = BaseUnmanagedClear(ob);
+            if (baseClearResult != 0)
             {
-                int baseClearResult = BaseUnmanagedClear(ob);
-                if (baseClearResult != 0)
-                {
-                    return baseClearResult;
-                }
-
-                ClearObjectDict(ob);
+                return baseClearResult;
             }
+
+            ClearObjectDict(ob);
             return 0;
         }
 
