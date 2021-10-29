@@ -1106,6 +1106,14 @@ namespace Python.Runtime
                 Delegates._Py_NewReference(ob);
         }
 
+        internal static bool? _Py_IsFinalizing()
+        {
+            if (Delegates._Py_IsFinalizing != null)
+                return Delegates._Py_IsFinalizing() != 0;
+            else
+                return null; ;
+        }
+
         //====================================================================
         // Python buffer API
         //====================================================================
@@ -2211,6 +2219,11 @@ namespace Python.Runtime
                     _Py_NewReference = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(_Py_NewReference), GetUnmanagedDll(_PythonDll));
                 }
                 catch (MissingMethodException) { }
+                try
+                {
+                    _Py_IsFinalizing = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(_Py_IsFinalizing), GetUnmanagedDll(_PythonDll));
+                }
+                catch (MissingMethodException) { }
             }
 
             static global::System.IntPtr GetUnmanagedDll(string? libraryName)
@@ -2464,6 +2477,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, TypeSlotID, IntPtr> PyType_GetSlot { get; }
             internal static delegate* unmanaged[Cdecl]<in NativeTypeSpec, BorrowedReference, NewReference> PyType_FromSpecWithBases { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> _Py_NewReference { get; }
+            internal static delegate* unmanaged[Cdecl]<int> _Py_IsFinalizing { get; }
         }
     }
 

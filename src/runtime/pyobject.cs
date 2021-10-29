@@ -186,8 +186,10 @@ namespace Python.Runtime
                 return;
             }
 
-            if (Runtime.Py_IsInitialized() == 0)
+            if (Runtime.Py_IsInitialized() == 0 && Runtime._Py_IsFinalizing() != true)
+            {
                 throw new InvalidOperationException("Python runtime must be initialized");
+            }
 
             nint refcount = Runtime.Refcount(this.obj);
             Debug.Assert(refcount > 0, "Object refcount is 0 or less");
