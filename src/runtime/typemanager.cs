@@ -93,7 +93,6 @@ namespace Python.Runtime
                 Debug.Assert(type == _slotsImpls[type]);
                 InitializeSlots(entry.Value, _slotsImpls[type], holder);
                 Runtime.PyType_Modified(entry.Value);
-                // FIXME: mp_length_slot.CanAssgin(clrType)
             }
         }
 
@@ -290,31 +289,7 @@ namespace Python.Runtime
             SlotsHolder slotsHolder = CreateSlotsHolder(type);
             InitializeSlots(type, impl.GetType(), slotsHolder);
 
-            if (!slotsHolder.IsHolding(TypeOffset.mp_length) && mp_length_slot.CanAssign(clrType))
-            {
-                InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
-            }
-
-            if (!typeof(IEnumerable).IsAssignableFrom(clrType) &&
-                !typeof(IEnumerator).IsAssignableFrom(clrType))
-            {
-                // The tp_iter slot should only be set for enumerable types.
-                Util.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
-            }
-
-
-            // Only set mp_subscript and mp_ass_subscript for types with indexers
-            if (!(impl is ArrayObject))
-            {
-                if (impl.indexer == null || !impl.indexer.CanGet)
-                {
-                    Util.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
-                }
-                if (impl.indexer == null || !impl.indexer.CanSet)
-                {
-                    Util.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
-                }
-            }
+            impl.InitializeSlots(type, slotsHolder);
 
             OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
@@ -330,8 +305,6 @@ namespace Python.Runtime
             string mn = clrType.Namespace ?? "";
             using (var mod = Runtime.PyString_FromString(mn))
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod.Borrow());
-
-            impl.InitializeSlots(type, slotsHolder);
 
             Runtime.PyType_Modified(type.Reference);
 
@@ -714,6 +687,12 @@ namespace Python.Runtime
         {
             var thunk = Interop.GetThunk(impl);
             InitializeSlot(type, slotOffset, thunk, slotsHolder);
+        }
+
+        internal static void InitializeSlotIfEmpty(BorrowedReference type, int slotOffset, Delegate impl, SlotsHolder slotsHolder)
+        {
+            if (slotsHolder.IsHolding(slotOffset)) return;
+            InitializeSlot(type, slotOffset, impl, slotsHolder);
         }
 
         static void InitializeSlot(BorrowedReference type, int slotOffset, ThunkInfo thunk, SlotsHolder slotsHolder)

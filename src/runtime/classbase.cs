@@ -7,6 +7,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
+using Python.Runtime.Slots;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -211,7 +213,7 @@ namespace Python.Runtime
         /// allows natural iteration over objects that either are IEnumerable
         /// or themselves support IEnumerator directly.
         /// </summary>
-        public static NewReference tp_iter(BorrowedReference ob)
+        static NewReference tp_iter_impl(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
@@ -410,7 +412,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for reflected classes and value types.
         /// </summary>
-        public static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
+        static NewReference mp_subscript_impl(BorrowedReference ob, BorrowedReference idx)
         {
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
@@ -440,7 +442,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for reflected classes and value types.
         /// </summary>
-        public static int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
+        static int mp_ass_subscript_impl(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
@@ -528,10 +530,32 @@ namespace Python.Runtime
         {
             if (!this.type.Valid) return;
 
-            if (GetCallImplementations(this.type.Value).Any()
-                && !slotsHolder.IsHolding(TypeOffset.tp_call))
+            if (GetCallImplementations(this.type.Value).Any())
             {
-                TypeManager.InitializeSlot(pyType, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
+            }
+
+            if (indexer is not null)
+            {
+                if (indexer.CanGet)
+                {
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_subscript, new Interop.BB_N(mp_subscript_impl), slotsHolder);
+                }
+                if (indexer.CanSet)
+                {
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_ass_subscript, new Interop.BBB_I32(mp_ass_subscript_impl), slotsHolder);
+                }
+            }
+
+            if (typeof(IEnumerable).IsAssignableFrom(type.Value)
+                || typeof(IEnumerator).IsAssignableFrom(type.Value))
+            {
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_iter, new Interop.B_N(tp_iter_impl), slotsHolder);
+            }
+
+            if (mp_length_slot.CanAssign(type.Value))
+            {
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_length, new Interop.B_P(mp_length_slot.impl), slotsHolder);
             }
         }
 
