@@ -26,7 +26,6 @@ namespace Python.Runtime
         private static Dictionary<MaybeType, PyType> cache = new();
 
         private static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
-        private static Dictionary<MaybeType, Type> _slotsImpls = new Dictionary<MaybeType, Type>();
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -64,7 +63,6 @@ namespace Python.Runtime
                 type.Dispose();
             }
             cache.Clear();
-            _slotsImpls.Clear();
             _slotsHolders.Clear();
         }
 
@@ -72,13 +70,11 @@ namespace Python.Runtime
             => new()
             {
                 Cache = cache,
-                SlotImplementations = _slotsImpls,
             };
 
         internal static void RestoreRuntimeData(TypeManagerState storage)
         {
             Debug.Assert(cache == null || cache.Count == 0);
-            _slotsImpls = storage.SlotImplementations;
             var typeCache = storage.Cache;
             foreach (var entry in typeCache)
             {
@@ -90,8 +86,7 @@ namespace Python.Runtime
                 Type type = entry.Key.Value;;
                 cache[type] = entry.Value;
                 SlotsHolder holder = CreateSlotsHolder(entry.Value);
-                Debug.Assert(type == _slotsImpls[type]);
-                InitializeSlots(entry.Value, _slotsImpls[type], holder);
+                InitializeSlots(entry.Value, type, holder);
                 Runtime.PyType_Modified(entry.Value);
             }
         }
@@ -104,7 +99,6 @@ namespace Python.Runtime
             {
                 pyType = CreateType(type);
                 cache[type] = pyType;
-                _slotsImpls.Add(type, type);
             }
             return pyType;
         }
@@ -308,13 +302,6 @@ namespace Python.Runtime
 
             Runtime.PyType_Modified(type.Reference);
 
-#if DEBUG
-            if (_slotsImpls.TryGetValue(clrType, out var implType))
-            {
-                Debug.Assert(implType == impl.GetType());
-            }
-#endif
-            _slotsImpls[clrType] = impl.GetType();
             //DebugUtil.DumpType(type);
         }
 
