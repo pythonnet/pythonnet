@@ -54,28 +54,8 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        internal static void DisposePythonWrappersForClrTypes()
+        internal static void RemoveClasses()
         {
-            var visited = new HashSet<IntPtr>();
-            var visitedHandle = GCHandle.Alloc(visited);
-            var visitedPtr = (IntPtr)visitedHandle;
-            try
-            {
-                foreach (var cls in cache.Values)
-                {
-                    // XXX: Force to release instance's managed resources
-                    // but not dealloc itself immediately.
-                    // These managed resources should preserve vacant shells
-                    // since others may still referencing it.
-                    BorrowedReference meta = Runtime.PyObject_TYPE(cls);
-                    ManagedType.CallTypeTraverse(cls, meta, TraverseTypeClear, visitedPtr);
-                    ManagedType.CallTypeClear(cls, meta);
-                }
-            }
-            finally
-            {
-                visitedHandle.Free();
-            }
             cache.Clear();
         }
 

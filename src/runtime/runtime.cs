@@ -284,7 +284,7 @@ namespace Python.Runtime
             RemoveClrRootModule();
 
             MoveClrInstancesOnwershipToPython();
-            ClassManager.DisposePythonWrappersForClrTypes();
+            ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
 
             Finalizer.Shutdown();
@@ -486,7 +486,7 @@ namespace Python.Runtime
                 handle?.Free();
                 if (handle is not null)
                 {
-                ManagedType.SetGCHandle(@ref, default);
+                    ManagedType.SetGCHandle(@ref, default);
                 }
             }
 
