@@ -812,7 +812,7 @@ namespace Python.Runtime
             try
             {
                 // create the python object
-                var type = TypeManager.GetType(obj.GetType());
+                var type = ClassManager.GetClass(obj.GetType());
                 self = CLRObject.GetReference(obj, type);
 
                 // set __pyobj__ to self and deref the python object which will allow this
