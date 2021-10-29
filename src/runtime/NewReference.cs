@@ -1,6 +1,7 @@
 namespace Python.Runtime
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
 
@@ -83,6 +84,7 @@ namespace Python.Runtime
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerHidden]
         public StolenReference StealOrThrow()
         {
             if (this.IsNull()) throw PythonException.ThrowLastAsClrException();
@@ -143,6 +145,7 @@ namespace Python.Runtime
         public static BorrowedReference Borrow(this in NewReference reference)
             => reference.IsNull() ? throw new NullReferenceException() : reference.BorrowNullable();
         [Pure]
+        [DebuggerHidden]
         public static BorrowedReference BorrowOrThrow(this in NewReference reference)
             => reference.IsNull() ? throw PythonException.ThrowLastAsClrException() : reference.BorrowNullable();
 

@@ -36,6 +36,7 @@ namespace Python.Runtime
         /// It is recommended to call this as <code>throw ThrowLastAsClrException()</code>
         /// to assist control flow checks.
         /// </summary>
+        [DebuggerHidden]
         internal static Exception ThrowLastAsClrException()
         {
             // prevent potential interop errors in this method
@@ -416,6 +417,7 @@ namespace Python.Runtime
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
+        [DebuggerHidden]
         internal static void ThrowIfIsNull(in NewReference ob)
         {
             if (ob.BorrowNullable() == null)
@@ -426,6 +428,7 @@ namespace Python.Runtime
         internal static BorrowedReference ThrowIfIsNull(BorrowedReference ob)
             => Exceptions.ErrorCheck(ob);
 
+        [DebuggerHidden]
         internal static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)
