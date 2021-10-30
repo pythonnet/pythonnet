@@ -99,8 +99,6 @@ namespace Python.Runtime
                 using var dict = Runtime.PyObject_GenericGetDict(cls.Value);
                 foreach (var member in cb.dotNetMembers)
                 {
-                    // No need to decref the member, the ClassBase instance does 
-                    // not own the reference.
                     if ((Runtime.PyDict_DelItemString(dict.Borrow(), member) == -1) &&
                         (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                     {

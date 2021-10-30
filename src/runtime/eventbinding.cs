@@ -94,11 +94,5 @@ namespace Python.Runtime
             string s = string.Format("<{0} event '{1}'>", type, self.e.name);
             return Runtime.PyString_FromString(s);
         }
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            Runtime.Py_CLEAR(ref this.target);
-            base.Clear(ob);
-        }
     }
 }

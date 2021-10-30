@@ -277,12 +277,5 @@ namespace Python.Runtime
             string name = self.m.name;
             return Runtime.PyString_FromString($"<{type} method '{name}'>");
         }
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            this.target = null;
-            this.targetType = null!;
-            base.Clear(ob);
-        }
     }
 }

@@ -331,12 +331,6 @@ namespace Python.Runtime
             return 0;
         }
 
-        protected override void Clear(BorrowedReference ob)
-        {
-            this.cache.Clear();
-            base.Clear(ob);
-        }
-
         /// <summary>
         /// Override the setattr implementation.
         /// This is needed because the import mechanics need

@@ -204,7 +204,6 @@ namespace Python.Runtime
 
         protected override void Clear(BorrowedReference ob)
         {
-            Runtime.Py_CLEAR(ref this.doc);
             this.unbound = null;
             base.Clear(ob);
         }

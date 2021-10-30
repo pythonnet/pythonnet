@@ -54,12 +54,5 @@ namespace Python.Runtime
             var self = (OverloadMapper)GetManagedObject(op)!;
             return self.m.GetDocString();
         }
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            this.target = null;
-            this.m = null!;
-            base.Clear(ob);
-        }
     }
 }
