@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using System.Text;
 
 using Python.Runtime.Native;
@@ -13,6 +15,7 @@ namespace Python.Runtime
     /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
+    [Serializable]
     public class PythonException : System.Exception
     {
         public PythonException(PyType type, PyObject? value, PyObject? traceback,
@@ -394,6 +397,32 @@ namespace Python.Runtime
         public PythonException Clone()
             => new PythonException(type: Type, value: Value, traceback: Traceback,
                                    Message, InnerException);
+
+        #region Serializable
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        protected PythonException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            Type = (PyType)info.GetValue(nameof(Type), typeof(PyType));
+            Value = (PyObject)info.GetValue(nameof(Value), typeof(PyObject));
+            Traceback = (PyObject)info.GetValue(nameof(Traceback), typeof(PyObject));
+        }
+
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            base.GetObjectData(info, context);
+
+            info.AddValue(nameof(Type), Type);
+            info.AddValue(nameof(Value), Value);
+            info.AddValue(nameof(Traceback), Traceback);
+        }
+        #endregion
 
         internal bool Is(BorrowedReference type)
         {
