@@ -664,16 +664,6 @@ namespace Python.Runtime
 #endif
         }
 
-
-#if DEBUG
-        [Obsolete("Do not use")]
-#else
-        [Obsolete("Do not use", error: true)]
-#endif
-        internal static unsafe void XDecref(BorrowedReference op)
-        {
-            XDecref(StolenReference.DangerousFromPointer(op.DangerousGetAddress()));
-        }
         internal static unsafe void XDecref(StolenReference op)
         {
 #if DEBUG
