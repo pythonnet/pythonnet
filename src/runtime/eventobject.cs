@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -10,123 +11,15 @@ namespace Python.Runtime
     [Serializable]
     internal class EventObject : ExtensionType
     {
-        internal string name;
-        internal PyObject? unbound;
-        internal EventInfo info;
-        internal Hashtable? reg;
+        internal readonly string name;
+        internal readonly EventHandlerCollection reg;
 
         public EventObject(EventInfo info)
         {
+            Debug.Assert(!info.AddMethod.IsStatic);
             this.name = info.Name;
-            this.info = info;
+            this.reg = new EventHandlerCollection(info);
         }
-
-
-        /// <summary>
-        /// Register a new Python object event handler with the event.
-        /// </summary>
-        internal bool AddEventHandler(BorrowedReference target, PyObject handler)
-        {
-            object? obj = null;
-            if (target != null)
-            {
-                var co = (CLRObject)GetManagedObject(target)!;
-                obj = co.inst;
-            }
-
-            // Create a true delegate instance of the appropriate type to
-            // wrap the Python handler. Note that wrapper delegate creation
-            // always succeeds, though calling the wrapper may fail.
-            Type type = info.EventHandlerType;
-            Delegate d = PythonEngine.DelegateManager.GetDelegate(type, handler);
-
-            // Now register the handler in a mapping from instance to pairs
-            // of (handler hash, delegate) so we can lookup to remove later.
-            // All this is done lazily to avoid overhead until an event is
-            // actually subscribed to by a Python event handler.
-            if (reg == null)
-            {
-                reg = new Hashtable();
-            }
-            object key = obj ?? info.ReflectedType;
-            var list = reg[key] as ArrayList;
-            if (list == null)
-            {
-                list = new ArrayList();
-                reg[key] = list;
-            }
-            list.Add(new Handler(Runtime.PyObject_Hash(handler), d));
-
-            // Note that AddEventHandler helper only works for public events,
-            // so we have to get the underlying add method explicitly.
-            object[] args = { d };
-            MethodInfo mi = info.GetAddMethod(true);
-            mi.Invoke(obj, BindingFlags.Default, null, args, null);
-
-            return true;
-        }
-
-
-        /// <summary>
-        /// Remove the given Python object event handler.
-        /// </summary>
-        internal bool RemoveEventHandler(BorrowedReference target, BorrowedReference handler)
-        {
-            if (reg == null)
-            {
-                Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
-                return false;
-            }
-
-            object? obj = null;
-            if (target != null)
-            {
-                var co = (CLRObject)GetManagedObject(target)!;
-                obj = co.inst;
-            }
-
-            nint hash = Runtime.PyObject_Hash(handler);
-            if (hash == -1 && Exceptions.ErrorOccurred())
-            {
-                return false;
-            }
-
-            object key = obj ?? info.ReflectedType;
-            var list = reg[key] as ArrayList;
-
-            if (list == null)
-            {
-                Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
-                return false;
-            }
-
-            object?[] args = { null };
-            MethodInfo mi = info.GetRemoveMethod(true);
-
-            for (var i = 0; i < list.Count; i++)
-            {
-                var item = (Handler)list[i];
-                if (item.hash != hash)
-                {
-                    continue;
-                }
-                args[0] = item.del;
-                try
-                {
-                    mi.Invoke(obj, BindingFlags.Default, null, args, null);
-                }
-                catch
-                {
-                    continue;
-                }
-                list.RemoveAt(i);
-                return true;
-            }
-
-            Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
-            return false;
-        }
-
 
         /// <summary>
         /// Descriptor __get__ implementation. A getattr on an event returns
@@ -141,17 +34,9 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            // If the event is accessed through its type (rather than via
-            // an instance) we return an 'unbound' EventBinding that will
-            // be cached for future accesses through the type.
-
             if (ob == null)
             {
-                if (self.unbound == null)
-                {
-                    self.unbound = new EventBinding(self, target: null).Alloc().MoveToPyObject();
-                }
-                return new NewReference(self.unbound);
+                return new NewReference(ds);
             }
 
             if (Runtime.PyObject_IsInstance(ob, tp) < 1)
@@ -159,7 +44,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            return new EventBinding(self, new PyObject(ob)).Alloc();
+            return new EventBinding(self.name, self.reg, new PyObject(ob)).Alloc();
         }
 
 
@@ -191,13 +76,6 @@ namespace Python.Runtime
         {
             var self = (EventObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<event '{self.name}'>");
-        }
-
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            this.unbound = null!;
-            base.Clear(ob);
         }
     }
 

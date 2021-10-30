@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace Python.Runtime
 {
@@ -8,13 +10,20 @@ namespace Python.Runtime
     [Serializable]
     internal class EventBinding : ExtensionType
     {
-        private EventObject e;
+        private readonly string name;
+        private readonly EventHandlerCollection e;
         private PyObject? target;
 
-        public EventBinding(EventObject e, PyObject? target)
+        public EventBinding(string name, EventHandlerCollection e, PyObject? target)
         {
+            this.name = name;
             this.target = target;
             this.e = e;
+        }
+
+        public EventBinding(EventInfo @event) : this(@event.Name, new EventHandlerCollection(@event), target: null)
+        {
+            Debug.Assert(@event.AddMethod.IsStatic);
         }
 
 
@@ -61,6 +70,10 @@ namespace Python.Runtime
             return new NewReference(ob);
         }
 
+        /// </summary>
+        public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
+            => EventObject.tp_descr_set(ds, ob, val);
+
 
         /// <summary>
         /// EventBinding  __hash__ implementation.
@@ -91,7 +104,7 @@ namespace Python.Runtime
         {
             var self = (EventBinding)GetManagedObject(ob)!;
             string type = self.target == null ? "unbound" : "bound";
-            string s = string.Format("<{0} event '{1}'>", type, self.e.name);
+            string s = string.Format("<{0} event '{1}'>", type, self.name);
             return Runtime.PyString_FromString(s);
         }
     }

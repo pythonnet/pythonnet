@@ -491,7 +491,9 @@ namespace Python.Runtime
                         {
                             continue;
                         }
-                        ob = new EventObject(ei);
+                        ob = ei.AddMethod.IsStatic
+                            ? new EventBinding(ei)
+                            : new EventObject(ei);
                         ci.members[ei.Name] = ob;
                         continue;
 

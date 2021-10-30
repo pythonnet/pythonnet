@@ -310,7 +310,7 @@ def after_reload():
                             public static event Action Before;
                             public static void Call()
                             {
-                                Before();
+                                if (Before != null) Before();
                             }
                         }
                     }",
@@ -324,7 +324,7 @@ def after_reload():
                             public static event Action After;
                             public static void Call()
                             {
-                                After();
+                                if (After != null) After();
                             }
                         }
                     }",
@@ -335,21 +335,29 @@ clr.AddReference('DomainTests')
 from TestNamespace import Cls
 
 called = False
+before_reload_called = False
+after_reload_called = False
 
 def callback_function():
     global called
     called = True
 
 def before_reload():
-    global called
+    global called, before_reload_called
     called = False
     Cls.Before += callback_function
     Cls.Call()
     assert called is True
+    before_reload_called = True
 
 def after_reload():
-    global called
+    global called, after_reload_called, before_reload_called
+
+    assert before_reload_called is True
+    if not after_reload_called:
     assert called is True
+    after_reload_called = True
+
     called = False
     Cls.Call()
     assert called is False
