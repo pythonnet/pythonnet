@@ -378,10 +378,10 @@ namespace Python.Runtime
         //====================================================================
 
         /// <summary>
-        /// Raises a TypeError exception and attaches any existing exception as its cause.
+        /// Raises a <see cref="TypeError"/> and attaches any existing exception as its cause.
         /// </summary>
         /// <param name="message">The exception message</param>
-        /// <returns><c>IntPtr.Zero</c></returns>
+        /// <returns><c>null</c></returns>
         internal static NewReference RaiseTypeError(string message)
         {
             var cause = PythonException.FetchCurrentOrNullRaw();
