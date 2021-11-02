@@ -82,6 +82,7 @@ namespace Python.Runtime
             do
             {
                 managedType = PyType.GetBase(managedType);
+                Debug.Assert(managedType != null);
             } while (IsManagedType(managedType));
             return managedType;
         }
