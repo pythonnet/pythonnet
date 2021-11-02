@@ -40,6 +40,8 @@ namespace Python.Runtime
             return py.AnalyzerWorkaround();
         }
 
+        public PyObject AllocObject() => new PyObject(Alloc().Steal());
+
         // "borrowed" references
         internal static readonly HashSet<IntPtr> loadedExtensions = new();
         void SetupGc (BorrowedReference ob, BorrowedReference tp)

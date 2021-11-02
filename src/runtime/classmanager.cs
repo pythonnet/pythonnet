@@ -56,6 +56,10 @@ namespace Python.Runtime
 
         internal static void RemoveClasses()
         {
+            foreach (var @class in cache.Values)
+            {
+                @class.Dispose();
+            }
             cache.Clear();
         }
 
@@ -81,11 +85,6 @@ namespace Python.Runtime
             var contexts = new Dictionary<ReflectedClrType, InterDomainContext>();
             foreach (var cls in cache)
             {
-                if (!cls.Key.Valid)
-                {
-                    // Don't serialize an invalid class
-                    continue;
-                }
                 var context = contexts[cls.Value] = new InterDomainContext();
                 var cb = (ClassBase)ManagedType.GetManagedObject(cls.Value)!;
                 cb.Save(cls.Value, context);
@@ -129,19 +128,18 @@ namespace Python.Runtime
             var contexts = storage.Contexts;
             foreach (var pair in cache)
             {
-                if (!pair.Key.Valid)
+                var context = contexts[pair.Value];
+                if (pair.Key.Valid)
+                {
+                    pair.Value.Restore(context);
+                }
+                else
                 {
                     invalidClasses.Add(pair);
-                    continue;
+                    var cb = new UnloadedClass(pair.Key.Name);
+                    cb.Load(pair.Value, context);
+                    pair.Value.Restore(cb);
                 }
-
-                pair.Value.Restore(contexts[pair.Value]);
-            }
-            
-            foreach (var pair in invalidClasses)
-            {
-                cache.Remove(pair.Key);
-                pair.Value.Dispose();
             }
         }
 
@@ -149,11 +147,13 @@ namespace Python.Runtime
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
-        internal static ReflectedClrType GetClass(Type type) => ReflectedClrType.GetOrCreate(type, out _);
+        internal static ReflectedClrType GetClass(Type type) => ReflectedClrType.GetOrCreate(type);
         internal static ClassBase GetClassImpl(Type type)
         {
-            ReflectedClrType.GetOrCreate(type, out var cb);
-            return cb;
+            var pyType = GetClass(type);
+            var impl = (ClassBase)ManagedType.GetManagedObject(pyType)!;
+            Debug.Assert(impl is not null);
+            return impl!;
         }
 
 
@@ -236,22 +236,11 @@ namespace Python.Runtime
                 var item = iter.Value;
                 var name = iter.Key;
                 impl.dotNetMembers.Add(name);
-                switch (item)
-                {
-                    case ClassBase nestedClass:
-                        Runtime.PyDict_SetItemString(dict, name, GetClass(nestedClass.type.Value));
-                        break;
-                    case ExtensionType extension:
-                        using (var pyRef = extension.Alloc())
-                        {
-                            Runtime.PyDict_SetItemString(dict, name, pyRef.Borrow());
-                        }
-                        break;
-                    default:
-                        throw new NotSupportedException();
-                }
+                Runtime.PyDict_SetItemString(dict, name, item);
                 if (ClassBase.CilToPyOpMap.TryGetValue(name, out var pyOp)
-                    && item is MethodObject method)
+                    // workaround for unintialized types crashing in GetManagedObject
+                    && item is not ReflectedClrType
+                    && ManagedType.GetManagedObject(item) is MethodObject method)
                 {
                     impl.richcompare.Add(pyOp, method);
                 }
@@ -347,7 +336,7 @@ namespace Python.Runtime
             var ci = new ClassInfo();
             var methods = new Dictionary<string, List<MethodInfo>>();
             MethodInfo meth;
-            ManagedType ob;
+            ExtensionType ob;
             string name;
             Type tp;
             int i, n;
@@ -472,7 +461,7 @@ namespace Python.Runtime
                         }
 
                         ob = new PropertyObject(pi);
-                        ci.members[pi.Name] = ob;
+                        ci.members[pi.Name] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.Field:
@@ -482,7 +471,7 @@ namespace Python.Runtime
                             continue;
                         }
                         ob = new FieldObject(fi);
-                        ci.members[mi.Name] = ob;
+                        ci.members[mi.Name] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.Event:
@@ -494,7 +483,7 @@ namespace Python.Runtime
                         ob = ei.AddMethod.IsStatic
                             ? new EventBinding(ei)
                             : new EventObject(ei);
-                        ci.members[ei.Name] = ob;
+                        ci.members[ei.Name] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.NestedType:
@@ -506,9 +495,8 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         var pyType = GetClass(tp);
-                        ob = ManagedType.GetManagedObject(pyType)!;
-                        Debug.Assert(ob is not null);
-                        ci.members[mi.Name] = ob;
+                        // make a copy, that could be disposed later
+                        ci.members[mi.Name] = new ReflectedClrType(pyType);
                         continue;
                 }
             }
@@ -519,7 +507,7 @@ namespace Python.Runtime
                 var mlist = iter.Value.ToArray();
 
                 ob = new MethodObject(type, name, mlist);
-                ci.members[name] = ob;
+                ci.members[name] = ob.AllocObject();
                 if (mlist.Any(OperatorMethod.IsOperatorMethod))
                 {
                     string pyName = OperatorMethod.GetPyMethodName(name);
@@ -527,10 +515,10 @@ namespace Python.Runtime
                     OperatorMethod.FilterMethods(mlist, out var forwardMethods, out var reverseMethods);
                     // Only methods where the left operand is the declaring type.
                     if (forwardMethods.Length > 0)
-                        ci.members[pyName] = new MethodObject(type, name, forwardMethods);
+                        ci.members[pyName] = new MethodObject(type, name, forwardMethods).AllocObject();
                     // Only methods where only the right operand is the declaring type.
                     if (reverseMethods.Length > 0)
-                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods);
+                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods).AllocObject();
                 }
             }
 
@@ -563,7 +551,7 @@ namespace Python.Runtime
         private class ClassInfo
         {
             public Indexer? indexer;
-            public readonly Dictionary<string, ManagedType> members = new();
+            public readonly Dictionary<string, PyObject> members = new();
 
             internal ClassInfo()
             {

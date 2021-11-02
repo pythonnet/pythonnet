@@ -9,6 +9,7 @@ namespace Python.Runtime;
 internal sealed class ReflectedClrType : PyType
 {
     private ReflectedClrType(StolenReference reference) : base(reference, prevalidated: true) { }
+    internal ReflectedClrType(ReflectedClrType original) : base(original, prevalidated: true) { }
 
     internal ClassBase Impl => (ClassBase)ManagedType.GetManagedObject(this)!;
 
@@ -19,12 +20,10 @@ internal sealed class ReflectedClrType : PyType
     /// Returned <see cref="ReflectedClrType"/> might be partially initialized.
     /// If you need fully initialized type, use <see cref="GetOrInitialize(ClassBase, Type)"/>
     /// </remarks>
-    public static ReflectedClrType GetOrCreate(Type type, out ClassBase impl)
+    public static ReflectedClrType GetOrCreate(Type type)
     {
         if (ClassManager.cache.TryGetValue(type, out var pyType))
         {
-            impl = (ClassBase)ManagedType.GetManagedObject(pyType)!;
-            Debug.Assert(impl is not null);
             return pyType;
         }
 
@@ -34,7 +33,7 @@ internal sealed class ReflectedClrType : PyType
         pyType = AllocateClass(type);
         ClassManager.cache.Add(type, pyType);
 
-        impl = ClassManager.CreateClass(type);
+        var impl = ClassManager.CreateClass(type);
 
         TypeManager.InitializeClassCore(type, pyType, impl);
 
@@ -52,11 +51,16 @@ internal sealed class ReflectedClrType : PyType
     {
         var cb = context.Storage.GetValue<ClassBase>("impl");
 
+        cb.Load(this, context);
+
+        Restore(cb);
+    }
+
+    internal void Restore(ClassBase cb)
+    {
         ClassManager.InitClassBase(cb.type.Value, cb, this);
 
         TypeManager.InitializeClass(this, cb, cb.type.Value);
-        
-        cb.Load(this, context);
     }
 
     internal static NewReference CreateSubclass(ClassBase baseClass,
@@ -71,7 +75,7 @@ internal sealed class ReflectedClrType : PyType
                 ns,
                 assembly);
 
-            var py_type = GetOrCreate(subType, out _);
+            var py_type = GetOrCreate(subType);
 
             // by default the class dict will have all the C# methods in it, but as this is a
             // derived class we want the python overrides in there instead if they exist.

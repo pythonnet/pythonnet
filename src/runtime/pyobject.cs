@@ -23,7 +23,7 @@ namespace Python.Runtime
         /// <summary>
         /// Trace stack for PyObject's construction
         /// </summary>
-        public StackTrace Traceback { get; private set; }
+        public StackTrace Traceback { get; } = new StackTrace(1);
 #endif  
 
         protected internal IntPtr rawPtr = IntPtr.Zero;
@@ -49,9 +49,6 @@ namespace Python.Runtime
 
             rawPtr = ptr;
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         [Obsolete("for testing purposes only")]
@@ -62,9 +59,6 @@ namespace Python.Runtime
             rawPtr = ptr;
             if (!skipCollect)
                 Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         /// <summary>
@@ -78,9 +72,15 @@ namespace Python.Runtime
 
             rawPtr = new NewReference(reference).DangerousMoveToPointer();
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
+        }
+
+        internal PyObject(BorrowedReference reference, bool skipCollect)
+        {
+            if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
+
+            rawPtr = new NewReference(reference).DangerousMoveToPointer();
+            if (!skipCollect)
+                Finalizer.Instance.ThrottledCollect();
         }
 
         internal PyObject(in StolenReference reference)
@@ -89,9 +89,6 @@ namespace Python.Runtime
 
             rawPtr = reference.DangerousGetAddressOrNull();
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         // Ensure that encapsulated Python object is decref'ed appropriately

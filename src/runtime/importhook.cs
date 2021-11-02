@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using Python.Runtime.StateSerialization;
 
@@ -98,6 +99,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             BorrowedReference pyModules = Runtime.PyImport_GetModuleDict();
             using var items = Runtime.PyDict_Items(pyModules);
             nint length = Runtime.PyList_Size(items.BorrowOrThrow());
+            Debug.Assert(length >= 0);
             var modules = new Dictionary<PyString, PyObject>();
             for (nint i = 0; i < length; i++)
             {

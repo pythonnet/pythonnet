@@ -105,10 +105,11 @@ namespace Python.Runtime
 
             PyCLRMetaType = MetaType.RestoreRuntimeData(storage.Metatype);
 
-            RestoreRuntimeDataObjects(storage.SharedObjects);
-            // RestoreRuntimeDataModules(storage.Assmeblies);
             TypeManager.RestoreRuntimeData(storage.Types);
             ClassManager.RestoreRuntimeData(storage.Classes);
+
+            RestoreRuntimeDataObjects(storage.SharedObjects);
+
             ImportHook.RestoreRuntimeData(storage.ImportHookState);
         }
 
@@ -139,25 +140,36 @@ namespace Python.Runtime
         {
             var contexts = new Dictionary<PyObject, InterDomainContext>(PythonReferenceComparer.Instance);
             var extensionObjs = new Dictionary<PyObject, ExtensionType>(PythonReferenceComparer.Instance);
-            foreach (IntPtr extensionAddr in ExtensionType.loadedExtensions)
+            // make a copy with strongly typed references to avoid concurrent modification
+            var extensions = ExtensionType.loadedExtensions
+                                .Select(addr => new PyObject(
+                                    new BorrowedReference(addr),
+                                    // if we don't skip collect, finalizer might modify loadedExtensions
+                                    skipCollect: true))
+                                .ToArray();
+            foreach (var pyObj in extensions)
             {
-                var @ref = new BorrowedReference(extensionAddr);
-                var extension = (ExtensionType)ManagedType.GetManagedObject(@ref)!;
+                var extension = (ExtensionType)ManagedType.GetManagedObject(pyObj)!;
                 Debug.Assert(CheckSerializable(extension));
                 var context = new InterDomainContext();
-                var pyObj = new PyObject(@ref);
                 contexts[pyObj] = context;
-                extension.Save(@ref, context);
+                extension.Save(pyObj, context);
                 extensionObjs.Add(pyObj, extension);
             }
 
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var userObjects = new CLRWrapperCollection();
-            foreach (IntPtr pyAddr in CLRObject.reflectedObjects)
+            // make a copy with strongly typed references to avoid concurrent modification
+            var reflectedObjects = CLRObject.reflectedObjects
+                                    .Select(addr => new PyObject(
+                                        new BorrowedReference(addr),
+                                        // if we don't skip collect, finalizer might modify reflectedObjects
+                                        skipCollect: true))
+                                    .ToList();
+            foreach (var pyObj in reflectedObjects)
             {
-                var @ref = new BorrowedReference(pyAddr);
                 // Wrapper must be the CLRObject
-                var clrObj = (CLRObject)ManagedType.GetManagedObject(@ref)!;
+                var clrObj = (CLRObject)ManagedType.GetManagedObject(pyObj)!;
                 object inst = clrObj.inst;
                 CLRMappedItem item;
                 List<CLRObject> mappedObjs;
@@ -174,7 +186,7 @@ namespace Python.Runtime
                 {
                     mappedObjs = wrappers[inst];
                 }
-                item.AddRef(new PyObject(@ref));
+                item.AddRef(pyObj);
                 mappedObjs.Add(clrObj);
             }
 

@@ -25,7 +25,7 @@ namespace Python.Runtime
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
         private static Dictionary<MaybeType, PyType> cache = new();
 
-        private static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
+        static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -721,6 +721,8 @@ namespace Python.Runtime
 
         private readonly PyType Type;
 
+        public string?[] Holds => _slots.Keys.Select(TypeOffset.GetSlotName).ToArray();
+
         /// <summary>
         /// Create slots holder for holding the delegate of slots and be able  to reset them.
         /// </summary>
@@ -731,6 +733,8 @@ namespace Python.Runtime
         }
 
         public bool IsHolding(int offset) => _slots.ContainsKey(offset);
+
+        public ICollection<int> Slots => _slots.Keys;
 
         public void Set(int offset, ThunkInfo thunk)
         {
@@ -752,6 +756,18 @@ namespace Python.Runtime
             _keepalive.Add(thunk);
         }
 
+        public static void ResetSlots(BorrowedReference type, IEnumerable<int> slots)
+        {
+            foreach (int offset in slots)
+            {
+                IntPtr ptr = GetDefaultSlot(offset);
+#if DEBUG
+                //DebugUtil.Print($"Set slot<{TypeOffsetHelper.GetSlotNameByOffset(offset)}> to 0x{ptr.ToString("X")} at {typeName}<0x{_type}>");
+#endif
+                Util.WriteIntPtr(type, offset, ptr);
+            }
+        }
+
         public void ResetSlots()
         {
             if (_alreadyReset)
@@ -763,14 +779,7 @@ namespace Python.Runtime
             IntPtr tp_name = Util.ReadIntPtr(Type, TypeOffset.tp_name);
             string typeName = Marshal.PtrToStringAnsi(tp_name);
 #endif
-            foreach (var offset in _slots.Keys)
-            {
-                IntPtr ptr = GetDefaultSlot(offset);
-#if DEBUG
-                //DebugUtil.Print($"Set slot<{TypeOffsetHelper.GetSlotNameByOffset(offset)}> to 0x{ptr.ToString("X")} at {typeName}<0x{_type}>");
-#endif
-                Util.WriteIntPtr(Type, offset, ptr);
-            }
+            ResetSlots(Type, _slots.Keys);
 
             foreach (var action in _deallocators)
             {

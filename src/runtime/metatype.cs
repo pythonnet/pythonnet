@@ -289,7 +289,7 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = (TypeFlags)Util.ReadCLong(lastRef.Borrow(), TypeOffset.tp_flags);
+            var flags = PyType.GetFlags(lastRef.Borrow());
             if ((flags & TypeFlags.Subclass) == 0)
             {
                 GetGCHandle(lastRef.Borrow()).Free();

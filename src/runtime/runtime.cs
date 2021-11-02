@@ -479,7 +479,10 @@ namespace Python.Runtime
                 }
             }
 
-            foreach (IntPtr objWithGcHandle in ExtensionType.loadedExtensions.Concat(CLRObject.reflectedObjects).ToArray())
+            foreach (IntPtr objWithGcHandle in ExtensionType.loadedExtensions
+                .Concat(CLRObject.reflectedObjects)
+                .ToArray()
+            )
             {
                 var @ref = new BorrowedReference(objWithGcHandle);
                 GCHandle? handle = ManagedType.TryGetGCHandle(@ref);
