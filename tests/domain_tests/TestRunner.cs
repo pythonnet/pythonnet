@@ -770,12 +770,12 @@ def before_reload():
     sys.my_cls = TestNamespace.Before
 
 def after_reload():
+    try:
     bar = sys.my_cls()
-
-    # Don't crash!
-    print(bar)
-    print(bar.__str__())
-    print(bar.__repr__())
+    except TypeError:
+        print('Caught expected exception')
+    else:
+        raise AssertionError('Failed to throw exception')
                     ",
             },
 
