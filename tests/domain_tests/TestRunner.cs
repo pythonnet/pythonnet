@@ -355,7 +355,7 @@ def after_reload():
 
     assert before_reload_called is True
     if not after_reload_called:
-    assert called is True
+        assert called is True
     after_reload_called = True
 
     called = False
@@ -771,7 +771,7 @@ def before_reload():
 
 def after_reload():
     try:
-    bar = sys.my_cls()
+        bar = sys.my_cls()
     except TypeError:
         print('Caught expected exception')
     else:
@@ -1167,7 +1167,7 @@ namespace CaseRunner
             }}
             catch (Exception e)
             {{
-                Console.WriteLine(e.StackTrace);
+                Console.Error.WriteLine(e.StackTrace);
                 throw;
             }}
             return 0;
@@ -1181,18 +1181,27 @@ namespace CaseRunner
 
         public static int Main(string[] args)
         {
-            TestCase testCase;
             if (args.Length < 1)
             {
-                testCase = Cases[0];
+                foreach (var testCase in Cases)
+                {
+                    Run(testCase);
+                    Console.WriteLine();
+                }
             }
             else
             {
                 string testName = args[0];
                 Console.WriteLine($"-- Looking for domain reload test case {testName}");
-                testCase = Cases.First(c => c.Name == testName);
+                var testCase = int.TryParse(testName, out var index) ? Cases[index] : Cases.First(c => c.Name == testName);
+                Run(testCase);
             }
 
+            return 0;
+        }
+
+        static void Run(TestCase testCase)
+        {
             Console.WriteLine($"-- Running domain reload test case: {testCase.Name}");
 
             SetupTestFolder(testCase.Name);
@@ -1230,7 +1239,7 @@ namespace CaseRunner
             // folder behind to debug failing tests.
             TeardownTestFolder();
 
-            return 0;
+            Console.WriteLine($"-- PASSED: {testCase.Name}");
         }
 
         static void SetupTestFolder(string testCaseName)
