@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 
 namespace Python.Runtime;
 
+[Serializable]
 internal class EventHandlerCollection: Dictionary<object, List<Handler>>
 {
     readonly EventInfo info;
@@ -102,4 +105,20 @@ internal class EventHandlerCollection: Dictionary<object, List<Handler>>
         Exceptions.SetError(Exceptions.ValueError, "unknown event handler");
         return false;
     }
+
+    #region Serializable
+    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    protected EventHandlerCollection(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+    {
+        this.info = (EventInfo)info.GetValue("event", typeof(EventInfo));
+    }
+    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    public override void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+        base.GetObjectData(info, context);
+
+        info.AddValue("event", this.info);
+    }
+    #endregion
 }
