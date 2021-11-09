@@ -33,6 +33,21 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public static void IterAcrossRuns()
+        {
+            Runtime.Runtime.Py_Initialize();
+            BorrowedReference builtins = Runtime.Runtime.PyEval_GetBuiltins();
+            BorrowedReference iter = Runtime.Runtime.PyDict_GetItemString(builtins, "iter");
+
+            using var ownedIter = new NewReference(iter);
+            Runtime.Runtime.Py_Finalize();
+
+            Runtime.Runtime.Py_Initialize();
+            ownedIter.Dispose();
+            Runtime.Runtime.Py_Finalize();
+        }
+
+        [Test]
         public static void RefCountTest()
         {
             Runtime.Runtime.Py_Initialize();

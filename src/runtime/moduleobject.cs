@@ -320,12 +320,19 @@ namespace Python.Runtime
 
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            var self = (ModuleObject)GetManagedObject(ob)!;
+            var self = (ModuleObject?)GetManagedObject(ob);
+            if (self is null) return 0;
+
+            Runtime.PyGC_ValidateLists();
+            Debug.Assert(self.dict == GetObjectDict(ob));
             int res = PyVisit(self.dict, visit, arg);
+            Runtime.PyGC_ValidateLists();
             if (res != 0) return res;
             foreach (var attr in self.cache.Values)
             {
+                Runtime.PyGC_ValidateLists();
                 res = PyVisit(attr, visit, arg);
+                Runtime.PyGC_ValidateLists();
                 if (res != 0) return res;
             }
             return 0;
@@ -388,7 +395,6 @@ namespace Python.Runtime
     [Serializable]
     internal class CLRModule : ModuleObject
     {
-        protected static bool hacked = false;
         protected static bool interactive_preload = true;
         internal static bool preload;
         // XXX Test performance of new features //
@@ -413,7 +419,6 @@ namespace Python.Runtime
 
         public static void Reset()
         {
-            hacked = false;
             interactive_preload = true;
             preload = false;
 

@@ -337,22 +337,25 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
-            GCHandle? gcHandle = TryGetGCHandle(lastRef.Borrow());
+            Runtime.PyGC_ValidateLists();
+            Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
 
-            tp_clear(lastRef.Borrow());
+            CallClear(lastRef.Borrow());
 
             IntPtr addr = lastRef.DangerousGetAddress();
             bool deleted = CLRObject.reflectedObjects.Remove(addr);
             Debug.Assert(deleted);
 
-            Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
-            Runtime.PyObject_GC_Del(lastRef.Steal());
-
-            gcHandle?.Free();
+            DecrefTypeAndFree(lastRef.Steal());
+            Runtime.PyGC_ValidateLists();
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
+            Runtime.PyGC_ValidateLists();
+            GCHandle? gcHandle = TryGetGCHandle(ob);
+            gcHandle?.Free();
+
             int baseClearResult = BaseUnmanagedClear(ob);
             if (baseClearResult != 0)
             {
@@ -360,10 +363,11 @@ namespace Python.Runtime
             }
 
             ClearObjectDict(ob);
+            Runtime.PyGC_ValidateLists();
             return 0;
         }
 
-        static unsafe int BaseUnmanagedClear(BorrowedReference ob)
+        internal static unsafe int BaseUnmanagedClear(BorrowedReference ob)
         {
             var type = Runtime.PyObject_TYPE(ob);
             var unmanagedBase = GetUnmanagedBaseType(type);
@@ -374,10 +378,10 @@ namespace Python.Runtime
             }
             var clear = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
 
-            bool usesSubtypeClear = clearPtr == Util.ReadIntPtr(Runtime.CLRMetaType, TypeOffset.tp_clear);
+            bool usesSubtypeClear = clearPtr == TypeManager.subtype_clear;
             if (usesSubtypeClear)
             {
-                // workaround for https://bugs.python.org/issue45266
+                // workaround for https://bugs.python.org/issue45266 (subtype_clear)
                 using var dict = Runtime.PyObject_GenericGetDict(ob);
                 if (Runtime.PyMapping_HasKey(dict.Borrow(), PyIdentifier.__clear_reentry_guard__) != 0)
                     return 0;

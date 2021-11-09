@@ -1,13 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Python.Runtime.Slots;
+using Python.Runtime.Native;
 using Python.Runtime.StateSerialization;
-using static Python.Runtime.PythonException;
+
 
 namespace Python.Runtime
 {
@@ -50,16 +49,16 @@ namespace Python.Runtime
         {
             foreach (var type in cache.Values)
             {
-                SlotsHolder holder;
-                if (_slotsHolders.TryGetValue(type, out holder))
-                {
-                    // If refcount > 1, it needs to reset the managed slot,
-                    // otherwise it can dealloc without any trick.
-                    if (Runtime.Refcount(type) > 1)
-                    {
-                        holder.ResetSlots();
-                    }
-                }
+                //SlotsHolder holder;
+                //if (_slotsHolders.TryGetValue(type, out holder))
+                //{
+                //    // If refcount > 1, it needs to reset the managed slot,
+                //    // otherwise it can dealloc without any trick.
+                //    if (Runtime.Refcount(type) > 1)
+                //    {
+                //        holder.ResetSlots();
+                //    }
+                //}
                 type.Dispose();
             }
             cache.Clear();
@@ -78,11 +77,6 @@ namespace Python.Runtime
             var typeCache = storage.Cache;
             foreach (var entry in typeCache)
             {
-                if (!entry.Key.Valid)
-                {
-                    entry.Value.Dispose();
-                    continue;
-                }
                 Type type = entry.Key.Value;;
                 cache[type] = entry.Value;
                 SlotsHolder holder = CreateSlotsHolder(entry.Value);
@@ -411,16 +405,16 @@ namespace Python.Runtime
                                                    dict: dictRef);
         }
 
-        internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, int flags, IntPtr doc)
+        internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, PyMethodFlags flags, IntPtr doc)
         {
             Marshal.WriteIntPtr(mdef, name);
             Marshal.WriteIntPtr(mdef, 1 * IntPtr.Size, func);
-            Marshal.WriteInt32(mdef, 2 * IntPtr.Size, flags);
+            Marshal.WriteInt32(mdef, 2 * IntPtr.Size, (int)flags);
             Marshal.WriteIntPtr(mdef, 3 * IntPtr.Size, doc);
             return mdef + 4 * IntPtr.Size;
         }
 
-        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001,
+        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, PyMethodFlags flags = PyMethodFlags.VarArgs,
             string? doc = null)
         {
             IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
@@ -452,6 +446,27 @@ namespace Python.Runtime
             }
         }
 
+        internal static PyType CreateMetatypeWithGCHandleOffset()
+        {
+            PyType py_type = Runtime.PyTypeType;
+            int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
+                       + IntPtr.Size // tp_clr_inst_offset
+            ;
+            var result = new PyType(new TypeSpec("GC Offset Base", basicSize: size,
+                new TypeSpec.Slot[]
+                {
+
+                },
+                TypeFlags.Default | TypeFlags.HeapType | TypeFlags.HaveGC),
+                bases: new PyTuple(new[] { py_type }));
+
+            SetRequiredSlots(result, seen: new HashSet<string>());
+
+            Runtime.PyType_Modified(result);
+
+            return result;
+        }
+
         internal static PyType CreateMetaType(Type impl, out SlotsHolder slotsHolder)
         {
             // The managed metatype is functionally little different than the
@@ -459,21 +474,22 @@ namespace Python.Runtime
             // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
-            PyType type = AllocateTypeObject("CLR Metatype", metatype: Runtime.PyTypeType);
+            PyType gcOffsetBase = CreateMetatypeWithGCHandleOffset();
 
-            PyType py_type = Runtime.PyTypeType;
-            Util.WriteRef(type, TypeOffset.tp_base, new NewReference(py_type).Steal());
+            PyType type = AllocateTypeObject("CLR Metatype", metatype: gcOffsetBase);
 
-            int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
-                       + IntPtr.Size // tp_clr_inst_offset
+            Util.WriteRef(type, TypeOffset.tp_base, new NewReference(gcOffsetBase).Steal());
+
+            nint size = Util.ReadInt32(gcOffsetBase, TypeOffset.tp_basicsize)
                        + IntPtr.Size // tp_clr_inst
             ;
-            Util.WriteIntPtr(type, TypeOffset.tp_basicsize, new IntPtr(size));
+            Util.WriteIntPtr(type, TypeOffset.tp_basicsize, size);
             Util.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, ManagedType.Offsets.tp_clr_inst);
 
             const TypeFlags flags = TypeFlags.Default
                             | TypeFlags.HeapType
-                            | TypeFlags.HaveGC;
+                            | TypeFlags.HaveGC
+                            | TypeFlags.HasClrInstance;
             Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             // Slots will inherit from TypeType, it's not neccesary for setting them.
@@ -487,7 +503,7 @@ namespace Python.Runtime
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-
+            
             BorrowedReference dict = Util.ReadRef(type, TypeOffset.tp_dict);
             using (var mod = Runtime.PyString_FromString("CLR"))
                 Runtime.PyDict_SetItemString(dict, "__module__", mod.Borrow());
@@ -643,6 +659,11 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
+            SetRequiredSlots(type, seen);
+        }
+
+        private static void SetRequiredSlots(PyType type, HashSet<string> seen)
+        {
             foreach (string slot in _requiredSlots)
             {
                 if (seen.Contains(slot))

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,6 +42,7 @@ namespace Python.Runtime
         public bool Enable { get; set; } = true;
 
         private ConcurrentQueue<IntPtr> _objQueue = new ConcurrentQueue<IntPtr>();
+        private readonly ConcurrentQueue<IntPtr> _derivedQueue = new ConcurrentQueue<IntPtr>();
         private int _throttled;
 
         #region FINALIZER_CHECK
@@ -132,6 +135,20 @@ namespace Python.Runtime
             }
             obj = IntPtr.Zero;
         }
+        internal void AddDerivedFinalizedObject(ref IntPtr derived)
+        {
+            if (derived == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(derived));
+
+            if (!Enable)
+            {
+                return;
+            }
+
+            IntPtr copy = derived;
+            derived = IntPtr.Zero;
+            _derivedQueue.Enqueue(copy);
+        }
 
         internal static void Initialize()
         {
@@ -146,6 +163,9 @@ namespace Python.Runtime
 
         private void DisposeAll()
         {
+            if (_objQueue.IsEmpty && _derivedQueue.IsEmpty)
+                return;
+
             BeforeCollect?.Invoke(this, new CollectArgs()
             {
                 ObjectCount = _objQueue.Count
@@ -159,6 +179,7 @@ namespace Python.Runtime
 #endif
                 IntPtr obj;
                 Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+                Debug.Assert(errType.IsNull());
 
                 try
                 {
@@ -168,6 +189,15 @@ namespace Python.Runtime
                             continue;
 
                         IntPtr copyForException = obj;
+                        Runtime.PyGC_ValidateLists();
+                        var @ref = new BorrowedReference(obj);
+                        nint refs = Runtime.Refcount(@ref);
+                        var type = Runtime.PyObject_TYPE(@ref);
+                        string typeName = Runtime.ToString(type);
+                        if (typeName == "<class 'clr.interop.PyErr'>")
+                        {
+                            
+                        }
                         Runtime.XDecref(StolenReference.Take(ref obj));
                         try
                         {
@@ -186,6 +216,25 @@ namespace Python.Runtime
                                     disposable: copyForException, innerException: e);
                             }
                         }
+                        Runtime.PyGC_ValidateLists();
+                    }
+
+                    while (!_derivedQueue.IsEmpty)
+                    {
+                        if (!_derivedQueue.TryDequeue(out var derived))
+                            continue;
+
+                        var @ref = NewReference.DangerousFromPointer(derived);
+                        GCHandle gcHandle = ManagedType.GetGCHandle(@ref.Borrow());
+
+                        bool deleted = CLRObject.reflectedObjects.Remove(derived);
+                        Debug.Assert(deleted);
+                        // rare case when it's needed
+                        // matches correspdonging PyObject_GC_UnTrack
+                        // in ClassDerivedObject.tp_dealloc
+                        Runtime.PyObject_GC_Del(@ref.Steal());
+
+                        gcHandle.Free();
                     }
                 }
                 finally

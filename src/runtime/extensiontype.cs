@@ -60,28 +60,6 @@ namespace Python.Runtime
             Runtime.PyObject_GC_UnTrack(ob);
         }
 
-        protected virtual void Dealloc(NewReference lastRef)
-        {
-            var type = Runtime.PyObject_TYPE(lastRef.Borrow());
-            GCHandle gcHandle = GetGCHandle(lastRef.Borrow(), type);
-
-            bool deleted = loadedExtensions.Remove(lastRef.DangerousGetAddress());
-            Debug.Assert(deleted);
-
-            Runtime.PyObject_GC_Del(lastRef.Steal());
-
-            gcHandle.Free();
-
-            // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
-            Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
-        }
-
-        /// <summary>DecRefs and nulls any fields pointing back to Python</summary>
-        protected virtual void Clear(BorrowedReference ob)
-        {
-            ClearObjectDict(ob);
-        }
-
         /// <summary>
         /// Type __setattr__ implementation.
         /// </summary>
@@ -96,20 +74,31 @@ namespace Python.Runtime
             return -1;
         }
 
-        public static void tp_dealloc(NewReference lastRef)
+        public unsafe static void tp_dealloc(NewReference lastRef)
         {
-            // Clean up a Python instance of this extension type. This
-            // frees the allocated Python object and decrefs the type.
-            var self = (ExtensionType?)GetManagedObject(lastRef.Borrow());
-            self?.Clear(lastRef.Borrow());
-            self?.Dealloc(lastRef.AnalyzerWorkaround());
+            Runtime.PyGC_ValidateLists();
+            Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
+
+            tp_clear(lastRef.Borrow());
+
+            bool deleted = loadedExtensions.Remove(lastRef.DangerousGetAddress());
+            Debug.Assert(deleted);
+
+            // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
+            DecrefTypeAndFree(lastRef.Steal());
+            Runtime.PyGC_ValidateLists();
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
-            var self = (ExtensionType?)GetManagedObject(ob);
-            self?.Clear(ob);
-            return 0;
+            Runtime.PyGC_ValidateLists();
+            GCHandle? gcHandle = TryGetGCHandle(ob);
+            gcHandle?.Free();
+            if (gcHandle is not null) SetGCHandle(ob, default);
+
+            int res = ClassBase.BaseUnmanagedClear(ob);
+            Runtime.PyGC_ValidateLists();
+            return res;
         }
 
         protected override void OnLoad(BorrowedReference ob, InterDomainContext context)

@@ -189,18 +189,39 @@ namespace Python.Runtime
             return new PythonException(type, value, traceback, inner);
         }
 
-        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        private static PyDict ToPyErrArgs(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
         {
             using var type = PyType.FromReference(typeRef);
             using var value = PyObject.FromNullableReference(valRef);
             using var traceback = PyObject.FromNullableReference(tbRef);
 
-            using var errorDict = new PyDict();
-            if (typeRef != null) errorDict["type"] = type;
-            if (valRef != null) errorDict["value"] = value ?? PyObject.None;
-            if (tbRef != null) errorDict["traceback"] = traceback ?? PyObject.None;
+            var errorDict = new PyDict();
+            errorDict["type"] = type;
+            if (value is not null) errorDict["value"] = value;
+            if (traceback is not null) errorDict["traceback"] = traceback;
 
+            return errorDict;
+        }
+
+        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        {
             using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
+
+
+            using (var tempErr = ToPyErrArgs(typeRef, valRef, tbRef))
+            {
+                Runtime.PyGC_ValidateLists();
+                using (var pyErr = pyErrType.Invoke(new PyTuple(), tempErr))
+                {
+                    Runtime.PyGC_ValidateLists();
+                    tempErr.Dispose();
+                    Runtime.PyGC_ValidateLists();
+                }
+                Runtime.PyGC_ValidateLists();
+            }
+            Runtime.PyGC_ValidateLists();
+
+            using var errorDict = ToPyErrArgs(typeRef, valRef, tbRef);
             using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
             if (PyObjectConversions.TryDecode(pyErrInfo.Reference, pyErrType.Reference,
                 typeof(Exception), out object? decoded) && decoded is Exception decodedPyErrInfo)
@@ -258,12 +279,8 @@ namespace Python.Runtime
         }
 
         /// <summary>Restores python error.</summary>
-        public void Restore()
+        internal void Restore()
         {
-            CheckRuntimeIsRunning();
-
-            using var _ = new Py.GILState();
-
             NewReference type = Type.NewReferenceOrNull();
             NewReference value = Value.NewReferenceOrNull();
             NewReference traceback = Traceback.NewReferenceOrNull();

@@ -143,7 +143,7 @@ namespace Python.Runtime
         public new static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
         {
             var obj = (CLRObject)GetManagedObject(ob)!;
-            var arrObj = (ArrayObject)GetManagedObjectType(ob)!;
+            var arrObj = (ArrayObject)GetManagedObject(Runtime.PyObject_TYPE(ob))!;
             if (!arrObj.type.Valid)
             {
                 return Exceptions.RaiseTypeError(arrObj.type.DeletedMessage);

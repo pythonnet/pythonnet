@@ -201,11 +201,5 @@ namespace Python.Runtime
             var self = (MethodObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<method '{self.name}'>");
         }
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            this.unbound = null;
-            base.Clear(ob);
-        }
     }
 }

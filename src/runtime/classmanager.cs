@@ -63,23 +63,6 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        private static int TraverseTypeClear(BorrowedReference ob, IntPtr arg)
-        {
-            var visited = (HashSet<IntPtr>)GCHandle.FromIntPtr(arg).Target;
-            if (!visited.Add(ob.DangerousGetAddressOrNull()))
-            {
-                return 0;
-            }
-            var clrObj = ManagedType.GetManagedObject(ob);
-            if (clrObj != null)
-            {
-                BorrowedReference tp = Runtime.PyObject_TYPE(ob);
-                ManagedType.CallTypeTraverse(ob, tp, TraverseTypeClear, arg);
-                ManagedType.CallTypeClear(ob, tp);
-            }
-            return 0;
-        }
-
         internal static ClassManagerState SaveRuntimeData()
         {
             var contexts = new Dictionary<ReflectedClrType, InterDomainContext>();

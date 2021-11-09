@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 using Python.Runtime.Native;
 
@@ -71,6 +69,7 @@ namespace Python.Runtime
 
         public new static void tp_dealloc(NewReference ob)
         {
+            Runtime.PyGC_ValidateLists();
             var self = (CLRObject)GetManagedObject(ob.Borrow())!;
 
             // don't let the python GC destroy this object
@@ -84,6 +83,7 @@ namespace Python.Runtime
             GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
             SetGCHandle(ob.Borrow(), gc);
             oldHandle.Free();
+            Runtime.PyGC_ValidateLists();
         }
 
         /// <summary>
@@ -800,6 +800,8 @@ namespace Python.Runtime
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
+            Debug.Assert(Runtime.PyGILState_Check() != 0);
+
             // call the base constructor
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
@@ -833,58 +835,12 @@ namespace Python.Runtime
             }
         }
 
-        static readonly ConcurrentQueue<IntPtr> finalizeQueue = new();
-        static readonly Lazy<Thread> derivedFinalizer = new(() =>
-        {
-           var thread = new Thread(DerivedFinalizerMain)
-           {
-               IsBackground = true,
-           };
-           thread.Start();
-           return thread;
-        }, LazyThreadSafetyMode.ExecutionAndPublication);
-
-        static void DerivedFinalizerMain()
-        {
-            while (true)
-            {
-                if (0 == Runtime.Py_IsInitialized())
-                {
-                    Thread.Sleep(millisecondsTimeout: 1000);
-                }
-
-                PyGILState gs = Runtime.PyGILState_Ensure();
-                try
-                {
-                    while (finalizeQueue.Count > 0)
-                    {
-                        finalizeQueue.TryDequeue(out IntPtr obj);
-                        var @ref = new BorrowedReference(obj);
-                        GCHandle gcHandle = ManagedType.GetGCHandle(@ref);
-
-                        bool deleted = CLRObject.reflectedObjects.Remove(obj);
-                        Debug.Assert(deleted);
-                        Runtime.PyObject_GC_Del(@ref);
-
-                        gcHandle.Free();
-                    }
-
-                }
-                finally
-                {
-                    Runtime.PyGILState_Release(gs);
-                }
-            }
-        }
         public static void PyFinalize(IPythonDerivedType obj)
         {
             // the C# object is being destroyed which must mean there are no more
             // references to the Python object as well
             var self = GetPyObj(obj).DangerousGetAddress();
-            finalizeQueue.Enqueue(self);
-            SetPyObj(obj, null);
-
-            GC.KeepAlive(derivedFinalizer.Value);
+            Finalizer.Instance.AddDerivedFinalizedObject(ref self);
         }
 
         internal static BorrowedReference GetPyObj(IPythonDerivedType obj)

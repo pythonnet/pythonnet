@@ -185,7 +185,6 @@ namespace Python.Runtime
 
                 SetPyMemberTypeOf(out PyBoolType, PyTrue!);
                 SetPyMemberTypeOf(out PyNoneType, PyNone!);
-                SetPyMemberTypeOf(out PyTypeType, PyNoneType!);
 
                 SetPyMemberTypeOf(out PyMethodType, PyObject_GetAttrString(builtins, "len").StealNullable());
 
@@ -466,19 +465,6 @@ namespace Python.Runtime
 
         private static void MoveClrInstancesOnwershipToPython()
         {
-            foreach (IntPtr extensionAddr in ExtensionType.loadedExtensions.ToArray())
-            {
-                var @ref = new BorrowedReference(extensionAddr);
-                var type = PyObject_TYPE(@ref);
-                ManagedType.CallTypeClear(@ref, type);
-                // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
-                // thus just be safe to give it back to GC chain.
-                if (!_PyObject_GC_IS_TRACKED(@ref))
-                {
-                    PyObject_GC_Track(@ref);
-                }
-            }
-
             foreach (IntPtr objWithGcHandle in ExtensionType.loadedExtensions
                 .Concat(CLRObject.reflectedObjects)
                 .ToArray()
@@ -493,7 +479,29 @@ namespace Python.Runtime
                 }
             }
 
-            ExtensionType.loadedExtensions.Clear();
+            //foreach (IntPtr extensionAddr in ExtensionType.loadedExtensions.ToArray())
+            //{
+            //    var @ref = new BorrowedReference(extensionAddr);
+            //    var type = PyObject_TYPE(@ref);
+            //    //ManagedType.CallTypeClear(@ref, type);
+            //    // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
+            //    // thus just be safe to give it back to GC chain.
+            //    if (PyVersion >= new Version(3, 9))
+            //    {
+            //        if (!PyObject_GC_IsTracked(@ref))
+            //        {
+            //            PyObject_GC_Track(@ref);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        // in older CPython versions it is safe to call UnTrack any number of time
+            //        // but Track can only be called on something previously untracked
+            //        PyObject_GC_UnTrack(@ref);
+            //        PyObject_GC_Track(@ref);
+            //    }
+                
+            //}
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -671,7 +679,7 @@ namespace Python.Runtime
         {
 #if DEBUG
             Debug.Assert(op == null || Refcount(new BorrowedReference(op.Pointer)) > 0);
-            Debug.Assert(_isInitialized || Py_IsInitialized() != 0);
+            Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() == true);
 #endif
 #if !CUSTOM_INCDEC_REF
             if (op == null) return;
@@ -1411,6 +1419,12 @@ namespace Python.Runtime
 
         internal static int PyUnicode_Compare(BorrowedReference left, BorrowedReference right) => Delegates.PyUnicode_Compare(left, right);
 
+        internal static string ToString(BorrowedReference op)
+        {
+            using var strval = PyObject_Str(op);
+            return GetManagedStringFromUnicodeObject(strval.BorrowOrThrow())!;
+        }
+
         /// <summary>
         /// Function to access the internal PyUnicode/PyString object and
         /// convert it to a managed string with the correct encoding.
@@ -1436,7 +1450,7 @@ namespace Python.Runtime
             return null;
         }
 
-        static string GetManagedStringFromUnicodeObject(in BorrowedReference op)
+        static string GetManagedStringFromUnicodeObject(BorrowedReference op)
         {
 #if DEBUG
             var type = PyObject_TYPE(op);
@@ -1701,8 +1715,6 @@ namespace Python.Runtime
 
 
         internal static void PyType_Modified(BorrowedReference type) => Delegates.PyType_Modified(type);
-        internal static bool PyType_IsSubtype(BorrowedReference t1, IntPtr ofType)
-            => PyType_IsSubtype(t1, new BorrowedReference(ofType));
         internal static bool PyType_IsSubtype(BorrowedReference t1, BorrowedReference t2)
         {
             Debug.Assert(t1 != null && t2 != null);
@@ -1746,24 +1758,30 @@ namespace Python.Runtime
         internal static NewReference PyObject_GenericGetDict(BorrowedReference o) => PyObject_GenericGetDict(o, IntPtr.Zero);
         internal static NewReference PyObject_GenericGetDict(BorrowedReference o, IntPtr context) => Delegates.PyObject_GenericGetDict(o, context);
 
-#if DEBUG
-        [Obsolete("Do not use")]
-#else
-        [Obsolete("Do not use", error: true)]
-#endif
-        internal static void PyObject_GC_Del(BorrowedReference ob)
-        {
-            PyObject_GC_Del(StolenReference.DangerousFromPointer(ob.DangerousGetAddress()));
-        }
-
         internal static void PyObject_GC_Del(StolenReference ob) => Delegates.PyObject_GC_Del(ob);
 
 
-        internal static void PyObject_GC_Track(BorrowedReference ob) => Delegates.PyObject_GC_Track(ob);
+        internal static bool PyObject_GC_IsTracked(BorrowedReference ob)
+        {
+            if (PyVersion >= new Version(3, 9))
+                return Delegates.PyObject_GC_IsTracked(ob) != 0;
 
+            throw new NotSupportedException("Requires Python 3.9");
+        }
 
-        internal static void PyObject_GC_UnTrack(BorrowedReference ob) => Delegates.PyObject_GC_UnTrack(ob);
+        internal static void PyObject_GC_Track(BorrowedReference ob)
+        {
+            PyGC_ValidateLists();
+            Delegates.PyObject_GC_Track(ob);
+            PyGC_ValidateLists();
+        }
 
+        internal static void PyObject_GC_UnTrack(BorrowedReference ob)
+        {
+            PyGC_ValidateLists();
+            Delegates.PyObject_GC_UnTrack(ob);
+            PyGC_ValidateLists();
+        }
 
         internal static void _PyObject_Dump(BorrowedReference ob) => Delegates._PyObject_Dump(ob);
 
@@ -1857,40 +1875,7 @@ namespace Python.Runtime
 
 
         internal static nint PyGC_Collect() => Delegates.PyGC_Collect();
-
-        internal static IntPtr _Py_AS_GC(BorrowedReference ob)
-        {
-            // XXX: PyGC_Head has a force alignment depend on platform.
-            // See PyGC_Head in objimpl.h for more details.
-            return ob.DangerousGetAddress() - (Is32Bit ?  16 : 24);
-        }
-
-        internal static IntPtr _Py_FROM_GC(IntPtr gc)
-        {
-            return Is32Bit ? gc + 16 : gc + 24;
-        }
-
-        internal static IntPtr _PyGCHead_REFS(IntPtr gc)
-        {
-            unsafe
-            {
-                var pGC = (PyGC_Head*)gc;
-                var refs = pGC->gc.gc_refs;
-                if (Is32Bit)
-                {
-                    return new IntPtr(refs.ToInt32() >> _PyGC_REFS_SHIFT);
-                }
-                return new IntPtr(refs.ToInt64() >> _PyGC_REFS_SHIFT);
-            }
-        }
-
-        internal static IntPtr _PyGC_REFS(BorrowedReference ob)
-        {
-            return _PyGCHead_REFS(_Py_AS_GC(ob));
-        }
-
-        internal static bool _PyObject_GC_IS_TRACKED(BorrowedReference ob)
-            => (long)_PyGC_REFS(ob) != _PyGC_REFS_UNTRACKED;
+        internal static void PyGC_ValidateLists() => Delegates.PyGC_ValidateLists();
 
         internal static void Py_CLEAR(BorrowedReference ob, int offset) => ReplaceReference(ob, offset, default);
         internal static void Py_CLEAR<T>(ref T? ob)
@@ -2173,6 +2158,10 @@ namespace Python.Runtime
                 PyObject_GenericGetDict = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, NewReference>)GetFunctionByName(nameof(PyObject_GenericGetDict), GetUnmanagedDll(PythonDLL));
                 PyObject_GenericSetAttr = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_GenericSetAttr), GetUnmanagedDll(_PythonDll));
                 PyObject_GC_Del = (delegate* unmanaged[Cdecl]<StolenReference, void>)GetFunctionByName(nameof(PyObject_GC_Del), GetUnmanagedDll(_PythonDll));
+                try
+                {
+                    PyObject_GC_IsTracked = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyObject_GC_IsTracked), GetUnmanagedDll(_PythonDll));
+                } catch (MissingMethodException) { }
                 PyObject_GC_Track = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(PyObject_GC_Track), GetUnmanagedDll(_PythonDll));
                 PyObject_GC_UnTrack = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(PyObject_GC_UnTrack), GetUnmanagedDll(_PythonDll));
                 _PyObject_Dump = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(_PyObject_Dump), GetUnmanagedDll(_PythonDll));
@@ -2192,6 +2181,7 @@ namespace Python.Runtime
                 PyCell_Get = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyCell_Get), GetUnmanagedDll(_PythonDll));
                 PyCell_Set = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyCell_Set), GetUnmanagedDll(_PythonDll));
                 PyGC_Collect = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyGC_Collect), GetUnmanagedDll(_PythonDll));
+                PyGC_ValidateLists = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyGC_ValidateLists), GetUnmanagedDll(_PythonDll));
                 PyCapsule_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyCapsule_New), GetUnmanagedDll(_PythonDll));
                 PyCapsule_GetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCapsule_GetPointer), GetUnmanagedDll(_PythonDll));
                 PyCapsule_SetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int>)GetFunctionByName(nameof(PyCapsule_SetPointer), GetUnmanagedDll(_PythonDll));
@@ -2217,6 +2207,9 @@ namespace Python.Runtime
                     _Py_IsFinalizing = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(_Py_IsFinalizing), GetUnmanagedDll(_PythonDll));
                 }
                 catch (MissingMethodException) { }
+
+                var type = GetFunctionByName("PyType_Type", GetUnmanagedDll(_PythonDll));
+                PyTypeType = new PyType(new BorrowedReference(type), prevalidated: true);
             }
 
             static global::System.IntPtr GetUnmanagedDll(string? libraryName)
@@ -2435,6 +2428,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, NewReference> PyObject_GenericGetAttr { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, int> PyObject_GenericSetAttr { get; }
             internal static delegate* unmanaged[Cdecl]<StolenReference, void> PyObject_GC_Del { get; }
+            internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyObject_GC_IsTracked { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> PyObject_GC_Track { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> PyObject_GC_UnTrack { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> _PyObject_Dump { get; }
@@ -2454,6 +2448,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyCell_Get { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyCell_Set { get; }
             internal static delegate* unmanaged[Cdecl]<nint> PyGC_Collect { get; }
+            internal static delegate* unmanaged[Cdecl]<void> PyGC_ValidateLists { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference> PyCapsule_New { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr> PyCapsule_GetPointer { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int> PyCapsule_SetPointer { get; }
