@@ -155,6 +155,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             // Create the import hook module
             using var import_hook_module = Runtime.PyModule_New("clr.loader");
             BorrowedReference mod_dict = Runtime.PyModule_GetDict(import_hook_module.BorrowOrThrow());
+            Debug.Assert(mod_dict != null);
 
             // Run the python code to create the module's classes.
             var builtins = Runtime.PyEval_GetBuiltins();

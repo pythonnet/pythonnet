@@ -1,6 +1,8 @@
 namespace Python.Runtime
 {
     using System;
+    using System.Diagnostics;
+
     /// <summary>
     /// Represents a reference to a Python object, that is being lent, and
     /// can only be safely used until execution returns to the caller.
@@ -11,6 +13,7 @@ namespace Python.Runtime
         public bool IsNull => this.pointer == IntPtr.Zero;
 
         /// <summary>Gets a raw pointer to the Python object</summary>
+        [DebuggerHidden]
         public IntPtr DangerousGetAddress()
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
         /// <summary>Gets a raw pointer to the Python object</summary>
