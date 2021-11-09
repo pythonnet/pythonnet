@@ -238,7 +238,7 @@ namespace Python.Runtime
 
                 LoadSubmodule(module_globals, "clr.interop", "interop.py");
 
-                    LoadMixins(module_globals);
+                LoadMixins(module_globals);
 
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
@@ -280,7 +280,7 @@ namespace Python.Runtime
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             string pyCode = assembly.ReadStringResource(resourceName);
-            Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+            Exec(pyCode, module_globals, module_globals);
 
             Runtime.PyDict_SetItemString(targetModuleDict, memberName!, module);
         }
@@ -548,11 +548,9 @@ namespace Python.Runtime
         /// Evaluate a Python expression and returns the result.
         /// It's a subset of Python eval function.
         /// </remarks>
-        public static PyObject Eval(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static PyObject Eval(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
-            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
-            PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.Eval);
+            PyObject result = RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.Eval);
             return result;
         }
 
@@ -564,11 +562,9 @@ namespace Python.Runtime
         /// Run a string containing Python code.
         /// It's a subset of Python exec function.
         /// </remarks>
-        public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static void Exec(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
-            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
-            using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
+            using PyObject result = RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.File);
             if (result.obj != Runtime.PyNone)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -621,9 +617,9 @@ namespace Python.Runtime
         /// Use Exec/Eval/RunSimpleString instead.
         /// </summary>
         [Obsolete("RunString is deprecated and will be removed. Use Exec/Eval/RunSimpleString instead.")]
-        public static PyObject RunString(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static PyObject RunString(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            return RunString(code, new BorrowedReference(globals.GetValueOrDefault()), new BorrowedReference(locals.GetValueOrDefault()), RunFlagType.File);
+            return RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.File);
         }
 
         /// <summary>

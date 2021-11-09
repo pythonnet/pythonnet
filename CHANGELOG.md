@@ -65,6 +65,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   BREAKING: Names of .NET types (e.g. `str(__class__)`) changed to better support generic types
 -   BREAKING: overload resolution will no longer prefer basic types. Instead, first matching overload will
 be chosen.
+-   BREAKING: `Exec` and `Eval` from `PythonEngine` no longer accept raw pointers.
 -   BREAKING: .NET collections and arrays are no longer automatically converted to
 Python collections. Instead, they implement standard Python
 collection interfaces from `collections.abc`.

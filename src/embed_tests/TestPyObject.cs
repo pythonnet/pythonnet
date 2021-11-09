@@ -46,7 +46,7 @@ class MemberNamesTest(object):
         return x + y
 
 a = MemberNamesTest()
-", null, locals.Handle);
+", null, locals);
 
             PyObject a = locals.GetItem("a");
 
