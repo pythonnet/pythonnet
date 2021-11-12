@@ -40,8 +40,10 @@ namespace Python.EmbeddingTest
             {
                 using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
                 {
-                    Assert.AreEqual(args[0], argv[0].ToString());
-                    Assert.AreEqual(args[1], argv[1].ToString());
+                    using var v0 = argv[0];
+                    using var v1 = argv[1];
+                    Assert.AreEqual(args[0], v0.ToString());
+                    Assert.AreEqual(args[1], v1.ToString());
                 }
             }
         }
@@ -54,12 +56,16 @@ namespace Python.EmbeddingTest
 
             PyObject ns = Py.Import(typeof(ImportClassShutdownRefcountClass).Namespace);
             PyObject cls = ns.GetAttr(nameof(ImportClassShutdownRefcountClass));
+            BorrowedReference clsRef = cls.Reference;
+#pragma warning disable CS0618 // Type or member is obsolete
+            cls.Leak();
+#pragma warning restore CS0618 // Type or member is obsolete
             ns.Dispose();
 
-            Assert.Less(cls.Refcount, 256);
+            Assert.Less(Runtime.Runtime.Refcount(clsRef), 256);
 
             PythonEngine.Shutdown();
-            Assert.Greater(cls.Refcount, 0);
+            Assert.Greater(Runtime.Runtime.Refcount(clsRef), 0);
         }
 
         /// <summary>

@@ -155,6 +155,7 @@ namespace Python.Runtime
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             IsFinalizing = false;
+            Finalizer.Initialize();
             InternString.Initialize();
 
             InitPyMembers();
@@ -378,6 +379,8 @@ namespace Python.Runtime
             DisposeLazyModule(inspect);
             PyObjectConversions.Reset();
 
+            bool everythingSeemsCollected = TryCollectingGarbage();
+            Debug.Assert(everythingSeemsCollected);
             Finalizer.Shutdown();
             InternString.Shutdown();
 
@@ -421,6 +424,26 @@ namespace Python.Runtime
                     PyGILState_Release(state);
                 }
             }
+        }
+
+        const int MaxCollectRetriesOnShutdown = 20;
+        internal static int _collected;
+        static bool TryCollectingGarbage()
+        {
+            for (int attempt = 0; attempt < MaxCollectRetriesOnShutdown; attempt++)
+            {
+                Interlocked.Exchange(ref _collected, 0);
+                nint pyCollected = 0;
+                for (int i = 0; i < 2; i++)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    pyCollected += PyGC_Collect();
+                }
+                if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
+                    return true;
+            }
+            return false;
         }
 
         internal static void Shutdown()
@@ -817,6 +840,10 @@ namespace Python.Runtime
             var p = (nint*)(op + ABI.RefCountOffset);
             return *p;
         }
+
+        [Pure]
+        internal static long Refcount(BorrowedReference op)
+            => Refcount(op.DangerousGetAddress());
 
         /// <summary>
         /// Call specified function, and handle PythonDLL-related failures.
@@ -2212,7 +2239,7 @@ namespace Python.Runtime
 
 
 
-        internal static IntPtr PyGC_Collect() => Delegates.PyGC_Collect();
+        internal static nint PyGC_Collect() => Delegates.PyGC_Collect();
 
         internal static IntPtr _Py_AS_GC(BorrowedReference ob)
         {
@@ -2592,7 +2619,7 @@ namespace Python.Runtime
                 PyErr_Print = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyErr_Print), GetUnmanagedDll(_PythonDll));
                 PyCell_Get = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyCell_Get), GetUnmanagedDll(_PythonDll));
                 PyCell_Set = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int>)GetFunctionByName(nameof(PyCell_Set), GetUnmanagedDll(_PythonDll));
-                PyGC_Collect = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyGC_Collect), GetUnmanagedDll(_PythonDll));
+                PyGC_Collect = (delegate* unmanaged[Cdecl]<nint>)GetFunctionByName(nameof(PyGC_Collect), GetUnmanagedDll(_PythonDll));
                 PyCapsule_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyCapsule_New), GetUnmanagedDll(_PythonDll));
                 PyCapsule_GetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCapsule_GetPointer), GetUnmanagedDll(_PythonDll));
                 PyCapsule_SetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int>)GetFunctionByName(nameof(PyCapsule_SetPointer), GetUnmanagedDll(_PythonDll));
@@ -2871,7 +2898,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<void> PyErr_Print { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyCell_Get { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int> PyCell_Set { get; }
-            internal static delegate* unmanaged[Cdecl]<IntPtr> PyGC_Collect { get; }
+            internal static delegate* unmanaged[Cdecl]<nint> PyGC_Collect { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference> PyCapsule_New { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr> PyCapsule_GetPointer { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int> PyCapsule_SetPointer { get; }

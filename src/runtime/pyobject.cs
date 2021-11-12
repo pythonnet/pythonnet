@@ -1,10 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -27,7 +27,7 @@ namespace Python.Runtime
 #endif  
 
         protected internal IntPtr obj = IntPtr.Zero;
-        readonly int run = Runtime.GetRun();
+        internal readonly int run = Runtime.GetRun();
 
         public static PyObject None => new PyObject(new BorrowedReference(Runtime.PyNone));
         internal BorrowedReference Reference => new BorrowedReference(this.obj);
@@ -96,13 +96,19 @@ namespace Python.Runtime
         // when the managed wrapper is garbage-collected.
         ~PyObject()
         {
-            Debug.Assert(obj != IntPtr.Zero);
+            Debug.Assert(obj != IntPtr.Zero || this.GetType() != typeof(PyObject));
+
+            if (obj != IntPtr.Zero)
+            {
 
 #if TRACE_ALLOC
-            CheckRun();
+                CheckRun();
 #endif
 
-            Finalizer.Instance.AddFinalizedObject(ref obj);
+                Interlocked.Increment(ref Runtime._collected);
+
+                Finalizer.Instance.AddFinalizedObject(ref obj, run);
+            }
 
             Dispose(false);
         }
@@ -231,12 +237,18 @@ namespace Python.Runtime
             Dispose(true);
         }
 
+        [Obsolete("Test use only")]
+        internal void Leak()
+        {
+            Debug.Assert(obj != IntPtr.Zero);
+            GC.SuppressFinalize(this);
+            obj = IntPtr.Zero;
+        }
+
         internal void CheckRun()
         {
             if (run != Runtime.GetRun())
-                throw new InvalidOperationException(
-                    "PythonEngine was shut down after this object was created." +
-                    " It is an error to attempt to dispose or to continue using it.");
+                throw new RuntimeShutdownException(obj);
         }
 
         internal BorrowedReference GetPythonTypeReference()

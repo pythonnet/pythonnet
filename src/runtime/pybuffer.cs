@@ -238,9 +238,10 @@ namespace Python.Runtime
         {
             Debug.Assert(!disposedValue);
 
-            _exporter.CheckRun();
-            
-            Finalizer.Instance.AddFinalizedObject(ref _view.obj);
+            if (_view.obj != IntPtr.Zero)
+            {
+                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run);
+            }
         }
 
         /// <summary>
