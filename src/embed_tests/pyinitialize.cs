@@ -176,6 +176,7 @@ namespace Python.EmbeddingTest
                 {
                     Assert.Fail(msg);
                 }
+                PythonEngine.InteropConfiguration = InteropConfiguration.MakeDefault();
                 return;
             }
             bool called = false;
@@ -187,6 +188,7 @@ namespace Python.EmbeddingTest
             atexit.Dispose();
             Runtime.Runtime.Shutdown();
             Assert.True(called);
+            PythonEngine.InteropConfiguration = InteropConfiguration.MakeDefault();
         }
     }
 

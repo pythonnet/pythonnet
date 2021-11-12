@@ -373,6 +373,11 @@ namespace Python.Runtime
             PyCLRMetaType = IntPtr.Zero;
 
             Exceptions.Shutdown();
+            PythonEngine.InteropConfiguration.Dispose();
+            DisposeLazyModule(clrInterop);
+            DisposeLazyModule(inspect);
+            PyObjectConversions.Reset();
+
             Finalizer.Shutdown();
             InternString.Shutdown();
 
@@ -422,6 +427,14 @@ namespace Python.Runtime
         {
             var mode = ShutdownMode;
             Shutdown(mode);
+        }
+
+        static void DisposeLazyModule(Lazy<PyObject> module)
+        {
+            if (module.IsValueCreated)
+            {
+                module.Value.Dispose();
+            }
         }
 
         private static Lazy<PyObject> GetModuleLazy(string moduleName)

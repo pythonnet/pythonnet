@@ -381,7 +381,6 @@ namespace Python.Runtime
             ExecuteShutdownHandlers();
             // Remember to shut down the runtime.
             Runtime.Shutdown(mode);
-            PyObjectConversions.Reset();
 
             initialized = false;
 
