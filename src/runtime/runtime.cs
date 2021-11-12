@@ -393,14 +393,6 @@ namespace Python.Runtime
                 }
                 ResetPyMembers();
                 GC.Collect();
-                try
-                {
-                    GC.WaitForFullGCComplete();
-                }
-                catch (NotImplementedException)
-                {
-                    // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
-                }
                 GC.WaitForPendingFinalizers();
                 PyGILState_Release(state);
                 // Then release the GIL for good, if there is somehting to release
