@@ -317,6 +317,8 @@ namespace Python.Runtime
             {
                 Initialize(setSysArgv: false, mode: ShutdownMode.Extension);
 
+                Finalizer.Instance.ErrorHandler += AllowLeaksDuringShutdown;
+
                 // Trickery - when the import hook is installed into an already
                 // running Python, the standard import machinery is still in
                 // control for the duration of the import that caused bootstrap.
@@ -356,6 +358,14 @@ namespace Python.Runtime
 
             return Python.Runtime.ImportHook.GetCLRModule()
                    .DangerousMoveToPointerOrNull();
+        }
+
+        private static void AllowLeaksDuringShutdown(object sender, Finalizer.ErrorArgs e)
+        {
+            if (e.Error is RuntimeShutdownException)
+            {
+                e.Handled = true;
+            }
         }
 
         /// <summary>
