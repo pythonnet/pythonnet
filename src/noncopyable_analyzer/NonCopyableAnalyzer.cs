@@ -57,13 +57,13 @@ namespace NonCopyable
                     CheckCopyability(oc, op.Value, ArgumentRule);
                 }, OperationKind.Argument);
 
-                csc.RegisterOperationAction(oc =>
-                {
-                    var op = (IReturnOperation)oc.Operation;
-                    if (op.ReturnedValue == null) return;
-                    CheckCopyability(oc, op.ReturnedValue, ReturnRule);
-                }, OperationKind.Return,
-                OperationKind.YieldReturn);
+                // csc.RegisterOperationAction(oc =>
+                // {
+                //     var op = (IReturnOperation)oc.Operation;
+                //     if (op.ReturnedValue == null) return;
+                //     CheckCopyability(oc, op.ReturnedValue, ReturnRule);
+                // }, OperationKind.Return,
+                // OperationKind.YieldReturn);
 
                 csc.RegisterOperationAction(oc =>
                 {
@@ -93,7 +93,7 @@ namespace NonCopyable
                 {
                     var op = (IArrayInitializerOperation)oc.Operation;
 
-                    if (!((IArrayTypeSymbol)((IArrayInitializerOperation)op.Parent).Type).ElementType.IsNonCopyable()) return;
+                    if (!((IArrayTypeSymbol)((IArrayCreationOperation)op.Parent).Type).ElementType.IsNonCopyable()) return;
 
                     foreach (var v in op.ElementValues)
                     {
