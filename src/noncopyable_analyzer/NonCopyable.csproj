@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <PackageId>PythonNet.NonCopyableAnalyzer</PackageId>
+    <Authors>Nobuyuki Iwanaga</Authors>
+    <PackageLicenseUrl>https://github.com/ufcpp/NonCopyableAnalyzer/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/ufcpp/NonCopyableAnalyzer</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Description>Analyzer for Non-copyable struct</Description>
+    <PackageReleaseNotes>Fixed false positive on conversion operators with in argument.</PackageReleaseNotes>
+    <PackageTags>NonCopyable, analyzers</PackageTags>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+  </PropertyGroup>
+   
+  <ItemGroup>
+    <ProjectReference Remove="$(MSBuildThisFile)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
