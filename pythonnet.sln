@@ -25,9 +25,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repo", "Repo", "{441A0123-F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{D301657F-5EAF-4534-B280-B858D651B2E5}"
 	ProjectSection(SolutionItems) = preProject
-		appveyor.yml = appveyor.yml
-		ci\appveyor_build_recipe.ps1 = ci\appveyor_build_recipe.ps1
-		ci\appveyor_run_tests.ps1 = ci\appveyor_run_tests.ps1
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\workflows\nuget-preview.yml = .github\workflows\nuget-preview.yml
 	EndProjectSection
@@ -35,13 +32,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57F5D701-F265-4736-A5A2-07249E7A4DA3}"
 	ProjectSection(SolutionItems) = preProject
 		setup.py = setup.py
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conda.recipe", "conda.recipe", "{7FD2404D-0CE8-4645-8DFB-766470E2150E}"
-	ProjectSection(SolutionItems) = preProject
-		conda.recipe\bld.bat = conda.recipe\bld.bat
-		conda.recipe\meta.yaml = conda.recipe\meta.yaml
-		conda.recipe\README.md = conda.recipe\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BC426F42-8494-4AA5-82C9-5109ACD97BD1}"
