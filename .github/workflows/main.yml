@@ -5,7 +5,6 @@ on: [ pull_request, push ]
 jobs:
 
   build:
-    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +33,6 @@ jobs:
 
   python-test:
     needs: build
-    name: Test Embedding .NET in Python
     runs-on: ${{ matrix.os }}-latest
     timeout-minutes: 15
 
@@ -72,6 +70,7 @@ jobs:
           architecture: ${{ matrix.platform }}
       
       - run: |
+          pip install wheel
           pip install psutil pytest clr-loader
           pip install --no-index --find-links=wheel pythonnet
 
