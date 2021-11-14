@@ -90,6 +90,7 @@ def pytest_configure(config):
     import clr
     clr.AddReference("Python.Test")
 
+    collect_ignore.append("domain_tests/test_domain_reload.py")
     # Disable for now
     # if config.getoption("--runtime") == "netcore":
         # collect_ignore.append("domain_tests/test_domain_reload.py")
