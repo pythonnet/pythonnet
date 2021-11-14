@@ -52,7 +52,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: python-tests
-          path: python-tests
+          path: python_tests
 
       - name: Set Environment on macOS
         uses: maxim-lobanov/setup-xamarin@v1
@@ -76,11 +76,11 @@ jobs:
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os != 'windows' }}
-        run: pytest --runtime mono ./python-tests --precompiled
+        run: pytest --runtime mono ./python_tests --precompiled
 
       - name: Python Tests (.NET Core)
-        run: pytest --runtime netcore ./python-tests --precompiled
+        run: pytest --runtime netcore ./python_tests --precompiled
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os == 'windows' }}
-        run: pytest --runtime netfx ./python-tests --precompiled
+        run: pytest --runtime netfx ./python_tests --precompiled
