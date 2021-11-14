@@ -77,11 +77,11 @@ jobs:
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os != 'windows' }}
-        run: pytest --runtime mono ./python-tests
+        run: pytest --runtime mono ./python-tests --precompiled
 
       - name: Python Tests (.NET Core)
-        run: pytest --runtime netcore ./python-tests
+        run: pytest --runtime netcore ./python-tests --precompiled
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os == 'windows' }}
-        run: pytest --runtime netfx ./python-tests
+        run: pytest --runtime netfx ./python-tests --precompiled

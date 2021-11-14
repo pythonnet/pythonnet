@@ -29,30 +29,45 @@ def pytest_addoption(parser):
         help="Must be one of default, netcore, netfx and mono"
     )
 
+    parser.addoption(
+        "--precompiled",
+        action="store_true",
+    )
+
 collect_ignore = []
 
 def pytest_configure(config):
     global bin_path
+    global precompiled
+
     if "clr" in sys.modules:
         # Already loaded (e.g. by the C# test runner), skip build
         import clr
         clr.AddReference("Python.Test")
+        precompiled = True
         return
-
+    
+    precompiled_opt = config.getoption("precompiled")
     runtime_opt = config.getoption("runtime")
-
-    test_proj_path = os.path.join(cwd, "..", "src", "testing")
 
     if runtime_opt not in ["netcore", "netfx", "mono", "default"]:
         raise RuntimeError(f"Invalid runtime: {runtime_opt}")
 
-    bin_path = mkdtemp()
 
-    # tmpdir_factory.mktemp(f"pythonnet-{runtime_opt}")
+    if precompiled_opt:
+        precompiled = True
 
-    fw = "net5.0" if runtime_opt == "netcore" else "netstandard2.0"
+        bin_path = os.path.join(
+            cwd, "binaries",
+            "netcore" if runtime_opt == "netcore" else "netstandard"
+        )
+    else:
+        precompiled = False
 
-    check_call(["dotnet", "publish", "-f", fw, "-o", bin_path, test_proj_path])
+        fw = "net5.0" if runtime_opt == "netcore" else "netstandard2.0"
+        bin_path = mkdtemp()
+        test_proj_path = os.path.join(cwd, "..", "src", "testing")
+        check_call(["dotnet", "publish", "-f", fw, "-o", bin_path, test_proj_path])
 
     sys.path.append(bin_path)
 
@@ -75,28 +90,26 @@ def pytest_configure(config):
     import clr
     clr.AddReference("Python.Test")
 
-    soft_mode = False
-    try:
-        os.environ['PYTHONNET_SHUTDOWN_MODE'] == 'Soft'
-    except: pass
-
-    if config.getoption("--runtime") == "netcore" or soft_mode\
-        :
-        collect_ignore.append("domain_tests/test_domain_reload.py")
-    else:
-        domain_tests_dir = os.path.join(os.path.dirname(__file__), "domain_tests")
-        bin_path = os.path.join(domain_tests_dir, "bin")
-        check_call(["dotnet", "build", domain_tests_dir, "-o", bin_path])
-
+    # Disable for now
+    # if config.getoption("--runtime") == "netcore":
+        # collect_ignore.append("domain_tests/test_domain_reload.py")
+    # else:
+        # os.environ['PYTHONNET_SHUTDOWN_MODE'] == 'Soft'
+        # domain_tests_dir = os.path.join(os.path.dirname(__file__), "domain_tests")
+        # bin_path = os.path.join(domain_tests_dir, "bin")
+        # check_call(["dotnet", "build", domain_tests_dir, "-o", bin_path])
+        # 
 
 
 
 def pytest_unconfigure(config):
-    global bin_path
-    try:
-        shutil.rmtree(bin_path)
-    except Exception:
-        pass
+    global bin_path, precompiled
+    if not precompiled:
+        try:
+            shutil.rmtree(bin_path)
+        except Exception:
+            pass
+
 
 def pytest_report_header(config):
     """Generate extra report headers"""
@@ -105,10 +118,8 @@ def pytest_report_header(config):
     arch = "x64" if is_64bits else "x86"
     ucs = ctypes.sizeof(ctypes.c_wchar)
     libdir = sysconfig.get_config_var("LIBDIR")
-    shared = bool(sysconfig.get_config_var("Py_ENABLE_SHARED"))
 
-    header = ("Arch: {arch}, UCS: {ucs}, LIBDIR: {libdir}, "
-              "Py_ENABLE_SHARED: {shared}".format(**locals()))
+    header = "Arch: {arch}, UCS: {ucs}, LIBDIR: {libdir}".format(**locals())
     return header
 
 
