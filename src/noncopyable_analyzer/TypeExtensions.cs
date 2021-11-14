@@ -78,13 +78,24 @@ namespace NonCopyable
                 if (parent == SyntaxKind.RefExpression) return true;
             }
 
+            if (k == OperationKind.Conditional)
+            {
+                var cond = (IConditionalOperation)op;
+                return cond.WhenFalse.CanCopy() && cond.WhenFalse.CanCopy();
+            }
+
             return k == OperationKind.ObjectCreation
                 || k == OperationKind.DefaultValue
                 || k == OperationKind.Literal
-                || k == OperationKind.Invocation;
+                || k == OperationKind.Invocation
+                // workaround for https://github.com/dotnet/roslyn/issues/49751
+                || !IsValid(k) && op.Syntax is InvocationExpressionSyntax;
 
             //todo: should return value be OK?
             //todo: move semantics
         }
+
+        static bool IsValid(OperationKind kind)
+            => kind != OperationKind.None && kind != OperationKind.Invalid;
     }
 }
