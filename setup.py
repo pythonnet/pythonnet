@@ -147,7 +147,7 @@ dotnet_libs = [
 setup(
     cmdclass=cmdclass,
     name="pythonnet",
-    version="3.0.0.dev1",
+    version="3.0.0-alpha1",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
     license="MIT",
