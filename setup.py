@@ -156,6 +156,7 @@ setup(
     packages=["pythonnet", "pythonnet.find_libpython"],
     install_requires=["clr_loader"],
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     py_modules=["clr"],
     dotnet_libs=dotnet_libs,
     classifiers=[

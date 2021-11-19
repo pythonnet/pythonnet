@@ -49,7 +49,7 @@ Embedding Python in .NET
    starting with version 3.0, otherwise you will receive ``BadPythonDllException``
    (internal, derived from ``MissingMethodException``) upon calling ``Initialize``.
    Typical values are ``python38.dll`` (Windows), ``libpython3.8.dylib`` (Mac),
-   ``libpython3.8.so`` (most other *nix).
+   ``libpython3.8.so`` (most other Unix-like operating systems).
 -  All calls to python should be inside a
    ``using (Py.GIL()) {/* Your code here */}`` block.
 -  Import python modules using ``dynamic mod = Py.Import("mod")``, then
