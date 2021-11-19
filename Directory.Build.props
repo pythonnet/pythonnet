@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionSuffix>alpha2</VersionSuffix>
     <AssemblyCopyright>Copyright (c) 2006-2021 The Contributors of the Python.NET Project</AssemblyCopyright>
     <AssemblyCompany>pythonnet</AssemblyCompany>
     <AssemblyProduct>Python.NET</AssemblyProduct>
