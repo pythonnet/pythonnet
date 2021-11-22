@@ -96,8 +96,6 @@ namespace Python.Runtime
         // when the managed wrapper is garbage-collected.
         ~PyObject()
         {
-            Debug.Assert(obj != IntPtr.Zero || this.GetType() != typeof(PyObject));
-
             if (obj != IntPtr.Zero)
             {
 
