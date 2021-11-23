@@ -94,7 +94,15 @@ namespace Python.Runtime
         {
             // derived types have a __pyobj__ field that gets set to the python
             // object in the overridden constructor
-            var self = GetPyObj(obj); 
+            BorrowedReference self;
+            try
+            {
+                self = GetPyObj(obj).CheckRun();
+            } catch (RuntimeShutdownException e)
+            {
+                Exceptions.SetError(e);
+                return default;
+            }
 
             var result = new NewReference(self);
 
@@ -162,7 +170,9 @@ namespace Python.Runtime
 
             // add a field for storing the python object pointer
             // FIXME: fb not used
-            FieldBuilder fb = typeBuilder.DefineField("__pyobj__", typeof(IntPtr), FieldAttributes.Public);
+            FieldBuilder fb = typeBuilder.DefineField("__pyobj__",
+                                typeof(UnsafeReferenceWithRun),
+                                FieldAttributes.Public);
 
             // override any constructors
             ConstructorInfo[] constructors = baseClass.GetConstructors();
@@ -649,13 +659,13 @@ namespace Python.Runtime
         {
             var self = GetPyObj(obj);
 
-            if (null != self)
+            if (null != self.Ref)
             {
                 var disposeList = new List<PyObject>();
                 PyGILState gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    using var pyself = new PyObject(self);
+                    using var pyself = new PyObject(self.CheckRun());
                     using PyObject method = pyself.GetAttr(methodName, Runtime.PyNone);
                     if (method.Reference != Runtime.PyNone)
                     {
@@ -702,13 +712,13 @@ namespace Python.Runtime
             object[] args)
         {
             var self = GetPyObj(obj);
-            if (null != self)
+            if (null != self.Ref)
             {
                 var disposeList = new List<PyObject>();
                 PyGILState gs = Runtime.PyGILState_Ensure();
                 try
                 {
-                    using var pyself = new PyObject(self);
+                    using var pyself = new PyObject(self.CheckRun());
                     PyObject method = pyself.GetAttr(methodName, Runtime.PyNone);
                     disposeList.Add(method);
                     if (method.Reference != Runtime.PyNone)
@@ -756,7 +766,7 @@ namespace Python.Runtime
         {
             var self = GetPyObj(obj);
 
-            if (null == self)
+            if (null == self.Ref)
             {
                 throw new NullReferenceException("Instance must be specified when getting a property");
             }
@@ -764,7 +774,7 @@ namespace Python.Runtime
             PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
-                using var pyself = new PyObject(self);
+                using var pyself = new PyObject(self.CheckRun());
                 using (PyObject pyvalue = pyself.GetAttr(propertyName))
                 {
                     return pyvalue.As<T>();
@@ -780,7 +790,7 @@ namespace Python.Runtime
         {
             var self = GetPyObj(obj);
 
-            if (null == self)
+            if (null == self.Ref)
             {
                 throw new NullReferenceException("Instance must be specified when setting a property");
             }
@@ -788,7 +798,7 @@ namespace Python.Runtime
             PyGILState gs = Runtime.PyGILState_Ensure();
             try
             {
-                using var pyself = new PyObject(self);
+                using var pyself = new PyObject(self.CheckRun());
                 using var pyvalue = Converter.ToPythonImplicit(value).MoveToPyObject();
                 pyself.SetAttr(propertyName, pyvalue);
             }
@@ -839,20 +849,20 @@ namespace Python.Runtime
         {
             // the C# object is being destroyed which must mean there are no more
             // references to the Python object as well
-            var self = GetPyObj(obj).DangerousGetAddress();
-            Finalizer.Instance.AddDerivedFinalizedObject(ref self);
+            var self = GetPyObj(obj);
+            Finalizer.Instance.AddDerivedFinalizedObject(ref self.RawObj, self.Run);
         }
 
-        internal static BorrowedReference GetPyObj(IPythonDerivedType obj)
+        internal static UnsafeReferenceWithRun GetPyObj(IPythonDerivedType obj)
         {
             FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            return new BorrowedReference((IntPtr)fi.GetValue(obj));
+            return (UnsafeReferenceWithRun)fi.GetValue(obj);
         }
 
         static void SetPyObj(IPythonDerivedType obj, BorrowedReference pyObj)
         {
             FieldInfo fi = obj.GetType().GetField("__pyobj__");
-            fi.SetValue(obj, pyObj.DangerousGetAddressOrNull());
+            fi.SetValue(obj, new UnsafeReferenceWithRun(pyObj));
         }
     }
 }

@@ -15,6 +15,7 @@
     <PackageIcon>python-clear.png</PackageIcon>
     <PackageIconUrl>https://raw.githubusercontent.com/pythonnet/pythonnet/master/src/console/python-clear.ico</PackageIconUrl>
     <PackageProjectUrl>https://pythonnet.github.io/</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Description>Python and CLR (.NET and Mono) cross-platform language interop</Description>
 
@@ -38,6 +39,7 @@
 
   <ItemGroup>
     <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
     <None Include="..\..\src\console\python-clear.png" Pack="true" PackagePath="" />
   </ItemGroup>
 

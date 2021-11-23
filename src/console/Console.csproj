@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net472;net6.0</TargetFrameworks>
     <Platforms>x64;x86</Platforms>
     <OutputType>Exe</OutputType>
     <AssemblyName>nPython</AssemblyName>

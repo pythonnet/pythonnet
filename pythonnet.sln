@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30717.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Python.Runtime", "src\runtime\Python.Runtime.csproj", "{4E8C8FE2-0FB8-4517-B2D9-5FB2D5FC849B}"
 EndProject
@@ -25,9 +25,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repo", "Repo", "{441A0123-F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{D301657F-5EAF-4534-B280-B858D651B2E5}"
 	ProjectSection(SolutionItems) = preProject
-		appveyor.yml = appveyor.yml
-		ci\appveyor_build_recipe.ps1 = ci\appveyor_build_recipe.ps1
-		ci\appveyor_run_tests.ps1 = ci\appveyor_run_tests.ps1
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\workflows\nuget-preview.yml = .github\workflows\nuget-preview.yml
 	EndProjectSection
@@ -35,13 +32,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57F5D701-F265-4736-A5A2-07249E7A4DA3}"
 	ProjectSection(SolutionItems) = preProject
 		setup.py = setup.py
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conda.recipe", "conda.recipe", "{7FD2404D-0CE8-4645-8DFB-766470E2150E}"
-	ProjectSection(SolutionItems) = preProject
-		conda.recipe\bld.bat = conda.recipe\bld.bat
-		conda.recipe\meta.yaml = conda.recipe\meta.yaml
-		conda.recipe\README.md = conda.recipe\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BC426F42-8494-4AA5-82C9-5109ACD97BD1}"
@@ -90,18 +80,6 @@ Global
 		{E6B01706-00BA-4144-9029-186AC42FBE9A}.Release|x64.Build.0 = Release|x64
 		{E6B01706-00BA-4144-9029-186AC42FBE9A}.Release|x86.ActiveCfg = Release|x86
 		{E6B01706-00BA-4144-9029-186AC42FBE9A}.Release|x86.Build.0 = Release|x86
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Debug|x64.Build.0 = Debug|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Debug|x86.Build.0 = Debug|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Release|x64.ActiveCfg = Release|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Release|x64.Build.0 = Release|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Release|x86.ActiveCfg = Release|Any CPU
-		{F9F5FA13-BC52-4C0B-BC1C-FE3C0B8FCCDD}.Release|x86.Build.0 = Release|Any CPU
 		{819E089B-4770-400E-93C6-4F7A35F0EA12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{819E089B-4770-400E-93C6-4F7A35F0EA12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{819E089B-4770-400E-93C6-4F7A35F0EA12}.Debug|x64.ActiveCfg = Debug|Any CPU

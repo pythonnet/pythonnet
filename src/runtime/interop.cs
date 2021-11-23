@@ -33,15 +33,6 @@ namespace Python.Runtime
 
     [Serializable]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
-    internal class PythonMethodAttribute : Attribute
-    {
-        public PythonMethodAttribute()
-        {
-        }
-    }
-
-    [Serializable]
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class ModuleFunctionAttribute : Attribute
     {
         public ModuleFunctionAttribute()

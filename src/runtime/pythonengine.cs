@@ -222,8 +222,7 @@ namespace Python.Runtime
             }
 
             // Load the clr.py resource into the clr module
-            NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
-            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr.Borrow());
+            BorrowedReference clr_dict = Runtime.PyModule_GetDict(ImportHook.ClrModuleReference);
 
             var locals = new PyDict();
             try
@@ -259,6 +258,8 @@ namespace Python.Runtime
             {
                 locals.Dispose();
             }
+
+            ImportHook.UpdateCLRModuleDict();
         }
 
         static BorrowedReference DefineModule(string name)
@@ -318,6 +319,8 @@ namespace Python.Runtime
             {
                 Initialize(setSysArgv: false, mode: ShutdownMode.Extension);
 
+                Finalizer.Instance.ErrorHandler += AllowLeaksDuringShutdown;
+
                 // Trickery - when the import hook is installed into an already
                 // running Python, the standard import machinery is still in
                 // control for the duration of the import that caused bootstrap.
@@ -359,6 +362,14 @@ namespace Python.Runtime
                    .DangerousMoveToPointerOrNull();
         }
 
+        private static void AllowLeaksDuringShutdown(object sender, Finalizer.ErrorArgs e)
+        {
+            if (e.Error is RuntimeShutdownException)
+            {
+                e.Handled = true;
+            }
+        }
+
         /// <summary>
         /// Shutdown Method
         /// </summary>
@@ -382,7 +393,6 @@ namespace Python.Runtime
             ExecuteShutdownHandlers();
             // Remember to shut down the runtime.
             Runtime.Shutdown(mode);
-            PyObjectConversions.Reset();
 
             initialized = false;
 

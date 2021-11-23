@@ -2,10 +2,11 @@ namespace Python.Runtime
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     using Python.Runtime.Mixins;
 
-    public sealed class InteropConfiguration
+    public sealed class InteropConfiguration: IDisposable
     {
         internal readonly PythonBaseTypeProviderGroup pythonBaseTypeProviders
             = new PythonBaseTypeProviderGroup();
@@ -23,6 +24,15 @@ namespace Python.Runtime
                     new CollectionMixinsProvider(new Lazy<PyObject>(() => Py.Import("clr._extras.collections"))),
                 },
             };
+        }
+
+        public void Dispose()
+        {
+            foreach (var provider in PythonBaseTypeProviders.OfType<IDisposable>())
+            {
+                provider.Dispose();
+            }
+            PythonBaseTypeProviders.Clear();
         }
     }
 }

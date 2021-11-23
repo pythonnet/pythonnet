@@ -213,19 +213,9 @@ namespace Python.Runtime
             return copylen;
         }
 
-        ~PyBuffer()
-        {
-            this.Dispose();
-            Finalizer.Instance.AddFinalizedObject(ref _view.obj);
-        }
-
         private bool disposedValue = false; // To detect redundant calls
 
-        /// <summary>
-        /// Release the buffer view and decrement the reference count for view->obj. This function MUST be called when the buffer is no longer being used, otherwise reference leaks may occur.
-        /// It is an error to call this function on a buffer that was not obtained via <see cref="PyObject.GetBuffer"/>.
-        /// </summary>
-        public void Dispose()
+        private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -242,6 +232,27 @@ namespace Python.Runtime
 
                 disposedValue = true;
             }
+        }
+
+        ~PyBuffer()
+        {
+            Debug.Assert(!disposedValue);
+
+            if (_view.obj != IntPtr.Zero)
+            {
+                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run);
+            }
+
+            Dispose(false);
+        }
+
+        /// <summary>
+        /// Release the buffer view and decrement the reference count for view->obj. This function MUST be called when the buffer is no longer being used, otherwise reference leaks may occur.
+        /// It is an error to call this function on a buffer that was not obtained via <see cref="PyObject.GetBuffer"/>.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }

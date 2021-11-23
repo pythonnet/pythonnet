@@ -11,6 +11,8 @@ import sys, os
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
 
+# Disable SourceLink during the build until it can read repo-format v1, #1613
+os.environ["EnableSourceControlManagerQueries"] = "false"
 
 class DotnetLib:
     def __init__(self, name, path, **kwargs):
@@ -154,6 +156,7 @@ setup(
     packages=["pythonnet", "pythonnet.find_libpython"],
     install_requires=["clr_loader"],
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     py_modules=["clr"],
     dotnet_libs=dotnet_libs,
     classifiers=[

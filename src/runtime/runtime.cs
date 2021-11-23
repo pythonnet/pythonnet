@@ -81,7 +81,16 @@ namespace Python.Runtime
             }
         }
 
-        /// <summary>
+        const string RunSysPropName = "__pythonnet_run__";
+        static int run = 0;
+
+        internal static int GetRun()
+        {
+            int runNumber = run;
+            Debug.Assert(runNumber > 0, "This must only be called after Runtime is initialized at least once");
+            return runNumber;
+        }
+
         /// Initialize the runtime...
         /// </summary>
         /// <remarks>Always call this method from the Main thread.  After the
@@ -106,6 +115,9 @@ namespace Python.Runtime
             if (!interpreterAlreadyInitialized)
             {
                 Py_InitializeEx(initSigs ? 1 : 0);
+
+                NewRun();
+
                 if (PyEval_ThreadsInitialized() == 0)
                 {
                     PyEval_InitThreads();
@@ -126,8 +138,20 @@ namespace Python.Runtime
                 {
                     PyGILState_Ensure();
                 }
+
+                BorrowedReference pyRun = PySys_GetObject(RunSysPropName);
+                if (pyRun != null)
+                {
+                    run = checked((int)PyLong_AsSignedSize_t(pyRun));
+                }
+                else
+                {
+                    NewRun();
+                }
             }
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
+
+            Finalizer.Initialize();
 
             InitPyMembers();
 
@@ -152,7 +176,6 @@ namespace Python.Runtime
                 PyCLRMetaType = MetaType.Initialize();
                 ImportHook.Initialize();
             }
-            Finalizer.Initialize();
             Exceptions.Initialize();
 
             // Need to add the runtime directory to sys.path so that we
@@ -168,6 +191,13 @@ namespace Python.Runtime
 
             clrInterop = GetModuleLazy("clr.interop");
             inspect = GetModuleLazy("inspect");
+        }
+
+        static void NewRun()
+        {
+            run++;
+            using var pyRun = PyLong_FromLongLong(run);
+            PySys_SetObject(RunSysPropName, pyRun.BorrowOrThrow());
         }
 
         private static void InitPyMembers()
@@ -286,32 +316,34 @@ namespace Python.Runtime
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
 
-            Finalizer.Shutdown();
-
             MetaType.Release();
             PyCLRMetaType.Dispose();
             PyCLRMetaType = null!;
 
             Exceptions.Shutdown();
+            PythonEngine.InteropConfiguration.Dispose();
+            DisposeLazyModule(clrInterop);
+            DisposeLazyModule(inspect);
+            PyObjectConversions.Reset();
+
+            if (mode != ShutdownMode.Extension)
+            {
+                PyGC_Collect();
+                bool everythingSeemsCollected = TryCollectingGarbage();
+                Debug.Assert(everythingSeemsCollected);
+            }
+
+            Finalizer.Shutdown();
             InternString.Shutdown();
 
             if (mode != ShutdownMode.Normal && mode != ShutdownMode.Extension)
             {
-                PyGC_Collect();
                 if (mode == ShutdownMode.Soft)
                 {
                     RuntimeState.Restore();
                 }
                 ResetPyMembers();
                 GC.Collect();
-                try
-                {
-                    GC.WaitForFullGCComplete();
-                }
-                catch (NotImplementedException)
-                {
-                    // Some clr runtime didn't implement GC.WaitForFullGCComplete yet.
-                }
                 GC.WaitForPendingFinalizers();
                 PyGILState_Release(state);
                 // Then release the GIL for good, if there is somehting to release
@@ -337,10 +369,38 @@ namespace Python.Runtime
             }
         }
 
+        const int MaxCollectRetriesOnShutdown = 20;
+        internal static int _collected;
+        static bool TryCollectingGarbage()
+        {
+            for (int attempt = 0; attempt < MaxCollectRetriesOnShutdown; attempt++)
+            {
+                Interlocked.Exchange(ref _collected, 0);
+                nint pyCollected = 0;
+                for (int i = 0; i < 2; i++)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    pyCollected += PyGC_Collect();
+                }
+                if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
+                    return true;
+            }
+            return false;
+        }
+
         internal static void Shutdown()
         {
             var mode = ShutdownMode;
             Shutdown(mode);
+        }
+
+        static void DisposeLazyModule(Lazy<PyObject> module)
+        {
+            if (module.IsValueCreated)
+            {
+                module.Value.Dispose();
+            }
         }
 
         private static Lazy<PyObject> GetModuleLazy(string moduleName)
@@ -522,7 +582,7 @@ namespace Python.Runtime
         internal static PyObject PyFloatType;
         internal static PyType PyBoolType;
         internal static PyType PyNoneType;
-        internal static PyType PyTypeType;
+        internal static BorrowedReference PyTypeType => new(Delegates.PyType_Type);
 
         internal static int* Py_NoSiteFlag;
 
@@ -2180,7 +2240,7 @@ namespace Python.Runtime
                 PyErr_Print = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyErr_Print), GetUnmanagedDll(_PythonDll));
                 PyCell_Get = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyCell_Get), GetUnmanagedDll(_PythonDll));
                 PyCell_Set = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyCell_Set), GetUnmanagedDll(_PythonDll));
-                PyGC_Collect = (delegate* unmanaged[Cdecl]<IntPtr>)GetFunctionByName(nameof(PyGC_Collect), GetUnmanagedDll(_PythonDll));
+                PyGC_Collect = (delegate* unmanaged[Cdecl]<nint>)GetFunctionByName(nameof(PyGC_Collect), GetUnmanagedDll(_PythonDll));
                 PyGC_ValidateLists = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyGC_ValidateLists), GetUnmanagedDll(_PythonDll));
                 PyCapsule_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyCapsule_New), GetUnmanagedDll(_PythonDll));
                 PyCapsule_GetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCapsule_GetPointer), GetUnmanagedDll(_PythonDll));
@@ -2208,8 +2268,7 @@ namespace Python.Runtime
                 }
                 catch (MissingMethodException) { }
 
-                var type = GetFunctionByName("PyType_Type", GetUnmanagedDll(_PythonDll));
-                PyTypeType = new PyType(new BorrowedReference(type), prevalidated: true);
+                PyType_Type = GetFunctionByName(nameof(PyType_Type), GetUnmanagedDll(_PythonDll));
             }
 
             static global::System.IntPtr GetUnmanagedDll(string? libraryName)
@@ -2466,6 +2525,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<in NativeTypeSpec, BorrowedReference, NewReference> PyType_FromSpecWithBases { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> _Py_NewReference { get; }
             internal static delegate* unmanaged[Cdecl]<int> _Py_IsFinalizing { get; }
+            internal static IntPtr PyType_Type { get; }
         }
     }
 

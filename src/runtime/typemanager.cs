@@ -448,7 +448,7 @@ namespace Python.Runtime
 
         internal static PyType CreateMetatypeWithGCHandleOffset()
         {
-            PyType py_type = Runtime.PyTypeType;
+            var py_type = new PyType(Runtime.PyTypeType, prevalidated: true);
             int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
                        + IntPtr.Size // tp_clr_inst_offset
             ;

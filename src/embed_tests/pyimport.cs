@@ -111,3 +111,14 @@ clr.AddReference('{path}')
         }
     }
 }
+
+// regression for https://github.com/pythonnet/pythonnet/issues/1601
+// initialize fails if a class derived from IEnumerable is in global namespace
+public class PublicEnumerator : System.Collections.IEnumerable
+{
+    public System.Collections.IEnumerator GetEnumerator()
+    {
+        return null;
+    }
+}
+
