@@ -50,7 +50,7 @@ def pytest_configure(config):
 
     # tmpdir_factory.mktemp(f"pythonnet-{runtime_opt}")
 
-    fw = "net5.0" if runtime_opt == "netcore" else "netstandard2.0"
+    fw = "net6.0" if runtime_opt == "netcore" else "netstandard2.0"
 
     check_call(["dotnet", "publish", "-f", fw, "-o", bin_path, test_proj_path])
 
