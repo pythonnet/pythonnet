@@ -8,7 +8,7 @@ namespace Python.Runtime.Codecs
     /// <summary>
     /// Represents a group of <see cref="IPyObjectDecoder"/>s. Useful to group them by priority.
     /// </summary>
-    public sealed class DecoderGroup: IPyObjectDecoder, IEnumerable<IPyObjectDecoder>
+    public sealed class DecoderGroup: IPyObjectDecoder, IEnumerable<IPyObjectDecoder>, IDisposable
     {
         readonly List<IPyObjectDecoder> decoders = new List<IPyObjectDecoder>();
 
@@ -46,6 +46,15 @@ namespace Python.Runtime.Codecs
         /// <inheritdoc />
         public IEnumerator<IPyObjectDecoder> GetEnumerator() => this.decoders.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this.decoders.GetEnumerator();
+
+        public void Dispose()
+        {
+            foreach (var decoder in this.decoders.OfType<IDisposable>())
+            {
+                decoder.Dispose();
+            }
+            this.decoders.Clear();
+        }
     }
 
     public static class DecoderGroupExtensions

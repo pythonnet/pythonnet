@@ -421,12 +421,17 @@ DateTimeDecoder.Setup()
             }
         }
 
-        class InstancelessExceptionDecoder : IPyObjectDecoder
+        class InstancelessExceptionDecoder : IPyObjectDecoder, IDisposable
         {
             readonly PyObject PyErr = Py.Import("clr.interop").GetAttr("PyErr");
 
             public bool CanDecode(PyType objectType, Type targetType)
                 => PythonReferenceComparer.Instance.Equals(PyErr, objectType);
+
+            public void Dispose()
+            {
+                PyErr.Dispose();
+            }
 
             public bool TryDecode<T>(PyObject pyObj, out T value)
             {

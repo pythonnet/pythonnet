@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using Python.Runtime.StateSerialization;
 
@@ -49,7 +50,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             return importlib.machinery.ModuleSpec(fullname, DotNetLoader(), is_package=True)
         return None
             ";
-        const string availableNsKey = "_available_namespaces";
+        const string _available_namespaces = "_available_namespaces";
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
@@ -193,12 +194,11 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }
-                if (Runtime.PyDict_SetItemString(root.dict, availableNsKey, newset.Borrow()) != 0)
-                {
-                    throw PythonException.ThrowLastAsClrException();
-                }
             }
-
+            if (Runtime.PyDict_SetItemString(root.dict, _available_namespaces, newset.Borrow()) != 0)
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         static void TeardownNameSpaceTracking()
         {
             // If the C# runtime isn't loaded, then there are no namespaces available
-            Runtime.PyDict_SetItemString(root.dict, availableNsKey, Runtime.PyNone);
+            Runtime.PyDict_SetItemString(root.dict, _available_namespaces, Runtime.PyNone);
         }
 
         static readonly ConcurrentQueue<string> addPending = new();
@@ -227,7 +227,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         internal static void AddNamespaceWithGIL(string name)
         {
             using var pyNs = Runtime.PyString_FromString(name);
-            var nsSet = Runtime.PyDict_GetItemString(root.dict, availableNsKey);
+            var nsSet = Runtime.PyDict_GetItemString(root.dict, _available_namespaces);
             if (!(nsSet.IsNull  || nsSet == Runtime.PyNone))
             {
                 if (Runtime.PySet_Add(nsSet, pyNs.BorrowOrThrow()) != 0)

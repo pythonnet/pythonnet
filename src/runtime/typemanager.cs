@@ -205,8 +205,6 @@ namespace Python.Runtime
             using (var mod = Runtime.PyString_FromString("CLR"))
             {
                 Runtime.PyDict_SetItem(dict.Borrow(), PyIdentifier.__module__, mod.Borrow());
-
-                InitMethods(dict.Borrow(), impl);
             }
 
             // The type has been modified after PyType_Ready has been called
@@ -803,41 +801,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Given a dict of a newly allocated Python type object and a managed Type that
-        /// implements it, initialize any methods defined by the Type that need
-        /// to appear in the Python type __dict__ (based on custom attribute).
-        /// </summary>
-        private static void InitMethods(BorrowedReference typeDict, Type type)
-        {
-            Type marker = typeof(PythonMethodAttribute);
-
-            BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
-            var addedMethods = new HashSet<string>();
-
-            while (type != null)
-            {
-                MethodInfo[] methods = type.GetMethods(flags);
-                foreach (MethodInfo method in methods)
-                {
-                    if (!addedMethods.Contains(method.Name))
-                    {
-                        object[] attrs = method.GetCustomAttributes(marker, false);
-                        if (attrs.Length > 0)
-                        {
-                            string method_name = method.Name;
-                            var mi = new MethodInfo[1];
-                            mi[0] = method;
-                            MethodObject m = new TypeMethod(type, method_name, mi);
-                            Runtime.PyDict_SetItemString(typeDict, method_name, m.ObjectReference);
-                            addedMethods.Add(method_name);
-                        }
-                    }
-                }
-                type = type.BaseType;
-            }
-        }
-
-
         /// <summary>
         /// Utility method to copy slots from a given type to another type.
         /// </summary>

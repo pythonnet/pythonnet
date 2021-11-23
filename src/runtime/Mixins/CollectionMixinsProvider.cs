@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Python.Runtime.Mixins
 {
-    class CollectionMixinsProvider : IPythonBaseTypeProvider
+    class CollectionMixinsProvider : IPythonBaseTypeProvider, IDisposable
     {
         readonly Lazy<PyObject> mixinsModule;
         public CollectionMixinsProvider(Lazy<PyObject> mixinsModule)
@@ -86,5 +86,13 @@ namespace Python.Runtime.Mixins
 
         static Type GetDefinition(Type type)
             => type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+
+        public void Dispose()
+        {
+            if (this.mixinsModule.IsValueCreated)
+            {
+                this.mixinsModule.Value.Dispose();
+            }
+        }
     }
 }
