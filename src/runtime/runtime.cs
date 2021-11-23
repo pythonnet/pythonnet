@@ -85,6 +85,7 @@ namespace Python.Runtime
             }
         }
 
+        const string RunSysPropName = "__pythonnet_run__";
         static int run = 0;
 
         internal static int GetRun()
@@ -142,7 +143,7 @@ namespace Python.Runtime
                     PyGILState_Ensure();
                 }
 
-                BorrowedReference pyRun = PySys_GetObject("__pynet_run__");
+                BorrowedReference pyRun = PySys_GetObject(RunSysPropName);
                 if (pyRun != null)
                 {
                     run = checked((int)PyLong_AsSignedSize_t(pyRun));
@@ -201,7 +202,7 @@ namespace Python.Runtime
         {
             run++;
             using var pyRun = PyLong_FromLongLong(run);
-            PySys_SetObject("__pynet_run__", pyRun);
+            PySys_SetObject(RunSysPropName, pyRun);
         }
 
         private static void InitPyMembers()
