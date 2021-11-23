@@ -24,6 +24,7 @@ namespace Python.EmbeddingTest
         [OneTimeTearDown]
         public void Dispose()
         {
+            ExtraBaseTypeProvider.ExtraBase.Dispose();
             PythonEngine.Shutdown();
         }
 

@@ -166,8 +166,8 @@ namespace Python.Runtime
                 {
                     clrToPython.Clear();
                     pythonToClr.Clear();
-                    encoders.Clear();
-                    decoders.Clear();
+                    encoders.Dispose();
+                    decoders.Dispose();
                 }
         }
 
