@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,10 +31,12 @@ namespace Python.Runtime
         [DefaultValue(DefaultThreshold)]
         public int Threshold { get; set; } = DefaultThreshold;
 
+        bool started;
+
         [DefaultValue(true)]
         public bool Enable { get; set; } = true;
 
-        private ConcurrentQueue<IntPtr> _objQueue = new ConcurrentQueue<IntPtr>();
+        private ConcurrentQueue<PendingFinalization> _objQueue = new ();
         private int _throttled;
 
         #region FINALIZER_CHECK
@@ -79,6 +82,8 @@ namespace Python.Runtime
 
         internal void ThrottledCollect()
         {
+            if (!started) throw new InvalidOperationException($"{nameof(PythonEngine)} is not initialized");
+
             _throttled = unchecked(this._throttled + 1);
             if (!Enable || _throttled < Threshold) return;
             _throttled = 0;
@@ -87,12 +92,13 @@ namespace Python.Runtime
 
         internal List<IntPtr> GetCollectedObjects()
         {
-            return _objQueue.ToList();
+            return _objQueue.Select(o => o.PyObj).ToList();
         }
 
-        internal void AddFinalizedObject(ref IntPtr obj)
+        internal void AddFinalizedObject(ref IntPtr obj, int run)
         {
-            if (!Enable || obj == IntPtr.Zero)
+            Debug.Assert(obj != IntPtr.Zero);
+            if (!Enable)
             {
                 return;
             }
@@ -101,14 +107,20 @@ namespace Python.Runtime
             lock (_queueLock)
 #endif
             {
-                this._objQueue.Enqueue(obj);
+                this._objQueue.Enqueue(new PendingFinalization { PyObj = obj, RuntimeRun = run });
             }
             obj = IntPtr.Zero;
+        }
+
+        internal static void Initialize()
+        {
+            Instance.started = true;
         }
 
         internal static void Shutdown()
         {
             Instance.DisposeAll();
+            Instance.started = false;
         }
 
         private void DisposeAll()
@@ -124,36 +136,31 @@ namespace Python.Runtime
 #if FINALIZER_CHECK
                 ValidateRefCount();
 #endif
-                IntPtr obj;
                 Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+
+                int run = Runtime.GetRun();
 
                 try
                 {
                     while (!_objQueue.IsEmpty)
                     {
-                        if (!_objQueue.TryDequeue(out obj))
+                        if (!_objQueue.TryDequeue(out var obj))
                             continue;
 
-                        Runtime.XDecref(obj);
+                        if (obj.RuntimeRun != run)
+                        {
+                            HandleFinalizationException(obj.PyObj, new RuntimeShutdownException(obj.PyObj));
+                            continue;
+                        }
+
+                        Runtime.XDecref(obj.PyObj);
                         try
                         {
                             Runtime.CheckExceptionOccurred();
                         }
                         catch (Exception e)
                         {
-                            var errorArgs = new ErrorArgs
-                            {
-                                Error = e,
-                            };
-
-                            ErrorHandler?.Invoke(this, errorArgs);
-
-                            if (!errorArgs.Handled)
-                            {
-                                throw new FinalizationException(
-                                    "Python object finalization failed",
-                                    disposable: obj, innerException: e);
-                            }
+                            HandleFinalizationException(obj.PyObj, e);
                         }
                     }
                 }
@@ -163,6 +170,23 @@ namespace Python.Runtime
                     // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
                     Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
+            }
+        }
+
+        void HandleFinalizationException(IntPtr obj, Exception cause)
+        {
+            var errorArgs = new ErrorArgs
+            {
+                Error = cause,
+            };
+
+            ErrorHandler?.Invoke(this, errorArgs);
+
+            if (!errorArgs.Handled)
+            {
+                throw new FinalizationException(
+                    "Python object finalization failed",
+                    disposable: obj, innerException: cause);
             }
         }
 
@@ -235,6 +259,12 @@ namespace Python.Runtime
 #endif
     }
 
+    struct PendingFinalization
+    {
+        public IntPtr PyObj;
+        public int RuntimeRun;
+    }
+
     public class FinalizationException : Exception
     {
         public IntPtr Handle { get; }
@@ -258,6 +288,22 @@ namespace Python.Runtime
         {
             if (disposable == IntPtr.Zero) throw new ArgumentNullException(nameof(disposable));
             this.Handle = disposable;
+        }
+
+        protected FinalizationException(string message, IntPtr disposable)
+            : base(message)
+        {
+            if (disposable == IntPtr.Zero) throw new ArgumentNullException(nameof(disposable));
+            this.Handle = disposable;
+        }
+    }
+
+    public class RuntimeShutdownException : FinalizationException
+    {
+        public RuntimeShutdownException(IntPtr disposable)
+            : base("Python runtime was shut down after this object was created." +
+                   " It is an error to attempt to dispose or to continue using it even after restarting the runtime.", disposable)
+        {
         }
     }
 }
