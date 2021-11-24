@@ -808,8 +808,6 @@ namespace Python.Runtime
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
-            Debug.Assert(Runtime.PyGILState_Check() != 0);
-
             // call the base constructor
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
