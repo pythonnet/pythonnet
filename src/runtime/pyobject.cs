@@ -18,7 +18,7 @@ namespace Python.Runtime
     /// </summary>
     [Serializable]
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public partial class PyObject : DynamicObject, IDisposable
+    public partial class PyObject : DynamicObject, IDisposable, ISerializable
     {
 #if TRACE_ALLOC
         /// <summary>
@@ -106,7 +106,11 @@ namespace Python.Runtime
 
                 Interlocked.Increment(ref Runtime._collected);
 
-                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run);
+                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
+#if TRACE_ALLOC
+                    , Traceback
+#endif
+                );
             }
 
             Dispose(false);
@@ -1453,15 +1457,21 @@ namespace Python.Runtime
             }
         }
 
-        [OnSerialized]
-        void OnSerialized(StreamingContext context)
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+            => GetObjectData(info, context);
+        protected virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-#warning check that these methods are inherited properly
-            new NewReference(this, canBeNull: true).StealNullable();
+#pragma warning disable CS0618 // Type or member is obsolete
+            Runtime.XIncref(this);
+#pragma warning restore CS0618 // Type or member is obsolete
+            info.AddValue("h", rawPtr.ToInt64());
+            info.AddValue("r", run);
         }
-        [OnDeserialized]
-        void OnDeserialized(StreamingContext context)
+
+        protected PyObject(SerializationInfo info, StreamingContext context)
         {
+            rawPtr = (IntPtr)info.GetInt64("h");
+            run = info.GetInt32("r");
             if (IsDisposed) GC.SuppressFinalize(this);
         }
     }

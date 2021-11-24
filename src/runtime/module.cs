@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -41,6 +42,9 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a module");
             }
         }
+
+        protected PyModule(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
         private void InitializeBuiltins()
         {

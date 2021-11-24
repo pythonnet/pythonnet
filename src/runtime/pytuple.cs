@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -20,6 +21,7 @@ namespace Python.Runtime
         /// The object reference is not checked for type-correctness.
         /// </remarks>
         internal PyTuple(BorrowedReference reference) : base(reference) { }
+        protected PyTuple(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         private static BorrowedReference FromObject(PyObject o)
         {

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -18,6 +19,10 @@ namespace Python.Runtime
         /// </summary>
         internal PyList(BorrowedReference reference) : base(reference) { }
 
+
+        protected PyList(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
 
         private static BorrowedReference FromObject(PyObject o)
         {

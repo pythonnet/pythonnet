@@ -290,7 +290,6 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
-            Runtime.PyGC_ValidateLists();
             // Fix this when we dont cheat on the handle for subclasses!
 
             var flags = PyType.GetFlags(lastRef.Borrow());
@@ -318,7 +317,6 @@ namespace Python.Runtime
             // We must decref our type.
             // type_dealloc from PyType will use it to get tp_free so we must keep the value
             Runtime.XDecref(StolenReference.DangerousFromPointer(op.DangerousGetAddress()));
-            Runtime.PyGC_ValidateLists();
         }
 
         private static NewReference DoInstanceCheck(BorrowedReference tp, BorrowedReference args, bool checkType)

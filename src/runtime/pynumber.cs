@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -15,6 +16,8 @@ namespace Python.Runtime
     {
         internal PyNumber(in StolenReference reference) : base(reference) { }
         internal PyNumber(BorrowedReference reference) : base(reference) { }
+        protected PyNumber(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
         /// <summary>
         /// IsNumberType Method

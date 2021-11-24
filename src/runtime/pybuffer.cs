@@ -240,7 +240,11 @@ namespace Python.Runtime
 
             if (_view.obj != IntPtr.Zero)
             {
-                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run);
+                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run
+#if TRACE_ALLOC
+                    , _exporter.Traceback
+#endif
+                );
             }
 
             Dispose(false);

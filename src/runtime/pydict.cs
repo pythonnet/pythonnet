@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -32,6 +33,9 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a dict");
             }
         }
+
+        protected PyDict(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
 
         /// <summary>

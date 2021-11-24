@@ -76,7 +76,6 @@ namespace Python.Runtime
 
         public unsafe static void tp_dealloc(NewReference lastRef)
         {
-            Runtime.PyGC_ValidateLists();
             Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
 
             tp_clear(lastRef.Borrow());
@@ -86,18 +85,15 @@ namespace Python.Runtime
 
             // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
             DecrefTypeAndFree(lastRef.Steal());
-            Runtime.PyGC_ValidateLists();
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
-            Runtime.PyGC_ValidateLists();
             GCHandle? gcHandle = TryGetGCHandle(ob);
             gcHandle?.Free();
             if (gcHandle is not null) SetGCHandle(ob, default);
 
             int res = ClassBase.BaseUnmanagedClear(ob);
-            Runtime.PyGC_ValidateLists();
             return res;
         }
 

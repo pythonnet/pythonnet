@@ -69,7 +69,6 @@ namespace Python.Runtime
 
         public new static void tp_dealloc(NewReference ob)
         {
-            Runtime.PyGC_ValidateLists();
             var self = (CLRObject)GetManagedObject(ob.Borrow())!;
 
             // don't let the python GC destroy this object
@@ -83,7 +82,6 @@ namespace Python.Runtime
             GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
             SetGCHandle(ob.Borrow(), gc);
             oldHandle.Free();
-            Runtime.PyGC_ValidateLists();
         }
 
         /// <summary>

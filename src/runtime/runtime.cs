@@ -382,6 +382,7 @@ namespace Python.Runtime
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     pyCollected += PyGC_Collect();
+                    pyCollected += Finalizer.Instance.DisposeAll();
                 }
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
                     return true;
@@ -1829,19 +1830,9 @@ namespace Python.Runtime
             throw new NotSupportedException("Requires Python 3.9");
         }
 
-        internal static void PyObject_GC_Track(BorrowedReference ob)
-        {
-            PyGC_ValidateLists();
-            Delegates.PyObject_GC_Track(ob);
-            PyGC_ValidateLists();
-        }
+        internal static void PyObject_GC_Track(BorrowedReference ob) => Delegates.PyObject_GC_Track(ob);
 
-        internal static void PyObject_GC_UnTrack(BorrowedReference ob)
-        {
-            PyGC_ValidateLists();
-            Delegates.PyObject_GC_UnTrack(ob);
-            PyGC_ValidateLists();
-        }
+        internal static void PyObject_GC_UnTrack(BorrowedReference ob) => Delegates.PyObject_GC_UnTrack(ob);
 
         internal static void _PyObject_Dump(BorrowedReference ob) => Delegates._PyObject_Dump(ob);
 
@@ -1935,8 +1926,6 @@ namespace Python.Runtime
 
 
         internal static nint PyGC_Collect() => Delegates.PyGC_Collect();
-        internal static void PyGC_ValidateLists() => Delegates.PyGC_ValidateLists();
-
         internal static void Py_CLEAR(BorrowedReference ob, int offset) => ReplaceReference(ob, offset, default);
         internal static void Py_CLEAR<T>(ref T? ob)
             where T: PyObject
@@ -2241,7 +2230,6 @@ namespace Python.Runtime
                 PyCell_Get = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyCell_Get), GetUnmanagedDll(_PythonDll));
                 PyCell_Set = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyCell_Set), GetUnmanagedDll(_PythonDll));
                 PyGC_Collect = (delegate* unmanaged[Cdecl]<nint>)GetFunctionByName(nameof(PyGC_Collect), GetUnmanagedDll(_PythonDll));
-                PyGC_ValidateLists = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyGC_ValidateLists), GetUnmanagedDll(_PythonDll));
                 PyCapsule_New = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyCapsule_New), GetUnmanagedDll(_PythonDll));
                 PyCapsule_GetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr>)GetFunctionByName(nameof(PyCapsule_GetPointer), GetUnmanagedDll(_PythonDll));
                 PyCapsule_SetPointer = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int>)GetFunctionByName(nameof(PyCapsule_SetPointer), GetUnmanagedDll(_PythonDll));
@@ -2507,7 +2495,6 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyCell_Get { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyCell_Set { get; }
             internal static delegate* unmanaged[Cdecl]<nint> PyGC_Collect { get; }
-            internal static delegate* unmanaged[Cdecl]<void> PyGC_ValidateLists { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, NewReference> PyCapsule_New { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, IntPtr> PyCapsule_GetPointer { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr, int> PyCapsule_SetPointer { get; }

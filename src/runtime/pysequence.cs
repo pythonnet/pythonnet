@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -14,6 +15,7 @@ namespace Python.Runtime
     {
         internal PySequence(BorrowedReference reference) : base(reference) { }
         internal PySequence(in StolenReference reference) : base(reference) { }
+        protected PySequence(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         /// <summary>
         /// Creates new instance from an existing object.

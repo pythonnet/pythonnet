@@ -206,21 +206,6 @@ namespace Python.Runtime
         private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
         {
             using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
-
-
-            using (var tempErr = ToPyErrArgs(typeRef, valRef, tbRef))
-            {
-                Runtime.PyGC_ValidateLists();
-                using (var pyErr = pyErrType.Invoke(new PyTuple(), tempErr))
-                {
-                    Runtime.PyGC_ValidateLists();
-                    tempErr.Dispose();
-                    Runtime.PyGC_ValidateLists();
-                }
-                Runtime.PyGC_ValidateLists();
-            }
-            Runtime.PyGC_ValidateLists();
-
             using var errorDict = ToPyErrArgs(typeRef, valRef, tbRef);
             using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
             if (PyObjectConversions.TryDecode(pyErrInfo.Reference, pyErrType.Reference,

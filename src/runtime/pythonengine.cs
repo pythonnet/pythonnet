@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Threading;
 
 using Python.Runtime.Native;
@@ -746,6 +747,12 @@ namespace Python.Runtime
 
         public class KeywordArguments : PyDict
         {
+            public KeywordArguments() : base()
+            {
+            }
+
+            protected KeywordArguments(SerializationInfo info, StreamingContext context)
+                : base(info, context) { }
         }
 
         public static KeywordArguments kw(params object?[] kv)

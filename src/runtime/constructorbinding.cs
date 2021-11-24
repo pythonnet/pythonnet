@@ -152,9 +152,7 @@ namespace Python.Runtime
             var self = (ConstructorBinding?)GetManagedObject(ob);
             if (self is null) return 0;
 
-            Runtime.PyGC_ValidateLists();
             int res = PyVisit(self.typeToCreate, visit, arg);
-            Runtime.PyGC_ValidateLists();
             return res;
         }
     }
@@ -237,9 +235,7 @@ namespace Python.Runtime
             var self = (BoundContructor?)GetManagedObject(ob);
             if (self is null) return 0;
 
-            Runtime.PyGC_ValidateLists();
             int res = PyVisit(self.typeToCreate, visit, arg);
-            Runtime.PyGC_ValidateLists();
             return res;
         }
     }

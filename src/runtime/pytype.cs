@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 
 using Python.Runtime.Native;
 
@@ -33,6 +34,8 @@ namespace Python.Runtime
             if (!Runtime.PyType_Check(this))
                 throw new ArgumentException("object is not a type");
         }
+
+        protected PyType(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         internal new static PyType? FromNullableReference(BorrowedReference reference)
             => reference == null

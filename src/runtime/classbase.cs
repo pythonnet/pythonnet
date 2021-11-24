@@ -337,7 +337,6 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
-            Runtime.PyGC_ValidateLists();
             Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
 
             CallClear(lastRef.Borrow());
@@ -347,12 +346,10 @@ namespace Python.Runtime
             Debug.Assert(deleted);
 
             DecrefTypeAndFree(lastRef.Steal());
-            Runtime.PyGC_ValidateLists();
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
-            Runtime.PyGC_ValidateLists();
             GCHandle? gcHandle = TryGetGCHandle(ob);
             gcHandle?.Free();
 
@@ -363,7 +360,6 @@ namespace Python.Runtime
             }
 
             ClearObjectDict(ob);
-            Runtime.PyGC_ValidateLists();
             return 0;
         }
 

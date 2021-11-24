@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -9,6 +10,8 @@ namespace Python.Runtime
     {
         internal PyIterable(BorrowedReference reference) : base(reference) { }
         internal PyIterable(in StolenReference reference) : base(reference) { }
+        protected PyIterable(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
         /// <summary>
         /// Creates new instance from an existing object.

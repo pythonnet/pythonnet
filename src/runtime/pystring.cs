@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -16,7 +17,7 @@ namespace Python.Runtime
     {
         internal PyString(in StolenReference reference) : base(reference) { }
         internal PyString(BorrowedReference reference) : base(reference) { }
-
+        protected PyString(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         private static BorrowedReference FromObject(PyObject o)
         {

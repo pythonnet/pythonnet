@@ -122,7 +122,11 @@ namespace Python.Runtime
             return _objQueue.Select(o => o.PyObj).ToList();
         }
 
-        internal void AddFinalizedObject(ref IntPtr obj, int run)
+        internal void AddFinalizedObject(ref IntPtr obj, int run
+#if TRACE_ALLOC
+                                         , StackTrace stackTrace
+#endif
+        )
         {
             Debug.Assert(obj != IntPtr.Zero);
             if (!Enable)
@@ -130,11 +134,18 @@ namespace Python.Runtime
                 return;
             }
 
+            Debug.Assert(Runtime.Refcount(new BorrowedReference(obj)) > 0);
+
 #if FINALIZER_CHECK
             lock (_queueLock)
 #endif
             {
-                this._objQueue.Enqueue(new PendingFinalization { PyObj = obj, RuntimeRun = run });
+                this._objQueue.Enqueue(new PendingFinalization {
+                    PyObj = obj, RuntimeRun = run,
+#if TRACE_ALLOC
+                    StackTrace = stackTrace.ToString(),
+#endif
+                });
             }
             obj = IntPtr.Zero;
         }
@@ -165,10 +176,12 @@ namespace Python.Runtime
             Instance.started = false;
         }
 
-        private void DisposeAll()
+        internal nint DisposeAll()
         {
             if (_objQueue.IsEmpty && _derivedQueue.IsEmpty)
-                return;
+                return 0;
+
+            nint collected = 0;
 
             BeforeCollect?.Invoke(this, new CollectArgs()
             {
@@ -200,16 +213,8 @@ namespace Python.Runtime
                         }
 
                         IntPtr copyForException = obj.PyObj;
-                        Runtime.PyGC_ValidateLists();
-                        var @ref = new BorrowedReference(obj.PyObj);
-                        nint refs = Runtime.Refcount(@ref);
-                        var type = Runtime.PyObject_TYPE(@ref);
-                        string typeName = Runtime.ToString(type);
-                        if (typeName == "<class 'clr.interop.PyErr'>")
-                        {
-
-                        }
                         Runtime.XDecref(StolenReference.Take(ref obj.PyObj));
+                        collected++;
                         try
                         {
                             Runtime.CheckExceptionOccurred();
@@ -218,7 +223,6 @@ namespace Python.Runtime
                         {
                             HandleFinalizationException(obj.PyObj, e);
                         }
-                        Runtime.PyGC_ValidateLists();
                     }
 
                     while (!_derivedQueue.IsEmpty)
@@ -241,6 +245,7 @@ namespace Python.Runtime
                         // matches correspdonging PyObject_GC_UnTrack
                         // in ClassDerivedObject.tp_dealloc
                         Runtime.PyObject_GC_Del(@ref.Steal());
+                        collected++;
 
                         gcHandle.Free();
                     }
@@ -252,6 +257,7 @@ namespace Python.Runtime
                     Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
             }
+            return collected;
         }
 
         void HandleFinalizationException(IntPtr obj, Exception cause)
@@ -341,6 +347,9 @@ namespace Python.Runtime
     {
         public IntPtr PyObj;
         public int RuntimeRun;
+#if TRACE_ALLOC
+        public string StackTrace;
+#endif
     }
 
     public class FinalizationException : Exception

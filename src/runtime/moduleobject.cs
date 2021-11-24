@@ -323,16 +323,12 @@ namespace Python.Runtime
             var self = (ModuleObject?)GetManagedObject(ob);
             if (self is null) return 0;
 
-            Runtime.PyGC_ValidateLists();
             Debug.Assert(self.dict == GetObjectDict(ob));
             int res = PyVisit(self.dict, visit, arg);
-            Runtime.PyGC_ValidateLists();
             if (res != 0) return res;
             foreach (var attr in self.cache.Values)
             {
-                Runtime.PyGC_ValidateLists();
                 res = PyVisit(attr, visit, arg);
-                Runtime.PyGC_ValidateLists();
                 if (res != 0) return res;
             }
             return 0;
