@@ -714,7 +714,7 @@ namespace Python.Runtime
         {
 #if DEBUG
             Debug.Assert(op == null || Refcount(new BorrowedReference(op.Pointer)) > 0);
-            Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() == true);
+            Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() != false);
 #endif
 #if !CUSTOM_INCDEC_REF
             if (op == null) return;
