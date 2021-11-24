@@ -664,7 +664,7 @@ namespace Python.Runtime
                 try
                 {
                     using var pyself = new PyObject(self.CheckRun());
-                    using PyObject method = pyself.GetAttr(methodName, Runtime.PyNone);
+                    using PyObject method = pyself.GetAttr(methodName, Runtime.None);
                     if (method.Reference != Runtime.PyNone)
                     {
                         // if the method hasn't been overridden then it will be a managed object
@@ -717,9 +717,9 @@ namespace Python.Runtime
                 try
                 {
                     using var pyself = new PyObject(self.CheckRun());
-                    PyObject method = pyself.GetAttr(methodName, Runtime.PyNone);
+                    PyObject method = pyself.GetAttr(methodName, Runtime.None);
                     disposeList.Add(method);
-                    if (method.Reference != Runtime.PyNone)
+                    if (method.Reference != Runtime.None)
                     {
                         // if the method hasn't been overridden then it will be a managed object
                         ManagedType? managedMethod = ManagedType.GetManagedObject(method);

@@ -209,12 +209,12 @@ namespace Python.Runtime
 
                 SetPyMember(out PyBaseObjectType, PyObject_GetAttrString(builtins, "object").StealNullable());
 
-                SetPyMember(out PyNone, PyObject_GetAttrString(builtins, "None").StealNullable());
-                SetPyMember(out PyTrue, PyObject_GetAttrString(builtins, "True").StealNullable());
-                SetPyMember(out PyFalse, PyObject_GetAttrString(builtins, "False").StealNullable());
+                SetPyMember(out _PyNone, PyObject_GetAttrString(builtins, "None").StealNullable());
+                SetPyMember(out _PyTrue, PyObject_GetAttrString(builtins, "True").StealNullable());
+                SetPyMember(out _PyFalse, PyObject_GetAttrString(builtins, "False").StealNullable());
 
-                SetPyMemberTypeOf(out PyBoolType, PyTrue!);
-                SetPyMemberTypeOf(out PyNoneType, PyNone!);
+                SetPyMemberTypeOf(out PyBoolType, _PyTrue!);
+                SetPyMemberTypeOf(out PyNoneType, _PyNone!);
 
                 SetPyMemberTypeOf(out PyMethodType, PyObject_GetAttrString(builtins, "len").StealNullable());
 
@@ -598,9 +598,12 @@ namespace Python.Runtime
         internal const int Py_GT = 4;
         internal const int Py_GE = 5;
 
-        internal static PyObject PyTrue;
-        internal static PyObject PyFalse;
-        internal static PyObject PyNone;
+        internal static BorrowedReference PyTrue => _PyTrue;
+        static PyObject _PyTrue;
+        internal static BorrowedReference PyFalse => _PyFalse;
+        static PyObject _PyFalse;
+        internal static BorrowedReference PyNone => _PyNone;
+        private static PyObject _PyNone;
 
         private static Lazy<PyObject> inspect;
         internal static PyObject InspectModule => inspect.Value;
@@ -610,7 +613,7 @@ namespace Python.Runtime
 
         internal static BorrowedReference CLRMetaType => PyCLRMetaType;
 
-        public static PyObject None => new(PyNone);
+        public static PyObject None => new(_PyNone);
 
         /// <summary>
         /// Check if any Python Exceptions occurred.

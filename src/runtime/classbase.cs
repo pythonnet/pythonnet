@@ -112,8 +112,8 @@ namespace Python.Runtime
             {
                 case Runtime.Py_EQ:
                 case Runtime.Py_NE:
-                    PyObject pytrue = Runtime.PyTrue;
-                    PyObject pyfalse = Runtime.PyFalse;
+                    BorrowedReference pytrue = Runtime.PyTrue;
+                    BorrowedReference pyfalse = Runtime.PyFalse;
 
                     // swap true and false for NE
                     if (op != Runtime.Py_EQ)
@@ -163,7 +163,7 @@ namespace Python.Runtime
                     {
                         int cmp = co1Comp.CompareTo(co2.inst);
 
-                        PyObject pyCmp;
+                        BorrowedReference pyCmp;
                         if (cmp < 0)
                         {
                             if (op == Runtime.Py_LT || op == Runtime.Py_LE)
