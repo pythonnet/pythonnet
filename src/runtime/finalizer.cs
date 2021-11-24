@@ -346,6 +346,7 @@ namespace Python.Runtime
     struct PendingFinalization
     {
         public IntPtr PyObj;
+        public BorrowedReference Ref => new(PyObj);
         public int RuntimeRun;
 #if TRACE_ALLOC
         public string StackTrace;
