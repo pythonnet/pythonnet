@@ -350,8 +350,7 @@ namespace Python.Runtime
 
         public static int tp_clear(BorrowedReference ob)
         {
-            GCHandle? gcHandle = TryGetGCHandle(ob);
-            gcHandle?.Free();
+            TryFreeGCHandle(ob);
 
             int baseClearResult = BaseUnmanagedClear(ob);
             if (baseClearResult != 0)

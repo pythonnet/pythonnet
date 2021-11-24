@@ -89,9 +89,7 @@ namespace Python.Runtime
 
         public static int tp_clear(BorrowedReference ob)
         {
-            GCHandle? gcHandle = TryGetGCHandle(ob);
-            gcHandle?.Free();
-            if (gcHandle is not null) SetGCHandle(ob, default);
+            TryFreeGCHandle(ob);
 
             int res = ClassBase.BaseUnmanagedClear(ob);
             return res;

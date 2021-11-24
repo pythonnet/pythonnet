@@ -823,15 +823,7 @@ namespace Python.Runtime
             if (Type != Runtime.CLRMetaType)
             {
                 var metatype = Runtime.PyObject_TYPE(Type);
-                if (ManagedType.TryGetGCHandle(Type, metatype) is { } handle)
-                {
-                    if (handle.IsAllocated)
-                    {
-                        handle.Free();
-                    }
-
-                    ManagedType.SetGCHandle(Type, metatype, default);
-                }
+                ManagedType.TryFreeGCHandle(Type, metatype);
             }
         }
 

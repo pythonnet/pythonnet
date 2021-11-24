@@ -25,7 +25,7 @@ namespace Python.Runtime
                 var flags = PyType.GetFlags(tp);
                 if ((flags & TypeFlags.HasClrInstance) != 0)
                 {
-                    var gc = TryGetGCHandle(ob);
+                    var gc = TryGetGCHandle(ob, tp);
                     return (ManagedType?)gc?.Target;
                 }
             }
@@ -193,6 +193,7 @@ namespace Python.Runtime
         {
             Debug.Assert(type != null);
             Debug.Assert(reflectedClrObject != null);
+            Debug.Assert(IsManagedType(type) || IsManagedType(reflectedClrObject));
             Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
 
             int offset = Util.ReadInt32(type, Offsets.tp_clr_inst_offset);
@@ -202,6 +203,28 @@ namespace Python.Runtime
         }
         internal static void SetGCHandle(BorrowedReference reflectedClrObject, GCHandle newHandle)
             => SetGCHandle(reflectedClrObject, Runtime.PyObject_TYPE(reflectedClrObject), newHandle);
+
+        internal static bool TryFreeGCHandle(BorrowedReference reflectedClrObject)
+            => TryFreeGCHandle(reflectedClrObject, Runtime.PyObject_TYPE(reflectedClrObject));
+
+        internal static bool TryFreeGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type)
+        {
+            Debug.Assert(type != null);
+            Debug.Assert(reflectedClrObject != null);
+            Debug.Assert(IsManagedType(type) || IsManagedType(reflectedClrObject));
+            Debug.Assert(Runtime.PyObject_TypeCheck(reflectedClrObject, type));
+
+            int offset = Util.ReadInt32(type, Offsets.tp_clr_inst_offset);
+            Debug.Assert(offset > 0);
+
+            IntPtr raw = Util.ReadIntPtr(reflectedClrObject, offset);
+            if (raw == IntPtr.Zero) return false;
+
+            ((GCHandle)raw).Free();
+
+            Util.WriteIntPtr(reflectedClrObject, offset, IntPtr.Zero);
+            return true;
+        }
 
         internal static class Offsets
         {

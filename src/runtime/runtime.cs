@@ -532,12 +532,7 @@ namespace Python.Runtime
             )
             {
                 var @ref = new BorrowedReference(objWithGcHandle);
-                GCHandle? handle = ManagedType.TryGetGCHandle(@ref);
-                handle?.Free();
-                if (handle is not null)
-                {
-                    ManagedType.SetGCHandle(@ref, default);
-                }
+                ManagedType.TryFreeGCHandle(@ref);
             }
 
             //foreach (IntPtr extensionAddr in ExtensionType.loadedExtensions.ToArray())
