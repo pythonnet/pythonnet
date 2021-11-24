@@ -326,12 +326,9 @@ namespace Python.Runtime
             DisposeLazyModule(inspect);
             PyObjectConversions.Reset();
 
-            if (mode != ShutdownMode.Extension)
-            {
-                PyGC_Collect();
-                bool everythingSeemsCollected = TryCollectingGarbage();
-                Debug.Assert(everythingSeemsCollected);
-            }
+            PyGC_Collect();
+            bool everythingSeemsCollected = TryCollectingGarbage();
+            Debug.Assert(everythingSeemsCollected);
 
             Finalizer.Shutdown();
             InternString.Shutdown();
