@@ -1,20 +1,23 @@
 using System;
+using System.ComponentModel;
 
 namespace Python.Runtime;
 
-struct UnsafeReferenceWithRun
+[EditorBrowsable(EditorBrowsableState.Never)]
+[Obsolete(Util.InternalUseOnly)]
+public struct UnsafeReferenceWithRun
 {
-    public UnsafeReferenceWithRun(BorrowedReference pyObj)
+    internal UnsafeReferenceWithRun(BorrowedReference pyObj)
     {
         RawObj = pyObj.DangerousGetAddressOrNull();
         Run = Runtime.GetRun();
     }
 
-    public IntPtr RawObj;
-    public BorrowedReference Ref => new(RawObj);
-    public int Run;
+    internal IntPtr RawObj;
+    internal BorrowedReference Ref => new(RawObj);
+    internal int Run;
 
-    public BorrowedReference CheckRun()
+    internal BorrowedReference CheckRun()
     {
         if (Run != Runtime.GetRun())
             throw new RuntimeShutdownException(RawObj);

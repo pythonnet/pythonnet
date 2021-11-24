@@ -168,9 +168,11 @@ namespace Python.Runtime
 
             // add a field for storing the python object pointer
             // FIXME: fb not used
-            FieldBuilder fb = typeBuilder.DefineField("__pyobj__",
+            FieldBuilder fb = typeBuilder.DefineField(PyObjName,
+#pragma warning disable CS0618 // Type or member is obsolete. OK for internal use.
                                 typeof(UnsafeReferenceWithRun),
-                                FieldAttributes.Public);
+#pragma warning restore CS0618 // Type or member is obsolete
+                                FieldAttributes.Private);
 
             // override any constructors
             ConstructorInfo[] constructors = baseClass.GetConstructors();
@@ -646,6 +648,9 @@ namespace Python.Runtime
     [Obsolete(Util.InternalUseOnly)]
     public class PythonDerivedType
     {
+        internal const string PyObjName = "__pyobj__";
+        internal const BindingFlags PyObjFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+
         /// <summary>
         /// This is the implementation of the overridden methods in the derived
         /// type. It looks for a python method with the same name as the method
@@ -849,15 +854,17 @@ namespace Python.Runtime
             Finalizer.Instance.AddDerivedFinalizedObject(ref self.RawObj, self.Run);
         }
 
+        internal static FieldInfo? GetPyObjField(Type type) => type.GetField(PyObjName, PyObjFlags);
+
         internal static UnsafeReferenceWithRun GetPyObj(IPythonDerivedType obj)
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
+            FieldInfo fi = GetPyObjField(obj.GetType())!;
             return (UnsafeReferenceWithRun)fi.GetValue(obj);
         }
 
         static void SetPyObj(IPythonDerivedType obj, BorrowedReference pyObj)
         {
-            FieldInfo fi = obj.GetType().GetField("__pyobj__");
+            FieldInfo fi = GetPyObjField(obj.GetType())!;
             fi.SetValue(obj, new UnsafeReferenceWithRun(pyObj));
         }
     }

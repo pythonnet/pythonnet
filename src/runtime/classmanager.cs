@@ -184,7 +184,9 @@ namespace Python.Runtime
                 impl = new ExceptionClassObject(type);
             }
 
-            else if (null != type.GetField("__pyobj__"))
+#pragma warning disable CS0618 // Type or member is obsolete. OK for internal use.
+            else if (null != PythonDerivedType.GetPyObjField(type))
+#pragma warning restore CS0618 // Type or member is obsolete
             {
                 impl = new ClassDerivedObject(type);
             }
