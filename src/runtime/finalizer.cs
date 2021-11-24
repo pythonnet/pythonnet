@@ -236,18 +236,11 @@ namespace Python.Runtime
                             continue;
                         }
 
-                        var @ref = NewReference.DangerousFromPointer(derived.PyObj);
-                        GCHandle gcHandle = ManagedType.GetGCHandle(@ref.Borrow());
+#pragma warning disable CS0618 // Type or member is obsolete. OK for internal use
+                        PythonDerivedType.Finalize(derived.PyObj);
+#pragma warning restore CS0618 // Type or member is obsolete
 
-                        bool deleted = CLRObject.reflectedObjects.Remove(derived.PyObj);
-                        Debug.Assert(deleted);
-                        // rare case when it's needed
-                        // matches correspdonging PyObject_GC_UnTrack
-                        // in ClassDerivedObject.tp_dealloc
-                        Runtime.PyObject_GC_Del(@ref.Steal());
                         collected++;
-
-                        gcHandle.Free();
                     }
                 }
                 finally

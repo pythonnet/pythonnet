@@ -85,6 +85,11 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// No-op clear. Real cleanup happens in <seealso cref="Finalize(IntPtr)"/>
+        /// </summary>
+        public new static int tp_clear(BorrowedReference ob) => 0;
+
+        /// <summary>
         /// Called from Converter.ToPython for types that are python subclasses of managed types.
         /// The referenced python object is returned instead of a new wrapper.
         /// </summary>
@@ -852,6 +857,21 @@ namespace Python.Runtime
             // references to the Python object as well
             var self = GetPyObj(obj);
             Finalizer.Instance.AddDerivedFinalizedObject(ref self.RawObj, self.Run);
+        }
+
+        internal static void Finalize(IntPtr derived)
+        {
+            bool deleted = CLRObject.reflectedObjects.Remove(derived);
+            Debug.Assert(deleted);
+
+            var @ref = NewReference.DangerousFromPointer(derived);
+
+            ClassBase.tp_clear(@ref.Borrow());
+
+            // rare case when it's needed
+            // matches correspdonging PyObject_GC_UnTrack
+            // in ClassDerivedObject.tp_dealloc
+            Runtime.PyObject_GC_Del(@ref.Steal());
         }
 
         internal static FieldInfo? GetPyObjField(Type type) => type.GetField(PyObjName, PyObjFlags);

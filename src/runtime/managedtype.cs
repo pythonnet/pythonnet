@@ -220,7 +220,8 @@ namespace Python.Runtime
             IntPtr raw = Util.ReadIntPtr(reflectedClrObject, offset);
             if (raw == IntPtr.Zero) return false;
 
-            ((GCHandle)raw).Free();
+            var handle = (GCHandle)raw;
+            handle.Free();
 
             Util.WriteIntPtr(reflectedClrObject, offset, IntPtr.Zero);
             return true;
