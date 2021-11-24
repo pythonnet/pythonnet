@@ -312,7 +312,7 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
-            MoveClrInstancesOnwershipToPython();
+            NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
 
@@ -382,7 +382,13 @@ namespace Python.Runtime
                     pyCollected += Finalizer.Instance.DisposeAll();
                 }
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
+                {
                     return true;
+                }
+                else
+                {
+                    NullGCHandles(CLRObject.reflectedObjects);
+                }
             }
             return false;
         }
@@ -521,40 +527,13 @@ namespace Python.Runtime
             PyErr_Clear();
         }
 
-        private static void MoveClrInstancesOnwershipToPython()
+        private static void NullGCHandles(IEnumerable<IntPtr> objects)
         {
-            foreach (IntPtr objWithGcHandle in ExtensionType.loadedExtensions
-                .Concat(CLRObject.reflectedObjects)
-                .ToArray()
-            )
+            foreach (IntPtr objWithGcHandle in objects.ToArray())
             {
                 var @ref = new BorrowedReference(objWithGcHandle);
                 ManagedType.TryFreeGCHandle(@ref);
             }
-
-            //foreach (IntPtr extensionAddr in ExtensionType.loadedExtensions.ToArray())
-            //{
-            //    var @ref = new BorrowedReference(extensionAddr);
-            //    var type = PyObject_TYPE(@ref);
-            //    //ManagedType.CallTypeClear(@ref, type);
-            //    // obj's tp_type will degenerate to a pure Python type after TypeManager.RemoveTypes(),
-            //    // thus just be safe to give it back to GC chain.
-            //    if (PyVersion >= new Version(3, 9))
-            //    {
-            //        if (!PyObject_GC_IsTracked(@ref))
-            //        {
-            //            PyObject_GC_Track(@ref);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        // in older CPython versions it is safe to call UnTrack any number of time
-            //        // but Track can only be called on something previously untracked
-            //        PyObject_GC_UnTrack(@ref);
-            //        PyObject_GC_Track(@ref);
-            //    }
-                
-            //}
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
