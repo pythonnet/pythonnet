@@ -69,19 +69,23 @@ namespace Python.Runtime
 
         public new static void tp_dealloc(NewReference ob)
         {
-            var self = (CLRObject)GetManagedObject(ob.Borrow())!;
+            var self = (CLRObject?)GetManagedObject(ob.Borrow());
 
             // don't let the python GC destroy this object
             Runtime.PyObject_GC_UnTrack(ob.Borrow());
 
-            // The python should now have a ref count of 0, but we don't actually want to
-            // deallocate the object until the C# object that references it is destroyed.
-            // So we don't call PyObject_GC_Del here and instead we set the python
-            // reference to a weak reference so that the C# object can be collected.
-            GCHandle oldHandle = GetGCHandle(ob.Borrow());
-            GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
-            SetGCHandle(ob.Borrow(), gc);
-            oldHandle.Free();
+            // self may be null after Shutdown begun
+            if (self is not null)
+            {
+                // The python should now have a ref count of 0, but we don't actually want to
+                // deallocate the object until the C# object that references it is destroyed.
+                // So we don't call PyObject_GC_Del here and instead we set the python
+                // reference to a weak reference so that the C# object can be collected.
+                GCHandle oldHandle = GetGCHandle(ob.Borrow());
+                GCHandle gc = GCHandle.Alloc(self, GCHandleType.Weak);
+                SetGCHandle(ob.Borrow(), gc);
+                oldHandle.Free();
+            }
         }
 
         /// <summary>
