@@ -45,20 +45,20 @@ namespace Python.Runtime
             pythonBaseTypeProvider = PythonEngine.InteropConfiguration.pythonBaseTypeProviders;
         }
 
-        internal static void RemoveTypes()
+        internal static void RemoveTypes(ShutdownMode shutdownMode)
         {
             foreach (var type in cache.Values)
             {
-                //SlotsHolder holder;
-                //if (_slotsHolders.TryGetValue(type, out holder))
-                //{
-                //    // If refcount > 1, it needs to reset the managed slot,
-                //    // otherwise it can dealloc without any trick.
-                //    if (Runtime.Refcount(type) > 1)
-                //    {
-                //        holder.ResetSlots();
-                //    }
-                //}
+                if (shutdownMode == ShutdownMode.Extension
+                    && _slotsHolders.TryGetValue(type, out var holder))
+                {
+                    // If refcount > 1, it needs to reset the managed slot,
+                    // otherwise it can dealloc without any trick.
+                    if (Runtime.Refcount(type) > 1)
+                    {
+                        holder.ResetSlots();
+                    }
+                }
                 type.Dispose();
             }
             cache.Clear();

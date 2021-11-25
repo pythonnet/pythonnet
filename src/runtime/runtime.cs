@@ -314,7 +314,7 @@ namespace Python.Runtime
 
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
-            TypeManager.RemoveTypes();
+            TypeManager.RemoveTypes(mode);
 
             MetaType.Release();
             PyCLRMetaType.Dispose();
