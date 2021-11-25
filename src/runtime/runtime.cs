@@ -618,7 +618,7 @@ namespace Python.Runtime
                 PyTuple_SetItem(items.Borrow(), size + n, args[n]);
             }
 
-            return items.AnalyzerWorkaround();
+            return items;
         }
 
         internal static Type[]? PythonArgsToTypeArray(BorrowedReference arg)

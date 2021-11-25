@@ -30,7 +30,7 @@ namespace Python.Runtime
             // slot if wrapping a CLR exception
             if (ob is Exception e) Exceptions.SetArgsAndCause(py.Borrow(), e);
 
-            return py.AnalyzerWorkaround();
+            return py;
         }
 
         CLRObject(object inst)

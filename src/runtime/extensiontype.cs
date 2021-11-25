@@ -37,7 +37,7 @@ namespace Python.Runtime
 #endif
             SetupGc(py.Borrow(), tp);
 
-            return py.AnalyzerWorkaround();
+            return py;
         }
 
         public PyObject AllocObject() => new PyObject(Alloc().Steal());

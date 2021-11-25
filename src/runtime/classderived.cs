@@ -133,7 +133,7 @@ namespace Python.Runtime
                 Runtime.PyObject_GC_Track(self);
             }
 
-            return result.AnalyzerWorkaround();
+            return result;
         }
 
         /// <summary>

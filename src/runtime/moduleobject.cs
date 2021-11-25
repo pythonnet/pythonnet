@@ -78,7 +78,7 @@ namespace Python.Runtime
 
             InitializeModuleMembers();
 
-            return py.AnalyzerWorkaround();
+            return py;
         }
 
 
@@ -118,8 +118,8 @@ namespace Python.Runtime
             if (AssemblyManager.IsValidNamespace(qname))
             {
                 var m = ModuleObject.Create(qname);
-                StoreAttribute(name, m.Borrow());
-                return m.AnalyzerWorkaround();
+                this.StoreAttribute(name, m.Borrow());
+                return m;
             }
 
             // Look for a type in the current namespace. Note that this
@@ -142,14 +142,14 @@ namespace Python.Runtime
             // enough to complicate the implementation for now.
             if (guess)
             {
-                string gname = GenericUtil.GenericNameForBaseName(_namespace, name);
+                string gname = GenericUtil.GenericNameForBaseName(this._namespace, name);
                 if (gname != null)
                 {
-                    var o = GetAttribute(gname, false);
+                    var o = this.GetAttribute(gname, false);
                     if (!o.IsNull())
                     {
-                        StoreAttribute(name, o.Borrow());
-                        return o.AnalyzerWorkaround();
+                        this.StoreAttribute(name, o.Borrow());
+                        return o;
                     }
                 }
             }
@@ -306,7 +306,7 @@ namespace Python.Runtime
                 return default;
             }
 
-            return attr.AnalyzerWorkaround();
+            return attr;
         }
 
         /// <summary>

@@ -156,10 +156,5 @@ namespace Python.Runtime
         [DebuggerHidden]
         public static BorrowedReference BorrowOrThrow(this in NewReference reference)
             => reference.IsNull() ? throw PythonException.ThrowLastAsClrException() : reference.BorrowNullable();
-
-        [Obsolete]
-        [DebuggerHidden]
-        public static NewReference AnalyzerWorkaround(this in NewReference reference)
-            => NewReference.DangerousFromPointer(reference.DangerousGetAddress());
     }
 }
