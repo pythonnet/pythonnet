@@ -37,12 +37,7 @@ namespace Python.Runtime
 
         public static void Release()
         {
-            //if (Runtime.Refcount(PyCLRMetaType) > 1)
-            //{
-            //    _metaSlotsHodler.ResetSlots();
-            //}
             PyCLRMetaType.Dispose();
-            //_metaSlotsHodler = null!;
         }
 
         internal static MetatypeState SaveRuntimeData() => new() { CLRMetaType = PyCLRMetaType };

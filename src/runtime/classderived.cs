@@ -9,7 +9,9 @@ using System.Runtime.InteropServices;
 
 using Python.Runtime.Native;
 
+#pragma warning disable CS0618 // Type or member is obsolete. OK for internal use
 using static Python.Runtime.PythonDerivedType;
+#pragma warning restore CS0618 // Type or member is obsolete
 
 namespace Python.Runtime
 {

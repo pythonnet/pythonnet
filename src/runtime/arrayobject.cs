@@ -140,7 +140,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public new static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
+        public static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
         {
             var obj = (CLRObject)GetManagedObject(ob)!;
             var arrObj = (ArrayObject)GetManagedObject(Runtime.PyObject_TYPE(ob))!;
@@ -243,7 +243,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static new int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
+        public static int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
             var obj = (CLRObject)GetManagedObject(ob)!;
             var items = (Array)obj.inst;

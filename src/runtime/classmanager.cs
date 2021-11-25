@@ -131,6 +131,7 @@ namespace Python.Runtime
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
         internal static ReflectedClrType GetClass(Type type) => ReflectedClrType.GetOrCreate(type);
+
         internal static ClassBase GetClassImpl(Type type)
         {
             var pyType = GetClass(type);
