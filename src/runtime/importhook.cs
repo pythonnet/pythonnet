@@ -44,6 +44,8 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         if 'clr' not in sys.modules:
             return None
         clr = sys.modules['clr']
+        if getattr(clr, '_initializing', False):
+            return None
 
         clr._add_pending_namespaces()
 
