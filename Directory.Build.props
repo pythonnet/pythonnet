@@ -1,19 +1,19 @@
 <Project>
   <PropertyGroup>
     <VersionPrefix>3.0.0</VersionPrefix>
-    <AssemblyCopyright>Copyright (c) 2006-2020 The Contributors of the Python.NET Project</AssemblyCopyright>
+    <AssemblyCopyright>Copyright (c) 2006-2021 The Contributors of the Python.NET Project</AssemblyCopyright>
     <AssemblyCompany>pythonnet</AssemblyCompany>
     <AssemblyProduct>Python.NET</AssemblyProduct>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>10.0</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="3.9.0-3.final">
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="4.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Lost.NonCopyableAnalyzer" Version="0.7.0-m04">
+    <PackageReference Include="NonCopyableAnalyzer" Version="0.7.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
