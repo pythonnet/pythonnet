@@ -106,36 +106,34 @@ namespace Python.Runtime
         #endregion
 
         #region Decoding
-        static readonly ConcurrentDictionary<TypePair, Converter.TryConvertFromPythonDelegate?> pythonToClr = new();
-        internal static bool TryDecode(BorrowedReference value, BorrowedReference type, Type targetType, out object? result)
-            => TryDecode(value, type.DangerousGetAddress(), targetType, out result);
-        internal static bool TryDecode(BorrowedReference pyHandle, IntPtr pyType, Type targetType, out object? result)
+        static readonly ConcurrentDictionary<TypePair, (PyType, Converter.TryConvertFromPythonDelegate?)> pythonToClr = new();
+        internal static bool TryDecode(BorrowedReference pyHandle, BorrowedReference pyType, Type targetType, out object? result)
         {
             if (pyHandle == null) throw new ArgumentNullException(nameof(pyHandle));
-            if (pyType == IntPtr.Zero) throw new ArgumentNullException(nameof(pyType));
+            if (pyType == null) throw new ArgumentNullException(nameof(pyType));
             if (targetType == null) throw new ArgumentNullException(nameof(targetType));
 
-            var decoder = pythonToClr.GetOrAdd(new TypePair(pyType, targetType), pair => GetDecoder(pair.PyType, pair.ClrType));
+            var key = new TypePair(pyType.DangerousGetAddress(), targetType);
+            var (_, decoder) = pythonToClr.GetOrAdd(key, pair => GetDecoder(pair.PyType, pair.ClrType));
             result = null;
             if (decoder == null) return false;
             return decoder.Invoke(pyHandle, out result);
         }
 
-        static Converter.TryConvertFromPythonDelegate? GetDecoder(IntPtr sourceType, Type targetType)
+        static (PyType, Converter.TryConvertFromPythonDelegate?) GetDecoder(IntPtr sourceType, Type targetType)
         {
-            IPyObjectDecoder decoder;
             var sourceTypeRef = new BorrowedReference(sourceType);
             Debug.Assert(PyType.IsType(sourceTypeRef));
-            using (var pyType = new PyType(sourceTypeRef, prevalidated: true))
+            var pyType = new PyType(sourceTypeRef, prevalidated: true);
+
+            IPyObjectDecoder decoder;
+            lock (decoders)
             {
-                lock (decoders)
-                {
-                    decoder = decoders.GetDecoder(pyType, targetType);
-                    if (decoder == null) return null;
-                }
+                decoder = decoders.GetDecoder(pyType, targetType);
+                if (decoder == null) return default;
             }
 
-            var decode = genericDecode.MakeGenericMethod(targetType);
+            var decode = genericDecode.MakeGenericMethod(targetType)!;
 
             bool TryDecode(BorrowedReference pyHandle, out object? result)
             {
@@ -151,7 +149,9 @@ namespace Python.Runtime
                 return success;
             }
 
-            return TryDecode;
+            // returning PyType here establishes strong reference to the object,
+            // that ensures the PyType we use as the converter cache key is not deallocated
+            return (pyType, TryDecode);
         }
 
         static readonly MethodInfo genericDecode = typeof(IPyObjectDecoder).GetMethod(nameof(IPyObjectDecoder.TryDecode));

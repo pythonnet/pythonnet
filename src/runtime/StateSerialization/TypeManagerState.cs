@@ -7,5 +7,4 @@ namespace Python.Runtime.StateSerialization;
 internal class TypeManagerState
 {
     public Dictionary<MaybeType, PyType> Cache { get; set; }
-    public Dictionary<MaybeType, Type> SlotImplementations { get; set; }
 }

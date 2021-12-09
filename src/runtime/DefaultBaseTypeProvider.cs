@@ -24,7 +24,7 @@ namespace Python.Runtime
                 return Exceptions.Exception;
 
             return type.BaseType is not null
-                ? ClassManager.GetClass(type.BaseType).ObjectReference
+                ? ClassManager.GetClass(type.BaseType)
                 : Runtime.PyBaseObjectType;
         }
 

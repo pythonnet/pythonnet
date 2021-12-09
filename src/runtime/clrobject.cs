@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -6,82 +7,66 @@ namespace Python.Runtime
 {
     [Serializable]
     [DebuggerDisplay("clrO: {inst}")]
-    internal class CLRObject : ManagedType
+    internal sealed class CLRObject : ManagedType
     {
-        internal object inst;
+        internal readonly object inst;
 
-        internal CLRObject(object ob, PyType tp)
+        // "borrowed" references
+        internal static readonly HashSet<IntPtr> reflectedObjects = new();
+        static NewReference Create(object ob, BorrowedReference tp)
         {
             Debug.Assert(tp != null);
-            using var py = Runtime.PyType_GenericAlloc(tp, 0);
+            var py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            tpHandle = tp;
-            pyHandle = py.MoveToPyObject();
-            inst = ob;
+            var self = new CLRObject(ob);
 
-            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
-            InitGCHandle(ObjectReference, type: TypeReference, gc);
+            GCHandle gc = GCHandle.Alloc(self);
+            InitGCHandle(py.Borrow(), type: tp, gc);
+
+            bool isNew = reflectedObjects.Add(py.DangerousGetAddress());
+            Debug.Assert(isNew);
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
             // slot if wrapping a CLR exception
-            if (ob is Exception e) Exceptions.SetArgsAndCause(ObjectReference, e);
+            if (ob is Exception e) Exceptions.SetArgsAndCause(py.Borrow(), e);
+
+            return py;
         }
 
-        protected CLRObject()
+        CLRObject(object inst)
         {
-        }
-
-        static CLRObject GetInstance(object ob, PyType pyType)
-        {
-            return new CLRObject(ob, pyType);
-        }
-
-
-        static CLRObject GetInstance(object ob)
-        {
-            ClassBase cc = ClassManager.GetClass(ob.GetType());
-            return GetInstance(ob, cc.tpHandle);
+            this.inst = inst;
         }
 
         internal static NewReference GetReference(object ob, BorrowedReference pyType)
-        {
-            CLRObject co = GetInstance(ob, new PyType(pyType));
-            return new NewReference(co.pyHandle);
-        }
+            => Create(ob, pyType);
 
         internal static NewReference GetReference(object ob, Type type)
         {
-            ClassBase cc = ClassManager.GetClass(type);
-            CLRObject co = GetInstance(ob, cc.tpHandle);
-            return new NewReference(co.pyHandle);
+            PyType cc = ClassManager.GetClass(type);
+            return Create(ob, cc);
         }
-
 
         internal static NewReference GetReference(object ob)
         {
-            CLRObject co = GetInstance(ob);
-            return new NewReference(co.pyHandle);
+            PyType cc = ClassManager.GetClass(ob.GetType());
+            return Create(ob, cc);
         }
 
-        internal static CLRObject Restore(object ob, BorrowedReference pyHandle, InterDomainContext context)
+        internal static void Restore(object ob, BorrowedReference pyHandle, InterDomainContext context)
         {
-            var pyObj = new PyObject(pyHandle);
-            CLRObject co = new CLRObject()
-            {
-                inst = ob,
-                pyHandle = pyObj,
-                tpHandle = pyObj.GetPythonType(),
-            };
-            Debug.Assert(co.tpHandle != null);
-            co.Load(context);
-            return co;
+            var co = new CLRObject(ob);
+            co.OnLoad(pyHandle, context);
         }
 
-        protected override void OnLoad(InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnLoad(context);
-            GCHandle gc = AllocGCHandle(TrackTypes.Wrapper);
-            SetGCHandle(ObjectReference, TypeReference, gc);
+            base.OnLoad(ob, context);
+            GCHandle gc = GCHandle.Alloc(this);
+            SetGCHandle(ob, gc);
+
+            bool isNew = reflectedObjects.Add(ob.DangerousGetAddress());
+            Debug.Assert(isNew);
         }
     }
 }

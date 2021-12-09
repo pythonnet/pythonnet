@@ -76,14 +76,17 @@ namespace Python.Runtime
                 return default;
             }
 
-            return self.WrapObject(obj);
+            return self.TryWrapObject(obj);
         }
 
         /// <summary>
         /// Wrap the given object in an interface object, so that only methods
         /// of the interface are available.
         /// </summary>
-        public NewReference WrapObject(object impl) => CLRObject.GetReference(impl, pyHandle);
+        public NewReference TryWrapObject(object impl)
+            => this.type.Valid
+                ? CLRObject.GetReference(impl, ClassManager.GetClass(this.type.Value))
+                : Exceptions.RaiseTypeError(this.type.DeletedMessage);
 
         /// <summary>
         /// Expose the wrapped implementation through attributes in both

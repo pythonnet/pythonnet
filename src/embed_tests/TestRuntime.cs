@@ -55,10 +55,12 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
 
             // XIncref/XDecref increase and decrease RefCount
+#pragma warning disable CS0618 // Type or member is obsolete. We are testing corresponding members
             Runtime.Runtime.XIncref(p);
             Assert.AreEqual(2, Runtime.Runtime.Refcount32(p));
-            Runtime.Runtime.XDecref(p);
+            Runtime.Runtime.XDecref(op.Steal());
             Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
+#pragma warning restore CS0618 // Type or member is obsolete
 
             op.Dispose();
 

@@ -68,6 +68,9 @@ namespace Python.Runtime
             name = serializationInfo.GetString(SerializationName);
             info = null;
             deserializationException = null;
+
+            if (name is null) return;
+
             try
             {
                 // Retrieve the reflected type of the method;

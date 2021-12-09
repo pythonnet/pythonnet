@@ -310,7 +310,7 @@ def after_reload():
                             public static event Action Before;
                             public static void Call()
                             {
-                                Before();
+                                if (Before != null) Before();
                             }
                         }
                     }",
@@ -324,7 +324,7 @@ def after_reload():
                             public static event Action After;
                             public static void Call()
                             {
-                                After();
+                                if (After != null) After();
                             }
                         }
                     }",
@@ -335,21 +335,29 @@ clr.AddReference('DomainTests')
 from TestNamespace import Cls
 
 called = False
+before_reload_called = False
+after_reload_called = False
 
 def callback_function():
     global called
     called = True
 
 def before_reload():
-    global called
+    global called, before_reload_called
     called = False
     Cls.Before += callback_function
     Cls.Call()
     assert called is True
+    before_reload_called = True
 
 def after_reload():
-    global called
-    assert called is True
+    global called, after_reload_called, before_reload_called
+
+    assert before_reload_called is True
+    if not after_reload_called:
+        assert called is True
+    after_reload_called = True
+
     called = False
     Cls.Call()
     assert called is False
@@ -762,12 +770,12 @@ def before_reload():
     sys.my_cls = TestNamespace.Before
 
 def after_reload():
-    bar = sys.my_cls()
-
-    # Don't crash!
-    print(bar)
-    print(bar.__str__())
-    print(bar.__repr__())
+    try:
+        bar = sys.my_cls()
+    except TypeError:
+        print('Caught expected exception')
+    else:
+        raise AssertionError('Failed to throw exception')
                     ",
             },
 
@@ -1159,7 +1167,7 @@ namespace CaseRunner
             }}
             catch (Exception e)
             {{
-                Console.WriteLine(e.StackTrace);
+                Console.Error.WriteLine(e.StackTrace);
                 throw;
             }}
             return 0;
@@ -1173,18 +1181,27 @@ namespace CaseRunner
 
         public static int Main(string[] args)
         {
-            TestCase testCase;
             if (args.Length < 1)
             {
-                testCase = Cases[0];
+                foreach (var testCase in Cases)
+                {
+                    Run(testCase);
+                    Console.WriteLine();
+                }
             }
             else
             {
                 string testName = args[0];
                 Console.WriteLine($"-- Looking for domain reload test case {testName}");
-                testCase = Cases.First(c => c.Name == testName);
+                var testCase = int.TryParse(testName, out var index) ? Cases[index] : Cases.First(c => c.Name == testName);
+                Run(testCase);
             }
 
+            return 0;
+        }
+
+        static void Run(TestCase testCase)
+        {
             Console.WriteLine($"-- Running domain reload test case: {testCase.Name}");
 
             SetupTestFolder(testCase.Name);
@@ -1222,7 +1239,7 @@ namespace CaseRunner
             // folder behind to debug failing tests.
             TeardownTestFolder();
 
-            return 0;
+            Console.WriteLine($"-- PASSED: {testCase.Name}");
         }
 
         static void SetupTestFolder(string testCaseName)

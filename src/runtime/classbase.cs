@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+
+using Python.Runtime.Slots;
 
 namespace Python.Runtime
 {
@@ -16,19 +20,13 @@ namespace Python.Runtime
     /// each variety of reflected type.
     /// </summary>
     [Serializable]
-    internal class ClassBase : ManagedType
+    internal class ClassBase : ManagedType, IDeserializationCallback
     {
         [NonSerialized]
-        internal readonly List<string> dotNetMembers = new();
+        internal List<string> dotNetMembers = new();
         internal Indexer? indexer;
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
-
-        internal new PyType pyHandle
-        {
-            get => (PyType)base.pyHandle;
-            set => base.pyHandle = value;
-        }
 
         internal ClassBase(Type tp)
         {
@@ -83,8 +81,8 @@ namespace Python.Runtime
                 {
                     return Exceptions.RaiseTypeError(e.Message);
                 }
-                ManagedType c = ClassManager.GetClass(t);
-                return new NewReference(c.ObjectReference);
+                var c = ClassManager.GetClass(t);
+                return new NewReference(c);
             }
 
             return Exceptions.RaiseTypeError($"{type.Value.Namespace}.{type.Name} does not accept {types.Length} generic parameters");
@@ -114,8 +112,8 @@ namespace Python.Runtime
             {
                 case Runtime.Py_EQ:
                 case Runtime.Py_NE:
-                    PyObject pytrue = Runtime.PyTrue;
-                    PyObject pyfalse = Runtime.PyFalse;
+                    BorrowedReference pytrue = Runtime.PyTrue;
+                    BorrowedReference pyfalse = Runtime.PyFalse;
 
                     // swap true and false for NE
                     if (op != Runtime.Py_EQ)
@@ -165,7 +163,7 @@ namespace Python.Runtime
                     {
                         int cmp = co1Comp.CompareTo(co2.inst);
 
-                        PyObject pyCmp;
+                        BorrowedReference pyCmp;
                         if (cmp < 0)
                         {
                             if (op == Runtime.Py_LT || op == Runtime.Py_LE)
@@ -215,7 +213,7 @@ namespace Python.Runtime
         /// allows natural iteration over objects that either are IEnumerable
         /// or themselves support IEnumerator directly.
         /// </summary>
-        public static NewReference tp_iter(BorrowedReference ob)
+        static NewReference tp_iter_impl(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             if (co == null)
@@ -254,7 +252,7 @@ namespace Python.Runtime
                 }
             }
 
-            return new NewReference(new Iterator(o, elemType).ObjectReference);
+            return new Iterator(o, elemType).Alloc();
         }
 
 
@@ -339,54 +337,32 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
-            ManagedType self = GetManagedObject(lastRef.Borrow())!;
-            tp_clear(lastRef.Borrow());
             Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
-            Runtime.PyObject_GC_Del(lastRef.Steal());
-            self?.FreeGCHandle();
+
+            CallClear(lastRef.Borrow());
+
+            IntPtr addr = lastRef.DangerousGetAddress();
+            bool deleted = CLRObject.reflectedObjects.Remove(addr);
+            Debug.Assert(deleted);
+
+            DecrefTypeAndFree(lastRef.Steal());
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
-            if (GetManagedObject(ob) is { } self)
+            TryFreeGCHandle(ob);
+
+            int baseClearResult = BaseUnmanagedClear(ob);
+            if (baseClearResult != 0)
             {
-                if (self.clearReentryGuard) return 0;
-
-                // workaround for https://bugs.python.org/issue45266
-                self.clearReentryGuard = true;
-
-                try
-                {
-                    return ClearImpl(ob, self);
-                }
-                finally
-                {
-                    self.clearReentryGuard = false;
-                }
+                return baseClearResult;
             }
-            else
-            {
-                return ClearImpl(ob, null);
-            }
-        }
 
-        static int ClearImpl(BorrowedReference ob, ManagedType? self)
-        {
-            bool isTypeObject = Runtime.PyObject_TYPE(ob) == Runtime.PyCLRMetaType;
-            if (!isTypeObject)
-            {
-                int baseClearResult = BaseUnmanagedClear(ob);
-                if (baseClearResult != 0)
-                {
-                    return baseClearResult;
-                }
-
-                ClearObjectDict(ob);
-            }
+            ClearObjectDict(ob);
             return 0;
         }
 
-        static unsafe int BaseUnmanagedClear(BorrowedReference ob)
+        internal static unsafe int BaseUnmanagedClear(BorrowedReference ob)
         {
             var type = Runtime.PyObject_TYPE(ob);
             var unmanagedBase = GetUnmanagedBaseType(type);
@@ -396,36 +372,42 @@ namespace Python.Runtime
                 return 0;
             }
             var clear = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
+
+            bool usesSubtypeClear = clearPtr == TypeManager.subtype_clear;
+            if (usesSubtypeClear)
+            {
+                // workaround for https://bugs.python.org/issue45266 (subtype_clear)
+                using var dict = Runtime.PyObject_GenericGetDict(ob);
+                if (Runtime.PyMapping_HasKey(dict.Borrow(), PyIdentifier.__clear_reentry_guard__) != 0)
+                    return 0;
+                int res = Runtime.PyDict_SetItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__, Runtime.None);
+                if (res != 0) return res;
+
+                res = clear(ob);
+                Runtime.PyDict_DelItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__);
+                return res;
+            }
             return clear(ob);
         }
 
-        protected override void OnSave(InterDomainContext context)
+        protected override void OnSave(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnSave(context);
-            if (!this.IsClrMetaTypeInstance())
-            {
-                BorrowedReference dict = GetObjectDict(ObjectReference);
-                context.Storage.AddValue("dict", PyObject.FromNullableReference(dict));
-            }
+            base.OnSave(ob, context);
+            context.Storage.AddValue("impl", this);
         }
 
-        protected override void OnLoad(InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnLoad(context);
-            if (!this.IsClrMetaTypeInstance())
-            {
-                var dict = context.Storage.GetValue<PyObject>("dict");
-                SetObjectDict(ObjectReference, dict.NewReferenceOrNull().StealNullable());
-            }
-            gcHandle = AllocGCHandle();
-            SetGCHandle(ObjectReference, gcHandle);
+            base.OnLoad(ob, context);
+            var gcHandle = GCHandle.Alloc(this);
+            SetGCHandle(ob, gcHandle);
         }
 
 
         /// <summary>
         /// Implements __getitem__ for reflected classes and value types.
         /// </summary>
-        public static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
+        static NewReference mp_subscript_impl(BorrowedReference ob, BorrowedReference idx)
         {
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
@@ -455,7 +437,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for reflected classes and value types.
         /// </summary>
-        public static int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
+        static int mp_ass_subscript_impl(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
@@ -539,15 +521,44 @@ namespace Python.Runtime
             => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.Name == "__call__");
 
-        public virtual void InitializeSlots(SlotsHolder slotsHolder)
+        public virtual void InitializeSlots(BorrowedReference pyType, SlotsHolder slotsHolder)
         {
             if (!this.type.Valid) return;
 
-            if (GetCallImplementations(this.type.Value).Any()
-                && !slotsHolder.IsHolding(TypeOffset.tp_call))
+            if (GetCallImplementations(this.type.Value).Any())
             {
-                TypeManager.InitializeSlot(ObjectReference, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
+            }
+
+            if (indexer is not null)
+            {
+                if (indexer.CanGet)
+                {
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_subscript, new Interop.BB_N(mp_subscript_impl), slotsHolder);
+                }
+                if (indexer.CanSet)
+                {
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_ass_subscript, new Interop.BBB_I32(mp_ass_subscript_impl), slotsHolder);
+                }
+            }
+
+            if (typeof(IEnumerable).IsAssignableFrom(type.Value)
+                || typeof(IEnumerator).IsAssignableFrom(type.Value))
+            {
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_iter, new Interop.B_N(tp_iter_impl), slotsHolder);
+            }
+
+            if (mp_length_slot.CanAssign(type.Value))
+            {
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_length, new Interop.B_P(mp_length_slot.impl), slotsHolder);
             }
         }
+
+        protected virtual void OnDeserialization(object sender)
+        {
+            this.dotNetMembers = new List<string>();
+        }
+
+        void IDeserializationCallback.OnDeserialization(object sender) => this.OnDeserialization(sender);
     }
 }

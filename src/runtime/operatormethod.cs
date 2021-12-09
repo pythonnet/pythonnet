@@ -154,7 +154,7 @@ namespace Python.Runtime
                 // A hack way for getting typeobject.c::slotdefs
                 string code = GenerateDummyCode();
                 // The resulting OperatorMethod class is stored in a PyDict.
-                PythonEngine.Exec(code, null, locals.Handle);
+                PythonEngine.Exec(code, null, locals);
                 // Return the class itself, which is a type.
                 return locals.GetItem("OperatorMethod");
             }

@@ -77,7 +77,7 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("How in the world could that happen!");
                 }
             }*/
-            return new NewReference(self.pyHandle);
+            return new NewReference(op);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
             var boundCtor = new BoundContructor(tp, self.typeToCreate, self.ctorBinder, ci);
-            return new NewReference(boundCtor.pyHandle);
+            return boundCtor.Alloc();
         }
 
         /// <summary>
@@ -147,24 +147,13 @@ namespace Python.Runtime
             return new NewReference(self.repr);
         }
 
-        protected override void Clear(BorrowedReference ob)
-        {
-            Runtime.Py_CLEAR(ref this.repr);
-            base.Clear(ob);
-        }
-
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            var self = (ConstructorBinding)GetManagedObject(ob)!;
-            int res = PyVisit(self.typeToCreate, visit, arg);
-            if (res != 0) return res;
+            var self = (ConstructorBinding?)GetManagedObject(ob);
+            if (self is null) return 0;
 
-            if (self.repr is not null)
-            {
-                res = PyVisit(self.repr, visit, arg);
-                if (res != 0) return res;
-            }
-            return 0;
+            int res = PyVisit(self.typeToCreate, visit, arg);
+            return res;
         }
     }
 
@@ -241,24 +230,13 @@ namespace Python.Runtime
             return new NewReference(self.repr);
         }
 
-        protected override void Clear(BorrowedReference ob)
-        {
-            Runtime.Py_CLEAR(ref this.repr);
-            base.Clear(ob);
-        }
-
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            var self = (BoundContructor)GetManagedObject(ob)!;
-            int res = PyVisit(self.typeToCreate, visit, arg);
-            if (res != 0) return res;
+            var self = (BoundContructor?)GetManagedObject(ob);
+            if (self is null) return 0;
 
-            if (self.repr is not null)
-            {
-                res = PyVisit(self.repr, visit, arg);
-                if (res != 0) return res;
-            }
-            return 0;
+            int res = PyVisit(self.typeToCreate, visit, arg);
+            return res;
         }
     }
 }

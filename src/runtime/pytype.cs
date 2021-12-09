@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 
 using Python.Runtime.Native;
 
@@ -34,6 +35,8 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a type");
         }
 
+        protected PyType(SerializationInfo info, StreamingContext context) : base(info, context) { }
+
         internal new static PyType? FromNullableReference(BorrowedReference reference)
             => reference == null
                 ? null
@@ -63,6 +66,10 @@ namespace Python.Runtime
             set => Util.WriteCLong(this, TypeOffset.tp_flags, (long)value);
         }
 
+        internal PyDict Dict => new(Util.ReadRef(this, TypeOffset.tp_dict));
+
+        internal PyTuple MRO => new(GetMRO(this));
+
         /// <summary>Checks if specified object is a Python type.</summary>
         public static bool IsType(PyObject value)
         {
@@ -86,7 +93,7 @@ namespace Python.Runtime
                 throw new ArgumentNullException(nameof(clrType));
             }
 
-            return new PyType(TypeManager.GetType(clrType));
+            return new PyType(ClassManager.GetClass(clrType));
         }
 
         internal BorrowedReference BaseReference

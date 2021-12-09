@@ -81,7 +81,6 @@ namespace Python.Runtime
         HasClrInstance = (1 << 15),
         /// <remarks>PythonNet specific</remarks>
         Subclass = (1 << 16),
-        HaveIndex = (1 << 17),
         /* Objects support nb_index in PyNumberMethods */
         HaveVersionTag = (1 << 18),
         ValidVersionTag = (1 << 19),
@@ -217,21 +216,6 @@ namespace Python.Runtime
             Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct PyGC_Node
-    {
-        public IntPtr gc_next;
-        public IntPtr gc_prev;
-        public IntPtr gc_refs;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct PyGC_Head
-    {
-        public PyGC_Node gc;
-    }
-
 
     [StructLayout(LayoutKind.Sequential)]
     struct PyMethodDef

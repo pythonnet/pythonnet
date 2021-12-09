@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -69,6 +70,9 @@ namespace Python.Runtime
         public PyFloat(string value) : base(FromString(value))
         {
         }
+
+        protected PyFloat(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
 
         /// <summary>

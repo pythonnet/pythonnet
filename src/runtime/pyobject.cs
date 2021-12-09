@@ -18,13 +18,13 @@ namespace Python.Runtime
     /// </summary>
     [Serializable]
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public partial class PyObject : DynamicObject, IDisposable
+    public partial class PyObject : DynamicObject, IDisposable, ISerializable
     {
 #if TRACE_ALLOC
         /// <summary>
         /// Trace stack for PyObject's construction
         /// </summary>
-        public StackTrace Traceback { get; private set; }
+        public StackTrace Traceback { get; } = new StackTrace(1);
 #endif  
 
         protected internal IntPtr rawPtr = IntPtr.Zero;
@@ -51,9 +51,6 @@ namespace Python.Runtime
 
             rawPtr = ptr;
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         [Obsolete("for testing purposes only")]
@@ -64,9 +61,6 @@ namespace Python.Runtime
             rawPtr = ptr;
             if (!skipCollect)
                 Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         /// <summary>
@@ -80,9 +74,15 @@ namespace Python.Runtime
 
             rawPtr = new NewReference(reference).DangerousMoveToPointer();
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
+        }
+
+        internal PyObject(BorrowedReference reference, bool skipCollect)
+        {
+            if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
+
+            rawPtr = new NewReference(reference).DangerousMoveToPointer();
+            if (!skipCollect)
+                Finalizer.Instance.ThrottledCollect();
         }
 
         internal PyObject(in StolenReference reference)
@@ -91,9 +91,6 @@ namespace Python.Runtime
 
             rawPtr = reference.DangerousGetAddressOrNull();
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         // Ensure that encapsulated Python object is decref'ed appropriately
@@ -109,7 +106,11 @@ namespace Python.Runtime
 
                 Interlocked.Increment(ref Runtime._collected);
 
-                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run);
+                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
+#if TRACE_ALLOC
+                    , Traceback
+#endif
+                );
             }
 
             Dispose(false);
@@ -185,41 +186,35 @@ namespace Python.Runtime
                 return;
             }
 
-            if (Runtime.Py_IsInitialized() == 0)
-                throw new InvalidOperationException("Python runtime must be initialized");
-
-            CheckRun();
-
-            if (!Runtime.IsFinalizing)
+            if (Runtime.Py_IsInitialized() == 0 && Runtime._Py_IsFinalizing() != true)
             {
-                long refcount = Runtime.Refcount(this.obj);
-                Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+                throw new InvalidOperationException("Python runtime must be initialized");
+            }
 
-                if (refcount == 1)
-                {
-                    Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+            nint refcount = Runtime.Refcount(this.obj);
+            Debug.Assert(refcount > 0, "Object refcount is 0 or less");
 
-                    try
-                    {
-                        Runtime.XDecref(StolenReference.Take(ref rawPtr));
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    finally
-                    {
-                        // Python requires finalizers to preserve exception:
-                        // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
-                        Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
-                    }
-                }
-                else
+            if (refcount == 1)
+            {
+                Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+
+                try
                 {
                     Runtime.XDecref(StolenReference.Take(ref rawPtr));
+                    Runtime.CheckExceptionOccurred();
+                }
+                finally
+                {
+                    // Python requires finalizers to preserve exception:
+                    // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                    Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
             }
             else
             {
-                throw new InvalidOperationException("Runtime is already finalizing");
+                Runtime.XDecref(StolenReference.Take(ref rawPtr));
             }
+
             this.rawPtr = IntPtr.Zero;
         }
 
@@ -235,6 +230,13 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
+            
+        }
+
+        internal StolenReference Steal()
+        {
+            GC.SuppressFinalize(this);
+            return StolenReference.Take(ref this.rawPtr);
         }
 
         [Obsolete("Test use only")]
@@ -263,8 +265,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyType GetPythonType()
         {
-            var tp = Runtime.PyObject_TYPE(Reference);
-            return new PyType(tp, prevalidated: true);
+            var tp = Runtime.PyObject_Type(Reference);
+            return new PyType(tp.StealOrThrow(), prevalidated: true);
         }
 
 
@@ -281,6 +283,8 @@ namespace Python.Runtime
 
             return Runtime.PyObject_TypeCheck(obj, typeOrClass.obj);
         }
+
+        internal PyType PyType => this.GetPythonType();
 
 
         /// <summary>
@@ -1063,17 +1067,17 @@ namespace Python.Runtime
         /// Return true if this object is equal to the given object. This
         /// method is based on Python equality semantics.
         /// </remarks>
-        public override bool Equals(object o)
+        public override bool Equals(object o) => Equals(o as PyObject);
+
+        public virtual bool Equals(PyObject? other)
         {
-            if (!(o is PyObject))
-            {
-                return false;
-            }
-            if (obj == ((PyObject)o).obj)
+            if (other is null) return false;
+
+            if (obj == other.obj)
             {
                 return true;
             }
-            int r = Runtime.PyObject_Compare(obj, ((PyObject)o).obj);
+            int r = Runtime.PyObject_Compare(this, other);
             if (Exceptions.ErrorOccurred())
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -1092,7 +1096,12 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
-            return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
+            nint pyHash = Runtime.PyObject_Hash(obj);
+            if (pyHash == -1 && Exceptions.ErrorOccurred())
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return pyHash.GetHashCode();
         }
 
         /// <summary>
@@ -1448,15 +1457,21 @@ namespace Python.Runtime
             }
         }
 
-        [OnSerialized]
-        void OnSerialized(StreamingContext context)
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+            => GetObjectData(info, context);
+        protected virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-#warning check that these methods are inherited properly
-            new NewReference(this, canBeNull: true).Steal();
+#pragma warning disable CS0618 // Type or member is obsolete
+            Runtime.XIncref(this);
+#pragma warning restore CS0618 // Type or member is obsolete
+            info.AddValue("h", rawPtr.ToInt64());
+            info.AddValue("r", run);
         }
-        [OnDeserialized]
-        void OnDeserialized(StreamingContext context)
+
+        protected PyObject(SerializationInfo info, StreamingContext context)
         {
+            rawPtr = (IntPtr)info.GetInt64("h");
+            run = info.GetInt32("r");
             if (IsDisposed) GC.SuppressFinalize(this);
         }
     }

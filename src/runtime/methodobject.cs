@@ -21,7 +21,7 @@ namespace Python.Runtime
         private MethodInfo[]? _info = null;
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
-        internal MethodBinding? unbound;
+        internal PyObject? unbound;
         internal readonly MethodBinder binder;
         internal bool is_static = false;
 
@@ -157,7 +157,6 @@ namespace Python.Runtime
         public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
             var self = (MethodObject)GetManagedObject(ds)!;
-            MethodBinding binding;
 
             // If the method is accessed through its type (rather than via
             // an instance) we return an 'unbound' MethodBinding that will
@@ -167,10 +166,9 @@ namespace Python.Runtime
             {
                 if (self.unbound is null)
                 {
-                    self.unbound = new MethodBinding(self, target: null, targetType: new PyType(tp));
+                    self.unbound = new PyObject(new MethodBinding(self, target: null, targetType: new PyType(tp)).Alloc().Steal());
                 }
-                binding = self.unbound;
-                return new NewReference(binding.pyHandle);
+                return new NewReference(self.unbound);
             }
 
             if (Runtime.PyObject_IsInstance(ob, tp) < 1)
@@ -188,13 +186,11 @@ namespace Python.Runtime
                 && obj.inst is IPythonDerivedType
                 && self.type.IsInstanceOfType(obj.inst))
             {
-                ClassBase basecls = ClassManager.GetClass(self.type);
-                binding = new MethodBinding(self, new PyObject(ob), basecls.pyHandle);
-                return new NewReference(binding.pyHandle);
+                var basecls = ClassManager.GetClass(self.type);
+                return new MethodBinding(self, new PyObject(ob), basecls).Alloc();
             }
 
-            binding = new MethodBinding(self, target: new PyObject(ob), targetType: new PyType(tp));
-            return new NewReference(binding.pyHandle);
+            return new MethodBinding(self, target: new PyObject(ob), targetType: new PyType(tp)).Alloc();
         }
 
         /// <summary>
@@ -204,14 +200,6 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<method '{self.name}'>");
-        }
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            Runtime.Py_CLEAR(ref this.doc);
-            this.unbound = null;
-            ClearObjectDict(this.pyHandle);
-            base.Clear(ob);
         }
     }
 }

@@ -30,6 +30,12 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
     <IsPackable>true</IsPackable>
+
+    <Configurations>Debug;Release;TraceAlloc</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'TraceAlloc'">
+    <DefineConstants>$(DefineConstants);TRACE_ALLOC</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>

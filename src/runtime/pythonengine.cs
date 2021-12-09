@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Threading;
 
 using Python.Runtime.Native;
@@ -222,8 +223,7 @@ namespace Python.Runtime
             }
 
             // Load the clr.py resource into the clr module
-            NewReference clr = Python.Runtime.ImportHook.GetCLRModule();
-            BorrowedReference clr_dict = Runtime.PyModule_GetDict(clr.Borrow());
+            BorrowedReference clr_dict = Runtime.PyModule_GetDict(ImportHook.ClrModuleReference);
 
             var locals = new PyDict();
             try
@@ -282,7 +282,7 @@ namespace Python.Runtime
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             string pyCode = assembly.ReadStringResource(resourceName);
-            Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+            Exec(pyCode, module_globals, module_globals);
 
             Runtime.PyDict_SetItemString(targetModuleDict, memberName!, module);
         }
@@ -559,11 +559,9 @@ namespace Python.Runtime
         /// Evaluate a Python expression and returns the result.
         /// It's a subset of Python eval function.
         /// </remarks>
-        public static PyObject Eval(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static PyObject Eval(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
-            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
-            PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.Eval);
+            PyObject result = RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.Eval);
             return result;
         }
 
@@ -575,11 +573,9 @@ namespace Python.Runtime
         /// Run a string containing Python code.
         /// It's a subset of Python exec function.
         /// </remarks>
-        public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static void Exec(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
-            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
-            using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
+            using PyObject result = RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.File);
             if (result.obj != Runtime.PyNone)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -632,9 +628,9 @@ namespace Python.Runtime
         /// Use Exec/Eval/RunSimpleString instead.
         /// </summary>
         [Obsolete("RunString is deprecated and will be removed. Use Exec/Eval/RunSimpleString instead.")]
-        public static PyObject RunString(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static PyObject RunString(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            return RunString(code, new BorrowedReference(globals.GetValueOrDefault()), new BorrowedReference(locals.GetValueOrDefault()), RunFlagType.File);
+            return RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.File);
         }
 
         /// <summary>
@@ -751,6 +747,12 @@ namespace Python.Runtime
 
         public class KeywordArguments : PyDict
         {
+            public KeywordArguments() : base()
+            {
+            }
+
+            protected KeywordArguments(SerializationInfo info, StreamingContext context)
+                : base(info, context) { }
         }
 
         public static KeywordArguments kw(params object?[] kv)

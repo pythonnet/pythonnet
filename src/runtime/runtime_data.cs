@@ -105,21 +105,12 @@ namespace Python.Runtime
 
             PyCLRMetaType = MetaType.RestoreRuntimeData(storage.Metatype);
 
-            var objs = RestoreRuntimeDataObjects(storage.SharedObjects);
-            // RestoreRuntimeDataModules(storage.Assmeblies);
             TypeManager.RestoreRuntimeData(storage.Types);
-            var clsObjs = ClassManager.RestoreRuntimeData(storage.Classes);
-            ImportHook.RestoreRuntimeData(storage.ImportHookState);
+            ClassManager.RestoreRuntimeData(storage.Classes);
 
-            foreach (var item in objs)
-            {
-                item.Value.ExecutePostActions();
-                #warning XDecref(item.Key.pyHandle);
-            }
-            foreach (var item in clsObjs)
-            {
-                item.Value.ExecutePostActions();
-            }
+            RestoreRuntimeDataObjects(storage.SharedObjects);
+
+            ImportHook.RestoreRuntimeData(storage.ImportHookState);
         }
 
         public static bool HasStashData()
@@ -147,69 +138,75 @@ namespace Python.Runtime
 
         private static SharedObjectsState SaveRuntimeDataObjects()
         {
-            var objs = ManagedType.GetManagedObjects();
-            var extensionObjs = new List<ManagedType>();
+            var contexts = new Dictionary<PyObject, InterDomainContext>(PythonReferenceComparer.Instance);
+            var extensionObjs = new Dictionary<PyObject, ExtensionType>(PythonReferenceComparer.Instance);
+            // make a copy with strongly typed references to avoid concurrent modification
+            var extensions = ExtensionType.loadedExtensions
+                                .Select(addr => new PyObject(
+                                    new BorrowedReference(addr),
+                                    // if we don't skip collect, finalizer might modify loadedExtensions
+                                    skipCollect: true))
+                                .ToArray();
+            foreach (var pyObj in extensions)
+            {
+                var extension = (ExtensionType)ManagedType.GetManagedObject(pyObj)!;
+                Debug.Assert(CheckSerializable(extension));
+                var context = new InterDomainContext();
+                contexts[pyObj] = context;
+                extension.Save(pyObj, context);
+                extensionObjs.Add(pyObj, extension);
+            }
+
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var userObjects = new CLRWrapperCollection();
-            var contexts = new Dictionary<PyObject, InterDomainContext>(PythonReferenceComparer.Instance);
-            foreach (var entry in objs)
+            // make a copy with strongly typed references to avoid concurrent modification
+            var reflectedObjects = CLRObject.reflectedObjects
+                                    .Select(addr => new PyObject(
+                                        new BorrowedReference(addr),
+                                        // if we don't skip collect, finalizer might modify reflectedObjects
+                                        skipCollect: true))
+                                    .ToList();
+            foreach (var pyObj in reflectedObjects)
             {
-                var obj = entry.Key;
-                XIncref(obj.pyHandle);
-                switch (entry.Value)
+                // Wrapper must be the CLRObject
+                var clrObj = (CLRObject)ManagedType.GetManagedObject(pyObj)!;
+                object inst = clrObj.inst;
+                CLRMappedItem item;
+                List<CLRObject> mappedObjs;
+                if (!userObjects.TryGetValue(inst, out item))
                 {
-                    case ManagedType.TrackTypes.Extension:
-                        Debug.Assert(CheckSerializable(obj));
-                        var context = new InterDomainContext();
-                        contexts[obj.pyHandle] = context;
-                        obj.Save(context);
-                        extensionObjs.Add(obj);
-                        break;
-                    case ManagedType.TrackTypes.Wrapper:
-                        // Wrapper must be the CLRObject
-                        var clrObj = (CLRObject)obj;
-                        object inst = clrObj.inst;
-                        CLRMappedItem item;
-                        List<CLRObject> mappedObjs;
-                        if (!userObjects.TryGetValue(inst, out item))
-                        {
-                            item = new CLRMappedItem(inst);
-                            userObjects.Add(item);
+                    item = new CLRMappedItem(inst);
+                    userObjects.Add(item);
 
-                            Debug.Assert(!wrappers.ContainsKey(inst));
-                            mappedObjs = new List<CLRObject>();
-                            wrappers.Add(inst, mappedObjs);
-                        }
-                        else
-                        {
-                            mappedObjs = wrappers[inst];
-                        }
-                        item.AddRef(clrObj.pyHandle);
-                        mappedObjs.Add(clrObj);
-                        break;
-                    default:
-                        break;
+                    Debug.Assert(!wrappers.ContainsKey(inst));
+                    mappedObjs = new List<CLRObject>();
+                    wrappers.Add(inst, mappedObjs);
                 }
+                else
+                {
+                    mappedObjs = wrappers[inst];
+                }
+                item.AddRef(pyObj);
+                mappedObjs.Add(clrObj);
             }
 
             var wrapperStorage = new RuntimeDataStorage();
             WrappersStorer?.Store(userObjects, wrapperStorage);
 
-            var internalStores = new List<CLRObject>();
+            var internalStores = new Dictionary<PyObject, CLRObject>(PythonReferenceComparer.Instance);
             foreach (var item in userObjects)
             {
-                if (!CheckSerializable(item.Instance))
+                if (!item.Stored)
                 {
-                    continue;
-                }
-                internalStores.AddRange(wrappers[item.Instance]);
-
-                foreach (var clrObj in wrappers[item.Instance])
-                {
-                    XIncref(clrObj.pyHandle);
-                    var context = new InterDomainContext();
-                    contexts[clrObj.pyHandle] = context;
-                    clrObj.Save(context);
+                    if (!CheckSerializable(item.Instance))
+                    {
+                        continue;
+                    }
+                    var clrO = wrappers[item.Instance].First();
+                    foreach (var @ref in item.PyRefs)
+                    {
+                        internalStores.Add(@ref, clrO);
+                    }
                 }
             }
 
@@ -222,17 +219,18 @@ namespace Python.Runtime
             };
         }
 
-        private static Dictionary<ManagedType, InterDomainContext> RestoreRuntimeDataObjects(SharedObjectsState storage)
+        private static void RestoreRuntimeDataObjects(SharedObjectsState storage)
         {
             var extensions = storage.Extensions;
             var internalStores = storage.InternalStores;
             var contexts = storage.Contexts;
-            var storedObjs = new Dictionary<ManagedType, InterDomainContext>();
-            foreach (var obj in Enumerable.Union(extensions, internalStores))
+            foreach (var extension in extensions)
             {
-                var context = contexts[obj.pyHandle];
-                obj.Load(context);
-                storedObjs.Add(obj, context);
+                extension.Value.Load(extension.Key, contexts[extension.Key]);
+            }
+            foreach (var clrObj in internalStores)
+            {
+                clrObj.Value.Load(clrObj.Key, null);
             }
             if (WrappersStorer != null)
             {
@@ -244,12 +242,10 @@ namespace Python.Runtime
                     foreach (var pyRef in item.PyRefs ?? new List<PyObject>())
                     {
                         var context = contexts[pyRef];
-                        var co = CLRObject.Restore(obj, pyRef, context);
-                        storedObjs.Add(co, context);
+                        CLRObject.Restore(obj, pyRef, context);
                     }
                 }
             }
-            return storedObjs;
         }
 
         private static IFormatter CreateFormatter()
@@ -330,72 +326,5 @@ namespace Python.Runtime
     {
         private RuntimeDataStorage _storage;
         public RuntimeDataStorage Storage => _storage ?? (_storage = new RuntimeDataStorage());
-
-        /// <summary>
-        /// Actions after loaded.
-        /// </summary>
-        [NonSerialized]
-        private List<Action> _postActions;
-        public List<Action> PostActions => _postActions ?? (_postActions = new List<Action>());
-
-        public void AddPostAction(Action action)
-        {
-            PostActions.Add(action);
-        }
-
-        public void ExecutePostActions()
-        {
-            if (_postActions == null)
-            {
-                return;
-            }
-            foreach (var action in _postActions)
-            {
-                action();
-            }
-        }
-    }
-
-    public class CLRMappedItem
-    {
-        public object Instance { get; private set; }
-        public List<PyObject>? PyRefs { get; set; }
-
-        public CLRMappedItem(object instance)
-        {
-            Instance = instance;
-        }
-
-        internal void AddRef(PyObject pyRef)
-        {
-            this.PyRefs ??= new List<PyObject>();
-            this.PyRefs.Add(pyRef);
-        }
-    }
-
-
-    public interface ICLRObjectStorer
-    {
-        ICollection<CLRMappedItem> Store(CLRWrapperCollection wrappers, RuntimeDataStorage storage);
-        CLRWrapperCollection Restore(RuntimeDataStorage storage);
-    }
-
-
-    public class CLRWrapperCollection : KeyedCollection<object, CLRMappedItem>
-    {
-        public bool TryGetValue(object key, out CLRMappedItem value)
-        {
-            if (Dictionary == null)
-            {
-                value = null;
-                return false;
-            }
-            return Dictionary.TryGetValue(key, out value);
-        }
-
-        protected override object GetKeyForItem(CLRMappedItem item)
-        {
-            return item.Instance;
-        }
     }
 }

@@ -55,7 +55,7 @@ class cmTest3:
         return a1 + a2 + a3 + a4
 
 a = cmTest3()
-", null, locals.Handle);
+", null, locals);
 
             return locals.GetItem("a");
         }

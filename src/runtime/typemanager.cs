@@ -1,13 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Python.Runtime.Slots;
+using Python.Runtime.Native;
 using Python.Runtime.StateSerialization;
-using static Python.Runtime.PythonException;
+
 
 namespace Python.Runtime
 {
@@ -25,8 +24,7 @@ namespace Python.Runtime
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
         private static Dictionary<MaybeType, PyType> cache = new();
 
-        private static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
-        private static Dictionary<MaybeType, Type> _slotsImpls = new Dictionary<MaybeType, Type>();
+        static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -47,12 +45,12 @@ namespace Python.Runtime
             pythonBaseTypeProvider = PythonEngine.InteropConfiguration.pythonBaseTypeProviders;
         }
 
-        internal static void RemoveTypes()
+        internal static void RemoveTypes(ShutdownMode shutdownMode)
         {
             foreach (var type in cache.Values)
             {
-                SlotsHolder holder;
-                if (_slotsHolders.TryGetValue(type, out holder))
+                if (shutdownMode == ShutdownMode.Extension
+                    && _slotsHolders.TryGetValue(type, out var holder))
                 {
                     // If refcount > 1, it needs to reset the managed slot,
                     // otherwise it can dealloc without any trick.
@@ -64,7 +62,6 @@ namespace Python.Runtime
                 type.Dispose();
             }
             cache.Clear();
-            _slotsImpls.Clear();
             _slotsHolders.Clear();
         }
 
@@ -72,26 +69,19 @@ namespace Python.Runtime
             => new()
             {
                 Cache = cache,
-                SlotImplementations = _slotsImpls,
             };
 
         internal static void RestoreRuntimeData(TypeManagerState storage)
         {
             Debug.Assert(cache == null || cache.Count == 0);
-            _slotsImpls = storage.SlotImplementations;
             var typeCache = storage.Cache;
             foreach (var entry in typeCache)
             {
-                if (!entry.Key.Valid)
-                {
-                    entry.Value.Dispose();
-                    continue;
-                }
                 Type type = entry.Key.Value;;
                 cache[type] = entry.Value;
-                SlotsHolder holder = CreateSolotsHolder(entry.Value);
-                InitializeSlots(entry.Value, _slotsImpls[type], holder);
-                // FIXME: mp_length_slot.CanAssgin(clrType)
+                SlotsHolder holder = CreateSlotsHolder(entry.Value);
+                InitializeSlots(entry.Value, type, holder);
+                Runtime.PyType_Modified(entry.Value);
             }
         }
 
@@ -103,7 +93,6 @@ namespace Python.Runtime
             {
                 pyType = CreateType(type);
                 cache[type] = pyType;
-                _slotsImpls.Add(type, type);
             }
             return pyType;
         }
@@ -114,52 +103,6 @@ namespace Python.Runtime
         /// descriptor and utility types like ModuleObject, PropertyObject, etc.
         /// </summary>
         internal static BorrowedReference GetTypeReference(Type type) => GetType(type).Reference;
-
-
-        /// <summary>
-        /// Get the fully initialized Python type that reflects the given CLR type.
-        /// The given ManagedType instance is a managed object that implements
-        /// the appropriate semantics in Python for the reflected managed type.
-        /// </summary>
-        internal static PyType GetOrInitializeClass(ClassBase obj, Type type)
-        {
-            var pyType = GetOrCreateClass(type);
-            if (!pyType.IsReady)
-            {
-                InitializeClass(pyType, obj, type);
-                _slotsImpls.Add(type, obj.GetType());
-            }
-            return pyType;
-        }
-
-        /// <summary>
-        /// Get the Python type that reflects the given CLR type.
-        /// The given ManagedType instance is a managed object that implements
-        /// the appropriate semantics in Python for the reflected managed type.
-        /// </summary>
-        /// <remarks>
-        /// Returned <see cref="PyType"/> might be partially initialized.
-        /// If you need fully initialized type, use <see cref="GetOrInitializeClass(ClassBase, Type)"/>
-        /// </remarks>
-        internal static PyType GetOrCreateClass(Type type)
-        {
-            if (!cache.TryGetValue(type, out var pyType))
-            {
-                pyType = AllocateClass(type);
-                cache.Add(type, pyType);
-                try
-                {
-                    InitializeClass(type, pyType);
-                }
-                catch
-                {
-                    cache.Remove(type);
-                    throw;
-                }
-            }
-            return pyType;
-        }
-
 
         /// <summary>
         /// The following CreateType implementations do the necessary work to
@@ -178,6 +121,8 @@ namespace Python.Runtime
                 ? Runtime.PyModuleType
                 : Runtime.PyBaseObjectType;
 
+            type.BaseReference = base_;
+
             int newFieldOffset = InheritOrAllocateStandardFields(type, base_);
 
             int tp_clr_inst_offset = newFieldOffset;
@@ -189,7 +134,7 @@ namespace Python.Runtime
             Util.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, tp_clr_inst_offset);
             Util.WriteIntPtr(type, TypeOffset.tp_new, (IntPtr)Runtime.Delegates.PyType_GenericNew);
 
-            SlotsHolder slotsHolder = CreateSolotsHolder(type);
+            SlotsHolder slotsHolder = CreateSlotsHolder(type);
             InitializeSlots(type, impl, slotsHolder);
 
             type.Flags = TypeFlags.Default | TypeFlags.HasClrInstance |
@@ -214,12 +159,16 @@ namespace Python.Runtime
         }
 
 
-        static void InitializeClass(Type clrType, PyType pyType)
+        internal static void InitializeClassCore(Type clrType, PyType pyType, ClassBase impl)
         {
             if (pyType.BaseReference != null)
             {
                 return;
             }
+
+            // Hide the gchandle of the implementation in a magic type slot.
+            GCHandle gc = GCHandle.Alloc(impl);
+            ManagedType.InitGCHandle(pyType, Runtime.CLRMetaType, gc);
 
             using var baseTuple = GetBaseTypeTuple(clrType);
 
@@ -229,21 +178,7 @@ namespace Python.Runtime
             InitializeCoreFields(pyType);
         }
 
-        static PyType AllocateClass(Type clrType)
-        {
-            string name = GetPythonTypeName(clrType);
-
-            var type = AllocateTypeObject(name, Runtime.PyCLRMetaType);
-            type.Flags = TypeFlags.Default
-                            | TypeFlags.HasClrInstance
-                            | TypeFlags.HeapType
-                            | TypeFlags.BaseType
-                            | TypeFlags.HaveGC;
-
-            return type;
-        }
-
-        static string GetPythonTypeName(Type clrType)
+        internal static string GetPythonTypeName(Type clrType)
         {
             var result = new System.Text.StringBuilder();
             GetPythonTypeName(clrType, target: result);
@@ -336,45 +271,20 @@ namespace Python.Runtime
             Util.WriteIntPtr(type, TypeOffset.tp_itemsize, IntPtr.Zero);
         }
 
-        static void InitializeClass(PyType type, ClassBase impl, Type clrType)
+        internal static void InitializeClass(PyType type, ClassBase impl, Type clrType)
         {
             // we want to do this after the slot stuff above in case the class itself implements a slot method
-            SlotsHolder slotsHolder = CreateSolotsHolder(type);
+            SlotsHolder slotsHolder = CreateSlotsHolder(type);
             InitializeSlots(type, impl.GetType(), slotsHolder);
 
-            if (Util.ReadIntPtr(type, TypeOffset.mp_length) == IntPtr.Zero
-                && mp_length_slot.CanAssign(clrType))
-            {
-                InitializeSlot(type, TypeOffset.mp_length, mp_length_slot.Method, slotsHolder);
-            }
-
-            if (!typeof(IEnumerable).IsAssignableFrom(clrType) &&
-                !typeof(IEnumerator).IsAssignableFrom(clrType))
-            {
-                // The tp_iter slot should only be set for enumerable types.
-                Util.WriteIntPtr(type, TypeOffset.tp_iter, IntPtr.Zero);
-            }
-
-
-            // Only set mp_subscript and mp_ass_subscript for types with indexers
-            if (!(impl is ArrayObject))
-            {
-                if (impl.indexer == null || !impl.indexer.CanGet)
-                {
-                    Util.WriteIntPtr(type, TypeOffset.mp_subscript, IntPtr.Zero);
-                }
-                if (impl.indexer == null || !impl.indexer.CanSet)
-                {
-                    Util.WriteIntPtr(type, TypeOffset.mp_ass_subscript, IntPtr.Zero);
-                }
-            }
+            impl.InitializeSlots(type, slotsHolder);
 
             OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
             // call this, else PyType_Ready will skip some slot initialization.
 
-            if (Runtime.PyType_Ready(type) != 0)
+            if (!type.IsReady && Runtime.PyType_Ready(type) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
@@ -383,16 +293,6 @@ namespace Python.Runtime
             string mn = clrType.Namespace ?? "";
             using (var mod = Runtime.PyString_FromString(mn))
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__module__, mod.Borrow());
-
-            // Hide the gchandle of the implementation in a magic type slot.
-            GCHandle gc = impl.AllocGCHandle();
-            ManagedType.InitGCHandle(type, Runtime.CLRMetaType, gc);
-
-            // Set the handle attributes on the implementing instance.
-            impl.tpHandle = type;
-            impl.pyHandle = type;
-
-            impl.InitializeSlots(slotsHolder);
 
             Runtime.PyType_Modified(type.Reference);
 
@@ -454,12 +354,17 @@ namespace Python.Runtime
         {
             // Utility to create a subtype of a managed type with the ability for the
             // a python subtype able to override the managed implementation
-            string name = Runtime.GetManagedString(py_name);
+            string? name = Runtime.GetManagedString(py_name);
+            if (name is null)
+            {
+                Exceptions.SetError(Exceptions.ValueError, "Class name must not be None");
+                return default;
+            }
 
             // the derived class can have class attributes __assembly__ and __module__ which
             // control the name of the assembly and module the new type is created in.
-            object assembly = null;
-            object namespaceStr = null;
+            object? assembly = null;
+            object? namespaceStr = null;
 
             using (var assemblyKey = new PyString("__assembly__"))
             {
@@ -494,48 +399,22 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("invalid base class, expected CLR class type");
             }
 
-            try
-            {
-                Type subType = ClassDerivedObject.CreateDerivedType(name,
-                    baseClass.type.Value,
-                    dictRef,
-                    (string)namespaceStr,
-                    (string)assembly);
-
-                // create the new ManagedType and python type
-                ClassBase subClass = ClassManager.GetClass(subType);
-                var py_type = GetOrInitializeClass(subClass, subType);
-
-                // by default the class dict will have all the C# methods in it, but as this is a
-                // derived class we want the python overrides in there instead if they exist.
-                var cls_dict = Util.ReadRef(py_type, TypeOffset.tp_dict);
-                ThrowIfIsNotZero(Runtime.PyDict_Update(cls_dict, dictRef));
-                // Update the __classcell__ if it exists
-                BorrowedReference cell = Runtime.PyDict_GetItemString(cls_dict, "__classcell__");
-                if (!cell.IsNull)
-                {
-                    ThrowIfIsNotZero(Runtime.PyCell_Set(cell, py_type));
-                    ThrowIfIsNotZero(Runtime.PyDict_DelItemString(cls_dict, "__classcell__"));
-                }
-
-                return new NewReference(py_type);
-            }
-            catch (Exception e)
-            {
-                return Exceptions.RaiseTypeError(e.Message);
-            }
+            return ReflectedClrType.CreateSubclass(baseClass, name,
+                                                   ns: (string?)namespaceStr,
+                                                   assembly: (string?)assembly,
+                                                   dict: dictRef);
         }
 
-        internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, int flags, IntPtr doc)
+        internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, PyMethodFlags flags, IntPtr doc)
         {
             Marshal.WriteIntPtr(mdef, name);
             Marshal.WriteIntPtr(mdef, 1 * IntPtr.Size, func);
-            Marshal.WriteInt32(mdef, 2 * IntPtr.Size, flags);
+            Marshal.WriteInt32(mdef, 2 * IntPtr.Size, (int)flags);
             Marshal.WriteIntPtr(mdef, 3 * IntPtr.Size, doc);
             return mdef + 4 * IntPtr.Size;
         }
 
-        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, int flags = 0x0001,
+        internal static IntPtr WriteMethodDef(IntPtr mdef, string name, IntPtr func, PyMethodFlags flags = PyMethodFlags.VarArgs,
             string? doc = null)
         {
             IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
@@ -567,6 +446,27 @@ namespace Python.Runtime
             }
         }
 
+        internal static PyType CreateMetatypeWithGCHandleOffset()
+        {
+            var py_type = new PyType(Runtime.PyTypeType, prevalidated: true);
+            int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
+                       + IntPtr.Size // tp_clr_inst_offset
+            ;
+            var result = new PyType(new TypeSpec("GC Offset Base", basicSize: size,
+                new TypeSpec.Slot[]
+                {
+
+                },
+                TypeFlags.Default | TypeFlags.HeapType | TypeFlags.HaveGC),
+                bases: new PyTuple(new[] { py_type }));
+
+            SetRequiredSlots(result, seen: new HashSet<string>());
+
+            Runtime.PyType_Modified(result);
+
+            return result;
+        }
+
         internal static PyType CreateMetaType(Type impl, out SlotsHolder slotsHolder)
         {
             // The managed metatype is functionally little different than the
@@ -574,21 +474,22 @@ namespace Python.Runtime
             // the standard type slots, and has to subclass PyType_Type for
             // certain functions in the C runtime to work correctly with it.
 
-            PyType type = AllocateTypeObject("CLR Metatype", metatype: Runtime.PyTypeType);
+            PyType gcOffsetBase = CreateMetatypeWithGCHandleOffset();
 
-            PyType py_type = Runtime.PyTypeType;
-            Util.WriteRef(type, TypeOffset.tp_base, new NewReference(py_type).Steal());
+            PyType type = AllocateTypeObject("CLR Metatype", metatype: gcOffsetBase);
 
-            int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
-                       + IntPtr.Size // tp_clr_inst_offset
+            Util.WriteRef(type, TypeOffset.tp_base, new NewReference(gcOffsetBase).Steal());
+
+            nint size = Util.ReadInt32(gcOffsetBase, TypeOffset.tp_basicsize)
                        + IntPtr.Size // tp_clr_inst
             ;
-            Util.WriteIntPtr(type, TypeOffset.tp_basicsize, new IntPtr(size));
+            Util.WriteIntPtr(type, TypeOffset.tp_basicsize, size);
             Util.WriteInt32(type, ManagedType.Offsets.tp_clr_inst_offset, ManagedType.Offsets.tp_clr_inst);
 
             const TypeFlags flags = TypeFlags.Default
                             | TypeFlags.HeapType
-                            | TypeFlags.HaveGC;
+                            | TypeFlags.HaveGC
+                            | TypeFlags.HasClrInstance;
             Util.WriteCLong(type, TypeOffset.tp_flags, (int)flags);
 
             // Slots will inherit from TypeType, it's not neccesary for setting them.
@@ -602,7 +503,7 @@ namespace Python.Runtime
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-
+            
             BorrowedReference dict = Util.ReadRef(type, TypeOffset.tp_dict);
             using (var mod = Runtime.PyString_FromString("CLR"))
                 Runtime.PyDict_SetItemString(dict, "__module__", mod.Borrow());
@@ -758,6 +659,11 @@ namespace Python.Runtime
                 impl = impl.BaseType;
             }
 
+            SetRequiredSlots(type, seen);
+        }
+
+        private static void SetRequiredSlots(PyType type, HashSet<string> seen)
+        {
             foreach (string slot in _requiredSlots)
             {
                 if (seen.Contains(slot))
@@ -791,6 +697,12 @@ namespace Python.Runtime
             InitializeSlot(type, slotOffset, thunk, slotsHolder);
         }
 
+        internal static void InitializeSlotIfEmpty(BorrowedReference type, int slotOffset, Delegate impl, SlotsHolder slotsHolder)
+        {
+            if (slotsHolder.IsHolding(slotOffset)) return;
+            InitializeSlot(type, slotOffset, impl, slotsHolder);
+        }
+
         static void InitializeSlot(BorrowedReference type, int slotOffset, ThunkInfo thunk, SlotsHolder slotsHolder)
         {
             Util.WriteIntPtr(type, slotOffset, thunk.Address);
@@ -801,7 +713,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// <summary>
         /// Utility method to copy slots from a given type to another type.
         /// </summary>
         internal static void CopySlot(BorrowedReference from, BorrowedReference to, int offset)
@@ -810,15 +721,12 @@ namespace Python.Runtime
             Util.WriteIntPtr(to, offset, fp);
         }
 
-        private static SlotsHolder CreateSolotsHolder(PyType type)
+        internal static SlotsHolder CreateSlotsHolder(PyType type)
         {
             var holder = new SlotsHolder(type);
             _slotsHolders.Add(type, holder);
             return holder;
         }
-
-        internal static SlotsHolder GetSlotsHolder(PyType type)
-            => _slotsHolders[type];
     }
 
 
@@ -834,6 +742,8 @@ namespace Python.Runtime
 
         private readonly PyType Type;
 
+        public string?[] Holds => _slots.Keys.Select(TypeOffset.GetSlotName).ToArray();
+
         /// <summary>
         /// Create slots holder for holding the delegate of slots and be able  to reset them.
         /// </summary>
@@ -844,6 +754,8 @@ namespace Python.Runtime
         }
 
         public bool IsHolding(int offset) => _slots.ContainsKey(offset);
+
+        public ICollection<int> Slots => _slots.Keys;
 
         public void Set(int offset, ThunkInfo thunk)
         {
@@ -865,6 +777,18 @@ namespace Python.Runtime
             _keepalive.Add(thunk);
         }
 
+        public static void ResetSlots(BorrowedReference type, IEnumerable<int> slots)
+        {
+            foreach (int offset in slots)
+            {
+                IntPtr ptr = GetDefaultSlot(offset);
+#if DEBUG
+                //DebugUtil.Print($"Set slot<{TypeOffsetHelper.GetSlotNameByOffset(offset)}> to 0x{ptr.ToString("X")} at {typeName}<0x{_type}>");
+#endif
+                Util.WriteIntPtr(type, offset, ptr);
+            }
+        }
+
         public void ResetSlots()
         {
             if (_alreadyReset)
@@ -876,14 +800,7 @@ namespace Python.Runtime
             IntPtr tp_name = Util.ReadIntPtr(Type, TypeOffset.tp_name);
             string typeName = Marshal.PtrToStringAnsi(tp_name);
 #endif
-            foreach (var offset in _slots.Keys)
-            {
-                IntPtr ptr = GetDefaultSlot(offset);
-#if DEBUG
-                //DebugUtil.Print($"Set slot<{TypeOffsetHelper.GetSlotNameByOffset(offset)}> to 0x{ptr.ToString("X")} at {typeName}<0x{_type}>");
-#endif
-                Util.WriteIntPtr(Type, offset, ptr);
-            }
+            ResetSlots(Type, _slots.Keys);
 
             foreach (var action in _deallocators)
             {
@@ -906,15 +823,7 @@ namespace Python.Runtime
             if (Type != Runtime.CLRMetaType)
             {
                 var metatype = Runtime.PyObject_TYPE(Type);
-                if (ManagedType.TryGetGCHandle(Type, metatype) is { } handle)
-                {
-                    if (handle.IsAllocated)
-                    {
-                        handle.Free();
-                    }
-
-                    ManagedType.SetGCHandle(Type, metatype, default);
-                }
+                ManagedType.TryFreeGCHandle(Type, metatype);
             }
         }
 

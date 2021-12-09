@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -89,5 +90,17 @@ namespace Python.Runtime
 
         public PyObject Current => _current ?? throw new InvalidOperationException();
         object System.Collections.IEnumerator.Current => Current;
+
+        protected PyIter(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            _current = (PyObject?)info.GetValue("c", typeof(PyObject));
+        }
+
+        protected override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue("c", _current);
+        }
     }
 }

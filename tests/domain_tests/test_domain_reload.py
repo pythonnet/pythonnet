@@ -56,7 +56,6 @@ def test_property_visibility_change():
 def test_class_visibility_change():
     _run_test("class_visibility_change")
 
-@pytest.mark.skip(reason='FIXME: Domain reload fails when Python points to a .NET object which points back to Python objects')
 def test_method_parameters_change():
     _run_test("method_parameters_change")
 
@@ -70,7 +69,6 @@ def test_field_type_change():
 def test_rename_event():
     _run_test('event_rename')
 
-@pytest.mark.xfail(reason="newly instanced object uses PyType_GenericAlloc")
 def test_construct_removed_class():
     _run_test("construct_removed_class")
 

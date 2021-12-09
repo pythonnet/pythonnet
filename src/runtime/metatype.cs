@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -11,7 +12,7 @@ namespace Python.Runtime
     /// types. It also provides support for single-inheritance from reflected
     /// managed types.
     /// </summary>
-    internal class MetaType : ManagedType
+    internal sealed class MetaType : ManagedType
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         // set in Initialize
@@ -36,12 +37,7 @@ namespace Python.Runtime
 
         public static void Release()
         {
-            if (Runtime.Refcount(PyCLRMetaType) > 1)
-            {
-                _metaSlotsHodler.ResetSlots();
-            }
             PyCLRMetaType.Dispose();
-            _metaSlotsHodler = null!;
         }
 
         internal static MetatypeState SaveRuntimeData() => new() { CLRMetaType = PyCLRMetaType };
@@ -166,15 +162,17 @@ namespace Python.Runtime
 
             // derived types must have their GCHandle at the same offset as the base types
             int clrInstOffset = Util.ReadInt32(base_type, Offsets.tp_clr_inst_offset);
+            Debug.Assert(clrInstOffset > 0
+                      && clrInstOffset < Util.ReadInt32(type.Borrow(), TypeOffset.tp_basicsize));
             Util.WriteInt32(type.Borrow(), Offsets.tp_clr_inst_offset, clrInstOffset);
 
             // for now, move up hidden handle...
-            IntPtr gc = Util.ReadIntPtr(base_type, Offsets.tp_clr_inst);
-            Util.WriteIntPtr(type.Borrow(), Offsets.tp_clr_inst, gc);
+            var gc = (GCHandle)Util.ReadIntPtr(base_type, Offsets.tp_clr_inst);
+            Util.WriteIntPtr(type.Borrow(), Offsets.tp_clr_inst, (IntPtr)GCHandle.Alloc(gc.Target));
 
             Runtime.PyType_Modified(type.Borrow());
 
-            return type.AnalyzerWorkaround();
+            return type;
         }
 
 
@@ -289,29 +287,31 @@ namespace Python.Runtime
         {
             // Fix this when we dont cheat on the handle for subclasses!
 
-            var flags = (TypeFlags)Util.ReadCLong(lastRef.Borrow(), TypeOffset.tp_flags);
+            var flags = PyType.GetFlags(lastRef.Borrow());
             if ((flags & TypeFlags.Subclass) == 0)
             {
-                GetGCHandle(lastRef.Borrow()).Free();
+                TryGetGCHandle(lastRef.Borrow())?.Free();
 #if DEBUG
                 // prevent ExecutionEngineException in debug builds in case we have a bug
                 // this would allow using managed debugger to investigate the issue
-                SetGCHandle(lastRef.Borrow(), Runtime.CLRMetaType, default);
+                SetGCHandle(lastRef.Borrow(), default);
 #endif
             }
 
-            var op = Util.ReadIntPtr(lastRef.Borrow(), TypeOffset.ob_type);
-            // We must decref our type.
-            // type_dealloc from PyType will use it to get tp_free so we must keep the value
-            Runtime.XDecref(StolenReference.DangerousFromPointer(op));
+            var op = Runtime.PyObject_TYPE(lastRef.Borrow());
+            Debug.Assert(Runtime.PyCLRMetaType is null || Runtime.PyCLRMetaType == op);
+            var builtinType = Runtime.PyObject_TYPE(Runtime.PyObject_TYPE(op));
 
             // Delegate the rest of finalization the Python metatype. Note
             // that the PyType_Type implementation of tp_dealloc will call
             // tp_free on the type of the type being deallocated - in this
             // case our CLR metatype. That is why we implement tp_free.
-
-            IntPtr tp_dealloc = Util.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_dealloc);
+            IntPtr tp_dealloc = Util.ReadIntPtr(builtinType, TypeOffset.tp_dealloc);
             NativeCall.CallDealloc(tp_dealloc, lastRef.Steal());
+
+            // We must decref our type.
+            // type_dealloc from PyType will use it to get tp_free so we must keep the value
+            Runtime.XDecref(StolenReference.DangerousFromPointer(op.DangerousGetAddress()));
         }
 
         private static NewReference DoInstanceCheck(BorrowedReference tp, BorrowedReference args, bool checkType)

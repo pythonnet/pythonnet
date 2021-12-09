@@ -13,8 +13,8 @@ namespace Python.EmbeddingTest
         public void SetUp()
         {
             PythonEngine.Initialize();
-            var locals = new PyDict();
-            PythonEngine.Exec(InheritanceTestBaseClassWrapper.ClassSourceCode, locals: locals.Handle);
+            using var locals = new PyDict();
+            PythonEngine.Exec(InheritanceTestBaseClassWrapper.ClassSourceCode, locals: locals);
             ExtraBaseTypeProvider.ExtraBase = new PyType(locals[InheritanceTestBaseClassWrapper.ClassName]);
             var baseTypeProviders = PythonEngine.InteropConfiguration.PythonBaseTypeProviders;
             baseTypeProviders.Add(new ExtraBaseTypeProvider());

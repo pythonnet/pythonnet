@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using System.Text;
 
 using Python.Runtime.Native;
@@ -13,6 +15,7 @@ namespace Python.Runtime
     /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
+    [Serializable]
     public class PythonException : System.Exception
     {
         public PythonException(PyType type, PyObject? value, PyObject? traceback,
@@ -36,6 +39,7 @@ namespace Python.Runtime
         /// It is recommended to call this as <code>throw ThrowLastAsClrException()</code>
         /// to assist control flow checks.
         /// </summary>
+        [DebuggerHidden]
         internal static Exception ThrowLastAsClrException()
         {
             // prevent potential interop errors in this method
@@ -185,18 +189,24 @@ namespace Python.Runtime
             return new PythonException(type, value, traceback, inner);
         }
 
-        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        private static PyDict ToPyErrArgs(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
         {
             using var type = PyType.FromReference(typeRef);
             using var value = PyObject.FromNullableReference(valRef);
             using var traceback = PyObject.FromNullableReference(tbRef);
 
-            using var errorDict = new PyDict();
-            if (typeRef != null) errorDict["type"] = type;
-            if (valRef != null) errorDict["value"] = value ?? PyObject.None;
-            if (tbRef != null) errorDict["traceback"] = traceback ?? PyObject.None;
+            var errorDict = new PyDict();
+            errorDict["type"] = type;
+            if (value is not null) errorDict["value"] = value;
+            if (traceback is not null) errorDict["traceback"] = traceback;
 
+            return errorDict;
+        }
+
+        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        {
             using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
+            using var errorDict = ToPyErrArgs(typeRef, valRef, tbRef);
             using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
             if (PyObjectConversions.TryDecode(pyErrInfo.Reference, pyErrType.Reference,
                 typeof(Exception), out object? decoded) && decoded is Exception decodedPyErrInfo)
@@ -254,12 +264,8 @@ namespace Python.Runtime
         }
 
         /// <summary>Restores python error.</summary>
-        public void Restore()
+        internal void Restore()
         {
-            CheckRuntimeIsRunning();
-
-            using var _ = new Py.GILState();
-
             NewReference type = Type.NewReferenceOrNull();
             NewReference value = Value.NewReferenceOrNull();
             NewReference traceback = Traceback.NewReferenceOrNull();
@@ -394,6 +400,32 @@ namespace Python.Runtime
             => new PythonException(type: Type, value: Value, traceback: Traceback,
                                    Message, InnerException);
 
+        #region Serializable
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        protected PythonException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            Type = (PyType)info.GetValue(nameof(Type), typeof(PyType));
+            Value = (PyObject)info.GetValue(nameof(Value), typeof(PyObject));
+            Traceback = (PyObject)info.GetValue(nameof(Traceback), typeof(PyObject));
+        }
+
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            base.GetObjectData(info, context);
+
+            info.AddValue(nameof(Type), Type);
+            info.AddValue(nameof(Value), Value);
+            info.AddValue(nameof(Traceback), Traceback);
+        }
+        #endregion
+
         internal bool Is(BorrowedReference type)
         {
             return Runtime.PyErr_GivenExceptionMatches(
@@ -416,6 +448,7 @@ namespace Python.Runtime
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
+        [DebuggerHidden]
         internal static void ThrowIfIsNull(in NewReference ob)
         {
             if (ob.BorrowNullable() == null)
@@ -426,6 +459,7 @@ namespace Python.Runtime
         internal static BorrowedReference ThrowIfIsNull(BorrowedReference ob)
             => Exceptions.ErrorCheck(ob);
 
+        [DebuggerHidden]
         internal static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)

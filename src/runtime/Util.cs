@@ -28,11 +28,13 @@ namespace Python.Runtime
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int ReadInt32(BorrowedReference ob, int offset)
         {
+            Debug.Assert(offset >= 0);
             return Marshal.ReadInt32(ob.DangerousGetAddress(), offset);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static long ReadInt64(BorrowedReference ob, int offset)
         {
+            Debug.Assert(offset >= 0);
             return Marshal.ReadInt64(ob.DangerousGetAddress(), offset);
         }
 
@@ -40,6 +42,7 @@ namespace Python.Runtime
         internal unsafe static T* ReadPtr<T>(BorrowedReference ob, int offset)
             where T: unmanaged
         {
+            Debug.Assert(offset >= 0);
             IntPtr ptr = Marshal.ReadIntPtr(ob.DangerousGetAddress(), offset);
             return (T*)ptr;
         }
@@ -47,39 +50,46 @@ namespace Python.Runtime
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static IntPtr ReadIntPtr(BorrowedReference ob, int offset)
         {
+            Debug.Assert(offset >= 0);
             return Marshal.ReadIntPtr(ob.DangerousGetAddress(), offset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static BorrowedReference ReadRef(BorrowedReference @ref, int offset)
         {
+            Debug.Assert(offset >= 0);
             return new BorrowedReference(ReadIntPtr(@ref, offset));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void WriteInt32(BorrowedReference ob, int offset, int value)
         {
+            Debug.Assert(offset >= 0);
             Marshal.WriteInt32(ob.DangerousGetAddress(), offset, value);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void WriteInt64(BorrowedReference ob, int offset, long value)
         {
+            Debug.Assert(offset >= 0);
             Marshal.WriteInt64(ob.DangerousGetAddress(), offset, value);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static void WriteIntPtr(BorrowedReference ob, int offset, IntPtr value)
         {
+            Debug.Assert(offset >= 0);
             Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, value);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static void WriteRef(BorrowedReference ob, int offset, in StolenReference @ref)
         {
+            Debug.Assert(offset >= 0);
             Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, @ref.DangerousGetAddress());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static void WriteNullableRef(BorrowedReference ob, int offset, in StolenReference @ref)
         {
+            Debug.Assert(offset >= 0);
             Marshal.WriteIntPtr(ob.DangerousGetAddress(), offset, @ref.DangerousGetAddressOrNull());
         }
 

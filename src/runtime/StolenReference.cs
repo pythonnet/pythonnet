@@ -1,6 +1,7 @@
 namespace Python.Runtime
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
 
@@ -13,6 +14,7 @@ namespace Python.Runtime
     {
         internal readonly IntPtr Pointer;
 
+        [DebuggerHidden]
         StolenReference(IntPtr pointer)
         {
             Pointer = pointer;
@@ -25,6 +27,7 @@ namespace Python.Runtime
             return TakeNullable(ref ptr);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerHidden]
         public static StolenReference TakeNullable(ref IntPtr ptr)
         {
             var stolenAddr = ptr;
@@ -62,12 +65,14 @@ namespace Python.Runtime
     static class StolenReferenceExtensions
     {
         [Pure]
+        [DebuggerHidden]
         public static IntPtr DangerousGetAddressOrNull(this in StolenReference reference)
             => reference.Pointer;
         [Pure]
+        [DebuggerHidden]
         public static IntPtr DangerousGetAddress(this in StolenReference reference)
             => reference.Pointer == IntPtr.Zero ? throw new NullReferenceException() : reference.Pointer;
-
+        [DebuggerHidden]
         public static StolenReference AnalyzerWorkaround(this in StolenReference reference)
         {
             IntPtr ptr = reference.DangerousGetAddressOrNull();

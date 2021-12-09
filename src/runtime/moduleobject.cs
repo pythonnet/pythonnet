@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.IO;
 using System.Reflection;
@@ -13,10 +14,10 @@ namespace Python.Runtime
     [Serializable]
     internal class ModuleObject : ExtensionType
     {
-        private Dictionary<string, ManagedType> cache;
+        private readonly Dictionary<string, PyObject> cache = new();
 
         internal string moduleName;
-        internal readonly PyDict dict;
+        internal PyDict dict;
         protected string _namespace;
         private readonly PyList __all__ = new ();
 
@@ -25,41 +26,59 @@ namespace Python.Runtime
         static readonly HashSet<string?> settableAttributes = 
             new () {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
 
-        public ModuleObject(string name)
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        /// <remarks><seealso cref="dict"/> is initialized in <seealso cref="Create(string)"/></remarks>
+        protected ModuleObject(string name)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             if (name == string.Empty)
             {
                 throw new ArgumentException("Name must not be empty!");
             }
             moduleName = name;
-            cache = new Dictionary<string, ManagedType>();
             _namespace = name;
+        }
 
-            // Use the filename from any of the assemblies just so there's something for
-            // anything that expects __file__ to be set.
-            var filename = "unknown";
-            var docstring = "Namespace containing types from the following assemblies:\n\n";
-            foreach (Assembly a in AssemblyManager.GetAssemblies(name))
+        internal static NewReference Create(string name) => new ModuleObject(name).Alloc();
+
+        public override NewReference Alloc()
+        {
+            var py = base.Alloc();
+
+            if (dict is null)
             {
-                if (!a.IsDynamic && a.Location != null)
+                // Use the filename from any of the assemblies just so there's something for
+                // anything that expects __file__ to be set.
+                var filename = "unknown";
+                var docstring = "Namespace containing types from the following assemblies:\n\n";
+                foreach (Assembly a in AssemblyManager.GetAssemblies(moduleName))
                 {
-                    filename = a.Location;
+                    if (!a.IsDynamic && a.Location != null)
+                    {
+                        filename = a.Location;
+                    }
+                    docstring += "- " + a.FullName + "\n";
                 }
-                docstring += "- " + a.FullName + "\n";
+
+                using var dictRef = Runtime.PyObject_GenericGetDict(py.Borrow());
+                dict = new PyDict(dictRef.StealOrThrow());
+                using var pyname = Runtime.PyString_FromString(moduleName);
+                using var pyfilename = Runtime.PyString_FromString(filename);
+                using var pydocstring = Runtime.PyString_FromString(docstring);
+                BorrowedReference pycls = TypeManager.GetTypeReference(GetType());
+                Runtime.PyDict_SetItem(dict, PyIdentifier.__name__, pyname.Borrow());
+                Runtime.PyDict_SetItem(dict, PyIdentifier.__file__, pyfilename.Borrow());
+                Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, pydocstring.Borrow());
+                Runtime.PyDict_SetItem(dict, PyIdentifier.__class__, pycls);
+            }
+            else
+            {
+                SetObjectDict(py.Borrow(), new NewReference(dict).Steal());
             }
 
-            using var dictRef = Runtime.PyObject_GenericGetDict(ObjectReference);
-            dict = new PyDict(dictRef.StealOrThrow());
-            using var pyname = Runtime.PyString_FromString(moduleName);
-            using var pyfilename = Runtime.PyString_FromString(filename);
-            using var pydocstring = Runtime.PyString_FromString(docstring);
-            BorrowedReference pycls = TypeManager.GetTypeReference(GetType());
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__name__, pyname.Borrow());
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__file__, pyfilename.Borrow());
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, pydocstring.Borrow());
-            Runtime.PyDict_SetItem(dict, PyIdentifier.__class__, pycls);
-
             InitializeModuleMembers();
+
+            return py;
         }
 
 
@@ -69,16 +88,14 @@ namespace Python.Runtime
         /// namespace (or null if the name is not found). This method does
         /// not increment the Python refcount of the returned object.
         /// </summary>
-        public ManagedType? GetAttribute(string name, bool guess)
+        public NewReference GetAttribute(string name, bool guess)
         {
             cache.TryGetValue(name, out var cached);
             if (cached != null)
             {
-                return cached;
+                return new NewReference(cached);
             }
 
-            ModuleObject m;
-            ClassBase c;
             Type type;
 
             //if (AssemblyManager.IsValidNamespace(name))
@@ -100,8 +117,8 @@ namespace Python.Runtime
             // a new ModuleObject representing that namespace.
             if (AssemblyManager.IsValidNamespace(qname))
             {
-                m = new ModuleObject(qname);
-                StoreAttribute(name, m);
+                var m = ModuleObject.Create(qname);
+                this.StoreAttribute(name, m.Borrow());
                 return m;
             }
 
@@ -111,9 +128,9 @@ namespace Python.Runtime
             type = AssemblyManager.LookupTypes(qname).FirstOrDefault(t => t.IsPublic);
             if (type != null)
             {
-                c = ClassManager.GetClass(type);
+                var c = ClassManager.GetClass(type);
                 StoreAttribute(name, c);
-                return c;
+                return new NewReference(c);
             }
 
             // We didn't find the name, so we may need to see if there is a
@@ -125,37 +142,31 @@ namespace Python.Runtime
             // enough to complicate the implementation for now.
             if (guess)
             {
-                string gname = GenericUtil.GenericNameForBaseName(_namespace, name);
+                string gname = GenericUtil.GenericNameForBaseName(this._namespace, name);
                 if (gname != null)
                 {
-                    ManagedType? o = GetAttribute(gname, false);
-                    if (o != null)
+                    var o = this.GetAttribute(gname, false);
+                    if (!o.IsNull())
                     {
-                        StoreAttribute(name, o);
+                        this.StoreAttribute(name, o.Borrow());
                         return o;
                     }
                 }
             }
 
-            return null;
+            return default;
         }
-
-        static void ImportWarning(Exception exception)
-        {
-            Exceptions.warn(exception.ToString(), Exceptions.ImportWarning);
-        }
-
 
         /// <summary>
         /// Stores an attribute in the instance dict for future lookups.
         /// </summary>
-        private void StoreAttribute(string name, ManagedType ob)
+        private void StoreAttribute(string name, BorrowedReference ob)
         {
-            if (Runtime.PyDict_SetItemString(dict, name, ob.ObjectReference) != 0)
+            if (Runtime.PyDict_SetItemString(dict, name, ob) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            cache[name] = ob;
+            cache[name] = new PyObject(ob);
         }
 
 
@@ -180,7 +191,8 @@ namespace Python.Runtime
                     continue;
                 }
 
-                if(GetAttribute(name, true) != null)
+                using var attrVal = GetAttribute(name, true);
+                if (!attrVal.IsNull())
                 {
                     // if it's a valid attribute, add it to __all__
                     using var pyname = Runtime.PyString_FromString(name);
@@ -217,8 +229,8 @@ namespace Python.Runtime
                         string name = method.Name;
                         var mi = new MethodInfo[1];
                         mi[0] = method;
-                        var m = new ModuleFunctionObject(type, name, mi, allow_threads);
-                        StoreAttribute(name, m);
+                        using var m = new ModuleFunctionObject(type, name, mi, allow_threads).Alloc();
+                        StoreAttribute(name, m.Borrow());
                     }
                 }
 
@@ -229,8 +241,8 @@ namespace Python.Runtime
                     if (attrs.Length > 0)
                     {
                         string name = property.Name;
-                        var p = new ModulePropertyObject(property);
-                        StoreAttribute(name, p);
+                        using var p = new ModulePropertyObject(property).Alloc();
+                        StoreAttribute(name, p.Borrow());
                     }
                 }
                 type = type.BaseType;
@@ -254,6 +266,8 @@ namespace Python.Runtime
                 return default;
             }
 
+            Debug.Assert(!self.dict.IsDisposed);
+
             BorrowedReference op = Runtime.PyDict_GetItem(self.dict, key);
             if (op != null)
             {
@@ -272,7 +286,7 @@ namespace Python.Runtime
                 return new NewReference(self.__all__);
             }
 
-            ManagedType? attr;
+            NewReference attr;
 
             try
             {
@@ -286,13 +300,13 @@ namespace Python.Runtime
             }
 
 
-            if (attr == null)
+            if (attr.IsNull())
             {
                 Exceptions.SetError(Exceptions.AttributeError, name);
                 return default;
             }
 
-            return new NewReference(attr.ObjectReference);
+            return attr;
         }
 
         /// <summary>
@@ -306,26 +320,18 @@ namespace Python.Runtime
 
         public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            var self = (ModuleObject)GetManagedObject(ob)!;
+            var self = (ModuleObject?)GetManagedObject(ob);
+            if (self is null) return 0;
+
+            Debug.Assert(self.dict == GetObjectDict(ob));
             int res = PyVisit(self.dict, visit, arg);
             if (res != 0) return res;
             foreach (var attr in self.cache.Values)
             {
-                res = PyVisit(attr.ObjectReference, visit, arg);
+                res = PyVisit(attr, visit, arg);
                 if (res != 0) return res;
             }
             return 0;
-        }
-
-        protected override void Clear(BorrowedReference ob)
-        {
-            this.dict.Dispose();
-            if (this.pyHandle?.IsDisposed == false)
-            {
-                ClearObjectDict(this.ObjectReference);
-            }
-            this.cache.Clear();
-            base.Clear(ob);
         }
 
         /// <summary>
@@ -338,7 +344,7 @@ namespace Python.Runtime
         {
             var managedKey = Runtime.GetManagedString(key);
             if ((settableAttributes.Contains(managedKey)) || 
-                (ManagedType.GetManagedObject(val)?.GetType() == typeof(ModuleObject)) )
+                (ManagedType.GetManagedObject(val) is ModuleObject) )
             {
                 var self = (ModuleObject)ManagedType.GetManagedObject(ob)!;
                 return Runtime.PyDict_SetItem(self.dict, key, val);
@@ -347,10 +353,10 @@ namespace Python.Runtime
             return ExtensionType.tp_setattro(ob, key, val);
         }
 
-        protected override void OnSave(InterDomainContext context)
+        protected override void OnSave(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnSave(context);
-            System.Diagnostics.Debug.Assert(dict == GetObjectDict(ObjectReference));
+            base.OnSave(ob, context);
+            System.Diagnostics.Debug.Assert(dict == GetObjectDict(ob));
             // destroy the cache(s)
             foreach (var pair in cache)
             {
@@ -370,10 +376,10 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        protected override void OnLoad(InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
         {
-            base.OnLoad(context);
-            SetObjectDict(pyHandle, new NewReference(dict).Steal());
+            base.OnLoad(ob, context);
+            SetObjectDict(ob, new NewReference(dict).Steal());
         }
     }
 
@@ -385,7 +391,6 @@ namespace Python.Runtime
     [Serializable]
     internal class CLRModule : ModuleObject
     {
-        protected static bool hacked = false;
         protected static bool interactive_preload = true;
         internal static bool preload;
         // XXX Test performance of new features //
@@ -397,26 +402,19 @@ namespace Python.Runtime
             Reset();
         }
 
-        public CLRModule() : base("clr")
+        private CLRModule() : base("clr")
         {
             _namespace = string.Empty;
+        }
 
-            // This hackery is required in order to allow a plain Python to
-            // import the managed runtime via the CLR bootstrapper module.
-            // The standard Python machinery in control at the time of the
-            // import requires the module to pass PyModule_Check. :(
-            if (!hacked)
-            {
-                BorrowedReference mro = Util.ReadRef(TypeReference, TypeOffset.tp_mro);
-                using var ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
-                Util.WriteRef(TypeReference, TypeOffset.tp_mro, ext.Steal());
-                hacked = true;
-            }
+        internal static NewReference Create(out CLRModule module)
+        {
+            module = new CLRModule();
+            return module.Alloc();
         }
 
         public static void Reset()
         {
-            hacked = false;
             interactive_preload = true;
             preload = false;
 

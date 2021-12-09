@@ -174,8 +174,8 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 Type a = t.MakeArrayType();
-                ClassBase o = ClassManager.GetClass(a);
-                return new NewReference(o.ObjectReference);
+                PyType o = ClassManager.GetClass(a);
+                return new NewReference(o);
             }
 
             // If there are generics in our namespace with the same base name
@@ -190,7 +190,7 @@ namespace Python.Runtime
             Type gtype = AssemblyManager.LookupTypes($"{type.Value.FullName}`{types.Length}").FirstOrDefault();
             if (gtype != null)
             {
-                var g = (GenericType)ClassManager.GetClass(gtype);
+                var g = (GenericType)ClassManager.GetClassImpl(gtype);
                 return g.type_subscript(idx);
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");

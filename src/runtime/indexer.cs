@@ -113,7 +113,7 @@ namespace Python.Runtime
                 using var arg = Converter.ToPython(pi[i + pynargs].DefaultValue, pi[i + pynargs].ParameterType);
                 Runtime.PyTuple_SetItem(defaultArgs.Borrow(), i, arg.Steal());
             }
-            return defaultArgs.AnalyzerWorkaround();
+            return defaultArgs;
         }
     }
 }

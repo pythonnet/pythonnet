@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -133,6 +134,9 @@ namespace Python.Runtime
         public PyInt(string value) : base(Runtime.PyLong_FromString(value, 0).StealOrThrow())
         {
         }
+
+        protected PyInt(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
 
         /// <summary>
