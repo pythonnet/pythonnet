@@ -83,24 +83,13 @@ namespace Python.EmbeddingTest
         [Test]
         public void BadAssembly()
         {
-            string path;
+            string path = Runtime.Runtime.PythonDLL;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 path = @"C:\Windows\System32\kernel32.dll";
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                path = "/usr/lib/libc.dylib";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                path = "/usr/lib/locale/locale-archive";
-            }
-            else
-            {
-                Assert.Pass("TODO: add bad assembly location for other platforms");
-                return;
-            }
+
+            Assert.IsTrue(File.Exists(path), $"Test DLL {path} does not exist!");
 
             string code = $@"
 import clr
