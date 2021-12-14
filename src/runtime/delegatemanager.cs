@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
+using Python.Runtime.Native;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -18,7 +20,7 @@ namespace Python.Runtime
         private readonly Type arrayType = typeof(object[]);
         private readonly Type voidtype = typeof(void);
         private readonly Type typetype = typeof(Type);
-        private readonly Type ptrtype = typeof(IntPtr);
+        private readonly Type pyobjType = typeof(PyObject);
         private readonly CodeGenerator codeGenerator = new CodeGenerator();
         private readonly ConstructorInfo arrayCtor;
         private readonly MethodInfo dispatch;
@@ -59,7 +61,7 @@ namespace Python.Runtime
                                   MethodAttributes.SpecialName |
                                   MethodAttributes.RTSpecialName;
             var cc = CallingConventions.Standard;
-            Type[] args = { ptrtype, typetype };
+            Type[] args = { pyobjType, typetype };
             ConstructorBuilder cb = tb.DefineConstructor(ma, cc, args);
             ConstructorInfo ci = basetype.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, args, null);
             ILGenerator il = cb.GetILGenerator();
@@ -178,7 +180,7 @@ namespace Python.Runtime
         /// returns an instance of the delegate type. The delegate instance
         /// returned will dispatch calls to the given Python object.
         /// </summary>
-        internal Delegate GetDelegate(Type dtype, IntPtr callable)
+        internal Delegate GetDelegate(Type dtype, PyObject callable)
         {
             Type dispatcher = GetDispatcher(dtype);
             object[] args = { callable, dtype };
@@ -212,64 +214,58 @@ namespace Python.Runtime
         readonly PyObject target;
         readonly Type dtype;
 
-        protected Dispatcher(IntPtr target, Type dtype)
+        protected Dispatcher(PyObject target, Type dtype)
         {
-            this.target = new PyObject(new BorrowedReference(target));
+            this.target = target;
             this.dtype = dtype;
         }
 
-        public object Dispatch(object[] args)
+        public object? Dispatch(object?[] args)
         {
-            IntPtr gs = PythonEngine.AcquireLock();
-            object ob;
+            PyGILState gs = PythonEngine.AcquireLock();
 
             try
             {
-                ob = TrueDispatch(args);
+                return TrueDispatch(args);
             }
             finally
             {
                 PythonEngine.ReleaseLock(gs);
             }
-
-            return ob;
         }
 
-        private object TrueDispatch(object[] args)
+        private object? TrueDispatch(object?[] args)
         {
             MethodInfo method = dtype.GetMethod("Invoke");
             ParameterInfo[] pi = method.GetParameters();
             Type rtype = method.ReturnType;
 
-            NewReference op;
-            using (var pyargs = NewReference.DangerousFromPointer(Runtime.PyTuple_New(pi.Length)))
+            NewReference callResult;
+            using (var pyargs = Runtime.PyTuple_New(pi.Length))
             {
                 for (var i = 0; i < pi.Length; i++)
                 {
                     // Here we own the reference to the Python value, and we
                     // give the ownership to the arg tuple.
-                    var arg = Converter.ToPythonReference(args[i], pi[i].ParameterType);
-                    if (arg.IsNull())
-                    {
-                        throw PythonException.ThrowLastAsClrException();
-                    }
-                    int res = Runtime.PyTuple_SetItem(pyargs, i, arg.Steal());
+                    using var arg = Converter.ToPython(args[i], pi[i].ParameterType);
+                    int res = Runtime.PyTuple_SetItem(pyargs.Borrow(), i, arg.StealOrThrow());
                     if (res != 0)
                     {
                         throw PythonException.ThrowLastAsClrException();
                     }
                 }
 
-                op = Runtime.PyObject_Call(target.Reference, pyargs, BorrowedReference.Null);
+                callResult = Runtime.PyObject_Call(target, pyargs.Borrow(), null);
             }
 
-            if (op.IsNull())
+            if (callResult.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
 
-            using (op)
+            using (callResult)
             {
+                BorrowedReference op = callResult.Borrow();
                 int byRefCount = pi.Count(parameterInfo => parameterInfo.ParameterType.IsByRef);
                 if (byRefCount > 0)
                 {
@@ -289,12 +285,11 @@ namespace Python.Runtime
                             Type t = pi[i].ParameterType;
                             if (t.IsByRef)
                             {
-                                if (!Converter.ToManaged(op, t, out object newArg, true))
+                                if (!Converter.ToManaged(op, t, out args[i], true))
                                 {
                                     Exceptions.RaiseTypeError($"The Python function did not return {t.GetElementType()} (the out parameter type)");
                                     throw PythonException.ThrowLastAsClrException();
                                 }
-                                args[i] = newArg;
                                 break;
                             }
                         }
@@ -309,12 +304,11 @@ namespace Python.Runtime
                             if (t.IsByRef)
                             {
                                 BorrowedReference item = Runtime.PyTuple_GetItem(op, index++);
-                                if (!Converter.ToManaged(item, t, out object newArg, true))
+                                if (!Converter.ToManaged(item, t, out args[i], true))
                                 {
                                     Exceptions.RaiseTypeError($"The Python function returned a tuple where element {i} was not {t.GetElementType()} (the out parameter type)");
                                     throw PythonException.ThrowLastAsClrException();
                                 }
-                                args[i] = newArg;
                             }
                         }
                         if (isVoid)
@@ -322,7 +316,7 @@ namespace Python.Runtime
                             return null;
                         }
                         BorrowedReference item0 = Runtime.PyTuple_GetItem(op, 0);
-                        if (!Converter.ToManaged(item0, rtype, out object result0, true))
+                        if (!Converter.ToManaged(item0, rtype, out object? result0, true))
                         {
                             Exceptions.RaiseTypeError($"The Python function returned a tuple where element 0 was not {rtype} (the return type)");
                             throw PythonException.ThrowLastAsClrException();
@@ -358,8 +352,7 @@ namespace Python.Runtime
                     return null;
                 }
 
-                object result;
-                if (!Converter.ToManaged(op, rtype, out result, true))
+                if (!Converter.ToManaged(op, rtype, out object? result, true))
                 {
                     throw PythonException.ThrowLastAsClrException();
                 }

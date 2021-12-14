@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -11,11 +12,12 @@ namespace Python.Runtime
     /// <remarks>
     /// 2011-01-29: ...Then why does the string constructor call PyUnicode_FromUnicode()???
     /// </remarks>
+    [Serializable]
     public class PyString : PySequence
     {
         internal PyString(in StolenReference reference) : base(reference) { }
         internal PyString(BorrowedReference reference) : base(reference) { }
-
+        protected PyString(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         private static BorrowedReference FromObject(PyObject o)
         {
@@ -39,20 +41,13 @@ namespace Python.Runtime
         {
         }
 
-
-        private static NewReference FromString(string s)
-        {
-            IntPtr val = Runtime.PyString_FromString(s);
-            PythonException.ThrowIfIsNull(val);
-            return NewReference.DangerousFromPointer(val);
-        }
         /// <summary>
         /// PyString Constructor
         /// </summary>
         /// <remarks>
         /// Creates a Python string from a managed string.
         /// </remarks>
-        public PyString(string s) : base(FromString(s).Steal())
+        public PyString(string s) : base(Runtime.PyString_FromString(s).StealOrThrow())
         {
         }
 

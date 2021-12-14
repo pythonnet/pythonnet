@@ -39,15 +39,9 @@ namespace Python.EmbeddingTest
         public void CanBorrowFromNewReference()
         {
             var dict = new PyDict();
-            NewReference reference = Runtime.PyDict_Items(dict.Reference);
-            try
-            {
-                PythonException.ThrowIfIsNotZero(Runtime.PyList_Reverse(reference));
-            }
-            finally
-            {
-                reference.Dispose();
-            }
+            using NewReference reference = Runtime.PyDict_Items(dict.Reference);
+            BorrowedReference borrowed = reference.BorrowOrThrow();
+            PythonException.ThrowIfIsNotZero(Runtime.PyList_Reverse(borrowed));
         }
     }
 }

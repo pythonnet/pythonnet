@@ -1,7 +1,9 @@
 namespace Python.Runtime
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.Contracts;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Should only be used for the arguments of Python C API functions, that steal references,
@@ -12,16 +14,32 @@ namespace Python.Runtime
     {
         internal readonly IntPtr Pointer;
 
-        internal StolenReference(IntPtr pointer)
+        [DebuggerHidden]
+        StolenReference(IntPtr pointer)
         {
             Pointer = pointer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static StolenReference Take(ref IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
+            return TakeNullable(ref ptr);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerHidden]
+        public static StolenReference TakeNullable(ref IntPtr ptr)
+        {
+            var stolenAddr = ptr;
+            ptr = IntPtr.Zero;
+            return new StolenReference(stolenAddr);
+        }
+
         [Pure]
-        public static bool operator ==(in StolenReference reference, NullOnly @null)
+        public static bool operator ==(in StolenReference reference, NullOnly? @null)
             => reference.Pointer == IntPtr.Zero;
         [Pure]
-        public static bool operator !=(in StolenReference reference, NullOnly @null)
+        public static bool operator !=(in StolenReference reference, NullOnly? @null)
             => reference.Pointer != IntPtr.Zero;
 
         [Pure]
@@ -47,7 +65,18 @@ namespace Python.Runtime
     static class StolenReferenceExtensions
     {
         [Pure]
+        [DebuggerHidden]
         public static IntPtr DangerousGetAddressOrNull(this in StolenReference reference)
             => reference.Pointer;
+        [Pure]
+        [DebuggerHidden]
+        public static IntPtr DangerousGetAddress(this in StolenReference reference)
+            => reference.Pointer == IntPtr.Zero ? throw new NullReferenceException() : reference.Pointer;
+        [DebuggerHidden]
+        public static StolenReference AnalyzerWorkaround(this in StolenReference reference)
+        {
+            IntPtr ptr = reference.DangerousGetAddressOrNull();
+            return StolenReference.TakeNullable(ref ptr);
+        }
     }
 }

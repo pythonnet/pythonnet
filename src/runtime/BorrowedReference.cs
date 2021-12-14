@@ -1,6 +1,8 @@
 namespace Python.Runtime
 {
     using System;
+    using System.Diagnostics;
+
     /// <summary>
     /// Represents a reference to a Python object, that is being lent, and
     /// can only be safely used until execution returns to the caller.
@@ -11,6 +13,7 @@ namespace Python.Runtime
         public bool IsNull => this.pointer == IntPtr.Zero;
 
         /// <summary>Gets a raw pointer to the Python object</summary>
+        [DebuggerHidden]
         public IntPtr DangerousGetAddress()
             => this.IsNull ? throw new NullReferenceException() : this.pointer;
         /// <summary>Gets a raw pointer to the Python object</summary>
@@ -30,13 +33,13 @@ namespace Python.Runtime
             => a.pointer == b.pointer;
         public static bool operator !=(BorrowedReference a, BorrowedReference b)
             => a.pointer != b.pointer;
-        public static bool operator ==(BorrowedReference reference, NullOnly @null)
+        public static bool operator ==(BorrowedReference reference, NullOnly? @null)
             => reference.IsNull;
-        public static bool operator !=(BorrowedReference reference, NullOnly @null)
+        public static bool operator !=(BorrowedReference reference, NullOnly? @null)
             => !reference.IsNull;
-        public static bool operator ==(NullOnly @null, BorrowedReference reference)
+        public static bool operator ==(NullOnly? @null, BorrowedReference reference)
             => reference.IsNull;
-        public static bool operator !=(NullOnly @null, BorrowedReference reference)
+        public static bool operator !=(NullOnly? @null, BorrowedReference reference)
             => !reference.IsNull;
 
         public override bool Equals(object obj) {
@@ -45,6 +48,9 @@ namespace Python.Runtime
 
             return false;
         }
+
+        public static implicit operator BorrowedReference(PyObject pyObject) => pyObject.Reference;
+        public static implicit operator BorrowedReference(NullOnly? @null) => Null;
 
         public override int GetHashCode() => pointer.GetHashCode();
     }

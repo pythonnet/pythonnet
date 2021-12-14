@@ -22,15 +22,15 @@ namespace Python.Runtime
         /// <summary>
         /// Implements support for the Python iteration protocol.
         /// </summary>
-        public static IntPtr tp_iternext(IntPtr ob)
+        public static NewReference tp_iternext(BorrowedReference ob)
         {
-            var self = GetManagedObject(ob) as Iterator;
+            var self = (Iterator)GetManagedObject(ob)!;
             try
             {
                 if (!self.iter.MoveNext())
                 {
                     Exceptions.SetError(Exceptions.StopIteration, Runtime.PyNone);
-                    return IntPtr.Zero;
+                    return default;
                 }
             }
             catch (Exception e)
@@ -40,16 +40,12 @@ namespace Python.Runtime
                     e = e.InnerException;
                 }
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
             object item = self.iter.Current;
             return Converter.ToPython(item, self.elemType);
         }
 
-        public static IntPtr tp_iter(IntPtr ob)
-        {
-            Runtime.XIncref(ob);
-            return ob;
-        }
+        public static NewReference tp_iter(BorrowedReference ob) => new (ob);
     }
 }

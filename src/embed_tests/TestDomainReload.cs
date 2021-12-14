@@ -107,7 +107,7 @@ obj.Field = 10
                         {
                             Debug.Assert(obj.AsManagedObject(type).GetType() == type);
                             // We only needs its Python handle
-                            PyRuntime.XIncref(obj.Handle);
+                            PyRuntime.XIncref(obj);
                             return obj.Handle;
                         }
                     }
@@ -127,16 +127,16 @@ obj.Field = 10
             {
                 // handle refering a clr object created in previous domain,
                 // it should had been deserialized and became callable agian.
-                IntPtr handle = (IntPtr)arg;
+                using var handle = NewReference.DangerousFromPointer((IntPtr)arg);
                 try
                 {
                     using (Py.GIL())
                     {
-                        IntPtr tp = Runtime.Runtime.PyObject_TYPE(handle);
-                        IntPtr tp_clear = Marshal.ReadIntPtr(tp, TypeOffset.tp_clear);
+                        BorrowedReference tp = Runtime.Runtime.PyObject_TYPE(handle.Borrow());
+                        IntPtr tp_clear = Util.ReadIntPtr(tp, TypeOffset.tp_clear);
                         Assert.That(tp_clear, Is.Not.Null);
 
-                        using (PyObject obj = new PyObject(handle))
+                        using (PyObject obj = new PyObject(handle.Steal()))
                         {
                             obj.InvokeMethod("Method");
                             obj.InvokeMethod("StaticMethod");

@@ -20,7 +20,7 @@ namespace Python.Runtime.Codecs
             //if (!SequenceDecoder.IsSequence(objectType)) return false;
 
             //returns wheter the type is a list.
-            return objectType.Handle == Runtime.PyListType;
+            return PythonReferenceComparer.Instance.Equals(objectType, Runtime.PyListType);
         }
 
         public bool CanDecode(PyType objectType, Type targetType)

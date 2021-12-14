@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Linq;
 
+using Python.Runtime.Reflection;
+
 namespace Python.Runtime
 {
     [Serializable]
@@ -17,50 +19,13 @@ namespace Python.Runtime
         const string SerializationIsCtor = "c";
         const string SerializationMethodName = "n";
 
-        [Serializable]
-        struct ParameterHelper : IEquatable<ParameterInfo>
-        {
-            public enum TypeModifier
-            {
-                None,
-                In,
-                Out,
-                Ref
-            }
-            public readonly string Name;
-            public readonly TypeModifier Modifier;
-
-            public ParameterHelper(ParameterInfo tp)
-            {
-                Name = tp.ParameterType.AssemblyQualifiedName;
-                Modifier = TypeModifier.None;
-
-                if (tp.IsIn && tp.ParameterType.IsByRef)
-                {
-                    Modifier = TypeModifier.In;
-                }
-                else if (tp.IsOut && tp.ParameterType.IsByRef)
-                {
-                    Modifier = TypeModifier.Out;
-                }
-                else if (tp.ParameterType.IsByRef)
-                {
-                    Modifier = TypeModifier.Ref;
-                }
-            }
-
-            public bool Equals(ParameterInfo other)
-            {
-                return this.Equals(new ParameterHelper(other));
-            }
-        }
-        public static implicit operator MaybeMethodBase<T> (T ob) => new MaybeMethodBase<T>(ob);
+        public static implicit operator MaybeMethodBase<T> (T? ob) => new (ob);
 
         string name;
-        MethodBase info;
+        MethodBase? info;
 
         [NonSerialized]
-        Exception deserializationException;
+        Exception? deserializationException;
 
         public string DeletedMessage 
         {
@@ -82,7 +47,7 @@ namespace Python.Runtime
             }
         }
 
-        public T UnsafeValue { get { return (T)info; } }
+        public T UnsafeValue => (T)info!;
         public string Name {get{return name;}}
         public bool Valid => info != null;
 
@@ -91,7 +56,7 @@ namespace Python.Runtime
             return (info != null ? info.ToString() : $"missing method info: {name}");
         }
 
-        public MaybeMethodBase(T mi)
+        public MaybeMethodBase(T? mi)
         {
             info = mi;
             name = mi?.ToString();
@@ -103,6 +68,9 @@ namespace Python.Runtime
             name = serializationInfo.GetString(SerializationName);
             info = null;
             deserializationException = null;
+
+            if (name is null) return;
+
             try
             {
                 // Retrieve the reflected type of the method;
@@ -119,7 +87,7 @@ namespace Python.Runtime
                 bool hasRefType = false;
                 for (int i = 0; i < param.Length; i++)
                 {
-                    var paramTypeName = param[i].Name;
+                    var paramTypeName = param[i].TypeName;
                     types[i] = Type.GetType(paramTypeName);
                     if (types[i] == null)
                     {
@@ -131,7 +99,7 @@ namespace Python.Runtime
                     }
                 }
 
-                MethodBase mb = null;
+                MethodBase? mb = null;
                 if (serializationInfo.GetBoolean(SerializationIsCtor))
                 {
                     // We never want the static constructor.
@@ -159,7 +127,7 @@ namespace Python.Runtime
             }
         }
 
-        MethodBase CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
+        MethodBase? CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
         {
             // One more step: Changing:
             // void MyFn (ref int a)

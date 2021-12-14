@@ -14,22 +14,18 @@ namespace Python.Runtime
     internal class DebugUtil
     {
         [Conditional("DEBUG")]
-        public static void Print(string msg, params IntPtr[] args)
+        public static void Print(string msg, BorrowedReference member)
         {
             string result = msg;
             result += " ";
 
-            foreach (IntPtr t in args)
+            if (member == null)
             {
-                if (t == IntPtr.Zero)
-                {
-                    Console.WriteLine("null arg to print");
-                }
-                IntPtr ob = Runtime.PyObject_Repr(t);
-                result += Runtime.GetManagedString(ob);
-                Runtime.XDecref(ob);
-                result += " ";
+                Console.WriteLine("null arg to print");
             }
+            using var ob = Runtime.PyObject_Repr(member);
+            result += Runtime.GetManagedString(ob.BorrowOrThrow());
+            result += " ";
             Console.WriteLine(result);
         }
 
@@ -40,23 +36,23 @@ namespace Python.Runtime
         }
 
         [Conditional("DEBUG")]
-        internal static void DumpType(IntPtr type)
+        internal static void DumpType(BorrowedReference type)
         {
-            IntPtr op = Marshal.ReadIntPtr(type, TypeOffset.tp_name);
+            IntPtr op = Util.ReadIntPtr(type, TypeOffset.tp_name);
             string name = Marshal.PtrToStringAnsi(op);
 
             Console.WriteLine("Dump type: {0}", name);
 
-            op = Marshal.ReadIntPtr(type, TypeOffset.ob_type);
-            Print("  type: ", op);
+            var objMember = Util.ReadRef(type, TypeOffset.ob_type);
+            Print("  type: ", objMember);
 
-            op = Marshal.ReadIntPtr(type, TypeOffset.tp_base);
-            Print("  base: ", op);
+            objMember = Util.ReadRef(type, TypeOffset.tp_base);
+            Print("  base: ", objMember);
 
-            op = Marshal.ReadIntPtr(type, TypeOffset.tp_bases);
-            Print("  bases: ", op);
+            objMember = Util.ReadRef(type, TypeOffset.tp_bases);
+            Print("  bases: ", objMember);
 
-            //op = Marshal.ReadIntPtr(type, TypeOffset.tp_mro);
+            //op = Util.ReadIntPtr(type, TypeOffset.tp_mro);
             //DebugUtil.Print("  mro: ", op);
 
 
@@ -67,33 +63,33 @@ namespace Python.Runtime
             {
                 int offset = entry.Value;
                 name = entry.Key;
-                op = Marshal.ReadIntPtr(type, offset);
+                op = Util.ReadIntPtr(type, offset);
                 Console.WriteLine("  {0}: {1}", name, op);
             }
 
             Console.WriteLine("");
             Console.WriteLine("");
 
-            op = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);
-            if (op == IntPtr.Zero)
+            objMember = Util.ReadRef(type, TypeOffset.tp_dict);
+            if (objMember == null)
             {
                 Console.WriteLine("  dict: null");
             }
             else
             {
-                Print("  dict: ", op);
+                Print("  dict: ", objMember);
             }
         }
 
         [Conditional("DEBUG")]
-        internal static void DumpInst(IntPtr ob)
+        internal static void DumpInst(BorrowedReference ob)
         {
-            IntPtr tp = Runtime.PyObject_TYPE(ob);
-            var sz = (int)Marshal.ReadIntPtr(tp, TypeOffset.tp_basicsize);
+            BorrowedReference tp = Runtime.PyObject_TYPE(ob);
+            nint sz = Util.ReadIntPtr(tp, TypeOffset.tp_basicsize);
 
-            for (var i = 0; i < sz; i += IntPtr.Size)
+            for (nint i = 0; i < sz; i += IntPtr.Size)
             {
-                var pp = new IntPtr(ob.ToInt64() + i);
+                var pp = new IntPtr(ob.DangerousGetAddress().ToInt64() + i);
                 IntPtr v = Marshal.ReadIntPtr(pp);
                 Console.WriteLine("offset {0}: {1}", i, v);
             }
@@ -139,9 +135,9 @@ namespace Python.Runtime
         }
 
         [Conditional("DEBUG")]
-        public static void AssertHasReferences(IntPtr obj)
+        public static void AssertHasReferences(BorrowedReference obj)
         {
-            long refcount = Runtime.Refcount(obj);
+            nint refcount = Runtime.Refcount(obj);
             Debug.Assert(refcount > 0, "Object refcount is 0 or less");
         }
 

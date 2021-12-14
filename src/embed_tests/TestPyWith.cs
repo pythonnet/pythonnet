@@ -37,7 +37,7 @@ class CmTest:
         return 5 / 0
 
 a = CmTest()
-", null, locals.Handle);
+", null, locals);
 
             var a = locals.GetItem("a");
 
@@ -76,7 +76,7 @@ class CmTest:
         return 5 / 0
 
 a = CmTest()
-", null, locals.Handle);
+", null, locals);
 
             var a = locals.GetItem("a");
             Py.With(a, cmTest =>

@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// to support natural array usage (indexing) from Python.
     /// </summary>
     [Serializable]
-    internal class ArrayObject : ClassBase
+    internal sealed class ArrayObject : ClassBase
     {
         internal ArrayObject(Type tp) : base(tp)
         {
@@ -22,16 +22,14 @@ namespace Python.Runtime
             return false;
         }
 
-        public static IntPtr tp_new(IntPtr tpRaw, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            if (kw != IntPtr.Zero)
+            if (kw != null)
             {
                 return Exceptions.RaiseTypeError("array constructor takes no keyword arguments");
             }
 
-            var tp = new BorrowedReference(tpRaw);
-
-            var self = GetManagedObject(tp) as ArrayObject;
+            var self = (ArrayObject)GetManagedObject(tp)!;
             if (!self.type.Valid)
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
@@ -46,12 +44,11 @@ namespace Python.Runtime
             if (dimensions.Length != 1)
             {
                 return CreateMultidimensional(arrType.GetElementType(), dimensions,
-                         shapeTuple: new BorrowedReference(args),
-                         pyType: tp)
-                       .DangerousMoveToPointerOrNull();
+                         shapeTuple: args,
+                         pyType: tp);
             }
 
-            IntPtr op = Runtime.PyTuple_GetItem(args, 0);
+            BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
 
             // create single dimensional array
             if (Runtime.PyInt_Check(op))
@@ -63,19 +60,17 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    return NewInstance(arrType.GetElementType(), tp, dimensions)
-                           .DangerousMoveToPointerOrNull();
+                    return NewInstance(arrType.GetElementType(), tp, dimensions);
                 }
             }
-            object result;
+            object? result;
 
             // this implements casting to Array[T]
             if (!Converter.ToManaged(op, arrType, out result, true))
             {
-                return IntPtr.Zero;
+                return default;
             }
-            return CLRObject.GetInstHandle(result, tp)
-                   .DangerousGetAddress();
+            return CLRObject.GetReference(result!, tp);
         }
 
         static NewReference CreateMultidimensional(Type elementType, long[] dimensions, BorrowedReference shapeTuple, BorrowedReference pyType)
@@ -104,6 +99,15 @@ namespace Python.Runtime
 
         static NewReference NewInstance(Type elementType, BorrowedReference arrayPyType, long[] dimensions)
         {
+            for (int dim = 0; dim < dimensions.Length; dim++)
+            {
+                if (dimensions[dim] < 0)
+                {
+                    Exceptions.SetError(Exceptions.ValueError, $"Non-negative number required (dims[{dim}])");
+                    return default;
+                }
+            }
+
             object result;
             try
             {
@@ -129,25 +133,25 @@ namespace Python.Runtime
                 Exceptions.SetError(Exceptions.MemoryError, oom.Message);
                 return default;
             }
-            return CLRObject.GetInstHandle(result, arrayPyType);
+            return CLRObject.GetReference(result, arrayPyType);
         }
 
 
         /// <summary>
         /// Implements __getitem__ for array types.
         /// </summary>
-        public new static IntPtr mp_subscript(IntPtr ob, IntPtr idx)
+        public static NewReference mp_subscript(BorrowedReference ob, BorrowedReference idx)
         {
-            var obj = (CLRObject)GetManagedObject(ob);
-            var arrObj = (ArrayObject)GetManagedObjectType(ob);
+            var obj = (CLRObject)GetManagedObject(ob)!;
+            var arrObj = (ArrayObject)GetManagedObject(Runtime.PyObject_TYPE(ob))!;
             if (!arrObj.type.Valid)
             {
                 return Exceptions.RaiseTypeError(arrObj.type.DeletedMessage);
             }
-            var items = obj.inst as Array;
+            var items = (Array)obj.inst;
             Type itemType = arrObj.type.Value.GetElementType();
             int rank = items.Rank;
-            nint index;
+            long index;
             object value;
 
             // Note that CLR 1.0 only supports int indexes - methods to
@@ -174,18 +178,16 @@ namespace Python.Runtime
 
                 if (index < 0)
                 {
-                    index = items.Length + index;
+                    index = items.LongLength + index;
                 }
 
-                try
-                {
-                    value = items.GetValue(index);
-                }
-                catch (IndexOutOfRangeException)
+                if (index < 0 || index >= items.LongLength)
                 {
                     Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                    return IntPtr.Zero;
+                    return default;
                 }
+
+                value = items.GetValue(index);
 
                 return Converter.ToPython(value, itemType);
             }
@@ -195,7 +197,7 @@ namespace Python.Runtime
             if (!Runtime.PyTuple_Check(idx))
             {
                 Exceptions.SetError(Exceptions.TypeError, "invalid index value");
-                return IntPtr.Zero;
+                return default;
             }
 
             var count = Runtime.PyTuple_Size(idx);
@@ -204,7 +206,7 @@ namespace Python.Runtime
 
             for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
+                BorrowedReference op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     return RaiseIndexMustBeIntegerError(op);
@@ -216,23 +218,23 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("invalid index value");
                 }
 
+                long len = items.GetLongLength(dimension);
+
                 if (index < 0)
                 {
-                    index = items.GetLength(dimension) + index;
+                    index = len + index;
+                }
+
+                if (index < 0 || index >= len)
+                {
+                    Exceptions.SetError(Exceptions.IndexError, "array index out of range");
+                    return default;
                 }
 
                 indices[dimension] = index;
             }
 
-            try
-            {
-                value = items.GetValue(indices);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                return IntPtr.Zero;
-            }
+            value = items.GetValue(indices);
 
             return Converter.ToPython(value, itemType);
         }
@@ -241,14 +243,14 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __setitem__ for array types.
         /// </summary>
-        public static new int mp_ass_subscript(IntPtr ob, IntPtr idx, IntPtr v)
+        public static int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
-            var obj = (CLRObject)GetManagedObject(ob);
-            var items = obj.inst as Array;
+            var obj = (CLRObject)GetManagedObject(ob)!;
+            var items = (Array)obj.inst;
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
-            nint index;
-            object value;
+            long index;
+            object? value;
 
             if (items.IsReadOnly)
             {
@@ -278,19 +280,16 @@ namespace Python.Runtime
 
                 if (index < 0)
                 {
-                    index = items.Length + index;
+                    index = items.LongLength + index;
                 }
 
-                try
-                {
-                    items.SetValue(value, index);
-                }
-                catch (IndexOutOfRangeException)
+                if (index < 0 || index >= items.LongLength)
                 {
                     Exceptions.SetError(Exceptions.IndexError, "array index out of range");
                     return -1;
                 }
 
+                items.SetValue(value, index);
                 return 0;
             }
 
@@ -305,7 +304,7 @@ namespace Python.Runtime
 
             for (int dimension = 0; dimension < count; dimension++)
             {
-                IntPtr op = Runtime.PyTuple_GetItem(idx, dimension);
+                BorrowedReference op = Runtime.PyTuple_GetItem(idx, dimension);
                 if (!Runtime.PyInt_Check(op))
                 {
                     RaiseIndexMustBeIntegerError(op);
@@ -319,28 +318,28 @@ namespace Python.Runtime
                     return -1;
                 }
 
+                long len = items.GetLongLength(dimension);
+
                 if (index < 0)
                 {
-                    index = items.GetLength(dimension) + index;
+                    index = len + index;
+                }
+
+                if (index < 0 || index >= len)
+                {
+                    Exceptions.SetError(Exceptions.IndexError, "array index out of range");
+                    return -1;
                 }
 
                 indices[dimension] = index;
             }
 
-            try
-            {
-                items.SetValue(value, indices);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                Exceptions.SetError(Exceptions.IndexError, "array index out of range");
-                return -1;
-            }
+            items.SetValue(value, indices);
 
             return 0;
         }
 
-        private static IntPtr RaiseIndexMustBeIntegerError(IntPtr idx)
+        private static NewReference RaiseIndexMustBeIntegerError(BorrowedReference idx)
         {
             string tpName = Runtime.PyObject_GetTypeName(idx);
             return Exceptions.RaiseTypeError($"array index has type {tpName}, expected an integer");
@@ -349,12 +348,12 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __contains__ for array types.
         /// </summary>
-        public static int sq_contains(IntPtr ob, IntPtr v)
+        public static int sq_contains(BorrowedReference ob, BorrowedReference v)
         {
-            var obj = (CLRObject)GetManagedObject(ob);
+            var obj = (CLRObject)GetManagedObject(ob)!;
             Type itemType = obj.inst.GetType().GetElementType();
-            var items = obj.inst as IList;
-            object value;
+            var items = (IList)obj.inst;
+            object? value;
 
             if (!Converter.ToManaged(v, itemType, out value, false))
             {
@@ -384,11 +383,11 @@ namespace Python.Runtime
                 Exceptions.SetError(Exceptions.BufferError, "only C-contiguous supported");
                 return -1;
             }
-            var self = (Array)((CLRObject)GetManagedObject(obj)).inst;
+            var self = (Array)((CLRObject)GetManagedObject(obj)!).inst;
             Type itemType = self.GetType().GetElementType();
 
             bool formatRequested = (flags & PyBUF.FORMATS) != 0;
-            string format = GetFormat(itemType);
+            string? format = GetFormat(itemType);
             if (formatRequested && format is null)
             {
                 Exceptions.SetError(Exceptions.BufferError, "unsupported element type: " + itemType.Name);
@@ -410,7 +409,7 @@ namespace Python.Runtime
             buffer = new Py_buffer
             {
                 buf = gcHandle.AddrOfPinnedObject(),
-                obj = Runtime.SelfIncRef(obj.DangerousGetAddress()),
+                obj = new NewReference(obj).DangerousMoveToPointer(),
                 len = (IntPtr)(self.LongLength*itemSize),
                 itemsize = (IntPtr)itemSize,
                 _readonly = false,
@@ -431,6 +430,8 @@ namespace Python.Runtime
             UnmanagedFree(ref buffer.shape);
             UnmanagedFree(ref buffer.strides);
             UnmanagedFree(ref buffer.suboffsets);
+
+            // TODO: decref buffer.obj?
 
             var gcHandle = (GCHandle)buffer._internal;
             gcHandle.Free();
@@ -498,7 +499,7 @@ namespace Python.Runtime
             [typeof(double)] = "d",
         };
 
-        static string GetFormat(Type elementType)
+        static string? GetFormat(Type elementType)
             => ItemFormats.TryGetValue(elementType, out string result) ? result : null;
 
         static readonly GetBufferProc getBufferProc = GetBuffer;
@@ -520,13 +521,13 @@ namespace Python.Runtime
         /// <summary>
         /// <see cref="TypeManager.InitializeSlots(IntPtr, Type, SlotsHolder)"/>
         /// </summary>
-        public static void InitializeSlots(IntPtr type, ISet<string> initialized, SlotsHolder slotsHolder)
+        public static void InitializeSlots(PyType type, ISet<string> initialized, SlotsHolder slotsHolder)
         {
             if (initialized.Add(nameof(TypeOffset.tp_as_buffer)))
             {
                 // TODO: only for unmanaged arrays
                 int offset = TypeOffset.GetSlotOffset(nameof(TypeOffset.tp_as_buffer));
-                Marshal.WriteIntPtr(type, offset, BufferProcsAddress);
+                Util.WriteIntPtr(type, offset, BufferProcsAddress);
             }
         }
     }

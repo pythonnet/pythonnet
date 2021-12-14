@@ -1,6 +1,7 @@
 namespace Python.Runtime
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
 
@@ -13,18 +14,21 @@ namespace Python.Runtime
         IntPtr pointer;
 
         /// <summary>Creates a <see cref="NewReference"/> pointing to the same object</summary>
+        [DebuggerHidden]
         public NewReference(BorrowedReference reference, bool canBeNull = false)
         {
             var address = canBeNull
                 ? reference.DangerousGetAddressOrNull()
                 : reference.DangerousGetAddress();
-            Runtime.XIncref(address);
+#pragma warning disable CS0618 // Type or member is obsolete
+            Runtime.XIncref(reference);
+#pragma warning restore CS0618 // Type or member is obsolete
             this.pointer = address;
         }
 
-        [Pure]
-        public static implicit operator BorrowedReference(in NewReference reference)
-            => new BorrowedReference(reference.pointer);
+        /// <summary>Creates a <see cref="NewReference"/> pointing to the same object</summary>
+        public NewReference(in NewReference reference, bool canBeNull = false)
+            : this(reference.BorrowNullable(), canBeNull) { }
 
         /// <summary>
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
@@ -34,9 +38,7 @@ namespace Python.Runtime
         {
             if (this.IsNull()) throw new NullReferenceException();
 
-            var result = new PyObject(this.pointer);
-            this.pointer = IntPtr.Zero;
-            return result;
+            return new PyObject(this.StealNullable());
         }
 
         /// <summary>Moves ownership of this instance to unmanged pointer</summary>
@@ -61,41 +63,49 @@ namespace Python.Runtime
         /// Returns <see cref="PyObject"/> wrapper around this reference, which now owns
         /// the pointer. Sets the original reference to <c>null</c>, as it no longer owns it.
         /// </summary>
-        public PyObject MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
-        /// <summary>
-        /// Call this method to move ownership of this reference to a Python C API function,
-        /// that steals reference passed to it.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StolenReference StealNullable()
-        {
-            IntPtr rawPointer = this.pointer;
-            this.pointer = IntPtr.Zero;
-            return new StolenReference(rawPointer);
-        }
+        public PyObject? MoveToPyObjectOrNull() => this.IsNull() ? null : this.MoveToPyObject();
 
         /// <summary>
         /// Call this method to move ownership of this reference to a Python C API function,
         /// that steals reference passed to it.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerHidden]
+        public StolenReference StealNullable() => StolenReference.TakeNullable(ref this.pointer);
+
+        /// <summary>
+        /// Call this method to move ownership of this reference to a Python C API function,
+        /// that steals reference passed to it.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerHidden]
         public StolenReference Steal()
         {
             if (this.IsNull()) throw new NullReferenceException();
 
             return this.StealNullable();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerHidden]
+        public StolenReference StealOrThrow()
+        {
+            if (this.IsNull()) throw PythonException.ThrowLastAsClrException();
+
+            return this.StealNullable();
+        }
+
         /// <summary>
         /// Removes this reference to a Python object, and sets it to <c>null</c>.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             if (this.IsNull())
             {
                 return;
             }
-            Runtime.XDecref(pointer);
-            pointer = IntPtr.Zero;
+            Runtime.XDecref(this.Steal());
         }
 
         /// <summary>
@@ -106,9 +116,12 @@ namespace Python.Runtime
             => new NewReference {pointer = pointer};
 
         [Pure]
+        internal static IntPtr DangerousGetAddressOrNull(in NewReference reference) => reference.pointer;
+        [Pure]
         internal static IntPtr DangerousGetAddress(in NewReference reference)
             => IsNull(reference) ? throw new NullReferenceException() : reference.pointer;
         [Pure]
+        [DebuggerHidden]
         internal static bool IsNull(in NewReference reference)
             => reference.pointer == IntPtr.Zero;
     }
@@ -122,10 +135,26 @@ namespace Python.Runtime
     {
         /// <summary>Gets a raw pointer to the Python object</summary>
         [Pure]
+        [DebuggerHidden]
         public static IntPtr DangerousGetAddress(this in NewReference reference)
             => NewReference.DangerousGetAddress(reference);
         [Pure]
+        [DebuggerHidden]
         public static bool IsNull(this in NewReference reference)
             => NewReference.IsNull(reference);
+
+
+        [Pure]
+        [DebuggerHidden]
+        public static BorrowedReference BorrowNullable(this in NewReference reference)
+            => new(NewReference.DangerousGetAddressOrNull(reference));
+        [Pure]
+        [DebuggerHidden]
+        public static BorrowedReference Borrow(this in NewReference reference)
+            => reference.IsNull() ? throw new NullReferenceException() : reference.BorrowNullable();
+        [Pure]
+        [DebuggerHidden]
+        public static BorrowedReference BorrowOrThrow(this in NewReference reference)
+            => reference.IsNull() ? throw PythonException.ThrowLastAsClrException() : reference.BorrowNullable();
     }
 }

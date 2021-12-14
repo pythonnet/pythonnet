@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -24,7 +23,7 @@ namespace Python.Runtime
         {
         }
 
-        internal static Exception ToException(BorrowedReference ob)
+        internal static Exception? ToException(BorrowedReference ob)
         {
             var co = GetManagedObject(ob) as CLRObject;
             return co?.inst as Exception;
@@ -33,9 +32,9 @@ namespace Python.Runtime
         /// <summary>
         /// Exception __repr__ implementation
         /// </summary>
-        public new static IntPtr tp_repr(IntPtr ob)
+        public new static NewReference tp_repr(BorrowedReference ob)
         {
-            Exception e = ToException(new BorrowedReference(ob));
+            Exception? e = ToException(ob);
             if (e == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");
@@ -56,9 +55,9 @@ namespace Python.Runtime
         /// <summary>
         /// Exception __str__ implementation
         /// </summary>
-        public new static IntPtr tp_str(IntPtr ob)
+        public new static NewReference tp_str(BorrowedReference ob)
         {
-            Exception e = ToException(new BorrowedReference(ob));
+            Exception? e = ToException(ob);
             if (e == null)
             {
                 return Exceptions.RaiseTypeError("invalid object");
@@ -87,8 +86,11 @@ namespace Python.Runtime
     /// </remarks>
     internal static class Exceptions
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        // set in Initialize
         internal static PyObject warnings_module;
         internal static PyObject exceptions_module;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         /// <summary>
         /// Initialization performed on startup of the Python runtime.
@@ -101,14 +103,14 @@ namespace Python.Runtime
             Type type = typeof(Exceptions);
             foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                IntPtr op = Runtime.PyObject_GetAttrString(exceptions_module.obj, fi.Name);
-                if (op != IntPtr.Zero)
+                using var op = Runtime.PyObject_GetAttrString(exceptions_module.obj, fi.Name);
+                if (!@op.IsNull())
                 {
-                    fi.SetValue(type, op);
+                    fi.SetValue(type, op.MoveToPyObject());
                 }
                 else
                 {
-                    fi.SetValue(type, IntPtr.Zero);
+                    fi.SetValue(type, null);
                     DebugUtil.Print($"Unknown exception: {fi.Name}");
                 }
             }
@@ -128,13 +130,13 @@ namespace Python.Runtime
             Type type = typeof(Exceptions);
             foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                var op = (IntPtr)fi.GetValue(type);
-                if (op == IntPtr.Zero)
+                var op = (PyObject?)fi.GetValue(type);
+                if (op is null)
                 {
                     continue;
                 }
-                Runtime.XDecref(op);
-                fi.SetValue(null, IntPtr.Zero);
+                op.Dispose();
+                fi.SetValue(null, null);
             }
             exceptions_module.Dispose();
             warnings_module.Dispose();
@@ -149,22 +151,26 @@ namespace Python.Runtime
         /// </summary>
         internal static void SetArgsAndCause(BorrowedReference ob, Exception e)
         {
-            IntPtr args;
+            NewReference args;
             if (!string.IsNullOrEmpty(e.Message))
             {
                 args = Runtime.PyTuple_New(1);
-                IntPtr msg = Runtime.PyString_FromString(e.Message);
-                Runtime.PyTuple_SetItem(args, 0, msg);
+                using var msg = Runtime.PyString_FromString(e.Message);
+                Runtime.PyTuple_SetItem(args.Borrow(), 0, msg.StealOrThrow());
             }
             else
             {
                 args = Runtime.PyTuple_New(0);
             }
 
-            using var argsTuple = NewReference.DangerousFromPointer(args);
-
-            if (Runtime.PyObject_SetAttrString(ob, "args", argsTuple) != 0)
-                throw PythonException.ThrowLastAsClrException();
+            using (args)
+            {
+                if (Runtime.PyObject_SetAttrString(ob, "args", args.Borrow()) != 0)
+                {
+                    args.Dispose();
+                    throw PythonException.ThrowLastAsClrException();
+                }
+            }
 
             if (e.InnerException != null)
             {
@@ -178,12 +184,14 @@ namespace Python.Runtime
         /// Shortcut for (pointer == NULL) -&gt; throw PythonException
         /// </summary>
         /// <param name="pointer">Pointer to a Python object</param>
-        internal static void ErrorCheck(BorrowedReference pointer)
+        internal static BorrowedReference ErrorCheck(BorrowedReference pointer)
         {
             if (pointer.IsNull)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
+
+            return pointer;
         }
 
         internal static void ErrorCheck(IntPtr pointer) => ErrorCheck(new BorrowedReference(pointer));
@@ -215,21 +223,18 @@ namespace Python.Runtime
         /// Returns true if the current Python exception matches the given
         /// Python object. This is a wrapper for PyErr_ExceptionMatches.
         /// </remarks>
-        public static bool ExceptionMatches(IntPtr ob)
+        public static bool ExceptionMatches(BorrowedReference ob)
         {
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
         /// <summary>
-        /// SetError Method
-        /// </summary>
-        /// <remarks>
         /// Sets the current Python exception given a native string.
         /// This is a wrapper for the Python PyErr_SetString call.
-        /// </remarks>
-        public static void SetError(IntPtr ob, string value)
+        /// </summary>
+        public static void SetError(BorrowedReference type, string message)
         {
-            Runtime.PyErr_SetString(ob, value);
+            Runtime.PyErr_SetString(type, message);
         }
 
         /// <summary>
@@ -239,9 +244,9 @@ namespace Python.Runtime
         /// Sets the current Python exception given a Python object.
         /// This is a wrapper for the Python PyErr_SetObject call.
         /// </remarks>
-        public static void SetError(IntPtr type, IntPtr exceptionObject)
+        public static void SetError(BorrowedReference type, BorrowedReference exceptionObject)
         {
-            Runtime.PyErr_SetObject(new BorrowedReference(type), new BorrowedReference(exceptionObject));
+            Runtime.PyErr_SetObject(type, exceptionObject);
         }
 
         internal const string DispatchInfoAttribute = "__dispatch_info__";
@@ -269,19 +274,19 @@ namespace Python.Runtime
                 return true;
             }
 
-            using var instance = Converter.ToPythonReference(e);
+            using var instance = Converter.ToPython(e);
             if (instance.IsNull()) return false;
 
             var exceptionInfo = ExceptionDispatchInfo.Capture(e);
-            using var pyInfo = Converter.ToPythonReference(exceptionInfo);
+            using var pyInfo = Converter.ToPython(exceptionInfo);
 
-            if (Runtime.PyObject_SetAttrString(instance, DispatchInfoAttribute, pyInfo) != 0)
+            if (Runtime.PyObject_SetAttrString(instance.Borrow(), DispatchInfoAttribute, pyInfo.Borrow()) != 0)
                 return false;
 
-            Debug.Assert(Runtime.PyObject_TypeCheck(instance, new BorrowedReference(BaseException)));
+            Debug.Assert(Runtime.PyObject_TypeCheck(instance.Borrow(), BaseException));
 
-            var type = Runtime.PyObject_TYPE(instance);
-            Runtime.PyErr_SetObject(type, instance);
+            var type = Runtime.PyObject_TYPE(instance.Borrow());
+            Runtime.PyErr_SetObject(type, instance.Borrow());
             return true;
         }
 
@@ -293,7 +298,7 @@ namespace Python.Runtime
         {
             var currentException = PythonException.FetchCurrentRaw();
             currentException.Normalize();
-            using var causeInstance = Converter.ToPythonReference(cause);
+            using var causeInstance = Converter.ToPython(cause);
             Runtime.PyException_SetCause(currentException.Value!.Reference, causeInstance.Steal());
             currentException.Restore();
         }
@@ -328,34 +333,32 @@ namespace Python.Runtime
         /// <summary>
         /// Alias for Python's warnings.warn() function.
         /// </summary>
-        public static void warn(string message, IntPtr exception, int stacklevel)
+        public static void warn(string message, BorrowedReference exception, int stacklevel)
         {
-            if (exception == IntPtr.Zero ||
-                (Runtime.PyObject_IsSubclass(new BorrowedReference(exception), new BorrowedReference(Exceptions.Warning)) != 1))
+            if (exception == null ||
+                (Runtime.PyObject_IsSubclass(exception, Exceptions.Warning) != 1))
             {
                 Exceptions.RaiseTypeError("Invalid exception");
             }
 
-            IntPtr warn = Runtime.PyObject_GetAttrString(warnings_module.obj, "warn");
-            Exceptions.ErrorCheck(warn);
+            using var warn = Runtime.PyObject_GetAttrString(warnings_module.obj, "warn");
+            Exceptions.ErrorCheck(warn.Borrow());
 
-            IntPtr args = Runtime.PyTuple_New(3);
-            IntPtr msg = Runtime.PyString_FromString(message);
-            Runtime.XIncref(exception); // PyTuple_SetItem steals a reference
-            IntPtr level = Runtime.PyInt_FromInt32(stacklevel);
-            Runtime.PyTuple_SetItem(args, 0, msg);
+            using var argsTemp = Runtime.PyTuple_New(3);
+            BorrowedReference args = argsTemp.BorrowOrThrow();
+
+            using var msg = Runtime.PyString_FromString(message);
+            Runtime.PyTuple_SetItem(args, 0, msg.StealOrThrow());
             Runtime.PyTuple_SetItem(args, 1, exception);
-            Runtime.PyTuple_SetItem(args, 2, level);
 
-            IntPtr result = Runtime.PyObject_CallObject(warn, args);
-            Exceptions.ErrorCheck(result);
+            using var level = Runtime.PyInt_FromInt32(stacklevel);
+            Runtime.PyTuple_SetItem(args, 2, level.StealOrThrow());
 
-            Runtime.XDecref(warn);
-            Runtime.XDecref(result);
-            Runtime.XDecref(args);
+            using var result = Runtime.PyObject_CallObject(warn.Borrow(), args);
+            Exceptions.ErrorCheck(result.Borrow());
         }
 
-        public static void warn(string message, IntPtr exception)
+        public static void warn(string message, BorrowedReference exception)
         {
             warn(message, exception, 1);
         }
@@ -375,28 +378,28 @@ namespace Python.Runtime
         //====================================================================
 
         /// <summary>
-        /// Raises a TypeError exception and attaches any existing exception as its cause.
+        /// Raises a <see cref="TypeError"/> and attaches any existing exception as its cause.
         /// </summary>
         /// <param name="message">The exception message</param>
-        /// <returns><c>IntPtr.Zero</c></returns>
-        internal static IntPtr RaiseTypeError(string message)
+        /// <returns><c>null</c></returns>
+        internal static NewReference RaiseTypeError(string message)
         {
             var cause = PythonException.FetchCurrentOrNullRaw();
             cause?.Normalize();
 
             Exceptions.SetError(Exceptions.TypeError, message);
 
-            if (cause is null) return IntPtr.Zero;
+            if (cause is null) return default;
 
             var typeError = PythonException.FetchCurrentRaw();
             typeError.Normalize();
 
             Runtime.PyException_SetCause(
-                typeError.Value!.Reference,
-                new NewReference(cause.Value!.Reference).Steal());
+                typeError.Value!,
+                new NewReference(cause.Value!).Steal());
             typeError.Restore();
 
-            return IntPtr.Zero;
+            return default;
         }
 
         // 2010-11-16: Arranged in python (2.6 & 2.7) source header file order
@@ -404,45 +407,47 @@ namespace Python.Runtime
            public static variables on the Exceptions class filled in from
            the python class using reflection in Initialize() looked up by
 		   name, not position. */
-        public static IntPtr BaseException;
-        public static IntPtr Exception;
-        public static IntPtr StopIteration;
-        public static IntPtr GeneratorExit;
-        public static IntPtr ArithmeticError;
-        public static IntPtr LookupError;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        // set in Initialize
+        public static PyObject BaseException;
+        public static PyObject Exception;
+        public static PyObject StopIteration;
+        public static PyObject GeneratorExit;
+        public static PyObject ArithmeticError;
+        public static PyObject LookupError;
 
-        public static IntPtr AssertionError;
-        public static IntPtr AttributeError;
-        public static IntPtr BufferError;
-        public static IntPtr EOFError;
-        public static IntPtr FloatingPointError;
-        public static IntPtr EnvironmentError;
-        public static IntPtr IOError;
-        public static IntPtr OSError;
-        public static IntPtr ImportError;
-        public static IntPtr ModuleNotFoundError;
-        public static IntPtr IndexError;
-        public static IntPtr KeyError;
-        public static IntPtr KeyboardInterrupt;
-        public static IntPtr MemoryError;
-        public static IntPtr NameError;
-        public static IntPtr OverflowError;
-        public static IntPtr RuntimeError;
-        public static IntPtr NotImplementedError;
-        public static IntPtr SyntaxError;
-        public static IntPtr IndentationError;
-        public static IntPtr TabError;
-        public static IntPtr ReferenceError;
-        public static IntPtr SystemError;
-        public static IntPtr SystemExit;
-        public static IntPtr TypeError;
-        public static IntPtr UnboundLocalError;
-        public static IntPtr UnicodeError;
-        public static IntPtr UnicodeEncodeError;
-        public static IntPtr UnicodeDecodeError;
-        public static IntPtr UnicodeTranslateError;
-        public static IntPtr ValueError;
-        public static IntPtr ZeroDivisionError;
+        public static PyObject AssertionError;
+        public static PyObject AttributeError;
+        public static PyObject BufferError;
+        public static PyObject EOFError;
+        public static PyObject FloatingPointError;
+        public static PyObject EnvironmentError;
+        public static PyObject IOError;
+        public static PyObject OSError;
+        public static PyObject ImportError;
+        public static PyObject ModuleNotFoundError;
+        public static PyObject IndexError;
+        public static PyObject KeyError;
+        public static PyObject KeyboardInterrupt;
+        public static PyObject MemoryError;
+        public static PyObject NameError;
+        public static PyObject OverflowError;
+        public static PyObject RuntimeError;
+        public static PyObject NotImplementedError;
+        public static PyObject SyntaxError;
+        public static PyObject IndentationError;
+        public static PyObject TabError;
+        public static PyObject ReferenceError;
+        public static PyObject SystemError;
+        public static PyObject SystemExit;
+        public static PyObject TypeError;
+        public static PyObject UnboundLocalError;
+        public static PyObject UnicodeError;
+        public static PyObject UnicodeEncodeError;
+        public static PyObject UnicodeDecodeError;
+        public static PyObject UnicodeTranslateError;
+        public static PyObject ValueError;
+        public static PyObject ZeroDivisionError;
 //#ifdef MS_WINDOWS
         //public static IntPtr WindowsError;
 //#endif
@@ -457,15 +462,16 @@ namespace Python.Runtime
 
 
         /* Predefined warning categories */
-        public static IntPtr Warning;
-        public static IntPtr UserWarning;
-        public static IntPtr DeprecationWarning;
-        public static IntPtr PendingDeprecationWarning;
-        public static IntPtr SyntaxWarning;
-        public static IntPtr RuntimeWarning;
-        public static IntPtr FutureWarning;
-        public static IntPtr ImportWarning;
-        public static IntPtr UnicodeWarning;
+        public static PyObject Warning;
+        public static PyObject UserWarning;
+        public static PyObject DeprecationWarning;
+        public static PyObject PendingDeprecationWarning;
+        public static PyObject SyntaxWarning;
+        public static PyObject RuntimeWarning;
+        public static PyObject FutureWarning;
+        public static PyObject ImportWarning;
+        public static PyObject UnicodeWarning;
         //PyAPI_DATA(PyObject *) PyExc_BytesWarning;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     }
 }

@@ -18,14 +18,14 @@ namespace Python.Runtime
     internal class MethodObject : ExtensionType
     {
         [NonSerialized]
-        private MethodInfo[] _info = null;
+        private MethodInfo[]? _info = null;
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
-        internal MethodBinding unbound;
+        internal PyObject? unbound;
         internal readonly MethodBinder binder;
         internal bool is_static = false;
 
-        internal IntPtr doc;
+        internal PyString? doc;
         internal Type type;
 
         public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
@@ -58,12 +58,12 @@ namespace Python.Runtime
             }
         }
 
-        public virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
+        public virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
             return Invoke(inst, args, kw, null);
         }
 
-        public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw, MethodBase info)
+        public virtual NewReference Invoke(BorrowedReference target, BorrowedReference args, BorrowedReference kw, MethodBase? info)
         {
             return binder.Invoke(target, args, kw, info, this.info);
         }
@@ -71,11 +71,11 @@ namespace Python.Runtime
         /// <summary>
         /// Helper to get docstrings from reflected method / param info.
         /// </summary>
-        internal IntPtr GetDocString()
+        internal NewReference GetDocString()
         {
-            if (doc != IntPtr.Zero)
+            if (doc is not null)
             {
-                return doc;
+                return new NewReference(doc);
             }
             var str = "";
             Type marker = typeof(DocStringAttribute);
@@ -97,8 +97,8 @@ namespace Python.Runtime
                     str += attr.DocString;
                 }
             }
-            doc = Runtime.PyString_FromString(str);
-            return doc;
+            doc = new PyString(str);
+            return new NewReference(doc);
         }
 
         internal NewReference GetName()
@@ -108,7 +108,7 @@ namespace Python.Runtime
                 Exceptions.SetError(Exceptions.AttributeError, "a method has no name");
                 return default;
             }
-            return NewReference.DangerousFromPointer(Runtime.PyString_FromString(names.First()));
+            return Runtime.PyString_FromString(names.First());
         }
 
 
@@ -133,9 +133,9 @@ namespace Python.Runtime
         /// <summary>
         /// Descriptor __getattribute__ implementation.
         /// </summary>
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
         {
-            var self = (MethodObject)GetManagedObject(ob);
+            var self = (MethodObject)GetManagedObject(ob)!;
 
             if (!Runtime.PyString_Check(key))
             {
@@ -144,9 +144,7 @@ namespace Python.Runtime
 
             if (Runtime.PyUnicode_Compare(key, PyIdentifier.__doc__) == 0)
             {
-                IntPtr doc = self.GetDocString();
-                Runtime.XIncref(doc);
-                return doc;
+                return self.GetDocString();
             }
 
             return Runtime.PyObject_GenericGetAttr(ob, key);
@@ -156,25 +154,21 @@ namespace Python.Runtime
         /// Descriptor __get__ implementation. Accessing a CLR method returns
         /// a "bound" method similar to a Python bound method.
         /// </summary>
-        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
+        public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
-            var self = (MethodObject)GetManagedObject(ds);
-            MethodBinding binding;
+            var self = (MethodObject)GetManagedObject(ds)!;
 
             // If the method is accessed through its type (rather than via
             // an instance) we return an 'unbound' MethodBinding that will
             // cached for future accesses through the type.
 
-            if (ob == IntPtr.Zero)
+            if (ob == null)
             {
-                if (self.unbound == null)
+                if (self.unbound is null)
                 {
-                    self.unbound = new MethodBinding(self, IntPtr.Zero, tp);
+                    self.unbound = new PyObject(new MethodBinding(self, target: null, targetType: new PyType(tp)).Alloc().Steal());
                 }
-                binding = self.unbound;
-                Runtime.XIncref(binding.pyHandle);
-                ;
-                return binding.pyHandle;
+                return new NewReference(self.unbound);
             }
 
             if (Runtime.PyObject_IsInstance(ob, tp) < 1)
@@ -192,45 +186,20 @@ namespace Python.Runtime
                 && obj.inst is IPythonDerivedType
                 && self.type.IsInstanceOfType(obj.inst))
             {
-                ClassBase basecls = ClassManager.GetClass(self.type);
-                binding = new MethodBinding(self, ob, basecls.pyHandle);
-                return binding.pyHandle;
+                var basecls = ClassManager.GetClass(self.type);
+                return new MethodBinding(self, new PyObject(ob), basecls).Alloc();
             }
 
-            binding = new MethodBinding(self, ob, tp);
-            return binding.pyHandle;
+            return new MethodBinding(self, target: new PyObject(ob), targetType: new PyType(tp)).Alloc();
         }
 
         /// <summary>
         /// Descriptor __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (MethodObject)GetManagedObject(ob);
+            var self = (MethodObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<method '{self.name}'>");
-        }
-
-        protected override void Clear()
-        {
-            Runtime.Py_CLEAR(ref this.doc);
-            if (this.unbound != null)
-            {
-                Runtime.XDecref(this.unbound.pyHandle);
-                this.unbound = null;
-            }
-
-            ClearObjectDict(this.pyHandle);
-            base.Clear();
-        }
-
-        protected override void OnSave(InterDomainContext context)
-        {
-            base.OnSave(context);
-            if (unbound != null)
-            {
-                Runtime.XIncref(unbound.pyHandle);
-            }
-            Runtime.XIncref(doc);
         }
     }
 }

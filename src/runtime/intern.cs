@@ -1,17 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 namespace Python.Runtime
 {
     static partial class InternString
     {
-        private static Dictionary<string, IntPtr> _string2interns;
-        private static Dictionary<IntPtr, string> _intern2strings;
+        private static readonly Dictionary<string, PyString> _string2interns = new();
+        private static readonly Dictionary<IntPtr, string> _intern2strings = new();
+        const BindingFlags PyIdentifierFieldFlags = BindingFlags.Static | BindingFlags.NonPublic;
 
         static InternString()
         {
-            var identifierNames = typeof(PyIdentifier).GetFields().Select(fi => fi.Name);
+            var identifierNames = typeof(PyIdentifier).GetFields(PyIdentifierFieldFlags)
+                                    .Select(fi => fi.Name.Substring(1));
             var validNames = new HashSet<string>(identifierNames);
             if (validNames.Count != _builtinNames.Length)
             {
@@ -28,30 +32,34 @@ namespace Python.Runtime
 
         public static void Initialize()
         {
-            _string2interns = new Dictionary<string, IntPtr>();
-            _intern2strings = new Dictionary<IntPtr, string>();
+            Debug.Assert(_string2interns.Count == 0);
 
             Type type = typeof(PyIdentifier);
             foreach (string name in _builtinNames)
             {
-                IntPtr op = Runtime.PyUnicode_InternFromString(name);
+                NewReference pyStr = Runtime.PyUnicode_InternFromString(name);
+                var op = new PyString(pyStr.StealOrThrow());
+                Debug.Assert(name == op.ToString());
                 SetIntern(name, op);
-                type.GetField(name).SetValue(null, op);
+                var field = type.GetField("f" + name, PyIdentifierFieldFlags)!;
+                field.SetValue(null, op.rawPtr);
             }
         }
 
         public static void Shutdown()
         {
-            foreach (var entry in _intern2strings)
+            foreach (var entry in _string2interns)
             {
-                Runtime.XDecref(entry.Key);
-                typeof(PyIdentifier).GetField(entry.Value).SetValue(null, IntPtr.Zero);
+                var field = typeof(PyIdentifier).GetField("f" + entry.Value, PyIdentifierFieldFlags)!;
+                entry.Value.Dispose();
+                field.SetValue(null, IntPtr.Zero);
             }
-            _string2interns = null;
-            _intern2strings = null;
+
+            _string2interns.Clear();
+            _intern2strings.Clear();
         }
 
-        public static string GetManagedString(IntPtr op)
+        public static string? GetManagedString(BorrowedReference op)
         {
             string s;
             if (TryGetInterned(op, out s))
@@ -61,15 +69,15 @@ namespace Python.Runtime
             return Runtime.GetManagedString(op);
         }
 
-        public static bool TryGetInterned(IntPtr op, out string s)
+        public static bool TryGetInterned(BorrowedReference op, out string s)
         {
-            return _intern2strings.TryGetValue(op, out s);
+            return _intern2strings.TryGetValue(op.DangerousGetAddress(), out s);
         }
 
-        private static void SetIntern(string s, IntPtr op)
+        private static void SetIntern(string s, PyString op)
         {
             _string2interns.Add(s, op);
-            _intern2strings.Add(op, s);
+            _intern2strings.Add(op.rawPtr, s);
         }
     }
 }

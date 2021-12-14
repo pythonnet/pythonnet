@@ -37,7 +37,7 @@ namespace Python.EmbeddingTest
             locals.SetItem("sys", sys);
             locals.SetItem("a", new PyInt(10));
 
-            object b = PythonEngine.Eval("sys.attr1 + a + 1", null, locals.Handle)
+            object b = PythonEngine.Eval("sys.attr1 + a + 1", null, locals)
                 .AsManagedObject(typeof(int));
             Assert.AreEqual(111, b);
         }
@@ -51,7 +51,7 @@ namespace Python.EmbeddingTest
             locals.SetItem("sys", sys);
             locals.SetItem("a", new PyInt(10));
 
-            PythonEngine.Exec("c = sys.attr1 + a + 1", null, locals.Handle);
+            PythonEngine.Exec("c = sys.attr1 + a + 1", null, locals);
             object c = locals.GetItem("c").AsManagedObject(typeof(int));
             Assert.AreEqual(111, c);
         }

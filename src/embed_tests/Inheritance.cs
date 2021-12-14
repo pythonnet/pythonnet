@@ -13,8 +13,8 @@ namespace Python.EmbeddingTest
         public void SetUp()
         {
             PythonEngine.Initialize();
-            var locals = new PyDict();
-            PythonEngine.Exec(InheritanceTestBaseClassWrapper.ClassSourceCode, locals: locals.Handle);
+            using var locals = new PyDict();
+            PythonEngine.Exec(InheritanceTestBaseClassWrapper.ClassSourceCode, locals: locals);
             ExtraBaseTypeProvider.ExtraBase = new PyType(locals[InheritanceTestBaseClassWrapper.ClassName]);
             var baseTypeProviders = PythonEngine.InteropConfiguration.PythonBaseTypeProviders;
             baseTypeProviders.Add(new ExtraBaseTypeProvider());
@@ -172,7 +172,7 @@ namespace Python.EmbeddingTest
                     {
                         return scope.Eval<int>($"super(this.__class__, this).{nameof(XProp)}");
                     }
-                    catch (PythonException ex) when (ex.Type.Handle == Exceptions.AttributeError)
+                    catch (PythonException ex) when (PythonReferenceComparer.Instance.Equals(ex.Type, Exceptions.AttributeError))
                     {
                         if (this.extras.TryGetValue(nameof(this.XProp), out object value))
                             return (int)value;

@@ -31,7 +31,7 @@ namespace Python.EmbeddingTest
             using var doc = new StrPtr(docStr, Encoding.UTF8);
             var spec = new TypeSpec(
                 name: name,
-                basicSize: Marshal.ReadInt32(Runtime.Runtime.PyBaseObjectType, TypeOffset.tp_basicsize),
+                basicSize: Util.ReadInt32(Runtime.Runtime.PyBaseObjectType, TypeOffset.tp_basicsize),
                 slots: new TypeSpec.Slot[] {
                     new (TypeSlotID.tp_doc, doc.RawPointer),
                 },

@@ -13,7 +13,7 @@ namespace Python.Runtime
     [Serializable]
     internal class InterfaceObject : ClassBase
     {
-        internal ConstructorInfo ctor;
+        internal ConstructorInfo? ctor;
 
         internal InterfaceObject(Type tp) : base(tp)
         {
@@ -34,9 +34,9 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __new__ for reflected interface types.
         /// </summary>
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            var self = (InterfaceObject)GetManagedObject(tp);
+            var self = (InterfaceObject)GetManagedObject(tp)!;
             if (!self.type.Valid)
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
@@ -47,13 +47,13 @@ namespace Python.Runtime
 
             if (nargs == 1)
             {
-                IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference inst = Runtime.PyTuple_GetItem(args, 0);
                 var co = GetManagedObject(inst) as CLRObject;
 
                 if (co == null || !type.IsInstanceOfType(co.inst))
                 {
                     Exceptions.SetError(Exceptions.TypeError, $"object does not implement {type.Name}");
-                    return IntPtr.Zero;
+                    return default;
                 }
 
                 obj = co.inst;
@@ -66,50 +66,49 @@ namespace Python.Runtime
                 if (obj == null || !type.IsInstanceOfType(obj))
                 {
                     Exceptions.SetError(Exceptions.TypeError, "CoClass default constructor failed");
-                    return IntPtr.Zero;
+                    return default;
                 }
             }
 
             else
             {
                 Exceptions.SetError(Exceptions.TypeError, "interface takes exactly one argument");
-                return IntPtr.Zero;
+                return default;
             }
 
-            return self.WrapObject(obj);
+            return self.TryWrapObject(obj);
         }
 
         /// <summary>
         /// Wrap the given object in an interface object, so that only methods
         /// of the interface are available.
         /// </summary>
-        public IntPtr WrapObject(object impl)
-        {
-            var objPtr = CLRObject.GetInstHandle(impl, pyHandle);
-            return objPtr;
-        }
+        public NewReference TryWrapObject(object impl)
+            => this.type.Valid
+                ? CLRObject.GetReference(impl, ClassManager.GetClass(this.type.Value))
+                : Exceptions.RaiseTypeError(this.type.DeletedMessage);
 
         /// <summary>
         /// Expose the wrapped implementation through attributes in both
         /// converted/encoded (__implementation__) and raw (__raw_implementation__) form.
         /// </summary>
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
         {
-            var clrObj = (CLRObject)GetManagedObject(ob);
+            var clrObj = (CLRObject)GetManagedObject(ob)!;
 
             if (!Runtime.PyString_Check(key))
             {
                 return Exceptions.RaiseTypeError("string expected");
             }
 
-            string name = Runtime.GetManagedString(key);
+            string? name = Runtime.GetManagedString(key);
             if (name == "__implementation__")
             {
                 return Converter.ToPython(clrObj.inst);
             }
             else if (name == "__raw_implementation__")
             {
-                return CLRObject.GetInstHandle(clrObj.inst);
+                return CLRObject.GetReference(clrObj.inst);
             }
 
             return Runtime.PyObject_GenericGetAttr(ob, key);

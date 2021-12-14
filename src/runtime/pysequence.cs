@@ -1,5 +1,5 @@
-#nullable enable
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -10,10 +10,12 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/sequence.html
     /// for details.
     /// </summary>
+    [Serializable]
     public class PySequence : PyIterable
     {
         internal PySequence(BorrowedReference reference) : base(reference) { }
         internal PySequence(in StolenReference reference) : base(reference) { }
+        protected PySequence(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         /// <summary>
         /// Creates new instance from an existing object.
@@ -43,12 +45,9 @@ namespace Python.Runtime
         /// </summary>
         public PyObject GetSlice(int i1, int i2)
         {
-            IntPtr op = Runtime.PySequence_GetSlice(obj, i1, i2);
-            if (op == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(op);
+            using var op = Runtime.PySequence_GetSlice(obj, i1, i2);
+            PythonException.ThrowIfIsNull(op);
+            return op.MoveToPyObject();
         }
 
 
@@ -87,11 +86,11 @@ namespace Python.Runtime
         /// Return the index of the given item in the sequence, or -1 if
         /// the item does not appear in the sequence.
         /// </summary>
-        public int Index(PyObject item)
+        public nint Index(PyObject item)
         {
             if (item is null) throw new ArgumentNullException(nameof(item));
 
-            int r = Runtime.PySequence_Index(obj, item.obj);
+            nint r = Runtime.PySequence_Index(obj, item.obj);
             if (r < 0)
             {
                 Runtime.PyErr_Clear();
@@ -99,6 +98,17 @@ namespace Python.Runtime
             }
             return r;
         }
+
+        /// <summary>
+        /// Return the index of the given item in the sequence, or -1 if
+        /// the item does not appear in the sequence.
+        /// </summary>
+        public int Index32(PyObject item) => checked((int)Index(item));
+        /// <summary>
+        /// Return the index of the given item in the sequence, or -1 if
+        /// the item does not appear in the sequence.
+        /// </summary>
+        public long Index64(PyObject item) => Index(item);
 
 
         /// <summary>
@@ -126,12 +136,9 @@ namespace Python.Runtime
         {
             if (other is null) throw new ArgumentNullException(nameof(other));
 
-            IntPtr op = Runtime.PySequence_Concat(obj, other.obj);
-            if (op == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(op);
+            using var op = Runtime.PySequence_Concat(obj, other.obj);
+            PythonException.ThrowIfIsNull(op);
+            return op.MoveToPyObject();
         }
 
 
@@ -141,12 +148,9 @@ namespace Python.Runtime
         /// </summary>
         public PyObject Repeat(int count)
         {
-            IntPtr op = Runtime.PySequence_Repeat(obj, count);
-            if (op == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(op);
+            using var op = Runtime.PySequence_Repeat(obj, count);
+            PythonException.ThrowIfIsNull(op);
+            return op.MoveToPyObject();
         }
     }
 }

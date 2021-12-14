@@ -1,17 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
+    [Serializable]
     public class PyIterable : PyObject, IEnumerable<PyObject>
     {
-        internal PyIterable(IntPtr ptr) : base(ptr)
-        {
-        }
-
         internal PyIterable(BorrowedReference reference) : base(reference) { }
         internal PyIterable(in StolenReference reference) : base(reference) { }
+        protected PyIterable(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
         /// <summary>
         /// Creates new instance from an existing object.

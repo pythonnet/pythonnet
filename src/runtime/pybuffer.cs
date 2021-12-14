@@ -15,7 +15,7 @@ namespace Python.Runtime
         {
             _view = new Py_buffer();
 
-            if (Runtime.PyObject_GetBuffer(exporter.Handle, ref _view, (int)flags) < 0)
+            if (Runtime.PyObject_GetBuffer(exporter, out _view, (int)flags) < 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
@@ -46,25 +46,25 @@ namespace Python.Runtime
         public int Dimensions => _view.ndim;
         public bool ReadOnly => _view._readonly;
         public IntPtr Buffer => _view.buf;
-        public string Format => _view.format;
+        public string? Format => _view.format;
 
         /// <summary>
         /// An array of length <see cref="Dimensions"/> indicating the shape of the memory as an n-dimensional array.
         /// </summary>
-        public long[] Shape { get; private set; }
+        public long[]? Shape { get; private set; }
 
         /// <summary>
         /// An array of length <see cref="Dimensions"/> giving the number of bytes to skip to get to a new element in each dimension.
         /// Will be null except when PyBUF_STRIDES or PyBUF_INDIRECT flags in GetBuffer/>.
         /// </summary>
-        public long[] Strides { get; private set; }
+        public long[]? Strides { get; private set; }
 
         /// <summary>
         /// An array of Py_ssize_t of length ndim. If suboffsets[n] >= 0,
         /// the values stored along the nth dimension are pointers and the suboffset value dictates how many bytes to add to each pointer after de-referencing.
         /// A suboffset value that is negative indicates that no de-referencing should occur (striding in a contiguous memory block).
         /// </summary>
-        public long[] SubOffsets { get; private set; }
+        public long[]? SubOffsets { get; private set; }
 
         private static char OrderStyleToChar(BufferOrderStyle order, bool eitherOneValid)
         {
@@ -162,7 +162,7 @@ namespace Python.Runtime
         /// If this function is used as part of a getbufferproc, exporter MUST be set to the exporting object and flags must be passed unmodified.Otherwise, exporter MUST be NULL.
         /// </remarks>
         /// <returns>On success, set view->obj to a new reference to exporter and return 0. Otherwise, raise PyExc_BufferError, set view->obj to NULL and return -1;</returns>
-        internal void FillInfo(IntPtr exporter, IntPtr buf, long len, bool _readonly, int flags)
+        internal void FillInfo(BorrowedReference exporter, IntPtr buf, long len, bool _readonly, int flags)
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
@@ -225,7 +225,7 @@ namespace Python.Runtime
                 // this also decrements ref count for _view->obj
                 Runtime.PyBuffer_Release(ref _view);
 
-                _exporter = null;
+                _exporter = null!;
                 Shape = null;
                 Strides = null;
                 SubOffsets = null;
@@ -240,8 +240,14 @@ namespace Python.Runtime
 
             if (_view.obj != IntPtr.Zero)
             {
-                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run);
+                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run
+#if TRACE_ALLOC
+                    , _exporter.Traceback
+#endif
+                );
             }
+
+            Dispose(false);
         }
 
         /// <summary>

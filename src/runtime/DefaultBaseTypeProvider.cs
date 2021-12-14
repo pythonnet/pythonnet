@@ -21,11 +21,11 @@ namespace Python.Runtime
         static BorrowedReference GetBaseType(Type type)
         {
             if (type == typeof(Exception))
-                return new BorrowedReference(Exceptions.Exception);
+                return Exceptions.Exception;
 
             return type.BaseType is not null
-                ? ClassManager.GetClass(type.BaseType).ObjectReference
-                : new BorrowedReference(Runtime.PyBaseObjectType);
+                ? ClassManager.GetClass(type.BaseType)
+                : Runtime.PyBaseObjectType;
         }
 
         DefaultBaseTypeProvider(){}

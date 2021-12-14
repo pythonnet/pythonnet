@@ -5,6 +5,7 @@
     <LangVersion>10.0</LangVersion>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
+    <Nullable>enable</Nullable>
 
     <PackageId>pythonnet</PackageId>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -29,6 +30,12 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
     <IsPackable>true</IsPackable>
+
+    <Configurations>Debug;Release;TraceAlloc</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'TraceAlloc'">
+    <DefineConstants>$(DefineConstants);TRACE_ALLOC</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
