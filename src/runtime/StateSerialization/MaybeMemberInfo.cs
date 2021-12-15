@@ -7,8 +7,6 @@ namespace Python.Runtime
     [Serializable]
     internal struct MaybeMemberInfo<T> : ISerializable where T : MemberInfo
     {
-        public static implicit operator MaybeMemberInfo<T>(T ob) => new MaybeMemberInfo<T>(ob);
-
         // .ToString() of the serialized object
         const string SerializationDescription = "d";
         // The ReflectedType of the object
@@ -50,8 +48,8 @@ namespace Python.Runtime
         public MaybeMemberInfo(T fi)
         {
             info = fi;
-            Description = info?.ToString();
-            if (info?.DeclaringType is not null)
+            Description = info.ToString();
+            if (info.DeclaringType is not null)
                 Description += " of " + info.DeclaringType;
             deserializationException = null;
         }

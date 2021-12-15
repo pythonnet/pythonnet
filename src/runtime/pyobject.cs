@@ -175,7 +175,7 @@ namespace Python.Runtime
         /// Return a managed object of the given type, based on the
         /// value of the Python object.
         /// </summary>
-        public T As<T>() => (T)this.AsManagedObject(typeof(T));
+        public T As<T>() => (T)this.AsManagedObject(typeof(T))!;
 
         internal bool IsDisposed => rawPtr == IntPtr.Zero;
 

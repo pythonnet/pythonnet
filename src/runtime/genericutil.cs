@@ -14,7 +14,7 @@ namespace Python.Runtime
         /// <summary>
         /// Maps namespace -> generic base name -> list of generic type names
         /// </summary>
-        private static Dictionary<string, Dictionary<string, List<string>>> mapping;
+        private static Dictionary<string, Dictionary<string, List<string>>> mapping = new();
 
         public static void Reset()
         {
@@ -51,7 +51,7 @@ namespace Python.Runtime
         /// <summary>
         /// xxx
         /// </summary>
-        public static List<string> GetGenericBaseNames(string ns)
+        public static List<string>? GetGenericBaseNames(string ns)
         {
             Dictionary<string, List<string>> nsmap;
             if (!mapping.TryGetValue(ns, out nsmap))
@@ -69,7 +69,7 @@ namespace Python.Runtime
         /// <summary>
         /// Finds a generic type with the given number of generic parameters and the same name and namespace as <paramref name="t"/>.
         /// </summary>
-        public static Type GenericForType(Type t, int paramCount)
+        public static Type? GenericForType(Type t, int paramCount)
         {
             return GenericByName(t.Namespace, t.Name, paramCount);
         }
@@ -77,7 +77,7 @@ namespace Python.Runtime
         /// <summary>
         /// Finds a generic type in the given namespace with the given name and number of generic parameters.
         /// </summary>
-        public static Type GenericByName(string ns, string basename, int paramCount)
+        public static Type? GenericByName(string ns, string basename, int paramCount)
         {
             Dictionary<string, List<string>> nsmap;
             if (!mapping.TryGetValue(ns, out nsmap))
@@ -107,7 +107,7 @@ namespace Python.Runtime
         /// <summary>
         /// xxx
         /// </summary>
-        public static string GenericNameForBaseName(string ns, string name)
+        public static string? GenericNameForBaseName(string ns, string name)
         {
             Dictionary<string, List<string>> nsmap;
             if (!mapping.TryGetValue(ns, out nsmap))

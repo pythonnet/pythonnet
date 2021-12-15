@@ -120,13 +120,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Null-coalesce: if <paramref name="primary"/> parameter is not
-        /// <see cref="IntPtr.Zero"/>, return it. Otherwise return <paramref name="fallback"/>.
-        /// </summary>
-        internal static IntPtr Coalesce(this IntPtr primary, IntPtr fallback)
-            => primary == IntPtr.Zero ? fallback : primary;
-
-        /// <summary>
         /// Gets substring after last occurrence of <paramref name="symbol"/>
         /// </summary>
         internal static string? AfterLast(this string str, char symbol)
@@ -149,5 +142,14 @@ namespace Python.Runtime
         }
 
         public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> enumerator) => enumerator;
+
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
+            where T: class
+        {
+            foreach (var item in source)
+            {
+                if (item is not null) yield return item;
+            }
+        }
     }
 }

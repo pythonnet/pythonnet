@@ -31,6 +31,7 @@ namespace Python.Runtime
 {
     static class PyIdentifier
     {
+#pragma warning disable CS0649 // indentifier is never assigned to (assigned with reflection)
 <#
     foreach (var name in internNames)
     {
@@ -40,6 +41,7 @@ namespace Python.Runtime
 <#
     }
 #>
+#pragma warning restore CS0649        // indentifier is never assigned to (assigned with reflection)
     }
 
 

@@ -28,7 +28,7 @@ namespace Python.Runtime.Codecs
         /// <inheritdoc />
         public bool CanEncode(Type type) => this.encoders.Any(encoder => encoder.CanEncode(type));
         /// <inheritdoc />
-        public PyObject TryEncode(object value)
+        public PyObject? TryEncode(object value)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 

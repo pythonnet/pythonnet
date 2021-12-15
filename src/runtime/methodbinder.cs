@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Python.Runtime
@@ -23,7 +24,7 @@ namespace Python.Runtime
         public List<MaybeMethodBase> list;
 
         [NonSerialized]
-        public MethodBase[] methods;
+        public MethodBase[]? methods;
 
         [NonSerialized]
         public bool init = false;
@@ -188,7 +189,7 @@ namespace Python.Runtime
                 methods = (from method in list where method.Valid select method.Value).ToArray();
                 init = true;
             }
-            return methods;
+            return methods!;
         }
 
         /// <summary>
@@ -376,7 +377,7 @@ namespace Python.Runtime
                 {
                     var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist.Borrow(), i));
                     BorrowedReference value = Runtime.PyList_GetItem(valueList.Borrow(), i);
-                    kwargDict[keyStr] = new PyObject(value);
+                    kwargDict[keyStr!] = new PyObject(value);
                 }
             }
 

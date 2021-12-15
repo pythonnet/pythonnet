@@ -23,7 +23,7 @@ namespace Python.Runtime
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
-        static readonly HashSet<string?> settableAttributes = 
+        static readonly HashSet<string?> settableAttributes =
             new () {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -142,7 +142,7 @@ namespace Python.Runtime
             // enough to complicate the implementation for now.
             if (guess)
             {
-                string gname = GenericUtil.GenericNameForBaseName(this._namespace, name);
+                string? gname = GenericUtil.GenericNameForBaseName(this._namespace, name);
                 if (gname != null)
                 {
                     var o = this.GetAttribute(gname, false);
@@ -343,7 +343,7 @@ namespace Python.Runtime
         public new static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
             var managedKey = Runtime.GetManagedString(key);
-            if ((settableAttributes.Contains(managedKey)) || 
+            if ((settableAttributes.Contains(managedKey)) ||
                 (ManagedType.GetManagedObject(val) is ModuleObject) )
             {
                 var self = (ModuleObject)ManagedType.GetManagedObject(ob)!;
@@ -376,7 +376,7 @@ namespace Python.Runtime
             cache.Clear();
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
         {
             base.OnLoad(ob, context);
             SetObjectDict(ob, new NewReference(dict).Steal());

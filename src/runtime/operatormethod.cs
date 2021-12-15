@@ -27,7 +27,7 @@ namespace Python.Runtime
             public int TypeOffset { get; }
 
         }
-        private static PyObject _opType;
+        private static PyObject? _opType;
 
         static OperatorMethod()
         {
@@ -115,7 +115,7 @@ namespace Python.Runtime
                 int offset = OpMethodMap[method.Name].TypeOffset;
                 // Copy the default implementation of e.g. the nb_add slot,
                 // which simply calls __add__ on the type.
-                IntPtr func = Util.ReadIntPtr(_opType, offset);
+                IntPtr func = Util.ReadIntPtr(_opType!, offset);
                 // Write the slot definition of the target Python type, so
                 // that we can later modify __add___ and it will be called
                 // when used with a Python operator.

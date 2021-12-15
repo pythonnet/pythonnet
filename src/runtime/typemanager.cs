@@ -19,7 +19,11 @@ namespace Python.Runtime
     {
         internal static IntPtr subtype_traverse;
         internal static IntPtr subtype_clear;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        /// <remarks>initialized in <see cref="Initialize"/> rather than in constructor</remarks>
         internal static IPythonBaseTypeProvider pythonBaseTypeProvider;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
         private static Dictionary<MaybeType, PyType> cache = new();
@@ -78,7 +82,7 @@ namespace Python.Runtime
             foreach (var entry in typeCache)
             {
                 Type type = entry.Key.Value;;
-                cache[type] = entry.Value;
+                cache![type] = entry.Value;
                 SlotsHolder holder = CreateSlotsHolder(entry.Value);
                 InitializeSlots(entry.Value, type, holder);
                 Runtime.PyType_Modified(entry.Value);
@@ -624,7 +628,7 @@ namespace Python.Runtime
         /// provides the implementation for the type, connect the type slots of
         /// the Python object to the managed methods of the implementing Type.
         /// </summary>
-        internal static void InitializeSlots(PyType type, Type impl, SlotsHolder slotsHolder = null)
+        internal static void InitializeSlots(PyType type, Type impl, SlotsHolder? slotsHolder = null)
         {
             // We work from the most-derived class up; make sure to get
             // the most-derived slot and not to override it with a base
@@ -654,7 +658,7 @@ namespace Python.Runtime
                 }
 
                 var initSlot = impl.GetMethod("InitializeSlots", BindingFlags.Static | BindingFlags.Public);
-                initSlot?.Invoke(null, parameters: new object[] { type, seen, slotsHolder });
+                initSlot?.Invoke(null, parameters: new object?[] { type, seen, slotsHolder });
 
                 impl = impl.BaseType;
             }
@@ -675,7 +679,7 @@ namespace Python.Runtime
             }
         }
 
-        static void InitializeSlot(BorrowedReference type, ThunkInfo thunk, string name, SlotsHolder slotsHolder)
+        static void InitializeSlot(BorrowedReference type, ThunkInfo thunk, string name, SlotsHolder? slotsHolder)
         {
             if (!Enum.TryParse<TypeSlotID>(name, out var id))
             {
@@ -703,7 +707,7 @@ namespace Python.Runtime
             InitializeSlot(type, slotOffset, impl, slotsHolder);
         }
 
-        static void InitializeSlot(BorrowedReference type, int slotOffset, ThunkInfo thunk, SlotsHolder slotsHolder)
+        static void InitializeSlot(BorrowedReference type, int slotOffset, ThunkInfo thunk, SlotsHolder? slotsHolder)
         {
             Util.WriteIntPtr(type, slotOffset, thunk.Address);
             if (slotsHolder != null)

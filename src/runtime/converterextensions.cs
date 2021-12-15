@@ -126,7 +126,7 @@ namespace Python.Runtime
             Debug.Assert(PyType.IsType(sourceTypeRef));
             var pyType = new PyType(sourceTypeRef, prevalidated: true);
 
-            IPyObjectDecoder decoder;
+            IPyObjectDecoder? decoder;
             lock (decoders)
             {
                 decoder = decoders.GetDecoder(pyType, targetType);

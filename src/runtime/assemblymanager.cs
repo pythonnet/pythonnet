@@ -358,7 +358,7 @@ namespace Python.Runtime
             //Dictionary<string, int> seen = new Dictionary<string, int>();
             var names = new List<string>(8);
 
-            List<string> g = GenericUtil.GetGenericBaseNames(nsname);
+            List<string>? g = GenericUtil.GetGenericBaseNames(nsname);
             if (g != null)
             {
                 foreach (string n in g)

@@ -74,7 +74,7 @@ namespace Python.Runtime
             return Instance;
         }
 
-        public static string PtrToStringUni(IntPtr p)
+        public static string? PtrToStringUni(IntPtr p)
         {
             if (p == IntPtr.Zero)
             {
@@ -134,7 +134,7 @@ namespace Python.Runtime
         /// <returns>
         /// Managed String
         /// </returns>
-        public static string PtrToPy3UnicodePy2String(IntPtr p)
+        public static string? PtrToPy3UnicodePy2String(IntPtr p)
         {
             return PtrToStringUni(p);
         }
@@ -184,7 +184,7 @@ namespace Python.Runtime
             return mem;
         }
 
-        public static ICustomMarshaler GetInstance(string cookie)
+        public static ICustomMarshaler GetInstance(string? cookie)
         {
             return Instance;
         }

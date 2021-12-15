@@ -4,6 +4,7 @@ namespace Python.Runtime
 {
     static class PyIdentifier
     {
+#pragma warning disable CS0649 // indentifier is never assigned to (assigned with reflection)
          static IntPtr f__name__;
          public static BorrowedReference __name__ => new(f__name__);
          static IntPtr f__dict__;
@@ -38,6 +39,7 @@ namespace Python.Runtime
          public static BorrowedReference __overloads__ => new(f__overloads__);
          static IntPtr fOverloads;
          public static BorrowedReference Overloads => new(fOverloads);
+#pragma warning restore CS0649        // indentifier is never assigned to (assigned with reflection)
     }
 
 

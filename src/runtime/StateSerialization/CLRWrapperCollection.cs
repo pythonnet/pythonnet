@@ -1,10 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Python.Runtime;
 
 public class CLRWrapperCollection : KeyedCollection<object, CLRMappedItem>
 {
-    public bool TryGetValue(object key, out CLRMappedItem value)
+    public bool TryGetValue(object key, [NotNullWhen(true)] out CLRMappedItem? value)
     {
         if (Dictionary == null)
         {
