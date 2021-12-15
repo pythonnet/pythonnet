@@ -53,7 +53,9 @@ internal sealed class ReflectedClrType : PyType
     {
         var cb = context.Storage.GetValue<ClassBase>("impl");
 
-        cb.Load(this, context);
+        Debug.Assert(cb is not null);
+
+        cb!.Load(this, context);
 
         Restore(cb);
     }

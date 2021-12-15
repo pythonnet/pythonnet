@@ -99,7 +99,9 @@ namespace Python.Runtime
 
         static readonly BindingFlags FieldFlags = BindingFlags.NonPublic | BindingFlags.Static;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Initialized in ABI.cs
         static Dictionary<string, int> SlotOffsets;
+#pragma warning restore CS8618
         internal static Dictionary<string, int> GetOffsets()
         {
             var properties = typeof(TypeOffset).GetProperties(FieldFlags);

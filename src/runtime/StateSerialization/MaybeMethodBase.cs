@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace Python.Runtime
 
         public static implicit operator MaybeMethodBase<T> (T? ob) => new (ob);
 
-        string name;
+        string? name;
         MethodBase? info;
 
         [NonSerialized]
@@ -48,7 +49,8 @@ namespace Python.Runtime
         }
 
         public T UnsafeValue => (T)info!;
-        public string Name {get{return name;}}
+        public string? Name => name;
+        [MemberNotNullWhen(true, nameof(info))]
         public bool Valid => info != null;
 
         public override string ToString()

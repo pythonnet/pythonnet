@@ -59,7 +59,7 @@ namespace Python.Runtime
             co.OnLoad(pyHandle, context);
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
         {
             base.OnLoad(ob, context);
             GCHandle gc = GCHandle.Alloc(this);

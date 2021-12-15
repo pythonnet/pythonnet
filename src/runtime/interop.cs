@@ -22,13 +22,7 @@ namespace Python.Runtime
             DocString = docStr;
         }
 
-        public string DocString
-        {
-            get { return docStr; }
-            set { docStr = value; }
-        }
-
-        private string docStr;
+        public string DocString { get; }
     }
 
     [Serializable]
@@ -204,15 +198,10 @@ namespace Python.Runtime
         public readonly Delegate Target;
         public readonly IntPtr Address;
 
-        public static readonly ThunkInfo Empty = new ThunkInfo(null);
-
         public ThunkInfo(Delegate target)
         {
-            if (target == null)
-            {
-                return;
-            }
-            Target = target;
+            Debug.Assert(target is not null);
+            Target = target!;
             Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }

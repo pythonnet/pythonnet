@@ -78,12 +78,13 @@ namespace Python.Runtime
                     {
                         ParameterInfo[] altParamters = info.GetParameters();
                         return i < altParamters.Length ? altParamters[i] : null;
-                    }).Where(p => p != null);
+                    }).WhereNotNull();
                     using var defaultValue = alternatives
-                        .Select(alternative => alternative.DefaultValue != DBNull.Value ? alternative.DefaultValue.ToPython() : null)
-                        .FirstOrDefault(v => v != null) ?? parameterClass.GetAttr("empty");
+                        .Select(alternative => alternative!.DefaultValue != DBNull.Value ? alternative.DefaultValue.ToPython() : null)
+                        .FirstOrDefault(v => v != null) ?? parameterClass?.GetAttr("empty");
 
-                    if (alternatives.Any(alternative => alternative.Name != parameter.Name))
+                    if (alternatives.Any(alternative => alternative.Name != parameter.Name)
+                        || positionalOrKeyword is null)
                     {
                         return signatureClass.Invoke();
                     }
@@ -94,7 +95,7 @@ namespace Python.Runtime
                     {
                         kw["default"] = defaultValue;
                     }
-                    using var parameterInfo = parameterClass.Invoke(args: args, kw: kw);
+                    using var parameterInfo = parameterClass!.Invoke(args: args, kw: kw);
                     parameters.Append(parameterInfo);
                 }
 
@@ -209,12 +210,12 @@ namespace Python.Runtime
                 // (eg if calling the base class method) then call the original base class method instead
                 // of the target method.
                 IntPtr superType = IntPtr.Zero;
-                if (target is not null && Runtime.PyObject_TYPE(target) != self.targetType)
+                if (target is not null && Runtime.PyObject_TYPE(target) != self.targetType!)
                 {
                     var inst = GetManagedObject(target) as CLRObject;
                     if (inst?.inst is IPythonDerivedType)
                     {
-                        var baseType = GetManagedObject(self.targetType) as ClassBase;
+                        var baseType = GetManagedObject(self.targetType!) as ClassBase;
                         if (baseType != null && baseType.type.Valid)
                         {
                             string baseMethodName = "_" + baseType.type.Value.Name + "__" + self.m.name;

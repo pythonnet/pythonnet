@@ -16,7 +16,7 @@ namespace Python.Runtime.CollectionWrappers
             {
                 var item = Runtime.PyList_GetItem(pyObject, index);
                 var pyItem = new PyObject(item);
-                return pyItem.As<T>();
+                return pyItem.As<T>()!;
             }
             set
             {

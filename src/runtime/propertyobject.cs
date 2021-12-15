@@ -18,7 +18,7 @@ namespace Python.Runtime
         {
             getter = md.GetGetMethod(true);
             setter = md.GetSetMethod(true);
-            info = md;
+            info = new MaybeMemberInfo<PropertyInfo>(md);
         }
 
 

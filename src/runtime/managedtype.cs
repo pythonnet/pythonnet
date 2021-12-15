@@ -114,13 +114,14 @@ namespace Python.Runtime
             OnSave(ob, context);
         }
 
-        internal void Load(BorrowedReference ob, InterDomainContext context)
+#warning context appears to be unused
+        internal void Load(BorrowedReference ob, InterDomainContext? context)
         {
             OnLoad(ob, context);
         }
 
         protected virtual void OnSave(BorrowedReference ob, InterDomainContext context) { }
-        protected virtual void OnLoad(BorrowedReference ob, InterDomainContext context) { }
+        protected virtual void OnLoad(BorrowedReference ob, InterDomainContext? context) { }
 
         protected static void ClearObjectDict(BorrowedReference ob)
         {

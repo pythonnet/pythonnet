@@ -35,7 +35,7 @@ namespace Python.Runtime.CollectionWrappers
                     iterObject.Dispose();
                     break;
                 }
-                yield return iterObject.Current.As<T>();
+                yield return iterObject.Current.As<T>()!;
             }
         }
     }

@@ -165,6 +165,9 @@ namespace Python.Runtime
             if (module is null) throw new ArgumentNullException(nameof(module));
 
             asname ??= module.GetAttr("__name__").As<string>();
+
+            if (asname is null) throw new ArgumentException("Module has no name");
+
             Set(asname, module);
         }
 
@@ -238,7 +241,7 @@ namespace Python.Runtime
         /// and convert the result to a Managed Object of given type.
         /// The ast can be either an expression or stmts.
         /// </summary>
-        public T Execute<T>(PyObject script, PyDict? locals = null)
+        public T? Execute<T>(PyObject script, PyDict? locals = null)
         {
             Check();
             PyObject pyObj = Execute(script, locals);
@@ -307,7 +310,7 @@ namespace Python.Runtime
         /// Add a new variable to the variables dict if it not exist
         /// or update its value if the variable exists.
         /// </remarks>
-        public PyModule Set(string name, object value)
+        public PyModule Set(string name, object? value)
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
@@ -425,7 +428,7 @@ namespace Python.Runtime
 
             Check();
             PyObject pyObj = Get(name);
-            return pyObj.As<T>();
+            return pyObj.As<T>()!;
         }
 
         /// <summary>
@@ -449,13 +452,13 @@ namespace Python.Runtime
             return true;
         }
 
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
             result = CheckNone(this.Get(binder.Name));
             return true;
         }
 
-        public override bool TrySetMember(SetMemberBinder binder, object value)
+        public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
             this.Set(binder.Name, value);
             return true;

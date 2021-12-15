@@ -95,7 +95,7 @@ namespace Python.Runtime
             return res;
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
         {
             base.OnLoad(ob, context);
             SetupGc(ob, Runtime.PyObject_TYPE(ob));

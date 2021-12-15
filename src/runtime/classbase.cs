@@ -67,7 +67,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(type.DeletedMessage);
             }
 
-            Type target = GenericUtil.GenericForType(type.Value, types.Length);
+            Type? target = GenericUtil.GenericForType(type.Value, types.Length);
 
             if (target != null)
             {
@@ -396,7 +396,7 @@ namespace Python.Runtime
             context.Storage.AddValue("impl", this);
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
         {
             base.OnLoad(ob, context);
             var gcHandle = GCHandle.Alloc(this);

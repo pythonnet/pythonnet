@@ -14,7 +14,7 @@ namespace Python.Runtime
 
         public FieldObject(FieldInfo info)
         {
-            this.info = info;
+            this.info = new MaybeFieldInfo(info);
         }
 
         /// <summary>

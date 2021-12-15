@@ -144,7 +144,7 @@ namespace Python.Runtime
         internal static Type CreateDerivedType(string name,
             Type baseType,
             BorrowedReference py_dict,
-            string namespaceStr,
+            string? namespaceStr,
             string? assemblyName,
             string moduleName = "Python.Runtime.Dynamic.dll")
         {
@@ -669,7 +669,7 @@ namespace Python.Runtime
         /// method binding (i.e. it has been overridden in the derived python
         /// class) it calls it, otherwise it calls the base method.
         /// </summary>
-        public static T InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName, object[] args)
+        public static T? InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName, object[] args)
         {
             var self = GetPyObj(obj);
 
@@ -776,7 +776,7 @@ namespace Python.Runtime
                 args);
         }
 
-        public static T InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)
+        public static T? InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)
         {
             var self = GetPyObj(obj);
 

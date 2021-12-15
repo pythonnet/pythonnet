@@ -17,8 +17,8 @@ namespace Python.Runtime
 {
     public static class RuntimeData
     {
-        private static Type _formatterType;
-        public static Type FormatterType
+        private static Type? _formatterType;
+        public static Type? FormatterType
         {
             get => _formatterType;
             set
@@ -31,7 +31,7 @@ namespace Python.Runtime
             }
         }
 
-        public static ICLRObjectStorer WrappersStorer { get; set; }
+        public static ICLRObjectStorer? WrappersStorer { get; set; }
 
         /// <summary>
         /// Clears the old "clr_data" entry if a previous one is present.
@@ -57,7 +57,7 @@ namespace Python.Runtime
                 Classes = ClassManager.SaveRuntimeData(),
                 SharedObjects = SaveRuntimeDataObjects(),
             };
-            
+
             IFormatter formatter = CreateFormatter();
             var ms = new MemoryStream();
             formatter.Serialize(ms, runtimeStorage);
@@ -171,9 +171,8 @@ namespace Python.Runtime
                 // Wrapper must be the CLRObject
                 var clrObj = (CLRObject)ManagedType.GetManagedObject(pyObj)!;
                 object inst = clrObj.inst;
-                CLRMappedItem item;
                 List<CLRObject> mappedObjs;
-                if (!userObjects.TryGetValue(inst, out item))
+                if (!userObjects.TryGetValue(inst, out var item))
                 {
                     item = new CLRMappedItem(inst);
                     userObjects.Add(item);
@@ -260,63 +259,28 @@ namespace Python.Runtime
     [Serializable]
     public class RuntimeDataStorage
     {
-        private Stack _stack;
-        private Dictionary<string, object> _namedValues;
+        private Dictionary<string, object?>? _namedValues;
 
         public T AddValue<T>(string name, T value)
         {
             if (_namedValues == null)
             {
-                _namedValues = new Dictionary<string, object>();
+                _namedValues = new Dictionary<string, object?>();
             }
             _namedValues.Add(name, value);
             return value;
         }
 
-        public object GetValue(string name)
+        public object? GetValue(string name)
         {
-            return _namedValues[name];
+            return _namedValues is null
+                ? throw new KeyNotFoundException()
+                : _namedValues[name];
         }
 
-        public T GetValue<T>(string name)
+        public T? GetValue<T>(string name)
         {
-            return (T)GetValue(name);
-        }
-
-        public T GetValue<T>(string name, out T value)
-        {
-            value = GetValue<T>(name);
-            return value;
-        }
-
-        public RuntimeDataStorage GetStorage(string name)
-        {
-            return GetValue<RuntimeDataStorage>(name);
-        }
-
-        public T PushValue<T>(T value)
-        {
-            if (_stack == null)
-            {
-                _stack = new Stack();
-            }
-            _stack.Push(value);
-            return value;
-        }
-
-        public object PopValue()
-        {
-            return _stack.Pop();
-        }
-
-        public T PopValue<T>()
-        {
-            return (T)PopValue();
-        }
-
-        public T PopValue<T>(out T value)
-        {
-            return value = (T)PopValue();
+            return (T?)GetValue(name);
         }
     }
 
@@ -324,7 +288,7 @@ namespace Python.Runtime
     [Serializable]
     class InterDomainContext
     {
-        private RuntimeDataStorage _storage;
+        private RuntimeDataStorage? _storage;
         public RuntimeDataStorage Storage => _storage ?? (_storage = new RuntimeDataStorage());
     }
 }
