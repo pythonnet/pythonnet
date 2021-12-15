@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.Serialization;
 using System.Threading;
 
 namespace Python.Runtime
@@ -17,20 +18,22 @@ namespace Python.Runtime
     /// </summary>
     [Serializable]
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public partial class PyObject : DynamicObject, IDisposable
+    public partial class PyObject : DynamicObject, IDisposable, ISerializable
     {
 #if TRACE_ALLOC
         /// <summary>
         /// Trace stack for PyObject's construction
         /// </summary>
-        public StackTrace Traceback { get; private set; }
+        public StackTrace Traceback { get; } = new StackTrace(1);
 #endif  
 
-        protected internal IntPtr obj = IntPtr.Zero;
+        protected internal IntPtr rawPtr = IntPtr.Zero;
         internal readonly int run = Runtime.GetRun();
 
-        public static PyObject None => new PyObject(new BorrowedReference(Runtime.PyNone));
-        internal BorrowedReference Reference => new BorrowedReference(this.obj);
+        internal BorrowedReference obj => new (rawPtr);
+
+        public static PyObject None => new (Runtime.PyNone);
+        internal BorrowedReference Reference => new (rawPtr);
 
         /// <summary>
         /// PyObject Constructor
@@ -41,15 +44,13 @@ namespace Python.Runtime
         /// and the reference will be DECREFed when the PyObject is garbage
         /// collected or explicitly disposed.
         /// </remarks>
+        [Obsolete]
         internal PyObject(IntPtr ptr)
         {
             if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
 
-            obj = ptr;
+            rawPtr = ptr;
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         [Obsolete("for testing purposes only")]
@@ -57,12 +58,9 @@ namespace Python.Runtime
         {
             if (ptr == IntPtr.Zero) throw new ArgumentNullException(nameof(ptr));
 
-            obj = ptr;
+            rawPtr = ptr;
             if (!skipCollect)
                 Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         /// <summary>
@@ -74,29 +72,32 @@ namespace Python.Runtime
         {
             if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
 
-            obj = Runtime.SelfIncRef(reference.DangerousGetAddress());
+            rawPtr = new NewReference(reference).DangerousMoveToPointer();
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
+        }
+
+        internal PyObject(BorrowedReference reference, bool skipCollect)
+        {
+            if (reference.IsNull) throw new ArgumentNullException(nameof(reference));
+
+            rawPtr = new NewReference(reference).DangerousMoveToPointer();
+            if (!skipCollect)
+                Finalizer.Instance.ThrottledCollect();
         }
 
         internal PyObject(in StolenReference reference)
         {
             if (reference == null) throw new ArgumentNullException(nameof(reference));
 
-            obj = reference.DangerousGetAddressOrNull();
+            rawPtr = reference.DangerousGetAddressOrNull();
             Finalizer.Instance.ThrottledCollect();
-#if TRACE_ALLOC
-            Traceback = new StackTrace(1);
-#endif
         }
 
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
         ~PyObject()
         {
-            if (obj != IntPtr.Zero)
+            if (!IsDisposed)
             {
 
 #if TRACE_ALLOC
@@ -105,7 +106,11 @@ namespace Python.Runtime
 
                 Interlocked.Increment(ref Runtime._collected);
 
-                Finalizer.Instance.AddFinalizedObject(ref obj, run);
+                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
+#if TRACE_ALLOC
+                    , Traceback
+#endif
+                );
             }
 
             Dispose(false);
@@ -116,9 +121,10 @@ namespace Python.Runtime
         /// Gets the native handle of the underlying Python object. This
         /// value is generally for internal use by the PythonNet runtime.
         /// </summary>
+        [Obsolete]
         public IntPtr Handle
         {
-            get { return obj; }
+            get { return rawPtr; }
         }
 
 
@@ -135,18 +141,16 @@ namespace Python.Runtime
             // Special case: if ob is null, we return None.
             if (ob == null)
             {
-                Runtime.XIncref(Runtime.PyNone);
                 return new PyObject(Runtime.PyNone);
             }
-            IntPtr op = CLRObject.GetInstHandle(ob);
-            return new PyObject(op);
+            return CLRObject.GetReference(ob).MoveToPyObject();
         }
 
         /// <summary>
         /// Creates new <see cref="PyObject"/> from a nullable reference.
         /// When <paramref name="reference"/> is <c>null</c>, <c>null</c> is returned.
         /// </summary>
-        internal static PyObject FromNullableReference(BorrowedReference reference)
+        internal static PyObject? FromNullableReference(BorrowedReference reference)
             => reference.IsNull ? null : new PyObject(reference);
 
 
@@ -157,10 +161,9 @@ namespace Python.Runtime
         /// Return a managed object of the given type, based on the
         /// value of the Python object.
         /// </remarks>
-        public object AsManagedObject(Type t)
+        public object? AsManagedObject(Type t)
         {
-            object result;
-            if (!Converter.ToManaged(obj, t, out result, true))
+            if (!Converter.ToManaged(obj, t, out var result, true))
             {
                 throw new InvalidCastException("cannot convert object to target type",
                     PythonException.FetchCurrentOrNull(out _));
@@ -172,53 +175,47 @@ namespace Python.Runtime
         /// Return a managed object of the given type, based on the
         /// value of the Python object.
         /// </summary>
-        public T As<T>() => (T)this.AsManagedObject(typeof(T));
+        public T As<T>() => (T)this.AsManagedObject(typeof(T))!;
 
-        internal bool IsDisposed => obj == IntPtr.Zero;
+        internal bool IsDisposed => rawPtr == IntPtr.Zero;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (this.obj == IntPtr.Zero)
+            if (IsDisposed)
             {
                 return;
             }
 
-            if (Runtime.Py_IsInitialized() == 0)
-                throw new InvalidOperationException("Python runtime must be initialized");
-
-            CheckRun();
-
-            if (!Runtime.IsFinalizing)
+            if (Runtime.Py_IsInitialized() == 0 && Runtime._Py_IsFinalizing() != true)
             {
-                long refcount = Runtime.Refcount(this.obj);
-                Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+                throw new InvalidOperationException("Python runtime must be initialized");
+            }
 
-                if (refcount == 1)
+            nint refcount = Runtime.Refcount(this.obj);
+            Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+
+            if (refcount == 1)
+            {
+                Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
+
+                try
                 {
-                    Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
-
-                    try
-                    {
-                        Runtime.XDecref(this.obj);
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    finally
-                    {
-                        // Python requires finalizers to preserve exception:
-                        // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
-                        Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
-                    }
+                    Runtime.XDecref(StolenReference.Take(ref rawPtr));
+                    Runtime.CheckExceptionOccurred();
                 }
-                else
+                finally
                 {
-                    Runtime.XDecref(this.obj);
+                    // Python requires finalizers to preserve exception:
+                    // https://docs.python.org/3/extending/newtypes.html#finalization-and-de-allocation
+                    Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), traceback.StealNullable());
                 }
             }
             else
             {
-                throw new InvalidOperationException("Runtime is already finalizing");
+                Runtime.XDecref(StolenReference.Take(ref rawPtr));
             }
-            this.obj = IntPtr.Zero;
+
+            this.rawPtr = IntPtr.Zero;
         }
 
         /// <summary>
@@ -233,24 +230,31 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
+            
+        }
+
+        internal StolenReference Steal()
+        {
+            GC.SuppressFinalize(this);
+            return StolenReference.Take(ref this.rawPtr);
         }
 
         [Obsolete("Test use only")]
         internal void Leak()
         {
-            Debug.Assert(obj != IntPtr.Zero);
+            Debug.Assert(!IsDisposed);
             GC.SuppressFinalize(this);
-            obj = IntPtr.Zero;
+            rawPtr = IntPtr.Zero;
         }
 
         internal void CheckRun()
         {
             if (run != Runtime.GetRun())
-                throw new RuntimeShutdownException(obj);
+                throw new RuntimeShutdownException(rawPtr);
         }
 
         internal BorrowedReference GetPythonTypeReference()
-            => new BorrowedReference(Runtime.PyObject_TYPE(obj));
+            => Runtime.PyObject_TYPE(obj);
 
         /// <summary>
         /// GetPythonType Method
@@ -261,8 +265,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyType GetPythonType()
         {
-            var tp = Runtime.PyObject_TYPE(Reference);
-            return new PyType(tp, prevalidated: true);
+            var tp = Runtime.PyObject_Type(Reference);
+            return new PyType(tp.StealOrThrow(), prevalidated: true);
         }
 
 
@@ -279,6 +283,8 @@ namespace Python.Runtime
 
             return Runtime.PyObject_TypeCheck(obj, typeOrClass.obj);
         }
+
+        internal PyType PyType => this.GetPythonType();
 
 
         /// <summary>
@@ -321,12 +327,8 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            IntPtr op = Runtime.PyObject_GetAttrString(obj, name);
-            if (op == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(op);
+            using var op = Runtime.PyObject_GetAttrString(obj, name);
+            return new PyObject(op.StealOrThrow());
         }
 
 
@@ -349,8 +351,8 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            IntPtr op = Runtime.PyObject_GetAttrString(obj, name);
-            if (op == IntPtr.Zero)
+            using var op = Runtime.PyObject_GetAttrString(obj, name);
+            if (op.IsNull())
             {
                 if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
                 {
@@ -362,7 +364,7 @@ namespace Python.Runtime
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
-            return new PyObject(op);
+            return new PyObject(op.Steal());
         }
 
 
@@ -378,12 +380,8 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            IntPtr op = Runtime.PyObject_GetAttr(obj, name.obj);
-            if (op == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(op);
+            using var op = Runtime.PyObject_GetAttr(obj, name.obj);
+            return new PyObject(op.StealOrThrow());
         }
 
 
@@ -406,8 +404,8 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            IntPtr op = Runtime.PyObject_GetAttr(obj, name.obj);
-            if (op == IntPtr.Zero)
+            using var op = Runtime.PyObject_GetAttr(obj, name.obj);
+            if (op.IsNull())
             {
                 if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
                 {
@@ -419,7 +417,7 @@ namespace Python.Runtime
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
-            return new PyObject(op);
+            return new PyObject(op.Steal());
         }
 
 
@@ -475,7 +473,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            int r = Runtime.PyObject_SetAttrString(obj, name, IntPtr.Zero);
+            int r = Runtime.PyObject_DelAttrString(obj, name);
             if (r < 0)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -495,7 +493,7 @@ namespace Python.Runtime
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            int r = Runtime.PyObject_SetAttr(obj, name.obj, IntPtr.Zero);
+            int r = Runtime.PyObject_DelAttr(obj, name.obj);
             if (r < 0)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -515,12 +513,12 @@ namespace Python.Runtime
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-            IntPtr op = Runtime.PyObject_GetItem(obj, key.obj);
-            if (op == IntPtr.Zero)
+            using var op = Runtime.PyObject_GetItem(obj, key.obj);
+            if (op.IsNull())
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            return new PyObject(op);
+            return new PyObject(op.Steal());
         }
 
 
@@ -753,13 +751,9 @@ namespace Python.Runtime
             if (args.Contains(null)) throw new ArgumentNullException();
 
             var t = new PyTuple(args);
-            IntPtr r = Runtime.PyObject_Call(obj, t.obj, IntPtr.Zero);
+            using var r = Runtime.PyObject_Call(obj, t.obj, null);
             t.Dispose();
-            if (r == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(r);
+            return new PyObject(r.StealOrThrow());
         }
 
 
@@ -774,12 +768,8 @@ namespace Python.Runtime
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
 
-            IntPtr r = Runtime.PyObject_Call(obj, args.obj, IntPtr.Zero);
-            if (r == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(r);
+            using var r = Runtime.PyObject_Call(obj, args.obj, null);
+            return new PyObject(r.StealOrThrow());
         }
 
 
@@ -790,19 +780,14 @@ namespace Python.Runtime
         /// Invoke the callable object with the given positional and keyword
         /// arguments. A PythonException is raised if the invocation fails.
         /// </remarks>
-        public PyObject Invoke(PyObject[] args, PyDict kw)
+        public PyObject Invoke(PyObject[] args, PyDict? kw)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
             if (args.Contains(null)) throw new ArgumentNullException();
 
-            var t = new PyTuple(args);
-            IntPtr r = Runtime.PyObject_Call(obj, t.obj, kw?.obj ?? IntPtr.Zero);
-            t.Dispose();
-            if (r == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(r);
+            using var t = new PyTuple(args);
+            using var r = Runtime.PyObject_Call(obj, t.obj, kw is null ? null : kw.obj);
+            return new PyObject(r.StealOrThrow());
         }
 
 
@@ -813,16 +798,12 @@ namespace Python.Runtime
         /// Invoke the callable object with the given positional and keyword
         /// arguments. A PythonException is raised if the invocation fails.
         /// </remarks>
-        public PyObject Invoke(PyTuple args, PyDict kw)
+        public PyObject Invoke(PyTuple args, PyDict? kw)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
 
-            IntPtr r = Runtime.PyObject_Call(obj, args.obj, kw?.obj ?? IntPtr.Zero);
-            if (r == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyObject(r);
+            using var r = Runtime.PyObject_Call(obj, args.obj, kw is null ? null : kw.obj);
+            return new PyObject(r.StealOrThrow());
         }
 
 
@@ -911,7 +892,7 @@ namespace Python.Runtime
         /// and keyword arguments. Keyword args are passed as a PyDict object.
         /// A PythonException is raised if the invocation is unsuccessful.
         /// </remarks>
-        public PyObject InvokeMethod(string name, PyObject[] args, PyDict kw)
+        public PyObject InvokeMethod(string name, PyObject[] args, PyDict? kw)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             if (args == null) throw new ArgumentNullException(nameof(args));
@@ -932,7 +913,7 @@ namespace Python.Runtime
         /// and keyword arguments. Keyword args are passed as a PyDict object.
         /// A PythonException is raised if the invocation is unsuccessful.
         /// </remarks>
-        public PyObject InvokeMethod(string name, PyTuple args, PyDict kw)
+        public PyObject InvokeMethod(string name, PyTuple args, PyDict? kw)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             if (args == null) throw new ArgumentNullException(nameof(args));
@@ -1042,12 +1023,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyList Dir()
         {
-            IntPtr r = Runtime.PyObject_Dir(obj);
-            if (r == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyList(NewReference.DangerousFromPointer(r).Steal());
+            using var r = Runtime.PyObject_Dir(obj);
+            return new PyList(r.StealOrThrow());
         }
 
 
@@ -1058,12 +1035,10 @@ namespace Python.Runtime
         /// Return a string representation of the object. This method is
         /// the managed equivalent of the Python expression "repr(object)".
         /// </remarks>
-        public string Repr()
+        public string? Repr()
         {
-            IntPtr strval = Runtime.PyObject_Repr(obj);
-            string result = Runtime.GetManagedString(strval);
-            Runtime.XDecref(strval);
-            return result;
+            using var strval = Runtime.PyObject_Repr(obj);
+            return Runtime.GetManagedString(strval.BorrowOrThrow());
         }
 
 
@@ -1074,17 +1049,15 @@ namespace Python.Runtime
         /// Return the string representation of the object. This method is
         /// the managed equivalent of the Python expression "str(object)".
         /// </remarks>
-        public override string ToString()
+        public override string? ToString()
         {
-            IntPtr strval = Runtime.PyObject_Str(obj);
-            string result = Runtime.GetManagedString(strval);
-            Runtime.XDecref(strval);
-            return result;
+            using var strval = Runtime.PyObject_Str(obj);
+            return Runtime.GetManagedString(strval.BorrowOrThrow());
         }
 
-        string DebuggerDisplay => DebugUtil.HaveInterpreterLock()
+        string? DebuggerDisplay => DebugUtil.HaveInterpreterLock()
             ? this.ToString()
-            : $"pyobj at 0x{this.obj:X} (get Py.GIL to see more info)";
+            : $"pyobj at 0x{this.rawPtr:X} (get Py.GIL to see more info)";
 
 
         /// <summary>
@@ -1094,17 +1067,17 @@ namespace Python.Runtime
         /// Return true if this object is equal to the given object. This
         /// method is based on Python equality semantics.
         /// </remarks>
-        public override bool Equals(object o)
+        public override bool Equals(object o) => Equals(o as PyObject);
+
+        public virtual bool Equals(PyObject? other)
         {
-            if (!(o is PyObject))
-            {
-                return false;
-            }
-            if (obj == ((PyObject)o).obj)
+            if (other is null) return false;
+
+            if (obj == other.obj)
             {
                 return true;
             }
-            int r = Runtime.PyObject_Compare(obj, ((PyObject)o).obj);
+            int r = Runtime.PyObject_Compare(this, other);
             if (Exceptions.ErrorOccurred())
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -1123,7 +1096,12 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
-            return ((ulong)Runtime.PyObject_Hash(obj)).GetHashCode();
+            nint pyHash = Runtime.PyObject_Hash(obj);
+            if (pyHash == -1 && Exceptions.ErrorOccurred())
+            {
+                throw PythonException.ThrowLastAsClrException();
+            }
+            return pyHash.GetHashCode();
         }
 
         /// <summary>
@@ -1149,25 +1127,24 @@ namespace Python.Runtime
         }
 
 
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
             result = CheckNone(this.GetAttr(binder.Name));
             return true;
         }
 
-        public override bool TrySetMember(SetMemberBinder binder, object value)
+        public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
-            IntPtr ptr = Converter.ToPython(value, value?.GetType());
-            int r = Runtime.PyObject_SetAttrString(obj, binder.Name, ptr);
+            using var newVal = Converter.ToPythonDetectType(value);
+            int r = Runtime.PyObject_SetAttrString(obj, binder.Name, newVal.Borrow());
             if (r < 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            Runtime.XDecref(ptr);
             return true;
         }
 
-        private void GetArgs(object[] inargs, CallInfo callInfo, out PyTuple args, out PyDict kwargs)
+        private void GetArgs(object?[] inargs, CallInfo callInfo, out PyTuple args, out PyDict? kwargs)
         {
             if (callInfo == null || callInfo.ArgumentNames.Count == 0)
             {
@@ -1179,14 +1156,14 @@ namespace Python.Runtime
             var namedArgumentCount = callInfo.ArgumentNames.Count;
             var regularArgumentCount = callInfo.ArgumentCount - namedArgumentCount;
 
-            var argTuple = Runtime.PyTuple_New(regularArgumentCount);
+            using var argTuple = Runtime.PyTuple_New(regularArgumentCount);
             for (int i = 0; i < regularArgumentCount; ++i)
             {
-                AddArgument(argTuple, i, inargs[i]);
+                AddArgument(argTuple.Borrow(), i, inargs[i]);
             }
-            args = new PyTuple(StolenReference.DangerousFromPointer(argTuple));
+            args = new PyTuple(argTuple.Steal());
 
-            var namedArgs = new object[namedArgumentCount * 2];
+            var namedArgs = new object?[namedArgumentCount * 2];
             for (int i = 0; i < namedArgumentCount; ++i)
             {
                 namedArgs[i * 2] = callInfo.ArgumentNames[i];
@@ -1195,70 +1172,66 @@ namespace Python.Runtime
             kwargs = Py.kw(namedArgs);
         }
 
-        private void GetArgs(object[] inargs, out PyTuple args, out PyDict kwargs)
+        private void GetArgs(object?[] inargs, out PyTuple args, out PyDict? kwargs)
         {
             int arg_count;
             for (arg_count = 0; arg_count < inargs.Length && !(inargs[arg_count] is Py.KeywordArguments); ++arg_count)
             {
                 ;
             }
-            IntPtr argtuple = Runtime.PyTuple_New(arg_count);
+            using var argtuple = Runtime.PyTuple_New(arg_count);
             for (var i = 0; i < arg_count; i++)
             {
-                AddArgument(argtuple, i, inargs[i]);
+                AddArgument(argtuple.Borrow(), i, inargs[i]);
             }
-            args = new PyTuple(StolenReference.DangerousFromPointer(argtuple));
+            args = new PyTuple(argtuple.Steal());
 
             kwargs = null;
             for (int i = arg_count; i < inargs.Length; i++)
             {
-                if (!(inargs[i] is Py.KeywordArguments))
+                if (inargs[i] is not Py.KeywordArguments kw)
                 {
                     throw new ArgumentException("Keyword arguments must come after normal arguments.");
                 }
                 if (kwargs == null)
                 {
-                    kwargs = (Py.KeywordArguments)inargs[i];
+                    kwargs = kw;
                 }
                 else
                 {
-                    kwargs.Update((Py.KeywordArguments)inargs[i]);
+                    kwargs.Update(kw);
                 }
             }
         }
 
-        private static void AddArgument(IntPtr argtuple, int i, object target)
+        private static void AddArgument(BorrowedReference argtuple, nint i, object? target)
         {
-            IntPtr ptr = GetPythonObject(target);
+            using var ptr = GetPythonObject(target);
 
-            if (Runtime.PyTuple_SetItem(argtuple, i, ptr) < 0)
+            if (Runtime.PyTuple_SetItem(argtuple, i, ptr.StealNullable()) < 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
         }
 
-        private static IntPtr GetPythonObject(object target)
+        private static NewReference GetPythonObject(object? target)
         {
-            IntPtr ptr;
-            if (target is PyObject)
+            if (target is PyObject pyObject)
             {
-                ptr = ((PyObject)target).Handle;
-                Runtime.XIncref(ptr);
+                return new NewReference(pyObject);
             }
             else
             {
-                ptr = Converter.ToPython(target, target?.GetType());
+                return Converter.ToPythonDetectType(target);
             }
-
-            return ptr;
         }
 
-        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object?[] args, out object? result)
         {
             if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
             {
-                PyTuple pyargs = null;
-                PyDict kwargs = null;
+                PyTuple? pyargs = null;
+                PyDict? kwargs = null;
                 try
                 {
                     GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
@@ -1266,14 +1239,8 @@ namespace Python.Runtime
                 }
                 finally
                 {
-                    if (null != pyargs)
-                    {
-                        pyargs.Dispose();
-                    }
-                    if (null != kwargs)
-                    {
-                        kwargs.Dispose();
-                    }
+                    pyargs?.Dispose();
+                    kwargs?.Dispose();
                 }
                 return true;
             }
@@ -1283,12 +1250,12 @@ namespace Python.Runtime
             }
         }
 
-        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+        public override bool TryInvoke(InvokeBinder binder, object?[] args, out object? result)
         {
             if (this.IsCallable())
             {
-                PyTuple pyargs = null;
-                PyDict kwargs = null;
+                PyTuple? pyargs = null;
+                PyDict? kwargs = null;
                 try
                 {
                     GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
@@ -1296,14 +1263,8 @@ namespace Python.Runtime
                 }
                 finally
                 {
-                    if (null != pyargs)
-                    {
-                        pyargs.Dispose();
-                    }
-                    if (null != kwargs)
-                    {
-                        kwargs.Dispose();
-                    }
+                    pyargs?.Dispose();
+                    kwargs?.Dispose();
                 }
                 return true;
             }
@@ -1313,7 +1274,7 @@ namespace Python.Runtime
             }
         }
 
-        public override bool TryConvert(ConvertBinder binder, out object result)
+        public override bool TryConvert(ConvertBinder binder, out object? result)
         {
             // always try implicit conversion first
             if (Converter.ToManaged(this.obj, binder.Type, out result, false))
@@ -1332,9 +1293,9 @@ namespace Python.Runtime
             return false;
         }
 
-        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
+        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
-            IntPtr res;
+            NewReference res;
             if (!(arg is PyObject))
             {
                 arg = arg.ToPython();
@@ -1424,14 +1385,14 @@ namespace Python.Runtime
                     result = null;
                     return false;
             }
-            Exceptions.ErrorCheck(res);
-            result = CheckNone(new PyObject(res));
+            Exceptions.ErrorCheck(res.BorrowNullable());
+            result = CheckNone(new PyObject(res.Borrow()));
             return true;
         }
 
         // Workaround for https://bugzilla.xamarin.com/show_bug.cgi?id=41509
         // See https://github.com/pythonnet/pythonnet/pull/219
-        internal static object CheckNone(PyObject pyObj)
+        internal static object? CheckNone(PyObject pyObj)
         {
             if (pyObj != null)
             {
@@ -1444,10 +1405,10 @@ namespace Python.Runtime
             return pyObj;
         }
 
-        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
+        public override bool TryUnaryOperation(UnaryOperationBinder binder, out object? result)
         {
             int r;
-            IntPtr res;
+            NewReference res;
             switch (binder.Operation)
             {
                 case ExpressionType.Negate:
@@ -1477,8 +1438,7 @@ namespace Python.Runtime
                     result = null;
                     return false;
             }
-            Exceptions.ErrorCheck(res);
-            result = CheckNone(new PyObject(res));
+            result = CheckNone(new PyObject(res.StealOrThrow()));
             return true;
         }
 
@@ -1493,17 +1453,35 @@ namespace Python.Runtime
         {
             foreach (PyObject pyObj in Dir())
             {
-                yield return pyObj.ToString();
+                yield return pyObj.ToString()!;
             }
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+            => GetObjectData(info, context);
+        protected virtual void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            Runtime.XIncref(this);
+#pragma warning restore CS0618 // Type or member is obsolete
+            info.AddValue("h", rawPtr.ToInt64());
+            info.AddValue("r", run);
+        }
+
+        protected PyObject(SerializationInfo info, StreamingContext context)
+        {
+            rawPtr = (IntPtr)info.GetInt64("h");
+            run = info.GetInt32("r");
+            if (IsDisposed) GC.SuppressFinalize(this);
         }
     }
 
     internal static class PyObjectExtensions
     {
-        internal static NewReference NewReferenceOrNull(this PyObject self)
-            => NewReference.DangerousFromPointer(
-                (self?.obj ?? IntPtr.Zero) == IntPtr.Zero
-                    ? IntPtr.Zero
-                    : Runtime.SelfIncRef(self.obj));
+        internal static NewReference NewReferenceOrNull(this PyObject? self)
+            => self is null || self.IsDisposed ? default : new NewReference(self);
+
+        internal static BorrowedReference BorrowNullable(this PyObject? self)
+            => self is null ? default : self.Reference;
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Python.Runtime
@@ -11,7 +13,7 @@ namespace Python.Runtime
     [Serializable]
     internal abstract class ExtensionType : ManagedType
     {
-        public ExtensionType()
+        public virtual NewReference Alloc()
         {
             // Create a new PyObject whose type is a generated type that is
             // implemented by the particular concrete ExtensionType subclass.
@@ -20,7 +22,7 @@ namespace Python.Runtime
 
             BorrowedReference tp = TypeManager.GetTypeReference(GetType());
 
-            //int rc = (int)Marshal.ReadIntPtr(tp, TypeOffset.ob_refcnt);
+            //int rc = (int)Util.ReadIntPtr(tp, TypeOffset.ob_refcnt);
             //if (rc > 1050)
             //{
             //    DebugUtil.Print("tp is: ", tp);
@@ -29,57 +31,42 @@ namespace Python.Runtime
 
             NewReference py = Runtime.PyType_GenericAlloc(tp, 0);
 
-            // Borrowed reference. Valid as long as pyHandle is valid.
-            tpHandle = tp.DangerousGetAddress();
-            pyHandle = py.DangerousMoveToPointer();
-
 #if DEBUG
-            GetGCHandle(ObjectReference, TypeReference, out var existing);
+            GetGCHandle(py.BorrowOrThrow(), tp, out var existing);
             System.Diagnostics.Debug.Assert(existing == IntPtr.Zero);
 #endif
-            SetupGc();
+            SetupGc(py.Borrow(), tp);
+
+            return py;
         }
 
-        void SetupGc ()
+        public PyObject AllocObject() => new PyObject(Alloc().Steal());
+
+        // "borrowed" references
+        internal static readonly HashSet<IntPtr> loadedExtensions = new();
+        void SetupGc (BorrowedReference ob, BorrowedReference tp)
         {
-            GCHandle gc = AllocGCHandle(TrackTypes.Extension);
-            InitGCHandle(ObjectReference, TypeReference, gc);
+            GCHandle gc = GCHandle.Alloc(this);
+            InitGCHandle(ob, tp, gc);
+
+            bool isNew = loadedExtensions.Add(ob.DangerousGetAddress());
+            Debug.Assert(isNew);
 
             // We have to support gc because the type machinery makes it very
             // hard not to - but we really don't have a need for it in most
             // concrete extension types, so untrack the object to save calls
             // from Python into the managed runtime that are pure overhead.
 
-            Runtime.PyObject_GC_UnTrack(pyHandle);
-        }
-
-
-        protected virtual void Dealloc()
-        {
-            var type = Runtime.PyObject_TYPE(this.ObjectReference);
-            Runtime.PyObject_GC_Del(this.pyHandle);
-            // Not necessary for decref of `tpHandle` - it is borrowed
-
-            this.FreeGCHandle();
-
-            // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
-            Runtime.XDecref(type.DangerousGetAddress());
-        }
-
-        /// <summary>DecRefs and nulls any fields pointing back to Python</summary>
-        protected virtual void Clear()
-        {
-            ClearObjectDict(this.pyHandle);
-            // Not necessary for decref of `tpHandle` - it is borrowed
+            Runtime.PyObject_GC_UnTrack(ob);
         }
 
         /// <summary>
         /// Type __setattr__ implementation.
         /// </summary>
-        public static int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        public static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
             var message = "type does not support setting attributes";
-            if (val == IntPtr.Zero)
+            if (val == null)
             {
                 message = "readonly attribute";
             }
@@ -87,26 +74,31 @@ namespace Python.Runtime
             return -1;
         }
 
-        public static void tp_dealloc(IntPtr ob)
+        public unsafe static void tp_dealloc(NewReference lastRef)
         {
-            // Clean up a Python instance of this extension type. This
-            // frees the allocated Python object and decrefs the type.
-            var self = (ExtensionType)GetManagedObject(ob);
-            self?.Clear();
-            self?.Dealloc();
+            Runtime.PyObject_GC_UnTrack(lastRef.Borrow());
+
+            tp_clear(lastRef.Borrow());
+
+            bool deleted = loadedExtensions.Remove(lastRef.DangerousGetAddress());
+            Debug.Assert(deleted);
+
+            // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
+            DecrefTypeAndFree(lastRef.Steal());
         }
 
-        public static int tp_clear(IntPtr ob)
+        public static int tp_clear(BorrowedReference ob)
         {
-            var self = (ExtensionType)GetManagedObject(ob);
-            self?.Clear();
-            return 0;
+            TryFreeGCHandle(ob);
+
+            int res = ClassBase.BaseUnmanagedClear(ob);
+            return res;
         }
 
-        protected override void OnLoad(InterDomainContext context)
+        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
         {
-            base.OnLoad(context);
-            SetupGc();
+            base.OnLoad(ob, context);
+            SetupGc(ob, Runtime.PyObject_TYPE(ob));
         }
     }
 }

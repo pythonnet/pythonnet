@@ -212,7 +212,7 @@ namespace Python.EmbeddingTest
                 Assert.AreEqual(ptr, e.Handle);
                 Assert.AreEqual(2, e.ImpactedObjects.Count);
                 // Fix for this test, don't do this on general environment
-                Runtime.Runtime.XIncref(e.Handle);
+                Runtime.Runtime.XIncref(e.Reference);
                 return false;
             };
             Finalizer.Instance.IncorrectRefCntResolver += handler;

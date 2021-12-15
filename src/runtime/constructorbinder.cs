@@ -29,7 +29,7 @@ namespace Python.Runtime
         /// object - the reason is that only the caller knows the correct
         /// Python type to use when wrapping the result (may be a subclass).
         /// </summary>
-        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw)
+        internal object? InvokeRaw(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
             return InvokeRaw(inst, args, kw, null);
         }
@@ -49,11 +49,12 @@ namespace Python.Runtime
         /// Binding binding = this.Bind(inst, args, kw, info);
         /// to take advantage of Bind()'s ability to use a single MethodBase (CI or MI).
         /// </remarks>
-        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal object? InvokeRaw(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info)
         {
             if (!_containingType.Valid)
             {
-                return Exceptions.RaiseTypeError(_containingType.DeletedMessage);
+                Exceptions.RaiseTypeError(_containingType.DeletedMessage);
+                return null;
             }
             object result;
             Type tp = _containingType.Value;
@@ -83,7 +84,7 @@ namespace Python.Runtime
                 return result;
             }
 
-            Binding binding = Bind(inst, args, kw, info);
+            Binding? binding = Bind(inst, args, kw, info);
 
             if (binding == null)
             {
@@ -94,9 +95,8 @@ namespace Python.Runtime
                 // if there is a default constructor and, if so, assume that
                 // any extra args are intended for the subclass' __init__.
 
-                IntPtr eargs = Runtime.PyTuple_New(0);
-                binding = Bind(inst, eargs, IntPtr.Zero);
-                Runtime.XDecref(eargs);
+                using var eargs = Runtime.PyTuple_New(0);
+                binding = Bind(inst, eargs.BorrowOrThrow(), kw: null);
 
                 if (binding == null)
                 {

@@ -9,23 +9,6 @@ namespace Python.Runtime.Slots
 {
     internal static class mp_length_slot
     {
-        private static MethodInfo _lengthMethod;
-        public static MethodInfo Method
-        {
-            get
-            {
-                if (_lengthMethod != null)
-                {
-                    return _lengthMethod;
-                }
-                _lengthMethod = typeof(mp_length_slot).GetMethod(
-                    nameof(mp_length_slot.mp_length),
-                    BindingFlags.Static | BindingFlags.NonPublic);
-                Debug.Assert(_lengthMethod != null);
-                return _lengthMethod;
-            }
-        }
-
         public static bool CanAssign(Type clrType)
         {
             if (typeof(ICollection).IsAssignableFrom(clrType))
@@ -47,12 +30,13 @@ namespace Python.Runtime.Slots
         /// Implements __len__ for classes that implement ICollection
         /// (this includes any IList implementer or Array subclass)
         /// </summary>
-        private static int mp_length(IntPtr ob)
+        internal static nint impl(BorrowedReference ob)
         {
             var co = ManagedType.GetManagedObject(ob) as CLRObject;
             if (co == null)
             {
                 Exceptions.RaiseTypeError("invalid object");
+                return -1;
             }
 
             // first look for ICollection implementation directly

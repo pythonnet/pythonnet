@@ -1,8 +1,4 @@
 using System;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Python.Runtime
 {
@@ -13,42 +9,25 @@ namespace Python.Runtime
     /// situations (specifically, calling functions through Python
     /// type structures) where we need to call functions indirectly.
     /// </summary>
-    internal class NativeCall
+    internal unsafe class NativeCall
     {
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate void Void_1_Delegate(IntPtr a1);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int Int_3_Delegate(IntPtr a1, IntPtr a2, IntPtr a3);
-
-        public static void Void_Call_1(IntPtr fp, IntPtr a1)
+        public static void CallDealloc(IntPtr fp, StolenReference a1)
         {
-            var d = GetDelegate<Interop.DestructorFunc>(fp);
+            var d = (delegate* unmanaged[Cdecl]<StolenReference, void>)fp;
             d(a1);
         }
 
-        public static IntPtr Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
+        public static NewReference Call_3(IntPtr fp, BorrowedReference a1, BorrowedReference a2, BorrowedReference a3)
         {
-            var d = GetDelegate<Interop.TernaryFunc>(fp);
+            var d = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, NewReference>)fp;
             return d(a1, a2, a3);
         }
 
 
-        public static int Int_Call_3(IntPtr fp, IntPtr a1, IntPtr a2, IntPtr a3)
+        public static int Int_Call_3(IntPtr fp, BorrowedReference a1, BorrowedReference a2, BorrowedReference a3)
         {
-            var d = GetDelegate<Interop.ObjObjArgFunc>(fp);
+            var d = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, int>)fp;
             return d(a1, a2, a3);
-        }
-
-        internal static T GetDelegate<T>(IntPtr fp) where T: Delegate
-        {
-            Delegate d = null;
-            if (!Interop.allocatedThunks.TryGetValue(fp, out d))
-            {
-                // We don't cache this delegate because this is a pure delegate ot unmanaged.
-                d = Marshal.GetDelegateForFunctionPointer<T>(fp);
-            }
-            return (T)d;
         }
     }
 }

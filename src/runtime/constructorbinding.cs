@@ -27,14 +27,13 @@ namespace Python.Runtime
         private ConstructorBinder ctorBinder;
 
         [NonSerialized]
-        private IntPtr repr;
+        private PyObject? repr;
 
         public ConstructorBinding(Type type, PyType typeToCreate, ConstructorBinder ctorBinder)
         {
             this.type = type;
             this.typeToCreate = typeToCreate;
             this.ctorBinder = ctorBinder;
-            repr = IntPtr.Zero;
         }
 
         /// <summary>
@@ -62,12 +61,13 @@ namespace Python.Runtime
         /// the attribute was accessed through, or None when the attribute is accessed through the owner.
         /// This method should return the (computed) attribute value or raise an AttributeError exception.
         /// </remarks>
-        public static IntPtr tp_descr_get(IntPtr op, IntPtr instance, IntPtr owner)
+        public static NewReference tp_descr_get(BorrowedReference op, BorrowedReference instance, BorrowedReference owner)
         {
-            var self = (ConstructorBinding)GetManagedObject(op);
+            var self = (ConstructorBinding?)GetManagedObject(op);
             if (self == null)
             {
-                return IntPtr.Zero;
+                Exceptions.SetError(Exceptions.AssertionError, "attempting to access destroyed object");
+                return default;
             }
 
             // It doesn't seem to matter if it's accessed through an instance (rather than via the type).
@@ -77,8 +77,7 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("How in the world could that happen!");
                 }
             }*/
-            Runtime.XIncref(self.pyHandle);
-            return self.pyHandle;
+            return new NewReference(op);
         }
 
         /// <summary>
@@ -89,16 +88,16 @@ namespace Python.Runtime
         /// Return element of o corresponding to the object key or NULL on failure.
         /// This is the equivalent of the Python expression o[key].
         /// </remarks>
-        public static IntPtr mp_subscript(IntPtr op, IntPtr key)
+        public static NewReference mp_subscript(BorrowedReference op, BorrowedReference key)
         {
-            var self = (ConstructorBinding)GetManagedObject(op);
+            var self = (ConstructorBinding)GetManagedObject(op)!;
             if (!self.type.Valid)
             {
                 return Exceptions.RaiseTypeError(self.type.DeletedMessage);
             }
             Type tp = self.type.Value;
 
-            Type[] types = Runtime.PythonArgsToTypeArray(key);
+            Type[]? types = Runtime.PythonArgsToTypeArray(key);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
@@ -111,20 +110,18 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
             var boundCtor = new BoundContructor(tp, self.typeToCreate, self.ctorBinder, ci);
-
-            return boundCtor.pyHandle;
+            return boundCtor.Alloc();
         }
 
         /// <summary>
         /// ConstructorBinding  __repr__ implementation [borrowed from MethodObject].
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (ConstructorBinding)GetManagedObject(ob);
-            if (self.repr != IntPtr.Zero)
+            var self = (ConstructorBinding)GetManagedObject(ob)!;
+            if (self.repr is not null)
             {
-                Runtime.XIncref(self.repr);
-                return self.repr;
+                return new NewReference(self.repr);
             }
             MethodBase[] methods = self.ctorBinder.GetMethods();
 
@@ -144,26 +141,19 @@ namespace Python.Runtime
                 int idx = str.IndexOf("(");
                 doc += string.Format("{0}{1}", name, str.Substring(idx));
             }
-            self.repr = Runtime.PyString_FromString(doc);
-            Runtime.XIncref(self.repr);
-            return self.repr;
+            using var docStr = Runtime.PyString_FromString(doc);
+            if (docStr.IsNull()) return default;
+            self.repr = docStr.MoveToPyObject();
+            return new NewReference(self.repr);
         }
 
-        protected override void Clear()
+        public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            Runtime.Py_CLEAR(ref this.repr);
-            base.Clear();
-        }
+            var self = (ConstructorBinding?)GetManagedObject(ob);
+            if (self is null) return 0;
 
-        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
-        {
-            var self = (ConstructorBinding)GetManagedObject(ob);
-            int res = PyVisit(self.typeToCreate.Handle, visit, arg);
-            if (res != 0) return res;
-
-            res = PyVisit(self.repr, visit, arg);
-            if (res != 0) return res;
-            return 0;
+            int res = PyVisit(self.typeToCreate, visit, arg);
+            return res;
         }
     }
 
@@ -182,7 +172,7 @@ namespace Python.Runtime
         private PyType typeToCreate; // The python type tells GetInstHandle which Type to create.
         private ConstructorBinder ctorBinder;
         private ConstructorInfo ctorInfo;
-        private IntPtr repr;
+        private PyObject? repr;
 
         public BoundContructor(Type type, PyType typeToCreate, ConstructorBinder ctorBinder, ConstructorInfo ci)
         {
@@ -190,7 +180,6 @@ namespace Python.Runtime
             this.typeToCreate = typeToCreate;
             this.ctorBinder = ctorBinder;
             ctorInfo = ci;
-            repr = IntPtr.Zero;
         }
 
         /// <summary>
@@ -200,9 +189,9 @@ namespace Python.Runtime
         /// <param name="args"> PyObject *args </param>
         /// <param name="kw"> PyObject *kw </param>
         /// <returns> A reference to a new instance of the class by invoking the selected ctor(). </returns>
-        public static IntPtr tp_call(IntPtr op, IntPtr args, IntPtr kw)
+        public static NewReference tp_call(BorrowedReference op, BorrowedReference args, BorrowedReference kw)
         {
-            var self = (BoundContructor)GetManagedObject(op);
+            var self = (BoundContructor)GetManagedObject(op)!;
             // Even though a call with null ctorInfo just produces the old behavior
             /*if (self.ctorInfo == null) {
                 string msg = "Usage: Class.Overloads[CLR_or_python_Type, ...]";
@@ -210,52 +199,44 @@ namespace Python.Runtime
             }*/
             // Bind using ConstructorBinder.Bind and invoke the ctor providing a null instancePtr
             // which will fire self.ctorInfo using ConstructorInfo.Invoke().
-            object obj = self.ctorBinder.InvokeRaw(IntPtr.Zero, args, kw, self.ctorInfo);
+            object? obj = self.ctorBinder.InvokeRaw(null, args, kw, self.ctorInfo);
             if (obj == null)
             {
                 // XXX set an error
-                return IntPtr.Zero;
+                return default;
             }
             // Instantiate the python object that wraps the result of the method call
             // and return the PyObject* to it.
-            return CLRObject.GetInstHandle(obj, self.typeToCreate.Reference).DangerousMoveToPointer();
+            return CLRObject.GetReference(obj, self.typeToCreate);
         }
 
         /// <summary>
         /// BoundContructor  __repr__ implementation [borrowed from MethodObject].
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (BoundContructor)GetManagedObject(ob);
-            if (self.repr != IntPtr.Zero)
+            var self = (BoundContructor)GetManagedObject(ob)!;
+            if (self.repr is not null)
             {
-                Runtime.XIncref(self.repr);
-                return self.repr;
+                return new NewReference(self.repr);
             }
             string name = self.type.FullName;
             string str = self.ctorInfo.ToString();
             int idx = str.IndexOf("(");
             str = string.Format("returns a new {0}{1}", name, str.Substring(idx));
-            self.repr = Runtime.PyString_FromString(str);
-            Runtime.XIncref(self.repr);
-            return self.repr;
+            using var docStr = Runtime.PyString_FromString(str);
+            if (docStr.IsNull()) return default;
+            self.repr = docStr.MoveToPyObject();
+            return new NewReference(self.repr);
         }
 
-        protected override void Clear()
+        public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
         {
-            Runtime.Py_CLEAR(ref this.repr);
-            base.Clear();
-        }
+            var self = (BoundContructor?)GetManagedObject(ob);
+            if (self is null) return 0;
 
-        public static int tp_traverse(IntPtr ob, IntPtr visit, IntPtr arg)
-        {
-            var self = (BoundContructor)GetManagedObject(ob);
-            int res = PyVisit(self.typeToCreate.Handle, visit, arg);
-            if (res != 0) return res;
-
-            res = PyVisit(self.repr, visit, arg);
-            if (res != 0) return res;
-            return 0;
+            int res = PyVisit(self.typeToCreate, visit, arg);
+            return res;
         }
     }
 }

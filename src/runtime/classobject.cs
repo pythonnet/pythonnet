@@ -1,5 +1,5 @@
-using System.Linq;
 using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -43,16 +43,15 @@ namespace Python.Runtime
                 }
                 str += t.ToString();
             }
-            return NewReference.DangerousFromPointer(Runtime.PyString_FromString(str));
+            return Runtime.PyString_FromString(str);
         }
 
 
         /// <summary>
         /// Implements __new__ for reflected classes and value types.
         /// </summary>
-        public static IntPtr tp_new(IntPtr tpRaw, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            var tp = new BorrowedReference(tpRaw);
             var self = GetManagedObject(tp) as ClassObject;
 
             // Sanity check: this ensures a graceful error if someone does
@@ -77,38 +76,37 @@ namespace Python.Runtime
                 if (Runtime.PyTuple_Size(args) != 1)
                 {
                     Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
-                    return IntPtr.Zero;
+                    return default;
                 }
 
-                IntPtr op = Runtime.PyTuple_GetItem(args, 0);
-                object result;
+                BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
 
-                if (!Converter.ToManaged(op, type, out result, true))
+                if (!Converter.ToManaged(op, type, out var result, true))
                 {
-                    return IntPtr.Zero;
+                    return default;
                 }
 
-                return CLRObject.GetInstHandle(result, tp).DangerousMoveToPointerOrNull();
+                return CLRObject.GetReference(result!, tp);
             }
 
             if (type.IsAbstract)
             {
                 Exceptions.SetError(Exceptions.TypeError, "cannot instantiate abstract class");
-                return IntPtr.Zero;
+                return default;
             }
 
             if (type.IsEnum)
             {
-                return NewEnum(type, new BorrowedReference(args), tp).DangerousMoveToPointerOrNull();
+                return NewEnum(type, args, tp);
             }
 
-            object obj = self.binder.InvokeRaw(IntPtr.Zero, args, kw);
+            object? obj = self.binder.InvokeRaw(null, args, kw);
             if (obj == null)
             {
-                return IntPtr.Zero;
+                return default;
             }
 
-            return CLRObject.GetInstHandle(obj, tp).DangerousMoveToPointerOrNull();
+            return CLRObject.GetReference(obj, tp);
         }
 
         private static NewReference NewEnum(Type type, BorrowedReference args, BorrowedReference tp)
@@ -133,7 +131,7 @@ namespace Python.Runtime
             }
 
             var op = Runtime.PyTuple_GetItem(args, 0);
-            if (!Converter.ToManaged(op, type.GetEnumUnderlyingType(), out object result, true))
+            if (!Converter.ToManaged(op, type.GetEnumUnderlyingType(), out object? result, true))
             {
                 return default;
             }
@@ -145,7 +143,7 @@ namespace Python.Runtime
             }
 
             object enumValue = Enum.ToObject(type, result);
-            return CLRObject.GetInstHandle(enumValue, tp);
+            return CLRObject.GetReference(enumValue, tp);
         }
 
 
@@ -154,7 +152,7 @@ namespace Python.Runtime
         /// both to implement the Array[int] syntax for creating arrays and
         /// to support generic name overload resolution using [].
         /// </summary>
-        public override IntPtr type_subscript(IntPtr idx)
+        public override NewReference type_subscript(BorrowedReference idx)
         {
             if (!type.Valid)
             {
@@ -170,21 +168,20 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 var c = GetManagedObject(idx) as ClassBase;
-                Type t = c != null ? c.type.Value : Converter.GetTypeByAlias(idx);
+                Type? t = c != null ? c.type.Value : Converter.GetTypeByAlias(idx);
                 if (t == null)
                 {
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 Type a = t.MakeArrayType();
-                ClassBase o = ClassManager.GetClass(a);
-                Runtime.XIncref(o.pyHandle);
-                return o.pyHandle;
+                PyType o = ClassManager.GetClass(a);
+                return new NewReference(o);
             }
 
             // If there are generics in our namespace with the same base name
             // as the current type, then [<type>] means the caller wants to
             // bind the generic type matching the given type parameters.
-            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            Type[]? types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
@@ -193,10 +190,8 @@ namespace Python.Runtime
             Type gtype = AssemblyManager.LookupTypes($"{type.Value.FullName}`{types.Length}").FirstOrDefault();
             if (gtype != null)
             {
-                var g = ClassManager.GetClass(gtype) as GenericType;
+                var g = (GenericType)ClassManager.GetClassImpl(gtype);
                 return g.type_subscript(idx);
-                //Runtime.XIncref(g.pyHandle);
-                //return g.pyHandle;
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
         }

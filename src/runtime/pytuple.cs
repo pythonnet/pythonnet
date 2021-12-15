@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -19,6 +21,7 @@ namespace Python.Runtime
         /// The object reference is not checked for type-correctness.
         /// </remarks>
         internal PyTuple(BorrowedReference reference) : base(reference) { }
+        protected PyTuple(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         private static BorrowedReference FromObject(PyObject o)
         {
@@ -50,33 +53,32 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new empty PyTuple.
         /// </remarks>
-        public PyTuple() : base(NewEmtpy().Steal()) { }
+        public PyTuple() : base(NewEmtpy()) { }
 
-        private static NewReference NewEmtpy()
+        private static StolenReference NewEmtpy()
         {
-            IntPtr ptr = Runtime.PyTuple_New(0);
-            PythonException.ThrowIfIsNull(ptr);
-            return NewReference.DangerousFromPointer(ptr);
+            var ptr = Runtime.PyTuple_New(0);
+            return ptr.StealOrThrow();
         }
 
-        private static NewReference FromArray(PyObject[] items)
+        private static StolenReference FromArray(PyObject[] items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
+            if (items.Any(item => item is null))
+                throw new ArgumentException(message: Util.UseNone, paramName: nameof(items));
 
             int count = items.Length;
-            IntPtr val = Runtime.PyTuple_New(count);
+            using var val = Runtime.PyTuple_New(count);
             for (var i = 0; i < count; i++)
             {
-                IntPtr ptr = items[i].obj;
-                Runtime.XIncref(ptr);
-                int res = Runtime.PyTuple_SetItem(val, i, ptr);
+                int res = Runtime.PyTuple_SetItem(val.Borrow(), i, items[i]);
                 if (res != 0)
                 {
-                    Runtime.Py_DecRef(val);
+                    val.Dispose();
                     throw PythonException.ThrowLastAsClrException();
                 }
             }
-            return NewReference.DangerousFromPointer(val);
+            return val.Steal();
         }
 
         /// <summary>
@@ -88,7 +90,7 @@ namespace Python.Runtime
         /// See caveats about PyTuple_SetItem:
         /// https://www.coursehero.com/file/p4j2ogg/important-exceptions-to-this-rule-PyTupleSetItem-and-PyListSetItem-These/
         /// </remarks>
-        public PyTuple(PyObject[] items) : base(FromArray(items).Steal())
+        public PyTuple(PyObject[] items) : base(FromArray(items))
         {
         }
 

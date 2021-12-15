@@ -10,11 +10,10 @@ namespace Python.Runtime
     internal class OverloadMapper : ExtensionType
     {
         private MethodObject m;
-        private IntPtr target;
+        private PyObject? target;
 
-        public OverloadMapper(MethodObject m, IntPtr target)
+        public OverloadMapper(MethodObject m, PyObject? target)
         {
-            Runtime.XIncref(target);
             this.target = target;
             this.m = m;
         }
@@ -22,21 +21,21 @@ namespace Python.Runtime
         /// <summary>
         /// Implement explicit overload selection using subscript syntax ([]).
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
+        public static NewReference mp_subscript(BorrowedReference tp, BorrowedReference idx)
         {
-            var self = (OverloadMapper)GetManagedObject(tp);
+            var self = (OverloadMapper)GetManagedObject(tp)!;
 
             // Note: if the type provides a non-generic method with N args
             // and a generic method that takes N params, then we always
             // prefer the non-generic version in doing overload selection.
 
-            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            Type[]? types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            MethodInfo mi = MethodBinder.MatchSignature(self.m.info, types);
+            MethodInfo? mi = MethodBinder.MatchSignature(self.m.info, types);
             if (mi == null)
             {
                 var e = "No match found for signature";
@@ -44,24 +43,16 @@ namespace Python.Runtime
             }
 
             var mb = new MethodBinding(self.m, self.target) { info = mi };
-            return mb.pyHandle;
+            return mb.Alloc();
         }
 
         /// <summary>
         /// OverloadMapper  __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr op)
+        public static NewReference tp_repr(BorrowedReference op)
         {
-            var self = (OverloadMapper)GetManagedObject(op);
-            IntPtr doc = self.m.GetDocString();
-            Runtime.XIncref(doc);
-            return doc;
-        }
-
-        protected override void Clear()
-        {
-            Runtime.Py_CLEAR(ref this.target);
-            base.Clear();
+            var self = (OverloadMapper)GetManagedObject(op)!;
+            return self.m.GetDocString();
         }
     }
 }

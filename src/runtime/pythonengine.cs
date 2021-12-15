@@ -5,7 +5,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Threading;
+
+using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -22,7 +25,7 @@ namespace Python.Runtime
 
         public static ShutdownMode DefaultShutdownMode => Runtime.GetDefaultShutdownMode();
 
-        private static DelegateManager delegateManager;
+        private static DelegateManager? delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
         private static IntPtr _programName = IntPtr.Zero;
@@ -243,7 +246,7 @@ namespace Python.Runtime
                 using (var keys = locals.Keys())
                 foreach (PyObject key in keys)
                 {
-                    if (!key.ToString().StartsWith("_") || key.ToString().Equals("__version__"))
+                    if (!key.ToString()!.StartsWith("_") || key.ToString()!.Equals("__version__"))
                     {
                         PyObject value = locals[key];
                         Runtime.PyDict_SetItem(clr_dict, key.Reference, value.Reference);
@@ -271,7 +274,7 @@ namespace Python.Runtime
 
         static void LoadSubmodule(BorrowedReference targetModuleDict, string fullName, string resourceName)
         {
-            string memberName = fullName.AfterLast('.');
+            string? memberName = fullName.AfterLast('.');
             Debug.Assert(memberName != null);
 
             var module = DefineModule(fullName);
@@ -279,9 +282,9 @@ namespace Python.Runtime
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             string pyCode = assembly.ReadStringResource(resourceName);
-            Exec(pyCode, module_globals.DangerousGetAddress(), module_globals.DangerousGetAddress());
+            Exec(pyCode, module_globals, module_globals);
 
-            Runtime.PyDict_SetItemString(targetModuleDict, memberName, module);
+            Runtime.PyDict_SetItemString(targetModuleDict, memberName!, module);
         }
 
         static void LoadMixins(BorrowedReference targetModuleDict)
@@ -488,7 +491,7 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        internal static IntPtr AcquireLock()
+        internal static PyGILState AcquireLock()
         {
             return Runtime.PyGILState_Ensure();
         }
@@ -503,7 +506,7 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        internal static void ReleaseLock(IntPtr gs)
+        internal static void ReleaseLock(PyGILState gs)
         {
             Runtime.PyGILState_Release(gs);
         }
@@ -519,9 +522,9 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        public static IntPtr BeginAllowThreads()
+        public static unsafe IntPtr BeginAllowThreads()
         {
-            return Runtime.PyEval_SaveThread();
+            return (IntPtr)Runtime.PyEval_SaveThread();
         }
 
 
@@ -535,9 +538,9 @@ namespace Python.Runtime
         /// For more information, see the "Extending and Embedding" section
         /// of the Python documentation on www.python.org.
         /// </remarks>
-        public static void EndAllowThreads(IntPtr ts)
+        public static unsafe void EndAllowThreads(IntPtr ts)
         {
-            Runtime.PyEval_RestoreThread(ts);
+            Runtime.PyEval_RestoreThread((PyThreadState*)ts);
         }
 
         public static PyObject Compile(string code, string filename = "", RunFlagType mode = RunFlagType.File)
@@ -556,11 +559,9 @@ namespace Python.Runtime
         /// Evaluate a Python expression and returns the result.
         /// It's a subset of Python eval function.
         /// </remarks>
-        public static PyObject Eval(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static PyObject Eval(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
-            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
-            PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.Eval);
+            PyObject result = RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.Eval);
             return result;
         }
 
@@ -572,11 +573,9 @@ namespace Python.Runtime
         /// Run a string containing Python code.
         /// It's a subset of Python exec function.
         /// </remarks>
-        public static void Exec(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static void Exec(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            var globalsRef = new BorrowedReference(globals.GetValueOrDefault());
-            var localsRef = new BorrowedReference(locals.GetValueOrDefault());
-            using PyObject result = RunString(code, globalsRef, localsRef, RunFlagType.File);
+            using PyObject result = RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.File);
             if (result.obj != Runtime.PyNone)
             {
                 throw PythonException.ThrowLastAsClrException();
@@ -629,9 +628,9 @@ namespace Python.Runtime
         /// Use Exec/Eval/RunSimpleString instead.
         /// </summary>
         [Obsolete("RunString is deprecated and will be removed. Use Exec/Eval/RunSimpleString instead.")]
-        public static PyObject RunString(string code, IntPtr? globals = null, IntPtr? locals = null)
+        public static PyObject RunString(string code, PyDict? globals = null, PyObject? locals = null)
         {
-            return RunString(code, new BorrowedReference(globals.GetValueOrDefault()), new BorrowedReference(locals.GetValueOrDefault()), RunFlagType.File);
+            return RunString(code, globals.BorrowNullable(), locals.BorrowNullable(), RunFlagType.File);
         }
 
         /// <summary>
@@ -652,9 +651,10 @@ namespace Python.Runtime
                 globals = Runtime.PyEval_GetGlobals();
                 if (globals.IsNull)
                 {
-                    globals = tempGlobals = NewReference.DangerousFromPointer(Runtime.PyDict_New());
+                    tempGlobals = Runtime.PyDict_New();
+                    globals = tempGlobals.BorrowOrThrow();
                     Runtime.PyDict_SetItem(
-                        globals, new BorrowedReference(PyIdentifier.__builtins__),
+                        globals, PyIdentifier.__builtins__,
                         Runtime.PyEval_GetBuiltins()
                     );
                 }
@@ -706,7 +706,7 @@ namespace Python.Runtime
 
         public class GILState : IDisposable
         {
-            private readonly IntPtr state;
+            private readonly PyGILState state;
             private bool isDisposed;
 
             internal GILState()
@@ -747,9 +747,15 @@ namespace Python.Runtime
 
         public class KeywordArguments : PyDict
         {
+            public KeywordArguments() : base()
+            {
+            }
+
+            protected KeywordArguments(SerializationInfo info, StreamingContext context)
+                : base(info, context) { }
         }
 
-        public static KeywordArguments kw(params object[] kv)
+        public static KeywordArguments kw(params object?[] kv)
         {
             var dict = new KeywordArguments();
             if (kv.Length % 2 != 0)
@@ -758,22 +764,29 @@ namespace Python.Runtime
             }
             for (var i = 0; i < kv.Length; i += 2)
             {
-                IntPtr value;
-                if (kv[i + 1] is PyObject)
+                var key = kv[i] as string;
+                if (key is null)
+                    throw new ArgumentException("Keys must be non-null strings");
+
+                BorrowedReference value;
+                NewReference temp = default;
+                if (kv[i + 1] is PyObject pyObj)
                 {
-                    value = ((PyObject)kv[i + 1]).Handle;
+                    value = pyObj;
                 }
                 else
                 {
-                    value = Converter.ToPython(kv[i + 1], kv[i + 1]?.GetType());
+                    temp = Converter.ToPythonDetectType(kv[i + 1]);
+                    value = temp.Borrow();
                 }
-                if (Runtime.PyDict_SetItemString(dict.Handle, (string)kv[i], value) != 0)
+                using (temp)
                 {
-                    throw new ArgumentException(string.Format("Cannot add key '{0}' to dictionary.", (string)kv[i]));
-                }
-                if (!(kv[i + 1] is PyObject))
-                {
-                    Runtime.XDecref(value);
+                    if (Runtime.PyDict_SetItemString(dict, key, value) != 0)
+                    {
+                        throw new ArgumentException(
+                            string.Format("Cannot add key '{0}' to dictionary.", key),
+                            innerException: PythonException.FetchCurrent());
+                    }
                 }
             }
             return dict;
@@ -829,8 +842,8 @@ namespace Python.Runtime
             // Behavior described here:
             // https://docs.python.org/2/reference/datamodel.html#with-statement-context-managers
 
-            Exception ex = null;
-            PythonException pyError = null;
+            Exception? ex = null;
+            PythonException? pyError = null;
 
             try
             {

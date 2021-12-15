@@ -1,12 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 namespace Python.Runtime
 {
@@ -27,16 +25,19 @@ namespace Python.Runtime
         //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
         private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
             new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
-        //private static Dictionary<string, Dictionary<string, string>> generics;
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        // domain-level handlers are initialized in Initialize
         private static AssemblyLoadEventHandler lhandler;
         private static ResolveEventHandler rhandler;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         // updated only under GIL?
         private static Dictionary<string, int> probed = new Dictionary<string, int>(32);
 
         // modified from event handlers below, potentially triggered from different .NET threads
-        private static ConcurrentQueue<Assembly> assemblies;
-        internal static List<string> pypath;
+        private static readonly ConcurrentQueue<Assembly> assemblies = new();
+        internal static readonly List<string> pypath = new (capacity: 16);
         private AssemblyManager()
         {
         }
@@ -48,8 +49,7 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-            assemblies = new ConcurrentQueue<Assembly>();
-            pypath = new List<string>(16);
+            pypath.Clear();
 
             AppDomain domain = AppDomain.CurrentDomain;
 
@@ -108,7 +108,7 @@ namespace Python.Runtime
         /// for failed loads, because they might be dependencies of something
         /// we loaded from Python which also needs to be found on PYTHONPATH.
         /// </summary>
-        private static Assembly ResolveHandler(object ob, ResolveEventArgs args)
+        private static Assembly? ResolveHandler(object ob, ResolveEventArgs args)
         {
             var name = new AssemblyName(args.Name);
             foreach (var alreadyLoaded in assemblies)
@@ -156,7 +156,7 @@ namespace Python.Runtime
                 for (var i = 0; i < count; i++)
                 {
                     BorrowedReference item = Runtime.PyList_GetItem(list, i);
-                    string path = Runtime.GetManagedString(item);
+                    string? path = Runtime.GetManagedString(item);
                     if (path != null)
                     {
                         pypath.Add(path);
@@ -231,7 +231,7 @@ namespace Python.Runtime
         /// <summary>
         /// Loads an assembly using an augmented search path (the python path).
         /// </summary>
-        public static Assembly LoadAssemblyPath(string name)
+        public static Assembly? LoadAssemblyPath(string name)
         {
             string path = FindAssembly(name);
             if (path == null) return null;
@@ -243,7 +243,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static Assembly LoadAssemblyFullPath(string name)
+        public static Assembly? LoadAssemblyFullPath(string name)
         {
             if (Path.IsPathRooted(name))
             {
@@ -258,7 +258,7 @@ namespace Python.Runtime
         /// <summary>
         /// Returns an assembly that's already been loaded
         /// </summary>
-        public static Assembly FindLoadedAssembly(string name)
+        public static Assembly? FindLoadedAssembly(string name)
         {
             foreach (Assembly a in assemblies)
             {
@@ -358,7 +358,7 @@ namespace Python.Runtime
             //Dictionary<string, int> seen = new Dictionary<string, int>();
             var names = new List<string>(8);
 
-            List<string> g = GenericUtil.GetGenericBaseNames(nsname);
+            List<string>? g = GenericUtil.GetGenericBaseNames(nsname);
             if (g != null)
             {
                 foreach (string n in g)

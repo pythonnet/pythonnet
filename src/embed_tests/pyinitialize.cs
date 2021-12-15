@@ -62,10 +62,10 @@ namespace Python.EmbeddingTest
 #pragma warning restore CS0618 // Type or member is obsolete
             ns.Dispose();
 
-            Assert.Less(Runtime.Runtime.Refcount(clsRef), 256);
+            Assert.Less(Runtime.Runtime.Refcount32(clsRef), 256);
 
             PythonEngine.Shutdown();
-            Assert.Greater(Runtime.Runtime.Refcount(clsRef), 0);
+            Assert.Greater(Runtime.Runtime.Refcount32(clsRef), 0);
         }
 
         /// <summary>

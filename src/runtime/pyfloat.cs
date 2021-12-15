@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -33,7 +34,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python float from a double value.
         /// </remarks>
-        public PyFloat(double value) : base(FromDouble(value).Steal())
+        public PyFloat(double value) : base(Runtime.PyFloat_FromDouble(value).StealOrThrow())
         {
         }
 
@@ -46,13 +47,6 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a float");
             }
             return o.Reference;
-        }
-
-        private static NewReference FromDouble(double value)
-        {
-            IntPtr val = Runtime.PyFloat_FromDouble(value);
-            PythonException.ThrowIfIsNull(val);
-            return NewReference.DangerousFromPointer(val);
         }
 
         private static StolenReference FromString(string value)
@@ -76,6 +70,9 @@ namespace Python.Runtime
         public PyFloat(string value) : base(FromString(value))
         {
         }
+
+        protected PyFloat(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
 
         /// <summary>

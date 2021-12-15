@@ -1,10 +1,13 @@
-#nullable enable
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using System.Text;
+
+using Python.Runtime.Native;
 
 namespace Python.Runtime
 {
@@ -12,6 +15,7 @@ namespace Python.Runtime
     /// Provides a managed interface to exceptions thrown by the Python
     /// runtime.
     /// </summary>
+    [Serializable]
     public class PythonException : System.Exception
     {
         public PythonException(PyType type, PyObject? value, PyObject? traceback,
@@ -35,6 +39,7 @@ namespace Python.Runtime
         /// It is recommended to call this as <code>throw ThrowLastAsClrException()</code>
         /// to assist control flow checks.
         /// </summary>
+        [DebuggerHidden]
         internal static Exception ThrowLastAsClrException()
         {
             // prevent potential interop errors in this method
@@ -89,7 +94,7 @@ namespace Python.Runtime
 
             try
             {
-                if (TryDecodePyErr(type, value, traceback) is { } pyErr)
+                if (TryDecodePyErr(type.Borrow(), value.BorrowNullable(), traceback.BorrowNullable()) is { } pyErr)
                 {
                     type.Dispose();
                     value.Dispose();
@@ -109,7 +114,7 @@ namespace Python.Runtime
 
             try
             {
-                return FromPyErr(typeRef: type, valRef: value, tbRef: traceback, out dispatchInfo);
+                return FromPyErr(typeRef: type.Borrow(), valRef: value.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
             }
             finally
             {
@@ -127,7 +132,7 @@ namespace Python.Runtime
         {
             if (exception.IsNull) return null;
 
-            var pyInfo = Runtime.PyObject_GetAttrString(exception, Exceptions.DispatchInfoAttribute);
+            using var pyInfo = Runtime.PyObject_GetAttrString(exception, Exceptions.DispatchInfoAttribute);
             if (pyInfo.IsNull())
             {
                 if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
@@ -137,19 +142,12 @@ namespace Python.Runtime
                 return null;
             }
 
-            try
+            if (Converter.ToManagedValue(pyInfo.Borrow(), typeof(ExceptionDispatchInfo), out object? result, setError: false))
             {
-                if (Converter.ToManagedValue(pyInfo, typeof(ExceptionDispatchInfo), out object? result, setError: false))
-                {
-                    return (ExceptionDispatchInfo)result!;
-                }
+                return (ExceptionDispatchInfo)result!;
+            }
 
-                return null;
-            }
-            finally
-            {
-                pyInfo.Dispose();
-            }
+            return null;
         }
 
         /// <summary>
@@ -180,32 +178,38 @@ namespace Python.Runtime
                 return pyErr;
             }
 
-            if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object decoded)
+            if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object? decoded)
                 && decoded is Exception decodedException)
             {
                 return decodedException;
             }
 
             using var cause = Runtime.PyException_GetCause(valRef);
-            Exception? inner = FromCause(cause);
+            Exception? inner = FromCause(cause.BorrowNullable());
             return new PythonException(type, value, traceback, inner);
         }
 
-        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        private static PyDict ToPyErrArgs(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
         {
             using var type = PyType.FromReference(typeRef);
             using var value = PyObject.FromNullableReference(valRef);
             using var traceback = PyObject.FromNullableReference(tbRef);
 
-            using var errorDict = new PyDict();
-            if (typeRef != null) errorDict["type"] = type;
-            if (valRef != null) errorDict["value"] = value;
-            if (tbRef != null) errorDict["traceback"] = traceback;
+            var errorDict = new PyDict();
+            errorDict["type"] = type;
+            if (value is not null) errorDict["value"] = value;
+            if (traceback is not null) errorDict["traceback"] = traceback;
 
+            return errorDict;
+        }
+
+        private static Exception? TryDecodePyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef)
+        {
             using var pyErrType = Runtime.InteropModule.GetAttr("PyErr");
+            using var errorDict = ToPyErrArgs(typeRef, valRef, tbRef);
             using var pyErrInfo = pyErrType.Invoke(new PyTuple(), errorDict);
             if (PyObjectConversions.TryDecode(pyErrInfo.Reference, pyErrType.Reference,
-                typeof(Exception), out object decoded) && decoded is Exception decodedPyErrInfo)
+                typeof(Exception), out object? decoded) && decoded is Exception decodedPyErrInfo)
             {
                 return decodedPyErrInfo;
             }
@@ -217,13 +221,13 @@ namespace Python.Runtime
         {
             if (cause == null || cause.IsNone()) return null;
 
-            Debug.Assert(Runtime.PyObject_TypeCheck(cause, new BorrowedReference(Exceptions.BaseException)));
+            Debug.Assert(Runtime.PyObject_TypeCheck(cause, Exceptions.BaseException));
 
             using var innerTraceback = Runtime.PyException_GetTraceback(cause);
             return FromPyErr(
                 typeRef: Runtime.PyObject_TYPE(cause),
                 valRef: cause,
-                tbRef: innerTraceback,
+                tbRef: innerTraceback.BorrowNullable(),
                 out _);
 
         }
@@ -234,7 +238,7 @@ namespace Python.Runtime
 
             if (value != null && !value.IsNone())
             {
-                return value.ToString();
+                return value.ToString() ?? "no message";
             }
 
             return type.Name;
@@ -260,12 +264,8 @@ namespace Python.Runtime
         }
 
         /// <summary>Restores python error.</summary>
-        public void Restore()
+        internal void Restore()
         {
-            CheckRuntimeIsRunning();
-
-            using var _ = new Py.GILState();
-
             NewReference type = Type.NewReferenceOrNull();
             NewReference value = Value.NewReferenceOrNull();
             NewReference traceback = Traceback.NewReferenceOrNull();
@@ -332,7 +332,7 @@ namespace Python.Runtime
         {
             CheckRuntimeIsRunning();
 
-            IntPtr gs = PythonEngine.AcquireLock();
+            PyGILState gs = PythonEngine.AcquireLock();
             try
             {
                 if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
@@ -351,9 +351,9 @@ namespace Python.Runtime
                     Debug.Assert(Traceback is null == tb.IsNull());
                     if (!tb.IsNull())
                     {
-                        Debug.Assert(Traceback!.Reference == tb);
+                        Debug.Assert(Traceback!.Reference == tb.Borrow());
 
-                        int r = Runtime.PyException_SetTraceback(Value.Reference, tb);
+                        int r = Runtime.PyException_SetTraceback(Value.Reference, tb.Borrow());
                         ThrowIfIsNotZero(r);
                     }
                 }
@@ -400,11 +400,37 @@ namespace Python.Runtime
             => new PythonException(type: Type, value: Value, traceback: Traceback,
                                    Message, InnerException);
 
-        internal bool Is(IntPtr type)
+        #region Serializable
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        protected PythonException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            Type = (PyType)info.GetValue(nameof(Type), typeof(PyType));
+            Value = (PyObject)info.GetValue(nameof(Value), typeof(PyObject));
+            Traceback = (PyObject)info.GetValue(nameof(Traceback), typeof(PyObject));
+        }
+
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            base.GetObjectData(info, context);
+
+            info.AddValue(nameof(Type), Type);
+            info.AddValue(nameof(Value), Value);
+            info.AddValue(nameof(Traceback), Traceback);
+        }
+        #endregion
+
+        internal bool Is(BorrowedReference type)
         {
             return Runtime.PyErr_GivenExceptionMatches(
                 given: (Value ?? Type).Reference,
-                typeOrTypes: new BorrowedReference(type)) != 0;
+                typeOrTypes: type) != 0;
         }
 
         private static void CheckRuntimeIsRunning()
@@ -417,31 +443,23 @@ namespace Python.Runtime
         /// Returns <c>true</c> if the current Python exception
         /// matches the given exception type.
         /// </summary>
-        internal static bool CurrentMatches(IntPtr ob)
+        internal static bool CurrentMatches(BorrowedReference ob)
         {
             return Runtime.PyErr_ExceptionMatches(ob) != 0;
         }
 
+        [DebuggerHidden]
+        internal static void ThrowIfIsNull(in NewReference ob)
+        {
+            if (ob.BorrowNullable() == null)
+            {
+                throw ThrowLastAsClrException();
+            }
+        }
         internal static BorrowedReference ThrowIfIsNull(BorrowedReference ob)
-        {
-            if (ob == null)
-            {
-                throw ThrowLastAsClrException();
-            }
+            => Exceptions.ErrorCheck(ob);
 
-            return ob;
-        }
-
-        internal static IntPtr ThrowIfIsNull(IntPtr ob)
-        {
-            if (ob == IntPtr.Zero)
-            {
-                throw ThrowLastAsClrException();
-            }
-
-            return ob;
-        }
-
+        [DebuggerHidden]
         internal static void ThrowIfIsNotZero(int value)
         {
             if (value != 0)

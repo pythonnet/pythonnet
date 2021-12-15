@@ -26,7 +26,7 @@ class build_dotnet(Command):
 
     description = "Build DLLs with dotnet-cli"
     user_options = [
-        ("dotnet-config", None, "dotnet build configuration"),
+        ("dotnet-config=", None, "dotnet build configuration"),
         (
             "inplace",
             "i",

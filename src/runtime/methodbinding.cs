@@ -16,54 +16,40 @@ namespace Python.Runtime
     {
         internal MaybeMethodInfo info;
         internal MethodObject m;
-        internal IntPtr target;
-        internal IntPtr targetType;
+        internal PyObject? target;
+        internal PyType? targetType;
 
-        public MethodBinding(MethodObject m, IntPtr target, IntPtr targetType)
+        public MethodBinding(MethodObject m, PyObject? target, PyType? targetType = null)
         {
-            Runtime.XIncref(target);
             this.target = target;
 
-            if (targetType == IntPtr.Zero)
-            {
-                targetType = Runtime.PyObject_Type(target);
-            }
-            else
-            {
-                Runtime.XIncref(targetType);
-            }
-
-            this.targetType = targetType;
+            this.targetType = targetType ?? target?.GetPythonType();
 
             this.info = null;
             this.m = m;
         }
 
-        public MethodBinding(MethodObject m, IntPtr target) : this(m, target, IntPtr.Zero)
-        {
-        }
-
         /// <summary>
         /// Implement binding of generic methods using the subscript syntax [].
         /// </summary>
-        public static IntPtr mp_subscript(IntPtr tp, IntPtr idx)
+        public static NewReference mp_subscript(BorrowedReference tp, BorrowedReference idx)
         {
-            var self = (MethodBinding)GetManagedObject(tp);
+            var self = (MethodBinding)GetManagedObject(tp)!;
 
-            Type[] types = Runtime.PythonArgsToTypeArray(idx);
+            Type[]? types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null)
             {
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            MethodInfo mi = MethodBinder.MatchParameters(self.m.info, types);
+            MethodInfo? mi = MethodBinder.MatchParameters(self.m.info, types);
             if (mi == null)
             {
                 return Exceptions.RaiseTypeError("No match found for given type params");
             }
 
-            var mb = new MethodBinding(self.m, self.target) { info = mi };
-            return mb.pyHandle;
+            var mb = new MethodBinding(self.m, self.target, self.targetType) { info = mi };
+            return mb.Alloc();
         }
 
         PyObject Signature
@@ -92,12 +78,13 @@ namespace Python.Runtime
                     {
                         ParameterInfo[] altParamters = info.GetParameters();
                         return i < altParamters.Length ? altParamters[i] : null;
-                    }).Where(p => p != null);
+                    }).WhereNotNull();
                     using var defaultValue = alternatives
-                        .Select(alternative => alternative.DefaultValue != DBNull.Value ? alternative.DefaultValue.ToPython() : null)
-                        .FirstOrDefault(v => v != null) ?? parameterClass.GetAttr("empty");
+                        .Select(alternative => alternative!.DefaultValue != DBNull.Value ? alternative.DefaultValue.ToPython() : null)
+                        .FirstOrDefault(v => v != null) ?? parameterClass?.GetAttr("empty");
 
-                    if (alternatives.Any(alternative => alternative.Name != parameter.Name))
+                    if (alternatives.Any(alternative => alternative.Name != parameter.Name)
+                        || positionalOrKeyword is null)
                     {
                         return signatureClass.Invoke();
                     }
@@ -108,7 +95,7 @@ namespace Python.Runtime
                     {
                         kw["default"] = defaultValue;
                     }
-                    using var parameterInfo = parameterClass.Invoke(args: args, kw: kw);
+                    using var parameterInfo = parameterClass!.Invoke(args: args, kw: kw);
                     parameters.Append(parameterInfo);
                 }
 
@@ -131,37 +118,35 @@ namespace Python.Runtime
         /// <summary>
         /// MethodBinding __getattribute__ implementation.
         /// </summary>
-        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
         {
-            var self = (MethodBinding)GetManagedObject(ob);
+            var self = (MethodBinding)GetManagedObject(ob)!;
 
             if (!Runtime.PyString_Check(key))
             {
                 Exceptions.SetError(Exceptions.TypeError, "string expected");
-                return IntPtr.Zero;
+                return default;
             }
 
-            string name = InternString.GetManagedString(key);
+            string? name = InternString.GetManagedString(key);
             switch (name)
             {
                 case "__doc__":
-                    IntPtr doc = self.m.GetDocString();
-                    Runtime.XIncref(doc);
-                    return doc;
+                    return self.m.GetDocString();
                 // FIXME: deprecate __overloads__ soon...
                 case "__overloads__":
                 case "Overloads":
                     var om = new OverloadMapper(self.m, self.target);
-                    return om.pyHandle;
+                    return om.Alloc();
                 case "__signature__" when Runtime.InspectModule is not null:
                     var sig = self.Signature;
                     if (sig is null)
                     {
                         return Runtime.PyObject_GenericGetAttr(ob, key);
                     }
-                    return sig.NewReferenceOrNull().DangerousMoveToPointerOrNull();
+                    return sig.NewReferenceOrNull();
                 case "__name__":
-                    return self.m.GetName().DangerousMoveToPointerOrNull();
+                    return self.m.GetName();
                 default:
                     return Runtime.PyObject_GenericGetAttr(ob, key);
             }
@@ -171,9 +156,9 @@ namespace Python.Runtime
         /// <summary>
         /// MethodBinding  __call__ implementation.
         /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        public static NewReference tp_call(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
-            var self = (MethodBinding)GetManagedObject(ob);
+            var self = (MethodBinding)GetManagedObject(ob)!;
 
             // This works around a situation where the wrong generic method is picked,
             // for example this method in the tests: string Overloaded<T>(int arg1, int arg2, string arg3)
@@ -183,11 +168,11 @@ namespace Python.Runtime
                 if (info.IsGenericMethod)
                 {
                     var len = Runtime.PyTuple_Size(args); //FIXME: Never used
-                    Type[] sigTp = Runtime.PythonArgsToTypeArray(args, true);
+                    Type[]? sigTp = Runtime.PythonArgsToTypeArray(args, true);
                     if (sigTp != null)
                     {
                         Type[] genericTp = info.GetGenericArguments();
-                        MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
+                        MethodInfo? betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
                         if (betterMatch != null)
                         {
                             self.info = betterMatch;
@@ -200,49 +185,48 @@ namespace Python.Runtime
             // as the first argument. Note that this is not supported if any
             // of the overloads are static since we can't know if the intent
             // was to call the static method or the unbound instance method.
-            var disposeList = new List<IntPtr>();
+            var disposeList = new List<PyObject>();
             try
             {
-                IntPtr target = self.target;
+                PyObject? target = self.target;
 
-                if (target == IntPtr.Zero && !self.m.IsStatic())
+                if (target is null && !self.m.IsStatic())
                 {
                     var len = Runtime.PyTuple_Size(args);
                     if (len < 1)
                     {
                         Exceptions.SetError(Exceptions.TypeError, "not enough arguments");
-                        return IntPtr.Zero;
+                        return default;
                     }
-                    target = Runtime.PyTuple_GetItem(args, 0);
-                    Runtime.XIncref(target);
+                    target = new PyObject(Runtime.PyTuple_GetItem(args, 0));
                     disposeList.Add(target);
 
-                    args = Runtime.PyTuple_GetSlice(args, 1, len);
-                    disposeList.Add(args);
+                    var unboundArgs = Runtime.PyTuple_GetSlice(args, 1, len).MoveToPyObject();
+                    disposeList.Add(unboundArgs);
+                    args = unboundArgs;
                 }
 
                 // if the class is a IPythonDerivedClass and target is not the same as self.targetType
                 // (eg if calling the base class method) then call the original base class method instead
                 // of the target method.
                 IntPtr superType = IntPtr.Zero;
-                if (Runtime.PyObject_TYPE(target) != self.targetType)
+                if (target is not null && Runtime.PyObject_TYPE(target) != self.targetType!)
                 {
                     var inst = GetManagedObject(target) as CLRObject;
                     if (inst?.inst is IPythonDerivedType)
                     {
-                        var baseType = GetManagedObject(self.targetType) as ClassBase;
+                        var baseType = GetManagedObject(self.targetType!) as ClassBase;
                         if (baseType != null && baseType.type.Valid)
                         {
                             string baseMethodName = "_" + baseType.type.Value.Name + "__" + self.m.name;
-                            IntPtr baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
-                            if (baseMethod != IntPtr.Zero)
+                            using var baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
+                            if (!baseMethod.IsNull())
                             {
-                                var baseSelf = GetManagedObject(baseMethod) as MethodBinding;
+                                var baseSelf = GetManagedObject(baseMethod.Borrow()) as MethodBinding;
                                 if (baseSelf != null)
                                 {
                                     self = baseSelf;
                                 }
-                                Runtime.XDecref(baseMethod);
                             }
                             else
                             {
@@ -251,13 +235,13 @@ namespace Python.Runtime
                         }
                     }
                 }
-                return self.m.Invoke(target, args, kw, self.info.UnsafeValue);
+                return self.m.Invoke(target is null ? BorrowedReference.Null : target, args, kw, self.info.UnsafeValue);
             }
             finally
             {
-                foreach (IntPtr ptr in disposeList)
+                foreach (var ptr in disposeList)
                 {
-                    Runtime.XDecref(ptr);
+                    ptr.Dispose();
                 }
             }
         }
@@ -266,12 +250,12 @@ namespace Python.Runtime
         /// <summary>
         /// MethodBinding  __hash__ implementation.
         /// </summary>
-        public static nint tp_hash(IntPtr ob)
+        public static nint tp_hash(BorrowedReference ob)
         {
-            var self = (MethodBinding)GetManagedObject(ob);
+            var self = (MethodBinding)GetManagedObject(ob)!;
             nint x = 0;
 
-            if (self.target != IntPtr.Zero)
+            if (self.target is not null)
             {
                 x = Runtime.PyObject_Hash(self.target);
                 if (x == -1)
@@ -280,38 +264,19 @@ namespace Python.Runtime
                 }
             }
 
-            nint y = Runtime.PyObject_Hash(self.m.pyHandle);
-            if (y == -1)
-            {
-                return y;
-            }
-
+            nint y = self.m.GetHashCode();
             return x ^ y;
         }
 
         /// <summary>
         /// MethodBinding  __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (MethodBinding)GetManagedObject(ob);
-            string type = self.target == IntPtr.Zero ? "unbound" : "bound";
+            var self = (MethodBinding)GetManagedObject(ob)!;
+            string type = self.target is null ? "unbound" : "bound";
             string name = self.m.name;
             return Runtime.PyString_FromString($"<{type} method '{name}'>");
-        }
-
-        protected override void Clear()
-        {
-            Runtime.Py_CLEAR(ref this.target);
-            Runtime.Py_CLEAR(ref this.targetType);
-            base.Clear();
-        }
-
-        protected override void OnSave(InterDomainContext context)
-        {
-            base.OnSave(context);
-            Runtime.XIncref(target);
-            Runtime.XIncref(targetType);
         }
     }
 }

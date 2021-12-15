@@ -18,20 +18,20 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __new__ for reflected generic types.
         /// </summary>
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
             Exceptions.SetError(Exceptions.TypeError, "cannot instantiate an open generic type");
-            return IntPtr.Zero;
+            return default;
         }
 
 
         /// <summary>
         /// Implements __call__ for reflected generic types.
         /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        public static NewReference tp_call(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
             Exceptions.SetError(Exceptions.TypeError, "object is not callable");
-            return IntPtr.Zero;
+            return default;
         }
     }
 }

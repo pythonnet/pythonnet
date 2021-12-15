@@ -1,8 +1,5 @@
-using System.Diagnostics;
 using System;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 
 namespace Python.Runtime
 {
@@ -13,7 +10,6 @@ namespace Python.Runtime
     {
         public unsafe static int Initialize(IntPtr data, int size)
         {
-            IntPtr gs = IntPtr.Zero;
             try
             {
                 var dllPath = Encoding.UTF8.GetString((byte*)data.ToPointer(), size);
@@ -27,11 +23,18 @@ namespace Python.Runtime
                     PythonDLL = null;
                 }
 
-                gs = PyGILState_Ensure();
+                var gs = PyGILState_Ensure();
 
-                // Console.WriteLine("Startup thread");
-                PythonEngine.InitExt();
-                // Console.WriteLine("Startup finished");
+                try
+                {
+                    // Console.WriteLine("Startup thread");
+                    PythonEngine.InitExt();
+                    // Console.WriteLine("Startup finished");
+                }
+                finally
+                {
+                    PyGILState_Release(gs);
+                }
             }
             catch (Exception exc)
             {
@@ -40,27 +43,27 @@ namespace Python.Runtime
                 );
                 return 1;
             }
-            finally
-            {
-                if (gs != IntPtr.Zero)
-                {
-                    PyGILState_Release(gs);
-                }
-            }
+            
             return 0;
         }
 
         public unsafe static int Shutdown(IntPtr data, int size)
         {
-            IntPtr gs = IntPtr.Zero;
             try
             {
                 var command = Encoding.UTF8.GetString((byte*)data.ToPointer(), size);
 
                 if (command == "full_shutdown")
                 {
-                    gs = PyGILState_Ensure();
-                    PythonEngine.Shutdown();
+                    var gs = PyGILState_Ensure();
+                    try
+                    {
+                        PythonEngine.Shutdown();
+                    }
+                    finally
+                    {
+                        PyGILState_Release(gs);
+                    }
                 }
             }
             catch (Exception exc)
@@ -70,13 +73,7 @@ namespace Python.Runtime
                 );
                 return 1;
             }
-            finally
-            {
-                if (gs != IntPtr.Zero)
-                {
-                    PyGILState_Release(gs);
-                }
-            }
+
             return 0;
         }
     }

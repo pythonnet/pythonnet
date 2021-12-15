@@ -14,7 +14,7 @@ namespace Python.Runtime
 
         public FieldObject(FieldInfo info)
         {
-            this.info = info;
+            this.info = new MaybeFieldInfo(info);
         }
 
         /// <summary>
@@ -22,30 +22,31 @@ namespace Python.Runtime
         /// value of the field on the given object. The returned value
         /// is converted to an appropriately typed Python object.
         /// </summary>
-        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
+        public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
-            var self = (FieldObject)GetManagedObject(ds);
+            var self = (FieldObject?)GetManagedObject(ds);
             object result;
 
             if (self == null)
             {
-                return IntPtr.Zero;
+                Exceptions.SetError(Exceptions.AssertionError, "attempting to access destroyed object");
+                return default;
             }
             else if (!self.info.Valid)
             {
                 Exceptions.SetError(Exceptions.AttributeError, self.info.DeletedMessage);
-                return IntPtr.Zero;
+                return default;
             }
 
             FieldInfo info = self.info.Value;
 
-            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
+            if (ob == null || ob == Runtime.PyNone)
             {
                 if (!info.IsStatic)
                 {
                     Exceptions.SetError(Exceptions.TypeError,
                         "instance attribute must be accessed through a class instance");
-                    return IntPtr.Zero;
+                    return default;
                 }
                 try
                 {
@@ -55,17 +56,17 @@ namespace Python.Runtime
                 catch (Exception e)
                 {
                     Exceptions.SetError(Exceptions.TypeError, e.Message);
-                    return IntPtr.Zero;
+                    return default;
                 }
             }
 
             try
             {
-                var co = (CLRObject)GetManagedObject(ob);
+                var co = (CLRObject?)GetManagedObject(ob);
                 if (co == null)
                 {
                     Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
-                    return IntPtr.Zero;
+                    return default;
                 }
                 result = info.GetValue(co.inst);
                 return Converter.ToPython(result, info.FieldType);
@@ -73,7 +74,7 @@ namespace Python.Runtime
             catch (Exception e)
             {
                 Exceptions.SetError(Exceptions.TypeError, e.Message);
-                return IntPtr.Zero;
+                return default;
             }
         }
 
@@ -82,13 +83,12 @@ namespace Python.Runtime
         /// a field based on the given Python value. The Python value must be
         /// convertible to the type of the field.
         /// </summary>
-        public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
         {
-            var self = (FieldObject)GetManagedObject(ds);
-            object newval;
-
+            var self = (FieldObject?)GetManagedObject(ds);
             if (self == null)
             {
+                Exceptions.SetError(Exceptions.AssertionError, "attempting to access destroyed object");
                 return -1;
             }
             else if (!self.info.Valid)
@@ -97,7 +97,7 @@ namespace Python.Runtime
                 return -1;
             }
 
-            if (val == IntPtr.Zero)
+            if (val == null)
             {
                 Exceptions.SetError(Exceptions.TypeError, "cannot delete field");
                 return -1;
@@ -113,7 +113,7 @@ namespace Python.Runtime
 
             bool is_static = info.IsStatic;
 
-            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
+            if (ob == null || ob == Runtime.PyNone)
             {
                 if (!is_static)
                 {
@@ -122,7 +122,7 @@ namespace Python.Runtime
                 }
             }
 
-            if (!Converter.ToManaged(val, info.FieldType, out newval, true))
+            if (!Converter.ToManaged(val, info.FieldType, out var newval, true))
             {
                 return -1;
             }
@@ -131,7 +131,7 @@ namespace Python.Runtime
             {
                 if (!is_static)
                 {
-                    var co = (CLRObject)GetManagedObject(ob);
+                    var co = (CLRObject?)GetManagedObject(ob);
                     if (co == null)
                     {
                         Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
@@ -155,9 +155,9 @@ namespace Python.Runtime
         /// <summary>
         /// Descriptor __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (FieldObject)GetManagedObject(ob);
+            var self = (FieldObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<field '{self.info}'>");
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -8,6 +9,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/dict.html
     /// for details.
     /// </summary>
+    [Serializable]
     public class PyDict : PyIterable
     {
         internal PyDict(BorrowedReference reference) : base(reference) { }
@@ -16,14 +18,7 @@ namespace Python.Runtime
         /// <summary>
         /// Creates a new Python dictionary object.
         /// </summary>
-        public PyDict() : base(Runtime.PyDict_New())
-        {
-            if (obj == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-        }
-
+        public PyDict() : base(Runtime.PyDict_New().StealOrThrow()) { }
 
         /// <summary>
         /// Wraps existing dictionary object.
@@ -38,6 +33,9 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a dict");
             }
         }
+
+        protected PyDict(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
 
         /// <summary>
@@ -106,12 +104,8 @@ namespace Python.Runtime
         /// </remarks>
         public PyIterable Values()
         {
-            IntPtr items = Runtime.PyDict_Values(obj);
-            if (items == IntPtr.Zero)
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return new PyIterable(items);
+            using var items = Runtime.PyDict_Values(obj);
+            return new PyIterable(items.StealOrThrow());
         }
 
 
@@ -176,6 +170,16 @@ namespace Python.Runtime
         public void Clear()
         {
             Runtime.PyDict_Clear(obj);
+        }
+
+        public override int GetHashCode() => rawPtr.GetHashCode();
+
+        public override bool Equals(PyObject? other)
+        {
+            if (other is null) return false;
+            if (obj == other.obj) return true;
+            if (other is PyDict || IsDictType(other)) return base.Equals(other);
+            return false;
         }
     }
 }

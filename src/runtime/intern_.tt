@@ -7,6 +7,7 @@
         "__dict__",
         "__doc__",
         "__class__",
+        "__clear_reentry_guard__",
         "__module__",
         "__file__",
         "__slots__",
@@ -30,14 +31,17 @@ namespace Python.Runtime
 {
     static class PyIdentifier
     {
+#pragma warning disable CS0649 // indentifier is never assigned to (assigned with reflection)
 <#
     foreach (var name in internNames)
     {
 #>
-         public static IntPtr <#= name #>;
+         static IntPtr f<#= name #>;
+         public static BorrowedReference <#= name #> => new(f<#= name #>);
 <#
     }
 #>
+#pragma warning restore CS0649        // indentifier is never assigned to (assigned with reflection)
     }
 
 

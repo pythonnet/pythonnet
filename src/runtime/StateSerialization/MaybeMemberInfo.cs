@@ -1,32 +1,27 @@
 using System;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
 
 namespace Python.Runtime
 {
     [Serializable]
     internal struct MaybeMemberInfo<T> : ISerializable where T : MemberInfo
     {
-        public static implicit operator MaybeMemberInfo<T>(T ob) => new MaybeMemberInfo<T>(ob);
-
         // .ToString() of the serialized object
-        const string SerializationName = "s";
+        const string SerializationDescription = "d";
         // The ReflectedType of the object
         const string SerializationType = "t";
-        const string SerializationFieldName = "f";
-        string name;
-        MemberInfo info;
+        const string SerializationMemberName = "n";
+        MemberInfo? info;
 
         [NonSerialized]
-        Exception deserializationException;
+        Exception? deserializationException;
 
         public string DeletedMessage
         {
             get
             {
-                return $"The .NET {typeof(T)} {name} no longer exists. Cause: " + deserializationException?.Message ;
+                return $"The .NET {typeof(T).Name} {Description} no longer exists. Cause: " + deserializationException?.Message ;
             }
         }
 
@@ -42,25 +37,26 @@ namespace Python.Runtime
             }
         }
 
-        public string Name => name;
+        public string Description { get; }
         public bool Valid => info != null;
 
         public override string ToString()
         {
-            return (info != null ? info.ToString() : $"missing type: {name}");
+            return (info != null ? info.ToString() : $"missing: {Description}");
         }
 
         public MaybeMemberInfo(T fi)
         {
             info = fi;
-            name = info?.ToString();
+            Description = info.ToString();
+            if (info.DeclaringType is not null)
+                Description += " of " + info.DeclaringType;
             deserializationException = null;
         }
 
         internal MaybeMemberInfo(SerializationInfo serializationInfo, StreamingContext context)
         {
-            // Assumption: name is always stored in "s"
-            name = serializationInfo.GetString(SerializationName);
+            Description = serializationInfo.GetString(SerializationDescription);
             info = null;
             deserializationException = null;
             try
@@ -68,8 +64,8 @@ namespace Python.Runtime
                 var tp = Type.GetType(serializationInfo.GetString(SerializationType));
                 if (tp != null)
                 {
-                    var field_name = serializationInfo.GetString(SerializationFieldName);
-                    MemberInfo mi = tp.GetField(field_name, ClassManager.BindingFlags);
+                    var memberName = serializationInfo.GetString(SerializationMemberName);
+                    MemberInfo? mi = Get(tp, memberName, ClassManager.BindingFlags);
                     if (mi != null && ShouldBindMember(mi))
                     {
                         info = mi;
@@ -80,6 +76,15 @@ namespace Python.Runtime
             {
                 deserializationException = e;
             }
+        }
+
+        static MemberInfo? Get(Type type, string name, BindingFlags flags)
+        {
+            if (typeof(T) == typeof(FieldInfo))
+                return type.GetField(name, flags);
+            if (typeof(T) == typeof(PropertyInfo))
+                return type.GetProperty(name, flags);
+            throw new NotImplementedException(typeof(T).Name);
         }
 
         // This is complicated because we bind fields 
@@ -107,10 +112,10 @@ namespace Python.Runtime
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
-            serializationInfo.AddValue(SerializationName, name);
-            if (Valid)
+            serializationInfo.AddValue(SerializationDescription, Description);
+            if (info is not null)
             {
-                serializationInfo.AddValue(SerializationFieldName, info.Name);
+                serializationInfo.AddValue(SerializationMemberName, info.Name);
                 serializationInfo.AddValue(SerializationType, info.ReflectedType.AssemblyQualifiedName);
             }
         }

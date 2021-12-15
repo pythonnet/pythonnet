@@ -23,7 +23,7 @@ namespace Python.Runtime
         /// Given a PyObject pointer to an instance of a delegate type, return
         /// the true managed delegate the Python object represents (or null).
         /// </summary>
-        private static Delegate GetTrueDelegate(IntPtr op)
+        private static Delegate? GetTrueDelegate(BorrowedReference op)
         {
             var o = GetManagedObject(op) as CLRObject;
             if (o != null)
@@ -48,9 +48,9 @@ namespace Python.Runtime
         /// delegate instance belongs to an object generated to relay the call
         /// to the Python callable passed in.
         /// </summary>
-        public static IntPtr tp_new(IntPtr tp, IntPtr args, IntPtr kw)
+        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            var self = (DelegateObject)GetManagedObject(tp);
+            var self = (DelegateObject)GetManagedObject(tp)!;
 
             if (!self.type.Valid)
             {
@@ -63,26 +63,26 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("class takes exactly one argument");
             }
 
-            IntPtr method = Runtime.PyTuple_GetItem(args, 0);
+            BorrowedReference method = Runtime.PyTuple_GetItem(args, 0);
 
             if (Runtime.PyCallable_Check(method) != 1)
             {
                 return Exceptions.RaiseTypeError("argument must be callable");
             }
 
-            Delegate d = PythonEngine.DelegateManager.GetDelegate(type, method);
-            return CLRObject.GetInstHandle(d, self.pyHandle);
+            Delegate d = PythonEngine.DelegateManager.GetDelegate(type, new PyObject(method));
+            return CLRObject.GetReference(d, ClassManager.GetClass(type));
         }
 
 
         /// <summary>
         /// Implements __call__ for reflected delegate types.
         /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        public static NewReference tp_call(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
             // TODO: add fast type check!
-            IntPtr pytype = Runtime.PyObject_TYPE(ob);
-            var self = (DelegateObject)GetManagedObject(pytype);
+            BorrowedReference pytype = Runtime.PyObject_TYPE(ob);
+            var self = (DelegateObject)GetManagedObject(pytype)!;
             var o = GetManagedObject(ob) as CLRObject;
 
             if (o == null)
@@ -103,16 +103,15 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __cmp__ for reflected delegate types.
         /// </summary>
-        public new static IntPtr tp_richcompare(IntPtr ob, IntPtr other, int op)
+        public new static NewReference tp_richcompare(BorrowedReference ob, BorrowedReference other, int op)
         {
             if (op != Runtime.Py_EQ && op != Runtime.Py_NE)
             {
-                Runtime.XIncref(Runtime.PyNotImplemented);
-                return Runtime.PyNotImplemented;
+                return new NewReference(Runtime.PyNotImplemented);
             }
 
-            IntPtr pytrue = Runtime.PyTrue;
-            IntPtr pyfalse = Runtime.PyFalse;
+            BorrowedReference pytrue = Runtime.PyTrue;
+            BorrowedReference pyfalse = Runtime.PyFalse;
 
             // swap true and false for NE
             if (op != Runtime.Py_EQ)
@@ -121,16 +120,10 @@ namespace Python.Runtime
                 pyfalse = Runtime.PyTrue;
             }
 
-            Delegate d1 = GetTrueDelegate(ob);
-            Delegate d2 = GetTrueDelegate(other);
-            if (d1 == d2)
-            {
-                Runtime.XIncref(pytrue);
-                return pytrue;
-            }
+            Delegate? d1 = GetTrueDelegate(ob);
+            Delegate? d2 = GetTrueDelegate(other);
 
-            Runtime.XIncref(pyfalse);
-            return pyfalse;
+            return new NewReference(d1 == d2 ? pytrue : pyfalse);
         }
     }
 }

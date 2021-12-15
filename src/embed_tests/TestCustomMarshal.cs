@@ -23,11 +23,11 @@ namespace Python.EmbeddingTest
         {
             const string expected = "FooBar";
 
-            IntPtr op = Runtime.Runtime.PyString_FromString(expected);
-            string s1 = Runtime.Runtime.GetManagedString(op);
-            string s2 = Runtime.Runtime.GetManagedString(op);
+            using var op = Runtime.Runtime.PyString_FromString(expected);
+            string s1 = Runtime.Runtime.GetManagedString(op.BorrowOrThrow());
+            string s2 = Runtime.Runtime.GetManagedString(op.Borrow());
 
-            Assert.AreEqual(1, Runtime.Runtime.Refcount(op));
+            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
             Assert.AreEqual(expected, s1);
             Assert.AreEqual(expected, s2);
         }

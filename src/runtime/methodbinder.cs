@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Python.Runtime
@@ -23,7 +24,7 @@ namespace Python.Runtime
         public List<MaybeMethodBase> list;
 
         [NonSerialized]
-        public MethodBase[] methods;
+        public MethodBase[]? methods;
 
         [NonSerialized]
         public bool init = false;
@@ -54,7 +55,7 @@ namespace Python.Runtime
         /// Given a sequence of MethodInfo and a sequence of types, return the
         /// MethodInfo that matches the signature represented by those types.
         /// </summary>
-        internal static MethodInfo MatchSignature(MethodInfo[] mi, Type[] tp)
+        internal static MethodInfo? MatchSignature(MethodInfo[] mi, Type[] tp)
         {
             if (tp == null)
             {
@@ -88,7 +89,7 @@ namespace Python.Runtime
         /// return the MethodInfo that represents the matching closed generic.
         /// If unsuccessful, returns null and may set a Python error.
         /// </summary>
-        internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp)
+        internal static MethodInfo? MatchParameters(MethodInfo[] mi, Type[]? tp)
         {
             if (tp == null)
             {
@@ -127,7 +128,7 @@ namespace Python.Runtime
         /// Given a sequence of MethodInfo and two sequences of type parameters,
         /// return the MethodInfo that matches the signature and the closed generic.
         /// </summary>
-        internal static MethodInfo MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
+        internal static MethodInfo? MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
         {
             if (genericTp == null || sigTp == null)
             {
@@ -188,7 +189,7 @@ namespace Python.Runtime
                 methods = (from method in list where method.Valid select method.Value).ToArray();
                 init = true;
             }
-            return methods;
+            return methods!;
         }
 
         /// <summary>
@@ -300,7 +301,7 @@ namespace Python.Runtime
         /// <param name="args">The Python arguments.</param>
         /// <param name="kw">The Python keyword arguments.</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
             return Bind(inst, args, kw, null, null);
         }
@@ -316,14 +317,14 @@ namespace Python.Runtime
         /// <param name="kw">The Python keyword arguments.</param>
         /// <param name="info">If not null, only bind to that method.</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info)
         {
             return Bind(inst, args, kw, info, null);
         }
 
         private readonly struct MatchedMethod
         {
-            public MatchedMethod(int kwargsMatched, int defaultsNeeded, object[] margs, int outs, MethodBase mb)
+            public MatchedMethod(int kwargsMatched, int defaultsNeeded, object?[] margs, int outs, MethodBase mb)
             {
                 KwargsMatched = kwargsMatched;
                 DefaultsNeeded = defaultsNeeded;
@@ -334,7 +335,7 @@ namespace Python.Runtime
 
             public int KwargsMatched { get; }
             public int DefaultsNeeded { get; }
-            public object[] ManagedArgs { get; }
+            public object?[] ManagedArgs { get; }
             public int Outs { get; }
             public MethodBase Method { get; }
         }
@@ -363,28 +364,27 @@ namespace Python.Runtime
         /// <param name="info">If not null, only bind to that method.</param>
         /// <param name="methodinfo">If not null, additionally attempt to bind to the generic methods in this array by inferring generic type parameters.</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodInfo[]? methodinfo)
         {
             // loop to find match, return invoker w/ or w/o error
-            MethodBase[] _methods = null;
-
-            var kwargDict = new Dictionary<string, IntPtr>();
-            if (kw != IntPtr.Zero)
+            var kwargDict = new Dictionary<string, PyObject>();
+            if (kw != null)
             {
-                var pynkwargs = (int)Runtime.PyDict_Size(kw);
-                IntPtr keylist = Runtime.PyDict_Keys(kw);
-                IntPtr valueList = Runtime.PyDict_Values(kw);
+                nint pynkwargs = Runtime.PyDict_Size(kw);
+                using var keylist = Runtime.PyDict_Keys(kw);
+                using var valueList = Runtime.PyDict_Values(kw);
                 for (int i = 0; i < pynkwargs; ++i)
                 {
-                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(new BorrowedReference(keylist), i));
-                    kwargDict[keyStr] = Runtime.PyList_GetItem(new BorrowedReference(valueList), i).DangerousGetAddress();
+                    var keyStr = Runtime.GetManagedString(Runtime.PyList_GetItem(keylist.Borrow(), i));
+                    BorrowedReference value = Runtime.PyList_GetItem(valueList.Borrow(), i);
+                    kwargDict[keyStr!] = new PyObject(value);
                 }
-                Runtime.XDecref(keylist);
-                Runtime.XDecref(valueList);
             }
 
             var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
+
+            MethodBase[] _methods;
             if (info != null)
             {
                 _methods = new MethodBase[1];
@@ -406,7 +406,7 @@ namespace Python.Runtime
                     isGeneric = true;
                 }
                 ParameterInfo[] pi = mi.GetParameters();
-                ArrayList defaultArgList;
+                ArrayList? defaultArgList;
                 bool paramsArray;
                 int kwargsMatched;
                 int defaultsNeeded;
@@ -442,13 +442,13 @@ namespace Python.Runtime
                 }
                 if (isOperator)
                 {
-                    if (inst != IntPtr.Zero)
+                    if (inst != null)
                     {
                         if (ManagedType.GetManagedObject(inst) is CLRObject co)
                         {
                             bool isUnary = pynargs == 0;
                             // Postprocessing to extend margs.
-                            var margsTemp = isUnary ? new object[1] : new object[2];
+                            var margsTemp = isUnary ? new object?[1] : new object?[2];
                             // If reverse, the bound instance is the right operand.
                             int boundOperandIndex = isReverse ? 1 : 0;
                             // If reverse, the passed instance is the left operand.
@@ -513,8 +513,8 @@ namespace Python.Runtime
                 var outs = bestMatch.Outs;
                 var mi = bestMatch.Method;
 
-                object target = null;
-                if (!mi.IsStatic && inst != IntPtr.Zero)
+                object? target = null;
+                if (!mi.IsStatic && inst != null)
                 {
                     //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
                     // InvalidCastException: Unable to cast object of type
@@ -541,8 +541,8 @@ namespace Python.Runtime
                 // is a generic method and info is null. That happens when a generic
                 // method was not called using the [] syntax. Let's introspect the
                 // type of the arguments and use it to construct the correct method.
-                Type[] types = Runtime.PythonArgsToTypeArray(args, true);
-                MethodInfo mi = MatchParameters(methodinfo, types);
+                Type[]? types = Runtime.PythonArgsToTypeArray(args, true);
+                MethodInfo? mi = MatchParameters(methodinfo, types);
                 if (mi != null)
                 {
                     return Bind(inst, args, kw, mi, null);
@@ -561,10 +561,10 @@ namespace Python.Runtime
             return new AggregateException(mismatchedMethods.Select(m => new ArgumentException($"{m.Exception.Message} in method {m.Method}", m.Exception)));
         }
 
-        static IntPtr HandleParamsArray(IntPtr args, int arrayStart, int pyArgCount, out bool isNewReference)
+        static BorrowedReference HandleParamsArray(BorrowedReference args, int arrayStart, int pyArgCount, out NewReference tempObject)
         {
-            isNewReference = false;
-            IntPtr op;
+            BorrowedReference op;
+            tempObject = default;
             // for a params method, we may have a sequence or single/multiple items
             // here we look to see if the item at the paramIndex is there or not
             // and then if it is a sequence itself.
@@ -572,7 +572,7 @@ namespace Python.Runtime
             {
                 // we only have one argument left, so we need to check it
                 // to see if it is a sequence or a single item
-                IntPtr item = Runtime.PyTuple_GetItem(args, arrayStart);
+                BorrowedReference item = Runtime.PyTuple_GetItem(args, arrayStart);
                 if (!Runtime.PyString_Check(item) && Runtime.PySequence_Check(item))
                 {
                     // it's a sequence (and not a string), so we use it as the op
@@ -580,14 +580,14 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    isNewReference = true;
-                    op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                    tempObject = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                    op = tempObject.Borrow();
                 }
             }
             else
             {
-                isNewReference = true;
-                op = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                tempObject = Runtime.PyTuple_GetSlice(args, arrayStart, pyArgCount);
+                op = tempObject.Borrow();
             }
             return op;
         }
@@ -606,21 +606,20 @@ namespace Python.Runtime
         /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>If successful, an array of .NET arguments that can be passed to the method.  Otherwise null.</returns>
-        static object[] TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
-            IntPtr args, int pyArgCount,
-            Dictionary<string, IntPtr> kwargDict,
-            ArrayList defaultArgList,
+        static object?[]? TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
+            BorrowedReference args, int pyArgCount,
+            Dictionary<string, PyObject> kwargDict,
+            ArrayList? defaultArgList,
             out int outs)
         {
             outs = 0;
-            var margs = new object[pi.Length];
+            var margs = new object?[pi.Length];
             int arrayStart = paramsArray ? pi.Length - 1 : -1;
 
             for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
             {
                 var parameter = pi[paramIndex];
                 bool hasNamedParam = parameter.Name != null ? kwargDict.ContainsKey(parameter.Name) : false;
-                bool isNewReference = false;
 
                 if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
                 {
@@ -632,16 +631,17 @@ namespace Python.Runtime
                     continue;
                 }
 
-                IntPtr op;
+                BorrowedReference op;
+                NewReference tempObject = default;
                 if (hasNamedParam)
                 {
-                    op = kwargDict[parameter.Name];
+                    op = kwargDict[parameter.Name!];
                 }
                 else
                 {
                     if(arrayStart == paramIndex)
                     {
-                        op = HandleParamsArray(args, arrayStart, pyArgCount, out isNewReference);
+                        op = HandleParamsArray(args, arrayStart, pyArgCount, out tempObject);
                     }
                     else
                     {
@@ -652,16 +652,11 @@ namespace Python.Runtime
                 bool isOut;
                 if (!TryConvertArgument(op, parameter.ParameterType, out margs[paramIndex], out isOut))
                 {
+                    tempObject.Dispose();
                     return null;
                 }
 
-                if (isNewReference)
-                {
-                    // TODO: is this a bug? Should this happen even if the conversion fails?
-                    // GetSlice() creates a new reference but GetItem()
-                    // returns only a borrow reference.
-                    Runtime.XDecref(op);
-                }
+                tempObject.Dispose();
 
                 if (isOut)
                 {
@@ -681,8 +676,8 @@ namespace Python.Runtime
         /// <param name="arg">Converted argument.</param>
         /// <param name="isOut">Whether the CLR type is passed by reference.</param>
         /// <returns>true on success</returns>
-        static bool TryConvertArgument(IntPtr op, Type parameterType,
-                                       out object arg, out bool isOut)
+        static bool TryConvertArgument(BorrowedReference op, Type parameterType,
+                                       out object? arg, out bool isOut)
         {
             arg = null;
             isOut = false;
@@ -707,22 +702,21 @@ namespace Python.Runtime
         /// <param name="parameterType">The parameter's managed type.</param>
         /// <param name="argument">Pointer to the Python argument object.</param>
         /// <returns>null if conversion is not possible</returns>
-        static Type TryComputeClrArgumentType(Type parameterType, IntPtr argument)
+        static Type? TryComputeClrArgumentType(Type parameterType, BorrowedReference argument)
         {
             // this logic below handles cases when multiple overloading methods
             // are ambiguous, hence comparison between Python and CLR types
             // is necessary
-            Type clrtype = null;
-            IntPtr pyoptype;
+            Type? clrtype = null;
 
             if (clrtype != null)
             {
                 if ((parameterType != typeof(object)) && (parameterType != clrtype))
                 {
-                    IntPtr pytype = Converter.GetPythonTypeByAlias(parameterType);
-                    pyoptype = Runtime.PyObject_Type(argument);
+                    BorrowedReference pytype = Converter.GetPythonTypeByAlias(parameterType);
+                    BorrowedReference pyoptype = Runtime.PyObject_TYPE(argument);
                     var typematch = false;
-                    if (pyoptype != IntPtr.Zero)
+                    if (pyoptype != null)
                     {
                         if (pytype != pyoptype)
                         {
@@ -749,7 +743,6 @@ namespace Python.Runtime
                             Exceptions.RaiseTypeError($"Expected {parameterTypeCode}, got {clrTypeCode}");
                         }
                     }
-                    Runtime.XDecref(pyoptype);
                     if (!typematch)
                     {
                         return null;
@@ -779,9 +772,9 @@ namespace Python.Runtime
         /// <param name="defaultsNeeded">Number of non-null defaultsArgs.</param>
         /// <returns></returns>
         static bool MatchesArgumentCount(int positionalArgumentCount, ParameterInfo[] parameters,
-            Dictionary<string, IntPtr> kwargDict,
+            Dictionary<string, PyObject> kwargDict,
             out bool paramsArray,
-            out ArrayList defaultArgList,
+            out ArrayList? defaultArgList,
             out int kwargsMatched,
             out int defaultsNeeded)
         {
@@ -837,40 +830,39 @@ namespace Python.Runtime
             return match;
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
             return Invoke(inst, args, kw, null, null);
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info)
         {
             return Invoke(inst, args, kw, info, null);
         }
 
-        protected static void AppendArgumentTypes(StringBuilder to, IntPtr args)
+        protected static void AppendArgumentTypes(StringBuilder to, BorrowedReference args)
         {
-            long argCount = Runtime.PyTuple_Size(args);
+            Runtime.AssertNoErorSet();
+
+            nint argCount = Runtime.PyTuple_Size(args);
             to.Append("(");
-            for (long argIndex = 0; argIndex < argCount; argIndex++)
+            for (nint argIndex = 0; argIndex < argCount; argIndex++)
             {
-                var arg = Runtime.PyTuple_GetItem(args, argIndex);
-                if (arg != IntPtr.Zero)
+                BorrowedReference arg = Runtime.PyTuple_GetItem(args, argIndex);
+                if (arg != null)
                 {
-                    var type = Runtime.PyObject_Type(arg);
-                    if (type != IntPtr.Zero)
+                    BorrowedReference type = Runtime.PyObject_TYPE(arg);
+                    if (type != null)
                     {
-                        try
+                        using var description = Runtime.PyObject_Str(type);
+                        if (description.IsNull())
                         {
-                            var description = Runtime.PyObject_Str(type);
-                            if (description != IntPtr.Zero)
-                            {
-                                to.Append(Runtime.GetManagedString(description));
-                                Runtime.XDecref(description);
-                            }
+                            Exceptions.Clear();
+                            to.Append(Util.BadStr);
                         }
-                        finally
+                        else
                         {
-                            Runtime.XDecref(type);
+                            to.Append(Runtime.GetManagedString(description.Borrow()));
                         }
                     }
                 }
@@ -881,7 +873,7 @@ namespace Python.Runtime
             to.Append(')');
         }
 
-        internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodInfo[]? methodinfo)
         {
             // No valid methods, nothing to bind.
             if (GetMethods().Length == 0)
@@ -894,7 +886,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(msg.ToString());
             }
 
-            Binding binding = Bind(inst, args, kw, info, methodinfo);
+            Binding? binding = Bind(inst, args, kw, info, methodinfo);
             object result;
             IntPtr ts = IntPtr.Zero;
 
@@ -914,8 +906,7 @@ namespace Python.Runtime
                 Runtime.PyErr_Fetch(out var errType, out var errVal, out var errTrace);
                 AppendArgumentTypes(to: value, args);
                 Runtime.PyErr_Restore(errType.StealNullable(), errVal.StealNullable(), errTrace.StealNullable());
-                Exceptions.RaiseTypeError(value.ToString());
-                return IntPtr.Zero;
+                return Exceptions.RaiseTypeError(value.ToString());
             }
 
             if (allow_threads)
@@ -938,7 +929,7 @@ namespace Python.Runtime
                     PythonEngine.EndAllowThreads(ts);
                 }
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
 
             if (allow_threads)
@@ -962,11 +953,11 @@ namespace Python.Runtime
 
                 bool isVoid = mi.ReturnType == typeof(void);
                 int tupleSize = binding.outs + (isVoid ? 0 : 1);
-                IntPtr t = Runtime.PyTuple_New(tupleSize);
+                using var t = Runtime.PyTuple_New(tupleSize);
                 if (!isVoid)
                 {
-                    IntPtr v = Converter.ToPython(result, mi.ReturnType);
-                    Runtime.PyTuple_SetItem(t, n, v);
+                    using var v = Converter.ToPython(result, mi.ReturnType);
+                    Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
                     n++;
                 }
 
@@ -975,21 +966,19 @@ namespace Python.Runtime
                     Type pt = pi[i].ParameterType;
                     if (pt.IsByRef)
                     {
-                        IntPtr v = Converter.ToPython(binding.args[i], pt.GetElementType());
-                        Runtime.PyTuple_SetItem(t, n, v);
+                        using var v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                        Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
                         n++;
                     }
                 }
 
                 if (binding.outs == 1 && mi.ReturnType == typeof(void))
                 {
-                    IntPtr v = Runtime.PyTuple_GetItem(t, 0);
-                    Runtime.XIncref(v);
-                    Runtime.XDecref(t);
-                    return v;
+                    BorrowedReference item = Runtime.PyTuple_GetItem(t.Borrow(), 0);
+                    return new NewReference(item);
                 }
 
-                return t;
+                return new NewReference(t.Borrow());
             }
 
             return Converter.ToPython(result, mi.ReturnType);
@@ -1053,11 +1042,11 @@ namespace Python.Runtime
     internal class Binding
     {
         public MethodBase info;
-        public object[] args;
-        public object inst;
+        public object?[] args;
+        public object? inst;
         public int outs;
 
-        internal Binding(MethodBase info, object inst, object[] args, int outs)
+        internal Binding(MethodBase info, object? inst, object?[] args, int outs)
         {
             this.info = info;
             this.inst = inst;
@@ -1069,7 +1058,7 @@ namespace Python.Runtime
 
     static internal class ParameterInfoExtensions
     {
-        public static object GetDefaultValue(this ParameterInfo parameterInfo)
+        public static object? GetDefaultValue(this ParameterInfo parameterInfo)
         {
             // parameterInfo.HasDefaultValue is preferable but doesn't exist in .NET 4.0
             bool hasDefaultValue = (parameterInfo.Attributes & ParameterAttributes.HasDefault) ==

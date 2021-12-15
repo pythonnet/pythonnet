@@ -32,12 +32,11 @@ namespace Python.EmbeddingTest
             string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "fixtures");
             TestContext.Out.WriteLine(testPath);
 
-            IntPtr str = Runtime.Runtime.PyString_FromString(testPath);
-            Assert.IsFalse(str == IntPtr.Zero);
+            using var str = Runtime.Runtime.PyString_FromString(testPath);
+            Assert.IsFalse(str.IsNull());
             BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
             Assert.IsFalse(path.IsNull);
-            Runtime.Runtime.PyList_Append(path, new BorrowedReference(str));
-            Runtime.Runtime.XDecref(str);
+            Runtime.Runtime.PyList_Append(path, str.Borrow());
         }
 
         [OneTimeTearDown]
@@ -84,24 +83,13 @@ namespace Python.EmbeddingTest
         [Test]
         public void BadAssembly()
         {
-            string path;
+            string path = Runtime.Runtime.PythonDLL;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 path = @"C:\Windows\System32\kernel32.dll";
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                path = "/usr/lib/libc.dylib";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                path = "/usr/lib/locale/locale-archive";
-            }
-            else
-            {
-                Assert.Pass("TODO: add bad assembly location for other platforms");
-                return;
-            }
+
+            Assert.IsTrue(File.Exists(path), $"Test DLL {path} does not exist!");
 
             string code = $@"
 import clr

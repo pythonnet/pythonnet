@@ -1,8 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
+using Python.Runtime.Reflection;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -21,13 +22,7 @@ namespace Python.Runtime
             DocString = docStr;
         }
 
-        public string DocString
-        {
-            get { return docStr; }
-            set { docStr = value; }
-        }
-
-        private string docStr;
+        public string DocString { get; }
     }
 
     [Serializable]
@@ -80,7 +75,6 @@ namespace Python.Runtime
         HasClrInstance = (1 << 15),
         /// <remarks>PythonNet specific</remarks>
         Subclass = (1 << 16),
-        HaveIndex = (1 << 17),
         /* Objects support nb_index in PyNumberMethods */
         HaveVersionTag = (1 << 18),
         ValidVersionTag = (1 << 19),
@@ -110,127 +104,46 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        private static Hashtable pmap;
+        static readonly Dictionary<MethodInfo, Type> delegateTypes = new();
 
-        static Interop()
+        internal static Type GetPrototype(MethodInfo method)
         {
-            // Here we build a mapping of PyTypeObject slot names to the
-            // appropriate prototype (delegate) type to use for the slot.
+            if (delegateTypes.TryGetValue(method, out var delegateType))
+                return delegateType;
 
-            Type[] items = typeof(Interop).GetNestedTypes();
-            Hashtable p = new Hashtable();
+            var parameters = method.GetParameters().Select(p => new ParameterHelper(p)).ToArray();
 
-            for (int i = 0; i < items.Length; i++)
+            foreach (var candidate in typeof(Interop).GetNestedTypes())
             {
-                Type item = items[i];
-                p[item.Name] = item;
+                if (!typeof(Delegate).IsAssignableFrom(candidate))
+                    continue;
+
+                MethodInfo invoke = candidate.GetMethod("Invoke");
+                var candiateParameters = invoke.GetParameters();
+                if (candiateParameters.Length != parameters.Length)
+                    continue;
+
+                var parametersMatch = parameters.Zip(candiateParameters,
+                    (expected, actual) => expected.Matches(actual))
+                    .All(matches => matches);
+
+                if (!parametersMatch) continue;
+
+                if (invoke.ReturnType != method.ReturnType) continue;
+
+                delegateTypes.Add(method, candidate);
+                return candidate;
             }
 
-            pmap = new Hashtable();
-
-            pmap["tp_dealloc"] = p["DestructorFunc"];
-            pmap["tp_print"] = p["PrintFunc"];
-            pmap["tp_getattr"] = p["BinaryFunc"];
-            pmap["tp_setattr"] = p["ObjObjArgFunc"];
-            pmap["tp_compare"] = p["ObjObjFunc"];
-            pmap["tp_repr"] = p["UnaryFunc"];
-            pmap["tp_hash"] = p["UnaryFunc"];
-            pmap["tp_call"] = p["TernaryFunc"];
-            pmap["tp_str"] = p["UnaryFunc"];
-            pmap["tp_getattro"] = p["BinaryFunc"];
-            pmap["tp_setattro"] = p["ObjObjArgFunc"];
-            pmap["tp_traverse"] = p["ObjObjArgFunc"];
-            pmap["tp_clear"] = p["InquiryFunc"];
-            pmap["tp_richcompare"] = p["RichCmpFunc"];
-            pmap["tp_iter"] = p["UnaryFunc"];
-            pmap["tp_iternext"] = p["UnaryFunc"];
-            pmap["tp_descr_get"] = p["TernaryFunc"];
-            pmap["tp_descr_set"] = p["ObjObjArgFunc"];
-            pmap["tp_init"] = p["ObjObjArgFunc"];
-            pmap["tp_alloc"] = p["IntArgFunc"];
-            pmap["tp_new"] = p["TernaryFunc"];
-            pmap["tp_free"] = p["DestructorFunc"];
-            pmap["tp_is_gc"] = p["InquiryFunc"];
-
-            pmap["nb_add"] = p["BinaryFunc"];
-            pmap["nb_subtract"] = p["BinaryFunc"];
-            pmap["nb_multiply"] = p["BinaryFunc"];
-            pmap["nb_remainder"] = p["BinaryFunc"];
-            pmap["nb_divmod"] = p["BinaryFunc"];
-            pmap["nb_power"] = p["TernaryFunc"];
-            pmap["nb_negative"] = p["UnaryFunc"];
-            pmap["nb_positive"] = p["UnaryFunc"];
-            pmap["nb_absolute"] = p["UnaryFunc"];
-            pmap["nb_nonzero"] = p["InquiryFunc"];
-            pmap["nb_invert"] = p["UnaryFunc"];
-            pmap["nb_lshift"] = p["BinaryFunc"];
-            pmap["nb_rshift"] = p["BinaryFunc"];
-            pmap["nb_and"] = p["BinaryFunc"];
-            pmap["nb_xor"] = p["BinaryFunc"];
-            pmap["nb_or"] = p["BinaryFunc"];
-            pmap["nb_coerce"] = p["ObjObjFunc"];
-            pmap["nb_int"] = p["UnaryFunc"];
-            pmap["nb_long"] = p["UnaryFunc"];
-            pmap["nb_float"] = p["UnaryFunc"];
-            pmap["nb_oct"] = p["UnaryFunc"];
-            pmap["nb_hex"] = p["UnaryFunc"];
-            pmap["nb_inplace_add"] = p["BinaryFunc"];
-            pmap["nb_inplace_subtract"] = p["BinaryFunc"];
-            pmap["nb_inplace_multiply"] = p["BinaryFunc"];
-            pmap["nb_inplace_remainder"] = p["BinaryFunc"];
-            pmap["nb_inplace_power"] = p["TernaryFunc"];
-            pmap["nb_inplace_lshift"] = p["BinaryFunc"];
-            pmap["nb_inplace_rshift"] = p["BinaryFunc"];
-            pmap["nb_inplace_and"] = p["BinaryFunc"];
-            pmap["nb_inplace_xor"] = p["BinaryFunc"];
-            pmap["nb_inplace_or"] = p["BinaryFunc"];
-            pmap["nb_floor_divide"] = p["BinaryFunc"];
-            pmap["nb_true_divide"] = p["BinaryFunc"];
-            pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
-            pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-            pmap["nb_index"] = p["UnaryFunc"];
-
-            pmap["sq_length"] = p["InquiryFunc"];
-            pmap["sq_concat"] = p["BinaryFunc"];
-            pmap["sq_repeat"] = p["IntArgFunc"];
-            pmap["sq_item"] = p["IntArgFunc"];
-            pmap["sq_slice"] = p["IntIntArgFunc"];
-            pmap["sq_ass_item"] = p["IntObjArgFunc"];
-            pmap["sq_ass_slice"] = p["IntIntObjArgFunc"];
-            pmap["sq_contains"] = p["ObjObjFunc"];
-            pmap["sq_inplace_concat"] = p["BinaryFunc"];
-            pmap["sq_inplace_repeat"] = p["IntArgFunc"];
-
-            pmap["mp_length"] = p["InquiryFunc"];
-            pmap["mp_subscript"] = p["BinaryFunc"];
-            pmap["mp_ass_subscript"] = p["ObjObjArgFunc"];
-
-            pmap["bf_getreadbuffer"] = p["IntObjArgFunc"];
-            pmap["bf_getwritebuffer"] = p["IntObjArgFunc"];
-            pmap["bf_getsegcount"] = p["ObjObjFunc"];
-            pmap["bf_getcharbuffer"] = p["IntObjArgFunc"];
-        }
-
-        internal static Type GetPrototype(string name)
-        {
-            return pmap[name] as Type;
+            throw new NotImplementedException(method.ToString());
         }
 
 
         internal static Dictionary<IntPtr, Delegate> allocatedThunks = new Dictionary<IntPtr, Delegate>();
 
-        internal static ThunkInfo GetThunk(MethodInfo method, string funcType = null)
+        internal static ThunkInfo GetThunk(MethodInfo method)
         {
-            Type dt;
-            if (funcType != null)
-                dt = typeof(Interop).GetNestedType(funcType) as Type;
-            else
-                dt = GetPrototype(method.Name);
-
-            if (dt == null)
-            {
-                return ThunkInfo.Empty;
-            }
+            Type dt = GetPrototype(method);
             Delegate d = Delegate.CreateDelegate(dt, method);
             return GetThunk(d);
         }
@@ -242,45 +155,41 @@ namespace Python.Runtime
             return info;
         }
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate NewReference B_N(BorrowedReference ob);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr UnaryFunc(IntPtr ob);
+        public delegate NewReference BB_N(BorrowedReference ob, BorrowedReference a);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr BinaryFunc(IntPtr ob, IntPtr arg);
+        public delegate NewReference BBB_N(BorrowedReference ob, BorrowedReference a1, BorrowedReference a2);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr TernaryFunc(IntPtr ob, IntPtr a1, IntPtr a2);
+        public delegate int B_I32(BorrowedReference ob);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int InquiryFunc(IntPtr ob);
+        public delegate int BB_I32(BorrowedReference ob, BorrowedReference a);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr IntArgFunc(IntPtr ob, int arg);
+        public delegate int BBB_I32(BorrowedReference ob, BorrowedReference a1, BorrowedReference a2);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr IntIntArgFunc(IntPtr ob, int a1, int a2);
+        public delegate int BP_I32(BorrowedReference ob, IntPtr arg);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int IntObjArgFunc(IntPtr ob, int a1, IntPtr a2);
+        public delegate IntPtr B_P(BorrowedReference ob);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int IntIntObjArgFunc(IntPtr o, int a, int b, IntPtr c);
+        public delegate NewReference BBI32_N(BorrowedReference ob, BorrowedReference a1, int a2);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int ObjObjArgFunc(IntPtr o, IntPtr a, IntPtr b);
+        public delegate NewReference BP_N(BorrowedReference ob, IntPtr arg);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int ObjObjFunc(IntPtr ob, IntPtr arg);
+        public delegate void N_V(NewReference ob);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void DestructorFunc(IntPtr ob);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int PrintFunc(IntPtr ob, IntPtr a, int b);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr RichCmpFunc(IntPtr ob, IntPtr a, int b);
+        public delegate int BPP_I32(BorrowedReference ob, IntPtr a1, IntPtr a2);
     }
 
 
@@ -289,33 +198,13 @@ namespace Python.Runtime
         public readonly Delegate Target;
         public readonly IntPtr Address;
 
-        public static readonly ThunkInfo Empty = new ThunkInfo(null);
-
         public ThunkInfo(Delegate target)
         {
-            if (target == null)
-            {
-                return;
-            }
-            Target = target;
+            Debug.Assert(target is not null);
+            Target = target!;
             Address = Marshal.GetFunctionPointerForDelegate(target);
         }
     }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct PyGC_Node
-    {
-        public IntPtr gc_next;
-        public IntPtr gc_prev;
-        public IntPtr gc_refs;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct PyGC_Head
-    {
-        public PyGC_Node gc;
-    }
-
 
     [StructLayout(LayoutKind.Sequential)]
     struct PyMethodDef

@@ -8,7 +8,7 @@ namespace Python.Runtime.Platform
 {
     interface ILibraryLoader
     {
-        IntPtr Load(string dllToLoad);
+        IntPtr Load(string? dllToLoad);
 
         IntPtr GetFunction(IntPtr hModule, string procedureName);
 
@@ -17,7 +17,7 @@ namespace Python.Runtime.Platform
 
     static class LibraryLoader
     {
-        static ILibraryLoader _instance = null;
+        static ILibraryLoader? _instance = null;
 
         public static ILibraryLoader Instance
         {
@@ -51,7 +51,7 @@ namespace Python.Runtime.Platform
             this.libDL = libDL ?? throw new ArgumentNullException(nameof(libDL));
         }
 
-        public IntPtr Load(string dllToLoad)
+        public IntPtr Load(string? dllToLoad)
         {
             ClearError();
             var res = libDL.dlopen(dllToLoad, libDL.RTLD_NOW | libDL.RTLD_GLOBAL);
@@ -92,7 +92,7 @@ namespace Python.Runtime.Platform
             libDL.dlerror();
         }
 
-        string GetError()
+        string? GetError()
         {
             var res = libDL.dlerror();
             if (res != IntPtr.Zero)
@@ -107,8 +107,9 @@ namespace Python.Runtime.Platform
         private const string NativeDll = "kernel32.dll";
 
 
-        public IntPtr Load(string dllToLoad)
+        public IntPtr Load(string? dllToLoad)
         {
+            if (dllToLoad is null) return IntPtr.Zero;
             var res = WindowsLoader.LoadLibrary(dllToLoad);
             if (res == IntPtr.Zero)
                 throw new DllNotFoundException($"Could not load {dllToLoad}.", new Win32Exception());

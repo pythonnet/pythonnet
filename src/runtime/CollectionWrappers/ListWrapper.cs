@@ -14,14 +14,14 @@ namespace Python.Runtime.CollectionWrappers
         {
             get
             {
-                var item = Runtime.PyList_GetItem(pyObject.Reference, index);
+                var item = Runtime.PyList_GetItem(pyObject, index);
                 var pyItem = new PyObject(item);
-                return pyItem.As<T>();
+                return pyItem.As<T>()!;
             }
             set
             {
                 var pyItem = value.ToPython();
-                var result = Runtime.PyList_SetItem(pyObject.Handle, index, pyItem.Handle);
+                var result = Runtime.PyList_SetItem(pyObject, index, new NewReference(pyItem).Steal());
                 if (result == -1)
                     Runtime.CheckExceptionOccurred();
             }
@@ -39,7 +39,7 @@ namespace Python.Runtime.CollectionWrappers
 
             var pyItem = item.ToPython();
 
-            var result = Runtime.PyList_Insert(pyObject.Reference, index, pyItem.Handle);
+            int result = Runtime.PyList_Insert(pyObject, index, pyItem);
             if (result == -1)
                 Runtime.CheckExceptionOccurred();
         }

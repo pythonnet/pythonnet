@@ -18,7 +18,7 @@ namespace Python.Runtime
         {
             getter = md.GetGetMethod(true);
             setter = md.GetSetMethod(true);
-            info = md;
+            info = new MaybeMemberInfo<PropertyInfo>(md);
         }
 
 
@@ -27,9 +27,9 @@ namespace Python.Runtime
         /// value of the property on the given object. The returned value
         /// is converted to an appropriately typed Python object.
         /// </summary>
-        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp)
+        public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
-            var self = (PropertyObject)GetManagedObject(ds);
+            var self = (PropertyObject)GetManagedObject(ds)!;
             if (!self.info.Valid)
             {
                 return Exceptions.RaiseTypeError(self.info.DeletedMessage);
@@ -44,13 +44,11 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("property cannot be read");
             }
 
-            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
+            if (ob == null || ob == Runtime.PyNone)
             {
                 if (!getter.IsStatic)
                 {
-                    Runtime.XIncref(ds);
-                    // unbound property
-                    return ds;
+                    return new NewReference(ds);
                 }
 
                 try
@@ -82,7 +80,7 @@ namespace Python.Runtime
                     e = e.InnerException;
                 }
                 Exceptions.SetError(e);
-                return IntPtr.Zero;
+                return default;
             }
         }
 
@@ -92,9 +90,9 @@ namespace Python.Runtime
         /// a property based on the given Python value. The Python value must
         /// be convertible to the type of the property.
         /// </summary>
-        public new static int tp_descr_set(IntPtr ds, IntPtr ob, IntPtr val)
+        public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
         {
-            var self = (PropertyObject)GetManagedObject(ds);
+            var self = (PropertyObject)GetManagedObject(ds)!;
             if (!self.info.Valid)
             {
                 Exceptions.RaiseTypeError(self.info.DeletedMessage);
@@ -103,9 +101,8 @@ namespace Python.Runtime
             var info = self.info.Value;
 
             MethodInfo setter = self.setter.UnsafeValue;
-            object newval;
 
-            if (val == IntPtr.Zero)
+            if (val == null)
             {
                 Exceptions.RaiseTypeError("cannot delete property");
                 return -1;
@@ -118,14 +115,14 @@ namespace Python.Runtime
             }
 
 
-            if (!Converter.ToManaged(val, info.PropertyType, out newval, true))
+            if (!Converter.ToManaged(val, info.PropertyType, out var newval, true))
             {
                 return -1;
             }
 
             bool is_static = setter.IsStatic;
 
-            if (ob == IntPtr.Zero || ob == Runtime.PyNone)
+            if (ob == null || ob == Runtime.PyNone)
             {
                 if (!is_static)
                 {
@@ -167,9 +164,9 @@ namespace Python.Runtime
         /// <summary>
         /// Descriptor __repr__ implementation.
         /// </summary>
-        public static IntPtr tp_repr(IntPtr ob)
+        public static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (PropertyObject)GetManagedObject(ob);
+            var self = (PropertyObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<property '{self.info}'>");
         }
     }

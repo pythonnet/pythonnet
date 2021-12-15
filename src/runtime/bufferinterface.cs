@@ -17,7 +17,7 @@ namespace Python.Runtime
         public bool _readonly;
         public int ndim;
         [MarshalAs(UnmanagedType.LPStr)]
-        public string format;
+        public string? format;
         public IntPtr shape;
         public IntPtr strides;
         public IntPtr suboffsets;

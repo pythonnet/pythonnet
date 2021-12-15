@@ -46,7 +46,7 @@ class MemberNamesTest(object):
         return x + y
 
 a = MemberNamesTest()
-", null, locals.Handle);
+", null, locals);
 
             PyObject a = locals.GetItem("a");
 
@@ -92,13 +92,13 @@ a = MemberNamesTest()
             var typeErrResult = Assert.Throws<PythonException>(
                 () => ob.GetAttr(nameof(PyObjectTestMethods.RaisesTypeError), fallback)
             );
-            Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type.Handle);
+            Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type);
         }
     }
 
     public class PyObjectTestMethods
     {
-        public string RaisesAttributeError => throw new PythonException(new PyType(new BorrowedReference(Exceptions.AttributeError)), value: null, traceback: null);
-        public string RaisesTypeError => throw new PythonException(new PyType(new BorrowedReference(Exceptions.TypeError)), value: null, traceback: null);
+        public string RaisesAttributeError => throw new PythonException(new PyType(Exceptions.AttributeError), value: null, traceback: null);
+        public string RaisesTypeError => throw new PythonException(new PyType(Exceptions.TypeError), value: null, traceback: null);
     }
 }

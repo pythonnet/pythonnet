@@ -14,7 +14,7 @@ namespace Python.EmbeddingTest
         {
             PythonEngine.Initialize();
             using var locals = new PyDict();
-            PythonEngine.Exec(CallViaInheritance.BaseClassSource, locals: locals.Handle);
+            PythonEngine.Exec(CallViaInheritance.BaseClassSource, locals: locals);
             CustomBaseTypeProvider.BaseClass = new PyType(locals[CallViaInheritance.BaseClassName]);
             PythonEngine.InteropConfiguration.PythonBaseTypeProviders.Add(new CustomBaseTypeProvider());
         }

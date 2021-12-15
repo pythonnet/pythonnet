@@ -22,18 +22,18 @@ namespace Python.Runtime
         /// <summary>
         /// __call__ implementation.
         /// </summary>
-        public static IntPtr tp_call(IntPtr ob, IntPtr args, IntPtr kw)
+        public static NewReference tp_call(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
         {
-            var self = (ModuleFunctionObject)GetManagedObject(ob);
+            var self = (ModuleFunctionObject)GetManagedObject(ob)!;
             return self.Invoke(ob, args, kw);
         }
 
         /// <summary>
         /// __repr__ implementation.
         /// </summary>
-        public new static IntPtr tp_repr(IntPtr ob)
+        public new static NewReference tp_repr(BorrowedReference ob)
         {
-            var self = (ModuleFunctionObject)GetManagedObject(ob);
+            var self = (ModuleFunctionObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<CLRModuleFunction '{self.name}'>");
         }
     }

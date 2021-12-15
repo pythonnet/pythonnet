@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -42,20 +43,13 @@ namespace Python.Runtime
             return o.Reference;
         }
 
-        private static NewReference FromInt(int value)
-        {
-            IntPtr val = Runtime.PyInt_FromInt32(value);
-            PythonException.ThrowIfIsNull(val);
-            return NewReference.DangerousFromPointer(val);
-        }
-
         /// <summary>
         /// PyInt Constructor
         /// </summary>
         /// <remarks>
         /// Creates a new Python int from an int32 value.
         /// </remarks>
-        public PyInt(int value) : base(FromInt(value).Steal())
+        public PyInt(int value) : base(Runtime.PyInt_FromInt32(value).StealOrThrow())
         {
         }
 
@@ -66,7 +60,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from a uint32 value.
         /// </remarks>
-        public PyInt(uint value) : base(FromLong(value))
+        public PyInt(uint value) : this((long)value)
         {
         }
 
@@ -77,31 +71,16 @@ namespace Python.Runtime
         /// <remarks>
         /// Creates a new Python int from an int64 value.
         /// </remarks>
-        public PyInt(long value) : base(FromLong(value))
+        public PyInt(long value) : base(Runtime.PyInt_FromInt64(value).StealOrThrow())
         {
-        }
-
-        private static StolenReference FromLong(long value)
-        {
-            var val = Runtime.PyInt_FromInt64(value);
-            PythonException.ThrowIfIsNull(val);
-            return val.Steal();
         }
 
         /// <summary>
         /// Creates a new Python int from a <see cref="UInt64"/> value.
         /// </summary>
-        public PyInt(ulong value) : base(FromUInt64(value))
+        public PyInt(ulong value) : base(Runtime.PyLong_FromUnsignedLongLong(value).StealOrThrow())
         {
         }
-
-        private static StolenReference FromUInt64(ulong value)
-        {
-            var val = Runtime.PyLong_FromUnsignedLongLong(value);
-            PythonException.ThrowIfIsNull(val);
-            return val.Steal();
-        }
-
 
         /// <summary>
         /// PyInt Constructor
@@ -146,23 +125,18 @@ namespace Python.Runtime
         {
         }
 
-
-        private static StolenReference FromString(string value)
-        {
-            NewReference val = Runtime.PyLong_FromString(value, 0);
-            PythonException.ThrowIfIsNull(val);
-            return val.Steal();
-        }
-
         /// <summary>
         /// PyInt Constructor
         /// </summary>
         /// <remarks>
         /// Creates a new Python int from a string value.
         /// </remarks>
-        public PyInt(string value) : base(FromString(value))
+        public PyInt(string value) : base(Runtime.PyLong_FromString(value, 0).StealOrThrow())
         {
         }
+
+        protected PyInt(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
 
 
         /// <summary>
