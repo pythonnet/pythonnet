@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -17,8 +18,9 @@ namespace Python.Runtime
         const string SerializationType = "t";
         // Fhe parameters of the MethodBase
         const string SerializationParameters = "p";
-        const string SerializationIsCtor = "c";
         const string SerializationMethodName = "n";
+        const string SerializationGenericParamCount = "G";
+        const string SerializationFlags = "V";
 
         public static implicit operator MaybeMethodBase<T> (T? ob) => new (ob);
 
@@ -62,6 +64,7 @@ namespace Python.Runtime
         {
             info = mi;
             name = mi?.ToString();
+            Debug.Assert(name != null || info == null);
             deserializationException = null;
         }
 
@@ -82,46 +85,15 @@ namespace Python.Runtime
                 {
                     throw new SerializationException($"The underlying type {typeName} can't be found");
                 }
+
+                var flags = (MaybeMethodFlags)serializationInfo.GetInt32(SerializationFlags);
+                int genericCount = serializationInfo.GetInt32(SerializationGenericParamCount);
+
                 // Get the method's parameters types
                 var field_name = serializationInfo.GetString(SerializationMethodName);
                 var param = (ParameterHelper[])serializationInfo.GetValue(SerializationParameters, typeof(ParameterHelper[]));
-                Type[] types = new Type[param.Length];
-                bool hasRefType = false;
-                for (int i = 0; i < param.Length; i++)
-                {
-                    var paramTypeName = param[i].TypeName;
-                    types[i] = Type.GetType(paramTypeName);
-                    if (types[i] == null)
-                    {
-                        throw new SerializationException($"The parameter of type {paramTypeName} can't be found");
-                    }
-                    else if (types[i].IsByRef)
-                    {
-                        hasRefType = true;
-                    }
-                }
 
-                MethodBase? mb = null;
-                if (serializationInfo.GetBoolean(SerializationIsCtor))
-                {
-                    // We never want the static constructor.
-                    mb = tp.GetConstructor(ClassManager.BindingFlags&(~BindingFlags.Static), binder:null, types:types, modifiers:null);
-                }
-                else
-                {
-                    mb = tp.GetMethod(field_name, ClassManager.BindingFlags, binder:null, types:types, modifiers:null);
-                }
-                
-                if (mb != null && hasRefType)
-                {
-                    mb = CheckRefTypes(mb, param);
-                }
-
-                // Do like in ClassManager.GetClassInfo
-                if(mb != null && ClassManager.ShouldBindMethod(mb))
-                {
-                    info = mb;
-                }
+                info = ScanForMethod(tp, field_name, genericCount, flags, param);
             }
             catch (Exception e)
             {
@@ -129,28 +101,44 @@ namespace Python.Runtime
             }
         }
 
-        MethodBase? CheckRefTypes(MethodBase mb, ParameterHelper[] ph)
+        static MethodBase ScanForMethod(Type declaringType, string name, int genericCount, MaybeMethodFlags flags, ParameterHelper[] parameters)
         {
-            // One more step: Changing:
-            // void MyFn (ref int a)
-            // to:
-            // void MyFn (out int a)
-            // will still find the function correctly as, `in`, `out` and `ref`
-            // are all represented as a reference type. Query the method we got
-            // and validate the parameters
-            if (ph.Length != 0)
-            {
-                foreach (var item in Enumerable.Zip(ph, mb.GetParameters(), (orig, current) => new {orig, current}))
-                {
-                    if (!item.current.Equals(item.orig))
-                    {
-                        // False positive
-                        return null;
-                    }
-                }
-            }
+            var bindingFlags = ClassManager.BindingFlags;
+            if (flags.HasFlag(MaybeMethodFlags.Constructor)) bindingFlags &= ~BindingFlags.Static;
 
-            return mb;
+            var alternatives = declaringType.GetMember(name,
+                flags.HasFlag(MaybeMethodFlags.Constructor)
+                    ? MemberTypes.Constructor
+                    : MemberTypes.Method,
+                bindingFlags);
+
+            if (alternatives.Length == 0)
+                throw new MissingMethodException($"{declaringType}.{name}");
+
+            var visibility = flags & MaybeMethodFlags.Visibility;
+
+            var result = alternatives.Cast<MethodBase>().FirstOrDefault(m
+                => MatchesGenericCount(m, genericCount) && MatchesSignature(m, parameters)
+                && (Visibility(m) == visibility || ClassManager.ShouldBindMethod(m)));
+
+            if (result is null)
+                throw new MissingMethodException($"Matching overload not found for {declaringType}.{name}");
+
+            return result;
+        }
+
+        static bool MatchesGenericCount(MethodBase method, int genericCount)
+            => method.ContainsGenericParameters
+                ? method.GetGenericArguments().Length == genericCount
+                : genericCount == 0;
+
+        static bool MatchesSignature(MethodBase method, ParameterHelper[] parameters)
+        {
+            var curr = method.GetParameters();
+            if (curr.Length != parameters.Length) return false;
+            for (int i = 0; i < curr.Length; i++)
+                if (!parameters[i].Matches(curr[i])) return false;
+            return true;
         }
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
@@ -159,11 +147,39 @@ namespace Python.Runtime
             if (Valid)
             {
                 serializationInfo.AddValue(SerializationMethodName, info.Name);
-                serializationInfo.AddValue(SerializationType, info.ReflectedType.AssemblyQualifiedName);
+                serializationInfo.AddValue(SerializationGenericParamCount,
+                    info.ContainsGenericParameters ? info.GetGenericArguments().Length : 0);
+                serializationInfo.AddValue(SerializationFlags, (int)Flags(info));
+                string? typeName = info.ReflectedType.AssemblyQualifiedName;
+                Debug.Assert(typeName != null);
+                serializationInfo.AddValue(SerializationType, typeName);
                 ParameterHelper[] parameters = (from p in info.GetParameters() select new ParameterHelper(p)).ToArray();
                 serializationInfo.AddValue(SerializationParameters, parameters, typeof(ParameterHelper[]));
-                serializationInfo.AddValue(SerializationIsCtor, info.IsConstructor);
             }
         }
+
+        static MaybeMethodFlags Flags(MethodBase method)
+        {
+            var flags = MaybeMethodFlags.Default;
+            if (method.IsConstructor) flags |= MaybeMethodFlags.Constructor;
+            if (method.IsStatic) flags |= MaybeMethodFlags.Static;
+            if (method.IsPublic) flags |= MaybeMethodFlags.Public;
+            return flags;
+        }
+
+        static MaybeMethodFlags Visibility(MethodBase method)
+            => Flags(method) & MaybeMethodFlags.Visibility;
+    }
+
+    [Flags]
+    internal enum MaybeMethodFlags
+    {
+        Default = 0,
+        Constructor = 1,
+        Static = 2,
+
+        // TODO: other kinds of visibility
+        Public = 32,
+        Visibility = Public,
     }
 }

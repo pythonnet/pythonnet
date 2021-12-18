@@ -247,7 +247,7 @@ namespace Python.Runtime
             }
         }
 
-        private static IFormatter CreateFormatter()
+        internal static IFormatter CreateFormatter()
         {
             return FormatterType != null ?
                 (IFormatter)Activator.CreateInstance(FormatterType)
