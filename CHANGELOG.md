@@ -103,6 +103,7 @@ Instead, `PyIterable` does that.
 -   Providing an invalid type parameter to a generic type or method produces a helpful Python error
 -   Empty parameter names (as can be generated from F#) do not cause crashes
 -   Unicode strings with surrogates were truncated when converting from Python
+-   `Reload` mode now supports generic methods (previously Python would stop seeing them after reload)
 
 ### Removed
 
