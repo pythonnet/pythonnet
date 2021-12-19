@@ -8,9 +8,6 @@ from subprocess import check_output, check_call
 
 import sys, os
 
-PY_MAJOR = sys.version_info[0]
-PY_MINOR = sys.version_info[1]
-
 # Disable SourceLink during the build until it can read repo-format v1, #1613
 os.environ["EnableSourceControlManagerQueries"] = "false"
 
@@ -169,6 +166,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",
