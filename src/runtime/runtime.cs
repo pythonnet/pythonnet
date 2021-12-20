@@ -339,6 +339,7 @@ namespace Python.Runtime
                 else if (forceBreakLoops)
                 {
                     NullGCHandles(CLRObject.reflectedObjects);
+                    CLRObject.reflectedObjects.Clear();
                 }
             }
             return false;

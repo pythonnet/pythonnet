@@ -80,16 +80,17 @@ namespace Python.Runtime
 
             tp_clear(lastRef.Borrow());
 
-            bool deleted = loadedExtensions.Remove(lastRef.DangerousGetAddress());
-            Debug.Assert(deleted);
-
             // we must decref our type: https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc
             DecrefTypeAndFree(lastRef.Steal());
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
-            TryFreeGCHandle(ob);
+            if (TryFreeGCHandle(ob))
+            {
+                bool deleted = loadedExtensions.Remove(ob.DangerousGetAddress());
+                Debug.Assert(deleted);
+            }
 
             int res = ClassBase.BaseUnmanagedClear(ob);
             return res;
