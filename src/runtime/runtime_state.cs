@@ -10,7 +10,7 @@ namespace Python.Runtime
     {
         public static void Save()
         {
-            if (!PySys_GetObject("dummy_gc").IsNull)
+            if (!PySys_GetObject("initial_modules").IsNull)
             {
                 throw new Exception("Runtime State set already");
             }

@@ -204,6 +204,7 @@ namespace Python.Runtime
             }
         }
 
+        const BindingFlags ModuleMethodFlags = BindingFlags.Public | BindingFlags.Static;
         /// <summary>
         /// Initialize module level functions and attributes
         /// </summary>
@@ -214,11 +215,9 @@ namespace Python.Runtime
             Type ftmarker = typeof(ForbidPythonThreadsAttribute);
             Type type = GetType();
 
-            BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
-
             while (type != null)
             {
-                MethodInfo[] methods = type.GetMethods(flags);
+                MethodInfo[] methods = type.GetMethods(ModuleMethodFlags);
                 foreach (MethodInfo method in methods)
                 {
                     object[] attrs = method.GetCustomAttributes(funcmarker, false);
@@ -246,6 +245,28 @@ namespace Python.Runtime
                     }
                 }
                 type = type.BaseType;
+            }
+        }
+
+        internal void ResetModuleMembers()
+        {
+            Type type = GetType();
+            var methods = type.GetMethods(ModuleMethodFlags)
+                .Where(m => m.GetCustomAttribute<ModuleFunctionAttribute>() is not null)
+                .OfType<MemberInfo>();
+            var properties = type.GetProperties().Where(p => p.GetCustomAttribute<ModulePropertyAttribute>() is not null);
+
+            foreach (string memberName in methods.Concat(properties).Select(m => m.Name))
+            {
+                if (Runtime.PyDict_DelItemString(dict, memberName) != 0)
+                {
+                    if (!PythonException.CurrentMatches(Exceptions.KeyError))
+                    {
+                        throw PythonException.ThrowLastAsClrException();
+                    }
+                    Runtime.PyErr_Clear();
+                }
+                cache.Remove(memberName);
             }
         }
 
@@ -353,9 +374,9 @@ namespace Python.Runtime
             return ExtensionType.tp_setattro(ob, key, val);
         }
 
-        protected override void OnSave(BorrowedReference ob, InterDomainContext context)
+        protected override Dictionary<string, object?>? OnSave(BorrowedReference ob)
         {
-            base.OnSave(ob, context);
+            var context = base.OnSave(ob);
             System.Diagnostics.Debug.Assert(dict == GetObjectDict(ob));
             // destroy the cache(s)
             foreach (var pair in cache)
@@ -374,9 +395,10 @@ namespace Python.Runtime
             }
 
             cache.Clear();
+            return context;
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
+        protected override void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context)
         {
             base.OnLoad(ob, context);
             SetObjectDict(ob, new NewReference(dict).Steal());

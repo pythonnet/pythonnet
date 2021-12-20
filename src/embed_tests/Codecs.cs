@@ -34,7 +34,7 @@ namespace Python.EmbeddingTest {
             using (var scope = Py.CreateScope())
             {
                 void Accept(T value) => restored = value;
-                var accept = new Action<T>(Accept).ToPython();
+                using var accept = new Action<T>(Accept).ToPython();
                 scope.Set(nameof(tuple), tuple);
                 scope.Set(nameof(accept), accept);
                 scope.Exec($"{nameof(accept)}({nameof(tuple)})");
@@ -55,7 +55,7 @@ namespace Python.EmbeddingTest {
             using (var scope = Py.CreateScope())
             {
                 void Accept(object value) => restored = (T)value;
-                var accept = new Action<object>(Accept).ToPython();
+                using var accept = new Action<object>(Accept).ToPython();
                 scope.Set(nameof(tuple), tuple);
                 scope.Set(nameof(accept), accept);
                 scope.Exec($"{nameof(accept)}({nameof(tuple)})");
@@ -71,7 +71,7 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripObject<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42.0, "42", new object());
-            var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
+            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
             Assert.AreEqual(expected: tuple, actual: restored);
         }
@@ -85,7 +85,7 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripGeneric<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
+            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
             Assert.AreEqual(expected: tuple, actual: restored);
         }
@@ -98,9 +98,9 @@ namespace Python.EmbeddingTest {
             var codec = ListDecoder.Instance;
             var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
 
-            var pyList = new PyList(items.ToArray());
+            using var pyList = new PyList(items.ToArray());
 
-            var pyListType = pyList.GetPythonType();
+            using var pyListType = pyList.GetPythonType();
             Assert.IsTrue(codec.CanDecode(pyListType, typeof(IList<bool>)));
             Assert.IsTrue(codec.CanDecode(pyListType, typeof(IList<int>)));
             Assert.IsFalse(codec.CanDecode(pyListType, typeof(System.Collections.IEnumerable)));
@@ -128,8 +128,8 @@ namespace Python.EmbeddingTest {
             Assert.Throws(typeof(InvalidCastException), () => { var x = stringList[0]; });
 
             //can't convert python iterable to list (this will require a copy which isn't lossless)
-            var foo = GetPythonIterable();
-            var fooType = foo.GetPythonType();
+            using var foo = GetPythonIterable();
+            using var fooType = foo.GetPythonType();
             Assert.IsFalse(codec.CanDecode(fooType, typeof(IList<int>)));
         }
 
@@ -140,8 +140,8 @@ namespace Python.EmbeddingTest {
             var items = new List<PyObject>() { new PyInt(1), new PyInt(2), new PyInt(3) };
 
             //SequenceConverter can only convert to any ICollection
-            var pyList = new PyList(items.ToArray());
-            var listType = pyList.GetPythonType();
+            using var pyList = new PyList(items.ToArray());
+            using var listType = pyList.GetPythonType();
             //it can convert a PyList, since PyList satisfies the python sequence protocol
 
             Assert.IsFalse(codec.CanDecode(listType, typeof(bool)));

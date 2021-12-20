@@ -14,10 +14,6 @@ jobs:
         os: [windows, ubuntu, macos]
         python: ["3.6", "3.7", "3.8", "3.9", "3.10"]
         platform: [x64]
-        shutdown_mode: [Normal, Soft]
-
-    env:
-      PYTHONNET_SHUTDOWN_MODE: ${{ matrix.SHUTDOWN_MODE }}
 
     steps:
       - name: Set Environment on macOS

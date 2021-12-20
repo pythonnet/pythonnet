@@ -67,14 +67,6 @@ namespace Python.EmbeddingTest
             RunAssemblyAndUnload("test2");
             Assert.That(PyRuntime.Py_IsInitialized() != 0,
                 "On soft-shutdown mode, Python runtime should still running");
-
-            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
-            {
-                // The default mode is a normal mode,
-                // it should shutdown the Python VM avoiding influence other tests.
-                PyRuntime.PyGILState_Ensure();
-                PyRuntime.Py_Finalize();
-            }
         }
 
         #region CrossDomainObject
@@ -222,7 +214,7 @@ obj.Field += 10
             // assembly (and Python .NET) to reside
             var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
 
-            theProxy.Call(nameof(PythonRunner.InitPython), ShutdownMode.Soft, PyRuntime.PythonDLL);
+            theProxy.Call(nameof(PythonRunner.InitPython), PyRuntime.PythonDLL);
             // From now on use the Proxy to call into the new assembly
             theProxy.RunPython();
 
@@ -290,7 +282,7 @@ obj.Field += 10
                 try
                 {
                     var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
-                    theProxy.Call(nameof(PythonRunner.InitPython), ShutdownMode.Reload, PyRuntime.PythonDLL);
+                    theProxy.Call(nameof(PythonRunner.InitPython), PyRuntime.PythonDLL);
 
                     var caller = CreateInstanceInstanceAndUnwrap<T1>(domain);
                     arg = caller.Execute(arg);
@@ -308,7 +300,7 @@ obj.Field += 10
                 try
                 {
                     var theProxy = CreateInstanceInstanceAndUnwrap<Proxy>(domain);
-                    theProxy.Call(nameof(PythonRunner.InitPython), ShutdownMode.Reload, PyRuntime.PythonDLL);
+                    theProxy.Call(nameof(PythonRunner.InitPython), PyRuntime.PythonDLL);
 
                     var caller = CreateInstanceInstanceAndUnwrap<T2>(domain);
                     caller.Execute(arg);
@@ -319,10 +311,8 @@ obj.Field += 10
                     AppDomain.Unload(domain);
                 }
             }
-            if (PythonEngine.DefaultShutdownMode == ShutdownMode.Normal)
-            {
-                Assert.IsTrue(PyRuntime.Py_IsInitialized() == 0);
-            }
+
+            Assert.IsTrue(PyRuntime.Py_IsInitialized() != 0);
         }
     }
 
@@ -368,10 +358,10 @@ obj.Field += 10
 
         private static IntPtr _state;
 
-        public static void InitPython(ShutdownMode mode, string dllName)
+        public static void InitPython(string dllName)
         {
             PyRuntime.PythonDLL = dllName;
-            PythonEngine.Initialize(mode: mode);
+            PythonEngine.Initialize();
             _state = PythonEngine.BeginAllowThreads();
         }
 
@@ -384,15 +374,7 @@ obj.Field += 10
         public static void ShutdownPythonCompletely()
         {
             PythonEngine.EndAllowThreads(_state);
-            // XXX: Reload mode will reserve clr objects after `Runtime.Shutdown`,
-            // if it used a another mode(the default mode) in other tests,
-            // when other tests trying to access these reserved objects, it may cause Domain exception,
-            // thus it needs to reduct to Soft mode to make sure all clr objects remove from Python.
-            var defaultMode = PythonEngine.DefaultShutdownMode;
-            if (defaultMode != ShutdownMode.Reload)
-            {
-                PythonEngine.ShutdownMode = defaultMode;
-            }
+
             PythonEngine.Shutdown();
         }
 

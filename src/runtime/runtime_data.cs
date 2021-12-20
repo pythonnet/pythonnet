@@ -138,7 +138,7 @@ namespace Python.Runtime
 
         private static SharedObjectsState SaveRuntimeDataObjects()
         {
-            var contexts = new Dictionary<PyObject, InterDomainContext>(PythonReferenceComparer.Instance);
+            var contexts = new Dictionary<PyObject, Dictionary<string, object?>>(PythonReferenceComparer.Instance);
             var extensionObjs = new Dictionary<PyObject, ExtensionType>(PythonReferenceComparer.Instance);
             // make a copy with strongly typed references to avoid concurrent modification
             var extensions = ExtensionType.loadedExtensions
@@ -151,9 +151,11 @@ namespace Python.Runtime
             {
                 var extension = (ExtensionType)ManagedType.GetManagedObject(pyObj)!;
                 Debug.Assert(CheckSerializable(extension));
-                var context = new InterDomainContext();
-                contexts[pyObj] = context;
-                extension.Save(pyObj, context);
+                var context = extension.Save(pyObj);
+                if (context is not null)
+                {
+                    contexts[pyObj] = context;
+                }
                 extensionObjs.Add(pyObj, extension);
             }
 
@@ -189,7 +191,7 @@ namespace Python.Runtime
                 mappedObjs.Add(clrObj);
             }
 
-            var wrapperStorage = new RuntimeDataStorage();
+            var wrapperStorage = new Dictionary<string, object?>();
             WrappersStorer?.Store(userObjects, wrapperStorage);
 
             var internalStores = new Dictionary<PyObject, CLRObject>(PythonReferenceComparer.Instance);
@@ -225,7 +227,8 @@ namespace Python.Runtime
             var contexts = storage.Contexts;
             foreach (var extension in extensions)
             {
-                extension.Value.Load(extension.Key, contexts[extension.Key]);
+                contexts.TryGetValue(extension.Key, out var context);
+                extension.Value.Load(extension.Key, context);
             }
             foreach (var clrObj in internalStores)
             {
@@ -253,42 +256,5 @@ namespace Python.Runtime
                 (IFormatter)Activator.CreateInstance(FormatterType)
                 : new BinaryFormatter();
         }
-    }
-
-
-    [Serializable]
-    public class RuntimeDataStorage
-    {
-        private Dictionary<string, object?>? _namedValues;
-
-        public T AddValue<T>(string name, T value)
-        {
-            if (_namedValues == null)
-            {
-                _namedValues = new Dictionary<string, object?>();
-            }
-            _namedValues.Add(name, value);
-            return value;
-        }
-
-        public object? GetValue(string name)
-        {
-            return _namedValues is null
-                ? throw new KeyNotFoundException()
-                : _namedValues[name];
-        }
-
-        public T? GetValue<T>(string name)
-        {
-            return (T?)GetValue(name);
-        }
-    }
-
-
-    [Serializable]
-    class InterDomainContext
-    {
-        private RuntimeDataStorage? _storage;
-        public RuntimeDataStorage Storage => _storage ?? (_storage = new RuntimeDataStorage());
     }
 }

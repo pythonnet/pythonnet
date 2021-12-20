@@ -87,11 +87,11 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             }
 
             TeardownNameSpaceTracking();
+            clrModule.ResetModuleMembers();
             Runtime.Py_CLEAR(ref py_clr_module!);
 
             root.Dispose();
             root = null!;
-            CLRModule.Reset();
         }
 
         private static Dictionary<PyString, PyObject> GetDotNetModules()

@@ -61,7 +61,7 @@ namespace Python.Runtime
     /// </summary>
     // Py_TPFLAGS_*
     [Flags]
-    public enum TypeFlags: int
+    public enum TypeFlags: long
     {
         HeapType = (1 << 9),
         BaseType = (1 << 10),

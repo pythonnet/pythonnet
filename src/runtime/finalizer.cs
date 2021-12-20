@@ -27,7 +27,7 @@ namespace Python.Runtime
             public Exception Error { get; }
         }
 
-        public static readonly Finalizer Instance = new Finalizer();
+        public static Finalizer Instance { get; } = new ();
 
         public event EventHandler<CollectArgs>? BeforeCollect;
         public event EventHandler<ErrorArgs>? ErrorHandler;

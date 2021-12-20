@@ -53,13 +53,13 @@ namespace Python.Runtime
             return Create(ob, cc);
         }
 
-        internal static void Restore(object ob, BorrowedReference pyHandle, InterDomainContext context)
+        internal static void Restore(object ob, BorrowedReference pyHandle, Dictionary<string, object?> context)
         {
             var co = new CLRObject(ob);
             co.OnLoad(pyHandle, context);
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
+        protected override void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context)
         {
             base.OnLoad(ob, context);
             GCHandle gc = GCHandle.Alloc(this);
