@@ -13,15 +13,18 @@ namespace Python.Runtime
     [Serializable]
     internal class InterfaceObject : ClassBase
     {
+        [NonSerialized]
         internal ConstructorInfo? ctor;
 
         internal InterfaceObject(Type tp) : base(tp)
         {
-            var coclass = (CoClassAttribute)Attribute.GetCustomAttribute(tp, cc_attr);
-            if (coclass != null)
-            {
-                ctor = coclass.CoClass.GetConstructor(Type.EmptyTypes);
-            }
+            this.ctor = TryGetCOMConstructor(tp);
+        }
+
+        static ConstructorInfo? TryGetCOMConstructor(Type tp)
+        {
+            var comClass = (CoClassAttribute?)Attribute.GetCustomAttribute(tp, cc_attr);
+            return comClass?.CoClass.GetConstructor(Type.EmptyTypes);
         }
 
         private static Type cc_attr;
@@ -112,6 +115,15 @@ namespace Python.Runtime
             }
 
             return Runtime.PyObject_GenericGetAttr(ob, key);
+        }
+
+        protected override void OnDeserialization(object sender)
+        {
+            base.OnDeserialization(sender);
+            if (this.type.Valid)
+            {
+                this.ctor = TryGetCOMConstructor(this.type.Value);
+            }
         }
     }
 }

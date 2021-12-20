@@ -25,7 +25,7 @@ namespace Python.Runtime
         internal bool is_static = false;
 
         internal PyString? doc;
-        internal Type type;
+        internal MaybeType type;
 
         public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
         {
@@ -157,6 +157,11 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ds)!;
 
+            if (!self.type.Valid)
+            {
+                return Exceptions.RaiseTypeError(self.type.DeletedMessage);
+            }
+
             // If the method is accessed through its type (rather than via
             // an instance) we return an 'unbound' MethodBinding that will
             // cached for future accesses through the type.
@@ -178,11 +183,11 @@ namespace Python.Runtime
             // In which case create a MethodBinding bound to the base class.
             var obj = GetManagedObject(ob) as CLRObject;
             if (obj != null
-                && obj.inst.GetType() != self.type
+                && obj.inst.GetType() != self.type.Value
                 && obj.inst is IPythonDerivedType
-                && self.type.IsInstanceOfType(obj.inst))
+                && self.type.Value.IsInstanceOfType(obj.inst))
             {
-                var basecls = ClassManager.GetClass(self.type);
+                var basecls = ClassManager.GetClass(self.type.Value);
                 return new MethodBinding(self, new PyObject(ob), basecls).Alloc();
             }
 
