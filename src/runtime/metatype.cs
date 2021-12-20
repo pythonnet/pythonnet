@@ -37,6 +37,10 @@ namespace Python.Runtime
 
         public static void Release()
         {
+            if (Runtime.HostedInPython)
+            {
+                _metaSlotsHodler.ResetSlots();
+            }
             PyCLRMetaType.Dispose();
         }
 
