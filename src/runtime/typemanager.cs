@@ -49,11 +49,11 @@ namespace Python.Runtime
             pythonBaseTypeProvider = PythonEngine.InteropConfiguration.pythonBaseTypeProviders;
         }
 
-        internal static void RemoveTypes(ShutdownMode shutdownMode)
+        internal static void RemoveTypes()
         {
             foreach (var type in cache.Values)
             {
-                if (shutdownMode == ShutdownMode.Extension
+                if (Runtime.HostedInPython
                     && _slotsHolders.TryGetValue(type, out var holder))
                 {
                     // If refcount > 1, it needs to reset the managed slot,
@@ -540,7 +540,7 @@ namespace Python.Runtime
             Util.WriteIntPtr(type, TypeOffset.tp_methods, mdefStart);
 
             // XXX: Hard code with mode check.
-            if (Runtime.ShutdownMode != ShutdownMode.Reload)
+            if (Runtime.HostedInPython)
             {
                 slotsHolder.Set(TypeOffset.tp_methods, (t, offset) =>
                 {
@@ -559,7 +559,7 @@ namespace Python.Runtime
             slotsHolder.KeeapAlive(thunkInfo);
 
             // XXX: Hard code with mode check.
-            if (Runtime.ShutdownMode != ShutdownMode.Reload)
+            if (Runtime.HostedInPython)
             {
                 IntPtr mdefAddr = mdef;
                 slotsHolder.AddDealloctor(() =>

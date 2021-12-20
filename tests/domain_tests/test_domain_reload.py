@@ -65,7 +65,6 @@ def test_method_return_type_change():
 def test_field_type_change():
     _run_test("field_type_change")
 
-@pytest.mark.xfail(reason="Events not yet serializable")
 def test_rename_event():
     _run_test('event_rename')
 

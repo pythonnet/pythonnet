@@ -13,7 +13,7 @@ namespace Python.Runtime
         internal const string UnstableApiMessage =
             "This API is unstable, and might be changed or removed in the next minor release";
         internal const string MinimalPythonVersionRequired =
-            "Only Python 3.5 or newer is supported";
+            "Only Python 3.6 or newer is supported";
         internal const string InternalUseOnly =
             "This API is for internal use only";
 

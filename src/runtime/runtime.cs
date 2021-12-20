@@ -56,6 +56,7 @@ namespace Python.Runtime
 
         private static bool _isInitialized = false;
 
+        internal static bool IsInitialized => _isInitialized;
         internal static readonly bool Is32Bit = IntPtr.Size == 4;
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -66,7 +67,6 @@ namespace Python.Runtime
 
         public static int MainManagedThreadId { get; private set; }
 
-        public static ShutdownMode ShutdownMode { get; internal set; }
         private static readonly List<PyObject> _pyRefs = new ();
 
         internal static Version PyVersion
@@ -91,23 +91,19 @@ namespace Python.Runtime
             return runNumber;
         }
 
+        internal static bool HostedInPython;
+
         /// Initialize the runtime...
         /// </summary>
         /// <remarks>Always call this method from the Main thread.  After the
         /// first call to this method, the main thread has acquired the GIL.</remarks>
-        internal static void Initialize(bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        internal static void Initialize(bool initSigs = false)
         {
             if (_isInitialized)
             {
                 return;
             }
             _isInitialized = true;
-
-            if (mode == ShutdownMode.Default)
-            {
-                mode = GetDefaultShutdownMode();
-            }
-            ShutdownMode = mode;
 
             bool interpreterAlreadyInitialized = TryUsingDll(
                 () => Py_IsInitialized() != 0
@@ -122,19 +118,11 @@ namespace Python.Runtime
                 {
                     PyEval_InitThreads();
                 }
-                // XXX: Reload mode may reduct to Soft mode,
-                // so even on Reload mode it still needs to save the RuntimeState
-                if (mode == ShutdownMode.Soft || mode == ShutdownMode.Reload)
-                {
-                    RuntimeState.Save();
-                }
+                RuntimeState.Save();
             }
             else
             {
-                // If we're coming back from a domain reload or a soft shutdown,
-                // we have previously released the thread state. Restore the main
-                // thread state here.
-                if (mode != ShutdownMode.Extension)
+                if (!HostedInPython)
                 {
                     PyGILState_Ensure();
                 }
@@ -167,7 +155,7 @@ namespace Python.Runtime
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             OperatorMethod.Initialize();
-            if (mode == ShutdownMode.Reload && RuntimeData.HasStashData())
+            if (RuntimeData.HasStashData())
             {
                 RuntimeData.RestoreRuntimeData();
             }
@@ -256,33 +244,7 @@ namespace Python.Runtime
             return Util.ReadPtr<NativeFunc>(pyType.Borrow(), TypeOffset.tp_iternext);
         }
 
-        /// <summary>
-        /// Tries to downgrade the shutdown mode, if possible.
-        /// The only possibles downgrades are:
-        /// Soft -> Normal
-        /// Reload -> Soft
-        /// Reload -> Normal
-        /// </summary>
-        /// <param name="mode">The desired shutdown mode</param>
-        /// <returns>The `mode` parameter if the downgrade is supported, the ShutdownMode
-        ///  set at initialization otherwise.</returns>
-        static ShutdownMode TryDowngradeShutdown(ShutdownMode mode)
-        {
-            if (
-                mode == Runtime.ShutdownMode
-                || mode == ShutdownMode.Normal
-                || (mode == ShutdownMode.Soft && Runtime.ShutdownMode == ShutdownMode.Reload)
-                )
-            {
-                return mode;
-            }
-            else // we can't downgrade
-            {
-                return Runtime.ShutdownMode;
-            }
-        }
-
-        internal static void Shutdown(ShutdownMode mode)
+        internal static void Shutdown()
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
@@ -290,21 +252,16 @@ namespace Python.Runtime
             }
             _isInitialized = false;
 
-            // If the shutdown mode specified is not the the same as the one specified
-            // during Initialization, we need to validate it; we can only downgrade,
-            // not upgrade the shutdown mode.
-            mode = TryDowngradeShutdown(mode);
-
             var state = PyGILState_Ensure();
 
-            if (mode == ShutdownMode.Soft)
+            if (!HostedInPython)
             {
-                RunExitFuncs();
-            }
-            if (mode == ShutdownMode.Reload)
-            {
+                // avoid saving dead objects
+                TryCollectingGarbage(runs: 3);
+
                 RuntimeData.Stash();
             }
+
             AssemblyManager.Shutdown();
             OperatorMethod.Shutdown();
             ImportHook.Shutdown();
@@ -314,7 +271,7 @@ namespace Python.Runtime
 
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
-            TypeManager.RemoveTypes(mode);
+            TypeManager.RemoveTypes();
 
             MetaType.Release();
             PyCLRMetaType.Dispose();
@@ -327,18 +284,15 @@ namespace Python.Runtime
             PyObjectConversions.Reset();
 
             PyGC_Collect();
-            bool everythingSeemsCollected = TryCollectingGarbage();
+            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
+                                                                 forceBreakLoops: true);
             Debug.Assert(everythingSeemsCollected);
 
             Finalizer.Shutdown();
             InternString.Shutdown();
 
-            if (mode != ShutdownMode.Normal && mode != ShutdownMode.Extension)
+            if (!HostedInPython)
             {
-                if (mode == ShutdownMode.Soft)
-                {
-                    RuntimeState.Restore();
-                }
                 ResetPyMembers();
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -351,26 +305,23 @@ namespace Python.Runtime
                     PyEval_SaveThread();
                 }
 
+                ExtensionType.loadedExtensions.Clear();
+                CLRObject.reflectedObjects.Clear();
             }
             else
             {
                 ResetPyMembers();
-                if (mode != ShutdownMode.Extension)
-                {
-                    Py_Finalize();
-                }
-                else
-                {
-                    PyGILState_Release(state);
-                }
+                PyGILState_Release(state);
             }
         }
 
         const int MaxCollectRetriesOnShutdown = 20;
         internal static int _collected;
-        static bool TryCollectingGarbage()
+        static bool TryCollectingGarbage(int runs, bool forceBreakLoops)
         {
-            for (int attempt = 0; attempt < MaxCollectRetriesOnShutdown; attempt++)
+            if (runs <= 0) throw new ArgumentOutOfRangeException(nameof(runs));
+
+            for (int attempt = 0; attempt < runs; attempt++)
             {
                 Interlocked.Exchange(ref _collected, 0);
                 nint pyCollected = 0;
@@ -383,21 +334,22 @@ namespace Python.Runtime
                 }
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
                 {
-                    return true;
+                    if (attempt + 1 == runs) return true;
                 }
-                else
+                else if (forceBreakLoops)
                 {
                     NullGCHandles(CLRObject.reflectedObjects);
                 }
             }
             return false;
         }
-
-        internal static void Shutdown()
-        {
-            var mode = ShutdownMode;
-            Shutdown(mode);
-        }
+        /// <summary>
+        /// Alternates .NET and Python GC runs in an attempt to collect all garbage
+        /// </summary>
+        /// <param name="runs">Total number of GC loops to run</param>
+        /// <returns><c>true</c> if a steady state was reached upon the requested number of tries (e.g. on the last try no objects were collected).</returns>
+        public static bool TryCollectingGarbage(int runs)
+            => TryCollectingGarbage(runs, forceBreakLoops: false);
 
         static void DisposeLazyModule(Lazy<PyObject> module)
         {
@@ -411,21 +363,6 @@ namespace Python.Runtime
             => moduleName is null
                 ? throw new ArgumentNullException(nameof(moduleName))
                 : new Lazy<PyObject>(() => PyModule.Import(moduleName), isThreadSafe: false);
-
-        internal static ShutdownMode GetDefaultShutdownMode()
-        {
-            string modeEvn = Environment.GetEnvironmentVariable("PYTHONNET_SHUTDOWN_MODE");
-            if (modeEvn == null)
-            {
-                return ShutdownMode.Normal;
-            }
-            ShutdownMode mode;
-            if (Enum.TryParse(modeEvn, true, out mode))
-            {
-                return mode;
-            }
-            return ShutdownMode.Normal;
-        }
 
         private static void RunExitFuncs()
         {
@@ -2494,15 +2431,5 @@ namespace Python.Runtime
     {
         public BadPythonDllException(string message, Exception innerException)
             : base(message, innerException) { }
-    }
-
-
-    public enum ShutdownMode
-    {
-        Default,
-        Normal,
-        Soft,
-        Reload,
-        Extension,
     }
 }

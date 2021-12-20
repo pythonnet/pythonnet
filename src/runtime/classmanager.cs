@@ -65,12 +65,15 @@ namespace Python.Runtime
 
         internal static ClassManagerState SaveRuntimeData()
         {
-            var contexts = new Dictionary<ReflectedClrType, InterDomainContext>();
+            var contexts = new Dictionary<ReflectedClrType, Dictionary<string, object?>>();
             foreach (var cls in cache)
             {
-                var context = contexts[cls.Value] = new InterDomainContext();
                 var cb = (ClassBase)ManagedType.GetManagedObject(cls.Value)!;
-                cb.Save(cls.Value, context);
+                var context = cb.Save(cls.Value);
+                if (context is not null)
+                {
+                    contexts[cls.Value] = context;
+                }
 
                 // Remove all members added in InitBaseClass.
                 // this is done so that if domain reloads and a member of a
@@ -201,7 +204,7 @@ namespace Python.Runtime
             return impl;
         }
 
-        internal static void InitClassBase(Type type, ClassBase impl, PyType pyType)
+        internal static void InitClassBase(Type type, ClassBase impl, ReflectedClrType pyType)
         {
             // First, we introspect the managed type and build some class
             // information, including generating the member descriptors

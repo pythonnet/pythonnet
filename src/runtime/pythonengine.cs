@@ -17,14 +17,6 @@ namespace Python.Runtime
     /// </summary>
     public class PythonEngine : IDisposable
     {
-        public static ShutdownMode ShutdownMode
-        {
-            get => Runtime.ShutdownMode;
-            set => Runtime.ShutdownMode = value;
-        }
-
-        public static ShutdownMode DefaultShutdownMode => Runtime.GetDefaultShutdownMode();
-
         private static DelegateManager? delegateManager;
         private static bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
@@ -182,9 +174,9 @@ namespace Python.Runtime
             Initialize(setSysArgv: true);
         }
 
-        public static void Initialize(bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        public static void Initialize(bool setSysArgv = true, bool initSigs = false)
         {
-            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs, mode);
+            Initialize(Enumerable.Empty<string>(), setSysArgv: setSysArgv, initSigs: initSigs);
         }
 
         /// <summary>
@@ -197,7 +189,7 @@ namespace Python.Runtime
         /// interpreter lock (GIL) to call this method.
         /// initSigs can be set to 1 to do default python signal configuration. This will override the way signals are handled by the application.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false, ShutdownMode mode = ShutdownMode.Default)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
         {
             if (initialized)
             {
@@ -209,7 +201,7 @@ namespace Python.Runtime
             // during an initial "import clr", and the world ends shortly thereafter.
             // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
             delegateManager = new DelegateManager();
-            Runtime.Initialize(initSigs, mode);
+            Runtime.Initialize(initSigs);
             initialized = true;
             Exceptions.Clear();
 
@@ -318,7 +310,16 @@ namespace Python.Runtime
         {
             try
             {
-                Initialize(setSysArgv: false, mode: ShutdownMode.Extension);
+                if (Runtime.IsInitialized)
+                {
+                    var builtins = Runtime.PyEval_GetBuiltins();
+                    var runtimeError = Runtime.PyDict_GetItemString(builtins, "RuntimeError");
+                    Exceptions.SetError(runtimeError, "Python.NET runtime is already initialized");
+                    return IntPtr.Zero;
+                }
+                Runtime.HostedInPython = true;
+
+                Initialize(setSysArgv: false);
 
                 Finalizer.Instance.ErrorHandler += AllowLeaksDuringShutdown;
 
@@ -372,15 +373,11 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Shutdown Method
-        /// </summary>
-        /// <remarks>
         /// Shutdown and release resources held by the Python runtime. The
         /// Python runtime can no longer be used in the current process
         /// after calling the Shutdown method.
-        /// </remarks>
-        /// <param name="mode">The ShutdownMode to use when shutting down the Runtime</param>
-        public static void Shutdown(ShutdownMode mode)
+        /// </summary>
+        public static void Shutdown()
         {
             if (!initialized)
             {
@@ -393,24 +390,11 @@ namespace Python.Runtime
 
             ExecuteShutdownHandlers();
             // Remember to shut down the runtime.
-            Runtime.Shutdown(mode);
+            Runtime.Shutdown();
 
             initialized = false;
 
             InteropConfiguration = InteropConfiguration.MakeDefault();
-        }
-
-        /// <summary>
-        /// Shutdown Method
-        /// </summary>
-        /// <remarks>
-        /// Shutdown and release resources held by the Python runtime. The
-        /// Python runtime can no longer be used in the current process
-        /// after calling the Shutdown method.
-        /// </remarks>
-        public static void Shutdown()
-        {
-            Shutdown(Runtime.ShutdownMode);
         }
 
         /// <summary>

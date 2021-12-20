@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -49,9 +50,9 @@ internal sealed class ReflectedClrType : PyType
         return pyType;
     }
 
-    internal void Restore(InterDomainContext context)
+    internal void Restore(Dictionary<string, object?> context)
     {
-        var cb = context.Storage.GetValue<ClassBase>("impl");
+        var cb = (ClassBase)context["impl"]!;
 
         Debug.Assert(cb is not null);
 

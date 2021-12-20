@@ -4,8 +4,6 @@ using NUnit.Framework;
 using Python.Runtime;
 
 namespace Python.EmbeddingTest {
-    using Runtime = Python.Runtime.Runtime;
-
     public class TestCallbacks {
         [OneTimeSetUp]
         public void SetUp() {
@@ -22,11 +20,13 @@ namespace Python.EmbeddingTest {
             int passed = 0;
             var aFunctionThatCallsIntoPython = new Action<int>(value => passed = value);
             using (Py.GIL()) {
-                dynamic callWith42 = PythonEngine.Eval("lambda f: f([42])");
-                var error =  Assert.Throws<PythonException>(() => callWith42(aFunctionThatCallsIntoPython.ToPython()));
+                using dynamic callWith42 = PythonEngine.Eval("lambda f: f([42])");
+                using var pyFunc = aFunctionThatCallsIntoPython.ToPython();
+                var error =  Assert.Throws<PythonException>(() => callWith42(pyFunc));
                 Assert.AreEqual("TypeError", error.Type.Name);
                 string expectedArgTypes = "(<class 'list'>)";
                 StringAssert.EndsWith(expectedArgTypes, error.Message);
+                error.Traceback.Dispose();
             }
         }
     }

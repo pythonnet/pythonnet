@@ -107,6 +107,8 @@ Instead, `PyIterable` does that.
 
 ### Removed
 
+-   `ShutdownMode` has been removed. The only shutdown mode supported now is an equivalent of `ShutdownMode.Reload`.
+There is no need to specify it.
 -   implicit assembly loading (you have to explicitly `clr.AddReference` before doing import)
 -   messages in `PythonException` no longer start with exception type
 -   `PyScopeManager`, `PyScopeException`, `PyScope` (use `PyModule` instead)

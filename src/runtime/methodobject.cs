@@ -21,7 +21,6 @@ namespace Python.Runtime
         private MethodInfo[]? _info = null;
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
-        internal PyObject? unbound;
         internal readonly MethodBinder binder;
         internal bool is_static = false;
 
@@ -164,11 +163,8 @@ namespace Python.Runtime
 
             if (ob == null)
             {
-                if (self.unbound is null)
-                {
-                    self.unbound = new PyObject(new MethodBinding(self, target: null, targetType: new PyType(tp)).Alloc().Steal());
-                }
-                return new NewReference(self.unbound);
+                var binding = new MethodBinding(self, target: null, targetType: new PyType(tp));
+                return binding.Alloc();
             }
 
             if (Runtime.PyObject_IsInstance(ob, tp) < 1)

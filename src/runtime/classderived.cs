@@ -867,17 +867,19 @@ namespace Python.Runtime
 
         internal static void Finalize(IntPtr derived)
         {
-            bool deleted = CLRObject.reflectedObjects.Remove(derived);
-            Debug.Assert(deleted);
-
             var @ref = NewReference.DangerousFromPointer(derived);
 
             ClassBase.tp_clear(@ref.Borrow());
+
+            var type = Runtime.PyObject_TYPE(@ref.Borrow());
 
             // rare case when it's needed
             // matches correspdonging PyObject_GC_UnTrack
             // in ClassDerivedObject.tp_dealloc
             Runtime.PyObject_GC_Del(@ref.Steal());
+
+            // must decref our type
+            Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
         }
 
         internal static FieldInfo? GetPyObjField(Type type) => type.GetField(PyObjName, PyObjFlags);

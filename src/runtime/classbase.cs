@@ -341,16 +341,17 @@ namespace Python.Runtime
 
             CallClear(lastRef.Borrow());
 
-            IntPtr addr = lastRef.DangerousGetAddress();
-            bool deleted = CLRObject.reflectedObjects.Remove(addr);
-            Debug.Assert(deleted);
-
             DecrefTypeAndFree(lastRef.Steal());
         }
 
         public static int tp_clear(BorrowedReference ob)
         {
-            TryFreeGCHandle(ob);
+            if (TryFreeGCHandle(ob))
+            {
+                IntPtr addr = ob.DangerousGetAddress();
+                bool deleted = CLRObject.reflectedObjects.Remove(addr);
+                Debug.Assert(deleted);
+            }
 
             int baseClearResult = BaseUnmanagedClear(ob);
             if (baseClearResult != 0)
@@ -390,13 +391,14 @@ namespace Python.Runtime
             return clear(ob);
         }
 
-        protected override void OnSave(BorrowedReference ob, InterDomainContext context)
+        protected override Dictionary<string, object?> OnSave(BorrowedReference ob)
         {
-            base.OnSave(ob, context);
-            context.Storage.AddValue("impl", this);
+            var context = base.OnSave(ob) ?? new();
+            context["impl"] = this;
+            return context;
         }
 
-        protected override void OnLoad(BorrowedReference ob, InterDomainContext? context)
+        protected override void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context)
         {
             base.OnLoad(ob, context);
             var gcHandle = GCHandle.Alloc(this);

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Python.Runtime
@@ -23,16 +24,15 @@ namespace Python.Runtime
     internal class ConstructorBinding : ExtensionType
     {
         private MaybeType type; // The managed Type being wrapped in a ClassObject
-        private PyType typeToCreate; // The python type tells GetInstHandle which Type to create.
         private ConstructorBinder ctorBinder;
 
         [NonSerialized]
         private PyObject? repr;
 
-        public ConstructorBinding(Type type, PyType typeToCreate, ConstructorBinder ctorBinder)
+        public ConstructorBinding(Type type, ReflectedClrType typeToCreate, ConstructorBinder ctorBinder)
         {
             this.type = type;
-            this.typeToCreate = typeToCreate;
+            Debug.Assert(typeToCreate == ReflectedClrType.GetOrCreate(type));
             this.ctorBinder = ctorBinder;
         }
 
@@ -109,7 +109,7 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError("No match found for constructor signature");
             }
-            var boundCtor = new BoundContructor(tp, self.typeToCreate, self.ctorBinder, ci);
+            var boundCtor = new BoundContructor(tp, self.ctorBinder, ci);
             return boundCtor.Alloc();
         }
 
@@ -146,15 +146,6 @@ namespace Python.Runtime
             self.repr = docStr.MoveToPyObject();
             return new NewReference(self.repr);
         }
-
-        public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
-        {
-            var self = (ConstructorBinding?)GetManagedObject(ob);
-            if (self is null) return 0;
-
-            int res = PyVisit(self.typeToCreate, visit, arg);
-            return res;
-        }
     }
 
     /// <summary>
@@ -169,15 +160,13 @@ namespace Python.Runtime
     internal class BoundContructor : ExtensionType
     {
         private Type type; // The managed Type being wrapped in a ClassObject
-        private PyType typeToCreate; // The python type tells GetInstHandle which Type to create.
         private ConstructorBinder ctorBinder;
         private ConstructorInfo ctorInfo;
         private PyObject? repr;
 
-        public BoundContructor(Type type, PyType typeToCreate, ConstructorBinder ctorBinder, ConstructorInfo ci)
+        public BoundContructor(Type type, ConstructorBinder ctorBinder, ConstructorInfo ci)
         {
             this.type = type;
-            this.typeToCreate = typeToCreate;
             this.ctorBinder = ctorBinder;
             ctorInfo = ci;
         }
@@ -207,7 +196,7 @@ namespace Python.Runtime
             }
             // Instantiate the python object that wraps the result of the method call
             // and return the PyObject* to it.
-            return CLRObject.GetReference(obj, self.typeToCreate);
+            return CLRObject.GetReference(obj, ReflectedClrType.GetOrCreate(self.type));
         }
 
         /// <summary>
@@ -228,15 +217,6 @@ namespace Python.Runtime
             if (docStr.IsNull()) return default;
             self.repr = docStr.MoveToPyObject();
             return new NewReference(self.repr);
-        }
-
-        public static int tp_traverse(BorrowedReference ob, IntPtr visit, IntPtr arg)
-        {
-            var self = (BoundContructor?)GetManagedObject(ob);
-            if (self is null) return 0;
-
-            int res = PyVisit(self.typeToCreate, visit, arg);
-            return res;
         }
     }
 }

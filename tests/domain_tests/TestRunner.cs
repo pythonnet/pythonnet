@@ -48,6 +48,8 @@ namespace Python.DomainReloadTests
             /// </summary>
             public string Name;
 
+            public override string ToString() => Name;
+
             /// <summary>
             /// The C# code to run in the first domain.
             /// </summary>
@@ -1135,8 +1137,7 @@ def after_reload():
         /// <summary>
         /// The runner's code. Runs the python code
         /// This is a template for string.Format
-        /// Arg 0 is the reload mode: ShutdownMode.Reload or other.
-        /// Arg 1 is the no-arg python function to run, before or after.
+        /// Arg 0 is the no-arg python function to run, before or after.
         /// </summary>
         const string CaseRunnerTemplate = @"
 using System;
@@ -1150,14 +1151,14 @@ namespace CaseRunner
         {{
             try
             {{
-                PythonEngine.Initialize(mode:{0});
+                PythonEngine.Initialize();
                 using (Py.GIL())
                 {{
                     var temp = AppDomain.CurrentDomain.BaseDirectory;
                     dynamic sys = Py.Import(""sys"");
                     sys.path.append(new PyString(temp));
                     dynamic test_mod = Py.Import(""domain_test_module.mod"");
-                    test_mod.{1}_reload();
+                    test_mod.{0}_reload();
                 }}
                 PythonEngine.Shutdown();
             }}
@@ -1280,9 +1281,9 @@ namespace CaseRunner
             return CreateAssembly(TestAssemblyName + ".dll", code, exe: false);
         }
 
-        static string CreateCaseRunnerAssembly(string verb, string shutdownMode = "ShutdownMode.Reload")
+        static string CreateCaseRunnerAssembly(string verb)
         {
-            var code = string.Format(CaseRunnerTemplate, shutdownMode, verb);
+            var code = string.Format(CaseRunnerTemplate, verb);
             var name = "TestCaseRunner.exe";
 
             return CreateAssembly(name, code, exe: true);
