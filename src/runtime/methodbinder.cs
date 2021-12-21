@@ -895,11 +895,11 @@ namespace Python.Runtime
                 var value = new StringBuilder("No method matches given arguments");
                 if (methodinfo != null && methodinfo.Length > 0)
                 {
-                    value.Append($" for {methodinfo[0].Name}");
+                    value.Append($" for {methodinfo[0].DeclaringType?.Name}.{methodinfo[0].Name}");
                 }
                 else if (list.Count > 0 && list[0].Valid)
                 {
-                    value.Append($" for {list[0].Value.Name}");
+                    value.Append($" for {list[0].Value.DeclaringType?.Name}.{list[0].Value.Name}");
                 }
 
                 value.Append(": ");
