@@ -456,7 +456,7 @@ namespace Python.Runtime
             int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
                        + IntPtr.Size // tp_clr_inst_offset
             ;
-            var result = new PyType(new TypeSpec("GC Offset Base", basicSize: size,
+            var result = new PyType(new TypeSpec("clr._internal.GCOffsetBase", basicSize: size,
                 new TypeSpec.Slot[]
                 {
 
@@ -480,7 +480,7 @@ namespace Python.Runtime
 
             PyType gcOffsetBase = CreateMetatypeWithGCHandleOffset();
 
-            PyType type = AllocateTypeObject("CLR Metatype", metatype: gcOffsetBase);
+            PyType type = AllocateTypeObject("CLRMetatype", metatype: gcOffsetBase);
 
             Util.WriteRef(type, TypeOffset.tp_base, new NewReference(gcOffsetBase).Steal());
 
@@ -509,7 +509,7 @@ namespace Python.Runtime
             }
             
             BorrowedReference dict = Util.ReadRef(type, TypeOffset.tp_dict);
-            using (var mod = Runtime.PyString_FromString("CLR"))
+            using (var mod = Runtime.PyString_FromString("clr._internal"))
                 Runtime.PyDict_SetItemString(dict, "__module__", mod.Borrow());
 
             // The type has been modified after PyType_Ready has been called
