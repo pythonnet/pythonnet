@@ -37,20 +37,22 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade -r requirements.txt
+          pip install numpy # for tests
 
       - name: Build and Install
         run: |
           pip install -v .
 
+      - name: Set Python DLL path (non Windows)
+        if: ${{ matrix.os != 'windows' }}
+        run: |
+          python -m pythonnet.find_libpython --export >> $GITHUB_ENV
+
       - name: Python Tests
         run: pytest
-        env:
-          PYTHONNET_PYDLL: libpython3.8.so
 
       - name: Embedding tests
         run: dotnet test --runtime any-ubuntu src/embed_tests/
-        env:
-          PYTHONNET_PYDLL: libpython3.8.so
 
       - name: Pack
         run: dotnet pack --configuration Release --version-suffix preview${{env.DATE_VER}} --output "Release-Preview"
@@ -59,6 +61,3 @@ jobs:
         run: |
           dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_MONTHLY }} Release-Preview/*.nupkg
           dotnet nuget push --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_MONTHLY }} Release-Preview/*.snupkg
-
-      # TODO: Run perf tests
-      # TODO: Run mono tests on Windows?
