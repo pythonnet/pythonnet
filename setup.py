@@ -151,7 +151,7 @@ setup(
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
     packages=["pythonnet", "pythonnet.find_libpython"],
-    install_requires=["clr_loader"],
+    install_requires=["clr_loader >= 0.1.7"],
     long_description=long_description,
     long_description_content_type="text/x-rst",
     py_modules=["clr"],
