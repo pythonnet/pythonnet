@@ -296,6 +296,7 @@ namespace Python.Runtime
 
         static void OnProcessExit(object _, EventArgs __)
         {
+            Runtime.ProcessIsTerminating = true;
             Shutdown();
         }
 

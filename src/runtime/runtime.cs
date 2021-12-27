@@ -92,6 +92,7 @@ namespace Python.Runtime
         }
 
         internal static bool HostedInPython;
+        internal static bool ProcessIsTerminating;
 
         /// Initialize the runtime...
         /// </summary>
@@ -254,7 +255,7 @@ namespace Python.Runtime
 
             var state = PyGILState_Ensure();
 
-            if (!HostedInPython)
+            if (!HostedInPython && !ProcessIsTerminating)
             {
                 // avoid saving dead objects
                 TryCollectingGarbage(runs: 3);
