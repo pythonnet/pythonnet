@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -8,17 +9,25 @@ namespace Python.Runtime
     /// Implements a Python descriptor type that manages CLR properties.
     /// </summary>
     [Serializable]
-    internal class PropertyObject : ExtensionType
+    internal class PropertyObject : ExtensionType, IDeserializationCallback
     {
         internal MaybeMemberInfo<PropertyInfo> info;
-        private MaybeMethodInfo getter;
-        private MaybeMethodInfo setter;
+        [NonSerialized]
+        private MethodInfo? getter;
+        [NonSerialized]
+        private MethodInfo? setter;
 
         public PropertyObject(PropertyInfo md)
         {
-            getter = md.GetGetMethod(true);
-            setter = md.GetSetMethod(true);
             info = new MaybeMemberInfo<PropertyInfo>(md);
+            CacheAccessors();
+        }
+
+        void CacheAccessors()
+        {
+            PropertyInfo md = info.Value;
+            getter = md.GetGetMethod(true) ?? md.GetBaseGetMethod(true);
+            setter = md.GetSetMethod(true) ?? md.GetBaseSetMethod(true);
         }
 
 
@@ -35,7 +44,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(self.info.DeletedMessage);
             }
             var info = self.info.Value;
-            MethodInfo getter = self.getter.UnsafeValue;
+            MethodInfo? getter = self.getter;
             object result;
 
 
@@ -70,7 +79,7 @@ namespace Python.Runtime
 
             try
             {
-                result = info.GetValue(co.inst, null);
+                result = getter.Invoke(co.inst, Array.Empty<object>());
                 return Converter.ToPython(result, info.PropertyType);
             }
             catch (Exception e)
@@ -100,7 +109,7 @@ namespace Python.Runtime
             }
             var info = self.info.Value;
 
-            MethodInfo setter = self.setter.UnsafeValue;
+            MethodInfo? setter = self.setter;
 
             if (val == null)
             {
@@ -141,7 +150,7 @@ namespace Python.Runtime
                         Exceptions.RaiseTypeError("invalid target");
                         return -1;
                     }
-                    info.SetValue(co.inst, newval, null);
+                    setter.Invoke(co.inst, new object?[] { newval });
                 }
                 else
                 {
@@ -168,6 +177,14 @@ namespace Python.Runtime
         {
             var self = (PropertyObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<property '{self.info}'>");
+        }
+
+        void IDeserializationCallback.OnDeserialization(object sender)
+        {
+            if (info.Valid)
+            {
+                CacheAccessors();
+            }
         }
     }
 }
