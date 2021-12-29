@@ -35,7 +35,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            MethodInfo? mi = MethodBinder.MatchSignature(self.m.info, types);
+            MethodBase? mi = MethodBinder.MatchSignature(self.m.info, types);
             if (mi == null)
             {
                 var e = "No match found for signature";

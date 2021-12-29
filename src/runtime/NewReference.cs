@@ -41,6 +41,17 @@ namespace Python.Runtime
             return new PyObject(this.StealNullable());
         }
 
+        /// <summary>
+        /// Creates new instance of <see cref="NewReference"/> which now owns the pointer.
+        /// Sets the original reference to <c>null</c>, as it no longer owns the pointer.
+        /// </summary>
+        public NewReference Move()
+        {
+            var result = new NewReference(this);
+            this.pointer = default;
+            return result;
+        }
+
         /// <summary>Moves ownership of this instance to unmanged pointer</summary>
         public IntPtr DangerousMoveToPointer()
         {

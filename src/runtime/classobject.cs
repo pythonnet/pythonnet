@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Python.Runtime
 {
@@ -13,18 +15,12 @@ namespace Python.Runtime
     [Serializable]
     internal class ClassObject : ClassBase
     {
-        internal ConstructorBinder binder;
-        internal int NumCtors = 0;
+        internal readonly int NumCtors = 0;
 
         internal ClassObject(Type tp) : base(tp)
         {
             var _ctors = type.Value.GetConstructors();
             NumCtors = _ctors.Length;
-            binder = new ConstructorBinder(type.Value);
-            foreach (ConstructorInfo t in _ctors)
-            {
-                binder.AddMethod(t);
-            }
         }
 
 
@@ -33,7 +29,12 @@ namespace Python.Runtime
         /// </summary>
         internal NewReference GetDocString()
         {
-            MethodBase[] methods = binder.GetMethods();
+            if (!type.Valid)
+            {
+                return Exceptions.RaiseTypeError(type.DeletedMessage);
+            }
+
+            MethodBase[] methods = type.Value.GetConstructors();
             var str = "";
             foreach (MethodBase t in methods)
             {
@@ -50,7 +51,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __new__ for reflected classes and value types.
         /// </summary>
-        public static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
+        static NewReference tp_new_impl(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
             var self = GetManagedObject(tp) as ClassObject;
 
@@ -100,14 +101,48 @@ namespace Python.Runtime
                 return NewEnum(type, args, tp);
             }
 
-            object? obj = self.binder.InvokeRaw(null, args, kw);
-            if (obj == null)
+            if (IsGenericNullable(type))
             {
-                return default;
+                // Nullable<T> has special handling in .NET runtime.
+                // Invoking its constructor via reflection on an uninitialized instance
+                // does not actually set the object fields.
+                return NewNullable(type, args, kw, tp);
             }
 
-            return CLRObject.GetReference(obj, tp);
+            object obj = FormatterServices.GetUninitializedObject(type);
+
+            return self.NewObjectToPython(obj, tp);
         }
+
+        protected virtual void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)
+        {
+            TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_new, new Interop.BBB_N(tp_new_impl), slotsHolder);
+        }
+
+        public override bool HasCustomNew()
+        {
+            if (base.HasCustomNew()) return true;
+
+            Type clrType = type.Value;
+            return clrType.IsPrimitive
+                || clrType.IsEnum
+                || clrType == typeof(string)
+                || IsGenericNullable(clrType);
+        }
+
+        static bool IsGenericNullable(Type type)
+            => type.IsValueType && type.IsGenericType
+            && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+
+        public override void InitializeSlots(BorrowedReference pyType, SlotsHolder slotsHolder)
+        {
+            base.InitializeSlots(pyType, slotsHolder);
+
+            this.SetTypeNewSlot(pyType, slotsHolder);
+        }
+
+        protected virtual NewReference NewObjectToPython(object obj, BorrowedReference tp)
+            => CLRObject.GetReference(obj, tp);
 
         private static NewReference NewEnum(Type type, BorrowedReference args, BorrowedReference tp)
         {
@@ -144,6 +179,28 @@ namespace Python.Runtime
 
             object enumValue = Enum.ToObject(type, result);
             return CLRObject.GetReference(enumValue, tp);
+        }
+
+        private static NewReference NewNullable(Type type, BorrowedReference args, BorrowedReference kw, BorrowedReference tp)
+        {
+            Debug.Assert(IsGenericNullable(type));
+
+            if (kw != null)
+            {
+                return Exceptions.RaiseTypeError("System.Nullable<T> constructor does not support keyword arguments");
+            }
+
+            nint argsCount = Runtime.PyTuple_Size(args);
+            if (argsCount != 1)
+            {
+                return Exceptions.RaiseTypeError("System.Nullable<T> constructor expects 1 argument, got " + (int)argsCount);
+            }
+
+            var value = Runtime.PyTuple_GetItem(args, 0);
+            var elementType = type.GetGenericArguments()[0];
+            return Converter.ToManaged(value, elementType, out var result, setError: true)
+                ? CLRObject.GetReference(result!, tp)
+                : default;
         }
 
 

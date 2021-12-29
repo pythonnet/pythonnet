@@ -2,6 +2,8 @@
 
 """Test CLR class constructor support."""
 
+import pytest
+
 import System
 
 
@@ -34,6 +36,11 @@ def test_struct_constructor():
     assert ob.value == guid
 
 
+def test_datetime():
+    inst = System.DateTime(2021, 12, 29)
+    assert inst.Year == 2021
+
+
 def test_subclass_constructor():
     """Test subclass constructor args"""
     from Python.Test import SubclassConstructorTest
@@ -48,8 +55,17 @@ def test_subclass_constructor():
 
 def test_multiple_constructor():
     from Python.Test import MultipleConstructorsTest
-    import System
 
     # Test parameterless
     ob = MultipleConstructorsTest()
     assert ob.value == ""
+
+
+def test_default_constructor_fallback():
+    from Python.Test import DefaultConstructorMatching
+
+    ob = DefaultConstructorMatching(2)
+    assert ob.a == 2
+
+    with pytest.raises(TypeError):
+        ob = DefaultConstructorMatching("2")

@@ -197,40 +197,24 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference tp_call(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            IntPtr func = Util.ReadIntPtr(tp, TypeOffset.tp_new);
-            if (func == IntPtr.Zero)
+            IntPtr tp_new = Util.ReadIntPtr(tp, TypeOffset.tp_new);
+            if (tp_new == IntPtr.Zero)
             {
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
-            using NewReference obj = NativeCall.Call_3(func, tp, args, kw);
+            using NewReference obj = NativeCall.Call_3(tp_new, tp, args, kw);
             if (obj.IsNull())
             {
                 return default;
             }
 
-            BorrowedReference objOrNull = CallInit(obj.Borrow(), args, kw);
-            return new NewReference(objOrNull, canBeNull: true);
+            var type = GetManagedObject(tp)!;
+
+            return type.Init(obj.Borrow(), args, kw)
+                ? obj.Move()
+                : default;
         }
-
-        private static BorrowedReference CallInit(BorrowedReference obj, BorrowedReference args, BorrowedReference kw)
-        {
-            using var init = Runtime.PyObject_GetAttr(obj, PyIdentifier.__init__);
-            Runtime.PyErr_Clear();
-
-            if (!init.IsNull())
-            {
-                using var result = Runtime.PyObject_Call(init.Borrow(), args, kw);
-
-                if (result.IsNull())
-                {
-                    return default;
-                }
-            }
-
-            return obj;
-        }
-
 
         /// <summary>
         /// Type __setattr__ implementation for reflected types. Note that this

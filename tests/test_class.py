@@ -108,19 +108,21 @@ def test_subclass_with_various_constructors():
 
     class SubClass(ClassCtorTest2):
         def __init__(self, v):
-            ClassCtorTest2.__init__(self)
-            self.value = v
+            ClassCtorTest2.__init__(self, v)
+            self.value2 = v
 
     inst = SubClass('test')
     assert inst.value == 'test'
+    assert inst.value2 == 'test'
 
     class SubClass2(ClassCtorTest2):
         def __init__(self, v):
-            ClassCtorTest2.__init__(self)
-            self.value = v
+            ClassCtorTest2.__init__(self, v)
+            self.value2 = v
 
     inst = SubClass2('test')
     assert inst.value == 'test'
+    assert inst.value2 == 'test'
 
 
 def test_struct_construction():
@@ -128,9 +130,9 @@ def test_struct_construction():
 
     from Python.Test import Point
 
-    p = Point()
-    assert p.X == 0
-    assert p.Y == 0
+    # no default constructor, must supply arguments
+    with pytest.raises(TypeError):
+        p = Point()
 
     p = Point(0, 0)
     assert p.X == 0

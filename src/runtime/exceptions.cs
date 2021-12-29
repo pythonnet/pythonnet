@@ -76,6 +76,15 @@ namespace Python.Runtime
             }
             return Runtime.PyString_FromString(message);
         }
+
+        public override bool Init(BorrowedReference obj, BorrowedReference args, BorrowedReference kw)
+        {
+            if (!base.Init(obj, args, kw)) return false;
+
+            var e = (CLRObject)GetManagedObject(obj)!;
+
+            return Exceptions.SetArgsAndCause(obj, (Exception)e.inst);
+        }
     }
 
     /// <summary>
@@ -149,7 +158,7 @@ namespace Python.Runtime
         /// __getattr__ implementation, and thus dereferencing a NULL
         /// pointer.
         /// </summary>
-        internal static void SetArgsAndCause(BorrowedReference ob, Exception e)
+        internal static bool SetArgsAndCause(BorrowedReference ob, Exception e)
         {
             NewReference args;
             if (!string.IsNullOrEmpty(e.Message))
@@ -167,8 +176,7 @@ namespace Python.Runtime
             {
                 if (Runtime.PyObject_SetAttrString(ob, "args", args.Borrow()) != 0)
                 {
-                    args.Dispose();
-                    throw PythonException.ThrowLastAsClrException();
+                    return false;
                 }
             }
 
@@ -178,6 +186,8 @@ namespace Python.Runtime
                 using var cause = CLRObject.GetReference(e.InnerException);
                 Runtime.PyException_SetCause(ob, cause.Steal());
             }
+
+            return true;
         }
 
         /// <summary>

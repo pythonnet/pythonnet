@@ -122,6 +122,28 @@ namespace Python.Runtime
         protected virtual Dictionary<string, object?>? OnSave(BorrowedReference ob) => null;
         protected virtual void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context) { }
 
+        /// <summary>
+        /// Initializes given object, or returns <c>false</c> and sets Python error on failure
+        /// </summary>
+        public virtual bool Init(BorrowedReference obj, BorrowedReference args, BorrowedReference kw)
+        {
+            // this just calls obj.__init__(*args, **kw)
+            using var init = Runtime.PyObject_GetAttr(obj, PyIdentifier.__init__);
+            Runtime.PyErr_Clear();
+
+            if (!init.IsNull())
+            {
+                using var result = Runtime.PyObject_Call(init.Borrow(), args, kw);
+
+                if (result.IsNull())
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         protected static void ClearObjectDict(BorrowedReference ob)
         {
             BorrowedReference type = Runtime.PyObject_TYPE(ob);
