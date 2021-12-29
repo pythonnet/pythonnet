@@ -556,6 +556,17 @@ namespace Python.Runtime
             }
         }
 
+        public virtual bool HasCustomNew() => this.GetType().GetMethod("tp_new") is not null;
+
+        public override bool Init(BorrowedReference obj, BorrowedReference args, BorrowedReference kw)
+        {
+            if (this.HasCustomNew())
+                // initialization must be done in tp_new
+                return true;
+
+            return base.Init(obj, args, kw);
+        }
+
         protected virtual void OnDeserialization(object sender)
         {
             this.dotNetMembers = new List<string>();

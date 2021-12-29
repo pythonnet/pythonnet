@@ -86,7 +86,7 @@ namespace Python.Runtime
             return OpMethodMap.ContainsKey(method.Name) || ComparisonOpMap.ContainsKey(method.Name);
         }
 
-        public static bool IsComparisonOp(MethodInfo method)
+        public static bool IsComparisonOp(MethodBase method)
         {
             return ComparisonOpMap.ContainsKey(method.Name);
         }
@@ -170,7 +170,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="method">The operator method.</param>
         /// <returns></returns>
-        public static bool IsReverse(MethodInfo method)
+        public static bool IsReverse(MethodBase method)
         {
             Type primaryType = method.IsOpsHelper()
                 ? method.DeclaringType.GetGenericArguments()[0]
@@ -179,10 +179,10 @@ namespace Python.Runtime
             return leftOperandType != primaryType;
         }
 
-        public static void FilterMethods(MethodInfo[] methods, out MethodInfo[] forwardMethods, out MethodInfo[] reverseMethods)
+        public static void FilterMethods(MethodBase[] methods, out MethodBase[] forwardMethods, out MethodBase[] reverseMethods)
         {
-            List<MethodInfo> forwardMethodsList = new List<MethodInfo>();
-            List<MethodInfo> reverseMethodsList = new List<MethodInfo>();
+            var forwardMethodsList = new List<MethodBase>();
+            var reverseMethodsList = new List<MethodBase>();
             foreach (var method in methods)
             {
                 if (IsReverse(method))

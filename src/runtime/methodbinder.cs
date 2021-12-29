@@ -55,14 +55,14 @@ namespace Python.Runtime
         /// Given a sequence of MethodInfo and a sequence of types, return the
         /// MethodInfo that matches the signature represented by those types.
         /// </summary>
-        internal static MethodInfo? MatchSignature(MethodInfo[] mi, Type[] tp)
+        internal static MethodBase? MatchSignature(MethodBase[] mi, Type[] tp)
         {
             if (tp == null)
             {
                 return null;
             }
             int count = tp.Length;
-            foreach (MethodInfo t in mi)
+            foreach (MethodBase t in mi)
             {
                 ParameterInfo[] pi = t.GetParameters();
                 if (pi.Length != count)
@@ -89,7 +89,7 @@ namespace Python.Runtime
         /// return the MethodInfo that represents the matching closed generic.
         /// If unsuccessful, returns null and may set a Python error.
         /// </summary>
-        internal static MethodInfo? MatchParameters(MethodInfo[] mi, Type[]? tp)
+        internal static MethodInfo? MatchParameters(MethodBase[] mi, Type[]? tp)
         {
             if (tp == null)
             {
@@ -128,7 +128,7 @@ namespace Python.Runtime
         /// Given a sequence of MethodInfo and two sequences of type parameters,
         /// return the MethodInfo that matches the signature and the closed generic.
         /// </summary>
-        internal static MethodInfo? MatchSignatureAndParameters(MethodInfo[] mi, Type[] genericTp, Type[] sigTp)
+        internal static MethodInfo? MatchSignatureAndParameters(MethodBase[] mi, Type[] genericTp, Type[] sigTp)
         {
             if (genericTp == null || sigTp == null)
             {
@@ -364,7 +364,7 @@ namespace Python.Runtime
         /// <param name="info">If not null, only bind to that method.</param>
         /// <param name="methodinfo">If not null, additionally attempt to bind to the generic methods in this array by inferring generic type parameters.</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodInfo[]? methodinfo)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodBase[]? methodinfo)
         {
             // loop to find match, return invoker w/ or w/o error
             var kwargDict = new Dictionary<string, PyObject>();
@@ -873,7 +873,7 @@ namespace Python.Runtime
             to.Append(')');
         }
 
-        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodInfo[]? methodinfo)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodBase[]? methodinfo)
         {
             // No valid methods, nothing to bind.
             if (GetMethods().Length == 0)
@@ -943,20 +943,20 @@ namespace Python.Runtime
             // we return the out parameter as the result to Python (for
             // code compatibility with ironpython).
 
-            var mi = (MethodInfo)binding.info;
+            var returnType = binding.info.IsConstructor ? typeof(void) : ((MethodInfo)binding.info).ReturnType;
 
             if (binding.outs > 0)
             {
-                ParameterInfo[] pi = mi.GetParameters();
+                ParameterInfo[] pi = binding.info.GetParameters();
                 int c = pi.Length;
                 var n = 0;
 
-                bool isVoid = mi.ReturnType == typeof(void);
+                bool isVoid = returnType == typeof(void);
                 int tupleSize = binding.outs + (isVoid ? 0 : 1);
                 using var t = Runtime.PyTuple_New(tupleSize);
                 if (!isVoid)
                 {
-                    using var v = Converter.ToPython(result, mi.ReturnType);
+                    using var v = Converter.ToPython(result, returnType);
                     Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
                     n++;
                 }
@@ -972,7 +972,7 @@ namespace Python.Runtime
                     }
                 }
 
-                if (binding.outs == 1 && mi.ReturnType == typeof(void))
+                if (binding.outs == 1 && returnType == typeof(void))
                 {
                     BorrowedReference item = Runtime.PyTuple_GetItem(t.Borrow(), 0);
                     return new NewReference(item);
@@ -981,7 +981,7 @@ namespace Python.Runtime
                 return new NewReference(t.Borrow());
             }
 
-            return Converter.ToPython(result, mi.ReturnType);
+            return Converter.ToPython(result, returnType);
         }
     }
 

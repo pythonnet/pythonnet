@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
 namespace Python.Runtime
 {
-    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
+    using MaybeMethodInfo = MaybeMethodBase<MethodBase>;
     /// <summary>
     /// Implements a Python binding type for CLR methods. These work much like
     /// standard Python method bindings, but the same type is used to bind
@@ -42,7 +43,9 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            MethodInfo? mi = MethodBinder.MatchParameters(self.m.info, types);
+            MethodBase? mi = self.m.IsInstanceConstructor
+                ? self.m.type.Value.GetConstructor(types)
+                : MethodBinder.MatchParameters(self.m.info, types);
             if (mi == null)
             {
                 return Exceptions.RaiseTypeError("No match found for given type params");
@@ -63,10 +66,9 @@ namespace Python.Runtime
                 infos = infos.Where(info => info.DeclaringType == type).ToArray();
                 // this is a primitive version
                 // the overload with the maximum number of parameters should be used
-                MethodInfo primary = infos.OrderByDescending(i => i.GetParameters().Length).First();
+                MethodBase primary = infos.OrderByDescending(i => i.GetParameters().Length).First();
                 var primaryParameters = primary.GetParameters();
                 PyObject signatureClass = Runtime.InspectModule.GetAttr("Signature");
-                var primaryReturn = primary.ReturnParameter;
 
                 using var parameters = new PyList();
                 using var parameterClass = primaryParameters.Length > 0 ? Runtime.InspectModule.GetAttr("Parameter") : null;

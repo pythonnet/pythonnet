@@ -210,7 +210,7 @@ namespace Python.Runtime
             // information, including generating the member descriptors
             // that we'll be putting in the Python class __dict__.
 
-            ClassInfo info = GetClassInfo(type);
+            ClassInfo info = GetClassInfo(type, impl);
 
             impl.indexer = info.indexer;
             impl.richcompare.Clear();
@@ -252,16 +252,17 @@ namespace Python.Runtime
             // required that the ClassObject.ctors be changed to internal
             if (co != null)
             {
-                if (co.NumCtors > 0)
+                if (co.NumCtors > 0 && !co.HasCustomNew())
                 {
                     // Implement Overloads on the class object
                     if (!CLRModule._SuppressOverloads)
                     {
-                        using var ctors = new ConstructorBinding(type, pyType, co.binder).Alloc();
-                        // ExtensionType types are untracked, so don't Incref() them.
+                        // HACK: __init__ points to instance constructors.
+                        // When unbound they fully instantiate object, so we get overloads for free from MethodBinding.
+                        var init = info.members["__init__"];
                         // TODO: deprecate __overloads__ soon...
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, ctors.Borrow());
-                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, ctors.Borrow());
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.__overloads__, init);
+                        Runtime.PyDict_SetItem(dict, PyIdentifier.Overloads, init);
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.
@@ -320,10 +321,10 @@ namespace Python.Runtime
             return ShouldBindMethod(ei.GetAddMethod(true));
         }
 
-        private static ClassInfo GetClassInfo(Type type)
+        private static ClassInfo GetClassInfo(Type type, ClassBase impl)
         {
             var ci = new ClassInfo();
-            var methods = new Dictionary<string, List<MethodInfo>>();
+            var methods = new Dictionary<string, List<MethodBase>>();
             MethodInfo meth;
             ExtensionType ob;
             string name;
@@ -420,11 +421,31 @@ namespace Python.Runtime
                             continue;
                         }
                         name = meth.Name;
+
+                        //TODO mangle?
+                        if (name == "__init__" && !impl.HasCustomNew())
+                            continue;
+
                         if (!methods.TryGetValue(name, out var methodList))
                         {
-                            methodList = methods[name] = new List<MethodInfo>();
+                            methodList = methods[name] = new List<MethodBase>();
                         }
                         methodList.Add(meth);
+                        continue;
+
+                    case MemberTypes.Constructor when !impl.HasCustomNew():
+                        var ctor = (ConstructorInfo)mi;
+                        if (ctor.IsStatic)
+                        {
+                            continue;
+                        }
+
+                        name = "__init__";
+                        if (!methods.TryGetValue(name, out methodList))
+                        {
+                            methodList = methods[name] = new List<MethodBase>();
+                        }
+                        methodList.Add(ctor);
                         continue;
 
                     case MemberTypes.Property:

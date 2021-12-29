@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
-    using MaybeMethodInfo = MaybeMethodBase<MethodInfo>;
+    using MaybeMethodInfo = MaybeMethodBase<MethodBase>;
 
     /// <summary>
     /// Implements a Python type that represents a CLR method. Method objects
@@ -18,7 +18,7 @@ namespace Python.Runtime
     internal class MethodObject : ExtensionType
     {
         [NonSerialized]
-        private MethodInfo[]? _info = null;
+        private MethodBase[]? _info = null;
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
         internal readonly MethodBinder binder;
@@ -27,13 +27,13 @@ namespace Python.Runtime
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(Type type, string name, MethodInfo[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
+        public MethodObject(Type type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
         {
             this.type = type;
             this.name = name;
             this.infoList = new List<MaybeMethodInfo>();
             binder = new MethodBinder();
-            foreach (MethodInfo item in info)
+            foreach (MethodBase item in info)
             {
                 this.infoList.Add(item);
                 binder.AddMethod(item);
@@ -45,7 +45,9 @@ namespace Python.Runtime
             binder.allow_threads = allow_threads;
         }
 
-        internal MethodInfo[] info
+        public bool IsInstanceConstructor => name == "__init__";
+
+        internal MethodBase[] info
         {
             get
             {

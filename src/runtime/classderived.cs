@@ -50,23 +50,26 @@ namespace Python.Runtime
         {
         }
 
-        /// <summary>
-        /// Implements __new__ for derived classes of reflected classes.
-        /// </summary>
-        public new static NewReference tp_new(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
+        protected override NewReference NewObjectToPython(object obj, BorrowedReference tp)
         {
-            var cls = (ClassDerivedObject)GetManagedObject(tp)!;
+            var self = base.NewObjectToPython(obj, tp);
 
-            // call the managed constructor
-            object? obj = cls.binder.InvokeRaw(null, args, kw);
-            if (obj == null)
+            SetPyObj((IPythonDerivedType)obj, self.Borrow());
+
+            // Decrement the python object's reference count.
+            // This doesn't actually destroy the object, it just sets the reference to this object
+            // to be a weak reference and it will be destroyed when the C# object is destroyed.
+            if (!self.IsNull())
             {
-                return default;
+                Runtime.XDecref(self.Steal());
             }
 
-            // return the pointer to the python object
-            // (this indirectly calls ClassDerivedObject.ToPython)
-            return Converter.ToPython(obj, cls.GetType());
+            return Converter.ToPython(obj, type.Value);
+        }
+
+        protected override void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)
+        {
+            // Python derived types rely on base tp_new and overridden __init__
         }
 
         public new static void tp_dealloc(NewReference ob)
@@ -824,37 +827,24 @@ namespace Python.Runtime
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
+            var selfRef = GetPyObj(obj);
+            if (selfRef.Ref == null)
+            {
+                // this might happen when the object is created from .NET
+                using var _ = Py.GIL();
+                // In the end we decrement the python object's reference count.
+                // This doesn't actually destroy the object, it just sets the reference to this object
+                // to be a weak reference and it will be destroyed when the C# object is destroyed.
+                using var self = CLRObject.GetReference(obj, obj.GetType());
+                SetPyObj(obj, self.Borrow());
+            }
+
             // call the base constructor
             obj.GetType().InvokeMember(origCtorName,
                 BindingFlags.InvokeMethod,
                 null,
                 obj,
                 args);
-
-            NewReference self = default;
-            PyGILState gs = Runtime.PyGILState_Ensure();
-            try
-            {
-                // create the python object
-                var type = ClassManager.GetClass(obj.GetType());
-                self = CLRObject.GetReference(obj, type);
-
-                // set __pyobj__ to self and deref the python object which will allow this
-                // object to be collected.
-                SetPyObj(obj, self.Borrow());
-            }
-            finally
-            {
-                // Decrement the python object's reference count.
-                // This doesn't actually destroy the object, it just sets the reference to this object
-                // to be a weak reference and it will be destroyed when the C# object is destroyed.
-                if (!self.IsNull())
-                {
-                    Runtime.XDecref(self.Steal());
-                }
-
-                Runtime.PyGILState_Release(gs);
-            }
         }
 
         public static void PyFinalize(IPythonDerivedType obj)
@@ -890,7 +880,7 @@ namespace Python.Runtime
             return (UnsafeReferenceWithRun)fi.GetValue(obj);
         }
 
-        static void SetPyObj(IPythonDerivedType obj, BorrowedReference pyObj)
+        internal static void SetPyObj(IPythonDerivedType obj, BorrowedReference pyObj)
         {
             FieldInfo fi = GetPyObjField(obj.GetType())!;
             fi.SetValue(obj, new UnsafeReferenceWithRun(pyObj));

@@ -177,9 +177,21 @@ def test_generic_reference_type():
 
 def test_generic_value_type():
     """Test usage of generic value type definitions."""
+    from System import Int32
+    from Python.Test import GenericStructConstructorTest
+
+    ob = GenericStructConstructorTest[Int32](42)
+    assert ob.Value == 42
+
+
+def test_nullable():
+    """Test usage of Nullable[T] (special runtime handling)."""
     inst = System.Nullable[System.Int32](10)
     assert inst.HasValue
     assert inst.Value == 10
+
+    with pytest.raises(TypeError):
+        inst = System.Nullable[System.Int32]()
 
 
 def test_generic_interface():

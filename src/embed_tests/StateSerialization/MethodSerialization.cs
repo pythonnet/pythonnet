@@ -19,6 +19,16 @@ public class MethodSerialization
         Assert.AreEqual(method, restored.Value);
     }
 
+    [Test]
+    public void ConstrctorRoundtrip()
+    {
+        var ctor = typeof(MethodTestHost).GetConstructor(new[] { typeof(int) });
+        var maybeConstructor = new MaybeMethodBase<MethodBase>(ctor);
+        var restored = SerializationRoundtrip(maybeConstructor);
+        Assert.IsTrue(restored.Valid);
+        Assert.AreEqual(ctor, restored.Value);
+    }
+
     static T SerializationRoundtrip<T>(T item)
     {
         using var buf = new MemoryStream();
@@ -31,5 +41,6 @@ public class MethodSerialization
 
 public class MethodTestHost
 {
+    public MethodTestHost(int _) { }
     public void Generic<T>(T item, T[] array, ref T @ref) { }
 }

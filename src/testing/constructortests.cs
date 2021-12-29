@@ -38,6 +38,16 @@ namespace Python.Test
         }
     }
 
+    public struct GenericStructConstructorTest<T> where T : struct
+    {
+        public T Value;
+
+        public GenericStructConstructorTest(T value)
+        {
+            this.Value = value;
+        }
+    }
+
 
     public class SubclassConstructorTest
     {
@@ -65,5 +75,12 @@ namespace Python.Test
             value = s;
             type = tp;
         }
+    }
+
+    public class DefaultConstructorMatching
+    {
+        public double a;
+        public DefaultConstructorMatching() { a = 1; }
+        public DefaultConstructorMatching(double a) { this.a = a; }
     }
 }

@@ -46,6 +46,9 @@ details about the cause of the failure
 -   floating point values passed from Python are no longer silently truncated
 when .NET expects an integer [#1342][i1342]
 -   More specific error messages for method argument mismatch
+-   BREAKING: when inheriting from .NET types in Python if you override `__init__` you
+must explicitly call base constructor using `super().__init__(.....)`. Not doing so will lead
+to undefined behavior.
 -   BREAKING: most `PyScope` methods will never return `null`. Instead, `PyObject` `None` will be returned.
 -   BREAKING: `PyScope` was renamed to `PyModule`
 -   BREAKING: Methods with `ref` or `out` parameters and void return type return a tuple of only the `ref` and `out` parameters.
@@ -85,6 +88,7 @@ Instead, `PyIterable` does that.
 ### Fixed
 
 -   Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
+-   Fixed parameterless .NET constructor being silently called when a matching constructor overload is not found ([#238][i238])
 -   Fix incorrect dereference in params array handling
 -   Fixes issue with function resolution when calling overloaded function with keyword arguments from python ([#1097][i1097])
 -   Fix `object[]` parameters taking precedence when should not in overload resolution
@@ -874,3 +878,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [p534]: https://github.com/pythonnet/pythonnet/pull/534
 [i449]: https://github.com/pythonnet/pythonnet/issues/449
 [i1342]: https://github.com/pythonnet/pythonnet/issues/1342
+[i238]: https://github.com/pythonnet/pythonnet/issues/238
