@@ -59,6 +59,14 @@ namespace Python.EmbeddingTest
             Assert.IsTrue(PythonReferenceComparer.Instance.Equals(b, bInstanceClass));
         }
 
+        // https://github.com/pythonnet/pythonnet/issues/1420
+        [Test]
+        public void CallBaseMethodFromContainerInNestedClass()
+        {
+            using var nested = new ContainerClass.InnerClass().ToPython();
+            nested.InvokeMethod(nameof(ContainerClass.BaseMethod));
+        }
+
         [Test]
         public void Grandchild_PassesExtraBaseInstanceCheck()
         {
@@ -181,6 +189,16 @@ namespace Python.EmbeddingTest
                 }
             }
             set => this.extras[nameof(this.XProp)] = value;
+        }
+    }
+
+    public class ContainerClass
+    {
+        public void BaseMethod() { }
+
+        public class InnerClass: ContainerClass
+        {
+
         }
     }
 }
