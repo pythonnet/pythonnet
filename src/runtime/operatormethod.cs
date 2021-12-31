@@ -101,7 +101,7 @@ namespace Python.Runtime
             Debug.Assert(_opType != null);
 
             var staticMethods =
-                clrType.IsEnum ? typeof(EnumOps<>).MakeGenericType(clrType).GetMethods(flags)
+                clrType.IsEnum ? typeof(FlagEnumOps<>).MakeGenericType(clrType).GetMethods(flags)
                 : clrType.GetMethods(flags);
 
             foreach (var method in staticMethods)

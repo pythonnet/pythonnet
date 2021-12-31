@@ -38,7 +38,7 @@ namespace Python.Runtime
     internal class OpsAttribute: Attribute { }
 
     [Ops]
-    internal static class EnumOps<T> where T : Enum
+    internal static class FlagEnumOps<T> where T : Enum
     {
         static readonly Func<T, T, T> and = BinaryOp(Expression.And);
         static readonly Func<T, T, T> or = BinaryOp(Expression.Or);
@@ -73,5 +73,17 @@ namespace Python.Runtime
                 return FromNumber(numericResult);
             });
         }
+    }
+
+    [Ops]
+    internal static class EnumOps<T> where T : Enum
+    {
+        [ForbidPythonThreads]
+#pragma warning disable IDE1006 // Naming Styles - must match Python
+        public static PyInt __int__(T value)
+#pragma warning restore IDE1006 // Naming Styles
+            => typeof(T).GetEnumUnderlyingType() == typeof(UInt64)
+            ? new PyInt(Convert.ToUInt64(value))
+            : new PyInt(Convert.ToInt64(value));
     }
 }
