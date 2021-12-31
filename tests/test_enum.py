@@ -87,6 +87,15 @@ def test_ulong_enum():
     assert Test.ULongEnum.Two == Test.ULongEnum(2)
 
 
+def test_long_enum_to_int():
+    assert int(Test.LongEnum.Max) == 9223372036854775807
+    assert int(Test.LongEnum.Min) == -9223372036854775808
+
+
+def test_ulong_enum_to_int():
+    assert int(Test.ULongEnum.Max) == 18446744073709551615
+
+
 def test_instantiate_enum_fails():
     """Test that instantiation of an enum class fails."""
     from System import DayOfWeek
