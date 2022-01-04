@@ -27,7 +27,7 @@ namespace Python.Runtime
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(Type type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
         {
             this.type = type;
             this.name = name;
@@ -46,6 +46,9 @@ namespace Python.Runtime
         }
 
         public bool IsInstanceConstructor => name == "__init__";
+
+        public MethodObject WithOverloads(MethodBase[] overloads)
+            => new(type, name, overloads, allow_threads: binder.allow_threads);
 
         internal MethodBase[] info
         {

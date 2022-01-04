@@ -86,16 +86,17 @@ namespace Python.Runtime
 
         /// <summary>
         /// Given a sequence of MethodInfo and a sequence of type parameters,
-        /// return the MethodInfo that represents the matching closed generic.
+        /// return the MethodInfo(s) that represents the matching closed generic.
         /// If unsuccessful, returns null and may set a Python error.
         /// </summary>
-        internal static MethodInfo? MatchParameters(MethodBase[] mi, Type[]? tp)
+        internal static MethodInfo[] MatchParameters(MethodBase[] mi, Type[]? tp)
         {
             if (tp == null)
             {
-                return null;
+                return Array.Empty<MethodInfo>();
             }
             int count = tp.Length;
+            var result = new List<MethodInfo>();
             foreach (MethodInfo t in mi)
             {
                 if (!t.IsGenericMethodDefinition)
@@ -111,16 +112,14 @@ namespace Python.Runtime
                 {
                     // MakeGenericMethod can throw ArgumentException if the type parameters do not obey the constraints.
                     MethodInfo method = t.MakeGenericMethod(tp);
-                    Exceptions.Clear();
-                    return method;
+                    result.Add(method);
                 }
-                catch (ArgumentException e)
+                catch (ArgumentException)
                 {
-                    Exceptions.SetError(e);
                     // The error will remain set until cleared by a successful match.
                 }
             }
-            return null;
+            return result.ToArray();
         }
 
 
@@ -381,9 +380,6 @@ namespace Python.Runtime
                 }
             }
 
-            var pynargs = (int)Runtime.PyTuple_Size(args);
-            var isGeneric = false;
-
             MethodBase[] _methods;
             if (info != null)
             {
@@ -395,11 +391,19 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
-            var argMatchedMethods = new List<MatchedMethod>(_methods.Length);
+            return Bind(inst, args, kwargDict, _methods, matchGenerics: true);
+        }
+
+        static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics)
+        {
+            var pynargs = (int)Runtime.PyTuple_Size(args);
+            var isGeneric = false;
+
+            var argMatchedMethods = new List<MatchedMethod>(methods.Length);
             var mismatchedMethods = new List<MismatchedMethod>();
 
             // TODO: Clean up
-            foreach (MethodBase mi in _methods)
+            foreach (MethodBase mi in methods)
             {
                 if (mi.IsGenericMethod)
                 {
@@ -535,17 +539,17 @@ namespace Python.Runtime
 
                 return new Binding(mi, target, margs, outs);
             }
-            else if (isGeneric && info == null && methodinfo != null)
+            else if (matchGenerics && isGeneric)
             {
                 // We weren't able to find a matching method but at least one
                 // is a generic method and info is null. That happens when a generic
                 // method was not called using the [] syntax. Let's introspect the
                 // type of the arguments and use it to construct the correct method.
                 Type[]? types = Runtime.PythonArgsToTypeArray(args, true);
-                MethodInfo? mi = MatchParameters(methodinfo, types);
-                if (mi != null)
+                MethodInfo[] overloads = MatchParameters(methods, types);
+                if (overloads.Length != 0)
                 {
-                    return Bind(inst, args, kw, mi, null);
+                    return Bind(inst, args, kwargDict, overloads, matchGenerics: false);
                 }
             }
             if (mismatchedMethods.Count > 0)

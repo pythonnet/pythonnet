@@ -43,15 +43,18 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            MethodBase? mi = self.m.IsInstanceConstructor
-                ? self.m.type.Value.GetConstructor(types)
+            MethodBase[] overloads = self.m.IsInstanceConstructor
+                ? self.m.type.Value.GetConstructor(types) is { } ctor
+                    ? new[] { ctor }
+                    : Array.Empty<MethodBase>()
                 : MethodBinder.MatchParameters(self.m.info, types);
-            if (mi == null)
+            if (overloads.Length == 0)
             {
                 return Exceptions.RaiseTypeError("No match found for given type params");
             }
 
-            var mb = new MethodBinding(self.m, self.target, self.targetType) { info = mi };
+            MethodObject overloaded = self.m.WithOverloads(overloads);
+            var mb = new MethodBinding(overloaded, self.target, self.targetType);
             return mb.Alloc();
         }
 
