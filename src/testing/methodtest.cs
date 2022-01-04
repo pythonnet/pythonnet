@@ -646,6 +646,9 @@ namespace Python.Test
             return i;
         }
 
+        public virtual void OverloadedConstrainedGeneric<T>(T generic) where T : MethodTest { }
+        public virtual void OverloadedConstrainedGeneric<T>(T generic, string str) where T: MethodTest { }
+
         public static string CaseSensitive()
         {
             return "CaseSensitive";

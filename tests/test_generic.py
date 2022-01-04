@@ -762,6 +762,18 @@ def test_missing_generic_type():
     with pytest.raises(TypeError):
         IList[bool]
 
+# https://github.com/pythonnet/pythonnet/issues/1522
+def test_overload_generic_parameter():
+    from Python.Test import MethodTest, MethodTestSub
+
+    inst = MethodTest()
+    generic = MethodTestSub()
+    inst.OverloadedConstrainedGeneric(generic)
+    inst.OverloadedConstrainedGeneric[MethodTestSub](generic)
+
+    inst.OverloadedConstrainedGeneric[MethodTestSub](generic, '42')
+    inst.OverloadedConstrainedGeneric[MethodTestSub](generic, System.String('42'))
+
 def test_invalid_generic_type_parameter():
     from Python.Test import GenericTypeWithConstraint
     with pytest.raises(TypeError):
