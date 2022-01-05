@@ -495,8 +495,6 @@ namespace Python.Runtime
         internal static PyType PyNoneType;
         internal static BorrowedReference PyTypeType => new(Delegates.PyType_Type);
 
-        internal static int* Py_NoSiteFlag;
-
         internal static PyObject PyBytesType;
         internal static NativeFunc* _PyObject_NextNotImplemented;
 
@@ -1881,24 +1879,11 @@ namespace Python.Runtime
 
         internal static void SetNoSiteFlag()
         {
-            var loader = LibraryLoader.Instance;
-            IntPtr dllLocal = IntPtr.Zero;
-            if (_PythonDll != "__Internal")
+            TryUsingDll(() =>
             {
-                dllLocal = loader.Load(_PythonDll);
-            }
-            try
-            {
-                Py_NoSiteFlag = (int*)loader.GetFunction(dllLocal, "Py_NoSiteFlag");
-                *Py_NoSiteFlag = 1;
-            }
-            finally
-            {
-                if (dllLocal != IntPtr.Zero)
-                {
-                    loader.Free(dllLocal);
-                }
-            }
+                *Delegates.Py_NoSiteFlag = 1;
+                return *Delegates.Py_NoSiteFlag;
+            });
         }
 
         internal static class Delegates
@@ -2170,6 +2155,7 @@ namespace Python.Runtime
                 catch (MissingMethodException) { }
 
                 PyType_Type = GetFunctionByName(nameof(PyType_Type), GetUnmanagedDll(_PythonDll));
+                Py_NoSiteFlag = (int*)GetFunctionByName(nameof(Py_NoSiteFlag), GetUnmanagedDll(_PythonDll));
             }
 
             static global::System.IntPtr GetUnmanagedDll(string? libraryName)
@@ -2426,6 +2412,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> _Py_NewReference { get; }
             internal static delegate* unmanaged[Cdecl]<int> _Py_IsFinalizing { get; }
             internal static IntPtr PyType_Type { get; }
+            internal static int* Py_NoSiteFlag { get; }
         }
     }
 
