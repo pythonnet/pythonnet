@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -17,8 +18,7 @@ namespace Python.PerformanceTests
             try {
                 PythonEngine.Initialize();
                 Console.WriteLine("Python Initialized");
-                if (PythonEngine.BeginAllowThreads() == IntPtr.Zero)
-                    throw new PythonException();
+                Trace.Assert(PythonEngine.BeginAllowThreads() != IntPtr.Zero);
                 Console.WriteLine("Threading enabled");
             }
             catch (Exception e) {
@@ -28,6 +28,11 @@ namespace Python.PerformanceTests
         }
 
         static BaselineComparisonBenchmarkBase()
+        {
+            SetupRuntimeResolve();
+        }
+
+        public static void SetupRuntimeResolve()
         {
             string pythonRuntimeDll = Environment.GetEnvironmentVariable(BaselineComparisonConfig.EnvironmentVariableName);
             if (string.IsNullOrEmpty(pythonRuntimeDll))
