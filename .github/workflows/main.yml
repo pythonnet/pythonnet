@@ -72,5 +72,8 @@ jobs:
       - name: Python tests run from .NET
         run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
 
-      # TODO: Run perf tests
+      - name: Perf tests
+        if: ${{ matrix.python == '3.8' }}
+        run: dotnet test --configuration Release --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/perf_tests/
+
       # TODO: Run mono tests on Windows?
