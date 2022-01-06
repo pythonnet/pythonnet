@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -41,6 +42,40 @@ namespace Python.Runtime
         {
             var attrs = TypeAttributes.Public;
             return mBuilder.DefineType(name, attrs, basetype);
+        }
+
+        /// <summary>
+        /// Generates code, that copies potentially modified objects in args array
+        /// back to the corresponding byref arguments
+        /// </summary>
+        internal static void GenerateMarshalByRefsBack(ILGenerator il, IReadOnlyList<Type> argTypes)
+        {
+            // assumes argument array is in loc_0
+            for (int i = 0; i < argTypes.Count; ++i)
+            {
+                var type = argTypes[i];
+                if (type.IsByRef)
+                {
+                    type = type.GetElementType();
+
+                    il.Emit(OpCodes.Ldarg, i + 1); // for stobj/stind later at the end
+
+                    il.Emit(OpCodes.Ldloc_0);
+                    il.Emit(OpCodes.Ldc_I4, i);
+                    il.Emit(OpCodes.Ldelem_Ref);
+
+                    if (type.IsValueType)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, type);
+                        il.Emit(OpCodes.Stobj, type);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Castclass, type);
+                        il.Emit(OpCodes.Stind_Ref);
+                    }
+                }
+            }
         }
     }
 }

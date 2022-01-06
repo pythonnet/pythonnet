@@ -93,6 +93,20 @@ def test_interface_object_returned_through_out_param():
 
     assert hello2.SayHello() == 'hello 2'
 
+def test_interface_out_param_python_impl():
+    from Python.Test import IOutArg, OutArgCaller
+
+    class MyOutImpl(IOutArg):
+        __namespace__ = "Python.Test"
+
+        def MyMethod_Out(self, name, index):
+            other_index = 101
+            return ('MyName', other_index)
+
+    py_impl = MyOutImpl()
+
+    assert 101 == OutArgCaller.CallMyMethod_Out(py_impl)
+
 
 def test_null_interface_object_returned():
     """Test None is used also for methods with interface return types"""

@@ -429,24 +429,33 @@ namespace Python.Runtime
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldc_I4, i);
                 il.Emit(OpCodes.Ldarg, i + 1);
-                if (parameterTypes[i].IsValueType)
+                var type = parameterTypes[i];
+                if (type.IsByRef)
                 {
-                    il.Emit(OpCodes.Box, parameterTypes[i]);
+                    type = type.GetElementType();
+                    il.Emit(OpCodes.Ldobj, type);
+                }
+                if (type.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, type);
                 }
                 il.Emit(OpCodes.Stelem, typeof(object));
             }
             il.Emit(OpCodes.Ldloc_0);
+
+            il.Emit(OpCodes.Ldtoken, method);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
             if (method.ReturnType == typeof(void))
             {
-                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(InvokeMethodVoid)));
             }
             else
             {
                 il.Emit(OpCodes.Call,
-                    typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(method.ReturnType));
+                    typeof(PythonDerivedType).GetMethod(nameof(InvokeMethod)).MakeGenericMethod(method.ReturnType));
             }
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
+            CodeGenerator.GenerateMarshalByRefsBack(il, parameterTypes);
             il.Emit(OpCodes.Ret);
         }
 
@@ -500,35 +509,65 @@ namespace Python.Runtime
                     argTypes.ToArray());
 
                 ILGenerator il = methodBuilder.GetILGenerator();
+
                 il.DeclareLocal(typeof(object[]));
+                il.DeclareLocal(typeof(RuntimeMethodHandle));
+
+                // this
                 il.Emit(OpCodes.Ldarg_0);
+
+                // Python method to call
                 il.Emit(OpCodes.Ldstr, methodName);
+
+                // original method name
                 il.Emit(OpCodes.Ldnull); // don't fall back to the base type's method
+
+                // create args array
                 il.Emit(OpCodes.Ldc_I4, argTypes.Count);
                 il.Emit(OpCodes.Newarr, typeof(object));
                 il.Emit(OpCodes.Stloc_0);
+
+                // fill args array
                 for (var i = 0; i < argTypes.Count; ++i)
                 {
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Ldc_I4, i);
                     il.Emit(OpCodes.Ldarg, i + 1);
-                    if (argTypes[i].IsValueType)
+                    var type = argTypes[i];
+                    if (type.IsByRef)
                     {
-                        il.Emit(OpCodes.Box, argTypes[i]);
+                        type = type.GetElementType();
+                        il.Emit(OpCodes.Ldobj, type);
+                    }
+                    if (type.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, type);
                     }
                     il.Emit(OpCodes.Stelem, typeof(object));
                 }
+
+                // args array
                 il.Emit(OpCodes.Ldloc_0);
+
+                // method handle for the base method is null
+                il.Emit(OpCodes.Ldloca_S, 1);
+                il.Emit(OpCodes.Initobj, typeof(RuntimeMethodHandle));
+                il.Emit(OpCodes.Ldloc_1);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
+
+                // invoke the method
                 if (returnType == typeof(void))
                 {
-                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod("InvokeMethodVoid"));
+                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(InvokeMethodVoid)));
                 }
                 else
                 {
                     il.Emit(OpCodes.Call,
-                        typeof(PythonDerivedType).GetMethod("InvokeMethod").MakeGenericMethod(returnType));
+                        typeof(PythonDerivedType).GetMethod(nameof(InvokeMethod)).MakeGenericMethod(returnType));
                 }
+
+                CodeGenerator.GenerateMarshalByRefsBack(il, argTypes);
+
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
                 il.Emit(OpCodes.Ret);
             }
@@ -672,7 +711,8 @@ namespace Python.Runtime
         /// method binding (i.e. it has been overridden in the derived python
         /// class) it calls it, otherwise it calls the base method.
         /// </summary>
-        public static T? InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName, object[] args)
+        public static T? InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName,
+            object[] args, RuntimeMethodHandle methodHandle)
         {
             var self = GetPyObj(obj);
 
@@ -698,8 +738,10 @@ namespace Python.Runtime
                             }
 
                             PyObject py_result = method.Invoke(pyargs);
-                            disposeList.Add(py_result);
-                            return py_result.As<T>();
+                            PyTuple? result_tuple = MarshalByRefsBack(args, methodHandle, py_result, outsOffset: 1);
+                            return result_tuple is not null
+                                ? result_tuple[0].As<T>()
+                                : py_result.As<T>();
                         }
                     }
                 }
@@ -726,7 +768,7 @@ namespace Python.Runtime
         }
 
         public static void InvokeMethodVoid(IPythonDerivedType obj, string methodName, string origMethodName,
-            object[] args)
+            object?[] args, RuntimeMethodHandle methodHandle)
         {
             var self = GetPyObj(obj);
             if (null != self.Ref)
@@ -736,8 +778,7 @@ namespace Python.Runtime
                 try
                 {
                     using var pyself = new PyObject(self.CheckRun());
-                    PyObject method = pyself.GetAttr(methodName, Runtime.None);
-                    disposeList.Add(method);
+                    using PyObject method = pyself.GetAttr(methodName, Runtime.None);
                     if (method.Reference != Runtime.None)
                     {
                         // if the method hasn't been overridden then it will be a managed object
@@ -752,7 +793,7 @@ namespace Python.Runtime
                             }
 
                             PyObject py_result = method.Invoke(pyargs);
-                            disposeList.Add(py_result);
+                            MarshalByRefsBack(args, methodHandle, py_result, outsOffset: 0);
                             return;
                         }
                     }
@@ -777,6 +818,44 @@ namespace Python.Runtime
                 null,
                 obj,
                 args);
+        }
+
+        /// <summary>
+        /// If the method has byref arguments, reinterprets Python return value
+        /// as a tuple of new values for those arguments, and updates corresponding
+        /// elements of <paramref name="args"/> array.
+        /// </summary>
+        private static PyTuple? MarshalByRefsBack(object?[] args, RuntimeMethodHandle methodHandle, PyObject pyResult, int outsOffset)
+        {
+            if (methodHandle == default) return null;
+
+            var originalMethod = MethodBase.GetMethodFromHandle(methodHandle);
+            var parameters = originalMethod.GetParameters();
+            PyTuple? outs = null;
+            int byrefIndex = 0;
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                Type type = parameters[i].ParameterType;
+                if (!type.IsByRef)
+                {
+                    continue;
+                }
+
+                type = type.GetElementType();
+
+                if (outs is null)
+                {
+                    outs = new PyTuple(pyResult);
+                    pyResult.Dispose();
+                }
+
+                args[i] = outs[byrefIndex + outsOffset].AsManagedObject(type);
+                byrefIndex++;
+            }
+            if (byrefIndex > 0 && outs!.Length() > byrefIndex + outsOffset)
+                throw new ArgumentException("Too many output parameters");
+
+            return outs;
         }
 
         public static T? InvokeGetProperty<T>(IPythonDerivedType obj, string propertyName)

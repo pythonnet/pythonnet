@@ -79,4 +79,18 @@ namespace Python.Test
         {
         }
     }
+    
+    public interface IOutArg
+    {
+        string MyMethod_Out(string name, out int index);
+    }
+
+    public class OutArgCaller
+    {
+        public static int CallMyMethod_Out(IOutArg myInterface)
+        {
+            myInterface.MyMethod_Out("myclient", out int index);
+            return index;
+        }
+    }
 }

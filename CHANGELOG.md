@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
 -   Add GetPythonThreadID and Interrupt methods in PythonEngine
 -   Ability to implement delegates with `ref` and `out` parameters in Python, by returning the modified parameter values in a tuple. ([#1355][i1355])
+-   Ability to override .NET methods that have `out` or `ref` in Python by returning the modified parameter values in a tuple. ([#1481][i1481])
 -   `PyType` - a wrapper for Python type objects, that also permits creating new heap types from `TypeSpec`
 -    Improved exception handling:
   *   exceptions can now be converted with codecs
@@ -879,3 +880,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [i449]: https://github.com/pythonnet/pythonnet/issues/449
 [i1342]: https://github.com/pythonnet/pythonnet/issues/1342
 [i238]: https://github.com/pythonnet/pythonnet/issues/238
+[i1481]: https://github.com/pythonnet/pythonnet/issues/1481
