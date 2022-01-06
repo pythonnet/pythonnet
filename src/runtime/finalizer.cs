@@ -43,6 +43,7 @@ namespace Python.Runtime
 
         private ConcurrentQueue<PendingFinalization> _objQueue = new();
         private readonly ConcurrentQueue<PendingFinalization> _derivedQueue = new();
+        private readonly ConcurrentQueue<Py_buffer> _bufferQueue = new();
         private int _throttled;
 
         #region FINALIZER_CHECK
@@ -165,6 +166,19 @@ namespace Python.Runtime
             _derivedQueue.Enqueue(pending);
         }
 
+        internal void AddFinalizedBuffer(ref Py_buffer buffer)
+        {
+            if (buffer.obj == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(buffer));
+
+            if (!Enable)
+                return;
+
+            var pending = buffer;
+            buffer = default;
+            _bufferQueue.Enqueue(pending);
+        }
+
         internal static void Initialize()
         {
             Instance.started = true;
@@ -178,7 +192,7 @@ namespace Python.Runtime
 
         internal nint DisposeAll()
         {
-            if (_objQueue.IsEmpty && _derivedQueue.IsEmpty)
+            if (_objQueue.IsEmpty && _derivedQueue.IsEmpty && _bufferQueue.IsEmpty)
                 return 0;
 
             nint collected = 0;
@@ -240,6 +254,15 @@ namespace Python.Runtime
                         PythonDerivedType.Finalize(derived.PyObj);
 #pragma warning restore CS0618 // Type or member is obsolete
 
+                        collected++;
+                    }
+
+                    while (!_bufferQueue.IsEmpty)
+                    {
+                        if (!_bufferQueue.TryDequeue(out var buffer))
+                            continue;
+
+                        Runtime.PyBuffer_Release(ref buffer);
                         collected++;
                     }
                 }

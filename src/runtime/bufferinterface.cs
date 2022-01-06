@@ -8,10 +8,11 @@ namespace Python.Runtime
     internal struct Py_buffer {
         public IntPtr buf;
         public IntPtr obj;        /* owned reference */
+        /// <summary>Buffer size in bytes</summary>
         [MarshalAs(UnmanagedType.SysInt)]
-        public IntPtr len;
+        public nint len;
         [MarshalAs(UnmanagedType.SysInt)]
-        public IntPtr itemsize;  /* This is Py_ssize_t so it can be
+        public nint itemsize;  /* This is Py_ssize_t so it can be
                              pointed to by strides in simple case.*/
         [MarshalAs(UnmanagedType.Bool)]
         public bool _readonly;
