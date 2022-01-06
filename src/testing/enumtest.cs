@@ -72,7 +72,9 @@ namespace Python.Test
         Two,
         Three,
         Four,
-        Five
+        Five,
+        Max = long.MaxValue,
+        Min = long.MinValue,
     }
 
     public enum ULongEnum : ulong
@@ -82,7 +84,8 @@ namespace Python.Test
         Two,
         Three,
         Four,
-        Five
+        Five,
+        Max = ulong.MaxValue,
     }
 
     [Flags]

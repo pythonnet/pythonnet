@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Python.Runtime
@@ -51,6 +51,8 @@ namespace Python.Runtime
                 ["op_OnesComplement"] = new SlotDefinition("__invert__", TypeOffset.nb_invert),
                 ["op_UnaryNegation"] = new SlotDefinition("__neg__", TypeOffset.nb_negative),
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
+
+                ["__int__"] = new SlotDefinition("__int__", TypeOffset.nb_int),
             };
             ComparisonOpMap = new Dictionary<string, string>
             {
@@ -97,14 +99,11 @@ namespace Python.Runtime
         /// </summary>
         public static void FixupSlots(BorrowedReference pyType, Type clrType)
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
             Debug.Assert(_opType != null);
 
-            var staticMethods =
-                clrType.IsEnum ? typeof(EnumOps<>).MakeGenericType(clrType).GetMethods(flags)
-                : clrType.GetMethods(flags);
+            var operatorCandidates = GetOperatorCandidates(clrType);
 
-            foreach (var method in staticMethods)
+            foreach (var method in operatorCandidates)
             {
                 // We only want to override slots for operators excluding
                 // comparison operators, which are handled by ClassBase.tp_richcompare.
@@ -122,6 +121,18 @@ namespace Python.Runtime
                 // https://tenthousandmeters.com/blog/python-behind-the-scenes-6-how-python-object-system-works/
                 Util.WriteIntPtr(pyType, offset, func);
             }
+        }
+
+        static IEnumerable<MethodInfo> GetOperatorCandidates(Type clrType)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+            if (clrType.IsEnum)
+            {
+                return typeof(EnumOps<>).MakeGenericType(clrType).GetMethods(flags)
+                    .Concat(typeof(FlagEnumOps<>).MakeGenericType(clrType).GetMethods(flags));
+            }
+
+            return clrType.GetMethods(flags);
         }
 
         public static string GetPyMethodName(string clrName)
