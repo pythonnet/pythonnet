@@ -89,7 +89,9 @@ namespace Python.Runtime
         {
             if (Runtime.PyVersion < new Version(3,9))
                 throw new NotSupportedException("SizeFromFormat requires at least Python 3.9");
-            return (long)Runtime.PyBuffer_SizeFromFormat(format);
+            nint result = Runtime.PyBuffer_SizeFromFormat(format);
+            if (result == -1) throw PythonException.ThrowLastAsClrException();
+            return result;
         }
 
         /// <summary>
@@ -113,7 +115,7 @@ namespace Python.Runtime
                 throw new ObjectDisposedException(nameof(PyBuffer));
             if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("GetPointer requires at least Python 3.7");
-            return Runtime.PyBuffer_GetPointer(ref _view, indices.Select(x => (IntPtr)x).ToArray());
+            return Runtime.PyBuffer_GetPointer(ref _view, indices.Select(x => checked((nint)x)).ToArray());
         }
 
         /// <summary>
@@ -126,7 +128,7 @@ namespace Python.Runtime
             if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("FromContiguous requires at least Python 3.7");
 
-            if (Runtime.PyBuffer_FromContiguous(ref _view, buf, (IntPtr)len, OrderStyleToChar(fort, false)) < 0)
+            if (Runtime.PyBuffer_FromContiguous(ref _view, buf, checked((nint)len), OrderStyleToChar(fort, false)) < 0)
                 throw PythonException.ThrowLastAsClrException();
         }
 
@@ -173,44 +175,60 @@ namespace Python.Runtime
         /// <summary>
         /// Writes a managed byte array into the buffer of a python object. This can be used to pass data like images from managed to python.
         /// </summary>
-        public void Write(byte[] buffer, int offset, int count)
+        public void Write(byte[] buffer, int sourceOffset, int count, nint destinationOffset)
         {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
-            if (ReadOnly)
-                throw new InvalidOperationException("Buffer is read-only");
-            if ((long)_view.len > int.MaxValue)
-                throw new NotSupportedException("Python buffers bigger than int.MaxValue are not supported.");
-            if (count > buffer.Length)
-                throw new ArgumentOutOfRangeException("count", "Count is bigger than the buffer.");
-            if (count > (int)_view.len)
-                throw new ArgumentOutOfRangeException("count", "Count is bigger than the python buffer.");
             if (_view.ndim != 1)
-                throw new NotSupportedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
+                throw new NotImplementedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
             if (!this.IsContiguous(BufferOrderStyle.C))
                 throw new NotImplementedException("Only continuous buffers are supported");
+            if (ReadOnly)
+                throw new InvalidOperationException("Buffer is read-only");
+            if (buffer is null)
+                throw new ArgumentNullException(nameof(buffer));
 
-            Marshal.Copy(buffer, offset, _view.buf, count);
+            if (sourceOffset < 0)
+                throw new IndexOutOfRangeException($"{nameof(sourceOffset)} is negative");
+            if (destinationOffset < 0)
+                throw new IndexOutOfRangeException($"{nameof(destinationOffset)} is negative");
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be >= 0");
+
+            if (checked(count + sourceOffset) > buffer.Length)
+                throw new ArgumentOutOfRangeException("count", "Count is bigger than the buffer.");
+            if (checked(count + destinationOffset) > _view.len)
+                throw new ArgumentOutOfRangeException("count", "Count is bigger than the python buffer.");
+
+            Marshal.Copy(buffer, sourceOffset, _view.buf + destinationOffset, count);
         }
 
         /// <summary>
         /// Reads the buffer of a python object into a managed byte array. This can be used to pass data like images from python to managed.
         /// </summary>
-        public int Read(byte[] buffer, int offset, int count) {
+        public void Read(byte[] buffer, int destinationOffset, int count, nint sourceOffset) {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
-            if (count > buffer.Length)
-                throw new ArgumentOutOfRangeException("count", "Count is bigger than the buffer.");
             if (_view.ndim != 1)
-                throw new NotSupportedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
-            if (_view.len.ToInt64() > int.MaxValue)
-                throw new NotSupportedException("Python buffers bigger than int.MaxValue are not supported.");
+                throw new NotImplementedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
             if (!this.IsContiguous(BufferOrderStyle.C))
                 throw new NotImplementedException("Only continuous buffers are supported");
+            if (buffer is null)
+                throw new ArgumentNullException(nameof(buffer));
 
-            int copylen = count < (int)_view.len ? count : (int)_view.len;
-            Marshal.Copy(_view.buf, buffer, offset, copylen);
-            return copylen;
+            if (sourceOffset < 0)
+                throw new IndexOutOfRangeException($"{nameof(sourceOffset)} is negative");
+            if (destinationOffset < 0)
+                throw new IndexOutOfRangeException($"{nameof(destinationOffset)} is negative");
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be >= 0");
+
+            if (checked(count + destinationOffset) > buffer.Length)
+                throw new ArgumentOutOfRangeException("count", "Count is bigger than the buffer.");
+            if (checked(count + sourceOffset) > _view.len)
+                throw new ArgumentOutOfRangeException("count", "Count is bigger than the python buffer.");
+
+            Marshal.Copy(_view.buf + sourceOffset, buffer, destinationOffset, count);
         }
 
         private bool disposedValue = false; // To detect redundant calls
@@ -240,11 +258,7 @@ namespace Python.Runtime
 
             if (_view.obj != IntPtr.Zero)
             {
-                Finalizer.Instance.AddFinalizedObject(ref _view.obj, _exporter.run
-#if TRACE_ALLOC
-                    , _exporter.Traceback
-#endif
-                );
+                Finalizer.Instance.AddFinalizedBuffer(ref _view);
             }
 
             Dispose(false);

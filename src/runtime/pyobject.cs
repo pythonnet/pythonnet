@@ -179,6 +179,11 @@ namespace Python.Runtime
 
         internal bool IsDisposed => rawPtr == IntPtr.Zero;
 
+        void CheckDisposed()
+        {
+            if (IsDisposed) throw new ObjectDisposedException(nameof(PyObject));
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (IsDisposed)
@@ -1114,6 +1119,7 @@ namespace Python.Runtime
         /// </remarks>
         public PyBuffer GetBuffer(PyBUF flags = PyBUF.SIMPLE)
         {
+            CheckDisposed();
             return new PyBuffer(this, flags);
         }
 

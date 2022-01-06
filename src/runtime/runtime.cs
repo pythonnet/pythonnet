@@ -1107,7 +1107,7 @@ namespace Python.Runtime
         internal static int PyBuffer_IsContiguous(ref Py_buffer view, char order) => Delegates.PyBuffer_IsContiguous(ref view, order);
 
 
-        internal static IntPtr PyBuffer_GetPointer(ref Py_buffer view, IntPtr[] indices) => Delegates.PyBuffer_GetPointer(ref view, indices);
+        internal static IntPtr PyBuffer_GetPointer(ref Py_buffer view, nint[] indices) => Delegates.PyBuffer_GetPointer(ref view, indices);
 
 
         internal static int PyBuffer_FromContiguous(ref Py_buffer view, IntPtr buf, IntPtr len, char fort) => Delegates.PyBuffer_FromContiguous(ref view, buf, len, fort);
@@ -1360,6 +1360,13 @@ namespace Python.Runtime
             byte* bytes = stackalloc byte[1];
             bytes[0] = 0;
             return Delegates.PyBytes_FromString((IntPtr)bytes);
+        }
+
+        internal static NewReference PyByteArray_FromStringAndSize(IntPtr strPtr, nint len) => Delegates.PyByteArray_FromStringAndSize(strPtr, len);
+        internal static NewReference PyByteArray_FromStringAndSize(string s)
+        {
+            using var ptr = new StrPtr(s, Encoding.UTF8);
+            return PyByteArray_FromStringAndSize(ptr.RawPointer, checked((nint)ptr.ByteCount));
         }
 
         internal static IntPtr PyBytes_AsString(BorrowedReference ob)
@@ -1977,7 +1984,7 @@ namespace Python.Runtime
                     // only in 3.9+
                 }
                 PyBuffer_IsContiguous = (delegate* unmanaged[Cdecl]<ref Py_buffer, char, int>)GetFunctionByName(nameof(PyBuffer_IsContiguous), GetUnmanagedDll(_PythonDll));
-                PyBuffer_GetPointer = (delegate* unmanaged[Cdecl]<ref Py_buffer, IntPtr[], IntPtr>)GetFunctionByName(nameof(PyBuffer_GetPointer), GetUnmanagedDll(_PythonDll));
+                PyBuffer_GetPointer = (delegate* unmanaged[Cdecl]<ref Py_buffer, nint[], IntPtr>)GetFunctionByName(nameof(PyBuffer_GetPointer), GetUnmanagedDll(_PythonDll));
                 PyBuffer_FromContiguous = (delegate* unmanaged[Cdecl]<ref Py_buffer, IntPtr, IntPtr, char, int>)GetFunctionByName(nameof(PyBuffer_FromContiguous), GetUnmanagedDll(_PythonDll));
                 PyBuffer_ToContiguous = (delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, IntPtr, char, int>)GetFunctionByName(nameof(PyBuffer_ToContiguous), GetUnmanagedDll(_PythonDll));
                 PyBuffer_FillContiguousStrides = (delegate* unmanaged[Cdecl]<int, IntPtr, IntPtr, int, char, void>)GetFunctionByName(nameof(PyBuffer_FillContiguousStrides), GetUnmanagedDll(_PythonDll));
@@ -2037,6 +2044,7 @@ namespace Python.Runtime
                 PySequence_List = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PySequence_List), GetUnmanagedDll(_PythonDll));
                 PyBytes_AsString = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyBytes_AsString), GetUnmanagedDll(_PythonDll));
                 PyBytes_FromString = (delegate* unmanaged[Cdecl]<IntPtr, NewReference>)GetFunctionByName(nameof(PyBytes_FromString), GetUnmanagedDll(_PythonDll));
+                PyByteArray_FromStringAndSize = (delegate* unmanaged[Cdecl]<IntPtr, nint, NewReference>)GetFunctionByName(nameof(PyByteArray_FromStringAndSize), GetUnmanagedDll(_PythonDll));
                 PyBytes_Size = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName(nameof(PyBytes_Size), GetUnmanagedDll(_PythonDll));
                 PyUnicode_AsUTF8 = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyUnicode_AsUTF8), GetUnmanagedDll(_PythonDll));
                 PyUnicode_DecodeUTF16 = (delegate* unmanaged[Cdecl]<IntPtr, nint, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyUnicode_DecodeUTF16), GetUnmanagedDll(_PythonDll));
@@ -2250,7 +2258,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<ref Py_buffer, void> PyBuffer_Release { get; }
             internal static delegate* unmanaged[Cdecl]<StrPtr, nint> PyBuffer_SizeFromFormat { get; }
             internal static delegate* unmanaged[Cdecl]<ref Py_buffer, char, int> PyBuffer_IsContiguous { get; }
-            internal static delegate* unmanaged[Cdecl]<ref Py_buffer, IntPtr[], IntPtr> PyBuffer_GetPointer { get; }
+            internal static delegate* unmanaged[Cdecl]<ref Py_buffer, nint[], IntPtr> PyBuffer_GetPointer { get; }
             internal static delegate* unmanaged[Cdecl]<ref Py_buffer, IntPtr, IntPtr, char, int> PyBuffer_FromContiguous { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, ref Py_buffer, IntPtr, char, int> PyBuffer_ToContiguous { get; }
             internal static delegate* unmanaged[Cdecl]<int, IntPtr, IntPtr, int, char, void> PyBuffer_FillContiguousStrides { get; }
@@ -2310,6 +2318,7 @@ namespace Python.Runtime
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PySequence_List { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyBytes_AsString { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, NewReference> PyBytes_FromString { get; }
+            internal static delegate* unmanaged[Cdecl]<IntPtr, nint, NewReference> PyByteArray_FromStringAndSize { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyBytes_Size { get; }
             internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyUnicode_AsUTF8 { get; }
             internal static delegate* unmanaged[Cdecl]<IntPtr, nint, IntPtr, IntPtr, NewReference> PyUnicode_DecodeUTF16 { get; }
