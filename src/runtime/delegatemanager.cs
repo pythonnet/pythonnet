@@ -135,28 +135,7 @@ namespace Python.Runtime
             if (anyByRef)
             {
                 // Dispatch() will have modified elements of the args list that correspond to out parameters.
-                for (var c = 0; c < signature.Length; c++)
-                {
-                    Type t = signature[c];
-                    if (t.IsByRef)
-                    {
-                        t = t.GetElementType();
-                        // *arg = args[c]
-                        il.Emit(OpCodes.Ldarg_S, (byte)(c + 1));
-                        il.Emit(OpCodes.Ldloc_0);
-                        il.Emit(OpCodes.Ldc_I4, c);
-                        il.Emit(OpCodes.Ldelem_Ref);
-                        if (t.IsValueType)
-                        {
-                            il.Emit(OpCodes.Unbox_Any, t);
-                            il.Emit(OpCodes.Stobj, t);
-                        }
-                        else
-                        {
-                            il.Emit(OpCodes.Stind_Ref);
-                        }
-                    }
-                }
+                CodeGenerator.GenerateMarshalByRefsBack(il, signature);
             }
 
             if (method.ReturnType == voidtype)
