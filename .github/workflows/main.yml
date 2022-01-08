@@ -74,6 +74,8 @@ jobs:
 
       - name: Perf tests
         if: ${{ matrix.python == '3.8' }}
-        run: dotnet test --configuration Release --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/perf_tests/
+        run: |
+          pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
+          dotnet test --configuration Release --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/perf_tests/
 
       # TODO: Run mono tests on Windows?
