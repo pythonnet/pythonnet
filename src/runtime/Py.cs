@@ -27,18 +27,29 @@ public static class Py
 
     public class GILState : IDisposable
     {
+        private static readonly ThreadLocal<int> internalGILCount = new();
         private readonly PyGILState state;
         private bool isDisposed;
 
         internal GILState()
         {
-            state = Runtime.PyGILState_Ensure();
+            if (internalGILCount.Value == 0)
+            {
+                state = Runtime.PyGILState_Ensure();
+            }
+
+            internalGILCount.Value += 1;
         }
 
         public virtual void Dispose()
         {
             if (this.isDisposed) return;
-            Runtime.PyGILState_Release(state);
+
+            internalGILCount.Value -= 1;
+            if (internalGILCount.Value == 0)
+            {
+                Runtime.PyGILState_Release(state);
+            }
             GC.SuppressFinalize(this);
             this.isDisposed = true;
         }
