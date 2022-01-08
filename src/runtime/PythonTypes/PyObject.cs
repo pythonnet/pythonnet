@@ -199,6 +199,7 @@ namespace Python.Runtime
             nint refcount = Runtime.Refcount(this.obj);
             Debug.Assert(refcount > 0, "Object refcount is 0 or less");
 
+            using var _ = new Py.GILState();
             if (refcount == 1)
             {
                 Runtime.PyErr_Fetch(out var errType, out var errVal, out var traceback);
@@ -1056,6 +1057,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string? ToString()
         {
+            using var _ = new Py.GILState();
             using var strval = Runtime.PyObject_Str(obj);
             return Runtime.GetManagedString(strval.BorrowOrThrow());
         }
@@ -1082,6 +1084,8 @@ namespace Python.Runtime
             {
                 return true;
             }
+            using var _ = new Py.GILState();
+
             int r = Runtime.PyObject_Compare(this, other);
             if (Exceptions.ErrorOccurred())
             {
@@ -1101,6 +1105,7 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
+            using var _ = new Py.GILState();
             nint pyHash = Runtime.PyObject_Hash(obj);
             if (pyHash == -1 && Exceptions.ErrorOccurred())
             {
@@ -1135,12 +1140,14 @@ namespace Python.Runtime
 
         public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
+            using var _ = new Py.GILState();
             result = CheckNone(this.GetAttr(binder.Name));
             return true;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
+            using var _ = Py.GIL();
             using var newVal = Converter.ToPythonDetectType(value);
             int r = Runtime.PyObject_SetAttrString(obj, binder.Name, newVal.Borrow());
             if (r < 0)
@@ -1234,6 +1241,7 @@ namespace Python.Runtime
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object?[] args, out object? result)
         {
+            using var _ = new Py.GILState();
             if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
             {
                 PyTuple? pyargs = null;
@@ -1258,6 +1266,7 @@ namespace Python.Runtime
 
         public override bool TryInvoke(InvokeBinder binder, object?[] args, out object? result)
         {
+            using var _ = new Py.GILState();
             if (this.IsCallable())
             {
                 PyTuple? pyargs = null;
@@ -1282,6 +1291,7 @@ namespace Python.Runtime
 
         public override bool TryConvert(ConvertBinder binder, out object? result)
         {
+            using var _ = new Py.GILState();
             // always try implicit conversion first
             if (Converter.ToManaged(this.obj, binder.Type, out result, false))
             {
@@ -1301,6 +1311,7 @@ namespace Python.Runtime
 
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
+            using var _ = new Py.GILState();
             NewReference res;
             if (!(arg is PyObject))
             {
@@ -1413,6 +1424,7 @@ namespace Python.Runtime
 
         public override bool TryUnaryOperation(UnaryOperationBinder binder, out object? result)
         {
+            using var _ = new Py.GILState();
             int r;
             NewReference res;
             switch (binder.Operation)
@@ -1457,10 +1469,13 @@ namespace Python.Runtime
         /// <returns>A sequence that contains dynamic member names.</returns>
         public override IEnumerable<string> GetDynamicMemberNames()
         {
-            foreach (PyObject pyObj in Dir())
-            {
-                yield return pyObj.ToString()!;
+            string[] res;
+
+            using (new Py.GILState()) {
+                res = Dir().Select(obj => obj.ToString()!).ToArray();
             }
+
+            return res;
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)

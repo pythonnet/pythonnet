@@ -66,6 +66,7 @@ namespace Python.Runtime
 
         public bool MoveNext()
         {
+            using var _ = new Py.GILState();
             NewReference next = Runtime.PyIter_Next(Reference);
             if (next.IsNull())
             {
