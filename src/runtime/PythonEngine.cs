@@ -461,41 +461,6 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// AcquireLock Method
-        /// </summary>
-        /// <remarks>
-        /// Acquire the Python global interpreter lock (GIL). Managed code
-        /// *must* call this method before using any objects or calling any
-        /// methods on objects in the Python.Runtime namespace. The only
-        /// exception is PythonEngine.Initialize, which may be called without
-        /// first calling AcquireLock.
-        /// Each call to AcquireLock must be matched by a corresponding call
-        /// to ReleaseLock, passing the token obtained from AcquireLock.
-        /// For more information, see the "Extending and Embedding" section
-        /// of the Python documentation on www.python.org.
-        /// </remarks>
-        internal static PyGILState AcquireLock()
-        {
-            return Runtime.PyGILState_Ensure();
-        }
-
-
-        /// <summary>
-        /// ReleaseLock Method
-        /// </summary>
-        /// <remarks>
-        /// Release the Python global interpreter lock using a token obtained
-        /// from a previous call to AcquireLock.
-        /// For more information, see the "Extending and Embedding" section
-        /// of the Python documentation on www.python.org.
-        /// </remarks>
-        internal static void ReleaseLock(PyGILState gs)
-        {
-            Runtime.PyGILState_Release(gs);
-        }
-
-
-        /// <summary>
         /// BeginAllowThreads Method
         /// </summary>
         /// <remarks>

@@ -719,7 +719,7 @@ namespace Python.Runtime
             if (null != self.Ref)
             {
                 var disposeList = new List<PyObject>();
-                PyGILState gs = Runtime.PyGILState_Ensure();
+                using var _ = new Py.GILState();
                 try
                 {
                     using var pyself = new PyObject(self.CheckRun());
@@ -751,7 +751,6 @@ namespace Python.Runtime
                     {
                         x?.Dispose();
                     }
-                    Runtime.PyGILState_Release(gs);
                 }
             }
 
@@ -774,7 +773,7 @@ namespace Python.Runtime
             if (null != self.Ref)
             {
                 var disposeList = new List<PyObject>();
-                PyGILState gs = Runtime.PyGILState_Ensure();
+                using var _ = new Py.GILState();
                 try
                 {
                     using var pyself = new PyObject(self.CheckRun());
@@ -804,7 +803,6 @@ namespace Python.Runtime
                     {
                         x?.Dispose();
                     }
-                    Runtime.PyGILState_Release(gs);
                 }
             }
 
@@ -867,18 +865,11 @@ namespace Python.Runtime
                 throw new NullReferenceException("Instance must be specified when getting a property");
             }
 
-            PyGILState gs = Runtime.PyGILState_Ensure();
-            try
+            using var _ = new Py.GILState();
+            using var pyself = new PyObject(self.CheckRun());
+            using (PyObject pyvalue = pyself.GetAttr(propertyName))
             {
-                using var pyself = new PyObject(self.CheckRun());
-                using (PyObject pyvalue = pyself.GetAttr(propertyName))
-                {
-                    return pyvalue.As<T>();
-                }
-            }
-            finally
-            {
-                Runtime.PyGILState_Release(gs);
+                return pyvalue.As<T>();
             }
         }
 
@@ -891,17 +882,10 @@ namespace Python.Runtime
                 throw new NullReferenceException("Instance must be specified when setting a property");
             }
 
-            PyGILState gs = Runtime.PyGILState_Ensure();
-            try
-            {
-                using var pyself = new PyObject(self.CheckRun());
-                using var pyvalue = Converter.ToPythonImplicit(value).MoveToPyObject();
-                pyself.SetAttr(propertyName, pyvalue);
-            }
-            finally
-            {
-                Runtime.PyGILState_Release(gs);
-            }
+            using var _ = new Py.GILState();
+            using var pyself = new PyObject(self.CheckRun());
+            using var pyvalue = Converter.ToPythonImplicit(value).MoveToPyObject();
+            pyself.SetAttr(propertyName, pyvalue);
         }
 
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
@@ -910,7 +894,7 @@ namespace Python.Runtime
             if (selfRef.Ref == null)
             {
                 // this might happen when the object is created from .NET
-                using var _ = Py.GIL();
+                using var _ = new Py.GILState();
                 // In the end we decrement the python object's reference count.
                 // This doesn't actually destroy the object, it just sets the reference to this object
                 // to be a weak reference and it will be destroyed when the C# object is destroyed.

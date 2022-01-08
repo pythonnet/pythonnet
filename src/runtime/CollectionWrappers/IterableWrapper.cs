@@ -20,7 +20,7 @@ namespace Python.Runtime.CollectionWrappers
         public IEnumerator<T> GetEnumerator()
         {
             PyIter iterObject;
-            using (Py.GIL())
+            using (new Py.GILState())
             {
                 iterObject = PyIter.GetIter(pyObject);
             }
@@ -28,7 +28,7 @@ namespace Python.Runtime.CollectionWrappers
             using var _ = iterObject;
             while (true)
             {
-                using var GIL = Py.GIL();
+                using var _g = new Py.GILState();
 
                 if (!iterObject.MoveNext())
                 {

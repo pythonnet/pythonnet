@@ -76,17 +76,15 @@ namespace Python.Runtime
                 get
                 {
                     if (message is not null) return message;
-                    var gil = PythonEngine.AcquireLock();
-                    try
+
+                    string name;
+                    using (new Py.GILState())
                     {
                         using var pyname = Runtime.PyObject_Str(new BorrowedReference(PyPtr));
-                        string name = Runtime.GetManagedString(pyname.BorrowOrThrow()) ?? Util.BadStr;
-                        message = $"<{name}> may has a incorrect ref count";
+                        name = Runtime.GetManagedString(pyname.BorrowOrThrow()) ?? Util.BadStr;
                     }
-                    finally
-                    {
-                        PythonEngine.ReleaseLock(gil);
-                    }
+                    message = $"<{name}> may has a incorrect ref count";
+
                     return message;
                 }
             }

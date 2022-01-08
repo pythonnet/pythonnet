@@ -32,14 +32,13 @@ public static class Py
 
         internal GILState()
         {
-            state = PythonEngine.AcquireLock();
+            state = Runtime.PyGILState_Ensure();
         }
 
         public virtual void Dispose()
         {
             if (this.isDisposed) return;
-
-            PythonEngine.ReleaseLock(state);
+            Runtime.PyGILState_Release(state);
             GC.SuppressFinalize(this);
             this.isDisposed = true;
         }

@@ -23,18 +23,8 @@ namespace Python.Runtime
                     PythonDLL = null;
                 }
 
-                var gs = PyGILState_Ensure();
-
-                try
-                {
-                    // Console.WriteLine("Startup thread");
-                    PythonEngine.InitExt();
-                    // Console.WriteLine("Startup finished");
-                }
-                finally
-                {
-                    PyGILState_Release(gs);
-                }
+                using var _ = new Py.GILState();
+                PythonEngine.InitExt();
             }
             catch (Exception exc)
             {
@@ -55,15 +45,8 @@ namespace Python.Runtime
 
                 if (command == "full_shutdown")
                 {
-                    var gs = PyGILState_Ensure();
-                    try
-                    {
-                        PythonEngine.Shutdown();
-                    }
-                    finally
-                    {
-                        PyGILState_Release(gs);
-                    }
+                    using var _ = new Py.GILState();
+                    PythonEngine.Shutdown();
                 }
             }
             catch (Exception exc)

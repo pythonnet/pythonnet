@@ -201,16 +201,8 @@ namespace Python.Runtime
 
         public object? Dispatch(object?[] args)
         {
-            PyGILState gs = PythonEngine.AcquireLock();
-
-            try
-            {
-                return TrueDispatch(args);
-            }
-            finally
-            {
-                PythonEngine.ReleaseLock(gs);
-            }
+            using var _ = new Py.GILState();
+            return TrueDispatch(args);
         }
 
         private object? TrueDispatch(object?[] args)

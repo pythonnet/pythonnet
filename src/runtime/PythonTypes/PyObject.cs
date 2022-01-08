@@ -1147,7 +1147,7 @@ namespace Python.Runtime
 
         public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
-            using var _ = Py.GIL();
+            using var _ = new Py.GILState();
             using var newVal = Converter.ToPythonDetectType(value);
             int r = Runtime.PyObject_SetAttrString(obj, binder.Name, newVal.Borrow());
             if (r < 0)

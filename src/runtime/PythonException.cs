@@ -332,39 +332,33 @@ namespace Python.Runtime
         {
             CheckRuntimeIsRunning();
 
-            PyGILState gs = PythonEngine.AcquireLock();
+            using var _ = new Py.GILState();
+
+            if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
+
+            // If an error is set and this PythonException is unnormalized, the error will be cleared and the PythonException will be replaced by a different error.
+            NewReference value = Value.NewReferenceOrNull();
+            NewReference type = Type.NewReferenceOrNull();
+            NewReference tb = Traceback.NewReferenceOrNull();
+
+            Runtime.PyErr_NormalizeException(type: ref type, val: ref value, tb: ref tb);
+
+            Value = value.MoveToPyObject();
+            Type = new PyType(type.Steal());
             try
             {
-                if (Exceptions.ErrorOccurred()) throw new InvalidOperationException("Cannot normalize when an error is set");
-
-                // If an error is set and this PythonException is unnormalized, the error will be cleared and the PythonException will be replaced by a different error.
-                NewReference value = Value.NewReferenceOrNull();
-                NewReference type = Type.NewReferenceOrNull();
-                NewReference tb = Traceback.NewReferenceOrNull();
-
-                Runtime.PyErr_NormalizeException(type: ref type, val: ref value, tb: ref tb);
-
-                Value = value.MoveToPyObject();
-                Type = new PyType(type.Steal());
-                try
+                Debug.Assert(Traceback is null == tb.IsNull());
+                if (!tb.IsNull())
                 {
-                    Debug.Assert(Traceback is null == tb.IsNull());
-                    if (!tb.IsNull())
-                    {
-                        Debug.Assert(Traceback!.Reference == tb.Borrow());
+                    Debug.Assert(Traceback!.Reference == tb.Borrow());
 
-                        int r = Runtime.PyException_SetTraceback(Value.Reference, tb.Borrow());
-                        ThrowIfIsNotZero(r);
-                    }
-                }
-                finally
-                {
-                    tb.Dispose();
+                    int r = Runtime.PyException_SetTraceback(Value.Reference, tb.Borrow());
+                    ThrowIfIsNotZero(r);
                 }
             }
             finally
             {
-                PythonEngine.ReleaseLock(gs);
+                tb.Dispose();
             }
         }
 
