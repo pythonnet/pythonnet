@@ -28,10 +28,10 @@ namespace Python.Runtime
 
         public static void Restore()
         {
-            ResotreModules();
+            RestoreModules();
         }
 
-        private static void ResotreModules()
+        private static void RestoreModules()
         {
             var intialModules = PySys_GetObject("initial_modules");
             Debug.Assert(!intialModules.IsNull);

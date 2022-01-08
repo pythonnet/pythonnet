@@ -550,9 +550,9 @@ namespace Python.Runtime
                 TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_iter, new Interop.B_N(tp_iter_impl), slotsHolder);
             }
 
-            if (mp_length_slot.CanAssign(type.Value))
+            if (MpLengthSlot.CanAssign(type.Value))
             {
-                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_length, new Interop.B_P(mp_length_slot.impl), slotsHolder);
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_length, new Interop.B_P(MpLengthSlot.impl), slotsHolder);
             }
         }
 

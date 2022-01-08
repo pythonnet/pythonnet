@@ -6,41 +6,8 @@ namespace Python.Runtime
     using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
+
     using Python.Runtime.Codecs;
-
-    /// <summary>
-    /// Defines <see cref="PyObject"/> conversion to CLR types (unmarshalling)
-    /// </summary>
-    public interface IPyObjectDecoder
-    {
-        /// <summary>
-        /// Checks if this decoder can decode from <paramref name="objectType"/> to <paramref name="targetType"/>
-        /// </summary>
-        bool CanDecode(PyType objectType, Type targetType);
-        /// <summary>
-        /// Attempts do decode <paramref name="pyObj"/> into a variable of specified type
-        /// </summary>
-        /// <typeparam name="T">CLR type to decode into</typeparam>
-        /// <param name="pyObj">Object to decode</param>
-        /// <param name="value">The variable, that will receive decoding result</param>
-        /// <returns></returns>
-        bool TryDecode<T>(PyObject pyObj, out T? value);
-    }
-
-    /// <summary>
-    /// Defines conversion from CLR objects into Python objects (e.g. <see cref="PyObject"/>) (marshalling)
-    /// </summary>
-    public interface IPyObjectEncoder
-    {
-        /// <summary>
-        /// Checks if encoder can encode CLR objects of specified type
-        /// </summary>
-        bool CanEncode(Type type);
-        /// <summary>
-        /// Attempts to encode CLR object <paramref name="value"/> into Python object
-        /// </summary>
-        PyObject? TryEncode(object value);
-    }
 
     /// <summary>
     /// This class allows to register additional marshalling codecs.

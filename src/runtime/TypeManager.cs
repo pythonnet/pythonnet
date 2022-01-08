@@ -609,7 +609,6 @@ namespace Python.Runtime
         /// </summary>
         static void InheritSubstructs(IntPtr type)
         {
-            #warning dead code?
             IntPtr substructAddress = type + TypeOffset.nb_add;
             Marshal.WriteIntPtr(type, TypeOffset.tp_as_number, substructAddress);
 
