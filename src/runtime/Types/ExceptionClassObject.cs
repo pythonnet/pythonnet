@@ -6,13 +6,6 @@ namespace Python.Runtime;
 /// Base class for Python types that reflect managed exceptions based on
 /// System.Exception
 /// </summary>
-/// <remarks>
-/// The Python wrapper for managed exceptions LIES about its inheritance
-/// tree. Although the real System.Exception is a subclass of
-/// System.Object the Python type for System.Exception does NOT claim that
-/// it subclasses System.Object. Instead TypeManager.CreateType() uses
-/// Python's exception.Exception class as base class for System.Exception.
-/// </remarks>
 [Serializable]
 internal class ExceptionClassObject : ClassObject
 {
