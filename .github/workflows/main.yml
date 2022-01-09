@@ -1,6 +1,10 @@
-name: GitHub Actions
+name: Main (x64)
 
-on: [ pull_request, push ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   build-test:
