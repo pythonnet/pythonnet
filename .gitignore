@@ -1,4 +1,5 @@
 /src/runtime/interopNative.cs
+/src/perf_tests/baseline/
 
 # General binaries and Build results
 *.dll

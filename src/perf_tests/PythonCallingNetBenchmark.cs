@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 using BenchmarkDotNet.Attributes;
@@ -17,11 +18,11 @@ namespace Python.PerformanceTests
             {
                 var locals = new PyDict();
                 locals.SetItem("a", new NetObject().ToPython());
-                PythonEngine.Exec($@"
+                Exec($@"
 s = 0
 for i in range(50000):
   s += a.{nameof(NetObject.LongProperty)}
-", locals: locals.Handle);
+", locals: locals);
             }
         }
 
@@ -30,12 +31,23 @@ for i in range(50000):
             using (Py.GIL()) {
                 var locals = new PyDict();
                 locals.SetItem("a", new NetObject().ToPython());
-                PythonEngine.Exec($@"
+                Exec($@"
 s = 0
 for i in range(50000):
   a.{nameof(NetObject.LongProperty)} += i
-", locals: locals.Handle);
+", locals: locals);
             }
+        }
+
+        static void Exec(string code, PyDict locals)
+        {
+            MethodInfo exec = typeof(PythonEngine).GetMethod(nameof(PythonEngine.Exec));
+            object localsArg = typeof(PyObject).Assembly.GetName().Version.Major >= 3
+                ? locals : locals.Handle;
+            exec.Invoke(null, new[]
+            {
+                code, localsArg, null
+            });
         }
     }
 
