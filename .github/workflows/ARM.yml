@@ -1,9 +1,13 @@
-name: GitHub Actions
+name: Main (ARM)
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
-  build-test-oracle:
+  build-test-arm:
     name: Build and Test ARM64
     runs-on: [self-hosted, linux, ARM64]
     timeout-minutes: 15
