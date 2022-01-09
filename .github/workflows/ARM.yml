@@ -1,0 +1,52 @@
+name: GitHub Actions
+
+on: [ push, pull_request ]
+
+jobs:
+  build-test-oracle:
+    name: Build and Test ARM64
+    runs-on: [self-hosted, linux, ARM64]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Clean previous install
+        run: |
+          pip uninstall -y pythonnet
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade -r requirements.txt
+          pip install pytest numpy # for tests
+
+      - name: Build and Install
+        run: |
+          pip install -v .
+
+      - name: Set Python DLL path (non Windows)
+        run: |
+          python -m pythonnet.find_libpython --export >> $GITHUB_ENV
+
+      - name: Embedding tests
+        run: dotnet test --logger "console;verbosity=detailed" src/embed_tests/
+
+      - name: Python Tests (Mono)
+        run: python -m pytest --runtime mono
+
+      - name: Python Tests (.NET Core)
+        run: python -m pytest --runtime netcore
+
+      - name: Python tests run from .NET
+        run: dotnet test src/python_tests_runner/
+
+      #- name: Perf tests
+      #  run: |
+      #    pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
+      #    dotnet test --configuration Release --logger "console;verbosity=detailed" src/perf_tests/
