@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace Python.Runtime.Slots
 {
-    internal static class mp_length_slot
+    internal static class MpLengthSlot
     {
         public static bool CanAssign(Type clrType)
         {
