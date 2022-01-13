@@ -632,6 +632,9 @@ namespace Python.Runtime
                         margs[paramIndex] = defaultArgList[paramIndex - pyArgCount];
                     }
 
+                    if (parameter.ParameterType.IsByRef)
+                        outs++;
+
                     continue;
                 }
 
@@ -816,6 +819,9 @@ namespace Python.Runtime
                         // to be passed in as the parameter value
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                         defaultsNeeded++;
+                    }
+                    else if (parameters[v].IsOut) {
+                        defaultArgList.Add(null);
                     }
                     else if (!paramsArray)
                     {
