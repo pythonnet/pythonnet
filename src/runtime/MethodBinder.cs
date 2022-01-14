@@ -633,7 +633,9 @@ namespace Python.Runtime
                     }
 
                     if (parameter.ParameterType.IsByRef)
+                    {
                         outs++;
+                    }
 
                     continue;
                 }
