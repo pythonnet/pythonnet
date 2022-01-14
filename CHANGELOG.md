@@ -109,6 +109,7 @@ Instead, `PyIterable` does that.
 -   Empty parameter names (as can be generated from F#) do not cause crashes
 -   Unicode strings with surrogates were truncated when converting from Python
 -   `Reload` mode now supports generic methods (previously Python would stop seeing them after reload)
+-   Temporarily fixed issue resolving method overload when method signature has `out` parameters ([#1672](i1672))
 
 ### Removed
 
@@ -881,3 +882,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [i1342]: https://github.com/pythonnet/pythonnet/issues/1342
 [i238]: https://github.com/pythonnet/pythonnet/issues/238
 [i1481]: https://github.com/pythonnet/pythonnet/issues/1481
+[i1672]: https://github.com/pythonnet/pythonnet/pull/1672
