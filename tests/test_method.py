@@ -280,6 +280,16 @@ def test_string_out_params():
     assert result[1] == "output string"
 
 
+def test_string_out_params_without_passing_string_value():
+    """Test use of string out-parameters."""
+    # @eirannejad 2022-01-13
+    result = MethodTest.TestStringOutParams("hi")
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert result[0] is True
+    assert result[1] == "output string"
+
+
 def test_string_ref_params():
     """Test use of string byref parameters."""
     result = MethodTest.TestStringRefParams("hi", "there")
@@ -308,6 +318,16 @@ def test_value_out_params():
         MethodTest.TestValueOutParams("hi", None)
 
 
+def test_value_out_params_without_passing_string_value():
+    """Test use of string out-parameters."""
+    # @eirannejad 2022-01-13
+    result = MethodTest.TestValueOutParams("hi")
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert result[0] is True
+    assert result[1] == 42
+
+
 def test_value_ref_params():
     """Test use of value type byref parameters."""
     result = MethodTest.TestValueRefParams("hi", 1)
@@ -330,6 +350,15 @@ def test_object_out_params():
     assert isinstance(result[1], System.Exception)
 
     result = MethodTest.TestObjectOutParams("hi", None)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert result[0] is True
+    assert isinstance(result[1], System.Exception)
+
+
+def test_object_out_params_without_passing_string_value():
+    """Test use of object out-parameters."""
+    result = MethodTest.TestObjectOutParams("hi")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
@@ -362,6 +391,15 @@ def test_struct_out_params():
     # None cannot be converted to a value type like a struct
     with pytest.raises(TypeError):
         MethodTest.TestValueRefParams("hi", None)
+
+
+def test_struct_out_params_without_passing_string_value():
+    """Test use of struct out-parameters."""
+    result = MethodTest.TestStructOutParams("hi")
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert result[0] is True
+    assert isinstance(result[1], System.Guid)
 
 
 def test_struct_ref_params():
