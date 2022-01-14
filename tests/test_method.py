@@ -267,13 +267,7 @@ def test_params_method_with_lists():
 
 def test_string_out_params():
     """Test use of string out-parameters."""
-    result = MethodTest.TestStringOutParams("hi", "there")
-    assert isinstance(result, tuple)
-    assert len(result) == 2
-    assert result[0] is True
-    assert result[1] == "output string"
-
-    result = MethodTest.TestStringOutParams("hi", None)
+    result = MethodTest.TestStringOutParams("hi")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
@@ -297,15 +291,11 @@ def test_string_ref_params():
 
 def test_value_out_params():
     """Test use of value type out-parameters."""
-    result = MethodTest.TestValueOutParams("hi", 1)
+    result = MethodTest.TestValueOutParams("hi")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
     assert result[1] == 42
-
-    # None cannot be converted to a value type like int, long, etc.
-    with pytest.raises(TypeError):
-        MethodTest.TestValueOutParams("hi", None)
 
 
 def test_value_ref_params():
@@ -323,13 +313,7 @@ def test_value_ref_params():
 
 def test_object_out_params():
     """Test use of object out-parameters."""
-    result = MethodTest.TestObjectOutParams("hi", MethodTest())
-    assert isinstance(result, tuple)
-    assert len(result) == 2
-    assert result[0] is True
-    assert isinstance(result[1], System.Exception)
-
-    result = MethodTest.TestObjectOutParams("hi", None)
+    result = MethodTest.TestObjectOutParams("hi")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
@@ -353,15 +337,11 @@ def test_object_ref_params():
 
 def test_struct_out_params():
     """Test use of struct out-parameters."""
-    result = MethodTest.TestStructOutParams("hi", System.Guid.NewGuid())
+    result = MethodTest.TestStructOutParams("hi")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
     assert isinstance(result[1], System.Guid)
-
-    # None cannot be converted to a value type like a struct
-    with pytest.raises(TypeError):
-        MethodTest.TestValueRefParams("hi", None)
 
 
 def test_struct_ref_params():
