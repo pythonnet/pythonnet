@@ -8,6 +8,51 @@ import System
 import pytest
 import pickle
 
+# begin code from https://utcc.utoronto.ca/~cks/space/blog/python/GetAllObjects
+import gc
+# Recursively expand slist's objects
+# into olist, using seen to track
+# already processed objects.
+
+def _getr(slist, olist, seen):
+    for e in slist:
+      if id(e) in seen:
+        continue
+      seen[id(e)] = None
+      olist.append(e)
+      tl = gc.get_referents(e)
+      if tl:
+        _getr(tl, olist, seen)
+
+# The public function.
+def get_all_objects():
+    gcl = gc.get_objects()
+    olist = []
+    seen = {}
+    # Just in case:
+    seen[id(gcl)] = None
+    seen[id(olist)] = None
+    seen[id(seen)] = None
+    # _getr does the real work.
+    _getr(gcl, olist, seen)
+    return olist
+# end code from https://utcc.utoronto.ca/~cks/space/blog/python/GetAllObjects
+
+def leak_check(func):
+    def do_leak_check():
+        func()
+        gc.collect()
+        exc = {x for x in get_all_objects() if isinstance(x, Exception) and not isinstance(x, pytest.PytestDeprecationWarning)}
+        print(len(exc))
+        if len(exc):
+            for x in exc:
+                print('-------')
+                print(repr(x))
+                print(gc.get_referrers(x))
+                print(len(gc.get_referrers(x)))
+            assert False
+    gc.collect()
+    return do_leak_check
 
 def test_unified_exception_semantics():
     """Test unified exception semantics."""
@@ -375,3 +420,33 @@ def test_iteration_innerexception():
     # after exception is thrown iterator is no longer valid
     with pytest.raises(StopIteration):
         next(val)
+
+def leak_test(func):
+    def do_test_leak():
+        # PyTest leaks things, gather the current state
+        orig_exc = {x for x in get_all_objects() if isinstance(x, Exception)}
+        func()
+        exc = {x for x in get_all_objects() if isinstance(x, Exception)}
+        possibly_leaked = exc - orig_exc
+        assert not possibly_leaked
+
+    return do_test_leak
+
+@leak_test
+def test_dont_leak_exceptions_simple():
+    from Python.Test import ExceptionTest
+
+    try:
+        ExceptionTest.DoThrowSimple()
+    except System.ArgumentException:
+        print('type error, as expected')
+
+@leak_test
+def test_dont_leak_exceptions_inner():
+    from Python.Test import ExceptionTest
+    try:
+        ExceptionTest.DoThrowWithInner()
+    except TypeError:
+        print('type error, as expected')
+    except System.ArgumentException:
+        print('type error, also expected')
