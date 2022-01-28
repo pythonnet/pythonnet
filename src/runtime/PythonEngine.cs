@@ -321,37 +321,6 @@ namespace Python.Runtime
                 Initialize(setSysArgv: false);
 
                 Finalizer.Instance.ErrorHandler += AllowLeaksDuringShutdown;
-
-                // Trickery - when the import hook is installed into an already
-                // running Python, the standard import machinery is still in
-                // control for the duration of the import that caused bootstrap.
-                //
-                // That is problematic because the std machinery tries to get
-                // sub-names directly from the module __dict__ rather than going
-                // through our module object's getattr hook. This workaround is
-                // evil ;) We essentially climb up the stack looking for the
-                // import that caused the bootstrap to happen, then re-execute
-                // the import explicitly after our hook has been installed. By
-                // doing this, the original outer import should work correctly.
-                //
-                // Note that this is only needed during the execution of the
-                // first import that installs the CLR import hook. This hack
-                // still doesn't work if you use the interactive interpreter,
-                // since there is no line info to get the import line ;(
-
-                string code =
-                    "import traceback\n" +
-                    "for item in traceback.extract_stack():\n" +
-                    "    line = item[3]\n" +
-                    "    if line is not None:\n" +
-                    "        if line.startswith('import CLR') or \\\n" +
-                    "           line.startswith('import clr') or \\\n" +
-                    "           line.startswith('from clr') or \\\n" +
-                    "           line.startswith('from CLR'):\n" +
-                    "            exec(line)\n" +
-                    "            break\n";
-
-                PythonEngine.Exec(code);
             }
             catch (PythonException e)
             {
