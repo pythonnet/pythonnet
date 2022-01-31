@@ -38,7 +38,7 @@ details about the cause of the failure
 -   BREAKING: Return values from .NET methods that return an interface are now automatically
      wrapped in that interface. This is a breaking change for users that rely on being
      able to access members that are part of the implementation class, but not the
-     interface.  Use the new __implementation__ or __raw_implementation__ properties to
+     interface.  Use the new `__implementation__` or `__raw_implementation__` properties to
      if you need to "downcast" to the implementation class.
 -   BREAKING: Parameters marked with `ParameterAttributes.Out` are no longer returned in addition
      to the regular method return value (unless they are passed with `ref` or `out` keyword).
