@@ -1296,6 +1296,12 @@ namespace Python.Runtime
                 return converted;
             }
 
+            if (binder.Type == typeof(System.Collections.IEnumerable) && this.IsIterable())
+            {
+                result = new PyIterable(this.Reference);
+                return true;
+            }
+
             return false;
         }
 

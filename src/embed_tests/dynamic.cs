@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 using Python.Runtime;
@@ -125,6 +126,16 @@ namespace Python.EmbeddingTest
 
             // Compare in .NET
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
+        }
+
+        // regression test for https://github.com/pythonnet/pythonnet/issues/1680
+        [Test]
+        public void ForEach()
+        {
+            dynamic pyList = PythonEngine.Eval("[1,2,3]");
+            var list = new List<int>();
+            foreach (int item in pyList)
+                list.Add(item);
         }
     }
 }
