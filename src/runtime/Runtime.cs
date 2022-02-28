@@ -365,31 +365,6 @@ namespace Python.Runtime
                 ? throw new ArgumentNullException(nameof(moduleName))
                 : new Lazy<PyObject>(() => PyModule.Import(moduleName), isThreadSafe: false);
 
-        private static void RunExitFuncs()
-        {
-            PyObject atexit;
-            try
-            {
-                atexit = Py.Import("atexit");
-            }
-            catch (PythonException e) when (e.Is(Exceptions.ImportError))
-            {
-                // The runtime may not provided `atexit` module.
-                return;
-            }
-            using (atexit)
-            {
-                try
-                {
-                    atexit.InvokeMethod("_run_exitfuncs").Dispose();
-                }
-                catch (PythonException e)
-                {
-                    Console.Error.WriteLine(e);
-                }
-            }
-        }
-
         private static void SetPyMember(out PyObject obj, StolenReference value)
         {
             // XXX: For current usages, value should not be null.
