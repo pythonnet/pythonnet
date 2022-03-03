@@ -179,6 +179,7 @@ namespace Python.Runtime
 
             clrInterop = GetModuleLazy("clr.interop");
             inspect = GetModuleLazy("inspect");
+            hexCallable = new(() => new PyString("%x").GetAttr("__mod__"));
         }
 
         static void NewRun()
@@ -279,8 +280,9 @@ namespace Python.Runtime
 
             Exceptions.Shutdown();
             PythonEngine.InteropConfiguration.Dispose();
-            DisposeLazyModule(clrInterop);
-            DisposeLazyModule(inspect);
+            DisposeLazyObject(clrInterop);
+            DisposeLazyObject(inspect);
+            DisposeLazyObject(hexCallable);
             PyObjectConversions.Reset();
 
             PyGC_Collect();
@@ -352,11 +354,11 @@ namespace Python.Runtime
         public static bool TryCollectingGarbage(int runs)
             => TryCollectingGarbage(runs, forceBreakLoops: false);
 
-        static void DisposeLazyModule(Lazy<PyObject> module)
+        static void DisposeLazyObject(Lazy<PyObject> pyObject)
         {
-            if (module.IsValueCreated)
+            if (pyObject.IsValueCreated)
             {
-                module.Value.Dispose();
+                pyObject.Value.Dispose();
             }
         }
 
@@ -489,8 +491,12 @@ namespace Python.Runtime
 
         private static Lazy<PyObject> inspect;
         internal static PyObject InspectModule => inspect.Value;
+
         private static Lazy<PyObject> clrInterop;
         internal static PyObject InteropModule => clrInterop.Value;
+
+        private static Lazy<PyObject> hexCallable;
+        internal static PyObject HexCallable => hexCallable.Value;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         internal static BorrowedReference CLRMetaType => PyCLRMetaType;

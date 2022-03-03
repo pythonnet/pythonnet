@@ -455,6 +455,14 @@ namespace Python.Runtime
                 }
             }
 
+            if (obType == typeof(System.Numerics.BigInteger)
+                && Runtime.PyInt_Check(value))
+            {
+                using var pyInt = new PyInt(value);
+                result = pyInt.ToBigInteger();
+                return true;
+            }
+
             return ToPrimitive(value, obType, out result, setError);
         }
 
