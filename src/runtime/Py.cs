@@ -10,15 +10,7 @@ using Python.Runtime.Native;
 
 public static class Py
 {
-    public static GILState GIL()
-    {
-        if (!PythonEngine.IsInitialized)
-        {
-            PythonEngine.Initialize();
-        }
-
-        return PythonEngine.DebugGIL ? new DebugGILState() : new GILState();
-    }
+    public static GILState GIL() => PythonEngine.DebugGIL ? new DebugGILState() : new GILState();
 
     public static PyModule CreateScope() => new();
     public static PyModule CreateScope(string name)

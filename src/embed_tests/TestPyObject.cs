@@ -94,6 +94,13 @@ a = MemberNamesTest()
             );
             Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type);
         }
+
+        // regression test from https://github.com/pythonnet/pythonnet/issues/1642
+        [Test]
+        public void InheritedMethodsAutoacquireGIL()
+        {
+            PythonEngine.Exec("from System import String\nString.Format('{0},{1}', 1, 2)");
+        }
     }
 
     public class PyObjectTestMethods

@@ -1056,6 +1056,7 @@ namespace Python.Runtime
         /// </remarks>
         public override string? ToString()
         {
+            using var _ = Py.GIL();
             using var strval = Runtime.PyObject_Str(obj);
             return Runtime.GetManagedString(strval.BorrowOrThrow());
         }
@@ -1072,7 +1073,11 @@ namespace Python.Runtime
         /// Return true if this object is equal to the given object. This
         /// method is based on Python equality semantics.
         /// </remarks>
-        public override bool Equals(object o) => Equals(o as PyObject);
+        public override bool Equals(object o)
+        {
+            using var _ = Py.GIL();
+            return Equals(o as PyObject);
+        }
 
         public virtual bool Equals(PyObject? other)
         {
@@ -1101,6 +1106,7 @@ namespace Python.Runtime
         /// </remarks>
         public override int GetHashCode()
         {
+            using var _ = Py.GIL();
             nint pyHash = Runtime.PyObject_Hash(obj);
             if (pyHash == -1 && Exceptions.ErrorOccurred())
             {
@@ -1135,12 +1141,14 @@ namespace Python.Runtime
 
         public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
+            using var _ = Py.GIL();
             result = CheckNone(this.GetAttr(binder.Name));
             return true;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
+            using var _ = Py.GIL();
             using var newVal = Converter.ToPythonDetectType(value);
             int r = Runtime.PyObject_SetAttrString(obj, binder.Name, newVal.Borrow());
             if (r < 0)
@@ -1234,6 +1242,7 @@ namespace Python.Runtime
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object?[] args, out object? result)
         {
+            using var _ = Py.GIL();
             if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
             {
                 PyTuple? pyargs = null;
@@ -1258,6 +1267,7 @@ namespace Python.Runtime
 
         public override bool TryInvoke(InvokeBinder binder, object?[] args, out object? result)
         {
+            using var _ = Py.GIL();
             if (this.IsCallable())
             {
                 PyTuple? pyargs = null;
@@ -1282,6 +1292,7 @@ namespace Python.Runtime
 
         public override bool TryConvert(ConvertBinder binder, out object? result)
         {
+            using var _ = Py.GIL();
             // always try implicit conversion first
             if (Converter.ToManaged(this.obj, binder.Type, out result, false))
             {
@@ -1307,6 +1318,7 @@ namespace Python.Runtime
 
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
+            using var _ = Py.GIL();
             NewReference res;
             if (!(arg is PyObject))
             {
@@ -1419,6 +1431,7 @@ namespace Python.Runtime
 
         public override bool TryUnaryOperation(UnaryOperationBinder binder, out object? result)
         {
+            using var _ = Py.GIL();
             int r;
             NewReference res;
             switch (binder.Operation)
@@ -1463,10 +1476,8 @@ namespace Python.Runtime
         /// <returns>A sequence that contains dynamic member names.</returns>
         public override IEnumerable<string> GetDynamicMemberNames()
         {
-            foreach (PyObject pyObj in Dir())
-            {
-                yield return pyObj.ToString()!;
-            }
+            using var _ = Py.GIL();
+            return Dir().Select(pyObj => pyObj.ToString()!).ToArray();
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
