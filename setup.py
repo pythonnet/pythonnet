@@ -147,6 +147,9 @@ setup(
     version="3.0.0.dev1",
     description=".Net and Mono integration for Python",
     url="https://pythonnet.github.io/",
+    project_urls={
+        "Source": "https://github.com/pythonnet/pythonnet",
+    },
     license="MIT",
     author="The Contributors of the Python.NET Project",
     author_email="pythonnet@python.org",
