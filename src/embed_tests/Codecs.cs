@@ -473,7 +473,7 @@ DateTimeDecoder.Setup()
         }
 
         public bool CanDecode(PyType objectType, Type targetType)
-            => objectType.Handle == TheOnlySupportedSourceType.Handle
+            => PythonReferenceComparer.Instance.Equals(objectType, TheOnlySupportedSourceType)
                && targetType == typeof(TTarget);
         public bool TryDecode<T>(PyObject pyObj, out T value)
         {

@@ -39,7 +39,7 @@ namespace Python.Runtime
             {
                 NewReference pyStr = Runtime.PyUnicode_InternFromString(name);
                 var op = new PyString(pyStr.StealOrThrow());
-                Debug.Assert(name == op.ToString());
+                Debug.Assert(name == op.As<string>());
                 SetIntern(name, op);
                 var field = type.GetField("f" + name, PyIdentifierFieldFlags)!;
                 field.SetValue(null, op.rawPtr);

@@ -47,6 +47,7 @@ details about the cause of the failure
 -   floating point values passed from Python are no longer silently truncated
 when .NET expects an integer [#1342][i1342]
 -   More specific error messages for method argument mismatch
+-   members of `PyObject` inherited from `System.Object and `DynamicObject` now autoacquire GIL
 -   BREAKING: when inheriting from .NET types in Python if you override `__init__` you
 must explicitly call base constructor using `super().__init__(.....)`. Not doing so will lead
 to undefined behavior.
@@ -69,6 +70,7 @@ One must now either use enum members (e.g. `MyEnum.Option`), or use enum constru
 -   BREAKING: Names of .NET types (e.g. `str(__class__)`) changed to better support generic types
 -   BREAKING: overload resolution will no longer prefer basic types. Instead, first matching overload will
 be chosen.
+-   BREAKING: acquiring GIL using `Py.GIL` no longer forces `PythonEngine` to initialize
 -   BREAKING: `Exec` and `Eval` from `PythonEngine` no longer accept raw pointers.
 -   BREAKING: .NET collections and arrays are no longer automatically converted to
 Python collections. Instead, they implement standard Python
