@@ -51,18 +51,21 @@ namespace Python.Runtime
 
         internal static void RemoveTypes()
         {
-            foreach (var type in cache.Values)
+            if (Runtime.HostedInPython)
             {
-                if (Runtime.HostedInPython
-                    && _slotsHolders.TryGetValue(type, out var holder))
+                foreach (var holder in _slotsHolders)
                 {
                     // If refcount > 1, it needs to reset the managed slot,
                     // otherwise it can dealloc without any trick.
-                    if (Runtime.Refcount(type) > 1)
+                    if (holder.Key.Refcount > 1)
                     {
-                        holder.ResetSlots();
+                        holder.Value.ResetSlots();
                     }
                 }
+            }
+
+            foreach (var type in cache.Values)
+            {
                 type.Dispose();
             }
             cache.Clear();
@@ -507,7 +510,7 @@ namespace Python.Runtime
             {
                 throw PythonException.ThrowLastAsClrException();
             }
-            
+
             BorrowedReference dict = Util.ReadRef(type, TypeOffset.tp_dict);
             using (var mod = Runtime.PyString_FromString("clr._internal"))
                 Runtime.PyDict_SetItemString(dict, "__module__", mod.Borrow());
@@ -726,6 +729,7 @@ namespace Python.Runtime
 
         internal static SlotsHolder CreateSlotsHolder(PyType type)
         {
+            type = new PyType(type);
             var holder = new SlotsHolder(type);
             _slotsHolders.Add(type, holder);
             return holder;

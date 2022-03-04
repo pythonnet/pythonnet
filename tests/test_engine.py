@@ -41,3 +41,7 @@ def test_run_string():
     assert sys.multiline_worked == 1
 
     PythonEngine.ReleaseLock()
+
+def test_leak_type():
+    import clr
+    sys._leaked_intptr = clr.GetClrType(System.IntPtr)
