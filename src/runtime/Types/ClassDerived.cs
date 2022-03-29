@@ -945,7 +945,9 @@ namespace Python.Runtime
             // rare case when it's needed
             // matches correspdonging PyObject_GC_UnTrack
             // in ClassDerivedObject.tp_dealloc
-            Runtime.PyObject_GC_Del(@ref.Steal());
+
+            // Deactivated for now to fix shutdown issues
+            // Runtime.PyObject_GC_Del(@ref.Steal());
 
             // must decref our type
             Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
