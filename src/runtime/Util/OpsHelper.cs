@@ -46,10 +46,12 @@ namespace Python.Runtime
 
         static readonly Func<T, T> invert = UnaryOp(Expression.OnesComplement);
 
+#pragma warning disable IDE1006
         public static T op_BitwiseAnd(T a, T b) => and(a, b);
         public static T op_BitwiseOr(T a, T b) => or(a, b);
         public static T op_ExclusiveOr(T a, T b) => xor(a, b);
         public static T op_OnesComplement(T value) => invert(value);
+#pragma warning restore IDE1006
 
         static Expression FromNumber(Expression number)
             => Expression.Convert(number, typeof(T));

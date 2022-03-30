@@ -32,8 +32,7 @@ namespace Python.Runtime.Slots
         /// </summary>
         internal static nint impl(BorrowedReference ob)
         {
-            var co = ManagedType.GetManagedObject(ob) as CLRObject;
-            if (co == null)
+            if (ManagedType.GetManagedObject(ob) is not CLRObject co)
             {
                 Exceptions.RaiseTypeError("invalid object");
                 return -1;

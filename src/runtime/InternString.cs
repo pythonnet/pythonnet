@@ -61,8 +61,7 @@ namespace Python.Runtime
 
         public static string? GetManagedString(BorrowedReference op)
         {
-            string s;
-            if (TryGetInterned(op, out s))
+            if (TryGetInterned(op, out string s))
             {
                 return s;
             }

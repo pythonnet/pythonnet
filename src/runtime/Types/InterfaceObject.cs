@@ -27,7 +27,7 @@ namespace Python.Runtime
             return comClass?.CoClass.GetConstructor(Type.EmptyTypes);
         }
 
-        private static Type cc_attr;
+        private static readonly Type cc_attr;
 
         static InterfaceObject()
         {
@@ -51,15 +51,16 @@ namespace Python.Runtime
             if (nargs == 1)
             {
                 BorrowedReference inst = Runtime.PyTuple_GetItem(args, 0);
-                var co = GetManagedObject(inst) as CLRObject;
 
-                if (co == null || !type.IsInstanceOfType(co.inst))
+                if (GetManagedObject(inst) is CLRObject co && type.IsInstanceOfType(co.inst))
+                {
+                    obj = co.inst;
+                }
+                else
                 {
                     Exceptions.SetError(Exceptions.TypeError, $"object does not implement {type.Name}");
                     return default;
                 }
-
-                obj = co.inst;
             }
 
             else if (nargs == 0 && self.ctor != null)

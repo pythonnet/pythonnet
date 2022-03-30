@@ -554,17 +554,17 @@ namespace Python.Runtime
                 }
                 ManagedType? mt = ManagedType.GetManagedObject(op);
 
-                if (mt is ClassBase)
+                if (mt is ClassBase b)
                 {
-                    MaybeType _type = ((ClassBase)mt).type;
+                    var _type = b.type;
                     t = _type.Valid ?  _type.Value : null;
                 }
-                else if (mt is CLRObject)
+                else if (mt is CLRObject ob)
                 {
-                    object inst = ((CLRObject)mt).inst;
-                    if (inst is Type)
+                    var inst = ob.inst;
+                    if (inst is Type ty)
                     {
-                        t = inst as Type;
+                        t = ty;
                     }
                 }
                 else

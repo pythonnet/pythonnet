@@ -397,8 +397,13 @@ namespace Python.Runtime
         }
 
         public PythonException Clone()
-            => new PythonException(type: Type, value: Value, traceback: Traceback,
-                                   Message, InnerException);
+            => new(
+                type: Type,
+                value: Value,
+                traceback: Traceback,
+                Message,
+                InnerException
+            );
 
         #region Serializable
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]

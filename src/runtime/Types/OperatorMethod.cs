@@ -148,7 +148,7 @@ namespace Python.Runtime
 
         private static string GenerateDummyCode()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendLine("class OperatorMethod(object):");
             foreach (var item in OpMethodMap.Values)
             {
@@ -160,15 +160,13 @@ namespace Python.Runtime
 
         private static PyObject GetOperatorType()
         {
-            using (PyDict locals = new PyDict())
-            {
-                // A hack way for getting typeobject.c::slotdefs
-                string code = GenerateDummyCode();
-                // The resulting OperatorMethod class is stored in a PyDict.
-                PythonEngine.Exec(code, null, locals);
-                // Return the class itself, which is a type.
-                return locals.GetItem("OperatorMethod");
-            }
+            using var locals = new PyDict();
+            // A hack way for getting typeobject.c::slotdefs
+            string code = GenerateDummyCode();
+            // The resulting OperatorMethod class is stored in a PyDict.
+            PythonEngine.Exec(code, null, locals);
+            // Return the class itself, which is a type.
+            return locals.GetItem("OperatorMethod");
         }
 
         public static string ReversePyMethodName(string pyName)

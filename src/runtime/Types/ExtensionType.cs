@@ -40,7 +40,7 @@ namespace Python.Runtime
             return py;
         }
 
-        public PyObject AllocObject() => new PyObject(Alloc().Steal());
+        public PyObject AllocObject() => new(Alloc().Steal());
 
         // "borrowed" references
         internal static readonly HashSet<IntPtr> loadedExtensions = new();
