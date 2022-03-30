@@ -14,8 +14,8 @@ namespace Python.Runtime
     /// </summary>
     internal class CodeGenerator
     {
-        private AssemblyBuilder aBuilder;
-        private ModuleBuilder mBuilder;
+        private readonly AssemblyBuilder aBuilder;
+        private readonly ModuleBuilder mBuilder;
 
         internal CodeGenerator()
         {

@@ -47,9 +47,7 @@ namespace Python.Runtime
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
-            var s = managedObj as string;
-
-            if (s == null)
+            if (managedObj is not string s)
             {
                 return IntPtr.Zero;
             }
@@ -152,9 +150,7 @@ namespace Python.Runtime
 
         public override IntPtr MarshalManagedToNative(object managedObj)
         {
-            var argv = managedObj as string[];
-
-            if (argv == null)
+            if (managedObj is not string[] argv)
             {
                 return IntPtr.Zero;
             }

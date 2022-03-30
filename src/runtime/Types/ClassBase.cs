@@ -41,7 +41,7 @@ namespace Python.Runtime
             return !type.Value.IsEnum;
         }
 
-        public readonly static Dictionary<string, int> CilToPyOpMap = new Dictionary<string, int>
+        public readonly static Dictionary<string, int> CilToPyOpMap = new()
         {
             ["op_Equality"] = Runtime.Py_EQ,
             ["op_Inequality"] = Runtime.Py_NE,
@@ -153,8 +153,7 @@ namespace Python.Runtime
                     {
                         return Exceptions.RaiseTypeError("Cannot get managed object");
                     }
-                    var co1Comp = co1.inst as IComparable;
-                    if (co1Comp == null)
+                    if (co1.inst is not IComparable co1Comp)
                     {
                         Type co1Type = co1.GetType();
                         return Exceptions.RaiseTypeError($"Cannot convert object of type {co1Type} to IComparable");
@@ -215,15 +214,13 @@ namespace Python.Runtime
         /// </summary>
         static NewReference tp_iter_impl(BorrowedReference ob)
         {
-            var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
+            if (GetManagedObject(ob) is not CLRObject co)
             {
                 return Exceptions.RaiseTypeError("invalid object");
             }
 
-            var e = co.inst as IEnumerable;
             IEnumerator? o;
-            if (e != null)
+            if (co.inst is IEnumerable e)
             {
                 o = e.GetEnumerator();
             }
@@ -239,7 +236,7 @@ namespace Python.Runtime
 
             var elemType = typeof(object);
             var iterType = co.inst.GetType();
-            foreach(var ifc in iterType.GetInterfaces())
+            foreach (var ifc in iterType.GetInterfaces())
             {
                 if (ifc.IsGenericType)
                 {
@@ -261,13 +258,15 @@ namespace Python.Runtime
         /// </summary>
         public static nint tp_hash(BorrowedReference ob)
         {
-            var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
+            if (GetManagedObject(ob) is CLRObject co)
+            {
+                return co.inst.GetHashCode();
+            }
+            else
             {
                 Exceptions.RaiseTypeError("unhashable type");
                 return 0;
             }
-            return co.inst.GetHashCode();
         }
 
 
@@ -276,30 +275,28 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference tp_str(BorrowedReference ob)
         {
-            var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
+            if (GetManagedObject(ob) is CLRObject co)
             {
-                return Exceptions.RaiseTypeError("invalid object");
-            }
-            try
-            {
-                return Runtime.PyString_FromString(co.inst.ToString());
-            }
-            catch (Exception e)
-            {
-                if (e.InnerException != null)
+                try
                 {
-                    e = e.InnerException;
+                    return Runtime.PyString_FromString(co.inst.ToString());
                 }
-                Exceptions.SetError(e);
-                return default;
+                catch (Exception e)
+                {
+                    if (e.InnerException != null)
+                    {
+                        e = e.InnerException;
+                    }
+                    Exceptions.SetError(e);
+                    return default;
+                }
             }
+            return Exceptions.RaiseTypeError("invalid object");
         }
 
         public static NewReference tp_repr(BorrowedReference ob)
         {
-            var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
+            if (GetManagedObject(ob) is not CLRObject co)
             {
                 return Exceptions.RaiseTypeError("invalid object");
             }
@@ -307,11 +304,17 @@ namespace Python.Runtime
             {
                 //if __repr__ is defined, use it
                 var instType = co.inst.GetType();
-                System.Reflection.MethodInfo methodInfo = instType.GetMethod("__repr__");
+                var methodInfo = instType.GetMethod("__repr__");
                 if (methodInfo != null && methodInfo.IsPublic)
                 {
-                    var reprString = methodInfo.Invoke(co.inst, null) as string;
-                    return reprString is null ? new NewReference(Runtime.PyNone) : Runtime.PyString_FromString(reprString);
+                    if (methodInfo.Invoke(co.inst, null) is string reprString)
+                    {
+                        return Runtime.PyString_FromString(reprString);
+                    }
+                    else
+                    {
+                        return new NewReference(Runtime.PyNone);
+                    }
                 }
 
                 //otherwise use the standard object.__repr__(inst)

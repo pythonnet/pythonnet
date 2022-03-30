@@ -322,13 +322,11 @@ namespace Python.Runtime
         private void SetPyValue(string name, BorrowedReference value)
         {
             Check();
-            using (var pyKey = new PyString(name))
+            using var pyKey = new PyString(name);
+            int r = Runtime.PyObject_SetItem(variables, pyKey.obj, value);
+            if (r < 0)
             {
-                int r = Runtime.PyObject_SetItem(variables, pyKey.obj, value);
-                if (r < 0)
-                {
-                    throw PythonException.ThrowLastAsClrException();
-                }
+                throw PythonException.ThrowLastAsClrException();
             }
         }
 
@@ -362,10 +360,8 @@ namespace Python.Runtime
             if (name is null) throw new ArgumentNullException(nameof(name));
 
             Check();
-            using (var pyKey = new PyString(name))
-            {
-                return Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0;
-            }
+            using var pyKey = new PyString(name);
+            return Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0;
         }
 
         /// <summary>
@@ -398,19 +394,17 @@ namespace Python.Runtime
             if (name is null) throw new ArgumentNullException(nameof(name));
 
             Check();
-            using (var pyKey = new PyString(name))
+            using var pyKey = new PyString(name);
+            if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
             {
-                if (Runtime.PyMapping_HasKey(variables, pyKey.obj) != 0)
-                {
-                    using var op = Runtime.PyObject_GetItem(variables, pyKey.obj);
-                    value = new PyObject(op.StealOrThrow());
-                    return true;
-                }
-                else
-                {
-                    value = null;
-                    return false;
-                }
+                using var op = Runtime.PyObject_GetItem(variables, pyKey.obj);
+                value = new PyObject(op.StealOrThrow());
+                return true;
+            }
+            else
+            {
+                value = null;
+                return false;
             }
         }
 
@@ -445,7 +439,7 @@ namespace Python.Runtime
             var result = TryGet(name, out var pyObj);
             if (!result)
             {
-                value = default(T);
+                value = default;
                 return false;
             }
             value = pyObj!.As<T>();

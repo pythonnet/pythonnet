@@ -27,24 +27,20 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference tp_descr_get(BorrowedReference ds, BorrowedReference ob, BorrowedReference tp)
         {
-            var self = GetManagedObject(ds) as EventObject;
-
-            if (self == null)
+            if (GetManagedObject(ds) is EventObject self)
             {
-                return Exceptions.RaiseTypeError("invalid argument");
-            }
+                if (ob == null)
+                {
+                    return new NewReference(ds);
+                }
 
-            if (ob == null)
-            {
-                return new NewReference(ds);
-            }
+                if (Runtime.PyObject_IsInstance(ob, tp) > 0)
+                {
+                    return new EventBinding(self.name, self.reg, new PyObject(ob)).Alloc();
+                }
 
-            if (Runtime.PyObject_IsInstance(ob, tp) < 1)
-            {
-                return Exceptions.RaiseTypeError("invalid argument");
             }
-
-            return new EventBinding(self.name, self.reg, new PyObject(ob)).Alloc();
+            return Exceptions.RaiseTypeError("invalid argument");
         }
 
 
@@ -57,9 +53,7 @@ namespace Python.Runtime
         /// </summary>
         public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
         {
-            var e = GetManagedObject(val) as EventBinding;
-
-            if (e != null)
+            if (GetManagedObject(val) is EventBinding _)
             {
                 return 0;
             }

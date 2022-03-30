@@ -53,12 +53,10 @@ namespace Python.Runtime
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
-            using (var s = new PyString(value))
-            {
-                NewReference val = Runtime.PyFloat_FromString(s.Reference);
-                PythonException.ThrowIfIsNull(val);
-                return val.Steal();
-            }
+            using var s = new PyString(value);
+            NewReference val = Runtime.PyFloat_FromString(s.Reference);
+            PythonException.ThrowIfIsNull(val);
+            return val.Steal();
         }
 
         /// <summary>

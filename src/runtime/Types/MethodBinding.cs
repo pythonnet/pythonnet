@@ -172,7 +172,6 @@ namespace Python.Runtime
                 var info = self.info.Value;
                 if (info.IsGenericMethod)
                 {
-                    var len = Runtime.PyTuple_Size(args); //FIXME: Never used
                     Type[]? sigTp = Runtime.PythonArgsToTypeArray(args, true);
                     if (sigTp != null)
                     {
@@ -220,15 +219,13 @@ namespace Python.Runtime
                     var inst = GetManagedObject(target) as CLRObject;
                     if (inst?.inst is IPythonDerivedType)
                     {
-                        var baseType = GetManagedObject(self.targetType!) as ClassBase;
-                        if (baseType != null && baseType.type.Valid)
+                        if (GetManagedObject(self.targetType!) is ClassBase baseType && baseType.type.Valid)
                         {
-                            string baseMethodName = "_" + baseType.type.Value.Name + "__" + self.m.name;
+                            var baseMethodName = $"_{baseType.type.Value.Name}__{self.m.name}";
                             using var baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
                             if (!baseMethod.IsNull())
                             {
-                                var baseSelf = GetManagedObject(baseMethod.Borrow()) as MethodBinding;
-                                if (baseSelf != null)
+                                if (GetManagedObject(baseMethod.Borrow()) is MethodBinding baseSelf)
                                 {
                                     self = baseSelf;
                                 }

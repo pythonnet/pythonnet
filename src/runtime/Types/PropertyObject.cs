@@ -71,26 +71,24 @@ namespace Python.Runtime
                 }
             }
 
-            var co = GetManagedObject(ob) as CLRObject;
-            if (co == null)
+            if (GetManagedObject(ob) is CLRObject co)
             {
-                return Exceptions.RaiseTypeError("invalid target");
-            }
-
-            try
-            {
-                result = getter.Invoke(co.inst, Array.Empty<object>());
-                return Converter.ToPython(result, info.PropertyType);
-            }
-            catch (Exception e)
-            {
-                if (e.InnerException != null)
+                try
                 {
-                    e = e.InnerException;
+                    result = getter.Invoke(co.inst, Array.Empty<object>());
+                    return Converter.ToPython(result, info.PropertyType);
                 }
-                Exceptions.SetError(e);
-                return default;
+                catch (Exception e)
+                {
+                    if (e.InnerException != null)
+                    {
+                        e = e.InnerException;
+                    }
+                    Exceptions.SetError(e);
+                    return default;
+                }
             }
+            return Exceptions.RaiseTypeError("invalid target");
         }
 
 
@@ -144,13 +142,15 @@ namespace Python.Runtime
             {
                 if (!is_static)
                 {
-                    var co = GetManagedObject(ob) as CLRObject;
-                    if (co == null)
+                    if (GetManagedObject(ob) is CLRObject co)
+                    {
+                        setter.Invoke(co.inst, new object?[] { newval });
+                    }
+                    else
                     {
                         Exceptions.RaiseTypeError("invalid target");
                         return -1;
                     }
-                    setter.Invoke(co.inst, new object?[] { newval });
                 }
                 else
                 {

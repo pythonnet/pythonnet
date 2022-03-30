@@ -41,7 +41,7 @@ namespace Python.Runtime
         [DefaultValue(true)]
         public bool Enable { get; set; } = true;
 
-        private ConcurrentQueue<PendingFinalization> _objQueue = new();
+        private readonly ConcurrentQueue<PendingFinalization> _objQueue = new();
         private readonly ConcurrentQueue<PendingFinalization> _derivedQueue = new();
         private readonly ConcurrentQueue<Py_buffer> _bufferQueue = new();
         private int _throttled;

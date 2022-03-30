@@ -110,7 +110,8 @@ namespace Python.Runtime
             try
             {
                 self = GetPyObj(obj).CheckRun();
-            } catch (RuntimeShutdownException e)
+            }
+            catch (RuntimeShutdownException e)
             {
                 Exceptions.SetError(e);
                 return default;
@@ -200,22 +201,19 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
-                using (PyIterable keys = dict.Keys())
+                using var keys = dict.Keys();
+                foreach (PyObject pyKey in keys)
                 {
-                    foreach (PyObject pyKey in keys)
+                    using var value = dict[pyKey];
+                    if (value.HasAttr("_clr_property_type_"))
                     {
-                        using (PyObject value = dict[pyKey])
-                        {
-                            if (value.HasAttr("_clr_property_type_"))
-                            {
-                                string propertyName = pyKey.ToString()!;
-                                pyProperties.Add(propertyName);
+                        string propertyName = pyKey.ToString()!;
+                        pyProperties.Add(propertyName);
 
-                                // Add the property to the type
-                                AddPythonProperty(propertyName, value, typeBuilder);
-                            }
-                        }
+                        // Add the property to the type
+                        AddPythonProperty(propertyName, value, typeBuilder);
                     }
+                    pyKey.Dispose();
                 }
             }
 
@@ -248,27 +246,24 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
-                using (PyIterable keys = dict.Keys())
+                using var keys = dict.Keys();
+                foreach (PyObject pyKey in keys)
                 {
-                    foreach (PyObject pyKey in keys)
+                    using var value = dict[pyKey];
+                    if (value.HasAttr("_clr_return_type_") && value.HasAttr("_clr_arg_types_"))
                     {
-                        using (PyObject value = dict[pyKey])
+                        string methodName = pyKey.ToString()!;
+
+                        // if this method has already been redirected to the python method skip it
+                        if (virtualMethods.Contains(methodName))
                         {
-                            if (value.HasAttr("_clr_return_type_") && value.HasAttr("_clr_arg_types_"))
-                            {
-                                string methodName = pyKey.ToString()!;
-
-                                // if this method has already been redirected to the python method skip it
-                                if (virtualMethods.Contains(methodName))
-                                {
-                                    continue;
-                                }
-
-                                // Add the method to the type
-                                AddPythonMethod(methodName, value, typeBuilder);
-                            }
+                            continue;
                         }
+
+                        // Add the method to the type
+                        AddPythonMethod(methodName, value, typeBuilder);
                     }
+                    pyKey.Dispose();
                 }
             }
 
@@ -871,10 +866,8 @@ namespace Python.Runtime
             try
             {
                 using var pyself = new PyObject(self.CheckRun());
-                using (PyObject pyvalue = pyself.GetAttr(propertyName))
-                {
-                    return pyvalue.As<T>();
-                }
+                using var pyvalue = pyself.GetAttr(propertyName);
+                return pyvalue.As<T>();
             }
             finally
             {

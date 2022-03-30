@@ -9,7 +9,7 @@ namespace Python.Runtime
     public sealed class InteropConfiguration: IDisposable
     {
         internal readonly PythonBaseTypeProviderGroup pythonBaseTypeProviders
-            = new PythonBaseTypeProviderGroup();
+            = new();
 
         /// <summary>Enables replacing base types of CLR types as seen from Python</summary>
         public IList<IPythonBaseTypeProvider> PythonBaseTypeProviders => this.pythonBaseTypeProviders;

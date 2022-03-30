@@ -63,14 +63,16 @@ namespace Python.Runtime
                     return NewInstance(arrType.GetElementType(), tp, dimensions);
                 }
             }
-            object? result;
 
             // this implements casting to Array[T]
-            if (!Converter.ToManaged(op, arrType, out result, true))
+            if (Converter.ToManaged(op, arrType, out object? result, true))
+            {
+                return CLRObject.GetReference(result!, tp);
+            }
+            else
             {
                 return default;
             }
-            return CLRObject.GetReference(result!, tp);
         }
 
         static NewReference CreateMultidimensional(Type elementType, long[] dimensions, BorrowedReference shapeTuple, BorrowedReference pyType)
@@ -250,7 +252,6 @@ namespace Python.Runtime
             Type itemType = obj.inst.GetType().GetElementType();
             int rank = items.Rank;
             long index;
-            object? value;
 
             if (items.IsReadOnly)
             {
@@ -258,7 +259,7 @@ namespace Python.Runtime
                 return -1;
             }
 
-            if (!Converter.ToManaged(v, itemType, out value, true))
+            if (!Converter.ToManaged(v, itemType, out object? value, true))
             {
                 return -1;
             }
@@ -353,9 +354,8 @@ namespace Python.Runtime
             var obj = (CLRObject)GetManagedObject(ob)!;
             Type itemType = obj.inst.GetType().GetElementType();
             var items = (IList)obj.inst;
-            object? value;
 
-            if (!Converter.ToManaged(v, itemType, out value, false))
+            if (!Converter.ToManaged(v, itemType, out object? value, false))
             {
                 return 0;
             }
@@ -397,7 +397,8 @@ namespace Python.Runtime
             try
             {
                 gcHandle = GCHandle.Alloc(self, GCHandleType.Pinned);
-            } catch (ArgumentException ex)
+            }
+            catch (ArgumentException ex)
             {
                 Exceptions.SetError(Exceptions.BufferError, ex.Message);
                 return -1;
@@ -410,7 +411,7 @@ namespace Python.Runtime
             {
                 buf = gcHandle.AddrOfPinnedObject(),
                 obj = new NewReference(obj).DangerousMoveToPointer(),
-                len = (IntPtr)(self.LongLength*itemSize),
+                len = (IntPtr)(self.LongLength * itemSize),
                 itemsize = (IntPtr)itemSize,
                 _readonly = false,
                 ndim = self.Rank,
@@ -476,7 +477,7 @@ namespace Python.Runtime
             return result;
         }
 
-        static readonly Dictionary<Type, string> ItemFormats = new Dictionary<Type, string>
+        static readonly Dictionary<Type, string> ItemFormats = new()
         {
             [typeof(byte)] = "B",
             [typeof(sbyte)] = "b",

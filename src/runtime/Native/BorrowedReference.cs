@@ -19,7 +19,7 @@ namespace Python.Runtime
         /// <summary>Gets a raw pointer to the Python object</summary>
         public IntPtr DangerousGetAddressOrNull() => this.pointer;
 
-        public static BorrowedReference Null => new BorrowedReference();
+        public static BorrowedReference Null => new();
 
         /// <summary>
         /// Creates new instance of <see cref="BorrowedReference"/> from raw pointer. Unsafe.

@@ -9,8 +9,8 @@ namespace Python.Runtime
     /// </summary>
     internal class OverloadMapper : ExtensionType
     {
-        private MethodObject m;
-        private PyObject? target;
+        private readonly MethodObject m;
+        private readonly PyObject? target;
 
         public OverloadMapper(MethodObject m, PyObject? target)
         {

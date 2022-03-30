@@ -11,7 +11,7 @@ namespace Python.Runtime
     [Serializable]
     internal class DelegateObject : ClassBase
     {
-        private MethodBinder binder;
+        private readonly MethodBinder binder;
 
         internal DelegateObject(Type tp) : base(tp)
         {
@@ -25,8 +25,7 @@ namespace Python.Runtime
         /// </summary>
         private static Delegate? GetTrueDelegate(BorrowedReference op)
         {
-            var o = GetManagedObject(op) as CLRObject;
-            if (o != null)
+            if (GetManagedObject(op) is CLRObject o)
             {
                 var d = o.inst as Delegate;
                 return d;
@@ -83,20 +82,12 @@ namespace Python.Runtime
             // TODO: add fast type check!
             BorrowedReference pytype = Runtime.PyObject_TYPE(ob);
             var self = (DelegateObject)GetManagedObject(pytype)!;
-            var o = GetManagedObject(ob) as CLRObject;
 
-            if (o == null)
+            if (GetManagedObject(ob) is CLRObject o && o.inst is Delegate _)
             {
-                return Exceptions.RaiseTypeError("invalid argument");
+                return self.binder.Invoke(ob, args, kw);
             }
-
-            var d = o.inst as Delegate;
-
-            if (d == null)
-            {
-                return Exceptions.RaiseTypeError("invalid argument");
-            }
-            return self.binder.Invoke(ob, args, kw);
+            return Exceptions.RaiseTypeError("invalid argument");
         }
 
 

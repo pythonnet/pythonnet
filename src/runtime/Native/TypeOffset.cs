@@ -121,7 +121,7 @@ namespace Python.Runtime
         public static string? GetSlotName(int offset)
             => SlotOffsets.FirstOrDefault(kv => kv.Value == offset).Key;
 
-        static readonly HashSet<string> slotNames = new HashSet<string>();
+        static readonly HashSet<string> slotNames = new();
         internal static bool IsSupportedSlotName(string name) => slotNames.Contains(name);
 
         [Conditional("DEBUG")]

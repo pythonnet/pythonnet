@@ -242,52 +242,24 @@ namespace Python.Runtime
 
             TypeCode tc = Type.GetTypeCode(t);
             // TODO: Clean up
-            switch (tc)
+            return tc switch
             {
-                case TypeCode.Object:
-                    return 1;
-
-                case TypeCode.UInt64:
-                    return 10;
-
-                case TypeCode.UInt32:
-                    return 11;
-
-                case TypeCode.UInt16:
-                    return 12;
-
-                case TypeCode.Int64:
-                    return 13;
-
-                case TypeCode.Int32:
-                    return 14;
-
-                case TypeCode.Int16:
-                    return 15;
-
-                case TypeCode.Char:
-                    return 16;
-
-                case TypeCode.SByte:
-                    return 17;
-
-                case TypeCode.Byte:
-                    return 18;
-
-                case TypeCode.Single:
-                    return 20;
-
-                case TypeCode.Double:
-                    return 21;
-
-                case TypeCode.String:
-                    return 30;
-
-                case TypeCode.Boolean:
-                    return 40;
-            }
-
-            return 2000;
+                TypeCode.Object => 1,
+                TypeCode.UInt64 => 10,
+                TypeCode.UInt32 => 11,
+                TypeCode.UInt16 => 12,
+                TypeCode.Int64 => 13,
+                TypeCode.Int32 => 14,
+                TypeCode.Int16 => 15,
+                TypeCode.Char => 16,
+                TypeCode.SByte => 17,
+                TypeCode.Byte => 18,
+                TypeCode.Single => 20,
+                TypeCode.Double => 21,
+                TypeCode.String => 30,
+                TypeCode.Boolean => 40,
+                _ => 2000,
+            };
         }
 
         /// <summary>
@@ -410,10 +382,6 @@ namespace Python.Runtime
                     isGeneric = true;
                 }
                 ParameterInfo[] pi = mi.GetParameters();
-                ArrayList? defaultArgList;
-                bool paramsArray;
-                int kwargsMatched;
-                int defaultsNeeded;
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);
                 // Binary operator methods will have 2 CLR args but only one Python arg
                 // (unary operators will have 1 less each), since Python operator methods are bound.
@@ -421,7 +389,7 @@ namespace Python.Runtime
                 bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
                 if (isReverse && OperatorMethod.IsComparisonOp((MethodInfo)mi))
                     continue;  // Comparison operators in Python have no reverse mode.
-                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out paramsArray, out defaultArgList, out kwargsMatched, out defaultsNeeded) && !isOperator)
+                if (!MatchesArgumentCount(pynargs, pi, kwargDict, out bool paramsArray, out ArrayList? defaultArgList, out int kwargsMatched, out int defaultsNeeded) && !isOperator)
                 {
                     continue;
                 }
@@ -436,8 +404,7 @@ namespace Python.Runtime
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();
                 }
-                int outs;
-                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList, outs: out outs);
+                var margs = TryConvertArguments(pi, paramsArray, args, pynargs, kwargDict, defaultArgList, outs: out int outs);
                 if (margs == null)
                 {
                     var mismatchCause = PythonException.FetchCurrent();
@@ -495,7 +462,7 @@ namespace Python.Runtime
                 {
                     // Best effort for determining method to match on gives multiple possible
                     // matches and we need at least one default argument - bail from this point
-                    StringBuilder stringBuilder = new StringBuilder("Not enough arguments provided to disambiguate the method.  Found:");
+                    var stringBuilder = new StringBuilder("Not enough arguments provided to disambiguate the method.  Found:");
                     foreach (var matchedMethod in argMatchedMethods)
                     {
                         stringBuilder.AppendLine();
@@ -523,18 +490,20 @@ namespace Python.Runtime
                     //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
                     // InvalidCastException: Unable to cast object of type
                     // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
-                    var co = ManagedType.GetManagedObject(inst) as CLRObject;
 
                     // Sanity check: this ensures a graceful exit if someone does
                     // something intentionally wrong like call a non-static method
                     // on the class rather than on an instance of the class.
                     // XXX maybe better to do this before all the other rigmarole.
-                    if (co == null)
+                    if (ManagedType.GetManagedObject(inst) is CLRObject co)
+                    {
+                        target = co.inst;
+                    }
+                    else
                     {
                         Exceptions.SetError(Exceptions.TypeError, "Invoked a non-static method with an invalid instance");
                         return null;
                     }
-                    target = co.inst;
                 }
 
                 return new Binding(mi, target, margs, outs);
@@ -623,7 +592,7 @@ namespace Python.Runtime
             for (int paramIndex = 0; paramIndex < pi.Length; paramIndex++)
             {
                 var parameter = pi[paramIndex];
-                bool hasNamedParam = parameter.Name != null ? kwargDict.ContainsKey(parameter.Name) : false;
+                bool hasNamedParam = parameter.Name != null && kwargDict.ContainsKey(parameter.Name);
 
                 if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == arrayStart)))
                 {
@@ -658,8 +627,7 @@ namespace Python.Runtime
                     }
                 }
 
-                bool isOut;
-                if (!TryConvertArgument(op, parameter.ParameterType, out margs[paramIndex], out isOut))
+                if (!TryConvertArgument(op, parameter.ParameterType, out margs[paramIndex], out bool isOut))
                 {
                     tempObject.Dispose();
                     return null;
@@ -789,7 +757,7 @@ namespace Python.Runtime
         {
             defaultArgList = null;
             var match = false;
-            paramsArray = parameters.Length > 0 ? Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute)) : false;
+            paramsArray = parameters.Length > 0 && Attribute.IsDefined(parameters[parameters.Length - 1], typeof(ParamArrayAttribute));
             kwargsMatched = 0;
             defaultsNeeded = 0;
             if (positionalArgumentCount == parameters.Length && kwargDict.Count == 0)

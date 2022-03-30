@@ -139,7 +139,7 @@ namespace Python.Runtime
         }
 
 
-        internal static Dictionary<IntPtr, Delegate> allocatedThunks = new Dictionary<IntPtr, Delegate>();
+        internal static Dictionary<IntPtr, Delegate> allocatedThunks = new();
 
         internal static ThunkInfo GetThunk(MethodInfo method)
         {

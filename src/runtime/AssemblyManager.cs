@@ -23,8 +23,8 @@ namespace Python.Runtime
         //    than it can end up referring to assemblies that are already unloaded (default behavior after unload appDomain -
         //     unless LoaderOptimization.MultiDomain is used);
         //    So for multidomain support it is better to have the dict. recreated for each app-domain initialization
-        private static ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
-            new ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>>();
+        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<Assembly, string>> namespaces =
+            new();
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         // domain-level handlers are initialized in Initialize
@@ -33,7 +33,7 @@ namespace Python.Runtime
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         // updated only under GIL?
-        private static Dictionary<string, int> probed = new Dictionary<string, int>(32);
+        private static readonly Dictionary<string, int> probed = new(32);
 
         // modified from event handlers below, potentially triggered from different .NET threads
         private static readonly ConcurrentQueue<Assembly> assemblies = new();

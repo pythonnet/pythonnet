@@ -53,12 +53,10 @@ namespace Python.Runtime
         /// </summary>
         static NewReference tp_new_impl(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
         {
-            var self = GetManagedObject(tp) as ClassObject;
-
             // Sanity check: this ensures a graceful error if someone does
             // something intentially wrong like use the managed metatype for
             // a class that is not really derived from a managed class.
-            if (self == null)
+            if (GetManagedObject(tp) is not ClassObject self)
             {
                 return Exceptions.RaiseTypeError("invalid object");
             }
@@ -224,8 +222,15 @@ namespace Python.Runtime
                 {
                     return Exceptions.RaiseTypeError("type expected");
                 }
-                var c = GetManagedObject(idx) as ClassBase;
-                Type? t = c != null ? c.type.Value : Converter.GetTypeByAlias(idx);
+                Type? t;
+                if (GetManagedObject(idx) is ClassBase c)
+                {
+                    t = c.type.Value;
+                }
+                else
+                {
+                    t = Converter.GetTypeByAlias(idx);
+                }
                 if (t == null)
                 {
                     return Exceptions.RaiseTypeError("type expected");

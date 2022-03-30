@@ -7,7 +7,7 @@ namespace Python.Runtime
 {
     internal static class ReflectionPolyfills
     {
-        public static AssemblyBuilder DefineDynamicAssembly(this AppDomain appDomain, AssemblyName assemblyName, AssemblyBuilderAccess assemblyBuilderAccess)
+        public static AssemblyBuilder DefineDynamicAssembly(this AppDomain _, AssemblyName assemblyName, AssemblyBuilderAccess assemblyBuilderAccess)
         {
             return AssemblyBuilder.DefineDynamicAssembly(assemblyName, assemblyBuilderAccess);
         }

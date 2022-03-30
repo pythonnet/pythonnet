@@ -10,7 +10,7 @@ namespace Python.Runtime.Codecs
     /// </summary>
     public sealed class DecoderGroup: IPyObjectDecoder, IEnumerable<IPyObjectDecoder>, IDisposable
     {
-        readonly List<IPyObjectDecoder> decoders = new List<IPyObjectDecoder>();
+        readonly List<IPyObjectDecoder> decoders = new();
 
         /// <summary>
         /// Add specified decoder to the group

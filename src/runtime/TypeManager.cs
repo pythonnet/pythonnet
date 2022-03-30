@@ -26,9 +26,9 @@ namespace Python.Runtime
 
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        private static Dictionary<MaybeType, PyType> cache = new();
+        private static readonly Dictionary<MaybeType, PyType> cache = new();
 
-        static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
+        static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new(PythonReferenceComparer.Instance);
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -84,7 +84,7 @@ namespace Python.Runtime
             var typeCache = storage.Cache;
             foreach (var entry in typeCache)
             {
-                Type type = entry.Key.Value;;
+                var type = entry.Key.Value;
                 cache![type] = entry.Value;
                 SlotsHolder holder = CreateSlotsHolder(entry.Value);
                 InitializeSlots(entry.Value, type, holder);
@@ -385,31 +385,30 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
 
-                using (var namespaceKey = new PyString("__namespace__"))
+                using var namespaceKey = new PyString("__namespace__");
+                var pyNamespace = Runtime.PyDict_GetItemWithError(dictRef, namespaceKey.Reference);
+                if (pyNamespace.IsNull)
                 {
-                    var pyNamespace = Runtime.PyDict_GetItemWithError(dictRef, namespaceKey.Reference);
-                    if (pyNamespace.IsNull)
-                    {
-                        if (Exceptions.ErrorOccurred()) return default;
-                    }
-                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
-                    {
-                        return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
-                    }
+                    if (Exceptions.ErrorOccurred()) return default;
+                }
+                else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
+                {
+                    return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
                 }
             }
 
             // create the new managed type subclassing the base managed type
-            var baseClass = ManagedType.GetManagedObject(py_base_type) as ClassBase;
-            if (null == baseClass)
+            if (ManagedType.GetManagedObject(py_base_type) is ClassBase baseClass)
+            {
+                return ReflectedClrType.CreateSubclass(baseClass, name,
+                                                       ns: (string?)namespaceStr,
+                                                       assembly: (string?)assembly,
+                                                       dict: dictRef);
+            }
+            else
             {
                 return Exceptions.RaiseTypeError("invalid base class, expected CLR class type");
             }
-
-            return ReflectedClrType.CreateSubclass(baseClass, name,
-                                                   ns: (string?)namespaceStr,
-                                                   assembly: (string?)assembly,
-                                                   dict: dictRef);
         }
 
         internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, PyMethodFlags flags, IntPtr doc)
@@ -526,7 +525,7 @@ namespace Python.Runtime
         internal static SlotsHolder SetupMetaSlots(Type impl, PyType type)
         {
             // Override type slots with those of the managed implementation.
-            SlotsHolder slotsHolder = new SlotsHolder(type);
+            var slotsHolder = new SlotsHolder(type);
             InitializeSlots(type, impl, slotsHolder);
 
             // We need space for 3 PyMethodDef structs.
@@ -683,7 +682,7 @@ namespace Python.Runtime
 
         static void InitializeSlot(BorrowedReference type, ThunkInfo thunk, string name, SlotsHolder? slotsHolder)
         {
-            if (!Enum.TryParse<TypeSlotID>(name, out var id))
+            if (!Enum.TryParse<TypeSlotID>(name, out _))
             {
                 throw new NotSupportedException("Bad slot name " + name);
             }
@@ -741,10 +740,10 @@ namespace Python.Runtime
     {
         public delegate void Resetor(PyType type, int offset);
 
-        private Dictionary<int, ThunkInfo> _slots = new Dictionary<int, ThunkInfo>();
-        private List<ThunkInfo> _keepalive = new List<ThunkInfo>();
-        private Dictionary<int, Resetor> _customResetors = new Dictionary<int, Resetor>();
-        private List<Action> _deallocators = new List<Action>();
+        private readonly Dictionary<int, ThunkInfo> _slots = new();
+        private readonly List<ThunkInfo> _keepalive = new();
+        private readonly Dictionary<int, Resetor> _customResetors = new();
+        private readonly List<Action> _deallocators = new();
         private bool _alreadyReset = false;
 
         private readonly PyType Type;
