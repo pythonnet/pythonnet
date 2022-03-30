@@ -122,11 +122,7 @@ public static class Py
             args = Enumerable.Empty<string>();
         }
 
-        SetArgv(
-            new[] { "" }.Concat(
-                Environment.GetCommandLineArgs().Skip(1)
-            )
-        );
+        SetArgv(new[] { "" }.Concat(args.Skip(1)));
     }
 
     public static void SetArgv(params string[] argv)
