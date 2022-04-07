@@ -832,6 +832,7 @@ namespace Python.Runtime
                 var metatype = Runtime.PyObject_TYPE(Type);
                 ManagedType.TryFreeGCHandle(Type, metatype);
             }
+            Runtime.PyType_Modified(Type);
         }
 
         public static IntPtr GetDefaultSlot(int offset)
