@@ -78,6 +78,7 @@ public unsafe partial class Runtime
             PyObject_RichCompareBool = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int, int>)GetFunctionByName(nameof(PyObject_RichCompareBool), GetUnmanagedDll(_PythonDll));
             PyObject_IsInstance = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_IsInstance), GetUnmanagedDll(_PythonDll));
             PyObject_IsSubclass = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyObject_IsSubclass), GetUnmanagedDll(_PythonDll));
+            PyObject_ClearWeakRefs = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(PyObject_ClearWeakRefs), GetUnmanagedDll(_PythonDll));
             PyCallable_Check = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyCallable_Check), GetUnmanagedDll(_PythonDll));
             PyObject_IsTrue = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyObject_IsTrue), GetUnmanagedDll(_PythonDll));
             PyObject_Not = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)GetFunctionByName(nameof(PyObject_Not), GetUnmanagedDll(_PythonDll));
@@ -361,6 +362,7 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int, int> PyObject_RichCompareBool { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_IsInstance { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyObject_IsSubclass { get; }
+        internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> PyObject_ClearWeakRefs { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyCallable_Check { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyObject_IsTrue { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, int> PyObject_Not { get; }

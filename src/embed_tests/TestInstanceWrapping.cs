@@ -34,6 +34,16 @@ namespace Python.EmbeddingTest
             }
         }
 
+        [Test]
+        public void WeakRefIsNone_AfterObjectIsGone()
+        {
+            using var makeref = Py.Import("weakref").GetAttr("ref");
+            var ub = new UriBuilder().ToPython();
+            using var weakref = makeref.Invoke(ub);
+            ub.Dispose();
+            Assert.IsTrue(weakref.Invoke().IsNone());
+        }
+
         class Base {}
         class Derived: Base { }
 

@@ -993,6 +993,18 @@ namespace Python.Runtime
 
         internal static int PyObject_IsSubclass(BorrowedReference ob, BorrowedReference type) => Delegates.PyObject_IsSubclass(ob, type);
 
+        internal static void PyObject_ClearWeakRefs(BorrowedReference ob) => Delegates.PyObject_ClearWeakRefs(ob);
+
+        internal static BorrowedReference PyObject_GetWeakRefList(BorrowedReference ob)
+        {
+            Debug.Assert(ob != null);
+            var type = PyObject_TYPE(ob);
+            int offset = Util.ReadInt32(type, TypeOffset.tp_weaklistoffset);
+            if (offset == 0) return BorrowedReference.Null;
+            Debug.Assert(offset > 0);
+            return Util.ReadRef(ob, offset);
+        }
+
 
         internal static int PyCallable_Check(BorrowedReference o) => Delegates.PyCallable_Check(o);
 
