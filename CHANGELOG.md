@@ -22,6 +22,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   .NET collection types now implement standard Python collection interfaces from `collections.abc`.
 See [Mixins/collections.py](src/runtime/Mixins/collections.py).
 -   .NET arrays implement Python buffer protocol
+-   Python integer interoperability with `System.Numerics.BigInteger`
 -   Python.NET will correctly resolve .NET methods, that accept `PyList`, `PyInt`,
 and other `PyObject` derived types when called from Python.
 -   .NET classes, that have `__call__` method are callable from Python

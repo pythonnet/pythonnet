@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 using NUnit.Framework;
 
@@ -129,6 +130,25 @@ namespace Python.EmbeddingTest
             var i = new PyInt(Const);
             var ni = i.As<int?>();
             Assert.AreEqual(Const, ni);
+        }
+
+        [Test]
+        public void BigIntExplicit()
+        {
+            BigInteger val = 42;
+            var i = new PyInt(val);
+            var ni = i.As<BigInteger>();
+            Assert.AreEqual(val, ni);
+            var nullable = i.As<BigInteger?>();
+            Assert.AreEqual(val, nullable);
+        }
+
+        [Test]
+        public void PyIntImplicit()
+        {
+            var i = new PyInt(1);
+            var ni = (PyObject)i.As<object>();
+            Assert.AreEqual(i.rawPtr, ni.rawPtr);
         }
 
         [Test]

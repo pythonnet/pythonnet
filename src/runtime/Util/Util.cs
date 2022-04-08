@@ -141,6 +141,13 @@ namespace Python.Runtime
             return reader.ReadToEnd();
         }
 
+        public static int HexToInt(char hex) => hex switch
+        {
+            >= '0' and <= '9' => hex - '0',
+            >= 'a' and <= 'f' => hex - 'a' + 10,
+            _ => throw new ArgumentOutOfRangeException(nameof(hex)),
+        };
+
         public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> enumerator) => enumerator;
 
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
