@@ -542,7 +542,6 @@ namespace Python.Runtime
         /// <returns>The Type object</returns>
 
         [ModuleFunction]
-        [ForbidPythonThreads]
         public static Type GetClrType(Type type)
         {
             return type;

@@ -59,10 +59,7 @@ namespace Python.Runtime
             // Decrement the python object's reference count.
             // This doesn't actually destroy the object, it just sets the reference to this object
             // to be a weak reference and it will be destroyed when the C# object is destroyed.
-            if (!self.IsNull())
-            {
-                Runtime.XDecref(self.Steal());
-            }
+            Runtime.XDecref(self.Steal());
 
             return Converter.ToPython(obj, type.Value);
         }
@@ -942,13 +939,16 @@ namespace Python.Runtime
 
             var type = Runtime.PyObject_TYPE(@ref.Borrow());
 
-            // rare case when it's needed
-            // matches correspdonging PyObject_GC_UnTrack
-            // in ClassDerivedObject.tp_dealloc
-            Runtime.PyObject_GC_Del(@ref.Steal());
+            if (!Runtime.HostedInPython || Runtime.TypeManagerInitialized)
+            {
+                // rare case when it's needed
+                // matches correspdonging PyObject_GC_UnTrack
+                // in ClassDerivedObject.tp_dealloc
+                Runtime.PyObject_GC_Del(@ref.Steal());
 
-            // must decref our type
-            Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
+                // must decref our type
+                Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
+            }
         }
 
         internal static FieldInfo? GetPyObjField(Type type) => type.GetField(PyObjName, PyObjFlags);

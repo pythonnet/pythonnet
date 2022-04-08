@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repo", "Repo", "{441A0123-F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{D301657F-5EAF-4534-B280-B858D651B2E5}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ARM.yml = .github\workflows\ARM.yml
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\workflows\nuget-preview.yml = .github\workflows\nuget-preview.yml
 	EndProjectSection

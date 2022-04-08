@@ -16,7 +16,7 @@ def set_runtime(runtime):
 
 
 def set_default_runtime() -> None:
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         set_runtime(clr_loader.get_netfx())
     else:
         set_runtime(clr_loader.get_mono())
@@ -36,14 +36,15 @@ def load():
         set_default_runtime()
 
     dll_path = join(dirname(__file__), "runtime", "Python.Runtime.dll")
-    
+
     _LOADER_ASSEMBLY = _RUNTIME.get_assembly(dll_path)
 
     func = _LOADER_ASSEMBLY["Python.Runtime.Loader.Initialize"]
-    if func(''.encode("utf8")) != 0:
+    if func(b"") != 0:
         raise RuntimeError("Failed to initialize Python.Runtime.dll")
 
     import atexit
+
     atexit.register(unload)
 
 
@@ -51,7 +52,7 @@ def unload():
     global _RUNTIME
     if _LOADER_ASSEMBLY is not None:
         func = _LOADER_ASSEMBLY["Python.Runtime.Loader.Shutdown"]
-        if func(b"") != 0:
+        if func(b"full_shutdown") != 0:
             raise RuntimeError("Failed to call Python.NET shutdown")
 
     if _RUNTIME is not None:

@@ -54,8 +54,9 @@ namespace Python.Runtime
         }
 
         private static bool _isInitialized = false;
-
         internal static bool IsInitialized => _isInitialized;
+        private static bool _typesInitialized = false;
+        internal static bool TypeManagerInitialized => _typesInitialized;
         internal static readonly bool Is32Bit = IntPtr.Size == 4;
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -151,6 +152,7 @@ namespace Python.Runtime
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
+            _typesInitialized = true;
 
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
@@ -273,6 +275,7 @@ namespace Python.Runtime
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
+            _typesInitialized = false;
 
             MetaType.Release();
             PyCLRMetaType.Dispose();
@@ -293,9 +296,10 @@ namespace Python.Runtime
             Finalizer.Shutdown();
             InternString.Shutdown();
 
+            ResetPyMembers();
+
             if (!HostedInPython)
             {
-                ResetPyMembers();
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 PyGILState_Release(state);
@@ -312,7 +316,6 @@ namespace Python.Runtime
             }
             else
             {
-                ResetPyMembers();
                 PyGILState_Release(state);
             }
         }
