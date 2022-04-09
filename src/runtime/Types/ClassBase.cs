@@ -346,6 +346,12 @@ namespace Python.Runtime
 
         public static int tp_clear(BorrowedReference ob)
         {
+            var weakrefs = Runtime.PyObject_GetWeakRefList(ob);
+            if (weakrefs != null)
+            {
+                Runtime.PyObject_ClearWeakRefs(ob);
+            }
+
             if (TryFreeGCHandle(ob))
             {
                 IntPtr addr = ob.DangerousGetAddress();
