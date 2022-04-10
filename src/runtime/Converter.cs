@@ -550,7 +550,7 @@ namespace Python.Runtime
         /// <summary>
         /// Convert a Python value to an instance of a primitive managed type.
         /// </summary>
-        private static bool ToPrimitive(BorrowedReference value, Type obType, out object? result, bool setError)
+        internal static bool ToPrimitive(BorrowedReference value, Type obType, out object? result, bool setError)
         {
             result = null;
             if (obType.IsEnum)

@@ -101,5 +101,7 @@ namespace Python.Runtime
             PythonException.ThrowIfIsNull(op);
             return new PyFloat(op.Steal());
         }
+
+        public override TypeCode GetTypeCode() => TypeCode.Double;
     }
 }

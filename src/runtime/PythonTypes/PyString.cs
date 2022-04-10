@@ -59,5 +59,7 @@ namespace Python.Runtime
         {
             return Runtime.PyString_Check(value.obj);
         }
+
+        public override TypeCode GetTypeCode() => TypeCode.String;
     }
 }

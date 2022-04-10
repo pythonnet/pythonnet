@@ -230,5 +230,7 @@ namespace Python.Runtime
             using var _ = Py.GIL();
             return ToBigInteger().ToString(format, formatProvider);
         }
+
+        public override TypeCode GetTypeCode() => TypeCode.Int64;
     }
 }

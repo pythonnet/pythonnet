@@ -670,3 +670,10 @@ def test_int_param_resolution_required():
     data = list(mri.MethodA(0x100000000, 10))
     assert len(data) == 10
     assert data[0] == 0
+
+def test_iconvertible_conversion():
+    change_type = System.Convert.ChangeType
+
+    assert 1024 == change_type(1024, System.Int32)
+    assert 1024 == change_type(1024, System.Int64)
+    assert 1024 == change_type(1024, System.Int16)
