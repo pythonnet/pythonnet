@@ -273,6 +273,12 @@ namespace Python.Runtime
         /// </summary>
         public static void tp_dealloc(NewReference lastRef)
         {
+            var weakrefs = Runtime.PyObject_GetWeakRefList(lastRef.Borrow());
+            if (weakrefs != null)
+            {
+                Runtime.PyObject_ClearWeakRefs(lastRef.Borrow());
+            }
+
             // Fix this when we dont cheat on the handle for subclasses!
 
             var flags = PyType.GetFlags(lastRef.Borrow());
