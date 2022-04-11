@@ -17,7 +17,12 @@ jobs:
       matrix:
         os: [windows, ubuntu, macos]
         python: ["3.6", "3.7", "3.8", "3.9", "3.10"]
-        platform: [x64]
+        platform: [x64, x86]
+        exclude:
+          - os: ubuntu
+            platform: x86
+          - os: macos
+            platform: x86
 
     steps:
       - name: Set Environment on macOS
@@ -67,6 +72,7 @@ jobs:
         run: pytest --runtime mono
 
       - name: Python Tests (.NET Core)
+        if: ${{ matrix.platform == 'x64' }}
         run: pytest --runtime netcore
 
       - name: Python Tests (.NET Framework)
@@ -77,7 +83,7 @@ jobs:
         run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
 
       - name: Perf tests
-        if: ${{ matrix.python == '3.8' }}
+        if: ${{ (matrix.python == '3.8') && (matrix.platform == 'x64') }}
         run: |
           pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
           dotnet test --configuration Release --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/perf_tests/

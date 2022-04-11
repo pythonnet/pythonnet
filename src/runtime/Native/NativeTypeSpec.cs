@@ -10,7 +10,7 @@ namespace Python.Runtime.Native
         public readonly StrPtr Name;
         public readonly int BasicSize;
         public readonly int ItemSize;
-        public readonly TypeFlags Flags;
+        public readonly int Flags;
         public IntPtr Slots;
 
         public NativeTypeSpec(TypeSpec spec)
@@ -20,7 +20,7 @@ namespace Python.Runtime.Native
             this.Name = new StrPtr(spec.Name, Encoding.UTF8);
             this.BasicSize = spec.BasicSize;
             this.ItemSize = spec.ItemSize;
-            this.Flags = spec.Flags;
+            this.Flags = (int)spec.Flags;
 
             unsafe
             {

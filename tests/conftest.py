@@ -86,7 +86,11 @@ def pytest_configure(config):
     else:
         domain_tests_dir = os.path.join(os.path.dirname(__file__), "domain_tests")
         bin_path = os.path.join(domain_tests_dir, "bin")
-        check_call(["dotnet", "build", domain_tests_dir, "-o", bin_path])
+        build_cmd = ["dotnet", "build", domain_tests_dir, "-o", bin_path]
+        is_64bits = sys.maxsize > 2**32
+        if not is_64bits:
+            build_cmd += ["/p:Prefer32Bit=True"]
+        check_call(build_cmd)
 
 
 
