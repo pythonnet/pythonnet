@@ -5,7 +5,7 @@ import clr
 import System
 import pytest
 import Python.Runtime
-from Python.Test import ListConversionTester, ListMember
+from Python.Test import ListConversionTester, ListMember, CodecResetter
 
 class int_iterable():
     def __init__(self):
@@ -43,7 +43,7 @@ def test_iterable():
     iterable2 = obj_iterable()
     assert 3 == ob.GetLength2(iterable2)
 
-    Python.Runtime.PyObjectConversions.Reset()
+    CodecResetter.Reset()
 
 def test_sequence():
     Python.Runtime.Codecs.SequenceDecoder.Register()
@@ -55,7 +55,7 @@ def test_sequence():
     tup2 = (ListMember(1, "one"), ListMember(2, "two"), ListMember(3, "three"))
     assert 3 == ob.GetLength(tup2)
 
-    Python.Runtime.PyObjectConversions.Reset()
+    CodecResetter.Reset()
 
 def test_list():
     Python.Runtime.Codecs.SequenceDecoder.Register()
@@ -67,4 +67,4 @@ def test_list():
     l2 = [ListMember(1, "one"), ListMember(2, "two"), ListMember(3, "three")]
     assert 3 == ob.GetLength(l2)
 
-    Python.Runtime.PyObjectConversions.Reset()
+    CodecResetter.Reset()

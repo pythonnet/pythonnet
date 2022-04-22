@@ -44,4 +44,12 @@ namespace Python.Test
             return o.Count;
         }
     }
+
+    public static class CodecResetter
+    {
+        public static void Reset()
+        {
+            PyObjectConversions.Reset();
+        }
+    }
 }
