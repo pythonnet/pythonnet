@@ -3,6 +3,8 @@
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj" />

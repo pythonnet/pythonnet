@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Python.Runtime;
 
 namespace Python.Test
 {
@@ -42,6 +43,14 @@ namespace Python.Test
         public int GetLength2(IList<ListMember> o)
         {
             return o.Count;
+        }
+    }
+
+    public static class CodecResetter
+    {
+        public static void Reset()
+        {
+            PyObjectConversions.Reset();
         }
     }
 }
