@@ -221,6 +221,7 @@ namespace Python.Runtime
                 BorrowedReference module = DefineModule("clr._extras");
                 BorrowedReference module_globals = Runtime.PyModule_GetDict(module);
 
+                Console.WriteLine("PythonEngine.Initialize(): clr GetManifestResourceStream...");
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 // add the contents of clr.py to the module
                 string clr_py = assembly.ReadStringResource("clr.py");

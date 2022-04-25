@@ -1,6 +1,8 @@
 using System;
 using System.Reflection;
 
+using Fasterflect;
+
 namespace Python.Runtime
 {
     using MaybeFieldInfo = MaybeMemberInfo<FieldInfo>;
@@ -11,6 +13,15 @@ namespace Python.Runtime
     internal class FieldObject : ExtensionType
     {
         private MaybeFieldInfo info;
+
+        private MemberGetter _memberGetter;
+        private Type _memberGetterType;
+
+        private MemberSetter _memberSetter;
+        private Type _memberSetterType;
+
+        private bool _isValueType;
+        private Type _isValueTypeType;
 
         public FieldObject(FieldInfo info)
         {
@@ -50,7 +61,16 @@ namespace Python.Runtime
                 }
                 try
                 {
-                    result = info.GetValue(null);
+                    // Fasterflect does not support constant fields
+                    if (info.IsLiteral && !info.IsInitOnly)
+                    {
+                        result = info.GetValue(null);
+                    }
+                    else
+                    {
+                        result = self.GetMemberGetter(info.DeclaringType)(info.DeclaringType);
+                    }
+
                     return Converter.ToPython(result, info.FieldType);
                 }
                 catch (Exception e)
@@ -68,7 +88,18 @@ namespace Python.Runtime
                     Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
                     return default;
                 }
-                result = info.GetValue(co.inst);
+
+                // Fasterflect does not support constant fields
+                if (info.IsLiteral && !info.IsInitOnly)
+                {
+                    result = info.GetValue(co.inst);
+                }
+                else
+                {
+                    var type = co.inst.GetType();
+                    result = self.GetMemberGetter(type)(self.IsValueType(type) ? co.inst.WrapIfValueType() : co.inst);
+                }
+
                 return Converter.ToPython(result, info.FieldType);
             }
             catch (Exception e)
@@ -137,11 +168,29 @@ namespace Python.Runtime
                         Exceptions.SetError(Exceptions.TypeError, "instance is not a clr object");
                         return -1;
                     }
-                    info.SetValue(co.inst, newval);
+
+                    // Fasterflect does not support constant fields
+                    if (info.IsLiteral && !info.IsInitOnly)
+                    {
+                        info.SetValue(co.inst, newval);
+                    }
+                    else
+                    {
+                        var type = co.inst.GetType();
+                        self.GetMemberSetter(type)(self.IsValueType(type) ? co.inst.WrapIfValueType() : co.inst, newval);
+                    }
                 }
                 else
                 {
-                    info.SetValue(null, newval);
+                    // Fasterflect does not support constant fields
+                    if (info.IsLiteral && !info.IsInitOnly)
+                    {
+                        info.SetValue(null, newval);
+                    }
+                    else
+                    {
+                        self.GetMemberSetter(info.DeclaringType)(info.DeclaringType, newval);
+                    }
                 }
                 return 0;
             }
@@ -159,6 +208,39 @@ namespace Python.Runtime
         {
             var self = (FieldObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<field '{self.info}'>");
+        }
+
+        private MemberGetter GetMemberGetter(Type type)
+        {
+            if (type != _memberGetterType)
+            {
+                _memberGetter = FasterflectManager.GetFieldGetter(type, info.Value.Name);
+                _memberGetterType = type;
+            }
+
+            return _memberGetter;
+        }
+
+        private MemberSetter GetMemberSetter(Type type)
+        {
+            if (type != _memberSetterType)
+            {
+                _memberSetter = FasterflectManager.GetFieldSetter(type, info.Value.Name);
+                _memberSetterType = type;
+            }
+
+            return _memberSetter;
+        }
+
+        private bool IsValueType(Type type)
+        {
+            if (type != _isValueTypeType)
+            {
+                _isValueType = FasterflectManager.IsValueType(type);
+                _isValueTypeType = type;
+            }
+
+            return _isValueType;
         }
     }
 }

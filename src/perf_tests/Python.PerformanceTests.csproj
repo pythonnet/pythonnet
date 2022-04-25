@@ -1,37 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net5.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <Platforms>x64</Platforms>
-    <PlatformTarget>x64</PlatformTarget>
-  
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="baseline\Python.Runtime.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="baseline/Python.Runtime.dll">
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.0" />
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="quantconnect.pythonnet" Version="2.0.11" GeneratePathProperty="true">
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <Target Name="GetRuntimeLibBuildOutput" BeforeTargets="Build">
@@ -40,9 +24,12 @@
     </MSBuild>
   </Target>
 
+  <Target Name="CopyBaseline" AfterTargets="Build">
+    <Copy SourceFiles="$(NuGetPackageRoot)quantconnect.pythonnet\2.0.11\lib\net5.0\Python.Runtime.dll" DestinationFolder="$(OutDir)baseline" />
+  </Target>
+
   <Target Name="CopyNewBuild" AfterTargets="Build">
-    <Message Text="Outputs: @(NewPythonRuntime)" Importance="high" />
-    <Copy SourceFiles="@(NewPythonRuntime)" DestinationFolder="$(OutDir)\new" />
+    <Copy SourceFiles="@(NewPythonRuntime)" DestinationFolder="$(OutDir)new" />
   </Target>
 
 </Project>

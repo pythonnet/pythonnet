@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -33,6 +34,170 @@ namespace Python.EmbeddingTest
         public void Dispose()
         {
             PythonEngine.Shutdown();
+        }
+
+        [Test]
+        public void ConvertListRoundTrip()
+        {
+            var list = new List<Type> { typeof(decimal), typeof(int) };
+            var py = list.ToPython();
+            object result;
+            var converted = Converter.ToManaged(py.Handle, typeof(List<Type>), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, list);
+        }
+
+        [Test]
+        public void GenericList()
+        {
+            var array = new List<Type> { typeof(decimal), typeof(int) };
+            var py = array.ToPython();
+            object result;
+            var converted = Converter.ToManaged(py.Handle, typeof(IList<Type>), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(typeof(List<Type>), result.GetType());
+            Assert.AreEqual(2, ((IReadOnlyCollection<Type>) result).Count);
+            Assert.AreEqual(typeof(decimal), ((IReadOnlyCollection<Type>) result).ToList()[0]);
+            Assert.AreEqual(typeof(int), ((IReadOnlyCollection<Type>) result).ToList()[1]);
+        }
+
+        [Test]
+        public void ReadOnlyCollection()
+        {
+            var array = new List<Type> { typeof(decimal), typeof(int) };
+            var py = array.ToPython();
+            object result;
+            var converted = Converter.ToManaged(py.Handle, typeof(IReadOnlyCollection<Type>), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(typeof(List<Type>), result.GetType());
+            Assert.AreEqual(2, ((IReadOnlyCollection<Type>) result).Count);
+            Assert.AreEqual(typeof(decimal), ((IReadOnlyCollection<Type>) result).ToList()[0]);
+            Assert.AreEqual(typeof(int), ((IReadOnlyCollection<Type>) result).ToList()[1]);
+        }
+
+        [Test]
+        public void ConvertPyListToArray()
+        {
+            var array = new List<Type> { typeof(decimal), typeof(int) };
+            var py = array.ToPython();
+            object result;
+            var outputType = typeof(Type[]);
+            var converted = Converter.ToManaged(py.Handle, outputType, out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, array);
+            Assert.AreEqual(outputType, result.GetType());
+        }
+
+        [Test]
+        public void ConvertInvalidDateTime()
+        {
+            var number = 10;
+            var pyNumber = number.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyNumber.Handle, typeof(DateTime), out result, false);
+
+            Assert.IsFalse(converted);
+        }
+
+        [Test]
+        public void ConvertTimeSpanRoundTrip()
+        {
+            var timespan = new TimeSpan(0, 1, 0, 0);
+            var pyTimedelta = timespan.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyTimedelta.Handle, typeof(TimeSpan), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(result, timespan);
+        }
+
+        [Test]
+        public void ConvertDecimalPerformance()
+        {
+            var value = 1111111111.0001m;
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            for (var i = 0; i < 500000; i++)
+            {
+                var pyDecimal = value.ToPython();
+                object result;
+                var converted = Converter.ToManaged(pyDecimal.Handle, typeof(decimal), out result, false);
+                if (!converted || result == null)
+                {
+                    throw new Exception("");
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds}");
+        }
+
+        [TestCase(DateTimeKind.Utc)]
+        [TestCase(DateTimeKind.Unspecified)]
+        public void ConvertDateTimeRoundTripPerformance(DateTimeKind kind)
+        {
+            var datetime = new DateTime(2000, 1, 1, 2, 3, 4, 5, kind);
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            for (var i = 0; i < 500000; i++)
+            {
+                var pyDatetime = datetime.ToPython();
+                object result;
+                var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+                if (!converted || result == null)
+                {
+                    throw new Exception("");
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds}");
+        }
+
+        [Test]
+        public void ConvertDateTimeRoundTripNoTime()
+        {
+            var datetime = new DateTime(2000, 1, 1);
+            var pyDatetime = datetime.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(datetime, result);
+        }
+
+        [TestCase(DateTimeKind.Utc)]
+        [TestCase(DateTimeKind.Unspecified)]
+        public void ConvertDateTimeRoundTrip(DateTimeKind kind)
+        {
+            var datetime = new DateTime(2000, 1, 1, 2, 3, 4, 5, kind);
+            var pyDatetime = datetime.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(datetime, result);
+        }
+
+        [Test]
+        public void ConvertTimestampRoundTrip()
+        {
+            var timeSpan = new TimeSpan(1, 2, 3, 4, 5);
+            var pyTimeSpan = timeSpan.ToPython();
+
+            object result;
+            var converted = Converter.ToManaged(pyTimeSpan.Handle, typeof(TimeSpan), out result, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(timeSpan, result);
         }
 
         [Test]
@@ -196,6 +361,17 @@ class PyGetListImpl(test.GetListImpl):
             dynamic inst = pyImpl.Invoke();
             List<string> result = inst.GetList();
             CollectionAssert.AreEqual(new[] { "testing" }, result);
+        }
+    
+        [Test]
+        public void PrimitiveIntConversion()
+        {
+            decimal value = 10;
+            var pyValue = value.ToPython();
+
+            // Try to convert python value to int
+            var testInt = pyValue.As<int>();
+            Assert.AreEqual(testInt , 10);
         }
     }
 

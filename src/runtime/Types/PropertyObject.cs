@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
+
+using Fasterflect;
 
 namespace Python.Runtime
 {
@@ -62,7 +65,7 @@ namespace Python.Runtime
 
                 try
                 {
-                    result = info.GetValue(null, null);
+                    result = self.GetMemberGetter(info.DeclaringType)(info.DeclaringType);
                     return Converter.ToPython(result, info.PropertyType);
                 }
                 catch (Exception e)
@@ -154,7 +157,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    info.SetValue(null, newval, null);
+                    self.GetMemberSetter(info.DeclaringType)(info.DeclaringType, newval);
                 }
                 return 0;
             }

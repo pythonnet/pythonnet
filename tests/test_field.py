@@ -173,7 +173,7 @@ def test_field_descriptor_get_set():
 def test_field_descriptor_wrong_type():
     """Test setting a field using a value of the wrong type."""
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         FieldTest().PublicField = "spam"
 
 

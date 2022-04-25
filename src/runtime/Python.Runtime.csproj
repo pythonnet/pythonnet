@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net5.0</TargetFrameworks>
     <Platforms>AnyCPU</Platforms>
     <LangVersion>10.0</LangVersion>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
-    <Nullable>enable</Nullable>
-
-    <PackageId>pythonnet</PackageId>
+    <PackageId>QuantConnect.pythonnet</PackageId>
+    <Version>2.0.11</Version>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -18,25 +18,30 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Description>Python and CLR (.NET and Mono) cross-platform language interop</Description>
-
     <DebugSymbols>true</DebugSymbols>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-
     <NoWarn>1591;NU1701</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CustomContentTarget</TargetsForTfmSpecificContentInPackage>
     <IsPackable>true</IsPackable>
-
-    <Configurations>Debug;Release;TraceAlloc</Configurations>
+    <PackageOutputPath>$(SolutionDir)</PackageOutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'TraceAlloc'">
-    <DefineConstants>$(DefineConstants);TRACE_ALLOC</DefineConstants>
-  </PropertyGroup>
+  <Target Name="CustomContentTarget" AfterTargets="build">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="../../clr.py">
+        <PackagePath>contentFiles/any/any/</PackagePath>
+        <PackageCopyToOutput>true</PackageCopyToOutput>
+      </TfmSpecificPackageFile>
+      <TfmSpecificPackageFile Include="../../pythonnet/**">
+        <PackagePath>contentFiles/any/any/pythonnet</PackagePath>
+        <PackageCopyToOutput>true</PackageCopyToOutput>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
 
   <PropertyGroup>
     <OutputPath>..\..\pythonnet\runtime</OutputPath>
@@ -60,8 +65,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lost.Compat.NullabilityAttributes" Version="0.0.4" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Security.Permissions" Version="4.7.0" />
+    <PackageReference Include="fasterflect" Version="3.0.0" />
   </ItemGroup>
 </Project>

@@ -52,7 +52,19 @@ namespace Python.Runtime
             if (obj == null) throw new ArgumentNullException(nameof(obj));
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            foreach (var encoder in clrToPython.GetOrAdd(type, GetEncoders))
+            if (clrToPython.Count == 0)
+            {
+                return null;
+            }
+
+            IPyObjectEncoder[] availableEncoders;
+            if (!clrToPython.TryGetValue(type, out availableEncoders))
+            {
+                availableEncoders = GetEncoders(type);
+                clrToPython[type] = availableEncoders;
+            }
+
+            foreach (var encoder in availableEncoders)
             {
                 var result = encoder.TryEncode(obj);
                 if (result != null) return result;
@@ -61,8 +73,8 @@ namespace Python.Runtime
             return null;
         }
 
-        static readonly ConcurrentDictionary<Type, IPyObjectEncoder[]>
-            clrToPython = new ConcurrentDictionary<Type, IPyObjectEncoder[]>();
+        static readonly Dictionary<Type, IPyObjectEncoder[]> clrToPython = new();
+
         static IPyObjectEncoder[] GetEncoders(Type type)
         {
             lock (encoders)

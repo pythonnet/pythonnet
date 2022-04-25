@@ -1,3 +1,5 @@
+using System;
+
 namespace Python.Test
 {
     using System.Collections.Generic;
@@ -31,6 +33,8 @@ namespace Python.Test
         public ShortEnum EnumField;
         public object ObjectField = null;
         public ISpam SpamField;
+        public DateTime DateTimeField;
+        public TimeSpan TimeSpanField;
 
         public byte[] ByteArrayField;
         public sbyte[] SByteArrayField;

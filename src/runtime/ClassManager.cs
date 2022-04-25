@@ -87,7 +87,7 @@ namespace Python.Runtime
                     if ((Runtime.PyDict_DelItemString(dict.Borrow(), member) == -1) &&
                         (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                     {
-                        // Trying to remove a key that's not in the dictionary 
+                        // Trying to remove a key that's not in the dictionary
                         // raises an error. We don't care about it.
                         Runtime.PyErr_Clear();
                     }
@@ -175,6 +175,11 @@ namespace Python.Runtime
             else if (type.IsArray)
             {
                 impl = new ArrayObject(type);
+            }
+
+            else if (type.IsKeyValuePairEnumerable())
+            {
+                impl = new KeyValuePairEnumerableObject(type);
             }
 
             else if (type.IsInterface)
@@ -563,7 +568,7 @@ namespace Python.Runtime
 
             return ci;
         }
-        
+
         /// <summary>
         /// This class owns references to PyObjects in the `members` member.
         /// The caller has responsibility to DECREF them.

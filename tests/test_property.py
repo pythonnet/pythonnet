@@ -121,7 +121,8 @@ def test_property_descriptor_get_set():
 def test_property_descriptor_wrong_type():
     """Test setting a property using a value of the wrong type."""
 
-    with pytest.raises(TypeError):
+    # Will attempt to implicitly convert "spam" to int, and fail, resulting in ValueError
+    with pytest.raises(ValueError):
         ob = PropertyTest()
         ob.PublicProperty = "spam"
 

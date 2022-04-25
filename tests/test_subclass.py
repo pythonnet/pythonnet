@@ -112,10 +112,8 @@ def test_interface():
     assert ob.bar("bar", 2) == "bar/bar"
     assert FunctionsTest.test_bar(ob, "bar", 2) == "bar/bar"
 
-    # pass_through will convert from InterfaceTestClass -> IInterfaceTest,
-    # causing a new wrapper object to be created. Hence id will differ.
-    x = FunctionsTest.pass_through_interface(ob)
-    assert id(x) != id(ob)
+    x = FunctionsTest.pass_through(ob)
+    assert id(x) == id(ob)
 
 
 def test_derived_class():
@@ -188,14 +186,14 @@ def test_create_instance():
     assert id(x) == id(ob)
 
     InterfaceTestClass = interface_test_class_fixture(test_create_instance.__name__)
-    ob2 = FunctionsTest.create_instance_interface(InterfaceTestClass)
+    ob2 = FunctionsTest.create_instance(InterfaceTestClass)
     assert ob2.foo() == "InterfaceTestClass"
     assert FunctionsTest.test_foo(ob2) == "InterfaceTestClass"
     assert ob2.bar("bar", 2) == "bar/bar"
     assert FunctionsTest.test_bar(ob2, "bar", 2) == "bar/bar"
 
-    y = FunctionsTest.pass_through_interface(ob2)
-    assert id(y) != id(ob2)
+    y = FunctionsTest.pass_through(ob2)
+    assert id(y) == id(ob2)
 
 
 def test_events():

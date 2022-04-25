@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;net6.0</TargetFrameworks>
-    <Platforms>x64;x86</Platforms>
+    <TargetFrameworks>net5.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <AssemblyName>nPython</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
@@ -10,18 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="python-clear.ico" />
-    <EmbeddedResource Condition="'$(TargetFramework)'=='net40'" Include="$(PythonBuildDir)\Python.Runtime.dll">
-      <LogicalName>Python.Runtime.dll</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <Content Include="python-clear.ico" />
   </ItemGroup>
 </Project>
