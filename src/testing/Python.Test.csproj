@@ -5,6 +5,7 @@
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
+    <NoWarn>IDE0051;IDE0060</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj" />

@@ -441,6 +441,12 @@ def test_single_default_param():
     assert result == 5
 
 
+def test_decimal_default_param():
+    """Test that decimal default parameters work."""
+    result = MethodTest.TestDecimalDefaultParam()
+    assert result == System.Decimal(1)
+
+
 def test_one_arg_and_two_default_param():
     """Test void method with single ref-parameter."""
     result = MethodTest.TestOneArgAndTwoDefaultParam(11)
