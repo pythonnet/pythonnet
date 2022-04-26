@@ -1072,11 +1072,7 @@ namespace Python.Runtime
     {
         public static object? GetDefaultValue(this ParameterInfo parameterInfo)
         {
-            // parameterInfo.HasDefaultValue is preferable but doesn't exist in .NET 4.0
-            bool hasDefaultValue = (parameterInfo.Attributes & ParameterAttributes.HasDefault) ==
-                ParameterAttributes.HasDefault;
-
-            if (hasDefaultValue)
+            if (parameterInfo.HasDefaultValue)
             {
                 return parameterInfo.DefaultValue;
             }
