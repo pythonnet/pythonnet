@@ -113,6 +113,7 @@ Instead, `PyIterable` does that.
 -   Unicode strings with surrogates were truncated when converting from Python
 -   `Reload` mode now supports generic methods (previously Python would stop seeing them after reload)
 -   Temporarily fixed issue resolving method overload when method signature has `out` parameters ([#1672](i1672))
+-   Decimal default parameters are now correctly taken into account
 
 ### Removed
 
