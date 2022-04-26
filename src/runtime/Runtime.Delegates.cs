@@ -108,6 +108,7 @@ public unsafe partial class Runtime
             PyNumber_Float = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyNumber_Float), GetUnmanagedDll(_PythonDll));
             PyNumber_Check = (delegate* unmanaged[Cdecl]<BorrowedReference, bool>)GetFunctionByName(nameof(PyNumber_Check), GetUnmanagedDll(_PythonDll));
             PyLong_FromLongLong = (delegate* unmanaged[Cdecl]<long, NewReference>)GetFunctionByName(nameof(PyLong_FromLongLong), GetUnmanagedDll(_PythonDll));
+            PyLong_AsLong = (delegate* unmanaged[Cdecl]<BorrowedReference, long>)GetFunctionByName(nameof(PyLong_AsLong), GetUnmanagedDll(_PythonDll));
             PyLong_FromUnsignedLongLong = (delegate* unmanaged[Cdecl]<ulong, NewReference>)GetFunctionByName(nameof(PyLong_FromUnsignedLongLong), GetUnmanagedDll(_PythonDll));
             PyLong_FromString = (delegate* unmanaged[Cdecl]<StrPtr, IntPtr, int, NewReference>)GetFunctionByName(nameof(PyLong_FromString), GetUnmanagedDll(_PythonDll));
             PyLong_AsLongLong = (delegate* unmanaged[Cdecl]<BorrowedReference, long>)GetFunctionByName(nameof(PyLong_AsLongLong), GetUnmanagedDll(_PythonDll));
@@ -170,6 +171,7 @@ public unsafe partial class Runtime
             PyUnicode_InternFromString = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyUnicode_InternFromString), GetUnmanagedDll(_PythonDll));
             PyUnicode_Compare = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyUnicode_Compare), GetUnmanagedDll(_PythonDll));
             PyDict_New = (delegate* unmanaged[Cdecl]<NewReference>)GetFunctionByName(nameof(PyDict_New), GetUnmanagedDll(_PythonDll));
+            PyDict_Next = (delegate* unmanaged[Cdecl]<BorrowedReference, out BorrowedReference, out BorrowedReference, out BorrowedReference, int>)GetFunctionByName(nameof(PyDict_Next), GetUnmanagedDll(_PythonDll));
             PyDict_GetItem = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference>)GetFunctionByName(nameof(PyDict_GetItem), GetUnmanagedDll(_PythonDll));
             PyDict_GetItemString = (delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, BorrowedReference>)GetFunctionByName(nameof(PyDict_GetItemString), GetUnmanagedDll(_PythonDll));
             PyDict_SetItem = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyDict_SetItem), GetUnmanagedDll(_PythonDll));
@@ -385,6 +387,7 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyNumber_Float { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, bool> PyNumber_Check { get; }
         internal static delegate* unmanaged[Cdecl]<long, NewReference> PyLong_FromLongLong { get; }
+        internal static delegate* unmanaged[Cdecl]<BorrowedReference, long> PyLong_AsLong { get; }
         internal static delegate* unmanaged[Cdecl]<ulong, NewReference> PyLong_FromUnsignedLongLong { get; }
         internal static delegate* unmanaged[Cdecl]<StrPtr, IntPtr, int, NewReference> PyLong_FromString { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, long> PyLong_AsLongLong { get; }
@@ -447,6 +450,7 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<StrPtr, NewReference> PyUnicode_InternFromString { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int> PyUnicode_Compare { get; }
         internal static delegate* unmanaged[Cdecl]<NewReference> PyDict_New { get; }
+        internal static delegate* unmanaged[Cdecl]<BorrowedReference, out BorrowedReference, out BorrowedReference, out BorrowedReference, int> PyDict_Next { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference> PyDict_GetItem { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, StrPtr, BorrowedReference> PyDict_GetItemString { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, int> PyDict_SetItem { get; }

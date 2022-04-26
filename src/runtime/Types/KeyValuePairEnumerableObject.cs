@@ -12,6 +12,7 @@ namespace Python.Runtime
     /// </summary>
     internal class KeyValuePairEnumerableObject : ClassObject
     {
+        [NonSerialized]
         private static Dictionary<Tuple<Type, string>, MethodInfo> methodsByType = new Dictionary<Tuple<Type, string>, MethodInfo>();
         private static List<string> requiredMethods = new List<string> { "Count", "ContainsKey" };
 
@@ -46,7 +47,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __len__ for dictionary types.
         /// </summary>
-        public static int mp_length(IntPtr ob)
+        public static int mp_length(BorrowedReference ob)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var self = obj.inst;
@@ -60,7 +61,7 @@ namespace Python.Runtime
         /// <summary>
         /// Implements __contains__ for dictionary types.
         /// </summary>
-        public static int sq_contains(IntPtr ob, IntPtr v)
+        public static int sq_contains(BorrowedReference ob, BorrowedReference v)
         {
             var obj = (CLRObject)GetManagedObject(ob);
             var self = obj.inst;

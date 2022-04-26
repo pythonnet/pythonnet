@@ -42,7 +42,7 @@ namespace Python.EmbeddingTest
             var list = new List<Type> { typeof(decimal), typeof(int) };
             var py = list.ToPython();
             object result;
-            var converted = Converter.ToManaged(py.Handle, typeof(List<Type>), out result, false);
+            var converted = Converter.ToManaged(py, typeof(List<Type>), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(result, list);
@@ -54,7 +54,7 @@ namespace Python.EmbeddingTest
             var array = new List<Type> { typeof(decimal), typeof(int) };
             var py = array.ToPython();
             object result;
-            var converted = Converter.ToManaged(py.Handle, typeof(IList<Type>), out result, false);
+            var converted = Converter.ToManaged(py, typeof(IList<Type>), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(typeof(List<Type>), result.GetType());
@@ -69,7 +69,7 @@ namespace Python.EmbeddingTest
             var array = new List<Type> { typeof(decimal), typeof(int) };
             var py = array.ToPython();
             object result;
-            var converted = Converter.ToManaged(py.Handle, typeof(IReadOnlyCollection<Type>), out result, false);
+            var converted = Converter.ToManaged(py, typeof(IReadOnlyCollection<Type>), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(typeof(List<Type>), result.GetType());
@@ -85,7 +85,7 @@ namespace Python.EmbeddingTest
             var py = array.ToPython();
             object result;
             var outputType = typeof(Type[]);
-            var converted = Converter.ToManaged(py.Handle, outputType, out result, false);
+            var converted = Converter.ToManaged(py, outputType, out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(result, array);
@@ -99,7 +99,7 @@ namespace Python.EmbeddingTest
             var pyNumber = number.ToPython();
 
             object result;
-            var converted = Converter.ToManaged(pyNumber.Handle, typeof(DateTime), out result, false);
+            var converted = Converter.ToManaged(pyNumber, typeof(DateTime), out result, false);
 
             Assert.IsFalse(converted);
         }
@@ -111,7 +111,7 @@ namespace Python.EmbeddingTest
             var pyTimedelta = timespan.ToPython();
 
             object result;
-            var converted = Converter.ToManaged(pyTimedelta.Handle, typeof(TimeSpan), out result, false);
+            var converted = Converter.ToManaged(pyTimedelta, typeof(TimeSpan), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(result, timespan);
@@ -128,7 +128,7 @@ namespace Python.EmbeddingTest
             {
                 var pyDecimal = value.ToPython();
                 object result;
-                var converted = Converter.ToManaged(pyDecimal.Handle, typeof(decimal), out result, false);
+                var converted = Converter.ToManaged(pyDecimal, typeof(decimal), out result, false);
                 if (!converted || result == null)
                 {
                     throw new Exception("");
@@ -150,7 +150,7 @@ namespace Python.EmbeddingTest
             {
                 var pyDatetime = datetime.ToPython();
                 object result;
-                var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+                var converted = Converter.ToManaged(pyDatetime, typeof(DateTime), out result, false);
                 if (!converted || result == null)
                 {
                     throw new Exception("");
@@ -167,7 +167,7 @@ namespace Python.EmbeddingTest
             var pyDatetime = datetime.ToPython();
 
             object result;
-            var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+            var converted = Converter.ToManaged(pyDatetime, typeof(DateTime), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(datetime, result);
@@ -181,7 +181,7 @@ namespace Python.EmbeddingTest
             var pyDatetime = datetime.ToPython();
 
             object result;
-            var converted = Converter.ToManaged(pyDatetime.Handle, typeof(DateTime), out result, false);
+            var converted = Converter.ToManaged(pyDatetime, typeof(DateTime), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(datetime, result);
@@ -194,7 +194,7 @@ namespace Python.EmbeddingTest
             var pyTimeSpan = timeSpan.ToPython();
 
             object result;
-            var converted = Converter.ToManaged(pyTimeSpan.Handle, typeof(TimeSpan), out result, false);
+            var converted = Converter.ToManaged(pyTimeSpan, typeof(TimeSpan), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(timeSpan, result);

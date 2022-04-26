@@ -26,7 +26,7 @@ namespace Python.Runtime
 
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        private static Dictionary<MaybeType, PyType> cache = new();
+        private static Dictionary<Type, PyType> cache = new();
 
         static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new Dictionary<PyType, SlotsHolder>(PythonReferenceComparer.Instance);
 
@@ -75,7 +75,7 @@ namespace Python.Runtime
         internal static TypeManagerState SaveRuntimeData()
             => new()
             {
-                Cache = cache,
+                Cache = cache.ToDictionary(kvp => new MaybeType(kvp.Key), kvp => kvp.Value),
             };
 
         internal static void RestoreRuntimeData(TypeManagerState storage)
@@ -380,7 +380,7 @@ namespace Python.Runtime
                 {
                     if (Exceptions.ErrorOccurred()) return default;
                 }
-                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, true))
+                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, true, out var _))
                 {
                     return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
@@ -392,7 +392,7 @@ namespace Python.Runtime
                     {
                         if (Exceptions.ErrorOccurred()) return default;
                     }
-                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
+                    else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true, out var _))
                     {
                         return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
                     }

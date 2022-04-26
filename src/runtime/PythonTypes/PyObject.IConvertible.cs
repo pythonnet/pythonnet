@@ -9,7 +9,7 @@ public partial class PyObject : IConvertible
     private T DoConvert<T>()
     {
         using var _ = Py.GIL();
-        if (Converter.ToPrimitive(Reference, typeof(T), out object? result, setError: false))
+        if (Converter.ToPrimitive(Reference, typeof(T), out object? result, setError: false, out var _))
         {
             return (T)result!;
         }

@@ -234,6 +234,14 @@ namespace Python.Runtime
 
             SetPyMemberTypeOf(out PyFloatType, PyFloat_FromDouble(0).StealNullable());
 
+            PyDecimalType = new Lazy<PyType>(() => {
+                using var decimalMod = PyImport_ImportModule("_pydecimal");
+                using var decimalCtor = PyObject_GetAttrString(decimalMod.BorrowNullable(), "Decimal");
+                var op = PyObject_CallObject(decimalCtor.BorrowNullable(), BorrowedReference.Null).MoveToPyObject();
+                SetPyMemberTypeOf(out var result, op);
+                return result;
+            });
+
             _PyObject_NextNotImplemented = Get_PyObject_NextNotImplemented();
             {
                 using var sys = PyImport_ImportModule("sys");
@@ -472,6 +480,7 @@ namespace Python.Runtime
         internal static PyObject PyFloatType;
         internal static PyType PyBoolType;
         internal static PyType PyNoneType;
+        internal static Lazy<PyType> PyDecimalType;
         internal static BorrowedReference PyTypeType => new(Delegates.PyType_Type);
 
         internal static PyObject PyBytesType;
@@ -1115,6 +1124,7 @@ namespace Python.Runtime
         internal static bool PyBool_Check(BorrowedReference ob)
             => PyObject_TypeCheck(ob, PyBoolType);
 
+        internal static long PyLong_AsLong(BorrowedReference ob) => Delegates.PyLong_AsLong(ob);
         internal static NewReference PyInt_FromInt32(int value) => PyLong_FromLongLong(value);
 
         internal static NewReference PyInt_FromInt64(long value) => PyLong_FromLongLong(value);
@@ -1422,6 +1432,21 @@ namespace Python.Runtime
                               length: bytesLength / 2 - 1); // utf16 - BOM
         }
 
+        internal static ReadOnlySpan<char> GetManagedSpan(BorrowedReference op, out NewReference reference)
+        {
+            var type = PyObject_TYPE(op);
+
+            if (type == PyUnicodeType)
+            {
+                reference = PyUnicode_AsUTF16String(op);
+                int bytesLength = checked((int)PyBytes_Size(reference.Borrow()));
+                var codePoints = PyBytes_AsString(reference.Borrow());
+                return new ReadOnlySpan<char>(IntPtr.Add(codePoints, sizeof(char)).ToPointer(), length: bytesLength / 2 - 1);
+            }
+            reference = default;
+            return null;
+        }
+
 
         //====================================================================
         // Python dictionary API
@@ -1434,6 +1459,8 @@ namespace Python.Runtime
 
 
         internal static NewReference PyDict_New() => Delegates.PyDict_New();
+
+        internal static int PyDict_Next(BorrowedReference p, out BorrowedReference ppos, out BorrowedReference pkey, out BorrowedReference pvalue) => Delegates.PyDict_Next(p, out ppos, out pkey, out pvalue);
 
         /// <summary>
         /// Return NULL if the key is not present, but without setting an exception.

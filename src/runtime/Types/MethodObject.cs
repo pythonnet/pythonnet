@@ -19,6 +19,7 @@ namespace Python.Runtime
     {
         [NonSerialized]
         private MethodBase[]? _info = null;
+        [NonSerialized]
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
         internal readonly MethodBinder binder;
@@ -69,7 +70,7 @@ namespace Python.Runtime
 
         public virtual NewReference Invoke(BorrowedReference target, BorrowedReference args, BorrowedReference kw, MethodBase? info)
         {
-            return binder.Invoke(target, args, kw, info, this.info);
+            return binder.Invoke(target, args, kw, info);
         }
 
         /// <summary>
@@ -84,13 +85,14 @@ namespace Python.Runtime
             var str = "";
             Type marker = typeof(DocStringAttribute);
             var methods = binder.GetMethods();
-            foreach (var method in methods)
+            foreach (var m in methods)
             {
+                var method = m.MethodBase;
                 if (str.Length > 0)
                 {
                     str += Environment.NewLine;
                 }
-                var attrs = (Attribute[])method.MethodBase.GetCustomAttributes(marker, false);
+                var attrs = (Attribute[])method.GetCustomAttributes(marker, false);
                 if (attrs.Length == 0)
                 {
                     str += method.ToString();
@@ -107,7 +109,7 @@ namespace Python.Runtime
 
         internal NewReference GetName()
         {
-            var names = new HashSet<string>(binder.GetMethods().Select(m => m.Name));
+            var names = new HashSet<string>(binder.GetMethods().Select(m => m.MethodBase.Name));
             if (names.Count != 1) {
                 Exceptions.SetError(Exceptions.AttributeError, "a method has no name");
                 return default;

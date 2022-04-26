@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
@@ -70,7 +70,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestPublicStaticMethodWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -91,7 +91,7 @@ class TestPublicStaticMethodWorks:
         [Test]
         public void TestConstWorksInNonStaticClass()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -112,7 +112,7 @@ class TestConstWorksInNonStaticClass:
         [Test]
         public void TestConstWorksInStaticClass()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -133,7 +133,7 @@ class TestConstWorksInStaticClass:
         [Test]
         public void TestGetPublicPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -156,7 +156,7 @@ class TestGetPublicPropertyWorks:
         [Test]
         public void TestSetPublicPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -180,7 +180,7 @@ class TestSetPublicPropertyWorks:
         [Test]
         public void TestGetPublicPropertyFailsWhenAccessedOnClass()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -201,7 +201,7 @@ class TestGetPublicPropertyFailsWhenAccessedOnClass:
         [Test]
         public void TestGetProtectedPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -222,7 +222,7 @@ class TestGetProtectedPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -247,7 +247,7 @@ class TestSetProtectedPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicReadOnlyPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -270,7 +270,7 @@ class TestGetPublicReadOnlyPropertyWorks:
         [Test]
         public void TestSetPublicReadOnlyPropertyFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -293,7 +293,7 @@ class TestSetPublicReadOnlyPropertyFails:
         [Test]
         public void TestGetPublicReadOnlyPropertyFailsWhenAccessedOnClass()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -314,7 +314,7 @@ class TestGetPublicReadOnlyPropertyFailsWhenAccessedOnClass:
         [Test]
         public void TestGetProtectedReadOnlyPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -335,7 +335,7 @@ class TestGetProtectedReadOnlyPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedReadOnlyPropertyFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -356,7 +356,7 @@ class TestSetProtectedReadOnlyPropertyFails(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicStaticPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -377,7 +377,7 @@ class TestGetPublicStaticPropertyWorks:
         [Test]
         public void TestSetPublicStaticPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -399,7 +399,7 @@ class TestSetPublicStaticPropertyWorks:
         [Test]
         public void TestGetProtectedStaticPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -420,7 +420,7 @@ class TestGetProtectedStaticPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedStaticPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -445,7 +445,7 @@ class TestSetProtectedStaticPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicStaticReadOnlyPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -466,7 +466,7 @@ class TestGetPublicStaticReadOnlyPropertyWorks:
         [Test]
         public void TestSetPublicStaticReadOnlyPropertyFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -487,7 +487,7 @@ class TestSetPublicStaticReadOnlyPropertyFails:
         [Test]
         public void TestGetProtectedStaticReadOnlyPropertyWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -508,7 +508,7 @@ class TestGetProtectedStaticReadOnlyPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedStaticReadOnlyPropertyFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -529,7 +529,7 @@ class TestSetProtectedStaticReadOnlyPropertyFails(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -552,7 +552,7 @@ class TestGetPublicFieldWorks:
         [Test]
         public void TestSetPublicFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -576,7 +576,7 @@ class TestSetPublicFieldWorks:
         [Test]
         public void TestGetPublicFieldFailsWhenAccessedOnClass()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -597,7 +597,7 @@ class TestGetPublicFieldFailsWhenAccessedOnClass:
         [Test]
         public void TestGetProtectedFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -618,7 +618,7 @@ class TestGetProtectedFieldWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -643,7 +643,7 @@ class TestSetProtectedPropertyWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicReadOnlyFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -666,7 +666,7 @@ class TestGetPublicReadOnlyFieldWorks:
         [Test]
         public void TestSetPublicReadOnlyFieldFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -689,7 +689,7 @@ class TestSetPublicReadOnlyFieldFails:
         [Test]
         public void TestGetPublicReadOnlyFieldFailsWhenAccessedOnClass()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -710,7 +710,7 @@ class TestGetPublicReadOnlyFieldFailsWhenAccessedOnClass:
         [Test]
         public void TestGetProtectedReadOnlyFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -731,7 +731,7 @@ class TestGetProtectedReadOnlyFieldWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedReadOnlyFieldFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -752,7 +752,7 @@ class TestSetProtectedReadOnlyFieldFails(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicStaticFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -773,7 +773,7 @@ class TestGetPublicStaticFieldWorks:
         [Test]
         public void TestSetPublicStaticFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -795,7 +795,7 @@ class TestSetPublicStaticFieldWorks:
         [Test]
         public void TestGetProtectedStaticFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -816,7 +816,7 @@ class TestGetProtectedStaticFieldWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedStaticFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -841,7 +841,7 @@ class TestSetProtectedStaticFieldWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestGetPublicStaticReadOnlyFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -862,7 +862,7 @@ class TestGetPublicStaticReadOnlyFieldWorks:
         [Test]
         public void TestSetPublicStaticReadOnlyFieldFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -883,7 +883,7 @@ class TestSetPublicStaticReadOnlyFieldFails:
         [Test]
         public void TestGetProtectedStaticReadOnlyFieldWorks()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -904,7 +904,7 @@ class TestGetProtectedStaticReadOnlyFieldWorks(TestPropertyAccess.Fixture):
         [Test]
         public void TestSetProtectedStaticReadOnlyFieldFails()
         {
-            dynamic model = PythonEngine.ModuleFromString("module", @"
+            dynamic model = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -938,7 +938,7 @@ class TestSetProtectedStaticReadOnlyFieldFails(TestPropertyAccess.Fixture):
             }
             else
             {
-                var pyModel = PythonEngine.ModuleFromString("module", @"
+                var pyModel = PyModule.FromString("module", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")

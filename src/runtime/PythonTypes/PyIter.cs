@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
@@ -101,6 +102,11 @@ namespace Python.Runtime
         {
             base.GetObjectData(info, context);
             info.AddValue("c", _current);
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return (IEnumerator)this;
         }
     }
 }

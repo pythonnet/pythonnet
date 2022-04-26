@@ -33,7 +33,7 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        internal static Dictionary<MaybeType, ReflectedClrType> cache = new(capacity: 128);
+        internal static Dictionary<Type, ReflectedClrType> cache = new(capacity: 128);
         private static readonly Type dtype;
 
         private ClassManager()
@@ -103,20 +103,21 @@ namespace Python.Runtime
             return new()
             {
                 Contexts = contexts,
-                Cache = cache,
+                Cache = cache.ToDictionary(kvp => new MaybeType(kvp.Key), kvp => kvp.Value),
             };
         }
 
         internal static void RestoreRuntimeData(ClassManagerState storage)
         {
-            cache = storage.Cache;
+            cache.Clear();
             var invalidClasses = new List<KeyValuePair<MaybeType, ReflectedClrType>>();
             var contexts = storage.Contexts;
-            foreach (var pair in cache)
+            foreach (var pair in storage.Cache)
             {
                 var context = contexts[pair.Value];
                 if (pair.Key.Valid)
                 {
+                    cache[pair.Key.Value] = pair.Value;
                     pair.Value.Restore(context);
                 }
                 else

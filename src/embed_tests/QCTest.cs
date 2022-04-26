@@ -28,7 +28,7 @@ class PythonModule(Algo):
         public void Setup()
         {
             PythonEngine.Initialize();
-            module = PythonEngine.ModuleFromString("module", testModule).GetAttr("PythonModule").Invoke();
+            module = PyModule.FromString("module", testModule).GetAttr("PythonModule").Invoke();
         }
 
         [OneTimeTearDown]

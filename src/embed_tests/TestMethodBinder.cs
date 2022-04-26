@@ -81,7 +81,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
             catch (PythonException)
             {
             }
-            module = PythonEngine.ModuleFromString("module", testModule).GetAttr("PythonModel").Invoke();
+            module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
         }
 
         [OneTimeTearDown]
@@ -152,7 +152,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
             catch (Exception e)
             {
                 errorCaught = true;
-                Assert.AreEqual("TypeError : Failed to implicitly convert Python.EmbeddingTest.TestMethodBinder+ErroredImplicitConversion to System.String", e.Message);
+                Assert.AreEqual("Failed to implicitly convert Python.EmbeddingTest.TestMethodBinder+ErroredImplicitConversion to System.String", e.Message);
             }
 
             Assert.IsTrue(errorCaught);
@@ -243,7 +243,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
             var numpyDateTime = Numpy.datetime64("2011-02");
 
             object result;
-            var converted = Converter.ToManaged(numpyDateTime.Handle, typeof(DateTime), out result, false);
+            var converted = Converter.ToManaged(numpyDateTime, typeof(DateTime), out result, false);
 
             Assert.IsTrue(converted);
             Assert.AreEqual(new DateTime(2011, 02, 1), result);
@@ -312,7 +312,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
             Assert.AreEqual(1, class2.Value);
 
             // Run in Python
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -345,7 +345,7 @@ if class1.Value != 1 or class2.Value != 1:
             Assert.AreEqual(1, class2.Value);
 
             // Run in Python
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -378,7 +378,7 @@ if class1.Value != 1 or class2.Value != 1:
             Assert.AreEqual(1, class2.Value);
 
             // Run in Python
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -419,7 +419,7 @@ if class1.Value != 1 or class2.Value != 1:
             Assert.AreEqual(1, class2b.Value);
 
             // Run in Python
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -466,7 +466,7 @@ if class2a.Value != 1 or class2b.Value != 1:
             Assert.AreEqual(1, class2b.Value);
 
             // Run in Python
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -493,7 +493,7 @@ if class2a.Value != 1 or class2b.Value != 1:
         public void TestPyClassGenericBinding()
         {
             // Overriding our generics in Python we should still match with the generic method
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -527,7 +527,7 @@ if singleGenericClass.Value != 1 or multiGenericClass.Value != 1:
 
 
             // When available, should select non-generic method over generic method
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -551,7 +551,7 @@ if class1.Value != 10:
             TestGenericMethod(class1);
             Assert.AreEqual(15, class1.Value);
 
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -586,7 +586,7 @@ if class1.Value != 15:
             // This test ensures that we can still match and bind a generic method when we
             // have a converted pytype in the args (py timedelta -> C# TimeSpan)
 
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import timedelta
 from clr import AddReference
 AddReference(""System"")
@@ -608,7 +608,7 @@ if class1.Value != 5:
         {
             // This test ensures that we can still match and bind a generic method when we have default args
 
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import timedelta
 from clr import AddReference
 AddReference(""System"")
@@ -628,13 +628,13 @@ if class1.Value != 50:
 "));
         }
 
-                [Test]
+        [Test]
         public void TestGenericTypeMatchingWithNullDefaultArgs()
         {
             // This test ensures that we can still match and bind a generic method when we have \
             // null default args, important because caching by arg types occurs
 
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import timedelta
 from clr import AddReference
 AddReference(""System"")
@@ -658,7 +658,7 @@ if class1.Value != 20:
         public void TestMatchPyDateToDateTime()
         {
             // This test ensures that we match py datetime.date object to C# DateTime object
-            Assert.DoesNotThrow(() => PythonEngine.ModuleFromString("test", @"
+            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import *
 from clr import AddReference
 AddReference(""System"")
@@ -675,7 +675,8 @@ if result != 5:
 
 
         // Used to test that we match this function with Py DateTime & Date Objects
-        public static int GetMonth(DateTime test){
+        public static int GetMonth(DateTime test)
+        {
             return test.Month;
         }
 
@@ -875,7 +876,8 @@ if result != 5:
         public static void TestGenericMethodWithNullDefault<T>(GenericClassBase<T> test, Object testObj = null)
         where T : class
         {
-            if(testObj == null){
+            if (testObj == null)
+            {
                 test.Value = 10;
             }
             else

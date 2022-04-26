@@ -20,6 +20,15 @@ namespace Python.Runtime
         [NonSerialized]
         private MethodInfo? setter;
 
+        private MemberGetter _memberGetter;
+        private Type _memberGetterType;
+
+        private MemberSetter _memberSetter;
+        private Type _memberSetterType;
+
+        private bool _isValueType;
+        private Type _isValueTypeType;
+
         public PropertyObject(PropertyInfo md)
         {
             info = new MaybeMemberInfo<PropertyInfo>(md);
@@ -60,7 +69,9 @@ namespace Python.Runtime
             {
                 if (!getter.IsStatic)
                 {
-                    return new NewReference(ds);
+                    Exceptions.SetError(Exceptions.TypeError,
+                        "instance property must be accessed through a class instance");
+                    return default;
                 }
 
                 try
@@ -188,6 +199,40 @@ namespace Python.Runtime
             {
                 CacheAccessors();
             }
+        }
+
+
+        private MemberGetter GetMemberGetter(Type type)
+        {
+            if (type != _memberGetterType)
+            {
+                _memberGetter = FasterflectManager.GetPropertyGetter(type, info.Value.Name);
+                _memberGetterType = type;
+            }
+
+            return _memberGetter;
+        }
+
+        private MemberSetter GetMemberSetter(Type type)
+        {
+            if (type != _memberSetterType)
+            {
+                _memberSetter = FasterflectManager.GetPropertySetter(type, info.Value.Name);
+                _memberSetterType = type;
+            }
+
+            return _memberSetter;
+        }
+
+        private bool IsValueType(Type type)
+        {
+            if (type != _isValueTypeType)
+            {
+                _isValueType = FasterflectManager.IsValueType(type);
+                _isValueTypeType = type;
+            }
+
+            return _isValueType;
         }
     }
 }

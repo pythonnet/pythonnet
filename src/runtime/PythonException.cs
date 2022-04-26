@@ -110,11 +110,12 @@ namespace Python.Runtime
                 throw;
             }
 
-            Runtime.PyErr_NormalizeException(type: ref type, val: ref value, tb: ref traceback);
+            var normalizedValue = new NewReference(value.Borrow());
+            Runtime.PyErr_NormalizeException(type: ref type, val: ref normalizedValue, tb: ref traceback);
 
             try
             {
-                return FromPyErr(typeRef: type.Borrow(), valRef: value.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
+                return FromPyErr(typeRef: type.Borrow(), valRef: value.Borrow(), nValRef: normalizedValue.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
             }
             finally
             {
@@ -142,7 +143,7 @@ namespace Python.Runtime
                 return null;
             }
 
-            if (Converter.ToManagedValue(pyInfo.Borrow(), typeof(ExceptionDispatchInfo), out object? result, setError: false))
+            if (Converter.ToManagedValue(pyInfo.Borrow(), typeof(ExceptionDispatchInfo), out object? result, setError: false, out var _))
             {
                 return (ExceptionDispatchInfo)result!;
             }
@@ -153,7 +154,7 @@ namespace Python.Runtime
         /// <summary>
         /// Requires lock to be acquired elsewhere
         /// </summary>
-        private static Exception FromPyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference tbRef,
+        private static Exception FromPyErr(BorrowedReference typeRef, BorrowedReference valRef, BorrowedReference nValRef, BorrowedReference tbRef,
                                            out ExceptionDispatchInfo? exceptionDispatchInfo)
         {
             if (valRef == null) throw new ArgumentNullException(nameof(valRef));
@@ -184,7 +185,7 @@ namespace Python.Runtime
                 return decodedException;
             }
 
-            using var cause = Runtime.PyException_GetCause(valRef);
+            using var cause = Runtime.PyException_GetCause(nValRef);
             Exception? inner = FromCause(cause.BorrowNullable());
             return new PythonException(type, value, traceback, inner);
         }
@@ -227,6 +228,7 @@ namespace Python.Runtime
             return FromPyErr(
                 typeRef: Runtime.PyObject_TYPE(cause),
                 valRef: cause,
+                nValRef: cause,
                 tbRef: innerTraceback.BorrowNullable(),
                 out _);
 
