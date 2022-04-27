@@ -136,4 +136,12 @@ namespace Python.Test
             return items;
         }
     }
+
+    public abstract class GenericVirtualMethodTest
+    {
+        public virtual Q VirtMethod<Q>(Q arg1)
+        {
+            return arg1;
+        }
+    }
 }
