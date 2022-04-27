@@ -9,7 +9,7 @@
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest)
+                         FunctionsTest, GenericVirtualMethodTest)
 from System.Collections.Generic import List
 
 
@@ -263,6 +263,12 @@ def test_namespace_and_no_init():
         q = 1
     t = TestX()
     assert t.q == 1
+
+def test_virtual_generic_method():
+    class OverloadingSubclass(GenericVirtualMethodTest):
+        __namespace__ = "test_virtual_generic_method_cls"
+    obj = OverloadingSubclass()
+    assert obj.VirtMethod[int](5) == 5
 
 def test_construction_from_clr():
     import clr
