@@ -6,7 +6,7 @@
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
     <PackageId>QuantConnect.pythonnet</PackageId>
-    <Version>2.0.11</Version>
+    <Version>2.0.12</Version>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
