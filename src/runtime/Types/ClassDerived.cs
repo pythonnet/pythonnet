@@ -219,8 +219,9 @@ namespace Python.Runtime
             var virtualMethods = new HashSet<string>();
             foreach (MethodInfo method in methods)
             {
-                if (!method.Attributes.HasFlag(MethodAttributes.Virtual) |
-                    method.Attributes.HasFlag(MethodAttributes.Final))
+                if (!method.Attributes.HasFlag(MethodAttributes.Virtual)
+                    || method.Attributes.HasFlag(MethodAttributes.Final)
+                    || method.IsGenericMethod)
                 {
                     continue;
                 }
