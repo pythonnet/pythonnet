@@ -267,6 +267,8 @@ def test_namespace_and_no_init():
 def test_virtual_generic_method():
     class OverloadingSubclass(GenericVirtualMethodTest):
         __namespace__ = "test_virtual_generic_method_cls"
+    class OverloadingSubclass2(OverloadingSubclass):
+        pass
     obj = OverloadingSubclass()
     assert obj.VirtMethod[int](5) == 5
 

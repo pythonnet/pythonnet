@@ -128,10 +128,18 @@ namespace Python.Runtime
             if (null != dict)
             {
                 using var clsDict = new PyDict(dict);
-                if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
+                
+                if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__")
+                                                   || (cb.type.Valid && cb.type.Value != null && cb.type.Value.GetConstructor(Array.Empty<Type>()) != null))
                 {
+                    if (!clsDict.HasKey("__namespace__"))
+                    {
+                        clsDict["__namespace__"] =
+                            (clsDict["__module__"].ToString()).ToPython();
+                    }
                     return TypeManager.CreateSubType(name, base_type, clsDict);
                 }
+                
             }
 
             // otherwise just create a basic type without reflecting back into the managed side.
