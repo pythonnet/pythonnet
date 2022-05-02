@@ -351,6 +351,12 @@ namespace Python.Runtime
             {
                 return;
             }
+            if (Exceptions.ErrorOccurred())
+            {
+                throw new InvalidOperationException(
+                    "Python error indicator is set",
+                    innerException: PythonException.PeekCurrentOrNull(out _));
+            }
             // If the shutdown handlers trigger a domain unload,
             // don't call shutdown again.
             AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;

@@ -36,6 +36,7 @@ and other `PyObject` derived types when called from Python.
 details about the cause of the failure
 -   `clr.AddReference` no longer adds ".dll" implicitly
 -   `PyIter(PyObject)` constructor replaced with static `PyIter.GetIter(PyObject)` method
+-   Python runtime can no longer be shut down if the Python error indicator is set, as it would have unpredictable behavior
 -   BREAKING: Return values from .NET methods that return an interface are now automatically
      wrapped in that interface. This is a breaking change for users that rely on being
      able to access members that are part of the implementation class, but not the
