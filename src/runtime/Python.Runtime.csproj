@@ -1,12 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net5.0</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     <Platforms>AnyCPU</Platforms>
-    <LangVersion>10.0</LangVersion>
     <RootNamespace>Python.Runtime</RootNamespace>
     <AssemblyName>Python.Runtime</AssemblyName>
     <PackageId>QuantConnect.pythonnet</PackageId>
-    <Version>2.0.12</Version>
+    <Version>2.0.13</Version>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/pythonnet/pythonnet</RepositoryUrl>
@@ -65,7 +64,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Security.Permissions" Version="4.7.0" />
     <PackageReference Include="fasterflect" Version="3.0.0" />
   </ItemGroup>
 </Project>
