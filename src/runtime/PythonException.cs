@@ -110,11 +110,11 @@ namespace Python.Runtime
                 throw;
             }
 
-            var normalizedValue = new NewReference(value.Borrow());
-            Runtime.PyErr_NormalizeException(type: ref type, val: ref normalizedValue, tb: ref traceback);
-
             try
             {
+                var normalizedValue = new NewReference(value.Borrow());
+                Runtime.PyErr_NormalizeException(type: ref type, val: ref normalizedValue, tb: ref traceback);
+
                 return FromPyErr(typeRef: type.Borrow(), valRef: value.Borrow(), nValRef: normalizedValue.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
             }
             finally
