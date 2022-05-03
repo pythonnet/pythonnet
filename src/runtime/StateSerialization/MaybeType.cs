@@ -15,7 +15,6 @@ namespace Python.Runtime
         const string SerializationName = "n";
         readonly string name;
         readonly Type type;
-        
         public string DeletedMessage
         {
             get
@@ -38,6 +37,7 @@ namespace Python.Runtime
 
         public string Name => name;
         public bool Valid => type != null;
+        public Type ValueOrNull => type;
 
         public override string ToString()
         {

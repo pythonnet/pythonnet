@@ -124,4 +124,25 @@ namespace Python.Test
             return et.value;
         }
     }
+
+    public interface ISimpleInterface
+    {
+        bool Ok();
+    }
+
+    public class SimpleClass
+    {
+
+        public static void TestObject(object obj)
+        {
+            if (obj is ISimpleInterface)
+            {
+
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+    }
 }

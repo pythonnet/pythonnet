@@ -17,6 +17,8 @@ namespace Python.PythonTestsRunner
         [OneTimeSetUp]
         public void SetUp()
         {
+            Python.Runtime.Runtime.PythonDLL =
+                "/Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib";
             PythonEngine.Initialize();
         }
 
@@ -35,6 +37,8 @@ namespace Python.PythonTestsRunner
             // Add the test that you want to debug here.
             yield return new[] { "test_indexer", "test_boolean_indexer" };
             yield return new[] { "test_delegate", "test_bool_delegate" };
+            yield return new[] { "test_subclass", "test_virtual_generic_method" };
+            yield return new[] { "test_subclass", "test_interface_and_class_impl2" };
         }
 
         /// <summary>
