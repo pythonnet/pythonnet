@@ -188,10 +188,15 @@ namespace Python.Runtime
                                 FieldAttributes.Private);
 
             // override any constructors
-            ConstructorInfo[] constructors = baseClass.GetConstructors();
+            ConstructorInfo[] constructors = baseClass.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (ConstructorInfo ctor in constructors)
             {
                 AddConstructor(ctor, baseType, typeBuilder);
+            }
+
+            if (constructors.Length == 0)
+            {
+                AddConstructor(null, baseType, typeBuilder);
             }
 
             // Override any properties explicitly overridden in python
@@ -303,7 +308,7 @@ namespace Python.Runtime
         /// <param name="typeBuilder">TypeBuilder for the new type the ctor is to be added to</param>
         private static void AddConstructor(ConstructorInfo ctor, Type baseType, TypeBuilder typeBuilder)
         {
-            ParameterInfo[] parameters = ctor.GetParameters();
+            ParameterInfo[] parameters = ctor?.GetParameters() ?? Array.Empty<ParameterInfo>();
             Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
 
             // create a method for calling the original constructor
@@ -322,14 +327,15 @@ namespace Python.Runtime
             {
                 il.Emit(OpCodes.Ldarg, i + 1);
             }
-            il.Emit(OpCodes.Call, ctor);
+            if(ctor != null)
+                il.Emit(OpCodes.Call, ctor);
             il.Emit(OpCodes.Ret);
 
             // override the original method with a new one that dispatches to python
             ConstructorBuilder cb = typeBuilder.DefineConstructor(MethodAttributes.Public |
                                                                   MethodAttributes.ReuseSlot |
                                                                   MethodAttributes.HideBySig,
-                ctor.CallingConvention,
+                ctor?.CallingConvention ?? CallingConventions.Any,
                 parameterTypes);
             il = cb.GetILGenerator();
             il.DeclareLocal(typeof(object[]));
