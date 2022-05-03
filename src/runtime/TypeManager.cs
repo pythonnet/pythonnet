@@ -374,7 +374,7 @@ namespace Python.Runtime
             return new PyTuple(bases);
         }
 
-        internal static NewReference CreateSubType(BorrowedReference py_name, BorrowedReference py_base_type, BorrowedReference dictRef)
+        internal static NewReference CreateSubType(BorrowedReference py_name, IEnumerable<ClassBase> py_base_type, IEnumerable<Type> interfaces, BorrowedReference dictRef)
         {
             // Utility to create a subtype of a managed type with the ability for the
             // a python subtype able to override the managed implementation
@@ -415,9 +415,10 @@ namespace Python.Runtime
             }
 
             // create the new managed type subclassing the base managed type
-            if (ManagedType.GetManagedObject(py_base_type) is ClassBase baseClass)
+            var baseClass = py_base_type.FirstOrDefault();
+            if (null == baseClass)
             {
-                return ReflectedClrType.CreateSubclass(baseClass, name,
+                return ReflectedClrType.CreateSubclass(baseClass, interfaces, name,
                                                        ns: (string?)namespaceStr,
                                                        assembly: (string?)assembly,
                                                        dict: dictRef);

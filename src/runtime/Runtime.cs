@@ -1824,6 +1824,12 @@ namespace Python.Runtime
                 return *Delegates.Py_NoSiteFlag;
             });
         }
+
+        internal static uint PyTuple_GetSize(BorrowedReference tuple)
+        {
+            IntPtr r = Delegates.PyTuple_Size(tuple);
+            return (uint)r.ToInt32();
+        }
     }
 
     internal class BadPythonDllException : MissingMethodException

@@ -9,7 +9,7 @@
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, GenericVirtualMethodTest)
+                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass)
 from System.Collections.Generic import List
 
 
@@ -271,6 +271,28 @@ def test_virtual_generic_method():
         pass
     obj = OverloadingSubclass()
     assert obj.VirtMethod[int](5) == 5
+
+def test_interface_and_class_impl():
+    class OverloadingSubclass(GenericVirtualMethodTest):
+        __namespace__ = "test_virtual_generic_method_cls"
+    class OverloadingSubclass2(OverloadingSubclass):
+        pass
+    obj = OverloadingSubclass()
+    assert obj.VirtMethod[int](5) == 5
+
+def test_interface_and_class_impl2():
+    class DualSubClass(ISimpleInterface, SimpleClass):
+        def Ok(self):
+            return True
+    class DualSubClass2(ISimpleInterface):
+        def Ok(self):
+            return True
+
+    obj = DualSubClass()
+    SimpleClass.TestObject(obj)
+    obj = DualSubClass2()
+    SimpleClass.TestObject(obj)
+
 
 def test_construction_from_clr():
     import clr

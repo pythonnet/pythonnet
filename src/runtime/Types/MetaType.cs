@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -84,35 +87,57 @@ namespace Python.Runtime
             // That type must itself have a managed implementation. We check
             // that by making sure its metatype is the CLR metatype.
 
-            if (Runtime.PyTuple_Size(bases) != 1)
+
+            List<Type> interfaces = new List<Type>();
+            List<ClassBase> baseType = new List<ClassBase>();
+
+            var cnt = Runtime.PyTuple_GetSize(bases);
+
+            for (uint i = 0; i < cnt; i++)
+            {
+                var base_type2 = Runtime.PyTuple_GetItem(bases, (int)i);
+                var cb2 = (ClassBase) GetManagedObject(base_type2);
+                if (cb2 != null)
+                {
+                    if (cb2.type.Valid && cb2.type.Value.IsInterface)
+                        interfaces.Add(cb2.type.Value);
+                    else baseType.Add(cb2);
+                }
+            }
+
+            if (baseType.Count == 0)
+            {
+                baseType.Add(new ClassBase(typeof(object)));
+            }
+
+
+            if (baseType.Count > 1)
             {
                 return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
             }
 
-            BorrowedReference base_type = Runtime.PyTuple_GetItem(bases, 0);
-            BorrowedReference mt = Runtime.PyObject_TYPE(base_type);
+            /*
+            BorrowedReference mt = Runtime.PyObject_TYPE(baseType);
 
             if (!(mt == PyCLRMetaType || mt == Runtime.PyTypeType))
             {
                 return Exceptions.RaiseTypeError("invalid metatype");
-            }
+            }*/
 
             // Ensure that the reflected type is appropriate for subclassing,
             // disallowing subclassing of delegates, enums and array types.
 
-            if (GetManagedObject(base_type) is ClassBase cb)
+            var cb = baseType.First();
+            try
             {
-                try
+                if (!cb.CanSubclass())
                 {
-                    if (!cb.CanSubclass())
-                    {
-                        return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
-                    }
+                    return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
                 }
-                catch (SerializationException)
-                {
-                    return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
-                }
+            }
+            catch (SerializationException)
+            {
+                return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
             }
 
             BorrowedReference slots = Runtime.PyDict_GetItem(dict, PyIdentifier.__slots__);
@@ -127,21 +152,25 @@ namespace Python.Runtime
             // into python.
             if (null != dict)
             {
+                var btt = baseType.FirstOrDefault().type.ValueOrNull;
+                var ctor = btt?.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .FirstOrDefault(x => x.GetParameters().Any() == false);
                 using var clsDict = new PyDict(dict);
                 
                 if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__")
-                                                   || (cb.type.Valid && cb.type.Value != null && cb.type.Value.GetConstructor(Array.Empty<Type>()) != null))
+                                                   || (ctor != null))
                 {
                     if (!clsDict.HasKey("__namespace__"))
                     {
                         clsDict["__namespace__"] =
                             (clsDict["__module__"].ToString()).ToPython();
                     }
-                    return TypeManager.CreateSubType(name, base_type, clsDict);
+                    return TypeManager.CreateSubType(name, baseType, interfaces, clsDict);
                 }
                 
             }
 
+            var base_type = Runtime.PyTuple_GetItem(bases, 0);
             // otherwise just create a basic type without reflecting back into the managed side.
             IntPtr func = Util.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_new);
             NewReference type = NativeCall.Call_3(func, tp, args, kw);
