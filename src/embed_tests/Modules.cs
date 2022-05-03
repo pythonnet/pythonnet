@@ -51,7 +51,7 @@ namespace Python.EmbeddingTest
                 ps.Set("a", 1);
                 var result = ps.Eval<int>("a + 2");
                 Assert.AreEqual(3, result);
-            }                
+            }
         }
 
         /// <summary>
@@ -286,7 +286,7 @@ namespace Python.EmbeddingTest
         public void TestVariables()
         {
             using (Py.GIL())
-            { 
+            {
                 (ps.Variables() as dynamic)["ee"] = new PyInt(200);
                 var a0 = ps.Get<int>("ee");
                 Assert.AreEqual(200, a0);
@@ -338,34 +338,49 @@ namespace Python.EmbeddingTest
                         "    th_cnt += 1\n"
                     );
                 }
-                int th_cnt = 100;
+                const int th_cnt = 100;
+                int locked = 0, unlocked = 0, started = 0;
                 for (int i = 0; i < th_cnt; i++)
                 {
-                    System.Threading.Thread th = new System.Threading.Thread(() =>
+                    ThreadPool.QueueUserWorkItem(_ =>
+                    // var th = new System.Threading.Thread(() =>
                     {
+                        Interlocked.Increment(ref started);
                         using (Py.GIL())
                         {
+                            Interlocked.Increment(ref locked);
                             //ps.GetVariable<dynamic>("update")(); //call the scope function dynamicly
                             _ps.update();
                         }
+                        Interlocked.Increment(ref unlocked);
                     });
-                    th.Start();
+                    // th.Start();
                 }
                 //equivalent to Thread.Join, make the main thread join the GIL competition
-                int cnt = 0;
-                while (cnt != th_cnt)
+                int result = 0;
+                var wait = new Thread(() =>
                 {
+                    int cnt = 0;
+                    while (cnt != th_cnt)
+                    {
+                        using (Py.GIL())
+                        {
+                            cnt = ps.Get<int>("th_cnt");
+                        }
+                        Thread.Yield();
+                    }
+
                     using (Py.GIL())
                     {
-                        cnt = ps.Get<int>("th_cnt");
+                        result = ps.Get<int>("res");
                     }
-                    Thread.Yield();
-                }
-                using (Py.GIL())
+                });
+                wait.Start();
+                if (!wait.Join(timeout: TimeSpan.FromSeconds(30)))
                 {
-                    var result = ps.Get<int>("res");
-                    Assert.AreEqual(101 * th_cnt, result);
+                    Assert.Fail($"started: {started} locked: {locked} unlocked: {unlocked}");
                 }
+                Assert.AreEqual(101 * th_cnt, result);
             }
             finally
             {
