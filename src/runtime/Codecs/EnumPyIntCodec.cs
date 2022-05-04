@@ -53,7 +53,14 @@ namespace Python.Runtime.Codecs
             var enumType = value.GetType();
             if (!enumType.IsEnum) return null;
 
-            return new PyInt(Convert.ToInt64(value));
+            try
+            {
+                return new PyInt(Convert.ToInt64(value));
+            }
+            catch (OverflowException)
+            {
+                return new PyInt(Convert.ToUInt64(value));
+            }
         }
 
         private EnumPyIntCodec() { }
