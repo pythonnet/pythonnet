@@ -15,13 +15,13 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateManager
     {
-        private readonly Dictionary<Type,Type> cache = new Dictionary<Type, Type>();
+        private readonly Dictionary<Type,Type> cache = new();
         private readonly Type basetype = typeof(Dispatcher);
         private readonly Type arrayType = typeof(object[]);
         private readonly Type voidtype = typeof(void);
         private readonly Type typetype = typeof(Type);
         private readonly Type pyobjType = typeof(PyObject);
-        private readonly CodeGenerator codeGenerator = new CodeGenerator();
+        private readonly CodeGenerator codeGenerator = new();
         private readonly ConstructorInfo arrayCtor;
         private readonly MethodInfo dispatch;
 
@@ -309,7 +309,7 @@ namespace Python.Runtime
                         {
                             tpName += $" of size {Runtime.PyTuple_Size(op)}";
                         }
-                        StringBuilder sb = new StringBuilder();
+                        var sb = new StringBuilder();
                         if (!isVoid) sb.Append(rtype.FullName);
                         for (int i = 0; i < pi.Length; i++)
                         {

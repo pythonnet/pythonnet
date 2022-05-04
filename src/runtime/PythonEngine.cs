@@ -233,7 +233,7 @@ namespace Python.Runtime
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
                 Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
-                using (var keys = locals.Keys())
+                using var keys = locals.Keys();
                 foreach (PyObject key in keys)
                 {
                     if (!key.ToString()!.StartsWith("_") || key.ToString()!.Equals("__version__"))
@@ -374,7 +374,7 @@ namespace Python.Runtime
         /// </summary>
         public delegate void ShutdownHandler();
 
-        static List<ShutdownHandler> ShutdownHandlers = new List<ShutdownHandler>();
+        static readonly List<ShutdownHandler> ShutdownHandlers = new();
 
         /// <summary>
         /// Add a function to be called when the engine is shut down.

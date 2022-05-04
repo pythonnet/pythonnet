@@ -12,10 +12,10 @@ namespace Python.Runtime
         // The ReflectedType of the object
         const string SerializationType = "t";
         const string SerializationMemberName = "n";
-        MemberInfo? info;
+        readonly MemberInfo? info;
 
         [NonSerialized]
-        Exception? deserializationException;
+        readonly Exception? deserializationException;
 
         public string DeletedMessage
         {

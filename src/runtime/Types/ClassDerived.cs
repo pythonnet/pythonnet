@@ -107,7 +107,8 @@ namespace Python.Runtime
             try
             {
                 self = GetPyObj(obj).CheckRun();
-            } catch (RuntimeShutdownException e)
+            }
+            catch (RuntimeShutdownException e)
             {
                 Exceptions.SetError(e);
                 return default;
@@ -197,22 +198,19 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
-                using (PyIterable keys = dict.Keys())
+                using var keys = dict.Keys();
+                foreach (PyObject pyKey in keys)
                 {
-                    foreach (PyObject pyKey in keys)
+                    using var value = dict[pyKey];
+                    if (value.HasAttr("_clr_property_type_"))
                     {
-                        using (PyObject value = dict[pyKey])
-                        {
-                            if (value.HasAttr("_clr_property_type_"))
-                            {
-                                string propertyName = pyKey.ToString()!;
-                                pyProperties.Add(propertyName);
+                        string propertyName = pyKey.ToString()!;
+                        pyProperties.Add(propertyName);
 
-                                // Add the property to the type
-                                AddPythonProperty(propertyName, value, typeBuilder);
-                            }
-                        }
+                        // Add the property to the type
+                        AddPythonProperty(propertyName, value, typeBuilder);
                     }
+                    pyKey.Dispose();
                 }
             }
 
@@ -245,27 +243,24 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
-                using (PyIterable keys = dict.Keys())
+                using var keys = dict.Keys();
+                foreach (PyObject pyKey in keys)
                 {
-                    foreach (PyObject pyKey in keys)
+                    using var value = dict[pyKey];
+                    if (value.HasAttr("_clr_return_type_") && value.HasAttr("_clr_arg_types_"))
                     {
-                        using (PyObject value = dict[pyKey])
+                        string methodName = pyKey.ToString()!;
+
+                        // if this method has already been redirected to the python method skip it
+                        if (virtualMethods.Contains(methodName))
                         {
-                            if (value.HasAttr("_clr_return_type_") && value.HasAttr("_clr_arg_types_"))
-                            {
-                                string methodName = pyKey.ToString()!;
-
-                                // if this method has already been redirected to the python method skip it
-                                if (virtualMethods.Contains(methodName))
-                                {
-                                    continue;
-                                }
-
-                                // Add the method to the type
-                                AddPythonMethod(methodName, value, typeBuilder);
-                            }
+                            continue;
                         }
+
+                        // Add the method to the type
+                        AddPythonMethod(methodName, value, typeBuilder);
                     }
+                    pyKey.Dispose();
                 }
             }
 
@@ -474,100 +469,100 @@ namespace Python.Runtime
                 methodName = pyMethodName.As<string>() ?? throw new ArgumentNullException(methodNameAttribute);
             }
 
-            using (PyObject pyReturnType = func.GetAttr("_clr_return_type_"))
-            using (var pyArgTypes = PyIter.GetIter(func.GetAttr("_clr_arg_types_")))
+            using var pyReturnType = func.GetAttr("_clr_return_type_");
+            using var pyArgTypes = func.GetAttr("_clr_arg_types_");
+            using var pyArgTypesIter = PyIter.GetIter(pyArgTypes);
+            var returnType = pyReturnType.AsManagedObject(typeof(Type)) as Type;
+            if (returnType == null)
             {
-                var returnType = pyReturnType.AsManagedObject(typeof(Type)) as Type;
-                if (returnType == null)
+                returnType = typeof(void);
+            }
+
+            var argTypes = new List<Type>();
+            foreach (PyObject pyArgType in pyArgTypesIter)
+            {
+                var argType = pyArgType.AsManagedObject(typeof(Type)) as Type;
+                if (argType == null)
                 {
-                    returnType = typeof(void);
+                    throw new ArgumentException("_clr_arg_types_ must be a list or tuple of CLR types");
                 }
+                argTypes.Add(argType);
+                pyArgType.Dispose();
+            }
 
-                var argTypes = new List<Type>();
-                foreach (PyObject pyArgType in pyArgTypes)
-                {
-                    var argType = pyArgType.AsManagedObject(typeof(Type)) as Type;
-                    if (argType == null)
-                    {
-                        throw new ArgumentException("_clr_arg_types_ must be a list or tuple of CLR types");
-                    }
-                    argTypes.Add(argType);
-                }
+            // add the method to call back into python
+            MethodAttributes methodAttribs = MethodAttributes.Public |
+                                             MethodAttributes.Virtual |
+                                             MethodAttributes.ReuseSlot |
+                                             MethodAttributes.HideBySig;
 
-                // add the method to call back into python
-                MethodAttributes methodAttribs = MethodAttributes.Public |
-                                                 MethodAttributes.Virtual |
-                                                 MethodAttributes.ReuseSlot |
-                                                 MethodAttributes.HideBySig;
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(methodName,
+                methodAttribs,
+                returnType,
+                argTypes.ToArray());
 
-                MethodBuilder methodBuilder = typeBuilder.DefineMethod(methodName,
-                    methodAttribs,
-                    returnType,
-                    argTypes.ToArray());
+            ILGenerator il = methodBuilder.GetILGenerator();
 
-                ILGenerator il = methodBuilder.GetILGenerator();
+            il.DeclareLocal(typeof(object[]));
+            il.DeclareLocal(typeof(RuntimeMethodHandle));
 
-                il.DeclareLocal(typeof(object[]));
-                il.DeclareLocal(typeof(RuntimeMethodHandle));
+            // this
+            il.Emit(OpCodes.Ldarg_0);
 
-                // this
-                il.Emit(OpCodes.Ldarg_0);
+            // Python method to call
+            il.Emit(OpCodes.Ldstr, methodName);
 
-                // Python method to call
-                il.Emit(OpCodes.Ldstr, methodName);
+            // original method name
+            il.Emit(OpCodes.Ldnull); // don't fall back to the base type's method
 
-                // original method name
-                il.Emit(OpCodes.Ldnull); // don't fall back to the base type's method
+            // create args array
+            il.Emit(OpCodes.Ldc_I4, argTypes.Count);
+            il.Emit(OpCodes.Newarr, typeof(object));
+            il.Emit(OpCodes.Stloc_0);
 
-                // create args array
-                il.Emit(OpCodes.Ldc_I4, argTypes.Count);
-                il.Emit(OpCodes.Newarr, typeof(object));
-                il.Emit(OpCodes.Stloc_0);
-
-                // fill args array
-                for (var i = 0; i < argTypes.Count; ++i)
-                {
-                    il.Emit(OpCodes.Ldloc_0);
-                    il.Emit(OpCodes.Ldc_I4, i);
-                    il.Emit(OpCodes.Ldarg, i + 1);
-                    var type = argTypes[i];
-                    if (type.IsByRef)
-                    {
-                        type = type.GetElementType();
-                        il.Emit(OpCodes.Ldobj, type);
-                    }
-                    if (type.IsValueType)
-                    {
-                        il.Emit(OpCodes.Box, type);
-                    }
-                    il.Emit(OpCodes.Stelem, typeof(object));
-                }
-
-                // args array
+            // fill args array
+            for (var i = 0; i < argTypes.Count; ++i)
+            {
                 il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Ldarg, i + 1);
+                var type = argTypes[i];
+                if (type.IsByRef)
+                {
+                    type = type.GetElementType();
+                    il.Emit(OpCodes.Ldobj, type);
+                }
+                if (type.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, type);
+                }
+                il.Emit(OpCodes.Stelem, typeof(object));
+            }
 
-                // method handle for the base method is null
-                il.Emit(OpCodes.Ldloca_S, 1);
-                il.Emit(OpCodes.Initobj, typeof(RuntimeMethodHandle));
-                il.Emit(OpCodes.Ldloc_1);
+            // args array
+            il.Emit(OpCodes.Ldloc_0);
+
+            // method handle for the base method is null
+            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Initobj, typeof(RuntimeMethodHandle));
+            il.Emit(OpCodes.Ldloc_1);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
 
-                // invoke the method
-                if (returnType == typeof(void))
-                {
-                    il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(InvokeMethodVoid)));
-                }
-                else
-                {
-                    il.Emit(OpCodes.Call,
-                        typeof(PythonDerivedType).GetMethod(nameof(InvokeMethod)).MakeGenericMethod(returnType));
-                }
+            // invoke the method
+            if (returnType == typeof(void))
+            {
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(InvokeMethodVoid)));
+            }
+            else
+            {
+                il.Emit(OpCodes.Call,
+                    typeof(PythonDerivedType).GetMethod(nameof(InvokeMethod)).MakeGenericMethod(returnType));
+            }
 
-                CodeGenerator.GenerateMarshalByRefsBack(il, argTypes);
+            CodeGenerator.GenerateMarshalByRefsBack(il, argTypes);
 
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
-                il.Emit(OpCodes.Ret);
-            }
+            il.Emit(OpCodes.Ret);
         }
 
         /// <summary>
@@ -586,68 +581,62 @@ namespace Python.Runtime
                                              MethodAttributes.HideBySig |
                                              MethodAttributes.SpecialName;
 
-            using (PyObject pyPropertyType = func.GetAttr("_clr_property_type_"))
+            using var pyPropertyType = func.GetAttr("_clr_property_type_");
+            var propertyType = pyPropertyType.AsManagedObject(typeof(Type)) as Type;
+            if (propertyType == null)
             {
-                var propertyType = pyPropertyType.AsManagedObject(typeof(Type)) as Type;
-                if (propertyType == null)
+                throw new ArgumentException("_clr_property_type must be a CLR type");
+            }
+
+            PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(propertyName,
+                PropertyAttributes.None,
+                propertyType,
+                null);
+
+            if (func.HasAttr("fget"))
+            {
+                using var pyfget = func.GetAttr("fget");
+                if (pyfget.IsTrue())
                 {
-                    throw new ArgumentException("_clr_property_type must be a CLR type");
-                }
+                    MethodBuilder methodBuilder = typeBuilder.DefineMethod("get_" + propertyName,
+                        methodAttribs,
+                        propertyType,
+                        null);
 
-                PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(propertyName,
-                    PropertyAttributes.None,
-                    propertyType,
-                    null);
-
-                if (func.HasAttr("fget"))
-                {
-                    using (PyObject pyfget = func.GetAttr("fget"))
-                    {
-                        if (pyfget.IsTrue())
-                        {
-                            MethodBuilder methodBuilder = typeBuilder.DefineMethod("get_" + propertyName,
-                                methodAttribs,
-                                propertyType,
-                                null);
-
-                            ILGenerator il = methodBuilder.GetILGenerator();
-                            il.Emit(OpCodes.Ldarg_0);
-                            il.Emit(OpCodes.Ldstr, propertyName);
+                    ILGenerator il = methodBuilder.GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldstr, propertyName);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
-                            il.Emit(OpCodes.Call,
-                                typeof(PythonDerivedType).GetMethod("InvokeGetProperty").MakeGenericMethod(propertyType));
+                    il.Emit(OpCodes.Call,
+                        typeof(PythonDerivedType).GetMethod("InvokeGetProperty").MakeGenericMethod(propertyType));
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
-                            il.Emit(OpCodes.Ret);
+                    il.Emit(OpCodes.Ret);
 
-                            propertyBuilder.SetGetMethod(methodBuilder);
-                        }
-                    }
+                    propertyBuilder.SetGetMethod(methodBuilder);
                 }
+            }
 
-                if (func.HasAttr("fset"))
+            if (func.HasAttr("fset"))
+            {
+                using var pyset = func.GetAttr("fset");
+                if (pyset.IsTrue())
                 {
-                    using (PyObject pyset = func.GetAttr("fset"))
-                    {
-                        if (pyset.IsTrue())
-                        {
-                            MethodBuilder methodBuilder = typeBuilder.DefineMethod("set_" + propertyName,
-                                methodAttribs,
-                                null,
-                                new[] { propertyType });
+                    MethodBuilder methodBuilder = typeBuilder.DefineMethod("set_" + propertyName,
+                        methodAttribs,
+                        null,
+                        new[] { propertyType });
 
-                            ILGenerator il = methodBuilder.GetILGenerator();
-                            il.Emit(OpCodes.Ldarg_0);
-                            il.Emit(OpCodes.Ldstr, propertyName);
-                            il.Emit(OpCodes.Ldarg_1);
+                    ILGenerator il = methodBuilder.GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldstr, propertyName);
+                    il.Emit(OpCodes.Ldarg_1);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
-                            il.Emit(OpCodes.Call,
-                                typeof(PythonDerivedType).GetMethod("InvokeSetProperty").MakeGenericMethod(propertyType));
+                    il.Emit(OpCodes.Call,
+                        typeof(PythonDerivedType).GetMethod("InvokeSetProperty").MakeGenericMethod(propertyType));
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
-                            il.Emit(OpCodes.Ret);
+                    il.Emit(OpCodes.Ret);
 
-                            propertyBuilder.SetSetMethod(methodBuilder);
-                        }
-                    }
+                    propertyBuilder.SetSetMethod(methodBuilder);
                 }
             }
         }
@@ -868,10 +857,8 @@ namespace Python.Runtime
             try
             {
                 using var pyself = new PyObject(self.CheckRun());
-                using (PyObject pyvalue = pyself.GetAttr(propertyName))
-                {
-                    return pyvalue.As<T>();
-                }
+                using var pyvalue = pyself.GetAttr(propertyName);
+                return pyvalue.As<T>();
             }
             finally
             {

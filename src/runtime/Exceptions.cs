@@ -196,8 +196,7 @@ namespace Python.Runtime
             // might get a managed exception raised that is a wrapper for a
             // Python exception. In that case we'd rather have the real thing.
 
-            var pe = e as PythonException;
-            if (pe != null)
+            if (e is PythonException pe)
             {
                 pe.Restore();
                 return true;

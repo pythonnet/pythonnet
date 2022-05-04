@@ -247,10 +247,9 @@ namespace Python.Runtime
                 Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc.Borrow());
             }
 
-            var co = impl as ClassObject;
             // If this is a ClassObject AND it has constructors, generate a __doc__ attribute.
             // required that the ClassObject.ctors be changed to internal
-            if (co != null)
+            if (impl is ClassObject co)
             {
                 if (co.NumCtors > 0 && !co.HasCustomNew())
                 {

@@ -77,8 +77,7 @@ public static class Py
         }
         for (var i = 0; i < kv.Length; i += 2)
         {
-            var key = kv[i] as string;
-            if (key is null)
+            if (kv[i] is not string key)
                 throw new ArgumentException("Keys must be non-null strings");
 
             BorrowedReference value;
@@ -123,11 +122,7 @@ public static class Py
             args = Enumerable.Empty<string>();
         }
 
-        SetArgv(
-            new[] { "" }.Concat(
-                Environment.GetCommandLineArgs().Skip(1)
-            )
-        );
+        SetArgv(new[] { "" }.Concat(args.Skip(1)));
     }
 
     public static void SetArgv(params string[] argv)

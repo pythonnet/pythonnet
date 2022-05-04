@@ -18,15 +18,15 @@ namespace Python.Runtime
         {
         }
 
-        private static Type objectType;
-        private static Type stringType;
-        private static Type singleType;
-        private static Type doubleType;
-        private static Type int16Type;
-        private static Type int32Type;
-        private static Type int64Type;
-        private static Type boolType;
-        private static Type typeType;
+        private static readonly Type objectType;
+        private static readonly Type stringType;
+        private static readonly Type singleType;
+        private static readonly Type doubleType;
+        private static readonly Type int16Type;
+        private static readonly Type int32Type;
+        private static readonly Type int64Type;
+        private static readonly Type boolType;
+        private static readonly Type typeType;
 
         static Converter()
         {
@@ -151,8 +151,7 @@ namespace Python.Runtime
 
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
-            var pyderived = value as IPythonDerivedType;
-            if (null != pyderived)
+            if (value is IPythonDerivedType pyderived)
             {
                 if (!IsTransparentProxy(pyderived))
                     return ClassDerivedObject.ToPython(pyderived);
@@ -161,7 +160,7 @@ namespace Python.Runtime
             // ModuleObjects are created in a way that their wrapping them as
             // a CLRObject fails, the ClassObject has no tpHandle. Return the
             // pyHandle as is, do not convert.
-            if (value is ModuleObject modobj)
+            if (value is ModuleObject)
             {
                 throw new NotImplementedException();
             }

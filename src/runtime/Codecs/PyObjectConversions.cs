@@ -15,8 +15,8 @@ namespace Python.Runtime
     /// </summary>
     public static class PyObjectConversions
     {
-        static readonly DecoderGroup decoders = new DecoderGroup();
-        static readonly EncoderGroup encoders = new EncoderGroup();
+        static readonly DecoderGroup decoders = new();
+        static readonly EncoderGroup encoders = new();
 
         /// <summary>
         /// Registers specified encoder (marshaller)
@@ -62,7 +62,7 @@ namespace Python.Runtime
         }
 
         static readonly ConcurrentDictionary<Type, IPyObjectEncoder[]>
-            clrToPython = new ConcurrentDictionary<Type, IPyObjectEncoder[]>();
+            clrToPython = new();
         static IPyObjectEncoder[] GetEncoders(Type type)
         {
             lock (encoders)

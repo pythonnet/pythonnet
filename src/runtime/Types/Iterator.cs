@@ -9,8 +9,8 @@ namespace Python.Runtime
     /// </summary>
     internal class Iterator : ExtensionType
     {
-        private IEnumerator iter;
-        private Type elemType;
+        private readonly IEnumerator iter;
+        private readonly Type elemType;
 
         public Iterator(IEnumerator e, Type elemType)
         {

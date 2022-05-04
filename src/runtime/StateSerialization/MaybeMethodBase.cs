@@ -24,11 +24,11 @@ namespace Python.Runtime
 
         public static implicit operator MaybeMethodBase<T> (T? ob) => new (ob);
 
-        string? name;
-        MethodBase? info;
+        readonly string? name;
+        readonly MethodBase? info;
 
         [NonSerialized]
-        Exception? deserializationException;
+        readonly Exception? deserializationException;
 
         public string DeletedMessage 
         {

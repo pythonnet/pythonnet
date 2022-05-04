@@ -57,7 +57,6 @@ namespace Python.Runtime
 
 
             var slots = TypeOffset.GetOffsets();
-            int size = IntPtr.Size;
 
             foreach (var entry in slots)
             {
@@ -99,7 +98,7 @@ namespace Python.Runtime
         }
 
         [Conditional("DEBUG")]
-        internal static void debug(string msg)
+        internal static void Debug(string msg)
         {
             var st = new StackTrace(1, true);
             StackFrame sf = st.GetFrame(0);
@@ -138,13 +137,13 @@ namespace Python.Runtime
         public static void AssertHasReferences(BorrowedReference obj)
         {
             nint refcount = Runtime.Refcount(obj);
-            Debug.Assert(refcount > 0, "Object refcount is 0 or less");
+            System.Diagnostics.Debug.Assert(refcount > 0, "Object refcount is 0 or less");
         }
 
         [Conditional("DEBUG")]
         public static void EnsureGIL()
         {
-            Debug.Assert(HaveInterpreterLock(), "GIL must be acquired");
+            System.Diagnostics.Debug.Assert(HaveInterpreterLock(), "GIL must be acquired");
         }
 
         public static bool HaveInterpreterLock() => Runtime.PyGILState_Check() == 1;

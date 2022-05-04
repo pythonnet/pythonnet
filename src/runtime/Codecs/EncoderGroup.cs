@@ -10,7 +10,7 @@ namespace Python.Runtime.Codecs
     /// </summary>
     public sealed class EncoderGroup: IPyObjectEncoder, IEnumerable<IPyObjectEncoder>, IDisposable
     {
-        readonly List<IPyObjectEncoder> encoders = new List<IPyObjectEncoder>();
+        readonly List<IPyObjectEncoder> encoders = new();
 
         /// <summary>
         /// Add specified encoder to the group

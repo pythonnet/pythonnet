@@ -12,7 +12,7 @@ namespace Python.Runtime
     {
         private readonly string name;
         private readonly EventHandlerCollection e;
-        private PyObject? target;
+        private readonly PyObject? target;
 
         public EventBinding(string name, EventHandlerCollection e, PyObject? target)
         {

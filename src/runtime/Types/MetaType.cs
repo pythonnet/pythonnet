@@ -100,8 +100,7 @@ namespace Python.Runtime
             // Ensure that the reflected type is appropriate for subclassing,
             // disallowing subclassing of delegates, enums and array types.
 
-            var cb = GetManagedObject(base_type) as ClassBase;
-            if (cb != null)
+            if (GetManagedObject(base_type) is ClassBase cb)
             {
                 try
                 {
@@ -128,12 +127,10 @@ namespace Python.Runtime
             // into python.
             if (null != dict)
             {
-                using (var clsDict = new PyDict(dict))
+                using var clsDict = new PyDict(dict);
+                if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
                 {
-                    if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
-                    {
-                        return TypeManager.CreateSubType(name, base_type, clsDict);
-                    }
+                    return TypeManager.CreateSubType(name, base_type, clsDict);
                 }
             }
 
@@ -259,8 +256,7 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference mp_subscript(BorrowedReference tp, BorrowedReference idx)
         {
-            var cb = GetManagedObject(tp) as ClassBase;
-            if (cb != null)
+            if (GetManagedObject(tp) is ClassBase cb)
             {
                 return cb.type_subscript(idx);
             }
@@ -310,44 +306,30 @@ namespace Python.Runtime
 
         private static NewReference DoInstanceCheck(BorrowedReference tp, BorrowedReference args, bool checkType)
         {
-            var cb = GetManagedObject(tp) as ClassBase;
-
-            if (cb == null || !cb.type.Valid)
+            if (GetManagedObject(tp) is not ClassBase cb || !cb.type.Valid)
             {
                 return new NewReference(Runtime.PyFalse);
             }
 
-            using (var argsObj = new PyList(args))
+            using var argsObj = new PyList(args);
+            if (argsObj.Length() != 1)
             {
-                if (argsObj.Length() != 1)
-                {
-                    return Exceptions.RaiseTypeError("Invalid parameter count");
-                }
+                return Exceptions.RaiseTypeError("Invalid parameter count");
+            }
 
-                PyObject arg = argsObj[0];
-                PyObject otherType;
-                if (checkType)
-                {
-                    otherType = arg;
-                }
-                else
-                {
-                    otherType = arg.GetPythonType();
-                }
+            PyObject arg = argsObj[0];
+            var otherType = checkType ? arg : arg.GetPythonType();
 
-                if (Runtime.PyObject_TYPE(otherType) != PyCLRMetaType)
-                {
-                    return new NewReference(Runtime.PyFalse);
-                }
+            if (Runtime.PyObject_TYPE(otherType) != PyCLRMetaType)
+            {
+                return new NewReference(Runtime.PyFalse);
+            }
 
-                var otherCb = GetManagedObject(otherType) as ClassBase;
-                if (otherCb == null || !otherCb.type.Valid)
-                {
-                    return new NewReference(Runtime.PyFalse);
-                }
-
+            if (GetManagedObject(otherType) is ClassBase otherCb && otherCb.type.Valid)
+            {
                 return Converter.ToPython(cb.type.Value.IsAssignableFrom(otherCb.type.Value));
             }
+            return new NewReference(Runtime.PyFalse);
         }
 
         public static NewReference __instancecheck__(BorrowedReference tp, BorrowedReference args)

@@ -539,10 +539,8 @@ namespace Python.Runtime
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-            using (var pyKey = new PyString(key))
-            {
-                return GetItem(pyKey);
-            }
+            using var pyKey = new PyString(key);
+            return GetItem(pyKey);
         }
 
 
@@ -556,10 +554,8 @@ namespace Python.Runtime
         /// </remarks>
         public virtual PyObject GetItem(int index)
         {
-            using (var key = new PyInt(index))
-            {
-                return GetItem(key);
-            }
+            using var key = new PyInt(index);
+            return GetItem(key);
         }
 
 
@@ -597,10 +593,8 @@ namespace Python.Runtime
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            using (var pyKey = new PyString(key))
-            {
-                SetItem(pyKey, value);
-            }
+            using var pyKey = new PyString(key);
+            SetItem(pyKey, value);
         }
 
 
@@ -616,10 +610,8 @@ namespace Python.Runtime
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            using (var pyindex = new PyInt(index))
-            {
-                SetItem(pyindex, value);
-            }
+            using var pyindex = new PyInt(index);
+            SetItem(pyindex, value);
         }
 
 
@@ -655,10 +647,8 @@ namespace Python.Runtime
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-            using (var pyKey = new PyString(key))
-            {
-                DelItem(pyKey);
-            }
+            using var pyKey = new PyString(key);
+            DelItem(pyKey);
         }
 
 
@@ -672,10 +662,8 @@ namespace Python.Runtime
         /// </remarks>
         public virtual void DelItem(int index)
         {
-            using (var pyindex = new PyInt(index))
-            {
-                DelItem(pyindex);
-            }
+            using var pyindex = new PyInt(index);
+            DelItem(pyindex);
         }
 
 
@@ -1320,7 +1308,7 @@ namespace Python.Runtime
         {
             using var _ = Py.GIL();
             NewReference res;
-            if (!(arg is PyObject))
+            if (arg is not PyObject)
             {
                 arg = arg.ToPython();
             }

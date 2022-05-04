@@ -57,9 +57,7 @@ namespace Python.Runtime
         /// </summary>
         public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
         {
-            var e = GetManagedObject(val) as EventBinding;
-
-            if (e != null)
+            if (GetManagedObject(val) is EventBinding _)
             {
                 return 0;
             }

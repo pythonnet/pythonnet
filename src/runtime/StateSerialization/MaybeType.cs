@@ -9,12 +9,12 @@ namespace Python.Runtime
     [Serializable]
     internal struct MaybeType : ISerializable
     {
-        public static implicit operator MaybeType (Type ob) => new MaybeType(ob);
+        public static implicit operator MaybeType (Type ob) => new(ob);
 
         // The AssemblyQualifiedName of the serialized Type
         const string SerializationName = "n";
-        string name;
-        Type type;
+        readonly string name;
+        readonly Type type;
         
         public string DeletedMessage
         {
