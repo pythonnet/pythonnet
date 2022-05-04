@@ -75,6 +75,23 @@ namespace Python.Runtime
             => FetchCurrentOrNullRaw()
                ?? throw new InvalidOperationException("No exception is set");
 
+        internal static Exception? PeekCurrentOrNull(out ExceptionDispatchInfo? dispatchInfo)
+        {
+            using var _ = new Py.GILState();
+
+            Runtime.PyErr_Fetch(out var type, out var value, out var traceback);
+            Runtime.PyErr_Restore(
+                new NewReference(type, canBeNull: true).StealNullable(),
+                new NewReference(value, canBeNull: true).StealNullable(),
+                new NewReference(traceback, canBeNull: true).StealNullable());
+
+            var err = FetchCurrentOrNull(out dispatchInfo);
+
+            Runtime.PyErr_Restore(type.StealNullable(), value.StealNullable(), traceback.StealNullable());
+
+            return err;
+        }
+
         internal static Exception? FetchCurrentOrNull(out ExceptionDispatchInfo? dispatchInfo)
         {
             dispatchInfo = null;
