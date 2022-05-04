@@ -55,11 +55,11 @@ namespace Python.Runtime.Codecs
 
             try
             {
-                return new PyInt((long)value);
+                return new PyInt(Convert.ToInt64(value));
             }
-            catch (InvalidCastException)
+            catch (OverflowException)
             {
-                return new PyInt((ulong)value);
+                return new PyInt(Convert.ToUInt64(value));
             }
         }
 
