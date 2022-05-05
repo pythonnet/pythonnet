@@ -49,8 +49,14 @@ class clrproperty(object):
         if not self.fset:
             raise AttributeError("%s is read-only" % self.__name__)
         return self.fset.__get__(instance, None)(value)
-    def add_attribute(self, attribute):
-        self._clr_attributes_.append(attribute)
+    def add_attribute(self, *args, **kwargs):
+        lst = []
+        if len(args) > 0:
+            if isinstance(args[0], tuple):
+                lst = args
+            else:
+                lst = [(args[0], args[1:], kwargs)]
+        self._clr_attributes_.extend(lst)
         return self
 
 class property(object):
@@ -68,9 +74,16 @@ class property(object):
         return v
     def __set__(self, instance, value):
         self.values[instance] = value
-    def add_attribute(self, attribute):
-        self._clr_attributes_.append(attribute)
+    def add_attribute(self, *args, **kwargs):
+        lst = []
+        if len(args) > 0:
+            if isinstance(args[0], tuple):
+                lst = args
+            else:
+                lst = [(args[0], args[1:], kwargs)]
+        self._clr_attributes_.extend(lst)
         return self
+
     def __call__(self, type, default):
         self2 = self.__class__(self._clr_property_type_, type, default)
         self2._clr_attributes_ = self._clr_attributes_
@@ -118,22 +131,34 @@ class clrmethod(object):
     def __get__(self, instance, owner):
         return self.__func.__get__(instance, owner)
 
-    def clr_attribute(self, attribute):
-        self._clr_attributes_.append(attribute)
+    def add_attribute(self, *args, **kwargs):
+        lst = []
+        if len(args) > 0:
+            if isinstance(args[0], tuple):
+                lst = args
+            else:
+                lst = [(args[0], args[1:], kwargs)]
+        self._clr_attributes_.extend(lst)
         return self
 
 class attribute(object):
 
-    def __init__(self, attr, *args, **kwargs):
-        self.attr = attr
+    def __init__(self, *args, **kwargs):
+        lst = []
+        if len(args) > 0:
+            if isinstance(args[0], tuple):
+                lst = args
+            else:
+                lst = [(args[0], args[1:], kwargs)]
         import Python.Runtime
         #todo: ensure that attributes only are pushed when @ is used.
-        #import inspect
-        #Python.Runtime.PythonDerivedType.Test(inspect.stack()[1].code_context)
+        self.attr = lst
+        for item in lst:
+            Python.Runtime.PythonDerivedType.PushAttribute(item)
 
-        Python.Runtime.PythonDerivedType.PushAttribute(attr)
     def __call__(self, x):
         import Python.Runtime
-        if Python.Runtime.PythonDerivedType.AssocAttribute(self.attr, x):
-            pass
+        for item in self.attr:
+            if Python.Runtime.PythonDerivedType.AssocAttribute(item, x):
+                pass
         return x

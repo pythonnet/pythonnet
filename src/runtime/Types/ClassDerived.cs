@@ -872,7 +872,8 @@ namespace Python.Runtime
             var tp = new PyTuple(obj);
             for (int i = 0; i < attributesStack.Count; i++)
             {
-                if (Equals(tp, attributesStack[i]))
+
+                if (tp.BorrowNullable()== attributesStack[i].BorrowNullable())
                 {
                     attributesStack.RemoveAt(i);
                     if (!methodAssoc.TryGetValue(func, out var lst))
