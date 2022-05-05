@@ -12,7 +12,7 @@ from System.Diagnostics import (DebuggerDisplay, DebuggerDisplayAttribute, Debug
 from System.ComponentModel import (Browsable, BrowsableAttribute)
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute)
+                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute, TestAttributeAttribute)
 from System.Collections.Generic import List
 
 
@@ -339,7 +339,12 @@ def test_class_with_advanced_attribute():
     @clr.attribute(TestAttribute(1, 2, z = "A", W = "B"))
     class ClassWithAttributes2(ISimpleInterface, SimpleClass):
         pass
+    @clr.attribute(TestAttributeAttribute, 1, 2, z = "A", W = "B")
+    class ClassWithAttributes3(ISimpleInterface, SimpleClass):
+        X = clr.property(Double, 1.0).add_attribute(TestAttributeAttribute, 1, 2)
+
     c = ClassWithAttributes2()
+    c2 = ClassWithAttributes3()
 def test_more_subclasses():
     import clr
     class SubClass1(SimpleClass):
