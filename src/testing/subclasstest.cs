@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Python.Test
 {
@@ -130,13 +131,42 @@ namespace Python.Test
         bool Ok();
     }
 
+    public class TestAttributeAttribute: Attribute
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public string Z { get; set; }
+        public string W { get; set; }
+        public TestAttributeAttribute(int x, int y, string z = "x")
+        {
+            X = x;
+            Y = y;
+            Z = z;
+
+        }
+    }
+
+
     public class SimpleClass
     {
+        public bool Initialized;
+
+        public SimpleClass()
+        {
+            Initialized = true;
+        }
+        private int counter = 0;
+        public virtual int IncrementThing()
+        {
+            return ++counter;
+        }
 
         public static void TestObject(object obj)
         {
-            if (obj is ISimpleInterface)
+            if (obj is ISimpleInterface si)
             {
+                if (!si.Ok())
+                    throw new Exception();
 
             }
             else
@@ -144,5 +174,44 @@ namespace Python.Test
                 throw new Exception();
             }
         }
+        public static void TestObjectProperty(object obj, string prop, double newval)
+        {
+            obj.GetType().GetProperty(prop).SetValue(obj, newval);
+            var val = obj.GetType().GetProperty(prop).GetValue(obj);
+            if (!Equals(newval, val))
+                throw new Exception();
+        }
+
+        private static SimpleClass objStore;
+        public static void Test1(SimpleClass obj)
+        {
+            objStore = obj;
+            int x = obj.IncrementThing();
+        }
+
+        public static void Test2()
+        {
+            GC.Collect();
+
+            var threads = new Thread[20];
+            for(int i = 0; i < threads.Length; i++)
+                threads[i] =  new Thread(() => TestObjectProperty(objStore, "X", 10.0));
+            for (int i = 0; i < threads.Length; i++)
+                threads[i].Start();
+            for (int i = 0; i < threads.Length; i++)
+                threads[i].Join();
+        }
+
+        public static object InvokeCtor(Type t)
+        {
+            var obj = Activator.CreateInstance(t);
+            return obj;
+        }
+
+        public static void Pause()
+        {
+
+        }
+
     }
 }

@@ -39,6 +39,9 @@ namespace Python.PythonTestsRunner
             yield return new[] { "test_delegate", "test_bool_delegate" };
             yield return new[] { "test_subclass", "test_virtual_generic_method" };
             yield return new[] { "test_subclass", "test_interface_and_class_impl2" };
+            yield return new[] { "test_subclass", "test_class_with_attributes" };
+            yield return new[] { "test_subclass", "test_class_with_advanced_attribute" };
+            yield return new[] { "test_subclass", "test_more_subclasses" };
         }
 
         /// <summary>

@@ -7,9 +7,12 @@
 """Test sub-classing managed types"""
 
 import System
+from System import (Console, Attribute, Double)
+from System.Diagnostics import (DebuggerDisplay, DebuggerDisplayAttribute, Debug)
+from System.ComponentModel import (Browsable, BrowsableAttribute)
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass)
+                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute)
 from System.Collections.Generic import List
 
 
@@ -292,6 +295,82 @@ def test_interface_and_class_impl2():
     SimpleClass.TestObject(obj)
     obj = DualSubClass2()
     SimpleClass.TestObject(obj)
+
+def test_class_with_attributes():
+    import clr
+    @clr.attribute(Browsable(False))
+    class ClassWithAttributes(ISimpleInterface, SimpleClass):
+        __clr_attributes__ = [DebuggerDisplay("X: {X}")]
+        @clr.attribute(Browsable(True))
+        def Ok(self):
+            return True
+        @clr.attribute(Browsable(True))
+        @clr.clrmethod(int, [int])
+        def Method1(x):
+            return x
+
+        X = clr.property(Double, 1.0).add_attribute(DebuggerDisplay("Asd"))
+    obj = ClassWithAttributes()
+    tp = obj.GetType()
+    founddisplay = 0
+    foundbrowsable = 0
+    for attr in Attribute.GetCustomAttributes(tp):
+        if isinstance(attr, DebuggerDisplayAttribute):
+            founddisplay = founddisplay + 1
+        if isinstance(attr, BrowsableAttribute):
+            foundbrowsable = foundbrowsable + 1
+    SimpleClass.TestObject(obj)
+    found_display_on_property = 0
+    for attr in Attribute.GetCustomAttributes(tp.GetProperty("X")):
+        if isinstance(attr, DebuggerDisplayAttribute):
+                    found_display_on_property = found_display_on_property + 1
+    found_display_on_method = 0
+    for attr in Attribute.GetCustomAttributes(tp.GetMethod("Method1")):
+            if isinstance(attr, BrowsableAttribute):
+                        found_display_on_method = found_display_on_method + 1
+    assert founddisplay == 1
+    assert found_display_on_property == 1
+    assert found_display_on_method == 1
+    assert foundbrowsable == 1
+    assert obj.X == 1.0
+    SimpleClass.TestObjectProperty(obj, "X", 10.0)
+def test_class_with_advanced_attribute():
+    import clr
+    @clr.attribute(TestAttribute(1, 2, z = "A", W = "B"))
+    class ClassWithAttributes2(ISimpleInterface, SimpleClass):
+        pass
+    c = ClassWithAttributes2()
+def test_more_subclasses():
+    import clr
+    class SubClass1(SimpleClass):
+        X = clr.property(Double, 1.0)
+        def __init__(self):
+            super().__init__()
+            self.Y = 10.0
+            SimpleClass.Pause();
+
+    @clr.attribute(DebuggerDisplay("X"))
+
+    class SubClass2(SubClass1):
+        __namespace__ = "TestModule"
+        def __init__(self):
+            SimpleClass.Pause();
+            super().__init__()
+        def IncrementThing(self):
+            return 6;
+    obj = SimpleClass.InvokeCtor(SubClass2)
+
+    obj2 = SubClass2()
+    tp = obj.GetType()
+    obj.X = 5.0
+    assert obj.Y == 10.0
+    assert obj2.Y == 10.0
+    assert obj.Initialized == True
+    assert obj2.Initialized == True
+    SimpleClass.Test1(obj)
+    obj = None
+    SimpleClass.Test2()
+
 
 
 def test_construction_from_clr():
