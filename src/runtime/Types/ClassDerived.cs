@@ -137,6 +137,112 @@ namespace Python.Runtime
             return result;
         }
 
+        static CustomAttributeBuilder AddAttribute(PyObject attr)
+        {
+            // this is a bit complicated because we want to support both unnamed and named arguments
+            // in C# there is a discrepancy between property setters and named argument wrt attributes
+            // in python there is no difference. But luckily there is rarely a conflict, so we can treat
+            // named arguments and named properties or fields the same way.
+            var tp = new PyTuple(attr);
+            Type attribute = (Type) tp[0].AsManagedObject(typeof(object));
+
+            var args = (PyObject[]) tp[1].AsManagedObject(typeof(PyObject[]));
+            var dict = new PyDict(tp[2]);
+            var dict2 = new Dictionary<string, PyObject>();
+            foreach (var key in dict.Keys())
+            {
+                var k = key.As<string>();
+                dict2[k] = dict[key];
+            }
+
+            // todo support kwargs and tupleargs
+            var allconstructors = attribute.GetConstructors();
+            foreach (var constructor in allconstructors)
+            {
+                var parameters = constructor.GetParameters();
+                List<object> paramValues = new List<object>();
+                HashSet<string> accountedFor = new HashSet<string>();
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var parameter = parameters[i];
+                    if (parameter.ParameterType.IsArray && null != parameter.GetCustomAttribute(typeof(ParamArrayAttribute)))
+                    {
+                        int cnt = args.Length - i;
+                        var values = Array.CreateInstance(parameter.ParameterType.GetElementType(), cnt);
+                        for(int j = 0; j < cnt; j++)
+                            values.SetValue(args[i + j], j);
+                        paramValues.Add(values);
+                        break;
+                    }
+
+                    PyObject argvalue = null;
+                    if (args.Length <= i && dict2.TryGetValue(parameter.Name, out argvalue))
+                    {
+                        accountedFor.Add(parameter.Name);
+                    }else if (args.Length <= i && parameter.IsOptional)
+                    {
+                        paramValues.Add(parameter.DefaultValue);
+                        continue;
+                    }else if (args.Length <= i)
+                    {
+                        goto next;
+                    }
+                    else
+                    {
+                        argvalue = args[i];
+                    }
+
+                    var argval = argvalue.AsManagedObject(parameter.ParameterType);
+                    if (parameter.ParameterType.IsAssignableFrom(argval?.GetType() ?? typeof(object)))
+                        paramValues.Add(argval);
+                    else if (parameter.IsOptional)
+                    {
+                        paramValues.Add(parameter.DefaultValue);
+                    }
+                }
+
+                List<PropertyInfo> namedProperties = new List<PropertyInfo>();
+                List<object> namedPropertyValues = new List<object>();
+                List<FieldInfo> namedFields = new List<FieldInfo>();
+                List<object> namedFieldValues = new List<object>();
+
+                foreach (var key in dict2.Keys.Where(x => accountedFor.Contains(x) == false))
+                {
+                    var member = attribute.GetMember(key).FirstOrDefault();
+                    if (member == null)
+                        goto next;
+                    if (member is PropertyInfo prop)
+                    {
+                        namedProperties.Add(prop);
+                        var argval = dict2[key].AsManagedObject(prop.PropertyType);
+                        if (prop.PropertyType.IsAssignableFrom(argval?.GetType() ?? typeof(object)))
+                            namedPropertyValues.Add(argval);
+                        else
+                            goto next;
+                    }
+                    if (member is FieldInfo field)
+                    {
+                        namedFields.Add(field);
+                        var argval = dict2[key].AsManagedObject(field.FieldType);
+                        if (field.FieldType.IsAssignableFrom(argval?.GetType() ?? typeof(object)))
+                            namedFieldValues.Add(argval);
+                        else
+                            goto next;
+                    }
+                }
+
+                var cb = new CustomAttributeBuilder(constructor, paramValues.ToArray(),
+                    namedProperties.ToArray(), namedPropertyValues.ToArray(),
+                    namedFields.ToArray(), namedFieldValues.ToArray());
+                return cb;
+                next: ;
+            }
+
+            return null;
+        }
+
+
+
         /// <summary>
         /// Creates a new managed type derived from a base type with any virtual
         /// methods overridden to call out to python if the associated python
@@ -181,11 +287,14 @@ namespace Python.Runtime
 
             // add a field for storing the python object pointer
             // FIXME: fb not used
-            FieldBuilder fb = typeBuilder.DefineField(PyObjName,
+            if (baseClass.GetField(PyObjName, PyObjFlags) == null)
+            {
+                FieldBuilder fb = typeBuilder.DefineField(PyObjName,
 #pragma warning disable CS0618 // Type or member is obsolete. OK for internal use.
-                                typeof(UnsafeReferenceWithRun),
+                    typeof(UnsafeReferenceWithRun),
 #pragma warning restore CS0618 // Type or member is obsolete
-                                FieldAttributes.Private);
+                    FieldAttributes.Public);
+            }
 
             // override any constructors
             ConstructorInfo[] constructors = baseClass.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -250,6 +359,24 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
+                if (dict.HasKey("__clr_attributes__"))
+                {
+                    var attributes = new PyList(dict["__clr_attributes__"]);
+                    foreach (var attr in attributes)
+                    {
+                        var builder = AddAttribute(attr);
+                        if (builder == null) throw new Exception();
+                        typeBuilder.SetCustomAttribute(builder);
+                    }
+                }
+
+                foreach (var attr in PopAttributes())
+                {
+                    var builder = AddAttribute(attr);
+                    if (builder == null) throw new Exception();
+                    typeBuilder.SetCustomAttribute(builder);
+                }
+
                 using var keys = dict.Keys();
                 foreach (PyObject pyKey in keys)
                 {
@@ -290,6 +417,7 @@ namespace Python.Runtime
 
             Type type = typeBuilder.CreateType();
 
+
             // scan the assembly so the newly added class can be imported
             Assembly assembly = Assembly.GetAssembly(type);
             AssemblyManager.ScanAssembly(assembly);
@@ -299,6 +427,8 @@ namespace Python.Runtime
 
             return type;
         }
+
+        private static Dictionary<Type, PyType> pyTypeLookup = new Dictionary<Type, PyType>();
 
         /// <summary>
         /// Add a constructor override that calls the python ctor after calling the base type constructor.
@@ -478,7 +608,8 @@ namespace Python.Runtime
             }
 
             using var pyReturnType = func.GetAttr("_clr_return_type_");
-            using var pyArgTypes = func.GetAttr("_clr_arg_types_");
+            usingvar attributes = new PyList(func.GetAttr("_clr_attributes_")))
+            using (var pyArgTypes = func.GetAttr("_clr_arg_types_");
             using var pyArgTypesIter = PyIter.GetIter(pyArgTypes);
             var returnType = pyReturnType.AsManagedObject(typeof(Type)) as Type;
             if (returnType == null)
@@ -509,7 +640,27 @@ namespace Python.Runtime
                 returnType,
                 argTypes.ToArray());
 
-            ILGenerator il = methodBuilder.GetILGenerator();
+            foreach (var attr in attributes)
+                {
+                    var builder = AddAttribute(attr);
+                    if (builder == null) throw new Exception();
+                    methodBuilder.SetCustomAttribute(builder);
+                }
+
+                if (methodAssoc.TryGetValue(func, out var lst))
+                {
+                    foreach(var attr in lst)
+                    {
+                        var builder = AddAttribute(attr);
+                        if (builder == null) throw new Exception();
+                        methodBuilder.SetCustomAttribute(builder);
+                    }
+
+                    methodAssoc.Remove(func);
+
+                }
+
+                ILGenerator il = methodBuilder.GetILGenerator();
 
             il.DeclareLocal(typeof(object[]));
             il.DeclareLocal(typeof(RuntimeMethodHandle));
@@ -600,6 +751,18 @@ namespace Python.Runtime
                 PropertyAttributes.None,
                 propertyType,
                 null);
+                if (func.HasAttr("_clr_attributes_"))
+                {
+                    using (var attributes = new PyList(func.GetAttr("_clr_attributes_")))
+                    {
+                        foreach (var attr in attributes)
+                        {
+                            var builder = AddAttribute(attr);
+                            if (builder == null) throw new Exception();
+                            propertyBuilder.SetCustomAttribute(builder);
+                        }
+                    }
+                }
 
             if (func.HasAttr("fget"))
             {
@@ -695,8 +858,45 @@ namespace Python.Runtime
     [Obsolete(Util.InternalUseOnly)]
     public class PythonDerivedType
     {
+        private static List<PyTuple> attributesStack = new List<PyTuple>();
+        internal static Dictionary<PyObject, List<PyTuple>> methodAssoc = new Dictionary<PyObject, List<PyTuple>>();
+        public static void PushAttribute(PyObject obj)
+        {
+            var tp = new PyTuple(obj);
+            attributesStack.Add(tp);
+        }
+
+        public static bool AssocAttribute(PyObject obj, PyObject func)
+        {
+            using var _ = Py.GIL();
+            var tp = new PyTuple(obj);
+            for (int i = 0; i < attributesStack.Count; i++)
+            {
+                if (Equals(tp, attributesStack[i]))
+                {
+                    attributesStack.RemoveAt(i);
+                    if (!methodAssoc.TryGetValue(func, out var lst))
+                    {
+                        lst = methodAssoc[func] = new List<PyTuple>();
+                    }
+                    lst.Add(tp);
+                    return true;
+                }
+            }
+            return false;
+
+        }
+
+
+        public static IEnumerable<PyObject> PopAttributes()
+        {
+            if (attributesStack.Count == 0) return Array.Empty<PyObject>();
+            var attrs = attributesStack;
+            attributesStack = new List<PyTuple>();
+            return attrs;
+        }
         internal const string PyObjName = "__pyobj__";
-        internal const BindingFlags PyObjFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+        internal const BindingFlags PyObjFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
         /// <summary>
         /// This is the implementation of the overridden methods in the derived
@@ -896,6 +1096,7 @@ namespace Python.Runtime
             }
         }
 
+        static private PyObject pin;
         public static void InvokeCtor(IPythonDerivedType obj, string origCtorName, object[] args)
         {
             var selfRef = GetPyObj(obj);
@@ -906,8 +1107,22 @@ namespace Python.Runtime
                 // In the end we decrement the python object's reference count.
                 // This doesn't actually destroy the object, it just sets the reference to this object
                 // to be a weak reference and it will be destroyed when the C# object is destroyed.
-                using var self = CLRObject.GetReference(obj, obj.GetType());
-                SetPyObj(obj, self.Borrow());
+
+                PyType cc = ClassManager.GetClass(obj.GetType());
+                var args2 = new PyObject[args.Length];
+                for (int i = 0; i < args.Length; i++)
+                    args2[i] = args[i].ToPython();
+                // create an instance of the class and steal the reference.
+                using (var obj2 = cc.Invoke(args2, null))
+                {
+                    // somehow if this is not done this object never gets a reference count
+                    // and things breaks later.
+                    // I am not sure what it does though.
+                    GCHandle gc = GCHandle.Alloc(obj);
+                    // hand over the reference.
+                    var py = obj2.NewReferenceOrNull();
+                    SetPyObj(obj, py.Borrow());
+                }
             }
 
             // call the base constructor
