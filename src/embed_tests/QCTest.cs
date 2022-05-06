@@ -9,6 +9,7 @@ namespace Python.EmbeddingTest
 {
     class QCTests
     {
+        private static dynamic containsTest;
         private static dynamic module;
         private static string testModule = @"
 from clr import AddReference
@@ -22,13 +23,20 @@ class PythonModule(Algo):
             return True
         except:
             return False
+
+def ContainsTest(key, collection):
+    if key in collection.Keys:
+        return True
+    return False
 ";
 
         [OneTimeSetUp]
         public void Setup()
         {
             PythonEngine.Initialize();
-            module = PyModule.FromString("module", testModule).GetAttr("PythonModule").Invoke();
+            var pyModule = PyModule.FromString("module", testModule);
+            containsTest = pyModule.GetAttr("ContainsTest");
+            module = pyModule.GetAttr("PythonModule").Invoke();
         }
 
         [OneTimeTearDown]
@@ -45,6 +53,14 @@ class PythonModule(Algo):
         {
             var output = (bool)module.TestA();
             Assert.IsTrue(output);
+        }
+
+        [TestCase("AAPL", false)]
+        [TestCase("SPY", true)]
+        public void ContainsTest(string key, bool expected)
+        {
+            var dic = new Dictionary<string, object> { { "SPY", new object() } };
+            Assert.AreEqual(expected, (bool)containsTest(key, dic));
         }
     }
 
