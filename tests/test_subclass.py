@@ -376,7 +376,15 @@ def test_more_subclasses():
     obj = None
     SimpleClass.Test2()
 
-
+def abstract_test():
+    class abstractClass(SimpleClass):
+        __clr_abstract__ = True
+    failed = False
+    try:
+        abstractClass()
+    except:
+        failed = True
+    assert failed
 
 def test_construction_from_clr():
     import clr

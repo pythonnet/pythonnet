@@ -42,6 +42,7 @@ namespace Python.PythonTestsRunner
             yield return new[] { "test_subclass", "test_class_with_attributes" };
             yield return new[] { "test_subclass", "test_class_with_advanced_attribute" };
             yield return new[] { "test_subclass", "test_more_subclasses" };
+            yield return new[] { "test_subclass", "abstract_test" };
         }
 
         /// <summary>
