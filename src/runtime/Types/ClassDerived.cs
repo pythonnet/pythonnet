@@ -280,8 +280,16 @@ namespace Python.Runtime
                 baseClass = typeof(object);
             }
 
+            bool isAbstract = false;
+            if (py_dict != null && Runtime.PyDict_Check(py_dict))
+            {
+                using var dict = new PyDict(py_dict);
+                if (dict.HasKey("__clr_abstract__"))
+                    isAbstract = true;
+            }
+
             TypeBuilder typeBuilder = moduleBuilder.DefineType(name,
-                TypeAttributes.Public | TypeAttributes.Class,
+                TypeAttributes.Public | TypeAttributes.Class | (isAbstract ? TypeAttributes.Abstract : 0),
                 baseClass,
                 interfaces.ToArray());
 
@@ -359,6 +367,7 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
+
                 if (dict.HasKey("__clr_attributes__"))
                 {
                     var attributes = new PyList(dict["__clr_attributes__"]);
