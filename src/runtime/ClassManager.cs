@@ -133,7 +133,7 @@ namespace Python.Runtime
         /// Return the ClassBase-derived instance that implements a particular
         /// reflected managed type, creating it if it doesn't yet exist.
         /// </summary>
-        internal static ReflectedClrType GetClass(Type type) => ReflectedClrType.GetOrCreate(type);
+        internal static BorrowedReference GetClass(Type type) => ReflectedClrType.GetOrCreate(type);
 
         internal static ClassBase GetClassImpl(Type type)
         {
