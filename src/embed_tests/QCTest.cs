@@ -16,6 +16,8 @@ namespace Python.EmbeddingTest
         private static dynamic withArgs_PythonSuperInitDefault;
         private static dynamic withArgs_PythonSuperInitInt;
 
+        private static dynamic pureCSharpConstruction;
+
         private static dynamic containsTest;
         private static dynamic module;
         private static string testModule = @"
@@ -63,6 +65,9 @@ class PythonSuperInitInt(SuperInit):
 class PythonSuperInitNone(SuperInit):
     def jose(self):
         return 1
+
+def PureCSharpConstruction():
+    return SuperInit(1)
 ";
 
         [OneTimeSetUp]
@@ -81,6 +86,8 @@ class PythonSuperInitNone(SuperInit):
             withArgs_PythonSuperInitNotCallingBase = pyModule.GetAttr("WithArgs_PythonSuperInitNotCallingBase");
             withArgs_PythonSuperInitDefault = pyModule.GetAttr("WithArgs_PythonSuperInitDefault");
             withArgs_PythonSuperInitInt = pyModule.GetAttr("WithArgs_PythonSuperInitInt");
+
+            pureCSharpConstruction = pyModule.GetAttr("PureCSharpConstruction");
         }
 
         [OneTimeTearDown]
@@ -108,14 +115,25 @@ class PythonSuperInitNone(SuperInit):
         }
 
         [Test]
+        public void PureCSharpConstruction()
+        {
+            using (Py.GIL())
+            {
+                var instance = pureCSharpConstruction();
+                Assert.AreEqual(1, (int)instance.CalledInt);
+                Assert.AreEqual(1, (int)instance.CalledDefault);
+            }
+        }
+
+        [Test]
         public void WithArgs_NoBaseConstructorCall()
         {
             using (Py.GIL())
             {
                 var instance = withArgs_PythonSuperInitNotCallingBase(1);
-                // this is true because we call the constructor always
-                Assert.IsTrue((bool)instance.CalledInt);
-                Assert.IsFalse((bool)instance.CalledDefault);
+                Assert.AreEqual(0, (int)instance.CalledInt);
+                // we call the constructor always
+                Assert.AreEqual(1, (int)instance.CalledDefault);
             }
         }
 
@@ -125,8 +143,8 @@ class PythonSuperInitNone(SuperInit):
             using (Py.GIL())
             {
                 var instance = withArgs_PythonSuperInitInt(1);
-                Assert.IsTrue((bool)instance.CalledInt);
-                Assert.IsFalse((bool)instance.CalledDefault);
+                Assert.AreEqual(1, (int)instance.CalledInt);
+                Assert.AreEqual(1, (int)instance.CalledDefault);
             }
         }
 
@@ -136,8 +154,8 @@ class PythonSuperInitNone(SuperInit):
             using (Py.GIL())
             {
                 var instance = withArgs_PythonSuperInitDefault(1);
-                Assert.IsTrue((bool)instance.CalledInt);
-                Assert.IsTrue((bool)instance.CalledDefault);
+                Assert.AreEqual(0, (int)instance.CalledInt);
+                Assert.AreEqual(2, (int)instance.CalledDefault);
             }
         }
 
@@ -147,9 +165,9 @@ class PythonSuperInitNone(SuperInit):
             using (Py.GIL())
             {
                 var instance = pythonSuperInitNotCallingBase();
-                Assert.IsFalse((bool)instance.CalledInt);
+                Assert.AreEqual(0, (int)instance.CalledInt);
                 // this is true because we call the default constructor always
-                Assert.IsTrue((bool)instance.CalledDefault);
+                Assert.AreEqual(1, (int)instance.CalledDefault);
             }
         }
 
@@ -159,9 +177,9 @@ class PythonSuperInitNone(SuperInit):
             using (Py.GIL())
             {
                 var instance = pythonSuperInitInt();
-                Assert.IsTrue((bool)instance.CalledInt);
+                Assert.AreEqual(1, (int)instance.CalledInt);
                 // this is true because we call the default constructor always
-                Assert.IsTrue((bool)instance.CalledDefault);
+                Assert.AreEqual(1, (int)instance.CalledDefault);
             }
         }
 
@@ -171,8 +189,8 @@ class PythonSuperInitNone(SuperInit):
             using (Py.GIL())
             {
                 var instance = pythonSuperInitNone();
-                Assert.IsFalse((bool)instance.CalledInt);
-                Assert.IsTrue((bool)instance.CalledDefault);
+                Assert.AreEqual(0, (int)instance.CalledInt);
+                Assert.AreEqual(2, (int)instance.CalledDefault);
             }
         }
 
@@ -183,8 +201,8 @@ class PythonSuperInitNone(SuperInit):
             {
                 var instance = pythonSuperInitDefault.Invoke();
 
-                Assert.IsFalse((bool)instance.CalledInt);
-                Assert.IsTrue((bool)instance.CalledDefault);
+                Assert.AreEqual(0, (int)instance.CalledInt);
+                Assert.AreEqual(2, (int)instance.CalledDefault);
             }
         }
     }
@@ -210,15 +228,15 @@ class PythonSuperInitNone(SuperInit):
 
     public class SuperInit
     {
-        public bool CalledInt { get; private set; }
-        public bool CalledDefault { get; private set; }
+        public int CalledInt { get; private set; }
+        public int CalledDefault { get; private set; }
         public SuperInit(int a)
         {
-            CalledInt = true;
+            CalledInt++;
         }
         public SuperInit()
         {
-            CalledDefault = true;
+            CalledDefault++;
         }
     }
 

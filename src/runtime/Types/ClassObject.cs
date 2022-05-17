@@ -121,21 +121,11 @@ namespace Python.Runtime
                     binder.AddMethod(self.constructors[i]);
                 }
 
-                // let's try to generate a binding using the args/kw we have
-                var binding = binder.Bind(pythonObj.Borrow(), args, kw);
+                using var tuple = Runtime.PyTuple_New(0);
+                var binding = binder.Bind(pythonObj.Borrow(), tuple.Borrow(), null);
                 if (binding != null)
                 {
                     binding.info.Invoke(obj, BindingFlags.Default, null, binding.args, null);
-                }
-                else
-                {
-                    // if we didn't match any constructor let's fall back into the default constructor, no args
-                    using var tuple = Runtime.PyTuple_New(0);
-                    binding = binder.Bind(pythonObj.Borrow(), tuple.Borrow(), null);
-                    if(binding != null)
-                    {
-                        binding.info.Invoke(obj, BindingFlags.Default, null, binding.args, null);
-                    }
                 }
             }
             catch (Exception)
