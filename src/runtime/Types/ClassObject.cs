@@ -15,12 +15,13 @@ namespace Python.Runtime
     [Serializable]
     internal class ClassObject : ClassBase
     {
+        private ConstructorInfo[] constructors;
         internal readonly int NumCtors = 0;
 
         internal ClassObject(Type tp) : base(tp)
         {
-            var _ctors = type.Value.GetConstructors();
-            NumCtors = _ctors.Length;
+            constructors = type.Value.GetConstructors();
+            NumCtors = constructors.Length;
         }
 
 
@@ -110,8 +111,40 @@ namespace Python.Runtime
             }
 
             object obj = FormatterServices.GetUninitializedObject(type);
+            var pythonObj = self.NewObjectToPython(obj, tp);
 
-            return self.NewObjectToPython(obj, tp);
+            try
+            {
+                var binder = new MethodBinder();
+                for (int i = 0; i < self.constructors.Length; i++)
+                {
+                    binder.AddMethod(self.constructors[i]);
+                }
+
+                // let's try to generate a binding using the args/kw we have
+                var binding = binder.Bind(pythonObj.Borrow(), args, kw);
+                if (binding != null)
+                {
+                    binding.info.Invoke(obj, BindingFlags.Default, null, binding.args, null);
+                }
+                else
+                {
+                    // if we didn't match any constructor let's fall back into the default constructor, no args
+                    using var tuple = Runtime.PyTuple_New(0);
+                    binding = binder.Bind(pythonObj.Borrow(), tuple.Borrow(), null);
+                    if(binding != null)
+                    {
+                        binding.info.Invoke(obj, BindingFlags.Default, null, binding.args, null);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                Exceptions.Clear();
+                // we try our best to call the base constructor but don't let it stop us
+            }
+
+            return pythonObj;
         }
 
         protected virtual void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)
