@@ -129,10 +129,20 @@ namespace Python.Runtime
 
             try
             {
-                var normalizedValue = new NewReference(value.Borrow());
+                var normalizedValue = new NewReference();
+                if (!value.IsNone() && !value.IsNull())
+                {
+                    normalizedValue = new NewReference(value.Borrow());
+                }
                 Runtime.PyErr_NormalizeException(type: ref type, val: ref normalizedValue, tb: ref traceback);
 
-                return FromPyErr(typeRef: type.Borrow(), valRef: value.Borrow(), nValRef: normalizedValue.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
+                var valRef = normalizedValue.Borrow();
+                if (!value.IsNone() && !value.IsNull())
+                {
+                    // try using value instead of the 'normalizedValue' since it containes more information
+                    valRef = value.Borrow();
+                }
+                return FromPyErr(typeRef: type.Borrow(), valRef: valRef, nValRef: normalizedValue.Borrow(), tbRef: traceback.BorrowNullable(), out dispatchInfo);
             }
             finally
             {
