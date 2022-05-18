@@ -43,6 +43,25 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void TestMessageComplete()
+        {
+            using (Py.GIL())
+            {
+                try
+                {
+                    // importing a module with syntax error 'x = 01' will throw
+                    PyModule.FromString(Guid.NewGuid().ToString(), "x = 01");
+                }
+                catch (PythonException exception)
+                {
+                    Assert.True(exception.Message.Contains("x = 01"));
+                    return;
+                }
+                Assert.Fail("No Exception was thrown!");
+            }
+        }
+
+        [Test]
         public void TestNoError()
         {
             // There is no PyErr to fetch
