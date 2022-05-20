@@ -236,7 +236,7 @@ namespace Python.Runtime
                     return Exceptions.RaiseTypeError("type expected");
                 }
                 Type a = t.MakeArrayType();
-                PyType o = ClassManager.GetClass(a);
+                BorrowedReference o = ClassManager.GetClass(a);
                 return new NewReference(o);
             }
 

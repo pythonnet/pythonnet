@@ -21,6 +21,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   `__name__` and `__signature__` to reflected .NET methods
 -   .NET collection types now implement standard Python collection interfaces from `collections.abc`.
 See [Mixins/collections.py](src/runtime/Mixins/collections.py).
+-   you can cast objects to generic .NET interfaces without specifying generic arguments as long as there is no ambiguity.
 -   .NET arrays implement Python buffer protocol
 -   Python integer interoperability with `System.Numerics.BigInteger`
 -   Python.NET will correctly resolve .NET methods, that accept `PyList`, `PyInt`,

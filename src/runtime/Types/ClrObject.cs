@@ -43,13 +43,13 @@ namespace Python.Runtime
 
         internal static NewReference GetReference(object ob, Type type)
         {
-            PyType cc = ClassManager.GetClass(type);
+            BorrowedReference cc = ClassManager.GetClass(type);
             return Create(ob, cc);
         }
 
         internal static NewReference GetReference(object ob)
         {
-            PyType cc = ClassManager.GetClass(ob.GetType());
+            BorrowedReference cc = ClassManager.GetClass(ob.GetType());
             return Create(ob, cc);
         }
 

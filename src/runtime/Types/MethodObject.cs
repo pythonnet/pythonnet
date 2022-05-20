@@ -191,7 +191,7 @@ namespace Python.Runtime
                 && obj.inst is IPythonDerivedType
                 && self.type.Value.IsInstanceOfType(obj.inst))
             {
-                var basecls = ClassManager.GetClass(self.type.Value);
+                var basecls = ReflectedClrType.GetOrCreate(self.type.Value);
                 return new MethodBinding(self, new PyObject(ob), basecls).Alloc();
             }
 

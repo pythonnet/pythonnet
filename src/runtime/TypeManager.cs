@@ -217,6 +217,23 @@ namespace Python.Runtime
                     }
 
                     target.Append(']');
+
+                    int nestedStart = fullName.IndexOf('+');
+                    while (nestedStart >= 0)
+                    {
+                        target.Append('.');
+                        int nextNested = fullName.IndexOf('+', nestedStart + 1);
+                        if (nextNested < 0)
+                        {
+                            target.Append(fullName.Substring(nestedStart + 1));
+                        }
+                        else
+                        {
+                            target.Append(fullName.Substring(nestedStart + 1, length: nextNested - nestedStart - 1));
+                        }
+                        nestedStart = nextNested;
+                    }
+
                     return;
                 }
             }

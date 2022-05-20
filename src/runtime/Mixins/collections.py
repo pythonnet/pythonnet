@@ -7,7 +7,11 @@ import collections.abc as col
 
 class IteratorMixin(col.Iterator):
     def close(self):
-        self.Dispose()
+        if hasattr(self, 'Dispose'):
+            self.Dispose()
+        else:
+            from System import IDisposable
+            IDisposable(self).Dispose()
 
 class IterableMixin(col.Iterable):
     pass
@@ -16,7 +20,12 @@ class SizedMixin(col.Sized):
     def __len__(self): return self.Count
 
 class ContainerMixin(col.Container):
-    def __contains__(self, item): return self.Contains(item)
+    def __contains__(self, item):
+        if hasattr('self', 'Contains'):
+            return self.Contains(item)
+        else:
+            from System.Collections.Generic import ICollection
+            return ICollection(self).Contains(item)
 
 try:
     abc_Collection = col.Collection
