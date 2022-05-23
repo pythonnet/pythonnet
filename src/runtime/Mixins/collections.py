@@ -1,6 +1,6 @@
 """
 Implements collections.abc for common .NET types
-https://docs.python.org/3.6/library/collections.abc.html
+https://docs.python.org/3/library/collections.abc.html
 """
 
 import collections.abc as col
