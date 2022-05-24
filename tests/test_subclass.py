@@ -10,9 +10,11 @@ import System
 from System import (Console, Attribute, Double)
 from System.Diagnostics import (DebuggerDisplay, DebuggerDisplayAttribute, Debug)
 from System.ComponentModel import (Browsable, BrowsableAttribute)
+from System.Threading import (CancellationToken)
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute, TestAttributeAttribute)
+                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute, TestAttributeAttribute, ISimpleInterface2)
+import Python.Test
 from System.Collections.Generic import List
 
 
@@ -290,11 +292,25 @@ def test_interface_and_class_impl2():
     class DualSubClass2(ISimpleInterface):
         def Ok(self):
             return True
+    class DualSubClass3(ISimpleInterface2):
+        def Execute(self, cancellationToken):
+            return 0
+    try:
+        class DualSubClass4(Python.Test.ISimpleInterface3):
+            def Execute(self, cancellationToken):
+                return 0
+        assert False # An exception should be thrown.
+    except AttributeError as ae:
+        assert ("not defined" in str(ae))
 
     obj = DualSubClass()
     SimpleClass.TestObject(obj)
     obj = DualSubClass2()
     SimpleClass.TestObject(obj)
+
+    obj2 = DualSubClass3();
+    SimpleClass.TestObject(obj2)
+    #obj2.Execute(CancellationToken.None)
 
 def test_class_with_attributes():
     import clr

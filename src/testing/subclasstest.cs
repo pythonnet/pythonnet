@@ -130,7 +130,10 @@ namespace Python.Test
     {
         bool Ok();
     }
-
+    public interface ISimpleInterface2
+    {
+        int Execute(CancellationToken token);
+    }
     public class TestAttributeAttribute: Attribute
     {
         public int X { get; set; }
@@ -167,6 +170,10 @@ namespace Python.Test
             {
                 if (!si.Ok())
                     throw new Exception();
+
+            }else if (obj is ISimpleInterface2 si2)
+            {
+                si2.Execute(CancellationToken.None);
 
             }
             else
