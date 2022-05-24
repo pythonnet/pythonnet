@@ -340,7 +340,7 @@ namespace Python.Runtime
 
             if (attr.IsNull())
             {
-                Exceptions.SetError(Exceptions.AttributeError, name);
+                Exceptions.SetError(Exceptions.AttributeError, $"name '{name}' is not defined in module '{self.moduleName}'.");
                 return default;
             }
 

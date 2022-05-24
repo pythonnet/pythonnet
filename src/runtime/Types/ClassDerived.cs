@@ -871,6 +871,7 @@ namespace Python.Runtime
         internal static Dictionary<PyObject, List<PyTuple>> methodAssoc = new Dictionary<PyObject, List<PyTuple>>();
         public static void PushAttribute(PyObject obj)
         {
+            using var _ = Py.GIL();
             var tp = new PyTuple(obj);
             attributesStack.Add(tp);
         }

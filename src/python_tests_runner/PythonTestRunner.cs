@@ -18,7 +18,7 @@ namespace Python.PythonTestsRunner
         public void SetUp()
         {
             Python.Runtime.Runtime.PythonDLL =
-                "/Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib";
+                "C:\\Python37.2\\python37.dll";
             PythonEngine.Initialize();
         }
 
