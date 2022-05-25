@@ -19,6 +19,14 @@ def test_multiple_calls_to_initialize():
         assert False  # Initialize() raise an exception.
 
 
+def test_supported_version():
+    major, minor, build, *_ = sys.version_info
+    ver = System.Version(major, minor, build)
+    assert PythonEngine.IsSupportedVersion(ver)
+    assert ver >= PythonEngine.MinSupportedVersion
+    assert ver <= PythonEngine.MaxSupportedVersion
+
+
 @pytest.mark.skip(reason="FIXME: test crashes")
 def test_import_module():
     """Test module import."""
