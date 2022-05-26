@@ -4,7 +4,7 @@ import operator
 import pytest
 
 import System
-from Python.Test import ConversionTest, MethodResolutionInt, UnicodeString
+from Python.Test import ConversionTest, MethodResolutionInt, UnicodeString, CodecResetter
 from Python.Runtime import PyObjectConversions
 from Python.Runtime.Codecs import RawProxyEncoder
 
@@ -658,6 +658,8 @@ def test_codecs():
     l = ob.ListField
     l.Add(42)
     assert ob.ListField.Count == 1
+
+    CodecResetter.Reset()
 
 def test_int_param_resolution_required():
     """Test resolution of `int` parameters when resolution is needed"""
