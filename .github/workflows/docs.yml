@@ -1,0 +1,40 @@
+name: Documentation
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Doxygen Action
+      uses: mattnotmitt/doxygen-action@1.9.4
+      with:
+        working-directory: "doc/"
+
+    - name: Build Sphinx documentation
+      run: |
+        pip install -r doc/requirements.txt
+        sphinx-build doc/source/ ./doc/build/html/
+
+    - name: Upload artifact
+      # Automatically uploads an artifact from the './_site' directory by default
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: doc/build/html/
+
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
