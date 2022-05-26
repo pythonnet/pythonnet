@@ -10,6 +10,7 @@ from Python.Test import ListConversionTester, ListMember, CodecResetter
 
 @pytest.fixture(autouse=True)
 def reset():
+    CodecResetter.Reset()
     yield
     CodecResetter.Reset()
 
