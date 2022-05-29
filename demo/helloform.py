@@ -3,8 +3,7 @@
 
 import clr
 
-SWF = clr.AddReference("System.Windows.Forms")
-print (SWF.Location)
+clr.AddReference("System.Windows.Forms")
 import System.Windows.Forms as WinForms
 from System.Drawing import Size, Point
 
@@ -14,6 +13,7 @@ class HelloApp(WinForms.Form):
        winforms programming and event-based programming in Python."""
 
     def __init__(self):
+        super().__init__()
         self.Text = "Hello World From Python"
         self.AutoScaleBaseSize = Size(5, 13)
         self.ClientSize = Size(392, 117)
