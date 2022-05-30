@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 using Python.Runtime.Codecs;
 
@@ -24,17 +26,6 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestReadme()
         {
-            dynamic np;
-            try
-            {
-                np = Py.Import("numpy");
-            }
-            catch (PythonException)
-            {
-                Assert.Inconclusive("Numpy or dependency not installed");
-                return;
-            }
-            
             Assert.AreEqual("1.0", np.cos(np.pi * 2).ToString());
 
             dynamic sin = np.sin;
@@ -55,17 +46,9 @@ namespace Python.EmbeddingTest
         [Test]
         public void MultidimensionalNumPyArray()
         {
-            PyObject np;
-            try {
-                np = Py.Import("numpy");
-            } catch (PythonException) {
-                Assert.Inconclusive("Numpy or dependency not installed");
-                return;
-            }
-
             var array = new[,] { { 1, 2 }, { 3, 4 } };
             var ndarray = np.InvokeMethod("asarray", array.ToPython());
-            Assert.AreEqual((2,2), ndarray.GetAttr("shape").As<(int,int)>());
+            Assert.AreEqual((2, 2), ndarray.GetAttr("shape").As<(int, int)>());
             Assert.AreEqual(1, ndarray[(0, 0).ToPython()].InvokeMethod("__int__").As<int>());
             Assert.AreEqual(array[1, 0], ndarray[(1, 0).ToPython()].InvokeMethod("__int__").As<int>());
         }
@@ -73,22 +56,42 @@ namespace Python.EmbeddingTest
         [Test]
         public void Int64Array()
         {
-            PyObject np;
-            try
-            {
-                np = Py.Import("numpy");
-            }
-            catch (PythonException)
-            {
-                Assert.Inconclusive("Numpy or dependency not installed");
-                return;
-            }
-
             var array = new long[,] { { 1, 2 }, { 3, 4 } };
             var ndarray = np.InvokeMethod("asarray", array.ToPython());
             Assert.AreEqual((2, 2), ndarray.GetAttr("shape").As<(int, int)>());
             Assert.AreEqual(1, ndarray[(0, 0).ToPython()].InvokeMethod("__int__").As<long>());
             Assert.AreEqual(array[1, 0], ndarray[(1, 0).ToPython()].InvokeMethod("__int__").As<long>());
         }
+
+        [Test]
+        public void VarArg()
+        {
+            dynamic zX = np.array(new[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 8, 9, 0 } });
+            dynamic grad = np.gradient(zX, 4.0, 5.0);
+            dynamic grad2 = np.InvokeMethod("gradient", new PyObject[] {zX, new PyFloat(4.0), new PyFloat(5.0)});
+
+            Assert.AreEqual(4.125, grad[0].sum().__float__().As<double>(), 0.001);
+            Assert.AreEqual(-1.2, grad[1].sum().__float__().As<double>(), 0.001);
+            Assert.AreEqual(4.125, grad2[0].sum().__float__().As<double>(), 0.001);
+            Assert.AreEqual(-1.2, grad2[1].sum().__float__().As<double>(), 0.001);
+        }
+
+#pragma warning disable IDE1006
+        dynamic np
+        {
+            get
+            {
+                try
+                {
+                    return Py.Import("numpy");
+                }
+                catch (PythonException)
+                {
+                    Assert.Inconclusive("Numpy or dependency not installed");
+                    return null;
+                }
+            }
+        }
+
     }
 }
