@@ -69,6 +69,7 @@ Example
 
    static void Main(string[] args)
    {
+       PythonEngine.Initialize();
        using (Py.GIL())
        {
            dynamic np = Py.Import("numpy");
