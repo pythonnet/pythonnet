@@ -87,6 +87,11 @@ def test_ulong_enum():
     assert Test.ULongEnum.Two == Test.ULongEnum(2)
 
 
+def test_simple_enum_to_int():
+    from System import DayOfWeek
+    assert int(DayOfWeek.Sunday) == 0
+
+
 def test_long_enum_to_int():
     assert int(Test.LongEnum.Max) == 9223372036854775807
     assert int(Test.LongEnum.Min) == -9223372036854775808
@@ -137,6 +142,7 @@ def test_enum_undefined_value():
     
     # explicitly permit undefined values
     Test.FieldTest().EnumField = Test.ShortEnum(20, True)
+
 
 def test_enum_conversion():
     """Test enumeration conversion."""
