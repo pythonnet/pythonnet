@@ -362,7 +362,7 @@ class Wordpad(WinForms.Form):
 
 class AboutForm(WinForms.Form):
     def __init__(self):
-        super.__init__()
+        super().__init__()
         self.InitializeComponent()
 
     def InitializeComponent(self):
@@ -393,8 +393,8 @@ class AboutForm(WinForms.Form):
         self.Controls.AddRange((self.label1, self.btnClose))
 
         self.FormBorderStyle = WinForms.FormBorderStyle.FixedDialog
-        self.MaximizeBox = 0
-        self.MinimizeBox = 0
+        self.MaximizeBox = False
+        self.MinimizeBox = False
         self.Name = "AboutForm"
         self.ShowInTaskbar = False
         self.StartPosition = WinForms.FormStartPosition.CenterScreen
