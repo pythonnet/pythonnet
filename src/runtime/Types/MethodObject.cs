@@ -27,7 +27,7 @@ namespace Python.Runtime
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads)
         {
             this.type = type;
             this.name = name;
@@ -43,6 +43,11 @@ namespace Python.Runtime
                 }
             }
             binder.allow_threads = allow_threads;
+        }
+
+        public MethodObject(MaybeType type, string name, MethodBase[] info)
+            : this(type, name, info, allow_threads: AllowThreads(info))
+        {
         }
 
         public bool IsInstanceConstructor => name == "__init__";
@@ -205,6 +210,28 @@ namespace Python.Runtime
         {
             var self = (MethodObject)GetManagedObject(ob)!;
             return Runtime.PyString_FromString($"<method '{self.name}'>");
+        }
+
+        static bool AllowThreads(MethodBase[] methods)
+        {
+            bool hasAllowOverload = false, hasForbidOverload = false;
+            foreach (var method in methods)
+            {
+                bool forbidsThreads = method.GetCustomAttribute<ForbidPythonThreadsAttribute>(inherit: false) != null;
+                if (forbidsThreads)
+                {
+                    hasForbidOverload = true;
+                }
+                else
+                {
+                    hasAllowOverload = true;
+                }
+            }
+
+            if (hasAllowOverload && hasForbidOverload)
+                throw new NotImplementedException("All method overloads currently must either allow or forbid Python threads together");
+
+            return !hasForbidOverload;
         }
     }
 }
