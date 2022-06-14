@@ -46,7 +46,7 @@ jobs:
       - name: Set Python DLL path (non Windows)
         if: ${{ matrix.os != 'windows' }}
         run: |
-          python -m pythonnet.find_libpython --export >> $GITHUB_ENV
+          echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
 
       - name: Python Tests
         run: pytest
