@@ -1,4 +1,4 @@
-name: Main (x64)
+name: Main
 
 on:
   push:
@@ -73,9 +73,10 @@ jobs:
         if: ${{ matrix.os != 'windows' }}
         run: pytest --runtime mono
 
+      # TODO: Run these tests on Windows x86
       - name: Python Tests (.NET Core)
         if: ${{ matrix.platform == 'x64' }}
-        run: pytest --runtime netcore
+        run: pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os == 'windows' }}

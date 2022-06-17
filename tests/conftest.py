@@ -8,91 +8,83 @@ import ctypes
 import os
 import sys
 import sysconfig
+from pathlib import Path
 from subprocess import check_call
 from tempfile import mkdtemp
 import shutil
 
 import pytest
 
-from pythonnet import set_runtime
-
 # Add path for `Python.Test`
-cwd = os.path.dirname(__file__)
-fixtures_path = os.path.join(cwd, "fixtures")
-sys.path.append(fixtures_path)
+cwd = Path(__file__).parent
+fixtures_path = cwd / "fixtures"
+sys.path.append(str(fixtures_path))
+
 
 def pytest_addoption(parser):
     parser.addoption(
         "--runtime",
         action="store",
         default="default",
-        help="Must be one of default, netcore, netfx and mono"
+        help="Must be one of default, coreclr, netfx and mono",
     )
 
+
 collect_ignore = []
+
 
 def pytest_configure(config):
     global bin_path
     if "clr" in sys.modules:
         # Already loaded (e.g. by the C# test runner), skip build
         import clr
+
         clr.AddReference("Python.Test")
         return
 
     runtime_opt = config.getoption("runtime")
-
-    test_proj_path = os.path.join(cwd, "..", "src", "testing")
-
-    if runtime_opt not in ["netcore", "netfx", "mono", "default"]:
+    if runtime_opt not in ["coreclr", "netfx", "mono", "default"]:
         raise RuntimeError(f"Invalid runtime: {runtime_opt}")
 
-    bin_path = mkdtemp()
+    test_proj_path = cwd.parent / "src" / "testing"
+    bin_path = Path(mkdtemp())
 
-    # tmpdir_factory.mktemp(f"pythonnet-{runtime_opt}")
+    fw = "netstandard2.0"
+    runtime_params = {}
 
-    fw = "net6.0" if runtime_opt == "netcore" else "netstandard2.0"
-
-    check_call(["dotnet", "publish", "-f", fw, "-o", bin_path, test_proj_path])
-
-    sys.path.append(bin_path)
-
-    if runtime_opt == "default":
-        pass
-    elif runtime_opt == "netfx":
-        from clr_loader import get_netfx
-        runtime = get_netfx()
-        set_runtime(runtime)
-    elif runtime_opt == "mono":
-        from clr_loader import get_mono
-        runtime = get_mono()
-        set_runtime(runtime)
-    elif runtime_opt == "netcore":
-        from clr_loader import get_coreclr
-        rt_config_path = os.path.join(bin_path, "Python.Test.runtimeconfig.json")
-        runtime = get_coreclr(rt_config_path)
-        set_runtime(runtime)
-
-    import clr
-    clr.AddReference("Python.Test")
-
-    soft_mode = False
-    try:
-        os.environ['PYTHONNET_SHUTDOWN_MODE'] == 'Soft'
-    except: pass
-
-    if config.getoption("--runtime") == "netcore" or soft_mode\
-        :
+    if runtime_opt == "coreclr":
+        fw = "net6.0"
+        runtime_params["runtime_config"] = str(
+            bin_path / "Python.Test.runtimeconfig.json"
+        )
         collect_ignore.append("domain_tests/test_domain_reload.py")
     else:
-        domain_tests_dir = os.path.join(os.path.dirname(__file__), "domain_tests")
-        bin_path = os.path.join(domain_tests_dir, "bin")
-        build_cmd = ["dotnet", "build", domain_tests_dir, "-o", bin_path]
+        domain_tests_dir = cwd / "domain_tests"
+        domain_bin_path = domain_tests_dir / "bin"
+        build_cmd = [
+            "dotnet",
+            "build",
+            str(domain_tests_dir),
+            "-o",
+            str(domain_bin_path),
+        ]
         is_64bits = sys.maxsize > 2**32
         if not is_64bits:
             build_cmd += ["/p:Prefer32Bit=True"]
         check_call(build_cmd)
 
+    check_call(
+        ["dotnet", "publish", "-f", fw, "-o", str(bin_path), str(test_proj_path)]
+    )
 
+    from pythonnet import load
+
+    load(runtime_opt, **runtime_params)
+
+    import clr
+
+    sys.path.append(str(bin_path))
+    clr.AddReference("Python.Test")
 
 
 def pytest_unconfigure(config):
@@ -102,6 +94,7 @@ def pytest_unconfigure(config):
     except Exception:
         pass
 
+
 def pytest_report_header(config):
     """Generate extra report headers"""
     # FIXME: https://github.com/pytest-dev/pytest/issues/2257
@@ -109,11 +102,8 @@ def pytest_report_header(config):
     arch = "x64" if is_64bits else "x86"
     ucs = ctypes.sizeof(ctypes.c_wchar)
     libdir = sysconfig.get_config_var("LIBDIR")
-    shared = bool(sysconfig.get_config_var("Py_ENABLE_SHARED"))
 
-    header = ("Arch: {arch}, UCS: {ucs}, LIBDIR: {libdir}, "
-              "Py_ENABLE_SHARED: {shared}".format(**locals()))
-    return header
+    return f"Arch: {arch}, UCS: {ucs}, LIBDIR: {libdir}"
 
 
 @pytest.fixture()

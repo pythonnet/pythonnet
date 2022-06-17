@@ -45,7 +45,7 @@ jobs:
         run: python -m pytest --runtime mono
 
       - name: Python Tests (.NET Core)
-        run: python -m pytest --runtime netcore
+        run: python -m pytest --runtime coreclr
 
       - name: Python tests run from .NET
         run: dotnet test src/python_tests_runner/
