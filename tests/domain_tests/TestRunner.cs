@@ -1132,6 +1132,168 @@ def after_reload():
     
                     ",
             },
+            new TestCase
+            {
+                Name = "serialize_not_serializable",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+                        
+                        public class NotSerializableTextWriter :  System.IO.TextWriter
+                        {
+                            override public System.Text.Encoding Encoding { get { return System.Text.Encoding.ASCII;} }
+                        }
+
+                        [System.Serializable]
+                        public static class SerializableWriter
+                        {
+                            private static System.IO.TextWriter _writer = null;
+
+                            public static System.IO.TextWriter Writer {get { return _writer; }}
+
+                            public static void SetWriter()
+                            {
+                                _writer = System.IO.TextWriter.Synchronized(new NotSerializableTextWriter());
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                   namespace TestNamespace
+                    {
+                        
+                        public class NotSerializableTextWriter :  System.IO.TextWriter
+                        {
+                            override public System.Text.Encoding Encoding { get { return System.Text.Encoding.ASCII;} }
+                        }
+
+                        [System.Serializable]
+                        public static class SerializableWriter
+                        {
+                            private static System.IO.TextWriter _writer = null;
+
+                            public static System.IO.TextWriter Writer {get { return _writer; }}
+
+                            public static void SetWriter(System.IO.TextWriter w)
+                            {
+                                _writer = System.IO.TextWriter.Synchronized(w);
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+import System
+
+def before_reload():
+
+    TestNamespace.SerializableWriter.SetWriter();
+    sys.log_writer = TestNamespace.SerializableWriter.Writer
+
+def after_reload():
+
+    assert sys.log_writer is not None
+    try:
+        encoding = sys.log_writer.Write('baba')
+    except System.Runtime.Serialization.SerializationException:
+        pass
+    else:
+        raise AssertionError('Serialized non-serializable objects should be deserialized to throwing objects')
+",
+            },
+            new TestCase
+            {
+                Name = "serialize_not_serializable_interface",
+                DotNetBefore = @"
+                    namespace TestNamespace
+                    {
+                        public interface MyInterface
+                        {
+                            int InterfaceMethod();
+                        }
+
+                        public class NotSerializableInterfaceImplement : MyInterface
+                        {
+                            public int value = -1;
+                            int MyInterface.InterfaceMethod()
+                            {
+                                return value;
+                            }
+                        }
+
+                        [System.Serializable]
+                        public static class SerializableWriter
+                        {
+                            private static MyInterface _iface = null;
+
+                            public static MyInterface Writer {get { return _iface; }}
+
+                            public static void SetInterface()
+                            {
+                                var temp = new NotSerializableInterfaceImplement();
+                                temp.value = 12315;
+                                _iface = temp;
+                            }
+                        }
+                    }",
+                DotNetAfter = @"
+                    namespace TestNamespace
+                    {
+                        public interface MyInterface
+                        {
+                            int InterfaceMethod();
+                        }
+
+                        public class NotSerializableInterfaceImplement : MyInterface
+                        {
+                            public int value = -1;
+                            int MyInterface.InterfaceMethod()
+                            {
+                                return value;
+                            }
+                        }
+
+                        [System.Serializable]
+                        public static class SerializableWriter
+                        {
+                            private static MyInterface _iface = null;
+
+                            public static MyInterface Writer {get { return _iface; }}
+
+                            public static void SetInterface()
+                            {
+                                var temp = new NotSerializableInterfaceImplement();
+                                temp.value = 123124;
+                                _iface = temp;
+                            }
+                        }
+                    }",
+                PythonCode = @"
+import clr
+import sys
+clr.AddReference('DomainTests')
+import TestNamespace
+import System
+
+def before_reload():
+
+    TestNamespace.SerializableWriter.SetInterface();
+    sys.log_writer = TestNamespace.SerializableWriter.Writer
+    assert(sys.log_writer.InterfaceMethod() == 12315)
+
+def after_reload():
+
+    assert sys.log_writer is not None
+    try:
+        retcode = sys.log_writer.InterfaceMethod()
+        print(f'retcode of InterfaceMethod is {retcode}')
+    except System.Runtime.Serialization.SerializationException:
+        pass
+    else:
+        raise AssertionError('Serialized non-serializable objects should be deserialized to throwing objects')
+",
+            },
         };
 
         /// <summary>
