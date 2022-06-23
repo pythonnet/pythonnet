@@ -355,11 +355,25 @@ namespace Python.Runtime
             {
                 return;
             }
+
+            // If we're embedded, we need to take the GIL, if it wasn't already 
+            // taken, as we may get called from the DomainUnload handler.
+            var pyGILState = PyGILState.PyGILState_UNLOCKED;
+            if (!Runtime.HostedInPython)
+            {
+                pyGILState = Runtime.PyGILState_Ensure();
+            }
+
             if (Exceptions.ErrorOccurred())
             {
                 throw new InvalidOperationException(
                     "Python error indicator is set",
                     innerException: PythonException.PeekCurrentOrNull(out _));
+            }
+
+            if (!Runtime.HostedInPython)
+            {
+                Runtime.PyGILState_Release(pyGILState);
             }
             // If the shutdown handlers trigger a domain unload,
             // don't call shutdown again.
