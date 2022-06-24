@@ -10,3 +10,6 @@ wheel
 pycparser
 setuptools
 clr-loader
+
+# Discover libpython
+find_libpython

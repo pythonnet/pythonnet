@@ -1,4 +1,4 @@
-name: Main (x64)
+name: Main
 
 on:
   push:
@@ -57,12 +57,12 @@ jobs:
       - name: Set Python DLL path (non Windows)
         if: ${{ matrix.os != 'windows' }}
         run: |
-          python -m pythonnet.find_libpython --export >> $GITHUB_ENV
+          echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
 
       - name: Set Python DLL path (Windows)
         if: ${{ matrix.os == 'windows' }}
         run: |
-          python -m pythonnet.find_libpython --export | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(python -m find_libpython)"
 
       - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/embed_tests/
@@ -73,9 +73,10 @@ jobs:
         if: ${{ matrix.os != 'windows' }}
         run: pytest --runtime mono
 
+      # TODO: Run these tests on Windows x86
       - name: Python Tests (.NET Core)
         if: ${{ matrix.platform == 'x64' }}
-        run: pytest --runtime netcore
+        run: pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os == 'windows' }}

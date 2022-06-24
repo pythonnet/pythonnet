@@ -29,6 +29,7 @@ and other `PyObject` derived types when called from Python.
 -   .NET classes, that have `__call__` method are callable from Python
 -   `PyIterable` type, that wraps any iterable object in Python
 -   `PythonEngine` properties for supported Python versions: `MinSupportedVersion`, `MaxSupportedVersion`, and `IsSupportedVersion`
+-   The runtime that is loaded on `import clr` can now be configured via environment variables
 
 
 ### Changed

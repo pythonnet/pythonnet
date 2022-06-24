@@ -4,7 +4,7 @@ import platform
 
 import pytest
 
-from pythonnet.find_libpython import find_libpython
+from find_libpython import find_libpython
 libpython = find_libpython()
 
 pytestmark = pytest.mark.xfail(libpython is None, reason="Can't find suitable libpython")
