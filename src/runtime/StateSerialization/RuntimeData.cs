@@ -49,6 +49,7 @@ namespace Python.Runtime
 
         internal static void Stash()
         {
+            return;
             var runtimeStorage = new PythonNetState
             {
                 Metatype = MetaType.SaveRuntimeData(),
