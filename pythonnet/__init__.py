@@ -1,4 +1,5 @@
 import sys
+from os import environ
 from pathlib import Path
 from typing import Dict, Optional, Union
 import clr_loader
@@ -28,9 +29,8 @@ def set_runtime(runtime: Union[clr_loader.Runtime, str], **params: str) -> None:
 
 
 def _get_params_from_env(prefix: str) -> Dict[str, str]:
-    from os import environ
 
-    full_prefix = f"PYTHONNET_{prefix.upper()}"
+    full_prefix = f"PYTHONNET_{prefix.upper()}_"
     len_ = len(full_prefix)
 
     env_vars = {
@@ -49,7 +49,7 @@ def _create_runtime_from_spec(
         if sys.platform == "win32":
             spec = "netfx"
         else:
-            spec = "mono"
+            spec = environ.get("PYTHONNET_RUNTIME", "mono")
 
     params = params or _get_params_from_env(spec)
 
@@ -78,7 +78,6 @@ def set_default_runtime() -> None:
     for all environments but Windows, on Windows the legacy .NET Framework is
     used.
     """
-    from os import environ
 
     print("Set default RUNTIME")
     raise RuntimeError("Shouldn't be called here")
