@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
+using Python.Runtime;
+
 namespace Python.Test
 {
     public interface IInterfaceTest
@@ -213,6 +215,30 @@ namespace Python.Test
         {
             var obj = Activator.CreateInstance(t);
             return obj;
+        }
+
+        public object TestObj { get; set; }
+
+        public static object TestOnType(Type t)
+        {
+            using (Py.GIL())
+            {
+                var obj = (SimpleClass) Activator.CreateInstance(t);
+                //obj = obj.ToPython().As<SimpleClass>();
+                obj.TestObj = new object();
+                var py = obj.ToPython();
+                var man = py.As<SimpleClass>();
+                if (!ReferenceEquals(man, obj))
+                    throw new Exception("Same object expected");
+                var setObj = py.GetAttr("TestObj").As<object>();
+                if (setObj == null)
+                    throw new NullReferenceException();
+                if (ReferenceEquals(setObj, obj.TestObj) == false)
+                    throw new Exception("!!");
+
+
+            return obj;
+            }
         }
 
         public static void Pause()

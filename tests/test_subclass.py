@@ -361,9 +361,27 @@ def test_class_with_advanced_attribute():
 
     c = ClassWithAttributes2()
     c2 = ClassWithAttributes3()
+
+def test_subclass_ctor():
+    import clr
+    class SubClass0(SimpleClass):
+        pass
+    class SubClass1(SubClass0):
+        def __init__(self):
+            super().__init__()
+    class SubClass2(SubClass1):
+        __namespace__ = "TestModule"
+        def __init__(self):
+            super().__init__()
+    SimpleClass.TestOnType(SubClass0)
+    SimpleClass.TestOnType(SubClass1)
+    SimpleClass.TestOnType(SubClass2)
+
 def test_more_subclasses():
     import clr
-    class SubClass1(SimpleClass):
+    class SubClass0(SimpleClass):
+        pass
+    class SubClass1(SubClass0):
         X = clr.property(Double, 1.0)
         def __init__(self):
             super().__init__()
@@ -379,6 +397,9 @@ def test_more_subclasses():
             super().__init__()
         def IncrementThing(self):
             return 6;
+    SimpleClass.TestOnType(SubClass0)
+    SimpleClass.TestOnType(SubClass1)
+    SimpleClass.TestOnType(SubClass2)
     obj = SimpleClass.InvokeCtor(SubClass2)
 
     obj2 = SubClass2()
