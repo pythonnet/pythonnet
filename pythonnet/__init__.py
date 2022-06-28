@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 import clr_loader
 
-__all__ = ["set_runtime", "set_default_runtime", "load"]
+__all__ = ["set_runtime", "set_runtime_from_env", "load"]
 
 _RUNTIME: Optional[clr_loader.Runtime] = None
 _LOADER_ASSEMBLY: Optional[clr_loader.wrappers.Assembly] = None
@@ -30,7 +30,7 @@ def set_runtime(runtime: Union[clr_loader.Runtime, str], **params: str) -> None:
 def _get_params_from_env(prefix: str) -> Dict[str, str]:
     from os import environ
 
-    full_prefix = f"PYTHONNET_{prefix.upper()}"
+    full_prefix = f"PYTHONNET_{prefix.upper()}_"
     len_ = len(full_prefix)
 
     env_vars = {
@@ -63,8 +63,8 @@ def _create_runtime_from_spec(
         raise RuntimeError(f"Invalid runtime name: '{spec}'")
 
 
-def set_default_runtime() -> None:
-    """Set up the default runtime
+def set_runtime_from_env() -> None:
+    """Set up the runtime using the environment
 
     This will use the environment variable PYTHONNET_RUNTIME to decide the
     runtime to use, which may be one of netfx, coreclr or mono. The parameters
@@ -80,16 +80,13 @@ def set_default_runtime() -> None:
     """
     from os import environ
 
-    print("Set default RUNTIME")
-    raise RuntimeError("Shouldn't be called here")
-
     spec = environ.get("PYTHONNET_RUNTIME", "default")
     runtime = _create_runtime_from_spec(spec)
     set_runtime(runtime)
 
 
 def load(
-    runtime: Union[clr_loader.Runtime, str] = "default", **params: Dict[str, str]
+    runtime: Union[clr_loader.Runtime, str, None] = None, **params: str
 ) -> None:
     """Load Python.NET in the specified runtime
 
@@ -102,7 +99,10 @@ def load(
         return
 
     if _RUNTIME is None:
-        set_runtime(runtime, **params)
+        if runtime is None:
+            set_runtime_from_env()
+        else:
+            set_runtime(runtime, **params)
 
     if _RUNTIME is None:
         raise RuntimeError("No valid runtime selected")
