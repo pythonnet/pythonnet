@@ -962,31 +962,6 @@ namespace Python.Runtime
 
         internal static int PyObject_RichCompareBool(BorrowedReference value1, BorrowedReference value2, int opid) => Delegates.PyObject_RichCompareBool(value1, value2, opid);
 
-        internal static int PyObject_Compare(BorrowedReference value1, BorrowedReference value2)
-        {
-            int res;
-            res = PyObject_RichCompareBool(value1, value2, Py_LT);
-            if (-1 == res)
-                return -1;
-            else if (1 == res)
-                return -1;
-
-            res = PyObject_RichCompareBool(value1, value2, Py_EQ);
-            if (-1 == res)
-                return -1;
-            else if (1 == res)
-                return 0;
-
-            res = PyObject_RichCompareBool(value1, value2, Py_GT);
-            if (-1 == res)
-                return -1;
-            else if (1 == res)
-                return 1;
-
-            Exceptions.SetError(Exceptions.SystemError, "Error comparing objects");
-            return -1;
-        }
-
 
         internal static int PyObject_IsInstance(BorrowedReference ob, BorrowedReference type) => Delegates.PyObject_IsInstance(ob, type);
 
