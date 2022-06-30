@@ -33,7 +33,8 @@ namespace Python.EmbeddingTest
         {
             PyObject sys = Py.Import("sys");
             // We can safely ignore the "m" abi flag
-            var abiflags = sys.GetAttr("abiflags", "".ToPython()).ToString().Replace("m", "");
+            var abiflags = sys.HasAttr("abiflags") ? sys.GetAttr("abiflags").ToString() : "";
+            abiflags = abiflags.Replace("m", "");
             if (!string.IsNullOrEmpty(abiflags))
             {
                 string typeName = "Python.Runtime.NativeTypeOffset, Python.Runtime";

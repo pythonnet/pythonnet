@@ -42,7 +42,7 @@ namespace Python.Runtime
                 Debug.Assert(name == op.As<string>());
                 SetIntern(name, op);
                 var field = type.GetField("f" + name, PyIdentifierFieldFlags)!;
-                field.SetValue(null, op.rawPtr);
+                field.SetValue(null, op.DangerousGetAddressOrNull());
             }
         }
 
@@ -76,7 +76,7 @@ namespace Python.Runtime
         private static void SetIntern(string s, PyString op)
         {
             _string2interns.Add(s, op);
-            _intern2strings.Add(op.rawPtr, s);
+            _intern2strings.Add(op.Reference.DangerousGetAddress(), s);
         }
     }
 }

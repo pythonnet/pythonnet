@@ -99,8 +99,7 @@ obj.Field = 10
                         {
                             Debug.Assert(obj.AsManagedObject(type).GetType() == type);
                             // We only needs its Python handle
-                            PyRuntime.XIncref(obj);
-                            return obj.Handle;
+                            return new NewReference(obj).DangerousMoveToPointer();
                         }
                     }
                 }
