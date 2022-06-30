@@ -1075,12 +1075,9 @@ namespace Python.Runtime
             {
                 return true;
             }
-            int r = Runtime.PyObject_Compare(this, other);
-            if (Exceptions.ErrorOccurred())
-            {
-                throw PythonException.ThrowLastAsClrException();
-            }
-            return r == 0;
+            int result = Runtime.PyObject_RichCompareBool(obj, other.obj, Runtime.Py_EQ);
+            if (result < 0) throw PythonException.ThrowLastAsClrException();
+            return result != 0;
         }
 
 
@@ -1304,6 +1301,18 @@ namespace Python.Runtime
             return false;
         }
 
+        private bool TryCompare(PyObject arg, int op, out object @out)
+        {
+            int result = Runtime.PyObject_RichCompareBool(this.obj, arg.obj, op);
+            @out = result != 0;
+            if (result < 0)
+            {
+                Exceptions.Clear();
+                return false;
+            }
+            return true;
+        }
+        
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
             using var _ = Py.GIL();
@@ -1352,11 +1361,9 @@ namespace Python.Runtime
                     res = Runtime.PyNumber_InPlaceXor(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.GreaterThan:
-                    result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) > 0;
-                    return true;
+                    return this.TryCompare((PyObject)arg, Runtime.Py_GT, out result);
                 case ExpressionType.GreaterThanOrEqual:
-                    result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) >= 0;
-                    return true;
+                    return this.TryCompare((PyObject)arg, Runtime.Py_GE, out result);
                 case ExpressionType.LeftShift:
                     res = Runtime.PyNumber_Lshift(this.obj, ((PyObject)arg).obj);
                     break;
@@ -1364,11 +1371,9 @@ namespace Python.Runtime
                     res = Runtime.PyNumber_InPlaceLshift(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.LessThan:
-                    result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) < 0;
-                    return true;
+                    return this.TryCompare((PyObject)arg, Runtime.Py_LT, out result);
                 case ExpressionType.LessThanOrEqual:
-                    result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) <= 0;
-                    return true;
+                    return this.TryCompare((PyObject)arg, Runtime.Py_LE, out result);
                 case ExpressionType.Modulo:
                     res = Runtime.PyNumber_Remainder(this.obj, ((PyObject)arg).obj);
                     break;
@@ -1376,8 +1381,9 @@ namespace Python.Runtime
                     res = Runtime.PyNumber_InPlaceRemainder(this.obj, ((PyObject)arg).obj);
                     break;
                 case ExpressionType.NotEqual:
-                    result = Runtime.PyObject_Compare(this.obj, ((PyObject)arg).obj) != 0;
-                    return true;
+                    return this.TryCompare((PyObject)arg, Runtime.Py_NE, out result);
+                case ExpressionType.Equal:
+                    return this.TryCompare((PyObject)arg, Runtime.Py_EQ, out result);
                 case ExpressionType.Or:
                     res = Runtime.PyNumber_Or(this.obj, ((PyObject)arg).obj);
                     break;
@@ -1400,6 +1406,40 @@ namespace Python.Runtime
             Exceptions.ErrorCheck(res.BorrowNullable());
             result = CheckNone(new PyObject(res.Borrow()));
             return true;
+        }
+
+        public static bool operator ==(PyObject? a, PyObject? b)
+        {
+            if (a is null && b is null)
+            {
+                return true;
+            }
+            if (a is null || b is null)
+            {
+                return false;
+            }
+
+            using var _ = Py.GIL();
+            int result = Runtime.PyObject_RichCompareBool(a.obj, b.obj, Runtime.Py_EQ);
+            if (result < 0) throw PythonException.ThrowLastAsClrException();
+            return result != 0;
+        }
+
+        public static bool operator !=(PyObject? a, PyObject? b)
+        {
+            if (a is null && b is null)
+            {
+                return false;
+            }
+            if (a is null || b is null)
+            {
+                return true;
+            }
+
+            using var _ = Py.GIL();
+            int result = Runtime.PyObject_RichCompareBool(a.obj, b.obj, Runtime.Py_NE);
+            if (result < 0) throw PythonException.ThrowLastAsClrException();
+            return result != 0;
         }
 
         // Workaround for https://bugzilla.xamarin.com/show_bug.cgi?id=41509
@@ -1436,14 +1476,17 @@ namespace Python.Runtime
                 case ExpressionType.Not:
                     r = Runtime.PyObject_Not(this.obj);
                     result = r == 1;
+                    if (r == -1) Exceptions.Clear();
                     return r != -1;
                 case ExpressionType.IsFalse:
                     r = Runtime.PyObject_IsTrue(this.obj);
                     result = r == 0;
+                    if (r == -1) Exceptions.Clear();
                     return r != -1;
                 case ExpressionType.IsTrue:
                     r = Runtime.PyObject_IsTrue(this.obj);
                     result = r == 1;
+                    if (r == -1) Exceptions.Clear();
                     return r != -1;
                 case ExpressionType.Decrement:
                 case ExpressionType.Increment:

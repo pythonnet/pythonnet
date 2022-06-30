@@ -128,6 +128,28 @@ namespace Python.EmbeddingTest
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
         }
 
+        // regression test for https://github.com/pythonnet/pythonnet/issues/1848
+        [Test]
+        public void EnumEquality()
+        {
+            using var scope = Py.CreateScope();
+            scope.Exec(@"
+import enum
+
+class MyEnum(enum.IntEnum):
+    OK = 1
+    ERROR = 2
+
+def get_status():
+    return MyEnum.OK 
+"
+);
+
+            dynamic MyEnum = scope.Get("MyEnum");
+            dynamic status = scope.Get("get_status").Invoke();
+            Assert.IsTrue(status == MyEnum.OK);
+        }
+
         // regression test for https://github.com/pythonnet/pythonnet/issues/1680
         [Test]
         public void ForEach()
