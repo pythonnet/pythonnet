@@ -325,7 +325,7 @@ namespace Python.Runtime
 
             MaybeType type = obj.GetType();
             
-            if (type.Value.CustomAttributes.Any((attr) => attr.AttributeType == typeof(NonSerializedAttribute)))
+            if (type.Value.CustomAttributes.Any((attr) => attr.AttributeType == typeof(PyNet_NotSerializedAttribute)))
             {
                 // Don't serialize a _NotSerialized. Serialize the base type, and deserialize as a _NotSerialized
                 type = type.Value.BaseType;
