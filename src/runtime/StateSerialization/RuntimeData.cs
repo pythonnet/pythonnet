@@ -1,9 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -45,38 +42,140 @@ namespace Python.Runtime
         internal static HashSet<string> dontReimplementMethods = new(){"Finalize", "Dispose", "GetType", "ReferenceEquals", "GetHashCode", "Equals"};
         const string notSerializedSuffix = "_NotSerialized";
 
-        public static object CreateNewObject(Type baseType)
+        private static Func<Type, TypeAttributes, bool> hasVisibility = (tp, attr) => (tp.Attributes & TypeAttributes.VisibilityMask) == attr; 
+        private static Func<Type, bool> isNestedType = (tp) => hasVisibility(tp, TypeAttributes.NestedPrivate) || hasVisibility(tp, TypeAttributes.NestedPublic) || hasVisibility(tp, TypeAttributes.NestedFamily) || hasVisibility(tp, TypeAttributes.NestedAssembly);
+        private static Func<Type, bool> isPrivateType = (tp) => hasVisibility(tp, TypeAttributes.NotPublic) || hasVisibility(tp, TypeAttributes.NestedPrivate) || hasVisibility(tp, TypeAttributes.NestedFamily) || hasVisibility( tp, TypeAttributes.NestedAssembly);
+        private static Func<Type, bool> isPublicType = (tp) => hasVisibility(tp, TypeAttributes.Public) || hasVisibility(tp,TypeAttributes.NestedPublic);
+
+        public static object? CreateNewObject(Type baseType)
         {
             var myType = CreateType(baseType);
+            if (myType is null)
+            {
+                return null;
+            }
             var myObject = Activator.CreateInstance(myType);
             return myObject;
         }
 
-        public static Type CreateType(Type tp)
+        static void FillTypeMethods(TypeBuilder tb)
         {
-            Type existingType = assemblyForNonSerializedClasses.GetType(tp.Name + "_NotSerialized", throwOnError:false);
-            if (existingType is not null)
+            var constructors = tb.BaseType.GetConstructors();
+            if (constructors.Count() == 0)
             {
-                return existingType;
+                // no constructors defined, at least declare a default
+                ConstructorBuilder constructor = tb.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName);
+            }
+            else
+            {
+                foreach (var ctor in constructors)
+                {
+                    var ctorParams = (from param in ctor.GetParameters() select param.ParameterType).ToArray();
+                    var ctorbuilder = tb.DefineConstructor(ctor.Attributes, ctor.CallingConvention, ctorParams);
+                    ctorbuilder.GetILGenerator().Emit(OpCodes.Ret);
+
+                }
+                var parameterless = tb.DefineConstructor(MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.Standard  | CallingConventions.HasThis, Type.EmptyTypes);
+                parameterless.GetILGenerator().Emit(OpCodes.Ret);
             }
 
-            TypeBuilder tb = GetTypeBuilder(tp);
-            ConstructorBuilder constructor = tb.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName);
-            var properties = tp.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            var properties = tb.BaseType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             foreach (var prop in properties)
             {
                 CreateProperty(tb, prop);
             }
 
-            var methods = tp.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            var methods = tb.BaseType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             foreach (var meth in methods)
             {
                 CreateMethod(tb, meth);
             }
 
             ImplementEqualityAndHash(tb);
+        }
 
-            return tb.CreateType();
+        static string MakeName(Type tp)
+        {
+            const string suffix = "_NotSerialized";
+            string @out = tp.Name + suffix;
+            var parentType = tp.DeclaringType;
+            while (parentType is not null)
+            {
+                // If we have a nested class, we need the whole nester/nestee 
+                // chain with the suffix for each.
+                @out = parentType.Name + suffix + "+" + @out;
+                parentType = parentType.DeclaringType;
+            }
+            return @out;
+        }
+
+        public static Type? CreateType(Type tp)
+        {
+            if (!isPublicType(tp))
+            {
+                return null;
+            }
+
+            Type existingType = assemblyForNonSerializedClasses.GetType(MakeName(tp), throwOnError:false);
+            if (existingType is not null)
+            {
+                return existingType;
+            }
+            var parentType = tp.DeclaringType;
+            if (parentType is not null)
+            {
+                // parent types for nested types must be created first. Climb up the 
+                // declaring type chain until we find a "top-level" class.
+                while (parentType.DeclaringType is not null)
+                {
+                    parentType = parentType.DeclaringType;
+                }
+                CreateTypeInternal(parentType);
+                Type nestedType = assemblyForNonSerializedClasses.GetType(MakeName(tp), throwOnError:true);
+                return nestedType;
+            }
+            return CreateTypeInternal(tp);
+        }
+
+        private static Type? CreateTypeInternal(Type baseType)
+        {
+            if (!isPublicType(baseType))
+            {
+                // we can't derive from non-public types.
+                return null;
+            }
+            Type existingType = assemblyForNonSerializedClasses.GetType(MakeName(baseType), throwOnError:false);
+            if (existingType is not null)
+            {
+                return existingType;
+            }
+
+            TypeBuilder tb = GetTypeBuilder(baseType);
+            SetNonSerialiedAttr(tb);
+            FillTypeMethods(tb);
+
+            var nestedtypes = baseType.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            List<TypeBuilder> nestedBuilders = new();
+            foreach (var nested in nestedtypes)
+            {
+                if (isPrivateType(nested))
+                {
+                    continue;
+                }
+                var nestedBuilder = tb.DefineNestedType(nested.Name + notSerializedSuffix,
+                TypeAttributes.NestedPublic,
+                nested
+                );
+                nestedBuilders.Add(nestedBuilder);
+            }
+            var outTp = tb.CreateType();
+            foreach(var builder in nestedBuilders)
+            {
+                FillTypeMethods(builder);
+                SetNonSerialiedAttr(builder);
+                builder.CreateType();
+            }
+            return outTp;
         }
 
         private static void ImplementEqualityAndHash(TypeBuilder tb)
@@ -91,7 +190,7 @@ namespace Python.Runtime
             getHashIlGen.Emit(OpCodes.Ldarg_0);
             getHashIlGen.EmitCall(OpCodes.Call, typeof(object).GetMethod("GetType"), Type.EmptyTypes);
             getHashIlGen.EmitCall(OpCodes.Call, typeof(Type).GetProperty("Name").GetMethod, Type.EmptyTypes);
-            getHashIlGen.EmitCall(OpCodes.Call, typeof(string).GetMethod("GetHashCode"), Type.EmptyTypes);
+            getHashIlGen.EmitCall(OpCodes.Call, typeof(string).GetMethod("GetHashCode", Type.EmptyTypes), Type.EmptyTypes);
             getHashIlGen.Emit(OpCodes.Ret);
 
             Type[] equalsArgs = new Type[] {typeof(object), typeof(object)};
@@ -108,19 +207,20 @@ namespace Python.Runtime
             equalsIlGen.Emit(OpCodes.Ret);
         }
 
+        private static void SetNonSerialiedAttr(TypeBuilder tb)
+        {
+            ConstructorInfo attrCtorInfo = typeof(PyNet_NotSerializedAttribute).GetConstructor(new Type[]{});
+            CustomAttributeBuilder attrBuilder = new CustomAttributeBuilder(attrCtorInfo,new object[]{});
+            tb.SetCustomAttribute(attrBuilder);
+        }
+
         private static TypeBuilder GetTypeBuilder(Type baseType)
         {
             string typeSignature = baseType.Name + notSerializedSuffix;
-
             TypeBuilder tb = moduleBuilder.DefineType(typeSignature,
                     baseType.Attributes,
                     baseType,
                     baseType.GetInterfaces());
-
-            ConstructorInfo attrCtorInfo = typeof(PyNet_NotSerializedAttribute).GetConstructor(new Type[]{});
-            CustomAttributeBuilder attrBuilder = new CustomAttributeBuilder(attrCtorInfo,new object[]{});
-            tb.SetCustomAttribute(attrBuilder);
-
             return tb;
         }
 
@@ -188,7 +288,6 @@ namespace Python.Runtime
 
         private static void CreateMethod(TypeBuilder tb, MethodInfo minfo)
         {
-            Console.WriteLine($"overimplementing method for: {minfo}  {minfo.IsVirtual}  {minfo.IsFinal}  ");
             string methodName = minfo.Name;
             
             if (dontReimplementMethods.Contains(methodName))
@@ -226,8 +325,7 @@ namespace Python.Runtime
 
             MaybeType type = obj.GetType();
             
-            var hasAttr = (from attr in obj.GetType().CustomAttributes select attr.AttributeType == typeof(PyNet_NotSerializedAttribute)).Count() != 0;
-            if (hasAttr)
+            if (type.Value.CustomAttributes.Any((attr) => attr.AttributeType == typeof(NonSerializedAttribute)))
             {
                 // Don't serialize a _NotSerialized. Serialize the base type, and deserialize as a _NotSerialized
                 type = type.Value.BaseType;
@@ -257,7 +355,7 @@ namespace Python.Runtime
             object nameObj = null!;
             try
             {
-                nameObj = info.GetValue($"notSerialized_tp", typeof(object));
+                nameObj = info.GetValue("notSerialized_tp", typeof(object));
             }
             catch
             {
@@ -274,7 +372,7 @@ namespace Python.Runtime
                 return null!;
             }
 
-            obj = NonSerializedTypeBuilder.CreateNewObject(name.Value);
+            obj = NonSerializedTypeBuilder.CreateNewObject(name.Value)!;
             return obj;
         }
     }
@@ -287,14 +385,13 @@ namespace Python.Runtime
             {
                 throw new ArgumentNullException();
             }
+            selector = this;
             if (type.IsSerializable)
             {
-                selector = this;
                 return null; // use whichever default
             }
             else
             {
-                selector = this;
                 return new NotSerializableSerializer();
             }
         }
@@ -597,7 +694,6 @@ namespace Python.Runtime
                 : new BinaryFormatter()
                 {
                     SurrogateSelector = new NonSerializableSelector(),
-                    // Binder = new CustomizedBinder()
                 };
         }
     }
