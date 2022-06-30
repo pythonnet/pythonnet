@@ -161,7 +161,7 @@ class TestException(NameError):
                 using var tbObj = tbPtr.MoveToPyObject();
                 // the type returned from PyErr_NormalizeException should not be the same type since a new
                 // exception was raised by initializing the exception
-                Assert.AreNotEqual(type.Handle, typeObj.Handle);
+                Assert.IsFalse(PythonReferenceComparer.Instance.Equals(type, typeObj));
                 // the message should now be the string from the throw exception during normalization
                 Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
             }

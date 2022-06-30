@@ -13,10 +13,10 @@ namespace Python.Runtime
         public static PythonReferenceComparer Instance { get; } = new PythonReferenceComparer();
         public bool Equals(PyObject? x, PyObject? y)
         {
-            return x?.rawPtr == y?.rawPtr;
+            return x?.DangerousGetAddressOrNull() == y?.DangerousGetAddressOrNull();
         }
 
-        public int GetHashCode(PyObject obj) => obj.rawPtr.GetHashCode();
+        public int GetHashCode(PyObject obj) => obj.DangerousGetAddressOrNull().GetHashCode();
 
         private PythonReferenceComparer() { }
     }

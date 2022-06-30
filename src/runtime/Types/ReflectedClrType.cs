@@ -117,6 +117,6 @@ internal sealed class ReflectedClrType : PyType
         return new ReflectedClrType(type.Steal());
     }
 
-    public override bool Equals(PyObject? other) => other != null && rawPtr == other.rawPtr;
+    public override bool Equals(PyObject? other) => rawPtr == other?.DangerousGetAddressOrNull();
     public override int GetHashCode() => rawPtr.GetHashCode();
 }
