@@ -27,7 +27,7 @@ namespace Python.Runtime
         public StackTrace Traceback { get; } = new StackTrace(1);
 #endif  
 
-        protected internal IntPtr rawPtr = IntPtr.Zero;
+        protected IntPtr rawPtr = IntPtr.Zero;
         internal readonly int run = Runtime.GetRun();
 
         internal BorrowedReference obj => new (rawPtr);
@@ -251,6 +251,8 @@ namespace Python.Runtime
             GC.SuppressFinalize(this);
             rawPtr = IntPtr.Zero;
         }
+
+        internal IntPtr DangerousGetAddressOrNull() => rawPtr;
 
         internal void CheckRun()
         {

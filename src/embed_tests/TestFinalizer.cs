@@ -212,7 +212,9 @@ namespace Python.EmbeddingTest
                 Assert.AreEqual(ptr, e.Handle);
                 Assert.AreEqual(2, e.ImpactedObjects.Count);
                 // Fix for this test, don't do this on general environment
+#pragma warning disable CS0618 // Type or member is obsolete
                 Runtime.Runtime.XIncref(e.Reference);
+#pragma warning restore CS0618 // Type or member is obsolete
                 return false;
             };
             Finalizer.Instance.IncorrectRefCntResolver += handler;
@@ -234,8 +236,9 @@ namespace Python.EmbeddingTest
         {
             PyString s1 = new PyString("test_string");
             // s2 steal a reference from s1
-            PyString s2 = new PyString(StolenReference.DangerousFromPointer(s1.Handle));
-            return s1.Handle;
+            IntPtr address = s1.Reference.DangerousGetAddress();
+            PyString s2 = new (StolenReference.DangerousFromPointer(address));
+            return address;
         }
     }
 }
