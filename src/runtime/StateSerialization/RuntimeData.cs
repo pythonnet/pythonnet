@@ -23,13 +23,6 @@ namespace Python.Runtime
         override public void GetObjectData(SerializationInfo info, StreamingContext context) => base.GetObjectData(info, context);
     }
 
-
-    // empty attribute to mark classes created by the "non-serializer" so we don't loop-inherit
-    // on multiple cycles of de/serialization
-    [System.AttributeUsage(System.AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    [System.Serializable]
-    sealed class PyNet_NotSerializedAttribute : System.Attribute {}
-
     [Serializable]
     internal static class NonSerializedTypeBuilder
     {
@@ -40,7 +33,12 @@ namespace Python.Runtime
             AppDomain.CurrentDomain.DefineDynamicAssembly(nonSerializedAssemblyName, AssemblyBuilderAccess.Run);
         internal static ModuleBuilder moduleBuilder = assemblyForNonSerializedClasses.DefineDynamicModule("NotSerializedModule");
         internal static HashSet<string> dontReimplementMethods = new(){"Finalize", "Dispose", "GetType", "ReferenceEquals", "GetHashCode", "Equals"};
-        const string notSerializedSuffix = "_NotSerialized";
+        internal const string notSerializedSuffix = "_NotSerialized";
+        // dummy field name to mark classes created by the "non-serializer" so we don't loop-inherit
+        // on multiple cycles of de/serialization. We use a static field instead of an attribute
+        // becaues of a bug in mono. Put a space in the name so users will be extremely unlikely
+        // to create a field with the same name.
+        internal const string notSerializedFieldName = "__PyNet NonSerialized";
 
         private static Func<Type, TypeAttributes, bool> hasVisibility = (tp, attr) => (tp.Attributes & TypeAttributes.VisibilityMask) == attr; 
         private static Func<Type, bool> isNestedType = (tp) => hasVisibility(tp, TypeAttributes.NestedPrivate) || hasVisibility(tp, TypeAttributes.NestedPublic) || hasVisibility(tp, TypeAttributes.NestedFamily) || hasVisibility(tp, TypeAttributes.NestedAssembly);
@@ -96,14 +94,13 @@ namespace Python.Runtime
 
         static string MakeName(Type tp)
         {
-            const string suffix = "_NotSerialized";
-            string @out = tp.Name + suffix;
+            string @out = tp.Name + notSerializedSuffix;
             var parentType = tp.DeclaringType;
             while (parentType is not null)
             {
                 // If we have a nested class, we need the whole nester/nestee 
                 // chain with the suffix for each.
-                @out = parentType.Name + suffix + "+" + @out;
+                @out = parentType.Name + notSerializedSuffix + "+" + @out;
                 parentType = parentType.DeclaringType;
             }
             return @out;
@@ -151,7 +148,7 @@ namespace Python.Runtime
             }
 
             TypeBuilder tb = GetTypeBuilder(baseType);
-            SetNonSerialiedAttr(tb);
+            SetNonSerializedAttr(tb);
             FillTypeMethods(tb);
 
             var nestedtypes = baseType.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
@@ -172,7 +169,7 @@ namespace Python.Runtime
             foreach(var builder in nestedBuilders)
             {
                 FillTypeMethods(builder);
-                SetNonSerialiedAttr(builder);
+                SetNonSerializedAttr(builder);
                 builder.CreateType();
             }
             return outTp;
@@ -207,11 +204,18 @@ namespace Python.Runtime
             equalsIlGen.Emit(OpCodes.Ret);
         }
 
-        private static void SetNonSerialiedAttr(TypeBuilder tb)
+        private static void SetNonSerializedAttr(TypeBuilder tb)
         {
-            ConstructorInfo attrCtorInfo = typeof(PyNet_NotSerializedAttribute).GetConstructor(new Type[]{});
-            CustomAttributeBuilder attrBuilder = new CustomAttributeBuilder(attrCtorInfo,new object[]{});
-            tb.SetCustomAttribute(attrBuilder);
+            // Name of the function says we're adding an attribute, but for some
+            // reason on Mono the attribute is not added, and no exceptions are
+            // thrown.
+            tb.DefineField(notSerializedFieldName, typeof(int), FieldAttributes.Public | FieldAttributes.Static);
+        }
+
+        public static bool IsNonSerializedType(Type tp)
+        {
+            return tp.GetField(NonSerializedTypeBuilder.notSerializedFieldName, BindingFlags.Public | BindingFlags.Static) is not null;
+
         }
 
         private static TypeBuilder GetTypeBuilder(Type baseType)
@@ -325,7 +329,7 @@ namespace Python.Runtime
 
             MaybeType type = obj.GetType();
             
-            if (type.Value.CustomAttributes.Any((attr) => attr.AttributeType == typeof(PyNet_NotSerializedAttribute)))
+            if (NonSerializedTypeBuilder.IsNonSerializedType(type.Value))
             {
                 // Don't serialize a _NotSerialized. Serialize the base type, and deserialize as a _NotSerialized
                 type = type.Value.BaseType;
