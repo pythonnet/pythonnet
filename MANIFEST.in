@@ -1,5 +1,6 @@
-recursive-include src/ *
+graft src/runtime
+prune src/runtime/obj
+prune src/runtime/bin
 include Directory.Build.*
 include pythonnet.sln
 include version.txt
-global-exclude **/obj/* **/bin/*
