@@ -44,6 +44,7 @@ namespace Python.Runtime
         private static Func<Type, bool> isNestedType = (tp) => hasVisibility(tp, TypeAttributes.NestedPrivate) || hasVisibility(tp, TypeAttributes.NestedPublic) || hasVisibility(tp, TypeAttributes.NestedFamily) || hasVisibility(tp, TypeAttributes.NestedAssembly);
         private static Func<Type, bool> isPrivateType = (tp) => hasVisibility(tp, TypeAttributes.NotPublic) || hasVisibility(tp, TypeAttributes.NestedPrivate) || hasVisibility(tp, TypeAttributes.NestedFamily) || hasVisibility( tp, TypeAttributes.NestedAssembly);
         private static Func<Type, bool> isPublicType = (tp) => hasVisibility(tp, TypeAttributes.Public) || hasVisibility(tp,TypeAttributes.NestedPublic);
+        private static Func<Type, bool> CanCreateType = (tp) => isPublicType(tp) && ((tp.Attributes & TypeAttributes.Sealed) == 0);
 
         public static object? CreateNewObject(Type baseType)
         {
@@ -108,7 +109,7 @@ namespace Python.Runtime
 
         public static Type? CreateType(Type tp)
         {
-            if (!isPublicType(tp))
+            if (!CanCreateType(tp))
             {
                 return null;
             }
