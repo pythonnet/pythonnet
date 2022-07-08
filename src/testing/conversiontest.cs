@@ -1,5 +1,6 @@
 namespace Python.Test
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -26,6 +27,8 @@ namespace Python.Test
         public ulong UInt64Field = 0;
         public float SingleField = 0.0F;
         public double DoubleField = 0.0;
+        public IntPtr IntPtrField = IntPtr.Zero;
+        public UIntPtr UIntPtrField = UIntPtr.Zero;
         public decimal DecimalField = 0;
         public string StringField;
         public ShortEnum EnumField;
@@ -42,7 +45,7 @@ namespace Python.Test
 
     }
 
-    
+
 
     public interface ISpam
     {
@@ -63,7 +66,7 @@ namespace Python.Test
             return value;
         }
     }
-    
+
     public class UnicodeString
     {
         public string value = "안녕";
