@@ -70,22 +70,9 @@ namespace Python.Runtime
             // Primitive types do not have constructors, but they look like
             // they do from Python. If the ClassObject represents one of the
             // convertible primitive types, just convert the arg directly.
-            if (type.IsPrimitive || type == typeof(string))
+            if (type.IsPrimitive)
             {
-                if (Runtime.PyTuple_Size(args) != 1)
-                {
-                    Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
-                    return default;
-                }
-
-                BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
-
-                if (!Converter.ToManaged(op, type, out var result, true))
-                {
-                    return default;
-                }
-
-                return CLRObject.GetReference(result!, tp);
+                return NewPrimitive(tp, args, type);
             }
 
             if (type.IsAbstract)
@@ -99,6 +86,11 @@ namespace Python.Runtime
                 return NewEnum(type, args, tp);
             }
 
+            if (type == typeof(string))
+            {
+                return NewString(args, tp);
+            }
+
             if (IsGenericNullable(type))
             {
                 // Nullable<T> has special handling in .NET runtime.
@@ -110,6 +102,101 @@ namespace Python.Runtime
             object obj = FormatterServices.GetUninitializedObject(type);
 
             return self.NewObjectToPython(obj, tp);
+        }
+
+        /// <summary>
+        /// Construct a new .NET String object from Python args
+        /// </summary>
+        private static NewReference NewString(BorrowedReference args, BorrowedReference tp)
+        {
+            if (Runtime.PyTuple_Size(args) == 1)
+            {
+                BorrowedReference ob = Runtime.PyTuple_GetItem(args, 0);
+                if (Runtime.PyString_Check(ob))
+                {
+                    if (Runtime.GetManagedString(ob) is string val)
+                        return CLRObject.GetReference(val, tp);
+                }
+
+                // TODO: Initialise using constructors instead
+
+                Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
+                return default;
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// Create a new Python object for a primitive type
+        /// 
+        /// The primitive types are Boolean, Byte, SByte, Int16, UInt16,
+        /// Int32, UInt32, Int64, UInt64, IntPtr, UIntPtr, Char, Double,
+        /// and Single.
+        ///
+        /// All numeric types and Boolean can be handled by a simple
+        /// conversion, (U)IntPtr has to be handled separately as we
+        /// do not want to convert them automically to/from integers.
+        /// </summary>
+        /// <param name="type">.NET type to construct</param>
+        /// <param name="tp">Corresponding Python type</param>
+        /// <param name="args">Constructor arguments</param>
+        private static NewReference NewPrimitive(BorrowedReference tp, BorrowedReference args, Type type)
+        {
+            // TODO: Handle IntPtr
+            if (Runtime.PyTuple_Size(args) != 1)
+            {
+                Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
+                return default;
+            }
+
+            BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
+            object? result = null;
+
+            if (type == typeof(IntPtr))
+            {
+                if (ManagedType.GetManagedObject(op) is CLRObject clrObject)
+                {
+                    switch (clrObject.inst)
+                    {
+                        case nint val:
+                            result = new IntPtr(val);
+                            break;
+                        case Int64 val:
+                            result = new IntPtr(val);
+                            break;
+                        case Int32 val:
+                            result = new IntPtr(val);
+                            break;
+                    }
+                }
+            }
+
+            if (type == typeof(UIntPtr))
+            {
+                if (ManagedType.GetManagedObject(op) is CLRObject clrObject)
+                {
+                    switch (clrObject.inst)
+                    {
+                        case nuint val:
+                            result = new UIntPtr(val);
+                            break;
+                        case UInt64 val:
+                            result = new UIntPtr(val);
+                            break;
+                        case UInt32 val:
+                            result = new UIntPtr(val);
+                            break;
+                    }
+                }
+            }
+
+            if (result == null && !Converter.ToManaged(op, type, out result, true))
+            {
+                return default;
+            }
+
+            return CLRObject.GetReference(result!, tp);
         }
 
         protected virtual void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)

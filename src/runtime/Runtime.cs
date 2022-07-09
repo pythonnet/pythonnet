@@ -1281,13 +1281,6 @@ namespace Python.Runtime
         //====================================================================
         // Python string API
         //====================================================================
-        internal static bool IsStringType(BorrowedReference op)
-        {
-            BorrowedReference t = PyObject_TYPE(op);
-            return (t == PyStringType)
-                || (t == PyUnicodeType);
-        }
-
         internal static bool PyString_Check(BorrowedReference ob)
         {
             return PyObject_TYPE(ob) == PyStringType;

@@ -298,36 +298,6 @@ namespace Python.Runtime
             {
                 case CLRObject co:
                     object tmp = co.inst;
-                    if (obType == typeof(IntPtr))
-                    {
-                        switch (tmp)
-                        {
-                            case nint val:
-                                result = new IntPtr(val);
-                                return true;
-                            case Int64 val:
-                                result = new IntPtr(val);
-                                return true;
-                            case Int32 val:
-                                result = new IntPtr(val);
-                                return true;
-                        }
-                    }
-                    if (obType == typeof(UIntPtr))
-                    {
-                        switch (tmp)
-                        {
-                            case nuint val:
-                                result = new UIntPtr(val);
-                                return true;
-                            case UInt64 val:
-                                result = new UIntPtr(val);
-                                return true;
-                            case UInt32 val:
-                                result = new UIntPtr(val);
-                                return true;
-                        }
-                    }
                     if (obType.IsInstanceOfType(tmp))
                     {
                         result = tmp;
@@ -391,7 +361,7 @@ namespace Python.Runtime
             // conversions (Python string -> managed string).
             if (obType == objectType)
             {
-                if (Runtime.IsStringType(value))
+                if (Runtime.PyString_Check(value))
                 {
                     return ToPrimitive(value, stringType, out result, setError);
                 }
