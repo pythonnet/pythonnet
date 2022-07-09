@@ -680,19 +680,19 @@ def test_iconvertible_conversion():
     assert 1024 == change_type(1024, System.Int64)
     assert 1024 == change_type(1024, System.Int16)
 
-def test_intptr_conversion():
-    from System import IntPtr, UIntPtr, Int64
+def test_intptr_construction():
+    from System import IntPtr, UIntPtr, Int64, UInt64
 
     ob = ConversionTest()
 
     assert ob.IntPtrField == IntPtr.Zero
     assert ob.UIntPtrField == UIntPtr.Zero
 
-    ob.IntPtrField = IntPtr(-1)
-    assert ob.IntPtrField == IntPtr(-1)
+    ob.IntPtrField = IntPtr(Int64(-1))
+    assert ob.IntPtrField.ToInt64() == -1
 
     ob.IntPtrField = IntPtr(Int64(1024))
-    assert ob.IntPtrField == IntPtr(1024)
+    assert ob.IntPtrField.ToInt64() == 1024
 
-    ob.UIntPtrField = ob.IntPtrField
-    assert ob.UIntPtrField == UIntPtr(1024)
+    ob.UIntPtrField = UIntPtr(UInt64(1024))
+    assert ob.UIntPtrField.ToUInt64() == 1024
