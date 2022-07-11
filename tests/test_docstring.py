@@ -25,3 +25,10 @@ def test_doc_without_ctor():
     assert DocWithoutCtorTest.__doc__ == 'DocWithoutCtorTest Class'
     assert DocWithoutCtorTest.TestMethod.__doc__ == 'DocWithoutCtorTest TestMethod'
     assert DocWithoutCtorTest.StaticTestMethod.__doc__ == 'DocWithoutCtorTest StaticTestMethod'
+
+
+def test_doc_primitve():
+    from System import Int64, String
+
+    assert Int64.__doc__ is not None
+    assert String.__doc__ is not None
