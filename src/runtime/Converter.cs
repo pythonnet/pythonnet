@@ -361,7 +361,7 @@ namespace Python.Runtime
             // conversions (Python string -> managed string).
             if (obType == objectType)
             {
-                if (Runtime.IsStringType(value))
+                if (Runtime.PyString_Check(value))
                 {
                     return ToPrimitive(value, stringType, out result, setError);
                 }
