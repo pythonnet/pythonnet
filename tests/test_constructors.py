@@ -69,3 +69,20 @@ def test_default_constructor_fallback():
 
     with pytest.raises(TypeError):
         ob = DefaultConstructorMatching("2")
+
+
+def test_string_constructor():
+    from System import String, Char, Array
+
+    ob = String('A', 10)
+    assert ob == 'A' * 10
+
+    arr = Array[Char](10)
+    for i in range(10):
+        arr[i] = Char(str(i))
+
+    ob = String(arr)
+    assert ob == "0123456789"
+
+    ob = String(arr, 5, 4)
+    assert ob == "5678"
