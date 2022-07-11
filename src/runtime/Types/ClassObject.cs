@@ -106,24 +106,63 @@ namespace Python.Runtime
 
         /// <summary>
         /// Construct a new .NET String object from Python args
+        ///
+        /// This manual implementation of all individual relevant constructors
+        /// is required because System.String can't be allocated uninitialized.
+        ///
+        /// Additionally, it implements `String(pythonStr)`
         /// </summary>
         private static NewReference NewString(BorrowedReference args, BorrowedReference tp)
         {
-            if (Runtime.PyTuple_Size(args) == 1)
+            var argCount = Runtime.PyTuple_Size(args);
+
+            string? result = null;
+            if (argCount == 1)
             {
                 BorrowedReference ob = Runtime.PyTuple_GetItem(args, 0);
                 if (Runtime.PyString_Check(ob))
                 {
                     if (Runtime.GetManagedString(ob) is string val)
-                        return CLRObject.GetReference(val, tp);
+                        result = val;
                 }
+                else if (Converter.ToManagedValue(ob, typeof(char[]), out object? arr, false))
+                {
+                    result = new String((char[])arr!);
+                }
+            }
+            else if (argCount == 2)
+            {
+                BorrowedReference p1 = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference p2 = Runtime.PyTuple_GetItem(args, 1);
 
-                // TODO: Initialise using constructors instead
+                if (
+                    Converter.ToManagedValue(p1, typeof(char), out object? chr, false) &&
+                    Converter.ToManagedValue(p2, typeof(int), out object? count, false)
+                   )
+                {
+                    result = new String((char)chr!, (int)count!);
+                }
+            }
+            else if (argCount == 3)
+            {
+                BorrowedReference p1 = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference p2 = Runtime.PyTuple_GetItem(args, 1);
+                BorrowedReference p3 = Runtime.PyTuple_GetItem(args, 2);
 
-                Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
-                return default;
+                if (
+                    Converter.ToManagedValue(p1, typeof(char[]), out object? arr, false) &&
+                    Converter.ToManagedValue(p2, typeof(int), out object? offset, false) &&
+                    Converter.ToManagedValue(p3, typeof(int), out object? length, false)
+                   )
+                {
+                    result = new String((char[])arr!, (int)offset!, (int)length!);
+                }
             }
 
+            if (result != null)
+                return CLRObject.GetReference(result!, tp);
+
+            Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
             return default;
         }
 
