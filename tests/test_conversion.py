@@ -689,10 +689,13 @@ def test_intptr_construction():
     assert ob.UIntPtrField == UIntPtr.Zero
 
     ob.IntPtrField = IntPtr(Int64(-1))
+    assert ob.IntPtrField == IntPtr(-1)
     assert ob.IntPtrField.ToInt64() == -1
 
     ob.IntPtrField = IntPtr(Int64(1024))
+    assert ob.IntPtrField == IntPtr(1024)
     assert ob.IntPtrField.ToInt64() == 1024
 
     ob.UIntPtrField = UIntPtr(UInt64(1024))
+    assert ob.UIntPtrField == UIntPtr(1024)
     assert ob.UIntPtrField.ToUInt64() == 1024

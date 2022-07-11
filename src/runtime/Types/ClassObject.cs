@@ -129,7 +129,7 @@ namespace Python.Runtime
 
         /// <summary>
         /// Create a new Python object for a primitive type
-        /// 
+        ///
         /// The primitive types are Boolean, Byte, SByte, Int16, UInt16,
         /// Int32, UInt32, Int64, UInt64, IntPtr, UIntPtr, Char, Double,
         /// and Single.
@@ -170,6 +170,14 @@ namespace Python.Runtime
                             break;
                     }
                 }
+                else if (Runtime.PyInt_Check(op))
+                {
+                    long? num = Runtime.PyLong_AsLongLong(op);
+                    if (num is long n)
+                    {
+                        result = new IntPtr(n);
+                    }
+                }
             }
 
             if (type == typeof(UIntPtr))
@@ -187,6 +195,14 @@ namespace Python.Runtime
                         case UInt32 val:
                             result = new UIntPtr(val);
                             break;
+                    }
+                }
+                else if (Runtime.PyInt_Check(op))
+                {
+                    ulong? num = Runtime.PyLong_AsUnsignedLongLong(op);
+                    if (num is ulong n)
+                    {
+                        result = new UIntPtr(n);
                     }
                 }
             }
