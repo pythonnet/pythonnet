@@ -701,7 +701,7 @@ def test_intptr_construction():
         assert ob.IntPtrField.ToInt64() == v
 
     for v in [min_intptr - 1, max_intptr + 1]:
-        with pytest.raises(TypeError):
+        with pytest.raises(OverflowError):
             IntPtr(v)
 
     for v in [0, 1024, min_uintptr, max_uintptr, max_intptr]:
@@ -710,6 +710,6 @@ def test_intptr_construction():
         assert ob.UIntPtrField.ToUInt64() == v
 
     for v in [min_uintptr - 1, max_uintptr + 1, min_intptr]:
-        with pytest.raises(TypeError):
+        with pytest.raises(OverflowError):
             UIntPtr(v)
 

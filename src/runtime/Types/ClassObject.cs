@@ -173,9 +173,14 @@ namespace Python.Runtime
                 else if (Runtime.PyInt_Check(op))
                 {
                     long? num = Runtime.PyLong_AsLongLong(op);
-                    if (num is long n)
+                    if (num is long n && n >= Runtime.IntPtrMinValue && n <= Runtime.IntPtrMaxValue)
                     {
                         result = new IntPtr(n);
+                    }
+                    else
+                    {
+                        Exceptions.SetError(Exceptions.OverflowError, "value not in range for IntPtr");
+                        return default;
                     }
                 }
             }
@@ -200,9 +205,14 @@ namespace Python.Runtime
                 else if (Runtime.PyInt_Check(op))
                 {
                     ulong? num = Runtime.PyLong_AsUnsignedLongLong(op);
-                    if (num is ulong n)
+                    if (num is ulong n && n <= Runtime.UIntPtrMaxValue)
                     {
                         result = new UIntPtr(n);
+                    }
+                    else
+                    {
+                        Exceptions.SetError(Exceptions.OverflowError, "value not in range for UIntPtr");
+                        return default;
                     }
                 }
             }
