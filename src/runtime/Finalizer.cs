@@ -106,6 +106,7 @@ namespace Python.Runtime
 
         #endregion
 
+        [ForbidPythonThreads]
         public void Collect() => this.DisposeAll();
 
         internal void ThrottledCollect()
