@@ -3,6 +3,7 @@
 """Test CLR class constructor support."""
 
 import pytest
+import sys
 
 import System
 
@@ -69,6 +70,19 @@ def test_default_constructor_fallback():
 
     with pytest.raises(TypeError):
         ob = DefaultConstructorMatching("2")
+
+
+def test_constructor_leak():
+    from System import Uri
+    from Python.Runtime import Runtime
+
+    uri = Uri("http://www.python.org")
+    Runtime.TryCollectingGarbage(20)
+    ref_count = sys.getrefcount(uri)
+
+    # check disabled due to GC uncertainty
+    # assert ref_count == 1
+
 
 
 def test_string_constructor():
