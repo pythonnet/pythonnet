@@ -22,7 +22,6 @@ internal sealed class ReflectedClrType : PyType
     /// </summary>
     /// <remarks>
     /// Returned <see cref="ReflectedClrType"/> might be partially initialized.
-    /// If you need fully initialized type, use <see cref="GetOrInitialize(ClassBase, Type)"/>
     /// </remarks>
     public static ReflectedClrType GetOrCreate(Type type)
     {
