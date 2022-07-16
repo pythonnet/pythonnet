@@ -70,7 +70,6 @@ namespace Python.Runtime
             return new NewReference(ob);
         }
 
-        /// </summary>
         public static int tp_descr_set(BorrowedReference ds, BorrowedReference ob, BorrowedReference val)
             => EventObject.tp_descr_set(ds, ob, val);
 

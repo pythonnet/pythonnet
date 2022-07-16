@@ -334,7 +334,7 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Returns an IEnumerable<string> containing the namepsaces exported
+        /// Returns an enumerable collection containing the namepsaces exported
         /// by loaded assemblies in the current app domain.
         /// </summary>
         public static IEnumerable<string> GetNamespaces ()

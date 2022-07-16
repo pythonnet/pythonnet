@@ -99,6 +99,7 @@ namespace Python.Runtime
         internal static bool HostedInPython;
         internal static bool ProcessIsTerminating;
 
+        /// <summary>
         /// Initialize the runtime...
         /// </summary>
         /// <remarks>Always call this method from the Main thread.  After the

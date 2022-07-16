@@ -520,7 +520,7 @@ namespace Python.Runtime
         #endregion
 
         /// <summary>
-        /// <see cref="TypeManager.InitializeSlots(IntPtr, Type, SlotsHolder)"/>
+        /// <see cref="TypeManager.InitializeSlots(PyType, Type, SlotsHolder?)"/>
         /// </summary>
         public static void InitializeSlots(PyType type, ISet<string> initialized, SlotsHolder slotsHolder)
         {
