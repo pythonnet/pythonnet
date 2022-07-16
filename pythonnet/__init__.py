@@ -121,7 +121,7 @@ def load(
 
 
 def unload() -> None:
-    """Explicitly unload a laoded runtime and shut down Python.NET"""
+    """Explicitly unload a loaded runtime and shut down Python.NET"""
 
     global _RUNTIME, _LOADER_ASSEMBLY
     if _LOADER_ASSEMBLY is not None:
