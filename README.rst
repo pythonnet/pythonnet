@@ -50,6 +50,8 @@ Embedding Python in .NET
    (internal, derived from ``MissingMethodException``) upon calling ``Initialize``.
    Typical values are ``python38.dll`` (Windows), ``libpython3.8.dylib`` (Mac),
    ``libpython3.8.so`` (most other Unix-like operating systems).
+-  Then call ``PythonEngine.Initialize()``. If you plan to use Python objects from
+   multiple threads, also call ``PythonEngine.BeginAllowThreads()``.
 -  All calls to python should be inside a
    ``using (Py.GIL()) {/* Your code here */}`` block.
 -  Import python modules using ``dynamic mod = Py.Import("mod")``, then
