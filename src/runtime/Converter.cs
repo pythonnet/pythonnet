@@ -389,11 +389,6 @@ namespace Python.Runtime
                     return true;
                 }
 
-                if (Runtime.PySequence_Check(value))
-                {
-                    return ToArray(value, typeof(object[]), out result, setError);
-                }
-
                 result = new PyObject(value);
                 return true;
             }

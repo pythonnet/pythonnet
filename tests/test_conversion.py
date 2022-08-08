@@ -577,6 +577,13 @@ def test_object_conversion():
     ob.ObjectField = Foo
     assert ob.ObjectField == Foo
 
+    class PseudoSeq:
+        def __getitem__(self, idx):
+           return 0
+
+    ob.ObjectField = PseudoSeq()
+    assert ob.ObjectField.__class__.__name__ == "PseudoSeq"
+
 
 def test_null_conversion():
     """Test null conversion."""
