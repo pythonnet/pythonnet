@@ -31,6 +31,7 @@ namespace Python.Runtime
         internal static int nb_or { get; private set; }
         internal static int nb_xor { get; private set; }
         internal static int nb_int { get; private set; }
+        internal static int nb_float { get; private set; }
         internal static int nb_lshift { get; private set; }
         internal static int nb_rshift { get; private set; }
         internal static int nb_remainder { get; private set; }

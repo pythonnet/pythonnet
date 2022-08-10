@@ -529,6 +529,13 @@ namespace Python.Runtime
             return callBinder.Invoke(ob, args, kw);
         }
 
+        static NewReference DoConvert(BorrowedReference ob)
+        {
+            var self = (CLRObject)GetManagedObject(ob)!;
+            using var python = self.inst.ToPython();
+            return python.NewReferenceOrNull();
+        }
+
         static IEnumerable<MethodInfo> GetCallImplementations(Type type)
             => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.Name == "__call__");
@@ -563,6 +570,24 @@ namespace Python.Runtime
             if (MpLengthSlot.CanAssign(type.Value))
             {
                 TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.mp_length, new Interop.B_P(MpLengthSlot.impl), slotsHolder);
+            }
+
+            switch (Type.GetTypeCode(type.Value))
+            {
+                case TypeCode.Byte:
+                case TypeCode.SByte:
+                case TypeCode.UInt16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt64:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvert), slotsHolder);
+                    break;
+                case TypeCode.Double:
+                case TypeCode.Single:
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvert), slotsHolder);
+                    break;
             }
         }
 

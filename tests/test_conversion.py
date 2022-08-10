@@ -720,3 +720,12 @@ def test_intptr_construction():
         with pytest.raises(OverflowError):
             UIntPtr(v)
 
+def test_explicit_conversion():
+    from System import Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte
+    from System import Double, Single
+
+    for t in [Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte]:
+        assert int(t(127)) == 127
+
+    for t in [Single, Double]:
+        assert float(t(0.125)) == 0.125
