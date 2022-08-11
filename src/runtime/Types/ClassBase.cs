@@ -536,18 +536,28 @@ namespace Python.Runtime
             return python.NewReferenceOrNull();
         }
 
+        static NewReference DoConvertInt(BorrowedReference ob)
+        {
+            var self = (CLRObject)GetManagedObject(ob)!;
+            return Runtime.PyLong_FromLongLong(Convert.ToInt64(self.inst));
+        }
+
+        static NewReference DoConvertUInt(BorrowedReference ob)
+        {
+            var self = (CLRObject)GetManagedObject(ob)!;
+            return Runtime.PyLong_FromUnsignedLongLong(Convert.ToUInt64(self.inst));
+        }
+
         static NewReference DoConvertBooleanInt(BorrowedReference ob)
         {
             var self = (CLRObject)GetManagedObject(ob)!;
-            using var python = ((bool)self.inst ? 1 : 0).ToPython();
-            return python.NewReferenceOrNull();
+            return Runtime.PyInt_FromInt32((bool)self.inst ? 1 : 0);
         }
 
-        static NewReference DoConvertIntFloat(BorrowedReference ob)
+        static NewReference DoConvertFloat(BorrowedReference ob)
         {
             var self = (CLRObject)GetManagedObject(ob)!;
-            using var python = (Convert.ToDouble(self.inst)).ToPython();
-            return python.NewReferenceOrNull();
+            return Runtime.PyFloat_FromDouble(Convert.ToDouble(self.inst));
         }
 
         static IEnumerable<MethodInfo> GetCallImplementations(Type type)
@@ -589,24 +599,23 @@ namespace Python.Runtime
             switch (Type.GetTypeCode(type.Value))
             {
                 case TypeCode.Boolean:
-                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertBooleanInt), slotsHolder);
-                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertIntFloat), slotsHolder);
-                    break;
-
-                case TypeCode.Byte:
                 case TypeCode.SByte:
-                case TypeCode.UInt16:
-                case TypeCode.UInt32:
-                case TypeCode.UInt64:
                 case TypeCode.Int16:
                 case TypeCode.Int32:
                 case TypeCode.Int64:
-                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvert), slotsHolder);
-                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertIntFloat), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertInt), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertFloat), slotsHolder);
+                    break;
+                case TypeCode.Byte:
+                case TypeCode.UInt16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt64:
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertUInt), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertFloat), slotsHolder);
                     break;
                 case TypeCode.Double:
                 case TypeCode.Single:
-                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvert), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertFloat), slotsHolder);
                     break;
             }
         }
