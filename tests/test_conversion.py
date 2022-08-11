@@ -721,11 +721,16 @@ def test_intptr_construction():
             UIntPtr(v)
 
 def test_explicit_conversion():
-    from System import Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte
+    from System import (
+        Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte, Boolean
+    )
     from System import Double, Single
+
+    assert int(Boolean(True)) == 1
 
     for t in [Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte]:
         assert int(t(127)) == 127
+        assert float(t(127)) == 127.0
 
     for t in [Single, Double]:
         assert float(t(0.125)) == 0.125

@@ -536,6 +536,20 @@ namespace Python.Runtime
             return python.NewReferenceOrNull();
         }
 
+        static NewReference DoConvertBooleanInt(BorrowedReference ob)
+        {
+            var self = (CLRObject)GetManagedObject(ob)!;
+            using var python = ((bool)self.inst ? 1 : 0).ToPython();
+            return python.NewReferenceOrNull();
+        }
+
+        static NewReference DoConvertIntFloat(BorrowedReference ob)
+        {
+            var self = (CLRObject)GetManagedObject(ob)!;
+            using var python = (Convert.ToDouble(self.inst)).ToPython();
+            return python.NewReferenceOrNull();
+        }
+
         static IEnumerable<MethodInfo> GetCallImplementations(Type type)
             => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.Name == "__call__");
@@ -574,6 +588,11 @@ namespace Python.Runtime
 
             switch (Type.GetTypeCode(type.Value))
             {
+                case TypeCode.Boolean:
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertBooleanInt), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertIntFloat), slotsHolder);
+                    break;
+
                 case TypeCode.Byte:
                 case TypeCode.SByte:
                 case TypeCode.UInt16:
@@ -583,6 +602,7 @@ namespace Python.Runtime
                 case TypeCode.Int32:
                 case TypeCode.Int64:
                     TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvert), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertIntFloat), slotsHolder);
                     break;
                 case TypeCode.Double:
                 case TypeCode.Single:
