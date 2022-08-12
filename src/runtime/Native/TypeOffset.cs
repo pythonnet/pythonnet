@@ -38,6 +38,7 @@ namespace Python.Runtime
         internal static int nb_invert { get; private set; }
         internal static int nb_inplace_add { get; private set; }
         internal static int nb_inplace_subtract { get; private set; }
+        internal static int nb_index { get; private set; }
         internal static int ob_size { get; private set; }
         internal static int ob_type { get; private set; }
         internal static int qualname { get; private set; }

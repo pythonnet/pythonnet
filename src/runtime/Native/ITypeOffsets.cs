@@ -31,6 +31,7 @@ namespace Python.Runtime.Native
         int nb_invert { get; }
         int nb_inplace_add { get; }
         int nb_inplace_subtract { get; }
+        int nb_index { get; }
         int ob_size { get; }
         int ob_type { get; }
         int qualname { get; }

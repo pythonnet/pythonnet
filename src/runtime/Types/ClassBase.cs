@@ -604,6 +604,7 @@ namespace Python.Runtime
                 case TypeCode.Int32:
                 case TypeCode.Int64:
                     TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertInt), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_index, new Interop.B_N(DoConvertInt), slotsHolder);
                     TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertFloat), slotsHolder);
                     break;
                 case TypeCode.Byte:
@@ -611,10 +612,12 @@ namespace Python.Runtime
                 case TypeCode.UInt32:
                 case TypeCode.UInt64:
                     TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertUInt), slotsHolder);
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_index, new Interop.B_N(DoConvertUInt), slotsHolder);
                     TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertFloat), slotsHolder);
                     break;
                 case TypeCode.Double:
                 case TypeCode.Single:
+                    TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_int, new Interop.B_N(DoConvertInt), slotsHolder);
                     TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.nb_float, new Interop.B_N(DoConvertFloat), slotsHolder);
                     break;
             }

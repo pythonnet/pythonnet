@@ -82,7 +82,7 @@ namespace Python.Runtime
     {
         [ForbidPythonThreads]
 #pragma warning disable IDE1006 // Naming Styles - must match Python
-        public static PyInt __int__(T value)
+        public static PyInt __index__(T value)
 #pragma warning restore IDE1006 // Naming Styles
             => typeof(T).GetEnumUnderlyingType() == typeof(UInt64)
             ? new PyInt(Convert.ToUInt64(value))
