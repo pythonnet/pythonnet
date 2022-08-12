@@ -743,9 +743,9 @@ def test_explicit_conversion():
         assert float(t(127)) == 127.0
         assert float(t(-127)) == -127.0
 
-    assert int(Int64.MaxValue) == 2**63 - 1
-    assert int(Int64.MinValue) == -2**63
-    assert int(UInt64.MaxValue) == 2**64 - 1
+    assert int(Int64(Int64.MaxValue)) == 2**63 - 1
+    assert int(Int64(Int64.MinValue)) == -2**63
+    assert int(UInt64(UInt64.MaxValue)) == 2**64 - 1
 
     for t in [Single, Double]:
         assert float(t(0.125)) == 0.125
