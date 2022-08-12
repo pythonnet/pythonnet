@@ -22,6 +22,7 @@ namespace Python.Runtime.Native
         int nb_true_divide { get; }
         int nb_and { get; }
         int nb_int { get; }
+        int nb_float { get; }
         int nb_or { get; }
         int nb_xor { get; }
         int nb_lshift { get; }
