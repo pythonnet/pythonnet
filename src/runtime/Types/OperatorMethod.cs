@@ -54,7 +54,7 @@ namespace Python.Runtime
 
                 ["__int__"] = new SlotDefinition("__int__", TypeOffset.nb_int),
                 ["__float__"] = new SlotDefinition("__float__", TypeOffset.nb_float),
-                ["__index__"] = new SlotDefinition("__float__", TypeOffset.nb_index),
+                ["__index__"] = new SlotDefinition("__index__", TypeOffset.nb_index),
             };
             ComparisonOpMap = new Dictionary<string, string>
             {
