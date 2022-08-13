@@ -721,6 +721,7 @@ def test_intptr_construction():
             UIntPtr(v)
 
 def test_explicit_conversion():
+    from operator import index
     from System import (
         Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte, Boolean
     )
@@ -730,18 +731,24 @@ def test_explicit_conversion():
     assert int(Boolean(True)) == 1
 
     for t in [UInt64, UInt32, UInt16, Byte]:
+        assert index(t(127)) == 127
         assert int(t(127)) == 127
         assert float(t(127)) == 127.0
 
     for t in [Int64, Int32, Int16, SByte]:
+        assert index(t(127)) == 127
+        assert index(t(-127)) == -127
         assert int(t(127)) == 127
         assert int(t(-127)) == -127
         assert float(t(127)) == 127.0
         assert float(t(-127)) == -127.0
 
-    assert int(Int64.MaxValue) == 2**63 - 1
-    assert int(Int64.MinValue) == -2**63
-    assert int(UInt64.MaxValue) == 2**64 - 1
+    assert int(Int64(Int64.MaxValue)) == 2**63 - 1
+    assert int(Int64(Int64.MinValue)) == -2**63
+    assert int(UInt64(UInt64.MaxValue)) == 2**64 - 1
 
     for t in [Single, Double]:
         assert float(t(0.125)) == 0.125
+        assert int(t(123.4)) == 123
+        with pytest.raises(TypeError):
+            index(t(123.4))
