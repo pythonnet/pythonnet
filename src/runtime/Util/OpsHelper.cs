@@ -87,5 +87,9 @@ namespace Python.Runtime
             => typeof(T).GetEnumUnderlyingType() == typeof(UInt64)
             ? new PyInt(Convert.ToUInt64(value))
             : new PyInt(Convert.ToInt64(value));
+        [ForbidPythonThreads]
+#pragma warning disable IDE1006 // Naming Styles - must match Python
+        public static PyInt __int__(T value) => __index__(value);
+#pragma warning restore IDE1006 // Naming Styles
     }
 }
