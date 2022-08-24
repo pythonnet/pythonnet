@@ -362,6 +362,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="runs">Total number of GC loops to run</param>
         /// <returns><c>true</c> if a steady state was reached upon the requested number of tries (e.g. on the last try no objects were collected).</returns>
+        [ForbidPythonThreads]
         public static bool TryCollectingGarbage(int runs)
             => TryCollectingGarbage(runs, forceBreakLoops: false);
 
