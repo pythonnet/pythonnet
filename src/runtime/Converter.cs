@@ -10,7 +10,7 @@ namespace Python.Runtime
 {
     /// <summary>
     /// Performs data conversions between managed types and Python types; it provides both static
-    /// functions and static member grouped grouped at start of the file for readability.
+    /// functions and static member; the latter are grouped at start of the file for readability.
     /// * Mapping between Python/CLR types; <see cref="GetTypeByAlias"/> and
     ///   <see cref="GetPythonTypeByAlias"/>
     /// * Transparent proxy function <see cref="GetIsTransparentProxyFunc"/> and static member
@@ -18,7 +18,7 @@ namespace Python.Runtime
     /// * Managed converters <see cref="ToManaged"/>, <see cref="ToManagedValue"/>,
     ///   <see cref="ToManagedExplicit"/>, <see cref="ToPrimitive"/>,
     ///   <see cref="ToPyObjectSubclass"/>, <see cref="ToArray"/> and <see cref="ToInt32"/>
-    /// * Functions to determine whether to use user converters; <see cref="DecodableByUser"/>
+    /// * Functions to determine whether to apply user converters; <see cref="DecodableByUser"/>
     ///   and <see cref="EncodableByUser"/>
     /// </summary>
     [SuppressUnmanagedCodeSecurity]
