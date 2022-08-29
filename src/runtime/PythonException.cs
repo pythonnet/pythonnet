@@ -159,7 +159,7 @@ namespace Python.Runtime
                 return null;
             }
 
-            if (Converter.ToManagedValue(pyInfo.Borrow(), typeof(ExceptionDispatchInfo), out object? result, setError: false))
+            if (Converter.ToManaged(pyInfo.Borrow(), typeof(ExceptionDispatchInfo), out object? result, setError: false))
             {
                 return (ExceptionDispatchInfo)result!;
             }

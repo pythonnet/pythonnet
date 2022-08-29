@@ -397,7 +397,7 @@ namespace Python.Runtime
                 {
                     if (Exceptions.ErrorOccurred()) return default;
                 }
-                else if (!Converter.ToManagedValue(assemblyPtr, typeof(string), out assembly, true))
+                else if (!Converter.ToManaged(assemblyPtr, typeof(string), out assembly, true))
                 {
                     return Exceptions.RaiseTypeError("Couldn't convert __assembly__ value to string");
                 }
@@ -408,7 +408,7 @@ namespace Python.Runtime
                 {
                     if (Exceptions.ErrorOccurred()) return default;
                 }
-                else if (!Converter.ToManagedValue(pyNamespace, typeof(string), out namespaceStr, true))
+                else if (!Converter.ToManaged(pyNamespace, typeof(string), out namespaceStr, true))
                 {
                     return Exceptions.RaiseTypeError("Couldn't convert __namespace__ value to string");
                 }
