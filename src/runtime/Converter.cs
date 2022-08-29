@@ -52,7 +52,6 @@ namespace Python.Runtime
             if (op == Runtime.PyStringType) return STRING_TYPE;
             if (op == Runtime.PyUnicodeType) return STRING_TYPE;
             if (op == Runtime.PyLongType) return INT32_TYPE;
-            if (op == Runtime.PyLongType) return INT64_TYPE;
             if (op == Runtime.PyFloatType) return DOUBLE_TYPE;
             if (op == Runtime.PyBoolType) return BOOL_TYPE;
             return null;
@@ -120,13 +119,14 @@ namespace Python.Runtime
         /// <exception cref="NotImplementedException"></exception>
         internal static NewReference ToPython(object? value, Type type)
         {
-            switch (value)
+            if (value is PyObject pyObj)
             {
-                case PyObject pyObj:
-                    return new NewReference(pyObj);
-                case null:
-                  // Null always converts to None in Python.
-                    return new NewReference(Runtime.PyNone);
+                return new NewReference(pyObj);
+            }
+            // Null always converts to None in Python.
+            if (value == null)
+            {
+                return new NewReference(Runtime.PyNone);
             }
             if (EncodableByUser(type, value))
             {
@@ -146,10 +146,10 @@ namespace Python.Runtime
             }
             // it the type is a python subclass of a managed type then return the
             // underlying python object rather than construct a new wrapper object.
-            if (value is IPythonDerivedType pyDerived)
+            if (value is IPythonDerivedType pyderived)
             {
-                if (!IS_TRANSPARENT_PROXY(pyDerived))
-                    return ClassDerivedObject.ToPython(pyDerived);
+                if (!IS_TRANSPARENT_PROXY(pyderived))
+                    return ClassDerivedObject.ToPython(pyderived);
             }
             // ModuleObjects are created in a way that their wrapping them as
             // a CLRObject fails, the ClassObject has no tpHandle. Return the
@@ -165,14 +165,14 @@ namespace Python.Runtime
             var valueType = value.GetType();
             if (valueType.IsEnum)
             {
-                return CLRObject.GetReference(value,valueType);
+                return CLRObject.GetReference(value, valueType);
             }
 
-            TypeCode tc = Type.GetTypeCode(type);
+            TypeCode tc = Type.GetTypeCode(valueType);
             switch (tc)
             {
                 case TypeCode.Object:
-                    return CLRObject.GetReference(value,valueType);
+                    return CLRObject.GetReference(value, valueType);
                 case TypeCode.String:
                     return Runtime.PyString_FromString((string)value);
                 case TypeCode.Int32:
