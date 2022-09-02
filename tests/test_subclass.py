@@ -396,6 +396,7 @@ def test_more_subclasses():
             SimpleClass.Pause();
             super().__init__()
         def IncrementThing(self):
+            super().IncrementThing()
             return 6;
     SimpleClass.TestOnType(SubClass0)
     SimpleClass.TestOnType(SubClass1)
@@ -465,3 +466,26 @@ def test_can_be_collected_by_gc():
 
     import gc
     gc.collect()
+def test_more_subclasses2():
+    import clr
+    class SubClass50(SimpleClass):
+        def __init__(self):
+           super().__init__()
+        def IncrementThing(self):
+           return super().IncrementThing()
+
+    @clr.attribute(DebuggerDisplay("X"))
+
+    class SubClass51(SubClass50):
+        __namespace__ = "TestModule"
+        def __init__(self):
+            super().__init__()
+
+        def IncrementThing(self):
+            return super().IncrementThing() + 10
+    x = SubClass51()
+    print(x.CallIncrementThing())
+    print(x.CallIncrementThing())
+    print(x.CallIncrementThing())
+
+

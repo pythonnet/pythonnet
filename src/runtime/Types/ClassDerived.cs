@@ -522,23 +522,26 @@ namespace Python.Runtime
             string? baseMethodName = null;
             if (!method.IsAbstract)
             {
-                baseMethodName = "_" + baseType.Name + "__" + method.Name;
-                MethodBuilder baseMethodBuilder = typeBuilder.DefineMethod(baseMethodName,
-                    MethodAttributes.Public |
-                    MethodAttributes.Final |
-                    MethodAttributes.HideBySig,
-                    method.ReturnType,
-                    parameterTypes);
-
-                // emit the assembly for calling the original method using call instead of callvirt
-                ILGenerator baseIl = baseMethodBuilder.GetILGenerator();
-                baseIl.Emit(OpCodes.Ldarg_0);
-                for (var i = 0; i < parameters.Length; ++i)
+                baseMethodName = "_" + method.DeclaringType.Name + "__" + method.Name;
+                if (baseType.GetMethod(baseMethodName) == null)
                 {
-                    baseIl.Emit(OpCodes.Ldarg, i + 1);
+                    MethodBuilder baseMethodBuilder = typeBuilder.DefineMethod(baseMethodName,
+                        MethodAttributes.Public |
+                        MethodAttributes.Final |
+                        MethodAttributes.HideBySig,
+                        method.ReturnType,
+                        parameterTypes);
+
+                    // emit the assembly for calling the original method using call instead of callvirt
+                    ILGenerator baseIl = baseMethodBuilder.GetILGenerator();
+                    baseIl.Emit(OpCodes.Ldarg_0);
+                    for (var i = 0; i < parameters.Length; ++i)
+                    {
+                        baseIl.Emit(OpCodes.Ldarg, i + 1);
+                    }
+                    baseIl.Emit(OpCodes.Call, method);
+                    baseIl.Emit(OpCodes.Ret);
                 }
-                baseIl.Emit(OpCodes.Call, method);
-                baseIl.Emit(OpCodes.Ret);
             }
 
             // override the original method with a new one that dispatches to python
