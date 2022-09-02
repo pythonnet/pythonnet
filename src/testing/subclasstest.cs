@@ -151,8 +151,17 @@ namespace Python.Test
         }
     }
 
+    public abstract class SimpleClassBase
+    {
+        private int counter;
+            public virtual int IncrementThing()
+            {
+                return counter++;
+            }
 
-    public class SimpleClass
+    }
+
+    public abstract class SimpleClass : SimpleClassBase
     {
         public bool Initialized;
 
@@ -160,10 +169,11 @@ namespace Python.Test
         {
             Initialized = true;
         }
-        private int counter = 0;
-        public virtual int IncrementThing()
+
+        public int CallIncrementThing()
         {
-            return ++counter;
+            var x = IncrementThing();
+            return x;
         }
 
         public static void TestObject(object obj)
