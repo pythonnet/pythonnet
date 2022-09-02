@@ -61,7 +61,7 @@ class clrproperty(object):
 
 class property(object):
 
-    def __init__(self, type, default):
+    def __init__(self, type, default = None):
         import weakref
         self._clr_property_type_ = type
         self.default = default
@@ -70,9 +70,14 @@ class property(object):
         self.fget = 1
         self.fset = 1
     def __get__(self, instance, owner):
+        if self.fget != 1:
+            return self.fget(instance)
         v = self.values.get(instance, self.default)
         return v
     def __set__(self, instance, value):
+        if self.fset != 1:
+            self.fset(instance,value)
+            return
         self.values[instance] = value
     def add_attribute(self, *args, **kwargs):
         lst = []
@@ -84,8 +89,9 @@ class property(object):
         self._clr_attributes_.extend(lst)
         return self
 
-    def __call__(self, type, default):
-        self2 = self.__class__(self._clr_property_type_, type, default)
+    def __call__(self, func):
+        self2 = self.__class__(self._clr_property_type_, None)
+        self2.fget = func
         self2._clr_attributes_ = self._clr_attributes_
         return self2
 class clrmethod(object):

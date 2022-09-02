@@ -145,6 +145,10 @@ namespace Python.Runtime
             // named arguments and named properties or fields the same way.
             var tp = new PyTuple(attr);
             Type attribute = (Type) tp[0].AsManagedObject(typeof(object));
+            if (typeof(Attribute).IsAssignableFrom(attribute) == false)
+            {
+                throw new Exception("This type is not an attribute type.");
+            }
 
             var args = (PyObject[]) tp[1].AsManagedObject(typeof(PyObject[]));
             var dict = new PyDict(tp[2]);
@@ -168,9 +172,10 @@ namespace Python.Runtime
                     if (parameter.ParameterType.IsArray && null != parameter.GetCustomAttribute(typeof(ParamArrayAttribute)))
                     {
                         int cnt = args.Length - i;
-                        var values = Array.CreateInstance(parameter.ParameterType.GetElementType(), cnt);
+                        var elemType = parameter.ParameterType.GetElementType();
+                        var values = Array.CreateInstance(elemType, cnt);
                         for(int j = 0; j < cnt; j++)
-                            values.SetValue(args[i + j], j);
+                            values.SetValue(args[i + j].AsManagedObject(typeof(object)), j);
                         paramValues.Add(values);
                         break;
                     }
@@ -750,28 +755,61 @@ namespace Python.Runtime
                                              MethodAttributes.SpecialName;
 
             using var pyPropertyType = func.GetAttr("_clr_property_type_");
-            var propertyType = pyPropertyType.AsManagedObject(typeof(Type)) as Type;
+            var pyNativeType = new PyType(pyPropertyType);
+            Converter.ToManaged(pyPropertyType, typeof(Type), out var result, false);
+            var propertyType = result as Type;
+            string pyTypeName = null;
+            string pyTypeModule = null;
             if (propertyType == null)
             {
-                throw new ArgumentException("_clr_property_type must be a CLR type");
+                propertyType = typeof(PyObject);
+                pyTypeModule = pyNativeType.GetAttr("__module__").ToString();
+                //throw new ArgumentException("_clr_property_type must be a CLR type");
+                pyTypeName = pyNativeType.Name;
             }
 
             PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(propertyName,
                 PropertyAttributes.None,
                 propertyType,
                 null);
-                if (func.HasAttr("_clr_attributes_"))
+            if (func.HasAttr("_clr_attributes_"))
+            {
+                using (var attributes = new PyList(func.GetAttr("_clr_attributes_")))
                 {
-                    using (var attributes = new PyList(func.GetAttr("_clr_attributes_")))
+                    foreach (var attr in attributes)
                     {
-                        foreach (var attr in attributes)
+                        var builder = AddAttribute(attr);
+                        if (builder == null) throw new Exception();
+                        propertyBuilder.SetCustomAttribute(builder);
+                    }
+                }
+            }
+
+            if (pyTypeName != null)
+            {
+                var cb = new CustomAttributeBuilder(typeof(PythonTypeAttribute).GetConstructors().First(),
+                    new object[] {pyTypeModule, pyTypeName});
+                propertyBuilder.SetCustomAttribute(cb);
+            }
+
+            {
+                // load attribute set on functions
+                foreach (var fname in new[]{ "fget", "fset" })
+                {
+                    using var pyfget = func.GetAttr(fname);
+                    if (methodAssoc.TryGetValue(pyfget, out var lst))
+                    {
+                        foreach (var attr in lst)
                         {
                             var builder = AddAttribute(attr);
                             if (builder == null) throw new Exception();
                             propertyBuilder.SetCustomAttribute(builder);
                         }
+
+                        methodAssoc.Remove(func);
                     }
                 }
+            }
 
             if (func.HasAttr("fget"))
             {
