@@ -28,6 +28,8 @@ def set_runtime(runtime: Union[clr_loader.Runtime, str], **params: str) -> None:
 
 
 def get_runtime_info() -> Optional[clr_loader.RuntimeInfo]:
+    """Retrieve information on the configured runtime"""
+
     if _RUNTIME is None:
         return None
     else:
@@ -52,7 +54,9 @@ def _get_params_from_env(prefix: str) -> Dict[str, str]:
 def _create_runtime_from_spec(
     spec: str, params: Optional[Dict[str, Any]] = None
 ) -> clr_loader.Runtime:
+    was_default = False
     if spec == "default":
+        was_default = True
         if sys.platform == "win32":
             spec = "netfx"
         else:
@@ -60,14 +64,29 @@ def _create_runtime_from_spec(
 
     params = params or _get_params_from_env(spec)
 
-    if spec == "netfx":
-        return clr_loader.get_netfx(**params)
-    elif spec == "mono":
-        return clr_loader.get_mono(**params)
-    elif spec == "coreclr":
-        return clr_loader.get_coreclr(**params)
-    else:
-        raise RuntimeError(f"Invalid runtime name: '{spec}'")
+    try:
+        if spec == "netfx":
+            return clr_loader.get_netfx(**params)
+        elif spec == "mono":
+            return clr_loader.get_mono(**params)
+        elif spec == "coreclr":
+            return clr_loader.get_coreclr(**params)
+        else:
+            raise RuntimeError(f"Invalid runtime name: '{spec}'")
+    except Exception as exc:
+        if was_default:
+            raise RuntimeError(
+                f"""Failed to create a default .NET runtime, which would
+                    have been "{spec}" on this system. Either install a
+                    compatible runtime or configure it explicitly via
+                    `set_runtime` or the `PYTHONNET_*` environment variables
+                    (see set_runtime_from_env)."""
+            ) from exc
+        else:
+            raise RuntimeError(
+                f"""Failed to create a .NET runtime ({spec}) using the
+                parameters {params}."""
+            ) from exc
 
 
 def set_runtime_from_env() -> None:
@@ -92,9 +111,7 @@ def set_runtime_from_env() -> None:
     set_runtime(runtime)
 
 
-def load(
-    runtime: Union[clr_loader.Runtime, str, None] = None, **params: str
-) -> None:
+def load(runtime: Union[clr_loader.Runtime, str, None] = None, **params: str) -> None:
     """Load Python.NET in the specified runtime
 
     The same parameters as for `set_runtime` can be used. By default,
