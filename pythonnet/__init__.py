@@ -1,12 +1,12 @@
 import sys
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Any
 import clr_loader
 
 __all__ = ["set_runtime", "set_runtime_from_env", "load"]
 
 _RUNTIME: Optional[clr_loader.Runtime] = None
-_LOADER_ASSEMBLY: Optional[clr_loader.wrappers.Assembly] = None
+_LOADER_ASSEMBLY: Optional[clr_loader.Assembly] = None
 _LOADED: bool = False
 
 
@@ -27,6 +27,13 @@ def set_runtime(runtime: Union[clr_loader.Runtime, str], **params: str) -> None:
     _RUNTIME = runtime
 
 
+def get_runtime_info() -> Optional[clr_loader.RuntimeInfo]:
+    if _RUNTIME is None:
+        return None
+    else:
+        return _RUNTIME.info()
+
+
 def _get_params_from_env(prefix: str) -> Dict[str, str]:
     from os import environ
 
@@ -43,7 +50,7 @@ def _get_params_from_env(prefix: str) -> Dict[str, str]:
 
 
 def _create_runtime_from_spec(
-    spec: str, params: Optional[Dict[str, str]] = None
+    spec: str, params: Optional[Dict[str, Any]] = None
 ) -> clr_loader.Runtime:
     if spec == "default":
         if sys.platform == "win32":
@@ -109,9 +116,9 @@ def load(
 
     dll_path = Path(__file__).parent / "runtime" / "Python.Runtime.dll"
 
-    _LOADER_ASSEMBLY = _RUNTIME.get_assembly(str(dll_path))
+    _LOADER_ASSEMBLY = assembly = _RUNTIME.get_assembly(str(dll_path))
+    func = assembly.get_function("Python.Runtime.Loader.Initialize")
 
-    func = _LOADER_ASSEMBLY["Python.Runtime.Loader.Initialize"]
     if func(b"") != 0:
         raise RuntimeError("Failed to initialize Python.Runtime.dll")
 
@@ -125,12 +132,12 @@ def unload() -> None:
 
     global _RUNTIME, _LOADER_ASSEMBLY
     if _LOADER_ASSEMBLY is not None:
-        func = _LOADER_ASSEMBLY["Python.Runtime.Loader.Shutdown"]
+        func = _LOADER_ASSEMBLY.get_function("Python.Runtime.Loader.Shutdown")
         if func(b"full_shutdown") != 0:
             raise RuntimeError("Failed to call Python.NET shutdown")
 
         _LOADER_ASSEMBLY = None
 
     if _RUNTIME is not None:
-        # TODO: Add explicit `close` to clr_loader
+        _RUNTIME.shutdown()
         _RUNTIME = None
