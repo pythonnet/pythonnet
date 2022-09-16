@@ -137,17 +137,17 @@ namespace Python.Runtime.Platform
 
         static IntPtr[] GetAllModules()
         {
-            var self = Process.GetCurrentProcess().Handle;
+            using var self = Process.GetCurrentProcess();
 
             uint bytes = 0;
             var result = new IntPtr[0];
-            if (!EnumProcessModules(self, result, bytes, out var needsBytes))
+            if (!EnumProcessModules(self.Handle, result, bytes, out var needsBytes))
                 throw new Win32Exception();
             while (bytes < needsBytes)
             {
                 bytes = needsBytes;
                 result = new IntPtr[bytes / IntPtr.Size];
-                if (!EnumProcessModules(self, result, bytes, out needsBytes))
+                if (!EnumProcessModules(self.Handle, result, bytes, out needsBytes))
                     throw new Win32Exception();
             }
             return result.Take((int)(needsBytes / IntPtr.Size)).ToArray();
