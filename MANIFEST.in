@@ -1,6 +1,7 @@
 graft src/runtime
 prune src/runtime/obj
 prune src/runtime/bin
+include src/pythonnet.snk
 include Directory.Build.*
 include pythonnet.sln
 include version.txt

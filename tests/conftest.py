@@ -53,10 +53,12 @@ def pytest_configure(config):
     runtime_params = {}
 
     if runtime_opt == "coreclr":
-        fw = "net6.0"
-        runtime_params["runtime_config"] = str(
-            bin_path / "Python.Test.runtimeconfig.json"
-        )
+        # This is optional now:
+        #
+        # fw = "net6.0"
+        # runtime_params["runtime_config"] = str(
+        #     bin_path / "Python.Test.runtimeconfig.json"
+        # )
         collect_ignore.append("domain_tests/test_domain_reload.py")
     else:
         domain_tests_dir = cwd / "domain_tests"
