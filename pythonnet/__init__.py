@@ -10,6 +10,21 @@ _LOADER_ASSEMBLY: Optional[clr_loader.Assembly] = None
 _LOADED: bool = False
 
 
+try:
+    import importlib.metadata
+    __version__ = importlib.metadata.version("pythonnet")
+except Exception:
+    try:
+        import pkg_resources  # part of setuptools
+        __version__ = pkg_resources.require("pythonnet")[0].version
+    except Exception:
+        try:
+            with open(Path(__file__).parent.parent / "version.txt") as f:
+                __version__ = f.read().strip()
+        except Exception:
+            __version__ = "unknown"
+
+
 def set_runtime(runtime: Union[clr_loader.Runtime, str], **params: str) -> None:
     """Set up a clr_loader runtime without loading it
 
