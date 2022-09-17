@@ -285,7 +285,6 @@ namespace Python.EmbeddingTest {
         }
 
         // regression for https://github.com/pythonnet/pythonnet/issues/1427
-        [Ignore("https://github.com/pythonnet/pythonnet/issues/1256")]
         [Test]
         public void PythonRegisteredDecoder_NoStackOverflowOnSystemType()
         {
