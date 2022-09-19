@@ -710,7 +710,7 @@ namespace Python.Runtime
                     {
                         if (Runtime.Is32Bit)
                         {
-                            if (!Runtime.PyLong_Check(value))
+                            if (!Runtime.PyInt_Check(value))
                             {
                                 goto type_error;
                             }
