@@ -136,6 +136,6 @@ namespace Python.Runtime
         public int ht_cached_keys  { get; private set; }
         public int ht_module  { get; private set; }
         public int _ht_tpname  { get; private set; }
+        public int spec_cache_getitem  { get; private set; }
     }
 }
-
