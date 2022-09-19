@@ -1145,9 +1145,7 @@ namespace Python.Runtime
         }
 
         internal static bool PyFloat_Check(BorrowedReference ob)
-        {
-            return PyObject_TYPE(ob) == PyFloatType;
-        }
+            => PyObject_TypeCheck(ob, PyFloatType);
 
         /// <summary>
         /// Return value: New reference.
