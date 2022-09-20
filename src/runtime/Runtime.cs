@@ -1101,11 +1101,6 @@ namespace Python.Runtime
 
         internal static NewReference PyInt_FromInt64(long value) => PyLong_FromLongLong(value);
 
-        internal static bool PyLong_Check(BorrowedReference ob)
-        {
-            return PyObject_TYPE(ob) == PyLongType;
-        }
-
         internal static NewReference PyLong_FromLongLong(long value) => Delegates.PyLong_FromLongLong(value);
 
 
@@ -1145,9 +1140,7 @@ namespace Python.Runtime
         }
 
         internal static bool PyFloat_Check(BorrowedReference ob)
-        {
-            return PyObject_TYPE(ob) == PyFloatType;
-        }
+            => PyObject_TypeCheck(ob, PyFloatType);
 
         /// <summary>
         /// Return value: New reference.
