@@ -1,9 +1,11 @@
+"""Python.NET runtime loading and configuration"""
+
 import sys
 from pathlib import Path
 from typing import Dict, Optional, Union, Any
 import clr_loader
 
-__all__ = ["set_runtime", "set_runtime_from_env", "load"]
+__all__ = ["set_runtime", "set_runtime_from_env", "load", "unload", "get_runtime_info"]
 
 _RUNTIME: Optional[clr_loader.Runtime] = None
 _LOADER_ASSEMBLY: Optional[clr_loader.Assembly] = None
@@ -13,9 +15,11 @@ _LOADED: bool = False
 def set_runtime(runtime: Union[clr_loader.Runtime, str], **params: str) -> None:
     """Set up a clr_loader runtime without loading it
 
-    :param runtime: Either an already initialised `clr_loader` runtime, or one
-    of netfx, coreclr, mono, or default. If a string parameter is given, the
-    runtime will be created."""
+    :param runtime:
+        Either an already initialised `clr_loader` runtime, or one of netfx,
+        coreclr, mono, or default. If a string parameter is given, the runtime
+        will be created.
+    """
 
     global _RUNTIME
     if _LOADED:
@@ -145,7 +149,7 @@ def load(runtime: Union[clr_loader.Runtime, str, None] = None, **params: str) ->
 
 
 def unload() -> None:
-    """Explicitly unload a laoded runtime and shut down Python.NET"""
+    """Explicitly unload a loaded runtime and shut down Python.NET"""
 
     global _RUNTIME, _LOADER_ASSEMBLY
     if _LOADER_ASSEMBLY is not None:
