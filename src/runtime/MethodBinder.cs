@@ -576,7 +576,6 @@ namespace Python.Runtime
         /// <param name="pyArgCount">Number of arguments, passed by Python</param>
         /// <param name="kwargDict">Dictionary of keyword argument name to python object pointer</param>
         /// <param name="defaultArgList">A list of default values for omitted parameters</param>
-        /// <param name="needsResolution"><c>true</c>, if overloading resolution is required</param>
         /// <param name="outs">Returns number of output parameters</param>
         /// <returns>If successful, an array of .NET arguments that can be passed to the method.  Otherwise null.</returns>
         static object?[]? TryConvertArguments(ParameterInfo[] pi, bool paramsArray,
