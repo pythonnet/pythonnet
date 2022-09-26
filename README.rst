@@ -17,11 +17,6 @@ provides a powerful application scripting tool for .NET developers. It
 allows Python code to interact with the CLR, and may also be used to
 embed Python into a .NET application.
 
-.. note::
-   The master branch of this repository tracks the ongoing development of version 3.0.
-   Backports of patches to 2.5 are tracked in the
-   `backports-2.5 branch <https://github.com/pythonnet/pythonnet/tree/backports-2.5>`_.
-
 Calling .NET code from Python
 -----------------------------
 
@@ -41,6 +36,25 @@ module:
    import clr
    clr.AddReference("System.Windows.Forms")
    from System.Windows.Forms import Form
+
+By default, Mono will be used on Linux and macOS, .NET Framework on Windows. For
+details on the loading of different runtimes, please refer to the documentation.
+
+.NET Core
+~~~~~~~~~
+
+If .NET Core is installed in a default location or the ``dotnet`` CLI tool is on
+the ``PATH``, loading it instead of the default (Mono/.NET Framework) runtime
+just requires setting either the environment variable
+``PYTHONNET_RUNTIME=coreclr`` or calling ``pythonnet.load`` explicitly:
+
+.. code-block:: python
+
+   from pythonnet import load
+   load("coreclr")
+
+   import clr
+
 
 Embedding Python in .NET
 ------------------------

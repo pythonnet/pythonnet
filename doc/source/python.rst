@@ -95,7 +95,8 @@ The equivalent configuration to the ``load`` example would be
    PYTHONNET_CORECLR_RUNTIME_CONFIG=/path/to/runtimeconfig.json
 
 .. note::
-   Only string parameters are supported this way.
+   Only string parameters are supported this way. It has the advantage, though,
+   that the same configuration will be used for subprocesses as well.
 
 Constructing a ``Runtime`` instance
 ...................................
