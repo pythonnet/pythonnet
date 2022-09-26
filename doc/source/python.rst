@@ -21,19 +21,19 @@ Installation
 
 Python.NET is available as a source release on
 `GitHub <https://github.com/pythonnet/pythonnet/releases>`__ and as a
-binary wheel or source distribution from the `Python Package
-Index <https://pypi.python.org/pypi/pythonnet>`__.
+platform-independent binary wheel or source distribution from the `Python
+Package Index <https://pypi.python.org/pypi/pythonnet>`__.
 
-The source release is a self-contained “private” assembly. Just unzip
-the package wherever you want it, cd to that directory, build the
-solution ``python setup.py build_ext --inplace``. Once you start up
-Python or IPython interpreter in this directory or append this directory
-to ``sys.path``, then after ``import clr`` statement .NET assemblies can
-be used. You can also run ``nPython.exe`` (``mono nPython.exe`` on
-``*nix``) to check how python can be embedded in console .NET
-application. Note that the source release does not include a copy of the
-CPython runtime, so you will need to have installed Python on your
-machine before using the source release.
+Installing from PyPI can be done using ``pip install pythonnet``.
+
+To build from source (either the ``sdist`` or clone or snapshot of the
+repository), only the .NET6 SDK (or newer) and Python itself are required. If
+``dotnet`` is on the ``PATH``, building can be done using
+
+.. code:: bash
+
+   python setup.py build
+
 
 Loading a Runtime
 ~~~~~~~~~~~~~~~~~
