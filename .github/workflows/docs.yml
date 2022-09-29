@@ -24,7 +24,7 @@ jobs:
         path: doc/build/html/
 
   deploy:
-    if: github.ref == 'refs/heads/release'
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: read
