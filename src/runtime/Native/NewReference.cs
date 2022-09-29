@@ -47,7 +47,7 @@ namespace Python.Runtime
         /// </summary>
         public NewReference Move()
         {
-            var result = new NewReference(this);
+            var result = DangerousFromPointer(this.DangerousGetAddress());
             this.pointer = default;
             return result;
         }

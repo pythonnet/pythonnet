@@ -25,7 +25,7 @@ def test_bool_conversion():
 
     with pytest.raises(TypeError):
         ob.BooleanField = 1
-    
+
     with pytest.raises(TypeError):
         ob.BooleanField = 0
 
@@ -577,6 +577,13 @@ def test_object_conversion():
     ob.ObjectField = Foo
     assert ob.ObjectField == Foo
 
+    class PseudoSeq:
+        def __getitem__(self, idx):
+           return 0
+
+    ob.ObjectField = PseudoSeq()
+    assert ob.ObjectField.__class__.__name__ == "PseudoSeq"
+
 
 def test_null_conversion():
     """Test null conversion."""
@@ -679,3 +686,69 @@ def test_iconvertible_conversion():
     assert 1024 == change_type(1024, System.Int32)
     assert 1024 == change_type(1024, System.Int64)
     assert 1024 == change_type(1024, System.Int16)
+
+def test_intptr_construction():
+    from System import IntPtr, UIntPtr, Int64, UInt64
+    from ctypes import sizeof, c_void_p
+
+    ptr_size = sizeof(c_void_p)
+    max_intptr = 2 ** (ptr_size * 8 - 1) - 1
+    min_intptr = -max_intptr - 1
+    max_uintptr = 2 ** (ptr_size * 8) - 1
+    min_uintptr = 0
+
+    ob = ConversionTest()
+
+    assert ob.IntPtrField == IntPtr.Zero
+    assert ob.UIntPtrField == UIntPtr.Zero
+
+    for v in [0, -1, 1024, max_intptr, min_intptr]:
+        ob.IntPtrField = IntPtr(Int64(v))
+        assert ob.IntPtrField == IntPtr(v)
+        assert ob.IntPtrField.ToInt64() == v
+
+    for v in [min_intptr - 1, max_intptr + 1]:
+        with pytest.raises(OverflowError):
+            IntPtr(v)
+
+    for v in [0, 1024, min_uintptr, max_uintptr, max_intptr]:
+        ob.UIntPtrField = UIntPtr(UInt64(v))
+        assert ob.UIntPtrField == UIntPtr(v)
+        assert ob.UIntPtrField.ToUInt64() == v
+
+    for v in [min_uintptr - 1, max_uintptr + 1, min_intptr]:
+        with pytest.raises(OverflowError):
+            UIntPtr(v)
+
+def test_explicit_conversion():
+    from operator import index
+    from System import (
+        Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte, Boolean
+    )
+    from System import Double, Single
+
+    assert int(Boolean(False)) == 0
+    assert int(Boolean(True)) == 1
+
+    for t in [UInt64, UInt32, UInt16, Byte]:
+        assert index(t(127)) == 127
+        assert int(t(127)) == 127
+        assert float(t(127)) == 127.0
+
+    for t in [Int64, Int32, Int16, SByte]:
+        assert index(t(127)) == 127
+        assert index(t(-127)) == -127
+        assert int(t(127)) == 127
+        assert int(t(-127)) == -127
+        assert float(t(127)) == 127.0
+        assert float(t(-127)) == -127.0
+
+    assert int(Int64(Int64.MaxValue)) == 2**63 - 1
+    assert int(Int64(Int64.MinValue)) == -2**63
+    assert int(UInt64(UInt64.MaxValue)) == 2**64 - 1
+
+    for t in [Single, Double]:
+        assert float(t(0.125)) == 0.125
+        assert int(t(123.4)) == 123
+        with pytest.raises(TypeError):
+            index(t(123.4))

@@ -59,6 +59,11 @@ namespace Python.Runtime
         internal static bool TypeManagerInitialized => _typesInitialized;
         internal static readonly bool Is32Bit = IntPtr.Size == 4;
 
+        // Available in newer .NET Core versions (>= 5) as IntPtr.MaxValue etc.
+        internal static readonly long IntPtrMaxValue = Is32Bit ? Int32.MaxValue : Int64.MaxValue;
+        internal static readonly long IntPtrMinValue = Is32Bit ? Int32.MinValue : Int64.MinValue;
+        internal static readonly ulong UIntPtrMaxValue = Is32Bit ? UInt32.MaxValue : UInt64.MaxValue;
+
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
@@ -94,6 +99,7 @@ namespace Python.Runtime
         internal static bool HostedInPython;
         internal static bool ProcessIsTerminating;
 
+        /// <summary>
         /// Initialize the runtime...
         /// </summary>
         /// <remarks>Always call this method from the Main thread.  After the
@@ -354,6 +360,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="runs">Total number of GC loops to run</param>
         /// <returns><c>true</c> if a steady state was reached upon the requested number of tries (e.g. on the last try no objects were collected).</returns>
+        [ForbidPythonThreads]
         public static bool TryCollectingGarbage(int runs)
             => TryCollectingGarbage(runs, forceBreakLoops: false);
 
@@ -1094,11 +1101,6 @@ namespace Python.Runtime
 
         internal static NewReference PyInt_FromInt64(long value) => PyLong_FromLongLong(value);
 
-        internal static bool PyLong_Check(BorrowedReference ob)
-        {
-            return PyObject_TYPE(ob) == PyLongType;
-        }
-
         internal static NewReference PyLong_FromLongLong(long value) => Delegates.PyLong_FromLongLong(value);
 
 
@@ -1138,9 +1140,7 @@ namespace Python.Runtime
         }
 
         internal static bool PyFloat_Check(BorrowedReference ob)
-        {
-            return PyObject_TYPE(ob) == PyFloatType;
-        }
+            => PyObject_TypeCheck(ob, PyFloatType);
 
         /// <summary>
         /// Return value: New reference.
@@ -1281,13 +1281,6 @@ namespace Python.Runtime
         //====================================================================
         // Python string API
         //====================================================================
-        internal static bool IsStringType(BorrowedReference op)
-        {
-            BorrowedReference t = PyObject_TYPE(op);
-            return (t == PyStringType)
-                || (t == PyUnicodeType);
-        }
-
         internal static bool PyString_Check(BorrowedReference ob)
         {
             return PyObject_TYPE(ob) == PyStringType;

@@ -361,7 +361,7 @@ namespace Python.Runtime
             // conversions (Python string -> managed string).
             if (obType == objectType)
             {
-                if (Runtime.IsStringType(value))
+                if (Runtime.PyString_Check(value))
                 {
                     return ToPrimitive(value, stringType, out result, setError);
                 }
@@ -387,11 +387,6 @@ namespace Python.Runtime
                 {
                     result = new PyInt(value);
                     return true;
-                }
-
-                if (Runtime.PySequence_Check(value))
-                {
-                    return ToArray(value, typeof(object[]), out result, setError);
                 }
 
                 result = new PyObject(value);
@@ -715,7 +710,7 @@ namespace Python.Runtime
                     {
                         if (Runtime.Is32Bit)
                         {
-                            if (!Runtime.PyLong_Check(value))
+                            if (!Runtime.PyInt_Check(value))
                             {
                                 goto type_error;
                             }

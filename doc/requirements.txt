@@ -1,0 +1,9 @@
+sphinx
+
+# Theme, force pygments update
+furo>=2022.9.15
+pygments>=2.7
+
+# C# via doxygen
+breathe
+git+https://github.com/rogerbarton/sphinx-csharp.git

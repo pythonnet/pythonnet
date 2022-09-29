@@ -10,7 +10,7 @@ license = {text = "MIT"}
 readme = "README.rst"
 
 dependencies = [
-    "clr_loader>=0.1.7"
+    "clr_loader>=0.2.2,<0.3.0"
 ]
 
 classifiers = [

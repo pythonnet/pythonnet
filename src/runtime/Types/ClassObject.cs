@@ -70,22 +70,9 @@ namespace Python.Runtime
             // Primitive types do not have constructors, but they look like
             // they do from Python. If the ClassObject represents one of the
             // convertible primitive types, just convert the arg directly.
-            if (type.IsPrimitive || type == typeof(string))
+            if (type.IsPrimitive)
             {
-                if (Runtime.PyTuple_Size(args) != 1)
-                {
-                    Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
-                    return default;
-                }
-
-                BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
-
-                if (!Converter.ToManaged(op, type, out var result, true))
-                {
-                    return default;
-                }
-
-                return CLRObject.GetReference(result!, tp);
+                return NewPrimitive(tp, args, type);
             }
 
             if (type.IsAbstract)
@@ -99,6 +86,11 @@ namespace Python.Runtime
                 return NewEnum(type, args, tp);
             }
 
+            if (type == typeof(string))
+            {
+                return NewString(args, tp);
+            }
+
             if (IsGenericNullable(type))
             {
                 // Nullable<T> has special handling in .NET runtime.
@@ -110,6 +102,166 @@ namespace Python.Runtime
             object obj = FormatterServices.GetUninitializedObject(type);
 
             return self.NewObjectToPython(obj, tp);
+        }
+
+        /// <summary>
+        /// Construct a new .NET String object from Python args
+        ///
+        /// This manual implementation of all individual relevant constructors
+        /// is required because System.String can't be allocated uninitialized.
+        ///
+        /// Additionally, it implements `String(pythonStr)`
+        /// </summary>
+        private static NewReference NewString(BorrowedReference args, BorrowedReference tp)
+        {
+            var argCount = Runtime.PyTuple_Size(args);
+
+            string? result = null;
+            if (argCount == 1)
+            {
+                BorrowedReference ob = Runtime.PyTuple_GetItem(args, 0);
+                if (Runtime.PyString_Check(ob))
+                {
+                    if (Runtime.GetManagedString(ob) is string val)
+                        result = val;
+                }
+                else if (Converter.ToManagedValue(ob, typeof(char[]), out object? arr, false))
+                {
+                    result = new String((char[])arr!);
+                }
+            }
+            else if (argCount == 2)
+            {
+                BorrowedReference p1 = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference p2 = Runtime.PyTuple_GetItem(args, 1);
+
+                if (
+                    Converter.ToManagedValue(p1, typeof(char), out object? chr, false) &&
+                    Converter.ToManagedValue(p2, typeof(int), out object? count, false)
+                   )
+                {
+                    result = new String((char)chr!, (int)count!);
+                }
+            }
+            else if (argCount == 3)
+            {
+                BorrowedReference p1 = Runtime.PyTuple_GetItem(args, 0);
+                BorrowedReference p2 = Runtime.PyTuple_GetItem(args, 1);
+                BorrowedReference p3 = Runtime.PyTuple_GetItem(args, 2);
+
+                if (
+                    Converter.ToManagedValue(p1, typeof(char[]), out object? arr, false) &&
+                    Converter.ToManagedValue(p2, typeof(int), out object? offset, false) &&
+                    Converter.ToManagedValue(p3, typeof(int), out object? length, false)
+                   )
+                {
+                    result = new String((char[])arr!, (int)offset!, (int)length!);
+                }
+            }
+
+            if (result != null)
+                return CLRObject.GetReference(result!, tp);
+
+            Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
+            return default;
+        }
+
+        /// <summary>
+        /// Create a new Python object for a primitive type
+        ///
+        /// The primitive types are Boolean, Byte, SByte, Int16, UInt16,
+        /// Int32, UInt32, Int64, UInt64, IntPtr, UIntPtr, Char, Double,
+        /// and Single.
+        ///
+        /// All numeric types and Boolean can be handled by a simple
+        /// conversion, (U)IntPtr has to be handled separately as we
+        /// do not want to convert them automically to/from integers.
+        /// </summary>
+        /// <param name="type">.NET type to construct</param>
+        /// <param name="tp">Corresponding Python type</param>
+        /// <param name="args">Constructor arguments</param>
+        private static NewReference NewPrimitive(BorrowedReference tp, BorrowedReference args, Type type)
+        {
+            // TODO: Handle IntPtr
+            if (Runtime.PyTuple_Size(args) != 1)
+            {
+                Exceptions.SetError(Exceptions.TypeError, "no constructors match given arguments");
+                return default;
+            }
+
+            BorrowedReference op = Runtime.PyTuple_GetItem(args, 0);
+            object? result = null;
+
+            if (type == typeof(IntPtr))
+            {
+                if (ManagedType.GetManagedObject(op) is CLRObject clrObject)
+                {
+                    switch (clrObject.inst)
+                    {
+                        case nint val:
+                            result = new IntPtr(val);
+                            break;
+                        case Int64 val:
+                            result = new IntPtr(val);
+                            break;
+                        case Int32 val:
+                            result = new IntPtr(val);
+                            break;
+                    }
+                }
+                else if (Runtime.PyInt_Check(op))
+                {
+                    long? num = Runtime.PyLong_AsLongLong(op);
+                    if (num is long n && n >= Runtime.IntPtrMinValue && n <= Runtime.IntPtrMaxValue)
+                    {
+                        result = new IntPtr(n);
+                    }
+                    else
+                    {
+                        Exceptions.SetError(Exceptions.OverflowError, "value not in range for IntPtr");
+                        return default;
+                    }
+                }
+            }
+
+            if (type == typeof(UIntPtr))
+            {
+                if (ManagedType.GetManagedObject(op) is CLRObject clrObject)
+                {
+                    switch (clrObject.inst)
+                    {
+                        case nuint val:
+                            result = new UIntPtr(val);
+                            break;
+                        case UInt64 val:
+                            result = new UIntPtr(val);
+                            break;
+                        case UInt32 val:
+                            result = new UIntPtr(val);
+                            break;
+                    }
+                }
+                else if (Runtime.PyInt_Check(op))
+                {
+                    ulong? num = Runtime.PyLong_AsUnsignedLongLong(op);
+                    if (num is ulong n && n <= Runtime.UIntPtrMaxValue)
+                    {
+                        result = new UIntPtr(n);
+                    }
+                    else
+                    {
+                        Exceptions.SetError(Exceptions.OverflowError, "value not in range for UIntPtr");
+                        return default;
+                    }
+                }
+            }
+
+            if (result == null && !Converter.ToManaged(op, type, out result, true))
+            {
+                return default;
+            }
+
+            return CLRObject.GetReference(result!, tp);
         }
 
         protected virtual void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)

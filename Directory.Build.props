@@ -6,7 +6,7 @@
     <AssemblyProduct>Python.NET</AssemblyProduct>
     <LangVersion>10.0</LangVersion>
     <IsPackable>false</IsPackable>
-    <FullVersion>$([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)version.txt))</FullVersion>
+    <FullVersion>$([System.IO.File]::ReadAllText("$(MSBuildThisFileDirectory)version.txt").Trim())</FullVersion>
     <VersionPrefix>$(FullVersion.Split('-', 2)[0])</VersionPrefix>
     <VersionSuffix Condition="$(FullVersion.Contains('-'))">$(FullVersion.Split('-', 2)[1])</VersionSuffix>
   </PropertyGroup>

@@ -228,6 +228,7 @@ namespace Python.Runtime
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 // add the contents of clr.py to the module
                 string clr_py = assembly.ReadStringResource("clr.py");
+
                 Exec(clr_py, module_globals, locals.Reference);
 
                 LoadSubmodule(module_globals, "clr.interop", "interop.py");
@@ -237,14 +238,22 @@ namespace Python.Runtime
                 // add the imported module to the clr module, and copy the API functions
                 // and decorators into the main clr module.
                 Runtime.PyDict_SetItemString(clr_dict, "_extras", module);
+
+                // append version
+                var version = typeof(PythonEngine)
+                    .Assembly
+                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                    .InformationalVersion;
+                using var versionObj = Runtime.PyString_FromString(version);
+                Runtime.PyDict_SetItemString(clr_dict, "__version__", versionObj.Borrow());
+
                 using var keys = locals.Keys();
                 foreach (PyObject key in keys)
                 {
-                    if (!key.ToString()!.StartsWith("_") || key.ToString()!.Equals("__version__"))
+                    if (!key.ToString()!.StartsWith("_"))
                     {
-                        PyObject value = locals[key];
+                        using PyObject value = locals[key];
                         Runtime.PyDict_SetItem(clr_dict, key.Reference, value.Reference);
-                        value.Dispose();
                     }
                     key.Dispose();
                 }

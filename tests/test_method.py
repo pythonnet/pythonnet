@@ -1256,3 +1256,41 @@ def test_method_encoding():
 def test_method_with_pointer_array_argument():
     with pytest.raises(TypeError):
         MethodTest.PointerArray([0])
+
+def test_method_call_implicit_conversion():
+
+    class IntAnswerMixin:
+        # For Python >= 3.8
+        def __index__(self):
+            return 42
+
+        # For Python < 3.10
+        def __int__(self):
+            return 42
+
+    class Answer(int, IntAnswerMixin):
+        pass
+
+    class FloatAnswer(float, IntAnswerMixin):
+        def __float__(self):
+            return 42.0
+
+    # TODO: This should also work for integer types but due to some complexities
+    # in the C-API functions (some call __int__/__index__, some don't), it's not
+    # supported, yet.
+    for v in [Answer(), FloatAnswer()]:
+        for t in [System.Double, System.Single]:
+            min_value = t(t.MinValue)
+            compare_to = min_value.CompareTo.__overloads__[t]
+
+            assert compare_to(v) == -1
+
+    class SomeNonFloat:
+        def __float__(self):
+            return 42.0
+
+    for t in [System.Double, System.Single]:
+        with pytest.raises(TypeError):
+            min_value = t(t.MinValue)
+            compare_to = min_value.CompareTo.__overloads__[t]
+            assert compare_to(SomeNonFloat()) == -1

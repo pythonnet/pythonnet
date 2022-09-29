@@ -53,6 +53,8 @@ namespace Python.Runtime
                 ["op_UnaryPlus"] = new SlotDefinition("__pos__", TypeOffset.nb_positive),
 
                 ["__int__"] = new SlotDefinition("__int__", TypeOffset.nb_int),
+                ["__float__"] = new SlotDefinition("__float__", TypeOffset.nb_float),
+                ["__index__"] = new SlotDefinition("__index__", TypeOffset.nb_index),
             };
             ComparisonOpMap = new Dictionary<string, string>
             {

@@ -31,6 +31,7 @@ def test_import_clr():
 def test_version_clr():
     import clr
     assert clr.__version__ >= "3.0.0"
+    assert clr.__version__[-1] != "\n"
 
 
 def test_preload_var():

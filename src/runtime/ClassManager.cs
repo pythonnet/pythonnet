@@ -87,7 +87,7 @@ namespace Python.Runtime
                     if ((Runtime.PyDict_DelItemString(dict.Borrow(), member) == -1) &&
                         (Exceptions.ExceptionMatches(Exceptions.KeyError)))
                     {
-                        // Trying to remove a key that's not in the dictionary 
+                        // Trying to remove a key that's not in the dictionary
                         // raises an error. We don't care about it.
                         Runtime.PyErr_Clear();
                     }
@@ -215,7 +215,7 @@ namespace Python.Runtime
             impl.indexer = info.indexer;
             impl.richcompare.Clear();
 
-            
+
             // Finally, initialize the class __dict__ and return the object.
             using var newDict = Runtime.PyObject_GenericGetDict(pyType.Reference);
             BorrowedReference dict = newDict.Borrow();
@@ -270,6 +270,15 @@ namespace Python.Runtime
                         doc = co.GetDocString();
                         Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc.Borrow());
                     }
+                }
+
+                if (Runtime.PySequence_Contains(dict, PyIdentifier.__doc__) != 1)
+                {
+                    // Ensure that at least some doc string is set
+                    using var fallbackDoc = Runtime.PyString_FromString(
+                        $"Python wrapper for .NET type {type}"
+                    );
+                    Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, fallbackDoc.Borrow());
                 }
             }
             doc.Dispose();
@@ -562,7 +571,7 @@ namespace Python.Runtime
 
             return ci;
         }
-        
+
         /// <summary>
         /// This class owns references to PyObjects in the `members` member.
         /// The caller has responsibility to DECREF them.

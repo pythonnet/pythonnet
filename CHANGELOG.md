@@ -67,6 +67,9 @@ or the DLL must be loaded in advance. This must be done before calling any other
 -   BREAKING: disabled implicit conversion from C# enums to Python `int` and back.
 One must now either use enum members (e.g. `MyEnum.Option`), or use enum constructor
 (e.g. `MyEnum(42)` or `MyEnum(42, True)` when `MyEnum` does not have a member with value 42).
+-   BREAKING: disabled implicit conversion from Python objects implementing sequence protocol to
+.NET arrays when the target .NET type is `System.Object`. The conversion is still attempted when the
+target type is a `System.Array`.
 -   Sign Runtime DLL with a strong name
 -   Implement loading through `clr_loader` instead of the included `ClrModule`, enables
     support for .NET Core
