@@ -133,6 +133,26 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void DerivedFloatIsNotFloat()
+        {
+            using var scope = Py.CreateScope();
+            scope.Exec(@"class DerivedFloat(float): pass");
+            using var derivedFloat = scope.Eval("DerivedFloat(42.0)");
+            object dotnetValue = derivedFloat.As<object>();
+            Assert.IsInstanceOf<PyObject>(dotnetValue);
+        }
+
+        [Test]
+        public void DerivedIntIsNotInt()
+        {
+            using var scope = Py.CreateScope();
+            scope.Exec(@"class DerivedInt(int): pass");
+            using var derivedInt = scope.Eval("DerivedInt(42)");
+            object dotnetValue = derivedInt.As<object>();
+            Assert.IsInstanceOf<PyObject>(dotnetValue);
+        }
+
+        [Test]
         public void BigIntExplicit()
         {
             BigInteger val = 42;

@@ -361,17 +361,17 @@ namespace Python.Runtime
             // conversions (Python string -> managed string).
             if (obType == objectType)
             {
-                if (Runtime.PyString_Check(value))
+                if (Runtime.PyString_CheckExact(value))
                 {
                     return ToPrimitive(value, stringType, out result, setError);
                 }
 
-                if (Runtime.PyBool_Check(value))
+                if (Runtime.PyBool_CheckExact(value))
                 {
                     return ToPrimitive(value, boolType, out result, setError);
                 }
 
-                if (Runtime.PyFloat_Check(value))
+                if (Runtime.PyFloat_CheckExact(value))
                 {
                     return ToPrimitive(value, doubleType, out result, setError);
                 }
