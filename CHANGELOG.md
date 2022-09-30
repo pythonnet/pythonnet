@@ -14,7 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Fixed
 
 
-## [3.0.0][] - 2022-09-29
+## [3.0.0](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.0) - 2022-09-29
 
 ### Added
 
@@ -143,7 +143,24 @@ There is no need to specify it.
 -   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
 (see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 
-## [2.5.0][] - 2020-06-14
+## [2.5.2](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.2) - 2021-02-05
+
+Bugfix release.
+
+### Fixed
+-   Fix `object[]` parameters taking precedence when should not in overload resolution
+-   Empty parameter names (as can be generated from F#) do not cause crashes
+
+## [2.5.1](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.1) - 2020-06-18
+
+Bugfix release.
+
+### Fixed
+
+-    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
+-    Fix incorrect dereference in params array handling
+
+## [2.5.0](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.0) - 2020-06-14
 
 This version improves performance on benchmarks significantly compared to 2.3.
 
