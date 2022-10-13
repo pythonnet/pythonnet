@@ -1051,9 +1051,20 @@ namespace Python.Runtime
             return Runtime.GetManagedString(strval.BorrowOrThrow());
         }
 
-        string? DebuggerDisplay => DebugUtil.HaveInterpreterLock()
-            ? this.ToString()
-            : $"pyobj at 0x{this.rawPtr:X} (get Py.GIL to see more info)";
+        ManagedType? InternalManagedObject => ManagedType.GetManagedObject(this.Reference);
+
+        string? DebuggerDisplay
+        {
+            get
+            {
+                if (DebugUtil.HaveInterpreterLock())
+                    return this.ToString();
+                var obj = this.InternalManagedObject;
+                return obj is { }
+                    ? obj.ToString()
+                    : $"pyobj at 0x{this.rawPtr:X} (get Py.GIL to see more info)";
+            }
+        }
 
 
         /// <summary>

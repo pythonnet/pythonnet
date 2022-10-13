@@ -364,6 +364,8 @@ namespace Python.Runtime
     {
         public IntPtr PyObj;
         public BorrowedReference Ref => new(PyObj);
+        public ManagedType? Managed => ManagedType.GetManagedObject(Ref);
+        public nint RefCount => Runtime.Refcount(Ref);
         public int RuntimeRun;
 #if TRACE_ALLOC
         public string StackTrace;
