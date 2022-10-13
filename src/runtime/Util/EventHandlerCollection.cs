@@ -99,6 +99,10 @@ internal class EventHandlerCollection: Dictionary<object, List<Handler>>
                 continue;
             }
             list.RemoveAt(i);
+            if (list.Count == 0)
+            {
+                Remove(key);
+            }
             return true;
         }
 
