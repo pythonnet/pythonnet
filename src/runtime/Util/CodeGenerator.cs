@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -17,13 +19,15 @@ namespace Python.Runtime
         private readonly AssemblyBuilder aBuilder;
         private readonly ModuleBuilder mBuilder;
 
+        const string NamePrefix = "__Python_Runtime_Generated_";
+
         internal CodeGenerator()
         {
-            var aname = new AssemblyName { Name = "__CodeGenerator_Assembly" };
+            var aname = new AssemblyName { Name = GetUniqueAssemblyName(NamePrefix + "Assembly") };
             var aa = AssemblyBuilderAccess.Run;
 
             aBuilder = Thread.GetDomain().DefineDynamicAssembly(aname, aa);
-            mBuilder = aBuilder.DefineDynamicModule("__CodeGenerator_Module");
+            mBuilder = aBuilder.DefineDynamicModule(NamePrefix + "Module");
         }
 
         /// <summary>
@@ -76,6 +80,21 @@ namespace Python.Runtime
                     }
                 }
             }
+        }
+
+        static string GetUniqueAssemblyName(string name)
+        {
+            var taken = new HashSet<string>(AppDomain.CurrentDomain
+                                                     .GetAssemblies()
+                                                     .Select(a => a.GetName().Name));
+            for (int i = 0; i < int.MaxValue; i++)
+            {
+                string candidate = name + i.ToString(CultureInfo.InvariantCulture);
+                if (!taken.Contains(candidate))
+                    return candidate;
+            }
+
+            throw new NotSupportedException("Too many assemblies");
         }
     }
 }
