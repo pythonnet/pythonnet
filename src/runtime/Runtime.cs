@@ -1094,8 +1094,13 @@ namespace Python.Runtime
         internal static bool PyInt_Check(BorrowedReference ob)
             => PyObject_TypeCheck(ob, PyLongType);
 
+        internal static bool PyInt_CheckExact(BorrowedReference ob)
+            => PyObject_TypeCheckExact(ob, PyLongType);
+
         internal static bool PyBool_Check(BorrowedReference ob)
             => PyObject_TypeCheck(ob, PyBoolType);
+        internal static bool PyBool_CheckExact(BorrowedReference ob)
+            => PyObject_TypeCheckExact(ob, PyBoolType);
 
         internal static NewReference PyInt_FromInt32(int value) => PyLong_FromLongLong(value);
 
@@ -1141,6 +1146,8 @@ namespace Python.Runtime
 
         internal static bool PyFloat_Check(BorrowedReference ob)
             => PyObject_TypeCheck(ob, PyFloatType);
+        internal static bool PyFloat_CheckExact(BorrowedReference ob)
+            => PyObject_TypeCheckExact(ob, PyFloatType);
 
         /// <summary>
         /// Return value: New reference.
@@ -1282,9 +1289,9 @@ namespace Python.Runtime
         // Python string API
         //====================================================================
         internal static bool PyString_Check(BorrowedReference ob)
-        {
-            return PyObject_TYPE(ob) == PyStringType;
-        }
+            => PyObject_TypeCheck(ob, PyStringType);
+        internal static bool PyString_CheckExact(BorrowedReference ob)
+            => PyObject_TypeCheckExact(ob, PyStringType);
 
         internal static NewReference PyString_FromString(string value)
         {
@@ -1643,6 +1650,8 @@ namespace Python.Runtime
             return Delegates.PyType_IsSubtype(t1, t2);
         }
 
+        internal static bool PyObject_TypeCheckExact(BorrowedReference ob, BorrowedReference tp)
+            => PyObject_TYPE(ob) == tp;
         internal static bool PyObject_TypeCheck(BorrowedReference ob, BorrowedReference tp)
         {
             BorrowedReference t = PyObject_TYPE(ob);
