@@ -85,3 +85,4 @@
 -   ([@alxnull](https://github.com/alxnull))
 -   ([@gpetrou](https://github.com/gpetrou))
 -   Ehsan Iran-Nejad ([@eirannejad](https://github.com/eirannejad))
+-   Rolf Madsen ([@rmadsen-ks](https://github.com/rmadsen-ks))
