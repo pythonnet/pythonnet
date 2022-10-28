@@ -191,16 +191,23 @@ namespace Python.EmbeddingTest
             {
                 0, 1, 2,
                 0x10,
+                0x79,
+                0x80,
+                0x81,
+                0xFF,
                 0x123,
+                0x8000,
                 0x1234,
+                0x8001,
+                0x4000,
+                0xFF,
             };
             simpleValues = simpleValues.Concat(simpleValues.Select(v => -v)).ToArray();
 
-            foreach (var val in simpleValues)
-            {
-                var pyInt = new PyInt(val);
-                Assert.AreEqual((BigInteger)val, pyInt.ToBigInteger());
-            }
+            var expected = simpleValues.Select(v => new BigInteger(v)).ToArray();
+            var actual = simpleValues.Select(v => new PyInt(v).ToBigInteger()).ToArray();
+
+            CollectionAssert.AreEqual(expected, actual);
         }
 
         [Test]
