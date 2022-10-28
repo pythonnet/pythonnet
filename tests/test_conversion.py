@@ -752,3 +752,9 @@ def test_explicit_conversion():
         assert int(t(123.4)) == 123
         with pytest.raises(TypeError):
             index(t(123.4))
+
+def test_object_string_format():
+    from System import String
+    integer_value = 200
+    string_value = String.Format("{0}", integer_value)
+    assert string_value == "200", f"{string_value} != ""200"""
