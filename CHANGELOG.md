@@ -14,6 +14,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Fixed
 
 -   Fixed objects leaking when Python attached event handlers to them even if they were later removed
+-   Fixed `PyInt` conversion to `BigInteger` and `System.String` produced incorrect result for values between 128 and 255.
 
 
 ## [3.0.0](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.0) - 2022-09-29
