@@ -361,6 +361,29 @@ namespace Python.Runtime
             // conversions (Python string -> managed string).
             if (obType == objectType)
             {
+                if (Runtime.PyString_CheckExact(value))
+                {
+                    return ToPrimitive(value, stringType, out result, setError);
+                }
+
+                if (Runtime.PyBool_CheckExact(value))
+                {
+                    return ToPrimitive(value, boolType, out result, setError);
+                }
+
+                if (Runtime.PyFloat_CheckExact(value))
+                {
+                    return ToPrimitive(value, doubleType, out result, setError);
+                }
+
+                // give custom codecs a chance to take over conversion
+                // of ints, sequences, and types derived from primitives
+                BorrowedReference pyType = Runtime.PyObject_TYPE(value);
+                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
+                {
+                    return true;
+                }
+
                 if (Runtime.PyString_Check(value))
                 {
                     return ToPrimitive(value, stringType, out result, setError);
@@ -374,13 +397,6 @@ namespace Python.Runtime
                 if (Runtime.PyFloat_Check(value))
                 {
                     return ToPrimitive(value, doubleType, out result, setError);
-                }
-
-                // give custom codecs a chance to take over conversion of ints and sequences
-                BorrowedReference pyType = Runtime.PyObject_TYPE(value);
-                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
-                {
-                    return true;
                 }
 
                 if (Runtime.PyInt_Check(value))

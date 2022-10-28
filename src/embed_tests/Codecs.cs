@@ -356,6 +356,19 @@ DateTimeDecoder.Setup()
         }
 
         [Test]
+        public void FloatDerivedDecoded()
+        {
+            using var scope = Py.CreateScope();
+            scope.Exec(@"class FloatDerived(float): pass");
+            using var floatDerived = scope.Eval("FloatDerived");
+            var decoder = new DecoderReturningPredefinedValue<object>(floatDerived, 42);
+            PyObjectConversions.RegisterDecoder(decoder);
+            using var result = scope.Eval("FloatDerived()");
+            object decoded = result.As<object>();
+            Assert.AreEqual(42, decoded);
+        }
+
+        [Test]
         public void ExceptionDecodedNoInstance()
         {
             PyObjectConversions.RegisterDecoder(new InstancelessExceptionDecoder());
