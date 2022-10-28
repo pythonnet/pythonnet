@@ -625,8 +625,8 @@ namespace Python.Runtime
             }
 
             using var pyReturnType = func.GetAttr("_clr_return_type_");
-            usingvar attributes = new PyList(func.GetAttr("_clr_attributes_")))
-            using (var pyArgTypes = func.GetAttr("_clr_arg_types_");
+            using var attributes = new PyList(func.GetAttr("_clr_attributes_"));
+            using var pyArgTypes = func.GetAttr("_clr_arg_types_");
             using var pyArgTypesIter = PyIter.GetIter(pyArgTypes);
             var returnType = pyReturnType.AsManagedObject(typeof(Type)) as Type;
             if (returnType == null)
@@ -1160,7 +1160,7 @@ namespace Python.Runtime
                 // This doesn't actually destroy the object, it just sets the reference to this object
                 // to be a weak reference and it will be destroyed when the C# object is destroyed.
 
-                PyType cc = ClassManager.GetClass(obj.GetType());
+                PyType cc = ReflectedClrType.GetOrCreate(obj.GetType());
                 var args2 = new PyObject[args.Length];
                 for (int i = 0; i < args.Length; i++)
                     args2[i] = args[i].ToPython();

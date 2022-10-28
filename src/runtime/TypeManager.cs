@@ -416,17 +416,11 @@ namespace Python.Runtime
 
             // create the new managed type subclassing the base managed type
             var baseClass = py_base_type.FirstOrDefault();
-            if (null == baseClass)
-            {
-                return ReflectedClrType.CreateSubclass(baseClass, interfaces, name,
-                                                       ns: (string?)namespaceStr,
-                                                       assembly: (string?)assembly,
-                                                       dict: dictRef);
-            }
-            else
-            {
-                return Exceptions.RaiseTypeError("invalid base class, expected CLR class type");
-            }
+
+            return ReflectedClrType.CreateSubclass(baseClass, interfaces, name,
+                                                   ns: (string?)namespaceStr,
+                                                   assembly: (string?)assembly,
+                                                    dict: dictRef);
         }
 
         internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, PyMethodFlags flags, IntPtr doc)
