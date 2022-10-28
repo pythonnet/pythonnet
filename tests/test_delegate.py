@@ -451,3 +451,11 @@ def test_int_ref_int_ref_string_delegate():
     # test sig mismatch, both on managed and Python side
 
     # test return wrong type
+
+def test_object_string_format():
+    """Test boolean delegate."""
+    from System import String
+    integer_value = 200
+    string_value = String.Format("{0}", integer_value)
+    assert string_value == "200", f"{string_value} != ""200"""
+
