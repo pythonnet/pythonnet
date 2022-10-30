@@ -620,6 +620,11 @@ namespace Python.Runtime
             Util.WriteRef(type, TypeOffset.name, new NewReference(temp).Steal());
             Util.WriteRef(type, TypeOffset.qualname, temp.Steal());
 
+            // Ensure that tp_traverse and tp_clear are always set, since their
+            // existence is enforced in newer Python versions in PyType_Ready
+            Util.WriteIntPtr(type, TypeOffset.tp_traverse, subtype_traverse);
+            Util.WriteIntPtr(type, TypeOffset.tp_clear, subtype_clear);
+
             InheritSubstructs(type.Reference.DangerousGetAddress());
 
             return type;
