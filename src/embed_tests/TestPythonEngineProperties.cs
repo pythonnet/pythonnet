@@ -9,6 +9,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetBuildinfoDoesntCrash()
         {
+            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.BuildInfo;
@@ -21,6 +22,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetCompilerDoesntCrash()
         {
+            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Compiler;
@@ -34,6 +36,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetCopyrightDoesntCrash()
         {
+            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Copyright;
@@ -46,6 +49,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetPlatformDoesntCrash()
         {
+            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Platform;
@@ -58,6 +62,7 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetVersionDoesntCrash()
         {
+            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Version;
