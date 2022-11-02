@@ -9,14 +9,25 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [3.0.1](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.1) - 2022-11-03
+
+### Added
+
 -   Support for Python 3.11
 
 ### Changed
+
+-   Allow decoders to override conversion of types derived from primitive types
 
 ### Fixed
 
 -   Fixed objects leaking when Python attached event handlers to them even if they were later removed
 -   Fixed `PyInt` conversion to `BigInteger` and `System.String` produced incorrect result for values between 128 and 255.
+-   Fixed implementing a generic interface with a Python class
 
 
 ## [3.0.0](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.0) - 2022-09-29
